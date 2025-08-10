@@ -14,6 +14,7 @@ public class PdfCreateExample {
     public static void main(String[] args) throws IOException {
         try (PDDocument doc = new PDDocument()) {
             PDPage page = new PDPage(PDRectangle.A4);
+            System.out.println("Meta Data is: "+ page.getMediaBox().getHeight() + " " +  page.getMediaBox().getWidth());
             doc.addPage(page);
 
             PDFont font = new PDType1Font(Standard14Fonts.FontName.COURIER);

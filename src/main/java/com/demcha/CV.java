@@ -1,8 +1,9 @@
 package com.demcha;
 
-import com.demcha.structure.*;
-import com.demcha.structure.Module;
+import com.demcha.scene.*;
+import com.demcha.scene.Module;
 import lombok.AllArgsConstructor;
+import org.w3c.dom.Text;
 
 import java.util.List;
 
@@ -35,18 +36,6 @@ public class CV {
     private final boolean hasRightToWorkInUK = true;
 
     public static void main(String[] args) {
-        Page page = new Page(1, "CV");
-
-        Module name = new Module("name");
-        name.addRow(
-                new Row(
-                        List.of(Element.of("name", new Text("Artem Demchyshyn")))
-                )
-
-        );
-
-        page.setModule(name);
-
 
     }
 

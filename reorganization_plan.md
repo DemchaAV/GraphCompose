@@ -35,21 +35,21 @@
 
 | Current Location | New Location |
 |------------------|--------------|
-| com.demcha.structure.Component | com.demcha.core.Component |
-| com.demcha.structure.Element | com.demcha.core.Element |
-| com.demcha.structure.Units | com.demcha.core.Units |
-| com.demcha.structure.Container | com.demcha.layout.Container |
-| com.demcha.structure.MeasureCtx | com.demcha.layout.MeasureCtx |
-| com.demcha.structure.interfaces.ArrangeCtx | com.demcha.layout.ArrangeCtx |
-| com.demcha.structure.Row | com.demcha.layout.Row |
-| com.demcha.structure.Module | com.demcha.layout.Module |
-| com.demcha.structure.Page | com.demcha.layout.Page |
-| com.demcha.structure.interfaces.UiElement | com.demcha.ui.UiElement |
-| com.demcha.structure.Anchor | com.demcha.ui.Anchor |
-| com.demcha.structure.TextDecoration | com.demcha.ui.TextDecoration |
-| com.demcha.structure.components.Text | com.demcha.ui.components.Text |
-| com.demcha.structure.interfaces.Element | com.demcha.ui.interfaces.Element |
-| com.demcha.structure.interfaces.ui.* | com.demcha.ui.interfaces.* |
+| com.demcha.core.Component | com.demcha.core.Component |
+| com.demcha.scene.Element | com.demcha.core.Element |
+| com.demcha.layout.Units | com.demcha.core.Units |
+| com.demcha.scene.Container | com.demcha.layout.Container |
+| com.demcha.layout.MeasureCtx | com.demcha.layout.MeasureCtx |
+| com.demcha.layout.ArrangeCtx | com.demcha.layout.ArrangeCtx |
+| com.demcha.scene.Row | com.demcha.layout.Row |
+| com.demcha.scene.Module | com.demcha.layout.Module |
+| com.demcha.scene.Page | com.demcha.layout.Page |
+| com.demcha.core.UiElement | com.demcha.ui.UiElement |
+| com.demcha.layout.AnchorType | com.demcha.ui.Anchor |
+| com.demcha.components.text.TextDecoration | com.demcha.ui.TextDecoration |
+| com.demcha.scene.components.Text | com.demcha.ui.components.Text |
+| com.demcha.core.Element | com.demcha.ui.interfaces.Element |
+| com.demcha.scene.interfaces.ui.* | com.demcha.ui.interfaces.* |
 
 This reorganization provides a clearer separation of concerns:
 - Core functionality is separated from UI

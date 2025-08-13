@@ -1,4 +1,6 @@
-package com.demcha.components.data.text;
+package com.demcha.components.data.text.block;
+
+import com.demcha.components.data.text.TextStyle;
 
 // Блочный текст с wrapWidth (ширина обтекания)
 // Если wrapWidth <= 0, используем то, что пришло в MeasureCtx

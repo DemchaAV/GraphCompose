@@ -1,4 +1,4 @@
-package com.demcha.components.data.text;
+package com.demcha.components.data;
 
 import com.demcha.core.Component;
 

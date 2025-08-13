@@ -1,6 +1,6 @@
 package com.demcha;
 
-import com.demcha.components.data.text.TextBlock;
+import com.demcha.components.data.text.block.TextBlock;
 import com.demcha.components.data.text.TextData;
 import com.demcha.components.data.text.TextDecoration;
 import com.demcha.components.data.text.TextStyle;

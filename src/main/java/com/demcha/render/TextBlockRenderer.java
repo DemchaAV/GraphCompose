@@ -1,10 +1,9 @@
 package com.demcha.render;
 
-import com.demcha.components.data.text.TextBlock;
+import com.demcha.components.data.text.block.TextBlock;
 import com.demcha.components.data.text.TextLines;
 import com.demcha.core.Element;
 import org.apache.pdfbox.pdmodel.font.PDFont;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
 import java.io.IOException;
 

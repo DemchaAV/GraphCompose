@@ -1,10 +1,8 @@
-package com.demcha.components.data.text;
+package com.demcha.components.data.text.block;
 
 import com.demcha.components.Size;
+import com.demcha.components.data.text.TextLines;
 import com.demcha.core.Element;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-
-import java.io.IOException;
 
 public final class TextBlockMeasurer {
     private TextBlockMeasurer() {}

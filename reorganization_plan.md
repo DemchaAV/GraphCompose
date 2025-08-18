@@ -5,12 +5,12 @@
 1. `com.demcha` - Root package
    - Main application classes (Main, CV, PDFRender, PdfCreateExample, BasicInfo)
 
-2. `com.demcha.core` - Core functionality
+2. `com.demcha.legacy.core` - Core functionality
    - Component (interface)
    - Element (class that manages components)
    - Units
 
-3. `com.demcha.layout` - Layout related classes
+3. `com.demcha.legacy.layout` - Layout related classes
    - Container
    - MeasureCtx
    - ArrangeCtx (moved from interfaces)
@@ -35,21 +35,21 @@
 
 | Current Location | New Location |
 |------------------|--------------|
-| com.demcha.core.Component | com.demcha.core.Component |
-| com.demcha.scene.Element | com.demcha.core.Element |
-| com.demcha.layout.Units | com.demcha.core.Units |
-| com.demcha.scene.Container | com.demcha.layout.Container |
-| com.demcha.layout.MeasureCtx | com.demcha.layout.MeasureCtx |
-| com.demcha.layout.ArrangeCtx | com.demcha.layout.ArrangeCtx |
-| com.demcha.scene.Row | com.demcha.layout.Row |
-| com.demcha.scene.Module | com.demcha.layout.Module |
-| com.demcha.scene.Page | com.demcha.layout.Page |
-| com.demcha.core.UiElement | com.demcha.ui.UiElement |
-| com.demcha.layout.AnchorType | com.demcha.ui.Anchor |
-| com.demcha.components.text.TextDecoration | com.demcha.ui.TextDecoration |
-| com.demcha.scene.components.Text | com.demcha.ui.components.Text |
-| com.demcha.core.Element | com.demcha.ui.interfaces.Element |
-| com.demcha.scene.interfaces.ui.* | com.demcha.ui.interfaces.* |
+| com.demcha.components.core.Component | com.demcha.components.core.Component |
+| com.demcha.legacy.scene.Element | com.demcha.legacy.core.Element |
+| com.demcha.components.core.Units | com.demcha.legacy.core.Units |
+| com.demcha.legacy.scene.Container | com.demcha.legacy.layout.Container |
+| com.demcha.legacy.layout.MeasureCtx | com.demcha.legacy.layout.MeasureCtx |
+| com.demcha.legacy.layout.ArrangeCtx | com.demcha.legacy.layout.ArrangeCtx |
+| com.demcha.legacy.scene.Row | com.demcha.legacy.layout.Row |
+| com.demcha.legacy.scene.Module | com.demcha.legacy.layout.Module |
+| com.demcha.legacy.scene.Page | com.demcha.legacy.layout.Page |
+| com.demcha.legacy.core.UiElement | com.demcha.ui.UiElement |
+| com.demcha.components.layout.AnchorType | com.demcha.ui.Anchor |
+| com.demcha.legacy.components.text.TextDecoration | com.demcha.ui.TextDecoration |
+| com.demcha.legacy.scene.components.Text | com.demcha.ui.components.Text |
+| com.demcha.legacy.core.Element | com.demcha.ui.interfaces.Element |
+| com.demcha.legacy.scene.interfaces.ui.* | com.demcha.ui.interfaces.* |
 
 This reorganization provides a clearer separation of concerns:
 - Core functionality is separated from UI

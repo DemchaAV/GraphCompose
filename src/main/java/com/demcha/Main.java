@@ -1,130 +1,99 @@
 package com.demcha;
 
-import com.demcha.components.data.text.block.TextBlock;
-import com.demcha.components.data.text.TextData;
-import com.demcha.components.data.text.TextDecoration;
-import com.demcha.components.data.text.TextStyle;
-import com.demcha.core.Element;
-import com.demcha.layout.Align;
-import com.demcha.layout.MeasureCtx;
-import com.demcha.layout.ArrangeCtx;
-import com.demcha.layout.layouts.VerticalLayout;
-import com.demcha.render.PdfRenderContext;
-import com.demcha.render.RenderEngine;
-import com.demcha.scene.Page;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import com.demcha.components.content.components_builders.BodyBoxBuilder;
+import com.demcha.components.core.EntityName;
+import com.demcha.components.geometry.BoxSize;
+import com.demcha.components.layout.ComputedPosition;
+import com.demcha.components.layout.ParentComponent;
+import com.demcha.components.layout.Position;
+import com.demcha.components.style.ColorComponent;
+import com.demcha.components.style.Margin;
+import com.demcha.components.style.Padding;
+import com.demcha.core.PdfDocument;
+import com.demcha.system.LayoutSystem;
 
 public class Main {
-    public static void main(String[] args) throws IOException {
-        try (PDDocument doc = new PDDocument()) {
-            PDPage pdfPage = new PDPage(PDRectangle.A4);
-            doc.addPage(pdfPage);
+    public static void main(String[] args) {
+        PdfDocument document = new PdfDocument();
+        LayoutSystem layoutSystem = new LayoutSystem();
+        document.addSystem(layoutSystem);
 
-            try (PdfRenderContext pdfCtx = new PdfRenderContext(doc, pdfPage)) {
-                // 1) Страница как корневой контейнер
-                Page page = new Page(pdfPage);
-                page.setMarginTop(50);
-                page.setMarginLeft(50);
-                page.setMarginRight(50);
-                page.setMarginBottom(60);
+        var box = BodyBoxBuilder.create()
+                .entityName(new EntityName("Box"))
+                .size(new BoxSize(500.0, 500.0))
+                .margin(new Margin(5, 9, 8, 0))
+                .padding(new Padding(8, 8, 8, 8))
+                .buildInto(document);
+//
+//        var component = TextBuilder.create()
+//                .parentComponent(new ParentComponent(box))
+//                .entityName(new EntityName("Module"))
+//                .text(new Text("Artem Demchyshyn"))
+//                .size(new BoxSize(200.0, 40.0))
+//                .position(new Position(24, 24))
+//                .margin(new Margin(5.5, 3, 0, 0))
+//                .buildInto(document);
+//
+//        var component2 = TextBuilder.create()
+//                .parentComponent(new ParentComponent(component))
+//                .entityName(new EntityName("Module2_test"))
+//                .text(new Text("Mark Loyd"))
+//                .size(new BoxSize(150., 30.0))
+//                .position(new Position(24, 24))
+//                .margin(new Margin(5.5, 3, 0, 0))
+//                .buildInto(document);
 
-                // 2) Вертикальный лейаут: элементы идут столбиком
-                page.setLayout(new VerticalLayout(8, Align.LEFT));
+//        var rectangle = RectangleBuilder.create()
+//                .parentComponent(new ParentComponent(box))
+//                .entityName(new EntityName("Rectangle"))
+//                .rectangle(new RectangleComponent(200, 50, Color.BLACK))
+//                .size(new BoxSize(300, 90))
+//                .position(new Position(24, 24))
+//                .margin(new Margin(5.5, 3, 0, 0))
+//                .buildInto(document);
+//        var rectangle2 = RectangleBuilder.create()
+//                .parentComponent(new ParentComponent(rectangle))
+//                .entityName(new EntityName("Rectangle2"))
+//                .rectangle(new RectangleComponent(200, 50, Color.YELLOW))
+//                .size(new BoxSize(75, 15))
+//                .position(new Position(24, 24))
+//                .margin(new Margin(5.5, 3, 0, 0))
+//                .buildInto(document);
+//
+//
+        PdfDocument doc = new PdfDocument();
+        doc.addSystem(new LayoutSystem());
 
-                // 3) Контент
-                Element paragraph = new Element().add(
-                        TextBlock.of(
-                                "Java backend developer with hands-on experience in Spring Boot, REST APIs, and PDF generation using PDFBox. " +
-                                "Building a flexible layout engine with measure/arrange passes and component-based rendering.",
-                                new TextStyle(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 11, TextDecoration.DEFAULT, java.awt.Color.DARK_GRAY),
-                                360
-                        )
-                );
-                page.add(paragraph);
+// Create a root with padding & margin
+        var root = doc.createEntity("Box");
+        root.addComponent(new BoxSize(500, 500));
+        root.addComponent(new Padding(8, 8, 8, 8));
+        root.addComponent(new Margin(5, 9, 8, 0));
 
-                List<Element> elements = getElements();
-                elements.forEach(page::add);
+        System.out.println("///////////////////");
+        System.out.println(root.getComponent(BoxSize.class));
+        root.addComponentIfAbsent(new BoxSize(200, 2055));
+        System.out.println(root.getComponent(BoxSize.class));
 
-                // 4) Движок: measure → arrange → render (централизованно)
-                RenderEngine engine = new RenderEngine();
+// Create a child positioned inside the root
+        var child = doc.createEntity("Rectangle");
+        child.addComponent(new ParentComponent(root.getId()));
+        child.addComponent(new Position(24, 24));
+        child.addComponent(new Margin(5.5, 3, 0, 0));
+        child.addComponent(new BoxSize(300, 90));
+        child.addComponent(new ColorComponent(ColorComponent.LINK_DEFAULT));
 
-                engine.measure(page, new MeasureCtx(page.contentWidth(), page.contentHeight()));
-                engine.arrange(page, new ArrangeCtx(
-                        page.startX(),
-                        page.startY(),
-                        page.contentWidth(),
-                        page.contentHeight()
-                ));
-                engine.render(page, pdfCtx);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+// Run systems
+        doc.processSystems();
 
-            doc.save("CV_Generated.pdf");
-        }
-    }
+// Read computed layout
+        ComputedPosition cp = doc.getEntities().get(child.getId())
+                .getComponent(ComputedPosition.class)
+                .orElseThrow();
+        System.out.println(cp.x() + ", " + cp.y());
 
-    private static List<Element> getElements() {
-        List<Element> elements = new ArrayList<>();
 
-        Element name = new Element()
-                .add(new TextData(
-                        "Artem Demchyshyn",
-                        new TextStyle(
-                                new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD),
-                                32,
-                                TextDecoration.BOLD,
-                                java.awt.Color.BLACK
-                        )
-                ));
-        elements.add(name);
+        document.processSystems();
 
-        Element github = new Element()
-                .add(new TextData(
-                        "GitHub",
-                        new TextStyle(
-                                new PDType1Font(Standard14Fonts.FontName.HELVETICA_OBLIQUE),
-                                10,
-                                TextDecoration.UNDERLINE,
-                                java.awt.Color.BLUE
-                        )
-                ))
-                .add(new com.demcha.components.data.Link("GitHub", "https://github.com/DemchaAV"));
-        elements.add(github);
-
-        Element address = new Element()
-                .add(new TextData(
-                        "TW8, London, UK",
-                        new TextStyle(
-                                new PDType1Font(Standard14Fonts.FontName.HELVETICA_OBLIQUE),
-                                10,
-                                TextDecoration.DEFAULT,
-                                java.awt.Color.DARK_GRAY
-                        )
-                ));
-        elements.add(address);
-
-        Element email = new Element()
-                .add(new TextData(
-                        "Email",
-                        new TextStyle(
-                                new PDType1Font(Standard14Fonts.FontName.HELVETICA_OBLIQUE),
-                                10,
-                                TextDecoration.UNDERLINE,
-                                java.awt.Color.BLUE
-                        )
-                ))
-                .add(new com.demcha.components.data.Link("Email", "mailto:DemchaAV@gmail.com"));
-        elements.add(email);
-
-        return elements;
     }
 }

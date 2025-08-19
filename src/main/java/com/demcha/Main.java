@@ -1,99 +1,82 @@
 package com.demcha;
 
-import com.demcha.components.content.components_builders.BodyBoxBuilder;
+import com.demcha.components.content.Stroke;
+import com.demcha.components.content.components_builders.RectangleBuilder;
+import com.demcha.components.content.components_builders.TextBuilder;
+import com.demcha.components.content.rectangle.Rectangle;
+import com.demcha.components.content.text.Text;
 import com.demcha.components.core.EntityName;
-import com.demcha.components.geometry.BoxSize;
-import com.demcha.components.layout.ComputedPosition;
-import com.demcha.components.layout.ParentComponent;
-import com.demcha.components.layout.Position;
-import com.demcha.components.style.ColorComponent;
+import com.demcha.components.layout.*;
 import com.demcha.components.style.Margin;
-import com.demcha.components.style.Padding;
 import com.demcha.core.PdfDocument;
+import com.demcha.helper.PdfRebuildOpenInAdobe;
 import com.demcha.system.LayoutSystem;
+import com.demcha.system.RenderingSystem;
+
+import java.awt.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.concurrent.TimeUnit;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+        String closingBatFile = "close-adobe.bat";
+        Path target = Paths.get("output.pdf");
+
+
         PdfDocument document = new PdfDocument();
-        LayoutSystem layoutSystem = new LayoutSystem();
-        document.addSystem(layoutSystem);
+        document.setPathOut(target);
+        document.addSystem(new LayoutSystem());
+        document.addSystem(new RenderingSystem());
 
-        var box = BodyBoxBuilder.create()
-                .entityName(new EntityName("Box"))
-                .size(new BoxSize(500.0, 500.0))
-                .margin(new Margin(5, 9, 8, 0))
-                .padding(new Padding(8, 8, 8, 8))
+
+//        var box = BodyBoxBuilder.create()
+//                .fillPageSize(document.getPage())
+//                .entityName(new EntityName("BoxContainer"))
+////                .padding(Padding.of(100))
+//                .buildComponents();
+//        document.putEntity(box);
+//
+        var rectangle = RectangleBuilder.create()
+                .rectangle(new Rectangle(50, 150))
+                .entityName(new EntityName("Rectangle1"))
+                .stroke(new Stroke(5))
+                .position(new Position(200, 200))
+//                .anchor(new Anchor(HAnchor.CENTER,VAnchor.MIDDLE))
+                .strokeColor(Color.DARK_GRAY)
+//                .parentComponent(new ParentComponent(box.getId()))
                 .buildInto(document);
-//
-//        var component = TextBuilder.create()
-//                .parentComponent(new ParentComponent(box))
-//                .entityName(new EntityName("Module"))
-//                .text(new Text("Artem Demchyshyn"))
-//                .size(new BoxSize(200.0, 40.0))
-//                .position(new Position(24, 24))
-//                .margin(new Margin(5.5, 3, 0, 0))
+
+        var rectangle2 = RectangleBuilder.create()
+                .rectangle(new Rectangle(10, 50))
+                .entityName(new EntityName("Rectangle2"))
+                .parentComponent(new ParentComponent(rectangle.getId()))
+                .stroke(new Stroke(5))
+//                .anchor(new Anchor(HAnchor.CENTER,VAnchor.MIDDLE))
+                .margin(Margin.all(5))
+                .anchor(new Anchor(HAnchor.CENTER,VAnchor.MIDDLE))
+                .strokeColor(Color.DARK_GRAY)
+//                .parentComponent(new ParentComponent(box.getId()))
+                .buildInto(document);
+
+//        var textEntity = TextBuilder.create()
+//                .parentComponent(new ParentComponent(rectangle.getId()))
+//                .textWithAutoSize(Text.of("Hello World!"))
+//                .margin(Margin.all(5))
+//                .anchor(new Anchor(HAnchor.CENTER, VAnchor.TOP))
 //                .buildInto(document);
-//
-//        var component2 = TextBuilder.create()
-//                .parentComponent(new ParentComponent(component))
-//                .entityName(new EntityName("Module2_test"))
-//                .text(new Text("Mark Loyd"))
-//                .size(new BoxSize(150., 30.0))
-//                .position(new Position(24, 24))
-//                .margin(new Margin(5.5, 3, 0, 0))
-//                .buildInto(document);
 
-//        var rectangle = RectangleBuilder.create()
-//                .parentComponent(new ParentComponent(box))
-//                .entityName(new EntityName("Rectangle"))
-//                .rectangle(new RectangleComponent(200, 50, Color.BLACK))
-//                .size(new BoxSize(300, 90))
-//                .position(new Position(24, 24))
-//                .margin(new Margin(5.5, 3, 0, 0))
-//                .buildInto(document);
-//        var rectangle2 = RectangleBuilder.create()
-//                .parentComponent(new ParentComponent(rectangle))
-//                .entityName(new EntityName("Rectangle2"))
-//                .rectangle(new RectangleComponent(200, 50, Color.YELLOW))
-//                .size(new BoxSize(75, 15))
-//                .position(new Position(24, 24))
-//                .margin(new Margin(5.5, 3, 0, 0))
-//                .buildInto(document);
-//
-//
-        PdfDocument doc = new PdfDocument();
-        doc.addSystem(new LayoutSystem());
 
-// Create a root with padding & margin
-        var root = doc.createEntity("Box");
-        root.addComponent(new BoxSize(500, 500));
-        root.addComponent(new Padding(8, 8, 8, 8));
-        root.addComponent(new Margin(5, 9, 8, 0));
-
-        System.out.println("///////////////////");
-        System.out.println(root.getComponent(BoxSize.class));
-        root.addComponentIfAbsent(new BoxSize(200, 2055));
-        System.out.println(root.getComponent(BoxSize.class));
-
-// Create a child positioned inside the root
-        var child = doc.createEntity("Rectangle");
-        child.addComponent(new ParentComponent(root.getId()));
-        child.addComponent(new Position(24, 24));
-        child.addComponent(new Margin(5.5, 3, 0, 0));
-        child.addComponent(new BoxSize(300, 90));
-        child.addComponent(new ColorComponent(ColorComponent.LINK_DEFAULT));
-
-// Run systems
-        doc.processSystems();
-
-// Read computed layout
-        ComputedPosition cp = doc.getEntities().get(child.getId())
-                .getComponent(ComputedPosition.class)
-                .orElseThrow();
-        System.out.println(cp.x() + ", " + cp.y());
+//        PdfRebuildOpenInAdobe.closeAdobeFromResources(closingBatFile, 3, TimeUnit.SECONDS);
 
 
         document.processSystems();
+//        System.out.println(box.getComponent(BoundingBox.class));
+//        System.out.println(textEntity.getComponent(BoundingBox.class));
+//        System.out.println(textEntity.getComponent(ComputedPosition.class));
+
+        PdfRebuildOpenInAdobe.openInAdobe(target);
 
     }
+
 }

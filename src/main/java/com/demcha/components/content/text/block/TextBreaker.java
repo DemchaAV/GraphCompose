@@ -1,6 +1,6 @@
-package com.demcha.legacy.components.data.text.block;
+package com.demcha.components.content.text.block;
 
-import com.demcha.legacy.components.data.text.TextLines;
+import com.demcha.components.content.text.TextLines;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 
 import java.io.IOException;

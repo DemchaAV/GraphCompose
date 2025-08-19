@@ -1,5 +1,6 @@
 package com.demcha.legacy.components.data.text;
 
+import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.geometry.BoxSize;
 import com.demcha.components.core.Component;
 import com.demcha.legacy.core.Element;
@@ -10,8 +11,8 @@ import java.io.IOException;
 public record TextData(String value, TextStyle style) implements Component {
    public static void autoMeasureText(Element e) throws IOException {
         e.get(TextData.class).ifPresent(td -> {
-            float textWidth = td.style.getTextWidth(td.value);
-            float textHeight = td.style.font().getFontDescriptor().getCapHeight();
+            double textWidth = td.style.getTextWidth(td.value);
+            double textHeight = td.style.font().getFontDescriptor().getCapHeight();
 
             e.add(new BoxSize(textWidth, textHeight));
 

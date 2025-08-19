@@ -14,4 +14,7 @@ public record Padding(double top, double right, double bottom, double left) impl
     public static Padding zero() {
         return new Padding(0.0, 0.0, 0.0, 0.0);
     }
+    public static Padding of( double trbl) {
+        return new Padding(trbl, trbl, trbl, trbl);
+    }
 }

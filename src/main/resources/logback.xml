@@ -2,6 +2,9 @@
 
     <!-- Optional: centralize log folder -->
     <property name="LOG_DIR" value="logs"/>
+    <logger name="org.apache.fontbox" level="WARN"/>
+    <logger name="org.apache.pdfbox" level="WARN"/>
+    <logger name="com.demcha" level="DEBUG"/>
 
     <!-- INFO-only file -->
     <appender name="INFO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -66,7 +69,7 @@
         </encoder>
     </appender>
 
-    <root level="INFO">
+    <root level="DEBUG">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="INFO_FILE"/>
         <appender-ref ref="WARN_FILE"/>

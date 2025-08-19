@@ -1,8 +1,10 @@
 package com.demcha.components.content.components_builders;
 
 import com.demcha.components.core.Component;
+import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
 import com.demcha.components.geometry.BoxSize;
+import com.demcha.components.geometry.Size;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.layout.Layer;
 import com.demcha.components.layout.ParentComponent;
@@ -12,7 +14,7 @@ import com.demcha.components.style.Padding;
 import com.demcha.core.PdfDocument;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.*;
+import java.util.LinkedHashMap;
 
 /**
  * Base class for ECS-style builders that assemble a set of {@link Component}s
@@ -42,10 +44,14 @@ import java.util.*;
 public abstract class ComponentBoxBuilder<B extends ComponentBoxBuilder<B>>
         implements ComponentBuilder {
 
-    /** Holds exactly one component per runtime type (class). */
-    protected final Map<Class<?>, Component> components = new LinkedHashMap<>();
+    /**
+     * Holds exactly one component per runtime type (class).
+     */
+    protected final Entity entity = new Entity();
 
-    /** @return {@code this} as the concrete builder type (CRTP). */
+    /**
+     * @return {@code this} as the concrete builder type (CRTP).
+     */
     protected abstract B self();
 
     /**
@@ -55,20 +61,23 @@ public abstract class ComponentBoxBuilder<B extends ComponentBoxBuilder<B>>
      * @return this builder
      */
     public B entityName(EntityName name) {
-       return put(name);
+        return addComponent(name);
     }
 
     public B layer(Layer layer) {
-        return put(layer);
+        return addComponent(layer);
     }
-    public B anchor(Anchor anchor){
-        return put(anchor);
+
+    public B anchor(Anchor anchor) {
+        return addComponent(anchor);
     }
-    public B padding(Padding padding){
-        return put(padding);
+
+    public B padding(Padding padding) {
+        return addComponent(padding);
     }
-    public B parentComponent(ParentComponent parentComponent){
-        return put(parentComponent);
+
+    public B parentComponent(ParentComponent parentComponent) {
+        return addComponent(parentComponent);
     }
 
     /**
@@ -82,14 +91,9 @@ public abstract class ComponentBoxBuilder<B extends ComponentBoxBuilder<B>>
      */
     @Override
     public String entityName() {
-        log.trace("entityName()");
-        var component = (EntityName) components.get(EntityName.class);
-        if (component == null) {
-            log.error("entityName not found");
-            return null;
-        }
-        return component.value();
+        return entity.name();
     }
+
     /**
      * Add or replace a {@link Position} component.
      *
@@ -97,17 +101,22 @@ public abstract class ComponentBoxBuilder<B extends ComponentBoxBuilder<B>>
      * @return this builder
      */
     public B position(Position position) {
-        return put(position);
+        return addComponent(position);
     }
+
     /**
      * Add or replace a {@link BoxSize} component.
      *
      * @param boxSize the boxSize component
      * @return this builder
      */
-    public B size(BoxSize boxSize) {
-        return put(boxSize);
+    public B size(Size size) {
+        return addComponent(size);
     }
+    public B boxSize(BoxSize boxSize) {
+        return addComponent(boxSize);
+    }
+
     /**
      * Add or replace a {@link Margin} component.
      *
@@ -115,8 +124,9 @@ public abstract class ComponentBoxBuilder<B extends ComponentBoxBuilder<B>>
      * @return this builder
      */
     public B margin(Margin margin) {
-        return put(margin);
+        return addComponent(margin);
     }
+
     /**
      * Put (add or replace) a component by its runtime class.
      * The last call for a given type wins.
@@ -125,10 +135,12 @@ public abstract class ComponentBoxBuilder<B extends ComponentBoxBuilder<B>>
      * @param <T>       the component type
      * @return this builder
      */
-    protected <T extends Component> B put(T component) {
-        components.put(component.getClass(), component);
+    protected <T extends Component> B addComponent(T component) {
+        entity.addComponent(component);
+        log.debug("Component {} has been added", component);
         return self();
     }
+
     /**
      * Build the set of components accumulated in this builder.
      * Maintains insertion order due to {@link LinkedHashMap}.
@@ -136,9 +148,10 @@ public abstract class ComponentBoxBuilder<B extends ComponentBoxBuilder<B>>
      * @return a de-duplicated set of components (one per type)
      */
     @Override
-    public Set<Component> buildComponents() {
-        return new LinkedHashSet<>(components.values());
+    public Entity buildComponents() {
+        return this.entity;
     }
+
     /**
      * Create an entity inside the given {@link PdfDocument} and populate it with this builder's components.
      *
@@ -148,7 +161,9 @@ public abstract class ComponentBoxBuilder<B extends ComponentBoxBuilder<B>>
      * @param pdfDocument the document to create/populate an entity in
      * @return the created entity's UUID
      */
-    public UUID buildInto(PdfDocument pdfDocument) {
-        return pdfDocument.createAndPopulateEntity(this);
+    public Entity buildInto(PdfDocument pdfDocument) {
+        log.info("Putting {}", entity);
+        pdfDocument.putEntity(this.entity);
+        return this.entity;
     }
 }

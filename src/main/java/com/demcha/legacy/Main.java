@@ -2,10 +2,10 @@ package com.demcha.legacy;
 
 import com.demcha.components.layout.HAnchor;
 import com.demcha.components.layout.VAnchor;
-import com.demcha.legacy.components.data.text.block.TextBlock;
+import com.demcha.components.content.text.block.TextBlock;
 import com.demcha.legacy.components.data.text.TextData;
-import com.demcha.legacy.components.data.text.TextDecoration;
-import com.demcha.legacy.components.data.text.TextStyle;
+import com.demcha.components.content.text.TextDecoration;
+import com.demcha.components.content.text.TextStyle;
 import com.demcha.legacy.core.Element;
 import com.demcha.components.layout.Align;
 import com.demcha.legacy.layout.MeasureCtx;

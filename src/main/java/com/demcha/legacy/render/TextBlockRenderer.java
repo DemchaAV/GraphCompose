@@ -1,8 +1,8 @@
 package com.demcha.legacy.render;
 
 import com.demcha.components.layout.Position;
-import com.demcha.legacy.components.data.text.block.TextBlock;
-import com.demcha.legacy.components.data.text.TextLines;
+import com.demcha.components.content.text.block.TextBlock;
+import com.demcha.components.content.text.TextLines;
 import com.demcha.legacy.core.Element;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 

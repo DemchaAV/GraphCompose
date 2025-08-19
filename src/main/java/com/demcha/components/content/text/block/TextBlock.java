@@ -1,6 +1,6 @@
-package com.demcha.legacy.components.data.text.block;
+package com.demcha.components.content.text.block;
 
-import com.demcha.legacy.components.data.text.TextStyle;
+import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Component;
 
 // Блочный текст с wrapWidth (ширина обтекания)

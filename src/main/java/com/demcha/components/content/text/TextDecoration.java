@@ -1,4 +1,4 @@
-package com.demcha.legacy.components.data.text;
+package com.demcha.components.content.text;
 
 public enum TextDecoration {
     DEFAULT(0),

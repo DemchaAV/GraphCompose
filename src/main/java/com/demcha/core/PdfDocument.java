@@ -1,6 +1,5 @@
 package com.demcha.core;
 
-import com.demcha.components.content.components_builders.ComponentBuilder;
 import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
@@ -8,7 +7,13 @@ import com.demcha.system.System;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -66,6 +71,25 @@ import java.util.*;
 public class PdfDocument {
     private final Map<UUID, Entity> entities = new HashMap<>();
     private final List<System> systems = new ArrayList<>();
+    private final PDPage page;
+    private Path pathOut;
+    private PDDocument document;
+
+    public PdfDocument(PDPage page) {
+        log.info("Created new pdf document {}", page.getBBox());
+        this.page = page;
+        document = new PDDocument();
+        document.addPage(page);
+    }
+
+    public PdfDocument() {
+        this(new PDPage(PDRectangle.A4));
+        log.info("PdfDocument with default settings PDRectangle.A4");
+    }
+
+    public PdfDocument(PDRectangle pdfRectangle) {
+        this(new PDPage(pdfRectangle));
+    }
 
     public Entity createEntity() {
         return createEntity(null);
@@ -73,6 +97,7 @@ public class PdfDocument {
 
     /**
      * Method create
+     *
      * @param name
      * @return
      */
@@ -95,23 +120,22 @@ public class PdfDocument {
         return Optional.ofNullable(entities.get(id));
     }
 
-    public  Entity putEntity(Entity entity) {
-        log.info("Putting  Entity id  {}", entity.getId());
-        return entities.put(entity.getId(), entity);
-    }
+    public Entity putEntity(Entity entity) {
+        UUID uuid = entity.getId();
+        log.info("Putting Entity id {}", uuid);
 
-    public UUID createAndPopulateEntity(ComponentBuilder componentBuilder) {
-        log.info("Creating and populating entity");
-        var entity = createEntity(componentBuilder.entityName());
-        var id = entity.getId();
-        Set<Component> components = componentBuilder.buildComponents();
-        log.info("Populating entity UUID [{}] with\nComponents: {}", entity, components);
-        for (Component component : components) {
-            log.debug("Add component {}", component.getClass().getSimpleName());
-            addComponent(id, component);
+        Optional<Entity> existing = getEntity(uuid);
+
+        if (existing.isPresent()) {
+            if (entity.equals(existing)) {
+                log.info("Entity already exists and is identical");
+                return existing.orElse(null);
+            } else {
+                log.warn("Entity conflict detected for id {}. Replacing old entity.", uuid);
+                return entities.put(uuid, entity);
+            }
         }
-        log.info("Created and populated entity {}", entity);
-        return id;
+        return entities.put(uuid, entity);
     }
 
 
@@ -129,16 +153,11 @@ public class PdfDocument {
     }
 
     public <T extends Component> Optional<T> getComponent(UUID entityId, Class<T> componentType) {
-        log.debug("Getting component type {} from entity id [{}]", componentType.getName(), entityId);
-        if (!entities.containsKey(entityId)) {
-            log.error("No component type {} in entity id [{}]", componentType.getName(), entityId);
-            return null;
-        }
-        log.debug("Found component type {} from entity id [{}]", componentType.getName(), entityId);
-        return entities.get(entityId).getComponent(componentType);
+        Optional<Entity> entity = getEntity(entityId);
+        return entity.flatMap(value -> value.getComponent(componentType));
     }
 
-    public List<UUID> getEntitiesWithComponent(Class<? extends Component> componentType) {
+    public Optional<List<UUID>> getEntitiesWithComponent(Class<? extends Component> componentType) {
         log.debug("Getting component with id {}", componentType.getName());
         List<UUID> entityIds = null;
         for (Map.Entry<UUID, Entity> entry : entities.entrySet()) {
@@ -154,14 +173,13 @@ public class PdfDocument {
                 entityIds.add(entityId);
             }
         }
+        if (entityIds == null || entityIds.isEmpty()) {
+            log.warn("No component with id {} found", componentType.getName());
+        }
         log.debug("Found [{}] entities  with component {}", entityIds == null ? 0 : entityIds.size(), componentType.getName());
-        return entityIds;
+        return Optional.ofNullable(entityIds);
     }
 
-    public void addSystem(System system) {
-        log.info("Adding System {}", system.getClass().getName());
-        systems.add(system);
-    }
 
     /**
      * System
@@ -172,6 +190,20 @@ public class PdfDocument {
             log.info("Processing System {}", system);
             system.process(this); // Передаём себя, чтобы система могла получить доступ к компонентам
         }
+    }
+
+    public PDPageContentStream openContentStream() throws IOException {
+        return new PDPageContentStream(
+                document, page,
+                PDPageContentStream.AppendMode.APPEND,   // keep existing content if any
+                true,                                    // compress
+                true                                     // resetContext: isolates graphics state (PDFBox 3)
+        );
+    }
+
+    public void addSystem(System system) {
+        log.info("Adding System {}", system.getClass().getName());
+        systems.add(system);
     }
 
 

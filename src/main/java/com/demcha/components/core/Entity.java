@@ -77,6 +77,18 @@ public final class Entity {
         return has(type);
     }
 
+    public <T extends Component>  Entity populate(Set<? extends Component> components) {
+        log.info("Creating and populating entity");
+
+        log.info("Populating entity UUID [{}] with\nComponents: {}", this, components);
+        for (Component component : components) {
+            addComponentIfAbsent(component);
+        }
+        log.info("Created and populated entity {}", this);
+        return this;
+
+    }
+
     /**
      * That method will return a copy of hashMap Entities as unmodifiableMap
      *
@@ -90,6 +102,22 @@ public final class Entity {
     @Override
     public String toString() {
         return "Entity: \"" + (name == null ? "null" : name.value()) + "\" UUID: [" + id + "]";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Entity entity = (Entity) o;
+        return id.equals(entity.id) && comps.equals(entity.comps) && Objects.equals(name, entity.name);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id.hashCode();
+        result = 31 * result + comps.hashCode();
+        result = 31 * result + Objects.hashCode(name);
+        return result;
     }
 }
 

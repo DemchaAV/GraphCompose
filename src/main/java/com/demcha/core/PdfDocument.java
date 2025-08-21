@@ -3,6 +3,7 @@ package com.demcha.core;
 import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
+import com.demcha.components.layout.ParentComponent;
 import com.demcha.system.System;
 import lombok.Getter;
 import lombok.Setter;
@@ -157,9 +158,9 @@ public class PdfDocument {
         return entity.flatMap(value -> value.getComponent(componentType));
     }
 
-    public Optional<List<UUID>> getEntitiesWithComponent(Class<? extends Component> componentType) {
+    public Optional<Set<UUID>> getEntitiesWithComponent(Class<? extends Component> componentType) {
         log.debug("Getting component with id {}", componentType.getName());
-        List<UUID> entityIds = null;
+        Set<UUID> entityIds = null;
         for (Map.Entry<UUID, Entity> entry : entities.entrySet()) {
             var entityId = entry.getKey();
             log.debug("Checking entity with id {}", entry.getKey());
@@ -167,7 +168,7 @@ public class PdfDocument {
             if (components.has(componentType)) {
                 log.debug("Found entity id [{}]  with component {}", entityId, componentType.getName());
                 if (entityIds == null) {
-                    entityIds = new ArrayList<>();
+                    entityIds = new HashSet<>();
                 }
                 log.debug("Adding entity [{}], to list  with component {}", entityId, componentType.getName());
                 entityIds.add(entityId);
@@ -178,6 +179,31 @@ public class PdfDocument {
         }
         log.debug("Found [{}] entities  with component {}", entityIds == null ? 0 : entityIds.size(), componentType.getName());
         return Optional.ofNullable(entityIds);
+    }
+
+    public Optional<Map<UUID, Set<UUID>>> childrenByParent() {
+        Optional<Set<UUID>> entitiesWithComponent = getEntitiesWithComponent(ParentComponent.class);
+
+        if (entitiesWithComponent.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return childrenByParent(entitiesWithComponent.get());
+    }
+
+    public Optional<Map<UUID, Set<UUID>>> childrenByParent(Set<UUID> childrenWithParent) {
+        Map<UUID, Set<UUID>> childrenByParent = new HashMap<>();
+
+        for (UUID childId : childrenWithParent) {
+            getComponent(childId, ParentComponent.class).ifPresent(parentComponent -> {
+                UUID parentId = parentComponent.uuid(); // assuming ParentComponent has uuid()
+                childrenByParent
+                        .computeIfAbsent(parentId, k -> new HashSet<>())
+                        .add(childId);
+            });
+        }
+
+        return Optional.of(childrenByParent);
     }
 
 
@@ -204,6 +230,12 @@ public class PdfDocument {
     public void addSystem(System system) {
         log.info("Adding System {}", system.getClass().getName());
         systems.add(system);
+    }
+
+    public PageSize pageSize() {
+        float width = page.getMediaBox().getWidth();
+        float height = page.getMediaBox().getHeight();
+        return new PageSize(width, height);
     }
 
 

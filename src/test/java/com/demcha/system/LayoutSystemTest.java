@@ -1,7 +1,10 @@
 package com.demcha.system;
 
+import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
 import com.demcha.components.geometry.BoxSize;
+import com.demcha.components.geometry.ContentBox;
+import com.demcha.components.geometry.Size;
 import com.demcha.components.layout.ComputedPosition;
 import com.demcha.components.layout.ParentComponent;
 import com.demcha.components.layout.Position;
@@ -66,5 +69,29 @@ class LayoutSystemTest {
         assertThat(rootComputedPosition).isNotNull();
         assertThat(rootComputedPosition.get().x()).isEqualTo(0.0);
         assertThat(rootComputedPosition.get().y()).isEqualTo(5.0);
+    }
+
+    @Test
+    void calculateContentBox(){
+        LayoutSystem layoutSystem = new LayoutSystem();
+        var entity = new Entity();
+        entity.addComponent(new EntityName("Box"))
+                        .addComponent(new Size( 200,300))
+                                .addComponent(new Padding(8, 8, 8, 8));
+
+        Optional<ContentBox> boxSize = layoutSystem.calculateContentBox(entity);
+        assertThat(boxSize).isNotNull();
+        assertThat(boxSize).isEqualTo(new ContentBox(184,284));
+    }
+    @Test
+    void calculationBoxSize(){
+        LayoutSystem layoutSystem = new LayoutSystem();
+        var entity = new Entity();
+        entity.addComponent(new EntityName("Box"))
+                .addComponent(new Size(200,300))
+                            .addComponent(new Margin(8, 8, 8, 8));
+        Optional<BoxSize> boxSize = layoutSystem.calculateBoxSize(entity);
+        assertThat(boxSize.get()).isNotNull();
+        assertThat(boxSize.get()).isEqualTo(new BoxSize(216,316));
     }
 }

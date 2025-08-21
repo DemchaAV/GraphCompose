@@ -162,7 +162,7 @@ public abstract class ComponentBoxBuilder<B extends ComponentBoxBuilder<B>>
      * @return the created entity's UUID
      */
     public Entity buildInto(PdfDocument pdfDocument) {
-        log.info("Putting {}", entity);
+        log.info("Put  {} in to the PdfDocument", entity);
         pdfDocument.putEntity(this.entity);
         return this.entity;
     }

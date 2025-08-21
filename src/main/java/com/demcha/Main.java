@@ -1,22 +1,20 @@
 package com.demcha;
 
-import com.demcha.components.content.Stroke;
-import com.demcha.components.content.components_builders.RectangleBuilder;
-import com.demcha.components.content.components_builders.TextBuilder;
-import com.demcha.components.content.rectangle.Rectangle;
-import com.demcha.components.content.text.Text;
+import com.demcha.components.content.components_builders.BodyBoxBuilder;
+import com.demcha.components.core.Component;
+import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
-import com.demcha.components.layout.*;
+import com.demcha.components.geometry.Size;
+import com.demcha.components.layout.ParentComponent;
 import com.demcha.components.style.Margin;
+import com.demcha.components.style.Padding;
 import com.demcha.core.PdfDocument;
-import com.demcha.helper.PdfRebuildOpenInAdobe;
 import com.demcha.system.LayoutSystem;
-import com.demcha.system.RenderingSystem;
 
-import java.awt.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
+import java.util.UUID;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -27,56 +25,73 @@ public class Main {
         PdfDocument document = new PdfDocument();
         document.setPathOut(target);
         document.addSystem(new LayoutSystem());
-        document.addSystem(new RenderingSystem());
+//        document.addSystem(new RenderingSystem());
 
 
-//        var box = BodyBoxBuilder.create()
-//                .fillPageSize(document.getPage())
-//                .entityName(new EntityName("BoxContainer"))
-////                .padding(Padding.of(100))
-//                .buildComponents();
-//        document.putEntity(box);
-//
-        var rectangle = RectangleBuilder.create()
-                .rectangle(new Rectangle(50, 150))
-                .entityName(new EntityName("Rectangle1"))
-                .stroke(new Stroke(5))
-                .position(new Position(200, 200))
-//                .anchor(new Anchor(HAnchor.CENTER,VAnchor.MIDDLE))
-                .strokeColor(Color.DARK_GRAY)
-//                .parentComponent(new ParentComponent(box.getId()))
-                .buildInto(document);
-
-        var rectangle2 = RectangleBuilder.create()
-                .rectangle(new Rectangle(10, 50))
-                .entityName(new EntityName("Rectangle2"))
-                .parentComponent(new ParentComponent(rectangle.getId()))
-                .stroke(new Stroke(5))
-//                .anchor(new Anchor(HAnchor.CENTER,VAnchor.MIDDLE))
-                .margin(Margin.all(5))
-                .anchor(new Anchor(HAnchor.CENTER,VAnchor.MIDDLE))
-                .strokeColor(Color.DARK_GRAY)
-//                .parentComponent(new ParentComponent(box.getId()))
-                .buildInto(document);
-
-//        var textEntity = TextBuilder.create()
-//                .parentComponent(new ParentComponent(rectangle.getId()))
-//                .textWithAutoSize(Text.of("Hello World!"))
-//                .margin(Margin.all(5))
-//                .anchor(new Anchor(HAnchor.CENTER, VAnchor.TOP))
+//        var rectangle = RectangleBuilder.create()
+//                .rectangle(new Rectangle(50, 150))
+//                .entityName(new EntityName("Rectangle1"))
+//                .stroke(new Stroke(5))
+//                .position(new Position(0, 0))
+//                .margin(Margin.all(50))
+////                .anchor(new Anchor(HAnchor.CENTER,VAnchor.MIDDLE))
+//                .strokeColor(Color.DARK_GRAY)
+////                .parentComponent(new ParentComponent(box.getId()))
 //                .buildInto(document);
+
+//        var rectangle2 = RectangleBuilder.create()
+//                .rectangle(new Rectangle(10, 50))
+//                .entityName(new EntityName("Rectangle2"))
+//                .parentComponent(new ParentComponent(rectangle.getId()))
+//                .stroke(new Stroke(5))
+////                .anchor(new Anchor(HAnchor.CENTER,VAnchor.MIDDLE))
+//                .margin(Margin.all(5))
+//                .anchor(new Anchor(HAnchor.CENTER,VAnchor.MIDDLE))
+//                .strokeColor(Color.DARK_GRAY)
+////                .parentComponent(new ParentComponent(box.getId()))
+//                .buildInto(document);
+        var box = BodyBoxBuilder.create()
+                .entityName(new EntityName("BoxContainer"))
+                .size(new Size(200, 200))
+                .padding(Padding.of(10))
+                .margin(new Margin(5, 5, 5, 5))
+                .buildInto(document);
+
+        var childBox = BodyBoxBuilder.create()
+                .entityName(new EntityName("ChildBox"))
+                .size(new Size(80, 40))
+                .parentComponent(new ParentComponent(box.getId()))
+                .padding(Padding.of(10))
+                .margin(Margin.all(4))
+                .buildInto(document);
 
 
 //        PdfRebuildOpenInAdobe.closeAdobeFromResources(closingBatFile, 3, TimeUnit.SECONDS);
+        for (Map.Entry<UUID, Entity> entry : document.getEntities().entrySet()) {
+            Entity value = entry.getValue();
+            System.out.println(entry.getValue());
+            Map<Class<? extends Component>, Component> view = value.view();
+            for (Component component : view.values()) {
+                System.out.println(component);
+            }
+        }
+
+            document.processSystems();
+
+            for (Map.Entry<UUID, Entity> entry : document.getEntities().entrySet()) {
+                Entity value = entry.getValue();
+                System.out.println(entry.getValue());
+                Map<Class<? extends Component>, Component> view = value.view();
+                for (Component component : view.values()) {
+                    System.out.println(component);
+                }
+
+            }
 
 
-        document.processSystems();
-//        System.out.println(box.getComponent(BoundingBox.class));
-//        System.out.println(textEntity.getComponent(BoundingBox.class));
-//        System.out.println(textEntity.getComponent(ComputedPosition.class));
+//        PdfRebuildOpenInAdobe.openInAdobe(target);
 
-        PdfRebuildOpenInAdobe.openInAdobe(target);
-
+        }
     }
 
-}
+

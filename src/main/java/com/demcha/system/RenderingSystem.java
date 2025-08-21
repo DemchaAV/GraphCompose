@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -74,9 +75,9 @@ public class RenderingSystem implements System {
         log.info("Processing RenderingSystem");
         try (PDDocument doc = pdfDocument.getDocument();
              PDPageContentStream cs = pdfDocument.openContentStream()) {
-            Optional<List<UUID>> optionalUUIDList = pdfDocument.getEntitiesWithComponent(ComputedPosition.class);
+            Optional<Set<UUID>> optionalUUIDList = pdfDocument.getEntitiesWithComponent(ComputedPosition.class);
             var entities = optionalUUIDList.stream().map(
-                            (List<UUID> id) -> id.stream()
+                            (Set<UUID> id) -> id.stream()
                                     .map((uuid -> pdfDocument.getEntity(uuid)))
                                     .toList())
                     .flatMap(List::stream)

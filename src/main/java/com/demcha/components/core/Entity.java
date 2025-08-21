@@ -34,7 +34,7 @@ public final class Entity {
             return this;
         }
         if (c instanceof EntityName en) this.name = en;
-        log.debug("Added component {} to {}", key.getSimpleName(), this);
+        log.debug("Added absent component {} to {}", key.getSimpleName(), this);
         return this;
     }
 
@@ -47,16 +47,21 @@ public final class Entity {
         Component prev = comps.put(key, c);
         if (c instanceof EntityName en) this.name = en;
         if (prev == null) {
-            log.debug("Added component {} to {}", key.getSimpleName(), this);
+            log.debug("Added component {} to {}", c, this);
         } else {
-            log.debug("Replaced component {} on {}", key.getSimpleName(), this);
+            log.debug("Replaced component {} on {}", c, this);
         }
         return this;
     }
 
     public <T extends Component> Optional<T> getComponent(Class<T> type) {
         log.debug("Getting component {} from  {}", type, this);
-        return Optional.ofNullable(type.cast(comps.get(type)));
+        T value = type.cast(comps.get(type));
+        if (value == null) {
+            log.warn("Component {} from {} not found!", type, this);
+            return Optional.empty();
+        }
+        return Optional.of(value);
     }
 
     public <T extends Component> T require(Class<T> type) {

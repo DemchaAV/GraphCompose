@@ -167,7 +167,7 @@ public class RenderEngine {
                 page.contentHeight()
         ));
 
-        // 3) Render: обойти детей и рисовать
+        // 3) PdfRender: обойти детей и рисовать
         for (Element child : page.getChildren()) {
             renderElement(ctx, child);
         }

@@ -19,7 +19,7 @@ package com.demcha.legacy.layout;
  * <pre>
  * ArrangeCtx ctx = new ArrangeCtx(10, 20, 100, 200);
  * System.out.println("Start Position: (" + ctx.startX() + ", " + ctx.startY() + ")");
- * System.out.println("Allocated BoxSize: " + ctx.allocatedWidth() + "x" + ctx.allocatedHeight());
+ * System.out.println("Allocated OuterBoxSize: " + ctx.allocatedWidth() + "x" + ctx.allocatedHeight());
  * </pre>
  *
  * <p>This class is immutable, ensuring that the provided arrangement data remains consistent throughout the layout pass.</p>

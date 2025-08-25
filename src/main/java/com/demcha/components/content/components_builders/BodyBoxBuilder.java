@@ -1,7 +1,7 @@
 package com.demcha.components.content.components_builders;
 
-import com.demcha.components.geometry.BoxSize;
-import com.demcha.components.geometry.Size;
+import com.demcha.components.geometry.OuterBoxSize;
+import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.Position;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -31,8 +31,7 @@ public class BodyBoxBuilder extends ComponentBoxBuilder<BodyBoxBuilder> {
         }
 
         // Store logical (CSS-like) top-left coordinates
-        addComponent(new Size(w, h));
-        addComponent(new BoxSize(w, h));
+        addComponent(new ContentSize(w, h));
         addComponent(new Position(0, h));   // top-left origin for your layout system
         return this;
     }

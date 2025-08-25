@@ -1,97 +1,170 @@
 package com.demcha.system;
 
+import com.demcha.components.content.components_builders.BodyBoxBuilder;
 import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
-import com.demcha.components.geometry.BoxSize;
-import com.demcha.components.geometry.ContentBox;
-import com.demcha.components.geometry.Size;
-import com.demcha.components.layout.ComputedPosition;
-import com.demcha.components.layout.ParentComponent;
-import com.demcha.components.layout.Position;
+import com.demcha.components.geometry.OuterBoxSize;
+import com.demcha.components.geometry.InnerBoxSize;
+import com.demcha.components.geometry.ContentSize;
+import com.demcha.components.layout.*;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import com.demcha.core.PdfDocument;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 // Import AssertJ for fluent assertions
+import static com.demcha.system.LayoutSystem.calculatePositionFromParent;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Optional;
+import java.util.Set;
 
 class LayoutSystemTest {
 
-    @Test
-    @DisplayName("Should calculate child's absolute position including parent's margin and padding")
-    void shouldCalculateChildPositionCorrectly() {
-        //  चरण 1: GIVEN (Arrange)
-        // Set up the world: the document, the system, and the entities.
-        LayoutSystem layoutSystem = new LayoutSystem();
-        PdfDocument doc = new PdfDocument();
-        doc.addSystem(layoutSystem);
 
-        // Create a root entity with padding & margin
-        var root = doc.createEntity();
-        root.addComponent(new EntityName("Box"));
-        root.addComponent(new BoxSize(500, 500));
-        root.addComponent(new Padding(8, 8, 8, 8)); // top=8, left=8
-        root.addComponent(new Margin(5, 9, 8, 0));  // top=5, left=0
-
-        // Create a child entity positioned inside the root
-        var child = doc.createEntity();
-        child.addComponent(new EntityName("Rectangle"));
-        child.addComponent(new ParentComponent(root.getId()));
-        child.addComponent(new Position(24, 24));         // relative x=24, y=24
-        child.addComponent(new Margin(5.5, 3, 0, 0)); // top=5.5, left=0
-        child.addComponent(new BoxSize(300, 90));
-
-        // चरण 2: WHEN (Act)
-        // Execute the logic we want to test.
-        doc.processSystems();
-
-        // चरण 3: THEN (Assert)
-        // Verify that the outcome is what we expect.
-        Optional<ComputedPosition> childComputedPosition = child.getComponent(ComputedPosition.class);
-
-        // Assert that the component was actually added
-
-        assertThat(childComputedPosition).isNotNull();
-
-        // Assert the calculated coordinates
-        // X = parent_margin_left(0) + parent_padding_left(8) + child_pos_x(24) + child_margin_left(0) = 32.0
-        assertThat(childComputedPosition.get().x()).isEqualTo(32.0);
-
-        // Y = parent_margin_top(5) + parent_padding_top(8) + child_pos_y(24) + child_margin_top(5.5) = 42.5
-        assertThat(childComputedPosition.get().y()).isEqualTo(42.5);
-
-        // You can also check the parent's position for completeness
-        Optional<ComputedPosition> rootComputedPosition = root.getComponent(ComputedPosition.class);
-        assertThat(rootComputedPosition).isNotNull();
-        assertThat(rootComputedPosition.get().x()).isEqualTo(0.0);
-        assertThat(rootComputedPosition.get().y()).isEqualTo(5.0);
-    }
 
     @Test
-    void calculateContentBox(){
+    void calculateInnerBoxSize(){
         LayoutSystem layoutSystem = new LayoutSystem();
         var entity = new Entity();
         entity.addComponent(new EntityName("Box"))
-                        .addComponent(new Size( 200,300))
+                        .addComponent(new ContentSize( 200,300))
                                 .addComponent(new Padding(8, 8, 8, 8));
 
-        Optional<ContentBox> boxSize = layoutSystem.calculateContentBox(entity);
-        assertThat(boxSize).isNotNull();
-        assertThat(boxSize).isEqualTo(new ContentBox(184,284));
+        Optional<InnerBoxSize> boxSize = InnerBoxSize.from (entity);
+        assertThat(boxSize.get()).isNotNull();
+        assertThat(boxSize.get()).isEqualTo(new InnerBoxSize(184,284));
+    }
+
+    @Test
+    void expendBoxSizeByChildren(){
+        Mockh mockh = getMockh();
+        var parent = mockh.parent();
+        var child = mockh.child();
+        child.addComponent(new ContentSize(500,300));
+
+        LayoutSystem.expendBoxSizeByChildren(parent, Set.of(child));
+        var outerBoxSize = InnerBoxSize.from(parent).orElse(null);
+        assertThat(outerBoxSize).isNotNull();
+        assertThat(outerBoxSize).isEqualTo(new InnerBoxSize(520,325));
+
     }
     @Test
     void calculationBoxSize(){
         LayoutSystem layoutSystem = new LayoutSystem();
         var entity = new Entity();
         entity.addComponent(new EntityName("Box"))
-                .addComponent(new Size(200,300))
+                .addComponent(new ContentSize(200,300))
                             .addComponent(new Margin(8, 8, 8, 8));
-        Optional<BoxSize> boxSize = layoutSystem.calculateBoxSize(entity);
+        Optional<OuterBoxSize> boxSize =OuterBoxSize.from (entity);
         assertThat(boxSize.get()).isNotNull();
-        assertThat(boxSize.get()).isEqualTo(new BoxSize(216,316));
+        assertThat(boxSize.get()).isEqualTo(new OuterBoxSize(216,316));
+    }
+
+    @Test
+    void computesParentAndChildAbsolutePositions() {
+        PdfDocument pdf = new PdfDocument();
+
+        Mockh mockh = getMockh();
+        var parent = mockh.parent();
+        var child = mockh.child();
+
+        pdf.putEntity(parent);
+        pdf.putEntity(child);
+
+        var boxPos = calculatePositionFromParent(parent, null, pdf).orElseThrow();
+        var childPos = calculatePositionFromParent(child, parent, pdf).orElseThrow();
+
+        // Presence
+        assertTrue(parent.getComponent(ComputedPosition.class).isPresent(), "Box must have ComputedPosition");
+        assertTrue(child.getComponent(ComputedPosition.class).isPresent(), "Child must have ComputedPosition");
+
+        // Idempotency
+        var boxPos2 = calculatePositionFromParent(parent, null, pdf).orElseThrow();
+        var childPos2 = calculatePositionFromParent(child, parent, pdf).orElseThrow();
+
+        assertEquals(boxPos.x(), boxPos2.x(), 1e-9);
+        assertEquals(boxPos.y(), boxPos2.y(), 1e-9);
+        assertEquals(childPos.x(), childPos2.x(), 1e-9);
+        assertEquals(childPos.y(), childPos2.y(), 1e-9);
+    }
+
+    @Test
+    void parent_child_grandchild_positions_are_computed_and_idempotent() {
+        
+        Mockh mockh = getMockh();
+        var child = mockh.child();
+        var parent = mockh.parent();
+        var grandChild = mockh.grandChild();
+        
+
+        mockh.pdf().putEntity(parent);
+        mockh.pdf().putEntity(mockh.child());
+        mockh.pdf().putEntity(grandChild);
+
+        var p1 = calculatePositionFromParent(parent, null, mockh.pdf()).orElseThrow();
+        var c1 = calculatePositionFromParent(child, parent, mockh.pdf()).orElseThrow();
+        var g1 = calculatePositionFromParent(grandChild, child, mockh.pdf()).orElseThrow();
+
+        // Компоненты должны быть сохранены
+        assertTrue(parent.getComponent(ComputedPosition.class).isPresent());
+        assertTrue(child.getComponent(ComputedPosition.class).isPresent());
+        assertTrue(grandChild.getComponent(ComputedPosition.class).isPresent());
+
+        // Идемпотентность
+        var p2 = calculatePositionFromParent(parent, null, mockh.pdf()).orElseThrow();
+        var c2 = calculatePositionFromParent(child, parent, mockh.pdf()).orElseThrow();
+        var g2 = calculatePositionFromParent(grandChild, child, mockh.pdf()).orElseThrow();
+
+        assertEquals(p1.x(), p2.x(), 1e-9);
+        assertEquals(p1.y(), p2.y(), 1e-9);
+        assertEquals(c1.x(), c2.x(), 1e-9);
+        assertEquals(c1.y(), c2.y(), 1e-9);
+        assertEquals(g1.x(), g2.x(), 1e-9);
+        assertEquals(g1.y(), g2.y(), 1e-9);
+    }
+
+    private static Mockh getMockh() {
+        PdfDocument pdf = new PdfDocument();
+
+        var parent = BodyBoxBuilder.create()
+                .entityName(new EntityName("ParentBox"))
+                .size(new ContentSize(300, 220))
+                .padding(Padding.of(10))
+                .position(Position.zero())
+                .anchor(new Anchor(HAnchor.RIGHT, VAnchor.TOP))
+                .margin(new Margin(5, 5, 5, 5))
+                .buildComponents();
+
+        var child = BodyBoxBuilder.create()
+                .entityName(new EntityName("ChildBox"))
+                .parentComponent(new ParentComponent(parent.getId()))
+                .size(new ContentSize(180, 140))
+                .padding(Padding.of(10))
+                .position(new Position(15, 20))
+                .anchor(new Anchor(HAnchor.RIGHT, VAnchor.TOP))
+                .margin(new Margin(5, 5, 5, 5))
+                .buildComponents();
+
+        var grandChild = BodyBoxBuilder.create()
+                .entityName(new EntityName("GrandChildBox"))
+                .parentComponent(new ParentComponent(child.getId()))
+                .size(new ContentSize(100, 80))
+                .padding(Padding.of(5))
+                .position(new Position(10, 12))
+                .anchor(new Anchor(HAnchor.RIGHT, VAnchor.TOP))
+                .margin(new Margin(3, 3, 3, 3))
+                .buildComponents();
+        pdf.putEntity(parent);
+        pdf.putEntity(child);
+        pdf.putEntity(grandChild);
+
+        Mockh result = new Mockh(pdf, parent, child, grandChild);
+        return result;
+    }
+
+    private record Mockh(PdfDocument pdf, Entity parent, Entity child, Entity grandChild) {
     }
 }

@@ -7,7 +7,7 @@ public enum Units {
 
     /**
      * Pixels — device-dependent units.
-     * BoxSize changes with screen DPI.
+     * OuterBoxSize changes with screen DPI.
      */
     PX,
 

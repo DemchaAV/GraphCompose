@@ -1,6 +1,6 @@
 package com.demcha.legacy.layout;
 
-import com.demcha.components.geometry.BoxSize;
+import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.core.Component;
 import com.demcha.legacy.core.Element;
 import lombok.NonNull;
@@ -61,17 +61,17 @@ public interface Container extends Component {
     default void measure(MeasureCtx ctx) {
         getLayout().measure(this, ctx);
     }
-    default void measure(@NonNull BoxSize boxSize) {
-        double height = boxSize.height();
-        double width = boxSize.width();
+    default void measure(@NonNull OuterBoxSize outerBoxSize) {
+        double height = outerBoxSize.height();
+        double width = outerBoxSize.width();
         getLayout().measure(this, new MeasureCtx(width, height));
     }
 
     default void arrange(ArrangeCtx ctx) {
         getLayout().arrange(this, ctx);
     }
-    default BoxSize getSize(){
-        return getElement().get(BoxSize.class).orElse(null);
+    default OuterBoxSize getSize(){
+        return getElement().get(OuterBoxSize.class).orElse(null);
     }
 
     /**

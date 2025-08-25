@@ -27,4 +27,8 @@ public class RectangleBuilder extends ComponentBoxBuilder<RectangleBuilder> {
     public RectangleBuilder strokeColor(Color color) {
       return   addComponent(new ColorComponent(color));
     }
+    public RectangleBuilder strokeColor(ColorComponent color) {
+        return   addComponent(color);
+    }
+
 }

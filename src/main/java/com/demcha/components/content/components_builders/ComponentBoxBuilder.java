@@ -3,8 +3,8 @@ package com.demcha.components.content.components_builders;
 import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
-import com.demcha.components.geometry.BoxSize;
-import com.demcha.components.geometry.Size;
+import com.demcha.components.geometry.OuterBoxSize;
+import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.layout.Layer;
 import com.demcha.components.layout.ParentComponent;
@@ -12,6 +12,7 @@ import com.demcha.components.layout.Position;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import com.demcha.core.PdfDocument;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.LinkedHashMap;
@@ -24,7 +25,7 @@ import java.util.LinkedHashMap;
  * <ul>
  *   <li>Hold exactly one component instance per component type (class) via an internal map.</li>
  *   <li>Provide a fluent API (CRTP) so subclass methods can chain and return the concrete builder type.</li>
- *   <li>Expose convenience methods for common components (e.g., {@link Position}, {@link BoxSize}, {@link Margin}).</li>
+ *   <li>Expose convenience methods for common components (e.g., {@link Position}, {@link OuterBoxSize}, {@link Margin}).</li>
  *   <li>Build the final, de-duplicated set of components and push them into a {@link PdfDocument}.</li>
  * </ul>
  *
@@ -79,6 +80,9 @@ public abstract class ComponentBoxBuilder<B extends ComponentBoxBuilder<B>>
     public B parentComponent(ParentComponent parentComponent) {
         return addComponent(parentComponent);
     }
+    public B parentComponent(@NonNull Entity parrentEntity) {
+        return addComponent(new ParentComponent(parrentEntity));
+    }
 
     /**
      * Get the stored entity name value (if present).
@@ -105,17 +109,14 @@ public abstract class ComponentBoxBuilder<B extends ComponentBoxBuilder<B>>
     }
 
     /**
-     * Add or replace a {@link BoxSize} component.
+     * Add or replace a {@link OuterBoxSize} component.
      *
-     * @param boxSize the boxSize component
      * @return this builder
      */
-    public B size(Size size) {
-        return addComponent(size);
+    public B size(ContentSize contentSize) {
+        return addComponent(contentSize);
     }
-    public B boxSize(BoxSize boxSize) {
-        return addComponent(boxSize);
-    }
+
 
     /**
      * Add or replace a {@link Margin} component.

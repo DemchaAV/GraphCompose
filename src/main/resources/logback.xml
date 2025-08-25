@@ -1,10 +1,11 @@
 <configuration>
 
-    <!-- Optional: centralize log folder -->
+    <!-- Centralized log folder -->
     <property name="LOG_DIR" value="logs"/>
+
+    <!-- Silence noisy libs -->
     <logger name="org.apache.fontbox" level="WARN"/>
     <logger name="org.apache.pdfbox" level="WARN"/>
-    <logger name="com.demcha" level="DEBUG"/>
 
     <!-- INFO-only file -->
     <appender name="INFO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -12,7 +13,6 @@
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${LOG_DIR}/app-%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
-            <!-- Optional total cap to avoid disk bloat -->
             <totalSizeCap>1GB</totalSizeCap>
         </rollingPolicy>
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
@@ -61,18 +61,34 @@
         </encoder>
     </appender>
 
-    <!-- (Optional) Console for local dev -->
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <!-- Console for LayoutSystem (DEBUG) -->
+    <appender name="CONSOLE_LAYOUTSYSTEM" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <!-- Уровень подсвечивается автоматически, логгер — циан -->
             <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>
         </encoder>
     </appender>
 
+    <!-- Console for global WARN+ERROR -->
+<!--    <appender name="CONSOLE_WARN_ERROR" class="ch.qos.logback.core.ConsoleAppender">-->
+<!--        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">-->
+<!--            <level>WARN</level>-->
+<!--        </filter>-->
+<!--        <encoder>-->
+<!--            <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>-->
+<!--        </encoder>-->
+<!--    </appender>-->
+
+    <!-- Root: only files + WARN/ERROR console -->
     <root level="DEBUG">
-        <appender-ref ref="CONSOLE"/>
         <appender-ref ref="INFO_FILE"/>
         <appender-ref ref="WARN_FILE"/>
         <appender-ref ref="ERROR_FILE"/>
+        <appender-ref ref="CONSOLE_WARN_ERROR"/>
     </root>
+
+    <!-- LayoutSystem: full DEBUG console -->
+    <logger name="com.demcha" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE_LAYOUTSYSTEM"/>
+    </logger>
+
 </configuration>

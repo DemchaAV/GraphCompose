@@ -2,8 +2,8 @@ package com.demcha.components.content.components_builders;
 
 import com.demcha.components.content.text.Text;
 import com.demcha.components.core.EntityName;
-import com.demcha.components.geometry.BoxSize;
-import com.demcha.components.geometry.Size;
+import com.demcha.components.geometry.OuterBoxSize;
+import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.Align;
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,11 +36,11 @@ public final class TextBuilder extends ComponentBoxBuilder<TextBuilder> {
      * @return this builder
      */
     public TextBuilder text(Text text) {
-        return addComponent(text);
+        return  textWithAutoSize(text);
     }
 
     public TextBuilder textWithAutoSize(Text text) {
-        Optional<Size> size;
+        Optional<ContentSize> size;
         try {
             size = text.autoMeasureText();
         } catch (IOException e) {
@@ -52,7 +52,6 @@ public final class TextBuilder extends ComponentBoxBuilder<TextBuilder> {
         if (size.isPresent()) {
             addComponent(text);
             addComponent(size.get());
-            addComponent(new BoxSize(size.get().width(), size.get().height()));
         }
 
         return this;

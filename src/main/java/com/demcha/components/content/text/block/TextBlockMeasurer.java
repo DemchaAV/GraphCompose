@@ -1,8 +1,5 @@
 package com.demcha.components.content.text.block;
 
-import com.demcha.components.geometry.BoxSize;
-import com.demcha.components.content.text.TextLines;
-
 public final class TextBlockMeasurer {
     private TextBlockMeasurer() {}
 
@@ -23,7 +20,7 @@ public final class TextBlockMeasurer {
 //        double height = lines.lines().size() * lines.lineHeight();
 //
 //        e.add(lines);
-//        e.add(new BoxSize(width, height));
+//        e.add(new OuterBoxSize(width, height));
 //    }
 }
 

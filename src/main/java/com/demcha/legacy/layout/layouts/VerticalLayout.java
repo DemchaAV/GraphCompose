@@ -1,6 +1,6 @@
 package com.demcha.legacy.layout.layouts;
 
-import com.demcha.components.geometry.BoxSize;
+import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.style.Margin;
 import com.demcha.components.layout.Position;
 import com.demcha.components.layout.Align;
@@ -24,16 +24,16 @@ public class VerticalLayout implements Layout {
         double totalH = 0, maxW = 0;
 
         for (Element child : c.getChildren()) {
-            if (!child.has(BoxSize.class)) {
+            if (!child.has(OuterBoxSize.class)) {
                 if (child.has(TextBlock.class)) {
                     TextBlockMeasurer.ensureMeasured(child, ctx.availableWidth());
                 } else if (child.has(TextData.class)) {
-                    child.add(BoxSize.textAutoSize(child));
+                    child.add(OuterBoxSize.textAutoSize(child));
                 }
             }
 
-            double w = child.get(BoxSize.class).map(BoxSize::width).orElse(0.0);
-            double h = child.get(BoxSize.class).map(BoxSize::height).orElse(0.0);
+            double w = child.get(OuterBoxSize.class).map(OuterBoxSize::width).orElse(0.0);
+            double h = child.get(OuterBoxSize.class).map(OuterBoxSize::height).orElse(0.0);
             Margin m = child.get(Margin.class).orElse(Margin.zero());
 
             if (totalH > 0) totalH += gap;
@@ -43,7 +43,7 @@ public class VerticalLayout implements Layout {
         final var fMaxW = maxW;
         final var fTotalH = totalH;
 
-        c.getElement().getOrAdd(BoxSize.class, () -> new BoxSize(fMaxW, fTotalH));
+        c.getElement().getOrAdd(OuterBoxSize.class, () -> new OuterBoxSize(fMaxW, fTotalH));
     }
 
     @Override
@@ -53,11 +53,11 @@ public class VerticalLayout implements Layout {
 
         double containerW = ctx.allocatedWidth() > 0
                 ? ctx.allocatedWidth()
-                : c.getElement().get(BoxSize.class).map(BoxSize::width).orElse(0.0);
+                : c.getElement().get(OuterBoxSize.class).map(OuterBoxSize::width).orElse(0.0);
 
         for (Element child : c.getChildren()) {
-            double w = child.get(BoxSize.class).map(BoxSize::width).orElse(0.0);
-            double h = child.get(BoxSize.class).map(BoxSize::height).orElse(0.0);
+            double w = child.get(OuterBoxSize.class).map(OuterBoxSize::width).orElse(0.0);
+            double h = child.get(OuterBoxSize.class).map(OuterBoxSize::height).orElse(0.0);
             Margin m = child.get(Margin.class).orElse(Margin.zero());
 
             // по горизонтали (cross-axis) — LEFT/CENTER/RIGHT

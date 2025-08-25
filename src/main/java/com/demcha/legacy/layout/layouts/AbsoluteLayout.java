@@ -1,7 +1,7 @@
 package com.demcha.legacy.layout.layouts;
 
+import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.layout.Position;
-import com.demcha.components.geometry.BoxSize;
 import com.demcha.legacy.core.Element;
 import com.demcha.legacy.layout.ArrangeCtx;
 import com.demcha.legacy.layout.Container;
@@ -29,11 +29,11 @@ public record AbsoluteLayout() implements Layout {
         // Iterate through all child elements to determine the maximum width and height
         for (Element child : c.getChildren()) {
             Position position = child.get(Position.class).orElse(Position.zero());
-            BoxSize boxSize = child.get(BoxSize.class).orElse(new BoxSize(0, 0));
+            OuterBoxSize outerBoxSize = child.get(OuterBoxSize.class).orElse(new OuterBoxSize(0, 0));
 
-            // Calculate the maximum width and height based on the child position and boxSize
-            double childMaxX = position.x() + boxSize.width();
-            double childMaxY = position.y() + boxSize.height();
+            // Calculate the maximum width and height based on the child position and outerBoxSize
+            double childMaxX = position.x() + outerBoxSize.width();
+            double childMaxY = position.y() + outerBoxSize.height();
 
             maxWidth = Math.max(maxWidth, childMaxX);
             maxHeight = Math.max(maxHeight, childMaxY);
@@ -42,7 +42,7 @@ public record AbsoluteLayout() implements Layout {
         final var finalMaxHeight = maxHeight;
 
         // Set the container's size based on the maximum width and height found
-        c.getElement().getOrAdd(BoxSize.class, () -> new BoxSize(finalMaxWidth, finalMaxHeight));
+        c.getElement().getOrAdd(OuterBoxSize.class, () -> new OuterBoxSize(finalMaxWidth, finalMaxHeight));
     }
 
     /**

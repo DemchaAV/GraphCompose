@@ -4,6 +4,7 @@ import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
 import com.demcha.components.layout.ParentComponent;
+import com.demcha.system.PdfRender;
 import com.demcha.system.System;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,6 +17,7 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * # PdfDocument
@@ -181,6 +183,44 @@ public class PdfDocument {
         return Optional.ofNullable(entityIds);
     }
 
+    public Set<UUID> getEntitiesWithAnyPdfRender() {
+        Set<UUID> result = new HashSet<>();
+        for (Map.Entry<UUID, Entity> e : entities.entrySet()) {
+            boolean hasRenderable = e.getValue().view().values().stream()
+                    .anyMatch(comp -> comp instanceof PdfRender);
+            if (hasRenderable) {
+                result.add(e.getKey());
+            }
+        }
+        return result;
+    }
+    public Set<UUID> getEntitiesWithPdfRender(Class<? extends PdfRender> componentType) {
+        log.debug("Searching for entities with component type {}", componentType.getName());
+
+        Set<UUID> result = new HashSet<>();
+        for (Map.Entry<UUID, Entity> e : entities.entrySet()) {
+            UUID entityId = e.getKey();
+            Entity entity = e.getValue();
+
+            // перебираем компоненты у сущности
+            for (Component comp : entity.view().values()) {
+                // подходит ли по типу?
+                if (componentType.isInstance(comp)) {
+                    result.add(entityId);
+                    log.debug("Matched entity {} with {}", entityId, componentType.getSimpleName());
+                    break; // уже добавили — дальше компоненты этой сущности можно не проверять
+                }
+            }
+        }
+
+        if (result.isEmpty()) {
+            log.warn("No entities found with {}", componentType.getName());
+        } else {
+            log.debug("Found {} entities with {}", result.size(), componentType.getName());
+        }
+        return result;
+    }
+
     public Optional<Map<UUID, Set<UUID>>> childrenByParent() {
         Optional<Set<UUID>> entitiesWithComponent = getEntitiesWithComponent(ParentComponent.class);
 
@@ -235,7 +275,18 @@ public class PdfDocument {
     public PageSize pageSize() {
         float width = page.getMediaBox().getWidth();
         float height = page.getMediaBox().getHeight();
-        return new PageSize(width, height);
+        float x = page.getMediaBox().getLowerLeftX();
+        float y = page.getMediaBox().getLowerLeftY();
+        return new PageSize(width, height,x,y);
+    }
+
+    public  void printEntities(){
+        this.entities.values().forEach(entity -> {
+            java.lang.System.out.println(entity.toString());
+            entity.view().forEach((k,v)->
+                    java.lang.System.out.println(v)
+                    );
+        });
     }
 
 

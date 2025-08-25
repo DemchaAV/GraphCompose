@@ -1,6 +1,6 @@
 package com.demcha.legacy.layout.layouts;
 
-import com.demcha.components.geometry.BoxSize;
+import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.layout.Position;
 import com.demcha.components.style.Margin;
 import com.demcha.components.layout.Align;
@@ -46,7 +46,7 @@ import com.demcha.legacy.layout.*;
  *     <li><strong>BOTTOM</strong> - Aligns children at the bottom of the container.</li>
  * </ul>
  *
- * <p>This class makes use of the {@link BoxSize}, {@link Position}, and {@link Margin} components
+ * <p>This class makes use of the {@link OuterBoxSize}, {@link Position}, and {@link Margin} components
  * to handle positioning, sizing, and spacing of elements within the layout.</p>
  */
 public class HorizontalLayout implements Layout {
@@ -76,16 +76,16 @@ public class HorizontalLayout implements Layout {
         double totalW = 0, maxH = 0;
 
         for (Element child : c.getChildren()) {
-            // --- 1. Автоматическое измерение, если нет BoxSize ---
+            // --- 1. Автоматическое измерение, если нет OuterBoxSize ---
             if (child.has(TextBlock.class)) {
                 TextBlockMeasurer.ensureMeasured(child, ctx.availableWidth());
             } else if (child.has(TextData.class)) {
-//                child.add(BoxSize.textAutoSize(child)); // твоё старое поведение
+//                child.add(OuterBoxSize.textAutoSize(child)); // твоё старое поведение
             }
 
             // --- 2. Получаем размеры и отступы ---
-            double w = child.get(BoxSize.class).map(BoxSize::width).orElse(0.0);
-            double h = child.get(BoxSize.class).map(BoxSize::height).orElse(0.0);
+            double w = child.get(OuterBoxSize.class).map(OuterBoxSize::width).orElse(0.0);
+            double h = child.get(OuterBoxSize.class).map(OuterBoxSize::height).orElse(0.0);
             Margin m = child.get(Margin.class).orElse(Margin.zero());
 
             if (totalW > 0) totalW += gap;
@@ -96,7 +96,7 @@ public class HorizontalLayout implements Layout {
         // --- 3. Записываем рассчитанный размер контейнера ---
         final double totalWfinal = totalW;
         final double maxHfinal = maxH;
-        c.getElement().getOrAdd(BoxSize.class, () -> new BoxSize(totalWfinal, maxHfinal));
+        c.getElement().getOrAdd(OuterBoxSize.class, () -> new OuterBoxSize(totalWfinal, maxHfinal));
     }
 
     /**
@@ -111,11 +111,11 @@ public class HorizontalLayout implements Layout {
         double topY = ctx.startY();
         double containerH = ctx.allocatedHeight() > 0
                 ? ctx.allocatedHeight()
-                : c.getElement().get(BoxSize.class).map(BoxSize::height).orElse(0.0);
+                : c.getElement().get(OuterBoxSize.class).map(OuterBoxSize::height).orElse(0.0);
 
         for (Element child : c.getChildren()) {
-            double w = child.get(BoxSize.class).map(BoxSize::width).orElse(0.0);
-            double h = child.get(BoxSize.class).map(BoxSize::height).orElse(0.0);
+            double w = child.get(OuterBoxSize.class).map(OuterBoxSize::width).orElse(0.0);
+            double h = child.get(OuterBoxSize.class).map(OuterBoxSize::height).orElse(0.0);
             Margin m = child.get(Margin.class).orElse(Margin.zero());
 
             // HorizontalLayout (cross-axis = vertical)

@@ -1,16 +1,22 @@
 package com.demcha.components.core;
 
+import com.demcha.system.PdfEntityRender;
+import com.demcha.system.PdfRender;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
+import java.io.IOException;
 import java.util.*;
 
 @Slf4j
-public final class Entity {
+public final class Entity implements PdfEntityRender {
     @Getter
     private final UUID id;
     private final Map<Class<? extends Component>, Component> comps = new LinkedHashMap<>();
     private EntityName name;
+    private PdfRender render;
 
     public Entity() {
         UUID uuid = UUID.randomUUID();
@@ -38,14 +44,19 @@ public final class Entity {
         return this;
     }
 
-    public <T extends Component> Entity addComponent(T c) { // upsert
-        if (c == null) {
-            log.warn("putComponent: component is null");
-            return this;
-        }
+    public <T extends Component> Entity addComponent(@NonNull T c) {
         Class<? extends Component> key = c.getClass().asSubclass(Component.class);
         Component prev = comps.put(key, c);
         if (c instanceof EntityName en) this.name = en;
+        if (c instanceof PdfRender) {
+            if (render == null) {
+                this.render = (PdfRender) c;
+            } else {
+                log.warn("Rendering Component Already signed in {}", this);
+                throw new IllegalStateException("%sRendering Component Already signed in %s".formatted(c, this.render));
+            }
+
+        }
         if (prev == null) {
             log.debug("Added component {} to {}", c, this);
         } else {
@@ -82,7 +93,13 @@ public final class Entity {
         return has(type);
     }
 
-    public <T extends Component>  Entity populate(Set<? extends Component> components) {
+    public boolean hasRender() {
+        return comps.values().stream()
+                .anyMatch(comp -> comp instanceof PdfRender);
+    }
+
+
+    public <T extends Component> Entity populate(Set<? extends Component> components) {
         log.info("Creating and populating entity");
 
         log.info("Populating entity UUID [{}] with\nComponents: {}", this, components);
@@ -123,6 +140,16 @@ public final class Entity {
         result = 31 * result + comps.hashCode();
         result = 31 * result + Objects.hashCode(name);
         return result;
+    }
+
+
+    @Override
+    public boolean render(PDPageContentStream cs) throws IOException {
+        if (!hasRender()) {
+            log.debug("Rendering entity {} without render", this);
+            throw new NoSuchElementException("No component rendered for " + this);
+        }
+        return render.render(this, cs);
     }
 }
 

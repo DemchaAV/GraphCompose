@@ -1,5 +1,98 @@
 package com.demcha.components.layout;
 
 import com.demcha.components.core.Component;
+import com.demcha.components.core.Entity;
+import com.demcha.components.geometry.InnerBoxSize;
+import com.demcha.components.style.Padding;
+import com.demcha.core.PageSize;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
-public record ComputedPosition(double x, double y) implements Component {}
+/**
+ * Represents the computed absolute position (x, y) of an {@link Entity}.
+ * <p>
+ * A {@code ComputedPosition} is usually calculated based on:
+ * <ul>
+ *   <li>The parent entity's {@link InnerBoxSize}</li>
+ *   <li>The {@link Anchor} of the child</li>
+ *   <li>Page size (for root-level entities)</li>
+ * </ul>
+ */
+@Slf4j
+public record ComputedPosition(double x, double y) implements Component {
+    /**
+     * Returns a zero position (0, 0).
+     */
+    public static ComputedPosition zero() {
+        return new ComputedPosition(0, 0);
+    }
+
+    /**
+     * Computes the position of a child entity relative to its parent's inner box size.
+     * If the child has no {@link Anchor}, a default {@link Anchor#topLeft()} is added.
+     *
+     * @param child              the child entity
+     * @param parentInnerBoxSize the inner box size of the parent
+     * @return computed position for the child
+     */
+    public static ComputedPosition from(@NonNull Entity child, @NonNull InnerBoxSize parentInnerBoxSize, PaddingCoordinate paddingParentCoordinate) {
+        var anchor = child.getComponent(Anchor.class).orElseGet(() -> {
+            log.warn("No Anchor found for {}. Using default Anchor (top-left).", child);
+            Anchor defaultAnchor = Anchor.bottomLeft();
+            child.addComponent(defaultAnchor);
+            return defaultAnchor;
+        });
+        ComputedPosition computedPosition = anchor.getComputedPosition(child, parentInnerBoxSize);
+        double x = computedPosition.x + paddingParentCoordinate.x();
+        double y = computedPosition.y + paddingParentCoordinate.y();
+        computedPosition = new ComputedPosition(x, y);
+
+        return computedPosition;
+    }
+
+    /**
+     * Computes the position of a child relative to its parent entity.
+     *
+     * @param child  the child entity
+     * @param parent the parent entity
+     * @return computed position
+     * @throws java.util.NoSuchElementException if the parent has no {@link InnerBoxSize}
+     */
+    public static ComputedPosition from(@NonNull Entity child, @NonNull Entity parent) {
+        var parentInnerBox = InnerBoxSize.from(parent).orElseThrow();
+        var paddingParentCoordinate = PaddingCoordinate.from(parent);
+        return from(child, parentInnerBox, paddingParentCoordinate);
+    }
+
+    /**
+     * Computes the position of a child entity relative to a {@link PageSize}.
+     * This is typically used for root-level entities (no parent).
+     *
+     * @param childEntity the child entity
+     * @param pageSize    the page size
+     * @return computed position
+     */
+    public static ComputedPosition from(@NonNull Entity childEntity, @NonNull PageSize pageSize) {
+        log.debug("Computing position using default PageSize.");
+        InnerBoxSize innerBoxSize = new InnerBoxSize(pageSize.width(), pageSize.height());
+        var paddingParentCoordinate = new PaddingCoordinate(pageSize.x(),pageSize.y());
+        return from(childEntity, innerBoxSize, paddingParentCoordinate);
+    }
+
+    /**
+     * Computes a {@link PaddingCoordinate} by applying the given padding to this position.
+     *
+     * @param padding the padding to apply
+     * @return padding-adjusted coordinate
+     */
+    public PaddingCoordinate paddingCoordinate(@NonNull Padding padding) {
+
+        var x = this.x + padding.left();
+        var y = this.y + padding.bottom();
+
+        log.debug("ComputedPosition is {}", this.toString());
+        log.debug("Padding coordinate is {}", padding);
+
+        return new PaddingCoordinate(x, y);
+    }
+}

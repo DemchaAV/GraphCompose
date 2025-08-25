@@ -2,6 +2,8 @@ package com.demcha.components.layout;
 
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
+import com.demcha.components.layout.coordinator.ComputedPosition;
+import com.demcha.components.layout.coordinator.PaddingCoordinate;
 import com.demcha.core.PageSize;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

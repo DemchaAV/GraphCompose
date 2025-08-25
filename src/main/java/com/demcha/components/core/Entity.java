@@ -4,6 +4,7 @@ import com.demcha.system.PdfEntityRender;
 import com.demcha.system.PdfRender;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
@@ -17,6 +18,8 @@ public final class Entity implements PdfEntityRender {
     private final Map<Class<? extends Component>, Component> comps = new LinkedHashMap<>();
     private EntityName name;
     private PdfRender render;
+    @Setter @Getter
+    private boolean guideLines;
 
     public Entity() {
         UUID uuid = UUID.randomUUID();
@@ -149,7 +152,7 @@ public final class Entity implements PdfEntityRender {
             log.debug("Rendering entity {} without render", this);
             throw new NoSuchElementException("No component rendered for " + this);
         }
-        return render.render(this, cs);
+        return render.render(this, cs,guideLines);
     }
 }
 

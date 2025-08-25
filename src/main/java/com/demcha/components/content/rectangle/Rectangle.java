@@ -4,12 +4,8 @@ import com.demcha.components.content.Stroke;
 import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
-import com.demcha.components.geometry.InnerBoxSize;
-import com.demcha.components.geometry.OuterBoxSize;
-import com.demcha.components.layout.BoxGuidesRenderer;
-import com.demcha.components.layout.ComputedPosition;
-import com.demcha.components.layout.PaddingCoordinate;
-import com.demcha.components.layout.RenderingPosition;
+import com.demcha.components.layout.GuidesRenderer;
+import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.components.style.ColorComponent;
 import com.demcha.system.ContentSizeNotFoundException;
 import com.demcha.system.PdfRender;
@@ -19,27 +15,28 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.awt.*;
 import java.io.IOException;
+import java.util.EnumSet;
 
 @Slf4j
-public record Rectangle(Radius radius) implements Component, PdfRender, BoxGuidesRenderer {
-    public Rectangle() { this(null); }
+public record Rectangle(Radius radius) implements Component, PdfRender, GuidesRenderer {
+    private static final EnumSet<Guide> DEFAULT_GUIDES =
+            EnumSet.of(Guide.MARGIN, Guide.PADDING);
 
-    @Override
-    public boolean render(Entity e, PDPageContentStream cs) throws IOException {
-        // По умолчанию рисуем ТОЛЬКО сам объект (без направляющих)
-        return render(e, cs, true);
+    public Rectangle() {
+        this(null);
     }
 
+    @Override
     public boolean render(Entity e, PDPageContentStream cs, boolean withGuides) throws IOException {
+        // По умолчанию рисуем ТОЛЬКО сам объект (без направляющих)
         boolean drawn = renderObject(e, cs); // ← рисуем сам прямоугольник
-
         if (withGuides) {
-            // Рисуем направляющие поверх/под объектом — на ваш выбор
-            renderMargin(e, cs);
-            renderPadding(e, cs);
+            renderGuides(e, cs, DEFAULT_GUIDES);
+
         }
         return drawn;
     }
+
 
     private boolean renderObject(Entity e, PDPageContentStream cs) throws IOException {
         // Обычно этот метод вызывается ТОЛЬКО если у сущности есть Rectangle,
@@ -83,14 +80,14 @@ public record Rectangle(Radius radius) implements Component, PdfRender, BoxGuide
         }
 
         // Ограничим радиус для корректной геометрии
-        float radius = (r == null) ? 0f : (float)Math.min(r.radius(), Math.min(w, h) / 2.0);
+        float radius = (r == null) ? 0f : (float) Math.min(r.radius(), Math.min(w, h) / 2.0);
 
         log.debug("Rendering rectangle at ({}, {}) size=({}, {}) radius={}", x, y, w, h, radius);
 
         cs.saveGraphicsState();
         try {
             if (radius > 0f) {
-                drawRoundedRectangle(cs, (float)x, (float)y, (float)w, (float)h, radius);
+                drawRoundedRectangle(cs, (float) x, (float) y, (float) w, (float) h, radius);
                 cs.setNonStrokingColor(color);
                 cs.fill(); // Можно добавить stroke() если нужен контур: cs.stroke();
             } else {
@@ -98,7 +95,7 @@ public record Rectangle(Radius radius) implements Component, PdfRender, BoxGuide
                     cs.setLineWidth((float) stroke.width());
                 }
                 cs.setStrokingColor(color);
-                cs.addRect((float)x, (float)y, (float)w, (float)h);
+                cs.addRect((float) x, (float) y, (float) w, (float) h);
                 cs.stroke();
             }
         } finally {

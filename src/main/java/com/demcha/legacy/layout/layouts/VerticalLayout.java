@@ -2,7 +2,7 @@ package com.demcha.legacy.layout.layouts;
 
 import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.style.Margin;
-import com.demcha.components.layout.Position;
+import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.layout.Align;
 import com.demcha.components.content.text.block.TextBlock;
 import com.demcha.components.content.text.block.TextBlockMeasurer;

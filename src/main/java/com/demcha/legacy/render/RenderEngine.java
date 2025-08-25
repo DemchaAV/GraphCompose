@@ -1,7 +1,7 @@
 package com.demcha.legacy.render;
 
 import com.demcha.components.layout.Anchor;
-import com.demcha.components.layout.Position;
+import com.demcha.components.layout.coordinator.Position;
 import com.demcha.legacy.components.data.Link;
 import com.demcha.legacy.components.data.text.TextData;
 import com.demcha.components.content.text.TextDecoration;

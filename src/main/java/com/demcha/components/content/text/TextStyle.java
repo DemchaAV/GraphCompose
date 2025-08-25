@@ -2,7 +2,6 @@ package com.demcha.components.content.text;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.font.PDFont;
-import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 
@@ -11,6 +10,21 @@ import java.io.IOException;
 
 @Slf4j
 public record TextStyle(PDFont font, int size, TextDecoration decoration, Color color) {
+
+    public static PDFont TIMES_ROMAN = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
+    public static PDFont TIMES_BOLD = new PDType1Font(Standard14Fonts.FontName.TIMES_BOLD);
+    public static PDFont TIMES_ITALIC = new PDType1Font(Standard14Fonts.FontName.TIMES_ITALIC);
+    public static PDFont TIMES_BOLD_ITALIC = new PDType1Font(Standard14Fonts.FontName.TIMES_BOLD_ITALIC);
+    public static PDFont HELVETICA = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+    public static PDFont HELVETICA_BOLD = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+    public static PDFont HELVETICA_OBLIQUE = new PDType1Font(Standard14Fonts.FontName.HELVETICA_OBLIQUE);
+    public static PDFont HELVETICA_BOLD_OBLIQUE = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD_OBLIQUE);
+    public static PDFont COURIER = new PDType1Font(Standard14Fonts.FontName.COURIER);
+    public static PDFont COURIER_BOLD = new PDType1Font(Standard14Fonts.FontName.COURIER_BOLD);
+    public static PDFont COURIER_OBLIQUE = new PDType1Font(Standard14Fonts.FontName.COURIER_OBLIQUE);
+    public static PDFont COURIER_BOLD_OBLIQUE = new PDType1Font(Standard14Fonts.FontName.COURIER_BOLD_OBLIQUE);
+    public static PDFont SYMBOL = new PDType1Font(Standard14Fonts.FontName.SYMBOL);
+    public static PDFont ZAPF_DINGBATS = new PDType1Font(Standard14Fonts.FontName.ZAPF_DINGBATS);
 
     public TextStyle(PDFont font, int size, TextDecoration decoration) {
         this(font, size, decoration, Color.BLACK);
@@ -76,7 +90,7 @@ public record TextStyle(PDFont font, int size, TextDecoration decoration, Color 
             return width;
         } catch (Exception e) {
             e.printStackTrace();
-            log.error("Error while getting text width {}", e.getMessage(),e);
+            log.error("Error while getting text width {}", e.getMessage(), e);
             return 0;  // Return 0 if something goes wrong
         }
     }
@@ -88,7 +102,18 @@ public record TextStyle(PDFont font, int size, TextDecoration decoration, Color 
             return v;
         } catch (IOException e) {
             e.printStackTrace();
-            log.error("Error while getting text height {}", e.getMessage(),e);
+            log.error("Error while getting text height {}", e.getMessage(), e);
+            return 0;  // Return 0 if something goes wrong
+        }
+    }
+    public double getTextHeight(Text text) {
+        try {
+            float v = font.getBoundingBox().getHeight() / 1000 * size;
+            log.debug("getTextHeight: " + text);
+            return v;
+        } catch (IOException e) {
+            e.printStackTrace();
+            log.error("Error while getting text height {}", e.getMessage(), e);
             return 0;  // Return 0 if something goes wrong
         }
     }

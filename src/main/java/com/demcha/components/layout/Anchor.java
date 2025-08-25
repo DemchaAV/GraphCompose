@@ -4,6 +4,9 @@ import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.geometry.OuterBoxSize;
+import com.demcha.components.layout.coordinator.ComputedPosition;
+import com.demcha.components.layout.coordinator.Position;
+import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.components.style.Margin;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -50,10 +53,14 @@ public record Anchor(HAnchor h, VAnchor v) implements Component {
     public static Anchor centerBottom() {
         return new Anchor(HAnchor.CENTER, VAnchor.BOTTOM);
     }
+    public static Anchor defaultAnchor() {
+        return new Anchor(HAnchor.DEFAULT, VAnchor.DEFAULT);
+    }
+
 
     public ComputedPosition getComputedPosition(Entity child, InnerBoxSize perrentInnerBoxSize) {
         log.debug("Starting calculation of computed position for {} ", child);
-        var position = child.getComponent(Position.class).get();
+        var position = child.getComponent(Position.class).orElse(Position.zero());
 
         var outerBoxSize = OuterBoxSize.from(child).get();
 
@@ -90,12 +97,14 @@ public record Anchor(HAnchor h, VAnchor v) implements Component {
             case LEFT -> position.x();      // x=0 at left
             case CENTER -> (areaW - outerW) / 2.0 + position.x();
             case RIGHT -> areaW - outerW - position.x();
+            case DEFAULT ->  position.x();
         };
 
         double y = switch (this.v()) {
             case BOTTOM -> position.y();          // y=0 at bottom
             case MIDDLE -> (areaH - outerH) / 2.0 + position.y();
             case TOP -> areaH - outerH - position.y();
+            case DEFAULT ->  position.y();
         };
 
         var computed = new ComputedPosition(x, y);

@@ -1,8 +1,7 @@
 package com.demcha.components.content.components_builders;
 
-import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.geometry.ContentSize;
-import com.demcha.components.layout.Position;
+import com.demcha.components.layout.coordinator.Position;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 

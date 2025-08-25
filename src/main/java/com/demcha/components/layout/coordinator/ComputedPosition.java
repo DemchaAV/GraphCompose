@@ -1,8 +1,9 @@
-package com.demcha.components.layout;
+package com.demcha.components.layout.coordinator;
 
 import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
+import com.demcha.components.layout.Anchor;
 import com.demcha.components.style.Padding;
 import com.demcha.core.PageSize;
 import lombok.NonNull;
@@ -38,13 +39,20 @@ public record ComputedPosition(double x, double y) implements Component {
     public static ComputedPosition from(@NonNull Entity child, @NonNull InnerBoxSize parentInnerBoxSize, PaddingCoordinate paddingParentCoordinate) {
         var anchor = child.getComponent(Anchor.class).orElseGet(() -> {
             log.warn("No Anchor found for {}. Using default Anchor (top-left).", child);
-            Anchor defaultAnchor = Anchor.bottomLeft();
+            Anchor defaultAnchor = Anchor.defaultAnchor();
             child.addComponent(defaultAnchor);
             return defaultAnchor;
         });
         ComputedPosition computedPosition = anchor.getComputedPosition(child, parentInnerBoxSize);
-        double x = computedPosition.x + paddingParentCoordinate.x();
-        double y = computedPosition.y + paddingParentCoordinate.y();
+        double x;
+        double y;
+        if (anchor.equals(Anchor.defaultAnchor())) {
+            var position = child.getComponent(Position.class).orElse(Position.zero());
+            x = computedPosition.x + paddingParentCoordinate.x() + position.x();
+            y = computedPosition.y + paddingParentCoordinate.y() +  position.y();
+        }
+        x = computedPosition.x + paddingParentCoordinate.x();
+        y = computedPosition.y + paddingParentCoordinate.y();
         computedPosition = new ComputedPosition(x, y);
 
         return computedPosition;
@@ -75,7 +83,7 @@ public record ComputedPosition(double x, double y) implements Component {
     public static ComputedPosition from(@NonNull Entity childEntity, @NonNull PageSize pageSize) {
         log.debug("Computing position using default PageSize.");
         InnerBoxSize innerBoxSize = new InnerBoxSize(pageSize.width(), pageSize.height());
-        var paddingParentCoordinate = new PaddingCoordinate(pageSize.x(),pageSize.y());
+        var paddingParentCoordinate = new PaddingCoordinate(pageSize.x(), pageSize.y());
         return from(childEntity, innerBoxSize, paddingParentCoordinate);
     }
 

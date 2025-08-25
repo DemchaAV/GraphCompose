@@ -1,4 +1,4 @@
-package com.demcha.components.layout;
+package com.demcha.components.layout.coordinator;
 
 import com.demcha.components.core.Component;
 

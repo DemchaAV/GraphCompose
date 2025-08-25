@@ -8,7 +8,7 @@ import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.layout.Layer;
 import com.demcha.components.layout.ParentComponent;
-import com.demcha.components.layout.Position;
+import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import com.demcha.core.PdfDocument;

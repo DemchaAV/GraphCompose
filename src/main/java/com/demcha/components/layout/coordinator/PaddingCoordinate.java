@@ -1,7 +1,6 @@
-package com.demcha.components.layout;
+package com.demcha.components.layout.coordinator;
 
 import com.demcha.components.core.Entity;
-import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;

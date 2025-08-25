@@ -77,6 +77,7 @@ public class PdfDocument {
     private final PDPage page;
     private Path pathOut;
     private PDDocument document;
+    private boolean guideLines;
 
     public PdfDocument(PDPage page) {
         log.info("Created new pdf document {}", page.getBBox());
@@ -122,6 +123,10 @@ public class PdfDocument {
         log.info("Getting  Entity id  {}", id);
         return Optional.ofNullable(entities.get(id));
     }
+    public void setGuideLines(boolean guideLines) {
+        this.guideLines = guideLines;
+        entities.forEach((id, entity) -> { entity.setGuideLines(guideLines); });
+    }
 
     public Entity putEntity(Entity entity) {
         UUID uuid = entity.getId();
@@ -138,6 +143,7 @@ public class PdfDocument {
                 return entities.put(uuid, entity);
             }
         }
+        entity.setGuideLines(guideLines);
         return entities.put(uuid, entity);
     }
 

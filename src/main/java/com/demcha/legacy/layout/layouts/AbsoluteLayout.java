@@ -1,7 +1,7 @@
 package com.demcha.legacy.layout.layouts;
 
 import com.demcha.components.geometry.OuterBoxSize;
-import com.demcha.components.layout.Position;
+import com.demcha.components.layout.coordinator.Position;
 import com.demcha.legacy.core.Element;
 import com.demcha.legacy.layout.ArrangeCtx;
 import com.demcha.legacy.layout.Container;

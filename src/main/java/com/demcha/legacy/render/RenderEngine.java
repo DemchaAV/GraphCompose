@@ -1,5 +1,6 @@
 package com.demcha.legacy.render;
 
+import com.demcha.components.containers.Container;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.layout.coordinator.Position;
 import com.demcha.legacy.components.data.Link;
@@ -174,17 +175,17 @@ public class RenderEngine {
     }
 
     // RenderEngine.java (добавь к твоему классу)
-    public void measure(com.demcha.legacy.layout.Container c, MeasureCtx ctx) {
+    public void measure(Container c, MeasureCtx ctx) {
         if (c.getLayout() == null) throw new IllegalStateException("Container has no layout");
         c.getLayout().measure(c, ctx);
     }
 
-    public void arrange(com.demcha.legacy.layout.Container c, ArrangeCtx ctx) {
+    public void arrange(Container c, ArrangeCtx ctx) {
         if (c.getLayout() == null) throw new IllegalStateException("Container has no layout");
         c.getLayout().arrange(c, ctx);
     }
 
-    public void render(com.demcha.legacy.layout.Container c, PdfRenderContext ctx) throws IOException {
+    public void render(Container c, PdfRenderContext ctx) throws IOException {
         // просто обходим детей и рисуем поддерживаемые элементы
         for (Element el : c.getChildren()) {
             renderElement(ctx, el);

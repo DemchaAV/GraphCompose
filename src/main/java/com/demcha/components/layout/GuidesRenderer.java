@@ -7,6 +7,7 @@ import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.PaddingCoordinate;
+import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.components.style.ColorComponent;
 import lombok.NonNull;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -54,7 +55,7 @@ public interface GuidesRenderer {
         double width = inner.innerW();
         double height = inner.innerH();
 
-        Color color = ColorComponent.DARK_GREEN;
+        Color color = ColorComponent.DARK_ORANGE;
         renderMarkers(cs, x, y, width, height, color);
 
         return renderRectangle(stroke, cs,
@@ -110,17 +111,16 @@ public interface GuidesRenderer {
 
         // лёгкий пунктир и тонкая линия, чтобы гайды не “забивали” контент
         var stroke = new Stroke(1);
+        var rp = RenderingPosition.from(e); // x/y с учетом margin/anchor и т.п.
 
-        double x = pos.x();
-        double y = pos.y();
-        double width = boxSize.width();
-        double height = boxSize.height();
-
+        double x = rp.x();
+        double y = rp.y();
+        double w = boxSize.width();
+        double h = boxSize.height();
         Color color = ColorComponent.GRAY;
-        renderMarkers(cs, x, y, width, height, color);
 
         return renderRectangle(stroke, cs,
-                x, y, width, height,
+                x, y, w, h,
                 color, false);
 
     }

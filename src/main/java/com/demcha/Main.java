@@ -1,6 +1,9 @@
 package com.demcha;
 
+import com.demcha.components.containers.HContainerBuilder;
+import com.demcha.components.containers.VContainerBuilder;
 import com.demcha.components.content.Stroke;
+import com.demcha.components.content.components_builders.BodyBoxBuilder;
 import com.demcha.components.content.components_builders.RectangleBuilder;
 import com.demcha.components.content.components_builders.TextBuilder;
 import com.demcha.components.content.rectangle.Radius;
@@ -8,8 +11,10 @@ import com.demcha.components.content.rectangle.Rectangle;
 import com.demcha.components.content.text.Text;
 import com.demcha.components.content.text.TextDecoration;
 import com.demcha.components.content.text.TextStyle;
+import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
 import com.demcha.components.geometry.ContentSize;
+import com.demcha.components.layout.Align;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.style.ColorComponent;
@@ -44,53 +49,67 @@ public class Main {
                 .margin(new Margin(5, 5, 5, 5))
                 .buildInto(document);
 
-
-        var rectangle2 = RectangleBuilder.create()
-                .entityName(new EntityName("Rectangle2"))
-                .rectangle(new Rectangle(new Radius(12)))
-                .size(new ContentSize(94, 50))
-                .padding(Padding.of(10))
-                .stroke(new Stroke(12.0))
-                .parentComponent(rectangle)
-                .strokeColor(new Color(133, 198, 198, 255))
-                .anchor(Anchor.topLeft())
-                .margin(new Margin(5, 5, 5, 5))
+        var box = BodyBoxBuilder.create()
+                .entityName(new EntityName("BodyBox"))
+                .fillHorizontal(document.getPage(), 100)
+                .padding(Padding.zero())
+                .position(new Position(0, 200))
+                .anchor(Anchor.centerTop())
+                .margin(Margin.all(0))
                 .buildInto(document);
-        var rectangle3 = RectangleBuilder.create()
-                .entityName(new EntityName("Rectangle2"))
-                .rectangle(new Rectangle(new Radius(12)))
-                .size(new ContentSize(94, 50))
-                .padding(Padding.of(10))
-                .stroke(new Stroke(12.0))
-                .parentComponent(rectangle)
-                .strokeColor(new Color(128, 128, 255, 255))
-                .anchor(Anchor.topRight())
-                .margin(new Margin(5, 5, 5, 5))
-                .buildInto(document);
+        var button1 = createABottom("button1", "Arteme", document);
+        var button2 = createABottom("button1", "Arteme", document);
+        var button3 = createABottom("button1", "Arteme", document);
+        var button4 = createABottom("button1", "Arteme", document);
 
-        var text = TextBuilder.create()
-                .entityName(new EntityName("Text"))
-                .parentComponent(rectangle2)
-                .text(new Text("Hello World!!", new TextStyle(TextStyle.HELVETICA, 12, TextDecoration.DEFAULT, ColorComponent.LINK_VISITED)))
-//                .position(new Position(25, 400))
-                .anchor(Anchor.center())
+        var hContainer1 = HContainerBuilder.create(Align.middle(5))
+                .entityName(new EntityName("HContainer_1"))
+                .anchor(Anchor.centerBottom())
+                .add(button1)
+                .add(button2)
+                .build(document);
+        var hContainer2 = HContainerBuilder.create(Align.middle(5))
+                .entityName(new EntityName("HContainer_2"))
+                .anchor(Anchor.centerBottom())
+                .add(button3)
+                .add(button4)
+                .build(document);
+
+        var VContainer = VContainerBuilder.create(Align.middle(5))
+                .entityName(new EntityName("VContainer"))
                 .margin(Margin.all(15))
-                .buildInto(document);
+                .anchor(Anchor.centerBottom())
+                .add(hContainer1)
+                .add(hContainer2)
+                .build(document);
 
-        var text2 = TextBuilder.create()
-                .entityName(new EntityName("Text"))
-                .parentComponent(rectangle3)
-                .text(new Text("Artem!!", new TextStyle(TextStyle.HELVETICA, 12, TextDecoration.DEFAULT, ColorComponent.LINK_VISITED)))
-//                .position(new Position(25, 400))
-                .anchor(Anchor.center())
-                .margin(Margin.all(15))
-                .buildInto(document);
 
-        document.setGuideLines(false);
+        document.setGuideLines(true);
         document.printEntities();
         document.processSystems();
         document.printEntities();
 
+
+    }
+
+    public static Entity createABottom(String nameButton, String TextButton, PdfDocument document) {
+        var button = RectangleBuilder.create()
+                .entityName(new EntityName(nameButton))
+                .rectangle(new Rectangle(new Radius(5)))
+                .size(new ContentSize(80, 30))
+                .padding(Padding.of(10))
+                .stroke(new Stroke(12.0))
+                .strokeColor(new Color(133, 198, 198, 255))
+                .anchor(Anchor.topLeft())
+                .margin(Margin.all(15))
+                .buildInto(document);
+        var text3 = TextBuilder.create()
+                .entityName(new EntityName("Text"))
+                .parentComponent(button)
+                .text(new Text(TextButton, new TextStyle(TextStyle.HELVETICA, 12, TextDecoration.DEFAULT, ColorComponent.LINK_VISITED)))
+                .anchor(Anchor.center())
+                .buildInto(document);
+        return button;
     }
 }
 

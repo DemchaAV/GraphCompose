@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -59,19 +60,45 @@ public class RenderingSystem implements System {
         }
     }
 
+//    @Override
+//    public void process(PdfDocument pdfDocument) {
+//        log.info("Processing RenderingSystem");
+//        try (PDDocument doc = pdfDocument.getDocument();
+//             PDPageContentStream cs = pdfDocument.openContentStream()) {
+//            var vieEntities = pdfDocument.getEntities();
+//
+//                for (Map.Entry<UUID, Entity> e : vieEntities.entrySet()) {
+//                    var entity = e.getValue();
+//                    if (entity.hasRender()) {
+//                        entity.render(cs);
+//                    }
+//                }
+//            cs.close();
+//            saveAtomic(doc, outputPath);
+//        } catch (IOException ex) {
+//            log.error("Rendering failed", ex);
+//        }
+//    }
+
     @Override
     public void process(PdfDocument pdfDocument) {
         log.info("Processing RenderingSystem");
         try (PDDocument doc = pdfDocument.getDocument();
              PDPageContentStream cs = pdfDocument.openContentStream()) {
             var vieEntities = pdfDocument.getEntities();
+            var entities = pdfDocument.getLayers();
 
-                for (Map.Entry<UUID, Entity> e : vieEntities.entrySet()) {
-                    var entity = e.getValue();
+            for (Map.Entry<Integer, List<UUID>> e : entities.entrySet()) {
+                var entitiesUuid = e.getValue();
+                for(UUID id : entitiesUuid) {
+                    var entity = pdfDocument.getEntity(id).orElseThrow();
+
                     if (entity.hasRender()) {
                         entity.render(cs);
                     }
                 }
+
+            }
             cs.close();
             saveAtomic(doc, outputPath);
         } catch (IOException ex) {

@@ -78,11 +78,15 @@ public class PdfDocument {
     private Path pathOut;
     private PDDocument document;
     private boolean guideLines;
+    private Map<Integer, List<UUID>> layers;     // NEW: layer → ordered ids
+    private Map<UUID, Integer> depthById;
 
     public PdfDocument(PDPage page) {
         log.info("Created new pdf document {}", page.getBBox());
         this.page = page;
         document = new PDDocument();
+        layers  = new HashMap<>();
+        depthById = new HashMap<>();
         document.addPage(page);
     }
 

@@ -12,6 +12,7 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 
+import java.awt.*;
 import java.io.IOException;
 import java.util.EnumSet;
 import java.util.Optional;
@@ -49,14 +50,16 @@ public record Text(String text, TextStyle textStyle) implements Component, PdfRe
         TextStyle style = text.textStyle();
         float size = style != null ? style.size() : 12f;
         double textHeight = style.getTextHeight(text);
-        double different = textHeight >size ? textHeight-size : 0;
+        double different = textHeight > size ? textHeight - size : 0;
 
         log.debug("Rendering text '{}' at ({}, {}) size={}", text.text(), pos.x(), pos.y(), size);
+        log.debug("{}", style);
 
         cs.saveGraphicsState();
-        cs.setFont(style != null ? style.font() : new PDType1Font(Standard14Fonts.FontName.HELVETICA), size);
+        cs.setFont(style.font(), size);
+        cs.setNonStrokingColor(style.color());
         cs.beginText();
-        cs.newLineAtOffset((float) position.x(), (float) position.y()+ (float) different);
+        cs.newLineAtOffset((float) position.x(), (float) position.y() + (float) different);
         cs.showText(text.text());
         cs.endText();
         cs.restoreGraphicsState();

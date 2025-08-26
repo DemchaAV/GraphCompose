@@ -334,7 +334,10 @@ public class LayoutSystem implements System {
         Map<UUID, Visit> visit = new HashMap<>();
         //Definition all entities as Visit.UNSEEN
         entities.keySet().forEach(id -> visit.put(id, Visit.UNSEEN));
-        for (UUID root : roots) dfsLayout(root, null, entities, childrenByParents, visit);
+        var layers = pdfDocument.getLayers();    // NEW: layer → ordered ids
+        Map<UUID, Integer> depthById = pdfDocument.getDepthById();
+        int depth = 0;
+        for (UUID root : roots) dfsLayout(root, null, entities, childrenByParents, visit, layers, depthById, depth + 1);
 
         log.info("LayoutSystem: layout complete (nodes: {})", entities.size());
     }
@@ -344,7 +347,10 @@ public class LayoutSystem implements System {
             UUID parentId,
             Map<UUID, Entity> entities,
             Map<UUID, Set<UUID>> childrenByParent,
-            Map<UUID, Visit> visit
+            Map<UUID, Visit> visit,
+            Map<Integer, List<UUID>> layers,     // NEW: layer → ordered ids
+            Map<UUID, Integer> depthById,         // NEW: id → depth
+            int depth                              // NEW: current depth
     ) {
         Visit st = visit.getOrDefault(id, Visit.UNSEEN);
         if (st == Visit.DONE) return;
@@ -358,39 +364,47 @@ public class LayoutSystem implements System {
             return;
         }
 
-        double x = 0.0, y = 0.0;
+        // --- LAYERS COLLECTION ---
+        layers.computeIfAbsent(depth, k -> new ArrayList<>()).add(id);
+        depthById.put(id, depth);
+
+        // --- POSITION CALC ---
         ComputedPosition computedPosition;
         if (parentId != null) {
             Entity parent = entities.get(parentId);
             if (parent != null) {
                 computedPosition = ComputedPosition.from(childEntity, parent);
-
             } else {
-                // Родитель указан, но отсутствует → ведём себя как для корня
                 log.warn("LayoutSystem: parent {} of {} not found — using root positioning (Position + Margin)", parentId, id);
                 computedPosition = ComputedPosition.from(childEntity, pdfDocument.pageSize());
-
             }
         } else {
             computedPosition = ComputedPosition.from(childEntity, pdfDocument.pageSize());
         }
 
-        childEntity.addComponent(new ComputedPosition(x, y));
-
-        OuterBoxSize outerBoxSize = OuterBoxSize.from(childEntity).orElseThrow();
+        // IMPORTANT: store the computed position, not (0,0)
         childEntity.addComponent(computedPosition);
 
-        var boundingBox = new Placement(computedPosition.x(), computedPosition.y(), outerBoxSize.width(), outerBoxSize.height());
+        OuterBoxSize outerBoxSize = OuterBoxSize.from(childEntity).orElseThrow();
+        var boundingBox = new Placement(
+                computedPosition.x(),
+                computedPosition.y(),
+                outerBoxSize.width(),
+                outerBoxSize.height()
+        );
         childEntity.addComponent(boundingBox);
 
-
         if (log.isDebugEnabled()) {
-            String name = childEntity.getComponent(EntityName.class).map(EntityName::value).orElse(id.toString());
-            log.debug("LayoutSystem: {} positioned at ({}, {})", name, x, y);
+            String name = childEntity.getComponent(EntityName.class)
+                    .map(EntityName::value)
+                    .orElse(id.toString());
+            log.debug("LayoutSystem: {} [depth={}] positioned at ({}, {})",
+                    name, depth, computedPosition.x(), computedPosition.y());
         }
 
+        // DFS to children with depth+1
         for (UUID childId : childrenByParent.getOrDefault(id, Collections.emptySet())) {
-            dfsLayout(childId, id, entities, childrenByParent, visit);
+            dfsLayout(childId, id, entities, childrenByParent, visit, layers, depthById, depth + 1);
         }
 
         visit.put(id, Visit.DONE);

@@ -1,5 +1,6 @@
 package com.demcha.components.core;
 
+import com.demcha.core.PdfDocument;
 import com.demcha.system.PdfEntityRender;
 import com.demcha.system.PdfRender;
 import lombok.Getter;
@@ -25,6 +26,12 @@ public final class Entity implements PdfEntityRender {
         UUID uuid = UUID.randomUUID();
         log.info("Creating entity {}", uuid);
         this.id = uuid;
+    }
+    public static Entity createFrom(Entity entity) {
+        var newEntity = new Entity();
+        var values = new HashSet<>(entity.comps.values());
+        newEntity.populate(values);
+        return newEntity;
     }
 
     public String name() {
@@ -57,6 +64,26 @@ public final class Entity implements PdfEntityRender {
             } else {
                 log.warn("Rendering Component Already signed in {}", this);
                 throw new IllegalStateException("%sRendering Component Already signed in %s".formatted(c, this.render));
+            }
+
+        }
+        if (prev == null) {
+            log.debug("Added component {} to {}", c, this);
+        } else {
+            log.debug("Replaced component {} on {}", c, this);
+        }
+        return this;
+    }
+    public <T extends Component> Entity forceAddComponent(@NonNull T c) {
+        Class<? extends Component> key = c.getClass().asSubclass(Component.class);
+        Component prev = comps.put(key, c);
+        if (c instanceof EntityName en) this.name = en;
+        if (c instanceof PdfRender) {
+            if (render == null) {
+                this.render = (PdfRender) c;
+            } else {
+                log.warn("Rendering Component Already signed in {}", this);
+                this.render = (PdfRender) c;
             }
 
         }
@@ -107,7 +134,7 @@ public final class Entity implements PdfEntityRender {
 
         log.info("Populating entity UUID [{}] with\nComponents: {}", this, components);
         for (Component component : components) {
-            addComponentIfAbsent(component);
+            addComponent(component);
         }
         log.info("Created and populated entity {}", this);
         return this;
@@ -153,6 +180,13 @@ public final class Entity implements PdfEntityRender {
             throw new NoSuchElementException("No component rendered for " + this);
         }
         return render.render(this, cs,guideLines);
+    }
+
+    public Entity buildInto(PdfDocument pdfDocument) {
+        log.info("Put  {} in to the PdfDocument", this);
+
+        pdfDocument.putEntity(this);
+        return this;
     }
 }
 

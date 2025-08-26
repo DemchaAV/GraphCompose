@@ -3,8 +3,8 @@ package com.demcha.components.content.components_builders;
 import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
-import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.geometry.ContentSize;
+import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.layout.Layer;
 import com.demcha.components.layout.ParentComponent;
@@ -16,6 +16,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.LinkedHashMap;
+import java.util.Optional;
 
 /**
  * Base class for ECS-style builders that assemble a set of {@link Component}s
@@ -49,6 +50,7 @@ public abstract class ComponentBoxBuilder<B extends ComponentBoxBuilder<B>>
      * Holds exactly one component per runtime type (class).
      */
     protected final Entity entity = new Entity();
+    protected boolean filledHorizontally;
 
     /**
      * @return {@code this} as the concrete builder type (CRTP).
@@ -80,6 +82,7 @@ public abstract class ComponentBoxBuilder<B extends ComponentBoxBuilder<B>>
     public B parentComponent(ParentComponent parentComponent) {
         return addComponent(parentComponent);
     }
+
     public B parentComponent(@NonNull Entity parrentEntity) {
         return addComponent(new ParentComponent(parrentEntity));
     }
@@ -164,6 +167,12 @@ public abstract class ComponentBoxBuilder<B extends ComponentBoxBuilder<B>>
      */
     public Entity buildInto(PdfDocument pdfDocument) {
         log.info("Put  {} in to the PdfDocument", entity);
+        if(filledHorizontally) {
+            var component = this.entity.getComponent(ContentSize.class).orElseThrow();
+            var margin = this.entity.getComponent(Margin.class).orElse(Margin.zero());
+            var newComponentSize = new ContentSize(component.width()- margin.horizontal(), component.height());
+            this.entity.addComponent(newComponentSize);
+        }
         pdfDocument.putEntity(this.entity);
         return this.entity;
     }

@@ -54,6 +54,10 @@ public record ColorComponent(Color color) implements Component {
      */
     public static final Color LINK_HOVER = new Color(255, 87, 34);   // A bright orange
 
+    public static final Color TITLE = new Color(44, 62, 80);
+    public static final Color MODULE_TITLE = new Color(44, 128, 185);
+    public static final Color MODULE_LINE_TEXT = new Color(51, 51, 51);
+
     // --- UI Specific: Link Colors ---
     public ColorComponent(Color color) {
         this.color = color;

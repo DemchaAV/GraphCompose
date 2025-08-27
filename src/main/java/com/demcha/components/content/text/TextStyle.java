@@ -1,5 +1,6 @@
 package com.demcha.components.content.text;
 
+import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
@@ -9,6 +10,7 @@ import java.awt.*;
 import java.io.IOException;
 
 @Slf4j
+@Builder
 public record TextStyle(PDFont font, int size, TextDecoration decoration, Color color) {
 
     public static PDFont TIMES_ROMAN = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);

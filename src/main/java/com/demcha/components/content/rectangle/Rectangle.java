@@ -52,9 +52,8 @@ public record Rectangle(Radius radius) implements Component, PdfRender, GuidesRe
         var rp = RenderingPosition.from(e); // x/y с учетом margin/anchor и т.п.
 
         // Цвет: дефолт если компонента нет
-        Color color = e.getComponent(ColorComponent.class)
-                .map(ColorComponent::color)
-                .orElse(Color.BLACK);
+        FillColor fillColor = e.getComponent(FillColor.class).orElse(null);
+
 
         double x = rp.x();
         double y = rp.y();
@@ -64,38 +63,70 @@ public record Rectangle(Radius radius) implements Component, PdfRender, GuidesRe
 
         // Для заливки радиусного прямоугольника используем non-stroking color,
         // для контура — stroking color.
-        return renderRectangle(stroke, cs, radius, x, y, w, h, color);
+
+        return renderRectangle(cs,x, y, stroke, fillColor, radius, w, h);
     }
 
-    private boolean renderRectangle(Stroke stroke,
-                                    PDPageContentStream cs,
-                                    Radius r,
+    private boolean renderRectangle(PDPageContentStream cs,
                                     double x, double y,
-                                    double w, double h,
-                                    @NonNull Color color) throws IOException {
+                                    Stroke stroke,          // may be null
+                                    FillColor fillColor,    // may be null
+                                    Radius r,               // may be null
+                                    double w, double h) throws IOException {
 
         if (w <= 0 || h <= 0) {
             log.debug("Skip rectangle: non-positive size ({}, {})", w, h);
             return false;
         }
 
-        // Ограничим радиус для корректной геометрии
-        float radius = (r == null) ? 0f : (float) Math.min(r.radius(), Math.min(w, h) / 2.0);
+        final float fx = (float) x;
+        final float fy = (float) y;
+        final float fw = (float) w;
+        final float fh = (float) h;
 
-        log.debug("Rendering rectangle at ({}, {}) size=({}, {}) radius={}", x, y, w, h, radius);
+        // Clamp radius
+        final float radius = (r == null) ? 0f : (float) Math.min(r.radius(), Math.min(w, h) / 2.0);
+
+        // Determine paint ops (null-safe)
+        final boolean hasFill   = (fillColor != null && fillColor.color() != null);
+        final boolean hasStroke = (stroke != null && stroke.strokeColor() != null && stroke.width() > 0);
+
+        if (!hasFill && !hasStroke) {
+            log.debug("Skip rectangle: neither fill nor stroke specified.");
+            return false;
+        }
+
+        log.debug("Rendering rectangle at ({}, {}) size=({}, {}) radius={} fill={} stroke={}",
+                x, y, w, h, radius, hasFill, hasStroke);
 
         cs.saveGraphicsState();
         try {
+            // Configure stroke if needed
+            if (hasStroke) {
+                cs.setLineWidth((float) stroke.width());
+                    cs.setStrokingColor(stroke.strokeColor().color());
+                // Optional: nicer corners for thick borders
+                // cs.setLineJoin(1); // 0=miter (default), 1=round, 2=bevel
+            }
+
+            // Configure fill if needed
+            if (hasFill) {
+                cs.setNonStrokingColor(fillColor.color());
+            }
+
+            // Build path once
             if (radius > 0f) {
-                drawRoundedRectangle(cs, (float) x, (float) y, (float) w, (float) h, radius);
-                cs.setNonStrokingColor(color);
-                cs.fill(); // Можно добавить stroke() если нужен контур: cs.stroke();
+                drawRoundedRectangle(cs, fx, fy, fw, fh, radius); // must close the path inside
             } else {
-                if (stroke != null) {
-                    cs.setLineWidth((float) stroke.width());
-                }
-                cs.setStrokingColor(color);
-                cs.addRect((float) x, (float) y, (float) w, (float) h);
+                cs.addRect(fx, fy, fw, fh); // auto-closed
+            }
+
+            // Paint with correct operator
+            if (hasFill && hasStroke) {
+                cs.fillAndStroke();
+            } else if (hasFill) {
+                cs.fill();
+            } else { // hasStroke
                 cs.stroke();
             }
         } finally {
@@ -103,6 +134,7 @@ public record Rectangle(Radius radius) implements Component, PdfRender, GuidesRe
         }
         return true;
     }
+
 
     private void drawRoundedRectangle(PDPageContentStream contentStream,
                                       float x, float y, float width, float height, float radius) throws IOException {

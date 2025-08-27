@@ -16,7 +16,6 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.LinkedHashMap;
-import java.util.Optional;
 
 /**
  * Base class for ECS-style builders that assemble a set of {@link Component}s
@@ -167,10 +166,10 @@ public abstract class ComponentBoxBuilder<B extends ComponentBoxBuilder<B>>
      */
     public Entity buildInto(PdfDocument pdfDocument) {
         log.info("Put  {} in to the PdfDocument", entity);
-        if(filledHorizontally) {
+        if (filledHorizontally) {
             var component = this.entity.getComponent(ContentSize.class).orElseThrow();
             var margin = this.entity.getComponent(Margin.class).orElse(Margin.zero());
-            var newComponentSize = new ContentSize(component.width()- margin.horizontal(), component.height());
+            var newComponentSize = new ContentSize(component.width() - margin.horizontal(), component.height());
             this.entity.addComponent(newComponentSize);
         }
         pdfDocument.putEntity(this.entity);

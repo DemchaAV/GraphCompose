@@ -97,16 +97,15 @@ public class Main {
                 .entityName(new EntityName(nameButton))
                 .rectangle(new Rectangle(new Radius(5)))
                 .size(new ContentSize(80, 30))
-                .padding(Padding.of(10))
-                .stroke(new Stroke(12.0))
-                .strokeColor(new Color(133, 198, 198, 255))
+                .padding(Padding.of(5))
+                .fillColor(ColorComponent.ROYAL_BLUE)
                 .anchor(Anchor.topLeft())
-                .margin(Margin.all(15))
+                .margin(Margin.all(5))
                 .buildInto(document);
         var text3 = TextBuilder.create()
                 .entityName(new EntityName("Text"))
                 .parentComponent(button)
-                .text(new Text(TextButton, new TextStyle(TextStyle.HELVETICA, 12, TextDecoration.DEFAULT, ColorComponent.LINK_VISITED)))
+                .text(new Text(TextButton, new TextStyle(TextStyle.HELVETICA, 12, TextDecoration.DEFAULT, ColorComponent.MODULE_LINE_TEXT)))
                 .anchor(Anchor.center())
                 .buildInto(document);
         return button;

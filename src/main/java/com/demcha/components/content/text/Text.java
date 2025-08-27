@@ -7,6 +7,7 @@ import com.demcha.components.layout.GuidesRenderer;
 import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.system.PdfRender;
+import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
@@ -18,6 +19,7 @@ import java.util.EnumSet;
 import java.util.Optional;
 
 @Slf4j
+@Builder
 public record Text(String text, TextStyle textStyle) implements Component, PdfRender, GuidesRenderer {
     private static final EnumSet<Guide> DEFAULT_GUIDES =
             EnumSet.of(Guide.MARGIN, Guide.PADDING);

@@ -1,7 +1,7 @@
 package com.demcha.components.moduls;
 
 
-import com.demcha.components.containers.HContainerBuilderBase;
+import com.demcha.components.containers.HContainerBuilder;
 import com.demcha.components.containers.VContainerBuilder;
 import com.demcha.components.content.Stroke;
 import com.demcha.components.content.components_builders.RectangleBuilder;
@@ -66,7 +66,7 @@ public class ModuleBuilder extends Module {
             buttons.add(cell);
         }
 
-        var hContainer2 = new HContainerBuilderBase(pdfDocument).create(Align.middle(5))
+        var hContainer2 = new HContainerBuilder(pdfDocument).create(Align.middle(5))
                 .entityName(new EntityName(rowName))
                 .anchor(Anchor.centerBottom());
 
@@ -90,7 +90,7 @@ public class ModuleBuilder extends Module {
                 .margin(Margin.of(15))
                 .anchor(Anchor.centerBottom());
         for (int i = 0; i < rows; i++) {
-            vContainer.add(rowsList.get(i));
+            vContainer.addChild(rowsList.get(i));
         }
         return vContainer.build();
     }

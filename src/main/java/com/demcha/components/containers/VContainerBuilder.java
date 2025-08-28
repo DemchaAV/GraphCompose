@@ -1,91 +1,104 @@
 package com.demcha.components.containers;
-
-import com.demcha.components.containers.abstract_builders.EmptyBox;
+import com.demcha.components.containers.abstract_builders.AbstractContainerBuilder;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.OuterBoxSize;
-import com.demcha.components.layout.*;
+import com.demcha.components.layout.Align;
+import com.demcha.components.layout.Anchor;
+import com.demcha.components.layout.VAnchor;
 import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.style.Padding;
 import com.demcha.core.PdfDocument;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
 
 @Slf4j
-public class VContainerBuilder extends EmptyBox<VContainerBuilder> {
-    private static final EnumSet<GuidesRenderer.Guide> DEFAULT_GUIDES =
-            EnumSet.of(GuidesRenderer.Guide.MARGIN, GuidesRenderer.Guide.PADDING, GuidesRenderer.Guide.BOX);
-    public static Align DEFAUT_ALIGN = Align.middle(5);
-    private Align align;
-    private Set<Entity> entities;
-    private double position;
-    private double width = 0;
-
+public class VContainerBuilder extends AbstractContainerBuilder<VContainerBuilder> {
+    /**
+     * Constructs a new {@code VContainerBuilder} with the specified PDF document.
+     *
+     * @param document The {@link PdfDocument} to which the container will be added.
+     */
     public VContainerBuilder(PdfDocument document) {
         super(document);
-        this.entities = new HashSet<>();
     }
 
-
-    public VContainerBuilder create() {
-        autoName();
-        return create(DEFAUT_ALIGN);
-    }
-
+    /**
+     * Initializes the container builder with the specified alignment.
+     * This method calls the common creation logic from the superclass and then
+     * adds a {@link VContainer} component to the entity.
+     *
+     * @param align The {@link Align} strategy for arranging children within the container.
+     * @return This builder instance for method chaining.
+     */
+    @Override
     public VContainerBuilder create(Align align) {
-        this.align = align;
-        autoName();
-        entity.addComponent(new VContainer());
-        entity.addComponent(align);
+        super.create(align); // Call the common logic
+        entity.addComponent(new VContainer()); // Add the specific component
         return self();
     }
-
-
-    public VContainerBuilder add(Entity entity) {
-        entity.addComponent(new ParentComponent(this.entity));
-        entity.addComponent(new Anchor(align.h(), VAnchor.DEFAULT));
-        var position = entity.getComponent(Position.class).orElse(Position.zero());
-        entity.addComponent(new Position(position.x(), position.y() + this.position));
-        var outbox = OuterBoxSize.from(entity).orElseThrow();
-        this.width = Math.max(width, outbox.width());
-        this.position += outbox.height() + align.spacing();
-        log.debug("Added entity {} at position {}", entity, position);
-        entities.add(entity);
-        return this;
+    /**
+     * Updates the position of a child entity within the vertical container.
+     * <p>
+     * This method adds an {@link Anchor} component to the child, aligning it horizontally
+     * according to the container's alignment and vertically to {@link VAnchor#DEFAULT}.
+     * It then updates the child's vertical position based on the accumulated primary axis position.
+     * </p>
+     *
+     * @param child The {@link Entity} whose position needs to be updated.
+     */
+    @Override
+    protected void updateChildPosition(Entity child) {
+        child.addComponent(new Anchor(align.h(), VAnchor.DEFAULT));
+        Position currentPos = child.getComponent(Position.class).orElse(Position.zero());
+        // Position along the primary (vertical) axis
+        child.addComponent(new Position(currentPos.x(), currentPos.y() + this.primaryAxisPosition));
     }
-
-    private double entitiesHigh() {
-        double high = 0;
-        Iterator<Entity> iterator = entities.iterator(); // один итератор
-
+    /**
+     * Updates the dimensions of the container based on the dimensions of the current child entity.
+     * <p>
+     * For a vertical container:
+     * <ul>
+     *     <li>The primary axis (height) grows with each child's height plus the spacing defined by {@link Align}.</li>
+     *     <li>The secondary axis (width) is the maximum width among all children.</li>
+     * </ul>
+     * </p>
+     *
+     * @param child The {@link Entity} whose dimensions are used to update the container's overall size.
+     * @throws java.util.NoSuchElementException if the child entity does not have an {@link OuterBoxSize} component.
+     */
+    @Override
+    protected void updateContainerDimensions(Entity child) {
+        var outbox = OuterBoxSize.from(child).orElseThrow();
+        // Main axis grows with each child
+        this.primaryAxisPosition += outbox.height() + align.spacing();
+        // Cross axis is the max of all children
+        this.secondaryAxisMaxSize = Math.max(secondaryAxisMaxSize, outbox.width());
+    }
+    /**
+     * Calculates the total content size of the vertical container, including padding.
+     * <p>
+     * The content height is the sum of all child entities' heights plus the spacing between them.
+     * The content width is the maximum width of all children.
+     * Padding is then added to both dimensions.
+     * </p>
+     *
+     * @param padding The {@link Padding} to be applied to the content size.
+     * @return A {@link ContentSize} object representing the calculated dimensions of the container's content.
+     * @throws java.util.NoSuchElementException if any child entity does not have an {@link OuterBoxSize} component.
+     */
+    @Override
+    protected ContentSize calculateContentSize(Padding padding) {
+        double entitiesHeight = 0;
+        Iterator<Entity> iterator = entities.iterator();
         while (iterator.hasNext()) {
-            Entity entity = iterator.next();
-            var outBoxSize = OuterBoxSize.from(entity).orElseThrow();
-            high += outBoxSize.height();
-
-            // если ещё есть элементы, добавляем spacing
+            Entity current = iterator.next();
+            entitiesHeight += OuterBoxSize.from(current).orElseThrow().height();
             if (iterator.hasNext()) {
-                high += align.spacing();
+                entitiesHeight += align.spacing();
             }
         }
-        return high;
+        return new ContentSize(secondaryAxisMaxSize + padding.horizontal(), entitiesHeight + padding.vertical());
     }
-
-    @Override
-    public Entity build() {
-        Padding padding = entity.getComponent(Padding.class).orElse(Padding.zero());
-        var h = entitiesHigh();
-        entity.addComponent(new ContentSize(width + padding.horizontal(), h + padding.vertical()));
-        document.putEntity(entity);
-        for (Entity entity : entities) {
-            document.putEntity(entity);
-        }
-        return entity;
-    }
-
-
 }

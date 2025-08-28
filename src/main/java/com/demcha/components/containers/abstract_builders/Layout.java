@@ -91,6 +91,10 @@ public interface Layout<B> {
 
     Entity entity();
 
+    /**
+     * Returns the current builder instance, cast to its generic type {@code B}.
+     * This method is used to enable method chaining in subclasses.
+     */
     B self();
 
 }

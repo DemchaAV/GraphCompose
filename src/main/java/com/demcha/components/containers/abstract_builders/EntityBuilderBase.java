@@ -10,25 +10,31 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 public abstract class EntityBuilderBase<B> implements Layout<B>, EntityCreator<B> {
     /**
-     * The underlying {@link Entity} that this builder is constructing.
-     * This entity holds all the components added to the layout.
+     * Abstract base class for entity builders.
      * <p>
-     * It is initialized with a new {@link Entity} instance upon creation of the builder.
+     * This class provides common functionality for building {@link Entity} objects,
+     * including managing components, auto-naming entities, and providing a fluent API
+     * for method chaining.
      * </p>
      */
     @Getter
     protected Entity entity = new Entity();
 
     /**
-     * Creates the layout by assigning a default name to the underlying entity
-     * and returning the builder instance.
+     * Initializes the entity by assigning a default name and returns the builder instance.
+     * This method should be called to finalize the initial setup of the entity.
+     *
+     * @return The current builder instance, allowing for method chaining.
      */
-
     public B create() {
         autoName();
         return self();
     }
 
+    /**
+     * Automatically generates a default name for the underlying {@link Entity}.
+     * The name is composed of the simple class name of the builder and a truncated version of the entity's ID.
+     */
     protected void autoName() {
         String simpleName = self().getClass().getSimpleName();
         String defaultName = simpleName + entity.getId().toString().substring(0, 5);
@@ -37,8 +43,10 @@ public abstract class EntityBuilderBase<B> implements Layout<B>, EntityCreator<B
 
     /**
      * Adds a {@link Component} to the underlying {@link Entity}.
+     * This method allows for the composition of the entity with various functional components.
      *
-     * @param component The component to add.
+     * @param component The {@link Component} to be added to the entity.
+     * @return The current builder instance, allowing for method chaining.
      */
     @Override
     public B addComponent(Component component) {
@@ -49,7 +57,8 @@ public abstract class EntityBuilderBase<B> implements Layout<B>, EntityCreator<B
 
     /**
      * Returns the current builder instance, cast to its generic type {@code B}.
-     * This method is used to enable method chaining in subclasses.
+     * This method is crucial for enabling fluent API and method chaining in subclasses.
+     * @return The current builder instance.
      */
     public B self() {
         return (B) this;

@@ -1,6 +1,6 @@
 package com.demcha;
 
-import com.demcha.components.containers.HContainerBuilderBase;
+import com.demcha.components.containers.HContainerBuilder;
 import com.demcha.components.containers.VContainerBuilder;
 import com.demcha.components.content.components_builders.BodyBoxBuilder;
 import com.demcha.components.content.components_builders.RectangleBuilder;
@@ -61,7 +61,7 @@ public class Main {
         var button3 = createABottom("button1", "Arteme", document);
         var button4 = createABottom("button1", "Arteme", document);
 
-        var hContainer1 = new HContainerBuilderBase(document).create()
+        var hContainer1 = new HContainerBuilder(document).create()
                 .anchor(Anchor.centerBottom())
                 .padding(Padding.of(5))
                 .margin(Margin.of(6))
@@ -70,7 +70,7 @@ public class Main {
                 .addChild(button2)
                 .build();
 
-        var hContainer2 = new HContainerBuilderBase(document).create()
+        var hContainer2 = new HContainerBuilder(document).create()
                 .anchor(Anchor.centerBottom())
                 .padding(Padding.of(5))
                 .margin(Margin.of(6))
@@ -86,8 +86,8 @@ public class Main {
                 .entityName(new EntityName("VContainer"))
                 .margin(Margin.of(15))
                 .anchor(Anchor.centerBottom())
-                .add(hContainer1)
-                .add(hContainer2)
+                .addChild(hContainer1)
+                .addChild(hContainer2)
                 .build();
 
 

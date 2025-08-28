@@ -21,38 +21,93 @@ public abstract class ShapeBuilderBase<T> extends EmptyBox<T> {
         super(document);
     }
 
+    /**
+     * Adds a rectangle component to the shape.
+     *
+     * @param rectangle The Rectangle object to add.
+     * @return The current builder instance for method chaining.
+     */
     public T rectangle(Rectangle rectangle) {
         return addComponent(rectangle);
     }
 
+    /**
+     * Adds a default rectangle component to the shape.
+     *
+     * @return The current builder instance for method chaining.
+     */
     public T rectangle() {
         return rectangle(new Rectangle());
     }
 
+    /**
+     * Sets the corner radius for the shape.
+     *
+     * @param radius The Radius object specifying the corner radius.
+     * @return The current builder instance for method chaining.
+     */
     public T cornerRadius(Radius radius) {
         return addComponent(radius);
     }
 
+    /**
+     * Sets the corner radius for the shape using a double value.
+     *
+     * @param radius The double value representing the corner radius.
+     * @return The current builder instance for method chaining.
+     */
     public T cornerRadius(double radius) {
         return cornerRadius(new Radius(radius));
     }
 
+    /**
+     * Sets the fill color for the shape.
+     *
+     * @param fillColor The FillColor object to set.
+     * @return The current builder instance for method chaining.
+     */
     public T fillColor(FillColor fillColor) {
         return addComponent(fillColor);
     }
 
+    /**
+     * Sets the fill color for the shape using a AWT Color object.
+     *
+     * @param fillColor The AWT Color object to set.
+     * @return The current builder instance for method chaining.
+     */
     public T fillColor(Color fillColor) {
         return fillColor(new FillColor(fillColor));
     }
 
+    /**
+     * Sets the fill color for the shape using a ComponentColor object.
+     *
+     * @param fillColor The ComponentColor object to set.
+     * @return The current builder instance for method chaining.
+     */
     public T fillColor(ComponentColor fillColor) {
         return fillColor(new FillColor(fillColor));
     }
 
+    /**
+     * Sets the fill color for the shape using individual RGB integer values.
+     *
+     * @param r The red component (0-255).
+     * @param g The green component (0-255).
+     * @param b The blue component (0-255).
+     * @return The current builder instance for method chaining.
+     */
     public T fillColor(int r, int g, int b) {
         return fillColor(new FillColor(new Color(r, g, b)));
     }
 
+    /**
+     * Sets the stroke (outline) for the shape.
+     *
+     * @param stroke The Stroke object to set.
+     * @return The current builder instance for method chaining.
+     */
     public T stroke(Stroke stroke) {
         return addComponent(stroke);
     }

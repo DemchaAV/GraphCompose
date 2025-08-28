@@ -1,0 +1,53 @@
+2025-08-19 00:00:54 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 00:10:52 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 00:15:03 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 00:22:03 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 00:22:33 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 00:22:57 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 00:23:14 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 00:25:01 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 00:26:11 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 00:28:53 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 00:30:21 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 00:31:41 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 00:32:01 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 00:32:37 [main] WARN  com.demcha.system.LayoutSystem - LayoutSystem: alignment requested for child [Text Box] but parent [Rectangle] has no contentSize; centering skipped.
+2025-08-19 00:32:37 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 19:36:09 [main] WARN  com.demcha.system.LayoutSystem - LayoutSystem: alignment CENTER MIDDLE requested for f312aae4-bb63-4f49-9af8-8f9d636e5de9 but child has no contentSize; result may look like LEFT/TOP.
+2025-08-19 19:36:09 [main] WARN  com.demcha.system.LayoutSystem - LayoutSystem: alignment requested for child [Text Box] but parent [Rectangle] has no contentSize; centering skipped.
+2025-08-19 19:36:09 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 19:36:55 [main] WARN  com.demcha.system.LayoutSystem - LayoutSystem: alignment requested for child [Text Box] but parent [Rectangle] has no contentSize; centering skipped.
+2025-08-19 19:36:55 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 19:39:31 [main] WARN  com.demcha.system.LayoutSystem - LayoutSystem: alignment requested for child [Text Box] but parent [Rectangle] has no contentSize; centering skipped.
+2025-08-19 19:39:31 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 19:41:28 [main] WARN  com.demcha.system.LayoutSystem - LayoutSystem: alignment requested for child [Text Box] but parent [Rectangle] has no contentSize; centering skipped.
+2025-08-19 19:41:28 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 19:49:16 [main] WARN  com.demcha.system.LayoutSystem - LayoutSystem: alignment requested for child [Text Box] but parent [Rectangle] has no content contentSize; alignment skipped.
+2025-08-19 19:49:16 [main] WARN  com.demcha.system.LayoutSystem - LayoutSystem: alignment requested for child [Text Box] but parent [Rectangle] has no content contentSize; alignment skipped.
+2025-08-19 19:49:17 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 19:52:03 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 19:53:33 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 19:53:55 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 19:54:14 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 19:54:30 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 19:54:41 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 19:55:16 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 19:55:34 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 20:00:26 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 20:18:17 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 20:18:48 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 20:19:24 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 20:20:03 [main] WARN  o.apache.pdfbox.pdmodel.PDDocument - You are overwriting the existing file output.pdf, this will produce a corrupted file if you're also reading from it
+2025-08-19 20:45:43 [main] WARN  com.demcha.system.RenderingSystem - [DIAG] Padding equals Margin on entity Entity: "Rectangle" UUID: [03947124-3b22-40f4-a1a3-5cce35899977]; check component wiring. padH=0.0, padV=0.0, marginH=0.0, marginV=0.0
+2025-08-19 20:46:05 [main] WARN  com.demcha.system.RenderingSystem - [DIAG] Padding equals Margin on entity Entity: "Rectangle" UUID: [5182cf26-84e7-41ba-a8ca-16242a26f699]; check component wiring. padH=0.0, padV=0.0, marginH=0.0, marginV=0.0
+2025-08-19 20:47:46 [main] WARN  com.demcha.system.RenderingSystem - [DIAG] Padding equals Margin on entity Entity: "Rectangle" UUID: [78943150-77f5-46a4-992e-d9481e26b84c]; check component wiring. padH=0.0, padV=0.0, marginH=0.0, marginV=0.0
+2025-08-19 20:48:38 [main] WARN  com.demcha.system.RenderingSystem - [DIAG] Padding equals Margin on entity Entity: "Rectangle" UUID: [ab49fe86-2187-4dc9-944d-94da3c6340a1]; check component wiring. padH=0.0, padV=0.0, marginH=0.0, marginV=0.0
+2025-08-19 20:48:57 [main] WARN  com.demcha.system.RenderingSystem - [DIAG] Padding equals Margin on entity Entity: "Rectangle" UUID: [08c0b501-fed3-4047-b055-5d4efa8293f6]; check component wiring. padH=0.0, padV=0.0, marginH=0.0, marginV=0.0
+2025-08-19 20:49:30 [main] WARN  com.demcha.system.RenderingSystem - [DIAG] Padding equals Margin on entity Entity: "Rectangle" UUID: [8b27d267-c7cb-4052-89f2-f08ad966717b]; check component wiring. padH=0.0, padV=0.0, marginH=0.0, marginV=0.0
+2025-08-19 20:50:19 [main] WARN  com.demcha.system.RenderingSystem - [DIAG] Padding equals Margin on entity Entity: "Rectangle" UUID: [e97a67bf-5f8b-45ad-a896-39cf07dbcf39]; check component wiring. padH=0.0, padV=0.0, marginH=0.0, marginV=0.0
+2025-08-19 20:51:51 [main] WARN  com.demcha.system.RenderingSystem - [DIAG] Padding equals Margin on entity Entity: "Rectangle" UUID: [3a3cb47b-4df7-4e7d-952c-aa2a91ad60cb]; check component wiring. padH=0.0, padV=0.0, marginH=0.0, marginV=0.0
+2025-08-19 20:52:16 [main] WARN  com.demcha.system.RenderingSystem - [DIAG] Padding equals Margin on entity Entity: "Rectangle1" UUID: [c1544a30-fdab-4d14-83c5-3410b9c4d184]; check component wiring. padH=0.0, padV=0.0, marginH=0.0, marginV=0.0
+2025-08-19 20:55:57 [main] WARN  com.demcha.system.RenderingSystem - [DIAG] Padding equals Margin on entity Entity: "Rectangle1" UUID: [335bd1b1-e394-4858-82fc-881c7869e3c3]; check component wiring. padH=0.0, padV=0.0, marginH=0.0, marginV=0.0
+2025-08-19 21:15:03 [main] WARN  com.demcha.system.RenderingSystem - [DIAG] Padding equals Margin on entity Entity: "Rectangle1" UUID: [04bc5b61-2956-40cb-8ae7-41771d53264a]; check component wiring. padH=0.0, padV=0.0, marginH=0.0, marginV=0.0
+2025-08-19 21:44:27 [main] WARN  com.demcha.system.RenderingSystem - [DIAG] Padding equals Margin on entity Entity: "Rectangle1" UUID: [4825612a-cb1d-429c-93df-06367c68d5e8]; check component wiring. padH=0.0, padV=0.0, marginH=0.0, marginV=0.0
+2025-08-19 21:45:01 [main] WARN  com.demcha.system.RenderingSystem - [DIAG] Padding equals Margin on entity Entity: "Rectangle1" UUID: [a9b9f64e-9b5c-4f31-b4ed-72d800bd3f6d]; check component wiring. padH=0.0, padV=0.0, marginH=0.0, marginV=0.0

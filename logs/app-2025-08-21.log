@@ -1,0 +1,513 @@
+2025-08-21 13:32:11 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 13:32:11 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 13:32:11 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 13:32:11 [main] INFO  com.demcha.components.core.Entity - Creating entity ddec0c14-e1d4-45d1-8ddc-9eef37de665b
+2025-08-21 13:32:11 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Putting Entity: "Rectangle1" UUID: [ddec0c14-e1d4-45d1-8ddc-9eef37de665b]
+2025-08-21 13:32:11 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id ddec0c14-e1d4-45d1-8ddc-9eef37de665b
+2025-08-21 13:32:11 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  ddec0c14-e1d4-45d1-8ddc-9eef37de665b
+2025-08-21 13:32:11 [main] INFO  com.demcha.components.core.Entity - Creating entity ff37b052-822a-4a65-843e-c60f20379d76
+2025-08-21 13:32:12 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Putting Entity: "Text Box" UUID: [ff37b052-822a-4a65-843e-c60f20379d76]
+2025-08-21 13:32:12 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id ff37b052-822a-4a65-843e-c60f20379d76
+2025-08-21 13:32:12 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  ff37b052-822a-4a65-843e-c60f20379d76
+2025-08-21 13:32:12 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 13:32:12 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 13:32:12 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 13:32:12 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  ff37b052-822a-4a65-843e-c60f20379d76
+2025-08-21 13:32:12 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: normalizing box contentSize
+2025-08-21 13:32:12 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  ddec0c14-e1d4-45d1-8ddc-9eef37de665b
+2025-08-21 13:32:12 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  ff37b052-822a-4a65-843e-c60f20379d76
+2025-08-21 13:32:12 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: layout complete (nodes: 2)
+2025-08-21 13:35:45 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 13:35:46 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 13:35:46 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 13:35:46 [main] INFO  com.demcha.components.core.Entity - Creating entity 657c9f01-073d-4206-9919-aa9ba0b9a683
+2025-08-21 13:35:46 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Putting Entity: "Rectangle1" UUID: [657c9f01-073d-4206-9919-aa9ba0b9a683]
+2025-08-21 13:35:46 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 657c9f01-073d-4206-9919-aa9ba0b9a683
+2025-08-21 13:35:46 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  657c9f01-073d-4206-9919-aa9ba0b9a683
+2025-08-21 13:35:46 [main] INFO  com.demcha.components.core.Entity - Creating entity 517b7bed-8ce6-4d46-9ebe-d01450dd744d
+2025-08-21 13:35:46 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Putting Entity: "Text Box" UUID: [517b7bed-8ce6-4d46-9ebe-d01450dd744d]
+2025-08-21 13:35:46 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 517b7bed-8ce6-4d46-9ebe-d01450dd744d
+2025-08-21 13:35:46 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  517b7bed-8ce6-4d46-9ebe-d01450dd744d
+2025-08-21 13:35:46 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 13:35:46 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 13:35:46 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 13:35:46 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  517b7bed-8ce6-4d46-9ebe-d01450dd744d
+2025-08-21 13:35:46 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: normalizing box contentSize
+2025-08-21 13:35:46 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  657c9f01-073d-4206-9919-aa9ba0b9a683
+2025-08-21 13:35:46 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  517b7bed-8ce6-4d46-9ebe-d01450dd744d
+2025-08-21 13:35:46 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: layout complete (nodes: 2)
+2025-08-21 13:36:20 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 13:36:20 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 13:36:20 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 13:36:20 [main] INFO  com.demcha.components.core.Entity - Creating entity 26ef08eb-0515-40ac-ac24-c76497ac8d3a
+2025-08-21 13:36:20 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Putting Entity: "Rectangle1" UUID: [26ef08eb-0515-40ac-ac24-c76497ac8d3a]
+2025-08-21 13:36:20 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 26ef08eb-0515-40ac-ac24-c76497ac8d3a
+2025-08-21 13:36:20 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  26ef08eb-0515-40ac-ac24-c76497ac8d3a
+2025-08-21 13:36:20 [main] INFO  com.demcha.components.core.Entity - Creating entity a273b4f6-d975-4055-a5b3-2158801d41b5
+2025-08-21 13:36:20 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Putting Entity: "Text Box" UUID: [a273b4f6-d975-4055-a5b3-2158801d41b5]
+2025-08-21 13:36:20 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id a273b4f6-d975-4055-a5b3-2158801d41b5
+2025-08-21 13:36:20 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  a273b4f6-d975-4055-a5b3-2158801d41b5
+2025-08-21 13:36:20 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 13:36:20 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 13:36:20 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 13:36:20 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  a273b4f6-d975-4055-a5b3-2158801d41b5
+2025-08-21 13:36:20 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: normalizing box contentSize
+2025-08-21 13:36:20 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  26ef08eb-0515-40ac-ac24-c76497ac8d3a
+2025-08-21 13:36:20 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  a273b4f6-d975-4055-a5b3-2158801d41b5
+2025-08-21 13:36:20 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: layout complete (nodes: 2)
+2025-08-21 13:39:29 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 13:39:29 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 13:39:29 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 13:39:29 [main] INFO  com.demcha.components.core.Entity - Creating entity 3b5198d0-379e-49a6-89b4-cee2ba876b6a
+2025-08-21 13:39:29 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Putting Entity: "BoxContainer" UUID: [3b5198d0-379e-49a6-89b4-cee2ba876b6a]
+2025-08-21 13:39:29 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 3b5198d0-379e-49a6-89b4-cee2ba876b6a
+2025-08-21 13:39:29 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  3b5198d0-379e-49a6-89b4-cee2ba876b6a
+2025-08-21 13:39:29 [main] INFO  com.demcha.components.core.Entity - Creating entity b201bc74-aa7f-4df9-a4e3-7354a3df39f0
+2025-08-21 13:39:29 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Putting Entity: "Rectangle1" UUID: [b201bc74-aa7f-4df9-a4e3-7354a3df39f0]
+2025-08-21 13:39:29 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id b201bc74-aa7f-4df9-a4e3-7354a3df39f0
+2025-08-21 13:39:29 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  b201bc74-aa7f-4df9-a4e3-7354a3df39f0
+2025-08-21 13:39:29 [main] INFO  com.demcha.components.core.Entity - Creating entity 12536b73-a2cc-41e9-8435-42ab910d056a
+2025-08-21 13:39:29 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Putting Entity: "ChildBox" UUID: [12536b73-a2cc-41e9-8435-42ab910d056a]
+2025-08-21 13:39:29 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 12536b73-a2cc-41e9-8435-42ab910d056a
+2025-08-21 13:39:29 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  12536b73-a2cc-41e9-8435-42ab910d056a
+2025-08-21 13:39:29 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 13:39:29 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 13:39:29 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 13:41:35 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 13:41:35 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 13:41:35 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 13:41:35 [main] INFO  com.demcha.components.core.Entity - Creating entity 250c0a90-e435-400a-a72c-5127056099ed
+2025-08-21 13:41:35 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Putting Entity: "BoxContainer" UUID: [250c0a90-e435-400a-a72c-5127056099ed]
+2025-08-21 13:41:35 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 250c0a90-e435-400a-a72c-5127056099ed
+2025-08-21 13:41:35 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  250c0a90-e435-400a-a72c-5127056099ed
+2025-08-21 13:41:35 [main] INFO  com.demcha.components.core.Entity - Creating entity 868fef6b-feba-4a5d-bb01-74b68dea348b
+2025-08-21 13:41:35 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Putting Entity: "Rectangle1" UUID: [868fef6b-feba-4a5d-bb01-74b68dea348b]
+2025-08-21 13:41:35 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 868fef6b-feba-4a5d-bb01-74b68dea348b
+2025-08-21 13:41:35 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  868fef6b-feba-4a5d-bb01-74b68dea348b
+2025-08-21 13:41:35 [main] INFO  com.demcha.components.core.Entity - Creating entity 7b3dce30-e4a7-40bd-b10d-840515db657c
+2025-08-21 13:41:35 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Putting Entity: "ChildBox" UUID: [7b3dce30-e4a7-40bd-b10d-840515db657c]
+2025-08-21 13:41:35 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 7b3dce30-e4a7-40bd-b10d-840515db657c
+2025-08-21 13:41:35 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  7b3dce30-e4a7-40bd-b10d-840515db657c
+2025-08-21 13:41:35 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 13:41:35 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 13:41:35 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 13:43:11 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 13:43:11 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 13:43:11 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 13:43:11 [main] INFO  com.demcha.components.core.Entity - Creating entity 9757bd01-70e2-4594-98a9-8e030afa3288
+2025-08-21 13:43:11 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [9757bd01-70e2-4594-98a9-8e030afa3288] in to the PdfDocument
+2025-08-21 13:43:11 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 9757bd01-70e2-4594-98a9-8e030afa3288
+2025-08-21 13:43:11 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  9757bd01-70e2-4594-98a9-8e030afa3288
+2025-08-21 13:43:11 [main] INFO  com.demcha.components.core.Entity - Creating entity ccaf935e-b196-4210-8f1c-8fa0acd4e163
+2025-08-21 13:43:11 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "Rectangle1" UUID: [ccaf935e-b196-4210-8f1c-8fa0acd4e163] in to the PdfDocument
+2025-08-21 13:43:11 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id ccaf935e-b196-4210-8f1c-8fa0acd4e163
+2025-08-21 13:43:11 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  ccaf935e-b196-4210-8f1c-8fa0acd4e163
+2025-08-21 13:43:11 [main] INFO  com.demcha.components.core.Entity - Creating entity 268ecbe5-66a7-4232-9347-b295128d0708
+2025-08-21 13:43:11 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [268ecbe5-66a7-4232-9347-b295128d0708] in to the PdfDocument
+2025-08-21 13:43:11 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 268ecbe5-66a7-4232-9347-b295128d0708
+2025-08-21 13:43:11 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  268ecbe5-66a7-4232-9347-b295128d0708
+2025-08-21 13:43:11 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 13:43:11 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 13:43:11 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 13:43:47 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 13:43:47 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 13:43:47 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 13:43:47 [main] INFO  com.demcha.components.core.Entity - Creating entity 717acfd9-9ea4-406a-88b1-fdb4f199fe02
+2025-08-21 13:43:47 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [717acfd9-9ea4-406a-88b1-fdb4f199fe02] in to the PdfDocument
+2025-08-21 13:43:47 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 717acfd9-9ea4-406a-88b1-fdb4f199fe02
+2025-08-21 13:43:47 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  717acfd9-9ea4-406a-88b1-fdb4f199fe02
+2025-08-21 13:43:47 [main] INFO  com.demcha.components.core.Entity - Creating entity eef519bf-5f25-4dea-9db3-483551285e81
+2025-08-21 13:43:47 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [eef519bf-5f25-4dea-9db3-483551285e81] in to the PdfDocument
+2025-08-21 13:43:47 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id eef519bf-5f25-4dea-9db3-483551285e81
+2025-08-21 13:43:47 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  eef519bf-5f25-4dea-9db3-483551285e81
+2025-08-21 13:43:47 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 13:43:47 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 13:43:47 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 13:48:51 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 13:48:51 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 13:48:51 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 13:48:51 [main] INFO  com.demcha.components.core.Entity - Creating entity ded2db72-ca7c-41ef-94b8-46b558e6907b
+2025-08-21 13:48:51 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [ded2db72-ca7c-41ef-94b8-46b558e6907b] in to the PdfDocument
+2025-08-21 13:48:51 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id ded2db72-ca7c-41ef-94b8-46b558e6907b
+2025-08-21 13:48:51 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  ded2db72-ca7c-41ef-94b8-46b558e6907b
+2025-08-21 13:48:51 [main] INFO  com.demcha.components.core.Entity - Creating entity 50e78e9f-bc4a-47a3-8a1d-334354e19b54
+2025-08-21 13:48:51 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [50e78e9f-bc4a-47a3-8a1d-334354e19b54] in to the PdfDocument
+2025-08-21 13:48:51 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 50e78e9f-bc4a-47a3-8a1d-334354e19b54
+2025-08-21 13:48:51 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  50e78e9f-bc4a-47a3-8a1d-334354e19b54
+2025-08-21 13:48:51 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 13:48:51 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 13:48:51 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 13:51:52 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 13:51:52 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 13:51:52 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 13:51:52 [main] INFO  com.demcha.components.core.Entity - Creating entity 342233d9-5ab9-406a-959f-158f8bfc0e91
+2025-08-21 13:51:52 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [342233d9-5ab9-406a-959f-158f8bfc0e91] in to the PdfDocument
+2025-08-21 13:51:52 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 342233d9-5ab9-406a-959f-158f8bfc0e91
+2025-08-21 13:51:52 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  342233d9-5ab9-406a-959f-158f8bfc0e91
+2025-08-21 13:51:52 [main] INFO  com.demcha.components.core.Entity - Creating entity 3db2ddd1-dd75-4de9-bedb-f031fafb9386
+2025-08-21 13:51:52 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [3db2ddd1-dd75-4de9-bedb-f031fafb9386] in to the PdfDocument
+2025-08-21 13:51:52 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 3db2ddd1-dd75-4de9-bedb-f031fafb9386
+2025-08-21 13:51:52 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  3db2ddd1-dd75-4de9-bedb-f031fafb9386
+2025-08-21 13:51:52 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 13:51:52 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 13:51:52 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 13:53:06 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 13:53:06 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 13:53:06 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 13:53:06 [main] INFO  com.demcha.components.core.Entity - Creating entity 87ab5928-d11e-4e52-b4f5-fb444d6937bf
+2025-08-21 13:53:06 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [87ab5928-d11e-4e52-b4f5-fb444d6937bf] in to the PdfDocument
+2025-08-21 13:53:06 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 87ab5928-d11e-4e52-b4f5-fb444d6937bf
+2025-08-21 13:53:06 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  87ab5928-d11e-4e52-b4f5-fb444d6937bf
+2025-08-21 13:53:06 [main] INFO  com.demcha.components.core.Entity - Creating entity b7f29f9b-40e7-4258-9664-1dfd5aceb680
+2025-08-21 13:53:06 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [b7f29f9b-40e7-4258-9664-1dfd5aceb680] in to the PdfDocument
+2025-08-21 13:53:06 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id b7f29f9b-40e7-4258-9664-1dfd5aceb680
+2025-08-21 13:53:06 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  b7f29f9b-40e7-4258-9664-1dfd5aceb680
+2025-08-21 13:53:49 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 13:53:49 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 13:53:49 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 13:53:51 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 13:53:51 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 13:53:51 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 13:53:51 [main] INFO  com.demcha.components.core.Entity - Creating entity 487bd7e6-8f27-40bd-8e80-253cd8ab4e34
+2025-08-21 13:53:51 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [487bd7e6-8f27-40bd-8e80-253cd8ab4e34] in to the PdfDocument
+2025-08-21 13:53:51 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 487bd7e6-8f27-40bd-8e80-253cd8ab4e34
+2025-08-21 13:53:51 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  487bd7e6-8f27-40bd-8e80-253cd8ab4e34
+2025-08-21 13:53:51 [main] INFO  com.demcha.components.core.Entity - Creating entity 35fd08ce-53ae-45b0-aed6-304132dd51f8
+2025-08-21 13:53:51 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [35fd08ce-53ae-45b0-aed6-304132dd51f8] in to the PdfDocument
+2025-08-21 13:53:51 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 35fd08ce-53ae-45b0-aed6-304132dd51f8
+2025-08-21 13:53:51 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  35fd08ce-53ae-45b0-aed6-304132dd51f8
+2025-08-21 13:53:57 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 13:53:57 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 13:53:57 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 13:54:19 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 13:54:19 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 13:54:19 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 13:54:19 [main] INFO  com.demcha.components.core.Entity - Creating entity eeea9f02-f57c-4f36-848d-830882d814e3
+2025-08-21 13:54:19 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [eeea9f02-f57c-4f36-848d-830882d814e3] in to the PdfDocument
+2025-08-21 13:54:19 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id eeea9f02-f57c-4f36-848d-830882d814e3
+2025-08-21 13:54:19 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  eeea9f02-f57c-4f36-848d-830882d814e3
+2025-08-21 13:54:19 [main] INFO  com.demcha.components.core.Entity - Creating entity bceb07da-b537-45df-9d3d-a8b461632268
+2025-08-21 13:54:19 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [bceb07da-b537-45df-9d3d-a8b461632268] in to the PdfDocument
+2025-08-21 13:54:19 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id bceb07da-b537-45df-9d3d-a8b461632268
+2025-08-21 13:54:19 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  bceb07da-b537-45df-9d3d-a8b461632268
+2025-08-21 13:54:51 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 13:54:51 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 13:54:51 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 13:54:51 [main] INFO  com.demcha.components.core.Entity - Creating entity a82c5792-66e1-43d9-9a31-921cd408a651
+2025-08-21 13:54:51 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [a82c5792-66e1-43d9-9a31-921cd408a651] in to the PdfDocument
+2025-08-21 13:54:51 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id a82c5792-66e1-43d9-9a31-921cd408a651
+2025-08-21 13:54:51 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  a82c5792-66e1-43d9-9a31-921cd408a651
+2025-08-21 13:54:51 [main] INFO  com.demcha.components.core.Entity - Creating entity b87dcbd4-c1be-40ad-abb9-33690d572827
+2025-08-21 13:54:51 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [b87dcbd4-c1be-40ad-abb9-33690d572827] in to the PdfDocument
+2025-08-21 13:54:51 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id b87dcbd4-c1be-40ad-abb9-33690d572827
+2025-08-21 13:54:51 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  b87dcbd4-c1be-40ad-abb9-33690d572827
+2025-08-21 13:55:35 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 13:55:35 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 13:55:35 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 13:55:35 [main] INFO  com.demcha.components.core.Entity - Creating entity 840f5784-3e0f-4963-b29e-594cb7b99705
+2025-08-21 13:55:35 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [840f5784-3e0f-4963-b29e-594cb7b99705] in to the PdfDocument
+2025-08-21 13:55:35 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 840f5784-3e0f-4963-b29e-594cb7b99705
+2025-08-21 13:55:35 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  840f5784-3e0f-4963-b29e-594cb7b99705
+2025-08-21 13:55:35 [main] INFO  com.demcha.components.core.Entity - Creating entity 0a79c0c3-578a-4aa8-a7d3-a003926ded43
+2025-08-21 13:55:35 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [0a79c0c3-578a-4aa8-a7d3-a003926ded43] in to the PdfDocument
+2025-08-21 13:55:35 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 0a79c0c3-578a-4aa8-a7d3-a003926ded43
+2025-08-21 13:55:35 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  0a79c0c3-578a-4aa8-a7d3-a003926ded43
+2025-08-21 13:55:35 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 13:55:35 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 13:55:35 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 13:55:55 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 13:55:55 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 13:55:55 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 13:55:55 [main] INFO  com.demcha.components.core.Entity - Creating entity 087b0d81-c577-48e6-a84c-81bfd4927242
+2025-08-21 13:55:55 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [087b0d81-c577-48e6-a84c-81bfd4927242] in to the PdfDocument
+2025-08-21 13:55:55 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 087b0d81-c577-48e6-a84c-81bfd4927242
+2025-08-21 13:55:55 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  087b0d81-c577-48e6-a84c-81bfd4927242
+2025-08-21 13:55:55 [main] INFO  com.demcha.components.core.Entity - Creating entity adb1fe1e-daed-4e35-b8e9-81bbc3daf708
+2025-08-21 13:55:55 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [adb1fe1e-daed-4e35-b8e9-81bbc3daf708] in to the PdfDocument
+2025-08-21 13:55:55 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id adb1fe1e-daed-4e35-b8e9-81bbc3daf708
+2025-08-21 13:55:55 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  adb1fe1e-daed-4e35-b8e9-81bbc3daf708
+2025-08-21 13:56:10 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 13:56:10 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 13:56:10 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 13:56:10 [main] INFO  com.demcha.components.core.Entity - Creating entity 046e7be4-2097-4630-a0dc-57224dfbc599
+2025-08-21 13:56:10 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [046e7be4-2097-4630-a0dc-57224dfbc599] in to the PdfDocument
+2025-08-21 13:56:10 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 046e7be4-2097-4630-a0dc-57224dfbc599
+2025-08-21 13:56:10 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  046e7be4-2097-4630-a0dc-57224dfbc599
+2025-08-21 13:56:10 [main] INFO  com.demcha.components.core.Entity - Creating entity 98bec4a8-467d-4906-8c8c-e94a6ff78f81
+2025-08-21 13:56:10 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [98bec4a8-467d-4906-8c8c-e94a6ff78f81] in to the PdfDocument
+2025-08-21 13:56:10 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 98bec4a8-467d-4906-8c8c-e94a6ff78f81
+2025-08-21 13:56:10 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  98bec4a8-467d-4906-8c8c-e94a6ff78f81
+2025-08-21 13:56:10 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 13:56:10 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 13:56:10 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 13:56:58 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 13:56:58 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 13:56:58 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 13:56:58 [main] INFO  com.demcha.components.core.Entity - Creating entity 40e4d98c-5fb2-44ca-9aad-8ff743d0b5e0
+2025-08-21 13:56:58 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [40e4d98c-5fb2-44ca-9aad-8ff743d0b5e0] in to the PdfDocument
+2025-08-21 13:56:58 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 40e4d98c-5fb2-44ca-9aad-8ff743d0b5e0
+2025-08-21 13:56:58 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  40e4d98c-5fb2-44ca-9aad-8ff743d0b5e0
+2025-08-21 13:56:58 [main] INFO  com.demcha.components.core.Entity - Creating entity 075e89f1-7b31-4a6f-a3ea-fee3fac29861
+2025-08-21 13:56:58 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [075e89f1-7b31-4a6f-a3ea-fee3fac29861] in to the PdfDocument
+2025-08-21 13:56:58 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 075e89f1-7b31-4a6f-a3ea-fee3fac29861
+2025-08-21 13:56:58 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  075e89f1-7b31-4a6f-a3ea-fee3fac29861
+2025-08-21 13:56:58 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 13:56:58 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 13:56:58 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 14:00:48 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 14:00:48 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 14:00:48 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 14:00:48 [main] INFO  com.demcha.components.core.Entity - Creating entity abe8c738-6dcc-4dc9-b4ba-45233215bd21
+2025-08-21 14:00:48 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [abe8c738-6dcc-4dc9-b4ba-45233215bd21] in to the PdfDocument
+2025-08-21 14:00:48 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id abe8c738-6dcc-4dc9-b4ba-45233215bd21
+2025-08-21 14:00:48 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  abe8c738-6dcc-4dc9-b4ba-45233215bd21
+2025-08-21 14:00:48 [main] INFO  com.demcha.components.core.Entity - Creating entity b548ee56-6066-4ad2-8a4d-cd53f13cc5b9
+2025-08-21 14:00:48 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [b548ee56-6066-4ad2-8a4d-cd53f13cc5b9] in to the PdfDocument
+2025-08-21 14:00:48 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id b548ee56-6066-4ad2-8a4d-cd53f13cc5b9
+2025-08-21 14:00:48 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  b548ee56-6066-4ad2-8a4d-cd53f13cc5b9
+2025-08-21 14:00:48 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 14:00:48 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 14:00:48 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 14:00:48 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  b548ee56-6066-4ad2-8a4d-cd53f13cc5b9
+2025-08-21 14:00:48 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: normalizing box contentSize
+2025-08-21 14:00:48 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  abe8c738-6dcc-4dc9-b4ba-45233215bd21
+2025-08-21 14:00:48 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  b548ee56-6066-4ad2-8a4d-cd53f13cc5b9
+2025-08-21 14:00:48 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: layout complete (nodes: 2)
+2025-08-21 14:00:48 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 14:00:48 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 14:00:48 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 14:00:48 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  b548ee56-6066-4ad2-8a4d-cd53f13cc5b9
+2025-08-21 14:00:48 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: normalizing box contentSize
+2025-08-21 14:00:48 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  abe8c738-6dcc-4dc9-b4ba-45233215bd21
+2025-08-21 14:00:48 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  b548ee56-6066-4ad2-8a4d-cd53f13cc5b9
+2025-08-21 14:00:48 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: layout complete (nodes: 2)
+2025-08-21 14:02:27 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 14:02:27 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 14:02:27 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 14:02:27 [main] INFO  com.demcha.components.core.Entity - Creating entity 5505d4b1-fc94-4588-b9a1-916327f3a763
+2025-08-21 14:02:27 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [5505d4b1-fc94-4588-b9a1-916327f3a763] in to the PdfDocument
+2025-08-21 14:02:27 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 5505d4b1-fc94-4588-b9a1-916327f3a763
+2025-08-21 14:02:27 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  5505d4b1-fc94-4588-b9a1-916327f3a763
+2025-08-21 14:02:27 [main] INFO  com.demcha.components.core.Entity - Creating entity de385a0e-1366-4f68-9ac9-49438d9f14f0
+2025-08-21 14:02:27 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [de385a0e-1366-4f68-9ac9-49438d9f14f0] in to the PdfDocument
+2025-08-21 14:02:27 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id de385a0e-1366-4f68-9ac9-49438d9f14f0
+2025-08-21 14:02:27 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  de385a0e-1366-4f68-9ac9-49438d9f14f0
+2025-08-21 14:02:27 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 14:02:27 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 14:02:27 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 14:02:27 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  de385a0e-1366-4f68-9ac9-49438d9f14f0
+2025-08-21 14:02:27 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: normalizing box contentSize
+2025-08-21 14:02:27 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  5505d4b1-fc94-4588-b9a1-916327f3a763
+2025-08-21 14:02:27 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  de385a0e-1366-4f68-9ac9-49438d9f14f0
+2025-08-21 14:02:27 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: layout complete (nodes: 2)
+2025-08-21 14:06:10 [main] INFO  com.demcha.components.core.Entity - Creating entity f38923de-a4d0-421c-b96e-429a16a15e07
+2025-08-21 14:07:06 [main] INFO  com.demcha.components.core.Entity - Creating entity 7fceca98-217f-4bff-8485-634e1fb36b00
+2025-08-21 14:08:22 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 14:08:22 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 14:08:22 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 14:08:22 [main] INFO  com.demcha.components.core.Entity - Creating entity d729f65a-e811-4d4a-ab8b-a9e49c9194c9
+2025-08-21 14:08:22 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [d729f65a-e811-4d4a-ab8b-a9e49c9194c9] in to the PdfDocument
+2025-08-21 14:08:22 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id d729f65a-e811-4d4a-ab8b-a9e49c9194c9
+2025-08-21 14:08:22 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  d729f65a-e811-4d4a-ab8b-a9e49c9194c9
+2025-08-21 14:08:22 [main] INFO  com.demcha.components.core.Entity - Creating entity 397a62c5-e6ed-474e-ac5f-09b5053f5209
+2025-08-21 14:08:22 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [397a62c5-e6ed-474e-ac5f-09b5053f5209] in to the PdfDocument
+2025-08-21 14:08:22 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 397a62c5-e6ed-474e-ac5f-09b5053f5209
+2025-08-21 14:08:22 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  397a62c5-e6ed-474e-ac5f-09b5053f5209
+2025-08-21 14:08:22 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 14:08:22 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 14:08:22 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 14:08:22 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  397a62c5-e6ed-474e-ac5f-09b5053f5209
+2025-08-21 14:08:22 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: normalizing box contentSize
+2025-08-21 14:08:22 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  d729f65a-e811-4d4a-ab8b-a9e49c9194c9
+2025-08-21 14:08:22 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  397a62c5-e6ed-474e-ac5f-09b5053f5209
+2025-08-21 14:08:22 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: layout complete (nodes: 2)
+2025-08-21 14:21:59 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 14:21:59 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 14:21:59 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 14:21:59 [main] INFO  com.demcha.components.core.Entity - Creating entity f7706550-4f67-4999-a7d1-2d7d904c795b
+2025-08-21 14:21:59 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [f7706550-4f67-4999-a7d1-2d7d904c795b] in to the PdfDocument
+2025-08-21 14:21:59 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id f7706550-4f67-4999-a7d1-2d7d904c795b
+2025-08-21 14:21:59 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  f7706550-4f67-4999-a7d1-2d7d904c795b
+2025-08-21 14:21:59 [main] INFO  com.demcha.components.core.Entity - Creating entity 4698ea58-ce7b-4d7c-9e6e-8bf69bb9539d
+2025-08-21 14:21:59 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [4698ea58-ce7b-4d7c-9e6e-8bf69bb9539d] in to the PdfDocument
+2025-08-21 14:21:59 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 4698ea58-ce7b-4d7c-9e6e-8bf69bb9539d
+2025-08-21 14:21:59 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  4698ea58-ce7b-4d7c-9e6e-8bf69bb9539d
+2025-08-21 14:21:59 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 14:21:59 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 14:21:59 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 14:21:59 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  4698ea58-ce7b-4d7c-9e6e-8bf69bb9539d
+2025-08-21 14:21:59 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: normalizing box contentSize
+2025-08-21 14:21:59 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  f7706550-4f67-4999-a7d1-2d7d904c795b
+2025-08-21 14:21:59 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  4698ea58-ce7b-4d7c-9e6e-8bf69bb9539d
+2025-08-21 14:21:59 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: layout complete (nodes: 2)
+2025-08-21 14:25:15 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 14:25:15 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 14:25:15 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 14:25:15 [main] INFO  com.demcha.components.core.Entity - Creating entity a05344ff-faaa-4f8d-8ddd-f8a2daa53f21
+2025-08-21 14:25:15 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [a05344ff-faaa-4f8d-8ddd-f8a2daa53f21] in to the PdfDocument
+2025-08-21 14:25:15 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id a05344ff-faaa-4f8d-8ddd-f8a2daa53f21
+2025-08-21 14:25:15 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  a05344ff-faaa-4f8d-8ddd-f8a2daa53f21
+2025-08-21 14:25:15 [main] INFO  com.demcha.components.core.Entity - Creating entity 02752d0f-ea1e-4921-9174-4c6b35da4860
+2025-08-21 14:25:15 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [02752d0f-ea1e-4921-9174-4c6b35da4860] in to the PdfDocument
+2025-08-21 14:25:15 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 02752d0f-ea1e-4921-9174-4c6b35da4860
+2025-08-21 14:25:15 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  02752d0f-ea1e-4921-9174-4c6b35da4860
+2025-08-21 14:25:25 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 14:25:25 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 14:25:25 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 14:25:25 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  02752d0f-ea1e-4921-9174-4c6b35da4860
+2025-08-21 14:25:25 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: normalizing box contentSize
+2025-08-21 14:25:25 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  a05344ff-faaa-4f8d-8ddd-f8a2daa53f21
+2025-08-21 14:25:25 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  02752d0f-ea1e-4921-9174-4c6b35da4860
+2025-08-21 14:25:25 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: layout complete (nodes: 2)
+2025-08-21 14:25:36 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 14:25:36 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 14:25:36 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 14:25:37 [main] INFO  com.demcha.components.core.Entity - Creating entity de74b73b-7c5d-4f28-a127-da1b41bef6ef
+2025-08-21 14:25:37 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [de74b73b-7c5d-4f28-a127-da1b41bef6ef] in to the PdfDocument
+2025-08-21 14:25:37 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id de74b73b-7c5d-4f28-a127-da1b41bef6ef
+2025-08-21 14:25:37 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  de74b73b-7c5d-4f28-a127-da1b41bef6ef
+2025-08-21 14:25:37 [main] INFO  com.demcha.components.core.Entity - Creating entity cbd17d3e-1ac4-44c8-ba2b-8a67b2313442
+2025-08-21 14:25:37 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [cbd17d3e-1ac4-44c8-ba2b-8a67b2313442] in to the PdfDocument
+2025-08-21 14:25:37 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id cbd17d3e-1ac4-44c8-ba2b-8a67b2313442
+2025-08-21 14:25:37 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  cbd17d3e-1ac4-44c8-ba2b-8a67b2313442
+2025-08-21 14:25:37 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 14:25:37 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 14:25:37 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 14:25:37 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  cbd17d3e-1ac4-44c8-ba2b-8a67b2313442
+2025-08-21 14:25:37 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: normalizing box contentSize
+2025-08-21 14:25:37 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  de74b73b-7c5d-4f28-a127-da1b41bef6ef
+2025-08-21 14:25:37 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  cbd17d3e-1ac4-44c8-ba2b-8a67b2313442
+2025-08-21 14:25:37 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: layout complete (nodes: 2)
+2025-08-21 14:41:46 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 14:41:46 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 14:41:46 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 14:41:46 [main] INFO  com.demcha.components.core.Entity - Creating entity 35f6ac0b-7971-4130-a3c4-16d339ed94dc
+2025-08-21 14:41:46 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [35f6ac0b-7971-4130-a3c4-16d339ed94dc] in to the PdfDocument
+2025-08-21 14:41:46 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 35f6ac0b-7971-4130-a3c4-16d339ed94dc
+2025-08-21 14:41:46 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  35f6ac0b-7971-4130-a3c4-16d339ed94dc
+2025-08-21 14:41:46 [main] INFO  com.demcha.components.core.Entity - Creating entity d4e2ce77-9e81-44d2-8dfc-2f8b5b4692e6
+2025-08-21 14:41:46 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [d4e2ce77-9e81-44d2-8dfc-2f8b5b4692e6] in to the PdfDocument
+2025-08-21 14:41:46 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id d4e2ce77-9e81-44d2-8dfc-2f8b5b4692e6
+2025-08-21 14:41:46 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  d4e2ce77-9e81-44d2-8dfc-2f8b5b4692e6
+2025-08-21 14:41:46 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 14:41:46 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 14:41:46 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 14:41:46 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  d4e2ce77-9e81-44d2-8dfc-2f8b5b4692e6
+2025-08-21 14:41:46 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: normalizing box contentSize
+2025-08-21 14:41:46 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  35f6ac0b-7971-4130-a3c4-16d339ed94dc
+2025-08-21 14:41:46 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  d4e2ce77-9e81-44d2-8dfc-2f8b5b4692e6
+2025-08-21 14:41:46 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: layout complete (nodes: 2)
+2025-08-21 14:43:58 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 14:43:58 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 14:43:58 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 14:43:58 [main] INFO  com.demcha.components.core.Entity - Creating entity be4056d8-2964-4c89-9309-c603a5bac0ad
+2025-08-21 14:43:58 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [be4056d8-2964-4c89-9309-c603a5bac0ad] in to the PdfDocument
+2025-08-21 14:43:58 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id be4056d8-2964-4c89-9309-c603a5bac0ad
+2025-08-21 14:43:58 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  be4056d8-2964-4c89-9309-c603a5bac0ad
+2025-08-21 14:43:58 [main] INFO  com.demcha.components.core.Entity - Creating entity eed6dbdb-fdb7-4591-9888-e6e4d7761462
+2025-08-21 14:43:58 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [eed6dbdb-fdb7-4591-9888-e6e4d7761462] in to the PdfDocument
+2025-08-21 14:43:58 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id eed6dbdb-fdb7-4591-9888-e6e4d7761462
+2025-08-21 14:43:58 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  eed6dbdb-fdb7-4591-9888-e6e4d7761462
+2025-08-21 14:43:58 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 14:43:58 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 14:43:58 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 14:43:58 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  eed6dbdb-fdb7-4591-9888-e6e4d7761462
+2025-08-21 14:43:58 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: normalizing box contentSize
+2025-08-21 14:43:58 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  be4056d8-2964-4c89-9309-c603a5bac0ad
+2025-08-21 14:43:58 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  eed6dbdb-fdb7-4591-9888-e6e4d7761462
+2025-08-21 14:43:58 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: layout complete (nodes: 2)
+2025-08-21 14:48:51 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 14:48:51 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 14:48:51 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 14:48:51 [main] INFO  com.demcha.components.core.Entity - Creating entity 8c05a2f2-b2b0-4784-9fe0-6c8b808b01c5
+2025-08-21 14:48:51 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [8c05a2f2-b2b0-4784-9fe0-6c8b808b01c5] in to the PdfDocument
+2025-08-21 14:48:51 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 8c05a2f2-b2b0-4784-9fe0-6c8b808b01c5
+2025-08-21 14:48:51 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  8c05a2f2-b2b0-4784-9fe0-6c8b808b01c5
+2025-08-21 14:48:51 [main] INFO  com.demcha.components.core.Entity - Creating entity 6bd54cdf-c993-494d-be52-9d6b5b07dc5e
+2025-08-21 14:48:51 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [6bd54cdf-c993-494d-be52-9d6b5b07dc5e] in to the PdfDocument
+2025-08-21 14:48:51 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 6bd54cdf-c993-494d-be52-9d6b5b07dc5e
+2025-08-21 14:48:51 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  6bd54cdf-c993-494d-be52-9d6b5b07dc5e
+2025-08-21 14:48:51 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 14:48:51 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 14:48:51 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 14:48:51 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  6bd54cdf-c993-494d-be52-9d6b5b07dc5e
+2025-08-21 14:48:51 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: normalizing box contentSize
+2025-08-21 14:48:51 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  8c05a2f2-b2b0-4784-9fe0-6c8b808b01c5
+2025-08-21 14:48:51 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  6bd54cdf-c993-494d-be52-9d6b5b07dc5e
+2025-08-21 14:48:51 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: layout complete (nodes: 2)
+2025-08-21 14:49:40 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 14:49:40 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 14:49:40 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 14:49:40 [main] INFO  com.demcha.components.core.Entity - Creating entity 2b76b6c4-61f0-4589-b269-d5866f85e6cf
+2025-08-21 14:49:40 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [2b76b6c4-61f0-4589-b269-d5866f85e6cf] in to the PdfDocument
+2025-08-21 14:49:40 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 2b76b6c4-61f0-4589-b269-d5866f85e6cf
+2025-08-21 14:49:40 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  2b76b6c4-61f0-4589-b269-d5866f85e6cf
+2025-08-21 14:49:40 [main] INFO  com.demcha.components.core.Entity - Creating entity 71f66ecf-f508-4419-86b3-5ac165b67a98
+2025-08-21 14:49:40 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [71f66ecf-f508-4419-86b3-5ac165b67a98] in to the PdfDocument
+2025-08-21 14:49:40 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 71f66ecf-f508-4419-86b3-5ac165b67a98
+2025-08-21 14:49:40 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  71f66ecf-f508-4419-86b3-5ac165b67a98
+2025-08-21 14:49:40 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 14:49:40 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 14:49:40 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 14:49:40 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  71f66ecf-f508-4419-86b3-5ac165b67a98
+2025-08-21 14:49:40 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: normalizing box contentSize
+2025-08-21 14:49:40 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  2b76b6c4-61f0-4589-b269-d5866f85e6cf
+2025-08-21 14:49:40 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  71f66ecf-f508-4419-86b3-5ac165b67a98
+2025-08-21 14:49:40 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: layout complete (nodes: 2)
+2025-08-21 14:51:08 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 14:51:08 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 14:51:08 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 14:51:08 [main] INFO  com.demcha.components.core.Entity - Creating entity f2705cc8-7fa4-4a15-8b4d-93542ec24fdf
+2025-08-21 14:51:08 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [f2705cc8-7fa4-4a15-8b4d-93542ec24fdf] in to the PdfDocument
+2025-08-21 14:51:08 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id f2705cc8-7fa4-4a15-8b4d-93542ec24fdf
+2025-08-21 14:51:08 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  f2705cc8-7fa4-4a15-8b4d-93542ec24fdf
+2025-08-21 14:51:08 [main] INFO  com.demcha.components.core.Entity - Creating entity 2cd55eb2-441e-4336-b1ca-b432f61609bb
+2025-08-21 14:51:08 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [2cd55eb2-441e-4336-b1ca-b432f61609bb] in to the PdfDocument
+2025-08-21 14:51:08 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 2cd55eb2-441e-4336-b1ca-b432f61609bb
+2025-08-21 14:51:08 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  2cd55eb2-441e-4336-b1ca-b432f61609bb
+2025-08-21 14:51:08 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 14:51:08 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 14:51:08 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 14:51:08 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  2cd55eb2-441e-4336-b1ca-b432f61609bb
+2025-08-21 14:51:08 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: normalizing box contentSize
+2025-08-21 14:51:08 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  f2705cc8-7fa4-4a15-8b4d-93542ec24fdf
+2025-08-21 14:51:08 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  2cd55eb2-441e-4336-b1ca-b432f61609bb
+2025-08-21 14:51:08 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: layout complete (nodes: 2)
+2025-08-21 14:52:13 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 14:52:13 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 14:52:13 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 14:52:13 [main] INFO  com.demcha.components.core.Entity - Creating entity 853375dc-bad0-4ba4-9c09-49e1b72cfeb6
+2025-08-21 14:52:13 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [853375dc-bad0-4ba4-9c09-49e1b72cfeb6] in to the PdfDocument
+2025-08-21 14:52:13 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 853375dc-bad0-4ba4-9c09-49e1b72cfeb6
+2025-08-21 14:52:13 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  853375dc-bad0-4ba4-9c09-49e1b72cfeb6
+2025-08-21 14:52:13 [main] INFO  com.demcha.components.core.Entity - Creating entity 305dedec-b167-48e5-aa9c-72272f485586
+2025-08-21 14:52:13 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [305dedec-b167-48e5-aa9c-72272f485586] in to the PdfDocument
+2025-08-21 14:52:13 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 305dedec-b167-48e5-aa9c-72272f485586
+2025-08-21 14:52:13 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  305dedec-b167-48e5-aa9c-72272f485586
+2025-08-21 14:52:13 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 14:52:13 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 14:52:13 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 14:52:13 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  305dedec-b167-48e5-aa9c-72272f485586
+2025-08-21 14:52:13 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: normalizing box contentSize
+2025-08-21 14:52:13 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  853375dc-bad0-4ba4-9c09-49e1b72cfeb6
+2025-08-21 14:52:13 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  305dedec-b167-48e5-aa9c-72272f485586
+2025-08-21 14:52:13 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: layout complete (nodes: 2)
+2025-08-21 14:55:39 [main] INFO  com.demcha.core.PdfDocument - Created new pdf document [0.0,0.0,595.27563,841.8898]
+2025-08-21 14:55:39 [main] INFO  com.demcha.core.PdfDocument - PdfDocument with default settings PDRectangle.A4
+2025-08-21 14:55:39 [main] INFO  com.demcha.core.PdfDocument - Adding System com.demcha.system.LayoutSystem
+2025-08-21 14:55:39 [main] INFO  com.demcha.components.core.Entity - Creating entity b3aeb5f6-4e66-46b5-9cd7-b10ed806c6f1
+2025-08-21 14:55:39 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "BoxContainer" UUID: [b3aeb5f6-4e66-46b5-9cd7-b10ed806c6f1] in to the PdfDocument
+2025-08-21 14:55:39 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id b3aeb5f6-4e66-46b5-9cd7-b10ed806c6f1
+2025-08-21 14:55:39 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  b3aeb5f6-4e66-46b5-9cd7-b10ed806c6f1
+2025-08-21 14:55:39 [main] INFO  com.demcha.components.core.Entity - Creating entity 8977ad81-1a2f-4e44-8698-527b8cc10d56
+2025-08-21 14:55:39 [main] INFO  c.d.c.c.c.ComponentBoxBuilder - Put  Entity: "ChildBox" UUID: [8977ad81-1a2f-4e44-8698-527b8cc10d56] in to the PdfDocument
+2025-08-21 14:55:39 [main] INFO  com.demcha.core.PdfDocument - Putting Entity id 8977ad81-1a2f-4e44-8698-527b8cc10d56
+2025-08-21 14:55:39 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  8977ad81-1a2f-4e44-8698-527b8cc10d56
+2025-08-21 14:55:39 [main] INFO  com.demcha.core.PdfDocument - Processing Systems
+2025-08-21 14:55:39 [main] INFO  com.demcha.core.PdfDocument - Processing System LayoutSystem
+2025-08-21 14:55:39 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: processing
+2025-08-21 14:55:39 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  8977ad81-1a2f-4e44-8698-527b8cc10d56
+2025-08-21 14:55:39 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: normalizing box contentSize
+2025-08-21 14:55:39 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  b3aeb5f6-4e66-46b5-9cd7-b10ed806c6f1
+2025-08-21 14:55:39 [main] INFO  com.demcha.core.PdfDocument - Getting  Entity id  8977ad81-1a2f-4e44-8698-527b8cc10d56
+2025-08-21 14:55:39 [main] INFO  com.demcha.system.LayoutSystem - LayoutSystem: layout complete (nodes: 2)

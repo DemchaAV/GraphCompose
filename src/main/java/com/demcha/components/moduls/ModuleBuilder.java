@@ -39,17 +39,15 @@ public class ModuleBuilder extends Module {
      */
 
     private  Entity createABottom(String nameButton, String TextButton) {
-        var button = RectangleBuilder.create()
+        var button = new RectangleBuilder(pdfDocument).create()
                 .entityName(new EntityName(nameButton))
                 .rectangle(new Rectangle(new Radius(5)))
                 .size(new ContentSize(100, 30))
 //                .padding(Padding.of(10))
                 .stroke(new Stroke(12.0))
-                .strokeColor(new Color(133, 198, 198, 255))
                 .anchor(Anchor.topLeft())
-//                .margin(Margin.all(15))
+                .build();
 
-                .buildInto(pdfDocument);
         var text3 = TextBuilder.create()
                 .entityName(new EntityName("Text"))
                 .parentComponent(button)

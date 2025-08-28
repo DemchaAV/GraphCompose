@@ -5,17 +5,20 @@ import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-
+/**
+ * Abstract base class for entity builders.
+ * <p>
+ * This class provides common functionality for building {@link Entity} objects,
+ * including managing components, auto-naming entities, and providing a fluent API
+ * for method chaining.
+ * </p>
+ */
 @Getter
 @Accessors(fluent = true)
 public abstract class EntityBuilderBase<B> implements Layout<B>, EntityCreator<B> {
+
     /**
-     * Abstract base class for entity builders.
-     * <p>
-     * This class provides common functionality for building {@link Entity} objects,
-     * including managing components, auto-naming entities, and providing a fluent API
-     * for method chaining.
-     * </p>
+     * The {@link Entity} instance being built by this builder.
      */
     @Getter
     protected Entity entity = new Entity();
@@ -24,16 +27,29 @@ public abstract class EntityBuilderBase<B> implements Layout<B>, EntityCreator<B
      * Initializes the entity by assigning a default name and returns the builder instance.
      * This method should be called to finalize the initial setup of the entity.
      *
+     * <p>
+     * This method performs two main actions:
+     * <ol>
+     *     <li>Calls {@link #autoName()} to assign a default name to the current entity.</li>
+     *     <li>Resets the internal {@code entity} field to a new {@link Entity} instance, preparing the builder for creating another entity.</li>
+     * </ol>
+     * </p>
      * @return The current builder instance, allowing for method chaining.
      */
     public B create() {
         autoName();
+        entity = new Entity();
         return self();
     }
 
     /**
      * Automatically generates a default name for the underlying {@link Entity}.
      * The name is composed of the simple class name of the builder and a truncated version of the entity's ID.
+     *
+     * <p>
+     * The generated name follows the pattern: {@code BuilderClassName + first 5 characters of EntityID}.
+     * This name is then added to the entity as an {@link EntityName} component.
+     * </p>
      */
     protected void autoName() {
         String simpleName = self().getClass().getSimpleName();
@@ -44,6 +60,10 @@ public abstract class EntityBuilderBase<B> implements Layout<B>, EntityCreator<B
     /**
      * Adds a {@link Component} to the underlying {@link Entity}.
      * This method allows for the composition of the entity with various functional components.
+     *
+     * <p>
+     * This method delegates the actual addition of the component to the {@link Entity#addComponent(Component)} method.
+     * </p>
      *
      * @param component The {@link Component} to be added to the entity.
      * @return The current builder instance, allowing for method chaining.
@@ -58,6 +78,10 @@ public abstract class EntityBuilderBase<B> implements Layout<B>, EntityCreator<B
     /**
      * Returns the current builder instance, cast to its generic type {@code B}.
      * This method is crucial for enabling fluent API and method chaining in subclasses.
+     *
+     * <p>
+     * Subclasses should implement this method to return {@code this} cast to their specific builder type.
+     * </p>
      * @return The current builder instance.
      */
     public B self() {

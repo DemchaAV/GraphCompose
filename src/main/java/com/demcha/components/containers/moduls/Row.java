@@ -1,6 +1,6 @@
 package com.demcha.components.containers.moduls;
 
-import com.demcha.components.content.components_builders.BaseShapeBuilder;
+import com.demcha.components.containers.abstract_builders.ShapeBuilderBase;
 import com.demcha.components.content.rectangle.Rectangle;
 import com.demcha.components.core.Entity;
 import com.demcha.core.PdfDocument;
@@ -18,21 +18,21 @@ public class Row {
         return new RowBuilder(pdfDocument);
     }
 
-    @AllArgsConstructor
-     class RowBuilder extends BaseShapeBuilder<RowBuilder> {
-        final PdfDocument pdfDocument;
 
-        @Override
-        protected RowBuilder self() {
-            return this;
+     class RowBuilder extends ShapeBuilderBase<RowBuilder> {
+
+        public RowBuilder(PdfDocument document) {
+            super(document);
         }
+
+
 
         public RowBuilder rectangle(Rectangle rectangle) {
             return addComponent(rectangle);
         }
 
         public Entity build() {
-            return buildInto(pdfDocument);
+            return entity;
         }
     }
 

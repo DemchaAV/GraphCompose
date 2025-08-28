@@ -36,17 +36,22 @@ public class Main {
         document.addSystem(new LayoutSystem());
         document.addSystem(new RenderingSystem());
 
+        var text3 = TextBuilder.create()
+                .entityName(new EntityName("Text"))
+                .text(new Text("Artem Demchyshyn", new TextStyle(TextStyle.HELVETICA, 32, TextDecoration.DEFAULT, ComponentColor.TITLE)))
+                .anchor(Anchor.centerTop())
+                .buildInto(document);
 
-        var rectangle = RectangleBuilder.create()
+
+        var rectangle = new RectangleBuilder(document).create()
                 .entityName(new EntityName("Rectangle"))
                 .rectangle(new Rectangle())
                 .size(new ContentSize(400, 200))
                 .padding(Padding.of(15))
-                .strokeColor(Color.BLACK)
                 .anchor(Anchor.center())
 //                .position(new Position(25, 25))
                 .margin(new Margin(5, 5, 5, 5))
-                .buildInto(document);
+                .build();
 
         var box = BodyBoxBuilder.create()
                 .entityName(new EntityName("BodyBox"))
@@ -100,13 +105,13 @@ public class Main {
     }
 
     public static Entity createABottom(String nameButton, String TextButton, PdfDocument document) {
-        var button = RectangleBuilder.create()
+        var button = new RectangleBuilder(document).create()
                 .entityName(new EntityName(nameButton))
                 .rectangle(new Rectangle(new Radius(5)))
                 .size(new ContentSize(80, 30))
                 .fillColor(ComponentColor.ROYAL_BLUE)
                 .anchor(Anchor.topLeft())
-                .buildInto(document);
+                .build();
         var text3 = TextBuilder.create()
                 .entityName(new EntityName("Text"))
                 .parentComponent(button)

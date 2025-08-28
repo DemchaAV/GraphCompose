@@ -1,8 +1,8 @@
 package com.demcha.components.moduls;
 
 
+import com.demcha.components.containers.abstract_builders.ShapeBuilderBase;
 import com.demcha.components.content.Stroke;
-import com.demcha.components.content.components_builders.BaseShapeBuilder;
 import com.demcha.components.content.components_builders.TextBuilder;
 import com.demcha.components.content.rectangle.Radius;
 import com.demcha.components.content.rectangle.Rectangle;
@@ -35,12 +35,11 @@ public class Button {
                 throw new IllegalStateException("Array  must be have 2 elements size[0]== width, size[1]== height");
             }
         }
-        var button = BodyButtonBuilder.create()
+        var button =  new BodyButtonBuilder(pdfDocument).create()
                 .entityName(new EntityName(nameButton))
                 .rectangle(cornerRadius == null ? new Rectangle() : new Rectangle(cornerRadius))
                 .size(new ContentSize(size[0], size[1]))
-                .stroke(new Stroke(12.0))
-                .strokeColor(new Color(133, 198, 198, 255));
+                .stroke(new Stroke(12.0));
 
         var text3 = TextBuilder.create()
                 .entityName(new EntityName("Text"))
@@ -63,7 +62,7 @@ public class Button {
         if (buttons == null) buttons = new HashMap<>();
 
         var buttonBody = button
-                .buildInto(pdfDocument);
+                .build();
 
         var buttonTextDecorated = buttonText
                 .parentComponent(buttonBody)
@@ -74,17 +73,19 @@ public class Button {
 }
 
 
-class BodyButtonBuilder extends BaseShapeBuilder<BodyButtonBuilder> {
-    public static BodyButtonBuilder create() {
-        return new BodyButtonBuilder();
+class BodyButtonBuilder extends ShapeBuilderBase<BodyButtonBuilder> {
+    public BodyButtonBuilder(PdfDocument document) {
+        super(document);
     }
 
-    @Override
-    protected BodyButtonBuilder self() {
-        return this;
-    }
+
 
     public BodyButtonBuilder rectangle(Rectangle rectangle) {
         return addComponent(rectangle);
+    }
+
+    @Override
+    public Entity build() {
+        return entity;
     }
 }

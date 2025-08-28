@@ -14,7 +14,7 @@ import java.util.Optional;
 @Slf4j
 public final class TextBuilder extends ComponentBoxBuilder<TextBuilder> {
 
-    private TextBuilder() {
+    public TextBuilder() {
     }
 
     public static TextBuilder create() {

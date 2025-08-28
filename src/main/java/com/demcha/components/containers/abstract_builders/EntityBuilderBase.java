@@ -25,10 +25,14 @@ public abstract class EntityBuilderBase<B> implements Layout<B>, EntityCreator<B
      */
 
     public B create() {
+        autoName();
+        return self();
+    }
+
+    protected void autoName() {
         String simpleName = self().getClass().getSimpleName();
         String defaultName = simpleName + entity.getId().toString().substring(0, 5);
         entity.addComponent(new EntityName(defaultName));
-        return self();
     }
 
     /**

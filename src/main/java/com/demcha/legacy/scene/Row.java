@@ -23,7 +23,7 @@ public class Row implements Container {
     public Element getElement() { return self; }
 
     @Override
-    public List<Element> getChildren() { return children; }
+    public List<Element> children() { return children; }
 
     @Override
     public Layout getLayout() { return layout; }

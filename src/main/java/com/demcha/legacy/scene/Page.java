@@ -44,7 +44,7 @@ public class Page implements Container {
     }
 
     @Override
-    public List<Element> getChildren() {
+    public List<Element> children() {
         return children;
     }
 

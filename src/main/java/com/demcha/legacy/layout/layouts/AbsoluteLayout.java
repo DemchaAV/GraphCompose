@@ -27,7 +27,7 @@ public record AbsoluteLayout() implements Layout {
         double maxHeight = 0;
 
         // Iterate through all child elements to determine the maximum width and height
-        for (Element child : c.getChildren()) {
+        for (Element child : c.children()) {
             Position position = child.get(Position.class).orElse(Position.zero());
             OuterBoxSize outerBoxSize = child.get(OuterBoxSize.class).orElse(new OuterBoxSize(0, 0));
 
@@ -55,7 +55,7 @@ public record AbsoluteLayout() implements Layout {
     @Override
     public void arrange(Container c, ArrangeCtx ctx) {
         // Iterate through all child elements and set their absolute positions
-        for (Element child : c.getChildren()) {
+        for (Element child : c.children()) {
             Position position = child.get(Position.class).orElse(Position.zero());
 
             // Set the child’s position explicitly

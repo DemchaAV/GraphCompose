@@ -76,7 +76,7 @@ public class HorizontalLayout implements Layout {
     public void measure(Container c, MeasureCtx ctx) {
         double totalW = 0, maxH = 0;
 
-        for (Element child : c.getChildren()) {
+        for (Element child : c.children()) {
             // --- 1. Автоматическое измерение, если нет OuterBoxSize ---
             if (child.has(TextBlock.class)) {
                 TextBlockMeasurer.ensureMeasured(child, ctx.availableWidth());
@@ -114,7 +114,7 @@ public class HorizontalLayout implements Layout {
                 ? ctx.allocatedHeight()
                 : c.getElement().get(OuterBoxSize.class).map(OuterBoxSize::height).orElse(0.0);
 
-        for (Element child : c.getChildren()) {
+        for (Element child : c.children()) {
             double w = child.get(OuterBoxSize.class).map(OuterBoxSize::width).orElse(0.0);
             double h = child.get(OuterBoxSize.class).map(OuterBoxSize::height).orElse(0.0);
             Margin m = child.get(Margin.class).orElse(Margin.zero());

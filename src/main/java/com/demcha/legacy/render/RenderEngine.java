@@ -169,7 +169,7 @@ public class RenderEngine {
         ));
 
         // 3) PdfRender: обойти детей и рисовать
-        for (Element child : page.getChildren()) {
+        for (Element child : page.children()) {
             renderElement(ctx, child);
         }
     }
@@ -187,7 +187,7 @@ public class RenderEngine {
 
     public void render(Container c, PdfRenderContext ctx) throws IOException {
         // просто обходим детей и рисуем поддерживаемые элементы
-        for (Element el : c.getChildren()) {
+        for (Element el : c.children()) {
             renderElement(ctx, el);
         }
     }

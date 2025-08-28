@@ -24,7 +24,7 @@ public class VerticalLayout implements Layout {
     public void measure(Container c, MeasureCtx ctx) {
         double totalH = 0, maxW = 0;
 
-        for (Element child : c.getChildren()) {
+        for (Element child : c.children()) {
             if (!child.has(OuterBoxSize.class)) {
                 if (child.has(TextBlock.class)) {
                     TextBlockMeasurer.ensureMeasured(child, ctx.availableWidth());
@@ -56,7 +56,7 @@ public class VerticalLayout implements Layout {
                 ? ctx.allocatedWidth()
                 : c.getElement().get(OuterBoxSize.class).map(OuterBoxSize::width).orElse(0.0);
 
-        for (Element child : c.getChildren()) {
+        for (Element child : c.children()) {
             double w = child.get(OuterBoxSize.class).map(OuterBoxSize::width).orElse(0.0);
             double h = child.get(OuterBoxSize.class).map(OuterBoxSize::height).orElse(0.0);
             Margin m = child.get(Margin.class).orElse(Margin.zero());

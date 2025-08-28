@@ -1,5 +1,6 @@
 package com.demcha.components.containers;
 
+import com.demcha.components.containers.abstract_builders.Container;
 import com.demcha.components.containers.abstract_builders.EmptyBox;
 import com.demcha.components.containers.abstract_builders.EntityCreator;
 import com.demcha.components.core.Entity;
@@ -28,10 +29,12 @@ public class HContainerBuilderBase extends EmptyBox<HContainerBuilderBase> {
     private double curPosition = 0;
     private double height = 0;
     private double width = 0;
+    private final Container container;
 
-    public HContainerBuilderBase(PdfDocument document) {
+    public HContainerBuilderBase(PdfDocument document, Container container) {
         super(document);
         this.entities = new HashSet<>();
+        this.container = container;
 
     }
 

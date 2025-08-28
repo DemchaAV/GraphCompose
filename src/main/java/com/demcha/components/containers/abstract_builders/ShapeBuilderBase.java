@@ -1,4 +1,4 @@
-package com.demcha.components.containers.moduls;
+package com.demcha.components.containers.abstract_builders;
 
 import com.demcha.components.content.Stroke;
 import com.demcha.components.content.rectangle.FillColor;
@@ -10,9 +10,14 @@ import com.demcha.core.PdfDocument;
 import java.awt.*;
 
 
-public abstract class ShapeBuilder<T> extends EmptyBox<T> {
+/**
+ * An abstract builder class for creating shapes within a PDF document.
+ * This class provides methods to add various shape-related components like rectangles, corner radii, fill colors, and strokes.
+ * @param <T> The type of the concrete builder extending this abstract class, allowing for method chaining.
+ */
+public abstract class ShapeBuilderBase<T> extends EmptyBox<T> {
 
-    public ShapeBuilder(PdfDocument document) {
+    public ShapeBuilderBase(PdfDocument document) {
         super(document);
     }
 

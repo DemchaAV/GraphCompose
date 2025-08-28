@@ -1,5 +1,6 @@
 package com.demcha.components.containers.abstract_builders;
 
+import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.layout.HAnchor;
@@ -9,10 +10,26 @@ import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 
-public interface Layout<B> extends EntityCreator<B> {
-
+/**
+ * This interface defines a set of default methods for configuring layout-related properties
+ * of a component builder. It is intended to be implemented by builder classes.
+ *
+ * @param <B> The type of the builder implementing this interface.
+ *
+ *            <p>The interface provides methods for setting various layout properties such as:
+ *            <ul>
+ *                <li>{@code layer}: The z-order of the component.</li>
+ *                <li>{@code position}: The absolute position (x, y) of the component.</li>
+ *                <li>{@code anchor}: How the component is anchored within its parent.</li>
+ *                <li>{@code size}: The width and height of the component.</li>
+ *                <li>{@code margin}: The external spacing around the component.</li>
+ *                <li>{@code padding}: The internal spacing within the component.</li>
+ *            </ul>
+ *            Each method returns the builder instance itself, allowing for method chaining.</p>
+ */
+public interface Layout<B> {
     default B layer(Layer layer) {
-        addComponent(layer);
+        entity().addComponent(layer);
         return self();
     }
 
@@ -22,7 +39,7 @@ public interface Layout<B> extends EntityCreator<B> {
     }
 
     default B position(Position position) {
-        addComponent(position);
+        entity().addComponent(position);
         return self();
     }
 
@@ -32,7 +49,7 @@ public interface Layout<B> extends EntityCreator<B> {
     }
 
     default B anchor(Anchor anchor) {
-        addComponent(anchor);
+        entity().addComponent(anchor);
         return self();
     }
 
@@ -42,7 +59,7 @@ public interface Layout<B> extends EntityCreator<B> {
     }
 
     default B size(ContentSize size) {
-        addComponent(size);
+        entity().addComponent(size);
         return self();
     }
 
@@ -53,7 +70,7 @@ public interface Layout<B> extends EntityCreator<B> {
     }
 
     default B margin(Margin margin) {
-        addComponent(margin);
+        entity().addComponent(margin);
         return self();
     }
 
@@ -63,7 +80,7 @@ public interface Layout<B> extends EntityCreator<B> {
     }
 
     default B padding(Padding padding) {
-        addComponent(padding);
+        entity().addComponent(padding);
         return self();
     }
 
@@ -71,6 +88,8 @@ public interface Layout<B> extends EntityCreator<B> {
         padding(new Padding(top, right, bottom, left));
         return self();
     }
+
+    Entity entity();
 
     B self();
 

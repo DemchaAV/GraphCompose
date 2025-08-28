@@ -1,6 +1,7 @@
 package com.demcha.components.containers;
 
-import com.demcha.components.containers.moduls.EmptyBox;
+import com.demcha.components.containers.abstract_builders.EmptyBox;
+import com.demcha.components.containers.abstract_builders.EntityCreator;
 import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
 import com.demcha.components.geometry.ContentSize;
@@ -20,22 +21,22 @@ import java.util.Set;
 
 @Slf4j
 
-public class HContainerBuilder extends EmptyBox<HContainerBuilder> {
+public class HContainerBuilderBase extends EmptyBox<HContainerBuilderBase> {
     public static Align DEFAUT_ALIGN = Align.middle(5);
     private final Set<Entity> entities = new HashSet<>();
     private Align align;
     private double curPosition = 0;
     private double height = 0;
 
-    public HContainerBuilder(PdfDocument document) {
+    public HContainerBuilderBase(PdfDocument document) {
         super(document);
     }
 
-    public HContainerBuilder create() {
+    public HContainerBuilderBase create() {
         return create(DEFAUT_ALIGN);
     }
 
-    public HContainerBuilder create(Align align) {
+    public HContainerBuilderBase create(Align align) {
         this.align = align;
         String simpleName = self().getClass().getSimpleName();
         String defaultName = simpleName + "_" + entity.getId().toString().substring(0, 5);
@@ -46,8 +47,8 @@ public class HContainerBuilder extends EmptyBox<HContainerBuilder> {
     }
 
 
-    public HContainerBuilder addChild(Entity entity) {
-        entity.addComponent(new ParentComponent(getEntity()));
+    public HContainerBuilderBase addChild(Entity entity) {
+        entity.addComponent(new ParentComponent(entity()));
         entity.addComponent(new Anchor(HAnchor.DEFAULT, align.v()));
         var position = entity.getComponent(Position.class).orElse(Position.zero());
         entity.addComponent(new Position(position.x() + this.curPosition, position.y()));

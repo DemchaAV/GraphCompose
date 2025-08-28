@@ -1,6 +1,6 @@
 package com.demcha.legacy.layout;
 
-import com.demcha.components.containers.Container;
+import com.demcha.components.containers.abstract_builders.Container;
 
 /**
  * Defines a strategy for arranging elements inside a container.

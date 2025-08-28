@@ -30,6 +30,4 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 public abstract class EmptyBox<T> extends EntityBuilderBase<T> implements BuildEntity {
     protected final PdfDocument document;
-
-
 }

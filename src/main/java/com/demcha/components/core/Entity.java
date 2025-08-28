@@ -151,6 +151,15 @@ public final class Entity implements PdfEntityRender {
         return Collections.unmodifiableMap(comps);
     }
 
+    public boolean remove(Class<? extends Component> type){
+        if (has(type)) {
+            comps.remove(type);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     @Override
     public String toString() {
         return "Entity: \"" + (name == null ? "null" : name.value()) + "\" UUID: [" + id + "]";
@@ -163,7 +172,6 @@ public final class Entity implements PdfEntityRender {
         Entity entity = (Entity) o;
         return id.equals(entity.id) && comps.equals(entity.comps) && Objects.equals(name, entity.name);
     }
-
     @Override
     public int hashCode() {
         int result = id.hashCode();

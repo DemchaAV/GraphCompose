@@ -1,7 +1,7 @@
 package com.demcha.legacy.scene;
 
 import com.demcha.legacy.core.Element;
-import com.demcha.components.containers.Container;
+import com.demcha.components.containers.abstract_builders.Container;
 import com.demcha.legacy.layout.Layout;
 import lombok.Getter;
 import lombok.Setter;

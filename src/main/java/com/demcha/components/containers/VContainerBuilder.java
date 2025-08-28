@@ -1,9 +1,11 @@
 package com.demcha.components.containers;
 
+import com.demcha.components.containers.abstract_builders.EmptyBox;
 import com.demcha.components.content.Box;
 import com.demcha.components.content.components_builders.ComponentBoxBuilder;
 import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
+import com.demcha.components.core.EntityName;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.layout.*;
@@ -22,8 +24,8 @@ import java.util.Iterator;
 import java.util.Set;
 
 @Slf4j
-@Data
-public class VContainerBuilder extends ComponentBoxBuilder<VContainerBuilder> implements Box, Component, PdfRender, GuidesRenderer  {
+public class VContainerBuilder extends EmptyBox<VContainerBuilder> {
+    public static Align DEFAUT_ALIGN = Align.middle(5);
     private Align align;
     private Set<Entity> entities;
     private double position;
@@ -31,21 +33,24 @@ public class VContainerBuilder extends ComponentBoxBuilder<VContainerBuilder> im
     private static final EnumSet<GuidesRenderer.Guide> DEFAULT_GUIDES =
             EnumSet.of(GuidesRenderer.Guide.MARGIN, GuidesRenderer.Guide.PADDING, GuidesRenderer.Guide.BOX);
 
-    public VContainerBuilder(Align align, Set<Entity> entities) {
+    public VContainerBuilder(PdfDocument document) {
+        super(document);
+        this.entities = new HashSet<>();
+    }
+
+
+    public VContainerBuilder create() {
+        return create(DEFAUT_ALIGN);
+    }
+
+    public VContainerBuilder create(Align align) {
         this.align = align;
-        this.entities = entities;
-    }
-
-    public VContainerBuilder(Align align) {
-
-        this(align, new HashSet<>());
-    }
-
-    public static VContainerBuilder create(Align align) {
-
-        VContainerBuilder VContainerBuilder = new VContainerBuilder(align, new HashSet<Entity>());
-        VContainerBuilder.addComponent(new HContainer());
-        return VContainerBuilder;
+        String simpleName = self().getClass().getSimpleName();
+        String defaultName = simpleName + "_" + entity.getId().toString().substring(0, 5);
+        entity.addComponent(new HContainer());
+        entity.addComponent(align);
+        entity.addComponent(new EntityName(defaultName));
+        return self();
     }
 
 
@@ -78,8 +83,8 @@ public class VContainerBuilder extends ComponentBoxBuilder<VContainerBuilder> im
         }
         return high;
     }
-
-    public Entity build(PdfDocument document) {
+@Override
+    public Entity build() {
         Padding padding = entity.getComponent(Padding.class).orElse(Padding.zero());
         var h = entitiesHigh();
         entity.addComponent(new ContentSize(width + padding.horizontal(), h + padding.vertical()));
@@ -90,16 +95,5 @@ public class VContainerBuilder extends ComponentBoxBuilder<VContainerBuilder> im
         return entity;
     }
 
-    @Override
-    protected VContainerBuilder self() {
-        return this;
-    }
-    @Override
-    public boolean render(Entity e, PDPageContentStream cs, boolean guideLines) throws IOException {
-        if (guideLines) {
-            renderGuides(e, cs, DEFAULT_GUIDES);
-        }
-        return true;
-    }
 
 }

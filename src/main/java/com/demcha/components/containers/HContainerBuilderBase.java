@@ -23,13 +23,16 @@ import java.util.Set;
 
 public class HContainerBuilderBase extends EmptyBox<HContainerBuilderBase> {
     public static Align DEFAUT_ALIGN = Align.middle(5);
-    private final Set<Entity> entities = new HashSet<>();
+    private final Set<Entity> entities;
     private Align align;
     private double curPosition = 0;
     private double height = 0;
+    private double width = 0;
 
     public HContainerBuilderBase(PdfDocument document) {
         super(document);
+        this.entities = new HashSet<>();
+
     }
 
     public HContainerBuilderBase create() {

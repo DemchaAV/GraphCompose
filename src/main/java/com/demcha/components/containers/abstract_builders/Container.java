@@ -1,7 +1,8 @@
-package com.demcha.components.containers;
+package com.demcha.components.containers.abstract_builders;
 
 import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
+import com.demcha.components.layout.ParentComponent;
 import lombok.NonNull;
 
 import java.util.Set;
@@ -44,42 +45,6 @@ public interface Container extends Component {
      *
      * @return the container's own {@link Entity}.
      */
-    Entity getEntity();
+    Entity entity();
 
-    /**
-     * Returns a list of the child Entitys contained within this container.
-     *
-     * @return the list of child {@link Entity}s.
-     */
-    Set<Entity> getChildren();
-
-
-    double width();
-
-
-    /**
-     * Adds a child Entity to the container.
-     * This is a default method that calls {@link #getChildren()} to add the child Entity.
-     *
-     */
-    void add(@NonNull Entity entity);
-
-    /**
-     * Removes a specified child Entity from the container.
-     * This is a default method that calls {@link #getChildren()} to remove the child Entity.
-     *
-     * @param child the {@link Entity} to remove.
-     * @return true if the child Entity was successfully removed, false otherwise.
-     */
-    default boolean remove(Entity child) {
-        return getChildren().remove(child);
-    }
-
-    /**
-     * Clears all child Entitys from the container.
-     * This is a default method that calls {@link #getChildren()} to clear the list of child Entitys.
-     */
-    default void clear() {
-        getChildren().clear();
-    }
 }

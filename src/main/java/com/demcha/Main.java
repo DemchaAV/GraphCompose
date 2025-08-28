@@ -81,13 +81,14 @@ public class Main {
         document.putEntity(hContainer2);
 
 
-        var VContainer = VContainerBuilder.create(Align.middle(5))
+        var VContainer = new VContainerBuilder(document)
+                .create(Align.middle(5))
                 .entityName(new EntityName("VContainer"))
                 .margin(Margin.of(15))
                 .anchor(Anchor.centerBottom())
                 .add(hContainer1)
                 .add(hContainer2)
-                .build(document);
+                .build();
 
 
         document.setGuideLines(true);

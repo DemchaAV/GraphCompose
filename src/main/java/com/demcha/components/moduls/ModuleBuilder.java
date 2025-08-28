@@ -85,14 +85,14 @@ public class ModuleBuilder extends Module {
             rowsList.add(row);
         }
 
-        var vContainer = VContainerBuilder.create(Align.middle(5))
+        var vContainer = new VContainerBuilder(pdfDocument).create(Align.middle(5))
                 .entityName(new EntityName("vContainer"))
                 .margin(Margin.of(15))
                 .anchor(Anchor.centerBottom());
         for (int i = 0; i < rows; i++) {
             vContainer.add(rowsList.get(i));
         }
-        return vContainer.build(pdfDocument);
+        return vContainer.build();
     }
 
 }

@@ -29,12 +29,10 @@ public class HContainerBuilderBase extends EmptyBox<HContainerBuilderBase> {
     private double curPosition = 0;
     private double height = 0;
     private double width = 0;
-    private final Container container;
 
-    public HContainerBuilderBase(PdfDocument document, Container container) {
+    public HContainerBuilderBase(PdfDocument document) {
         super(document);
         this.entities = new HashSet<>();
-        this.container = container;
 
     }
 
@@ -49,7 +47,7 @@ public class HContainerBuilderBase extends EmptyBox<HContainerBuilderBase> {
         entity.addComponent(new HContainer());
         entity.addComponent(align);
         entity.addComponent(new EntityName(defaultName));
-        return self();
+        return this;
     }
 
 

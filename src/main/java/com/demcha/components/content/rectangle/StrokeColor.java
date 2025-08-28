@@ -1,14 +1,14 @@
 package com.demcha.components.content.rectangle;
 
-import com.demcha.components.style.ColorComponent;
+import com.demcha.components.style.ComponentColor;
 import lombok.NonNull;
 
 import java.awt.*;
 
 public record StrokeColor(Color color) {
-    public static Color DEFAULT_STROKE_COLOR = ColorComponent.BLACK;
+    public static Color DEFAULT_STROKE_COLOR = ComponentColor.BLACK;
 
-    public StrokeColor(@NonNull ColorComponent color) {
+    public StrokeColor(@NonNull ComponentColor color) {
         this(color.color());
     }
 

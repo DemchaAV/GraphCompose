@@ -6,14 +6,11 @@ import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.GuidesRenderer;
 import com.demcha.components.layout.coordinator.RenderingPosition;
-import com.demcha.components.style.ColorComponent;
 import com.demcha.system.ContentSizeNotFoundException;
 import com.demcha.system.PdfRender;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
-import java.awt.*;
 import java.io.IOException;
 import java.util.EnumSet;
 

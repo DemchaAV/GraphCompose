@@ -1,4 +1,6 @@
 package com.demcha.components.content.rectangle;
 
-public record Radius(double radius) {
+import com.demcha.components.core.Component;
+
+public record Radius(double radius) implements Component {
 }

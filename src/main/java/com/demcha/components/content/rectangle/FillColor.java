@@ -1,15 +1,15 @@
 package com.demcha.components.content.rectangle;
 
 import com.demcha.components.core.Component;
-import com.demcha.components.style.ColorComponent;
+import com.demcha.components.style.ComponentColor;
 import lombok.NonNull;
 
 import java.awt.*;
 
 public record FillColor(Color color) implements Component {
-    public static Color DEFAULT_FILL_COLOR = ColorComponent.MODULE_TITLE;
+    public static Color DEFAULT_FILL_COLOR = ComponentColor.MODULE_TITLE;
 
-    public FillColor(@NonNull ColorComponent color) {
+    public FillColor(@NonNull ComponentColor color) {
         this(color.color());
     }
     public static FillColor nonColor(){

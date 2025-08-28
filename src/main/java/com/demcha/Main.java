@@ -2,7 +2,6 @@ package com.demcha;
 
 import com.demcha.components.containers.HContainerBuilder;
 import com.demcha.components.containers.VContainerBuilder;
-import com.demcha.components.content.Stroke;
 import com.demcha.components.content.components_builders.BodyBoxBuilder;
 import com.demcha.components.content.components_builders.RectangleBuilder;
 import com.demcha.components.content.components_builders.TextBuilder;
@@ -17,7 +16,7 @@ import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.layout.coordinator.Position;
-import com.demcha.components.style.ColorComponent;
+import com.demcha.components.style.ComponentColor;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import com.demcha.core.PdfDocument;
@@ -55,29 +54,36 @@ public class Main {
                 .padding(Padding.zero())
                 .position(new Position(0, 200))
                 .anchor(Anchor.centerTop())
-                .margin(Margin.all(0))
+                .margin(Margin.of(0))
                 .buildInto(document);
         var button1 = createABottom("button1", "Arteme", document);
         var button2 = createABottom("button1", "Arteme", document);
         var button3 = createABottom("button1", "Arteme", document);
         var button4 = createABottom("button1", "Arteme", document);
 
-        var hContainer1 = HContainerBuilder.create(Align.middle(5))
-                .entityName(new EntityName("HContainer_1"))
+        var hContainer1 = new HContainerBuilder(document).create()
                 .anchor(Anchor.centerBottom())
-                .add(button1)
-                .add(button2)
-                .build(document);
-        var hContainer2 = HContainerBuilder.create(Align.middle(5))
-                .entityName(new EntityName("HContainer_2"))
+                .padding(Padding.of(5))
+                .margin(Margin.of(6))
+                .anchor(Anchor.center())
+                .addChild(button1)
+                .addChild(button2)
+                .build();
+
+        var hContainer2 = new HContainerBuilder(document).create()
                 .anchor(Anchor.centerBottom())
-                .add(button3)
-                .add(button4)
-                .build(document);
+                .padding(Padding.of(5))
+                .margin(Margin.of(6))
+                .anchor(Anchor.center())
+                .addChild(button3)
+                .addChild(button4)
+                .build();
+        document.putEntity(hContainer2);
+
 
         var VContainer = VContainerBuilder.create(Align.middle(5))
                 .entityName(new EntityName("VContainer"))
-                .margin(Margin.all(15))
+                .margin(Margin.of(15))
                 .anchor(Anchor.centerBottom())
                 .add(hContainer1)
                 .add(hContainer2)
@@ -97,15 +103,13 @@ public class Main {
                 .entityName(new EntityName(nameButton))
                 .rectangle(new Rectangle(new Radius(5)))
                 .size(new ContentSize(80, 30))
-                .padding(Padding.of(5))
-                .fillColor(ColorComponent.ROYAL_BLUE)
+                .fillColor(ComponentColor.ROYAL_BLUE)
                 .anchor(Anchor.topLeft())
-                .margin(Margin.all(5))
                 .buildInto(document);
         var text3 = TextBuilder.create()
                 .entityName(new EntityName("Text"))
                 .parentComponent(button)
-                .text(new Text(TextButton, new TextStyle(TextStyle.HELVETICA, 12, TextDecoration.DEFAULT, ColorComponent.MODULE_LINE_TEXT)))
+                .text(new Text(TextButton, new TextStyle(TextStyle.HELVETICA, 12, TextDecoration.DEFAULT, ComponentColor.MODULE_LINE_TEXT)))
                 .anchor(Anchor.center())
                 .buildInto(document);
         return button;

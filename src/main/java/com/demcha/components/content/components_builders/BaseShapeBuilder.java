@@ -2,7 +2,7 @@ package com.demcha.components.content.components_builders;
 
 import com.demcha.components.content.Stroke;
 import com.demcha.components.content.rectangle.FillColor;
-import com.demcha.components.style.ColorComponent;
+import com.demcha.components.style.ComponentColor;
 
 import java.awt.Color;
 
@@ -16,7 +16,7 @@ public abstract class BaseShapeBuilder<T extends BaseShapeBuilder<T>>
 
     }
 
-    public T strokeColor(ColorComponent color) {
+    public T strokeColor(ComponentColor color) {
         return strokeColor(color.color());
     }
 
@@ -32,7 +32,7 @@ public abstract class BaseShapeBuilder<T extends BaseShapeBuilder<T>>
         return addComponent(fillColor);
     }
 
-    public T fillColor(ColorComponent fillColor) {
+    public T fillColor(ComponentColor fillColor) {
         return fillColor(fillColor.color());
     }
 

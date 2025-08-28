@@ -4,7 +4,7 @@ import com.demcha.components.core.Component;
 
 import java.awt.*;
 
-public record ColorComponent(Color color) implements Component {
+public record ComponentColor(Color color) implements Component {
     // --- Grayscale ---
     public static final Color BLACK = new Color(0, 0, 0);
     public static final Color DARK_GRAY = new Color(64, 64, 64);
@@ -59,15 +59,15 @@ public record ColorComponent(Color color) implements Component {
     public static final Color MODULE_LINE_TEXT = new Color(51, 51, 51);
 
     // --- UI Specific: Link Colors ---
-    public ColorComponent(Color color) {
+    public ComponentColor(Color color) {
         this.color = color;
     }
 
-    public ColorComponent(int r, int g, int b) {
+    public ComponentColor(int r, int g, int b) {
         this(new Color(r, g, b));
     }
 
-    public ColorComponent(int rgb) {
+    public ComponentColor(int rgb) {
         this(new Color(rgb));
     }
 }

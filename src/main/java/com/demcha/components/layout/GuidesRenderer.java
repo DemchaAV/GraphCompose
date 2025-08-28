@@ -8,7 +8,7 @@ import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.PaddingCoordinate;
 import com.demcha.components.layout.coordinator.RenderingPosition;
-import com.demcha.components.style.ColorComponent;
+import com.demcha.components.style.ComponentColor;
 import lombok.NonNull;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
@@ -38,7 +38,7 @@ public interface GuidesRenderer {
         double width = outer.width();
         double height = outer.height();
 
-        Color color = ColorComponent.ROYAL_BLUE;
+        Color color = ComponentColor.ROYAL_BLUE;
         renderMarkers(cs, x, y, width, height, color);
         return renderRectangle(stroke, cs,
                 x, y, width, height,
@@ -55,7 +55,7 @@ public interface GuidesRenderer {
         double width = inner.innerW();
         double height = inner.innerH();
 
-        Color color = ColorComponent.DARK_ORANGE;
+        Color color = ComponentColor.DARK_ORANGE;
         renderMarkers(cs, x, y, width, height, color);
 
         return renderRectangle(stroke, cs,
@@ -117,7 +117,7 @@ public interface GuidesRenderer {
         double y = rp.y();
         double w = boxSize.width();
         double h = boxSize.height();
-        Color color = ColorComponent.GRAY;
+        Color color = ComponentColor.GRAY;
 
         return renderRectangle(stroke, cs,
                 x, y, w, h,

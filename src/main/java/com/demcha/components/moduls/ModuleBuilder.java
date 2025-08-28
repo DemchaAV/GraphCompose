@@ -16,7 +16,7 @@ import com.demcha.components.core.EntityName;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.Anchor;
-import com.demcha.components.style.ColorComponent;
+import com.demcha.components.style.ComponentColor;
 import com.demcha.components.style.Margin;
 import com.demcha.core.PdfDocument;
 
@@ -53,7 +53,7 @@ public class ModuleBuilder extends Module {
         var text3 = TextBuilder.create()
                 .entityName(new EntityName("Text"))
                 .parentComponent(button)
-                .text(new Text(TextButton, new TextStyle(TextStyle.HELVETICA, 12, TextDecoration.DEFAULT, ColorComponent.MODULE_LINE_TEXT)))
+                .text(new Text(TextButton, new TextStyle(TextStyle.HELVETICA, 12, TextDecoration.DEFAULT, ComponentColor.MODULE_LINE_TEXT)))
                 .anchor(Anchor.center())
                 .buildInto(pdfDocument);
         return button;
@@ -66,15 +66,15 @@ public class ModuleBuilder extends Module {
             buttons.add(cell);
         }
 
-        var hContainer2 = HContainerBuilder.create(Align.middle(5))
+        var hContainer2 = new HContainerBuilder(pdfDocument).create(Align.middle(5))
                 .entityName(new EntityName(rowName))
                 .anchor(Anchor.centerBottom());
 
         for (int i = 0; i < buttons.size(); i++) {
-            hContainer2.add(buttons.get(i));
+            hContainer2.addChild(buttons.get(i));
         }
 
-        var h = hContainer2.build(pdfDocument);
+        var h = hContainer2.build();
         return h;
     }
 
@@ -87,7 +87,7 @@ public class ModuleBuilder extends Module {
 
         var vContainer = VContainerBuilder.create(Align.middle(5))
                 .entityName(new EntityName("vContainer"))
-                .margin(Margin.all(15))
+                .margin(Margin.of(15))
                 .anchor(Anchor.centerBottom());
         for (int i = 0; i < rows; i++) {
             vContainer.add(rowsList.get(i));

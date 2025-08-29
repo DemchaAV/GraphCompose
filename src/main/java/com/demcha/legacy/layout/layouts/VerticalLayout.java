@@ -8,7 +8,7 @@ import com.demcha.components.layout.Align;
 import com.demcha.components.content.text.block.TextBlock;
 import com.demcha.components.content.text.block.TextBlockMeasurer;
 import com.demcha.legacy.components.data.text.TextData;
-import com.demcha.legacy.core.Element;
+import com.demcha.components.content.Element;
 import com.demcha.legacy.layout.*;
 
 public class VerticalLayout implements Layout {

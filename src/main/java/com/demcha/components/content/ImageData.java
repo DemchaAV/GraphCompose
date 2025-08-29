@@ -1,4 +1,4 @@
-package com.demcha.legacy.components.data;
+package com.demcha.components.content;
 
 import com.demcha.components.core.Component;
 

@@ -1,18 +1,19 @@
-package com.demcha.components.moduls;
+package com.demcha.components.containers.moduls;
 
 
 import com.demcha.components.containers.abstract_builders.ShapeBuilderBase;
+import com.demcha.components.content.Element;
 import com.demcha.components.content.Stroke;
 import com.demcha.components.content.components_builders.TextBuilder;
 import com.demcha.components.content.rectangle.Radius;
 import com.demcha.components.content.rectangle.Rectangle;
-import com.demcha.components.content.text.Text;
 import com.demcha.components.content.text.TextDecoration;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.Anchor;
+import com.demcha.components.layout.ParentComponent;
 import com.demcha.core.PdfDocument;
 import lombok.AllArgsConstructor;
 
@@ -35,26 +36,26 @@ public class Button {
                 throw new IllegalStateException("Array  must be have 2 elements size[0]== width, size[1]== height");
             }
         }
-        var button =  new BodyButtonBuilder(pdfDocument).create()
-                .entityName(new EntityName(nameButton))
-                .rectangle(cornerRadius == null ? new Rectangle() : new Rectangle(cornerRadius))
-                .size(new ContentSize(size[0], size[1]))
-                .stroke(new Stroke(12.0));
-
-        var text3 = TextBuilder.create()
-                .entityName(new EntityName("Text"))
-                .text(Text.builder()
-                        .text(textButton)
-                        .textStyle(TextStyle.builder()
-                                .font(TextStyle.HELVETICA)
-                                .size(12)
-                                .decoration(TextDecoration.DEFAULT)
-                                .color(new Color(19, 19, 19))
-                                .build()
-                        )
+        var text3 = new TextBuilder(pdfDocument).create()
+                .entityName(new EntityName("TextComponent"))
+                .textWithAutoSize(textButton)
+                .textStyle(TextStyle.builder()
+                        .font(TextStyle.HELVETICA)
+                        .size(12)
+                        .decoration(TextDecoration.DEFAULT)
+                        .color(new Color(19, 19, 19))
                         .build()
                 )
                 .anchor(Anchor.center());
+
+
+        var button = new BodyButtonBuilder(pdfDocument).create()
+                .entityName(new EntityName(nameButton))
+                .rectangle(new Rectangle())
+                .cornerRadius(cornerRadius)
+                .size(new ContentSize(size[0], size[1]))
+                .stroke(new Stroke(12.0));
+
         return buildButton(button, text3);
     }
 
@@ -65,8 +66,8 @@ public class Button {
                 .build();
 
         var buttonTextDecorated = buttonText
-                .parentComponent(buttonBody)
-                .buildInto(pdfDocument);
+                .addComponent(new ParentComponent(buttonBody))
+                .buildInto();
 
         return buttonBody;
     }
@@ -79,7 +80,6 @@ class BodyButtonBuilder extends ShapeBuilderBase<BodyButtonBuilder> {
     }
 
 
-
     public BodyButtonBuilder rectangle(Rectangle rectangle) {
         return addComponent(rectangle);
     }
@@ -87,5 +87,10 @@ class BodyButtonBuilder extends ShapeBuilderBase<BodyButtonBuilder> {
     @Override
     public Entity build() {
         return entity;
+    }
+
+    @Override
+    public void initialize() {
+        entity.addComponent(new Element());
     }
 }

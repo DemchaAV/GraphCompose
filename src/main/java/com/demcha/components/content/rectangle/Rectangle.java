@@ -15,12 +15,12 @@ import java.io.IOException;
 import java.util.EnumSet;
 
 @Slf4j
-public record Rectangle(Radius radius) implements Component, PdfRender, GuidesRenderer {
+public record Rectangle() implements Component, PdfRender, GuidesRenderer {
     private static final EnumSet<Guide> DEFAULT_GUIDES =
             EnumSet.of(Guide.MARGIN, Guide.PADDING);
 
     public Rectangle() {
-        this(null);
+
     }
 
     @Override
@@ -57,6 +57,8 @@ public record Rectangle(Radius radius) implements Component, PdfRender, GuidesRe
         double w = size.width();
         double h = size.height();
         Stroke stroke = e.getComponent(Stroke.class).orElse(null);
+        Radius radius = e.getComponent(Radius.class).orElse(null);
+
 
         // Для заливки радиусного прямоугольника используем non-stroking color,
         // для контура — stroking color.

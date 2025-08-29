@@ -32,16 +32,17 @@ public interface EntityCreator<B> {
 
     default B entityName(String name) {
         entityName(new EntityName(name));
+        initialize();
         return self();
     }
 
-
     /**
-     * Builds the entity.
-     *
-     * @return The built entity.
+     * This method provides an initialization step for components within the entity,
+     * ensuring that all components are properly associated with this entity.
      */
-    Entity build();
+
+     void initialize();
+
 
     /**
      * add component in to our entity

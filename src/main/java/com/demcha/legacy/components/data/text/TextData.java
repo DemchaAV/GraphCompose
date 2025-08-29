@@ -3,7 +3,7 @@ package com.demcha.legacy.components.data.text;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.core.Component;
-import com.demcha.legacy.core.Element;
+import com.demcha.components.content.Element;
 
 import java.io.IOException;
 

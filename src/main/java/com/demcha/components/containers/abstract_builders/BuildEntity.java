@@ -19,6 +19,10 @@ public interface BuildEntity {
      */
     Entity build();
 
+    default Entity buildInto(){
+      return   document().putEntity(build());
+    }
+
     /**
      * Returns the {@link PdfDocument} associated with this builder.
      *

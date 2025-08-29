@@ -20,4 +20,9 @@ public class RectangleBuilder extends ShapeBuilderBase<RectangleBuilder> {
     public RectangleBuilder rectangle(Rectangle rectangle) {
         return addComponent(rectangle);
     }
+
+    @Override
+    public void initialize() {
+        entity.addComponent(new Rectangle());
+    }
 }

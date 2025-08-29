@@ -1,8 +1,7 @@
 package com.demcha.system;
 
-import com.demcha.components.content.Box;
-import com.demcha.components.content.components_builders.BodyBoxBuilder;
-import com.demcha.components.content.text.Text;
+import com.demcha.components.content.components_builders.ElementBuilder;
+import com.demcha.components.content.text.TextComponent;
 import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
@@ -240,7 +239,7 @@ public class LayoutSystem implements System {
 
         PdfDocument pdf = new PdfDocument();
 
-        var parent = BodyBoxBuilder.create()
+        var parent = ElementBuilder.create()
                 .entityName(new EntityName("ParentBox"))
                 .size(new ContentSize(300, 220))
                 .padding(Padding.of(10))
@@ -249,7 +248,7 @@ public class LayoutSystem implements System {
                 .margin(new Margin(5, 5, 5, 5))
                 .buildComponents();
 
-        var child = BodyBoxBuilder.create()
+        var child = ElementBuilder.create()
                 .entityName(new EntityName("ChildBox"))
                 .parentComponent(new ParentComponent(parent.getId()))
                 .size(new ContentSize(180, 140))
@@ -259,7 +258,7 @@ public class LayoutSystem implements System {
                 .margin(new Margin(5, 5, 5, 5))
                 .buildComponents();
 
-        var grandChild = BodyBoxBuilder.create()
+        var grandChild = ElementBuilder.create()
                 .entityName(new EntityName("GrandChildBox"))
                 .parentComponent(new ParentComponent(child.getId()))
                 .size(new ContentSize(100, 80))
@@ -467,7 +466,7 @@ public class LayoutSystem implements System {
      *
      * <p>Rules:
      * <ul>
-     *   <li>Has {@code Text}  → return {@code true}  (do not expand)</li>
+     *   <li>Has {@code TextComponent}  → return {@code true}  (do not expand)</li>
      *   <li>Has {@code Box}   → return {@code false} (allow expansion)</li>
      *   <li>Otherwise         → return {@code true}  (do not expand)</li>
      * </ul>
@@ -478,13 +477,11 @@ public class LayoutSystem implements System {
 
     private boolean isExpandable(Entity entity) {
         //TODO Restrictions if we need to skip a some entitie and deny expend execution
-        if (entity.has(Text.class)) {
+        if (entity.has(TextComponent.class)) {
             // Forbidden expend text Entitie
             return false;
         }
-        if (entity.has(Box.class)) {
-            return true;
-        }
+
         return false;
     }
 

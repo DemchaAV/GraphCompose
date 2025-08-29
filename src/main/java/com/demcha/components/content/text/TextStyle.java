@@ -1,5 +1,7 @@
 package com.demcha.components.content.text;
 
+import com.demcha.components.core.Component;
+import com.demcha.components.style.ComponentColor;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.font.PDFont;
@@ -11,7 +13,9 @@ import java.io.IOException;
 
 @Slf4j
 @Builder
-public record TextStyle(PDFont font, int size, TextDecoration decoration, Color color) {
+public record TextStyle(PDFont font, int size, TextDecoration decoration, Color color)  implements Component {
+
+    public static final TextStyle textStyle = new TextStyle(TextStyle.HELVETICA, 14, TextDecoration.DEFAULT, ComponentColor.TITLE);
 
     public static PDFont TIMES_ROMAN = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
     public static PDFont TIMES_BOLD = new PDType1Font(Standard14Fonts.FontName.TIMES_BOLD);
@@ -31,6 +35,7 @@ public record TextStyle(PDFont font, int size, TextDecoration decoration, Color 
     public TextStyle(PDFont font, int size, TextDecoration decoration) {
         this(font, size, decoration, Color.BLACK);
     }
+
 
     // Factory methods for standard fonts
     public static TextStyle standard14(String family, int size, TextDecoration deco) {
@@ -108,14 +113,15 @@ public record TextStyle(PDFont font, int size, TextDecoration decoration, Color 
             return 0;  // Return 0 if something goes wrong
         }
     }
-    public double getTextHeight(Text text) {
+
+    public double getTextHeight(TextComponent textComponent) {
         try {
             float v = font.getBoundingBox().getHeight() / 1000 * size;
-            log.debug("getTextHeight: " + text);
+            log.debug("getTextHeight: " + textComponent);
             return v;
         } catch (IOException e) {
             e.printStackTrace();
-            log.error("Error while getting text height {}", e.getMessage(), e);
+            log.error("Error while getting textComponent height {}", e.getMessage(), e);
             return 0;  // Return 0 if something goes wrong
         }
     }

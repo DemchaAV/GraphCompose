@@ -1,6 +1,7 @@
 package com.demcha.components.containers;
 
 import com.demcha.components.containers.abstract_builders.AbstractContainerBuilder;
+import com.demcha.components.content.HContainer;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.OuterBoxSize;
@@ -46,7 +47,7 @@ public class HContainerBuilder extends AbstractContainerBuilder<HContainerBuilde
     @Override
     public HContainerBuilder create(Align align) {
         super.create(align); // Call the common logic
-        entity.addComponent(new HContainer()); // Add the specific component
+        entity.addComponentIfAbsent(new HContainer()); // Add the specific component
         return self();
     }
 
@@ -94,7 +95,7 @@ public class HContainerBuilder extends AbstractContainerBuilder<HContainerBuilde
     @Override
     protected ContentSize calculateContentSize(Padding padding) {
         double entitiesWidth = 0;
-        Iterator<Entity> iterator = entities.iterator();
+        Iterator<Entity> iterator = children.iterator();
         while (iterator.hasNext()) {
             Entity current = iterator.next();
             entitiesWidth += OuterBoxSize.from(current).orElseThrow().width();
@@ -103,5 +104,10 @@ public class HContainerBuilder extends AbstractContainerBuilder<HContainerBuilde
             }
         }
         return new ContentSize(entitiesWidth + padding.horizontal(), secondaryAxisMaxSize + padding.vertical());
+    }
+
+    @Override
+    public void initialize() {
+        entity.addComponent(new HContainer());
     }
 }

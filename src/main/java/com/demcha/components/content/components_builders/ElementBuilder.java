@@ -1,28 +1,28 @@
 package com.demcha.components.content.components_builders;
 
-import com.demcha.components.content.Body;
+import com.demcha.components.content.Element;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.coordinator.Position;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 
-public class BodyBoxBuilder extends ComponentBoxBuilder<BodyBoxBuilder> {
-    private BodyBoxBuilder() {
+public class ElementBuilder extends ComponentBoxBuilder<ElementBuilder> {
+    private ElementBuilder() {
     }
 
-    public static BodyBoxBuilder create() {
-        BodyBoxBuilder bodyBoxBuilder = new BodyBoxBuilder();
-        bodyBoxBuilder.addComponent(new Body());
-        return bodyBoxBuilder;
+    public static ElementBuilder create() {
+        ElementBuilder elementBuilder = new ElementBuilder();
+        elementBuilder.addComponent(new Element());
+        return elementBuilder;
     }
 
     @Override
-    protected BodyBoxBuilder self() {
+    protected ElementBuilder self() {
         return this;
     }
 
-    public BodyBoxBuilder fillPageSize(PDPage page) {
+    public ElementBuilder fillPageSize(PDPage page) {
         PDRectangle box = page.getCropBox() != null ? page.getCropBox() : page.getMediaBox();
         float w = box.getWidth();
         float h = box.getHeight();
@@ -40,7 +40,7 @@ public class BodyBoxBuilder extends ComponentBoxBuilder<BodyBoxBuilder> {
         addComponent(new Position(0, h));   // top-left origin for your layout system
         return this;
     }
-    public BodyBoxBuilder fillHorizontal(PDPage page, float high) {
+    public ElementBuilder fillHorizontal(PDPage page, float high) {
         PDRectangle box = page.getCropBox() != null ? page.getCropBox() : page.getMediaBox();
         this.filledHorizontally = true;
         float w = box.getWidth();

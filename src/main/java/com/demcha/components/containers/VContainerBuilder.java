@@ -1,5 +1,6 @@
 package com.demcha.components.containers;
 import com.demcha.components.containers.abstract_builders.AbstractContainerBuilder;
+import com.demcha.components.content.VContainer;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.OuterBoxSize;
@@ -35,7 +36,7 @@ public class VContainerBuilder extends AbstractContainerBuilder<VContainerBuilde
     @Override
     public VContainerBuilder create(Align align) {
         super.create(align); // Call the common logic
-        entity.addComponent(new VContainer()); // Add the specific component
+        entity.addComponentIfAbsent(new VContainer()); // Add the specific component
         return self();
     }
     /**
@@ -91,7 +92,7 @@ public class VContainerBuilder extends AbstractContainerBuilder<VContainerBuilde
     @Override
     protected ContentSize calculateContentSize(Padding padding) {
         double entitiesHeight = 0;
-        Iterator<Entity> iterator = entities.iterator();
+        Iterator<Entity> iterator = children.iterator();
         while (iterator.hasNext()) {
             Entity current = iterator.next();
             entitiesHeight += OuterBoxSize.from(current).orElseThrow().height();
@@ -100,5 +101,10 @@ public class VContainerBuilder extends AbstractContainerBuilder<VContainerBuilde
             }
         }
         return new ContentSize(secondaryAxisMaxSize + padding.horizontal(), entitiesHeight + padding.vertical());
+    }
+
+    @Override
+    public void initialize() {
+        entity.addComponent(new VContainer());
     }
 }

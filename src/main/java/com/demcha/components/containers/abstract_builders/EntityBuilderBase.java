@@ -37,10 +37,12 @@ public abstract class EntityBuilderBase<B> implements Layout<B>, EntityCreator<B
      * @return The current builder instance, allowing for method chaining.
      */
     public B create() {
-        autoName();
         entity = new Entity();
+        autoName();
+        initialize();
         return self();
     }
+
 
     /**
      * Automatically generates a default name for the underlying {@link Entity}.

@@ -1,12 +1,13 @@
 package com.demcha.legacy;
 
+import com.demcha.components.content.link.Link;
 import com.demcha.components.layout.HAnchor;
 import com.demcha.components.layout.VAnchor;
 import com.demcha.components.content.text.block.TextBlock;
 import com.demcha.legacy.components.data.text.TextData;
 import com.demcha.components.content.text.TextDecoration;
 import com.demcha.components.content.text.TextStyle;
-import com.demcha.legacy.core.Element;
+import com.demcha.components.content.Element;
 import com.demcha.components.layout.Align;
 import com.demcha.legacy.layout.MeasureCtx;
 import com.demcha.legacy.layout.ArrangeCtx;
@@ -99,7 +100,7 @@ public class Main {
                                 java.awt.Color.BLUE
                         )
                 ))
-                .add(new com.demcha.legacy.components.data.Link("GitHub", "https://github.com/DemchaAV"));
+                .add(new Link("GitHub", "https://github.com/DemchaAV"));
         elements.add(github);
 
         Element address = new Element()
@@ -124,7 +125,7 @@ public class Main {
                                 java.awt.Color.BLUE
                         )
                 ))
-                .add(new com.demcha.legacy.components.data.Link("Email", "mailto:DemchaAV@gmail.com"));
+                .add(new Link("Email", "mailto:DemchaAV@gmail.com"));
         elements.add(email);
 
         return elements;

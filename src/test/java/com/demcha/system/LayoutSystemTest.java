@@ -1,6 +1,6 @@
 package com.demcha.system;
 
-import com.demcha.components.content.components_builders.BodyBoxBuilder;
+import com.demcha.components.content.components_builders.ElementBuilder;
 import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
 import com.demcha.components.geometry.OuterBoxSize;
@@ -131,7 +131,7 @@ class LayoutSystemTest {
     private static Mockh getMockh() {
         PdfDocument pdf = new PdfDocument();
 
-        var parent = BodyBoxBuilder.create()
+        var parent = ElementBuilder.create()
                 .entityName(new EntityName("ParentBox"))
                 .size(new ContentSize(300, 220))
                 .padding(Padding.of(10))
@@ -140,7 +140,7 @@ class LayoutSystemTest {
                 .margin(new Margin(5, 5, 5, 5))
                 .buildComponents();
 
-        var child = BodyBoxBuilder.create()
+        var child = ElementBuilder.create()
                 .entityName(new EntityName("ChildBox"))
                 .parentComponent(new ParentComponent(parent.getId()))
                 .size(new ContentSize(180, 140))
@@ -150,7 +150,7 @@ class LayoutSystemTest {
                 .margin(new Margin(5, 5, 5, 5))
                 .buildComponents();
 
-        var grandChild = BodyBoxBuilder.create()
+        var grandChild = ElementBuilder.create()
                 .entityName(new EntityName("GrandChildBox"))
                 .parentComponent(new ParentComponent(child.getId()))
                 .size(new ContentSize(100, 80))

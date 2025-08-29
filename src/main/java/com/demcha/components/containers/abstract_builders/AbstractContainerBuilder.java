@@ -28,18 +28,18 @@ import java.util.Set;
  * @see com.demcha.components.containers.VContainerBuilder
  * @see EmptyBox
  */
-public abstract class AbstractContainerBuilder<T extends AbstractContainerBuilder<T>> extends EmptyBox<T> {
+public abstract class AbstractContainerBuilder<T extends AbstractContainerBuilder<T>> extends EmptyBox<T> implements Box {
 
     public static final Align DEFAULT_ALIGN = Align.middle(5);
 
-    protected final Set<Entity> entities;
+    protected final Set<Entity> children;
     protected Align align;
     protected double primaryAxisPosition = 0; // Represents width for H-Container, height for V-Container
     protected double secondaryAxisMaxSize = 0; // Represents max height for H-Container, max width for V-Container
 
     public AbstractContainerBuilder(PdfDocument document) {
         super(document);
-        this.entities = new HashSet<>();
+        this.children = new HashSet<>();
     }
 
     /**
@@ -52,11 +52,22 @@ public abstract class AbstractContainerBuilder<T extends AbstractContainerBuilde
      * @return The builder instance for method chaining.
      */
     public T create(Align align) {
-        this.align = align;
+        entity = new Entity();
         autoName();
+        this.align = align;
+        initialize();
         entity.addComponent(align);
-        // Let subclasses add the specific container component (HContainer or VContainer)
         return self();
+    }
+
+    /**
+     * Returns the set of child entities currently added to this container builder.
+     *
+     * @return A {@link Set} of {@link Entity} objects representing the children.
+     */
+    @Override
+    public Set<Entity> children() {
+        return children;
     }
 
     /**
@@ -65,6 +76,7 @@ public abstract class AbstractContainerBuilder<T extends AbstractContainerBuilde
      *
      * @return The builder instance for method chaining.
      */
+    @Override
     public T create() {
         return create(DEFAULT_ALIGN);
     }
@@ -84,7 +96,7 @@ public abstract class AbstractContainerBuilder<T extends AbstractContainerBuilde
         updateChildPosition(child);
         updateContainerDimensions(child);
 
-        entities.add(child);
+        children.add(child);
         return self();
     }
 
@@ -104,7 +116,7 @@ public abstract class AbstractContainerBuilder<T extends AbstractContainerBuilde
         entity.addComponent(contentSize);
 
         document.putEntity(this.entity);
-        for (Entity entity : entities) {
+        for (Entity entity : children) {
             document.putEntity(entity);
         }
         return entity;

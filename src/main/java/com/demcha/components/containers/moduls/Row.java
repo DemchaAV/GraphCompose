@@ -1,6 +1,7 @@
 package com.demcha.components.containers.moduls;
 
 import com.demcha.components.containers.abstract_builders.ShapeBuilderBase;
+import com.demcha.components.content.HContainer;
 import com.demcha.components.content.rectangle.Rectangle;
 import com.demcha.components.core.Entity;
 import com.demcha.core.PdfDocument;
@@ -34,7 +35,12 @@ public class Row {
         public Entity build() {
             return entity;
         }
-    }
+
+         @Override
+         public void initialize() {
+             entity.addComponent(new HContainer());
+         }
+     }
 
 
 }

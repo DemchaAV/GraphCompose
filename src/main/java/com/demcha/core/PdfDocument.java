@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
  * PdfDocument doc = new PdfDocument();
  * UUID e = doc.createEntity();
  * doc.addComponent(e, new Position(50, 100));
- * doc.addComponent(e, new Text("Hello"));
+ * doc.addComponent(e, new TextComponent("Hello"));
  *
  * doc.addSystem(new LayoutSystem());
  * doc.addSystem(new RenderSystem());

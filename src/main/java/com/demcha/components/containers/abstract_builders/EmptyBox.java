@@ -1,5 +1,7 @@
 package com.demcha.components.containers.abstract_builders;
 
+import com.demcha.components.core.Entity;
+import com.demcha.components.layout.ParentComponent;
 import com.demcha.core.PdfDocument;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -27,4 +29,13 @@ public abstract class EmptyBox<T> extends EntityBuilderBase<T> implements BuildE
      * and is used by concrete implementations to interact with the PDF.
      */
     protected final PdfDocument document;
+
+    T parrent(ParentComponent parent) {
+        entity.addComponent(parent);
+        return self();
+    }
+    T parrent(Entity parent) {
+        return parrent(new ParentComponent(parent));
+    }
+
 }

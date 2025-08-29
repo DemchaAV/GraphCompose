@@ -3,7 +3,7 @@ package com.demcha.legacy.scene;
 import com.demcha.components.containers.abstract_builders.EmptyBox;
 import com.demcha.components.core.Entity;
 import com.demcha.core.PdfDocument;
-import com.demcha.legacy.core.Element;
+import com.demcha.components.content.Element;
 import com.demcha.legacy.layout.Layout;
 import lombok.Getter;
 import lombok.Setter;
@@ -48,5 +48,10 @@ public class Module extends EmptyBox<Module> {
 
     public Entity build() {
         return null;
+    }
+
+    @Override
+    public void initialize() {
+        entity.addComponent(new Element());
     }
 }

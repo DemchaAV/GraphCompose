@@ -1,64 +1,70 @@
 package com.demcha.components.content.components_builders;
 
+import com.demcha.components.containers.abstract_builders.EmptyBox;
 import com.demcha.components.content.text.Text;
-import com.demcha.components.core.EntityName;
-import com.demcha.components.geometry.OuterBoxSize;
+import com.demcha.components.content.text.TextComponent;
+import com.demcha.components.content.text.TextStyle;
+import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
-import com.demcha.components.layout.Align;
+import com.demcha.components.style.Padding;
+import com.demcha.core.PdfDocument;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.IOException;
-import java.util.Optional;
 
 //TODO has to be finish with adding essential data type for building b Box
 @Slf4j
-public final class TextBuilder extends ComponentBoxBuilder<TextBuilder> {
+public final class TextBuilder extends EmptyBox<TextBuilder> {
+    private String text;
+    private TextStyle style;
+    private boolean autosize;
 
-    public TextBuilder() {
+    public TextBuilder(PdfDocument document) {
+        super(document);
     }
 
-    public static TextBuilder create() {
-        TextBuilder textBuilder = new TextBuilder();
-        textBuilder.entity.addComponent(new EntityName("Text Box"));
-        return textBuilder;
+    public TextBuilder text(Text textComponent) {
+        return addComponent(textComponent);
     }
 
+    public TextBuilder text(String text) {
+        return addComponent(new Text(text));
+    }
+
+    public TextBuilder textStyle(TextStyle textStyle) {
+        return addComponent(textStyle);
+    }
+
+
+    public TextBuilder textWithAutoSize(Text textComponent) {
+        autosize = true;
+        return addComponent(textComponent);
+
+    }
+    public TextBuilder textWithAutoSize(String text) {
+        autosize = true;
+        return addComponent(new Text(text));
+
+    }
 
     @Override
-    protected TextBuilder self() {
-        return this;
+    public void initialize() {
+        entity.addComponent(new TextComponent());
     }
 
-    /**
-     * Add ar replace {@link Text} component
-     *
-     * @param text the Text component
-     * @return this builder
-     */
-    public TextBuilder text(Text text) {
-        return  textWithAutoSize(text);
-    }
-
-    public TextBuilder textWithAutoSize(Text text) {
-        Optional<ContentSize> size;
-        try {
-            size = text.autoMeasureText();
-        } catch (IOException e) {
-            log.error("Error while trying to add a {}", text.getClass(), e);
-            log.info("Element {} have not been added", text);
-            return this;
+    @Override
+    public Entity build() {
+        if (entity.has(TextComponent.class)) {
+            if (autosize) {
+                TextStyle style = entity.getComponent(TextStyle.class).orElseThrow();
+                Text textValue = entity.getComponent(Text.class).orElseThrow();
+                Padding padding = entity.getComponent(Padding.class).orElse(Padding.zero());
+                double textHeight = style.getTextHeight(textValue.value()) + padding.vertical();
+                double textWidth = style.getTextWidth(textValue.value()) + padding.horizontal();
+                entity.addComponent(new ContentSize(textWidth, textHeight));
+            }
+            return entity;
+        } else {
+            log.error("TextComponent Component  has not been initialized");
+            throw new RuntimeException(TextComponent.class + " Component  has not been initialized");
         }
-        log.debug("Element {} has been added", text);
-        if (size.isPresent()) {
-            addComponent(text);
-            addComponent(size.get());
-        }
-
-        return this;
-    }
-
-    public TextBuilder align(Align align) {
-        addComponent(align);
-        return this;
     }
 }

@@ -3,7 +3,7 @@ package com.demcha.legacy.render;
 import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.content.text.block.TextBlock;
 import com.demcha.components.content.text.TextLines;
-import com.demcha.legacy.core.Element;
+import com.demcha.components.content.Element;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 
 import java.io.IOException;

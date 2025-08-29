@@ -2,12 +2,11 @@ package com.demcha;
 
 import com.demcha.components.containers.HContainerBuilder;
 import com.demcha.components.containers.VContainerBuilder;
-import com.demcha.components.content.components_builders.BodyBoxBuilder;
+import com.demcha.components.content.Stroke;
+import com.demcha.components.content.components_builders.ElementBuilder;
 import com.demcha.components.content.components_builders.RectangleBuilder;
 import com.demcha.components.content.components_builders.TextBuilder;
 import com.demcha.components.content.rectangle.Radius;
-import com.demcha.components.content.rectangle.Rectangle;
-import com.demcha.components.content.text.Text;
 import com.demcha.components.content.text.TextDecoration;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
@@ -15,6 +14,7 @@ import com.demcha.components.core.EntityName;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.Anchor;
+import com.demcha.components.layout.ParentComponent;
 import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.style.ComponentColor;
 import com.demcha.components.style.Margin;
@@ -23,7 +23,6 @@ import com.demcha.core.PdfDocument;
 import com.demcha.system.LayoutSystem;
 import com.demcha.system.RenderingSystem;
 
-import java.awt.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -36,24 +35,29 @@ public class Main {
         document.addSystem(new LayoutSystem());
         document.addSystem(new RenderingSystem());
 
-        var text3 = TextBuilder.create()
-                .entityName(new EntityName("Text"))
-                .text(new Text("Artem Demchyshyn", new TextStyle(TextStyle.HELVETICA, 32, TextDecoration.DEFAULT, ComponentColor.TITLE)))
-                .anchor(Anchor.centerTop())
-                .buildInto(document);
+        var text3 = new TextBuilder(document).create()
+                .entityName(new EntityName("TextComponent"))
+                .textWithAutoSize("Artem Demchyshyn")
+                .textStyle(new TextStyle(TextStyle.HELVETICA, 32, TextDecoration.DEFAULT, ComponentColor.TITLE))
+                .anchor(Anchor.center())
+                .margin(Margin.of(6))
+                .padding(Padding.of(5))
+                .buildInto();
 
 
         var rectangle = new RectangleBuilder(document).create()
                 .entityName(new EntityName("Rectangle"))
-                .rectangle(new Rectangle())
                 .size(new ContentSize(400, 200))
+                .cornerRadius(new Radius(5))
+                .stroke(new Stroke(ComponentColor.ROYAL_BLUE,5))
+
                 .padding(Padding.of(15))
                 .anchor(Anchor.center())
 //                .position(new Position(25, 25))
                 .margin(new Margin(5, 5, 5, 5))
-                .build();
+                .buildInto();
 
-        var box = BodyBoxBuilder.create()
+        var box = ElementBuilder.create()
                 .entityName(new EntityName("BodyBox"))
                 .fillHorizontal(document.getPage(), 100)
                 .padding(Padding.zero())
@@ -105,19 +109,21 @@ public class Main {
     }
 
     public static Entity createABottom(String nameButton, String TextButton, PdfDocument document) {
+
         var button = new RectangleBuilder(document).create()
                 .entityName(new EntityName(nameButton))
-                .rectangle(new Rectangle(new Radius(5)))
+                .cornerRadius(new Radius(5))
                 .size(new ContentSize(80, 30))
                 .fillColor(ComponentColor.ROYAL_BLUE)
                 .anchor(Anchor.topLeft())
                 .build();
-        var text3 = TextBuilder.create()
-                .entityName(new EntityName("Text"))
-                .parentComponent(button)
-                .text(new Text(TextButton, new TextStyle(TextStyle.HELVETICA, 12, TextDecoration.DEFAULT, ComponentColor.MODULE_LINE_TEXT)))
+        var text3 = new TextBuilder(document).create()
+                .entityName(new EntityName("TextComponent"))
+                .textWithAutoSize(TextButton)
+                .textStyle((new TextStyle(TextStyle.HELVETICA, 12, TextDecoration.DEFAULT, ComponentColor.MODULE_LINE_TEXT)))
                 .anchor(Anchor.center())
-                .buildInto(document);
+                .addComponent(new ParentComponent(button))
+                .buildInto();
         return button;
     }
 }

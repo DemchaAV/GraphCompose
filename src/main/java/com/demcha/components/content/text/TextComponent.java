@@ -62,7 +62,7 @@ public record TextComponent() implements Component, PdfRender, GuidesRenderer {
         cs.setFont(style.font(), size);
         cs.setNonStrokingColor(style.color());
         cs.beginText();
-        cs.newLineAtOffset((float) position.x() + (float) padding.left(), (float) position.y() + (float) (different*1.5) + (float) padding.bottom());
+        cs.newLineAtOffset((float) position.x() + (float) padding.left(), (float) position.y() + (float) (different*2) + (float) padding.bottom());
         cs.showText(textValue.value());
         cs.endText();
         cs.restoreGraphicsState();

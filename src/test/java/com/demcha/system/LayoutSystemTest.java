@@ -11,7 +11,7 @@ import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
-import com.demcha.core.PdfDocument;
+import com.demcha.core.EntityManager;
 import org.junit.jupiter.api.Test;
 
 // Import AssertJ for fluent assertions
@@ -67,7 +67,7 @@ class LayoutSystemTest {
 
     @Test
     void computesParentAndChildAbsolutePositions() {
-        PdfDocument pdf = new PdfDocument();
+        EntityManager pdf = new EntityManager();
 
         Mockh mockh = getMockh();
         var parent = mockh.parent();
@@ -129,7 +129,7 @@ class LayoutSystemTest {
     }
 
     private static Mockh getMockh() {
-        PdfDocument pdf = new PdfDocument();
+        EntityManager pdf = new EntityManager();
 
         var parent = ElementBuilder.create()
                 .entityName(new EntityName("ParentBox"))
@@ -167,6 +167,6 @@ class LayoutSystemTest {
         return result;
     }
 
-    private record Mockh(PdfDocument pdf, Entity parent, Entity child, Entity grandChild) {
+    private record Mockh(EntityManager pdf, Entity parent, Entity child, Entity grandChild) {
     }
 }

@@ -5,10 +5,10 @@ import com.demcha.components.content.Element;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.style.Padding;
-import com.demcha.core.PdfDocument;
+import com.demcha.core.EntityManager;
 
 public class Module extends AbstractContainerBuilder<Module> {
-    public Module(PdfDocument document) {
+    public Module(EntityManager document) {
         super(document);
     }
 

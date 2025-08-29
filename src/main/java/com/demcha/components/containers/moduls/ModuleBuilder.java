@@ -3,25 +3,22 @@ package com.demcha.components.containers.moduls;
 
 import com.demcha.components.containers.HContainerBuilder;
 import com.demcha.components.containers.VContainerBuilder;
-import com.demcha.components.containers.abstract_builders.AbstractContainerBuilder;
 import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
-import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.style.Margin;
-import com.demcha.components.style.Padding;
-import com.demcha.core.PdfDocument;
+import com.demcha.core.EntityManager;
 
 import java.util.ArrayList;
 
 public class ModuleBuilder extends VContainerBuilder {
-    private ModuleBuilder(PdfDocument pdfDocument) {
-        super(pdfDocument);
+    private ModuleBuilder(EntityManager entityManager) {
+        super(entityManager);
     }
 
-    public ModuleBuilder create(PdfDocument pdfDocument) {
-        return new ModuleBuilder(pdfDocument);
+    public ModuleBuilder create(EntityManager entityManager) {
+        return new ModuleBuilder(entityManager);
     }
 
     /**

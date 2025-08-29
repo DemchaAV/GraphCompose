@@ -5,7 +5,7 @@ import com.demcha.components.content.rectangle.FillColor;
 import com.demcha.components.content.rectangle.Radius;
 import com.demcha.components.content.rectangle.Rectangle;
 import com.demcha.components.style.ComponentColor;
-import com.demcha.core.PdfDocument;
+import com.demcha.core.EntityManager;
 
 import java.awt.*;
 
@@ -17,7 +17,7 @@ import java.awt.*;
  */
 public abstract class ShapeBuilderBase<T> extends EmptyBox<T> {
 
-    public ShapeBuilderBase(PdfDocument document) {
+    public ShapeBuilderBase(EntityManager document) {
         super(document);
     }
 

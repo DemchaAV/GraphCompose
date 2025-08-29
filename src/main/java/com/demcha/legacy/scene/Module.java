@@ -2,7 +2,7 @@ package com.demcha.legacy.scene;
 
 import com.demcha.components.containers.abstract_builders.EmptyBox;
 import com.demcha.components.core.Entity;
-import com.demcha.core.PdfDocument;
+import com.demcha.core.EntityManager;
 import com.demcha.components.content.Element;
 import com.demcha.legacy.layout.Layout;
 import lombok.Getter;
@@ -39,7 +39,7 @@ public class Module extends EmptyBox<Module> {
      *
      * @param document The PDF document associated with this module.
      */
-    public Module(PdfDocument document) {
+    public Module(EntityManager document) {
         super(document);
     }
 

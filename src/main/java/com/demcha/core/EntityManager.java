@@ -17,16 +17,15 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
- * # PdfDocument
+ * # EntityManager
  * <p>
  * A minimal ECS-style (Entity–Component–System) registry for your PDF domain.
  * <p>
  * - **Entities** are identified by {@link UUID}.<br>
  * - **Components** are plain data objects keyed by their concrete {@link Class}.<br>
- * - **Systems** implement domain logic via {@link System#process(PdfDocument)} and
+ * - **Systems** implement domain logic via {@link System#process(EntityManager)} and
  * operate on entities/components stored here.
  * </p>
  *
@@ -40,7 +39,7 @@ import java.util.stream.Collectors;
  *
  * <h2>Typical usage</h2>
  * <pre>{@code
- * PdfDocument doc = new PdfDocument();
+ * EntityManager doc = new EntityManager();
  * UUID e = doc.createEntity();
  * doc.addComponent(e, new Position(50, 100));
  * doc.addComponent(e, new TextComponent("Hello"));
@@ -71,7 +70,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Getter
 @Setter
-public class PdfDocument {
+public class EntityManager {
     private final Map<UUID, Entity> entities = new HashMap<>();
     private final List<System> systems = new ArrayList<>();
     private final PDPage page;
@@ -81,21 +80,21 @@ public class PdfDocument {
     private Map<Integer, List<UUID>> layers;     // NEW: layer → ordered ids
     private Map<UUID, Integer> depthById;
 
-    public PdfDocument(PDPage page) {
+    public EntityManager(PDPage page) {
         log.info("Created new pdf document {}", page.getBBox());
         this.page = page;
         document = new PDDocument();
-        layers  = new HashMap<>();
+        layers = new HashMap<>();
         depthById = new HashMap<>();
         document.addPage(page);
     }
 
-    public PdfDocument() {
+    public EntityManager() {
         this(new PDPage(PDRectangle.A4));
-        log.info("PdfDocument with default settings PDRectangle.A4");
+        log.info("EntityManager with default settings PDRectangle.A4");
     }
 
-    public PdfDocument(PDRectangle pdfRectangle) {
+    public EntityManager(PDRectangle pdfRectangle) {
         this(new PDPage(pdfRectangle));
     }
 
@@ -127,9 +126,12 @@ public class PdfDocument {
         log.info("Getting  Entity id  {}", id);
         return Optional.ofNullable(entities.get(id));
     }
+
     public void setGuideLines(boolean guideLines) {
         this.guideLines = guideLines;
-        entities.forEach((id, entity) -> { entity.setGuideLines(guideLines); });
+        entities.forEach((id, entity) -> {
+            entity.setGuideLines(guideLines);
+        });
     }
 
     public Entity putEntity(Entity entity) {
@@ -204,6 +206,7 @@ public class PdfDocument {
         }
         return result;
     }
+
     public Set<UUID> getEntitiesWithPdfRender(Class<? extends PdfRender> componentType) {
         log.debug("Searching for entities with component type {}", componentType.getName());
 
@@ -287,15 +290,15 @@ public class PdfDocument {
         float height = page.getMediaBox().getHeight();
         float x = page.getMediaBox().getLowerLeftX();
         float y = page.getMediaBox().getLowerLeftY();
-        return new PageSize(width, height,x,y);
+        return new PageSize(width, height, x, y);
     }
 
-    public  void printEntities(){
+    public void printEntities() {
         this.entities.values().forEach(entity -> {
             java.lang.System.out.println(entity.toString());
-            entity.view().forEach((k,v)->
+            entity.view().forEach((k, v) ->
                     java.lang.System.out.println(v)
-                    );
+            );
         });
     }
 

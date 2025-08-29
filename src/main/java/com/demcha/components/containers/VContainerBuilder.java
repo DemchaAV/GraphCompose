@@ -9,7 +9,7 @@ import com.demcha.components.layout.Anchor;
 import com.demcha.components.layout.VAnchor;
 import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.style.Padding;
-import com.demcha.core.PdfDocument;
+import com.demcha.core.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Iterator;
@@ -19,9 +19,9 @@ public class VContainerBuilder extends AbstractContainerBuilder<VContainerBuilde
     /**
      * Constructs a new {@code VContainerBuilder} with the specified PDF document.
      *
-     * @param document The {@link PdfDocument} to which the container will be added.
+     * @param document The {@link EntityManager} to which the container will be added.
      */
-    public VContainerBuilder(PdfDocument document) {
+    public VContainerBuilder(EntityManager document) {
         super(document);
     }
 

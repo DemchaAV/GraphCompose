@@ -11,7 +11,7 @@ import com.demcha.components.layout.ParentComponent;
 import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
-import com.demcha.core.PdfDocument;
+import com.demcha.core.EntityManager;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,14 +19,14 @@ import java.util.LinkedHashMap;
 
 /**
  * Base class for ECS-style builders that assemble a set of {@link Component}s
- * (one component per type) and optionally create/populate an entity in a {@link PdfDocument}.
+ * (one component per type) and optionally create/populate an entity in a {@link EntityManager}.
  *
  * <p><strong>Responsibilities</strong>:</p>
  * <ul>
  *   <li>Hold exactly one component instance per component type (class) via an internal map.</li>
  *   <li>Provide a fluent API (CRTP) so subclass methods can chain and return the concrete builder type.</li>
  *   <li>Expose convenience methods for common components (e.g., {@link Position}, {@link OuterBoxSize}, {@link Margin}).</li>
- *   <li>Build the final, de-duplicated set of components and push them into a {@link PdfDocument}.</li>
+ *   <li>Build the final, de-duplicated set of components and push them into a {@link EntityManager}.</li>
  * </ul>
  *
  * <p><strong>Design</strong>:</p>
@@ -38,7 +38,7 @@ import java.util.LinkedHashMap;
  *
  * @param <B> the concrete builder type (for fluent chaining via CRTP)
  * @see ComponentBuilder
- * @see PdfDocument
+ * @see EntityManager
  * @see Component
  */
 @Slf4j
@@ -156,23 +156,23 @@ public abstract class ComponentBoxBuilder<B extends ComponentBoxBuilder<B>>
     }
 
     /**
-     * Create an entity inside the given {@link PdfDocument} and populate it with this builder's components.
+     * Create an entity inside the given {@link EntityManager} and populate it with this builder's components.
      *
-     * <p>Delegates to {@code pdfDocument.createAndPopulateEntity(this)}.
-     * Ensure that your {@link PdfDocument} has a compatible method.</p>
+     * <p>Delegates to {@code entityManager.createAndPopulateEntity(this)}.
+     * Ensure that your {@link EntityManager} has a compatible method.</p>
      *
-     * @param pdfDocument the document to create/populate an entity in
+     * @param entityManager the document to create/populate an entity in
      * @return the created entity's UUID
      */
-    public Entity buildInto(PdfDocument pdfDocument) {
-        log.info("Put  {} in to the PdfDocument", entity);
+    public Entity buildInto(EntityManager entityManager) {
+        log.info("Put  {} in to the EntityManager", entity);
         if (filledHorizontally) {
             var component = this.entity.getComponent(ContentSize.class).orElseThrow();
             var margin = this.entity.getComponent(Margin.class).orElse(Margin.zero());
             var newComponentSize = new ContentSize(component.width() - margin.horizontal(), component.height());
             this.entity.addComponent(newComponentSize);
         }
-        pdfDocument.putEntity(this.entity);
+        entityManager.putEntity(this.entity);
         return this.entity;
     }
 }

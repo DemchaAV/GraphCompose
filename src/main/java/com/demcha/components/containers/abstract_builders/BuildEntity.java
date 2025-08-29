@@ -1,11 +1,11 @@
 package com.demcha.components.containers.abstract_builders;
 
 import com.demcha.components.core.Entity;
-import com.demcha.core.PdfDocument;
+import com.demcha.core.EntityManager;
 
 /**
  * The {@code BuildEntity} interface defines a contract for classes that are responsible for building an {@link Entity} object.
- * It provides methods to build the entity, access the associated {@link PdfDocument}, and retrieve the entity being built.
+ * It provides methods to build the entity, access the associated {@link EntityManager}, and retrieve the entity being built.
  * <p>
  * Implementations of this interface are typically used in builder patterns to construct complex {@link Entity} objects step-by-step.
  */
@@ -24,11 +24,11 @@ public interface BuildEntity {
     }
 
     /**
-     * Returns the {@link PdfDocument} associated with this builder.
+     * Returns the {@link EntityManager} associated with this builder.
      *
-     * @return The associated {@link PdfDocument}.
+     * @return The associated {@link EntityManager}.
      */
-    PdfDocument document();
+    EntityManager document();
 
     /**
      * Returns the {@link Entity} object that is currently being built by this builder.

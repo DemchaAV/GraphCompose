@@ -14,7 +14,7 @@ import com.demcha.components.core.EntityName;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.layout.ParentComponent;
-import com.demcha.core.PdfDocument;
+import com.demcha.core.EntityManager;
 import lombok.AllArgsConstructor;
 
 import java.awt.*;
@@ -24,7 +24,7 @@ import java.util.UUID;
 
 @AllArgsConstructor
 public class Button {
-    private final PdfDocument pdfDocument;
+    private final EntityManager entityManager;
     private Map<UUID, Entity> buttons;
 
 
@@ -36,7 +36,7 @@ public class Button {
                 throw new IllegalStateException("Array  must be have 2 elements size[0]== width, size[1]== height");
             }
         }
-        var text3 = new TextBuilder(pdfDocument).create()
+        var text3 = new TextBuilder(entityManager).create()
                 .entityName(new EntityName("TextComponent"))
                 .textWithAutoSize(textButton)
                 .textStyle(TextStyle.builder()
@@ -49,7 +49,7 @@ public class Button {
                 .anchor(Anchor.center());
 
 
-        var button = new BodyButtonBuilder(pdfDocument).create()
+        var button = new BodyButtonBuilder(entityManager).create()
                 .entityName(new EntityName(nameButton))
                 .rectangle(new Rectangle())
                 .cornerRadius(cornerRadius)
@@ -75,7 +75,7 @@ public class Button {
 
 
 class BodyButtonBuilder extends ShapeBuilderBase<BodyButtonBuilder> {
-    public BodyButtonBuilder(PdfDocument document) {
+    public BodyButtonBuilder(EntityManager document) {
         super(document);
     }
 

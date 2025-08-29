@@ -15,7 +15,7 @@ import com.demcha.components.layout.coordinator.PaddingCoordinate;
 import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
-import com.demcha.core.PdfDocument;
+import com.demcha.core.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class LayoutSystem implements System {
-    private PdfDocument pdfDocument;
+    private EntityManager entityManager;
 
     private static boolean updateContentSizeInEntity(Entity parent, double requireInnerBoxWidth, double requireInnerBoxHigh) {
         log.debug("Check if require size bigger than parent InnerBoxSize");
@@ -90,18 +90,18 @@ public class LayoutSystem implements System {
      *
      * @param childEntity  the entity to position
      * @param parentEntity the parentEntity entity, or {@code null} if the childEntity is the root
-     * @param pdfDocument  the document providing page size information
+     * @param entityManager  the document providing page size information
      * @return an {@link Optional} with the computed position
      */
 
     public static Optional<ComputedPosition> calculatePositionFromParent(Entity childEntity,
                                                                          Entity parentEntity,
-                                                                         PdfDocument pdfDocument) {
+                                                                         EntityManager entityManager) {
         log.debug("Starting calculation of computed position for {} from parentEntity {}", childEntity, parentEntity);
 
         // 0) Handle page-level (no parent)
         if (parentEntity == null) {
-            var page = pdfDocument.pageSize();
+            var page = entityManager.pageSize();
             InnerBoxSize pageArea = new InnerBoxSize(page.width(), page.height());
 
             PaddingCoordinate paddingPercentCoordinate = new PaddingCoordinate(page.x(), page.y());
@@ -127,7 +127,7 @@ public class LayoutSystem implements System {
                 break; // cur is root
             }
             UUID gpId = parentCompOpt.get().uuid();
-            cur = pdfDocument.getEntity(gpId).orElse(null);
+            cur = entityManager.getEntity(gpId).orElse(null);
         }
 
         int depth = chain.size(); // глубина
@@ -141,7 +141,7 @@ public class LayoutSystem implements System {
             if (e.getComponent(ComputedPosition.class).isEmpty()) {
                 var parentComp = e.getComponent(ParentComponent.class);
                 if (parentComp.isPresent()) {
-                    Entity p = pdfDocument.getEntity(parentComp.get().uuid())
+                    Entity p = entityManager.getEntity(parentComp.get().uuid())
                             .orElseThrow(() -> new IllegalStateException("Parent not found for " + e));
 
                     var parentInner = InnerBoxSize.from(p).orElseThrow();
@@ -154,7 +154,7 @@ public class LayoutSystem implements System {
                     e.addComponent(new ComputedPosition(local.x() + parentAbs.x(),
                             local.y() + parentAbs.y()));
                 } else {
-                    var page = pdfDocument.pageSize();
+                    var page = entityManager.pageSize();
                     InnerBoxSize refArea = new InnerBoxSize(page.width(), page.height());
                     var pagingCoordinate = PaddingCoordinate.from(parentEntity);
                     ComputedPosition local = positionWithAnchor(e, refArea, pagingCoordinate);
@@ -237,7 +237,7 @@ public class LayoutSystem implements System {
 
     public static void main(String[] args) {
 
-        PdfDocument pdf = new PdfDocument();
+        EntityManager pdf = new EntityManager();
 
         var parent = ElementBuilder.create()
                 .entityName(new EntityName("ParentBox"))
@@ -277,11 +277,11 @@ public class LayoutSystem implements System {
     }
 
     @Override
-    public void process(PdfDocument pdfDocument) {
-        this.pdfDocument = pdfDocument;
+    public void process(EntityManager entityManager) {
+        this.entityManager = entityManager;
         log.info("LayoutSystem: processing");
 
-        Map<UUID, Entity> entities = pdfDocument.getEntities();
+        Map<UUID, Entity> entities = entityManager.getEntities();
         if (entities == null || entities.isEmpty()) {
             log.info("LayoutSystem: no entities to layout");
             return;
@@ -289,10 +289,10 @@ public class LayoutSystem implements System {
 
 
         // 2) Build parent → children map
-        Optional<Set<UUID>> allChildrenOpt = pdfDocument.getEntitiesWithComponent(ParentComponent.class);
+        Optional<Set<UUID>> allChildrenOpt = entityManager.getEntitiesWithComponent(ParentComponent.class);
         Optional<Map<UUID, Set<UUID>>> childrenByParentOpt;
         if (allChildrenOpt.isPresent()) {
-            childrenByParentOpt = pdfDocument.childrenByParent(allChildrenOpt.get());
+            childrenByParentOpt = entityManager.childrenByParent(allChildrenOpt.get());
         } else {
             log.info("LayoutSystem: no children to layout");
             return;
@@ -311,10 +311,10 @@ public class LayoutSystem implements System {
         roots.removeAll(allChildren); // nodes that are never children are roots
 
         // If you intended to prefetch/cache, store the result; otherwise remove this line.
-        pdfDocument.getEntitiesWithComponent(ParentComponent.class)
+        entityManager.getEntitiesWithComponent(ParentComponent.class)
                 .ifPresent(parentEntities -> {
                     for (UUID id : parentEntities) {
-                        var eOpt = pdfDocument.getEntity(id);
+                        var eOpt = entityManager.getEntity(id);
                         if (eOpt.isEmpty()) continue;
 
                         Entity e = eOpt.get();
@@ -333,8 +333,8 @@ public class LayoutSystem implements System {
         Map<UUID, Visit> visit = new HashMap<>();
         //Definition all entities as Visit.UNSEEN
         entities.keySet().forEach(id -> visit.put(id, Visit.UNSEEN));
-        var layers = pdfDocument.getLayers();    // NEW: layer → ordered ids
-        Map<UUID, Integer> depthById = pdfDocument.getDepthById();
+        var layers = entityManager.getLayers();    // NEW: layer → ordered ids
+        Map<UUID, Integer> depthById = entityManager.getDepthById();
         int depth = 0;
         for (UUID root : roots) dfsLayout(root, null, entities, childrenByParents, visit, layers, depthById, depth + 1);
 
@@ -375,10 +375,10 @@ public class LayoutSystem implements System {
                 computedPosition = ComputedPosition.from(childEntity, parent);
             } else {
                 log.warn("LayoutSystem: parent {} of {} not found — using root positioning (Position + Margin)", parentId, id);
-                computedPosition = ComputedPosition.from(childEntity, pdfDocument.pageSize());
+                computedPosition = ComputedPosition.from(childEntity, entityManager.pageSize());
             }
         } else {
-            computedPosition = ComputedPosition.from(childEntity, pdfDocument.pageSize());
+            computedPosition = ComputedPosition.from(childEntity, entityManager.pageSize());
         }
 
         // IMPORTANT: store the computed position, not (0,0)
@@ -421,7 +421,7 @@ public class LayoutSystem implements System {
 
         for (Map.Entry<UUID, Set<UUID>> parentUuid : childrenByParents.entrySet()) {
 
-            var entityParentOpt = pdfDocument.getEntity(parentUuid.getKey());
+            var entityParentOpt = entityManager.getEntity(parentUuid.getKey());
             if (entityParentOpt.isEmpty()) {
                 log.warn("LayoutSystem: hasn't find a Parent Entity by id {}", parentUuid.getKey());
                 continue;
@@ -433,7 +433,7 @@ public class LayoutSystem implements System {
             }
             var childrenEntities = parentUuid.getValue()
                     .stream()
-                    .map(pdfDocument::getEntity)
+                    .map(entityManager::getEntity)
                     .map(Optional::get)
                     .collect(Collectors.toSet());
             alignCildrenInContainer(parentEntity, childrenEntities);

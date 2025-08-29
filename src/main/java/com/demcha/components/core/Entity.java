@@ -1,6 +1,6 @@
 package com.demcha.components.core;
 
-import com.demcha.core.PdfDocument;
+import com.demcha.core.EntityManager;
 import com.demcha.system.PdfEntityRender;
 import com.demcha.system.PdfRender;
 import lombok.Getter;
@@ -190,10 +190,10 @@ public final class Entity implements PdfEntityRender {
         return render.render(this, cs,guideLines);
     }
 
-    public Entity buildInto(PdfDocument pdfDocument) {
-        log.info("Put  {} in to the PdfDocument", this);
+    public Entity buildInto(EntityManager entityManager) {
+        log.info("Put  {} in to the EntityManager", this);
 
-        pdfDocument.putEntity(this);
+        entityManager.putEntity(this);
         return this;
     }
 }

@@ -19,9 +19,9 @@ import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.style.ComponentColor;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
-import com.demcha.core.PdfDocument;
+import com.demcha.core.EntityManager;
 import com.demcha.system.LayoutSystem;
-import com.demcha.system.RenderingSystem;
+import com.demcha.system.PdfRenderingSystem;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,10 +30,10 @@ public class Main {
     public static void main(String[] args) throws Exception {
         Path target = Paths.get("output.pdf");
 
-        PdfDocument document = new PdfDocument();
+        EntityManager document = new EntityManager();
         document.setPathOut(target);
         document.addSystem(new LayoutSystem());
-        document.addSystem(new RenderingSystem());
+        document.addSystem(new PdfRenderingSystem());
 
         var text3 = new TextBuilder(document).create()
                 .entityName(new EntityName("TextComponent"))
@@ -108,7 +108,7 @@ public class Main {
 
     }
 
-    public static Entity createABottom(String nameButton, String TextButton, PdfDocument document) {
+    public static Entity createABottom(String nameButton, String TextButton, EntityManager document) {
 
         var button = new RectangleBuilder(document).create()
                 .entityName(new EntityName(nameButton))

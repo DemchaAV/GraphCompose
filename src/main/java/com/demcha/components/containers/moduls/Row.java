@@ -4,25 +4,24 @@ import com.demcha.components.containers.abstract_builders.ShapeBuilderBase;
 import com.demcha.components.content.HContainer;
 import com.demcha.components.content.rectangle.Rectangle;
 import com.demcha.components.core.Entity;
-import com.demcha.core.PdfDocument;
-import lombok.AllArgsConstructor;
+import com.demcha.core.EntityManager;
 
 // horizontall aligne
 public class Row {
-    PdfDocument pdfDocument;
+    EntityManager entityManager;
 
-    public Row(PdfDocument pdfDocument) {
-        this.pdfDocument = pdfDocument;
+    public Row(EntityManager entityManager) {
+        this.entityManager = entityManager;
     }
 
     public  RowBuilder create() {
-        return new RowBuilder(pdfDocument);
+        return new RowBuilder(entityManager);
     }
 
 
      class RowBuilder extends ShapeBuilderBase<RowBuilder> {
 
-        public RowBuilder(PdfDocument document) {
+        public RowBuilder(EntityManager document) {
             super(document);
         }
 

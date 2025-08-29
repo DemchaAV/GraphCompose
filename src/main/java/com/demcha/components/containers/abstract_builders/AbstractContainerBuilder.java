@@ -6,7 +6,7 @@ import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.ParentComponent;
 import com.demcha.components.style.Padding;
-import com.demcha.core.PdfDocument;
+import com.demcha.core.EntityManager;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -37,7 +37,7 @@ public abstract class AbstractContainerBuilder<T extends AbstractContainerBuilde
     protected double primaryAxisPosition = 0; // Represents width for H-Container, height for V-Container
     protected double secondaryAxisMaxSize = 0; // Represents max height for H-Container, max width for V-Container
 
-    public AbstractContainerBuilder(PdfDocument document) {
+    public AbstractContainerBuilder(EntityManager document) {
         super(document);
         this.children = new HashSet<>();
     }
@@ -101,7 +101,7 @@ public abstract class AbstractContainerBuilder<T extends AbstractContainerBuilde
     }
 
     /**
-     * Builds the container entity and its children, adding them to the {@link PdfDocument}.
+     * Builds the container entity and its children, adding them to the {@link EntityManager}.
      * This method calculates the final content size of the container, considering padding,
      * and then registers the container and all its child entities with the document.
      *

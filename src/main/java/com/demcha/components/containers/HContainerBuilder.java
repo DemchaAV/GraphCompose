@@ -10,7 +10,7 @@ import com.demcha.components.layout.Anchor;
 import com.demcha.components.layout.HAnchor;
 import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.style.Padding;
-import com.demcha.core.PdfDocument;
+import com.demcha.core.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Iterator;
@@ -30,9 +30,9 @@ public class HContainerBuilder extends AbstractContainerBuilder<HContainerBuilde
     /**
      * Constructs a new {@code HContainerBuilder} associated with a specific PDF document.
      *
-     * @param document The {@link PdfDocument} to which the container and its entities will belong.
+     * @param document The {@link EntityManager} to which the container and its entities will belong.
      */
-    public HContainerBuilder(PdfDocument document) {
+    public HContainerBuilder(EntityManager document) {
         super(document);
     }
 

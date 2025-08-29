@@ -1,9 +1,7 @@
 package com.demcha.system;
 
-import com.demcha.core.PdfDocument;
-
-import java.sql.DriverManager;
+import com.demcha.core.EntityManager;
 
 public interface System {
-      void process(PdfDocument pdfDocument);
+      void process(EntityManager entityManager);
 }

@@ -5,7 +5,9 @@ import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.GuidesRenderer;
 import com.demcha.components.layout.coordinator.ComputedPosition;
+import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.layout.coordinator.RenderingPosition;
+import com.demcha.components.style.Padding;
 import com.demcha.system.PdfRender;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
@@ -42,14 +44,15 @@ public record TextComponent() implements Component, PdfRender, GuidesRenderer {
             return false;
         }
 
-        var text = textOpt.get();
+        var text = e.getComponent(Text.class).orElseThrow();
         var pos = posOpt.get();
         RenderingPosition position = RenderingPosition.from(e);
         TextStyle style = e.getComponent(TextStyle.class).orElseThrow();
         Text textValue = e.getComponent(Text.class).orElseThrow();
+        Padding padding = e.getComponent(Padding.class).orElse(Padding.zero());
 
         float size = style != null ? style.size() : 12f;
-        double textHeight = style.getTextHeight(text);
+        double textHeight = style.getTextHeight(text.value());
         double different = textHeight > size ? textHeight - size : 0;
 
         log.debug("Rendering text '{}' at ({}, {}) size={}", textValue, pos.x(), pos.y(), size);
@@ -59,7 +62,7 @@ public record TextComponent() implements Component, PdfRender, GuidesRenderer {
         cs.setFont(style.font(), size);
         cs.setNonStrokingColor(style.color());
         cs.beginText();
-        cs.newLineAtOffset((float) position.x(), (float) position.y() + (float) different);
+        cs.newLineAtOffset((float) position.x() + (float) padding.left(), (float) position.y() + (float) (different*1.5) + (float) padding.bottom());
         cs.showText(textValue.value());
         cs.endText();
         cs.restoreGraphicsState();

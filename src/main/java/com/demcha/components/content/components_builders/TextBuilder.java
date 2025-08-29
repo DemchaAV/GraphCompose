@@ -6,6 +6,8 @@ import com.demcha.components.content.text.TextComponent;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
+import com.demcha.components.layout.Anchor;
+import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.style.Padding;
 import com.demcha.core.PdfDocument;
 import lombok.extern.slf4j.Slf4j;

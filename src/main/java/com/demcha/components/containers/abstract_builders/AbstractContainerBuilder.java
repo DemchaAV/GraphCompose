@@ -1,6 +1,8 @@
 package com.demcha.components.containers.abstract_builders;
 
 
+import com.demcha.components.components_builders.HContainerBuilder;
+import com.demcha.components.components_builders.VContainerBuilder;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.Align;
@@ -24,8 +26,8 @@ import java.util.Set;
  *
  * @param <T> The type of the concrete builder extending this abstract class,
  *            allowing for method chaining (fluent API).
- * @see com.demcha.components.containers.HContainerBuilder
- * @see com.demcha.components.containers.VContainerBuilder
+ * @see HContainerBuilder
+ * @see VContainerBuilder
  * @see EmptyBox
  */
 public abstract class AbstractContainerBuilder<T extends AbstractContainerBuilder<T>> extends EmptyBox<T> implements Box {
@@ -115,9 +117,9 @@ public abstract class AbstractContainerBuilder<T extends AbstractContainerBuilde
         ContentSize contentSize = calculateContentSize(padding);
         entity.addComponent(contentSize);
 
-        document.putEntity(this.entity);
+        entityManager.putEntity(this.entity);
         for (Entity entity : children) {
-            document.putEntity(entity);
+            entityManager.putEntity(entity);
         }
         return entity;
     }

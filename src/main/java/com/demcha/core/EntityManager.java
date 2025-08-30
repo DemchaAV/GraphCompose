@@ -9,13 +9,9 @@ import com.demcha.system.System;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -71,32 +67,21 @@ import java.util.*;
 @Getter
 @Setter
 public class EntityManager {
-    private final Map<UUID, Entity> entities = new HashMap<>();
-    private final List<System> systems = new ArrayList<>();
-    private final PDPage page;
-    private Path pathOut;
-    private PDDocument document;
-    private boolean guideLines;
+    private final Map<UUID, Entity> entities;
+    private final List<System> systems;
     private Map<Integer, List<UUID>> layers;     // NEW: layer → ordered ids
     private Map<UUID, Integer> depthById;
+    private boolean guideLines;
 
-    public EntityManager(PDPage page) {
-        log.info("Created new pdf document {}", page.getBBox());
-        this.page = page;
-        document = new PDDocument();
-        layers = new HashMap<>();
-        depthById = new HashMap<>();
-        document.addPage(page);
-    }
 
     public EntityManager() {
-        this(new PDPage(PDRectangle.A4));
-        log.info("EntityManager with default settings PDRectangle.A4");
+        log.info("Creating new EntityManager");
+        this.layers = new HashMap<>();
+        this.depthById = new HashMap<>();
+        this.systems = new ArrayList<>();
+        this.entities = new HashMap<>();
     }
 
-    public EntityManager(PDRectangle pdfRectangle) {
-        this(new PDPage(pdfRectangle));
-    }
 
     public Entity createEntity() {
         return createEntity(null);
@@ -271,27 +256,13 @@ public class EntityManager {
         }
     }
 
-    public PDPageContentStream openContentStream() throws IOException {
-        return new PDPageContentStream(
-                document, page,
-                PDPageContentStream.AppendMode.APPEND,   // keep existing content if any
-                true,                                    // compress
-                true                                     // resetContext: isolates graphics state (PDFBox 3)
-        );
-    }
 
     public void addSystem(System system) {
         log.info("Adding System {}", system.getClass().getName());
         systems.add(system);
     }
 
-    public PageSize pageSize() {
-        float width = page.getMediaBox().getWidth();
-        float height = page.getMediaBox().getHeight();
-        float x = page.getMediaBox().getLowerLeftX();
-        float y = page.getMediaBox().getLowerLeftY();
-        return new PageSize(width, height, x, y);
-    }
+
 
     public void printEntities() {
         this.entities.values().forEach(entity -> {

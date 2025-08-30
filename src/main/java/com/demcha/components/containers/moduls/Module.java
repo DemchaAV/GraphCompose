@@ -1,7 +1,7 @@
 package com.demcha.components.containers.moduls;
 
 import com.demcha.components.containers.abstract_builders.AbstractContainerBuilder;
-import com.demcha.components.content.Element;
+import com.demcha.components.renderable.Element;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.style.Padding;

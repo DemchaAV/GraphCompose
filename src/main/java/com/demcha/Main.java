@@ -1,12 +1,8 @@
 package com.demcha;
 
-import com.demcha.components.containers.HContainerBuilder;
-import com.demcha.components.containers.VContainerBuilder;
-import com.demcha.components.content.Stroke;
-import com.demcha.components.content.components_builders.ElementBuilder;
-import com.demcha.components.content.components_builders.RectangleBuilder;
-import com.demcha.components.content.components_builders.TextBuilder;
-import com.demcha.components.content.rectangle.Radius;
+import com.demcha.components.components_builders.*;
+import com.demcha.components.content.shape.Stroke;
+import com.demcha.components.content.shape.CornerRadius;
 import com.demcha.components.content.text.TextDecoration;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
@@ -21,7 +17,11 @@ import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
 import com.demcha.system.LayoutSystem;
+import com.demcha.system.PdfFileManagerSystem;
 import com.demcha.system.PdfRenderingSystem;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,100 +30,108 @@ public class Main {
     public static void main(String[] args) throws Exception {
         Path target = Paths.get("output.pdf");
 
-        EntityManager document = new EntityManager();
-        document.setPathOut(target);
-        document.addSystem(new LayoutSystem());
-        document.addSystem(new PdfRenderingSystem());
-
-        var text3 = new TextBuilder(document).create()
-                .entityName(new EntityName("TextComponent"))
-                .textWithAutoSize("Artem Demchyshyn")
-                .textStyle(new TextStyle(TextStyle.HELVETICA, 32, TextDecoration.DEFAULT, ComponentColor.TITLE))
-                .anchor(Anchor.center())
-                .margin(Margin.of(6))
-                .padding(Padding.of(5))
-                .buildInto();
+        EntityManager entityManager = new EntityManager();
+        entityManager.setGuideLines(false);
+        PDDocument doc = new PDDocument();
+        doc.addPage(new PDPage(PDRectangle.A4));
 
 
-        var rectangle = new RectangleBuilder(document).create()
+        entityManager.addSystem(new LayoutSystem(doc.getPage(0)));
+        entityManager.addSystem(new PdfRenderingSystem(doc));
+        entityManager.addSystem(new PdfFileManagerSystem(target, doc));
+
+
+
+
+        var rectangle = new RectangleBuilder(entityManager).create()
                 .entityName(new EntityName("Rectangle"))
                 .size(new ContentSize(400, 200))
-                .cornerRadius(new Radius(5))
-                .stroke(new Stroke(ComponentColor.ROYAL_BLUE,5))
-
+                .cornerRadius(new CornerRadius(15))
+                .stroke(new Stroke(ComponentColor.ROYAL_BLUE, 5))
                 .padding(Padding.of(15))
                 .anchor(Anchor.center())
-//                .position(new Position(25, 25))
                 .margin(new Margin(5, 5, 5, 5))
-                .buildInto();
+                .build();
 
-        var box = ElementBuilder.create()
-                .entityName(new EntityName("BodyBox"))
-                .fillHorizontal(document.getPage(), 100)
-                .padding(Padding.zero())
-                .position(new Position(0, 200))
-                .anchor(Anchor.centerTop())
+        var rectangleChild = new RectangleBuilder(entityManager).create()
+                .size(new ContentSize(390, 190))
+                .cornerRadius(new CornerRadius(12))
+                .addParent(rectangle)
+                .stroke(new Stroke(ComponentColor.MODULE_TITLE, 2))
+                .anchor(Anchor.center())
+                .build();
+
+        var text3 = new TextBuilder(entityManager).create()
+                .textWithAutoSize("Artem Demchyshyn")
+                .textStyle((new TextStyle(TextStyle.HELVETICA, 32, TextDecoration.DEFAULT, ComponentColor.MODULE_LINE_TEXT)))
+                .anchor(Anchor.center())
+                .addParent(rectangleChild)
+                .build();
+
+
+        var root = new ElementBuilder(entityManager).create()
+                .entityName(new EntityName("Root"))
+                .fillPageSize(doc.getPage(0))
+                .padding(Padding.of(25))
+                .addChildAndFit(rectangle)
                 .margin(Margin.of(0))
-                .buildInto(document);
-        var button1 = createABottom("button1", "Arteme", document);
-        var button2 = createABottom("button1", "Arteme", document);
-        var button3 = createABottom("button1", "Arteme", document);
-        var button4 = createABottom("button1", "Arteme", document);
+                .build();
 
-        var hContainer1 = new HContainerBuilder(document).create()
-                .anchor(Anchor.centerBottom())
-                .padding(Padding.of(5))
-                .margin(Margin.of(6))
+        var button1 = createABottom("button1", "Arteme", entityManager);
+        var button2 = createABottom("button1", "Arteme", entityManager);
+        var button3 = createABottom("button1", "Arteme", entityManager);
+        var button4 = createABottom("button1", "Arteme", entityManager);
+
+        var hContainer1 = new HContainerBuilder(entityManager).create(Align.middle(0))
                 .anchor(Anchor.center())
                 .addChild(button1)
                 .addChild(button2)
                 .build();
 
-        var hContainer2 = new HContainerBuilder(document).create()
+        var hContainer2 = new HContainerBuilder(entityManager).create(Align.middle(0))
                 .anchor(Anchor.centerBottom())
-                .padding(Padding.of(5))
-                .margin(Margin.of(6))
+//                .padding(Padding.of(5))
                 .anchor(Anchor.center())
                 .addChild(button3)
                 .addChild(button4)
                 .build();
-        document.putEntity(hContainer2);
+        entityManager.putEntity(hContainer2);
 
 
-        var VContainer = new VContainerBuilder(document)
-                .create(Align.middle(5))
+        var VContainer = new VContainerBuilder(entityManager)
+                .create(Align.middle(1))
                 .entityName(new EntityName("VContainer"))
                 .margin(Margin.of(15))
-                .anchor(Anchor.centerBottom())
+                .anchor(Anchor.center())
                 .addChild(hContainer1)
                 .addChild(hContainer2)
+                .addParent(root)
                 .build();
 
 
-        document.setGuideLines(true);
-        document.printEntities();
-        document.processSystems();
-        document.printEntities();
+        entityManager.processSystems();
 
 
     }
 
     public static Entity createABottom(String nameButton, String TextButton, EntityManager document) {
 
-        var button = new RectangleBuilder(document).create()
-                .entityName(new EntityName(nameButton))
-                .cornerRadius(new Radius(5))
-                .size(new ContentSize(80, 30))
-                .fillColor(ComponentColor.ROYAL_BLUE)
-                .anchor(Anchor.topLeft())
-                .build();
         var text3 = new TextBuilder(document).create()
                 .entityName(new EntityName("TextComponent"))
                 .textWithAutoSize(TextButton)
                 .textStyle((new TextStyle(TextStyle.HELVETICA, 12, TextDecoration.DEFAULT, ComponentColor.MODULE_LINE_TEXT)))
                 .anchor(Anchor.center())
-                .addComponent(new ParentComponent(button))
-                .buildInto();
+                .build();
+
+        var button = new RectangleBuilder(document).create()
+                .entityName(new EntityName(nameButton))
+                .cornerRadius(new CornerRadius(5))
+                .size(new ContentSize(80, 30))
+                .fillColor(ComponentColor.ROYAL_BLUE)
+                .addChild(text3)
+                .anchor(Anchor.topLeft())
+                .build();
+
         return button;
     }
 }

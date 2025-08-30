@@ -1,0 +1,26 @@
+package com.demcha.components.renderable;
+
+import com.demcha.components.containers.abstract_builders.GuidesRenderer;
+import com.demcha.components.core.Entity;
+import com.demcha.system.PdfRender;
+import lombok.ToString;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+
+import java.io.IOException;
+import java.util.EnumSet;
+
+@ToString
+public class HContainer implements PdfRender, GuidesRenderer {
+
+    private static final EnumSet<Guide> DEFAULT_GUIDES =
+            EnumSet.of(Guide.MARGIN, Guide.PADDING, Guide.BOX);
+
+
+    @Override
+    public boolean pdfRender(Entity e, PDPageContentStream cs, boolean guideLines) throws IOException {
+        if (guideLines) {
+            renderGuides(e, cs, DEFAULT_GUIDES);
+        }
+        return true;
+    }
+}

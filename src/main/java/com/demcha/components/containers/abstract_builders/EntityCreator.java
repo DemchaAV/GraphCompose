@@ -1,7 +1,6 @@
 package com.demcha.components.containers.abstract_builders;
 
 import com.demcha.components.core.Component;
-import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
 
 /**
@@ -41,7 +40,7 @@ public interface EntityCreator<B> {
      * ensuring that all components are properly associated with this entity.
      */
 
-     void initialize();
+    void initialize();
 
 
     /**

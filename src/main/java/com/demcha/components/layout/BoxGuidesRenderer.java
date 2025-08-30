@@ -1,4 +1,6 @@
 package com.demcha.components.layout;
 
-public class BoxGuidesRenderer implements GuidesRenderer{
+import com.demcha.components.containers.abstract_builders.GuidesRenderer;
+
+public class BoxGuidesRenderer implements GuidesRenderer {
 }

@@ -4,7 +4,7 @@ import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.PaddingCoordinate;
-import com.demcha.core.PageSize;
+import com.demcha.core.CanvasSize;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -111,12 +111,12 @@ class ComputedPositionTest {
 
 
     @Test
-    @DisplayName("from(child, pageSize) wraps PageSize in InnerBoxSize(width,height) and delegates")
+    @DisplayName("from(child, pageSize) wraps CanvasSize in InnerBoxSize(width,height) and delegates")
     void from_child_pageSize_wrapsIntoInnerBox() {
         // Arrange
         Entity child = mock(Entity.class);
         Anchor anchor = mock(Anchor.class);
-        PageSize pageSize = mock(PageSize.class);
+        CanvasSize pageSize = mock(CanvasSize.class);
         when(pageSize.width()).thenReturn(595.0);
         when(pageSize.height()).thenReturn(842.0);
 

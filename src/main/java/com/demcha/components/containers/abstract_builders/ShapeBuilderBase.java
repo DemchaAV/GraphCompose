@@ -1,9 +1,9 @@
 package com.demcha.components.containers.abstract_builders;
 
-import com.demcha.components.content.Stroke;
-import com.demcha.components.content.rectangle.FillColor;
-import com.demcha.components.content.rectangle.Radius;
-import com.demcha.components.content.rectangle.Rectangle;
+import com.demcha.components.content.shape.Stroke;
+import com.demcha.components.content.shape.CornerRadius;
+import com.demcha.components.content.shape.FillColor;
+import com.demcha.components.renderable.Rectangle;
 import com.demcha.components.style.ComponentColor;
 import com.demcha.core.EntityManager;
 
@@ -43,10 +43,10 @@ public abstract class ShapeBuilderBase<T> extends EmptyBox<T> {
     /**
      * Sets the corner radius for the shape.
      *
-     * @param radius The Radius object specifying the corner radius.
+     * @param radius The CornerRadius object specifying the corner radius.
      * @return The current builder instance for method chaining.
      */
-    public T cornerRadius(Radius radius) {
+    public T cornerRadius(CornerRadius radius) {
         return addComponent(radius);
     }
 
@@ -57,7 +57,7 @@ public abstract class ShapeBuilderBase<T> extends EmptyBox<T> {
      * @return The current builder instance for method chaining.
      */
     public T cornerRadius(double radius) {
-        return cornerRadius(new Radius(radius));
+        return cornerRadius(new CornerRadius(radius));
     }
 
     /**

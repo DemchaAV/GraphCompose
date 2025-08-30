@@ -5,7 +5,7 @@ import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.style.Padding;
-import com.demcha.core.PageSize;
+import com.demcha.core.CanvasSize;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -73,15 +73,15 @@ public record ComputedPosition(double x, double y) implements Component {
     }
 
     /**
-     * Computes the position of a child entity relative to a {@link PageSize}.
+     * Computes the position of a child entity relative to a {@link CanvasSize}.
      * This is typically used for root-level entities (no parent).
      *
      * @param childEntity the child entity
      * @param pageSize    the page size
      * @return computed position
      */
-    public static ComputedPosition from(@NonNull Entity childEntity, @NonNull PageSize pageSize) {
-        log.debug("Computing position using default PageSize.");
+    public static ComputedPosition from(@NonNull Entity childEntity, @NonNull CanvasSize pageSize) {
+        log.debug("Computing position using default CanvasSize.");
         InnerBoxSize innerBoxSize = new InnerBoxSize(pageSize.width(), pageSize.height());
         var paddingParentCoordinate = new PaddingCoordinate(pageSize.x(), pageSize.y());
         return from(childEntity, innerBoxSize, paddingParentCoordinate);

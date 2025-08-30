@@ -1,25 +1,26 @@
 package com.demcha.components.core;
 
 import com.demcha.core.EntityManager;
-import com.demcha.system.PdfEntityRender;
 import com.demcha.system.PdfRender;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
-import java.io.IOException;
 import java.util.*;
 
 @Slf4j
-public final class Entity implements PdfEntityRender {
+@EqualsAndHashCode
+public final class Entity {
     @Getter
     private final UUID id;
     private final Map<Class<? extends Component>, Component> comps = new LinkedHashMap<>();
     private EntityName name;
-    private PdfRender render;
-    @Setter @Getter
+    @Getter
+    private PdfRender pdfRender;
+    @Setter
+    @Getter
     private boolean guideLines;
 
     public Entity() {
@@ -27,6 +28,7 @@ public final class Entity implements PdfEntityRender {
         log.info("Creating entity {}", uuid);
         this.id = uuid;
     }
+
     public static Entity createFrom(Entity entity) {
         var newEntity = new Entity();
         var values = new HashSet<>(entity.comps.values());
@@ -59,11 +61,11 @@ public final class Entity implements PdfEntityRender {
         Component prev = comps.put(key, c);
         if (c instanceof EntityName en) this.name = en;
         if (c instanceof PdfRender) {
-            if (render == null) {
-                this.render = (PdfRender) c;
+            if (pdfRender == null) {
+                this.pdfRender = (PdfRender) c;
             } else {
-                log.warn("Rendering Component Already signed in {}", this);
-                throw new IllegalStateException("%sRendering Component Already signed in %s".formatted(c, this.render));
+                log.warn("PdfRender Component Already signed in {}", this);
+                throw new IllegalStateException("%PdfRender Component Already signed in %s".formatted(c, this.pdfRender));
             }
 
         }
@@ -74,16 +76,17 @@ public final class Entity implements PdfEntityRender {
         }
         return this;
     }
+
     public <T extends Component> Entity forceAddComponent(@NonNull T c) {
         Class<? extends Component> key = c.getClass().asSubclass(Component.class);
         Component prev = comps.put(key, c);
         if (c instanceof EntityName en) this.name = en;
         if (c instanceof PdfRender) {
-            if (render == null) {
-                this.render = (PdfRender) c;
+            if (pdfRender == null) {
+                this.pdfRender = (PdfRender) c;
             } else {
                 log.warn("Rendering Component Already signed in {}", this);
-                this.render = (PdfRender) c;
+                this.pdfRender = (PdfRender) c;
             }
 
         }
@@ -123,7 +126,7 @@ public final class Entity implements PdfEntityRender {
         return has(type);
     }
 
-    public boolean hasRender() {
+    public boolean hasRender(Class<? extends Component> type) {
         return comps.values().stream()
                 .anyMatch(comp -> comp instanceof PdfRender);
     }
@@ -151,7 +154,7 @@ public final class Entity implements PdfEntityRender {
         return Collections.unmodifiableMap(comps);
     }
 
-    public boolean remove(Class<? extends Component> type){
+    public boolean remove(Class<? extends Component> type) {
         if (has(type)) {
             comps.remove(type);
             return true;
@@ -172,6 +175,7 @@ public final class Entity implements PdfEntityRender {
         Entity entity = (Entity) o;
         return id.equals(entity.id) && comps.equals(entity.comps) && Objects.equals(name, entity.name);
     }
+
     @Override
     public int hashCode() {
         int result = id.hashCode();
@@ -180,15 +184,6 @@ public final class Entity implements PdfEntityRender {
         return result;
     }
 
-
-    @Override
-    public boolean render(PDPageContentStream cs) throws IOException {
-        if (!hasRender()) {
-            log.debug("Rendering entity {} without render", this);
-            throw new NoSuchElementException("No component rendered for " + this);
-        }
-        return render.render(this, cs,guideLines);
-    }
 
     public Entity buildInto(EntityManager entityManager) {
         log.info("Put  {} in to the EntityManager", this);

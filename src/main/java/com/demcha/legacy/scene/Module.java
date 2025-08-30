@@ -3,7 +3,7 @@ package com.demcha.legacy.scene;
 import com.demcha.components.containers.abstract_builders.EmptyBox;
 import com.demcha.components.core.Entity;
 import com.demcha.core.EntityManager;
-import com.demcha.components.content.Element;
+import com.demcha.components.renderable.Element;
 import com.demcha.legacy.layout.Layout;
 import lombok.Getter;
 import lombok.Setter;

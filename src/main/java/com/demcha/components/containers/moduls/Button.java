@@ -1,12 +1,11 @@
 package com.demcha.components.containers.moduls;
 
 
-import com.demcha.components.containers.abstract_builders.ShapeBuilderBase;
-import com.demcha.components.content.Element;
-import com.demcha.components.content.Stroke;
-import com.demcha.components.content.components_builders.TextBuilder;
-import com.demcha.components.content.rectangle.Radius;
-import com.demcha.components.content.rectangle.Rectangle;
+import com.demcha.components.components_builders.BodyButtonBuilder;
+import com.demcha.components.content.shape.Stroke;
+import com.demcha.components.components_builders.TextBuilder;
+import com.demcha.components.content.shape.CornerRadius;
+import com.demcha.components.renderable.Rectangle;
 import com.demcha.components.content.text.TextDecoration;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
@@ -28,7 +27,7 @@ public class Button {
     private Map<UUID, Entity> buttons;
 
 
-    private Entity createABottom(String nameButton, double[] size, Radius cornerRadius, String textButton) {
+    private Entity createABottom(String nameButton, double[] size, CornerRadius cornerRadius, String textButton) {
         if (size == null) {
             size = new double[]{100, 30};
         } else {
@@ -67,30 +66,10 @@ public class Button {
 
         var buttonTextDecorated = buttonText
                 .addComponent(new ParentComponent(buttonBody))
-                .buildInto();
+                .build();
 
         return buttonBody;
     }
 }
 
 
-class BodyButtonBuilder extends ShapeBuilderBase<BodyButtonBuilder> {
-    public BodyButtonBuilder(EntityManager document) {
-        super(document);
-    }
-
-
-    public BodyButtonBuilder rectangle(Rectangle rectangle) {
-        return addComponent(rectangle);
-    }
-
-    @Override
-    public Entity build() {
-        return entity;
-    }
-
-    @Override
-    public void initialize() {
-        entity.addComponent(new Element());
-    }
-}

@@ -33,6 +33,12 @@ public record Anchor(HAnchor h, VAnchor v) implements Component {
     public static Anchor center() {
         return new Anchor(HAnchor.CENTER, VAnchor.MIDDLE);
     }
+    public static Anchor centerLeft() {
+        return new Anchor(HAnchor.LEFT, VAnchor.MIDDLE);
+    }
+    public static Anchor centerRight() {
+        return new Anchor(HAnchor.RIGHT, VAnchor.MIDDLE);
+    }
 
     public static Anchor topRight() {
         return new Anchor(HAnchor.RIGHT, VAnchor.TOP);

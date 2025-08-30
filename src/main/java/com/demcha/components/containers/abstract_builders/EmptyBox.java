@@ -1,7 +1,10 @@
 package com.demcha.components.containers.abstract_builders;
 
 import com.demcha.components.core.Entity;
+import com.demcha.components.geometry.ContentSize;
+import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.layout.ParentComponent;
+import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -28,14 +31,41 @@ public abstract class EmptyBox<T> extends EntityBuilderBase<T> implements BuildE
      * This document is typically provided during the construction of the builder
      * and is used by concrete implementations to interact with the PDF.
      */
-    protected final EntityManager document;
+    protected final EntityManager entityManager;
 
     T parrent(ParentComponent parent) {
         entity.addComponent(parent);
         return self();
     }
+
     T parrent(Entity parent) {
         return parrent(new ParentComponent(parent));
     }
 
+    public T addChild(Entity child) {
+        child.addComponent(new ParentComponent(this.entity));
+        return self();
+    }
+
+    public T addChildAndFit(Entity child) {
+        var outerBox = OuterBoxSize.from(child).get();
+        child.addComponent(new ParentComponent(this.entity));
+        var component = entity().getComponent(ContentSize.class).orElseThrow();
+        var padding = entity().getComponent(Padding.class).orElse(Padding.zero());
+        var newComponentSize = new ContentSize(Math.max(component.width(), outerBox.width() + padding.horizontal())
+                , Math.max(component.height(), outerBox.height() + padding.vertical()));
+        entity().addComponent(newComponentSize);
+
+        return self();
+    }
+
+    public T addParent(Entity parent) {
+        entity().addComponent(new ParentComponent(parent));
+        return self();
+    }
+
+    @Override
+    public EntityManager manager() {
+        return entityManager;
+    }
 }

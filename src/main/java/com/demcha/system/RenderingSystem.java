@@ -1,4 +1,4 @@
 package com.demcha.system;
 
-public interface RenderingSystem {
+public interface RenderingSystem extends System{
 }

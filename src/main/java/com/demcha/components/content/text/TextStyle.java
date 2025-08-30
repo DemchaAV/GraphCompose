@@ -1,6 +1,7 @@
 package com.demcha.components.content.text;
 
 import com.demcha.components.core.Component;
+import com.demcha.components.renderable.TextComponent;
 import com.demcha.components.style.ComponentColor;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;

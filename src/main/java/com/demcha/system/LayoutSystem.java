@@ -1,7 +1,6 @@
 package com.demcha.system;
 
-import com.demcha.components.content.components_builders.ElementBuilder;
-import com.demcha.components.content.text.TextComponent;
+import com.demcha.components.renderable.TextComponent;
 import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
@@ -9,14 +8,17 @@ import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.geometry.Placement;
-import com.demcha.components.layout.*;
+import com.demcha.components.layout.Align;
+import com.demcha.components.layout.Anchor;
+import com.demcha.components.layout.ParentComponent;
 import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.PaddingCoordinate;
 import com.demcha.components.layout.coordinator.Position;
-import com.demcha.components.style.Margin;
-import com.demcha.components.style.Padding;
+import com.demcha.core.CanvasSize;
 import com.demcha.core.EntityManager;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.pdfbox.pdmodel.PDPage;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,10 +38,15 @@ import java.util.stream.Collectors;
  * </p>
  */
 @Slf4j
+@RequiredArgsConstructor
 public class LayoutSystem implements System {
-    private EntityManager entityManager;
+    private final CanvasSize canvasSize;
 
-    private static boolean updateContentSizeInEntity(Entity parent, double requireInnerBoxWidth, double requireInnerBoxHigh) {
+    public LayoutSystem(PDPage page) {
+        this.canvasSize = generateCanvasSizeFromPage(page);
+    }
+
+    private boolean updateContentSizeInEntity(Entity parent, double requireInnerBoxWidth, double requireInnerBoxHigh) {
         log.debug("Check if require size bigger than parent InnerBoxSize");
         var innerBoxSize = InnerBoxSize.from(parent).orElseThrow();
 
@@ -74,7 +81,7 @@ public class LayoutSystem implements System {
      * @param returnClass
      * @param cause
      */
-    private static void errorCalculation(Entity e, Class<? extends Component> returnClass, String cause) {
+    private void errorCalculation(Entity e, Class<? extends Component> returnClass, String cause) {
         var returnClassName = returnClass.getName();
         log.error("❌ Critical error: {} Cannot proceed. Can not compute {} Cause: {}.", e, returnClassName, cause == null ? "" : cause);
     }
@@ -88,23 +95,22 @@ public class LayoutSystem implements System {
      * <p>If a parentEntity is present, its {@link InnerBoxSize} is used as the reference
      * area for alignment (delegating to {@code alinePositionWithAnchor}).</p>
      *
-     * @param childEntity  the entity to position
-     * @param parentEntity the parentEntity entity, or {@code null} if the childEntity is the root
-     * @param entityManager  the document providing page size information
+     * @param childEntity   the entity to position
+     * @param parentEntity  the parentEntity entity, or {@code null} if the childEntity is the root
+     * @param entityManager the document providing page size information
      * @return an {@link Optional} with the computed position
      */
 
-    public static Optional<ComputedPosition> calculatePositionFromParent(Entity childEntity,
-                                                                         Entity parentEntity,
-                                                                         EntityManager entityManager) {
+    private Optional<ComputedPosition> calculatePositionFromParent(Entity childEntity,
+                                                                  Entity parentEntity,
+                                                                  EntityManager entityManager) {
         log.debug("Starting calculation of computed position for {} from parentEntity {}", childEntity, parentEntity);
 
         // 0) Handle page-level (no parent)
         if (parentEntity == null) {
-            var page = entityManager.pageSize();
-            InnerBoxSize pageArea = new InnerBoxSize(page.width(), page.height());
+            InnerBoxSize pageArea = new InnerBoxSize(this.canvasSize.width(), this.canvasSize.height());
 
-            PaddingCoordinate paddingPercentCoordinate = new PaddingCoordinate(page.x(), page.y());
+            PaddingCoordinate paddingPercentCoordinate = new PaddingCoordinate(this.canvasSize.x(), this.canvasSize.y());
             ComputedPosition local = positionWithAnchor(childEntity, pageArea, paddingPercentCoordinate);
             log.debug("Final computed absolute position (page-level): {}", local);
             return Optional.of(local);
@@ -154,8 +160,7 @@ public class LayoutSystem implements System {
                     e.addComponent(new ComputedPosition(local.x() + parentAbs.x(),
                             local.y() + parentAbs.y()));
                 } else {
-                    var page = entityManager.pageSize();
-                    InnerBoxSize refArea = new InnerBoxSize(page.width(), page.height());
+                    InnerBoxSize refArea = new InnerBoxSize(this.canvasSize.width(), this.canvasSize.height());
                     var pagingCoordinate = PaddingCoordinate.from(parentEntity);
                     ComputedPosition local = positionWithAnchor(e, refArea, pagingCoordinate);
                     e.addComponent(local);
@@ -201,7 +206,7 @@ public class LayoutSystem implements System {
      * <p><b>Note:</b> OuterBoxSize already includes margin, so do not add it again in formulas.</p>
      */
 
-    public static ComputedPosition positionWithAnchor(Entity child, InnerBoxSize perrentInnerBoxSize, PaddingCoordinate paddingCoordinate) {
+    private ComputedPosition positionWithAnchor(Entity child, InnerBoxSize perrentInnerBoxSize, PaddingCoordinate paddingCoordinate) {
 
         var computed = ComputedPosition.from(child, perrentInnerBoxSize, paddingCoordinate);
         child.addComponent(computed);
@@ -210,7 +215,7 @@ public class LayoutSystem implements System {
         return computed;
     }
 
-    public static void expendBoxSizeByChildren(Entity parent, Set<Entity> children) {
+    public void expendBoxSizeByChildren(Entity parent, Set<Entity> children) {
         var parentInner = InnerBoxSize.from(parent).orElseThrow();
         log.debug("{} {}", parent, parentInner);
         double requireContextWidth = parentInner.innerW();
@@ -235,50 +240,9 @@ public class LayoutSystem implements System {
 
     }
 
-    public static void main(String[] args) {
-
-        EntityManager pdf = new EntityManager();
-
-        var parent = ElementBuilder.create()
-                .entityName(new EntityName("ParentBox"))
-                .size(new ContentSize(300, 220))
-                .padding(Padding.of(10))
-                .position(Position.zero())
-                .anchor(new Anchor(HAnchor.RIGHT, VAnchor.TOP))
-                .margin(new Margin(5, 5, 5, 5))
-                .buildComponents();
-
-        var child = ElementBuilder.create()
-                .entityName(new EntityName("ChildBox"))
-                .parentComponent(new ParentComponent(parent.getId()))
-                .size(new ContentSize(180, 140))
-                .padding(Padding.of(10))
-                .position(new Position(15, 20))
-                .anchor(new Anchor(HAnchor.RIGHT, VAnchor.TOP))
-                .margin(new Margin(5, 5, 5, 5))
-                .buildComponents();
-
-        var grandChild = ElementBuilder.create()
-                .entityName(new EntityName("GrandChildBox"))
-                .parentComponent(new ParentComponent(child.getId()))
-                .size(new ContentSize(100, 80))
-                .padding(Padding.of(5))
-                .position(new Position(10, 12))
-                .anchor(new Anchor(HAnchor.RIGHT, VAnchor.TOP))
-                .margin(new Margin(3, 3, 3, 3))
-                .buildComponents();
-
-        pdf.putEntity(parent);
-        pdf.putEntity(child);
-        pdf.putEntity(grandChild);
-
-        calculatePositionFromParent(grandChild, child, pdf);
-
-    }
 
     @Override
     public void process(EntityManager entityManager) {
-        this.entityManager = entityManager;
         log.info("LayoutSystem: processing");
 
         Map<UUID, Entity> entities = entityManager.getEntities();
@@ -302,8 +266,7 @@ public class LayoutSystem implements System {
         var allChildren = allChildrenOpt.get();
 
         //change a box size or size if child bigger then parent
-
-        expandParentsBox(childrenByParents);
+        expandParentsBox(childrenByParents, entityManager);
 
 
         // 3) Roots (no parent, or parent is missing)
@@ -375,10 +338,10 @@ public class LayoutSystem implements System {
                 computedPosition = ComputedPosition.from(childEntity, parent);
             } else {
                 log.warn("LayoutSystem: parent {} of {} not found — using root positioning (Position + Margin)", parentId, id);
-                computedPosition = ComputedPosition.from(childEntity, entityManager.pageSize());
+                computedPosition = ComputedPosition.from(childEntity, this.canvasSize);
             }
         } else {
-            computedPosition = ComputedPosition.from(childEntity, entityManager.pageSize());
+            computedPosition = ComputedPosition.from(childEntity, canvasSize);
         }
 
         // IMPORTANT: store the computed position, not (0,0)
@@ -416,7 +379,7 @@ public class LayoutSystem implements System {
      *
      * @param childrenByParents map already sorted by parent
      */
-    private void expandParentsBox(Map<UUID, Set<UUID>> childrenByParents) {
+    private void expandParentsBox(Map<UUID, Set<UUID>> childrenByParents, EntityManager entityManager) {
         log.info("LayoutSystem: normalizing box size");
 
         for (Map.Entry<UUID, Set<UUID>> parentUuid : childrenByParents.entrySet()) {
@@ -483,6 +446,14 @@ public class LayoutSystem implements System {
         }
 
         return false;
+    }
+
+    private CanvasSize generateCanvasSizeFromPage(PDPage page) {
+        float width = page.getMediaBox().getWidth();
+        float height = page.getMediaBox().getHeight();
+        float x = page.getMediaBox().getLowerLeftX();
+        float y = page.getMediaBox().getLowerLeftY();
+        return new CanvasSize(width, height, x, y);
     }
 
     @Override

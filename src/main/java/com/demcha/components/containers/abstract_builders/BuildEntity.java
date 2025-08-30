@@ -17,18 +17,18 @@ public interface BuildEntity {
      *
      * @return The fully constructed and assembled {@link Entity} object.
      */
-    Entity build();
-
-    default Entity buildInto(){
-      return   document().putEntity(build());
+    default Entity build(){
+        manager().putEntity(entity());
+        return entity();
     }
+
 
     /**
      * Returns the {@link EntityManager} associated with this builder.
      *
      * @return The associated {@link EntityManager}.
      */
-    EntityManager document();
+    EntityManager manager();
 
     /**
      * Returns the {@link Entity} object that is currently being built by this builder.

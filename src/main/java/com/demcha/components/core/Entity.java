@@ -2,16 +2,14 @@ package com.demcha.components.core;
 
 import com.demcha.core.EntityManager;
 import com.demcha.system.PdfRender;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Setter;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
 @Slf4j
 @EqualsAndHashCode
+@ToString
 public final class Entity {
     @Getter
     private final UUID id;
@@ -168,33 +166,11 @@ public final class Entity {
         }
     }
 
-    @Override
-    public String toString() {
-        return "Entity: \"" + (name == null ? "null" : name.value()) + "\" UUID: [" + id + "]";
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Entity entity = (Entity) o;
-        return id.equals(entity.id) && comps.equals(entity.comps) && Objects.equals(name, entity.name);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = id.hashCode();
-        result = 31 * result + comps.hashCode();
-        result = 31 * result + Objects.hashCode(name);
-        return result;
-    }
+//    @Override
+//    public String toString() {
+//        return "Entity: \"" + (name == null ? "null" : name.value()) + "\" UUID: [" + id + "]";
+//    }
 
 
-    public Entity buildInto(EntityManager entityManager) {
-        log.info("Put  {} in to the EntityManager", this);
-
-        entityManager.putEntity(this);
-        return this;
-    }
 }
 

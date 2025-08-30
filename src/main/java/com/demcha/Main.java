@@ -1,9 +1,7 @@
 package com.demcha;
 
-import com.demcha.components.components_builders.ButtonBuilder;
-import com.demcha.components.components_builders.RectangleBuilder;
-import com.demcha.components.components_builders.RowBuilder;
-import com.demcha.components.components_builders.TextBuilder;
+import com.demcha.components.components_builders.*;
+import com.demcha.components.content.link.LinkUrl;
 import com.demcha.components.content.shape.CornerRadius;
 import com.demcha.components.content.text.TextDecoration;
 import com.demcha.components.content.text.TextStyle;
@@ -38,22 +36,28 @@ public class Main {
         entityManager.addSystem(new PdfRenderingSystem(doc));
         entityManager.addSystem(new PdfFileManagerSystem(target, doc));
 
+//
+//        var button = new ButtonBuilder(entityManager).create()
+//                .createABottom("MyButton", new double[]{90, 30}, new CornerRadius(5), "Hello")
+//                .anchor(Anchor.center())
+//                .build();
+//        var button2 = new ButtonBuilder(entityManager).create()
+//                .createABottom("MyButton2", new double[]{90, 30}, new CornerRadius(5), "Gooogle")
+//                .anchor(Anchor.center())
+//                .build();
+//        ;
+//        var row = new RowBuilder(entityManager).create(Align.middle(15))
+//                .anchor(Anchor.center())
+//                .addChild(button)
+//                .addChild(button2)
+//                .build();
 
-        var button = new ButtonBuilder(entityManager).create()
-                .createABottom("MyButton", new double[]{90, 30}, new CornerRadius(5), "Hello")
-//                .padding(new Padding(2, 0, 0, 0))
+        var link = new LinkBuilder(entityManager).create()
+                .linkUrl(new LinkUrl("demchaav@gmail.com"))
                 .anchor(Anchor.center())
-                .build();
-        var button2 = new ButtonBuilder(entityManager).create()
-                .createABottom("MyButton2", new double[]{90, 30}, new CornerRadius(5), "Gooogle")
-//                .padding(new Padding(2, 0, 0, 0))
-                .anchor(Anchor.center())
-                .build();
-        ;
-        var row = new RowBuilder(entityManager).create(Align.middle(15))
-                .anchor(Anchor.center())
-                .addChild(button)
-                .addChild(button2)
+                .displayText(new DisplayTextBuilder(entityManager).create()
+                        .textWithAutoSize("Email")
+                )
                 .build();
 
 
@@ -62,26 +66,7 @@ public class Main {
 
     }
 
-    public static Entity createABottom(String nameButton, String TextButton, EntityManager document) {
 
-        var text3 = new TextBuilder(document).create()
-                .entityName(new EntityName("TextComponent"))
-                .textWithAutoSize(TextButton)
-                .textStyle((new TextStyle(TextStyle.HELVETICA, 12, TextDecoration.DEFAULT, ComponentColor.MODULE_LINE_TEXT)))
-                .anchor(Anchor.center())
-                .build();
-
-        var button = new RectangleBuilder(document).create()
-                .entityName(new EntityName(nameButton))
-                .cornerRadius(new CornerRadius(5))
-                .size(new ContentSize(80, 30))
-                .fillColor(ComponentColor.ROYAL_BLUE)
-                .addChild(text3)
-                .anchor(Anchor.topLeft())
-                .build();
-
-        return button;
-    }
 }
 
 

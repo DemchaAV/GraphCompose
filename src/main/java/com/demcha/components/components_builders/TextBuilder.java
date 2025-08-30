@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 
 //TODO has to be finish with adding essential data type for building b Box
 @Slf4j
-public final class TextBuilder extends EmptyBox<TextBuilder> {
+public class TextBuilder extends EmptyBox<TextBuilder> {
     private boolean autosize;
 
     public TextBuilder(EntityManager document) {

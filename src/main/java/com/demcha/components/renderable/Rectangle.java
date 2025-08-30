@@ -25,11 +25,11 @@ public class Rectangle implements PdfRender, GuidesRenderer {
 
 
     @Override
-    public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, boolean withGuides) throws IOException {
+    public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, int indexPage, boolean guideLines) throws IOException {
         // draw an object first
         boolean drawn = pdfRenderObject(e, cs);
         // if was specified, draw guides
-        if (withGuides) {
+        if (guideLines) {
             renderGuides(e, cs, DEFAULT_GUIDES);
 
         }

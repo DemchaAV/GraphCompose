@@ -58,7 +58,7 @@ public class TextComponent implements PdfRender, GuidesRenderer {
     }
 
     @Override
-    public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, boolean guideLine) throws IOException {
+    public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, int indexPage, boolean guideLines) throws IOException {
 
         if (!e.hasAssignable(TextComponent.class)) {
             log.debug("Entity doesn't have TextComponent; skipping: {}", e);
@@ -93,7 +93,7 @@ public class TextComponent implements PdfRender, GuidesRenderer {
         cs.restoreGraphicsState();
 
 
-        if (guideLine) {
+        if (guideLines) {
             renderGuides(e, cs, DEFAULT_GUIDES);
         }
 

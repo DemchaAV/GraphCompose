@@ -28,7 +28,7 @@ public class Element implements PdfRender, GuidesRenderer {
      * @throws IOException If an I/O error occurs during rendering.
      */
     @Override
-    public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, boolean guideLines) throws IOException {
+    public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, int indexPage, boolean guideLines) throws IOException {
         TextComponent textComponent = new TextComponent();
         if (guideLines) renderGuides(e, cs, DEFAULT_GUIDES);
 

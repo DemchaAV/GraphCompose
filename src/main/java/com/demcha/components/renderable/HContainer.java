@@ -18,7 +18,7 @@ public class HContainer implements PdfRender, GuidesRenderer {
 
 
     @Override
-    public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, boolean guideLines) throws IOException {
+    public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, int indexPage, boolean guideLines) throws IOException {
         if (guideLines) renderGuides(e, cs, DEFAULT_GUIDES);
 
         return true;

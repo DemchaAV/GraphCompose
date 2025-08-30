@@ -7,5 +7,6 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import java.io.IOException;
 
 public interface PdfRender extends Render {
-    boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, boolean guideLine) throws IOException;
+    boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, int indexPage, boolean guideLines) throws IOException;
 }
+       

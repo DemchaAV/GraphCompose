@@ -33,7 +33,7 @@ public class Container implements PdfRender, GuidesRenderer {
      * @throws IOException If an I/O error occurs during rendering.
      */
     @Override
-    public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, boolean guideLines) throws IOException {
+    public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, int indexPage, boolean guideLines) throws IOException {
         if (guideLines) renderGuides(e, cs, DEFAULT_GUIDES);
         return true;
     }

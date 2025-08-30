@@ -14,27 +14,36 @@ import java.io.IOException;
 
 @Slf4j
 @Builder
-public record TextStyle(PDFont font, int size, TextDecoration decoration, Color color)  implements Component {
+public record TextStyle(PDFont font, int size, TextDecoration decoration, Color color) implements Component {
 
-    public static final TextStyle textStyle = new TextStyle(TextStyle.HELVETICA, 14, TextDecoration.DEFAULT, ComponentColor.TITLE);
+    // 1) Fonts first
+    public static final PDFont TIMES_ROMAN = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
+    public static final PDFont TIMES_BOLD = new PDType1Font(Standard14Fonts.FontName.TIMES_BOLD);
+    public static final PDFont TIMES_ITALIC = new PDType1Font(Standard14Fonts.FontName.TIMES_ITALIC);
+    public static final PDFont TIMES_BOLD_ITALIC = new PDType1Font(Standard14Fonts.FontName.TIMES_BOLD_ITALIC);
+    public static final PDFont HELVETICA = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+    public static final PDFont HELVETICA_BOLD = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+    public static final PDFont HELVETICA_OBLIQUE = new PDType1Font(Standard14Fonts.FontName.HELVETICA_OBLIQUE);
+    public static final PDFont HELVETICA_BOLD_OBLIQUE = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD_OBLIQUE);
+    public static final PDFont COURIER = new PDType1Font(Standard14Fonts.FontName.COURIER);
+    public static final PDFont COURIER_BOLD = new PDType1Font(Standard14Fonts.FontName.COURIER_BOLD);
+    public static final PDFont COURIER_OBLIQUE = new PDType1Font(Standard14Fonts.FontName.COURIER_OBLIQUE);
+    public static final PDFont COURIER_BOLD_OBLIQUE = new PDType1Font(Standard14Fonts.FontName.COURIER_BOLD_OBLIQUE);
+    public static final PDFont SYMBOL = new PDType1Font(Standard14Fonts.FontName.SYMBOL);
+    public static final PDFont ZAPF_DINGBATS = new PDType1Font(Standard14Fonts.FontName.ZAPF_DINGBATS);
 
-    public static PDFont TIMES_ROMAN = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
-    public static PDFont TIMES_BOLD = new PDType1Font(Standard14Fonts.FontName.TIMES_BOLD);
-    public static PDFont TIMES_ITALIC = new PDType1Font(Standard14Fonts.FontName.TIMES_ITALIC);
-    public static PDFont TIMES_BOLD_ITALIC = new PDType1Font(Standard14Fonts.FontName.TIMES_BOLD_ITALIC);
-    public static PDFont HELVETICA = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
-    public static PDFont HELVETICA_BOLD = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
-    public static PDFont HELVETICA_OBLIQUE = new PDType1Font(Standard14Fonts.FontName.HELVETICA_OBLIQUE);
-    public static PDFont HELVETICA_BOLD_OBLIQUE = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD_OBLIQUE);
-    public static PDFont COURIER = new PDType1Font(Standard14Fonts.FontName.COURIER);
-    public static PDFont COURIER_BOLD = new PDType1Font(Standard14Fonts.FontName.COURIER_BOLD);
-    public static PDFont COURIER_OBLIQUE = new PDType1Font(Standard14Fonts.FontName.COURIER_OBLIQUE);
-    public static PDFont COURIER_BOLD_OBLIQUE = new PDType1Font(Standard14Fonts.FontName.COURIER_BOLD_OBLIQUE);
-    public static PDFont SYMBOL = new PDType1Font(Standard14Fonts.FontName.SYMBOL);
-    public static PDFont ZAPF_DINGBATS = new PDType1Font(Standard14Fonts.FontName.ZAPF_DINGBATS);
+    // 2) Then DEFAULT_STYLE
+    public static final TextStyle DEFAULT_STYLE =
+            new TextStyle(HELVETICA, 14, TextDecoration.DEFAULT, ComponentColor.TITLE);
 
     public TextStyle(PDFont font, int size, TextDecoration decoration) {
         this(font, size, decoration, Color.BLACK);
+    }
+
+    public static TextStyle defaultStyle() {
+        log.debug("Getting default style");
+        return new TextStyle(DEFAULT_STYLE.font, DEFAULT_STYLE.size, TextDecoration.DEFAULT, DEFAULT_STYLE.color);
+
     }
 
 

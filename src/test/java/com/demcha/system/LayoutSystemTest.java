@@ -15,8 +15,9 @@ import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
+import org.apache.entityManagerbox.pdmodel.PDPage;
+import org.apache.entityManagerbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
@@ -30,9 +31,9 @@ class LayoutSystemTest {
 
 
     private static Mockh getMockh() {
-        EntityManager pdf = new EntityManager();
+        EntityManager entityManager = new EntityManager();
 
-        var parent = ElementBuilder.create()
+        var parent =new ElementBuilder().create()
                 .entityName(new EntityName("ParentBox"))
                 .size(new ContentSize(300, 220))
                 .padding(Padding.of(10))
@@ -60,11 +61,11 @@ class LayoutSystemTest {
                 .anchor(new Anchor(HAnchor.RIGHT, VAnchor.TOP))
                 .margin(new Margin(3, 3, 3, 3))
                 .buildComponents();
-        pdf.putEntity(parent);
-        pdf.putEntity(child);
-        pdf.putEntity(grandChild);
+        entityManager.putEntity(parent);
+        entityManager.putEntity(child);
+        entityManager.putEntity(grandChild);
 
-        Mockh result = new Mockh(pdf, parent, child, grandChild);
+        Mockh result = new Mockh(entityManager, parent, child, grandChild);
         return result;
     }
 
@@ -111,27 +112,28 @@ class LayoutSystemTest {
 
     @Test
     void computesParentAndChildAbsolutePositions() {
-        EntityManager pdf = new EntityManager();
-        var layoutSystem = new LayoutSystem(new PDPage(PDRectangle.A4));
+        EntityManager entityManager = new EntityManager();
+
+        var layoutSystem = new LayoutSystem(new org.apache.pdfbox.pdmodel.PDPage(org.apache.pdfbox.pdmodel.common.PDRectangle.A4));
 
         Mockh mockh = getMockh();
         var parent = mockh.parent();
         var child = mockh.child();
 
-        pdf.putEntity(parent);
-        pdf.putEntity(child);
+        entityManager.putEntity(parent);
+        entityManager.putEntity(child);
 
 
-        var boxPos = layoutSystem.calculatePositionFromParent(parent, null, pdf).orElseThrow();
-        var childPos = layoutSystem.calculatePositionFromParent(child, parent, pdf).orElseThrow();
+        var boxPos = layoutSystem.calculatePositionFromParent(parent, null, entityManager).orElseThrow();
+        var childPos = layoutSystem.calculatePositionFromParent(child, parent, entityManager).orElseThrow();
 
         // Presence
         assertTrue(parent.getComponent(ComputedPosition.class).isPresent(), "Box must have ComputedPosition");
         assertTrue(child.getComponent(ComputedPosition.class).isPresent(), "Child must have ComputedPosition");
 
         // Idempotency
-        var boxPos2 = layoutSystem.calculatePositionFromParent(parent, null, pdf).orElseThrow();
-        var childPos2 = layoutSystem.calculatePositionFromParent(child, parent, pdf).orElseThrow();
+        var boxPos2 = layoutSystem.calculatePositionFromParent(parent, null, entityManager).orElseThrow();
+        var childPos2 = layoutSystem.calculatePositionFromParent(child, parent, entityManager).orElseThrow();
 
         assertEquals(boxPos.x(), boxPos2.x(), 1e-9);
         assertEquals(boxPos.y(), boxPos2.y(), 1e-9);
@@ -149,14 +151,14 @@ class LayoutSystemTest {
         var layoutSystem = new LayoutSystem(new PDPage(PDRectangle.A4));
 
 
-        mockh.pdf().putEntity(parent);
-        mockh.pdf().putEntity(mockh.child());
-        mockh.pdf().putEntity(grandChild);
+        mockh.entityManager().putEntity(parent);
+        mockh.entityManager().putEntity(mockh.child());
+        mockh.entityManager().putEntity(grandChild);
 
 
-        var p1 = layoutSystem.calculatePositionFromParent(parent, null, mockh.pdf()).orElseThrow();
-        var c1 = layoutSystem.calculatePositionFromParent(child, parent, mockh.pdf()).orElseThrow();
-        var g1 = layoutSystem.calculatePositionFromParent(grandChild, child, mockh.pdf()).orElseThrow();
+        var p1 = layoutSystem.calculatePositionFromParent(parent, null, mockh.entityManager()).orElseThrow();
+        var c1 = layoutSystem.calculatePositionFromParent(child, parent, mockh.entityManager()).orElseThrow();
+        var g1 = layoutSystem.calculatePositionFromParent(grandChild, child, mockh.entityManager()).orElseThrow();
 
         // Компоненты должны быть сохранены
         assertTrue(parent.getComponent(ComputedPosition.class).isPresent());
@@ -164,9 +166,9 @@ class LayoutSystemTest {
         assertTrue(grandChild.getComponent(ComputedPosition.class).isPresent());
 
         // Идемпотентность
-        var p2 = layoutSystem.calculatePositionFromParent(parent, null, mockh.pdf()).orElseThrow();
-        var c2 = layoutSystem.calculatePositionFromParent(child, parent, mockh.pdf()).orElseThrow();
-        var g2 = layoutSystem.calculatePositionFromParent(grandChild, child, mockh.pdf()).orElseThrow();
+        var p2 = layoutSystem.calculatePositionFromParent(parent, null, mockh.entityManager()).orElseThrow();
+        var c2 = layoutSystem.calculatePositionFromParent(child, parent, mockh.entityManager()).orElseThrow();
+        var g2 = layoutSystem.calculatePositionFromParent(grandChild, child, mockh.entityManager()).orElseThrow();
 
         assertEquals(p1.x(), p2.x(), 1e-9);
         assertEquals(p1.y(), p2.y(), 1e-9);
@@ -176,6 +178,6 @@ class LayoutSystemTest {
         assertEquals(g1.y(), g2.y(), 1e-9);
     }
 
-    private record Mockh(EntityManager pdf, Entity parent, Entity child, Entity grandChild) {
+    private record Mockh(EntityManager entityManager, Entity parent, Entity child, Entity grandChild) {
     }
 }

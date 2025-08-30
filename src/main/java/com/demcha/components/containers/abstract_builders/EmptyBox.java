@@ -22,7 +22,7 @@ import lombok.experimental.Accessors;
  * @param <T> The type of the entity that this builder will construct.
  */
 @Getter
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 @Accessors(fluent = true)
 public abstract class EmptyBox<T> extends EntityBuilderBase<T> implements BuildEntity {
 
@@ -32,6 +32,11 @@ public abstract class EmptyBox<T> extends EntityBuilderBase<T> implements BuildE
      * and is used by concrete implementations to interact with the PDF.
      */
     protected final EntityManager entityManager;
+
+    protected EmptyBox(EntityManager entityManager) {
+        this.entityManager = entityManager;
+        create();
+    }
 
     T parrent(ParentComponent parent) {
         entity.addComponent(parent);

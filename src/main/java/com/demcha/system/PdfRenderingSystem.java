@@ -50,7 +50,7 @@ public class PdfRenderingSystem implements RenderingSystem {
                     if (entity.hasRender(PdfRender.class)) {
                         var render = entity.getPdfRender();
                         var guideLines = entity.isGuideLines();
-                        render.pdfRender(entity, cs, guideLines);
+                        render.pdfRender(entity, cs,doc, guideLines);
                     }
                 }
 

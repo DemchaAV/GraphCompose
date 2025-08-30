@@ -1,38 +1,28 @@
 package com.demcha.components.components_builders;
 
 import com.demcha.components.containers.abstract_builders.ContainerBuilder;
-import com.demcha.components.renderable.HContainer;
-import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.layout.HAnchor;
 import com.demcha.components.layout.coordinator.Position;
+import com.demcha.components.renderable.HContainer;
+import com.demcha.components.core.Entity;
 import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.Iterator;
 
-/**
- * Builder class for creating horizontal containers ({@link HContainer}).
- * This builder extends {@link ContainerBuilder} and specializes in arranging
- * child entities horizontally, managing their positions and calculating the
- * container's overall dimensions based on its children.
- * <p>
- * It uses Lombok's {@code @Slf4j} for logging.
- * </p>
- */
-@Slf4j
-public class HContainerBuilder extends ContainerBuilder<HContainerBuilder> {
+// horizontall aligne
+public class RowBuilder extends ContainerBuilder<RowBuilder> {
 
     /**
      * Constructs a new {@code HContainerBuilder} associated with a specific PDF document.
      *
      * @param document The {@link EntityManager} to which the container and its entities will belong.
      */
-    public HContainerBuilder(EntityManager document) {
+    public RowBuilder(EntityManager document) {
         super(document);
     }
 
@@ -45,7 +35,7 @@ public class HContainerBuilder extends ContainerBuilder<HContainerBuilder> {
      * @return This builder instance, allowing for method chaining.
      */
     @Override
-    public HContainerBuilder create(Align align) {
+    public RowBuilder create(Align align) {
         super.create(align); // Call the common logic
         entity.addComponentIfAbsent(new HContainer()); // Add the specific component
         return self();
@@ -111,3 +101,5 @@ public class HContainerBuilder extends ContainerBuilder<HContainerBuilder> {
         entity.addComponent(new HContainer());
     }
 }
+
+

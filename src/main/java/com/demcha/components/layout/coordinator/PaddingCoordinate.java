@@ -30,7 +30,7 @@ public record PaddingCoordinate(double x, double y) {
      */
     public static PaddingCoordinate from(@NonNull Entity entity) {
 
-        var renderingPos = RenderingPosition.from(entity);
+        var renderingPos = RenderingPosition.from(entity).orElseThrow();
 
         var padding = entity.getComponent(Padding.class).orElse(Padding.zero());
         var result = from(renderingPos, padding);

@@ -1,8 +1,10 @@
 package com.demcha.components.renderable;
 
 import com.demcha.components.containers.abstract_builders.GuidesRenderer;
+import com.demcha.components.content.text.Text;
 import com.demcha.components.core.Entity;
 import com.demcha.system.PdfRender;
+import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.io.IOException;
@@ -26,8 +28,11 @@ public class Element implements PdfRender, GuidesRenderer {
      * @throws IOException If an I/O error occurs during rendering.
      */
     @Override
-    public boolean pdfRender(Entity e, PDPageContentStream cs, boolean guideLines) throws IOException {
+    public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, boolean guideLines) throws IOException {
+        TextComponent textComponent = new TextComponent();
         if (guideLines) renderGuides(e, cs, DEFAULT_GUIDES);
+
+
         return true;
     }
 

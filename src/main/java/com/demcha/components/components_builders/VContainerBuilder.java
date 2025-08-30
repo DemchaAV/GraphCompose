@@ -1,5 +1,5 @@
 package com.demcha.components.components_builders;
-import com.demcha.components.containers.abstract_builders.AbstractContainerBuilder;
+import com.demcha.components.containers.abstract_builders.ContainerBuilder;
 import com.demcha.components.renderable.VContainer;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Iterator;
 
 @Slf4j
-public class VContainerBuilder extends AbstractContainerBuilder<VContainerBuilder> {
+public class VContainerBuilder extends ContainerBuilder<VContainerBuilder> {
     /**
      * Constructs a new {@code VContainerBuilder} with the specified PDF document.
      *

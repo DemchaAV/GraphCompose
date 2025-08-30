@@ -5,12 +5,14 @@ import com.demcha.components.content.text.Text;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
-import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.components.style.Padding;
 import com.demcha.system.PdfRender;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.io.IOException;
@@ -18,7 +20,9 @@ import java.util.EnumSet;
 
 @Slf4j
 @Builder
-public record TextComponent() implements PdfRender, GuidesRenderer {
+@EqualsAndHashCode
+@NoArgsConstructor
+public class TextComponent implements PdfRender, GuidesRenderer {
     private static final EnumSet<Guide> DEFAULT_GUIDES =
             EnumSet.of(Guide.MARGIN, Guide.PADDING);
 
@@ -32,39 +36,63 @@ public record TextComponent() implements PdfRender, GuidesRenderer {
         return new ContentSize(width, height);
     }
 
-    @Override
-    public boolean pdfRender(Entity e, PDPageContentStream cs, boolean guideLine) throws IOException {
+    private static ValidatedTextData getValidatedTextData(Entity e) {
+        var textValueOpt = e.getComponent(Text.class);
+        var styleOpt = e.getComponent(TextStyle.class);
 
-        var textOpt = e.getComponent(TextComponent.class);
-        if (textOpt.isEmpty()) return false;
-        var posOpt = e.getComponent(ComputedPosition.class);
-        if (posOpt.isEmpty()) {
-            log.warn("TextComponent has no ComputedPosition; skipping: {}", e);
+        Text textValue;
+        TextStyle style;
+        if (textValueOpt.isEmpty()) {
+            log.info("TextComponent has no TextValue; skipping: {}", e);
+            textValue = textValueOpt.orElse(Text.empty());
+        } else {
+            textValue = textValueOpt.get();
+        }
+        if (styleOpt.isEmpty()) {
+            log.info("TextComponent has no TextStyle; skipping: {}", e);
+            style = styleOpt.orElse(TextStyle.defaultStyle());
+        } else {
+            style = styleOpt.get();
+        }
+        return new ValidatedTextData(style, textValue);
+    }
+
+    @Override
+    public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, boolean guideLine) throws IOException {
+
+        if (!e.hasAssignable(TextComponent.class)) {
+            log.debug("Entity doesn't have TextComponent; skipping: {}", e);
             return false;
         }
 
-        var text = e.getComponent(Text.class).orElseThrow();
-        var pos = posOpt.get();
-        RenderingPosition position = RenderingPosition.from(e);
-        TextStyle style = e.getComponent(TextStyle.class).orElseThrow();
-        Text textValue = e.getComponent(Text.class).orElseThrow();
+        var positionOpt = RenderingPosition.from(e);
         Padding padding = e.getComponent(Padding.class).orElse(Padding.zero());
+        if (positionOpt.isEmpty()) {
+            log.warn("TextComponent has no RenderingPosition; skipping: {}", e);
+            return false;
+        }
+        var position = positionOpt.get();
 
-        float size = style != null ? style.size() : 12f;
-        double textHeight = style.getTextHeight(text.value());
+        ValidatedTextData validateText = getValidatedTextData(e);
+
+
+        float size = validateText.style().size();
+        double textHeight = validateText.style().getTextHeight(validateText.textValue().value());
         double different = textHeight > size ? textHeight - size : 0;
 
-        log.debug("Rendering text '{}' at ({}, {}) size={}", textValue, pos.x(), pos.y(), size);
-        log.debug("{}", style);
+        log.debug("Rendering text '{}' at ({}, {}) size={}", validateText.textValue(), position.x(), position.y(), size);
+        log.debug("{}", validateText.style());
 
         cs.saveGraphicsState();
-        cs.setFont(style.font(), size);
-        cs.setNonStrokingColor(style.color());
+        cs.setFont(validateText.style().font(), size);
+        cs.setNonStrokingColor(validateText.style().color());
         cs.beginText();
-        cs.newLineAtOffset((float) position.x() + (float) padding.left(), (float) position.y() + (float) (different*2) + (float) padding.bottom());
-        cs.showText(textValue.value());
+        cs.newLineAtOffset((float) position.x() + (float) padding.left(), (float) position.y() + (float) (different * 2) + (float) padding.bottom());
+        cs.showText(validateText.textValue().value());
         cs.endText();
         cs.restoreGraphicsState();
+
+
         if (guideLine) {
             renderGuides(e, cs, DEFAULT_GUIDES);
         }
@@ -72,6 +100,8 @@ public record TextComponent() implements PdfRender, GuidesRenderer {
         return true;
     }
 
+    private record ValidatedTextData(TextStyle style, Text textValue) {
+    }
 
 
 }

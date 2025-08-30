@@ -13,8 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 //TODO has to be finish with adding essential data type for building b Box
 @Slf4j
 public final class TextBuilder extends EmptyBox<TextBuilder> {
-    private String text;
-    private TextStyle style;
     private boolean autosize;
 
     public TextBuilder(EntityManager document) {
@@ -54,7 +52,7 @@ public final class TextBuilder extends EmptyBox<TextBuilder> {
     public Entity build() {
         if (entity.has(TextComponent.class)) {
             if (autosize) {
-                TextStyle style = entity.getComponent(TextStyle.class).orElseThrow();
+                TextStyle style = entity.getComponent(TextStyle.class).orElse(TextStyle.defaultStyle());
                 Text textValue = entity.getComponent(Text.class).orElseThrow();
                 Padding padding = entity.getComponent(Padding.class).orElse(Padding.zero());
                 double textHeight = style.getTextHeight(textValue.value()) + padding.vertical();

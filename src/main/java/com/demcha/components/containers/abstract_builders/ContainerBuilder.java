@@ -30,7 +30,7 @@ import java.util.Set;
  * @see VContainerBuilder
  * @see EmptyBox
  */
-public abstract class AbstractContainerBuilder<T extends AbstractContainerBuilder<T>> extends EmptyBox<T> implements Box {
+public abstract class ContainerBuilder<T extends ContainerBuilder<T>> extends EmptyBox<T> implements Box {
 
     public static final Align DEFAULT_ALIGN = Align.middle(5);
 
@@ -39,7 +39,7 @@ public abstract class AbstractContainerBuilder<T extends AbstractContainerBuilde
     protected double primaryAxisPosition = 0; // Represents width for H-Container, height for V-Container
     protected double secondaryAxisMaxSize = 0; // Represents max height for H-Container, max width for V-Container
 
-    public AbstractContainerBuilder(EntityManager document) {
+    public ContainerBuilder(EntityManager document) {
         super(document);
         this.children = new HashSet<>();
     }

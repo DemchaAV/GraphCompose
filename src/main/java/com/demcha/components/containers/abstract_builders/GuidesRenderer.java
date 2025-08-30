@@ -106,12 +106,12 @@ public interface GuidesRenderer {
     }
 
     default boolean boxRender(Entity e, PDPageContentStream cs) throws IOException {
-        var pos = e.getComponent(ComputedPosition.class).orElseThrow();
         var boxSize = e.getComponent(ContentSize.class).orElseThrow();
 
         // лёгкий пунктир и тонкая линия, чтобы гайды не “забивали” контент
         var stroke = new Stroke(1);
-        var rp = RenderingPosition.from(e); // x/y с учетом margin/anchor и т.п.
+        var rp = RenderingPosition.from(e).orElseThrow(); // x/y с учетом margin/anchor и т.п.
+
 
         double x = rp.x();
         double y = rp.y();

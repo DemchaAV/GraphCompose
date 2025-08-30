@@ -102,7 +102,7 @@ public final class Entity {
         log.debug("Getting component {} from  {}", type, this);
         T value = type.cast(comps.get(type));
         if (value == null) {
-            log.warn("Component {} from {} not found!", type, this);
+            log.debug("Component {} from {} not found!", type, this);
             return Optional.empty();
         }
         return Optional.of(value);
@@ -115,6 +115,11 @@ public final class Entity {
             return new NoSuchElementException("Missing " + type.getName() + " for " + id);
         });
     }
+    public boolean hasAssignable(Class<?> baseClass) {
+        return comps.keySet().stream()
+                .anyMatch(c -> baseClass.isAssignableFrom(c));
+    }
+
 
     public boolean has(Class<? extends Component> type) {
         log.debug("Checking component {} {}", type, this);

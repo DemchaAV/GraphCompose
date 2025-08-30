@@ -1,30 +1,34 @@
 package com.demcha.components.renderable;
 
 import com.demcha.components.containers.abstract_builders.GuidesRenderer;
-import com.demcha.components.content.shape.Stroke;
 import com.demcha.components.content.shape.CornerRadius;
 import com.demcha.components.content.shape.FillColor;
+import com.demcha.components.content.shape.Stroke;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.system.ContentSizeNotFoundException;
 import com.demcha.system.PdfRender;
+import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.io.IOException;
 import java.util.EnumSet;
 
 @Slf4j
-public record Rectangle() implements PdfRender, GuidesRenderer {
+@EqualsAndHashCode
+public class Rectangle implements PdfRender, GuidesRenderer {
     private static final EnumSet<Guide> DEFAULT_GUIDES =
             EnumSet.of(Guide.MARGIN, Guide.PADDING);
 
 
     @Override
-    public boolean pdfRender(Entity e, PDPageContentStream cs, boolean withGuides) throws IOException {
-        // По умолчанию рисуем ТОЛЬКО сам объект (без направляющих)
-        boolean drawn = pdfRenderObject(e, cs); // ← рисуем сам прямоугольник
+    public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, boolean withGuides) throws IOException {
+        // draw an object first
+        boolean drawn = pdfRenderObject(e, cs);
+        // if was specified, draw guides
         if (withGuides) {
             renderGuides(e, cs, DEFAULT_GUIDES);
 
@@ -34,9 +38,7 @@ public record Rectangle() implements PdfRender, GuidesRenderer {
 
 
     private boolean pdfRenderObject(Entity e, PDPageContentStream cs) throws IOException {
-        // Обычно этот метод вызывается ТОЛЬКО если у сущности есть Rectangle,
-        // проверка ниже избыточна, но пусть останется:
-        if (!e.has(Rectangle.class)) {
+        if (!e.hasAssignable(Rectangle.class)) {
             log.debug("No Rectangle on {}", e);
             return false;
         }
@@ -44,24 +46,21 @@ public record Rectangle() implements PdfRender, GuidesRenderer {
         var size = e.getComponent(ContentSize.class)
                 .orElseThrow(ContentSizeNotFoundException::new);
 
-        var rp = RenderingPosition.from(e); // x/y с учетом margin/anchor и т.п.
+        var rpOpt = RenderingPosition.from(e); // x/y с учетом margin/anchor и т.п.
 
-        // Цвет: дефолт если компонента нет
-        FillColor fillColor = e.getComponent(FillColor.class).orElse(null);
+        // Color Default if not specified
+        FillColor fillColor = e.getComponent(FillColor.class).orElse(FillColor.defaultColor());
 
-
+        var rp = rpOpt.orElseThrow();
         double x = rp.x();
         double y = rp.y();
         double w = size.width();
         double h = size.height();
+        //Should be null  if not specified
         Stroke stroke = e.getComponent(Stroke.class).orElse(null);
+        //Should be null  if not specified
         CornerRadius radius = e.getComponent(CornerRadius.class).orElse(null);
-
-
-        // Для заливки радиусного прямоугольника используем non-stroking color,
-        // для контура — stroking color.
-
-        return pdfRenderRectangle(cs,x, y, stroke, fillColor, radius, w, h);
+        return pdfRenderRectangle(cs, x, y, stroke, fillColor, radius, w, h);
     }
 
     private boolean pdfRenderRectangle(PDPageContentStream cs,
@@ -85,7 +84,7 @@ public record Rectangle() implements PdfRender, GuidesRenderer {
         final float radius = (r == null) ? 0f : (float) Math.min(r.radius(), Math.min(w, h) / 2.0);
 
         // Determine paint ops (null-safe)
-        final boolean hasFill   = (fillColor != null && fillColor.color() != null);
+        final boolean hasFill = (fillColor != null && fillColor.color() != null);
         final boolean hasStroke = (stroke != null && stroke.strokeColor() != null && stroke.width() > 0);
 
         if (!hasFill && !hasStroke) {
@@ -101,7 +100,7 @@ public record Rectangle() implements PdfRender, GuidesRenderer {
             // Configure stroke if needed
             if (hasStroke) {
                 cs.setLineWidth((float) stroke.width());
-                    cs.setStrokingColor(stroke.strokeColor().color());
+                cs.setStrokingColor(stroke.strokeColor().color());
                 // Optional: nicer corners for thick borders
                 // cs.setLineJoin(1); // 0=miter (default), 1=round, 2=bevel
             }

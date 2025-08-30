@@ -15,7 +15,7 @@ import java.util.Set;
 
 /**
  * An abstract base class for building container components (e.g., HContainer, VContainer)
- * within a PDF document. This class provides common functionality for managing child entities,
+ * within a Entity Manager. This class provides common functionality for managing child entities,
  * handling alignment, and calculating container dimensions.
  *
  * <p>Subclasses are responsible for implementing specific layout logic, such as how child
@@ -39,8 +39,8 @@ public abstract class ContainerBuilder<T extends ContainerBuilder<T>> extends Em
     protected double primaryAxisPosition = 0; // Represents width for H-Container, height for V-Container
     protected double secondaryAxisMaxSize = 0; // Represents max height for H-Container, max width for V-Container
 
-    public ContainerBuilder(EntityManager document) {
-        super(document);
+    public ContainerBuilder(EntityManager entityManager) {
+        super(entityManager);
         this.children = new HashSet<>();
     }
 
@@ -105,7 +105,7 @@ public abstract class ContainerBuilder<T extends ContainerBuilder<T>> extends Em
     /**
      * Builds the container entity and its children, adding them to the {@link EntityManager}.
      * This method calculates the final content size of the container, considering padding,
-     * and then registers the container and all its child entities with the document.
+     * and then registers the container and all its child entities with the entityManager.
      *
      * @return The built container {@link Entity}.
      */

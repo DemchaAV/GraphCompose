@@ -28,12 +28,12 @@ import java.util.Iterator;
 public class HContainerBuilder extends ContainerBuilder<HContainerBuilder> {
 
     /**
-     * Constructs a new {@code HContainerBuilder} associated with a specific PDF document.
+     * Constructs a new {@code HContainerBuilder} associated with a specific Entity Manager.
      *
-     * @param document The {@link EntityManager} to which the container and its entities will belong.
+     * @param entityManager The {@link EntityManager} to which the container and its entities will belong.
      */
-    public HContainerBuilder(EntityManager document) {
-        super(document);
+    public HContainerBuilder(EntityManager entityManager) {
+        super(entityManager);
     }
 
     /**

@@ -16,8 +16,8 @@ import com.demcha.core.EntityManager;
 import java.awt.*;
 
 public class ButtonBuilder extends ShapeBuilderBase<ButtonBuilder> {
-    public ButtonBuilder(EntityManager document) {
-        super(document);
+    public ButtonBuilder(EntityManager entityManager) {
+        super(entityManager);
     }
 
 

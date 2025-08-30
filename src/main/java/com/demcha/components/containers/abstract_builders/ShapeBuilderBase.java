@@ -11,14 +11,14 @@ import java.awt.*;
 
 
 /**
- * An abstract builder class for creating shapes within a PDF document.
+ * An abstract builder class for creating shapes within a Entity Manager.
  * This class provides methods to add various shape-related components like rectangles, corner radii, fill colors, and strokes.
  * @param <T> The type of the concrete builder extending this abstract class, allowing for method chaining.
  */
 public abstract class ShapeBuilderBase<T> extends EmptyBox<T> {
 
-    public ShapeBuilderBase(EntityManager document) {
-        super(document);
+    public ShapeBuilderBase(EntityManager entityManager) {
+        super(entityManager);
     }
 
     /**

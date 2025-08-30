@@ -1,37 +1,36 @@
 package com.demcha.components.content.link;
 
 import com.demcha.components.core.Component;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
-import java.util.Objects;
+import java.net.URI;
+import java.net.URISyntaxException;
 
-public  class LinkUrl implements Component {
+@Slf4j
+@Getter
+@EqualsAndHashCode
+public class LinkUrl implements Component {
     private final String url;
+    private final boolean valid;
 
     public LinkUrl(String url) {
         this.url = url;
+        this.valid = validateUrl(url);
     }
 
-    public String url() {
-        return url;
+    private boolean validateUrl(String url) {
+        if (url == null || url.isBlank()) {
+            log.warn("URL is null or blank");
+            return false;
+        }
+        try {
+            URI uri = new URI(url);
+            return uri.getScheme() != null && uri.getHost() != null;
+        } catch (URISyntaxException e) {
+            log.warn("Invalid link url: '{}'", url);
+            return false;
+        }
     }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == this) return true;
-        if (obj == null || obj.getClass() != this.getClass()) return false;
-        var that = (LinkUrl) obj;
-        return Objects.equals(this.url, that.url);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(url);
-    }
-
-    @Override
-    public String toString() {
-        return "LinkUrl[" +
-               "url=" + url + ']';
-    }
-
 }

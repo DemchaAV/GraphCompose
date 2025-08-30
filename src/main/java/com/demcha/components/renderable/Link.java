@@ -1,6 +1,7 @@
 package com.demcha.components.renderable;
 
 import com.demcha.components.containers.abstract_builders.GuidesRenderer;
+import com.demcha.components.content.link.Email;
 import com.demcha.components.content.link.LinkUrl;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
@@ -29,7 +30,7 @@ public class Link implements PdfRender, GuidesRenderer {
         link.setDestination(null);
 
         PDActionURI action = new PDActionURI();
-        action.setURI(url.url());
+        action.setURI(url.getUrl());
         link.setAction(action);
 
 // УБИРАЕМ РАМКУ
@@ -59,7 +60,9 @@ public class Link implements PdfRender, GuidesRenderer {
         var renderingPosition = RenderingPosition.from(e).orElseThrow();
         Padding padding = e.getComponent(Padding.class).orElse(Padding.zero());
         ContentSize size = e.getComponent(ContentSize.class).orElseThrow();
-        LinkUrl url = e.getComponent(LinkUrl.class).orElseThrow();
+        var url = e.getComponent(LinkUrl.class)
+                .or(() -> e.getComponent(Email.class))
+                .orElseThrow();
         PDRectangle position = new PDRectangle();
 
         float x = (float) renderingPosition.x();

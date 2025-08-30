@@ -161,7 +161,7 @@ public abstract class ComponentBoxBuilder<B extends ComponentBoxBuilder<B>>
      * <p>Delegates to {@code entityManager.createAndPopulateEntity(this)}.
      * Ensure that your {@link EntityManager} has a compatible method.</p>
      *
-     * @param entityManager the document to create/populate an entity in
+     * @param entityManager the entityManager to create/populate an entity in
      * @return the created entity's UUID
      */
     public Entity buildInto(EntityManager entityManager) {

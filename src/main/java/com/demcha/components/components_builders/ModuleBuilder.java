@@ -17,12 +17,12 @@ import java.util.Iterator;
 public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
 
     /**
-     * Constructs a new {@code ModuleBuilder} associated with a specific PDF document.
+     * Constructs a new {@code ModuleBuilder} associated with a specific Entity Manager.
      *
-     * @param document The {@link EntityManager} to which the container and its entities will belong.
+     * @param entityManager The {@link EntityManager} to which the container and its entities will belong.
      */
-    public ModuleBuilder(EntityManager document) {
-        super(document);
+    public ModuleBuilder(EntityManager entityManager) {
+        super(entityManager);
     }
 
     /**

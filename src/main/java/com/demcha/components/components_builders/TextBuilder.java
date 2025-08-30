@@ -15,8 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 public class TextBuilder extends EmptyBox<TextBuilder> {
     private boolean autosize;
 
-    public TextBuilder(EntityManager document) {
-        super(document);
+    public TextBuilder(EntityManager entityManager) {
+        super(entityManager);
     }
 
     public TextBuilder text(Text textComponent) {
@@ -50,7 +50,7 @@ public class TextBuilder extends EmptyBox<TextBuilder> {
 
     @Override
     public Entity build() {
-        if (entity.has(TextComponent.class)) {
+        if (entity.hasAssignable (TextComponent.class)) {
             if (autosize) {
                 TextStyle style = entity.getComponent(TextStyle.class).orElse(TextStyle.defaultStyle());
                 Text textValue = entity.getComponent(Text.class).orElseThrow();

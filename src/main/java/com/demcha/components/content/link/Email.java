@@ -1,24 +1,59 @@
 package com.demcha.components.content.link;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 
+/**
+ * Represents an email link, extending the {@link LinkUrl} class.
+ * This class provides functionality to construct "mailto:" URLs with optional
+ * subject and body parameters, allowing for easy creation of clickable email links
+ * within entityManagers or applications.
+ */
+@Slf4j
 public class Email extends LinkUrl {
+
+    // Конструктор с полным набором параметров
     public Email(String to, String subject, String body) {
         super(buildMailto(to, subject, body));
     }
 
-    private static String buildMailto(String to, String subject, String body) {
-        try {
-            return "mailto:" + to
-                   + "?subject=" + URLEncoder.encode(subject, StandardCharsets.UTF_8)
-                   + "&body=" + URLEncoder.encode(body, StandardCharsets.UTF_8);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    // Конструктор только с "to"
+    public Email(String to) {
+        super(buildMailto(to, null, null));
     }
 
+    private static String buildMailto(String to, String subject, String body) {
+        if (to == null || to.isBlank()) {
+            log.error("to is null or blank");
+            to ="";
+        }
+
+        StringBuilder sb = new StringBuilder("mailto:").append(to);
+
+        // Добавляем query параметры только если они не null/blank
+        List<String> params = new ArrayList<>();
+        if (subject != null && !subject.isBlank()) {
+            params.add("subject=" + encode(subject));;
+        }
+        if (body != null && !body.isBlank()) {
+            params.add("body=" +  encode(subject));;
+        }
+
+        if (!params.isEmpty()) {
+            sb.append("?").append(String.join("&", params));
+        }
+
+        return sb.toString();
+    }
+
+    private static String encode(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8)
+                .replace("+", "%20");
+    }
 }

@@ -37,10 +37,10 @@ public class Module extends EmptyBox<Module> {
     /**
      * Constructs a new Module instance.
      *
-     * @param document The PDF document associated with this module.
+     * @param entityManager The Entity Manager associated with this module.
      */
-    public Module(EntityManager document) {
-        super(document);
+    public Module(EntityManager entityManager) {
+        super(entityManager);
     }
 
 

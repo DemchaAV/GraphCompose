@@ -43,7 +43,7 @@ import java.util.*;
  * doc.addSystem(new LayoutSystem());
  * doc.addSystem(new RenderSystem());
  *
- * doc.processSystems(); // Systems read/write components via the document
+ * doc.processSystems(); // Systems read/write components via the entityManager
  * }</pre>
  *
  * <h2>Gotchas</h2>

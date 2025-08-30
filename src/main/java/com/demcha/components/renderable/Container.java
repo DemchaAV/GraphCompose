@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.EnumSet;
 
 /**
- * Represents a basic container component that can render itself and its guides on a PDF document.
+ * Represents a basic container component that can render itself and its guides on a Entity Manager.
  * This class serves as an abstract builder for more specific container types, providing
  * fundamental rendering capabilities and guide visualization.
  */

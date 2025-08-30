@@ -18,12 +18,12 @@ import java.util.Iterator;
 public class RowBuilder extends ContainerBuilder<RowBuilder> {
 
     /**
-     * Constructs a new {@code HContainerBuilder} associated with a specific PDF document.
+     * Constructs a new {@code HContainerBuilder} associated with a specific Entity Manager.
      *
-     * @param document The {@link EntityManager} to which the container and its entities will belong.
+     * @param entityManager The {@link EntityManager} to which the container and its entities will belong.
      */
-    public RowBuilder(EntityManager document) {
-        super(document);
+    public RowBuilder(EntityManager entityManager) {
+        super(entityManager);
     }
 
     /**

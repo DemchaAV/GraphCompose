@@ -12,7 +12,7 @@ import lombok.experimental.Accessors;
 
 /**
  * Abstract base class for building entities that represent an empty box or a container
- * within a PDF document. This class extends {@link EntityBuilderBase} and implements
+ * within a Entity Manager. This class extends {@link EntityBuilderBase} and implements
  * {@link BuildEntity}, providing a foundation for components that might not render
  * visible content themselves but serve as structural elements or placeholders.
  *
@@ -27,8 +27,8 @@ import lombok.experimental.Accessors;
 public abstract class EmptyBox<T> extends EntityBuilderBase<T> implements BuildEntity {
 
     /**
-     * The PDF document instance to which the built entity will be added or associated.
-     * This document is typically provided during the construction of the builder
+     * The Entity Manager instance to which the built entity will be added or associated.
+     * This entityManager is typically provided during the construction of the builder
      * and is used by concrete implementations to interact with the PDF.
      */
     protected final EntityManager entityManager;

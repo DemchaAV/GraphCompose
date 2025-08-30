@@ -97,7 +97,7 @@ public class LayoutSystem implements System {
      *
      * @param childEntity   the entity to position
      * @param parentEntity  the parentEntity entity, or {@code null} if the childEntity is the root
-     * @param entityManager the document providing page size information
+     * @param entityManager the entityManager providing page size information
      * @return an {@link Optional} with the computed position
      */
 

@@ -17,12 +17,12 @@ import java.util.Iterator;
 @Slf4j
 public class VContainerBuilder extends ContainerBuilder<VContainerBuilder> {
     /**
-     * Constructs a new {@code VContainerBuilder} with the specified PDF document.
+     * Constructs a new {@code VContainerBuilder} with the specified Entity Manager.
      *
-     * @param document The {@link EntityManager} to which the container will be added.
+     * @param entityManager The {@link EntityManager} to which the container will be added.
      */
-    public VContainerBuilder(EntityManager document) {
-        super(document);
+    public VContainerBuilder(EntityManager entityManager) {
+        super(entityManager);
     }
 
     /**

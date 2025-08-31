@@ -1,6 +1,7 @@
 package com.demcha;
 
 import com.demcha.components.components_builders.*;
+import com.demcha.components.content.link.Email;
 import com.demcha.components.content.link.LinkUrl;
 import com.demcha.components.content.text.TextDecoration;
 import com.demcha.components.content.text.TextStyle;
@@ -37,38 +38,39 @@ public class Main {
 
 
 
-        var link = new LinkBuilder(entityManager).create()
-                .linkUrl(new LinkUrl("https://www.google.com/"))
-                .anchor(Anchor.center())
-                .entityName("Link_1")
-                .displayText(new DisplayUrlTextBuilder(entityManager).create()
-                        .textWithAutoSize("Email 1")
-                )
-                .build();
-        var link2 = new LinkBuilder(entityManager).create()
-                .linkUrl(new LinkUrl("https://www.google.com/"))
-                .anchor(Anchor.center())
-                .entityName("Link_2")
-                .displayText(new DisplayUrlTextBuilder(entityManager).create()
-                        .textWithAutoSize("Email 2")
-                )
-                .build();
-
-        var row =  new VContainerBuilder(entityManager).create(Align.middle(5))
-                .margin(Margin.of(5))
-                .anchor(Anchor.center())
-                .addChild(link)
-                .addChild(link2)
-                .build();
-        row.getChildren().forEach(System.out::println);
-
-
+        links_mail(entityManager);
         BlockTextTest(entityManager);
 
 
         entityManager.processSystems();
 
 
+    }
+
+    private static void links_mail(EntityManager entityManager) {
+        var google = new LinkBuilder(entityManager).create()
+                .linkUrl(new LinkUrl("https://www.google.com/"))
+                .anchor(Anchor.center())
+                .entityName("google")
+                .displayText(new DisplayUrlTextBuilder(entityManager).create()
+                        .textWithAutoSize("Google")
+                )
+                .build();
+        var email = new LinkBuilder(entityManager).create()
+                .linkUrl(new Email("demchaav@gmail.com", "Job Info hiring", "Dear Artem "))
+                .anchor(Anchor.center())
+                .entityName("email")
+                .displayText(new DisplayUrlTextBuilder(entityManager).create()
+                        .textWithAutoSize("Email")
+                )
+                .build();
+
+        var row =  new HContainerBuilder(entityManager).create(Align.middle(5))
+                .margin(Margin.of(5))
+                .anchor(Anchor.center())
+                .addChild(google)
+                .addChild(email)
+                .build();
     }
 
     private static void BlockTextTest(EntityManager entityManager) {
@@ -93,9 +95,10 @@ public class Main {
 
 
         Entity build = new BlockTextBuilder(entityManager).create(Align.middle(-2))
-                .size(400, 600)
+                .size(500, 650)
                 .margin(Margin.of(10))
-                .anchor(Anchor.centerTop())
+                .anchor(Anchor.topLeft())
+                .padding(0,0, 0, 20)
                 .text(textBuilder )
                 .build();
     }

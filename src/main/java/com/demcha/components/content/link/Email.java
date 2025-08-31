@@ -42,7 +42,7 @@ public class Email extends LinkUrl {
             params.add("subject=" + encode(subject));;
         }
         if (body != null && !body.isBlank()) {
-            params.add("body=" +  encode(subject));;
+            params.add("body=" +  encode(body));;
         }
 
         if (!params.isEmpty()) {

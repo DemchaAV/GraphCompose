@@ -10,6 +10,7 @@ import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.ParentComponent;
+import com.demcha.components.renderable.BlockText;
 import com.demcha.components.renderable.TextComponent;
 import com.demcha.components.renderable.VContainer;
 import com.demcha.components.style.Margin;
@@ -138,9 +139,9 @@ public class BlockTextBuilder extends ContainerBuilder<BlockTextBuilder> {
             textBuilder.addComponent(entry.getValue());
 
         }
-       var entity =  textBuilder.build();
+        var entity = textBuilder.build();
 
-       textBuilder.addComponent(new ParentComponent(this.entity));
+        textBuilder.addComponent(new ParentComponent(this.entity));
 
         entity().getChildren().add(entity);
     }
@@ -151,16 +152,11 @@ public class BlockTextBuilder extends ContainerBuilder<BlockTextBuilder> {
         entity.addComponent(new BlockText());
     }
 
-    /**
-     * Constructs a new {@code VContainerBuilder} with the specified Entity Manager.
-     *
-     * @param entityManager The {@link EntityManager} to which the container will be added.
-     */
 
     /**
      * Initializes the container builder with the specified alignment.
      * This method calls the common creation logic from the superclass and then
-     * adds a {@link VContainer} component to the entity.
+     * adds a {@link BlockText} component to the entity.
      *
      * @param align The {@link Align} strategy for arranging children within the container.
      * @return This builder instance for method chaining.

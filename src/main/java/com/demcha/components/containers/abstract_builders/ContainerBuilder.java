@@ -267,7 +267,7 @@ public abstract class ContainerBuilder<T extends ContainerBuilder<T>> extends Em
         log.debug("{}", outbox);
         // Main axis grows with each child
         log.info("updateContainerDimensionsHorizontal: Current axisHorizontal={}, axisVertical={}", axisHorizontal, axisVertical);
-        this.axisHorizontal += outbox.width() + (isLast ? 0 : align.spacing());
+        this.axisHorizontal += outbox.width() ;
         // Cross axis is the max of all children
         this.axisVertical = Math.max(axisVertical, outbox.height());
         log.info("updateContainerDimensionsHorizontal: Calculated axisHorizontal={}, axisVertical={}", axisHorizontal, axisVertical);
@@ -278,7 +278,7 @@ public abstract class ContainerBuilder<T extends ContainerBuilder<T>> extends Em
         var outbox = OuterBoxSize.from(child).orElseThrow();
         log.info("updateContainerDimensionsVertical: Current axisHorizontal={}, axisVertical={}", axisHorizontal, axisVertical);
         // Main axis grows with each child
-        this.axisVertical += outbox.height() + (isLast ? 0 : align.spacing());
+        this.axisVertical += outbox.height() ;
         // Cross axis is the max of all children
         this.axisHorizontal = Math.max(axisHorizontal, outbox.height());
         log.info("updateContainerDimensionsVertical: Calculated axisHorizontal={}, axisVertical={}", axisHorizontal, axisVertical);

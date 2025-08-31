@@ -22,7 +22,7 @@ public class Main {
         Path target = Paths.get("output.pdf");
 
         EntityManager entityManager = new EntityManager();
-        entityManager.setGuideLines(true);
+        entityManager.setGuideLines(false);
         PDDocument doc = new PDDocument();
         doc.addPage(new PDPage(PDRectangle.A4));
 
@@ -51,7 +51,7 @@ public class Main {
                 )
                 .build();
 
-        var row =  new VContainerBuilder(entityManager).create(Align.middle(5))
+        var row =  new RowBuilder(entityManager).create(Align.middle(5))
                 .margin(Margin.of(5))
                 .anchor(Anchor.center())
                 .addChild(link)
@@ -60,7 +60,7 @@ public class Main {
         row.getChildren().forEach(System.out::println);
 
 
-//        BlockTextTest(entityManager);
+        BlockTextTest(entityManager);
 
 
         entityManager.processSystems();
@@ -83,7 +83,7 @@ public class Main {
                 .anchor(Anchor.centerRight());
 
 
-        Entity build = new BlockTextBuilder(entityManager).create(Align.middle(0.1))
+        Entity build = new BlockTextBuilder(entityManager).create(Align.middle(-4))
                 .size(400, 600)
                 .anchor(Anchor.center())
                 .text(textBuilder )

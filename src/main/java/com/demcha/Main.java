@@ -2,9 +2,12 @@ package com.demcha;
 
 import com.demcha.components.components_builders.*;
 import com.demcha.components.content.link.LinkUrl;
+import com.demcha.components.content.text.TextDecoration;
+import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.Anchor;
+import com.demcha.components.style.ComponentColor;
 import com.demcha.components.style.Margin;
 import com.demcha.core.EntityManager;
 import com.demcha.system.LayoutSystem;
@@ -22,7 +25,7 @@ public class Main {
         Path target = Paths.get("output.pdf");
 
         EntityManager entityManager = new EntityManager();
-        entityManager.setGuideLines(false);
+        entityManager.setGuideLines(true);
         PDDocument doc = new PDDocument();
         doc.addPage(new PDPage(PDRectangle.A4));
 
@@ -51,7 +54,7 @@ public class Main {
                 )
                 .build();
 
-        var row =  new RowBuilder(entityManager).create(Align.middle(5))
+        var row =  new VContainerBuilder(entityManager).create(Align.middle(5))
                 .margin(Margin.of(5))
                 .anchor(Anchor.center())
                 .addChild(link)
@@ -80,10 +83,16 @@ public class Main {
                                   "word that should ac turpis quis ligula lacinia aliquet. Mauris ipsum. Nulla metus scelerisque sem at dolor. Maecenas " +
                                   "mattis. Sed convallis Curabitur sodales ligula in libero. Sed dignissim lacinia nunc. Lorem ipsum dolor sit amet," +
                                   " consectetur adipiscing elit.")
+                .textStyle(TextStyle.builder()
+                        .size(15)
+                        .color(ComponentColor.RED)
+                        .font(TextStyle.HELVETICA)
+                        .decoration(TextDecoration.DEFAULT)
+                        .build())
                 .anchor(Anchor.centerRight());
 
 
-        Entity build = new BlockTextBuilder(entityManager).create(Align.middle(-4))
+        Entity build = new BlockTextBuilder(entityManager).create(Align.middle(-2))
                 .size(400, 600)
                 .anchor(Anchor.center())
                 .text(textBuilder )

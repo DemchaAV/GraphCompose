@@ -8,11 +8,8 @@ import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.InnerBoxSize;
-import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.layout.Align;
-import com.demcha.components.layout.Anchor;
-import com.demcha.components.layout.VAnchor;
-import com.demcha.components.layout.coordinator.Position;
+import com.demcha.components.layout.ParentComponent;
 import com.demcha.components.renderable.TextComponent;
 import com.demcha.components.renderable.VContainer;
 import com.demcha.components.style.Margin;
@@ -29,9 +26,8 @@ public class BlockTextBuilder extends ContainerBuilder<BlockTextBuilder> {
 
     public BlockTextBuilder(EntityManager entityManager) {
         super(entityManager);
-        this.stackAxis = StackAxis.REVERSE_VERTICAL;
+        this.stackAxis = StackAxis.VERTICAL;
     }
-
 
 
     public BlockTextBuilder text(TextBuilder textBuilder) {
@@ -63,6 +59,8 @@ public class BlockTextBuilder extends ContainerBuilder<BlockTextBuilder> {
         // Make a shallow copy of components (excluding Text, which we will replace)
         var components = new HashMap<>(entity.view());
         components.remove(Text.class); // we'll set a new Text per line
+        components.remove(TextComponent.class);
+        components.remove(ContentSize.class);
 
         // Remove original entity (we're going to replace it with per-line children)
         entityManager.remove(entity);
@@ -127,21 +125,24 @@ public class BlockTextBuilder extends ContainerBuilder<BlockTextBuilder> {
 
     private void createLine(List<String> words, Map<Class<? extends Component>, Component> baseComponents) {
         // Join with spaces for correct rendering
-        String lineText = String.join("", words);
+        String lineText = String.join(" ", words);
 
 
         var textBuilder = new TextBuilder(entityManager)
-                .create()
-                .textWithAutoSize(lineText)
-                .build();
+                .textWithAutoSize(lineText);
 
         // Copy over all base components EXCEPT Text (already set) and anything you explicitly want to override.
         for (Map.Entry<Class<? extends Component>, Component> entry : baseComponents.entrySet()) {
+            log.debug("EntryKey: {} value: {}, {}", entry.getKey(), entry.getValue());
 
-            textBuilder.addComponentIfAbsent(entry.getValue());
+            textBuilder.addComponent(entry.getValue());
+
         }
+       var entity =  textBuilder.build();
 
-       entity().getChildren().add(textBuilder);
+       textBuilder.addComponent(new ParentComponent(this.entity));
+
+        entity().getChildren().add(entity);
     }
 
 
@@ -167,11 +168,9 @@ public class BlockTextBuilder extends ContainerBuilder<BlockTextBuilder> {
     @Override
     public BlockTextBuilder create(Align align) {
         super.create(align); // Call the common logic
-        entity.addComponentIfAbsent(new VContainer()); // Add the specific component
+        entity.addComponentIfAbsent(new BlockText()); // Add the specific component
         return self();
     }
-
-
 
 
 }

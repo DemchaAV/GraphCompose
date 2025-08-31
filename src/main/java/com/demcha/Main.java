@@ -25,7 +25,7 @@ public class Main {
         Path target = Paths.get("output.pdf");
 
         EntityManager entityManager = new EntityManager();
-        entityManager.setGuideLines(true);
+        entityManager.setGuideLines(false);
         PDDocument doc = new PDDocument();
         doc.addPage(new PDPage(PDRectangle.A4));
 
@@ -73,7 +73,7 @@ public class Main {
 
     private static void BlockTextTest(EntityManager entityManager) {
         TextBuilder textBuilder = new TextBuilder(entityManager).create()
-                .textWithAutoSize("trigger the long word warning. Integer nec odio. Praesent libero. lectus risus, iaculis vel, suscipit quis, " +
+                .textWithAutoSize("Trigger the long word warning. Integer nec odio. Praesent libero. lectus risus, iaculis vel, suscipit quis, " +
                                   "luctus non, massa. Fusce Vestibulum facilisis, nunc in hendrerit posuere, sapien magna Vestibulum lacinia arcu eget " +
                                   "nulla. Class aptent taciti sociosqu Sed cursus ante dapibus diam. Sed nisi. Nulla quis sem at nibh elementum imperdiet. " +
                                   "Duis sagittis ipsum. Praesent mauris. metus, ullamcorper vel, tincidunt sed, euismod in, nibh. Curabitur tortor. " +
@@ -84,17 +84,18 @@ public class Main {
                                   "mattis. Sed convallis Curabitur sodales ligula in libero. Sed dignissim lacinia nunc. Lorem ipsum dolor sit amet," +
                                   " consectetur adipiscing elit.")
                 .textStyle(TextStyle.builder()
-                        .size(15)
-                        .color(ComponentColor.RED)
+                        .size(12)
+                        .color(ComponentColor.TITLE)
                         .font(TextStyle.HELVETICA)
                         .decoration(TextDecoration.DEFAULT)
                         .build())
-                .anchor(Anchor.centerRight());
+                .anchor(Anchor.centerLeft());
 
 
         Entity build = new BlockTextBuilder(entityManager).create(Align.middle(-2))
                 .size(400, 600)
-                .anchor(Anchor.center())
+                .margin(Margin.of(10))
+                .anchor(Anchor.centerTop())
                 .text(textBuilder )
                 .build();
     }

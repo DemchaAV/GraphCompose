@@ -22,5 +22,10 @@ public record Align(HAnchor h, VAnchor v, double spacing) implements Component {
         var h = HAnchor.CENTER;
         return new Align(h,v,spacing);
     }
+    public static Align defaultAlign(double spacing){
+        var v = VAnchor.DEFAULT;
+        var h = HAnchor.DEFAULT;
+        return new Align(h,v,spacing);
+    }
 }
 

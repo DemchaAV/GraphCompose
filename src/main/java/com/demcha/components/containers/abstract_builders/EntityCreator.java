@@ -31,7 +31,6 @@ public interface EntityCreator<B> {
 
     default B entityName(String name) {
         entityName(new EntityName(name));
-        initialize();
         return self();
     }
 

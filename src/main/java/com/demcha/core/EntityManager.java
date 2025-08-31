@@ -192,6 +192,13 @@ public class EntityManager {
         return result;
     }
 
+    public boolean remove(UUID entityId) {
+        return entities.remove(entityId) != null;
+    }
+    public boolean remove(Entity entity) {
+        return entities.remove(entity.getId()) != null;
+    }
+
     public Set<UUID> getEntitiesWithPdfRender(Class<? extends PdfRender> componentType) {
         log.debug("Searching for entities with component type {}", componentType.getName());
 

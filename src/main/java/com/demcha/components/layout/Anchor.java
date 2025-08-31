@@ -29,6 +29,9 @@ public record Anchor(HAnchor h, VAnchor v) implements Component {
     public static Anchor topLeft() {
         return new Anchor(HAnchor.LEFT, VAnchor.TOP);
     }
+    public static Anchor left() {
+        return new Anchor(HAnchor.LEFT, VAnchor.DEFAULT);
+    }
 
     public static Anchor center() {
         return new Anchor(HAnchor.CENTER, VAnchor.MIDDLE);

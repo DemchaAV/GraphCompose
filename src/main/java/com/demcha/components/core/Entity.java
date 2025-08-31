@@ -1,19 +1,22 @@
 package com.demcha.components.core;
 
-import com.demcha.core.EntityManager;
 import com.demcha.system.PdfRender;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
 @Slf4j
 @EqualsAndHashCode
-@ToString
 public final class Entity {
     @Getter
     private final UUID id;
     private final Map<Class<? extends Component>, Component> comps = new LinkedHashMap<>();
+    @Getter
+    private final List<Entity> children = new ArrayList<>();
     private EntityName name;
     @Getter
     private PdfRender pdfRender;
@@ -113,6 +116,7 @@ public final class Entity {
             return new NoSuchElementException("Missing " + type.getName() + " for " + id);
         });
     }
+
     public boolean hasAssignable(Class<?> baseClass) {
         return comps.keySet().stream()
                 .anyMatch(c -> baseClass.isAssignableFrom(c));
@@ -166,10 +170,12 @@ public final class Entity {
         }
     }
 
-//    @Override
-//    public String toString() {
-//        return "Entity: \"" + (name == null ? "null" : name.value()) + "\" UUID: [" + id + "]";
-//    }
+    @Override
+    public String toString() {
+        return "Entity[" + name +
+               " id: " + id +
+               ']';
+    }
 
 
 }

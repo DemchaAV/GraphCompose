@@ -1,6 +1,7 @@
 package com.demcha.components.components_builders;
 
 import com.demcha.components.containers.abstract_builders.ContainerBuilder;
+import com.demcha.components.containers.abstract_builders.StackAxis;
 import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.Anchor;
@@ -23,6 +24,8 @@ public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
      */
     public ModuleBuilder(EntityManager entityManager) {
         super(entityManager);
+        this.stackAxis = StackAxis.REVERSE_VERTICAL;
+
     }
 
     /**
@@ -40,63 +43,11 @@ public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
         return self();
     }
 
-    /**
-     * Updates the position of a child entity within the horizontal container.
-     * For horizontal containers, the primary axis is X. The child's X position
-     * is adjusted based on the {@code primaryAxisPosition} accumulated from previous children.
-     * A default horizontal anchor is also added to the child.
-     *
-     * @param child The {@link Entity} whose position needs to be updated.
-     */
-    @Override
-    protected void updateChildPosition(Entity child) {
-        child.addComponent(new Anchor(HAnchor.DEFAULT, align.v()));
-        Position currentPos = child.getComponent(Position.class).orElse(Position.zero());
-        // Position along the primary (horizontal) axis
-        child.addComponent(new Position(currentPos.x() + this.primaryAxisPosition, currentPos.y()));
-    }
 
-    /**
-     * Updates the dimensions of the container based on the dimensions of a child entity.
-     * The container's width (primary axis) grows with each child's width plus spacing.
-     * The container's height (secondary axis) is determined by the maximum height
-     * among all its children.
-     *
-     * @param child The {@link Entity} whose dimensions contribute to the container's overall size.
-     */
-    @Override
-    protected void updateContainerDimensions(Entity child) {
-        var outbox = OuterBoxSize.from(child).orElseThrow();
-        // Main axis grows with each child
-        this.primaryAxisPosition += outbox.width() + align.spacing();
-        // Cross axis is the max of all children
-        this.secondaryAxisMaxSize = Math.max(secondaryAxisMaxSize, outbox.height());
-    }
-
-    /**
-     * Calculates the total content size of the horizontal container, including padding.
-     * The width is the sum of all child widths plus spacing between them, plus horizontal padding.
-     * The height is the maximum height of any child, plus vertical padding.
-     *
-     * @param padding The {@link Padding} applied to the container.
-     * @return A {@link ContentSize} object representing the calculated dimensions.
-     */
-    @Override
-    protected ContentSize calculateContentSize(Padding padding) {
-        double entitiesWidth = 0;
-        Iterator<Entity> iterator = children.iterator();
-        while (iterator.hasNext()) {
-            Entity current = iterator.next();
-            entitiesWidth += OuterBoxSize.from(current).orElseThrow().width();
-            if (iterator.hasNext()) {
-                entitiesWidth += align.spacing();
-            }
-        }
-        return new ContentSize(entitiesWidth + padding.horizontal(), secondaryAxisMaxSize + padding.vertical());
-    }
 
     @Override
     public void initialize() {
         entity.addComponent(new com.demcha.components.renderable.Module());
     }
+
 }

@@ -54,6 +54,7 @@ public class TextComponent implements PdfRender, GuidesRenderer {
         } else {
             style = styleOpt.get();
         }
+
         return new ValidatedTextData(style, textValue);
     }
 
@@ -88,7 +89,11 @@ public class TextComponent implements PdfRender, GuidesRenderer {
         cs.setNonStrokingColor(validateText.style().color());
         cs.beginText();
         cs.newLineAtOffset((float) position.x() + (float) padding.left(), (float) position.y() + (float) (different * 2) + (float) padding.bottom());
-        cs.showText(validateText.textValue().value());
+        String value = validateText.textValue().value();
+
+
+        cs.showText(value);
+
         cs.endText();
         cs.restoreGraphicsState();
 

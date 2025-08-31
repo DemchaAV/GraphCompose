@@ -65,7 +65,7 @@ public abstract class EmptyBox<T> extends EntityBuilderBase<T> implements BuildE
     }
 
     public T addParent(Entity parent) {
-        entity().addComponent(new ParentComponent(parent));
+        addChild(this.entity);
         return self();
     }
 

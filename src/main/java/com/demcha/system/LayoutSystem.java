@@ -379,8 +379,9 @@ public class LayoutSystem implements System {
      *
      * @param childrenByParents map already sorted by parent
      */
-    private void expandParentsBox(Map<UUID, Set<UUID>> childrenByParents, EntityManager entityManager) {
+    private void expandParentsBox(  Map<UUID, Set<UUID>> childrenByParents, EntityManager entityManager) {
         log.info("LayoutSystem: normalizing box size");
+
 
         for (Map.Entry<UUID, Set<UUID>> parentUuid : childrenByParents.entrySet()) {
 
@@ -399,7 +400,6 @@ public class LayoutSystem implements System {
                     .map(entityManager::getEntity)
                     .map(Optional::get)
                     .collect(Collectors.toSet());
-            alignCildrenInContainer(parentEntity, childrenEntities);
 
 
             if (parentEntity.has(Align.class)) {
@@ -417,8 +417,7 @@ public class LayoutSystem implements System {
     private Entity alignCildrenInContainer(Entity parentContainer, Set<Entity> children) {
         //TODO нужно имплементировать  другой алгоритм для имерения сонтент бокса если родитель это VBox или HBox должен учитываться то что спайсинг
         Align align = parentContainer
-                .getComponent(Align.class)
-                .orElseThrow(() -> new IllegalAlignException("Entity should have Align component"));
+                .getComponent(Align.class).orElse(Align.defaultAlign(2));
 
 
         return null;
@@ -445,7 +444,7 @@ public class LayoutSystem implements System {
             return false;
         }
 
-        return false;
+        return true;
     }
 
     private CanvasSize generateCanvasSizeFromPage(PDPage page) {

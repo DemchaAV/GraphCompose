@@ -87,7 +87,7 @@
     </root>
 
     <!-- LayoutSystem: full DEBUG console -->
-    <logger name="com.demcha.system.LayoutSystem" level="DEBUG" additivity="false">
+    <logger name="com.demcha.components.containers.abstract_builders.ContainerBuilder" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE_LAYOUTSYSTEM"/>
     </logger>
 

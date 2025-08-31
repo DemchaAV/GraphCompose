@@ -101,8 +101,11 @@ public record TextStyle(PDFont font, int size, TextDecoration decoration, Color 
 
     // Get the width of the text for the given font and size
     public double getTextWidth(String text) {
+        String sanitized = text.replace("\r", " ").replace("\n", " ")
+                .replaceAll("[\\p{Cntrl}&&[^\\t]]", " ")
+                .replace('\u00A0',' ').replaceAll(" +", " ");
         try {
-            float width = font.getStringWidth(text) / 1000 * size;
+            float width = font.getStringWidth(sanitized) / 1000 * size;
             log.debug("Getting text width: " + width);
             return width;
         } catch (Exception e) {

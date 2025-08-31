@@ -229,16 +229,17 @@ public abstract class ContainerBuilder<T extends ContainerBuilder<T>> extends Em
 
     protected void updateChildPosition(Entity child) {
         Position cur = child.getComponent(Position.class).orElse(Position.zero());
+        var anchor = child.getComponent(Anchor.class).orElse(Anchor.defaultAnchor());
         log.info("Current position {} with Axis {}", child, cur);
         switch (this.stackAxis) {
             case HORIZONTAL, REVERSE_HORIZONTAL -> {
-                child.addComponent(new Anchor(HAnchor.DEFAULT, align.v())); // выравнивание по вертикали из Align
+                child.addComponent(new Anchor(HAnchor.DEFAULT, anchor.v())); // выравнивание по вертикали из Align
                 Position c = new Position(cur.x() + this.axisHorizontal, cur.y());
                 log.info("New position {} with Axis {}", child, c);
                 child.addComponent(c);
             }
             case VERTICAL, REVERSE_VERTICAL -> {
-                child.addComponent(new Anchor(align.h(), VAnchor.DEFAULT)); // выравнивание по горизонтали из Align
+                child.addComponent(new Anchor(anchor.h(), VAnchor.DEFAULT)); // выравнивание по горизонтали из Align
                 Position c = new Position(cur.x(), cur.y() + this.axisVertical);
                 log.info("New position {} with Axis {}", child, c);
                 child.addComponent(c);

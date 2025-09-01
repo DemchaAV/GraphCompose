@@ -105,7 +105,7 @@ public class TextComponent implements PdfRender, GuidesRenderer {
         return true;
     }
 
-    private record ValidatedTextData(TextStyle style, Text textValue) {
+    public record ValidatedTextData(TextStyle style, Text textValue) {
     }
 
 

@@ -26,7 +26,7 @@ public class Main {
         Path target = Paths.get("output.pdf");
 
         EntityManager entityManager = new EntityManager();
-        entityManager.setGuideLines(false);
+        entityManager.setGuideLines(true);
         PDDocument doc = new PDDocument();
         doc.addPage(new PDPage(PDRectangle.A4));
 
@@ -36,13 +36,13 @@ public class Main {
         entityManager.addSystem(new PdfFileManagerSystem(target, doc));
 
 
-
-
-        links_mail(entityManager);
-        BlockTextTest(entityManager);
+//        links_mail(entityManager);
+//        ChunkTextBuilder(entityManager);
+        Entity entity = BlockTextBuilder(entityManager);
 
 
         entityManager.processSystems();
+        System.out.println("hello");
 
 
     }
@@ -65,15 +65,16 @@ public class Main {
                 )
                 .build();
 
-        var row =  new HContainerBuilder(entityManager).create(Align.middle(5))
+        var row = new HContainerBuilder(entityManager).create(Align.middle(5))
                 .margin(Margin.of(5))
                 .anchor(Anchor.center())
+
                 .addChild(google)
                 .addChild(email)
                 .build();
     }
 
-    private static void BlockTextTest(EntityManager entityManager) {
+    private static void ChunkTextBuilder(EntityManager entityManager) {
         TextBuilder textBuilder = new TextBuilder(entityManager).create()
                 .textWithAutoSize("Trigger the long word warning. Integer nec odio. Praesent libero. lectus risus, iaculis vel, suscipit quis, " +
                                   "luctus non, massa. Fusce Vestibulum facilisis, nunc in hendrerit posuere, sapien magna Vestibulum lacinia arcu eget " +
@@ -94,13 +95,54 @@ public class Main {
                 .anchor(Anchor.centerLeft());
 
 
-        Entity build = new BlockTextBuilder(entityManager).create(Align.middle(-2))
+        Entity blockText = new ChunkTextBuilder(entityManager).create(Align.middle(-2))
                 .size(500, 650)
                 .margin(Margin.of(10))
                 .anchor(Anchor.topLeft())
-                .padding(0,0, 0, 20)
-                .text(textBuilder )
+                .padding(0, 0, 0, 20)
+                .text(textBuilder)
                 .build();
+    }
+
+    private static Entity BlockTextBuilder(EntityManager entityManager) {
+        TextBuilder textBuilder = new TextBuilder(entityManager).create()
+                .textWithAutoSize("Trigger the long word warning. Integer nec odio. Praesent libero. lectus risus, iaculis vel, suscipit quis, " +
+                                  "luctus non, massa. Fusce Vestibulum facilisis, nunc in hendrerit posuere, sapien magna Vestibulum lacinia arcu eget " +
+                                  "nulla. Class aptent taciti sociosqu Sed cursus ante dapibus diam. Sed nisi. Nulla quis sem at nibh elementum imperdiet. " +
+                                  "Duis sagittis ipsum. Praesent mauris. metus, ullamcorper vel, tincidunt sed, euismod in, nibh. Curabitur tortor. " +
+                                  "Pellentesque nibh. Aenean quam. In ad litora torquent per conubia nostra, per inceptos himenaeos. " +
+                                  "Fusce nec tellus sed augue semper porta. Mauris massa. pellentesque nunc, ac vehicula eros elit vitae nisl. t" +
+                                  "ristique sem. Proin ut ligula vel nunc egestas porttitor. Morbi Supercalifragilisticexpialidocious is a very long " +
+                                  "word that should ac turpis quis ligula lacinia aliquet. Mauris ipsum. Nulla metus scelerisque sem at dolor. Maecenas " +
+                                  "mattis. Sed convallis Curabitur sodales ligula in libero. Sed dignissim lacinia nunc. Lorem ipsum dolor sit amet," +
+                                  " consectetur adipiscing elit.")
+                .textStyle(TextStyle.builder()
+                        .size(12)
+                        .color(ComponentColor.TITLE)
+                        .font(TextStyle.HELVETICA)
+                        .decoration(TextDecoration.DEFAULT)
+                        .build())
+                .anchor(Anchor.centerLeft());
+
+
+        Entity blockText = new BlockTextBuilder(entityManager).create(Align.right(-3))
+                .size(500, 2)
+                .margin(Margin.of(10))
+                .anchor(Anchor.center())
+                .padding(0, 0, 0, 20)
+                .text(textBuilder)
+                .build();
+        return blockText;
+    }
+
+    private static Entity textTest(EntityManager entityManager) {
+        var text = new TextBuilder(entityManager).create()
+                .textWithAutoSize("Hello world")
+                .textStyle(TextStyle.defaultStyle())
+                .anchor(Anchor.center())
+                .build();
+        return text;
+
     }
 
 

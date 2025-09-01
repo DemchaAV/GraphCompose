@@ -1,8 +1,7 @@
 package com.demcha.components.components_builders;
 
-import com.demcha.components.LineTextData;
-import com.demcha.components.containers.abstract_builders.EmptyBox;
-import com.demcha.components.content.text.BlockTextData;
+import com.demcha.components.containers.abstract_builders.ContainerBuilder;
+import com.demcha.components.containers.abstract_builders.StackAxis;
 import com.demcha.components.content.text.Text;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Component;
@@ -10,62 +9,46 @@ import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.Align;
-import com.demcha.components.layout.HAnchor;
+import com.demcha.components.layout.ParentComponent;
 import com.demcha.components.renderable.BlockText;
 import com.demcha.components.renderable.TextComponent;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
 import lombok.NonNull;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
 @Slf4j
-public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
-    Map<Class<? extends Component>, Component> baseComponents;
-    @Setter
+public class ChunkTextBuilder extends ContainerBuilder<ChunkTextBuilder> {
     private double lineSpacing = 0.0;
-    private List<LineTextData> lines;
-    private TextStyle textStyle;
 
-    public BlockTextBuilder(EntityManager entityManager) {
+    public ChunkTextBuilder(EntityManager entityManager) {
         super(entityManager);
+        this.stackAxis = StackAxis.VERTICAL;
     }
 
 
-    public BlockTextBuilder text(TextBuilder textBuilder) {
+    public ChunkTextBuilder text(TextBuilder textBuilder) {
         var rowText = textBuilder.build();
-        var style = rowText.getComponent(TextStyle.class).orElse(TextStyle.DEFAULT_STYLE);
-        this.textStyle = style;
-        var padding = rowText.getComponent(Padding.class).orElse(Padding.zero());
-        var margin = rowText.getComponent(Margin.class).orElse(Margin.zero());
-        lines = new ArrayList<>();
-
-
         var boundingBox = InnerBoxSize.from(this.entity).orElseThrow();
-        BlockTextData blockTextData = breakLines(rowText, boundingBox);
-
-
-        addComponent(blockTextData);
-        addComponent(textStyle);
+        breakLines(rowText, boundingBox);
         return this;
     }
 
 
-    public BlockTextData breakLines(@NonNull Entity entity, @NonNull InnerBoxSize innerBoxSize) {
+    public List<Entity> breakLines(@NonNull Entity entity, @NonNull InnerBoxSize innerBoxSize) {
         // Early exit if not a block of text
         if (!entity.hasAssignable(TextComponent.class)) {
             log.debug("Entity doesn't have BlockText component");
-            return new BlockTextData(lines, (float) lineSpacing);
+            return children();
         }
 
         // Required components (fail fast but with a clear message)
         var text = entity.getComponent(Text.class)
                 .orElseThrow(() -> new IllegalStateException("Missing Text component"));
         var style = entity.getComponent(TextStyle.class).orElse(TextStyle.defaultStyle());
-        textStyle = style;
 
         var margin = entity.getComponent(Margin.class).orElse(Margin.zero());
         var padding = entity.getComponent(Padding.class).orElse(Padding.zero());
@@ -78,8 +61,6 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         components.remove(Text.class); // we'll set a new Text per line
         components.remove(TextComponent.class);
         components.remove(ContentSize.class);
-        components.remove(Padding.class);
-        baseComponents = new HashMap<>(components);
 
         // Remove original entity (we're going to replace it with per-line children)
         entityManager.remove(entity);
@@ -104,7 +85,7 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
                 } else {
                     // Long single word: place as its own line and warn
                     log.warn("Word is too long; can't break line: '{}'", word);
-                    createLine(List.of(word)); // still create a line
+                    createLine(List.of(word), components); // still create a line
                     line.clear();
                     lineWidth = horizontalMargins;
                 }
@@ -119,7 +100,7 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
                 lineWidth = candidateWidth;
             } else {
                 // Flush current line
-                createLine(new ArrayList<>(line));
+                createLine(new ArrayList<>(line), components);
                 // Start a new line with this word
                 line.clear();
                 if (horizontalMargins + wordWidth <= maxWidth) {
@@ -127,7 +108,7 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
                     lineWidth = horizontalMargins + wordWidth;
                 } else {
                     log.warn("Word is too long; can't break line: '{}'", word);
-                    createLine(List.of(word));
+                    createLine(List.of(word), components);
                     lineWidth = horizontalMargins;
                 }
             }
@@ -135,25 +116,33 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
 
         // Flush the last line if any
         if (!line.isEmpty()) {
-            createLine(new ArrayList<>(line));
+            createLine(new ArrayList<>(line), components);
         }
 
 
-        BlockTextData blockTextData = new BlockTextData(lines, (float) lineSpacing);
-        return blockTextData;
+        return children();
     }
 
-    private void createLine(List<String> words) {
+    private void createLine(List<String> words, Map<Class<? extends Component>, Component> baseComponents) {
         // Join with spaces for correct rendering
         String lineText = String.join(" ", words);
-        lines.add(createLineTextData(lineText));
-    }
 
-    private LineTextData createLineTextData(String chunkText) {
-        log.debug("createLineTextData: '{}'", chunkText);
-        LineTextData lineTextData = new LineTextData(chunkText, textStyle.getTextWidth(chunkText));
-        log.debug("createLineTextData: {}", lineTextData);
-        return lineTextData;
+
+        var textBuilder = new TextBuilder(entityManager)
+                .textWithAutoSize(lineText);
+
+        // Copy over all base components EXCEPT Text (already set) and anything you explicitly want to override.
+        for (Map.Entry<Class<? extends Component>, Component> entry : baseComponents.entrySet()) {
+            log.debug("EntryKey: {} value: {}, {}", entry.getKey(), entry.getValue());
+
+            textBuilder.addComponent(entry.getValue());
+
+        }
+        var entity = textBuilder.build();
+
+        textBuilder.addComponent(new ParentComponent(this.entity));
+
+        entity().getChildren().add(entity);
     }
 
 
@@ -171,40 +160,13 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
      * @param align The {@link Align} strategy for arranging children within the container.
      * @return This builder instance for method chaining.
      */
-    public BlockTextBuilder create(Align align) {
-        align(align);
-        entity.addComponentIfAbsent(new BlockText()); // Add the specific component
-        return self();
-    }
-
-    public BlockTextBuilder align(Align align) {
-        HAnchor h = align.h();
-        if (HAnchor.LEFT != h && HAnchor.RIGHT != h) {
-
-                log.info("Align has to be HAnchor.LEFT or HAnchor.RIGHT  current {}", align);
-                throw new IllegalStateException("Align has to be HAnchor.LEFT or HAnchor.RIGHT in BlockText");
-
-
-        }
-        entity.addComponent(align);
-        return self();
-    }
-
     @Override
-    public Entity build() {
-        manager().putEntity(entity());
-        Padding padding = entity.getComponent(Padding.class).orElse(Padding.zero());
-        var blockTextData = entity.getComponent(BlockTextData.class).orElseThrow();
-        var width = blockTextData.lines().stream().max(Comparator.comparingDouble(LineTextData::getWidth)).map(LineTextData::getWidth).orElseThrow();
-        var spasing = entity.getComponent(Align.class).orElseThrow().spacing();
-        var spasingAll = ((blockTextData.lines().size() - 1) * spasing);
-
-        double calculatedHigh = (textStyle.getTextHeight() * blockTextData.lines().size()) + spasingAll;
-        size(new ContentSize(width + padding.horizontal(), calculatedHigh + padding.vertical()));
-
-        return entity();
+    public ChunkTextBuilder create(Align align) {
+        super.create(align); // Call the common logic
+        entity.addComponentIfAbsent(new BlockText()); // Add the specific component
+        if (lineSpacing == 0) lineSpacing = align.spacing();
+        return self();
     }
 
 
 }
-

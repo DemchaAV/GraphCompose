@@ -261,6 +261,7 @@ public class EntityManager {
             log.info("Processing System {}", system);
             system.process(this); // Передаём себя, чтобы система могла получить доступ к компонентам
         }
+        log.info("Processed Systems");
     }
 
 

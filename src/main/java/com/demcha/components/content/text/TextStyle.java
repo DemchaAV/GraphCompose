@@ -126,6 +126,17 @@ public record TextStyle(PDFont font, int size, TextDecoration decoration, Color 
             return 0;  // Return 0 if something goes wrong
         }
     }
+    public double getTextHeight() {
+        try {
+            float v = font.getBoundingBox().getHeight() / 1000 * size;
+            log.debug("getTextHeight: " );
+            return v;
+        } catch (IOException e) {
+            e.printStackTrace();
+            log.error("Error while getting text height {}", e.getMessage(), e);
+            return 0;  // Return 0 if something goes wrong
+        }
+    }
 
     public double getTextHeight(TextComponent textComponent) {
         try {

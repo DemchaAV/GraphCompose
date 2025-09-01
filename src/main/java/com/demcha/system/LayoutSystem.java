@@ -1,6 +1,7 @@
 package com.demcha.system;
 
-import com.demcha.components.renderable.TextComponent;
+import com.demcha.components.LineTextData;
+import com.demcha.components.content.text.BlockTextData;
 import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
@@ -14,6 +15,8 @@ import com.demcha.components.layout.ParentComponent;
 import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.PaddingCoordinate;
 import com.demcha.components.layout.coordinator.Position;
+import com.demcha.components.renderable.TextComponent;
+import com.demcha.components.style.Padding;
 import com.demcha.core.CanvasSize;
 import com.demcha.core.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +44,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class LayoutSystem implements System {
     private final CanvasSize canvasSize;
+    private EntityManager entityManager;
 
     public LayoutSystem(PDPage page) {
         this.canvasSize = generateCanvasSizeFromPage(page);
@@ -102,8 +106,8 @@ public class LayoutSystem implements System {
      */
 
     private Optional<ComputedPosition> calculatePositionFromParent(Entity childEntity,
-                                                                  Entity parentEntity,
-                                                                  EntityManager entityManager) {
+                                                                   Entity parentEntity,
+                                                                   EntityManager entityManager) {
         log.debug("Starting calculation of computed position for {} from parentEntity {}", childEntity, parentEntity);
 
         // 0) Handle page-level (no parent)
@@ -243,6 +247,7 @@ public class LayoutSystem implements System {
 
     @Override
     public void process(EntityManager entityManager) {
+        this.entityManager = entityManager;
         log.info("LayoutSystem: processing");
 
         Map<UUID, Entity> entities = entityManager.getEntities();
@@ -259,6 +264,14 @@ public class LayoutSystem implements System {
             childrenByParentOpt = entityManager.childrenByParent(allChildrenOpt.get());
         } else {
             log.info("LayoutSystem: no children to layout");
+            entities.forEach((key, value)->{
+                log.info("check align");
+                if (value.has(Align.class)) {
+                    alignRearrange(value);
+
+                }
+
+            });
             return;
         }
 
@@ -341,6 +354,9 @@ public class LayoutSystem implements System {
                 computedPosition = ComputedPosition.from(childEntity, this.canvasSize);
             }
         } else {
+            if (childEntity.has(Align.class)){
+                alignRearrange(childEntity);
+            }
             computedPosition = ComputedPosition.from(childEntity, canvasSize);
         }
 
@@ -355,6 +371,9 @@ public class LayoutSystem implements System {
                 outerBoxSize.height()
         );
         childEntity.addComponent(boundingBox);
+        if (childEntity.has(Align.class)){
+            alignRearrange(childEntity);
+        }
 
         if (log.isDebugEnabled()) {
             String name = childEntity.getComponent(EntityName.class)
@@ -379,7 +398,7 @@ public class LayoutSystem implements System {
      *
      * @param childrenByParents map already sorted by parent
      */
-    private void expandParentsBox(  Map<UUID, Set<UUID>> childrenByParents, EntityManager entityManager) {
+    private void expandParentsBox(Map<UUID, Set<UUID>> childrenByParents, EntityManager entityManager) {
         log.info("LayoutSystem: normalizing box size");
 
 
@@ -403,8 +422,10 @@ public class LayoutSystem implements System {
 
 
             if (parentEntity.has(Align.class)) {
+
                 log.debug("It is a container with component Align");
-                alignCildrenInContainer(parentEntity, childrenEntities);
+
+
             }
 
             log.debug("Definition {} all child entities by given Set children uuid", parentEntity);
@@ -414,13 +435,44 @@ public class LayoutSystem implements System {
         }
     }
 
-    private Entity alignCildrenInContainer(Entity parentContainer, Set<Entity> children) {
+    private Entity alignBlockText(Entity blockTextBox) {
         //TODO нужно имплементировать  другой алгоритм для имерения сонтент бокса если родитель это VBox или HBox должен учитываться то что спайсинг
-        Align align = parentContainer
+        Align align = blockTextBox
                 .getComponent(Align.class).orElse(Align.defaultAlign(2));
+        var component = blockTextBox.getComponent(BlockTextData.class).orElseThrow();
+        var size = blockTextBox.getComponent(ContentSize.class).orElseThrow();
+        var padding = blockTextBox.getComponent(Padding.class).orElse(Padding.zero());
+
+        var lines = component.lines();
+        for (LineTextData line : lines) {
+            switch (align.h()) {
+                case LEFT -> {
+                    double x = line.getX() + padding.left();
+                    line.setX(x);
+                }
+                case RIGHT -> {
+                    double x = size.width() - line.getWidth() + line.getX() + padding.right();
+                    line.setX(x);
+                }
+                default -> {
+                    continue;
+                }
+            }
+
+        }
 
 
-        return null;
+        return blockTextBox;
+    }
+    public Entity alignRearrange(Entity entity){
+
+        if (entity.has(BlockTextData.class)) {
+            return  alignBlockText(entity);
+        }else {
+            log.info("Has to be implemented align for entity {}", entity);
+            return entity;
+        }
+
     }
 
     /**

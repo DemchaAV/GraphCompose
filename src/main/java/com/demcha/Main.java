@@ -97,7 +97,7 @@ public class Main {
 
         Entity blockText = new ChunkTextBuilder(entityManager).create(Align.middle(-2))
                 .size(500, 650)
-                .margin(Margin.of(10))
+                .margin(Margin.of(0))
                 .anchor(Anchor.topLeft())
                 .padding(0, 0, 0, 20)
                 .text(textBuilder)
@@ -121,15 +121,14 @@ public class Main {
                         .color(ComponentColor.TITLE)
                         .font(TextStyle.HELVETICA)
                         .decoration(TextDecoration.DEFAULT)
-                        .build())
-                .anchor(Anchor.centerLeft());
+                        .build());
 
 
-        Entity blockText = new BlockTextBuilder(entityManager).create(Align.right(-3))
+        Entity blockText = new BlockTextBuilder(entityManager).create(Align.middle(5))
                 .size(500, 2)
-                .margin(Margin.of(10))
-                .anchor(Anchor.center())
-                .padding(0, 0, 0, 20)
+                .margin(Margin.of(20))
+                .anchor(Anchor.centerTop())
+                .padding(0, 5, 0, 20)
                 .text(textBuilder)
                 .build();
         return blockText;

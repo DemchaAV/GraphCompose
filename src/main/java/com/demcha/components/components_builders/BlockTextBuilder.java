@@ -179,7 +179,7 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
 
     public BlockTextBuilder align(Align align) {
         HAnchor h = align.h();
-        if (HAnchor.LEFT != h && HAnchor.RIGHT != h) {
+        if (HAnchor.LEFT != h && HAnchor.RIGHT != h && HAnchor.CENTER != h) {
 
                 log.info("Align has to be HAnchor.LEFT or HAnchor.RIGHT  current {}", align);
                 throw new IllegalStateException("Align has to be HAnchor.LEFT or HAnchor.RIGHT in BlockText");
@@ -192,15 +192,19 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
 
     @Override
     public Entity build() {
-        manager().putEntity(entity());
         Padding padding = entity.getComponent(Padding.class).orElse(Padding.zero());
         var blockTextData = entity.getComponent(BlockTextData.class).orElseThrow();
         var width = blockTextData.lines().stream().max(Comparator.comparingDouble(LineTextData::getWidth)).map(LineTextData::getWidth).orElseThrow();
-        var spasing = entity.getComponent(Align.class).orElseThrow().spacing();
-        var spasingAll = ((blockTextData.lines().size() - 1) * spasing);
+        var spacing = entity.getComponent(Align.class).orElseThrow().spacing();
 
-        double calculatedHigh = (textStyle.getTextHeight() * blockTextData.lines().size()) + spasingAll;
-        size(new ContentSize(width + padding.horizontal(), calculatedHigh + padding.vertical()));
+        double textHeight = entity.getComponent(TextStyle.class).orElse(TextStyle.DEFAULT_STYLE).getTextHeight();
+        double calculatedHigh = (blockTextData.lines().size()) * textHeight;
+        double spacingFullHigh= (blockTextData.lines().size()-1)* spacing;
+        double high  = calculatedHigh + spacingFullHigh + padding.vertical();
+
+
+        entity.addComponent(new ContentSize(width+padding.horizontal(), high));
+        manager().putEntity(entity());
 
         return entity();
     }

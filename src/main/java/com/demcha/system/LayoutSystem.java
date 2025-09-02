@@ -248,74 +248,106 @@ public class LayoutSystem implements System {
     @Override
     public void process(EntityManager entityManager) {
         this.entityManager = entityManager;
-        log.info("LayoutSystem: processing");
+        log.info("LayoutSystem: processing...");
 
-        Map<UUID, Entity> entities = entityManager.getEntities();
+        final var entities = entityManager.getEntities();
         if (entities == null || entities.isEmpty()) {
-            log.info("LayoutSystem: no entities to layout");
+            log.info("LayoutSystem: no entities to lay out");
             return;
         }
 
+        // 1) Collect all nodes that have a ParentComponent (i.e., are children)
+        final Set<UUID> childIds = entityManager
+                .getEntitiesWithComponent(ParentComponent.class)
+                .orElseGet(Set::of);
 
-        // 2) Build parent → children map
-        Optional<Set<UUID>> allChildrenOpt = entityManager.getEntitiesWithComponent(ParentComponent.class);
-        Optional<Map<UUID, Set<UUID>>> childrenByParentOpt;
-        if (allChildrenOpt.isPresent()) {
-            childrenByParentOpt = entityManager.childrenByParent(allChildrenOpt.get());
-        } else {
-            log.info("LayoutSystem: no children to layout");
-            entities.forEach((key, value)->{
-                log.info("check align");
-                if (value.has(Align.class)) {
-                    alignRearrange(value);
+        // Align-only fast path (no parent/child relationships at all)
+        if (childIds.isEmpty()) {
+            log.info("LayoutSystem: no children to lay out (align-only pass)");
+            entities.values().forEach(e -> {
+                log.info("Checking align");
+                if (e.has(Align.class)) {
+                    alignRearrange(e);
 
                 }
-
             });
-            return;
+            log.info("LayoutSystem: layout complete (align-only)");
+//            return;
         }
 
-        var childrenByParents = childrenByParentOpt.get();
-        var allChildren = allChildrenOpt.get();
+        // 2) Build parent -> children map
+        final Map<UUID, Set<UUID>> childrenByParent = entityManager
+                .childrenByParent(childIds)
+                .orElseGet(Map::of);
 
-        //change a box size or size if child bigger then parent
-        expandParentsBox(childrenByParents, entityManager);
+        // 3) Expand parent boxes if needed (any child larger than parent)
+        expandParentsBox(childrenByParent, entityManager);
 
+        // 4) Compute roots
+        final Set<UUID> roots = computeRoots(entities, childIds, entityManager);
 
-        // 3) Roots (no parent, or parent is missing)
-        Set<UUID> roots = new LinkedHashSet<>(entities.keySet()); // preserve insertion order
-        roots.removeAll(allChildren); // nodes that are never children are roots
-
-        // If you intended to prefetch/cache, store the result; otherwise remove this line.
-        entityManager.getEntitiesWithComponent(ParentComponent.class)
-                .ifPresent(parentEntities -> {
-                    for (UUID id : parentEntities) {
-                        var eOpt = entityManager.getEntity(id);
-                        if (eOpt.isEmpty()) continue;
-
-                        Entity e = eOpt.get();
-                        UUID pid = e.getComponent(ParentComponent.class).get().uuid();
-
-                        if (pid == null || !entities.containsKey(pid)) {
-                            if (roots.add(id)) {
-                                log.warn("LayoutSystem: entity {} references missing parent {} — treating as root", id, pid);
-                            }
-                        }
-                    }
-                });
-
-
-        // 4) DFS with cycle detection
-        Map<UUID, Visit> visit = new HashMap<>();
-        //Definition all entities as Visit.UNSEEN
+        // 5) DFS with cycle detection
+        final Map<UUID, Visit> visit = new HashMap<>(entities.size());
         entities.keySet().forEach(id -> visit.put(id, Visit.UNSEEN));
-        var layers = entityManager.getLayers();    // NEW: layer → ordered ids
-        Map<UUID, Integer> depthById = entityManager.getDepthById();
-        int depth = 0;
-        for (UUID root : roots) dfsLayout(root, null, entities, childrenByParents, visit, layers, depthById, depth + 1);
+
+        final var layers = entityManager.getLayers();     // layer → ordered ids (assumed provided)
+        final var depthById = entityManager.getDepthById();
+
+        for (UUID root : roots) {
+            dfsLayout(
+                    root,
+                    null,
+                    entities,
+                    childrenByParent,
+                    visit,
+                    layers,
+                    depthById,
+                    /* depth = */ 1
+            );
+        }
 
         log.info("LayoutSystem: layout complete (nodes: {})", entities.size());
     }
+
+    /**
+     * Roots are nodes that are never listed as children, plus nodes whose parent is missing.
+     */
+    private Set<UUID> computeRoots(Map<UUID, Entity> entities,
+                                   Set<UUID> childIds,
+                                   EntityManager entityManager) {
+        final Set<UUID> roots = new LinkedHashSet<>(entities.keySet());
+        // Nodes that are never children are roots
+        roots.removeAll(childIds);
+
+        // Nodes with missing/invalid parent are also roots
+        entityManager.getEntitiesWithComponent(ParentComponent.class).ifPresent(parentEntities -> {
+            for (UUID id : parentEntities) {
+                final var eOpt = entityManager.getEntity(id);
+                if (eOpt.isEmpty()) continue;
+
+                final UUID pid = eOpt.get()
+                        .getComponent(ParentComponent.class)
+                        .map(ParentComponent::uuid)
+                        .orElse(null);
+
+                if (pid == null || !entities.containsKey(pid)) {
+                    if (roots.add(id)) {
+                        log.warn("LayoutSystem: entity {} references missing parent {} — treating as root", id, pid);
+                    }
+                }
+            }
+        });
+
+        if (roots.isEmpty()) {
+            // Defensive: if everything is wired as a child forming a closed cycle, fall back to all nodes
+            log.warn("LayoutSystem: computed empty root set; falling back to all entities as roots");
+            roots.addAll(entities.keySet());
+        }
+        return roots;
+    }
+
+
+
 
     private void dfsLayout(
             UUID id,
@@ -447,11 +479,15 @@ public class LayoutSystem implements System {
         for (LineTextData line : lines) {
             switch (align.h()) {
                 case LEFT -> {
-                    double x = line.getX() + padding.left();
+                    double x = line.getX()+ padding.left();
                     line.setX(x);
                 }
                 case RIGHT -> {
-                    double x = size.width() - line.getWidth() + line.getX() + padding.right();
+                    double x = size.width() - line.getWidth()- padding.right() ;
+                    line.setX(x);
+                }
+                case CENTER -> {
+                    double x = (size.width() - line.getWidth() + padding.left()) / 2 ;
                     line.setX(x);
                 }
                 default -> {

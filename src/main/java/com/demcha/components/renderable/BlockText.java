@@ -1,8 +1,8 @@
 package com.demcha.components.renderable;
 
 import com.demcha.components.LineTextData;
-import com.demcha.components.content.text.BlockTextData;
 import com.demcha.components.containers.abstract_builders.GuidesRenderer;
+import com.demcha.components.content.text.BlockTextData;
 import com.demcha.components.content.text.Text;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.util.Matrix;
 
 import java.awt.*;
 import java.io.IOException;
@@ -30,7 +31,7 @@ import java.util.EnumSet;
 @NoArgsConstructor
 public class BlockText implements PdfRender, GuidesRenderer {
     private static final EnumSet<Guide> DEFAULT_GUIDES =
-            EnumSet.of(Guide.MARGIN, Guide.PADDING);
+            EnumSet.of(Guide.MARGIN, Guide.PADDING, Guide.BOX);
 
 
     public static <T extends TextComponent> ContentSize autoMeasureText(Entity entity) throws IOException {
@@ -108,22 +109,16 @@ public class BlockText implements PdfRender, GuidesRenderer {
 
         // стартовая позиция (левый верх «абзаца»)
         float startX = (float) position.x();
-        float startY = (float) (position.y() + innerBoxSize.innerH() -  textHeight + spacing); // первая базовая линия сверху
-        cs.newLineAtOffset(startX, startY);
+        float startY = (float) (position.y() + innerBoxSize.innerH() - textHeight - (spacing < 0 ? spacing  : spacing* -1));
 
-// межстрочный шаг (leading)
-        for (LineTextData textData : blockTextData) {
-            String line = textData.getLine();
+// Устанавливаем начальную позицию
+        float prevX = 0; // отслеживаем предыдущее смещение по X
 
-            // Если нужна подстрочная горизонтальная корректировка (центр/право):
-            float dx = (float) textData.getX(); // вычисляй при необходимости, иначе оставь 0
-
-            if (dx != 0f) cs.newLineAtOffset(dx, 0);
-            cs.showText(line);
-            if (dx != 0f) cs.newLineAtOffset(-dx, 0);
-
-            // переход на следующую строку
-            cs.newLineAtOffset(0, -textHeight + (float) spacing);
+        for (LineTextData ltd : blockTextData) {
+            float currenPosition = (float) ltd.getX() + startX;
+            cs.setTextMatrix(new Matrix(1, 0, 0, 1, currenPosition, startY));
+            cs.showText(ltd.getLine());
+            startY -= (textHeight - spacing);
         }
 
         cs.endText();

@@ -3,9 +3,11 @@ package com.demcha;
 import com.demcha.components.components_builders.*;
 import com.demcha.components.content.link.Email;
 import com.demcha.components.content.link.LinkUrl;
+import com.demcha.components.content.shape.Stroke;
 import com.demcha.components.content.text.TextDecoration;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
+import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.style.ComponentColor;
@@ -36,9 +38,22 @@ public class Main {
         entityManager.addSystem(new PdfFileManagerSystem(target, doc));
 
 
-//        links_mail(entityManager);
+        links_mail(entityManager);
 //        ChunkTextBuilder(entityManager);
-        Entity entity = BlockTextBuilder(entityManager);
+        Entity entity = blockTextBuilder(entityManager);
+        var button = new ButtonBuilder(entityManager).create()
+                .text(new TextBuilder(entityManager)
+                        .create()
+                        .textWithAutoSize("Button")
+                        .textStyle(TextStyle.defaultStyle())
+                        .anchor(Anchor.center())
+
+                )
+                .fillColor(ComponentColor.ROYAL_BLUE)
+                .stroke(new Stroke(ComponentColor.MODULE_TITLE, 2.0))
+                .position(100,100)
+                .size(new ContentSize(90,30))
+                        .build();
 
 
         entityManager.processSystems();
@@ -104,7 +119,7 @@ public class Main {
                 .build();
     }
 
-    private static Entity BlockTextBuilder(EntityManager entityManager) {
+    private static Entity blockTextBuilder(EntityManager entityManager) {
         TextBuilder textBuilder = new TextBuilder(entityManager).create()
                 .textWithAutoSize("Trigger the long word warning. Integer nec odio. Praesent libero. lectus risus, iaculis vel, suscipit quis, " +
                                   "luctus non, massa. Fusce Vestibulum facilisis, nunc in hendrerit posuere, sapien magna Vestibulum lacinia arcu eget " +

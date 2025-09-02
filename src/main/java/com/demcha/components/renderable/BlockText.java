@@ -74,7 +74,6 @@ public class BlockText implements PdfRender, GuidesRenderer {
         }
 
         var positionOpt = RenderingPosition.from(e);
-        Padding padding = e.getComponent(Padding.class).orElse(Padding.zero());
         if (positionOpt.isEmpty()) {
             log.warn("TextComponent has no RenderingPosition; skipping: {}", e);
             return false;

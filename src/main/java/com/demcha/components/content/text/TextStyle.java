@@ -6,10 +6,14 @@ import com.demcha.components.style.ComponentColor;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDFontDescriptor;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 
 @Slf4j
@@ -126,16 +130,43 @@ public record TextStyle(PDFont font, int size, TextDecoration decoration, Color 
             return 0;  // Return 0 if something goes wrong
         }
     }
-    public double getTextHeight() {
-        try {
-            float v = font.getBoundingBox().getHeight() / 1000 * size;
-            log.debug("getTextHeight: " );
-            return v;
-        } catch (IOException e) {
-            e.printStackTrace();
-            log.error("Error while getting text height {}", e.getMessage(), e);
-            return 0;  // Return 0 if something goes wrong
+    /**
+     * Line height based on font metrics (recommended for baseline-to-baseline step).
+     * Uses ascent, descent (usually negative), and optional leading if present.
+     */
+    public double getLineHeight() throws IOException {
+        PDFontDescriptor fd = font.getFontDescriptor();
+        float ascent  = (fd != null ? fd.getAscent()  : font.getBoundingBox().getUpperRightY());
+        float descent = (fd != null ? fd.getDescent() : font.getBoundingBox().getLowerLeftY()); // often negative
+        float leading = (fd != null ? fd.getLeading() : 0);
+        return (ascent - descent + leading) * scale();
+    }
+
+    /**
+     * Visual height of capitals (useful for tight boxes behind text like buttons/titles).
+     */
+    public double getCapHeight() throws IOException {
+        PDFontDescriptor fd = font.getFontDescriptor();
+        float cap = (fd != null ? fd.getCapHeight() : 0);
+        if (cap == 0) { // fallback: approximate via bbox
+            return font.getBoundingBox().getHeight() * 0.7f * scale();
         }
+        return cap * scale();
+    }
+
+    // Scale once: PDF units are per 1000 EM
+    private float scale() { return size / 1000f; }
+
+    /**
+     * Tight per-string bounds (slow but exact for hit-areas/links).
+     * Computes the glyph path bounds for THIS string.
+     */
+    public Rectangle2D getTightBounds(String text) throws IOException {
+        if (text == null || text.isEmpty()) return new Rectangle2D.Float(0,0,0,0);
+        GeneralPath path = font.getFontDescriptor().getFontBoundingBox().toGeneralPath();
+        AffineTransform at = AffineTransform.getScaleInstance(scale(), scale());
+        Shape s = at.createTransformedShape(path);
+        return s.getBounds2D(); // width/height in user units; y is relative to baseline
     }
 
     public double getTextHeight(TextComponent textComponent) {

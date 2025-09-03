@@ -15,6 +15,7 @@ import com.demcha.core.EntityManager;
 
 import java.awt.*;
 
+
 public class ButtonBuilder extends ShapeBuilderBase<ButtonBuilder> {
     public ButtonBuilder(EntityManager entityManager) {
         super(entityManager);
@@ -25,10 +26,6 @@ public class ButtonBuilder extends ShapeBuilderBase<ButtonBuilder> {
         return addComponent(rectangle);
     }
 
-//    @Override
-//    public Entity build() {
-//        return entity;
-//    }
 
     public ButtonBuilder text(TextBuilder textBuilder) {
         return addChild(textBuilder.build());
@@ -38,7 +35,7 @@ public class ButtonBuilder extends ShapeBuilderBase<ButtonBuilder> {
         if (size == null) {
             size = new double[]{100, 30};
         } else {
-            if (size.length > 2 || size.length < 2) {
+            if (size.length != 2) {
                 throw new IllegalStateException("Array  must be have 2 elements size[0]== width, size[1]== height");
             }
         }

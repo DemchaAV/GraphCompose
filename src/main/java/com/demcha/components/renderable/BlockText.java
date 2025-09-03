@@ -3,14 +3,11 @@ package com.demcha.components.renderable;
 import com.demcha.components.LineTextData;
 import com.demcha.components.containers.abstract_builders.GuidesRenderer;
 import com.demcha.components.content.text.BlockTextData;
-import com.demcha.components.content.text.Text;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
-import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.coordinator.RenderingPosition;
-import com.demcha.components.style.Padding;
 import com.demcha.system.PdfRender;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -25,24 +22,25 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.EnumSet;
 
+/**
+ * {@code BlockText} is a renderable component responsible for drawing blocks of text onto a PDF document.
+ * It handles text styling, positioning, and line-by-line rendering, including line spacing and alignment.
+ */
 @Slf4j
 @Builder
 @EqualsAndHashCode
 @NoArgsConstructor
 public class BlockText implements PdfRender, GuidesRenderer {
     private static final EnumSet<Guide> DEFAULT_GUIDES =
-            EnumSet.of(Guide.MARGIN, Guide.PADDING, Guide.BOX);
+            EnumSet.of(Guide.MARGIN, Guide.PADDING);
 
-
-    public static <T extends TextComponent> ContentSize autoMeasureText(Entity entity) throws IOException {
-        Text text = entity.getComponent(Text.class).orElseThrow();
-        TextStyle style = entity.getComponent(TextStyle.class).orElseThrow();
-
-        double width = style.getTextWidth(text.value());
-        double height = style.getTextHeight(text.value());
-        return new ContentSize(width, height);
-    }
-
+    /**
+     * Retrieves and validates the {@link BlockTextData} and {@link TextStyle} components from an {@link Entity}.
+     * If a component is missing, it logs a warning and provides a default or empty instance.
+     *
+     * @param e The {@link Entity} from which to extract text data and style.
+     * @return A {@link ValidatedTextData} record containing the validated {@link TextStyle} and {@link BlockTextData}.
+     */
     private static ValidatedTextData getValidatedTextData(Entity e) {
         var textValueOpt = e.getComponent(BlockTextData.class);
         var styleOpt = e.getComponent(TextStyle.class);
@@ -65,6 +63,20 @@ public class BlockText implements PdfRender, GuidesRenderer {
         return new ValidatedTextData(style, textValue);
     }
 
+    /**
+     * Renders the block of text onto the PDF content stream.
+     * This method retrieves text data, style, position, and size from the given {@link Entity}.
+     * It then iterates through each line of text, setting the font, size, color, and position before drawing.
+     * Optionally, it can render guide lines for debugging layout.
+     *
+     * @param e The {@link Entity} containing the {@link BlockTextData}, {@link TextStyle}, {@link RenderingPosition}, and {@link InnerBoxSize}.
+     * @param cs The {@link PDPageContentStream} to draw on.
+     * @param doc The {@link PDDocument} (currently unused but part of the interface).
+     * @param indexPage The current page index (currently unused but part of the interface).
+     * @param guideLines A boolean indicating whether to render layout guides.
+     * @return {@code true} if the text was rendered, {@code false} otherwise (e.g., if required components are missing).
+     * @throws IOException If an error occurs during PDF content stream operations.
+     */
     @Override
     public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, int indexPage, boolean guideLines) throws IOException {
 
@@ -108,16 +120,14 @@ public class BlockText implements PdfRender, GuidesRenderer {
 
         // стартовая позиция (левый верх «абзаца»)
         float startX = (float) position.x();
-        float startY = (float) (position.y() + innerBoxSize.innerH() - textHeight - (spacing < 0 ? spacing  : spacing* -1));
+        float startY = (float) (position.y() + innerBoxSize.innerH() - textHeight - (spacing < 0 ? spacing : spacing * -1)); // if spacing will be negative
 
-// Устанавливаем начальную позицию
-        float prevX = 0; // отслеживаем предыдущее смещение по X
 
         for (LineTextData ltd : blockTextData) {
             float currenPosition = (float) ltd.getX() + startX;
             cs.setTextMatrix(new Matrix(1, 0, 0, 1, currenPosition, startY));
             cs.showText(ltd.getLine());
-            startY -= (textHeight - spacing);
+            startY -= (float) (textHeight - spacing);
         }
 
         cs.endText();
@@ -131,6 +141,12 @@ public class BlockText implements PdfRender, GuidesRenderer {
         return true;
     }
 
+    /**
+     * A record to hold validated text style and block text data.
+     * This is used internally to pass the extracted and validated components.
+     * @param style The {@link TextStyle} applied to the text block.
+     * @param textValue The {@link BlockTextData} containing the lines of text.
+     */
     public record ValidatedTextData(TextStyle style, BlockTextData textValue) {
     }
 

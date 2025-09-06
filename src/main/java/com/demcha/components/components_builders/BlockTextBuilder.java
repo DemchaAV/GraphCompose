@@ -53,6 +53,26 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         return this;
     }
 
+    public BlockTextBuilder text(List<String> text, TextStyle style, Padding padding, Margin margin, String bulletOffset) {
+        this.textStyle = style;
+        lines = new ArrayList<>();
+        this.baseComponents = new HashMap<>();
+
+        this.baseComponents.put(Padding.class, padding);
+        this.baseComponents.put(Margin.class, margin);
+        this.baseComponents.put(TextStyle.class, style);
+
+
+        var boundingBox = InnerBoxSize.from(this.entity).orElseThrow();
+        BlockTextData blockTextData = breakLinesFromList(text, boundingBox,bulletOffset==null?"":bulletOffset);
+
+
+        addComponent(blockTextData);
+        addComponent(textStyle);
+        return this;
+    }
+
+
 
     public BlockTextData breakLines(@NonNull Entity entity, @NonNull InnerBoxSize innerBoxSize) {
         // Early exit if not a block of text
@@ -143,6 +163,88 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         return blockTextData;
     }
 
+    public BlockTextData breakLinesFromList(@NonNull List<String> text, @NonNull InnerBoxSize innerBoxSize, String bulletOffset) {
+
+
+        TextStyle style = (TextStyle) baseComponents.getOrDefault(TextStyle.class, TextStyle.DEFAULT_STYLE);
+        Margin margin = (Margin) baseComponents.getOrDefault(Margin.class, Margin.zero());
+        style = style == null ? TextStyle.defaultStyle() : style;
+        margin = margin == null ? Margin.zero() : margin;
+
+        final double maxWidth = innerBoxSize.innerW();
+        final double horizontalMargins = margin.horizontal();
+
+        // Make a shallow copy of components (excluding Text, which we will replace)
+
+
+        for (String textLine : text) {
+
+            if (style.getTextWidth(textLine) <= maxWidth) {
+                createLine(List.of(textLine));
+                continue;
+            }
+
+
+            // Split text into tokens (simple space-based; enhance with hyphenation if needed)
+            String[] words = textLine.split("\\s+");
+
+            Deque<String> line = new ArrayDeque<>();
+            double lineWidth = horizontalMargins; // start with margins
+
+            // Pre-compute space width (if your TextStyle has such a method; otherwise use getTextWidth(" "))
+            double spaceWidth = style.getTextWidth(" ");
+
+            for (String word : words) {
+                double wordWidth = style.getTextWidth(word);
+
+                // If line is empty, try to place the word even if it overflows
+                if (line.isEmpty()) {
+                    if (horizontalMargins + wordWidth <= maxWidth) {
+                        line.addLast(word);
+                        lineWidth = horizontalMargins + wordWidth;
+                    } else {
+                        // Long single word: place as its own line and warn
+                        log.warn("Word is too long; can't break line: '{}'", word);
+                        createLine(List.of(word)); // still create a line
+                        line.clear();
+                        lineWidth = horizontalMargins;
+                    }
+                    continue;
+                }
+
+                // If we already have words, include a space before the next word
+                double candidateWidth = lineWidth + spaceWidth + wordWidth;
+
+                if (candidateWidth <= maxWidth) {
+                    line.addLast(word);
+                    lineWidth = candidateWidth;
+                } else {
+                    // Flush current line
+                    createLine(new ArrayList<>(line));
+                    // Start a new line with this word
+                    line.clear();
+                    if (horizontalMargins + wordWidth <= maxWidth) {
+                        line.addLast(" ".repeat(bulletOffset.length()) + word);
+                        lineWidth = horizontalMargins + wordWidth;
+                    } else {
+                        log.warn("Word is too long; can't break line: '{}'", word);
+                        createLine(List.of(word));
+                        lineWidth = horizontalMargins;
+                    }
+                }
+            }
+
+            // Flush the last line if any
+            if (!line.isEmpty()) {
+                createLine(new ArrayList<>(line));
+            }
+
+        }
+
+
+        return new BlockTextData(lines, (float) lineSpacing);
+    }
+
     private void createLine(List<String> words) {
         // Join with spaces for correct rendering
         String lineText = String.join(" ", words);
@@ -181,8 +283,8 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         HAnchor h = align.h();
         if (HAnchor.LEFT != h && HAnchor.RIGHT != h && HAnchor.CENTER != h) {
 
-                log.info("Align has to be HAnchor.LEFT or HAnchor.RIGHT  current {}", align);
-                throw new IllegalStateException("Align has to be HAnchor.LEFT or HAnchor.RIGHT in BlockText");
+            log.info("Align has to be HAnchor.LEFT or HAnchor.RIGHT  current {}", align);
+            throw new IllegalStateException("Align has to be HAnchor.LEFT or HAnchor.RIGHT in BlockText");
 
 
         }
@@ -197,13 +299,13 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         var width = blockTextData.lines().stream().max(Comparator.comparingDouble(LineTextData::getWidth)).map(LineTextData::getWidth).orElseThrow();
         var spacing = entity.getComponent(Align.class).orElseThrow().spacing();
 
-        double textHeight = entity.getComponent(TextStyle.class).orElse(TextStyle.DEFAULT_STYLE).getTextHeight();
+        double textHeight = entity.getComponent(TextStyle.class).orElse(TextStyle.DEFAULT_STYLE).getLineHeight();
         double calculatedHigh = (blockTextData.lines().size()) * textHeight;
-        double spacingFullHigh= (blockTextData.lines().size()-1)* spacing;
-        double high  = calculatedHigh + spacingFullHigh + padding.vertical();
+        double spacingFullHigh = (blockTextData.lines().size() - 1) * spacing;
+        double high = calculatedHigh + spacingFullHigh + padding.vertical();
 
 
-        entity.addComponent(new ContentSize(width+padding.horizontal(), high));
+        entity.addComponent(new ContentSize(width + padding.horizontal(), high));
         manager().putEntity(entity());
 
         return entity();

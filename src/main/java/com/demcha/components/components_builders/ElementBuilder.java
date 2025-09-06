@@ -1,12 +1,15 @@
 package com.demcha.components.components_builders;
 
 import com.demcha.components.containers.abstract_builders.EmptyBox;
-import com.demcha.components.renderable.Element;
+import com.demcha.components.core.Component;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.coordinator.Position;
+import com.demcha.components.renderable.Element;
 import com.demcha.core.EntityManager;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+
+import java.util.Optional;
 
 
 public class ElementBuilder extends EmptyBox<ElementBuilder> implements Canvas {
@@ -24,7 +27,6 @@ public class ElementBuilder extends EmptyBox<ElementBuilder> implements Canvas {
     }
 
 
-
     @Override
     public ElementBuilder fillPageSize(PDPage page) {
         PDRectangle box = page.getCropBox() != null ? page.getCropBox() : page.getMediaBox();
@@ -38,11 +40,18 @@ public class ElementBuilder extends EmptyBox<ElementBuilder> implements Canvas {
             w = h;
             h = tmp;
         }
+       return fillPageSize(w, h);
+    }
+
+    public ElementBuilder fillPageSize(double width, double height) {
+        float w = (float) width;
+        float h = (float) height;
         // Store logical (CSS-like) top-left coordinates
         addComponent(new ContentSize(w, h));
         addComponent(new Position(0, 0));   // top-left origin for your layout system
         return this;
     }
+
     public ElementBuilder fillHorizontal(PDPage page, float high) {
         PDRectangle box = page.getCropBox() != null ? page.getCropBox() : page.getMediaBox();
         this.filledHorizontally = true;
@@ -60,7 +69,9 @@ public class ElementBuilder extends EmptyBox<ElementBuilder> implements Canvas {
         return this;
     }
 
-
+    public <T extends Component> Optional<T> getComponent(Class<T> clazz) {
+        return entity.getComponent(clazz);
+    }
 
 
 }

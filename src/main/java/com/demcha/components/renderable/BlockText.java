@@ -97,10 +97,10 @@ public class BlockText implements PdfRender, GuidesRenderer {
 
 
         var style = validateText.style();
-        float fontSize = style.size();
+        float fontSize = (float)style.size();
         PDFont font = style.font();
         Color color = validateText.style().color();
-        var textHeight = (float) style.getTextHeight();
+        var textHeight = (float) style.getLineHeight();
 
         var blockTextData = validateText.textValue().lines();
 

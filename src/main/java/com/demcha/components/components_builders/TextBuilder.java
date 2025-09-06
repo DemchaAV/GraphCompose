@@ -55,7 +55,7 @@ public class TextBuilder extends EmptyBox<TextBuilder> {
                 TextStyle style = entity.getComponent(TextStyle.class).orElse(TextStyle.defaultStyle());
                 Text textValue = entity.getComponent(Text.class).orElseThrow();
                 Padding padding = entity.getComponent(Padding.class).orElse(Padding.zero());
-                double textHeight = style.getTextHeight(textValue.value()) + padding.vertical();
+                double textHeight = style.getLineHeight() + padding.vertical();
                 double textWidth = style.getTextWidth(textValue.value()) + padding.horizontal();
                 entity.addComponent(new ContentSize(textWidth, textHeight));
             }

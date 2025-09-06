@@ -151,10 +151,10 @@ public abstract class ContainerBuilder<T extends ContainerBuilder<T>> extends Em
                     var entity = entity().getChildren().get(i - 1);
                     log.info("VERTICAL, REVERSE_HORIZONTAL build(): {}", entity);
                     updateChildPosition(entity);
-                    if (i == entity.getChildren().size() - 2) {
+                    if (i == entity.getChildren().size() - 1) {
                         hasNext = true;
                     }
-                    if (i == (this.entity.getChildren().size() - 1)) {
+                    if (i == (this.entity.getChildren().size() -2)) {
                         isLast = true;
                     }
                     updateContainerDimensions(entity, hasNext);

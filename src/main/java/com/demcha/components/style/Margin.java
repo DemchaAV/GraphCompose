@@ -12,6 +12,19 @@ public record Margin(double top, double right, double bottom, double left) imple
     public static Margin zero() {
         return new Margin(0, 0, 0, 0);
     }
+    public static Margin bottom(double value) {
+        return new Margin(0, 0, value, 0);
+    }
+    public static Margin top(double value) {
+        return new Margin(value, 0, 0, 0);
+    }
+    public static Margin right(double value) {
+        return new Margin(0, value, 0, 0);
+    }
+    public static Margin left(double value) {
+        return new Margin(0, 0, 0, value);
+    }
+
     public double horizontal() {
         return left + right;
     }

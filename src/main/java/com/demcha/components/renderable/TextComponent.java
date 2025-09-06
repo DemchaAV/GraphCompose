@@ -14,6 +14,8 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDFontDescriptor;
 
 import java.io.IOException;
 import java.util.EnumSet;
@@ -32,7 +34,7 @@ public class TextComponent implements PdfRender, GuidesRenderer {
         TextStyle style = entity.getComponent(TextStyle.class).orElseThrow();
 
         double width = style.getTextWidth(text.value());
-        double height = style.getTextHeight(text.value());
+        double height = style.getLineHeight();
         return new ContentSize(width, height);
     }
 
@@ -60,50 +62,50 @@ public class TextComponent implements PdfRender, GuidesRenderer {
 
     @Override
     public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, int indexPage, boolean guideLines) throws IOException {
-
-        if (!e.hasAssignable(TextComponent.class)) {
-            log.debug("Entity doesn't have TextComponent; skipping: {}", e);
-            return false;
-        }
+        if (!e.hasAssignable(TextComponent.class)) return false;
 
         var positionOpt = RenderingPosition.from(e);
-        Padding padding = e.getComponent(Padding.class).orElse(Padding.zero());
-        if (positionOpt.isEmpty()) {
-            log.warn("TextComponent has no RenderingPosition; skipping: {}", e);
-            return false;
-        }
+        if (positionOpt.isEmpty()) return false;
+
         var position = positionOpt.get();
+        Padding padding = e.getComponent(Padding.class).orElse(Padding.zero());
 
-        ValidatedTextData validateText = getValidatedTextData(e);
+        ValidatedTextData v = getValidatedTextData(e);
+        PDFont font = v.style().font();
+        float fontSize =(float) v.style().size();
+        String text = v.textValue().value();
 
+        // ---- compute metrics once
+        float scale = fontSize / 1000f;
+        PDFontDescriptor fd = font.getFontDescriptor();
 
-        float size = validateText.style().size();
-        double textHeight = validateText.style().getTextHeight(validateText.textValue().value());
-        double different = textHeight > size ? textHeight - size : 0;
+//        float ascentPx  = (fd != null ? fd.getAscent()  : font.getBoundingBox().getUpperRightY()) * scale;
+        float descentPx = Math.abs((fd != null ? fd.getDescent() : font.getBoundingBox().getLowerLeftY()) * scale);
+        // float leadingPx = (fd != null ? fd.getLeading() : 0) * scale; // use for multi-line spacing
 
-        log.debug("Rendering text '{}' at ({}, {}) size={}", validateText.textValue(), position.x(), position.y(), size);
-        log.debug("{}", validateText.style());
+        // ---- choose alignment rule for Y
+        // If your position.y is the TOP edge of the text box:
+        float topY = (float) position.y() - (float) padding.top();
+        float baselineY = topY+descentPx;
+
+        // If your position.x is the LEFT edge:
+        float leftX = (float) position.x() + (float) padding.left();
 
         cs.saveGraphicsState();
-        cs.setFont(validateText.style().font(), size);
-        cs.setNonStrokingColor(validateText.style().color());
+        cs.setFont(font, fontSize);
+        cs.setNonStrokingColor(v.style().color());
+
         cs.beginText();
-        cs.newLineAtOffset((float) position.x() + (float) padding.left(), (float) position.y() + (float) (different * 2) + (float) padding.bottom());
-        String value = validateText.textValue().value();
-
-
-        cs.showText(value);
-
+        cs.newLineAtOffset(leftX, baselineY); // << baseline, no extra "different*2"
+        cs.showText(text);
         cs.endText();
+
         cs.restoreGraphicsState();
 
-
-        if (guideLines) {
-            renderGuides(e, cs, DEFAULT_GUIDES);
-        }
-
+        if (guideLines) renderGuides(e, cs, DEFAULT_GUIDES);
         return true;
     }
+
 
     public record ValidatedTextData(TextStyle style, Text textValue) {
     }

@@ -1,5 +1,6 @@
 package com.demcha;
 
+import com.demcha.Templatese.CvData;
 import com.demcha.components.components_builders.*;
 import com.demcha.components.content.link.Email;
 import com.demcha.components.content.link.LinkUrl;
@@ -28,7 +29,7 @@ public class Main {
         Path target = Paths.get("output.pdf");
 
         EntityManager entityManager = new EntityManager();
-        entityManager.setGuideLines(true);
+        entityManager.setGuideLines(false);
         PDDocument doc = new PDDocument();
         doc.addPage(new PDPage(PDRectangle.A4));
 
@@ -36,6 +37,7 @@ public class Main {
         entityManager.addSystem(new LayoutSystem(doc.getPage(0)));
         entityManager.addSystem(new PdfRenderingSystem(doc));
         entityManager.addSystem(new PdfFileManagerSystem(target, doc));
+
 
 
         links_mail(entityManager);
@@ -82,8 +84,7 @@ public class Main {
 
         var row = new HContainerBuilder(entityManager).create(Align.middle(5))
                 .margin(Margin.of(5))
-                .anchor(Anchor.center())
-
+                .anchor(Anchor.centerTop())
                 .addChild(google)
                 .addChild(email)
                 .build();

@@ -4,4 +4,6 @@ import org.apache.pdfbox.pdmodel.PDPage;
 
 public interface Canvas {
     ElementBuilder fillPageSize(PDPage page);
+
+
 }

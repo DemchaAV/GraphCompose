@@ -5,6 +5,7 @@ import com.demcha.components.renderable.TextComponent;
 import com.demcha.components.style.ComponentColor;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.fontbox.util.BoundingBox;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDFontDescriptor;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
@@ -18,7 +19,7 @@ import java.io.IOException;
 
 @Slf4j
 @Builder
-public record TextStyle(PDFont font, int size, TextDecoration decoration, Color color) implements Component {
+public record TextStyle(PDFont font, double size, TextDecoration decoration, Color color) implements Component {
 
     // 1) Fonts first
     public static final PDFont TIMES_ROMAN = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
@@ -95,7 +96,7 @@ public record TextStyle(PDFont font, int size, TextDecoration decoration, Color 
         double textWidth = getTextWidth(text);
 
         // If textWidth exceeds availableWidth, reduce the font size
-        int newSize = size;
+        double newSize = size;
         while (textWidth > availableWidth && newSize > 1) {
             newSize--;  // Reduce size
             textWidth = getTextWidth(text);  // Recalculate text width
@@ -109,7 +110,7 @@ public record TextStyle(PDFont font, int size, TextDecoration decoration, Color 
                 .replaceAll("[\\p{Cntrl}&&[^\\t]]", " ")
                 .replace('\u00A0',' ').replaceAll(" +", " ");
         try {
-            float width = font.getStringWidth(sanitized) / 1000 * size;
+            float width =  font.getStringWidth(sanitized) / 1000 * (float) size;
             log.debug("Getting text width: " + width);
             return width;
         } catch (Exception e) {
@@ -119,10 +120,10 @@ public record TextStyle(PDFont font, int size, TextDecoration decoration, Color 
         }
     }
 
-    public double getTextHeight(String text) {
+    public double getTextHeight() {
         try {
-            float v = font.getBoundingBox().getHeight() / 1000 * size;
-            log.debug("getTextHeight: " + text);
+            float v = font.getBoundingBox().getHeight() / 1000 * (float)size;
+            log.debug("getTextHeight: " );
             return v;
         } catch (IOException e) {
             e.printStackTrace();
@@ -134,10 +135,17 @@ public record TextStyle(PDFont font, int size, TextDecoration decoration, Color 
      * Line height based on font metrics (recommended for baseline-to-baseline step).
      * Uses ascent, descent (usually negative), and optional leading if present.
      */
-    public double getLineHeight() throws IOException {
+    public double getLineHeight() {
         PDFontDescriptor fd = font.getFontDescriptor();
-        float ascent  = (fd != null ? fd.getAscent()  : font.getBoundingBox().getUpperRightY());
-        float descent = (fd != null ? fd.getDescent() : font.getBoundingBox().getLowerLeftY()); // often negative
+        BoundingBox boundingBox = null;
+        try {
+            boundingBox = font.getBoundingBox();
+        } catch (IOException e) {
+            log.error("Error while getting text height {}", e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+        float ascent  = (fd != null ? fd.getAscent()  : boundingBox.getUpperRightY());
+        float descent = (fd != null ? fd.getDescent() : boundingBox.getLowerLeftY()); // often negative
         float leading = (fd != null ? fd.getLeading() : 0);
         return (ascent - descent + leading) * scale();
     }
@@ -155,7 +163,7 @@ public record TextStyle(PDFont font, int size, TextDecoration decoration, Color 
     }
 
     // Scale once: PDF units are per 1000 EM
-    private float scale() { return size / 1000f; }
+    private float scale() { return (float)size / 1000f; }
 
     /**
      * Tight per-string bounds (slow but exact for hit-areas/links).
@@ -171,7 +179,7 @@ public record TextStyle(PDFont font, int size, TextDecoration decoration, Color 
 
     public double getTextHeight(TextComponent textComponent) {
         try {
-            float v = font.getBoundingBox().getHeight() / 1000 * size;
+            float v = font.getBoundingBox().getHeight() / 1000 *(float) size;
             log.debug("getTextHeight: " + textComponent);
             return v;
         } catch (IOException e) {

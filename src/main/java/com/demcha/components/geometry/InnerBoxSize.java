@@ -1,5 +1,6 @@
 package com.demcha.components.geometry;
 
+import com.demcha.components.components_builders.ElementBuilder;
 import com.demcha.components.core.Entity;
 import com.demcha.components.style.Padding;
 import com.demcha.system.ContentSizeNotFoundException;
@@ -13,6 +14,23 @@ import java.util.Optional;
 public record InnerBoxSize(double innerW, double innerH) {
 
     public static Optional<InnerBoxSize> from(@NonNull Entity entity) {
+        log.debug("Starting calculation a OuterBoxSize for entity: {}", entity);
+        Optional<ContentSize> sizeOpt = entity.getComponent(ContentSize.class);
+        var padding = entity.getComponent(Padding.class).orElse(Padding.zero());
+        var size = sizeOpt
+                .orElseThrow(
+                        () -> {
+                            log.debug("{} has no outer BoxSize.", entity);
+                            return new ContentSizeNotFoundException();
+                        }
+                );
+        var innerBoxSizeOpt = from(size, padding);
+        var innerBoxSize = innerBoxSizeOpt.orElseThrow();
+        log.debug("Calculated Inner  {} for entity: {}", innerBoxSize, entity);
+        return innerBoxSizeOpt;
+    }
+
+    public static Optional<InnerBoxSize> from(@NonNull ElementBuilder entity) {
         log.debug("Starting calculation a OuterBoxSize for entity: {}", entity);
         Optional<ContentSize> sizeOpt = entity.getComponent(ContentSize.class);
         var padding = entity.getComponent(Padding.class).orElse(Padding.zero());

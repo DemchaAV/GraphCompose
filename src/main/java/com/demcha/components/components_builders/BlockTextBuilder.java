@@ -39,8 +39,6 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         var rowText = textBuilder.build();
         var style = rowText.getComponent(TextStyle.class).orElse(TextStyle.DEFAULT_STYLE);
         this.textStyle = style;
-        var padding = rowText.getComponent(Padding.class).orElse(Padding.zero());
-        var margin = rowText.getComponent(Margin.class).orElse(Margin.zero());
         lines = new ArrayList<>();
 
 

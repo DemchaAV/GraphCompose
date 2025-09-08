@@ -24,9 +24,8 @@ public class HContainerBuilder extends ContainerBuilder<HContainerBuilder> {
      *
      * @param entityManager The {@link EntityManager} to which the container and its entities will belong.
      */
-    public HContainerBuilder(EntityManager entityManager) {
-        super(entityManager);
-        this.stackAxis = StackAxis.HORIZONTAL;
+    public HContainerBuilder(EntityManager entityManager, Align align) {
+        super(entityManager, align);
     }
 
 
@@ -38,16 +37,10 @@ public class HContainerBuilder extends ContainerBuilder<HContainerBuilder> {
      * @param align The alignment strategy to be used for arranging children within the container.
      * @return This builder instance, allowing for method chaining.
      */
-    @Override
-    public HContainerBuilder create(Align align) {
-        super.create(align); // Call the common logic
-        entity.addComponentIfAbsent(new HContainer()); // Add the specific component
-        return self();
-    }
-
 
     @Override
     public void initialize() {
         entity.addComponent(new HContainer());
+        entity.addComponent(StackAxis.HORIZONTAL);
     }
 }

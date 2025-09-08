@@ -31,7 +31,7 @@ import java.util.EnumSet;
 @Builder
 @EqualsAndHashCode
 @NoArgsConstructor
-public class BlockText implements PdfRender, GuidesRenderer {
+public class ChunkedBlockText extends Container{
     private static final EnumSet<Guide> DEFAULT_GUIDES =
             EnumSet.of(Guide.MARGIN, Guide.PADDING);
 

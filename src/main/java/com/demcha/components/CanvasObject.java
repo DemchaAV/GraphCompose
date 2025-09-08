@@ -16,7 +16,7 @@ public class CanvasObject {
     private float height;
 
     public CanvasObject(EntityManager entityManager, double width, double height) {
-        this.elementBuilder = new ElementBuilder(entityManager).create()
+        this.elementBuilder = new ElementBuilder(entityManager)
                 .anchor(Anchor.center())
                 .fillPageSize(width, height)
         ;

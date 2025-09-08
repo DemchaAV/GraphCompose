@@ -1,8 +1,8 @@
 package com.demcha.components.containers.abstract_builders;
-import com.demcha.components.core.Entity;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface Box {
-    List<Entity> children();
+    List<UUID> children();
 }

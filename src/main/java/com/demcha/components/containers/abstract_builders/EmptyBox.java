@@ -7,8 +7,8 @@ import com.demcha.components.layout.ParentComponent;
 import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Abstract base class for building entities that represent an empty box or a container
@@ -21,8 +21,8 @@ import lombok.experimental.Accessors;
  *
  * @param <T> The type of the entity that this builder will construct.
  */
+@Slf4j
 @Getter
-//@RequiredArgsConstructor
 @Accessors(fluent = true)
 public abstract class EmptyBox<T> extends EntityBuilderBase<T> implements BuildEntity {
 
@@ -35,37 +35,31 @@ public abstract class EmptyBox<T> extends EntityBuilderBase<T> implements BuildE
 
     protected EmptyBox(EntityManager entityManager) {
         this.entityManager = entityManager;
-        create();
+        this.entity = new Entity();
+        autoName();
+        initialize();
+        log.info("Created entity {}", self());
     }
 
-    T parrent(ParentComponent parent) {
-        entity.addComponent(parent);
+    T addParrent(ParentComponent parent) {
+        var parrentEntity = entityManager.getEntity(parent.uuid()).orElseThrow(()->{
+            return new IllegalStateException("No found entity with id %s".formatted(parent.uuid()));
+        });
+
+        return addParrent(parrentEntity);
+    }
+
+    T addParrent(Entity parent) {
+        log.info("Add parent {}", parent);
+        this.entity.addComponent(new ParentComponent(parent.getUuid()));
+        parent.getChildren().add(this.entity.getUuid());
         return self();
-    }
-
-    T parrent(Entity parent) {
-        return parrent(new ParentComponent(parent));
     }
 
     public T addChild(Entity child) {
+        log.info("Add child {} to parent {}", child, this.entity);
         child.addComponent(new ParentComponent(this.entity));
-        return self();
-    }
-
-    public T addChildAndFit(Entity child) {
-        var outerBox = OuterBoxSize.from(child).get();
-        child.addComponent(new ParentComponent(this.entity));
-        var component = entity().getComponent(ContentSize.class).orElseThrow();
-        var padding = entity().getComponent(Padding.class).orElse(Padding.zero());
-        var newComponentSize = new ContentSize(Math.max(component.width(), outerBox.width() + padding.horizontal())
-                , Math.max(component.height(), outerBox.height() + padding.vertical()));
-        entity().addComponent(newComponentSize);
-
-        return self();
-    }
-
-    public T addParent(Entity parent) {
-        addChild(this.entity);
+        this.entity.getChildren().add(child.getUuid());
         return self();
     }
 

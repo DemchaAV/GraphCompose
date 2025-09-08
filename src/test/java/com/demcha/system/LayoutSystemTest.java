@@ -17,7 +17,6 @@ import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
 import org.apache.entityManagerbox.pdmodel.PDPage;
 import org.apache.entityManagerbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.PDPage;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
@@ -33,7 +32,7 @@ class LayoutSystemTest {
     private static Mockh getMockh() {
         EntityManager entityManager = new EntityManager();
 
-        var parent =new ElementBuilder().create()
+        var parent =new ElementBuilder()
                 .entityName(new EntityName("ParentBox"))
                 .size(new ContentSize(300, 220))
                 .padding(Padding.of(10))
@@ -42,7 +41,7 @@ class LayoutSystemTest {
                 .margin(new Margin(5, 5, 5, 5))
                 .buildComponents();
 
-        var child = ElementBuilder.create()
+        var child = ElementBuilder
                 .entityName(new EntityName("ChildBox"))
                 .parentComponent(new ParentComponent(parent.getId()))
                 .size(new ContentSize(180, 140))
@@ -52,7 +51,7 @@ class LayoutSystemTest {
                 .margin(new Margin(5, 5, 5, 5))
                 .buildComponents();
 
-        var grandChild = ElementBuilder.create()
+        var grandChild = ElementBuilder
                 .entityName(new EntityName("GrandChildBox"))
                 .parentComponent(new ParentComponent(child.getId()))
                 .size(new ContentSize(100, 80))
@@ -71,7 +70,7 @@ class LayoutSystemTest {
 
     @Test
     void calculateInnerBoxSize() {
-        LayoutSystem layoutSystem = new LayoutSystem(new PDPage(PDRectangle.A4));
+        PdfLayoutSystem pdfLayoutSystem = new PdfLayoutSystem(new PDPage(PDRectangle.A4));
         var entity = new Entity();
         entity.addComponent(new EntityName("Box"))
                 .addComponent(new ContentSize(200, 300))
@@ -87,7 +86,7 @@ class LayoutSystemTest {
         Mockh mockh = getMockh();
         var parent = mockh.parent();
         var child = mockh.child();
-        var layoutSystem = new LayoutSystem(new PDPage(PDRectangle.A4));
+        var layoutSystem = new PdfLayoutSystem(new PDPage(PDRectangle.A4));
 
         child.addComponent(new ContentSize(500, 300));
 
@@ -100,7 +99,7 @@ class LayoutSystemTest {
 
     @Test
     void calculationBoxSize() {
-        LayoutSystem layoutSystem = new LayoutSystem(new PDPage(PDRectangle.A4));
+        PdfLayoutSystem pdfLayoutSystem = new PdfLayoutSystem(new PDPage(PDRectangle.A4));
         var entity = new Entity();
         entity.addComponent(new EntityName("Box"))
                 .addComponent(new ContentSize(200, 300))
@@ -114,7 +113,7 @@ class LayoutSystemTest {
     void computesParentAndChildAbsolutePositions() {
         EntityManager entityManager = new EntityManager();
 
-        var layoutSystem = new LayoutSystem(new org.apache.pdfbox.pdmodel.PDPage(org.apache.pdfbox.pdmodel.common.PDRectangle.A4));
+        var layoutSystem = new PdfLayoutSystem(new org.apache.pdfbox.pdmodel.PDPage(org.apache.pdfbox.pdmodel.common.PDRectangle.A4));
 
         Mockh mockh = getMockh();
         var parent = mockh.parent();
@@ -148,7 +147,7 @@ class LayoutSystemTest {
         var child = mockh.child();
         var parent = mockh.parent();
         var grandChild = mockh.grandChild();
-        var layoutSystem = new LayoutSystem(new PDPage(PDRectangle.A4));
+        var layoutSystem = new PdfLayoutSystem(new PDPage(PDRectangle.A4));
 
 
         mockh.entityManager().putEntity(parent);

@@ -3,7 +3,6 @@ package com.demcha.Templatese;
 import com.demcha.ConfigLoader;
 import com.demcha.Templatese.data.ModuleSummary;
 import com.demcha.Templatese.data.ModuleYml;
-import com.demcha.Templatese.data.SimpleModule;
 import com.demcha.components.CanvasObject;
 import com.demcha.components.components_builders.*;
 import com.demcha.components.content.link.Email;
@@ -19,7 +18,7 @@ import com.demcha.components.style.ComponentColor;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
-import com.demcha.system.LayoutSystem;
+import com.demcha.system.PdfLayoutSystem;
 import com.demcha.system.PdfFileManagerSystem;
 import com.demcha.system.PdfRenderingSystem;
 import lombok.AllArgsConstructor;
@@ -39,7 +38,7 @@ public class Model {
     private EntityManager entityManager;
 
     public Entity name(String name) {
-        Entity nameEntity = new TextBuilder(entityManager).create()
+        Entity nameEntity = new TextBuilder(entityManager)
                 .textWithAutoSize(name)
                 .anchor(Anchor.topRight())
                 .margin(Margin.bottom(5))
@@ -53,7 +52,7 @@ public class Model {
     }
 
     public Entity info(String info) {
-        Entity infoEntity = new TextBuilder(entityManager).create()
+        Entity infoEntity = new TextBuilder(entityManager)
                 .textWithAutoSize(info)
                 .anchor(Anchor.center())
                 .textStyle(TextStyle.builder()
@@ -73,13 +72,13 @@ public class Model {
                 .max(Double::compareTo).get();
         ComponentColor componentColor = entities.get(0).getComponent(ComponentColor.class).orElse(new ComponentColor(ComponentColor.MODULE_LINE_TEXT));
 
-        var links = new HContainerBuilder(entityManager).create(Align.right(5))
+        var links = new HContainerBuilder(entityManager,Align.right(5))
                 .anchor(Anchor.topRight());
 
 
         for (int i = 0; i < entities.size(); i++) {
             if (i < entities.size() && i != 0) {
-                var separator = new RectangleBuilder(entityManager).create()
+                var separator = new RectangleBuilder(entityManager)
                         .size(new ContentSize(1, heigh))
                         .fillColor(componentColor)
                         .margin(0, 2, 0, 2)
@@ -93,10 +92,10 @@ public class Model {
     }
 
     public <T extends LinkUrl> Entity link(T link, String displayText) {
-        var linkEntity = new LinkBuilder(entityManager).create()
+        var linkEntity = new LinkBuilder(entityManager)
                 .linkUrl(link)
                 .anchor(Anchor.centerRight())
-                .displayText(new DisplayUrlTextBuilder(entityManager).create()
+                .displayText(new DisplayUrlTextBuilder(entityManager)
                         .textWithAutoSize(displayText)
                         .textStyle(TextStyle.builder()
                                 .size(12)
@@ -109,7 +108,7 @@ public class Model {
     }
 
     private Entity moduleName(String moduleName) {
-        Entity moduleNameEntity = new TextBuilder(entityManager).create()
+        Entity moduleNameEntity = new TextBuilder(entityManager)
                 .textWithAutoSize(moduleName)
                 .anchor(Anchor.topLeft())
                 .margin(new Margin(5, 5, 5, 10))
@@ -123,7 +122,7 @@ public class Model {
     }
 
     public ModuleBuilder moduleBuilder(String moduleName, PDPage page) {
-        var moduleHeader = new ModuleBuilder(entityManager, page).create(Align.middle(5))
+        var moduleHeader = new ModuleBuilder(entityManager,Align.middle(5), page)
                 .margin(Margin.of(20))
                 .anchor(Anchor.topRight());
         if (moduleName != null) {
@@ -134,7 +133,7 @@ public class Model {
     }
 
     public ModuleBuilder moduleBuilder(String moduleName, InnerBoxSize innerBoxSize) {
-        var moduleHeader = new ModuleBuilder(entityManager, innerBoxSize).create(Align.middle(5))
+        var moduleHeader = new ModuleBuilder(entityManager,Align.middle(5), innerBoxSize)
                 .margin(Margin.of(5))
                 .anchor(Anchor.topLeft());
         if (moduleName != null) {
@@ -145,13 +144,13 @@ public class Model {
     }
 
     public ModuleBuilder moduleBuilder(String moduleName, InnerBoxSize innerBoxSize, List<String> modulePoints) {
-        var moduleHeader = new ModuleBuilder(entityManager, innerBoxSize).create(Align.middle(5))
+        var moduleHeader = new ModuleBuilder(entityManager,Align.middle(5), innerBoxSize)
                 .margin(Margin.of(5))
                 .anchor(Anchor.topLeft());
         if (moduleName != null) {
             moduleHeader.addChild(moduleName(moduleName));
         }
-        var vbox = new VContainerBuilder(entityManager).create(Align.middle(5))
+        var vbox = new VContainerBuilder(entityManager,Align.middle(5))
                 .size(new ContentSize(innerBoxSize.innerW(), 50));
         for (int i = 0; i < modulePoints.size(); i++) {
             vbox.addChild(
@@ -210,7 +209,7 @@ public class Model {
 
 
     private BlockTextBuilder blockTextBuilder(String text, double width) {
-        TextBuilder textBuilder = new TextBuilder(entityManager).create()
+        TextBuilder textBuilder = new TextBuilder(entityManager)
                 .textWithAutoSize(text)
                 .textStyle(TextStyle.builder()
                         .size(12)
@@ -241,7 +240,7 @@ class test {
         doc.addPage(new PDPage(PDRectangle.A4));
 
 
-        entityManager.addSystem(new LayoutSystem(doc.getPage(0)));
+        entityManager.addSystem(new PdfLayoutSystem(doc.getPage(0)));
         entityManager.addSystem(new PdfRenderingSystem(doc));
         entityManager.addSystem(new PdfFileManagerSystem(target, doc));
 
@@ -280,7 +279,7 @@ class test {
         );
 
 
-        Entity moduleHeader = new ModuleBuilder(entityManager, canvas.innerBoxSize()).create(Align.middle(5))
+        Entity moduleHeader = new ModuleBuilder(entityManager,Align.middle(5), canvas.innerBoxSize())
                 .margin(Margin.of(10))
                 .anchor(Anchor.topRight())
                 .addChild(artemDemchyshyn)

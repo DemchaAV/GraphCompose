@@ -22,9 +22,9 @@ public class VContainerBuilder extends ContainerBuilder<VContainerBuilder> {
      *
      * @param entityManager The {@link EntityManager} to which the container will be added.
      */
-    public VContainerBuilder(EntityManager entityManager) {
-        super(entityManager);
-        this.stackAxis = StackAxis.VERTICAL;
+    public VContainerBuilder(EntityManager entityManager, Align align) {
+        super(entityManager,align);
+        entity.addComponent(align);
     }
 
     /**
@@ -35,18 +35,14 @@ public class VContainerBuilder extends ContainerBuilder<VContainerBuilder> {
      * @param align The {@link Align} strategy for arranging children within the container.
      * @return This builder instance for method chaining.
      */
-    @Override
-    public VContainerBuilder create(Align align) {
-        super.create(align); // Call the common logic
-        entity.addComponentIfAbsent(new VContainer()); // Add the specific component
-        return self();
-    }
+
 
 
 
     @Override
     public void initialize() {
         entity.addComponent(new VContainer());
+        entity.addComponent(StackAxis.VERTICAL);
     }
 
 

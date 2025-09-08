@@ -11,7 +11,9 @@ import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.ParentComponent;
 import com.demcha.components.renderable.BlockText;
+import com.demcha.components.renderable.ChunkedBlockText;
 import com.demcha.components.renderable.TextComponent;
+import com.demcha.components.renderable.VContainer;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
@@ -22,11 +24,9 @@ import java.util.*;
 
 @Slf4j
 public class ChunkTextBuilder extends ContainerBuilder<ChunkTextBuilder> {
-    private double lineSpacing = 0.0;
 
-    public ChunkTextBuilder(EntityManager entityManager) {
-        super(entityManager);
-        this.stackAxis = StackAxis.VERTICAL;
+    public ChunkTextBuilder(EntityManager entityManager,Align align) {
+        super(entityManager,align);
     }
 
 
@@ -38,7 +38,7 @@ public class ChunkTextBuilder extends ContainerBuilder<ChunkTextBuilder> {
     }
 
 
-    public List<Entity> breakLines(@NonNull Entity entity, @NonNull InnerBoxSize innerBoxSize) {
+    public List<UUID> breakLines(@NonNull Entity entity, @NonNull InnerBoxSize innerBoxSize) {
         // Early exit if not a block of text
         if (!entity.hasAssignable(TextComponent.class)) {
             log.debug("Entity doesn't have BlockText component");
@@ -142,31 +142,22 @@ public class ChunkTextBuilder extends ContainerBuilder<ChunkTextBuilder> {
 
         textBuilder.addComponent(new ParentComponent(this.entity));
 
-        entity().getChildren().add(entity);
+        entity().getChildren().add(entity.getUuid());
     }
-
-
-    @Override
-    public void initialize() {
-        entity.addComponent(new BlockText());
-    }
-
 
     /**
      * Initializes the container builder with the specified alignment.
      * This method calls the common creation logic from the superclass and then
      * adds a {@link BlockText} component to the entity.
      *
-     * @param align The {@link Align} strategy for arranging children within the container.
      * @return This builder instance for method chaining.
      */
     @Override
-    public ChunkTextBuilder create(Align align) {
-        super.create(align); // Call the common logic
-        entity.addComponentIfAbsent(new BlockText()); // Add the specific component
-        if (lineSpacing == 0) lineSpacing = align.spacing();
-        return self();
+    public void initialize() {
+        entity.addComponent(new ChunkedBlockText());
+        entity.addComponent(StackAxis.VERTICAL);
     }
+
 
 
 }

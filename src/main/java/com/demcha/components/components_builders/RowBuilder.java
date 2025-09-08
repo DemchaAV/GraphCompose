@@ -23,9 +23,8 @@ public class RowBuilder extends ContainerBuilder<RowBuilder> {
      *
      * @param entityManager The {@link EntityManager} to which the container and its entities will belong.
      */
-    public RowBuilder(EntityManager entityManager) {
-        super(entityManager);
-        this.stackAxis = StackAxis.HORIZONTAL;
+    public RowBuilder(EntityManager entityManager, Align align) {
+        super(entityManager,align);
     }
 
 
@@ -34,16 +33,8 @@ public class RowBuilder extends ContainerBuilder<RowBuilder> {
      * This method calls the common creation logic from the superclass and then
      * adds the specific {@link HContainer} component to the entity being built.
      *
-     * @param align The alignment strategy to be used for arranging children within the container.
      * @return This builder instance, allowing for method chaining.
      */
-    @Override
-    public RowBuilder create(Align align) {
-        super.create(align); // Call the common logic
-        entity.addComponentIfAbsent(new HContainer()); // Add the specific component
-        return self();
-    }
-
 
 
     @Override

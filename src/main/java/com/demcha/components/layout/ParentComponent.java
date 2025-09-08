@@ -8,6 +8,6 @@ import java.util.UUID;
 
 public record ParentComponent(UUID uuid) implements Component{
     public ParentComponent(Entity entity) {
-        this(Objects.requireNonNull(entity.getId(), "Entity ID cannot be null.") );
+        this(Objects.requireNonNull(entity.getUuid(), "Entity ID cannot be null.") );
     }
 }

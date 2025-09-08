@@ -21,27 +21,8 @@ public abstract class EntityBuilderBase<B> implements Layout<B>, EntityCreator<B
      * The {@link Entity} instance being built by this builder.
      */
     @Getter
-    protected Entity entity = new Entity();
+    protected Entity entity;
 
-    /**
-     * Initializes the entity by assigning a default name and returns the builder instance.
-     * This method should be called to finalize the initial setup of the entity.
-     *
-     * <p>
-     * This method performs two main actions:
-     * <ol>
-     *     <li>Calls {@link #autoName()} to assign a default name to the current entity.</li>
-     *     <li>Resets the internal {@code entity} field to a new {@link Entity} instance, preparing the builder for creating another entity.</li>
-     * </ol>
-     * </p>
-     * @return The current builder instance, allowing for method chaining.
-     */
-    public B create() {
-        entity = new Entity();
-        autoName();
-        initialize();
-        return self();
-    }
 
 
     /**
@@ -55,7 +36,7 @@ public abstract class EntityBuilderBase<B> implements Layout<B>, EntityCreator<B
      */
     protected void autoName() {
         String simpleName = self().getClass().getSimpleName();
-        String defaultName = simpleName + entity.getId().toString().substring(0, 5);
+        String defaultName = simpleName + entity.getUuid().toString().substring(0, 5);
         entity.addComponent(new EntityName(defaultName));
     }
 

@@ -1,7 +1,6 @@
 package com.demcha.components.components_builders;
 
 import com.demcha.components.containers.abstract_builders.EmptyBox;
-import com.demcha.components.content.link.Email;
 import com.demcha.components.content.link.LinkUrl;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
@@ -24,7 +23,7 @@ public class LinkBuilder extends EmptyBox<LinkBuilder> {
         return self();
     }
 
-    public<T extends LinkUrl> LinkBuilder linkUrl(T linkUrl) {
+    public <T extends LinkUrl> LinkBuilder linkUrl(T linkUrl) {
         entity().addComponent(linkUrl);
         return self();
     }

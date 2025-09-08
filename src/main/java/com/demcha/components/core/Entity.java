@@ -13,10 +13,10 @@ import java.util.*;
 @EqualsAndHashCode
 public final class Entity {
     @Getter
-    private final UUID id;
+    private final UUID uuid;
     private final Map<Class<? extends Component>, Component> comps = new LinkedHashMap<>();
     @Getter
-    private final List<Entity> children = new ArrayList<>();
+    private final List<UUID> children = new ArrayList<>();
     private EntityName name;
     @Getter
     private PdfRender pdfRender;
@@ -27,7 +27,7 @@ public final class Entity {
     public Entity() {
         UUID uuid = UUID.randomUUID();
         log.info("Creating entity {}", uuid);
-        this.id = uuid;
+        this.uuid = uuid;
     }
 
     public static Entity createFrom(Entity entity) {
@@ -112,8 +112,8 @@ public final class Entity {
     public <T extends Component> T require(Class<T> type) {
         log.debug("Require component {} {}", type, this);
         return getComponent(type).orElseThrow(() -> {
-            log.error("No component found for type {} for entity [{}]", type.getName(), id);
-            return new NoSuchElementException("Missing " + type.getName() + " for " + id);
+            log.error("No component found for type {} for entity [{}]", type.getName(), uuid);
+            return new NoSuchElementException("Missing " + type.getName() + " for " + uuid);
         });
     }
 
@@ -157,7 +157,7 @@ public final class Entity {
      * @return <p>Map<Class<? extends Component>, Component></p>
      */
     public Map<Class<? extends Component>, Component> view() {
-        log.debug("Viewing component {} {}", id, this);
+        log.debug("Viewing component {} {}", uuid, this);
         return Collections.unmodifiableMap(comps);
     }
 
@@ -173,7 +173,7 @@ public final class Entity {
     @Override
     public String toString() {
         return "Entity[" + name +
-               " id: " + id +
+               " id: " + uuid +
                ']';
     }
 

@@ -48,7 +48,7 @@ public class ButtonBuilder extends ShapeBuilderBase<ButtonBuilder> {
     }
 
     private TextBuilder defaultTextDecoration(String textButton) {
-        return new TextBuilder(entityManager).create()
+        return new TextBuilder(entityManager)
                 .entityName(new EntityName("TextComponent"))
                 .textWithAutoSize(textButton)
                 .anchor(Anchor.center())
@@ -62,7 +62,6 @@ public class ButtonBuilder extends ShapeBuilderBase<ButtonBuilder> {
     }
 
     private void setDefaultButtonDecoration(String nameButton, double[] size, CornerRadius cornerRadius) {
-        create();
         entityName(new EntityName(nameButton));
         cornerRadius(cornerRadius);
         size(new ContentSize(size[0], size[1]));

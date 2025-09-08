@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.EnumSet;
 
 @Data
-public class VContainer implements PdfRender, GuidesRenderer {
+public class VContainer extends Container {
 
     private static final EnumSet<Guide> DEFAULT_GUIDES =
             EnumSet.of(Guide.MARGIN, Guide.PADDING, Guide.BOX);

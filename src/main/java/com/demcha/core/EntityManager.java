@@ -9,8 +9,6 @@ import com.demcha.system.System;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.util.*;
 
@@ -40,7 +38,7 @@ import java.util.*;
  * doc.addComponent(e, new Position(50, 100));
  * doc.addComponent(e, new TextComponent("Hello"));
  *
- * doc.addSystem(new LayoutSystem());
+ * doc.addSystem(new PdfLayoutSystem());
  * doc.addSystem(new RenderSystem());
  *
  * doc.processSystems(); // Systems read/write components via the entityManager
@@ -102,7 +100,7 @@ public class EntityManager {
             entity.addComponent(new EntityName(name));
             log.info("Created {}", entity);
         } else {
-            log.info("Created entity with no EntityName {}", entity.getId());
+            log.info("Created entity with no EntityName {}", entity.getUuid());
         }
         return entity;
     }
@@ -120,7 +118,7 @@ public class EntityManager {
     }
 
     public Entity putEntity(Entity entity) {
-        UUID uuid = entity.getId();
+        UUID uuid = entity.getUuid();
         log.info("Putting Entity id {}", uuid);
 
         Optional<Entity> existing = getEntity(uuid);
@@ -196,7 +194,7 @@ public class EntityManager {
         return entities.remove(entityId) != null;
     }
     public boolean remove(Entity entity) {
-        return entities.remove(entity.getId()) != null;
+        return entities.remove(entity.getUuid()) != null;
     }
 
     public Set<UUID> getEntitiesWithPdfRender(Class<? extends PdfRender> componentType) {

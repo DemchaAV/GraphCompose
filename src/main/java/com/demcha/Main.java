@@ -26,7 +26,7 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         // 1. Setup Phase
-        EntityManager entityManager = setupEntityManager();
+        EntityManager entityManager = setupEntityManager(true);
 
         // 2. Content Creation and Layout
         createATableLayout(entityManager);
@@ -40,13 +40,13 @@ public class Main {
      *
      * @return A configured EntityManager instance.
      */
-    private static EntityManager setupEntityManager() throws Exception {
+    private static EntityManager setupEntityManager(boolean guidLines) throws Exception {
         Path target = Paths.get("output.pdf");
         PDDocument doc = new PDDocument();
         doc.addPage(new PDPage(PDRectangle.A4));
 
         EntityManager entityManager = new EntityManager();
-        entityManager.setGuideLines(true);
+        entityManager.setGuideLines(guidLines);
 
         entityManager.addSystem(new PdfLayoutSystem(doc.getPage(0)));
         entityManager.addSystem(new PdfRenderingSystem(doc));

@@ -2,7 +2,7 @@ package com.demcha.components.geometry;
 
 import com.demcha.components.core.Entity;
 import com.demcha.components.style.Margin;
-import com.demcha.system.ContentSizeNotFoundException;
+import com.demcha.exeptions.ContentSizeNotFoundException;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 

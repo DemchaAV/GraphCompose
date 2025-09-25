@@ -1,14 +1,12 @@
 package com.demcha.components.renderable;
 
 import com.demcha.components.LineTextData;
-import com.demcha.components.containers.abstract_builders.GuidesRenderer;
 import com.demcha.components.content.text.BlockTextData;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.coordinator.RenderingPosition;
-import com.demcha.system.PdfRender;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;

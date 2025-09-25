@@ -1,7 +1,8 @@
-package com.demcha.system;
+package com.demcha.system.pdf_systems;
 
 import com.demcha.core.CanvasSize;
 import com.demcha.core.EntityManager;
+import com.demcha.system.RenderingSystem;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;

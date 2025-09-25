@@ -1,4 +1,4 @@
-package com.demcha.system;
+package com.demcha.exeptions;
 
 import com.demcha.components.core.Entity;
 

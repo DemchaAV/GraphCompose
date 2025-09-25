@@ -1,4 +1,4 @@
-package com.demcha.helper;
+package com.demcha.utils.files;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -6,7 +6,6 @@ import java.nio.file.*;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class PdfRebuildOpenInAdobe {
@@ -14,7 +13,7 @@ public class PdfRebuildOpenInAdobe {
     /** Главный сценарий: закрыть Adobe -> пересобрать PDF -> открыть его в Adobe */
     public static void regenerateAndOpenInAdobe(Path target, Supplier<Path> supplier) throws Exception {
         // 1) Close Adobe
-        closeAdobeFromResources("close-adobe.bat", 3, TimeUnit.SECONDS);
+        closeAdobeFromResources("pdf_close-adobe.bat", 3, TimeUnit.SECONDS);
         Thread.sleep(700);
 
         // Resolve a safe directory for temp files (same dir as target)
@@ -133,7 +132,7 @@ public class PdfRebuildOpenInAdobe {
         throw new IOException("Не удалось заменить файл: " + target, last);
     }
 
-    /** Выполняет .bat из resources (например, "close-adobe.bat") */
+    /** Выполняет .bat из resources (например, "pdf_close-adobe.bat") */
     public static void closeAdobeFromResources(String resourcePath, long timeout, TimeUnit unit)
             throws IOException, InterruptedException {
         InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath);

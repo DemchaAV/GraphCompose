@@ -1,4 +1,4 @@
-package com.demcha.system;
+package com.demcha.utils.page_brecker;
 
 public interface Breakable {
     void breakElement();

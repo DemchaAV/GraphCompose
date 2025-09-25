@@ -1,4 +1,4 @@
-package com.demcha.system;
+package com.demcha.system.pdf_systems;
 
 import com.demcha.components.LineTextData;
 import com.demcha.components.content.text.BlockTextData;
@@ -19,8 +19,9 @@ import com.demcha.components.renderable.TextComponent;
 import com.demcha.components.style.Padding;
 import com.demcha.core.CanvasSize;
 import com.demcha.core.EntityManager;
+import com.demcha.system.System;
 import com.demcha.utils.containerUtils.ContainerExpander;
-import com.demcha.utils.containerUtils.ContainerRearranger;
+import com.demcha.utils.containerUtils.ContainerLayoutManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -230,7 +231,7 @@ public class PdfLayoutSystem implements System {
                 .childrenByParent(childIds)
                 .orElseGet(Map::of);
 
-        ContainerRearranger.process(childrenByParent, entityManager);
+        ContainerLayoutManager.process(childrenByParent, entityManager);
 
         // 3) Expand parent boxes if needed (any child larger than parent)
         expandParentsBox(childrenByParent, entityManager);

@@ -1,6 +1,6 @@
 package com.demcha.components.core;
 
-import com.demcha.system.PdfRender;
+import com.demcha.system.pdf_systems.PdfRender;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;

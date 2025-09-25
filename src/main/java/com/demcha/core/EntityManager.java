@@ -4,7 +4,7 @@ import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
 import com.demcha.components.layout.ParentComponent;
-import com.demcha.system.PdfRender;
+import com.demcha.system.pdf_systems.PdfRender;
 import com.demcha.system.System;
 import lombok.Getter;
 import lombok.Setter;

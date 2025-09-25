@@ -1,7 +1,8 @@
-package com.demcha.system;
+package com.demcha.system.pdf_systems;
 
 import com.demcha.core.EntityManager;
-import com.demcha.helper.PdfRebuildOpenInAdobe;
+import com.demcha.system.FileManagerSystem;
+import com.demcha.utils.files.PdfRebuildOpenInAdobe;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -20,7 +21,7 @@ public class PdfFileManagerSystem implements FileManagerSystem {
     /**
      * The file which will be closed and reopened atomically.
      */
-    private String closingBatFile = "close-adobe.bat";
+    private String closingBatFile = "pdf_close-adobe.bat";
 
     @Override
     public void process(EntityManager entityManager) {

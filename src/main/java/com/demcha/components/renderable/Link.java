@@ -7,7 +7,7 @@ import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.components.style.Padding;
-import com.demcha.system.PdfRender;
+import com.demcha.system.pdf_systems.PdfRender;
 import org.apache.pdfbox.cos.COSArray;
 import org.apache.pdfbox.cos.COSInteger;
 import org.apache.pdfbox.cos.COSName;

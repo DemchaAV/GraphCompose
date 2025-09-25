@@ -30,8 +30,9 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
     private List<LineTextData> lines;
     private TextStyle textStyle;
 
-    public BlockTextBuilder(EntityManager entityManager) {
+    public BlockTextBuilder(EntityManager entityManager, Align align) {
         super(entityManager);
+        align(align);
     }
 
 
@@ -262,20 +263,20 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         entity.addComponent(new BlockText());
     }
 
-
-    /**
-     * Initializes the container builder with the specified alignment.
-     * This method calls the common creation logic from the superclass and then
-     * adds a {@link BlockText} component to the entity.
-     *
-     * @param align The {@link Align} strategy for arranging children within the container.
-     * @return This builder instance for method chaining.
-     */
-    public BlockTextBuilder create(Align align) {
-        align(align);
-        entity.addComponentIfAbsent(new BlockText()); // Add the specific component
-        return self();
-    }
+//
+//    /**
+//     * Initializes the container builder with the specified alignment.
+//     * This method calls the common creation logic from the superclass and then
+//     * adds a {@link BlockText} component to the entity.
+//     *
+//     * @param align The {@link Align} strategy for arranging children within the container.
+//     * @return This builder instance for method chaining.
+//     */
+//    public BlockTextBuilder create(Align align) {
+//        align(align);
+//        entity.addComponentIfAbsent(new BlockText()); // Add the specific component
+//        return self();
+//    }
 
     public BlockTextBuilder align(Align align) {
         HAnchor h = align.h();

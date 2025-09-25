@@ -173,7 +173,7 @@ public class ContainerAligner {
         protected List<Entity> getOrderedChildren(Entity parent, EntityManager entityManager) {
             return parent.getChildren().stream()
                     .map(id -> entityManager.getEntity(id).orElseThrow())
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toList()).reversed();
         }
 
         // --- Abstract "Hook" Methods ---
@@ -274,9 +274,9 @@ public class ContainerAligner {
     private abstract static class ReverseLayoutStrategy extends BaseLayoutStrategy {
         @Override
         protected List<Entity> getOrderedChildren(Entity parent, EntityManager entityManager) {
-            List<Entity> children = super.getOrderedChildren(parent, entityManager);
-            Collections.reverse(children);
-            return children;
+           return  parent.getChildren().stream()
+                    .map(id -> entityManager.getEntity(id).orElseThrow())
+                    .collect(Collectors.toList());
         }
     }
 
@@ -301,6 +301,7 @@ public class ContainerAligner {
      * A reverse vertical strategy. It uses composition to delegate all layout calculations
      * to the standard {@link VerticalStrategy}, after it has reversed the child order.
      */
+
     private static class ReverseVerticalStrategy extends ReverseLayoutStrategy {
         private final VerticalStrategy delegate = new VerticalStrategy();
 

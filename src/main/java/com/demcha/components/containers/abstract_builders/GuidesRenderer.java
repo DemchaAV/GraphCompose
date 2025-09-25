@@ -29,7 +29,7 @@ public interface GuidesRenderer {
     float GUIDES_OPACITY = 0.8f;
 
     // --- Margin Guide ---
-    Color MARGIN_COLOR =  new Color(15, 88, 147);
+    Color MARGIN_COLOR =  new Color(0, 110, 255);
     Stroke MARGIN_STROKE = new Stroke(0.5);
 
     // --- Padding Guide ---

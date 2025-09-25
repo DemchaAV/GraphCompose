@@ -195,7 +195,7 @@ public class Model {
                 .decoration(TextDecoration.UNDERLINE)
                 .build();
 
-        var blockText = new BlockTextBuilder(entityManager).create(Align.left(5))
+        var blockText = new BlockTextBuilder(entityManager,Align.left(5))
                 .size(width, 2)
                 .padding(0, 5, 0, 25)
                 .text(text, stye, padding, margin, bulletOffset)
@@ -219,7 +219,7 @@ public class Model {
                         .build());
 
 
-        var blockText = new BlockTextBuilder(entityManager).create(Align.left(5))
+        var blockText = new BlockTextBuilder(entityManager,Align.left(5))
                 .size(width, 2)
                 .padding(0, 5, 0, 25)
                 .text(textBuilder);

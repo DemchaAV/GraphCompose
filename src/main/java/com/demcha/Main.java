@@ -4,6 +4,7 @@ import com.demcha.components.components_builders.*;
 import com.demcha.components.content.link.Email;
 import com.demcha.components.content.link.LinkUrl;
 import com.demcha.components.content.shape.Stroke;
+import com.demcha.components.content.text.TextDecoration;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
@@ -18,18 +19,27 @@ import com.demcha.system.pdf_systems.PdfRenderingSystem;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 public class Main {
-
+   static String textBlockData = "Junior Java Backend Developer with hands-on experience building REST APIs using Spring Boot, Spring " +
+                           "    Data JPA, and JWT-based Security. Transitioning from an engineering leadership background with a " +
+                           "    strong foundation in Core/Advanced Java, SQL, and object-oriented design. Passionate about clean " +
+                           "    code, robust architecture, and solving real-world problems. Ready to contribute to modern backend " +
+                           "    development projects and grow within a collaborative team. ";
     public static void main(String[] args) throws Exception {
         // 1. Setup Phase
         EntityManager entityManager = setupEntityManager(true);
 
         // 2. Content Creation and Layout
-        createATableLayout(entityManager);
+        createATableLayout(entityManager, "table");
+//        createButtonsVContainer(entityManager, "buttons");
+
 
         // 3. Final Processing
         entityManager.processSystems();
@@ -55,34 +65,30 @@ public class Main {
         return entityManager;
     }
 
-    /**
-     * Creates and assembles the main layout of the PDF page.
-     *
-     * @param entityManager The entity manager to use for creating entities.
-     */
-    private static Entity createPageLayout(EntityManager entityManager) {
-        // Create two vertical columns of links
-        Entity leftColumn = createLinksColumn(entityManager);
-        Entity rightColumn = createLinksColumn(entityManager);
 
-        // Assemble them into a horizontal container
-        return new HContainerBuilder(entityManager, Align.middle(20))
-                .entityName("Horizontal Container")
-                .anchor(Anchor.center())
-                .addChild(leftColumn)
-                .addChild(rightColumn)
-                .build();
+    private static Entity createATableLayout(EntityManager entityManager, String name) {
+
+        Entity row1LeftColumn = createLinksColumn(entityManager, "leftColumn");
+        Entity row1RightColumn = createLinksColumn(entityManager, "rightColumn");
+        var row1 = createHContainer(entityManager, "row1", row1LeftColumn, row1RightColumn)
+                .addComponent(Margin.zero());//delete a Margin from rows
+
+        Entity row2LeftColumn = createLinksColumn(entityManager, "leftColumn");
+        Entity row2RightColumn = createLinksColumn(entityManager, "rightColumn");
+        var row2 = createHContainer(entityManager, "row2", row2LeftColumn, row2RightColumn)
+                .addComponent(Margin.zero()); //delete a Margin from rows
+
+        var buttons  = createButtonsVContainer(entityManager, "buttons");
+        Entity blockTextBuilder = blockTextBuilder(entityManager, textBlockData, 400, 2);
+
+
+        return createVContainer(entityManager, name, row1, row2, buttons,blockTextBuilder);
     }
 
-    private static Entity createATableLayout(EntityManager entityManager) {
-        var row1 = createPageLayout(entityManager);
-        var row2 = createPageLayout(entityManager);
-        return new VContainerBuilder(entityManager, Align.middle(20))
-                .entityName("Main Vertical Container")
-                .anchor(Anchor.center())
-                .addChild(row1)
-                .addChild(row2)
-                .build();
+    private static Entity createButtonsVContainer(EntityManager entityManager, String name) {
+        var button1 = button(entityManager, "button1");
+        var button2 = button(entityManager, "button2");
+        return createVContainer(entityManager, name, button1, button2);
     }
 
     /**
@@ -91,7 +97,7 @@ public class Main {
      * @param entityManager The entity manager to use for creating entities.
      * @return The built container (Entity).
      */
-    private static Entity createLinksColumn(EntityManager entityManager) {
+    private static Entity createLinksColumn(EntityManager entityManager, String name) {
         var googleLink = new LinkBuilder(entityManager)
                 .linkUrl(new LinkUrl("https://www.google.com/"))
                 .anchor(Anchor.center())
@@ -111,15 +117,9 @@ public class Main {
                 .build();
 
         // The method name is more descriptive now
-        return new VContainerBuilder(entityManager, Align.middle(20))
-                .margin(Margin.of(5))
-                .anchor(Anchor.topCenter())
-                .addChild(googleLink)
-                .addChild(emailLink)
-                .build();
+        return createVContainer(entityManager, name, googleLink, emailLink);
     }
 
-    // Note: The 'button' method is kept as it is well-defined, but it is not used
     // in this specific layout. You can call it from createPageLayout if needed.
     private static Entity button(EntityManager entityManager, String buttonText) {
         return new ButtonBuilder(entityManager)
@@ -130,8 +130,51 @@ public class Main {
                 )
                 .fillColor(ComponentColor.ROYAL_BLUE)
                 .stroke(new Stroke(ComponentColor.MODULE_TITLE, 2.0))
-                .position(100, 100)
                 .size(new ContentSize(90, 30))
                 .build();
     }
+
+    private static Entity createVContainer(EntityManager entityManager, String name, Entity... entities) {
+        VContainerBuilder vContainerBuilder = new VContainerBuilder(entityManager, Align.middle(20))
+                .entityName(name)
+                .margin(Margin.of(5))
+                .anchor(Anchor.center());
+        Arrays.stream(entities).forEach(vContainerBuilder::addChild);
+        return vContainerBuilder
+                .build();
+    }
+
+    private static Entity createHContainer(EntityManager entityManager, String name, Entity... entities) {
+        HContainerBuilder hContainerBuilder = new HContainerBuilder(entityManager, Align.middle(20))
+                .entityName(name)
+                .margin(Margin.of(5))
+                .anchor(Anchor.center());
+        Arrays.stream(entities).forEach(hContainerBuilder::addChild);
+        return hContainerBuilder
+                .build();
+    }
+
+    private static Entity blockTextBuilder(EntityManager entityManager, String text, double width, double spacing) {
+        TextBuilder textBuilder = new TextBuilder(entityManager)
+                .textWithAutoSize(text)
+                .textStyle(TextStyle.builder()
+                        .size(12)
+                        .color(ComponentColor.TITLE)
+                        .font(new PDType1Font(Standard14Fonts.FontName.HELVETICA))
+                        .decoration(TextDecoration.UNDERLINE)
+                        .build());
+
+
+        var blockText = new BlockTextBuilder(entityManager,Align.left(spacing))
+                .size(width, 2)
+                .anchor(Anchor.center())
+                .padding(0, 5, 0, 25)
+                .text(textBuilder);
+
+        return blockText.build();
+
+    }
+    
+    
+
 }

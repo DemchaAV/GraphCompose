@@ -26,6 +26,7 @@ public class ContainerLayoutManager {
         }
         Objects.requireNonNull(entityManager, "entityManager");
 
+
         // 'visited' is a clearer name than doneList for graph-style traversals.
         Set<UUID> visited = new HashSet<>();
 
@@ -34,6 +35,7 @@ public class ContainerLayoutManager {
                 if (isContainer(parentId, entityManager)) {
                     alignContainer(parentId, childrenByParent, visited, entityManager, new ArrayDeque<>());
                 } else {
+                    log.debug("Element Not container {}", entityManager.getEntity(parentId).orElseThrow(() -> new NoSuchElementException("Entity not found: " + parentId)));
                     visited.add(parentId);
                 }
             }

@@ -212,20 +212,6 @@ public class PdfLayoutSystem implements System {
                 .getEntitiesWithComponent(ParentComponent.class)
                 .orElseGet(Set::of);
 
-        // Align-only fast path (no parent/child relationships at all)
-        //TODO нужно будет переместить начало для алаинса текста
-        if (childIds.isEmpty()) {
-            log.info("PdfLayoutSystem: no children to lay out (align-only pass)");
-            entities.values().forEach(e -> {
-                log.info("Checking align");
-                if (e.has(Align.class)) {
-                    alignRearrange(e);
-
-                }
-            });
-            log.info("PdfLayoutSystem: layout complete (align-only)");
-        }
-
         // 2) Build parent -> children map
         final Map<UUID, Set<UUID>> childrenByParent = entityManager
                 .childrenByParent(childIds)
@@ -344,9 +330,6 @@ public class PdfLayoutSystem implements System {
                 computedPosition = ComputedPosition.from(childEntity, this.canvasSize);
             }
         } else {
-            if (childEntity.has(Align.class)) {
-                alignRearrange(childEntity);
-            }
             computedPosition = ComputedPosition.from(childEntity, canvasSize);
         }
 
@@ -362,7 +345,7 @@ public class PdfLayoutSystem implements System {
         );
         childEntity.addComponent(boundingBox);
         if (childEntity.has(Align.class)) {
-            alignRearrange(childEntity);
+            alignRearrangeBlockText(childEntity);
         }
 
         if (log.isDebugEnabled()) {
@@ -423,7 +406,6 @@ public class PdfLayoutSystem implements System {
     }
 
     private Entity alignBlockText(Entity blockTextBox) {
-        //TODO нужно имплементировать  другой алгоритм для имерения сонтент бокса если родитель это VBox или HBox должен учитываться то что спайсинг
         Align align = blockTextBox
                 .getComponent(Align.class).orElse(Align.defaultAlign(2));
         var component = blockTextBox.getComponent(BlockTextData.class).orElseThrow();
@@ -456,15 +438,14 @@ public class PdfLayoutSystem implements System {
         return blockTextBox;
     }
 
-    public Entity alignRearrange(Entity entity) {
+    public Optional <Entity> alignRearrangeBlockText(Entity entity) {
 
         if (entity.has(BlockTextData.class)) {
-            return alignBlockText(entity);
+            return Optional.of(alignBlockText(entity));
         } else {
-            log.info("Has to be implemented align for entity {}", entity);
-            return entity;
+           log.info("Entity  is not a BlockTextData");
+           return Optional.empty();
         }
-
     }
 
 

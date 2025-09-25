@@ -15,12 +15,12 @@ import com.demcha.components.layout.ParentComponent;
 import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.PaddingCoordinate;
 import com.demcha.components.layout.coordinator.Position;
-import com.demcha.components.renderable.ChunkedBlockText;
-import com.demcha.components.renderable.Container;
 import com.demcha.components.renderable.TextComponent;
 import com.demcha.components.style.Padding;
 import com.demcha.core.CanvasSize;
 import com.demcha.core.EntityManager;
+import com.demcha.utils.containerUtils.ContainerExpander;
+import com.demcha.utils.containerUtils.ContainerRearranger;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -52,33 +52,6 @@ public class PdfLayoutSystem implements System {
         this.canvasSize = generateCanvasSizeFromPage(page);
     }
 
-    private boolean updateContentSizeInEntity(Entity parent, double requireInnerBoxWidth, double requireInnerBoxHigh) {
-        log.debug("Check if require size bigger than parent InnerBoxSize");
-        var innerBoxSize = InnerBoxSize.from(parent).orElseThrow();
-
-        if (requireInnerBoxWidth > innerBoxSize.innerW() || requireInnerBoxHigh > innerBoxSize.innerH()) {
-            double wDifference = requireInnerBoxWidth - innerBoxSize.innerW();
-            double hDifference = requireInnerBoxHigh - innerBoxSize.innerH();
-
-
-            var contentSize = parent
-                    .getComponent(ContentSize.class)
-                    .orElseThrow(() -> {
-                        log.error("All objects must have a ContentSize. Object {} doesn't have one.", parent);
-                        return new ContentSizeNotFoundException(parent);
-                    });
-
-            log.debug("{} has been changed to", contentSize);
-            ContentSize newSize = new ContentSize(contentSize.width() + wDifference, contentSize.height() + hDifference);
-            parent.addComponent(newSize);
-
-            log.debug("{} size has been changed", newSize);
-            return true;
-        } else {
-            log.debug("{} size hasn't been changed", parent);
-            return false;
-        }
-    }
 
     /**
      * log.error("❌ Critical error: {} Cannot proceed. Can not compute {} Cause: {}.", e,returnClassName);
@@ -99,7 +72,7 @@ public class PdfLayoutSystem implements System {
      * to the page using {@link #positionWithAnchor(Entity, InnerBoxSize, PaddingCoordinate)}.</p>
      *
      * <p>If a parentEntity is present, its {@link InnerBoxSize} is used as the reference
-     * area for alignment (delegating to {@code alinePositionWithAnchor}).</p>
+     * area for alignment (delegating to {@code alignPositionWithAnchor}).</p>
      *
      * @param childEntity   the entity to position
      * @param parentEntity  the parentEntity entity, or {@code null} if the childEntity is the root
@@ -205,45 +178,20 @@ public class PdfLayoutSystem implements System {
      *   <li>{@link Position} – offset from the anchor</li>
      * </ul>
      *
-     * @param child               entity to align
-     * @param perrentInnerBoxSize parent’s content area
+     * @param child              entity to align
+     * @param parentInnerBoxSize parent’s content area
      * @return the computed position, also added to the entity
      *
      * <p><b>Note:</b> OuterBoxSize already includes margin, so do not add it again in formulas.</p>
      */
 
-    private ComputedPosition positionWithAnchor(Entity child, InnerBoxSize perrentInnerBoxSize, PaddingCoordinate paddingCoordinate) {
+    private ComputedPosition positionWithAnchor(Entity child, InnerBoxSize parentInnerBoxSize, PaddingCoordinate paddingCoordinate) {
 
-        var computed = ComputedPosition.from(child, perrentInnerBoxSize, paddingCoordinate);
+        var computed = ComputedPosition.from(child, parentInnerBoxSize, paddingCoordinate);
         child.addComponent(computed);
         log.debug("Computed position with Anchor has been created: {}", computed);
         log.debug("{} has been created in: {}", computed, child);
         return computed;
-    }
-
-    public void expendBoxSizeByChildren(Entity parent, Set<Entity> children) {
-        var parentInner = InnerBoxSize.from(parent).orElseThrow();
-        log.debug("{} {}", parent, parentInner);
-        double requireContextWidth = parentInner.innerW();
-        double requireContextHigth = parentInner.innerH();
-        log.debug("");
-        for (Entity childEntity : children) {
-            Optional<OuterBoxSize> childBoxSizeComponentOpt = OuterBoxSize.from(childEntity);
-            if (childBoxSizeComponentOpt.isPresent()) {
-                var childBoxSize = childBoxSizeComponentOpt.get();
-                log.debug("{} {}", childEntity, childBoxSize);
-                requireContextWidth = Math.max(requireContextWidth, childBoxSize.width());
-                requireContextHigth = Math.max(requireContextHigth, childBoxSize.height());
-            }
-
-        }
-        //update OuterBoxSize if size is bigger then previous
-        if (updateContentSizeInEntity(parent, requireContextWidth, requireContextHigth)) {
-            log.debug("{} has been expended", parent);
-        } else {
-            log.debug("{} has not been expended", parent);
-        }
-
     }
 
 
@@ -282,7 +230,7 @@ public class PdfLayoutSystem implements System {
                 .childrenByParent(childIds)
                 .orElseGet(Map::of);
 
-        containerAligner(childrenByParent);
+        ContainerRearranger.containerAligner(childrenByParent, entityManager);
 
         // 3) Expand parent boxes if needed (any child larger than parent)
         expandParentsBox(childrenByParent, entityManager);
@@ -306,7 +254,7 @@ public class PdfLayoutSystem implements System {
                     visit,
                     layers,
                     depthById,
-                    /* depth = */ 1
+                    1
             );
         }
 
@@ -471,7 +419,7 @@ public class PdfLayoutSystem implements System {
 
             log.debug("Definition {} all child entities by given Set children uuid", parentEntity);
 
-            expendBoxSizeByChildren(parentEntity, childrenEntities);
+            ContainerExpander.expandContentSizeByChildren(parentEntity, childrenEntities);
 
         }
     }
@@ -521,35 +469,6 @@ public class PdfLayoutSystem implements System {
 
     }
 
-    /**
-     * Aligns children within container entities.
-     * Iterates through parents with children and, if the parent is a {@link Container},
-     * delegates alignment to {@link ContainerAligner}. If the container also has {@link ChunkedBlockText},
-     * it performs horizontal alignment.
-     * @param childrenByParent A map where keys are parent UUIDs and values are sets of their children's UUIDs.
-     */
-
-    private void containerAligner(Map<UUID, Set<UUID>> childrenByParent) {
-        for (Map.Entry<UUID, Set<UUID>> parentUuid : childrenByParent.entrySet()) {
-            var entityParent = entityManager.getEntity(parentUuid.getKey()).orElseThrow();
-            if (entityParent.hasAssignable(Container.class)) {
-                log.info("{} is a container with component Container", entityParent);
-                ContainerAligner.align(entityParent, entityManager);
-                if (entityParent.hasAssignable(ChunkedBlockText.class)) {
-                    horizontallyAlign(entityParent);
-                }
-            }
-        }
-    }
-
-    private void horizontallyAlign(Entity parent) {
-        Align align = parent.getComponent(Align.class).orElseThrow();
-        for (UUID uuid : parent.getChildren()) {
-            Entity child = entityManager.getEntity(uuid).orElseThrow();
-            Align.alignHorizontally(child, InnerBoxSize.from(parent).orElseThrow().innerW(), align);
-
-        }
-    }
 
     /**
      * Returns whether the given entity must NOT be expanded.

@@ -55,11 +55,11 @@ public record Anchor(HAnchor h, VAnchor v) implements Component {
         return new Anchor(HAnchor.RIGHT, VAnchor.BOTTOM);
     }
 
-    public static Anchor centerTop() {
+    public static Anchor topCenter() {
         return new Anchor(HAnchor.CENTER, VAnchor.TOP);
     }
 
-    public static Anchor centerBottom() {
+    public static Anchor bottomCenter() {
         return new Anchor(HAnchor.CENTER, VAnchor.BOTTOM);
     }
     public static Anchor defaultAnchor() {

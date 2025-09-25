@@ -326,7 +326,7 @@ class test {
         // 13) Главная вертикальная колонка
         InnerBoxSize inner = canvas.innerBoxSize();
         Entity vBox = cv.moduleBuilder(inner)
-                .anchor(Anchor.centerTop())
+                .anchor(Anchor.topCenter())
                 .addChild(moduleHeader)
                 .addChild(moduleProfessionalSummary)
                 .addChild(moduleTechnicalSkills)

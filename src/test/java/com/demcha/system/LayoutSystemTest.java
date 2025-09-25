@@ -90,7 +90,7 @@ class LayoutSystemTest {
 
         child.addComponent(new ContentSize(500, 300));
 
-        layoutSystem.expendBoxSizeByChildren(parent, Set.of(child));
+        layoutSystem.expandBoxSizeByChildren(parent, Set.of(child));
         var outerBoxSize = InnerBoxSize.from(parent).orElse(null);
         assertThat(outerBoxSize).isNotNull();
         assertThat(outerBoxSize).isEqualTo(new InnerBoxSize(520, 325));

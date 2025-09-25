@@ -1,4 +1,4 @@
-package com.demcha.system;
+package com.demcha.utils.containerUtils;
 
 import com.demcha.components.containers.abstract_builders.StackAxis;
 import com.demcha.components.core.Entity;
@@ -74,6 +74,7 @@ public class ContainerAligner {
             return;
         }
 
+
         StackAxis stackAxis = parent.getComponent(StackAxis.class)
                 .orElseThrow(() -> new IllegalStateException("Container Entity must have a StackAxis component."));
 
@@ -142,6 +143,7 @@ public class ContainerAligner {
 
             for (int i = 0; i < children.size(); i++) {
                 Entity child = children.get(i);
+
                 boolean isLastChild = (i == children.size() - 1);
 
                 // IMPORTANT: Recursively align children of any nested containers first.

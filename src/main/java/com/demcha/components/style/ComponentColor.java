@@ -58,10 +58,6 @@ public record ComponentColor(Color color) implements Component {
     public static final Color MODULE_TITLE = new Color(44, 128, 185);
     public static final Color MODULE_LINE_TEXT = new Color(51, 51, 51);
 
-    // --- UI Specific: Link Colors ---
-    public ComponentColor(Color color) {
-        this.color = color;
-    }
 
     public ComponentColor(int r, int g, int b) {
         this(new Color(r, g, b));

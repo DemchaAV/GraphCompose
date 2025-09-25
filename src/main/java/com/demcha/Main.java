@@ -1,7 +1,6 @@
 package com.demcha;
 
 import com.demcha.components.components_builders.*;
-import com.demcha.components.containers.abstract_builders.ContainerBuilder;
 import com.demcha.components.content.link.Email;
 import com.demcha.components.content.link.LinkUrl;
 import com.demcha.components.content.shape.Stroke;
@@ -14,8 +13,8 @@ import com.demcha.components.layout.Anchor;
 import com.demcha.components.style.ComponentColor;
 import com.demcha.components.style.Margin;
 import com.demcha.core.EntityManager;
-import com.demcha.system.PdfLayoutSystem;
 import com.demcha.system.PdfFileManagerSystem;
+import com.demcha.system.PdfLayoutSystem;
 import com.demcha.system.PdfRenderingSystem;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -39,33 +38,54 @@ public class Main {
         entityManager.addSystem(new PdfFileManagerSystem(target, doc));
 
 
-
-//        links_mail(entityManager);
-//        ChunkTextBuilder(entityManager);
+        Entity links = links_mail(entityManager);
+//        Entity links2= links_mail(entityManager).addComponent(Anchor.topCenter());
 //        Entity entity = blockTextBuilder(entityManager);
+//        Entity blockText = textTest(entityManager);
+        Entity button1 = button(entityManager, "Button1");
+        Entity button2 = button(entityManager, "Button2");
+                var vBox = new VContainerBuilder(entityManager, Align.middle(20))
+                .entityName("V Main Container")
+                .anchor(Anchor.center())
+                .addChild(button1)
+                .addChild(button2)
+                .build();
 
-        textTest(entityManager);
-//        var button = new ButtonBuilder(entityManager)
-//                .text(new TextBuilder(entityManager)
-//                        .textWithAutoSize("Button")
-//                        .textStyle(TextStyle.defaultStyle())
-//                        .anchor(Anchor.center())
 //
-//                )
-//                .fillColor(ComponentColor.ROYAL_BLUE)
-//                .stroke(new Stroke(ComponentColor.MODULE_TITLE, 2.0))
-//                .position(100,100)
-//                .size(new ContentSize(90,30))
-//                        .build();
+//
+//        var vBox = new VContainerBuilder(entityManager, Align.middle(20))
+//                .entityName("V Main Container")
+//                .anchor(Anchor.center())
+//                .addChild(blockText)
+//                .addChild(links)
+//                .addChild(links2)
+//                .addChild(entity)
+//                .addChild(button)
+//                .build();
 
 
         entityManager.processSystems();
-        System.out.println("hello");
 
 
     }
 
-    private static void links_mail(EntityManager entityManager) {
+    private static Entity button(EntityManager entityManager, String buttonText) {
+        var button = new ButtonBuilder(entityManager)
+                .text(new TextBuilder(entityManager)
+                        .textWithAutoSize(buttonText)
+                        .textStyle(TextStyle.defaultStyle())
+                        .anchor(Anchor.center())
+
+                )
+                .fillColor(ComponentColor.ROYAL_BLUE)
+                .stroke(new Stroke(ComponentColor.MODULE_TITLE, 2.0))
+                .position(100, 100)
+                .size(new ContentSize(90, 30))
+                .build();
+        return button;
+    }
+
+    private static Entity links_mail(EntityManager entityManager) {
         var google = new LinkBuilder(entityManager)
                 .linkUrl(new LinkUrl("https://www.google.com/"))
                 .anchor(Anchor.center())
@@ -83,12 +103,13 @@ public class Main {
                 )
                 .build();
 
-        var row = new VContainerBuilder(entityManager,Align.middle(20))
+        var row = new VContainerBuilder(entityManager, Align.middle(20))
                 .margin(Margin.of(5))
                 .anchor(Anchor.center())
                 .addChild(google)
                 .addChild(email)
                 .build();
+        return row;
     }
 
     private static void ChunkTextBuilder(EntityManager entityManager) {
@@ -111,7 +132,7 @@ public class Main {
                         .build());
 
 
-        Entity blockText = new ChunkTextBuilder(entityManager,Align.left(10))
+        Entity blockText = new ChunkTextBuilder(entityManager, Align.left(10))
                 .size(500, 650)
                 .margin(Margin.of(0))
                 .anchor(Anchor.center())
@@ -143,7 +164,7 @@ public class Main {
         Entity blockText = new BlockTextBuilder(entityManager).create(Align.middle(0))
                 .size(500, 2)
                 .margin(Margin.of(20))
-                .anchor(Anchor.center())
+                .anchor(Anchor.bottomCenter())
                 .padding(0, 5, 0, 20)
                 .text(textBuilder)
                 .build();

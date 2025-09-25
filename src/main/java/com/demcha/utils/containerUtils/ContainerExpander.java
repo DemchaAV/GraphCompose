@@ -4,6 +4,7 @@ import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.geometry.OuterBoxSize;
+import com.demcha.components.style.Margin;
 import com.demcha.exeptions.ContentSizeNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -55,6 +56,7 @@ public final class ContainerExpander {
             if (log.isTraceEnabled()) log.trace("Child {} outer size: {}x{}", child, childOuter.width(), childOuter.height());
 
             // NOTE: if children can be offset, replace with (childRight, childBottom) calculation
+            Margin margin = child.getComponent(Margin.class).orElse(Margin.zero());
             requiredContentWidth = Math.max(requiredContentWidth, childOuter.width());
             requiredContentHeight = Math.max(requiredContentHeight, childOuter.height());
         }

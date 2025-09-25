@@ -20,4 +20,21 @@ public record Padding(double top, double right, double bottom, double left) impl
     public static Padding of( double trbl) {
         return new Padding(trbl, trbl, trbl, trbl);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Padding padding = (Padding) o;
+        return Double.compare(top, padding.top) == 0 && Double.compare(left, padding.left) == 0 && Double.compare(right, padding.right) == 0 && Double.compare(bottom, padding.bottom) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Double.hashCode(top);
+        result = 31 * result + Double.hashCode(right);
+        result = 31 * result + Double.hashCode(bottom);
+        result = 31 * result + Double.hashCode(left);
+        return result;
+    }
 }

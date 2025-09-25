@@ -8,6 +8,8 @@ import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.PaddingCoordinate;
 import com.demcha.components.layout.coordinator.RenderingPosition;
+import com.demcha.components.style.Margin;
+import com.demcha.components.style.Padding;
 import lombok.NonNull;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
@@ -40,10 +42,12 @@ public interface GuidesRenderer {
     Color BOX_COLOR = new Color(150, 150, 150); // Using a slightly lighter gray
     Stroke BOX_STROKE = new Stroke(1.0);
 
-    //endregion
+    //viability
+    boolean showOnlySetGuide = true;
 
     default boolean renderGuides(Entity e, PDPageContentStream cs, EnumSet<Guide> guides) throws IOException {
         boolean any = false;
+
         if (guides.contains(Guide.MARGIN)) any |= renderMargin(e, cs);
         if (guides.contains(Guide.PADDING)) any |= renderPadding(e, cs);
         if (guides.contains(Guide.BOX)) any |= boxRender(e, cs);
@@ -51,6 +55,12 @@ public interface GuidesRenderer {
     }
 
     default boolean renderMargin(Entity e, PDPageContentStream cs) throws IOException {
+        if (showOnlySetGuide){
+            var margin = e.getComponent(Margin.class).orElse(Margin.zero());
+            if (margin.equals(Margin.zero())) return false;
+        }
+
+
         var pos = e.getComponent(ComputedPosition.class).orElseThrow();
         var outer = OuterBoxSize.from(e).orElseThrow();
 
@@ -65,6 +75,12 @@ public interface GuidesRenderer {
     }
 
     default boolean renderPadding(Entity e, PDPageContentStream cs) throws IOException {
+        if (showOnlySetGuide){
+            var padding = e.getComponent(Padding.class).orElse(Padding.zero());
+            if (padding.equals(Padding.zero())) return false;
+        }
+
+
         var pad = PaddingCoordinate.from(e);
         var inner = InnerBoxSize.from(e).orElseThrow();
 

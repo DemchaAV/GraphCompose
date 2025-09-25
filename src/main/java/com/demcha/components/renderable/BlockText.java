@@ -33,7 +33,7 @@ import java.util.EnumSet;
 @NoArgsConstructor
 public class BlockText implements PdfRender, GuidesRenderer {
     private static final EnumSet<Guide> DEFAULT_GUIDES =
-            EnumSet.of(Guide.MARGIN, Guide.PADDING);
+            EnumSet.of(Guide.MARGIN, Guide.PADDING, Guide.BOX);
 
     /**
      * Retrieves and validates the {@link BlockTextData} and {@link TextStyle} components from an {@link Entity}.

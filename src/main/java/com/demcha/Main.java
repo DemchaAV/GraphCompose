@@ -12,6 +12,7 @@ import com.demcha.components.layout.Align;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.style.ComponentColor;
 import com.demcha.components.style.Margin;
+import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
 import com.demcha.system.pdf_systems.PdfFileManagerSystem;
 import com.demcha.system.pdf_systems.PdfLayoutSystem;
@@ -79,10 +80,10 @@ public class Main {
                 .addComponent(Margin.zero()); //delete a Margin from rows
 
         var buttons  = createButtonsVContainer(entityManager, "buttons");
-        Entity blockTextBuilder = blockTextBuilder(entityManager, textBlockData, 400, 2);
+        Entity blockTextBuilder = blockTextBuilder(entityManager, textBlockData, 400, 0);
 
 
-        return createVContainer(entityManager, name, row1, row2, buttons,blockTextBuilder);
+        return createVContainer(entityManager, name, row1, row2, buttons, blockTextBuilder);
     }
 
     private static Entity createButtonsVContainer(EntityManager entityManager, String name) {
@@ -135,9 +136,10 @@ public class Main {
     }
 
     private static Entity createVContainer(EntityManager entityManager, String name, Entity... entities) {
-        VContainerBuilder vContainerBuilder = new VContainerBuilder(entityManager, Align.middle(20))
+        VContainerBuilder vContainerBuilder = new VContainerBuilder(entityManager, Align.middle(10))
                 .entityName(name)
                 .margin(Margin.of(5))
+                .padding(Padding.of(5))
                 .anchor(Anchor.center());
         Arrays.stream(entities).forEach(vContainerBuilder::addChild);
         return vContainerBuilder
@@ -145,9 +147,10 @@ public class Main {
     }
 
     private static Entity createHContainer(EntityManager entityManager, String name, Entity... entities) {
-        HContainerBuilder hContainerBuilder = new HContainerBuilder(entityManager, Align.middle(20))
+        HContainerBuilder hContainerBuilder = new HContainerBuilder(entityManager, Align.middle(10))
                 .entityName(name)
                 .margin(Margin.of(5))
+                .padding(Padding.of(5))
                 .anchor(Anchor.center());
         Arrays.stream(entities).forEach(hContainerBuilder::addChild);
         return hContainerBuilder

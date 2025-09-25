@@ -31,5 +31,22 @@ public record Margin(double top, double right, double bottom, double left) imple
     public double vertical() {
         return top + bottom;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Margin margin = (Margin) o;
+        return Double.compare(top, margin.top) == 0 && Double.compare(left, margin.left) == 0 && Double.compare(right, margin.right) == 0 && Double.compare(bottom, margin.bottom) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Double.hashCode(top);
+        result = 31 * result + Double.hashCode(right);
+        result = 31 * result + Double.hashCode(bottom);
+        result = 31 * result + Double.hashCode(left);
+        return result;
+    }
 }
 

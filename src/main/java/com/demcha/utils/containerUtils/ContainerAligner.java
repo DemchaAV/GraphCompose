@@ -10,10 +10,11 @@ import com.demcha.components.layout.HAnchor;
 import com.demcha.components.layout.VAnchor;
 import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.renderable.Container;
+import com.demcha.components.style.Margin;
+import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -42,11 +43,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ContainerAligner {
 
-    /**
-     * A static map that holds all available layout strategies, keyed by their corresponding {@link StackAxis}.
-     * This map is the core of the Strategy pattern implementation, allowing for a fast, clean lookup
-     * of the correct alignment algorithm without using conditional statements.
-     */
     private static final Map<StackAxis, LayoutStrategy> STRATEGIES = Map.of(
             StackAxis.HORIZONTAL, new HorizontalStrategy(),
             StackAxis.VERTICAL, new VerticalStrategy(),
@@ -54,87 +50,31 @@ public class ContainerAligner {
             StackAxis.REVERSE_VERTICAL, new ReverseVerticalStrategy()
     );
 
-    /**
-     * The primary public method to initiate the alignment process.
-     * <p>
-     * It performs the following steps:
-     * <ol>
-     * <li>Validates that the provided entity is a container.</li>
-     * <li>Retrieves the container's {@link StackAxis} to determine the layout direction.</li>
-     * <li>Looks up the appropriate {@link LayoutStrategy} from the strategies map.</li>
-     * <li>Delegates the entire alignment process to the selected strategy.</li>
-     * </ol>
-     *
-     * @param parent        The container {@link Entity} whose children need to be aligned.
-     * @param entityManager The {@link EntityManager} used to fetch entity objects from their IDs.
-     */
     public static void align(Entity parent, EntityManager entityManager) {
         if (!parent.hasAssignable(Container.class)) {
             log.debug("{} is not a Container and will be skipped.", parent);
             return;
         }
 
-
         StackAxis stackAxis = parent.getComponent(StackAxis.class)
                 .orElseThrow(() -> new IllegalStateException("Container Entity must have a StackAxis component."));
 
-        // Select the appropriate strategy from the map based on the container's StackAxis.
         LayoutStrategy strategy = STRATEGIES.get(stackAxis);
 
         if (strategy != null) {
-            // Delegate the alignment task to the chosen strategy.
             log.debug("Aligning children of {} using {} strategy.", parent, stackAxis);
             strategy.alignChildren(parent, entityManager);
         } else {
-            // Handle cases where a StackAxis is defined but has no corresponding strategy.
             log.warn("No layout strategy found for StackAxis: {}. No alignment will be performed.", stackAxis);
         }
     }
 
-    /**
-     * <h2>The Strategy Interface</h2>
-     * <p>
-     * This interface defines the contract for all concrete layout strategy classes.
-     * It ensures that every strategy has a single, well-defined entry point for executing
-     * its alignment algorithm.
-     * </p>
-     */
     private interface LayoutStrategy {
-        /**
-         * Executes the specific layout algorithm for aligning children of a given parent container.
-         *
-         * @param parent        The container entity.
-         * @param entityManager The manager to fetch child entities.
-         */
         void alignChildren(Entity parent, EntityManager entityManager);
     }
 
-    /**
-     * <h2>Abstract Base Strategy</h2>
-     * <p>
-     * An abstract class that implements the {@link LayoutStrategy} interface. It contains the
-     * common boilerplate logic shared by all concrete strategies, such as the main iteration
-     * loop over child entities and the recursive alignment call for nested containers.
-     * This helps to keep the concrete strategies clean and focused on their specific layout logic.
-     * </p>
-     */
     private abstract static class BaseLayoutStrategy implements LayoutStrategy {
 
-        /**
-         * A mutable inner class used as an accumulator to track the container's dimensions
-         * as child elements are processed.
-         */
-        protected static final class Axes {
-            /** The primary axis of layout direction (e.g., width for horizontal, height for vertical). */
-            double main = 0;
-            /** The secondary axis, perpendicular to the main axis (e.g., height for horizontal). */
-            double cross = 0;
-        }
-
-        /**
-         * The template method that orchestrates the alignment process. It defines the skeleton
-         * of the algorithm and lets subclasses override specific steps.
-         */
         @Override
         public void alignChildren(Entity parent, EntityManager entityManager) {
             Align align = parent.getComponent(Align.class).orElseThrow();
@@ -143,14 +83,11 @@ public class ContainerAligner {
 
             for (int i = 0; i < children.size(); i++) {
                 Entity child = children.get(i);
-
                 boolean isLastChild = (i == children.size() - 1);
 
                 // IMPORTANT: Recursively align children of any nested containers first.
-                // This ensures that we calculate layouts from the innermost container outwards.
                 ContainerAligner.align(child, entityManager);
 
-                // --- Defer to concrete strategy for specific calculations ---
                 updateChildPosition(child, axes);
                 updateContainerDimensions(child, axes);
 
@@ -161,158 +98,133 @@ public class ContainerAligner {
             }
 
             // After processing all children, update the parent's final size.
-            parent.addComponent(getFinalContentSize(axes));
+            Padding parentPadding = parent.getComponent(Padding.class).orElse(Padding.zero());
+            parent.addComponent(getFinalContentSize(axes, parentPadding));
         }
 
         /**
-         * Hook method to get the list of children in the correct iteration order.
-         * Standard strategies process children in their natural order. Reverse strategies will override this.
-         *
-         * @return A list of child entities.
+         * CORRECTED: This now returns children in the standard, forward order.
+         * The reverse logic is handled by the ReverseLayoutStrategy.
          */
         protected List<Entity> getOrderedChildren(Entity parent, EntityManager entityManager) {
             return parent.getChildren().stream()
                     .map(id -> entityManager.getEntity(id).orElseThrow())
-                    .collect(Collectors.toList()).reversed();
+                    .collect(Collectors.toList());
         }
 
-        // --- Abstract "Hook" Methods ---
-        // These methods must be implemented by concrete subclasses to define the specific layout logic.
-
-        /**
-         * Calculates and applies the new position for a child entity based on the current main axis progress.
-         * @param child The child entity to position.
-         * @param axes  The current state of the container's dimensions.
-         */
         protected abstract void updateChildPosition(Entity child, Axes axes);
 
-        /**
-         * Updates the container's dimensions (main and cross axes) based on the size of the child being added.
-         * @param child The child entity being processed.
-         * @param axes  The accumulator for the container's dimensions.
-         */
         protected abstract void updateContainerDimensions(Entity child, Axes axes);
 
         /**
-         * Constructs the final {@link ContentSize} component for the parent container from the accumulated axes.
-         * @param axes The final calculated dimensions.
-         * @return The {@link ContentSize} component to be added to the parent.
+         * CORRECTED: The `lastChildMargin` parameter was removed to prevent double-counting.
+         * The parent's size is determined by the accumulated children's outer sizes and the parent's own padding.
          */
-        protected abstract ContentSize getFinalContentSize(Axes axes);
+        protected abstract ContentSize getFinalContentSize(Axes axes, Padding padding);
+
+        protected static final class Axes {
+            double main = 0;
+            double cross = 0;
+        }
     }
 
-    // --------------------------------------------------------------------------------
     // --- Concrete Strategy Implementations ---
-    // --------------------------------------------------------------------------------
 
-    /**
-     * Strategy for aligning children along the horizontal (X) axis.
-     * - Main axis: Width
-     * - Cross axis: Max Height
-     */
     private static class HorizontalStrategy extends BaseLayoutStrategy {
         @Override
         protected void updateChildPosition(Entity child, Axes axes) {
-            // We still need the current position for the cross-axis (y)
             Position currentPos = child.getComponent(Position.class).orElse(Position.zero());
             Anchor anchor = child.getComponent(Anchor.class).orElse(Anchor.defaultAnchor());
-
-            // Set the x-position based ONLY on the layout logic (axes.main).
-            // The y-position is preserved for now (but could be used for vertical alignment).
-            child.addComponent(new Position(axes.main, currentPos.y())); // Changed: currentPos.x() + axes.main → axes.main
+            child.addComponent(new Position(axes.main, currentPos.y()));
             child.addComponent(new Anchor(HAnchor.DEFAULT, anchor.v()));
         }
 
         @Override
         protected void updateContainerDimensions(Entity child, Axes axes) {
             var outbox = OuterBoxSize.from(child).orElseThrow();
-            axes.main += outbox.width(); // The main axis grows with the width of each child.
-            axes.cross = Math.max(axes.cross, outbox.height()); // The cross axis is the height of the tallest child.
+            axes.main += outbox.width();
+            axes.cross = Math.max(axes.cross, outbox.height());
         }
 
         @Override
-        protected ContentSize getFinalContentSize(Axes axes) {
-            // For horizontal, main axis is width, cross axis is height.
-            return new ContentSize(axes.main, axes.cross);
+        protected ContentSize getFinalContentSize(Axes axes, Padding padding) {
+            // CORRECTED: Do not add last child's margin. Parent padding affects both axes.
+            return new ContentSize(axes.main + padding.horizontal(), axes.cross + padding.vertical());
         }
     }
 
-    /**
-     * Strategy for aligning children along the vertical (Y) axis.
-     * - Main axis: Height
-     * - Cross axis: Max Width
-     */
     private static class VerticalStrategy extends BaseLayoutStrategy {
         @Override
         protected void updateChildPosition(Entity child, Axes axes) {
             Position currentPos = child.getComponent(Position.class).orElse(Position.zero());
             Anchor anchor = child.getComponent(Anchor.class).orElse(Anchor.defaultAnchor());
-
-            // Set the y-position based ONLY on the layout logic (axes.main).
-            child.addComponent(new Position(currentPos.x(), axes.main)); // Changed: currentPos.y() + axes.main → axes.main
+            // CORRECTED: Preserves original x-position for a true vertical stack.
+            // The previous logic (currentPos.x() + margin.bottom()) created an unintentional diagonal layout.
+            child.addComponent(new Position(currentPos.x(), axes.main));
             child.addComponent(new Anchor(anchor.h(), VAnchor.DEFAULT));
         }
 
         @Override
         protected void updateContainerDimensions(Entity child, Axes axes) {
             var outbox = OuterBoxSize.from(child).orElseThrow();
-            axes.main += outbox.height(); // The main axis grows with the height of each child.
-            axes.cross = Math.max(axes.cross, outbox.width()); // The cross axis is the width of the widest child.
+            axes.main += outbox.height();
+            axes.cross = Math.max(axes.cross, outbox.width());
         }
 
         @Override
-        protected ContentSize getFinalContentSize(Axes axes) {
-            // For vertical, main axis is height, cross axis is width.
-            return new ContentSize(axes.cross, axes.main);
+        protected ContentSize getFinalContentSize(Axes axes, Padding padding) {
+            // CORRECTED: Do not add last child's margin. Parent padding affects both axes.
+            return new ContentSize(axes.cross + padding.horizontal(), axes.main + padding.vertical());
         }
     }
 
-    /**
-     * An abstract strategy that simply reverses the iteration order of children.
-     * It inherits all other logic from {@link BaseLayoutStrategy}, demonstrating the power of composition.
-     */
     private abstract static class ReverseLayoutStrategy extends BaseLayoutStrategy {
+        /**
+         * CORRECTED: This class now correctly reverses the order of children.
+         */
         @Override
         protected List<Entity> getOrderedChildren(Entity parent, EntityManager entityManager) {
-           return  parent.getChildren().stream()
+            return parent.getChildren().stream()
                     .map(id -> entityManager.getEntity(id).orElseThrow())
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toList()).reversed(); // .reversed() is now correctly placed here
         }
     }
 
-    /**
-     * A reverse horizontal strategy. It uses composition to delegate all layout calculations
-     * to the standard {@link HorizontalStrategy}, after it has reversed the child order.
-     */
     private static class ReverseHorizontalStrategy extends ReverseLayoutStrategy {
         private final HorizontalStrategy delegate = new HorizontalStrategy();
 
         @Override
-        protected void updateChildPosition(Entity child, Axes axes) { delegate.updateChildPosition(child, axes); }
+        protected void updateChildPosition(Entity child, Axes axes) {
+            delegate.updateChildPosition(child, axes);
+        }
 
         @Override
-        protected void updateContainerDimensions(Entity child, Axes axes) { delegate.updateContainerDimensions(child, axes); }
+        protected void updateContainerDimensions(Entity child, Axes axes) {
+            delegate.updateContainerDimensions(child, axes);
+        }
 
         @Override
-        protected ContentSize getFinalContentSize(Axes axes) { return delegate.getFinalContentSize(axes); }
+        protected ContentSize getFinalContentSize(Axes axes, Padding padding) {
+            return delegate.getFinalContentSize(axes, padding);
+        }
     }
-
-    /**
-     * A reverse vertical strategy. It uses composition to delegate all layout calculations
-     * to the standard {@link VerticalStrategy}, after it has reversed the child order.
-     */
 
     private static class ReverseVerticalStrategy extends ReverseLayoutStrategy {
         private final VerticalStrategy delegate = new VerticalStrategy();
 
         @Override
-        protected void updateChildPosition(Entity child, Axes axes) { delegate.updateChildPosition(child, axes); }
+        protected void updateChildPosition(Entity child, Axes axes) {
+            delegate.updateChildPosition(child, axes);
+        }
 
         @Override
-        protected void updateContainerDimensions(Entity child, Axes axes) { delegate.updateContainerDimensions(child, axes); }
+        protected void updateContainerDimensions(Entity child, Axes axes) {
+            delegate.updateContainerDimensions(child, axes);
+        }
 
         @Override
-        protected ContentSize getFinalContentSize(Axes axes) { return delegate.getFinalContentSize(axes); }
+        protected ContentSize getFinalContentSize(Axes axes, Padding padding) {
+            return delegate.getFinalContentSize(axes, padding);
+        }
     }
 }
-

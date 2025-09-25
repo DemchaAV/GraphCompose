@@ -230,7 +230,7 @@ public class PdfLayoutSystem implements System {
                 .childrenByParent(childIds)
                 .orElseGet(Map::of);
 
-        ContainerRearranger.containerAligner(childrenByParent, entityManager);
+        ContainerRearranger.process(childrenByParent, entityManager);
 
         // 3) Expand parent boxes if needed (any child larger than parent)
         expandParentsBox(childrenByParent, entityManager);
@@ -416,9 +416,6 @@ public class PdfLayoutSystem implements System {
 
 
             }
-
-            log.debug("Definition {} all child entities by given Set children uuid", parentEntity);
-
             ContainerExpander.expandContentSizeByChildren(parentEntity, childrenEntities);
 
         }

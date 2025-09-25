@@ -213,10 +213,13 @@ public class ContainerAligner {
     private static class HorizontalStrategy extends BaseLayoutStrategy {
         @Override
         protected void updateChildPosition(Entity child, Axes axes) {
+            // We still need the current position for the cross-axis (y)
             Position currentPos = child.getComponent(Position.class).orElse(Position.zero());
             Anchor anchor = child.getComponent(Anchor.class).orElse(Anchor.defaultAnchor());
-            // Position the child at the end of the current main axis progress.
-            child.addComponent(new Position(currentPos.x() + axes.main, currentPos.y()));
+
+            // Set the x-position based ONLY on the layout logic (axes.main).
+            // The y-position is preserved for now (but could be used for vertical alignment).
+            child.addComponent(new Position(axes.main, currentPos.y())); // Changed: currentPos.x() + axes.main → axes.main
             child.addComponent(new Anchor(HAnchor.DEFAULT, anchor.v()));
         }
 
@@ -244,8 +247,9 @@ public class ContainerAligner {
         protected void updateChildPosition(Entity child, Axes axes) {
             Position currentPos = child.getComponent(Position.class).orElse(Position.zero());
             Anchor anchor = child.getComponent(Anchor.class).orElse(Anchor.defaultAnchor());
-            // Position the child at the end of the current main axis progress.
-            child.addComponent(new Position(currentPos.x(), currentPos.y() + axes.main));
+
+            // Set the y-position based ONLY on the layout logic (axes.main).
+            child.addComponent(new Position(currentPos.x(), axes.main)); // Changed: currentPos.y() + axes.main → axes.main
             child.addComponent(new Anchor(anchor.h(), VAnchor.DEFAULT));
         }
 

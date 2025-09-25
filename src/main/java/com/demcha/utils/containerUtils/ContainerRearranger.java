@@ -14,73 +14,118 @@ import java.util.*;
 public class ContainerRearranger {
 
     /**
-     * Recursively aligns child entities within their parent containers.
+     * Recursively aligns child entities within their parent containers (post-order).
      *
-     * <p>This utility performs a post-order traversal (bottom-up) of the entity tree. It ensures that
-     * a container's children are aligned before the container itself is aligned. This is crucial for layouts
-     * where a parent's size depends on its children's dimensions.</p>
-     *
-     * <p>It delegates the primary alignment logic to {@link ContainerAligner} and performs additional
-     * horizontal alignment for containers that also have a {@link ChunkedBlockText} component.</p>
-     *
-     * @param childrenByParent A map representing the entity hierarchy, where keys are parent UUIDs
-     * and values are the set of their direct children's UUIDs.
-     * @param entityManager The manager to retrieve entity and component data.
+     * A parent container is aligned only after all of its container-children are aligned.
+     * Non-container parents are just marked as processed (nothing to align).
      */
-    public static void containerAligner(Map<UUID, Set<UUID>> childrenByParent, EntityManager entityManager) {
-        Set<UUID> doneList = new HashSet<>();
-        for (Map.Entry<UUID, Set<UUID>> parentUuid : childrenByParent.entrySet()) {
-            if (doneList.contains(parentUuid.getKey())) {
-                continue;
+    public static void process(Map<UUID, Set<UUID>> childrenByParent, EntityManager entityManager) {
+        if (childrenByParent == null || childrenByParent.isEmpty()) {
+            log.debug("process(): nothing to do, childrenByParent is null or empty");
+            return;
+        }
+        Objects.requireNonNull(entityManager, "entityManager");
+
+        // 'visited' is a clearer name than doneList for graph-style traversals.
+        Set<UUID> visited = new HashSet<>();
+
+        for (UUID parentId : childrenByParent.keySet()) {
+            if (!visited.contains(parentId)) {
+                if (isContainer(parentId, entityManager)) {
+                    alignContainer(parentId, childrenByParent, visited, entityManager, new ArrayDeque<>());
+                } else {
+                    visited.add(parentId);
+                }
             }
-            if (isContainer(parentUuid.getKey(), entityManager)) {
-                alignContainer(parentUuid.getKey(), childrenByParent, doneList, entityManager);
+        }
+    }
+
+    /**
+     * Depth-first post-order alignment with cycle detection.
+     */
+    private static void alignContainer(
+            UUID parentId,
+            Map<UUID, Set<UUID>> childrenByParent,
+            Set<UUID> visited,
+            EntityManager entityManager,
+            Deque<UUID> stackForCycleCheck
+    ) {
+        log.debug("Align container start: {}", parentId);
+
+        if (!stackForCycleCheck.add(parentId)) {
+            // parentId is already in the current DFS path → cycle
+            throw new IllegalStateException("Cycle detected in entity hierarchy: " + stackForCycleCheck);
+        }
+
+        // Iterate children safely (use empty set when absent)
+        Set<UUID> children = childrenByParent.getOrDefault(parentId, Collections.emptySet());
+        for (UUID childId : children) {
+            if (visited.contains(childId)) continue;
+
+            if (isContainerSafe(childId, entityManager)) {
+                alignContainer(childId, childrenByParent, visited, entityManager, stackForCycleCheck);
             } else {
-                doneList.add(parentUuid.getKey());
+                // Non-container child: nothing to align here, but still mark as visited.
+                visited.add(childId);
             }
+        }
 
+        // Post-order: align AFTER children
+        alignElement(parentId, entityManager);
+        visited.add(parentId);
+
+        // Pop for cycle check
+        UUID popped = stackForCycleCheck.removeLast();
+        assert popped.equals(parentId) : "Cycle stack corrupted";
+
+        log.debug("Align container end: {}", parentId);
+    }
+
+    private static boolean isContainer(UUID id, EntityManager em) {
+        Entity e = em.getEntity(id).orElseThrow(() -> new NoSuchElementException("Entity not found: " + id));
+        return e.hasAssignable(Container.class);
+    }
+
+    private static boolean isContainerSafe(UUID id, EntityManager em) {
+        return em.getEntity(id)
+                .map(e -> e.hasAssignable(Container.class))
+                .orElse(false);
+    }
+
+    private static void alignElement(UUID id, EntityManager em) {
+        Entity parent = em.getEntity(id).orElseThrow(() -> new NoSuchElementException("Entity not found: " + id));
+
+        if (!parent.hasAssignable(Container.class)) {
+            log.trace("alignElement(): {} is not a Container — skipping.", parent);
+            return;
+        }
+
+        log.info("Aligning container: {}", parent);
+        ContainerAligner.align(parent, em);
+
+        // Optional horizontal text alignment when container also holds text
+        if (parent.hasAssignable(ChunkedBlockText.class)) {
+            horizontallyAlign(parent, em);
         }
     }
 
-    private static void alignContainer(UUID elementUuid, Map<UUID, Set<UUID>> childrenByParent, Set<UUID> doneList, EntityManager entityManager) {
-        log.info("{} aligner container", elementUuid);
-        log.debug("{} chek children if they a also container", childrenByParent.size());
-        for (UUID childUuid : childrenByParent.get(elementUuid)) {
-            if (doneList.contains(childUuid)) {
-                continue;
-            }
-            if (isContainer(childUuid, entityManager)) {
-                alignContainer(childUuid, childrenByParent, doneList, entityManager);
-            }
-        }
-        log.info("{} aligner container", elementUuid);
-        alignElement(elementUuid, entityManager);
-        doneList.add(elementUuid);
-    }
+    /**
+     * Align children horizontally inside parent's inner width.
+     * Uses the parent's Align component as the policy.
+     */
+    private static void horizontallyAlign(Entity parent, EntityManager em) {
+        Align parentAlign = parent.getComponent(Align.class)
+                .orElseThrow(() -> new NoSuchElementException("Align component missing on parent: " + parent));
 
+        double innerW = InnerBoxSize.from(parent)
+                .orElseThrow(() -> new NoSuchElementException("InnerBoxSize missing on parent: " + parent))
+                .innerW();
 
-    private static boolean isContainer(UUID uuid, EntityManager entityManager) {
-        Entity entity = entityManager.getEntity(uuid).orElseThrow();
-        return entity.hasAssignable(Container.class);
-    }
+        for (UUID childId : parent.getChildren()) {
+            Entity child = em.getEntity(childId)
+                    .orElseThrow(() -> new NoSuchElementException("Child entity not found: " + childId));
 
-
-    private static void alignElement(UUID uuid, EntityManager entityManager) {
-        var entityParent = entityManager.getEntity(uuid).orElseThrow();
-        if (entityParent.hasAssignable(Container.class)) {
-            log.info("{} is a container with component Container", entityParent);
-            ContainerAligner.align(entityParent, entityManager);
-            if (entityParent.hasAssignable(ChunkedBlockText.class)) {
-                horizontallyAlign(entityParent, entityManager);
-            }
-        }
-    }
-
-    private static void horizontallyAlign(Entity parent, EntityManager entityManager) {
-        Align align = parent.getComponent(Align.class).orElseThrow();
-        for (UUID uuid : parent.getChildren()) {
-            Entity child = entityManager.getEntity(uuid).orElseThrow();
-            Align.alignHorizontally(child, InnerBoxSize.from(parent).orElseThrow().innerW(), align);
+            Align.alignHorizontally(child, innerW, parentAlign);
         }
     }
 }

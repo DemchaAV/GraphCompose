@@ -24,6 +24,7 @@ public record InnerBoxSize(double innerW, double innerH) {
                             return new ContentSizeNotFoundException();
                         }
                 );
+
         var innerBoxSizeOpt = from(size, padding);
         var innerBoxSize = innerBoxSizeOpt.orElseThrow();
         log.debug("Calculated Inner  {} for entity: {}", innerBoxSize, entity);

@@ -109,7 +109,7 @@ public class ContainerAligner {
         protected List<Entity> getOrderedChildren(Entity parent, EntityManager entityManager) {
             return parent.getChildren().stream()
                     .map(id -> entityManager.getEntity(id).orElseThrow())
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toList()).reversed();
         }
 
         protected abstract void updateChildPosition(Entity child, Axes axes);
@@ -186,7 +186,7 @@ public class ContainerAligner {
         protected List<Entity> getOrderedChildren(Entity parent, EntityManager entityManager) {
             return parent.getChildren().stream()
                     .map(id -> entityManager.getEntity(id).orElseThrow())
-                    .collect(Collectors.toList()).reversed(); // .reversed() is now correctly placed here
+                    .collect(Collectors.toList()); // .reversed() is now correctly placed here
         }
     }
 

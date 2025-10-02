@@ -32,4 +32,10 @@ public record RenderingPosition(double x, double y) {
         log.debug("Rendering position {}", from);
         return Optional.of(from);
     }
+
+    @Override
+    public String toString() {
+        return "RenderingPosition[" + "x: " + x() + ", " + "y: " + y() + "]";
+
+    }
 }

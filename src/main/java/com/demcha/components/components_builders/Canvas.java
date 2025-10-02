@@ -1,7 +1,12 @@
 package com.demcha.components.components_builders;
 
-import org.apache.pdfbox.pdmodel.PDPage;
+import com.demcha.components.style.Margin;
 
 public interface Canvas {
-    ElementBuilder fillPageSize(PDPage page);
+    double width();
+
+    double height();
+
+    Margin margin();
+
 }

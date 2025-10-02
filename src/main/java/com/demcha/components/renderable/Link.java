@@ -56,7 +56,6 @@ public class Link implements PdfRender, GuidesRenderer {
     public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, int indexPage, boolean guideLine) throws IOException {
 
         // прямоугольник поверх текста
-        System.out.println(e);
         var renderingPosition = RenderingPosition.from(e).orElseThrow();
         Padding padding = e.getComponent(Padding.class).orElse(Padding.zero());
         ContentSize size = e.getComponent(ContentSize.class).orElseThrow();

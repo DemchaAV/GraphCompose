@@ -8,6 +8,7 @@ import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.exeptions.ContentSizeNotFoundException;
+import com.demcha.system.Expendable;
 import com.demcha.system.pdf_systems.PdfRender;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +20,7 @@ import java.util.EnumSet;
 
 @Slf4j
 @EqualsAndHashCode
-public class Rectangle implements PdfRender, GuidesRenderer {
+public class Rectangle implements PdfRender, GuidesRenderer, Expendable {
     private static final EnumSet<Guide> DEFAULT_GUIDES =
             EnumSet.of(Guide.MARGIN, Guide.PADDING);
 

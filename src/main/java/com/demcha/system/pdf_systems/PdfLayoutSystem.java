@@ -27,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDPage;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * <h1>PdfLayoutSystem</h1>
@@ -47,23 +46,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PdfLayoutSystem implements System {
     private final CanvasSize canvasSize;
-    private EntityManager entityManager;
 
     public PdfLayoutSystem(PDPage page) {
         this.canvasSize = generateCanvasSizeFromPage(page);
-    }
-
-
-    /**
-     * log.error("❌ Critical error: {} Cannot proceed. Can not compute {} Cause: {}.", e,returnClassName);
-     *
-     * @param e
-     * @param returnClass
-     * @param cause
-     */
-    private void errorCalculation(Entity e, Class<? extends Component> returnClass, String cause) {
-        var returnClassName = returnClass.getName();
-        log.error("❌ Critical error: {} Cannot proceed. Can not compute {} Cause: {}.", e, returnClassName, cause == null ? "" : cause);
     }
 
     /**
@@ -198,7 +183,6 @@ public class PdfLayoutSystem implements System {
 
     @Override
     public void process(EntityManager entityManager) {
-        this.entityManager = entityManager;
         log.info("PdfLayoutSystem: processing...");
 
         final var entities = entityManager.getEntities();
@@ -220,7 +204,7 @@ public class PdfLayoutSystem implements System {
         ContainerLayoutManager.process(childrenByParent, entityManager);
 
         // 3) Expand parent boxes if needed (any child larger than parent)
-        expandParentsBox(childrenByParent, entityManager);
+        ContainerExpander.process(childrenByParent, entityManager);
 
         // 4) Compute roots
         final Set<UUID> roots = computeRoots(entities, childIds, entityManager);
@@ -362,47 +346,6 @@ public class PdfLayoutSystem implements System {
         }
 
         visit.put(id, Visit.DONE);
-    }
-
-    /**
-     * The method normalizeBoxSize adjusts the size of parent entities. For each parent, it inspects the dimensions (OuterBoxSize) of all its direct children.
-     * It then ensures the parent's OuterBoxSize is large enough to encompass its own original size and the size of its largest child by updating it to the maximum width and maximum height found.
-     * In simple terms: It makes a parent container at least as big as its biggest child.
-     *
-     * @param childrenByParents map already sorted by parent
-     */
-    private void expandParentsBox(Map<UUID, Set<UUID>> childrenByParents, EntityManager entityManager) {
-        log.info("PdfLayoutSystem: normalizing box size");
-
-
-        for (Map.Entry<UUID, Set<UUID>> parentUuid : childrenByParents.entrySet()) {
-
-            var entityParentOpt = entityManager.getEntity(parentUuid.getKey());
-            if (entityParentOpt.isEmpty()) {
-                log.warn("PdfLayoutSystem: hasn't find a Parent Entity by id {}", parentUuid.getKey());
-                continue;
-            }
-            var parentEntity = entityParentOpt.get();
-            if (!isExpandable(parentEntity)) {
-                log.debug("{} is restricted", parentEntity);
-                continue;
-            }
-            var childrenEntities = parentUuid.getValue()
-                    .stream()
-                    .map(entityManager::getEntity)
-                    .map(Optional::get)
-                    .collect(Collectors.toSet());
-
-
-            if (parentEntity.has(Align.class)) {
-
-                log.debug("It is a container with component Align");
-
-
-            }
-            ContainerExpander.expandContentSizeByChildren(parentEntity, childrenEntities);
-
-        }
     }
 
     private Entity alignBlockText(Entity blockTextBox) {

@@ -4,13 +4,14 @@ import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
 import com.demcha.components.layout.ParentComponent;
-import com.demcha.system.pdf_systems.PdfRender;
 import com.demcha.system.System;
+import com.demcha.system.pdf_systems.PdfRender;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * # EntityManager
@@ -193,6 +194,7 @@ public class EntityManager {
     public boolean remove(UUID entityId) {
         return entities.remove(entityId) != null;
     }
+
     public boolean remove(Entity entity) {
         return entities.remove(entity.getUuid()) != null;
     }
@@ -249,6 +251,21 @@ public class EntityManager {
         return Optional.of(childrenByParent);
     }
 
+    /**
+     * Retrive Entities from UUUIDs Set
+     * @param uuids Set will be transformed
+     * @return Set Entities
+     */
+    public Set<Entity> getSetEntitiesFromUuids(Set<UUID> uuids) {
+        return uuids
+                .stream()
+                .map(this::getEntity)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toSet());
+
+    }
+
 
     /**
      * System
@@ -267,7 +284,6 @@ public class EntityManager {
         log.info("Adding System {}", system.getClass().getName());
         systems.add(system);
     }
-
 
 
     public void printEntities() {

@@ -17,6 +17,7 @@ import com.demcha.core.EntityManager;
 import com.demcha.system.pdf_systems.PdfFileManagerSystem;
 import com.demcha.system.pdf_systems.PdfLayoutSystem;
 import com.demcha.system.pdf_systems.PdfRenderingSystem;
+import com.demcha.utils.page_brecker.PageBreaker;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -28,14 +29,15 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 
 public class Main {
-   static String textBlockData = "Junior Java Backend Developer with hands-on experience building REST APIs using Spring Boot, Spring " +
-                           "    Data JPA, and JWT-based Security. Transitioning from an engineering leadership background with a " +
-                           "    strong foundation in Core/Advanced Java, SQL, and object-oriented design. Passionate about clean " +
-                           "    code, robust architecture, and solving real-world problems. Ready to contribute to modern backend " +
-                           "    development projects and grow within a collaborative team. ";
+    static String textBlockData = "Junior Java Backend Developer with hands-on experience building REST APIs using Spring Boot, Spring " +
+                                  "    Data JPA, and JWT-based Security. Transitioning from an engineering leadership background with a " +
+                                  "    strong foundation in Core/Advanced Java, SQL, and object-oriented design. Passionate about clean " +
+                                  "    code, robust architecture, and solving real-world problems. Ready to contribute to modern backend " +
+                                  "    development projects and grow within a collaborative team. ";
+
     public static void main(String[] args) throws Exception {
         // 1. Setup Phase
-        EntityManager entityManager = setupEntityManager(true);
+        EntityManager entityManager = setupEntityManager(false);
 
         // 2. Content Creation and Layout
         createATableLayout(entityManager, "table");
@@ -44,6 +46,8 @@ public class Main {
 
         // 3. Final Processing
         entityManager.processSystems();
+        PageBreaker  pageBreaker = new PageBreaker(entityManager);
+        pageBreaker.sortEntityInOrder();
     }
 
     /**
@@ -79,8 +83,8 @@ public class Main {
         var row2 = createHContainer(entityManager, "row2", row2LeftColumn, row2RightColumn)
                 .addComponent(Margin.zero()); //delete a Margin from rows
 
-        var buttons  = createButtonsVContainer(entityManager, "buttons");
-        Entity blockTextBuilder = blockTextBuilder(entityManager, textBlockData, 400, 0);
+        var buttons = createButtonsVContainer(entityManager, "buttons");
+        Entity blockTextBuilder = blockTextBuilder(entityManager, textBlockData, 400, 1);
 
 
         return createVContainer(entityManager, name, row1, row2, buttons, blockTextBuilder);
@@ -132,6 +136,7 @@ public class Main {
                 .fillColor(ComponentColor.ROYAL_BLUE)
                 .stroke(new Stroke(ComponentColor.MODULE_TITLE, 2.0))
                 .size(new ContentSize(90, 30))
+                .cornerRadius(5)
                 .build();
     }
 
@@ -161,23 +166,23 @@ public class Main {
         TextBuilder textBuilder = new TextBuilder(entityManager)
                 .textWithAutoSize(text)
                 .textStyle(TextStyle.builder()
-                        .size(12)
+                        .size(9)
                         .color(ComponentColor.TITLE)
                         .font(new PDType1Font(Standard14Fonts.FontName.HELVETICA))
                         .decoration(TextDecoration.UNDERLINE)
                         .build());
 
 
-        var blockText = new BlockTextBuilder(entityManager,Align.left(spacing))
+        var blockText = new BlockTextBuilder(entityManager, Align.middle(spacing))
                 .size(width, 2)
                 .anchor(Anchor.center())
                 .padding(0, 5, 0, 25)
+                .margin(Margin.of(5))
                 .text(textBuilder);
 
         return blockText.build();
 
     }
-    
-    
+
 
 }

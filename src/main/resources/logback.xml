@@ -62,7 +62,7 @@
     </appender>
 
     <!-- Console for PdfLayoutSystem (DEBUG) -->
-    <appender name="CONSOLE_LAYOUTSYSTEM" class="ch.qos.logback.core.ConsoleAppender">
+    <appender name="CONSOLE_LAYOUT_SYSTEM" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>
         </encoder>
@@ -87,8 +87,8 @@
     </root>
 
     <!-- PdfLayoutSystem: full DEBUG console -->
-    <logger name="com.demcha" level="DEBUG" additivity="false">
-        <appender-ref ref="CONSOLE_LAYOUTSYSTEM"/>
+    <logger name="com.demcha.utils.page_brecker" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE_LAYOUT_SYSTEM"/>
     </logger>
 
 </configuration>

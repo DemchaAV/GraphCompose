@@ -4,20 +4,22 @@ import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.geometry.OuterBoxSize;
+import com.demcha.components.layout.Align;
 import com.demcha.components.style.Margin;
+import com.demcha.core.EntityManager;
 import com.demcha.exeptions.ContentSizeNotFoundException;
+import com.demcha.system.Expendable;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 public final class ContainerExpander {
 
     private static final double EPS = 1e-6;
 
-    private ContainerExpander() {}
+    private ContainerExpander() {
+    }
 
     /**
      * Ensures the parent's ContentSize is at least large enough to contain all children,
@@ -27,7 +29,7 @@ public final class ContainerExpander {
      * @param children direct children of the container
      * @return true if parent's ContentSize was increased, false otherwise
      */
-    public static boolean expandContentSizeByChildren(Entity parent, Set<Entity> children) {
+    private static boolean expandContentSizeByChildren(Entity parent, Set<Entity> children) {
         Objects.requireNonNull(parent, "parent cannot be null");
         Objects.requireNonNull(children, "children cannot be null");
 
@@ -53,7 +55,8 @@ public final class ContainerExpander {
             if (childOuterOpt.isEmpty()) continue;
 
             OuterBoxSize childOuter = childOuterOpt.get();
-            if (log.isTraceEnabled()) log.trace("Child {} outer size: {}x{}", child, childOuter.width(), childOuter.height());
+            if (log.isTraceEnabled())
+                log.trace("Child {} outer size: {}x{}", child, childOuter.width(), childOuter.height());
 
             // NOTE: if children can be offset, replace with (childRight, childBottom) calculation
             Margin margin = child.getComponent(Margin.class).orElse(Margin.zero());
@@ -99,5 +102,52 @@ public final class ContainerExpander {
         log.info("Expanded ContentSize for {}: {}x{} -> {}x{}",
                 parent, current.width(), current.height(), newWidth, newHeight);
         return true;
+    }
+
+    /**
+     * The method normalizeBoxSize adjusts the size of parent entities. For each parent, it inspects the dimensions (OuterBoxSize) of all its direct children.
+     * It then ensures the parent's OuterBoxSize is large enough to encompass its own original size and the size of its largest child by updating it to the maximum width and maximum height found.
+     * In simple terms: It makes a parent container at least as big as its biggest child.
+     *
+     * @param childrenByParents map already sorted by parent
+     */
+    public static void process(Map<UUID, Set<UUID>> childrenByParents, EntityManager entityManager) {
+        log.info("Box size normalizer");
+
+
+        for (Map.Entry<UUID, Set<UUID>> parentUuid : childrenByParents.entrySet()) {
+
+            var entityParentOpt = entityManager.getEntity(parentUuid.getKey());
+            if (entityParentOpt.isEmpty()) {
+                log.warn("Hasn't find a Parent Entity by id {}", parentUuid.getKey());
+                continue;
+            }
+            var parentEntity = entityParentOpt.get();
+            if (!isExpandable(parentEntity)) {
+                continue;
+            }
+            // Retriven Entiti
+            var childrenEntities = entityManager.getSetEntitiesFromUuids(parentUuid.getValue());
+
+
+            if (parentEntity.has(Align.class)) {
+
+                log.debug("It is a container with component Align");
+
+
+            }
+            ContainerExpander.expandContentSizeByChildren(parentEntity, childrenEntities);
+
+        }
+    }
+
+
+
+    private static boolean isExpandable(Entity entity) {
+        if (entity.hasAssignable(Expendable.class)) {
+            return true;
+        }
+        log.info("Entity {} has no Expendable", entity);
+        return false;
     }
 }

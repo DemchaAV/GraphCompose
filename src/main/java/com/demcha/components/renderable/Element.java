@@ -2,6 +2,7 @@ package com.demcha.components.renderable;
 
 import com.demcha.components.containers.abstract_builders.GuidesRenderer;
 import com.demcha.components.core.Entity;
+import com.demcha.system.Expendable;
 import com.demcha.system.pdf_systems.PdfRender;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -12,7 +13,7 @@ import java.util.EnumSet;
 /**
  * This is simply an empty element that can hold anything (image, text, etc.) as a single instance.
  */
-public class Element implements PdfRender, GuidesRenderer {
+public class Element implements PdfRender, GuidesRenderer, Expendable {
     private static final EnumSet<Guide> DEFAULT_GUIDES =
             EnumSet.of(Guide.MARGIN, Guide.PADDING, Guide.BOX);
 

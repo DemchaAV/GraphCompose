@@ -12,7 +12,7 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import java.util.Optional;
 
 
-public class ElementBuilder extends EmptyBox<ElementBuilder> implements Canvas {
+public class ElementBuilder extends EmptyBox<ElementBuilder>  {
     private boolean filledHorizontally;
     private boolean filledVertically;
 
@@ -27,7 +27,6 @@ public class ElementBuilder extends EmptyBox<ElementBuilder> implements Canvas {
     }
 
 
-    @Override
     public ElementBuilder fillPageSize(PDPage page) {
         PDRectangle box = page.getCropBox() != null ? page.getCropBox() : page.getMediaBox();
         float w = box.getWidth();

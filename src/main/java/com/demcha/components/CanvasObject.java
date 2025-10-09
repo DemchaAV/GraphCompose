@@ -64,7 +64,8 @@ public class CanvasObject {
 
         }
 
-        elementBuilder.addChild(module);
+        elementBuilder.addChild(module)
+                .anchor(Anchor.topCenter());
         return this;
     }
 

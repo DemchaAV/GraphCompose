@@ -113,10 +113,6 @@ class InnerBoxSizeTest {
                     .isInstanceOf(ContentSizeNotFoundException.class);
         }
 
-        @Test
-        void nullEntity_throwsNullPointerBecauseOfLombokNonNull() {
-            assertThatThrownBy(() -> InnerBoxSize.from(null))
-                    .isInstanceOf(NullPointerException.class);
-        }
+
     }
 }

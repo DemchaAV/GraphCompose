@@ -8,15 +8,39 @@
     <artifactId>PDF_CV_CREATOR</artifactId>
     <version>1.0-SNAPSHOT</version>
 
+    <!-- ===================== -->
+    <!--        PROPERTIES     -->
+    <!-- ===================== -->
     <properties>
+        <!-- Java -->
         <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Lib versions -->
+        <slf4j.version>2.0.17</slf4j.version>
+        <logback.version>1.5.18</logback.version>
+        <pdfbox.version>3.0.5</pdfbox.version>
+        <snakeyaml.version>2.4</snakeyaml.version>
+        <lombok.version>1.18.38</lombok.version>
+        <assertj.version>3.27.3</assertj.version>
+
+        <!-- Mockito / Byte Buddy -->
         <mockito.version>5.20.0</mockito.version>
+        <mockito.inline.version>5.2.0</mockito.inline.version>
+        <bytebuddy.version>1.17.7</bytebuddy.version>
+
+        <!-- Maven plugins -->
+        <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
+        <maven.surefire.plugin.version>3.2.5</maven.surefire.plugin.version>
+        <maven.dependency.plugin.version>3.7.1</maven.dependency.plugin.version>
     </properties>
 
-    <!-- Выравниваем JUnit через BOM одной версии -->
+    <!-- ===================== -->
+    <!--  DEPENDENCY MANAGEMENT-->
+    <!-- ===================== -->
     <dependencyManagement>
         <dependencies>
+            <!-- Align all JUnit 5 artifacts via BOM -->
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
@@ -27,12 +51,15 @@
         </dependencies>
     </dependencyManagement>
 
+    <!-- ===================== -->
+    <!--      DEPENDENCIES     -->
+    <!-- ===================== -->
     <dependencies>
-        <!-- Lombok -->
+        <!-- Lombok (compile-time only) -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.38</version>
+            <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -40,30 +67,30 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>2.0.17</version>
+            <version>${slf4j.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.5.18</version>
+            <version>${logback.version}</version>
         </dependency>
 
         <!-- PDFBox -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
-            <version>3.0.5</version>
+            <version>${pdfbox.version}</version>
         </dependency>
 
         <!-- YAML -->
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-            <version>2.4</version>
+            <version>${snakeyaml.version}</version>
         </dependency>
 
         <!-- ===== TEST SCOPE ===== -->
-        <!-- JUnit 5 (полный + параметризация) -->
+        <!-- JUnit 5 (platform + params picked from BOM) -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -75,54 +102,52 @@
             <scope>test</scope>
         </dependency>
 
-
         <!-- AssertJ -->
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.27.3</version>
+            <version>${assertj.version}</version>
             <scope>test</scope>
         </dependency>
 
-        <!-- Mockito (core достаточно; inline — только если нужен mock-maker-inline) -->
+        <!-- Mockito: core + junit-jupiter + inline (for final/private/etc.) -->
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>5.20.0</version>
+            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
-
-        <dependency>
-          <groupId>org.mockito</groupId>
-          <artifactId>mockito-inline</artifactId>
-          <version>5.2.0</version>
-          <scope>test</scope>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/org.mockito/mockito-junit-jupiter -->
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
-            <version>5.20.0</version>
+            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-inline</artifactId>
+            <version>${mockito.inline.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
+    <!-- ===================== -->
+    <!--        BUILD          -->
+    <!-- ===================== -->
     <build>
         <plugins>
             <!-- Compiler -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
+                <version>${maven.compiler.plugin.version}</version>
                 <configuration>
                     <release>${maven.compiler.release}</release>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
-                            <version>1.18.38</version>
+                            <version>${lombok.version}</version>
                         </path>
                     </annotationProcessorPaths>
                     <excludes>
@@ -131,22 +156,29 @@
                 </configuration>
             </plugin>
 
-            <!-- Surefire для JUnit 5 и Java 21 -->
+            <!-- Surefire (JUnit 5 on Java 21) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
+                <version>${maven.surefire.plugin.version}</version>
                 <configuration>
+                    <!-- For modular projects this avoids JPMS issues -->
                     <useModulePath>false</useModulePath>
-                    <!-- Никаких javaagent для Mockito не нужно -->
+
+                    <!-- Pre-attach Byte Buddy agent to avoid future JDK restrictions
+                         on dynamic agent loading (silences Mockito warning). -->
+                    <argLine>
+                        -javaagent:"${settings.localRepository}/net/bytebuddy/byte-buddy-agent/${bytebuddy.version}/byte-buddy-agent-${bytebuddy.version}.jar"
+                        -Xshare:off
+                    </argLine>
                 </configuration>
             </plugin>
 
-            <!-- (Опционально) Dependency plugin -->
+            <!-- (Optional) Dependency helper -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.7.1</version>
+                <version>${maven.dependency.plugin.version}</version>
             </plugin>
         </plugins>
     </build>

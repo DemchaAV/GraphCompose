@@ -87,7 +87,7 @@
     </root>
 
     <!-- PdfLayoutSystem: full DEBUG console -->
-    <logger name="com.demcha.utils.page_brecker" level="DEBUG" additivity="false">
+    <logger name="com.demcha.utils.page_brecker" level="OFF" additivity="false">
         <appender-ref ref="CONSOLE_LAYOUT_SYSTEM"/>
     </logger>
 

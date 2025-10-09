@@ -46,7 +46,7 @@ public class Main {
 
         // 3. Final Processing
         entityManager.processSystems();
-        var  pageBreaker = PageBreaker.sortEntityInOrder(entityManager.getEntities());
+        var  pageBreaker = PageBreaker.sortByYPosition(entityManager.getEntities());
     }
 
     /**

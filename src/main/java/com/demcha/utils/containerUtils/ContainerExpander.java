@@ -29,7 +29,7 @@ public final class ContainerExpander {
      * @param children direct children of the container
      * @return true if parent's ContentSize was increased, false otherwise
      */
-    private static boolean expandContentSizeByChildren(Entity parent, Set<Entity> children) {
+    public static boolean expandContentSizeByChildren(Entity parent, Set<Entity> children) {
         Objects.requireNonNull(parent, "parent cannot be null");
         Objects.requireNonNull(children, "children cannot be null");
 

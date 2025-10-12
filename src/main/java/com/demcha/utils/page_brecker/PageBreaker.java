@@ -44,6 +44,7 @@ public class PageBreaker {
                     Optional<RenderingPosition> pos = RenderingPosition.from(entry.getValue());
                     log.debug("{} -> {}", entry.getValue(), pos.orElse(null));
                 })
+
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 

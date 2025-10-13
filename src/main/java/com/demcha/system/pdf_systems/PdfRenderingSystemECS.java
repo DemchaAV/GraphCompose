@@ -2,7 +2,7 @@ package com.demcha.system.pdf_systems;
 
 import com.demcha.core.CanvasSize;
 import com.demcha.core.EntityManager;
-import com.demcha.system.RenderingSystem;
+import com.demcha.system.RenderingSystemECS;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * PdfRenderingSystem — diagnostics & hardening
+ * PdfRenderingSystemECS — diagnostics & hardening
  * <p>
  * Goals:
  * 1) PROVE that margins are not sneaking into the drawn width/height.
@@ -24,23 +24,23 @@ import java.util.UUID;
  */
 @Slf4j
 
-public class PdfRenderingSystem implements RenderingSystem {
+public class PdfRenderingSystemECS implements RenderingSystemECS {
 
     public static final PDRectangle DEFAULT_PAGE = PDRectangle.A4;
     private final PDDocument doc;
 
-    public PdfRenderingSystem(PDDocument doc, PDPage page) {
+    public PdfRenderingSystemECS(PDDocument doc, PDPage page) {
         this.doc = doc;
         doc.addPage(page);
     }
 
-    public PdfRenderingSystem(PDDocument doc) {
+    public PdfRenderingSystemECS(PDDocument doc) {
         this.doc = doc;
     }
 
     @Override
     public void process(EntityManager entityManager) {
-        log.info("Processing PdfRenderingSystem");
+        log.info("Processing PdfRenderingSystemECS");
         try (PDPageContentStream cs = openContentStream(0)) {
             var entities = entityManager.getLayers();
             for (Map.Entry<Integer, List<UUID>> e : entities.entrySet()) {

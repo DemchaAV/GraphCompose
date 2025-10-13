@@ -4,7 +4,7 @@ import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
 import com.demcha.components.layout.ParentComponent;
-import com.demcha.system.System;
+import com.demcha.system.SystemECS;
 import com.demcha.system.pdf_systems.PdfRender;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,11 +16,11 @@ import java.util.stream.Collectors;
 /**
  * # EntityManager
  * <p>
- * A minimal ECS-style (Entity–Component–System) registry for your PDF domain.
+ * A minimal ECS-style (Entity–Component–SystemECS) registry for your PDF domain.
  * <p>
  * - **Entities** are identified by {@link UUID}.<br>
  * - **Components** are plain data objects keyed by their concrete {@link Class}.<br>
- * - **Systems** implement domain logic via {@link System#process(EntityManager)} and
+ * - **Systems** implement domain logic via {@link SystemECS#process(EntityManager)} and
  * operate on entities/components stored here.
  * </p>
  *
@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
  *       (current implementation). Treat accordingly.</li>
  *   <li>The type cast in {@link #getComponent(UUID, Class)} is unchecked; ensure you request
  *       the correct component class.</li>
- *   <li>The interface name {@code com.demcha.system.System} shadows {@link java.lang.System};
+ *   <li>The interface name {@code com.demcha.system.SystemECS} shadows {@link java.lang.System};
  *       import carefully or fully qualify when needed.</li>
  * </ul>
  *
@@ -67,7 +67,7 @@ import java.util.stream.Collectors;
 @Setter
 public class EntityManager {
     private final Map<UUID, Entity> entities;
-    private final List<System> systems;
+    private final List<SystemECS> systems;
     private Map<Integer, List<UUID>> layers;     // NEW: layer → ordered ids
     private Map<UUID, Integer> depthById;
     private boolean guideLines;
@@ -268,20 +268,20 @@ public class EntityManager {
 
 
     /**
-     * System
+     * SystemECS
      */
     public void processSystems() {
         log.info("Processing Systems");
-        for (System system : systems) {
-            log.info("Processing System {}", system);
+        for (SystemECS system : systems) {
+            log.info("Processing SystemECS {}", system);
             system.process(this); // Передаём себя, чтобы система могла получить доступ к компонентам
         }
         log.info("Processed Systems");
     }
 
 
-    public void addSystem(System system) {
-        log.info("Adding System {}", system.getClass().getName());
+    public void addSystem(SystemECS system) {
+        log.info("Adding SystemECS {}", system.getClass().getName());
         systems.add(system);
     }
 

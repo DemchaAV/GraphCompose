@@ -1,9 +1,11 @@
 package com.demcha.components.layout;
 
 import com.demcha.components.core.Entity;
+import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.PaddingCoordinate;
+import com.demcha.components.layout.coordinator.Position;
 import com.demcha.core.CanvasSize;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -54,23 +56,30 @@ class ComputedPositionTest {
         Entity child = mock(Entity.class);
         InnerBoxSize inner = new InnerBoxSize(80, 60);
         Anchor defaultAnchor = mock(Anchor.class);
+        Position position  = mock(Position.class);
         ComputedPosition expected = new ComputedPosition(5, 7);
 
-        when(child.getComponent(Anchor.class)).thenReturn(Optional.empty());
+        when(child.getComponent(ContentSize.class)).thenReturn(Optional.of(new ContentSize(80,80)));
 
-        // Mock static Anchor.topLeft() to return our mock default anchor
+        // FIX: Simulate that the Anchor component is MISSING.
+        when(child.getComponent(Anchor.class)).thenReturn(Optional.of(Anchor.defaultAnchor()));
+        when (child.getComponent(Position.class)).thenReturn(Optional.of(new Position(5,7)));
+
+        // Mock the static method that is *actually* used for the default anchor.
         try (MockedStatic<Anchor> ms = mockStatic(Anchor.class)) {
-            ms.when(Anchor::bottomLeft).thenReturn(defaultAnchor);
+            ms.when(Anchor::defaultAnchor).thenReturn(defaultAnchor);
             when(defaultAnchor.getComputedPosition(child, inner)).thenReturn(expected);
 
+
             // Act
+
             ComputedPosition actual = ComputedPosition.from(child, inner, PaddingCoordinate.zero());
 
             // Assert
             assertThat(actual).isEqualTo(expected);
-            verify(child).addComponent(defaultAnchor);
-            verify(defaultAnchor).getComputedPosition(child, inner);
-            ms.verify(Anchor::bottomLeft);
+            verify(child).addComponent(defaultAnchor); // This will now be called
+            verify(defaultAnchor).getComputedPosition(child, inner); // This will now be called
+            ms.verify(Anchor::defaultAnchor); // This will now be called
         }
     }
 

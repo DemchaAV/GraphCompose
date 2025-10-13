@@ -19,7 +19,7 @@ import com.demcha.components.renderable.TextComponent;
 import com.demcha.components.style.Padding;
 import com.demcha.core.CanvasSize;
 import com.demcha.core.EntityManager;
-import com.demcha.system.System;
+import com.demcha.system.SystemECS;
 import com.demcha.utils.containerUtils.ContainerExpander;
 import com.demcha.utils.containerUtils.ContainerLayoutManager;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +44,7 @@ import java.util.*;
  */
 @Slf4j
 @RequiredArgsConstructor
-public class PdfLayoutSystem implements System {
+public class PdfLayoutSystem implements SystemECS {
     private final CanvasSize canvasSize;
 
     public PdfLayoutSystem(PDPage page) {

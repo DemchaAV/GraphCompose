@@ -16,7 +16,7 @@ import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
 import com.demcha.system.pdf_systems.PdfFileManagerSystem;
 import com.demcha.system.pdf_systems.PdfLayoutSystem;
-import com.demcha.system.pdf_systems.PdfRenderingSystem;
+import com.demcha.system.pdf_systems.PdfRenderingSystemECS;
 import com.demcha.utils.page_brecker.PageBreaker;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -63,7 +63,7 @@ public class Main {
         entityManager.setGuideLines(guidLines);
 
         entityManager.addSystem(new PdfLayoutSystem(doc.getPage(0)));
-        entityManager.addSystem(new PdfRenderingSystem(doc));
+        entityManager.addSystem(new PdfRenderingSystemECS(doc));
         entityManager.addSystem(new PdfFileManagerSystem(target, doc));
 
         return entityManager;

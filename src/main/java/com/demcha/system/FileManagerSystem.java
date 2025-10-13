@@ -3,7 +3,7 @@ package com.demcha.system;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public interface FileManagerSystem extends System {
+public interface FileManagerSystem extends SystemECS {
 
     Path outPath();
 

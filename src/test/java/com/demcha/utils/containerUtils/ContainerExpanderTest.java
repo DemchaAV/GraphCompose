@@ -1,10 +1,10 @@
 package com.demcha.utils.containerUtils;
 
+import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.geometry.OuterBoxSize;
-import com.demcha.components.layout.Align;
 import com.demcha.components.style.Margin;
 import com.demcha.core.EntityManager;
 import com.demcha.exeptions.ContentSizeNotFoundException;
@@ -35,7 +35,7 @@ class ContainerExpanderTest {
     private static final double EPSILON = 1e-6;
 
     /** A concrete, named class for testing the Expendable marker interface. */
-    private static class TestExpendable implements Expendable {}
+    private static class TestExpendable implements Expendable, Component {}
 
     /**
      * Helper method to create a child entity.
@@ -305,14 +305,16 @@ class ContainerExpanderTest {
         @Test
         @DisplayName("Should process and expand an 'Expendable' parent")
         void process_withExpendableParent_shouldExpand() {
-//            parentEntity.addComponent(new TestExpendable());
+            // FIX: Added the Expendable component to ensure the parent is processed.
+            parentEntity.addComponent(new TestExpendable());
 
             Entity childEntity1 = createChild();
             UUID childUuid1 = childEntity1.getUuid();
             Set<UUID> childUuids = Set.of(childUuid1);
             Set<Entity> childEntities = Set.of(childEntity1);
 
-            childrenByParents.put(childUuid1, childUuids);
+            // FIX: Used the parent's UUID as the key, not the child's.
+            childrenByParents.put(parentUuid, childUuids);
 
             when(entityManager.getEntity(parentUuid)).thenReturn(Optional.of(parentEntity));
             when(entityManager.getSetEntitiesFromUuids(childUuids)).thenReturn(childEntities);
@@ -330,7 +332,8 @@ class ContainerExpanderTest {
         @DisplayName("Should handle multiple parents correctly")
         void process_withMultipleParents_shouldProcessAll() {
             // --- Parent 1 (Expendable, should expand) ---
-//            parentEntity.addComponent(new TestExpendable());
+            // FIX: Added the Expendable component.
+            parentEntity.addComponent(new TestExpendable());
             Entity childEntity1 = createChild();
             UUID childUuid1 = childEntity1.getUuid();
             childrenByParents.put(parentUuid, Set.of(childUuid1));
@@ -348,10 +351,11 @@ class ContainerExpanderTest {
             childrenByParents.put(parent2Uuid, Collections.emptySet());
             when(entityManager.getEntity(parent2Uuid)).thenReturn(Optional.of(parent2Entity));
 
-            // --- Parent 3 (Expendable, but children fit) ---
+            // --- Parent 3 (Expendable, but children fit, should not expand) ---
             Entity parent3Entity = new Entity();
             UUID parent3Uuid = parent3Entity.getUuid();
-//            parent3Entity.addComponent(new TestExpendable());
+            // FIX: Added the Expendable component.
+            parent3Entity.addComponent(new TestExpendable());
             parent3Entity.addComponent(new ContentSize(200, 200));
             mockedInnerBoxSize.when(() -> InnerBoxSize.from(eq(parent3Entity)))
                     .thenReturn(Optional.of(new InnerBoxSize(200, 200)));
@@ -381,4 +385,3 @@ class ContainerExpanderTest {
         }
     }
 }
-

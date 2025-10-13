@@ -83,6 +83,15 @@ public class PageBreaker {
 
     // === Paging math =========================================================
 
+public static void  breakPages(Map<UUID, Entity> entities, double pageHeight) {
+        entities.entrySet().stream()
+                .forEach(e -> {
+                    var r = RenderingPosition.from(e.getValue()).orElseThrow(
+                            () -> new IllegalStateException("Entity " + e + " has no RenderingPosition"));
+                    PositionOnPage position = definePositionOnPage(r.y(), pageHeight, 0);
+                    e.getValue().addComponent(position);
+                });
+}
 
 
     /**

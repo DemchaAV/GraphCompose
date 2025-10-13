@@ -61,7 +61,7 @@ public final class ConfigLoader {
     }
 
     /**
-     * Replace ${ENV} or ${ENV:default} with values from System.getenv().
+     * Replace ${ENV} or ${ENV:default} with values from SystemECS.getenv().
      * Unknown vars without default → empty string.
      */
     private static String replaceEnvVariables(String text) {

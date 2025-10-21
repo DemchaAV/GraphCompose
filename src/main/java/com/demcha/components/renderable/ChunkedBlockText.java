@@ -5,8 +5,10 @@ import com.demcha.components.content.text.BlockTextData;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
+import com.demcha.components.geometry.Placement;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.coordinator.RenderingPosition;
+import com.demcha.system.RenderingSystemECS;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -29,7 +31,7 @@ import java.util.EnumSet;
 @Builder
 @EqualsAndHashCode
 @NoArgsConstructor
-public class ChunkedBlockText extends Container{
+public class ChunkedBlockText extends Container {
     private static final EnumSet<Guide> DEFAULT_GUIDES =
             EnumSet.of(Guide.MARGIN, Guide.PADDING);
 
@@ -69,77 +71,82 @@ public class ChunkedBlockText extends Container{
      * Optionally, it can render guide lines for debugging layout.
      *
      * @param e          The {@link Entity} containing the {@link BlockTextData}, {@link TextStyle}, {@link RenderingPosition}, and {@link InnerBoxSize}.
-     * @param cs         The {@link PDPageContentStream} to draw on.
      * @param doc        The {@link PDDocument} (currently unused but part of the interface).
-     * @param indexPage  The current page index (currently unused but part of the interface).
      * @param guideLines A boolean indicating whether to render layout guides.
      * @return {@code true} if the text was rendered, {@code false} otherwise (e.g., if required components are missing).
      * @throws IOException If an error occurs during PDF content stream operations.
      */
     @Override
-    public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, int indexPage, boolean guideLines) throws IOException {
+    public boolean pdfRender(Entity e, PDDocument doc, RenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
+
 
         if (!e.hasAssignable(BlockTextData.class)) {
             log.debug("Entity doesn't have TextComponent; skipping: {}", e);
             return false;
         }
 
-        var positionOpt = RenderingPosition.from(e);
-        if (positionOpt.isEmpty()) {
+        var placementOpt = e.getComponent(Placement.class);
+        if (placementOpt.isEmpty()) {
             log.warn("TextComponent has no RenderingPosition; skipping: {}", e);
             return false;
         }
-        var position = positionOpt.get();
-        InnerBoxSize innerBoxSize = InnerBoxSize.from(e).orElseThrow();
 
-        ValidatedTextData validateText = getValidatedTextData(e);
+        try (PDPageContentStream cs = openContentStream(e,doc, renderingSystemECS)) {
 
+            var position = placementOpt.get();
+            InnerBoxSize innerBoxSize = InnerBoxSize.from(e).orElseThrow();
 
-        var style = validateText.style();
-        float fontSize = (float) style.size();
-        PDFont font = style.font();
-        Color color = validateText.style().color();
-        var textHeight = (float) style.getLineHeight();
-
-        float scale = fontSize / 1000f;
-        PDFontDescriptor fd = font.getFontDescriptor();
-
-        float descentPx = Math.abs((fd != null ? fd.getDescent() : font.getBoundingBox().getLowerLeftY()) * scale);
-
-        var blockTextData = validateText.textValue().lines();
-
-        double spacing = e.getComponent(Align.class).orElseGet(() -> {
-            log.warn("TextComponent has no Align; using default: {}", e);
-            return Align.defaultAlign(2);
-        }).spacing() * -1;
-
-        log.debug("Rendering textBlock '{}' at position ({}, {}) fontSize={}  textStyle= ", blockTextData, position.x(), position.y());
-        log.debug("fontSize={}  textStyle= {}", fontSize, style);
+            ValidatedTextData validateText = getValidatedTextData(e);
 
 
-        cs.saveGraphicsState();
-        cs.setFont(font, fontSize);
-        cs.setNonStrokingColor(color);
-        cs.beginText();
+            var style = validateText.style();
+            float fontSize = (float) style.size();
+            PDFont font = style.font();
+            Color color = validateText.style().color();
+            var textHeight = (float) style.getLineHeight();
 
-        // стартовая позиция (левый верх «абзаца»)
-        float startX = (float) position.x() - descentPx;
-        float startY = (float) (position.y() + innerBoxSize.innerH()) - textHeight + descentPx; // if spacing will be negative
+            float scale = fontSize / 1000f;
+            PDFontDescriptor fd = font.getFontDescriptor();
+
+            float descentPx = Math.abs((fd != null ? fd.getDescent() : font.getBoundingBox().getLowerLeftY()) * scale);
+
+            var blockTextData = validateText.textValue().lines();
+
+            double spacing = e.getComponent(Align.class).orElseGet(() -> {
+                log.warn("TextComponent has no Align; using default: {}", e);
+                return Align.defaultAlign(2);
+            }).spacing() * -1;
+
+            log.debug("Rendering textBlock '{}' at position ({}, {}) fontSize={}  textStyle= ", blockTextData, position.x(), position.y());
+            log.debug("fontSize={}  textStyle= {}", fontSize, style);
 
 
-        for (LineTextData ltd : blockTextData) {
-            float currenPosition = (float) ltd.getX() + startX;
-            cs.setTextMatrix(new Matrix(1, 0, 0, 1, currenPosition, startY));
-            cs.showText(ltd.getLine());
-            startY -= (float) (textHeight - spacing);
-        }
+            cs.saveGraphicsState();
+            cs.setFont(font, fontSize);
+            cs.setNonStrokingColor(color);
+            cs.beginText();
 
-        cs.endText();
-        cs.restoreGraphicsState();
+            // стартовая позиция (левый верх «абзаца»)
+            float startX = (float) position.x() - descentPx;
+            float startY = (float) (position.y() + innerBoxSize.innerH()) - textHeight + descentPx; // if spacing will be negative
 
 
-        if (guideLines) {
-            renderGuides(e, cs, DEFAULT_GUIDES);
+            for (LineTextData ltd : blockTextData) {
+                float currenPosition = (float) ltd.getX() + startX;
+                cs.setTextMatrix(new Matrix(1, 0, 0, 1, currenPosition, startY));
+                cs.showText(ltd.getLine());
+                startY -= (float) (textHeight - spacing);
+            }
+
+            cs.endText();
+            cs.restoreGraphicsState();
+
+
+            if (guideLines) {
+                renderGuides(e, cs, DEFAULT_GUIDES);
+            }
+        }catch (IOException ioe) {
+            throw new IOException(ioe);
         }
 
         return true;

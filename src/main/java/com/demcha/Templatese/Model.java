@@ -98,6 +98,7 @@ public class Model {
     private Entity moduleName(String moduleName) {
         Entity moduleNameEntity = new TextBuilder(entityManager)
                 .textWithAutoSize(moduleName)
+                .entityName(moduleName)
                 .anchor(Anchor.topLeft())
                 .margin(new Margin(5, 5, 5, 10))
                 .textStyle(TextStyle.builder()

@@ -25,39 +25,39 @@ import java.util.Objects;
  * @param height The final height, including any vertical margins.
  */
 @Slf4j
-public record Placement(double x, double y, double width, double height) implements Component {
+public record Placement(double x, double y, double width, double height, int pageNumber) implements Component {
 
 
-    private static Placement from(OuterBoxSize outerBoxSize, Position positionWithMargins) {
+    private static Placement from(OuterBoxSize outerBoxSize, Position positionWithMargins, int pageNumber) {
         Objects.requireNonNull(outerBoxSize);
         Objects.requireNonNull(positionWithMargins);
-        return new Placement(positionWithMargins.x(), positionWithMargins.y(), outerBoxSize.width(), outerBoxSize.height());
+        return new Placement(positionWithMargins.x(), positionWithMargins.y(), outerBoxSize.width(), outerBoxSize.height(), pageNumber);
     }
 
-    public static Placement from(Entity entity, InnerBoxSize parrentInnerBoxSize,  PaddingCoordinate paddingCoordinate) {
+    public static Placement from(Entity entity, InnerBoxSize parrentInnerBoxSize,  PaddingCoordinate paddingCoordinate,  int pageNumber) {
         var computedPosition = ComputedPosition.from(entity, parrentInnerBoxSize, paddingCoordinate);
         var outBoxSize = OuterBoxSize.from(entity).orElseThrow();
         var padding = entity.getComponent(Padding.class).get();
-        return new Placement(computedPosition.x(), computedPosition.y(), outBoxSize.width(), outBoxSize.height());
+        return new Placement(computedPosition.x(), computedPosition.y(), outBoxSize.width(), outBoxSize.height(),pageNumber);
 
 
     }
 
-    public static Placement fromWithDefault(Entity entity, InnerBoxSize parrentInnerBoxSize,  PaddingCoordinate paddingCoordinate) {
+    public static Placement fromWithDefault(Entity entity, InnerBoxSize parrentInnerBoxSize,  PaddingCoordinate paddingCoordinate, int pageNumber) {
         var position = entity.getComponent(Position.class).orElse(Position.zero());
         entity.addComponent(position);
         var margin = entity.getComponent(Margin.class).orElse(Margin.zero());
         entity.addComponent(margin);
         var anchor = entity.getComponent(Anchor.class).orElse(Anchor.topLeft());
         entity.addComponent(anchor);
-        return from(entity, parrentInnerBoxSize,  paddingCoordinate);
+        return from(entity, parrentInnerBoxSize,  paddingCoordinate, pageNumber);
     }
 
-
-    public static Placement from(Entity child, Entity parent) {
+// TODO надо сделать так что бы считало позицию исходя с родителей
+    public static Placement from(Entity child, Entity parent, int pageNumber) {
         var parrentInnerBoxSize = InnerBoxSize.from(parent).orElseThrow();
         var paddingCoordinate = PaddingCoordinate.from(parent);
 
-        return from(child, parrentInnerBoxSize, paddingCoordinate);
+        return from(child, parrentInnerBoxSize, paddingCoordinate, pageNumber);
     }
 }

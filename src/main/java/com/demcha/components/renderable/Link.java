@@ -5,15 +5,16 @@ import com.demcha.components.content.link.Email;
 import com.demcha.components.content.link.LinkUrl;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
+import com.demcha.components.geometry.Placement;
 import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.components.style.Padding;
+import com.demcha.system.RenderingSystemECS;
 import com.demcha.system.pdf_systems.PdfRender;
 import org.apache.pdfbox.cos.COSArray;
 import org.apache.pdfbox.cos.COSInteger;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.interactive.action.PDActionURI;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
@@ -53,10 +54,10 @@ public class Link implements PdfRender, GuidesRenderer {
     }
 
     @Override
-    public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, int indexPage, boolean guideLine) throws IOException {
+    public boolean pdfRender(Entity e, PDDocument doc, RenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
 
         // прямоугольник поверх текста
-        var renderingPosition = RenderingPosition.from(e).orElseThrow();
+        var renderingPosition = e.getComponent(Placement.class).orElseThrow();
         Padding padding = e.getComponent(Padding.class).orElse(Padding.zero());
         ContentSize size = e.getComponent(ContentSize.class).orElseThrow();
         var url = e.getComponent(LinkUrl.class)
@@ -72,6 +73,7 @@ public class Link implements PdfRender, GuidesRenderer {
         position.setUpperRightX(x + (float) (size.width() + padding.horizontal()));
         position.setUpperRightY(y + (float) (size.height() + padding.vertical()));
 
+        int indexPage = e.getComponent(Placement.class).orElseThrow().pageNumber();
         addLink(doc, indexPage, position, url);
 
 

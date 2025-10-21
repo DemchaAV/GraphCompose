@@ -170,6 +170,13 @@ public final class Entity {
         }
     }
 
+    public void printInfo() {
+        System.out.println(this);
+        comps.forEach((k, e) -> {
+            System.out.println(e);
+        });
+    }
+
     @Override
     public String toString() {
         return "Entity[" + name +

@@ -6,9 +6,11 @@ import com.demcha.components.content.shape.FillColor;
 import com.demcha.components.content.shape.Stroke;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
+import com.demcha.components.geometry.Placement;
 import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.exeptions.ContentSizeNotFoundException;
 import com.demcha.system.Expendable;
+import com.demcha.system.RenderingSystemECS;
 import com.demcha.system.pdf_systems.PdfRender;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
@@ -26,19 +28,22 @@ public class Rectangle implements PdfRender, GuidesRenderer, Expendable {
 
 
     @Override
-    public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, int indexPage, boolean guideLines) throws IOException {
+    public boolean pdfRender(Entity e, PDDocument doc, RenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
         // draw an object first
-        boolean drawn = pdfRenderObject(e, cs);
-        // if was specified, draw guides
-        if (guideLines) {
-            renderGuides(e, cs, DEFAULT_GUIDES);
+        boolean drawn;
+        try (PDPageContentStream cs = openContentStream(e,doc, renderingSystemECS)) {
+            drawn = pdfRenderObject(e, cs);
+            // if was specified, draw guides
+            if (guideLines) {
+                renderGuides(e, cs, DEFAULT_GUIDES);
 
+            }
         }
         return drawn;
     }
 
 
-    private boolean pdfRenderObject(Entity e, PDPageContentStream cs) throws IOException {
+    private boolean pdfRenderObject(Entity e,PDPageContentStream cs) throws IOException {
         if (!e.hasAssignable(Rectangle.class)) {
             log.debug("No Rectangle on {}", e);
             return false;
@@ -47,7 +52,7 @@ public class Rectangle implements PdfRender, GuidesRenderer, Expendable {
         var size = e.getComponent(ContentSize.class)
                 .orElseThrow(ContentSizeNotFoundException::new);
 
-        var rpOpt = RenderingPosition.from(e); // x/y с учетом margin/anchor и т.п.
+        var rpOpt = e.getComponent(Placement.class); // x/y с учетом margin/anchor и т.п.
 
         // Color Default if not specified
         FillColor fillColor = e.getComponent(FillColor.class).orElse(FillColor.defaultColor());

@@ -59,7 +59,6 @@ public final class ContainerExpander {
                 log.trace("Child {} outer size: {}x{}", child, childOuter.width(), childOuter.height());
 
             // NOTE: if children can be offset, replace with (childRight, childBottom) calculation
-            Margin margin = child.getComponent(Margin.class).orElse(Margin.zero());
             requiredContentWidth = Math.max(requiredContentWidth, childOuter.width());
             requiredContentHeight = Math.max(requiredContentHeight, childOuter.height());
         }

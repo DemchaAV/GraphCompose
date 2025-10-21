@@ -13,6 +13,7 @@ import com.demcha.components.layout.Anchor;
 import com.demcha.components.style.ComponentColor;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
+import com.demcha.core.CanvasSize;
 import com.demcha.core.EntityManager;
 import com.demcha.system.pdf_systems.PdfFileManagerSystem;
 import com.demcha.system.pdf_systems.PdfLayoutSystem;
@@ -46,7 +47,7 @@ public class Main {
 
         // 3. Final Processing
         entityManager.processSystems();
-        var  pageBreaker = PageBreaker.sortByYPosition(entityManager.getEntities());
+        var pageBreaker = PageBreaker.sortByYPosition(entityManager.getEntities());
     }
 
     /**
@@ -57,13 +58,13 @@ public class Main {
     private static EntityManager setupEntityManager(boolean guidLines) throws Exception {
         Path target = Paths.get("output.pdf");
         PDDocument doc = new PDDocument();
-        doc.addPage(new PDPage(PDRectangle.A4));
+        CanvasSize canvasSize = new CanvasSize(PDRectangle.A4.getWidth(), PDRectangle.A4.getHeight(), 0.0f, 0.0f);
 
         EntityManager entityManager = new EntityManager();
         entityManager.setGuideLines(guidLines);
 
-        entityManager.addSystem(new PdfLayoutSystem(doc.getPage(0)));
-        entityManager.addSystem(new PdfRenderingSystemECS(doc));
+        entityManager.addSystem(new PdfLayoutSystem(canvasSize));
+        entityManager.addSystem(new PdfRenderingSystemECS(doc,canvasSize));
         entityManager.addSystem(new PdfFileManagerSystem(target, doc));
 
         return entityManager;

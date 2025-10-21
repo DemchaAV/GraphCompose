@@ -8,17 +8,18 @@ import com.demcha.components.components_builders.ModuleBuilder;
 import com.demcha.components.content.link.Email;
 import com.demcha.components.content.link.LinkUrl;
 import com.demcha.components.core.Entity;
+import com.demcha.components.core.EntityName;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
+import com.demcha.core.CanvasSize;
 import com.demcha.core.EntityManager;
 import com.demcha.system.pdf_systems.PdfFileManagerSystem;
 import com.demcha.system.pdf_systems.PdfLayoutSystem;
 import com.demcha.system.pdf_systems.PdfRenderingSystemECS;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
@@ -32,11 +33,11 @@ class test {
         EntityManager entityManager = new EntityManager();
         entityManager.setGuideLines(false);
         PDDocument doc = new PDDocument();
-        doc.addPage(new PDPage(PDRectangle.A4));
+        CanvasSize canvasSize = new CanvasSize(PDRectangle.A4.getWidth(), PDRectangle.A4.getHeight(), 0.0f, 0.0f);
 
 
-        entityManager.addSystem(new PdfLayoutSystem(doc.getPage(0)));
-        entityManager.addSystem(new PdfRenderingSystemECS(doc));
+        entityManager.addSystem(new PdfLayoutSystem(canvasSize));
+        entityManager.addSystem(new PdfRenderingSystemECS(doc, canvasSize));
         entityManager.addSystem(new PdfFileManagerSystem(target, doc));
 
         Model cv = new Model(entityManager);
@@ -55,7 +56,7 @@ class test {
         ModuleYml additional = data.getAdditional();
 
 
-        var canvas = new CanvasObject(entityManager, doc.getPage(0))
+        var canvas = new CanvasObject(entityManager, canvasSize)
                 .padding(Padding.of(10));
 
 
@@ -136,5 +137,19 @@ class test {
 
 
         entityManager.processSystems();
+        System.out.printf("Page number: %s ", doc.getNumberOfPages());
+//        entityManager.getEntities().forEach(
+//                (u, e) -> {
+//                    EntityName entityName = e.getComponent(EntityName.class).orElseThrow();
+//                    if (entityName.value().equalsIgnoreCase("Projects")) {
+//                        e.printInfo();
+//                    }
+//
+////                    Placement placement = e.getComponent(Placement.class).orElseThrow();
+////                    System.out.println(e + "\n" + placement);
+//                }
+//
+//        );
     }
 }
+

@@ -1,11 +1,16 @@
 package com.demcha.utils.page_brecker;
 
 import com.demcha.components.core.Entity;
+import com.demcha.components.geometry.OuterBoxSize;
+import com.demcha.components.geometry.Placement;
+import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.RenderingPosition;
+import com.demcha.core.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
 /**
  * Utility class for sorting graphical entities based on their Y-position
  * and for calculating their resulting page and in-page Y coordinates
@@ -16,7 +21,8 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class PageBreaker {
-    private PageBreaker() {}
+    private PageBreaker() {
+    }
 
 
     // === Sorting =============================================================
@@ -29,9 +35,9 @@ public class PageBreaker {
      * by being collected into a {@link LinkedHashSet}.
      *
      * @param entities A map where keys are {@link UUID}s and values are {@link Entity} objects
-     * to be sorted. Must not be null.
+     *                 to be sorted. Must not be null.
      * @return A {@code Set} of map entries sorted by Y-position, descending (top-to-bottom on a page).
-     * @throws NullPointerException if the input map is null.
+     * @throws NullPointerException  if the input map is null.
      * @throws IllegalStateException if any entity does not have a defined {@code RenderingPosition}.
      */
     public static Set<Map.Entry<UUID, Entity>> sortByYPosition(Map<UUID, Entity> entities) {
@@ -55,9 +61,9 @@ public class PageBreaker {
      * This provides a convenient map-based view where the iteration order is the sorted order.
      *
      * @param entities A map where keys are {@link UUID}s and values are {@link Entity} objects
-     * to be sorted. Must not be null.
+     *                 to be sorted. Must not be null.
      * @return A {@code LinkedHashMap} with the entities, ordered by Y-position, descending.
-     * @throws NullPointerException if the input map is null.
+     * @throws NullPointerException  if the input map is null.
      * @throws IllegalStateException if any entity does not have a defined {@code RenderingPosition}.
      */
     public static LinkedHashMap<UUID, Entity> sortByYPositionToMap(Map<UUID, Entity> entities) {
@@ -74,6 +80,34 @@ public class PageBreaker {
                 ));
     }
 
+    public static LinkedHashMap<UUID, Entity> sortByYPositionToMap(EntityManager entityManager, Set<UUID> entityUuids) {
+        Objects.requireNonNull(entityUuids, "entities must not be null");
+
+
+        return sortByYPositionToMap(entityManager.getSetEntitiesFromUuids(entityUuids));
+    }
+
+    public static LinkedHashMap<UUID, Entity> sortByYPositionToMap(EntityManager entityManager, List<UUID> entityUuids) {
+        Objects.requireNonNull(entityUuids, "entities must not be null");
+
+
+        return sortByYPositionToMap(entityManager.getSetEntitiesFromUuids(new HashSet<>(entityUuids)));
+    }
+
+    public static LinkedHashMap<UUID, Entity> sortByYPositionToMap(Set<Entity> entities) {
+        Objects.requireNonNull(entities, "entities must not be null");
+
+        return entities.stream()
+                .sorted(Comparator.comparingDouble(PageBreaker::yOf).reversed())
+                .collect(Collectors.toMap(
+                        Entity::getUuid,           // key mapper → UUID
+                        e -> e,                  // value mapper → Entity
+                        (a, b) -> a,             // merge function (shouldn't happen)
+                        LinkedHashMap::new       // preserve order
+                ));
+    }
+
+
     private static double yOf(Entity e) {
         return RenderingPosition.from(e)
                 .map(RenderingPosition::y)
@@ -83,15 +117,33 @@ public class PageBreaker {
 
     // === Paging math =========================================================
 
-public static void  breakPages(Map<UUID, Entity> entities, double pageHeight) {
+    public static void breakPages(Map<UUID, Entity> entities, double pageHeight) {
         entities.entrySet().stream()
                 .forEach(e -> {
                     var r = RenderingPosition.from(e.getValue()).orElseThrow(
                             () -> new IllegalStateException("Entity " + e + " has no RenderingPosition"));
-                    PositionOnPage position = definePositionOnPage(r.y(), pageHeight, 0);
-                    e.getValue().addComponent(position);
+                    ComputedPosition computedPosition = e.getValue().getComponent(ComputedPosition.class).orElseThrow();
+                    OuterBoxSize outerBoxSize = OuterBoxSize.from(e.getValue()).orElseThrow();
+
+                    YPositionOnPage position = definePositionOnPage(r.y(), pageHeight, 0);
+                    Placement placement = setYInPlacement(e.getValue(), position);
+                    e.getValue().addComponent(placement);
                 });
-}
+    }
+
+    public static void breakPages(EntityManager entityManager, double pageHeight) {
+        breakPages(entityManager.getEntities(), pageHeight);
+    }
+
+    private static Placement setYInPlacement(Entity entity, double yPosition, int pageNumber) {
+        ComputedPosition computedPosition = entity.getComponent(ComputedPosition.class).orElseThrow();
+        OuterBoxSize outerBoxSize = OuterBoxSize.from(entity).orElseThrow();
+        return new Placement(computedPosition.x(), yPosition, outerBoxSize.width(), outerBoxSize.height(), pageNumber);
+    }
+
+    private static Placement setYInPlacement(Entity entity, YPositionOnPage position) {
+        return setYInPlacement(entity, position.yPosition(), position.pageNumber());
+    }
 
 
     /**
@@ -101,14 +153,14 @@ public static void  breakPages(Map<UUID, Entity> entities, double pageHeight) {
      * {@code [0, pageHeight)} and calculates the page offset relative to
      * {@code currentPageNumber}.
      *
-     * @param currentPositionY The entity's current absolute Y-coordinate.
-     * @param pageHeight The height of a single page (must be positive and finite).
+     * @param currentPositionY  The entity's current absolute Y-coordinate.
+     * @param pageHeight        The height of a single page (must be positive and finite).
      * @param currentPageNumber The current page number (e.g., the page the entity is currently thought to be on).
-     * @return A {@link PositionOnPage} object containing the normalized Y-position and the final page number.
+     * @return A {@link YPositionOnPage} object containing the normalized Y-position and the final page number.
      * @throws IllegalArgumentException if {@code pageHeight} is not a finite positive number, or if the
-     * resulting page number is less than zero.
+     *                                  resulting page number is less than zero.
      */
-    public static PositionOnPage definePositionOnPage(double currentPositionY, double pageHeight, int currentPageNumber) {
+    public static YPositionOnPage definePositionOnPage(double currentPositionY, double pageHeight, int currentPageNumber) {
         if (!(pageHeight > 0.0) || Double.isNaN(pageHeight) || Double.isInfinite(pageHeight)) {
             throw new IllegalArgumentException("pageHeight must be a finite positive number; was " + pageHeight);
         }
@@ -124,8 +176,8 @@ public static void  breakPages(Map<UUID, Entity> entities, double pageHeight) {
         // Normalize y into [0, pageHeight)
         double yInPage = positiveModulo(currentPositionY, pageHeight);
 
-        PositionOnPage result = new PositionOnPage(yInPage, finalPage);
-        log.debug("Result: {}", result);
+        YPositionOnPage result = new YPositionOnPage(yInPage, finalPage);
+        log.debug("Defined position on page: {}", result);
         return result;
     }
 
@@ -143,7 +195,7 @@ public static void  breakPages(Map<UUID, Entity> entities, double pageHeight) {
      * The calculation is $- \lfloor \frac{Y}{H} \rfloor$.
      *
      * @param currentPositionY The entity's current absolute Y-coordinate.
-     * @param pageHeight The height of a single page (must be positive and finite).
+     * @param pageHeight       The height of a single page (must be positive and finite).
      * @return The integer page offset.
      * @throws IllegalArgumentException if {@code pageHeight} is not a finite positive number.
      */
@@ -161,11 +213,14 @@ public static void  breakPages(Map<UUID, Entity> entities, double pageHeight) {
         return definedPage;
     }
 
-    /** Proper positive modulo for doubles: result in [0, m). */
+    /**
+     * Proper positive modulo for doubles: result in [0, m).
+     */
     private static double positiveModulo(double a, double m) {
         double r = a % m;
         return (r < 0) ? r + m : r;
     }
+
     /**
      * Placeholder method for the main page-breaking logic.
      * <p>

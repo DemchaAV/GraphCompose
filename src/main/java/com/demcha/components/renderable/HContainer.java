@@ -1,6 +1,7 @@
 package com.demcha.components.renderable;
 
 import com.demcha.components.core.Entity;
+import com.demcha.system.RenderingSystemECS;
 import lombok.ToString;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -16,9 +17,10 @@ public class HContainer extends Container {
 
 
     @Override
-    public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, int indexPage, boolean guideLines) throws IOException {
-        if (guideLines) renderGuides(e, cs, DEFAULT_GUIDES);
-
+    public boolean pdfRender(Entity e, PDDocument doc, RenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
+        try (PDPageContentStream pdPageContentStream = openContentStream(e, doc, renderingSystemECS)) {
+            if (guideLines) renderGuides(e,pdPageContentStream, DEFAULT_GUIDES);
+        }
         return true;
     }
 }

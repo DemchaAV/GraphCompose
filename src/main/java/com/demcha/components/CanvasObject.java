@@ -7,6 +7,7 @@ import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.style.Padding;
+import com.demcha.core.CanvasSize;
 import com.demcha.core.EntityManager;
 import org.apache.pdfbox.pdmodel.PDPage;
 
@@ -27,6 +28,9 @@ public class CanvasObject {
 
     public CanvasObject(EntityManager entityManager, PDPage page) {
         this(entityManager, page.getMediaBox().getWidth(), page.getCropBox().getHeight());
+    }
+    public CanvasObject(EntityManager entityManager, CanvasSize size) {
+        this(entityManager, size.width(), size.height());
     }
 
     public CanvasObject padding(Padding padding) {

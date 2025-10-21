@@ -5,6 +5,7 @@ import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.geometry.OuterBoxSize;
+import com.demcha.components.geometry.Placement;
 import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.PaddingCoordinate;
 import com.demcha.components.layout.coordinator.RenderingPosition;
@@ -61,7 +62,7 @@ public interface GuidesRenderer {
         }
 
 
-        var pos = e.getComponent(ComputedPosition.class).orElseThrow();
+        var pos = e.getComponent(Placement.class).orElseThrow();
         var outer = OuterBoxSize.from(e).orElseThrow();
 
         double x = pos.x();
@@ -169,6 +170,10 @@ public interface GuidesRenderer {
         } finally {
             cs.restoreGraphicsState();
         }
+    }
+    private static double positiveModulo(double a, double m) {
+        double r = a % m;
+        return (r < 0) ? r + m : r;
     }
 
     enum Guide {MARGIN, PADDING, BOX}

@@ -4,9 +4,12 @@ import com.demcha.components.containers.abstract_builders.GuidesRenderer;
 import com.demcha.components.content.text.Text;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
+import com.demcha.components.core.EntityName;
 import com.demcha.components.geometry.ContentSize;
+import com.demcha.components.geometry.Placement;
 import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.components.style.Padding;
+import com.demcha.system.RenderingSystemECS;
 import com.demcha.system.pdf_systems.PdfRender;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -61,48 +64,57 @@ public class TextComponent implements PdfRender, GuidesRenderer {
     }
 
     @Override
-    public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, int indexPage, boolean guideLines) throws IOException {
+    public boolean pdfRender(Entity e, PDDocument doc, RenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
         if (!e.hasAssignable(TextComponent.class)) return false;
 
-        var positionOpt = RenderingPosition.from(e);
-        if (positionOpt.isEmpty()) return false;
+        var placementOpt = e.getComponent(Placement.class);
+        if (placementOpt.isEmpty()) return false;
 
-        var position = positionOpt.get();
-        Padding padding = e.getComponent(Padding.class).orElse(Padding.zero());
+        try (PDPageContentStream cs = openContentStream(e,doc, renderingSystemECS)) {
+            EntityName entityName = e.getComponent(EntityName.class).orElseThrow();
+            if (entityName.value().equalsIgnoreCase("Professional Experience")) {
+                e.printInfo();
+            }
 
-        ValidatedTextData v = getValidatedTextData(e);
-        PDFont font = v.style().font();
-        float fontSize =(float) v.style().size();
-        String text = v.textValue().value();
+            var position = placementOpt.get();
+            Padding padding = e.getComponent(Padding.class).orElse(Padding.zero());
 
-        // ---- compute metrics once
-        float scale = fontSize / 1000f;
-        PDFontDescriptor fd = font.getFontDescriptor();
+            ValidatedTextData v = getValidatedTextData(e);
+            PDFont font = v.style().font();
+            float fontSize = (float) v.style().size();
+            String text = v.textValue().value();
+
+            // ---- compute metrics once
+            float scale = fontSize / 1000f;
+            PDFontDescriptor fd = font.getFontDescriptor();
 
 //        float ascentPx  = (fd != null ? fd.getAscent()  : font.getBoundingBox().getUpperRightY()) * scale;
-        float descentPx = Math.abs((fd != null ? fd.getDescent() : font.getBoundingBox().getLowerLeftY()) * scale);
-        // float leadingPx = (fd != null ? fd.getLeading() : 0) * scale; // use for multi-line spacing
+            float descentPx = Math.abs((fd != null ? fd.getDescent() : font.getBoundingBox().getLowerLeftY()) * scale);
+            // float leadingPx = (fd != null ? fd.getLeading() : 0) * scale; // use for multi-line spacing
 
-        // ---- choose alignment rule for Y
-        // If your position.y is the TOP edge of the text box:
-        float topY = (float) position.y() - (float) padding.top();
-        float baselineY = topY+descentPx;
+            // ---- choose alignment rule for Y
+            // If your position.y is the TOP edge of the text box:
+            float topY = (float) position.y() - (float) padding.top();
+            float baselineY = topY + descentPx;
 
-        // If your position.x is the LEFT edge:
-        float leftX = (float) position.x() + (float) padding.left();
+            // If your position.x is the LEFT edge:
+            float leftX = (float) position.x() + (float) padding.left();
 
-        cs.saveGraphicsState();
-        cs.setFont(font, fontSize);
-        cs.setNonStrokingColor(v.style().color());
+            cs.saveGraphicsState();
+            cs.setFont(font, fontSize);
+            cs.setNonStrokingColor(v.style().color());
 
-        cs.beginText();
-        cs.newLineAtOffset(leftX, baselineY); // << baseline, no extra "different*2"
-        cs.showText(text);
-        cs.endText();
+            cs.beginText();
+            cs.newLineAtOffset(leftX, baselineY); // << baseline, no extra "different*2"
+            cs.showText(text);
+            cs.endText();
 
-        cs.restoreGraphicsState();
+            cs.restoreGraphicsState();
 
-        if (guideLines) renderGuides(e, cs, DEFAULT_GUIDES);
+            if (guideLines) renderGuides(e, cs, DEFAULT_GUIDES);
+        }catch (IOException ioe) {
+            throw new IOException(ioe);
+        }
         return true;
     }
 

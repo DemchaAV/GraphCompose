@@ -6,9 +6,13 @@ import com.demcha.components.content.text.BlockTextData;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
+import com.demcha.components.geometry.Placement;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.coordinator.RenderingPosition;
+import com.demcha.system.RenderingSystemECS;
 import com.demcha.system.pdf_systems.PdfRender;
+import com.demcha.utils.page_brecker.PageBreaker;
+import com.demcha.utils.page_brecker.YPositionOnPage;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -71,15 +75,13 @@ public class BlockText implements PdfRender, GuidesRenderer {
      * Optionally, it can render guide lines for debugging layout.
      *
      * @param e          The {@link Entity} containing the {@link BlockTextData}, {@link TextStyle}, {@link RenderingPosition}, and {@link InnerBoxSize}.
-     * @param cs         The {@link PDPageContentStream} to draw on.
      * @param doc        The {@link PDDocument} (currently unused but part of the interface).
-     * @param indexPage  The current page index (currently unused but part of the interface).
      * @param guideLines A boolean indicating whether to render layout guides.
      * @return {@code true} if the text was rendered, {@code false} otherwise (e.g., if required components are missing).
      * @throws IOException If an error occurs during PDF content stream operations.
      */
     @Override
-    public boolean pdfRender(Entity e, PDPageContentStream cs, PDDocument doc, int indexPage, boolean guideLines) throws IOException {
+    public boolean pdfRender(Entity e, PDDocument doc, RenderingSystemECS renderingSystem, boolean guideLines) throws IOException {
 
         if (!e.hasAssignable(BlockTextData.class)) {
             log.debug("Entity doesn't have TextComponent; skipping: {}", e);
@@ -118,30 +120,68 @@ public class BlockText implements PdfRender, GuidesRenderer {
         log.debug("Rendering textBlock '{}' at position ({}, {}) fontSize={}  textStyle= ", blockTextData, position.x(), position.y());
         log.debug("fontSize={}  textStyle= {}", fontSize, style);
 
+        int currentPage = 0;
+//        int currentPage = e.getComponent(Placement.class).orElseThrow().pageNumber();
 
-        cs.saveGraphicsState();
-        cs.setFont(font, fontSize);
-        cs.setNonStrokingColor(color);
-        cs.beginText();
 
         // стартовая позиция (левый верх «абзаца»)
         float startX = (float) position.x() - descentPx;
         float startY = (float) (position.y() + innerBoxSize.innerH()) - textHeight + descentPx; // if spacing will be negative
+        PDPageContentStream cs = null;
+        try {
+            cs = openContentStream(doc, renderingSystem, currentPage);
+
+            cs.saveGraphicsState();
+            cs.setFont(font, fontSize);
+            cs.setNonStrokingColor(color);
+            cs.beginText();
+            boolean isStarted = false;
+
+            for (LineTextData ltd : blockTextData) {
+                if (!isStarted) {
+                    log.debug("Started print a block text, Position Y is {}", startY);
+                    isStarted = true;
+                }
+
+                float currenPosition = (float) ltd.getX() + startX;
+                cs.setTextMatrix(new Matrix(1, 0, 0, 1, currenPosition, startY));
+                cs.showText(ltd.getLine());
+                startY -= (float) (textHeight - spacing);
 
 
-        for (LineTextData ltd : blockTextData) {
-            float currenPosition = (float) ltd.getX() + startX;
-            cs.setTextMatrix(new Matrix(1, 0, 0, 1, currenPosition, startY));
-            cs.showText(ltd.getLine());
-            startY -= (float) (textHeight - spacing);
-        }
-
-        cs.endText();
-        cs.restoreGraphicsState();
+                YPositionOnPage yPositionOnPage = PageBreaker.definePositionOnPage(startY, renderingSystem.getCanvasSize().height(), currentPage);
+                if (log.isDebugEnabled()) {
+                    log.debug(ltd.toString());
+                    log.debug("Line position {}, Current page: {}", ltd.getX(), currentPage);
+                    log.debug(yPositionOnPage.toString());
+                }
 
 
-        if (guideLines) {
-            renderGuides(e, cs, DEFAULT_GUIDES);
+                startY = (float) yPositionOnPage.yPosition();
+                if (currentPage != yPositionOnPage.pageNumber()) {
+                    if (cs != null) {
+                        cs.endText();
+                        cs.restoreGraphicsState();
+                        cs.close();
+                    }
+                    currentPage = yPositionOnPage.pageNumber();
+                    cs = openContentStream(doc, renderingSystem, currentPage);
+                    cs.saveGraphicsState();
+                    cs.setFont(font, fontSize);
+                    cs.setNonStrokingColor(color);
+                    cs.beginText();
+                }
+            }
+
+            cs.endText();
+            cs.restoreGraphicsState();
+
+
+            if (guideLines) {
+                renderGuides(e, cs, DEFAULT_GUIDES);
+            }
+        } finally {
+            cs.close();
         }
 
         return true;

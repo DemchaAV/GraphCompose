@@ -48,7 +48,7 @@ educationCertifications:
     - "Kherson State Agrarian and Economic University, Ukraine"
     - "Sep 2012 – May 2017 (Grade: 2.1)"
 projects:
-  name: "Projects"
+  name: Projects
   modulePoints:
     - "Shopping Cart API (Spring Boot + JWT + JPA)"
     - "Secure API with user authentication, role-based access, product management, and cart operations."
@@ -64,7 +64,7 @@ projects:
     - "Java console game implementing object-oriented principles and control flow."
 
 professionalExperience:
-  name: "Professional Experience"
+  name: Professional Experience
   modulePoints:
     - "Bartender, Caprice Holdings – Scott’s Richmond, London, UK"
     - "Aug 2022 – Present - Delivered outstanding customer service and team collaboration in a fast-paced setting."
@@ -76,7 +76,7 @@ professionalExperience:
     - "Mentored and trained 8 team members, fostering their growth into leadership positions."
 
 additional:
-  name: "Additional"
+  name: Additional
   modulePoints:
     - "Languages: English (Professional), Ukrainian (Native), Russian (Native)"
     - "Work Eligibility: Right to work in the UK"

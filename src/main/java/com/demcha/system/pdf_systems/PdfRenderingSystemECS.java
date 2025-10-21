@@ -1,18 +1,17 @@
 package com.demcha.system.pdf_systems;
 
+import com.demcha.components.core.Entity;
 import com.demcha.core.CanvasSize;
 import com.demcha.core.EntityManager;
 import com.demcha.system.RenderingSystemECS;
+import com.demcha.utils.page_brecker.PageBreaker;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * PdfRenderingSystemECS — diagnostics & hardening
@@ -23,51 +22,43 @@ import java.util.UUID;
  * 3) Atomically save without PDFBox overwrite warning.
  */
 @Slf4j
-
+@Getter
 public class PdfRenderingSystemECS implements RenderingSystemECS {
 
-    public static final PDRectangle DEFAULT_PAGE = PDRectangle.A4;
     private final PDDocument doc;
+    private final CanvasSize canvasSize;
 
-    public PdfRenderingSystemECS(PDDocument doc, PDPage page) {
+    public PdfRenderingSystemECS(PDDocument doc, CanvasSize canvasSize) {
         this.doc = doc;
-        doc.addPage(page);
+        this.canvasSize = canvasSize;
     }
 
-    public PdfRenderingSystemECS(PDDocument doc) {
-        this.doc = doc;
-    }
 
     @Override
     public void process(EntityManager entityManager) {
         log.info("Processing PdfRenderingSystemECS");
-        try (PDPageContentStream cs = openContentStream(0)) {
-            var entities = entityManager.getLayers();
-            for (Map.Entry<Integer, List<UUID>> e : entities.entrySet()) {
-                var entitiesUuid = e.getValue();
-                for (UUID id : entitiesUuid) {
-                    var entity = entityManager.getEntity(id).orElseThrow();
 
-                    if (entity.hasRender(PdfRender.class)) {
-                        var render = entity.getPdfRender();
-                        var guideLines = entity.isGuideLines();
-                        render.pdfRender(entity, cs,doc,0, guideLines);
+        var entities = entityManager.getLayers();
+        for (Map.Entry<Integer, List<UUID>> e : entities.entrySet()) {
+            var entitiesUuid = e.getValue();
+            LinkedHashMap<UUID, Entity> uuidEntityLinkedHashMap = PageBreaker.sortByYPositionToMap(entityManager, entitiesUuid);
+
+            PageBreaker.sortByYPositionToMap(entityManager,entitiesUuid);
+            uuidEntityLinkedHashMap.forEach((uuid, entity) -> {
+                if (entity.hasRender(PdfRender.class)) {
+                    var render = entity.getPdfRender();
+                    var guideLines = entity.isGuideLines();
+                    try {
+                        render.pdfRender(entity, doc, this, guideLines);
+                    } catch (IOException ex) {
+                        log.error(ex.getMessage());
+                        throw new RuntimeException(ex);
                     }
                 }
+            });
 
-            }
-        } catch (IOException ex) {
-            log.error("Rendering failed", ex);
         }
-    }
 
-    private PDPageContentStream openContentStream(int pageIndex) throws IOException {
-        return new PDPageContentStream(
-                doc, doc.getPage(pageIndex),
-                PDPageContentStream.AppendMode.APPEND,   // keep existing content if any
-                true,                                    // compress
-                true                                     // resetContext: isolates graphics state (PDFBox 3)
-        );
     }
 
     public CanvasSize pageSize(int pageIndex) {
@@ -78,6 +69,11 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
         return new CanvasSize(width, height, x, y);
     }
 
+
+    @Override
+    public CanvasSize getCanvasSize() {
+       return  canvasSize;
+    }
 }
 
 

@@ -2,7 +2,6 @@ package com.demcha.system.pdf_systems;
 
 import com.demcha.components.LineTextData;
 import com.demcha.components.content.text.BlockTextData;
-import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
 import com.demcha.components.geometry.ContentSize;
@@ -22,6 +21,7 @@ import com.demcha.core.EntityManager;
 import com.demcha.system.SystemECS;
 import com.demcha.utils.containerUtils.ContainerExpander;
 import com.demcha.utils.containerUtils.ContainerLayoutManager;
+import com.demcha.utils.page_brecker.PageBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -47,9 +47,10 @@ import java.util.*;
 public class PdfLayoutSystem implements SystemECS {
     private final CanvasSize canvasSize;
 
-    public PdfLayoutSystem(PDPage page) {
-        this.canvasSize = generateCanvasSizeFromPage(page);
-    }
+//    public PdfLayoutSystem(PDPage page) {
+//        this.canvasSize = generateCanvasSizeFromPage(page);
+//    }
+
 
     /**
      * Calculates a childEntity's {@link ComputedPosition} relative to its parentEntity entity.
@@ -230,6 +231,10 @@ public class PdfLayoutSystem implements SystemECS {
         }
 
         log.info("PdfLayoutSystem: layout complete (nodes: {})", entities.size());
+
+        // Pagination
+        PageBreaker.breakPages(entityManager, canvasSize.height());
+
     }
 
     /**
@@ -325,7 +330,7 @@ public class PdfLayoutSystem implements SystemECS {
                 computedPosition.x(),
                 computedPosition.y(),
                 outerBoxSize.width(),
-                outerBoxSize.height()
+                outerBoxSize.height(), 0
         );
         childEntity.addComponent(boundingBox);
         if (childEntity.has(Align.class)) {
@@ -381,13 +386,13 @@ public class PdfLayoutSystem implements SystemECS {
         return blockTextBox;
     }
 
-    public Optional <Entity> alignRearrangeBlockText(Entity entity) {
+    public Optional<Entity> alignRearrangeBlockText(Entity entity) {
 
         if (entity.has(BlockTextData.class)) {
             return Optional.of(alignBlockText(entity));
         } else {
-           log.info("Entity  is not a BlockTextData");
-           return Optional.empty();
+            log.info("Entity  is not a BlockTextData");
+            return Optional.empty();
         }
     }
 

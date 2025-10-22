@@ -1,11 +1,11 @@
 package com.demcha.components.layout.coordinator;
 
+import com.demcha.components.components_builders.Canvas;
 import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.style.Padding;
-import com.demcha.core.CanvasSize;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -49,7 +49,7 @@ public record ComputedPosition(double x, double y) implements Component {
         if (anchor.equals(Anchor.defaultAnchor())) {
             var position = child.getComponent(Position.class).orElse(Position.zero());
             x = computedPosition.x + paddingParentCoordinate.x() + position.x();
-            y = computedPosition.y + paddingParentCoordinate.y() +  position.y();
+            y = computedPosition.y + paddingParentCoordinate.y() + position.y();
         }
         x = computedPosition.x + paddingParentCoordinate.x();
         y = computedPosition.y + paddingParentCoordinate.y();
@@ -73,15 +73,15 @@ public record ComputedPosition(double x, double y) implements Component {
     }
 
     /**
-     * Computes the position of a child entity relative to a {@link CanvasSize}.
+     * Computes the position of a child entity relative to a {@link Canvas}.
      * This is typically used for root-level entities (no parent).
      *
      * @param childEntity the child entity
      * @param pageSize    the page size
      * @return computed position
      */
-    public static ComputedPosition from(@NonNull Entity childEntity, @NonNull CanvasSize pageSize) {
-        log.debug("Computing position using default CanvasSize.");
+    public static ComputedPosition from(@NonNull Entity childEntity, @NonNull Canvas pageSize) {
+        log.debug("Computing position using default Canvas.");
         InnerBoxSize innerBoxSize = new InnerBoxSize(pageSize.width(), pageSize.height());
         var paddingParentCoordinate = new PaddingCoordinate(pageSize.x(), pageSize.y());
         return from(childEntity, innerBoxSize, paddingParentCoordinate);

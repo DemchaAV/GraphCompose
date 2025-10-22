@@ -1,17 +1,20 @@
 package com.demcha.system.pdf_systems;
 
+import com.demcha.components.components_builders.Canvas;
 import com.demcha.components.core.Entity;
-import com.demcha.core.CanvasSize;
 import com.demcha.core.EntityManager;
 import com.demcha.system.RenderingSystemECS;
 import com.demcha.utils.page_brecker.PageBreaker;
+import com.demcha.utils.page_brecker.PdfCanvas;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * PdfRenderingSystemECS — diagnostics & hardening
@@ -26,11 +29,11 @@ import java.util.*;
 public class PdfRenderingSystemECS implements RenderingSystemECS {
 
     private final PDDocument doc;
-    private final CanvasSize canvasSize;
+    private final Canvas canvas;
 
-    public PdfRenderingSystemECS(PDDocument doc, CanvasSize canvasSize) {
+    public PdfRenderingSystemECS(PDDocument doc, Canvas canvas) {
         this.doc = doc;
-        this.canvasSize = canvasSize;
+        this.canvas = canvas;
     }
 
 
@@ -43,7 +46,7 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
             var entitiesUuid = e.getValue();
             LinkedHashMap<UUID, Entity> uuidEntityLinkedHashMap = PageBreaker.sortByYPositionToMap(entityManager, entitiesUuid);
 
-            PageBreaker.sortByYPositionToMap(entityManager,entitiesUuid);
+            PageBreaker.sortByYPositionToMap(entityManager, entitiesUuid);
             uuidEntityLinkedHashMap.forEach((uuid, entity) -> {
                 if (entity.hasRender(PdfRender.class)) {
                     var render = entity.getPdfRender();
@@ -61,18 +64,18 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
 
     }
 
-    public CanvasSize pageSize(int pageIndex) {
+    public Canvas pageSize(int pageIndex) {
         float width = doc.getPage(pageIndex).getMediaBox().getWidth();
         float height = doc.getPage(pageIndex).getMediaBox().getHeight();
         float x = doc.getPage(pageIndex).getMediaBox().getLowerLeftX();
         float y = doc.getPage(pageIndex).getMediaBox().getLowerLeftY();
-        return new CanvasSize(width, height, x, y);
+        return new PdfCanvas(width, height, x, y);
     }
 
 
     @Override
-    public CanvasSize getCanvasSize() {
-       return  canvasSize;
+    public Canvas getCanvas() {
+        return canvas;
     }
 }
 

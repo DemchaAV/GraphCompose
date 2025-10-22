@@ -5,8 +5,7 @@ import com.demcha.components.content.link.Email;
 import com.demcha.components.content.link.LinkUrl;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
-import com.demcha.components.geometry.Placement;
-import com.demcha.components.layout.coordinator.RenderingPosition;
+import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.style.Padding;
 import com.demcha.system.RenderingSystemECS;
 import com.demcha.system.pdf_systems.PdfRender;
@@ -73,7 +72,7 @@ public class Link implements PdfRender, GuidesRenderer {
         position.setUpperRightX(x + (float) (size.width() + padding.horizontal()));
         position.setUpperRightY(y + (float) (size.height() + padding.vertical()));
 
-        int indexPage = e.getComponent(Placement.class).orElseThrow().pageNumber();
+        int indexPage = e.getComponent(Placement.class).orElseThrow().startPage();
         addLink(doc, indexPage, position, url);
 
 

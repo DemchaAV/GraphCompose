@@ -63,14 +63,13 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
 
 
         var boundingBox = InnerBoxSize.from(this.entity).orElseThrow();
-        BlockTextData blockTextData = breakLinesFromList(text, boundingBox,bulletOffset==null?"":bulletOffset);
+        BlockTextData blockTextData = breakLinesFromList(text, boundingBox, bulletOffset == null ? "" : bulletOffset);
 
 
         addComponent(blockTextData);
         addComponent(textStyle);
         return this;
     }
-
 
 
     public BlockTextData breakLines(@NonNull Entity entity, @NonNull InnerBoxSize innerBoxSize) {
@@ -291,20 +290,35 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         return self();
     }
 
-    @Override
-    public Entity build() {
+    /**
+     * Compute container size for text
+     *
+     * @return
+     */
+
+    private ContentSize computeContentSize() {
         Padding padding = entity.getComponent(Padding.class).orElse(Padding.zero());
         var blockTextData = entity.getComponent(BlockTextData.class).orElseThrow();
-        var width = blockTextData.lines().stream().max(Comparator.comparingDouble(LineTextData::getWidth)).map(LineTextData::getWidth).orElseThrow();
-        var spacing = entity.getComponent(Align.class).orElseThrow().spacing();
+        var width = blockTextData.lines().stream().max(Comparator.comparingDouble(LineTextData::width)).map(LineTextData::width).orElseThrow();
+        var spacingOpt = entity.getComponent(Align.class);
+        double spacing = spacingOpt.orElse(Align.defaultAlign(0.0)).spacing();
+
 
         double textHeight = entity.getComponent(TextStyle.class).orElse(TextStyle.DEFAULT_STYLE).getLineHeight();
         double calculatedHigh = (blockTextData.lines().size()) * textHeight;
         double spacingFullHigh = (blockTextData.lines().size() - 1) * spacing;
         double high = calculatedHigh + spacingFullHigh + padding.vertical();
 
+        return new ContentSize(width + padding.horizontal(), high);
+    }
 
-        entity.addComponent(new ContentSize(width + padding.horizontal(), high));
+    @Override
+    public Entity build() {
+
+        //Definition a size for current block
+        ContentSize contentSize = computeContentSize();
+
+        entity.addComponent(contentSize);
         manager().putEntity(entity());
 
         return entity();

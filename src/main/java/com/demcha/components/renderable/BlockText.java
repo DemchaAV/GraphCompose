@@ -6,26 +6,24 @@ import com.demcha.components.content.text.BlockTextData;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
-import com.demcha.components.geometry.Placement;
-import com.demcha.components.layout.Align;
+import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.system.RenderingSystemECS;
 import com.demcha.system.pdf_systems.PdfRender;
-import com.demcha.utils.page_brecker.PageBreaker;
-import com.demcha.utils.page_brecker.YPositionOnPage;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDFont;
-import org.apache.pdfbox.pdmodel.font.PDFontDescriptor;
 import org.apache.pdfbox.util.Matrix;
 
 import java.awt.*;
 import java.io.IOException;
 import java.util.EnumSet;
+import java.util.Optional;
 
 /**
  * {@code BlockText} is a renderable component responsible for drawing blocks of text onto a PDF document.
@@ -46,17 +44,20 @@ public class BlockText implements PdfRender, GuidesRenderer {
      * @param e The {@link Entity} from which to extract text data and style.
      * @return A {@link ValidatedTextData} record containing the validated {@link TextStyle} and {@link BlockTextData}.
      */
-    private static ValidatedTextData getValidatedTextData(Entity e) {
-        var textValueOpt = e.getComponent(BlockTextData.class);
+    private static Optional<ValidatedTextData> getValidatedTextData(@NonNull Entity e) {
+
+        var blockTextDataOpt = e.getComponent(BlockTextData.class);
         var styleOpt = e.getComponent(TextStyle.class);
 
         BlockTextData textValue;
         TextStyle style;
-        if (textValueOpt.isEmpty()) {
-            log.info("TextComponent has no BlockTextData; skipping: {}", e);
-            textValue = textValueOpt.orElse(BlockTextData.empty());
+
+        if (blockTextDataOpt.isEmpty()) {
+            log.info("TextComponent has no BlockTextData.class; skipping: {}", e);
+            return Optional.empty();
+
         } else {
-            textValue = textValueOpt.get();
+            textValue = blockTextDataOpt.get();
         }
         if (styleOpt.isEmpty()) {
             log.info("TextComponent has no TextStyle; skipping: {}", e);
@@ -65,7 +66,21 @@ public class BlockText implements PdfRender, GuidesRenderer {
             style = styleOpt.get();
         }
 
-        return new ValidatedTextData(style, textValue);
+        return Optional.of(new ValidatedTextData(style, textValue));
+    }
+
+    private static Optional<Placement> blockEntityValidate(Entity e) {
+        if (!e.hasAssignable(BlockTextData.class)) {
+            log.debug("Entity doesn't have TextComponent; skipping: {}", e);
+            return Optional.empty();
+        }
+
+        var placementOpt = e.getComponent(Placement.class);
+        if (placementOpt.isEmpty()) {
+            log.warn("TextComponent has no Placement.class Component, skipping: {}", e);
+            return Optional.empty();
+        }
+        return placementOpt;
     }
 
     /**
@@ -80,111 +95,97 @@ public class BlockText implements PdfRender, GuidesRenderer {
      * @return {@code true} if the text was rendered, {@code false} otherwise (e.g., if required components are missing).
      * @throws IOException If an error occurs during PDF content stream operations.
      */
+
     @Override
     public boolean pdfRender(Entity e, PDDocument doc, RenderingSystemECS renderingSystem, boolean guideLines) throws IOException {
 
-        if (!e.hasAssignable(BlockTextData.class)) {
-            log.debug("Entity doesn't have TextComponent; skipping: {}", e);
-            return false;
-        }
+        var placementOpt = blockEntityValidate(e);
+        if (placementOpt.isEmpty()) return false;
+        var placement = placementOpt.get();
 
-        var positionOpt = RenderingPosition.from(e);
-        if (positionOpt.isEmpty()) {
-            log.warn("TextComponent has no RenderingPosition; skipping: {}", e);
-            return false;
-        }
-        var position = positionOpt.get();
-        InnerBoxSize innerBoxSize = InnerBoxSize.from(e).orElseThrow();
-
-        ValidatedTextData validateText = getValidatedTextData(e);
+        var validateTextOpt = getValidatedTextData(e);
+        if (validateTextOpt.isEmpty()) return false;
+        ValidatedTextData validateText = getValidatedTextData(e).get();
 
 
         var style = validateText.style();
+
+        //Font Settings info
         float fontSize = (float) style.size();
         PDFont font = style.font();
         Color color = validateText.style().color();
-        var textHeight = (float) style.getLineHeight();
 
-        float scale = fontSize / 1000f;
-        PDFontDescriptor fd = font.getFontDescriptor();
-
-        float descentPx = Math.abs((fd != null ? fd.getDescent() : font.getBoundingBox().getLowerLeftY()) * scale);
 
         var blockTextData = validateText.textValue().lines();
 
-        double spacing = e.getComponent(Align.class).orElseGet(() -> {
-            log.warn("TextComponent has no Align; using default: {}", e);
-            return Align.defaultAlign(2);
-        }).spacing() * -1;
+        if (log.isDebugEnabled()) {
+            log.debug("Rendering textBlock '{}' at position ({}, {}) fontSize={}  textStyle= ", blockTextData, placement.x(), placement.y());
+            log.debug("fontSize={}  textStyle= {}", fontSize, style);
+        }
 
-        log.debug("Rendering textBlock '{}' at position ({}, {}) fontSize={}  textStyle= ", blockTextData, position.x(), position.y());
-        log.debug("fontSize={}  textStyle= {}", fontSize, style);
 
-        int currentPage = 0;
-//        int currentPage = e.getComponent(Placement.class).orElseThrow().pageNumber();
-
+        int currentPage = e.getComponent(Placement.class).orElseThrow().startPage();
 
         // стартовая позиция (левый верх «абзаца»)
-        float startX = (float) position.x() - descentPx;
-        float startY = (float) (position.y() + innerBoxSize.innerH()) - textHeight + descentPx; // if spacing will be negative
+
+
+
+        return printData(e, doc, renderingSystem, guideLines, currentPage, font, fontSize, color, blockTextData);
+//        return true;
+    }
+
+    private boolean printData(Entity e, PDDocument doc, RenderingSystemECS renderingSystem, boolean guideLines, int currentPage, PDFont font, float fontSize, Color color, java.util.List<LineTextData> blockTextData) throws IOException {
+        boolean result = false;
         PDPageContentStream cs = null;
         try {
-            cs = openContentStream(doc, renderingSystem, currentPage);
-
-            cs.saveGraphicsState();
-            cs.setFont(font, fontSize);
-            cs.setNonStrokingColor(color);
-            cs.beginText();
+            cs = reopenStreams(doc, cs, currentPage, renderingSystem, font, fontSize, color);
             boolean isStarted = false;
 
             for (LineTextData ltd : blockTextData) {
+
                 if (!isStarted) {
-                    log.debug("Started print a block text, Position Y is {}", startY);
+                    log.debug("Started print a block text, Position Y is {}", ltd.page());
                     isStarted = true;
                 }
 
-                float currenPosition = (float) ltd.getX() + startX;
-                cs.setTextMatrix(new Matrix(1, 0, 0, 1, currenPosition, startY));
-                cs.showText(ltd.getLine());
-                startY -= (float) (textHeight - spacing);
-
-
-                YPositionOnPage yPositionOnPage = PageBreaker.definePositionOnPage(startY, renderingSystem.getCanvasSize().height(), currentPage);
-                if (log.isDebugEnabled()) {
-                    log.debug(ltd.toString());
-                    log.debug("Line position {}, Current page: {}", ltd.getX(), currentPage);
-                    log.debug(yPositionOnPage.toString());
+                if (currentPage != ltd.page()) {
+                    currentPage = ltd.page();
+                    cs = reopenStreams(doc, cs, currentPage, renderingSystem, font, fontSize, color);
                 }
 
-
-                startY = (float) yPositionOnPage.yPosition();
-                if (currentPage != yPositionOnPage.pageNumber()) {
-                    if (cs != null) {
-                        cs.endText();
-                        cs.restoreGraphicsState();
-                        cs.close();
-                    }
-                    currentPage = yPositionOnPage.pageNumber();
-                    cs = openContentStream(doc, renderingSystem, currentPage);
-                    cs.saveGraphicsState();
-                    cs.setFont(font, fontSize);
-                    cs.setNonStrokingColor(color);
-                    cs.beginText();
-                }
+                cs.setTextMatrix(new Matrix(1, 0, 0, 1, (float) ltd.x(), (float) ltd.y()));
+                cs.showText(ltd.line());
             }
 
             cs.endText();
             cs.restoreGraphicsState();
-
-
             if (guideLines) {
                 renderGuides(e, cs, DEFAULT_GUIDES);
             }
+
+            result = true;
+
         } finally {
+            if (cs != null) {
+                cs.close();
+            }
+            return result;
+        }
+    }
+
+    private PDPageContentStream reopenStreams(PDDocument doc, PDPageContentStream cs, int currentPage, RenderingSystemECS renderingSystem, PDFont font, float fontSize, Color color) throws IOException {
+        PDPageContentStream newStream = null;
+        if (cs != null) {
+            cs.endText();
+            cs.restoreGraphicsState();
             cs.close();
         }
-
-        return true;
+        newStream = openContentStream(doc, renderingSystem, currentPage);
+        newStream.saveGraphicsState();
+        newStream.setFont(font, fontSize);
+        newStream.setNonStrokingColor(color);
+        newStream.beginText();
+        return newStream;
     }
 
     /**

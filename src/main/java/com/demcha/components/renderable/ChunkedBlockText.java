@@ -5,7 +5,7 @@ import com.demcha.components.content.text.BlockTextData;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
-import com.demcha.components.geometry.Placement;
+import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.system.RenderingSystemECS;
@@ -132,9 +132,9 @@ public class ChunkedBlockText extends Container {
 
 
             for (LineTextData ltd : blockTextData) {
-                float currenPosition = (float) ltd.getX() + startX;
+                float currenPosition = (float) ltd.x() + startX;
                 cs.setTextMatrix(new Matrix(1, 0, 0, 1, currenPosition, startY));
-                cs.showText(ltd.getLine());
+                cs.showText(ltd.line());
                 startY -= (float) (textHeight - spacing);
             }
 

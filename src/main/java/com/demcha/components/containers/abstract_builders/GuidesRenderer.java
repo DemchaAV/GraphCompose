@@ -5,8 +5,7 @@ import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.geometry.OuterBoxSize;
-import com.demcha.components.geometry.Placement;
-import com.demcha.components.layout.coordinator.ComputedPosition;
+import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.PaddingCoordinate;
 import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.components.style.Margin;
@@ -32,7 +31,7 @@ public interface GuidesRenderer {
     float GUIDES_OPACITY = 0.8f;
 
     // --- Margin Guide ---
-    Color MARGIN_COLOR =  new Color(0, 110, 255);
+    Color MARGIN_COLOR = new Color(0, 110, 255);
     Stroke MARGIN_STROKE = new Stroke(0.5);
 
     // --- Padding Guide ---
@@ -46,6 +45,11 @@ public interface GuidesRenderer {
     //viability
     boolean showOnlySetGuide = true;
 
+    private static double positiveModulo(double a, double m) {
+        double r = a % m;
+        return (r < 0) ? r + m : r;
+    }
+
     default boolean renderGuides(Entity e, PDPageContentStream cs, EnumSet<Guide> guides) throws IOException {
         boolean any = false;
 
@@ -56,8 +60,9 @@ public interface GuidesRenderer {
     }
 
     default boolean renderMargin(Entity e, PDPageContentStream cs) throws IOException {
-        if (showOnlySetGuide){
-            var margin = e.getComponent(Margin.class).orElse(Margin.zero());
+        Margin margin = null;
+        if (showOnlySetGuide) {
+            margin = e.getComponent(Margin.class).orElse(Margin.zero());
             if (margin.equals(Margin.zero())) return false;
         }
 
@@ -66,7 +71,8 @@ public interface GuidesRenderer {
         var outer = OuterBoxSize.from(e).orElseThrow();
 
         double x = pos.x();
-        double y = pos.y();
+        //TODO возможно нужно убрать -margin.bottom()
+        double y = pos.y() - margin.bottom();
         double width = outer.width();
         double height = outer.height();
 
@@ -76,7 +82,7 @@ public interface GuidesRenderer {
     }
 
     default boolean renderPadding(Entity e, PDPageContentStream cs) throws IOException {
-        if (showOnlySetGuide){
+        if (showOnlySetGuide) {
             var padding = e.getComponent(Padding.class).orElse(Padding.zero());
             if (padding.equals(Padding.zero())) return false;
         }
@@ -170,10 +176,6 @@ public interface GuidesRenderer {
         } finally {
             cs.restoreGraphicsState();
         }
-    }
-    private static double positiveModulo(double a, double m) {
-        double r = a % m;
-        return (r < 0) ? r + m : r;
     }
 
     enum Guide {MARGIN, PADDING, BOX}

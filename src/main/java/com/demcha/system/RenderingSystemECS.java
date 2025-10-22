@@ -1,7 +1,7 @@
 package com.demcha.system;
 
-import com.demcha.core.CanvasSize;
+import com.demcha.components.components_builders.Canvas;
 
 public interface RenderingSystemECS extends SystemECS {
-    CanvasSize getCanvasSize();
+    Canvas getCanvas();
 }

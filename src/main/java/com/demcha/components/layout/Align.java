@@ -5,11 +5,13 @@ import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.layout.coordinator.Position;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Align = like Anchor, but used when local Position is absent.
  * If Position is present, Align acts as a base; Position is an offset from that base.
  */
+@Slf4j
 public record Align(HAnchor h, VAnchor v, double spacing) implements Component {
     public static Align middle(double spacing){
         var v = VAnchor.MIDDLE;
@@ -27,6 +29,7 @@ public record Align(HAnchor h, VAnchor v, double spacing) implements Component {
         return new Align(h,v,spacing);
     }
     public static Align defaultAlign(double spacing){
+        log.info("Align defaultAlign");
         var v = VAnchor.DEFAULT;
         var h = HAnchor.DEFAULT;
         return new Align(h,v,spacing);

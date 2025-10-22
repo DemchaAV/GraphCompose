@@ -13,14 +13,13 @@ import com.demcha.components.layout.Anchor;
 import com.demcha.components.style.ComponentColor;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
-import com.demcha.core.CanvasSize;
 import com.demcha.core.EntityManager;
 import com.demcha.system.pdf_systems.PdfFileManagerSystem;
 import com.demcha.system.pdf_systems.PdfLayoutSystem;
 import com.demcha.system.pdf_systems.PdfRenderingSystemECS;
 import com.demcha.utils.page_brecker.PageBreaker;
+import com.demcha.utils.page_brecker.PdfCanvas;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
@@ -38,7 +37,7 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         // 1. Setup Phase
-        EntityManager entityManager = setupEntityManager(false);
+        EntityManager entityManager = setupEntityManager(true);
 
         // 2. Content Creation and Layout
         createATableLayout(entityManager, "table");
@@ -58,13 +57,13 @@ public class Main {
     private static EntityManager setupEntityManager(boolean guidLines) throws Exception {
         Path target = Paths.get("output.pdf");
         PDDocument doc = new PDDocument();
-        CanvasSize canvasSize = new CanvasSize(PDRectangle.A4.getWidth(), PDRectangle.A4.getHeight(), 0.0f, 0.0f);
+        Canvas canvasSize = new PdfCanvas(PDRectangle.A4, 0.0f);
 
         EntityManager entityManager = new EntityManager();
         entityManager.setGuideLines(guidLines);
 
         entityManager.addSystem(new PdfLayoutSystem(canvasSize));
-        entityManager.addSystem(new PdfRenderingSystemECS(doc,canvasSize));
+        entityManager.addSystem(new PdfRenderingSystemECS(doc, canvasSize));
         entityManager.addSystem(new PdfFileManagerSystem(target, doc));
 
         return entityManager;
@@ -75,7 +74,7 @@ public class Main {
 
         Entity row1LeftColumn = createLinksColumn(entityManager, "leftColumn");
         Entity row1RightColumn = createLinksColumn(entityManager, "rightColumn");
-        var row1 = createHContainer(entityManager, "row1", row1LeftColumn, row1RightColumn)
+        var row1 = createVContainer(entityManager, "row1", row1LeftColumn, row1RightColumn)
                 .addComponent(Margin.zero());//delete a Margin from rows
 
         Entity row2LeftColumn = createLinksColumn(entityManager, "leftColumn");

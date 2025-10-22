@@ -1,13 +1,13 @@
 package com.demcha.system.pdf_systems;
 
 import com.demcha.components.LineTextData;
+import com.demcha.components.components_builders.Canvas;
 import com.demcha.components.content.text.BlockTextData;
 import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.geometry.OuterBoxSize;
-import com.demcha.components.geometry.Placement;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.layout.ParentComponent;
@@ -45,10 +45,10 @@ import java.util.*;
 @Slf4j
 @RequiredArgsConstructor
 public class PdfLayoutSystem implements SystemECS {
-    private final CanvasSize canvasSize;
+    private final Canvas canvas;
 
 //    public PdfLayoutSystem(PDPage page) {
-//        this.canvasSize = generateCanvasSizeFromPage(page);
+//        this.canvasSize = generateCanvasFromPage(page);
 //    }
 
 
@@ -74,9 +74,9 @@ public class PdfLayoutSystem implements SystemECS {
 
         // 0) Handle page-level (no parent)
         if (parentEntity == null) {
-            InnerBoxSize pageArea = new InnerBoxSize(this.canvasSize.width(), this.canvasSize.height());
+            InnerBoxSize pageArea = new InnerBoxSize(this.canvas.width(), this.canvas.height());
 
-            PaddingCoordinate paddingPercentCoordinate = new PaddingCoordinate(this.canvasSize.x(), this.canvasSize.y());
+            PaddingCoordinate paddingPercentCoordinate = new PaddingCoordinate(this.canvas.x(), this.canvas.y());
             ComputedPosition local = positionWithAnchor(childEntity, pageArea, paddingPercentCoordinate);
             log.debug("Final computed absolute position (page-level): {}", local);
             return Optional.of(local);
@@ -126,7 +126,7 @@ public class PdfLayoutSystem implements SystemECS {
                     e.addComponent(new ComputedPosition(local.x() + parentAbs.x(),
                             local.y() + parentAbs.y()));
                 } else {
-                    InnerBoxSize refArea = new InnerBoxSize(this.canvasSize.width(), this.canvasSize.height());
+                    InnerBoxSize refArea = new InnerBoxSize(this.canvas.width(), this.canvas.height());
                     var pagingCoordinate = PaddingCoordinate.from(parentEntity);
                     ComputedPosition local = positionWithAnchor(e, refArea, pagingCoordinate);
                     e.addComponent(local);
@@ -233,7 +233,7 @@ public class PdfLayoutSystem implements SystemECS {
         log.info("PdfLayoutSystem: layout complete (nodes: {})", entities.size());
 
         // Pagination
-        PageBreaker.breakPages(entityManager, canvasSize.height());
+        PageBreaker.breakPages(entityManager);
 
     }
 
@@ -316,23 +316,15 @@ public class PdfLayoutSystem implements SystemECS {
                 computedPosition = ComputedPosition.from(childEntity, parent);
             } else {
                 log.warn("PdfLayoutSystem: parent {} of {} not found — using root positioning (Position + Margin)", parentId, id);
-                computedPosition = ComputedPosition.from(childEntity, this.canvasSize);
+                computedPosition = ComputedPosition.from(childEntity, this.canvas);
             }
         } else {
-            computedPosition = ComputedPosition.from(childEntity, canvasSize);
+            computedPosition = ComputedPosition.from(childEntity, canvas);
         }
 
         // IMPORTANT: store the computed position, not (0,0)
         childEntity.addComponent(computedPosition);
 
-        OuterBoxSize outerBoxSize = OuterBoxSize.from(childEntity).orElseThrow();
-        var boundingBox = new Placement(
-                computedPosition.x(),
-                computedPosition.y(),
-                outerBoxSize.width(),
-                outerBoxSize.height(), 0
-        );
-        childEntity.addComponent(boundingBox);
         if (childEntity.has(Align.class)) {
             alignRearrangeBlockText(childEntity);
         }
@@ -364,16 +356,16 @@ public class PdfLayoutSystem implements SystemECS {
         for (LineTextData line : lines) {
             switch (align.h()) {
                 case LEFT -> {
-                    double x = line.getX() + padding.left();
-                    line.setX(x);
+                    double x = line.x() + padding.left();
+                    line.x(x);
                 }
                 case RIGHT -> {
-                    double x = size.width() - line.getWidth() - padding.right();
-                    line.setX(x);
+                    double x = size.width() - line.width() - padding.right();
+                    line.x(x);
                 }
                 case CENTER -> {
-                    double x = (size.width() - line.getWidth() + padding.left()) / 2;
-                    line.setX(x);
+                    double x = (size.width() - line.width() + padding.left()) / 2;
+                    line.x(x);
                 }
                 default -> {
                     continue;
@@ -421,7 +413,7 @@ public class PdfLayoutSystem implements SystemECS {
         return true;
     }
 
-    private CanvasSize generateCanvasSizeFromPage(PDPage page) {
+    private Canvas generateCanvasFromPage(PDPage page) {
         float width = page.getMediaBox().getWidth();
         float height = page.getMediaBox().getHeight();
         float x = page.getMediaBox().getLowerLeftX();

@@ -8,15 +8,13 @@ import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.renderable.HContainer;
-import com.demcha.components.style.Margin;
-import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDPage;
 
 @Slf4j
 public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
-    private final ContentSize canvasSize;
+    private final ContentSize contentSize;
 
     /**
      * Constructs a new {@code ModuleBuilder} associated with a specific Entity Manager.
@@ -29,7 +27,7 @@ public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
 
     public ModuleBuilder(EntityManager entityManager,Align align, ContentSize canvasSize) {
         super(entityManager, align);
-        this.canvasSize = canvasSize;
+        this.contentSize = canvasSize;
 
     }
     public ModuleBuilder(EntityManager entityManager,Align align, PDPage page) {
@@ -46,7 +44,7 @@ public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
         entity.addComponent(new com.demcha.components.renderable.Module());
         entity.addComponent(StackAxis.VERTICAL);
         entity.addComponentIfAbsent(new HContainer()); // Add the specific component
-        entity.addComponent(canvasSize==null?new ContentSize(0,0): new ContentSize(canvasSize.width(), 0));
+        entity.addComponent(contentSize == null?new ContentSize(0,0): new ContentSize(contentSize.width(), 0));
     }
 
 

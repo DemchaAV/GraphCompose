@@ -4,21 +4,21 @@ import com.demcha.ConfigLoader;
 import com.demcha.Templatese.data.ModuleSummary;
 import com.demcha.Templatese.data.ModuleYml;
 import com.demcha.components.CanvasObject;
+import com.demcha.components.components_builders.Canvas;
 import com.demcha.components.components_builders.ModuleBuilder;
 import com.demcha.components.content.link.Email;
 import com.demcha.components.content.link.LinkUrl;
 import com.demcha.components.core.Entity;
-import com.demcha.components.core.EntityName;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
-import com.demcha.core.CanvasSize;
 import com.demcha.core.EntityManager;
 import com.demcha.system.pdf_systems.PdfFileManagerSystem;
 import com.demcha.system.pdf_systems.PdfLayoutSystem;
 import com.demcha.system.pdf_systems.PdfRenderingSystemECS;
+import com.demcha.utils.page_brecker.PdfCanvas;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
@@ -31,9 +31,9 @@ class test {
         Path target = Paths.get("new_test_file.pdf");
 
         EntityManager entityManager = new EntityManager();
-        entityManager.setGuideLines(false);
+        entityManager.setGuideLines(true);
         PDDocument doc = new PDDocument();
-        CanvasSize canvasSize = new CanvasSize(PDRectangle.A4.getWidth(), PDRectangle.A4.getHeight(), 0.0f, 0.0f);
+        Canvas canvasSize = new PdfCanvas(PDRectangle.A4, 0.0f, 0.0f);
 
 
         entityManager.addSystem(new PdfLayoutSystem(canvasSize));

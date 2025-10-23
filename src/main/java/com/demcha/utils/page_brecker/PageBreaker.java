@@ -5,11 +5,12 @@ import com.demcha.components.components_builders.Canvas;
 import com.demcha.components.content.text.BlockTextData;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
+import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.geometry.OuterBoxSize;
-import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.coordinator.ComputedPosition;
+import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.components.renderable.BlockText;
 import com.demcha.components.style.Margin;
@@ -23,7 +24,7 @@ import org.apache.pdfbox.pdmodel.font.PDFontDescriptor;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -133,17 +134,23 @@ public class PageBreaker {
     // === Paging math =========================================================
 
     public static void breakPages(@NonNull Map<UUID, Entity> entities, Canvas canvas) {
+        AtomicReference<Double> move = new AtomicReference<>(0.0);
         entities.entrySet().stream()
                 .forEach(e -> {
                     var r = RenderingPosition.from(e.getValue()).orElseThrow(
                             () -> new IllegalStateException("Entity " + e + " has no RenderingPosition"));
+                    ContentSize contentSize = e.getValue().getComponent(ContentSize.class).orElseThrow(() -> {
+                       return new IllegalStateException("Entity " + e + " has no ContentSize");
+                    });
 
-                    YPositionOnPage position = definePositionOnPage(r.y(), canvas.height(), 0, canvas.margin().orElse(Margin.zero()).top());
+                    YPositionOnPage position = definePositionOnPage(r.y(), canvas.boundingTopLine(), contentSize.height(), 0,canvas.margin().orElse(Margin.zero()).top());
+                    move.accumulateAndGet(defineMove(position, e.getValue(), canvas), Double::sum);
                     Placement placement = setYInPlacement(e.getValue(), position);
+                    e.getValue().addComponent(placement);
                     if (e.getValue().hasAssignable(BlockText.class)) {
                         try {
-                            blockTextDataPositions(e.getValue(),canvas);
-                            if(log.isDebugEnabled()){
+                            blockTextDataPositions(e.getValue(), canvas);
+                            if (log.isDebugEnabled()) {
                                 BlockTextData blockTextData = e.getValue().getComponent(BlockTextData.class).orElseThrow();
                                 blockTextData.lines().forEach(System.out::println);
                             }
@@ -151,9 +158,27 @@ public class PageBreaker {
                             throw new RuntimeException(ex);
                         }
                     }
-                    e.getValue().addComponent(placement);
+
                 });
     }
+
+    private static double defineMove(YPositionOnPage position, Entity entity, Canvas canvas) {
+        if (Breakable.class.isAssignableFrom(entity.getPdfRender().getClass())) {
+            return 0;
+        }
+        var margin = entity.getComponent(Margin.class).orElse(Margin.zero());
+        var size = entity.getComponent(ContentSize.class).orElseThrow();
+        return defineMove(position.yPosition(), size.height(), margin.top(), canvas.boundingBottonLine());
+    }
+
+    private static double defineMove(double position, double sizeHeight, double topMargin, double canvasBoundingTopLine) {
+        double requireSpace = position + sizeHeight + topMargin;
+        if (requireSpace > canvasBoundingTopLine) {
+            return requireSpace - canvasBoundingTopLine;
+        }
+        return 0;
+    }
+
 
     public static void breakPages(@NonNull EntityManager entityManager) {
         log.info("Breaking pages");
@@ -198,7 +223,7 @@ public class PageBreaker {
      * @throws IllegalArgumentException if {@code pageHeight} is not a finite positive number, or if the
      *                                  resulting page number is less than zero.
      */
-    public static YPositionOnPage definePositionOnPage(double currentPositionY, double pageHeight, int currentPageNumber, double topMargin) {
+    public static YPositionOnPage definePositionOnPage(double currentPositionY, double pageHeight, double objectHeight, int currentPageNumber, double topMargin) {
         if (!(pageHeight > 0.0) || Double.isNaN(pageHeight) || Double.isInfinite(pageHeight)) {
             throw new IllegalArgumentException("pageHeight must be a finite positive number; was " + pageHeight);
         }
@@ -208,6 +233,7 @@ public class PageBreaker {
         int offset = definePage(currentPositionY, pageHeight); // may be negative, zero, or positive
         int finalPage = Math.addExact(currentPageNumber, offset); // detect overflow
         if (finalPage < 0) {
+            log.error("Invalid page number {}", finalPage);
             throw new IllegalArgumentException("Page number is less than zero after offset: " + finalPage);
         }
 
@@ -216,6 +242,10 @@ public class PageBreaker {
         double yInPage = positiveModulo(currentPositionY, pageHeight, topMargin);
 
         YPositionOnPage result = new YPositionOnPage(yInPage, finalPage);
+
+        AtomicReference<Double> move = new AtomicReference<>(0.0);
+        move.accumulateAndGet(defineMove(result.yPosition(), objectHeight, topMargin, pageHeight), Double::sum);
+
         log.debug("Defined position on page: {}", result);
         return result;
     }
@@ -290,18 +320,6 @@ public class PageBreaker {
         return new BlockText.ValidatedTextData(style, textValue);
     }
 
-    /**
-     * Placeholder method for the main page-breaking logic.
-     * <p>
-     * **TODO:** The implementation should likely involve sorting entities
-     * (using {@link #sortByYPositionToMap(Map)}) and then iterating through
-     * them to calculate and potentially adjust their page and in-page
-     * coordinates (using {@link #definePositionOnPage(double, double, int, double)}).
-     */
-    public void breakPages() {
-        // TODO: implement page breaking using the helpers above
-    }
-
     private static boolean blockTextDataPositions(Entity e, Canvas canvas) throws IOException {
 
 
@@ -342,6 +360,7 @@ public class PageBreaker {
         log.debug("fontSize={}  textStyle= {}", fontSize, style);
 
         int currentPage = 0;
+        //TODO надо пеересмотреть нужно ли брать страницу с  с контейнера
 //        int currentPage = e.getComponent(Placement.class).orElseThrow().startPage();
 
 
@@ -367,7 +386,7 @@ public class PageBreaker {
 
 
             YPositionOnPage yPositionOnPage = PageBreaker
-                    .definePositionOnPage(startY, canvas.height(), currentPage, canvas.margin().orElse(Margin.zero()).top());
+                    .definePositionOnPage(startY, canvas.boundingTopLine(),textHeight, currentPage, canvas.margin().orElse(Margin.zero()).top());
             if (log.isDebugEnabled()) {
                 log.debug(ltd.toString());
                 log.debug("Line position {}, Current page: {}", ltd.x(), currentPage);
@@ -381,11 +400,23 @@ public class PageBreaker {
 
             }
         }
-        newBlockTextData = new BlockTextData(assignPositionTextData,(float) spacing);
+        newBlockTextData = new BlockTextData(assignPositionTextData, (float) spacing);
         e.addComponent(newBlockTextData);
 
 
         return true;
+    }
+
+    /**
+     * Placeholder method for the main page-breaking logic.
+     * <p>
+     * **TODO:** The implementation should likely involve sorting entities
+     * (using {@link #sortByYPositionToMap(Map)}) and then iterating through
+     * them to calculate and potentially adjust their page and in-page
+     * coordinates (using {@link #defineMove(double, double, double, double)} .
+     */
+    public void breakPages() {
+        // TODO: implement page breaking using the helpers above
     }
 
     private static class LocatedPages {

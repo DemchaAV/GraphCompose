@@ -1,5 +1,8 @@
 package com.demcha.components.core;
 
+import com.demcha.components.geometry.ContentSize;
+import com.demcha.components.layout.coordinator.Placement;
+import com.demcha.components.style.Margin;
 import com.demcha.system.pdf_systems.PdfRender;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -136,6 +139,52 @@ public final class Entity {
     public boolean hasRender(Class<? extends Component> type) {
         return comps.values().stream()
                 .anyMatch(comp -> comp instanceof PdfRender);
+    }
+
+    public double boundingTopLine() {
+        var placement = getComponent(Placement.class).orElseThrow(() -> {
+            // Лямбда здесь позволяет выполнить логирование *только* в случае ошибки
+            log.error("No component Placement.class found for entity [{}] boundingTopLine() aborted", this);
+            return new NoSuchElementException("Missing component Placement.class");
+        });
+        var margin = getComponent(Margin.class).orElse(Margin.zero());
+        var size = getComponent(ContentSize.class).orElseThrow(() -> new NoSuchElementException("Missing component ContentSize.class"));
+
+        return placement.y() + size.height() + margin.top();
+    }
+
+    public double boundingBottomLine() {
+        var placement = getComponent(Placement.class).orElseThrow(() -> {
+            // Лямбда здесь позволяет выполнить логирование *только* в случае ошибки
+            log.error("No component Placement.class found for entity [{}] boundingBottomLine() aborted", this);
+            return new NoSuchElementException("Missing component Placement.class");
+        });
+        var margin = getComponent(Margin.class).orElse(Margin.zero());
+
+        return placement.y() - margin.bottom();
+    }
+
+    public double boundingRightLine() {
+        var placement = getComponent(Placement.class).orElseThrow(() -> {
+            // Лямбда здесь позволяет выполнить логирование *только* в случае ошибки
+            log.error("No component Placement.class found for entity [{}] boundingRightLine() aborted", this);
+            return new NoSuchElementException("Missing component Placement.class");
+        });
+        var margin = getComponent(Margin.class).orElse(Margin.zero());
+        var size = getComponent(ContentSize.class).orElseThrow(() -> new NoSuchElementException("Missing component ContentSize.class"));
+
+        return placement.x() + size.width() + margin.right();
+    }
+
+    public double boundingLeftLine() {
+        var placement = getComponent(Placement.class).orElseThrow(() -> {
+            // Лямбда здесь позволяет выполнить логирование *только* в случае ошибки
+            log.error("No component Placement.class found for entity [{}] boundingLeftLine() aborted", this);
+            return new NoSuchElementException("Missing component Placement.class");
+        });
+        var margin = getComponent(Margin.class).orElse(Margin.zero());
+
+        return placement.x() - margin.left();
     }
 
 

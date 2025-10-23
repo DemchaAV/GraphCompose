@@ -10,6 +10,7 @@ import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.system.RenderingSystemECS;
 import com.demcha.system.pdf_systems.PdfRender;
+import com.demcha.utils.page_brecker.Breakable;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -33,7 +34,7 @@ import java.util.Optional;
 @Builder
 @EqualsAndHashCode
 @NoArgsConstructor
-public class BlockText implements PdfRender, GuidesRenderer {
+public class BlockText implements PdfRender, GuidesRenderer, Breakable {
     private static final EnumSet<Guide> DEFAULT_GUIDES =
             EnumSet.of(Guide.MARGIN, Guide.PADDING, Guide.BOX);
 

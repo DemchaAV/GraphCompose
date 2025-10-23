@@ -15,19 +15,19 @@ public interface Canvas {
 
     Optional<Margin> margin();
 
-    default float BoundingTopLine() {
+    default float boundingTopLine() {
         return height() - (float) margin().orElse(Margin.zero()).top();
     }
 
-    default float BoundingBottonLine() {
+    default float boundingBottonLine() {
         return (float) margin().orElse(Margin.zero()).bottom();
     }
 
-    default float BoundingRightLine() {
+    default float boundingRightLine() {
         return width() - (float) margin().orElse(Margin.zero()).right();
     }
 
-    default float BoundingLeftLine() {
+    default float boundingLeftLine() {
         return (float) margin().orElse(Margin.zero()).left();
     }
 

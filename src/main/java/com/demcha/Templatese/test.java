@@ -85,37 +85,37 @@ class test {
 
         // 7) Professional Summary
         Entity moduleProfessionalSummary = cv.moduleBuilder(summary.getModuleName(), canvas.innerBoxSize())
-                .addChild(cv.blockText(summary.getBlockSummary(), canvas.innerBoxSize().innerW()))
+                .addChild(cv.blockText(summary.getBlockSummary(), canvas.innerBoxSize().width()))
                 .margin(Margin.top(6))
                 .build();
 
         // 8) Technical Skills
         Entity moduleTechnicalSkills = cv.moduleBuilder(technicalSkills.getName(), canvas.innerBoxSize())
-                .addChild(cv.blockText(technicalSkills.getModulePoints(), canvas.innerBoxSize().innerW(), "• "))
+                .addChild(cv.blockText(technicalSkills.getModulePoints(), canvas.innerBoxSize().width(), "• "))
                 .margin(Margin.top(6))
                 .build();
 
         // 9) Education & Certifications
         Entity moduleEducationCertifications = cv.moduleBuilder(educationCertifications.getName(), canvas.innerBoxSize())
-                .addChild(cv.blockText(educationCertifications.getModulePoints(), canvas.innerBoxSize().innerW(), null))
+                .addChild(cv.blockText(educationCertifications.getModulePoints(), canvas.innerBoxSize().width(), null))
                 .margin(Margin.top(6))
                 .build();
 
         // 10) Projects (как modulePoints)
         Entity moduleProjects = cv.moduleBuilder(projects.getName(), canvas.innerBoxSize())
-                .addChild(cv.blockText(projects.getModulePoints(), canvas.innerBoxSize().innerW(), null))
+                .addChild(cv.blockText(projects.getModulePoints(), canvas.innerBoxSize().width(), null))
                 .margin(Margin.top(6))
                 .build();
 
         // 11) Professional Experience (как modulePoints)
         Entity moduleProfessionalExperience = cv.moduleBuilder(professionalExperience.getName(), canvas.innerBoxSize())
-                .addChild(cv.blockText(professionalExperience.getModulePoints(), canvas.innerBoxSize().innerW(), null))
+                .addChild(cv.blockText(professionalExperience.getModulePoints(), canvas.innerBoxSize().width(), null))
                 .margin(Margin.top(6))
                 .build();
 
         // 12) Additional (как blockText)
         Entity moduleAdditional = cv.moduleBuilder(additional.getName(), canvas.innerBoxSize())
-                .addChild(cv.blockText(additional.getModulePoints(), canvas.innerBoxSize().innerW(), null))
+                .addChild(cv.blockText(additional.getModulePoints(), canvas.innerBoxSize().width(), null))
                 .margin(Margin.top(6))
                 .build();
 

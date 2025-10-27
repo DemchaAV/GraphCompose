@@ -93,8 +93,8 @@ public interface GuidesRenderer {
 
         double x = pad.x();
         double y = pad.y();
-        double width = inner.innerW();
-        double height = inner.innerH();
+        double width = inner.width();
+        double height = inner.hight();
 
         //  Using constants for configuration
         renderMarkers(cs, x, y, width, height, PADDING_COLOR);

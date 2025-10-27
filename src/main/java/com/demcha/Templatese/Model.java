@@ -140,10 +140,10 @@ public class Model {
             moduleHeader.addChild(moduleName(moduleName));
         }
         var vbox = new VContainerBuilder(entityManager,Align.middle(5))
-                .size(new ContentSize(innerBoxSize.innerW(), 50));
+                .size(new ContentSize(innerBoxSize.width(), 50));
         for (int i = 0; i < modulePoints.size(); i++) {
             vbox.addChild(
-                    blockTextBuilder(modulePoints.get(i), innerBoxSize.innerW())
+                    blockTextBuilder(modulePoints.get(i), innerBoxSize.width())
                             .anchor(Anchor.left())
                             .build()
             );

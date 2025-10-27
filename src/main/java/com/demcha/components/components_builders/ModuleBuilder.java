@@ -35,7 +35,7 @@ public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
 
     }
     public ModuleBuilder(EntityManager entityManager, Align align,InnerBoxSize innerBoxSize) {
-        this(entityManager,align, new ContentSize(innerBoxSize.innerW(), innerBoxSize.innerH()));
+        this(entityManager,align, new ContentSize(innerBoxSize.width(), innerBoxSize.hight()));
     }
 
 
@@ -52,7 +52,7 @@ public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
     private  void fitInParent(Entity child) {
         var childOuter = OuterBoxSize.from(child).orElseThrow();
         var childSize = child.getComponent(ContentSize.class).orElseThrow();
-        double availibleW = InnerBoxSize.from(entity).orElseThrow().innerW();
+        double availibleW = InnerBoxSize.from(entity).orElseThrow().width();
         double different = availibleW - childOuter.width();
         if (different > 0){
             child.addComponent(new ContentSize(availibleW, childSize.height()));

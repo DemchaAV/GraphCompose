@@ -5,7 +5,6 @@ import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.layout.Align;
-import com.demcha.components.style.Margin;
 import com.demcha.core.EntityManager;
 import com.demcha.exeptions.ContentSizeNotFoundException;
 import com.demcha.system.Expendable;
@@ -42,8 +41,8 @@ public final class ContainerExpander {
                 new IllegalStateException("Parent is missing InnerBoxSize: " + parent));
 
         // Start from current inner box constraints
-        double requiredContentWidth = inner.innerW();
-        double requiredContentHeight = inner.innerH();
+        double requiredContentWidth = inner.width();
+        double requiredContentHeight = inner.hight();
 
         if (log.isTraceEnabled()) {
             log.trace("Initial required size from inner box for {}: {}x{}",
@@ -73,8 +72,8 @@ public final class ContainerExpander {
         final InnerBoxSize inner = InnerBoxSize.from(parent).orElseThrow(() ->
                 new IllegalStateException("Parent is missing InnerBoxSize: " + parent));
 
-        final boolean wider = requiredInnerWidth > inner.innerW() + EPS;
-        final boolean taller = requiredInnerHeight > inner.innerH() + EPS;
+        final boolean wider = requiredInnerWidth > inner.width() + EPS;
+        final boolean taller = requiredInnerHeight > inner.hight() + EPS;
 
         if (!wider && !taller) {
             log.debug("Parent {} content not expanded (required <= inner).", parent);
@@ -86,8 +85,8 @@ public final class ContainerExpander {
             return new ContentSizeNotFoundException(parent);
         });
 
-        final double newWidth = wider ? current.width() + (requiredInnerWidth - inner.innerW()) : current.width();
-        final double newHeight = taller ? current.height() + (requiredInnerHeight - inner.innerH()) : current.height();
+        final double newWidth = wider ? current.width() + (requiredInnerWidth - inner.width()) : current.width();
+        final double newHeight = taller ? current.height() + (requiredInnerHeight - inner.hight()) : current.height();
 
         // Avoid churn
         if (Math.abs(newWidth - current.width()) < EPS && Math.abs(newHeight - current.height()) < EPS) {

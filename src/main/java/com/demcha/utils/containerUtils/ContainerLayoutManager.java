@@ -121,7 +121,7 @@ public class ContainerLayoutManager {
 
         double innerW = InnerBoxSize.from(parent)
                 .orElseThrow(() -> new NoSuchElementException("InnerBoxSize missing on parent: " + parent))
-                .innerW();
+                .width();
 
         for (UUID childId : parent.getChildren()) {
             Entity child = em.getEntity(childId)

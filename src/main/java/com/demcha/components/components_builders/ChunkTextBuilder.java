@@ -13,7 +13,6 @@ import com.demcha.components.layout.ParentComponent;
 import com.demcha.components.renderable.BlockText;
 import com.demcha.components.renderable.ChunkedBlockText;
 import com.demcha.components.renderable.TextComponent;
-import com.demcha.components.renderable.VContainer;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
@@ -53,7 +52,7 @@ public class ChunkTextBuilder extends ContainerBuilder<ChunkTextBuilder> {
         var margin = entity.getComponent(Margin.class).orElse(Margin.zero());
         var padding = entity.getComponent(Padding.class).orElse(Padding.zero());
 
-        final double maxWidth = innerBoxSize.innerW();
+        final double maxWidth = innerBoxSize.width();
         final double horizontalMargins = margin.horizontal();
 
         // Make a shallow copy of components (excluding Text, which we will replace)

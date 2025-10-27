@@ -11,7 +11,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
-public record InnerBoxSize(double innerW, double innerH) {
+public record InnerBoxSize(double width, double hight) {
 
     public static Optional<InnerBoxSize> from(@NonNull Entity entity) {
         log.debug("Starting calculation a OuterBoxSize for entity: {}", entity);

@@ -366,7 +366,7 @@ public class PageBreaker {
 
         // стартовая позиция (левый верх «абзаца»)
         float startX = (float) position.x() - descentPx;
-        float startY = (float) (position.y() + innerBoxSize.innerH()) - textHeight + descentPx; // if spacing will be negative
+        float startY = (float) (position.y() + innerBoxSize.hight()) - textHeight + descentPx; // if spacing will be negative
 
         boolean isStarted = false;
         BlockTextData newBlockTextData;

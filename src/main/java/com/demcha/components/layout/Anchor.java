@@ -94,8 +94,8 @@ public record Anchor(HAnchor h, VAnchor v) implements Component {
         double outerW = outerBoxSize.width();
         double outerH = outerBoxSize.height();
 
-        double areaW = parentInnerBoxSize.innerW();
-        double areaH = parentInnerBoxSize.innerH();
+        double areaW = parentInnerBoxSize.width();
+        double areaH = parentInnerBoxSize.hight();
 
         return getComputedPosition(position, areaW, outerW, areaH, outerH);
 

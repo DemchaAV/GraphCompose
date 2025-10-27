@@ -26,7 +26,9 @@ import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class Main {
     static String textBlockData = "Junior Java Backend Developer with hands-on experience building REST APIs using Spring Boot, Spring " +

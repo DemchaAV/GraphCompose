@@ -88,7 +88,7 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         var margin = entity.getComponent(Margin.class).orElse(Margin.zero());
         var padding = entity.getComponent(Padding.class).orElse(Padding.zero());
 
-        final double maxWidth = innerBoxSize.innerW();
+        final double maxWidth = innerBoxSize.width();
         final double horizontalMargins = margin.horizontal();
 
         // Make a shallow copy of components (excluding Text, which we will replace)
@@ -169,7 +169,7 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         style = style == null ? TextStyle.defaultStyle() : style;
         margin = margin == null ? Margin.zero() : margin;
 
-        final double maxWidth = innerBoxSize.innerW();
+        final double maxWidth = innerBoxSize.width();
         final double horizontalMargins = margin.horizontal();
 
         // Make a shallow copy of components (excluding Text, which we will replace)

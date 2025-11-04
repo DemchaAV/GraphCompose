@@ -3,9 +3,8 @@ package com.demcha.components.renderable;
 import com.demcha.components.containers.abstract_builders.GuidesRenderer;
 import com.demcha.components.core.Entity;
 import com.demcha.system.Expendable;
-import com.demcha.system.RenderingSystemECS;
 import com.demcha.system.pdf_systems.PdfRender;
-import org.apache.pdfbox.pdmodel.PDDocument;
+import com.demcha.system.pdf_systems.PdfRenderingSystemECS;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.io.IOException;
@@ -14,9 +13,9 @@ import java.util.EnumSet;
 /**
  * This is simply an empty element that can hold anything (image, text, etc.) as a single instance.
  */
-public class Element implements PdfRender, GuidesRenderer, Expendable {
-    private static final EnumSet<Guide> DEFAULT_GUIDES =
-            EnumSet.of(Guide.MARGIN, Guide.PADDING, Guide.BOX);
+public class Element implements PdfRender,  Expendable {
+    private static final EnumSet<GuidesRenderer.Guide> DEFAULT_GUIDES =
+            EnumSet.of(GuidesRenderer.Guide.MARGIN, GuidesRenderer.Guide.PADDING, GuidesRenderer.Guide.BOX);
 
     /**
      * Renders the container component on the PDF content stream.
@@ -29,10 +28,10 @@ public class Element implements PdfRender, GuidesRenderer, Expendable {
      * @throws IOException If an I/O error occurs during rendering.
      */
     @Override
-    public boolean pdfRender(Entity e, PDDocument doc, RenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
+    public boolean pdf(Entity e, PdfRenderingSystemECS pdfRenderingSystem, boolean guideLines) throws IOException {
         TextComponent textComponent = new TextComponent();
-        try (PDPageContentStream pdPageContentStream = openContentStream(e, doc, renderingSystemECS)) {
-            if (guideLines) renderGuides(e,pdPageContentStream, DEFAULT_GUIDES);
+        try (PDPageContentStream pdPageContentStream = pdfRenderingSystem.openContentStream (e)) {
+            if (guideLines) pdfRenderingSystem .renderGuides(e,pdPageContentStream, DEFAULT_GUIDES);
         }
 
         return true;

@@ -9,11 +9,10 @@ import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.exeptions.ContentSizeNotFoundException;
 import com.demcha.system.Expendable;
-import com.demcha.system.RenderingSystemECS;
 import com.demcha.system.pdf_systems.PdfRender;
+import com.demcha.system.pdf_systems.PdfRenderingSystemECS;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.io.IOException;
@@ -21,20 +20,20 @@ import java.util.EnumSet;
 
 @Slf4j
 @EqualsAndHashCode
-public class Rectangle implements PdfRender, GuidesRenderer, Expendable {
-    private static final EnumSet<Guide> DEFAULT_GUIDES =
-            EnumSet.of(Guide.MARGIN, Guide.PADDING);
+public class Rectangle implements PdfRender, Expendable {
+    private static final EnumSet<GuidesRenderer.Guide> DEFAULT_GUIDES =
+            EnumSet.of(GuidesRenderer.Guide.MARGIN, GuidesRenderer.Guide.PADDING);
 
 
     @Override
-    public boolean pdfRender(Entity e, PDDocument doc, RenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
+    public boolean pdf(Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
         // draw an object first
         boolean drawn;
-        try (PDPageContentStream cs = openContentStream(e,doc, renderingSystemECS)) {
+        try (PDPageContentStream cs = renderingSystemECS.openContentStream(e)) {
             drawn = pdfRenderObject(e, cs);
             // if was specified, draw guides
             if (guideLines) {
-                renderGuides(e, cs, DEFAULT_GUIDES);
+                renderingSystemECS.renderGuides(e, cs, DEFAULT_GUIDES);
 
             }
         }
@@ -42,7 +41,7 @@ public class Rectangle implements PdfRender, GuidesRenderer, Expendable {
     }
 
 
-    private boolean pdfRenderObject(Entity e,PDPageContentStream cs) throws IOException {
+    private boolean pdfRenderObject(Entity e, PDPageContentStream cs) throws IOException {
         if (!e.hasAssignable(Rectangle.class)) {
             log.debug("No Rectangle on {}", e);
             return false;

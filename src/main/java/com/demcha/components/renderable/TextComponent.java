@@ -4,17 +4,15 @@ import com.demcha.components.containers.abstract_builders.GuidesRenderer;
 import com.demcha.components.content.text.Text;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
-import com.demcha.components.core.EntityName;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.style.Padding;
-import com.demcha.system.RenderingSystemECS;
 import com.demcha.system.pdf_systems.PdfRender;
+import com.demcha.system.pdf_systems.PdfRenderingSystemECS;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDFontDescriptor;
@@ -26,9 +24,9 @@ import java.util.EnumSet;
 @Builder
 @EqualsAndHashCode
 @NoArgsConstructor
-public class TextComponent implements PdfRender, GuidesRenderer {
-    private static final EnumSet<Guide> DEFAULT_GUIDES =
-            EnumSet.of(Guide.MARGIN, Guide.PADDING);
+public class TextComponent implements PdfRender {
+    private static final EnumSet<GuidesRenderer.Guide> DEFAULT_GUIDES =
+            EnumSet.of(GuidesRenderer.Guide.MARGIN, GuidesRenderer.Guide.PADDING);
 
 
     public static <T extends TextComponent> ContentSize autoMeasureText(Entity entity) throws IOException {
@@ -63,17 +61,14 @@ public class TextComponent implements PdfRender, GuidesRenderer {
     }
 
     @Override
-    public boolean pdfRender(Entity e, PDDocument doc, RenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
+    public boolean pdf(Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
         if (!e.hasAssignable(TextComponent.class)) return false;
 
         var placementOpt = e.getComponent(Placement.class);
         if (placementOpt.isEmpty()) return false;
 
-        try (PDPageContentStream cs = openContentStream(e,doc, renderingSystemECS)) {
-            EntityName entityName = e.getComponent(EntityName.class).orElseThrow();
-            if (entityName.value().equalsIgnoreCase("Professional Experience")) {
-                e.printInfo();
-            }
+        try (PDPageContentStream cs = renderingSystemECS.openContentStream(e)) {
+
 
             var position = placementOpt.get();
             Padding padding = e.getComponent(Padding.class).orElse(Padding.zero());
@@ -110,8 +105,8 @@ public class TextComponent implements PdfRender, GuidesRenderer {
 
             cs.restoreGraphicsState();
 
-            if (guideLines) renderGuides(e, cs, DEFAULT_GUIDES);
-        }catch (IOException ioe) {
+            if (guideLines) renderingSystemECS.renderGuides(e, cs, DEFAULT_GUIDES);
+        } catch (IOException ioe) {
             throw new IOException(ioe);
         }
         return true;

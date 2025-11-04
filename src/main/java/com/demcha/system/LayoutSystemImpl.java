@@ -1,4 +1,4 @@
-package com.demcha.system.pdf_systems;
+package com.demcha.system;
 
 import com.demcha.components.LineTextData;
 import com.demcha.components.components_builders.Canvas;
@@ -18,7 +18,6 @@ import com.demcha.components.renderable.TextComponent;
 import com.demcha.components.style.Padding;
 import com.demcha.core.CanvasSize;
 import com.demcha.core.EntityManager;
-import com.demcha.system.SystemECS;
 import com.demcha.utils.containerUtils.ContainerExpander;
 import com.demcha.utils.containerUtils.ContainerLayoutManager;
 import com.demcha.utils.page_brecker.PageBreaker;
@@ -29,7 +28,7 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import java.util.*;
 
 /**
- * <h1>PdfLayoutSystem</h1>
+ * <h1>LayoutSystemImpl</h1>
  * <p>
  * Top-down DFS layout for ECS-model with a CSS-like box model.
  * </p>
@@ -44,12 +43,10 @@ import java.util.*;
  */
 @Slf4j
 @RequiredArgsConstructor
-public class PdfLayoutSystem implements SystemECS {
+public class LayoutSystemImpl implements SystemECS {
     private final Canvas canvas;
 
-//    public PdfLayoutSystem(PDPage page) {
-//        this.canvasSize = generateCanvasFromPage(page);
-//    }
+
 
 
     /**
@@ -184,11 +181,11 @@ public class PdfLayoutSystem implements SystemECS {
 
     @Override
     public void process(EntityManager entityManager) {
-        log.info("PdfLayoutSystem: processing...");
+        log.info("LayoutSystemImpl: processing...");
 
         final var entities = entityManager.getEntities();
         if (entities == null || entities.isEmpty()) {
-            log.info("PdfLayoutSystem: no entities to lay out");
+            log.info("LayoutSystemImpl: no entities to lay out");
             return;
         }
 
@@ -230,7 +227,7 @@ public class PdfLayoutSystem implements SystemECS {
             );
         }
 
-        log.info("PdfLayoutSystem: layout complete (nodes: {})", entities.size());
+        log.info("LayoutSystemImpl: layout complete (nodes: {})", entities.size());
 
         // Pagination
         PageBreaker.breakPages(entityManager);
@@ -261,7 +258,7 @@ public class PdfLayoutSystem implements SystemECS {
 
                 if (pid == null || !entities.containsKey(pid)) {
                     if (roots.add(id)) {
-                        log.warn("PdfLayoutSystem: entity {} references missing parent {} — treating as root", id, pid);
+                        log.warn("LayoutSystemImpl: entity {} references missing parent {} — treating as root", id, pid);
                     }
                 }
             }
@@ -269,7 +266,7 @@ public class PdfLayoutSystem implements SystemECS {
 
         if (roots.isEmpty()) {
             // Defensive: if everything is wired as a child forming a closed cycle, fall back to all nodes
-            log.warn("PdfLayoutSystem: computed empty root set; falling back to all entities as roots");
+            log.warn("LayoutSystemImpl: computed empty root set; falling back to all entities as roots");
             roots.addAll(entities.keySet());
         }
         return roots;
@@ -294,12 +291,12 @@ public class PdfLayoutSystem implements SystemECS {
     ) {
         Visit st = visit.getOrDefault(id, Visit.UNSEEN);
         if (st == Visit.DONE) return;
-        if (st == Visit.ACTIVE) throw new IllegalStateException("PdfLayoutSystem: cycle detected at entity " + id);
+        if (st == Visit.ACTIVE) throw new IllegalStateException("LayoutSystemImpl: cycle detected at entity " + id);
         visit.put(id, Visit.ACTIVE);
 
         Entity childEntity = entities.get(id);
         if (childEntity == null) {
-            log.warn("PdfLayoutSystem: entity {} not found — skipping", id);
+            log.warn("LayoutSystemImpl: entity {} not found — skipping", id);
             visit.put(id, Visit.DONE);
             return;
         }
@@ -315,7 +312,7 @@ public class PdfLayoutSystem implements SystemECS {
             if (parent != null) {
                 computedPosition = ComputedPosition.from(childEntity, parent);
             } else {
-                log.warn("PdfLayoutSystem: parent {} of {} not found — using root positioning (Position + Margin)", parentId, id);
+                log.warn("LayoutSystemImpl: parent {} of {} not found — using root positioning (Position + Margin)", parentId, id);
                 computedPosition = ComputedPosition.from(childEntity, this.canvas);
             }
         } else {
@@ -333,7 +330,7 @@ public class PdfLayoutSystem implements SystemECS {
             String name = childEntity.getComponent(EntityName.class)
                     .map(EntityName::value)
                     .orElse(id.toString());
-            log.debug("PdfLayoutSystem: {} [depth={}] positioned at ({}, {})",
+            log.debug("LayoutSystemImpl: {} [depth={}] positioned at ({}, {})",
                     name, depth, computedPosition.x(), computedPosition.y());
         }
 
@@ -423,7 +420,7 @@ public class PdfLayoutSystem implements SystemECS {
 
     @Override
     public String toString() {
-        return "PdfLayoutSystem";
+        return "LayoutSystemImpl";
     }
 
     private enum Visit {UNSEEN, ACTIVE, DONE;}

@@ -8,22 +8,22 @@ import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderingPosition;
-import com.demcha.system.RenderingSystemECS;
 import com.demcha.system.pdf_systems.PdfRender;
+import com.demcha.system.pdf_systems.PdfRenderingSystemECS;
 import com.demcha.utils.page_brecker.Breakable;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.util.Matrix;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.IOException;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -34,9 +34,9 @@ import java.util.Optional;
 @Builder
 @EqualsAndHashCode
 @NoArgsConstructor
-public class BlockText implements PdfRender, GuidesRenderer, Breakable {
-    private static final EnumSet<Guide> DEFAULT_GUIDES =
-            EnumSet.of(Guide.MARGIN, Guide.PADDING, Guide.BOX);
+public class BlockText implements PdfRender, Breakable {
+    private static final EnumSet<GuidesRenderer.Guide> DEFAULT_GUIDES =
+            EnumSet.of(GuidesRenderer.Guide.MARGIN, GuidesRenderer.Guide.PADDING, GuidesRenderer.Guide.BOX);
 
     /**
      * Retrieves and validates the {@link BlockTextData} and {@link TextStyle} components from an {@link Entity}.
@@ -91,14 +91,13 @@ public class BlockText implements PdfRender, GuidesRenderer, Breakable {
      * Optionally, it can render guide lines for debugging layout.
      *
      * @param e          The {@link Entity} containing the {@link BlockTextData}, {@link TextStyle}, {@link RenderingPosition}, and {@link InnerBoxSize}.
-     * @param doc        The {@link PDDocument} (currently unused but part of the interface).
      * @param guideLines A boolean indicating whether to render layout guides.
      * @return {@code true} if the text was rendered, {@code false} otherwise (e.g., if required components are missing).
      * @throws IOException If an error occurs during PDF content stream operations.
      */
 
     @Override
-    public boolean pdfRender(Entity e, PDDocument doc, RenderingSystemECS renderingSystem, boolean guideLines) throws IOException {
+    public boolean pdf(Entity e, PdfRenderingSystemECS renderingSystem, boolean guideLines) throws IOException {
 
         var placementOpt = blockEntityValidate(e);
         if (placementOpt.isEmpty()) return false;
@@ -120,7 +119,7 @@ public class BlockText implements PdfRender, GuidesRenderer, Breakable {
         var blockTextData = validateText.textValue().lines();
 
         if (log.isDebugEnabled()) {
-            log.debug("Rendering textBlock '{}' at position ({}, {}) fontSize={}  textStyle= ", blockTextData, placement.x(), placement.y());
+            log.debug("Rendering textBlock '{}' at {}", blockTextData, placement);
             log.debug("fontSize={}  textStyle= {}", fontSize, style);
         }
 
@@ -130,16 +129,15 @@ public class BlockText implements PdfRender, GuidesRenderer, Breakable {
         // стартовая позиция (левый верх «абзаца»)
 
 
-
-        return printData(e, doc, renderingSystem, guideLines, currentPage, font, fontSize, color, blockTextData);
+        return pdfRenderBlock(e, renderingSystem, guideLines, currentPage, font, fontSize, color, blockTextData);
 //        return true;
     }
 
-    private boolean printData(Entity e, PDDocument doc, RenderingSystemECS renderingSystem, boolean guideLines, int currentPage, PDFont font, float fontSize, Color color, java.util.List<LineTextData> blockTextData) throws IOException {
+    private boolean pdfRenderBlock(Entity e, PdfRenderingSystemECS renderingSystem, boolean guideLines, int currentPage, PDFont font, float fontSize, Color color, List<LineTextData> blockTextData) throws IOException {
         boolean result = false;
         PDPageContentStream cs = null;
         try {
-            cs = reopenStreams(doc, cs, currentPage, renderingSystem, font, fontSize, color);
+            cs = renderingSystem.openContentSteamForTextData(currentPage, font, fontSize, color);
             boolean isStarted = false;
 
             for (LineTextData ltd : blockTextData) {
@@ -151,7 +149,7 @@ public class BlockText implements PdfRender, GuidesRenderer, Breakable {
 
                 if (currentPage != ltd.page()) {
                     currentPage = ltd.page();
-                    cs = reopenStreams(doc, cs, currentPage, renderingSystem, font, fontSize, color);
+                    cs = renderingSystem.reopenContentStreamForTextData(cs, currentPage, font, fontSize, color);
                 }
 
                 cs.setTextMatrix(new Matrix(1, 0, 0, 1, (float) ltd.x(), (float) ltd.y()));
@@ -161,7 +159,7 @@ public class BlockText implements PdfRender, GuidesRenderer, Breakable {
             cs.endText();
             cs.restoreGraphicsState();
             if (guideLines) {
-                renderGuides(e, cs, DEFAULT_GUIDES);
+                renderingSystem.renderGuides(e, DEFAULT_GUIDES);
             }
 
             result = true;
@@ -170,24 +168,11 @@ public class BlockText implements PdfRender, GuidesRenderer, Breakable {
             if (cs != null) {
                 cs.close();
             }
-            return result;
         }
+
+        return result;
     }
 
-    private PDPageContentStream reopenStreams(PDDocument doc, PDPageContentStream cs, int currentPage, RenderingSystemECS renderingSystem, PDFont font, float fontSize, Color color) throws IOException {
-        PDPageContentStream newStream = null;
-        if (cs != null) {
-            cs.endText();
-            cs.restoreGraphicsState();
-            cs.close();
-        }
-        newStream = openContentStream(doc, renderingSystem, currentPage);
-        newStream.saveGraphicsState();
-        newStream.setFont(font, fontSize);
-        newStream.setNonStrokingColor(color);
-        newStream.beginText();
-        return newStream;
-    }
 
     /**
      * A record to hold validated text style and block text data.

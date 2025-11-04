@@ -163,7 +163,7 @@ public class PageBreaker {
     }
 
     private static double defineMove(YPositionOnPage position, Entity entity, Canvas canvas) {
-        if (Breakable.class.isAssignableFrom(entity.getPdfRender().getClass())) {
+        if (Breakable.class.isAssignableFrom(entity.getRender().getClass())) {
             return 0;
         }
         var margin = entity.getComponent(Margin.class).orElse(Margin.zero());
@@ -195,7 +195,7 @@ public class PageBreaker {
             log.error("No RenderingSystemECS found");
             throw new IllegalStateException("No RenderingSystemECS found");
         }
-        breakPages(entityManager.getEntities(), renderingSystemECS.getCanvas());
+        breakPages(entityManager.getEntities(), renderingSystemECS.canvas());
     }
 
     private static Placement setYInPlacement(Entity entity, double yPosition, int startPage, int endPage) {

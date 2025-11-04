@@ -2,6 +2,8 @@ package com.demcha.components.geometry;
 
 import com.demcha.components.components_builders.ElementBuilder;
 import com.demcha.components.core.Entity;
+import com.demcha.components.layout.coordinator.Placement;
+import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import com.demcha.exeptions.ContentSizeNotFoundException;
 import lombok.NonNull;
@@ -26,8 +28,6 @@ public record InnerBoxSize(double width, double hight) {
                 );
 
         var innerBoxSizeOpt = from(size, padding);
-        var innerBoxSize = innerBoxSizeOpt.orElseThrow();
-        log.debug("Calculated Inner  {} for entity: {}", innerBoxSize, entity);
         return innerBoxSizeOpt;
     }
 
@@ -64,5 +64,34 @@ public record InnerBoxSize(double width, double hight) {
         var box = new InnerBoxSize(w, h);
         log.debug("{}", box);
         return Optional.of(box);
+    }
+
+
+
+    private static Placement getPlacement(Entity entity) {
+        return entity.getComponent(Placement.class).orElseThrow(() -> {
+            log.error("Placement.class has not been found. {}", entity);
+            return new NullPointerException("Placement.class has not been found.");
+        });
+    }
+
+    public double getX(Placement placement, Padding padding) {
+        return placement.x() + padding.left();
+    }
+
+    public double getY(Placement placement, Padding padding) {
+        return placement.y() + padding.bottom();
+    }
+
+    public double getInnerX(Entity entity) {
+        Placement placement = getPlacement(entity);
+        Padding padding = entity.getComponent(Padding.class).orElse(Padding.zero());
+        return getX(placement, padding);
+    }
+
+    public double getInnerY(Entity entity) {
+        Placement placement = getPlacement(entity);
+        Padding padding = entity.getComponent(Padding.class).orElse(Padding.zero());
+        return getY(placement, padding);
     }
 }

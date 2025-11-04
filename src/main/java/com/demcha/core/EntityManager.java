@@ -4,8 +4,8 @@ import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
 import com.demcha.components.layout.ParentComponent;
+import com.demcha.system.Render;
 import com.demcha.system.SystemECS;
-import com.demcha.system.pdf_systems.PdfRender;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
  * doc.addComponent(e, new Position(50, 100));
  * doc.addComponent(e, new TextComponent("Hello"));
  *
- * doc.addSystem(new PdfLayoutSystem());
+ * doc.addSystem(new LayoutSystemImpl());
  * doc.addSystem(new RenderSystem());
  *
  * doc.processSystems(); // Systems read/write components via the entityManager
@@ -183,7 +183,7 @@ public class EntityManager {
         Set<UUID> result = new HashSet<>();
         for (Map.Entry<UUID, Entity> e : entities.entrySet()) {
             boolean hasRenderable = e.getValue().view().values().stream()
-                    .anyMatch(comp -> comp instanceof PdfRender);
+                    .anyMatch(comp -> comp instanceof Render);
             if (hasRenderable) {
                 result.add(e.getKey());
             }
@@ -199,7 +199,7 @@ public class EntityManager {
         return entities.remove(entity.getUuid()) != null;
     }
 
-    public Set<UUID> getEntitiesWithPdfRender(Class<? extends PdfRender> componentType) {
+    public Set<UUID> getEntitiesWithPdfRender(Class<? extends Render> componentType) {
         log.debug("Searching for entities with component type {}", componentType.getName());
 
         Set<UUID> result = new HashSet<>();
@@ -253,6 +253,7 @@ public class EntityManager {
 
     /**
      * Retrive Entities from UUUIDs Set
+     *
      * @param uuids Set will be transformed
      * @return Set Entities
      */

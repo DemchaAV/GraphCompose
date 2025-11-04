@@ -14,8 +14,8 @@ import com.demcha.components.style.ComponentColor;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
+import com.demcha.system.LayoutSystemImpl;
 import com.demcha.system.pdf_systems.PdfFileManagerSystem;
-import com.demcha.system.pdf_systems.PdfLayoutSystem;
 import com.demcha.system.pdf_systems.PdfRenderingSystemECS;
 import com.demcha.utils.page_brecker.PageBreaker;
 import com.demcha.utils.page_brecker.PdfCanvas;
@@ -26,9 +26,7 @@ import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class Main {
     static String textBlockData = "Junior Java Backend Developer with hands-on experience building REST APIs using Spring Boot, Spring " +
@@ -64,7 +62,7 @@ public class Main {
         EntityManager entityManager = new EntityManager();
         entityManager.setGuideLines(guidLines);
 
-        entityManager.addSystem(new PdfLayoutSystem(canvasSize));
+        entityManager.addSystem(new LayoutSystemImpl(canvasSize));
         entityManager.addSystem(new PdfRenderingSystemECS(doc, canvasSize));
         entityManager.addSystem(new PdfFileManagerSystem(target, doc));
 

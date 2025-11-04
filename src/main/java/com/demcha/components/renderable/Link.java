@@ -1,14 +1,13 @@
 package com.demcha.components.renderable;
 
-import com.demcha.components.containers.abstract_builders.GuidesRenderer;
 import com.demcha.components.content.link.Email;
 import com.demcha.components.content.link.LinkUrl;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.style.Padding;
-import com.demcha.system.RenderingSystemECS;
 import com.demcha.system.pdf_systems.PdfRender;
+import com.demcha.system.pdf_systems.PdfRenderingSystemECS;
 import org.apache.pdfbox.cos.COSArray;
 import org.apache.pdfbox.cos.COSInteger;
 import org.apache.pdfbox.cos.COSName;
@@ -21,10 +20,10 @@ import org.apache.pdfbox.pdmodel.interactive.annotation.PDBorderStyleDictionary;
 
 import java.io.IOException;
 
-public class Link implements PdfRender, GuidesRenderer {
+public class Link implements PdfRender {
 
 
-    private void addLink(PDDocument doc, int indexPage, PDRectangle position, LinkUrl url) throws IOException {
+    private void addLink(PdfRenderingSystemECS renderingSystemECS, int indexPage, PDRectangle position, LinkUrl url) throws IOException {
         PDAnnotationLink link = new PDAnnotationLink();
         link.setRectangle(position);
         link.setDestination(null);
@@ -48,12 +47,13 @@ public class Link implements PdfRender, GuidesRenderer {
 
 
 // добавляем на страницу
+        PDDocument doc = renderingSystemECS.getDoc();
         PDPage page = doc.getPage(indexPage);
         page.getAnnotations().add(link);
     }
 
     @Override
-    public boolean pdfRender(Entity e, PDDocument doc, RenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
+    public boolean pdf(Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
 
         // прямоугольник поверх текста
         var renderingPosition = e.getComponent(Placement.class).orElseThrow();
@@ -73,8 +73,7 @@ public class Link implements PdfRender, GuidesRenderer {
         position.setUpperRightY(y + (float) (size.height() + padding.vertical()));
 
         int indexPage = e.getComponent(Placement.class).orElseThrow().startPage();
-        addLink(doc, indexPage, position, url);
-
+        addLink(renderingSystemECS, indexPage, position, url);
 
         return true;
     }

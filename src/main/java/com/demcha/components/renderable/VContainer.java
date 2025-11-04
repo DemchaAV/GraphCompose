@@ -12,17 +12,4 @@ import java.util.EnumSet;
 @Data
 public class VContainer extends Container {
 
-    private static final EnumSet<Guide> DEFAULT_GUIDES =
-            EnumSet.of(Guide.MARGIN, Guide.PADDING, Guide.BOX);
-
-
-    @Override
-    public boolean pdfRender(Entity e, PDDocument doc, RenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
-        try (PDPageContentStream cs = openContentStream(e,doc, renderingSystemECS)) {
-            if (guideLines) {
-                renderGuides(e, cs, DEFAULT_GUIDES);
-            }
-        }
-        return true;
-    }
 }

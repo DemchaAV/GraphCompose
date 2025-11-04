@@ -1,9 +1,14 @@
 package com.demcha.components.geometry;
 
 import com.demcha.components.core.Entity;
+import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.style.Margin;
 import com.demcha.exeptions.ContentSizeNotFoundException;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Objects;
@@ -12,11 +17,13 @@ import java.util.Optional;
 /**
  * This is size of Box Component which including a Component size + margins
  *
- * @param width
- * @param height
  */
 @Slf4j
-public record OuterBoxSize(double width, double height) {
+@Accessors(fluent = true)
+@Data
+public final class OuterBoxSize {
+    final private double width;
+    final private double height;
 
     public static Optional<OuterBoxSize> from(@NonNull Entity entity) {
         log.debug("Starting calculation a OuterBoxSize for entity: {}", entity);
@@ -49,5 +56,34 @@ public record OuterBoxSize(double width, double height) {
         log.debug("{}", box);
         return Optional.of(box);
     }
+
+    private static Placement getPlacement(Entity entity) {
+        return entity.getComponent(Placement.class).orElseThrow(() -> {
+            log.error("Placement.class has not been found. {}", entity);
+            return new NullPointerException("Placement.class has not been found.");
+        });
+    }
+
+    public static double getX(Placement placement, Margin margin) {
+        return placement.x() - margin.left();
+    }
+
+    public static double getY(Placement placement, Margin margin) {
+        return placement.y() - margin.bottom();
+    }
+
+    public static double getOuterX(Entity entity) {
+        Placement placement = getPlacement(entity);
+        Margin margin = entity.getComponent(Margin.class).orElse(Margin.zero());
+        return getX(placement, margin);
+    }
+
+    public static double getOuterY(Entity entity) {
+        Placement placement = getPlacement(entity);
+        Margin margin = entity.getComponent(Margin.class).orElse(Margin.zero());
+        return getY(placement, margin);
+    }
+
+
 }
 

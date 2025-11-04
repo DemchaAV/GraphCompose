@@ -1,19 +1,20 @@
 package com.demcha.components.renderable;
 
 import com.demcha.components.LineTextData;
+import com.demcha.components.containers.abstract_builders.GuidesRenderer;
 import com.demcha.components.content.text.BlockTextData;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
-import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.Align;
+import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderingPosition;
-import com.demcha.system.RenderingSystemECS;
+import com.demcha.exeptions.RenderGuideLinesException;
+import com.demcha.system.pdf_systems.PdfRenderingSystemECS;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDFontDescriptor;
@@ -32,8 +33,8 @@ import java.util.EnumSet;
 @EqualsAndHashCode
 @NoArgsConstructor
 public class ChunkedBlockText extends Container {
-    private static final EnumSet<Guide> DEFAULT_GUIDES =
-            EnumSet.of(Guide.MARGIN, Guide.PADDING);
+    private static final EnumSet<GuidesRenderer.Guide> DEFAULT_GUIDES =
+            EnumSet.of(GuidesRenderer.Guide.MARGIN, GuidesRenderer.Guide.PADDING);
 
     /**
      * Retrieves and validates the {@link BlockTextData} and {@link TextStyle} components from an {@link Entity}.
@@ -71,13 +72,12 @@ public class ChunkedBlockText extends Container {
      * Optionally, it can render guide lines for debugging layout.
      *
      * @param e          The {@link Entity} containing the {@link BlockTextData}, {@link TextStyle}, {@link RenderingPosition}, and {@link InnerBoxSize}.
-     * @param doc        The {@link PDDocument} (currently unused but part of the interface).
      * @param guideLines A boolean indicating whether to render layout guides.
      * @return {@code true} if the text was rendered, {@code false} otherwise (e.g., if required components are missing).
      * @throws IOException If an error occurs during PDF content stream operations.
      */
     @Override
-    public boolean pdfRender(Entity e, PDDocument doc, RenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
+    public boolean pdf(Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
 
 
         if (!e.hasAssignable(BlockTextData.class)) {
@@ -91,7 +91,7 @@ public class ChunkedBlockText extends Container {
             return false;
         }
 
-        try (PDPageContentStream cs = openContentStream(e,doc, renderingSystemECS)) {
+        try (PDPageContentStream cs = renderingSystemECS.openContentStream(e)) {
 
             var position = placementOpt.get();
             InnerBoxSize innerBoxSize = InnerBoxSize.from(e).orElseThrow();
@@ -143,9 +143,11 @@ public class ChunkedBlockText extends Container {
 
 
             if (guideLines) {
-                renderGuides(e, cs, DEFAULT_GUIDES);
+                renderingSystemECS.renderGuides(e, cs, DEFAULT_GUIDES);
             }
-        }catch (IOException ioe) {
+        } catch (RenderGuideLinesException ex) {
+            throw new RenderGuideLinesException("Error in render in Guideline " + this.getClass().getSimpleName(), ex);
+        } catch (IOException ioe) {
             throw new IOException(ioe);
         }
 

@@ -3,7 +3,9 @@ package com.demcha.components.core;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.style.Margin;
-import com.demcha.system.pdf_systems.PdfRender;
+import com.demcha.components.style.Padding;
+import com.demcha.core.EntityManager;
+import com.demcha.system.Render;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -22,7 +24,7 @@ public final class Entity {
     private final List<UUID> children = new ArrayList<>();
     private EntityName name;
     @Getter
-    private PdfRender pdfRender;
+    private Render render;
     @Setter
     @Getter
     private boolean guideLines;
@@ -64,12 +66,12 @@ public final class Entity {
         Class<? extends Component> key = c.getClass().asSubclass(Component.class);
         Component prev = comps.put(key, c);
         if (c instanceof EntityName en) this.name = en;
-        if (c instanceof PdfRender) {
-            if (pdfRender == null) {
-                this.pdfRender = (PdfRender) c;
+        if (c instanceof Render) {
+            if (render == null) {
+                this.render = (Render) c;
             } else {
-                log.warn("PdfRender Component Already signed in {}", this);
-                throw new IllegalStateException("%sPdfRender Component Already signed in %s".formatted(c, this.pdfRender));
+                log.warn("Render Component Already signed in {}", this);
+                throw new IllegalStateException("%sPdfRender Component Already signed in %s".formatted(c, this.render));
             }
 
         }
@@ -85,12 +87,12 @@ public final class Entity {
         Class<? extends Component> key = c.getClass().asSubclass(Component.class);
         Component prev = comps.put(key, c);
         if (c instanceof EntityName en) this.name = en;
-        if (c instanceof PdfRender) {
-            if (pdfRender == null) {
-                this.pdfRender = (PdfRender) c;
+        if (c instanceof Render) {
+            if (render == null) {
+                this.render = (Render) c;
             } else {
                 log.warn("Rendering Component Already signed in {}", this);
-                this.pdfRender = (PdfRender) c;
+                this.render = (Render) c;
             }
 
         }
@@ -136,9 +138,9 @@ public final class Entity {
         return has(type);
     }
 
-    public boolean hasRender(Class<? extends Component> type) {
+    public boolean hasRender() {
         return comps.values().stream()
-                .anyMatch(comp -> comp instanceof PdfRender);
+                .anyMatch(comp -> comp instanceof Render);
     }
 
     public double boundingTopLine() {
@@ -185,6 +187,41 @@ public final class Entity {
         var margin = getComponent(Margin.class).orElse(Margin.zero());
 
         return placement.x() - margin.left();
+    }
+
+    public void updateSize(EntityManager manager) {
+        var padding = getComponent(Padding.class).orElse(Padding.zero());
+        var thisPlacement = getComponent(Placement.class).orElseThrow(() -> new NoSuchElementException("Missing component Placement.class"));
+        double boundingTopLine = 0.0;
+        double boundingBottomLine = 0.0;
+        double boundingRightLine = 0.0;
+        double boundingLeftLine = 0.0;
+        int pageStarts = thisPlacement.startPage();
+        int pageEnds = thisPlacement.endPage();
+
+        if (getChildren().isEmpty()) {
+            log.error("No children found for entity [{}] updateSize() aborted", this);
+        } else {
+            var children = getChildren();
+            Set<Entity> entities = manager.getSetEntitiesFromUuids(new HashSet<>(children));
+            for (Entity entity : entities) {
+                Placement placement = entity.getComponent(Placement.class).orElseThrow(() -> new NoSuchElementException("Missing component Placement.class"));
+                if (boundingTopLine < entity.boundingTopLine()) {
+                    boundingTopLine = entity.boundingTopLine();
+                    pageStarts = Math.min(pageStarts, placement.startPage());
+                }
+                if ((boundingBottomLine < entity.boundingBottomLine() && thisPlacement.endPage() <= placement.endPage())
+                    || thisPlacement.endPage() < placement.endPage()
+                ) {
+                    boundingBottomLine = entity.boundingBottomLine();
+                    pageEnds = Math.max(pageEnds, placement.endPage());
+                }
+                if (boundingRightLine < entity.boundingRightLine()) boundingRightLine = entity.boundingRightLine();
+                if (boundingLeftLine < entity.boundingLeftLine()) boundingLeftLine = entity.boundingLeftLine();
+            }
+
+            log.trace("Updating component size");
+        }
     }
 
 

@@ -5,6 +5,7 @@ import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.Anchor;
+import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +47,8 @@ public record ComputedPosition(double x, double y) implements Component {
         ComputedPosition computedPosition = anchor.getComputedPosition(child, parentInnerBoxSize);
         double x;
         double y;
+        var margin   = child.getComponent(Margin.class).orElse(Margin.zero());
+
         if (anchor.equals(Anchor.defaultAnchor())) {
             var position = child.getComponent(Position.class).orElse(Position.zero());
             x = computedPosition.x + paddingParentCoordinate.x() + position.x();

@@ -65,7 +65,8 @@ public final class OuterBoxSize {
     }
 
     public static double getX(Placement placement, Margin margin) {
-        return placement.x() - margin.left();
+        //TODO  has to be placement.y() - margin.left()
+        return placement.x();
     }
 
     public static double getY(Placement placement, Margin margin) {

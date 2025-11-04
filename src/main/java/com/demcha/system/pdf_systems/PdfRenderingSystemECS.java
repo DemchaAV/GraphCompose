@@ -206,7 +206,8 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
         double outerX = OuterBoxSize.getX(pos, margin);
         double outerY = OuterBoxSize.getY(pos, margin);
 
-        double x = outerX ;        //TODO возможно нужно убрать -margin.bottom()
+        double x = outerX >= 0 ? outerX : 0;
+        //TODO возможно нужно убрать -margin.bottom()
         double y;
         double width;
         double height;

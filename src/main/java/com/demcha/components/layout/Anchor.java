@@ -105,7 +105,7 @@ public record Anchor(HAnchor h, VAnchor v) implements Component {
         double x = switch (this.h()) {
             case LEFT -> position.x();      // x=0 at left
             case CENTER -> (areaW - outerW) / 2.0 + position.x();
-            case RIGHT -> areaW - outerW - position.x();
+            case RIGHT -> areaW - outerW + position.x();
             case DEFAULT ->  position.x();
         };
 

@@ -86,7 +86,8 @@ public class Main {
         Entity blockTextBuilder = blockTextBuilder(entityManager, textBlockData, 400, 1);
 
 
-        return createVContainer(entityManager, name, row1, row2, buttons, blockTextBuilder);
+        return createVContainer(entityManager, name, row1, row2, buttons, blockTextBuilder)
+                .addComponent(Anchor.topRight()) ;
     }
 
     private static Entity createButtonsVContainer(EntityManager entityManager, String name) {

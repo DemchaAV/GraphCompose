@@ -410,13 +410,6 @@ public class LayoutSystemImpl implements SystemECS {
         return true;
     }
 
-    private Canvas generateCanvasFromPage(PDPage page) {
-        float width = page.getMediaBox().getWidth();
-        float height = page.getMediaBox().getHeight();
-        float x = page.getMediaBox().getLowerLeftX();
-        float y = page.getMediaBox().getLowerLeftY();
-        return new CanvasSize(width, height, x, y);
-    }
 
     @Override
     public String toString() {

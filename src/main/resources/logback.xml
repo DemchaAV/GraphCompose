@@ -87,7 +87,7 @@
     </root>
 
     <!-- LayoutSystemImpl: full DEBUG console -->
-    <logger name="com.demcha.components" level="DEBUG" additivity="false">
+    <logger name="com.demcha.utils.page_brecker.PageBreaker" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE_LAYOUT_SYSTEM"/>
     </logger>
 

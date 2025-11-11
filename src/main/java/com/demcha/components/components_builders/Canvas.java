@@ -31,4 +31,6 @@ public interface Canvas {
         return (float) margin().orElse(Margin.zero()).left();
     }
 
+    void addMargin(Margin margin);
+
 }

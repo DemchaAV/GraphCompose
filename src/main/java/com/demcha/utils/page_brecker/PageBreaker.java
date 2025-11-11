@@ -140,10 +140,10 @@ public class PageBreaker {
                     var r = RenderingPosition.from(e.getValue()).orElseThrow(
                             () -> new IllegalStateException("Entity " + e + " has no RenderingPosition"));
                     ContentSize contentSize = e.getValue().getComponent(ContentSize.class).orElseThrow(() -> {
-                       return new IllegalStateException("Entity " + e + " has no ContentSize");
+                        return new IllegalStateException("Entity " + e + " has no ContentSize");
                     });
 
-                    YPositionOnPage position = definePositionOnPage(r.y(), canvas.boundingTopLine(), contentSize.height(), 0,canvas.margin().orElse(Margin.zero()).top());
+                    YPositionOnPage position = definePositionOnPage(r.y(), canvas.boundingTopLine(), contentSize.height(), 0, canvas.margin().orElse(Margin.zero()).top());
                     move.accumulateAndGet(defineMove(position, e.getValue(), canvas), Double::sum);
                     Placement placement = setYInPlacement(e.getValue(), position);
                     e.getValue().addComponent(placement);
@@ -320,18 +320,18 @@ public class PageBreaker {
         return new BlockText.ValidatedTextData(style, textValue);
     }
 
-    private static boolean blockTextDataPositions(Entity e, Canvas canvas) throws IOException {
+    private static double blockTextDataPositions(Entity e, Canvas canvas) throws IOException {
 
 
         if (!e.hasAssignable(BlockTextData.class)) {
             log.debug("Entity doesn't have TextComponent; skipping: {}", e);
-            return false;
+            return 0;
         }
 
         var positionOpt = RenderingPosition.from(e);
         if (positionOpt.isEmpty()) {
             log.warn("TextComponent has no RenderingPosition; skipping: {}", e);
-            return false;
+            return 0;
         }
         var position = positionOpt.get();
         InnerBoxSize innerBoxSize = InnerBoxSize.from(e).orElseThrow();
@@ -371,6 +371,7 @@ public class PageBreaker {
         boolean isStarted = false;
         BlockTextData newBlockTextData;
         List<LineTextData> assignPositionTextData = new ArrayList<>();
+        double shift = 0.0;
 
         for (LineTextData ltd : blockTextData) {
             if (!isStarted) {
@@ -379,14 +380,15 @@ public class PageBreaker {
             }
 
             float currenPosition = (float) ltd.x() + startX;
+            shift += shift(e, startY, canvas);
 
-            LineTextData nltd = new LineTextData(ltd, currenPosition, startY, currentPage);
+            LineTextData nltd = new LineTextData(ltd, currenPosition, startY + shift, currentPage);
             assignPositionTextData.add(nltd);
-            startY -= (float) (textHeight - spacing);
+            startY -= (float) (textHeight - spacing) + shift;
 
 
             YPositionOnPage yPositionOnPage = PageBreaker
-                    .definePositionOnPage(startY, canvas.boundingTopLine(),textHeight, currentPage, canvas.margin().orElse(Margin.zero()).top());
+                    .definePositionOnPage(startY, canvas.boundingTopLine(), textHeight, currentPage, canvas.margin().orElse(Margin.zero()).top());
             if (log.isDebugEnabled()) {
                 log.debug(ltd.toString());
                 log.debug("Line position {}, Current page: {}", ltd.x(), currentPage);
@@ -400,11 +402,25 @@ public class PageBreaker {
 
             }
         }
+
+
         newBlockTextData = new BlockTextData(assignPositionTextData, (float) spacing);
         e.addComponent(newBlockTextData);
 
 
-        return true;
+        return shift;
+    }
+
+    private static double shift(Entity e, float startY, Canvas canvas) {
+        var styleOptional = e.getComponent(TextStyle.class).orElseThrow();
+        var margin  = e.getComponent(Margin.class).orElse(Margin.zero());
+
+        if (startY + styleOptional.getLineHeight()+ margin.top() > canvas.boundingTopLine()) {
+            return startY + styleOptional.getLineHeight() - canvas.boundingTopLine();
+        }
+
+
+        return 0;
     }
 
     /**

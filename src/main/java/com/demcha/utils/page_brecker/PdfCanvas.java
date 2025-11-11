@@ -15,7 +15,7 @@ public final class PdfCanvas implements Canvas {
     private final float height;
     private final float x;
     private final float y;
-    private final Margin margin;
+    private  Margin margin;
 
     public PdfCanvas(float width, float height, float x, float y, Margin margin) {
         this.width = width;
@@ -57,6 +57,11 @@ public final class PdfCanvas implements Canvas {
     @Override
     public Optional<Margin> margin() {
         return Optional.ofNullable(margin);
+    }
+
+    @Override
+    public void addMargin(Margin margin) {
+        this.margin = margin;
     }
 }
 

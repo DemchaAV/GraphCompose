@@ -13,22 +13,22 @@ public interface Canvas {
 
     float height();
 
-    Optional<Margin> margin();
+    Margin margin();
 
     default float boundingTopLine() {
-        return height() - (float) margin().orElse(Margin.zero()).top();
+        return height() - (float) margin().top();
     }
 
-    default float boundingBottonLine() {
-        return (float) margin().orElse(Margin.zero()).bottom();
+    default float boundingBottomLine() {
+        return (float) margin().bottom();
     }
 
     default float boundingRightLine() {
-        return width() - (float) margin().orElse(Margin.zero()).right();
+        return width() - (float) margin().right();
     }
 
     default float boundingLeftLine() {
-        return (float) margin().orElse(Margin.zero()).left();
+        return (float) margin().left();
     }
 
     void addMargin(Margin margin);

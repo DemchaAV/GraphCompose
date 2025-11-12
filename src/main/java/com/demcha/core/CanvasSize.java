@@ -29,8 +29,11 @@ public final class CanvasSize implements Canvas {
     }
 
     @Override
-    public Optional<Margin> margin() {
-        return Optional.ofNullable(margin);
+    public Margin margin() {
+        if (this.margin == null) {
+            return Margin.zero();
+        }
+        return margin;
     }
 
     @Override

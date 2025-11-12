@@ -11,12 +11,12 @@ import com.demcha.components.components_builders.Canvas;
 import com.demcha.core.EntityManager;
 import org.apache.pdfbox.pdmodel.PDPage;
 
-public class CanvasObject {
+public class ModuleContainer {
     private final ElementBuilder elementBuilder;
     private float width;
     private float height;
 
-    public CanvasObject(EntityManager entityManager, double width, double height) {
+    public ModuleContainer(EntityManager entityManager, double width, double height) {
         this.elementBuilder = new ElementBuilder(entityManager)
                 .anchor(Anchor.center())
                 .fillPageSize(width, height)
@@ -26,25 +26,25 @@ public class CanvasObject {
 
     }
 
-    public CanvasObject(EntityManager entityManager, PDPage page) {
+    public ModuleContainer(EntityManager entityManager, PDPage page) {
         this(entityManager, page.getMediaBox().getWidth(), page.getCropBox().getHeight());
     }
-    public CanvasObject(EntityManager entityManager, Canvas size) {
+    public ModuleContainer(EntityManager entityManager, Canvas size) {
         this(entityManager, size.width(), size.height());
     }
 
-    public CanvasObject padding(Padding padding) {
+    public ModuleContainer padding(Padding padding) {
         elementBuilder.padding(padding);
         return this;
     }
 
-    public CanvasObject padding(double top, double right, double bottom, double left) {
+    public ModuleContainer padding(double top, double right, double bottom, double left) {
         Padding padding = new Padding(top, right, bottom, left);
         elementBuilder.padding(padding);
         return this;
     }
 
-    public <T extends Entity> CanvasObject addChild(T component) {
+    public <T extends Entity> ModuleContainer addChild(T component) {
         elementBuilder.addChild(component);
         return this;
     }
@@ -56,7 +56,7 @@ public class CanvasObject {
      * @param <T>
      * @return
      */
-    public <T extends Entity> CanvasObject addModule(T module) {
+    public <T extends Entity> ModuleContainer addModule(T module) {
         var from = OuterBoxSize.from(module).orElseThrow();
         if (from.width() > width || from.height() > height) {
             float differentW = width - (float) from.width();

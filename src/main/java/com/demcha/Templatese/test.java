@@ -3,7 +3,7 @@ package com.demcha.Templatese;
 import com.demcha.ConfigLoader;
 import com.demcha.Templatese.data.ModuleSummary;
 import com.demcha.Templatese.data.ModuleYml;
-import com.demcha.components.CanvasObject;
+import com.demcha.components.ModuleContainer;
 import com.demcha.components.components_builders.Canvas;
 import com.demcha.components.components_builders.ModuleBuilder;
 import com.demcha.components.content.link.Email;
@@ -13,7 +13,6 @@ import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.style.Margin;
-import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
 import com.demcha.system.LayoutSystemImpl;
 import com.demcha.system.pdf_systems.PdfFileManagerSystem;
@@ -31,10 +30,10 @@ class test {
         Path target = Paths.get("new_test_file.pdf");
 
         EntityManager entityManager = new EntityManager();
-        entityManager.setGuideLines(true);
+        entityManager.setGuideLines(false);
         PDDocument doc = new PDDocument();
         Canvas canvasSize = new PdfCanvas(PDRectangle.A4, 0.0f, 0.0f);
-//        canvasSize.addMargin(Margin.of(20));
+        canvasSize.addMargin(Margin.of(20));
 
 
         entityManager.addSystem(new LayoutSystemImpl(canvasSize));
@@ -57,8 +56,7 @@ class test {
         ModuleYml additional = data.getAdditional();
 
 
-        var canvas = new CanvasObject(entityManager, canvasSize)
-                .padding(Padding.of(10));
+        var canvas = new ModuleContainer(entityManager, canvasSize);
 
 
         Entity artemDemchyshyn = cv.name(data.getHeder().getName());

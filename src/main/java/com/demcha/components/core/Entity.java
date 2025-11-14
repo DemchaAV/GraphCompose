@@ -1,11 +1,14 @@
 package com.demcha.components.core;
 
 import com.demcha.components.geometry.ContentSize;
+import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
+import com.demcha.exeptions.ContentSizeNotFoundException;
 import com.demcha.system.Render;
+import com.demcha.utils.Offset;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -143,6 +146,39 @@ public final class Entity {
                 .anyMatch(comp -> comp instanceof Render);
     }
 
+    public Entity verticalOffsetAndCorrectionSize(Offset offset) {
+        if (offset == null || offset.position() == 0.0) {
+            log.trace("Update ComputateioPosition.class and ContentSize.class not requer becouse {}", offset);
+            return this;
+        }
+        log.debug("Checking component ContentSize.class {}", offset);
+        var size = getComponent(ContentSize.class).orElseThrow(ContentSizeNotFoundException::new);
+        log.debug("Updating Component Size to {}", size);
+        addComponent(new ContentSize(size.width(), size.height() + Math.abs(offset.position())));
+
+        return updateVerticalComputedPosition(offset);
+    }
+
+    public Entity updateVerticalComputedPosition(@NonNull Offset offset) {
+        return updateComputedPosition(offset.position(), 0.0);
+    }
+
+    public Entity updateHorizontalComputedPosition(@NonNull Offset offset) {
+        return updateComputedPosition(0.0, offset.position());
+    }
+
+    public Entity updateComputedPosition(double yPosition, double xPosition) {
+        if (yPosition == 0.0 && xPosition == 0.0) {
+            return this;
+        }
+        log.debug("Checking component ComputedPosition.class {}", this);
+        var computedPosition = getComponent(ComputedPosition.class)
+                .orElseThrow(() -> new NoSuchElementException("Missing component ComputedPosition.class"));
+        log.debug("Updating Component ComputedPosition to {}", computedPosition);
+        addComponent(new ComputedPosition(computedPosition.x() + xPosition, computedPosition.y() + yPosition));
+        return this;
+    }
+
     public double boundingTopLine() {
         var placement = getComponent(Placement.class).orElseThrow(() -> {
             // Лямбда здесь позволяет выполнить логирование *только* в случае ошибки
@@ -236,6 +272,7 @@ public final class Entity {
         return this;
 
     }
+
 
     /**
      * That method will return a copy of hashMap Entities as unmodifiableMap

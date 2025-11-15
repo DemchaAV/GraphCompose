@@ -267,8 +267,7 @@ public class PageBreaker {
         double yInPage = positiveModulo(currentPositionY, pageHeight);
         // we
         if (yInPage < bottomMargin) {
-            //TODO возможно нужно добавить том маргин маргин обьекта
-            double currentOffset = (bottomMargin - yInPage + objectHeight) * -1;
+            double currentOffset = ( yInPage + objectHeight) * -1;
             yInPage = pageHeight - objectHeight;
             finalPage++;
             yOffset.increment(currentOffset);
@@ -458,7 +457,6 @@ public class PageBreaker {
             }
         }
 
-        var margin = e.getComponent(Margin.class).orElse(Margin.zero());
         newBlockTextData = new BlockTextData(assignPositionTextData, (float) spacing);
         e.verticalOffsetAndCorrectionSize(entityYOffset);
         yOffset.increment(entityYOffset);

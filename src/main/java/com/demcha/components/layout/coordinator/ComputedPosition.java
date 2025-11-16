@@ -80,13 +80,14 @@ public record ComputedPosition(double x, double y) implements Component {
      * This is typically used for root-level entities (no parent).
      *
      * @param childEntity the child entity
-     * @param pageSize    the page size
+     * @param canvas    the page size
      * @return computed position
      */
-    public static ComputedPosition from(@NonNull Entity childEntity, @NonNull Canvas pageSize) {
+    public static ComputedPosition from(@NonNull Entity childEntity, @NonNull Canvas canvas) {
         log.debug("Computing position using default Canvas.");
-        InnerBoxSize innerBoxSize = new InnerBoxSize(pageSize.width(), pageSize.height());
-        var paddingParentCoordinate = new PaddingCoordinate(pageSize.x(), pageSize.y());
+        var margin = canvas.margin();
+        InnerBoxSize innerBoxSize = new InnerBoxSize(canvas.width()- margin.horizontal(), canvas.height() - margin.vertical());
+        var paddingParentCoordinate = new PaddingCoordinate(margin.left(), margin.bottom());
         return from(childEntity, innerBoxSize, paddingParentCoordinate);
     }
 

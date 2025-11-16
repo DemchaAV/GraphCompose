@@ -147,24 +147,24 @@ public final class Entity {
     }
 
     public Entity verticalOffsetAndCorrectionSize(Offset offset) {
-        if (offset == null || offset.position() == 0.0) {
+        if (offset == null || offset.y() == 0.0) {
             log.trace("Update ComputateioPosition.class and ContentSize.class not requer becouse {}", offset);
             return this;
         }
         log.debug("Checking component ContentSize.class {}", offset);
         var size = getComponent(ContentSize.class).orElseThrow(ContentSizeNotFoundException::new);
         log.debug("Updating Component Size to {}", size);
-        addComponent(new ContentSize(size.width(), size.height() + Math.abs(offset.position())));
+        addComponent(new ContentSize(size.width(), size.height() + Math.abs(offset.y())));
 
         return updateVerticalComputedPosition(offset);
     }
 
     public Entity updateVerticalComputedPosition(@NonNull Offset offset) {
-        return updateComputedPosition(offset.position(), 0.0);
+        return updateComputedPosition(offset.y(), 0.0);
     }
 
     public Entity updateHorizontalComputedPosition(@NonNull Offset offset) {
-        return updateComputedPosition(0.0, offset.position());
+        return updateComputedPosition(0.0, offset.y());
     }
 
     public Entity updateComputedPosition(double yPosition, double xPosition) {

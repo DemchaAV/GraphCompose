@@ -8,24 +8,43 @@ import lombok.extern.slf4j.Slf4j;
 @Data
 @Accessors(fluent = true)
 public class Offset {
-    private double position = 0.0;
+    private double y = 0.0;
+    private double x = 0.0;
 
-    public double increment(float increment) {
-        return increment(Double.valueOf(increment));
+    public double incrementY(float increment) {
+        return incrementY(Double.valueOf(increment));
     }
 
-    public double increment(int increment) {
-        return increment(Double.valueOf(increment));
+    public double incrementY(int increment) {
+        return incrementY(Double.valueOf(increment));
     }
 
-    public double increment(double increment) {
-        log.debug("{} increment({})", this, increment);
-        return this.position += increment;
+    public double incrementY(double increment) {
+        log.debug("{} increment Y({})", this, increment);
+        return this.y += increment;
     }
 
-    public double increment(Offset offset) {
-        log.debug("Increment offset from object {}", offset);
-        return increment(offset.position);
+    public double incrementY(Offset offset) {
+        log.debug("Increment offset Y from object {}", offset);
+        return incrementY(offset.y);
+    }
+
+    public double incrementX(float increment) {
+        return incrementY(Double.valueOf(increment));
+    }
+
+    public double incrementX(int increment) {
+        return incrementY(Double.valueOf(increment));
+    }
+
+    public double incrementX(double increment) {
+        log.debug("{} increment X ({})", this, increment);
+        return this.x += increment;
+    }
+
+    public double incrementX(Offset offset) {
+        log.debug("Increment offset X from object {}", offset);
+        return incrementY(offset.x);
     }
 
 }

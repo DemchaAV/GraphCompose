@@ -270,7 +270,7 @@ public class PageBreaker {
             double currentOffset = ( yInPage + objectHeight) * -1;
             yInPage = pageHeight - objectHeight;
             finalPage++;
-            yOffset.increment(currentOffset);
+            yOffset.incrementY(currentOffset);
         }
 
 
@@ -448,7 +448,7 @@ public class PageBreaker {
                 double currentShift;
                 currentShift = shift;
                 startY += (float) currentShift;
-                entityYOffset.increment(currentShift);
+                entityYOffset.incrementY(currentShift);
                 log.debug("Current Entity Offset {} {}", entityYOffset, e);
             }
             if (currentPage != yPositionOnPage.pageNumber()) {
@@ -459,7 +459,7 @@ public class PageBreaker {
 
         newBlockTextData = new BlockTextData(assignPositionTextData, (float) spacing);
         e.verticalOffsetAndCorrectionSize(entityYOffset);
-        yOffset.increment(entityYOffset);
+        yOffset.incrementY(entityYOffset);
         log.debug("Returned Offset:  {} , {}", yOffset, e);
         e.addComponent(newBlockTextData);
 

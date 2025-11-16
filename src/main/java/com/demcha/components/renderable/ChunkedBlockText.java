@@ -91,7 +91,7 @@ public class ChunkedBlockText extends Container {
             return false;
         }
 
-        try (PDPageContentStream cs = renderingSystemECS.openContentStream(e)) {
+        try (PDPageContentStream cs = renderingSystemECS.getStream().openContentStream(e)) {
 
             var position = placementOpt.get();
             InnerBoxSize innerBoxSize = InnerBoxSize.from(e).orElseThrow();

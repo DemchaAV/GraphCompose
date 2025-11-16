@@ -29,7 +29,7 @@ public class Rectangle implements PdfRender, Expendable {
     public boolean pdf(Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
         // draw an object first
         boolean drawn;
-        try (PDPageContentStream cs = renderingSystemECS.openContentStream(e)) {
+        try (PDPageContentStream cs = renderingSystemECS.getStream().openContentStream(e)) {
             drawn = pdfRenderObject(e, cs);
             // if was specified, draw guides
             if (guideLines) {

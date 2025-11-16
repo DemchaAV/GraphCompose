@@ -67,7 +67,7 @@ public class TextComponent implements PdfRender {
         var placementOpt = e.getComponent(Placement.class);
         if (placementOpt.isEmpty()) return false;
 
-        try (PDPageContentStream cs = renderingSystemECS.openContentStream(e)) {
+        try (PDPageContentStream cs = renderingSystemECS.getStream().openContentStream(e)) {
 
 
             var position = placementOpt.get();

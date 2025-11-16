@@ -37,7 +37,6 @@ public class Container implements  PdfRender, Expendable, Breakable {
      * If {@code guideLines} is true, it also renders the default set of guides for the component.
      *
      * @param e          The {@link Entity} representing the component's data and properties.
-     * @param cs         The {@link PDPageContentStream} to draw on.
      * @param guideLines A boolean indicating whether to render guide lines (margin, padding, box) for the component.
      * @throws IOException If an I/O error occurs during rendering.
      */

@@ -9,11 +9,12 @@ import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.layout.coordinator.PaddingCoordinate;
 import com.demcha.components.layout.coordinator.Placement;
-import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
 import com.demcha.exeptions.RenderGuideLinesException;
+import com.demcha.system.GuidLineSettings;
+import com.demcha.system.RenderStream;
 import com.demcha.system.RenderingSystemECS;
 import com.demcha.utils.page_brecker.Breakable;
 import com.demcha.utils.page_brecker.PageBreaker;
@@ -32,6 +33,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * PdfRenderingSystemECS — diagnostics & hardening
@@ -46,25 +48,17 @@ import java.util.List;
 public class PdfRenderingSystemECS implements RenderingSystemECS {
     private final PDDocument doc;
     private final Canvas canvas;
-    /**
-     * The opacity for all guide elements. Value between 0.0f (transparent) and 1.0f (opaque).
-     */
-    float GUIDES_OPACITY = 0.8f;
-    // --- Margin Guide ---
-    Color MARGIN_COLOR = new Color(0, 110, 255);
-    com.demcha.components.content.shape.Stroke MARGIN_STROKE = new com.demcha.components.content.shape.Stroke(0.5);
-    // --- Padding Guide ---
-    Color PADDING_COLOR = new Color(255, 140, 0);
-    com.demcha.components.content.shape.Stroke PADDING_STROKE = new com.demcha.components.content.shape.Stroke(0.5);
-    // --- Content Box Guide ---
-    Color BOX_COLOR = new Color(150, 150, 150); // Using a slightly lighter gray
-    com.demcha.components.content.shape.Stroke BOX_STROKE = new com.demcha.components.content.shape.Stroke(1.0);
-    //viability
-    boolean showOnlySetGuide = true;
+    private final RenderStream<PDPageContentStream> stream;
+    private GuidLineSettings guidLineSettings;
+
+
 
     public PdfRenderingSystemECS(PDDocument doc, Canvas canvas) {
         this.doc = doc;
         this.canvas = canvas;
+        this.stream = new PdfStream(doc, canvas);
+        this.guidLineSettings = new GuidLineSettings();
+
     }
 
     private static RenderGuideLinesException rethrowAsGuideLinesException(IOException io, String message) throws RenderGuideLinesException {
@@ -110,30 +104,6 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
 
     }
 
-    public PDPageContentStream openContentStream(int pageIndex) throws IOException {
-        int numberOfPages = doc.getNumberOfPages();
-        if (numberOfPages - 1 < pageIndex) {
-            for (int i = 0; i < pageIndex + 1; i++) {
-                doc.addPage(new PDPage(new PDRectangle(canvas.x(), canvas.y(), (float) canvas.width(), (float) canvas.height())));
-            }
-        }
-        return new PDPageContentStream(
-                doc, doc.getPage(pageIndex),
-                PDPageContentStream.AppendMode.APPEND,   // keep existing content if any
-                true,                                    // compress
-                true                                     // resetContext: isolates graphics state (PDFBox 3)
-        );
-    }
-
-    public PDPageContentStream openContentStream(Entity entity) throws IOException {
-        int startPageIndex = entity.getComponent(Placement.class).orElseThrow().startPage();
-        int endPageIndex = entity.getComponent(Placement.class).orElseThrow().endPage();
-        if (endPageIndex != startPageIndex) {
-            throw new IllegalStateException("endPageIndex should be the same as page startPageIndex");
-        }
-        return openContentStream(startPageIndex);
-
-    }
 
     public Canvas pageSize(int pageIndex) {
         float width = doc.getPage(pageIndex).getMediaBox().getWidth();
@@ -163,7 +133,7 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
             Placement placement = e.getComponent(Placement.class)
                     .orElseThrow(() -> new IllegalArgumentException("Didn't find any Placement"));
             //top part;
-            try (PDPageContentStream pdPageContentStream = renderingSystemECS.openContentStream(placement.endPage())) {
+            try (PDPageContentStream pdPageContentStream = stream.openContentStream(placement.endPage())) {
                 renderGuides(e, pdPageContentStream, guides);
                 log.info("Render topParts has been completed.");
 
@@ -174,8 +144,7 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
             }
 
             //bottom part
-            try (PDPageContentStream pdPageContentStream = renderingSystemECS
-                    .openContentStream(placement.startPage())) {
+            try (PDPageContentStream pdPageContentStream = stream.openContentStream(placement.startPage())) {
                 renderGuides(e, pdPageContentStream, guides);
                 log.info("Render bottom has been completed.");
                 return true;
@@ -194,7 +163,7 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
 
     private boolean renderMarginFromStream(Entity e, PDPageContentStream cs) throws RenderGuideLinesException {
         Margin margin = null;
-        if (showOnlySetGuide) {
+        if (guidLineSettings.showOnlySetGuide()) {
             margin = e.getComponent(Margin.class).orElse(Margin.zero());
             if (margin.equals(Margin.zero())) return false;
         }
@@ -207,7 +176,6 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
         double outerY = OuterBoxSize.getY(pos, margin);
 
         double x = outerX >= 0 ? outerX : 0;
-        //TODO возможно нужно убрать -margin.bottom()
         double y;
         double width;
         double height;
@@ -223,8 +191,8 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
 
         //  Using constants for configuration
         try {
-            renderMarkers(cs, x, y, width, height, MARGIN_COLOR);
-            renderRectangle(MARGIN_STROKE, cs, x, y, width, height, MARGIN_COLOR, true);
+            renderMarkers(cs, x, y, width, height, guidLineSettings.MARGIN_COLOR());
+            renderRectangle(guidLineSettings.MARGIN_STROKE(), cs, x, y, width, height, guidLineSettings.MARGIN_COLOR(), true);
         } catch (IOException ex) {
             rethrowAsGuideLinesException(ex, "An error occurred while rendering margin guide lines.");
 
@@ -233,7 +201,7 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
     }
 
     private boolean renderPaddingFromStream(Entity e, PDPageContentStream cs) throws RenderGuideLinesException {
-        if (showOnlySetGuide) {
+        if (guidLineSettings.showOnlySetGuide()) {
             var padding = e.getComponent(Padding.class).orElse(Padding.zero());
             if (padding.equals(Padding.zero())) return false;
         }
@@ -247,10 +215,10 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
         double width = inner.width();
         double height = inner.hight();
         try {
-            renderRectangle(PADDING_STROKE, cs, x, y, width, height, PADDING_COLOR, true);
+            renderRectangle(guidLineSettings.PADDING_STROKE(), cs, x, y, width, height, guidLineSettings.PADDING_COLOR(), true);
 
 
-            renderMarkers(cs, x, y, width, height, PADDING_COLOR);
+            renderMarkers(cs, x, y, width, height, guidLineSettings.PADDING_COLOR());
         } catch (IOException io) {
             rethrowAsGuideLinesException(io, "An error occurred while rendering padding guide lines.");
         }
@@ -271,7 +239,7 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
         try {
             PDExtendedGraphicsState gState = new PDExtendedGraphicsState();
             //  Using constant for opacity
-            gState.setStrokingAlphaConstant(GUIDES_OPACITY);
+            gState.setStrokingAlphaConstant(guidLineSettings.GUIDES_OPACITY());
             cs.setGraphicsStateParameters(gState);
 
             if (lineDash) {
@@ -300,17 +268,18 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
 
     private boolean boxRenderFromStream(@NonNull Entity e, @NonNull PDPageContentStream cs) throws RenderGuideLinesException {
         var boxSize = e.getComponent(ContentSize.class).orElseThrow();
-        var rp = RenderingPosition.from(e).orElseThrow();
+        var margin = e.getComponent(Margin.class).orElse(Margin.zero());
+        var placement = e.getComponent(Placement.class).orElseThrow();
 
-        double x = rp.x();
-        double y = rp.y();
+        double x = placement.x() + margin.left();
+        double y = placement.y();
         double w = boxSize.width();
         double h = boxSize.height();
 
         //  Using constants for configuration
 
         try {
-            return renderRectangle(BOX_STROKE, cs, x, y, w, h, BOX_COLOR, false);
+            return renderRectangle(guidLineSettings.BOX_STROKE(), cs, x, y, w, h, guidLineSettings.BOX_COLOR(), false);
         } catch (IOException ex) {
             throw rethrowAsGuideLinesException(ex, "An error occurred while rendering box guide lines.");
         }
@@ -326,7 +295,7 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
         try {
             PDExtendedGraphicsState gState = new PDExtendedGraphicsState();
             //  Using constant for opacity
-            gState.setNonStrokingAlphaConstant(GUIDES_OPACITY);
+            gState.setNonStrokingAlphaConstant(guidLineSettings.GUIDES_OPACITY());
             cs.setGraphicsStateParameters(gState);
 
             cs.setNonStrokingColor(fill);
@@ -345,7 +314,7 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
     @Override
     public <T extends RenderingSystemECS> boolean boxRender(Entity e) throws RenderGuideLinesException {
 
-        try (PDPageContentStream cs = openContentStream(e)) {
+        try (PDPageContentStream cs = stream.openContentStream(e)) {
             return boxRenderFromStream(e, cs);
         } catch (IOException ex) {
             String msg = "Error opening content stream for Box render";
@@ -359,7 +328,7 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
     @Override
     public <T extends RenderingSystemECS> boolean renderPadding(Entity e) throws RenderGuideLinesException {
 
-        try (PDPageContentStream cs = openContentStream(e)) {
+        try (PDPageContentStream cs = stream.openContentStream(e)) {
             return renderPaddingFromStream(e, cs);
         } catch (IOException ex) {
             String msg = "Error opening content stream for Padding render";
@@ -373,7 +342,7 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
     public <T extends RenderingSystemECS> boolean renderMargin(Entity e) throws RenderGuideLinesException {
 
         // 3. Prepare the PDF "canvas"
-        try (PDPageContentStream cs = openContentStream(e)) {
+        try (PDPageContentStream cs = stream.openContentStream(e)) {
             return renderMarginFromStream(e, cs);
 
         } catch (IOException ex) {
@@ -386,7 +355,7 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
 
 
     public <T extends Component> boolean renderGuides(Entity entity, EnumSet<Guide> defaultGuides, T component) throws RenderGuideLinesException {
-        try (PDPageContentStream pdPageContentStream = openContentStream(entity)) {
+        try (PDPageContentStream pdPageContentStream = stream.openContentStream(entity)) {
             return renderGuides(entity, pdPageContentStream, defaultGuides);
         } catch (IOException e) {
             throw rethrowAsGuideLinesException(e, "Error opening content stream for Guides render component :" + component.getClass().getSimpleName());
@@ -403,7 +372,7 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
     }
 
     public PDPageContentStream openContentSteamForTextData(int currentPage, PDFont font, float fontSize, Color color) throws IOException {
-        PDPageContentStream newStream = openContentStream(currentPage);
+        PDPageContentStream newStream = stream.openContentStream(currentPage);
         newStream.saveGraphicsState();
         newStream.setFont(font, fontSize);
         newStream.setNonStrokingColor(color);

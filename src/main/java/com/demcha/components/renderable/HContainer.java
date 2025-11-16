@@ -20,7 +20,7 @@ public class HContainer extends Container {
 
     @Override
     public boolean pdf(Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
-        try (PDPageContentStream pdPageContentStream = renderingSystemECS.openContentStream(e)) {
+        try (PDPageContentStream pdPageContentStream = renderingSystemECS.getStream().openContentStream(e)) {
             if (guideLines) renderingSystemECS.renderGuides(e,pdPageContentStream, DEFAULT_GUIDES);
         }
         return true;

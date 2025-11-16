@@ -47,7 +47,6 @@ public record ComputedPosition(double x, double y) implements Component {
         ComputedPosition computedPosition = anchor.getComputedPosition(child, parentInnerBoxSize);
         double x;
         double y;
-        var margin   = child.getComponent(Margin.class).orElse(Margin.zero());
 
         if (anchor.equals(Anchor.defaultAnchor())) {
             var position = child.getComponent(Position.class).orElse(Position.zero());

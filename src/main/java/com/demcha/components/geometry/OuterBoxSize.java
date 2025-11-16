@@ -64,12 +64,12 @@ public final class OuterBoxSize {
         });
     }
 
-    public static double getX(Placement placement, Margin margin) {
+    public static double getX(Placement placement, @NonNull Margin margin) {
         //TODO  has to be placement.y() - margin.left()
         return placement.x();
     }
 
-    public static double getY(Placement placement, Margin margin) {
+    public static double getY(Placement placement, @NonNull Margin margin) {
         return placement.y() - margin.bottom();
     }
 

@@ -6,6 +6,7 @@ import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.coordinator.Placement;
+import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import com.demcha.system.pdf_systems.PdfRender;
 import com.demcha.system.pdf_systems.PdfRenderingSystemECS;
@@ -72,6 +73,7 @@ public class TextComponent implements PdfRender {
 
             var position = placementOpt.get();
             Padding padding = e.getComponent(Padding.class).orElse(Padding.zero());
+            Margin margin = e.getComponent(Margin.class).orElse(Margin.zero());
 
             ValidatedTextData v = getValidatedTextData(e);
             PDFont font = v.style().font();
@@ -92,7 +94,8 @@ public class TextComponent implements PdfRender {
             float baselineY = topY + descentPx;
 
             // If your position.x is the LEFT edge:
-            float leftX = (float) position.x() + (float) padding.left();
+            //TODO margin.left() должен быть убран
+            float leftX = (float) position.x() + (float) padding.left()+ (float) margin.left();
 
             cs.saveGraphicsState();
             cs.setFont(font, fontSize);

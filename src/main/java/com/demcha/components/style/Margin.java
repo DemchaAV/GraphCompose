@@ -57,7 +57,9 @@ public record Margin(double top, double right, double bottom, double left) imple
         endPage = placement.endPage();
         width = size.width() + horizontal();
         height = size.height() + vertical();
-        x = placement.x() - left();
+        x = placement.x() ;
+        //TODO должно быть так но нужно зафиксить пока временно будет без минус
+//        x = placement.x() - left();
         y = placement.y() - bottom();
 
 

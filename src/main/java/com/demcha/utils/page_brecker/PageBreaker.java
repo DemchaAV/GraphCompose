@@ -3,7 +3,6 @@ package com.demcha.utils.page_brecker;
 import com.demcha.components.LineTextData;
 import com.demcha.components.components_builders.Canvas;
 import com.demcha.components.content.text.BlockTextData;
-import com.demcha.components.content.text.Text;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
@@ -14,7 +13,6 @@ import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.components.renderable.BlockText;
-import com.demcha.components.renderable.TextComponent;
 import com.demcha.components.style.Margin;
 import com.demcha.core.EntityManager;
 import com.demcha.exeptions.BigSizeElementException;
@@ -151,13 +149,7 @@ public class PageBreaker {
                 .forEach(e -> {
                     Entity entity = e.getValue();
                     log.info("Work with Element {} ", entity);
-                    if (entity.hasAssignable(TextComponent.class)) {
-                        var text = (Text) entity.getComponent(Text.class).orElseThrow();
-                        if (text.value().equals("Additional")) {
-                            System.out.println(e);
-                        }
 
-                    }
 
                     entity.updateVerticalComputedPosition(yOffset);
                     var r = RenderingPosition.from(entity).get();
@@ -230,7 +222,7 @@ public class PageBreaker {
     }
 
     private static Placement setYInPlacement(Entity entity, YPositionOnPage position) {
-        return setYInPlacement(entity, position.yPosition(), position.pageNumber(), position.pageNumber());
+        return setYInPlacement(entity, position.yPosition(), position.startPage(), position.startPage());
     }
 
 
@@ -422,7 +414,7 @@ public class PageBreaker {
                 YPositionOnPage yPositionOnPage = PageBreaker
                         .definePositionOnPage(startY, canvas.boundingTopLine(), textHeight, currentPage, canvas, yOffset);
                 startY = (float) yPositionOnPage.yPosition();
-                currentPage = yPositionOnPage.pageNumber();
+                currentPage = yPositionOnPage.startPage();
             }
 
             float currenPosition = (float) ltd.x() + startX;
@@ -451,8 +443,8 @@ public class PageBreaker {
                 entityYOffset.incrementY(currentShift);
                 log.debug("Current Entity Offset {} {}", entityYOffset, e);
             }
-            if (currentPage != yPositionOnPage.pageNumber()) {
-                currentPage = yPositionOnPage.pageNumber();
+            if (currentPage != yPositionOnPage.startPage()) {
+                currentPage = yPositionOnPage.startPage();
 
             }
         }

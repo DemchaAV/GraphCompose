@@ -3,7 +3,9 @@ package com.demcha.components.style;
 
 import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
+import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.RenderCoordinate;
+import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderCoordinateContext;
 import lombok.extern.slf4j.Slf4j;
 
@@ -11,19 +13,21 @@ import java.util.Optional;
 
 @Slf4j
 public record Padding(double top, double right, double bottom, double left) implements Component, RenderCoordinate {
+    public static Padding zero() {
+        log.debug("Getting zero padding");
+        return new Padding(0.0, 0.0, 0.0, 0.0);
+    }
+
+    public static Padding of(double trbl) {
+        return new Padding(trbl, trbl, trbl, trbl);
+    }
+
     public double horizontal() {
         return right + left;
     }
 
     public double vertical() {
         return top + bottom;
-    }
-    public static Padding zero() {
-        log.debug("Getting zero padding");
-        return new Padding(0.0, 0.0, 0.0, 0.0);
-    }
-    public static Padding of( double trbl) {
-        return new Padding(trbl, trbl, trbl, trbl);
     }
 
     @Override
@@ -45,6 +49,26 @@ public record Padding(double top, double right, double bottom, double left) impl
 
     @Override
     public Optional<RenderCoordinateContext> renderCoordinate(Entity entity) {
-        return Optional.empty();
+        if (this.equals(zero())) {
+            log.error("Padding is zero, return empty");
+            return Optional.empty();
+        }
+        var inner = InnerBoxSize.from(entity).orElseThrow();
+        var placement = entity.getComponent(Placement.class).orElseThrow();
+        double x;
+        double y;
+        double width;
+        double height;
+        int startPage;
+        int endPage;
+
+        startPage = placement.startPage();
+        endPage = placement.endPage();
+
+        x = placement.x() + left();
+        y = placement.y()+ bottom();
+        width = inner.width();
+        height = inner.hight();
+        return Optional.of(new RenderCoordinateContext(x, y, width, height, startPage, endPage));
     }
 }

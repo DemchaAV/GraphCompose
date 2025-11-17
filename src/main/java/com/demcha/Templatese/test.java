@@ -35,7 +35,7 @@ class test {
         entityManager.setGuideLines(true);
         PDDocument doc = new PDDocument();
         Canvas canvasSize = new PdfCanvas(PDRectangle.A4, 0.0f, 0.0f);
-        canvasSize.addMargin(Margin.of(20));
+        canvasSize.addMargin(Margin.of(10));
 
 
         entityManager.addSystem(new LayoutSystemImpl(canvasSize));

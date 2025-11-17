@@ -6,9 +6,10 @@ import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.InnerBoxSize;
-import com.demcha.components.geometry.OuterBoxSize;
+import com.demcha.components.layout.RenderCoordinate;
 import com.demcha.components.layout.coordinator.PaddingCoordinate;
 import com.demcha.components.layout.coordinator.Placement;
+import com.demcha.components.layout.coordinator.RenderCoordinateContext;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
@@ -23,9 +24,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 
@@ -33,7 +32,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.function.Supplier;
 
 /**
  * PdfRenderingSystemECS — diagnostics & hardening
@@ -50,7 +49,6 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
     private final Canvas canvas;
     private final RenderStream<PDPageContentStream> stream;
     private GuidLineSettings guidLineSettings;
-
 
 
     public PdfRenderingSystemECS(PDDocument doc, Canvas canvas) {
@@ -162,32 +160,29 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
 
 
     private boolean renderMarginFromStream(Entity e, PDPageContentStream cs) throws RenderGuideLinesException {
-        Margin margin = null;
-        if (guidLineSettings.showOnlySetGuide()) {
-            margin = e.getComponent(Margin.class).orElse(Margin.zero());
-            if (margin.equals(Margin.zero())) return false;
+        RenderCoordinateContext coordinateContext = null;
+        Optional<RenderCoordinateContext> coordinateOpt =
+                resolveCoordinateContext(e, guidLineSettings, Margin.class, Margin::zero);
+
+        if (coordinateOpt.isEmpty()) {
+            return false;
+        } else {
+            coordinateContext = coordinateOpt.get();
         }
 
 
-
-        var pos = e.getComponent(Placement.class).orElseThrow();
-        var outer = OuterBoxSize.from(e).orElseThrow();
-
-        double outerX = OuterBoxSize.getX(pos, margin);
-        double outerY = OuterBoxSize.getY(pos, margin);
-
-        double x = outerX >= 0 ? outerX : 0;
+        double x = coordinateContext.x() >= 0 ? coordinateContext.x() : 0;
         double y;
         double width;
         double height;
-        y = (outerY >= 0) ? outerY : 0;
+        y = (coordinateContext.y() >= 0) ? coordinateContext.y() : 0;
         if (canvas != null) {
-            height = ((y + outer.height()) > canvas.boundingTopLine())
+            height = ((y + coordinateContext.height()) > canvas.boundingTopLine())
                     ? canvas.boundingTopLine() - y
-                    : outer.height();
+                    : coordinateContext.height();
         }
-        height = outer.height();
-        width = outer.width();
+        height = coordinateContext.height();
+        width = coordinateContext.width();
 
 
         //  Using constants for configuration
@@ -201,24 +196,49 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
         return true;
     }
 
+    private <T extends RenderCoordinate & Component>
+    Optional<RenderCoordinateContext> resolveCoordinateContext(
+            Entity e,
+            @NonNull GuidLineSettings guidLineSettings,
+            Class<T> componentClass,
+            Supplier<T> defaultSupplier
+    ) {
+        if (!guidLineSettings.showOnlySetGuide()) {
+            return Optional.empty();
+        }
+
+        // Берём компонент или default (Margin.zero() / Padding.zero())
+        T context = e.getComponent(componentClass)
+                .orElseGet(()->{
+                    log.info("{} is {} ", componentClass, defaultSupplier.get());
+                    return defaultSupplier.get();
+                });
+
+        return context.renderCoordinate(e);
+    }
+
     private boolean renderPaddingFromStream(Entity e, PDPageContentStream cs) throws RenderGuideLinesException {
-        if (guidLineSettings.showOnlySetGuide()) {
-            var padding = e.getComponent(Padding.class).orElse(Padding.zero());
-            if (padding.equals(Padding.zero())) return false;
+
+
+        RenderCoordinateContext coordinateContext;
+        Optional<RenderCoordinateContext> coordinateOpt =
+                resolveCoordinateContext(e, guidLineSettings, Padding.class, Padding::zero);
+
+        if (coordinateOpt.isEmpty()) {
+            return false;
+        } else {
+            coordinateContext = coordinateOpt.get();
         }
 
 
-        var pad = PaddingCoordinate.from(e);
-        var inner = InnerBoxSize.from(e).orElseThrow();
+        double x = coordinateContext.x();
+        double y = coordinateContext.y();
+        double width = coordinateContext.width();
+        double height = coordinateContext.height();
 
-        double x = pad.x();
-        double y = pad.y();
-        double width = inner.width();
-        double height = inner.hight();
+
         try {
             renderRectangle(guidLineSettings.PADDING_STROKE(), cs, x, y, width, height, guidLineSettings.PADDING_COLOR(), true);
-
-
             renderMarkers(cs, x, y, width, height, guidLineSettings.PADDING_COLOR());
         } catch (IOException io) {
             rethrowAsGuideLinesException(io, "An error occurred while rendering padding guide lines.");
@@ -266,12 +286,11 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
         fillCircle(cs, cx + (float) w, cy, radius, color);
         fillCircle(cs, cx + (float) w, cy + (float) h, radius, color);
     }
-
     private boolean boxRenderFromStream(@NonNull Entity e, @NonNull PDPageContentStream cs) throws RenderGuideLinesException {
         var boxSize = e.getComponent(ContentSize.class).orElseThrow();
         var margin = e.getComponent(Margin.class).orElse(Margin.zero());
         var placement = e.getComponent(Placement.class).orElseThrow();
-
+//TODO x должен быть просто placement.x() так как это и есть коробка
         double x = placement.x() + margin.left();
         double y = placement.y();
         double w = boxSize.width();

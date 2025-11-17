@@ -30,6 +30,13 @@ public interface Canvas {
     default float boundingLeftLine() {
         return (float) margin().left();
     }
+    default double innerHeigh(){
+        return height() - margin().vertical();
+    }
+    default double innerWidth(){
+        return width() - margin().horizontal();
+    }
+
 
     void addMargin(Margin margin);
 

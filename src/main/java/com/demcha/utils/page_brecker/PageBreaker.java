@@ -259,7 +259,7 @@ public class PageBreaker {
         double yInPage = positiveModulo(currentPositionY, pageHeight);
         // we
         if (yInPage < bottomMargin) {
-            double currentOffset = ( yInPage + objectHeight) * -1;
+            double currentOffset = (yInPage + objectHeight) * -1;
             yInPage = pageHeight - objectHeight;
             finalPage++;
             yOffset.incrementY(currentOffset);
@@ -280,6 +280,86 @@ public class PageBreaker {
     public static YPositionOnPage definePositionOnPage(double currentPositionY, double pageHeight, double objectHeight, int currentPageNumber, Canvas canvas, Offset yOffset) {
         var margin = canvas.margin();
         return definePositionOnPage(currentPositionY, pageHeight, objectHeight, currentPageNumber, margin.top(), margin.bottom(), yOffset);
+    }
+
+    public static YPositionOnPage definePositionOnPage(double currentPositionY,
+                                                       int currentPageNumber, double objectHeight,
+                                                       double objectMarginTop,
+                                                       double objectMarginBottom,
+                                                       Canvas canvas,
+                                                       Offset yOffset) {
+        var margin = canvas.margin();
+        return definePositionOnPage(currentPositionY, canvas.boundingTopLine(), objectHeight, currentPageNumber, margin.top(), margin.bottom(), yOffset);
+    }
+
+    private static YPositionOnPage definePositionOnPage(double currentPositionY,
+                                                        int currentPageNumber,
+                                                        Entity entity,
+                                                        double canvasHigh,
+                                                        double canvasMarginTop,
+                                                        double canvasMarginBottom,
+                                                        Offset yOffset) {
+        var size = entity.getComponent(ContentSize.class).orElseThrow();
+        var margin = entity.getComponent(Margin.class).orElse(Margin.zero());
+
+        double objectHeight = size.height();
+        double objectMarginTop = margin.top();
+        double objectMarginBottom = margin.bottom();
+        return definePositionOnPage(currentPositionY, currentPageNumber, objectHeight, objectMarginTop, objectMarginBottom, canvasHigh, canvasMarginTop, canvasMarginBottom, yOffset);
+
+    }
+    private static YPositionOnPage definePositionOnPage(double currentPositionY,
+                                                        int currentPageNumber,
+                                                        Entity entity,Canvas canvas, Offset offset){
+        //TODO тут должно быть просто
+        double canvasHigh = canvas.height() - canvas.margin().vertical();
+//        double canvasHigh = canvas.boundingTopLine();
+        double top = canvas.margin().top();
+        double bottom = canvas.margin().bottom();
+        return definePositionOnPage(currentPositionY, currentPageNumber, entity, canvasHigh, top, bottom, offset);
+    }
+
+    private static YPositionOnPage definePositionOnPage(double currentPositionY,
+                                                        int currentPageNumber,
+                                                        double objectHeight,
+                                                        double objectMarginTop,
+                                                        double objectMarginBottom,
+                                                        double canvasHigh,
+                                                        double canvasMarginTop,
+                                                        double canvasMarginBottom,
+                                                        Offset yOffset) {
+
+        if (!(canvasHigh > 0.0) || Double.isNaN(canvasHigh) || Double.isInfinite(canvasHigh)) {
+            throw new IllegalArgumentException("canvasHigh must be a finite positive number; was " + canvasHigh);
+        }
+
+        log.debug("Input: y={}, pageHeight={}, currentPage={}", currentPositionY, canvasHigh, currentPageNumber);
+
+        int pageOffset = definePage(currentPositionY, canvasHigh); // may be negative, zero, or positive
+        int finalPage = Math.addExact(currentPageNumber, pageOffset); // detect overflow
+        if (finalPage < 0) {
+            log.error("Invalid page number {}", finalPage);
+            throw new IllegalArgumentException("Page number is less than zero after pageOffset: " + finalPage);
+        }
+
+
+        // Normalize y into [0, pageHeight)
+        double yInPage = positiveModulo(currentPositionY, canvasHigh);
+        // we
+        if (yInPage < canvasMarginBottom) {
+            double currentOffset = (yInPage + objectHeight) * -1;
+            yInPage = canvasHigh - objectHeight;
+            finalPage++;
+            yOffset.incrementY(currentOffset);
+        }
+
+
+        YPositionOnPage result = new YPositionOnPage(yInPage, finalPage);
+
+
+        log.debug("Defined position on page: {}", result);
+        return result;
+
     }
 
     private static LocatedPages locatePages(Entity entity, YPositionOnPage position, Canvas canvas) {

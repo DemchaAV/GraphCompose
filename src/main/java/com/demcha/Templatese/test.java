@@ -29,13 +29,13 @@ import java.util.List;
 
 class test {
     public static void main(String[] args) {
-        Path target = Paths.get("new_test_file.pdf");
+        Path target = Paths.get("HCLTech_CV_ArtemDemchyshyn.pdf");
 
         EntityManager entityManager = new EntityManager();
         entityManager.setGuideLines(true);
         PDDocument doc = new PDDocument();
         Canvas canvasSize = new PdfCanvas(PDRectangle.A4, 0.0f, 0.0f);
-        canvasSize.addMargin(Margin.of(10));
+        canvasSize.addMargin(Margin.of(15));
 
 
         entityManager.addSystem(new LayoutSystemImpl(canvasSize));
@@ -43,7 +43,9 @@ class test {
         entityManager.addSystem(new PdfFileManagerSystem(target, doc));
 
         Model cv = new Model(entityManager);
-        CvData data = ConfigLoader.loadConfigWithEnv("cv_data.yml", CvData.class, false);
+//        CvData data = ConfigLoader.loadConfigWithEnv("cv_data.yml", CvData.class, false);
+        CvData data = ConfigLoader.loadConfigWithEnv("HCLTech.yml", CvData.class, false);
+//        CvData data = ConfigLoader.loadConfigWithEnv("royalMailCv.yml", CvData.class, false);
         var number = data.getHeder().getPhoneNumber();
         var address = data.getHeder().getAddress();
         var email = data.getHeder().getEmail();

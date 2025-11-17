@@ -2,10 +2,15 @@ package com.demcha.components.style;
 
 
 import com.demcha.components.core.Component;
+import com.demcha.components.core.Entity;
+import com.demcha.components.layout.RenderCoordinate;
+import com.demcha.components.layout.coordinator.RenderCoordinateContext;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Optional;
+
 @Slf4j
-public record Padding(double top, double right, double bottom, double left) implements Component {
+public record Padding(double top, double right, double bottom, double left) implements Component, RenderCoordinate {
     public double horizontal() {
         return right + left;
     }
@@ -36,5 +41,10 @@ public record Padding(double top, double right, double bottom, double left) impl
         result = 31 * result + Double.hashCode(bottom);
         result = 31 * result + Double.hashCode(left);
         return result;
+    }
+
+    @Override
+    public Optional<RenderCoordinateContext> renderCoordinate(Entity entity) {
+        return Optional.empty();
     }
 }

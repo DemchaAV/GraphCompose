@@ -2,8 +2,18 @@ package com.demcha.components.style;
 
 
 import com.demcha.components.core.Component;
+import com.demcha.components.core.Entity;
+import com.demcha.components.geometry.ContentSize;
+import com.demcha.components.layout.RenderCoordinate;
+import com.demcha.components.layout.coordinator.Placement;
+import com.demcha.components.layout.coordinator.RenderCoordinateContext;
+import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 
-public record Margin(double top, double right, double bottom, double left) implements Component {
+import java.util.Optional;
+
+@Slf4j
+public record Margin(double top, double right, double bottom, double left) implements Component, RenderCoordinate {
 
     public static Margin of(double value) {
         return new Margin(value, value, value, value);
@@ -12,22 +22,53 @@ public record Margin(double top, double right, double bottom, double left) imple
     public static Margin zero() {
         return new Margin(0, 0, 0, 0);
     }
+
     public static Margin bottom(double value) {
         return new Margin(0, 0, value, 0);
     }
+
     public static Margin top(double value) {
         return new Margin(value, 0, 0, 0);
     }
+
     public static Margin right(double value) {
         return new Margin(0, value, 0, 0);
     }
+
     public static Margin left(double value) {
         return new Margin(0, 0, 0, value);
+    }
+
+    public  Optional<RenderCoordinateContext> renderCoordinate(Entity entity) {
+        if (this.equals(Margin.zero())) {
+            log.error("Margin is zero, return empty");
+            return Optional.empty();
+        }
+        double x;
+        double y;
+        double width;
+        double height;
+        int startPage;
+        int endPage;
+
+        var placement = entity.getComponent(Placement.class).orElseThrow();
+        var size = entity.getComponent(ContentSize.class).orElseThrow();
+        startPage = placement.startPage();
+        endPage = placement.endPage();
+        width = size.width() + horizontal();
+        height = size.height() + vertical();
+        x = placement.x() - left();
+        y = placement.y() - bottom();
+
+
+        return Optional.of(new RenderCoordinateContext(x, y, width, height, startPage, endPage));
+
     }
 
     public double horizontal() {
         return left + right;
     }
+
     public double vertical() {
         return top + bottom;
     }
@@ -49,4 +90,5 @@ public record Margin(double top, double right, double bottom, double left) imple
         return result;
     }
 }
+
 

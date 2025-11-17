@@ -169,6 +169,7 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
         }
 
 
+
         var pos = e.getComponent(Placement.class).orElseThrow();
         var outer = OuterBoxSize.from(e).orElseThrow();
 

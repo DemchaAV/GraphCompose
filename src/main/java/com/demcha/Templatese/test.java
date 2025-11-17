@@ -9,9 +9,11 @@ import com.demcha.components.components_builders.ModuleBuilder;
 import com.demcha.components.content.link.Email;
 import com.demcha.components.content.link.LinkUrl;
 import com.demcha.components.core.Entity;
+import com.demcha.components.core.EntityName;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.Anchor;
+import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.style.Margin;
 import com.demcha.core.EntityManager;
 import com.demcha.system.LayoutSystemImpl;
@@ -137,18 +139,16 @@ class test {
 
         entityManager.processSystems();
         System.out.printf("Page number: %s ", doc.getNumberOfPages());
-//        entityManager.getEntities().forEach(
-//                (u, e) -> {
-//                    EntityName entityName = e.getComponent(EntityName.class).orElseThrow();
-//                    if (entityName.value().equalsIgnoreCase("Projects")) {
-//                        e.printInfo();
-//                    }
-//
-////                    Placement placement = e.getComponent(Placement.class).orElseThrow();
-////                    System.out.println(e + "\n" + placement);
-//                }
-//
-//        );
+        entityManager.getEntities().forEach(
+                (u, e) -> {
+                    System.out.println(e.name());
+                    Placement placement = e.getComponent(Placement.class).orElseThrow();
+                    System.out.println(placement);
+
+
+                }
+
+        );
     }
 }
 

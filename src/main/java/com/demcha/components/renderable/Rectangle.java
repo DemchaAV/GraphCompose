@@ -1,6 +1,5 @@
 package com.demcha.components.renderable;
 
-import com.demcha.components.containers.abstract_builders.GuidesRenderer;
 import com.demcha.components.content.shape.CornerRadius;
 import com.demcha.components.content.shape.FillColor;
 import com.demcha.components.content.shape.Stroke;
@@ -9,6 +8,7 @@ import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.exeptions.ContentSizeNotFoundException;
 import com.demcha.system.Expendable;
+import com.demcha.system.GuidesRenderer;
 import com.demcha.system.pdf_systems.PdfRender;
 import com.demcha.system.pdf_systems.PdfRenderingSystemECS;
 import lombok.EqualsAndHashCode;
@@ -29,11 +29,11 @@ public class Rectangle implements PdfRender, Expendable {
     public boolean pdf(Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
         // draw an object first
         boolean drawn;
-        try (PDPageContentStream cs = renderingSystemECS.getStream().openContentStream(e)) {
+        try (PDPageContentStream cs = renderingSystemECS.stream().openContentStream(e)) {
             drawn = pdfRenderObject(e, cs);
             // if was specified, draw guides
             if (guideLines) {
-                renderingSystemECS.renderGuides(e, cs, DEFAULT_GUIDES);
+                renderingSystemECS.guideRenderer().guidesRender(e, cs, DEFAULT_GUIDES);
 
             }
         }

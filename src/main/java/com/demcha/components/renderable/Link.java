@@ -47,7 +47,7 @@ public class Link implements PdfRender {
 
 
 // добавляем на страницу
-        PDDocument doc = renderingSystemECS.getDoc();
+        PDDocument doc = renderingSystemECS.doc();
         PDPage page = doc.getPage(indexPage);
         page.getAnnotations().add(link);
     }

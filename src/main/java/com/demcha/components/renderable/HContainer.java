@@ -1,11 +1,9 @@
 package com.demcha.components.renderable;
 
-import com.demcha.components.containers.abstract_builders.GuidesRenderer;
 import com.demcha.components.core.Entity;
-import com.demcha.system.RenderingSystemECS;
+import com.demcha.system.GuidesRenderer;
 import com.demcha.system.pdf_systems.PdfRenderingSystemECS;
 import lombok.ToString;
-import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.io.IOException;
@@ -20,8 +18,8 @@ public class HContainer extends Container {
 
     @Override
     public boolean pdf(Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
-        try (PDPageContentStream pdPageContentStream = renderingSystemECS.getStream().openContentStream(e)) {
-            if (guideLines) renderingSystemECS.renderGuides(e,pdPageContentStream, DEFAULT_GUIDES);
+        try (PDPageContentStream pdPageContentStream = renderingSystemECS.stream().openContentStream(e)) {
+            if (guideLines) renderingSystemECS.guideRenderer().guidesRender(e,pdPageContentStream, DEFAULT_GUIDES);
         }
         return true;
     }

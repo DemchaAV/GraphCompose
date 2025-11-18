@@ -1,6 +1,5 @@
 package com.demcha.components.renderable;
 
-import com.demcha.components.containers.abstract_builders.GuidesRenderer;
 import com.demcha.components.content.text.Text;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
@@ -8,6 +7,7 @@ import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
+import com.demcha.system.GuidesRenderer;
 import com.demcha.system.pdf_systems.PdfRender;
 import com.demcha.system.pdf_systems.PdfRenderingSystemECS;
 import lombok.Builder;
@@ -68,7 +68,7 @@ public class TextComponent implements PdfRender {
         var placementOpt = e.getComponent(Placement.class);
         if (placementOpt.isEmpty()) return false;
 
-        try (PDPageContentStream cs = renderingSystemECS.getStream().openContentStream(e)) {
+        try (PDPageContentStream cs = renderingSystemECS.stream().openContentStream(e)) {
 
 
             var position = placementOpt.get();
@@ -108,7 +108,7 @@ public class TextComponent implements PdfRender {
 
             cs.restoreGraphicsState();
 
-            if (guideLines) renderingSystemECS.renderGuides(e, cs, DEFAULT_GUIDES);
+            if (guideLines) renderingSystemECS.guideRenderer().guidesRender(e, cs, DEFAULT_GUIDES);
         } catch (IOException ioe) {
             throw new IOException(ioe);
         }

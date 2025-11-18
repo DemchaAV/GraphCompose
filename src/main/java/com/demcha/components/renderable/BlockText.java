@@ -1,13 +1,13 @@
 package com.demcha.components.renderable;
 
 import com.demcha.components.LineTextData;
-import com.demcha.components.containers.abstract_builders.GuidesRenderer;
 import com.demcha.components.content.text.BlockTextData;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderingPosition;
+import com.demcha.system.GuidesRenderer;
 import com.demcha.system.pdf_systems.PdfRender;
 import com.demcha.system.pdf_systems.PdfRenderingSystemECS;
 import com.demcha.utils.page_brecker.Breakable;
@@ -137,7 +137,7 @@ public class BlockText implements PdfRender, Breakable {
         boolean result = false;
         PDPageContentStream cs = null;
         try {
-            cs = renderingSystem.openContentSteamForTextData(currentPage, font, fontSize, color);
+            cs = renderingSystem.stream() .openContentSteamForTextData(currentPage, font, fontSize, color);
             boolean isStarted = false;
 
             for (LineTextData ltd : blockTextData) {
@@ -149,7 +149,7 @@ public class BlockText implements PdfRender, Breakable {
 
                 if (currentPage != ltd.page()) {
                     currentPage = ltd.page();
-                    cs = renderingSystem.reopenContentStreamForTextData(cs, currentPage, font, fontSize, color);
+                    cs = renderingSystem.stream().reopenContentStreamForTextData(cs, currentPage, font, fontSize, color);
                 }
 
                 cs.setTextMatrix(new Matrix(1, 0, 0, 1, (float) ltd.x(), (float) ltd.y()));
@@ -159,7 +159,7 @@ public class BlockText implements PdfRender, Breakable {
             cs.endText();
             cs.restoreGraphicsState();
             if (guideLines) {
-                renderingSystem.renderGuides(e, DEFAULT_GUIDES);
+                renderingSystem.guideRenderer().guidesRender(e, DEFAULT_GUIDES);
             }
 
             result = true;

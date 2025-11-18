@@ -1,18 +1,13 @@
 package com.demcha.components.renderable;
 
-import com.demcha.components.containers.abstract_builders.GuidesRenderer;
 import com.demcha.components.core.Entity;
-import com.demcha.exeptions.RenderGuideLinesException;
 import com.demcha.system.Expendable;
-import com.demcha.system.Render;
-import com.demcha.system.RenderingSystemECS;
+import com.demcha.system.GuidesRenderer;
 import com.demcha.system.pdf_systems.PdfRender;
 import com.demcha.system.pdf_systems.PdfRenderingSystemECS;
 import com.demcha.utils.page_brecker.Breakable;
 import lombok.Getter;
-import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.io.IOException;
 import java.util.EnumSet;
@@ -24,7 +19,7 @@ import java.util.EnumSet;
  */
 @Slf4j
 @Getter
-public class Container implements  PdfRender, Expendable, Breakable {
+public class Container implements PdfRender, Expendable, Breakable {
     /**
      * A default set of guides to be rendered for this container.
      * By default, it includes MARGIN, PADDING, and BOX guides.
@@ -42,10 +37,9 @@ public class Container implements  PdfRender, Expendable, Breakable {
      */
     @Override
     public boolean pdf(Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
-        if (guideLines) return    renderingSystemECS.renderGuides(e,DEFAULT_GUIDES, this    );
+        if (guideLines) return renderingSystemECS.guideRenderer().guidesRender(e, DEFAULT_GUIDES, this);
         return false;
     }
-
 
 
 }

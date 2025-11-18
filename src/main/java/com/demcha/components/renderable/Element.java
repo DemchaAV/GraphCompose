@@ -1,8 +1,8 @@
 package com.demcha.components.renderable;
 
-import com.demcha.components.containers.abstract_builders.GuidesRenderer;
 import com.demcha.components.core.Entity;
 import com.demcha.system.Expendable;
+import com.demcha.system.GuidesRenderer;
 import com.demcha.system.pdf_systems.PdfRender;
 import com.demcha.system.pdf_systems.PdfRenderingSystemECS;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -22,7 +22,7 @@ public class Element implements PdfRender,  Expendable {
      * If {@code guideLines} is true, it also renders the default set of guides for the component.
      *
      * @param e          The {@link Entity} representing the component's data and properties.
-     * @param cs         The {@link PDPageContentStream} to draw on.
+     * @param pdfRenderingSystem        The {@link PDPageContentStream} to draw on.
      * @param guideLines A boolean indicating whether to render guide lines (margin, padding, box) for the component.
      * @return {@code true} if the rendering was successful, {@code false} otherwise.
      * @throws IOException If an I/O error occurs during rendering.
@@ -30,8 +30,8 @@ public class Element implements PdfRender,  Expendable {
     @Override
     public boolean pdf(Entity e, PdfRenderingSystemECS pdfRenderingSystem, boolean guideLines) throws IOException {
         TextComponent textComponent = new TextComponent();
-        try (PDPageContentStream pdPageContentStream = pdfRenderingSystem.getStream().openContentStream (e)) {
-            if (guideLines) pdfRenderingSystem .renderGuides(e,pdPageContentStream, DEFAULT_GUIDES);
+        try (PDPageContentStream pdPageContentStream = pdfRenderingSystem.stream().openContentStream (e)) {
+            if (guideLines) pdfRenderingSystem .guideRenderer().guidesRender(e,pdPageContentStream, DEFAULT_GUIDES);
         }
 
         return true;

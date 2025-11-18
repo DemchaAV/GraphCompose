@@ -7,7 +7,7 @@ import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.PaddingCoordinate;
 import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.components_builders.Canvas;
-import com.demcha.core.CanvasSize;
+import com.demcha.core.CanvasBox;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -126,7 +126,7 @@ class ComputedPositionTest {
         // Arrange
         Entity child = mock(Entity.class);
         Anchor anchor = mock(Anchor.class);
-        Canvas pageSize = mock(CanvasSize.class);
+        Canvas pageSize = mock(CanvasBox.class);
         when(pageSize.width()).thenReturn(595.0f);
         when(pageSize.height()).thenReturn(842.0f);
 

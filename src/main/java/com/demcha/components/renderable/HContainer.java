@@ -1,8 +1,8 @@
 package com.demcha.components.renderable;
 
 import com.demcha.components.core.Entity;
-import com.demcha.system.GuidesRenderer;
-import com.demcha.system.pdf_systems.PdfRenderingSystemECS;
+import com.demcha.system.intarfaces.GuidesRenderer;
+import com.demcha.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
 import lombok.ToString;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 

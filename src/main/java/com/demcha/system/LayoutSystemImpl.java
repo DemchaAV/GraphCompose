@@ -16,14 +16,13 @@ import com.demcha.components.layout.coordinator.PaddingCoordinate;
 import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.renderable.TextComponent;
 import com.demcha.components.style.Padding;
-import com.demcha.core.CanvasSize;
 import com.demcha.core.EntityManager;
-import com.demcha.utils.containerUtils.ContainerExpander;
-import com.demcha.utils.containerUtils.ContainerLayoutManager;
-import com.demcha.utils.page_brecker.PageBreaker;
+import com.demcha.system.intarfaces.SystemECS;
+import com.demcha.system.utils.containerUtils.ContainerExpander;
+import com.demcha.system.utils.containerUtils.ContainerLayoutManager;
+import com.demcha.system.utils.page_brecker.PageBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.pdfbox.pdmodel.PDPage;
 
 import java.util.*;
 
@@ -33,7 +32,7 @@ import java.util.*;
  * Top-down DFS layout for ECS-model with a CSS-like box model.
  * </p>
  * <p>
- * Box Model:
+ * Box ModelBuilder:
  * <ul>
  *   <li>OuterBoxSize = content size (inner size, excludes padding/margin)</li>
  *   <li>Placement = final rendered box (content + padding + margin)</li>

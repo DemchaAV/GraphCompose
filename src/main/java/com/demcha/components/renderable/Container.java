@@ -1,11 +1,11 @@
 package com.demcha.components.renderable;
 
 import com.demcha.components.core.Entity;
-import com.demcha.system.Expendable;
-import com.demcha.system.GuidesRenderer;
-import com.demcha.system.pdf_systems.PdfRender;
-import com.demcha.system.pdf_systems.PdfRenderingSystemECS;
-import com.demcha.utils.page_brecker.Breakable;
+import com.demcha.components.geometry.Expendable;
+import com.demcha.system.intarfaces.GuidesRenderer;
+import com.demcha.system.implemented_systems.pdf_systems.PdfRender;
+import com.demcha.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
+import com.demcha.system.utils.page_brecker.Breakable;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 

@@ -4,8 +4,8 @@ import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
 import com.demcha.components.layout.ParentComponent;
-import com.demcha.system.Render;
-import com.demcha.system.SystemECS;
+import com.demcha.system.intarfaces.Render;
+import com.demcha.system.intarfaces.SystemECS;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
  *       (current implementation). Treat accordingly.</li>
  *   <li>The type cast in {@link #getComponent(UUID, Class)} is unchecked; ensure you request
  *       the correct component class.</li>
- *   <li>The interface name {@code com.demcha.system.SystemECS} shadows {@link java.lang.System};
+ *   <li>The interface name {@code com.demcha.system.intarfaces.SystemECS} shadows {@link java.lang.System};
  *       import carefully or fully qualify when needed.</li>
  * </ul>
  *

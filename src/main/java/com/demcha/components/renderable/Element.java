@@ -1,10 +1,10 @@
 package com.demcha.components.renderable;
 
 import com.demcha.components.core.Entity;
-import com.demcha.system.Expendable;
-import com.demcha.system.GuidesRenderer;
-import com.demcha.system.pdf_systems.PdfRender;
-import com.demcha.system.pdf_systems.PdfRenderingSystemECS;
+import com.demcha.components.geometry.Expendable;
+import com.demcha.system.intarfaces.GuidesRenderer;
+import com.demcha.system.implemented_systems.pdf_systems.PdfRender;
+import com.demcha.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.io.IOException;

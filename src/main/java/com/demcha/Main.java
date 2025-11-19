@@ -59,14 +59,14 @@ public class Main {
     private static EntityManager setupEntityManager(boolean guidLines) throws Exception {
         Path target = Paths.get("output.pdf");
         PDDocument doc = new PDDocument();
-        Canvas canvasSize = new PdfCanvas(PDRectangle.A4, 0.0f);
-        canvasSize.addMargin(Margin.of(0));
+        Canvas canvas = new PdfCanvas(PDRectangle.A4, 0.0f);
+        canvas.addMargin(Margin.of(0));
 
         EntityManager entityManager = new EntityManager();
         entityManager.setGuideLines(guidLines);
 
-        entityManager.addSystem(new LayoutSystemImpl(canvasSize));
-        entityManager.addSystem(new PdfRenderingSystemECS(doc, canvasSize));
+        entityManager.addSystem(new LayoutSystemImpl(canvas));
+        entityManager.addSystem(new PdfRenderingSystemECS(doc, canvas));
         entityManager.addSystem(new PdfFileManagerSystem(target, doc));
 
         return entityManager;

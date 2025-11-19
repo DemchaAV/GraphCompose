@@ -152,12 +152,12 @@ public class PageBreaker {
 
 
                     entity.updateVerticalComputedPosition(yOffset);
-                    var r = RenderingPosition.from(entity).get();
+                    var computedPosition = entity.getComponent(ComputedPosition.class).orElseThrow();
                     ContentSize contentSize = entity.getComponent(ContentSize.class)
                             .orElseThrow(() -> new IllegalStateException("Entity " + e + " has no ContentSize"));
 
 
-                    YPositionOnPage position = definePositionOnPage(r.y(), canvas.boundingTopLine(), contentSize.height(), 0, canvas, yOffset);
+                    YPositionOnPage position = definePositionOnPage(computedPosition.y(), canvas.boundingTopLine(), contentSize.height(), 0, canvas, yOffset);
 
                     Placement placement = setYInPlacement(entity, position);
                     entity.addComponent(placement);
@@ -217,8 +217,8 @@ public class PageBreaker {
 
     private static Placement setYInPlacement(Entity entity, double yPosition, int startPage, int endPage) {
         ComputedPosition computedPosition = entity.getComponent(ComputedPosition.class).orElseThrow();
-        OuterBoxSize outerBoxSize = OuterBoxSize.from(entity).orElseThrow();
-        return new Placement(computedPosition.x(), yPosition, outerBoxSize.width(), outerBoxSize.height(), startPage, endPage);
+        var size = entity.getComponent(ContentSize.class).orElseThrow();
+        return new Placement(computedPosition.x(), yPosition, size.width(), size.height(), startPage, endPage);
     }
 
     private static Placement setYInPlacement(Entity entity, YPositionOnPage position) {

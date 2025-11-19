@@ -214,7 +214,7 @@ public record PdfGuidesRenderer(PdfRenderingSystemECS renderingSystemECS) implem
         var margin = e.getComponent(Margin.class).orElse(Margin.zero());
         var placement = e.getComponent(Placement.class).orElseThrow();
 //TODO x должен быть просто placement.x() так как это и есть коробка
-        double x = placement.x() + margin.left();
+        double x = placement.x();
         double y = placement.y();
         double w = boxSize.width();
         double h = boxSize.height();

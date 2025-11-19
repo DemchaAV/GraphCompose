@@ -15,10 +15,10 @@ import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
 import com.demcha.system.LayoutSystemImpl;
+import com.demcha.system.implemented_systems.pdf_systems.PdfCanvas;
 import com.demcha.system.implemented_systems.pdf_systems.PdfFileManagerSystem;
 import com.demcha.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
 import com.demcha.system.utils.page_brecker.PageBreaker;
-import com.demcha.system.implemented_systems.pdf_systems.PdfCanvas;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
@@ -40,7 +40,8 @@ public class Main {
         EntityManager entityManager = setupEntityManager(true);
 
         // 2. Content Creation and Layout
-        createATableLayout(entityManager, "table");
+//        createATableLayout(entityManager, "table");
+        createASingleObject(entityManager, "Heloo");
 //        createButtonsVContainer(entityManager, "buttons");
 
 
@@ -58,7 +59,7 @@ public class Main {
         Path target = Paths.get("output.pdf");
         PDDocument doc = new PDDocument();
         Canvas canvasSize = new PdfCanvas(PDRectangle.A4, 0.0f);
-        canvasSize.addMargin(Margin.of(10));
+        canvasSize.addMargin(Margin.of(0));
 
         EntityManager entityManager = new EntityManager();
         entityManager.setGuideLines(guidLines);
@@ -88,7 +89,12 @@ public class Main {
 
 
         return createVContainer(entityManager, name, row1, row2, buttons, blockTextBuilder)
-                .addComponent(Anchor.topRight()) ;
+                .addComponent(Anchor.topRight());
+    }
+
+    private static Entity createASingleObject(EntityManager entityManager, String name) {
+        return createVContainer(entityManager, name, button(entityManager, "Button1"), button(entityManager, "Button2"));
+
     }
 
     private static Entity createButtonsVContainer(EntityManager entityManager, String name) {
@@ -144,9 +150,9 @@ public class Main {
     private static Entity createVContainer(EntityManager entityManager, String name, Entity... entities) {
         VContainerBuilder vContainerBuilder = new VContainerBuilder(entityManager, Align.middle(10))
                 .entityName(name)
-                .margin(Margin.of(5))
-                .padding(Padding.of(5))
-                .anchor(Anchor.center());
+                .margin(new Margin(10,10,5,5))
+                .padding(new Padding(5,5,10,10))
+                .anchor(Anchor.topCenter());
         Arrays.stream(entities).forEach(vContainerBuilder::addChild);
         return vContainerBuilder
                 .build();

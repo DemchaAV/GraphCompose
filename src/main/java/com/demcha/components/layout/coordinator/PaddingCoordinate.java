@@ -30,10 +30,10 @@ public record PaddingCoordinate(double x, double y) {
      */
     public static PaddingCoordinate from(@NonNull Entity entity) {
 
-        var renderingPos = RenderingPosition.from(entity).orElseThrow();
+        ComputedPosition position = entity.getComponent(ComputedPosition.class).orElseThrow();
 
         var padding = entity.getComponent(Padding.class).orElse(Padding.zero());
-        var result = from(renderingPos, padding);
+        var result = from(position, padding);
         log.debug("PaddingCoordinate.from(entity={}) -> {}", entity, result);
         return result;
     }
@@ -48,7 +48,7 @@ public record PaddingCoordinate(double x, double y) {
      * @param parrentPadding  the parrentPadding to apply
      * @return parrentPadding-adjusted coordinate
      */
-    public static PaddingCoordinate from(@NonNull RenderingPosition position, @NonNull Padding parrentPadding) {
+    public static PaddingCoordinate from(@NonNull ComputedPosition position, @NonNull Padding parrentPadding) {
         double px = position.x() + parrentPadding.left() ;
         double py = position.y() + parrentPadding.bottom() ;
         var result = new PaddingCoordinate(px, py);

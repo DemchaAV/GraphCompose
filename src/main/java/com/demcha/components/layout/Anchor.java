@@ -29,6 +29,7 @@ public record Anchor(HAnchor h, VAnchor v) implements Component {
     public static Anchor topLeft() {
         return new Anchor(HAnchor.LEFT, VAnchor.TOP);
     }
+
     public static Anchor left() {
         return new Anchor(HAnchor.LEFT, VAnchor.DEFAULT);
     }
@@ -36,9 +37,11 @@ public record Anchor(HAnchor h, VAnchor v) implements Component {
     public static Anchor center() {
         return new Anchor(HAnchor.CENTER, VAnchor.MIDDLE);
     }
+
     public static Anchor centerLeft() {
         return new Anchor(HAnchor.LEFT, VAnchor.MIDDLE);
     }
+
     public static Anchor centerRight() {
         return new Anchor(HAnchor.RIGHT, VAnchor.MIDDLE);
     }
@@ -62,21 +65,36 @@ public record Anchor(HAnchor h, VAnchor v) implements Component {
     public static Anchor bottomCenter() {
         return new Anchor(HAnchor.CENTER, VAnchor.BOTTOM);
     }
+
     public static Anchor defaultAnchor() {
         return new Anchor(HAnchor.DEFAULT, VAnchor.DEFAULT);
     }
 
+    public static RenderingPosition renderingPosition(ComputedPosition computedPosition, Margin margin) {
+        Objects.requireNonNull(computedPosition, "computedPosition cannot be null");
+        Objects.requireNonNull(margin, "margin cannot be null");
+
+        // computedPosition — это левый-нижний угол OUTER-box (учитывает anchor/align).
+        // Чтобы рисовать контент/рамку внутри margin, просто смещаемся внутрь.
+        double rx = computedPosition.x() + margin.left();
+        double ry = computedPosition.y() + margin.bottom();
+
+        var renderingPosition = new RenderingPosition(rx, ry);
+        log.debug("Rendering position computed: {}", renderingPosition);
+        return renderingPosition;
+    }
 
     public ComputedPosition getComputedPosition(Entity child, InnerBoxSize perrentInnerBoxSize) {
         log.debug("Starting calculation of computed position for {} ", child);
         var position = child.getComponent(Position.class).orElse(Position.zero());
 
         var outerBoxSize = OuterBoxSize.from(child).get();
+        var childMargin = child.getComponent(Margin.class).orElse(Margin.zero());
 
-        return getComputedPosition(position, outerBoxSize, perrentInnerBoxSize);
+        return getComputedPosition(position, childMargin, outerBoxSize, perrentInnerBoxSize);
     }
 
-    private ComputedPosition getComputedPosition(Position position, OuterBoxSize outerBoxSize, InnerBoxSize parentInnerBoxSize) {
+    private ComputedPosition getComputedPosition(Position position, Margin childMargin, OuterBoxSize outerBoxSize, InnerBoxSize parentInnerBoxSize) {
         Objects.requireNonNull(position, () -> {
             log.error("Position cannot be null.");
             throw new NullPointerException("Position cannot be null.");
@@ -97,23 +115,27 @@ public record Anchor(HAnchor h, VAnchor v) implements Component {
         double areaW = parentInnerBoxSize.width();
         double areaH = parentInnerBoxSize.hight();
 
-        return getComputedPosition(position, areaW, outerW, areaH, outerH);
+        double childBottomMargin = childMargin.bottom();
+        double childLeftMargin = childMargin.left();
+
+
+        return getComputedPosition(position, childBottomMargin, childLeftMargin, areaW, outerW, areaH, outerH);
 
     }
 
-    private ComputedPosition getComputedPosition(Position position, double areaW, double outerW, double areaH, double outerH) {
+    private ComputedPosition getComputedPosition(Position position, double childBottomMargin, double childLeftMargin, double areaW, double outerW, double areaH, double outerH) {
         double x = switch (this.h()) {
-            case LEFT -> position.x();      // x=0 at left
-            case CENTER -> (areaW - outerW) / 2.0 + position.x();
-            case RIGHT -> areaW - outerW + position.x();
-            case DEFAULT ->  position.x();
+            case LEFT -> position.x() + childLeftMargin;      // x=0 at left
+            case CENTER -> (areaW - outerW) / 2.0 + position.x() + childLeftMargin;
+            case RIGHT -> areaW - outerW + position.x() + childLeftMargin;
+            case DEFAULT -> position.x();
         };
 
         double y = switch (this.v()) {
-            case BOTTOM -> position.y();          // y=0 at bottom
-            case MIDDLE -> (areaH - outerH) / 2.0 + position.y();
-            case TOP -> areaH - outerH - position.y();
-            case DEFAULT ->  position.y();
+            case BOTTOM -> position.y() + childBottomMargin;          // y=0 at bottom
+            case MIDDLE -> (areaH - outerH) / 2.0 + position.y()+ childBottomMargin;
+            case TOP -> areaH - outerH + position.y() + childBottomMargin;
+            case DEFAULT -> position.y();
         };
 
         var computed = new ComputedPosition(x, y);
@@ -121,24 +143,6 @@ public record Anchor(HAnchor h, VAnchor v) implements Component {
         return computed;
     }
 
-    public static RenderingPosition renderingPosition(ComputedPosition computedPosition, Margin margin) {
-        Objects.requireNonNull(computedPosition, "computedPosition cannot be null");
-        Objects.requireNonNull(margin, "margin cannot be null");
-
-        // computedPosition — это левый-нижний угол OUTER-box (учитывает anchor/align).
-        // Чтобы рисовать контент/рамку внутри margin, просто смещаемся внутрь.
-        double rx = computedPosition.x() + margin.left();
-        double ry = computedPosition.y() + margin.bottom();
-
-        var renderingPosition = new RenderingPosition(rx, ry);
-        log.debug("Rendering position computed: {}", renderingPosition);
-        return renderingPosition;
-    }
-    public RenderingPosition renderingPosition(@NonNull Entity entity) {
-        ComputedPosition computedPosition = entity.getComponent(ComputedPosition.class).get();
-        Margin margin = entity.getComponent(Margin.class).get();
-        return renderingPosition(computedPosition, margin);
-    }
 
 }
 

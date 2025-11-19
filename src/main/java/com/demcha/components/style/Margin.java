@@ -52,14 +52,13 @@ public record Margin(double top, double right, double bottom, double left) imple
         int endPage;
 
         var placement = entity.getComponent(Placement.class).orElseThrow();
-        var size = entity.getComponent(ContentSize.class).orElseThrow();
         startPage = placement.startPage();
         endPage = placement.endPage();
-        width = size.width() + horizontal();
-        height = size.height() + vertical();
-        x = placement.x() ;
+        width = placement.width() + horizontal();
+        height = placement.height() + vertical();
+//        x = placement.x() ;
         //TODO должно быть так но нужно зафиксить пока временно будет без минус
-//        x = placement.x() - left();
+        x = placement.x() - left();
         y = placement.y() - bottom();
 
 

@@ -96,6 +96,7 @@ public class ContainerAligner {
                 }
             }
 
+
             // After processing all children, update the parent's final size.
             Padding parentPadding = parent.getComponent(Padding.class).orElse(Padding.zero());
             parent.addComponent(getFinalContentSize(axes, parentPadding));

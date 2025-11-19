@@ -6,6 +6,7 @@ import com.demcha.components.content.shape.Stroke;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.coordinator.Placement;
+import com.demcha.components.layout.coordinator.RenderCoordinateContext;
 import com.demcha.exeptions.ContentSizeNotFoundException;
 import com.demcha.components.geometry.Expendable;
 import com.demcha.system.intarfaces.GuidesRenderer;
@@ -17,6 +18,7 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.io.IOException;
 import java.util.EnumSet;
+import java.util.Optional;
 
 @Slf4j
 @EqualsAndHashCode
@@ -58,8 +60,8 @@ public class Rectangle implements PdfRender, Expendable {
         var rp = rpOpt.orElseThrow();
         double x = rp.x();
         double y = rp.y();
-        double w = size.width();
-        double h = size.height();
+        double w = rp.width();
+        double h = rp.height();
         //Should be null  if not specified
         Stroke stroke = e.getComponent(Stroke.class).orElse(null);
         //Should be null  if not specified

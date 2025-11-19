@@ -2,6 +2,7 @@ package com.demcha.components.layout.coordinator;
 
 import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
+import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.layout.*;
@@ -10,6 +11,7 @@ import com.demcha.components.style.Padding;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Represents the final size and position of a component, including any calculated margins.
@@ -65,5 +67,24 @@ public record Placement(double x, double y, double width, double height, int sta
         var paddingCoordinate = PaddingCoordinate.from(parent);
 
         return from(child, parrentInnerBoxSize, paddingCoordinate, pageNumber);
+    }
+
+
+    public Optional<RenderCoordinateContext> renderCoordinate(Entity entity) {
+        double x;
+        double y;
+        double width;
+        double height;
+        int startPage;
+        int endPage;
+
+        startPage = startPage();
+        endPage = endPage();
+
+        x = x();
+        y = y();
+        width = width();
+        height = height();
+        return Optional.of(new RenderCoordinateContext(x, y, width, height, startPage, endPage));
     }
 }

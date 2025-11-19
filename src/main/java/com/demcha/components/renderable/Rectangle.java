@@ -57,11 +57,11 @@ public class Rectangle implements PdfRender, Expendable {
         // Color Default if not specified
         FillColor fillColor = e.getComponent(FillColor.class).orElse(FillColor.defaultColor());
 
-        var rp = rpOpt.orElseThrow();
-        double x = rp.x();
-        double y = rp.y();
-        double w = rp.width();
-        double h = rp.height();
+        var placement = rpOpt.orElseThrow();
+        double x = placement.x();
+        double y = placement.y();
+        double w = placement.width();
+        double h = placement.height();
         //Should be null  if not specified
         Stroke stroke = e.getComponent(Stroke.class).orElse(null);
         //Should be null  if not specified

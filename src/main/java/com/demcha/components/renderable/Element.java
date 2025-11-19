@@ -29,7 +29,6 @@ public class Element implements PdfRender,  Expendable {
      */
     @Override
     public boolean pdf(Entity e, PdfRenderingSystemECS pdfRenderingSystem, boolean guideLines) throws IOException {
-        TextComponent textComponent = new TextComponent();
         try (PDPageContentStream pdPageContentStream = pdfRenderingSystem.stream().openContentStream (e)) {
             if (guideLines) pdfRenderingSystem .guideRenderer().guidesRender(e,pdPageContentStream, DEFAULT_GUIDES);
         }

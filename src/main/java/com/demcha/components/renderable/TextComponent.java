@@ -72,8 +72,6 @@ public class TextComponent implements PdfRender {
 
 
             var position = placementOpt.get();
-            Padding padding = e.getComponent(Padding.class).orElse(Padding.zero());
-            Margin margin = e.getComponent(Margin.class).orElse(Margin.zero());
 
             ValidatedTextData v = getValidatedTextData(e);
             PDFont font = v.style().font();
@@ -84,18 +82,13 @@ public class TextComponent implements PdfRender {
             float scale = fontSize / 1000f;
             PDFontDescriptor fd = font.getFontDescriptor();
 
-//        float ascentPx  = (fd != null ? fd.getAscent()  : font.getBoundingBox().getUpperRightY()) * scale;
             float descentPx = Math.abs((fd != null ? fd.getDescent() : font.getBoundingBox().getLowerLeftY()) * scale);
-            // float leadingPx = (fd != null ? fd.getLeading() : 0) * scale; // use for multi-line spacing
 
-            // ---- choose alignment rule for Y
-            // If your position.y is the TOP edge of the text box:
-            float topY = (float) position.y() - (float) padding.top();
+            float topY = (float) position.y();
             float baselineY = topY + descentPx;
 
-            // If your position.x is the LEFT edge:
-            //TODO margin.left() должен быть убран
-            float leftX = (float) position.x() + (float) padding.left()+ (float) margin.left();
+
+            float leftX = (float) position.x();
 
             cs.saveGraphicsState();
             cs.setFont(font, fontSize);

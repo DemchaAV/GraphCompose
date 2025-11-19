@@ -41,7 +41,7 @@ public record Margin(double top, double right, double bottom, double left) imple
 
     public  Optional<RenderCoordinateContext> renderCoordinate(Entity entity) {
         if (this.equals(Margin.zero())) {
-            log.error("Margin is zero, return empty");
+            log.warn("Margin is zero, return empty");
             return Optional.empty();
         }
         double x;

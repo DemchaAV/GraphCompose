@@ -27,6 +27,7 @@ import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 
 public class Main {
     static String textBlockData = "Junior Java Backend Developer with hands-on experience building REST APIs using Spring Boot, Spring " +
@@ -59,7 +60,7 @@ public class Main {
         Path target = Paths.get("output.pdf");
         PDDocument doc = new PDDocument();
         Canvas canvasSize = new PdfCanvas(PDRectangle.A4, 0.0f);
-        canvasSize.addMargin(Margin.of(10));
+        canvasSize.addMargin(Margin.of(0));
 
         EntityManager entityManager = new EntityManager();
         entityManager.setGuideLines(guidLines);
@@ -93,14 +94,20 @@ public class Main {
     }
 
     private static Entity createASingleObject(EntityManager entityManager, String name) {
-        return createVContainer(entityManager, name, button(entityManager, "Button1"), button(entityManager, "Button2"));
+        var buttons = List.of(
+                button(entityManager, "Button1"),
+                button(entityManager, "Button2"),
+                button(entityManager, "Button3"),
+                button(entityManager, "Button4"));
+        return createHContainer(entityManager, name, buttons);
 
     }
 
     private static Entity createButtonsVContainer(EntityManager entityManager, String name) {
-        var button1 = button(entityManager, "button1");
-        var button2 = button(entityManager, "button2");
-        return createVContainer(entityManager, name, button1, button2);
+        var buttons = List.of(
+                button(entityManager, "Button1"),
+                button(entityManager, "Button2"));
+        return createHContainer(entityManager, name, buttons);
     }
 
     /**
@@ -144,29 +151,38 @@ public class Main {
                 .stroke(new Stroke(ComponentColor.MODULE_TITLE, 2.0))
                 .size(new ContentSize(90, 30))
                 .cornerRadius(5)
+                .anchor(Anchor.center())
+                .margin(Margin.of(5))
                 .build();
     }
 
-    private static Entity createVContainer(EntityManager entityManager, String name, Entity... entities) {
-        VContainerBuilder vContainerBuilder = new VContainerBuilder(entityManager, Align.middle(10))
+    private static Entity createVContainer(EntityManager entityManager, String name, List<Entity> entities) {
+        var vContainerBuilder = new VContainerBuilder(entityManager, Align.middle(5))
                 .entityName(name)
-                .margin(new Margin(10,10,5,5))
-                .padding(new Padding(5,5,10,10))
+                .margin(new Margin(10, 10, 5, 5))
+                .padding(new Padding(5, 5, 10, 10))
                 .anchor(Anchor.topCenter());
-        Arrays.stream(entities).forEach(vContainerBuilder::addChild);
+        entities.forEach(vContainerBuilder::addChild);
         return vContainerBuilder
                 .build();
     }
 
-    private static Entity createHContainer(EntityManager entityManager, String name, Entity... entities) {
+    private static Entity createVContainer(EntityManager entityManager, String name, Entity... entities) {
+        return createVContainer(entityManager, name, Arrays.asList(entities));
+    }
+
+    private static Entity createHContainer(EntityManager entityManager, String name, List<Entity> entities) {
         HContainerBuilder hContainerBuilder = new HContainerBuilder(entityManager, Align.middle(10))
                 .entityName(name)
-                .margin(Margin.of(5))
+                .margin(new Margin(10,20,5,15))
                 .padding(Padding.of(5))
-                .anchor(Anchor.center());
-        Arrays.stream(entities).forEach(hContainerBuilder::addChild);
+                .anchor(Anchor.topLeft());
+        entities.forEach(hContainerBuilder::addChild);
         return hContainerBuilder
                 .build();
+    }
+    private static Entity createHContainer(EntityManager entityManager, String name, Entity... entities) {
+        return createHContainer(entityManager, name, Arrays.asList(entities));
     }
 
     private static Entity blockTextBuilder(EntityManager entityManager, String text, double width, double spacing) {

@@ -10,6 +10,7 @@ import com.demcha.components.layout.HAnchor;
 import com.demcha.components.layout.VAnchor;
 import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.renderable.Container;
+import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
 import lombok.extern.slf4j.Slf4j;
@@ -134,8 +135,9 @@ public class ContainerAligner {
         @Override
         protected void updateChildPosition(Entity child, Axes axes) {
             Position currentPos = child.getComponent(Position.class).orElse(Position.zero());
+            Margin margin = child.getComponent(Margin.class).orElse(Margin.zero());
             Anchor anchor = child.getComponent(Anchor.class).orElse(Anchor.defaultAnchor());
-            child.addComponent(new Position(axes.main, currentPos.y()));
+            child.addComponent(new Position(axes.main + margin.left(), currentPos.y()));
             child.addComponent(new Anchor(HAnchor.DEFAULT, anchor.v()));
         }
 
@@ -158,9 +160,10 @@ public class ContainerAligner {
         protected void updateChildPosition(Entity child, Axes axes) {
             Position currentPos = child.getComponent(Position.class).orElse(Position.zero());
             Anchor anchor = child.getComponent(Anchor.class).orElse(Anchor.defaultAnchor());
+            Margin margin = child.getComponent(Margin.class).orElse(Margin.zero());
             // CORRECTED: Preserves original x-position for a true vertical stack.
             // The previous logic (currentPos.x() + margin.bottom()) created an unintentional diagonal layout.
-            child.addComponent(new Position(currentPos.x(), axes.main));
+            child.addComponent(new Position(currentPos.x(), axes.main + margin.bottom()));
             child.addComponent(new Anchor(anchor.h(), VAnchor.DEFAULT));
         }
 

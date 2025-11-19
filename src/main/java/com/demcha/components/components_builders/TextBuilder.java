@@ -2,12 +2,13 @@ package com.demcha.components.components_builders;
 
 import com.demcha.components.containers.abstract_builders.EmptyBox;
 import com.demcha.components.content.text.Text;
-import com.demcha.components.renderable.TextComponent;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
+import com.demcha.components.renderable.TextComponent;
 import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
+import com.demcha.exeptions.TextComponentException;
 import lombok.extern.slf4j.Slf4j;
 
 //TODO has to be finish with adding essential data type for building b Box
@@ -37,6 +38,7 @@ public class TextBuilder extends EmptyBox<TextBuilder> {
         return addComponent(textComponent);
 
     }
+
     public TextBuilder textWithAutoSize(String text) {
         autosize = true;
         return addComponent(new Text(text));
@@ -50,10 +52,10 @@ public class TextBuilder extends EmptyBox<TextBuilder> {
 
     @Override
     public Entity build() {
-        if (entity.hasAssignable (TextComponent.class)) {
+        if (entity.hasAssignable(TextComponent.class)) {
             if (autosize) {
                 TextStyle style = entity.getComponent(TextStyle.class).orElse(TextStyle.defaultStyle());
-                Text textValue = entity.getComponent(Text.class).orElseThrow();
+                Text textValue = entity.getComponent(Text.class).orElseThrow(() -> new TextComponentException("TextComponent Component  has not been initialized"));
                 Padding padding = entity.getComponent(Padding.class).orElse(Padding.zero());
                 double textHeight = style.getLineHeight() + padding.vertical();
                 double textWidth = style.getTextWidth(textValue.value()) + padding.horizontal();
@@ -63,7 +65,7 @@ public class TextBuilder extends EmptyBox<TextBuilder> {
             return entity;
         } else {
             log.error("TextComponent Component  has not been initialized");
-            throw new RuntimeException(TextComponent.class + " Component  has not been initialized");
+            throw new TextComponentException(TextComponent.class + " Component  has not been initialized");
         }
     }
 }

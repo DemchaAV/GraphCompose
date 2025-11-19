@@ -8,7 +8,6 @@ import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.components.style.Margin;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Objects;
@@ -113,7 +112,7 @@ public record Anchor(HAnchor h, VAnchor v) implements Component {
         double outerH = outerBoxSize.height();
 
         double areaW = parentInnerBoxSize.width();
-        double areaH = parentInnerBoxSize.hight();
+        double areaH = parentInnerBoxSize.height();
 
         double childBottomMargin = childMargin.bottom();
         double childLeftMargin = childMargin.left();

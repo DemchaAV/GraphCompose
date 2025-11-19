@@ -20,7 +20,7 @@ import static org.mockito.Mockito.*;
 class PageBreakerTest {
 
 
-    @ParameterizedTest(name = "[{index}] p={0}, hight={1} -> expected {2}")
+    @ParameterizedTest(name = "[{index}] p={0}, height={1} -> expected {2}")
     @CsvSource({
             // currentPosition, canvas height, expected page
             "20,        12,         -1",
@@ -144,7 +144,7 @@ class PageBreakerTest {
     void definePositionOnPage() {
     }
 
-    @ParameterizedTest(name = "[{index}] p={0}, hight={1} -> expected {2}")
+    @ParameterizedTest(name = "[{index}] p={0}, height={1} -> expected {2}")
     @CsvSource({
             // currentPosition, canvas height, expected page
             "20,        12,         -1",

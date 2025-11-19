@@ -35,7 +35,7 @@ public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
 
     }
     public ModuleBuilder(EntityManager entityManager, Align align,InnerBoxSize innerBoxSize) {
-        this(entityManager,align, new ContentSize(innerBoxSize.width(), innerBoxSize.hight()));
+        this(entityManager,align, new ContentSize(innerBoxSize.width(), innerBoxSize.height()));
     }
 
 

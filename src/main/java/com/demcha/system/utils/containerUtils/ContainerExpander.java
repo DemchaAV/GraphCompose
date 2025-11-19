@@ -42,7 +42,7 @@ public final class ContainerExpander {
 
         // Start from current inner box constraints
         double requiredContentWidth = inner.width();
-        double requiredContentHeight = inner.hight();
+        double requiredContentHeight = inner.height();
 
         if (log.isTraceEnabled()) {
             log.trace("Initial required size from inner box for {}: {}x{}",
@@ -73,7 +73,7 @@ public final class ContainerExpander {
                 new IllegalStateException("Parent is missing InnerBoxSize: " + parent));
 
         final boolean wider = requiredInnerWidth > inner.width() + EPS;
-        final boolean taller = requiredInnerHeight > inner.hight() + EPS;
+        final boolean taller = requiredInnerHeight > inner.height() + EPS;
 
         if (!wider && !taller) {
             log.debug("Parent {} content not expanded (required <= inner).", parent);
@@ -86,7 +86,7 @@ public final class ContainerExpander {
         });
 
         final double newWidth = wider ? current.width() + (requiredInnerWidth - inner.width()) : current.width();
-        final double newHeight = taller ? current.height() + (requiredInnerHeight - inner.hight()) : current.height();
+        final double newHeight = taller ? current.height() + (requiredInnerHeight - inner.height()) : current.height();
 
         // Avoid churn
         if (Math.abs(newWidth - current.width()) < EPS && Math.abs(newHeight - current.height()) < EPS) {

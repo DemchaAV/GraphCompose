@@ -7,7 +7,6 @@ import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.InnerBoxSize;
-import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.Placement;
@@ -482,7 +481,7 @@ public class PageBreaker {
 
         // стартовая позиция (левый верх «абзаца»)
         float startX = (float) position.x() - descentPx;
-        float startY = (float) (position.y() + innerBoxSize.hight()) - textHeight + descentPx; // if spacing will be negative
+        float startY = (float) (position.y() + innerBoxSize.height()) - textHeight + descentPx; // if spacing will be negative
         boolean isStarted = false;
         BlockTextData newBlockTextData;
         List<LineTextData> assignPositionTextData = new ArrayList<>();

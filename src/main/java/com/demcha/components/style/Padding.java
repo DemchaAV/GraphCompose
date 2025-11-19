@@ -68,7 +68,7 @@ public record Padding(double top, double right, double bottom, double left) impl
         x = placement.x() + left();
         y = placement.y()+ bottom();
         width = inner.width();
-        height = inner.hight();
+        height = inner.height();
         return Optional.of(new RenderCoordinateContext(x, y, width, height, startPage, endPage));
     }
 }

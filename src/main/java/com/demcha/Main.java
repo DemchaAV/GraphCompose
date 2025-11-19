@@ -99,7 +99,7 @@ public class Main {
                 button(entityManager, "Button2"),
                 button(entityManager, "Button3"),
                 button(entityManager, "Button4"));
-        return createHContainer(entityManager, name, buttons);
+        return createVContainer(entityManager, name, buttons);
 
     }
 
@@ -161,7 +161,7 @@ public class Main {
                 .entityName(name)
                 .margin(new Margin(10, 10, 5, 5))
                 .padding(new Padding(5, 5, 10, 10))
-                .anchor(Anchor.topCenter());
+                .anchor(Anchor.bottomLeft());
         entities.forEach(vContainerBuilder::addChild);
         return vContainerBuilder
                 .build();
@@ -176,7 +176,7 @@ public class Main {
                 .entityName(name)
                 .margin(new Margin(10,20,5,15))
                 .padding(Padding.of(5))
-                .anchor(Anchor.topLeft());
+                .anchor(Anchor.bottomLeft());
         entities.forEach(hContainerBuilder::addChild);
         return hContainerBuilder
                 .build();

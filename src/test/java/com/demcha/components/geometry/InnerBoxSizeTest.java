@@ -43,7 +43,7 @@ class InnerBoxSizeTest {
             assertThat(result).isPresent();
             InnerBoxSize box = result.get();
             assertThat(box.width()).isEqualTo(expectedInnerW);
-            assertThat(box.hight()).isEqualTo(expectedInnerH);
+            assertThat(box.height()).isEqualTo(expectedInnerH);
         }
 
         @Test
@@ -83,7 +83,7 @@ class InnerBoxSizeTest {
             // W = 100 - (left+right) = 100 - (20+10) = 70
             // H = 200 - (top+bottom) = 200 - (5+15) = 180
             assertThat(box.width()).isEqualTo(70.0);
-            assertThat(box.hight()).isEqualTo(180.0);
+            assertThat(box.height()).isEqualTo(180.0);
         }
 
         @Test
@@ -99,7 +99,7 @@ class InnerBoxSizeTest {
             assertThat(result).isPresent();
             InnerBoxSize box = result.get();
             assertThat(box.width()).isEqualTo(80.0);
-            assertThat(box.hight()).isEqualTo(60.0);
+            assertThat(box.height()).isEqualTo(60.0);
         }
 
         @Test

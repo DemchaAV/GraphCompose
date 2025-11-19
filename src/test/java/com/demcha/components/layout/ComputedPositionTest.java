@@ -145,7 +145,7 @@ class ComputedPositionTest {
 
         InnerBoxSize innerUsed = innerCaptor.getValue();
         assertThat(innerUsed.width()).isEqualTo(595.0);
-        assertThat(innerUsed.hight()).isEqualTo(842.0);
+        assertThat(innerUsed.height()).isEqualTo(842.0);
 
         verify(anchor).getComputedPosition(eq(child), any(InnerBoxSize.class));
     }

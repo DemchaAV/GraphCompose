@@ -3,7 +3,6 @@ package com.demcha.components.geometry;
 import com.demcha.components.components_builders.ElementBuilder;
 import com.demcha.components.core.Entity;
 import com.demcha.components.layout.coordinator.Placement;
-import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import com.demcha.exeptions.ContentSizeNotFoundException;
 import lombok.NonNull;
@@ -13,7 +12,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
-public record InnerBoxSize(double width, double hight) {
+public record InnerBoxSize(double width, double height) {
 
     public static Optional<InnerBoxSize> from(@NonNull Entity entity) {
         log.debug("Starting calculation a OuterBoxSize for entity: {}", entity);

@@ -41,8 +41,8 @@ public class Main {
         EntityManager entityManager = setupEntityManager(true);
 
         // 2. Content Creation and Layout
-//        createATableLayout(entityManager, "table");
-        createASingleObject(entityManager, "Heloo");
+        createATableLayout(entityManager, "table");
+//        createASingleObject(entityManager, "Hello");
 //        createButtonsVContainer(entityManager, "buttons");
 
 
@@ -75,14 +75,22 @@ public class Main {
 
     private static Entity createATableLayout(EntityManager entityManager, String name) {
 
-        Entity row1LeftColumn = createLinksColumn(entityManager, "leftColumn");
-        Entity row1RightColumn = createLinksColumn(entityManager, "rightColumn");
-        var row1 = createVContainer(entityManager, "row1", row1LeftColumn, row1RightColumn)
+
+        var rows = List.of(
+                createLinksColumn(entityManager, "leftColumn"),
+                createLinksColumn(entityManager, "rightColumn")
+        );
+        var row1 = createVContainer(entityManager, "row1", rows)
+                .addComponent(Anchor.center())
                 .addComponent(Margin.zero());//delete a Margin from rows
 
-        Entity row2LeftColumn = createLinksColumn(entityManager, "leftColumn");
-        Entity row2RightColumn = createLinksColumn(entityManager, "rightColumn");
-        var row2 = createHContainer(entityManager, "row2", row2LeftColumn, row2RightColumn)
+        var rows2 = List.of(
+                createLinksColumn(entityManager, "leftColumn"),
+                createLinksColumn(entityManager, "rightColumn")
+        );
+
+        var row2 = createHContainer(entityManager, "row2", rows2)
+                .addComponent(Anchor.center())
                 .addComponent(Margin.zero()); //delete a Margin from rows
 
         var buttons = createButtonsVContainer(entityManager, "buttons");

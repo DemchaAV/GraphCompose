@@ -248,10 +248,15 @@ public class PageBreaker {
 
         int pageOffset = definePage(currentPositionY, pageHeight); // may be negative, zero, or positive
         int finalPage = Math.addExact(currentPageNumber, pageOffset); // detect overflow
+        //TODO нужно вернуть выброс ошибки временное решение финальную страницу ставлю как 0
         if (finalPage < 0) {
-            log.error("Invalid page number {}", finalPage);
-            throw new IllegalArgumentException("Page number is less than zero after pageOffset: " + finalPage);
+           finalPage = 0;
         }
+
+//        if (finalPage < 0) {
+//            log.error("Invalid page number {}", finalPage);
+//            throw new IllegalArgumentException("Page number is less than zero after pageOffset: " + finalPage);
+//        }
 
 
         // Normalize y into [0, pageHeight)
@@ -450,7 +455,7 @@ public class PageBreaker {
         }
 
 
-        var position = e.getComponent(Placement.class).orElseThrow();
+        var placement = e.getComponent(Placement.class).orElseThrow();
         InnerBoxSize innerBoxSize = InnerBoxSize.from(e).orElseThrow();
 
         BlockText.ValidatedTextData validateText = getValidatedTextData(e);
@@ -473,15 +478,15 @@ public class PageBreaker {
             return Align.defaultAlign(2);
         }).spacing() * -1;
 
-        log.debug("Rendering textBlock '{}' at position ({}, {}) fontSize={}  textStyle= ", blockTextData, position.x(), position.y());
+        log.debug("Rendering textBlock '{}' at placement ({}, {}) fontSize={}  textStyle= ", blockTextData, placement.x(), placement.y());
         log.debug("fontSize={}  textStyle= {}", fontSize, style);
 
-        int currentPage = 0;
+        int currentPage = placement.startPage() ;
 
 
         // стартовая позиция (левый верх «абзаца»)
-        float startX = (float) position.x() - descentPx;
-        float startY = (float) (position.y() + innerBoxSize.height()) - textHeight + descentPx; // if spacing will be negative
+        float startX = (float) placement.x() - descentPx;
+        float startY = (float) (placement.y() + innerBoxSize.height()) - textHeight + descentPx; // if spacing will be negative
         boolean isStarted = false;
         BlockTextData newBlockTextData;
         List<LineTextData> assignPositionTextData = new ArrayList<>();
@@ -507,7 +512,7 @@ public class PageBreaker {
 
             if (log.isDebugEnabled()) {
                 log.debug(ltd.toString());
-                log.debug("Line position {}, Current page: {}", ltd.x(), currentPage);
+                log.debug("Line placement {}, Current page: {}", ltd.x(), currentPage);
                 log.debug(yPositionOnPage.toString());
             }
 

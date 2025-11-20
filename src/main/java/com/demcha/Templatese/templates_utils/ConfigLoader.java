@@ -32,7 +32,7 @@ public final class ConfigLoader {
 
         URL resource = cl.getResource(fileName);
         if (resource == null) {
-            throw new IllegalArgumentException("Config resource not found on classpath: " + fileName);
+            throw new IllegalArgumentException("Config resource not found on classpath: " + fileName + "Url: " + resource);
         }
         log.info("Reading config from '{}'", resource);
 

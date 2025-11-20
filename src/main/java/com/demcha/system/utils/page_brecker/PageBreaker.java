@@ -533,6 +533,7 @@ public class PageBreaker {
             }
         }
 
+
         newBlockTextData = new BlockTextData(assignPositionTextData, (float) spacing);
         e.verticalOffsetAndCorrectionSize(entityYOffset);
         yOffset.incrementY(entityYOffset);

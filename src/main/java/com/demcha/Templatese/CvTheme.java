@@ -100,9 +100,9 @@ public record CvTheme(
                 ComponentColor.ROYAL_BLUE,                  // accent / links
                 new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD),
                 new PDType1Font(Standard14Fonts.FontName.HELVETICA),
-                30,        // name
-                18.4,      // header
-                12         // body
+                28,        // name
+                17.4,      // header
+                11         // body
         );
     }
 }

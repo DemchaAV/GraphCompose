@@ -1,9 +1,9 @@
 package com.demcha.Templatese;
 
-import com.demcha.Templatese.templates_utils.ConfigLoader;
 import com.demcha.Templatese.data.MainPageCV;
 import com.demcha.Templatese.data.ModuleSummary;
 import com.demcha.Templatese.data.ModuleYml;
+import com.demcha.Templatese.templates_utils.ConfigLoader;
 import com.demcha.components.ModuleContainer;
 import com.demcha.components.components_builders.Canvas;
 import com.demcha.components.components_builders.ModuleBuilder;
@@ -17,9 +17,9 @@ import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.style.Margin;
 import com.demcha.core.EntityManager;
 import com.demcha.system.LayoutSystemImpl;
+import com.demcha.system.implemented_systems.pdf_systems.PdfCanvas;
 import com.demcha.system.implemented_systems.pdf_systems.PdfFileManagerSystem;
 import com.demcha.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
-import com.demcha.system.implemented_systems.pdf_systems.PdfCanvas;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
@@ -29,13 +29,13 @@ import java.util.List;
 
 class TemplateCV_1 {
     public static void main(String[] args) {
-        Path target = Paths.get("HCLTech_CV_ArtemDemchyshyn.pdf");
+        Path target = Paths.get("ExpleoGroup_CV_ArtemDemchyshyn.pdf");
 
         EntityManager entityManager = new EntityManager();
-        entityManager.setGuideLines(true);
+        entityManager.setGuideLines(false);
         PDDocument doc = new PDDocument();
         Canvas canvasSize = new PdfCanvas(PDRectangle.A4, 0.0f, 0.0f);
-        canvasSize.addMargin(Margin.of(15));
+        canvasSize.addMargin(Margin.of(10));
 
 
         entityManager.addSystem(new LayoutSystemImpl(canvasSize));
@@ -43,8 +43,9 @@ class TemplateCV_1 {
         entityManager.addSystem(new PdfFileManagerSystem(target, doc));
 
         ModelBuilder cv = new ModelBuilder(entityManager);
+        String pathFolder = "/ai_content/";
 //        MainPageCV data = ConfigLoader.loadConfigWithEnv("cv_data.yml", MainPageCV.class, false);
-        MainPageCV data = ConfigLoader.loadConfigWithEnv("HCLTech.yml", MainPageCV.class, false);
+        MainPageCV data = ConfigLoader.loadConfigWithEnv("ExpleoGroup2.yml", MainPageCV.class, false);
 //        MainPageCV data = ConfigLoader.loadConfigWithEnv("royalMailCv.yml", MainPageCV.class, false);
         var number = data.getHeder().getPhoneNumber();
         var address = data.getHeder().getAddress();

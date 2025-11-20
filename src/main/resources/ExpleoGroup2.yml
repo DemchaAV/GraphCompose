@@ -1,0 +1,76 @@
+heder:
+  name: "Artem Demchyshyn"
+  address: "TW8, London, UK"
+  phoneNumber: "+44 7862 139662"
+  email:
+    to: "demchaav@gmail.com"
+    subject: "Application – Junior Java Developer"
+    body: "Dear Hiring Manager,"
+    displayText: "DemchaAV@gmail.com"
+  gitHub:
+    linkUrl: "https://github.com/DemchaAV"
+    displayText: "GitHub"
+  linkedIn:
+    linkUrl: "https://www.linkedin.com/in/artemdemchyshyn"
+    displayText: "LinkedIn"
+
+moduleSummary:
+  moduleName: "Professional Summary"
+  blockSummary: >
+    Junior Java Developer with a strong focus on backend engineering and integration.
+    Solid core Java, OOP, collections, and REST API skills gained through intensive
+    self-study and practical projects using Spring Boot, databases, and external APIs.
+    Experienced in working with JSON, XML, and HTML data, implementing error handling
+    and structured logging to support troubleshooting. Highly motivated to grow into
+    an integration-focused role and quickly build hands-on experience with IBM
+    Integration Bus (IIB), ESQL, and IBM MQ.
+
+technicalSkills:
+  name: "Technical Skills"
+  modulePoints:
+    - "• Languages & Core: Java (OOP, Collections, Streams, Lambdas, Generics, Exceptions), SQL"
+    - "• Backend & Integration: Spring Boot, RESTful APIs, HTTP, JSON, XML, CSV, JDBC, JPA/Hibernate (basics)"
+    - "• Integration Concepts: Request/response patterns, data transformation and routing concepts, queues/topics fundamentals, API integration with external services"
+    - "• Tools & Practices: IntelliJ IDEA, Maven, Git, JUnit 5, Mockito, SLF4J/Logback, Postman, Docker (basics); clean code, unit testing, debugging, familiarity with Agile/Scrum"
+
+educationCertifications:
+  name: "Education & Certifications"
+  modulePoints:
+    - "• BSc Hydraulic Engineering – Kherson State Agrarian and Economic University, Ukraine"
+    - "• Self-directed Java Backend Development (2023–Present): Core Java, collections, streams, concurrency basics, JDBC, Maven, Git, unit testing"
+    - "• Spring Boot & REST API (online course, ongoing) and Oracle SQL self-study: schema design, joins, aggregations"
+
+projects:
+  name: "Projects"
+  modulePoints:
+    - "• Spring-Cart-API – RESTful Backend Service | Java Developer (Self-initiated)"
+    - "• Built RESTful endpoints in Spring Boot using HTTP and JSON for cart and product operations, with validation and centralized exception handling."
+    - "• Designed a normalized relational schema and JPA mappings, and added SLF4J/Logback logging to support easier troubleshooting of integration issues."
+    - "• Gemini Java Client – AI API Integration | Java Developer (Self-initiated)"
+    - "• Implemented a reusable Java client library to call Google Gemini over HTTP/REST, sending and receiving JSON payloads."
+    - "• Designed request/response models with Jackson and added robust error handling and logging around remote API calls."
+    - "• CocktailScrapper – Data Ingestion & Transformation Tool | Java Developer (Self-initiated)"
+    - "• Developed a Java tool with Jsoup to fetch and parse HTML pages, transforming them into structured Java objects and JSON output."
+    - "• Used multithreading (ExecutorService) to process pages in parallel and added detailed logs for each step (fetch, parse, transform, save)."
+    - "• PDF_CV_CREATOR – Document Generation Engine | Java Developer (Self-initiated)"
+    - "• Created a PDF generation engine using Apache PDFBox to render multi-page CVs from YAML/JSON configuration."
+    - "• Implemented layout, alignment, and page-breaking logic with logging and unit tests (JUnit 5) to verify rendering behaviour."
+    - "• Algorithmic Practice & Coding Challenges | Java Developer (Self-initiated)"
+    - "• Solved problems involving arrays, strings, collections, and maps to strengthen core Java and problem-solving skills."
+
+professionalExperience:
+  name: "Professional Experience"
+  modulePoints:
+    - "• Bartender – Scott’s Richmond, Caprice Holdings, London, UK | 2022 – Present"
+    - "• Provide high-quality customer service in a fast-paced environment, maintaining accuracy and attention to detail under pressure."
+    - "• Collaborate closely with cross-functional teams, developing strong communication, reliability, and teamwork skills relevant to Agile development."
+    - "• Earlier Engineering Background – Ukraine"
+    - "• Experience in an engineering environment, building analytical thinking, structured problem solving, and safety-conscious work habits."
+
+additional:
+  name: "Additional"
+  modulePoints:
+    - "• Languages: English (Professional working proficiency), Ukrainian (Native), Russian (Native)"
+    - "• Work Eligibility: Full right to work in the UK"
+    - "• Interests: Backend engineering, system integration, messaging, automation, AI-assisted development"
+    - "• Motivation: Strong desire to build practical expertise with IBM Integration Bus, ESQL, and IBM MQ in a mentoring-friendly environment"

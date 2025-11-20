@@ -450,7 +450,7 @@ public class PageBreaker {
         }
 
 
-        var position = positionOpt.get();
+        var position = e.getComponent(Placement.class).orElseThrow();
         InnerBoxSize innerBoxSize = InnerBoxSize.from(e).orElseThrow();
 
         BlockText.ValidatedTextData validateText = getValidatedTextData(e);

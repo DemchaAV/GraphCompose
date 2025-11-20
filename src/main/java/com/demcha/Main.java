@@ -42,6 +42,8 @@ public class Main {
 
         // 2. Content Creation and Layout
         createATableLayout(entityManager, "table");
+//        blockTextBuilder(entityManager, textBlockData, 400, 1);
+
 //        createASingleObject(entityManager, "Hello");
 //        createButtonsVContainer(entityManager, "buttons");
 

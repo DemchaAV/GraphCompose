@@ -1,0 +1,95 @@
+heder:
+  name: Artem Demchyshyn
+  address: TW8, London, UK
+  phoneNumber: +44 7862 139662
+  email:
+    to: demchaav@gmail.com
+    subject: Job Info hiring
+    body: Dear Artem
+    displayText: DemchaAV@gmail.com
+  gitHub:
+    linkUrl: https://github.com/DemchaAV
+    displayText: GitHub
+  linkedIn:
+    linkUrl: https://www.linkedin.com/in/artemdemchyshyn
+    displayText: LinkedIn
+
+moduleSummary:
+  moduleName: Professional Summary
+  blockSummary: >
+    Junior Java Backend Developer with practical experience delivering freelance
+    backend solutions for Ukrainian small businesses. Built REST APIs, automation
+    tools, and data-processing services using Spring Boot, JPA, and JWT-based
+    Security. Strong foundation in Core/Advanced Java, SQL, and object-oriented
+    design. Transitioning from an engineering leadership background with proven
+    problem-solving and system optimisation experience. Ready to contribute to
+    modern backend development projects within a collaborative team.
+
+technicalSkills:
+  name: Technical Skills
+  modulePoints:
+    - "• Languages: Java, SQL"
+    - "• Backend Development: Spring Boot, Spring Data JPA, Spring Security, JWT, MapStruct, Lombok, Swagger, Jackson"
+    - "• Core Java: OOP, Collections, Streams API, Multithreading, Concurrency (ExecutorService, Locks), IO/NIO, JDBC, Reflection, Annotations, Optional, Record"
+    - "• Databases: MySQL, Oracle SQL, SQLite, MongoDB"
+    - "• SQL: DDL, DML, Joins, Subqueries, Set Operators, Transactions, Indexes, Views, Sequences"
+    - "• Security: JWT Authentication, BCrypt, Stateless API Security, Role-based Authorization"
+    - "• Tools: IntelliJ IDEA, Git, GitHub, Maven, Postman, SQL Developer, Flyway"
+    - "• Other: Jsoup, JavaFX (Basic), Regex, File I/O, Project Configuration (.yml/.properties)"
+
+educationCertifications:
+  name: Education & Certifications
+  modulePoints:
+    - "Oracle SQL Course – Self-Study"
+    - "Jan 2024 – Jun 2024 - Mastered DDL/DML, joins, transactions, views, and sequences using Oracle SQL tools."
+    - "Advanced Java Course (OCA-aligned) – Self-Study"
+    - "Dec 2023 – Jan 2024 - Covered multithreading, Streams API, JDBC, functional programming, and reflection."
+    - "Spring Boot & REST API Mastery – Ongoing"
+    - "Apr 2024 – Present - RESTful APIs with Spring Boot, DTOs, Security with JWT, CRUD, Postman testing."
+    - "BSc in Hydraulic Engineering"
+    - "Kherson State Agrarian and Economic University, Ukraine"
+    - "Sep 2012 – May 2017 (Grade: 2.1)"
+
+projects:
+  name: Freelance & Project Experience
+  modulePoints:
+    - "Shopping Cart API (Freelance backend for small e-commerce shop, Ukraine)"
+    - "Developed a secure REST API supporting user authentication, role-based access, product management, and shopping cart operations."
+    - "Features: Login/Register, JWT handling, Role checks, CRUD endpoints, validation."
+    - "Stack: Spring Boot, JPA, MySQL, Spring Security, Postman, MapStruct, Swagger."
+
+    - "Custom GeminiConnection (Freelance tooling / automation)"
+    - "Java client for Google’s Gemini API supporting generation config, streaming responses, and image requests."
+
+    - "AnkiQuestionGeneration (Internal tool for educational client, Ukraine)"
+    - "Parser + AI-powered converter that transforms Notion HTML notes into Anki flashcards using Gemini + SQLite."
+
+    - "CocktailScrapper (Freelance data-scraping service)"
+    - "Multithreaded recipe scraper with Jsoup, MongoDB/MySQL integration, and anti-bot rotation for a hospitality content project."
+
+    - "BlackJack CLI Game (Personal practice project)"
+    - "Java console game implementing object-oriented principles and control flow."
+
+professionalExperience:
+  name: Professional Experience
+  modulePoints:
+    - "Freelance Java Backend Developer – Ukraine / Remote"
+    - "2023 – Present - Delivered API development, data processing services, and small automation tools for Ukrainian clients."
+    - "Designed and built REST APIs, scrapers, converters, and internal utilities using Java, Spring Boot, JPA, and SQL."
+    - "Worked directly with clients to clarify requirements, plan delivery, and implement solutions."
+
+    - "Bartender, Caprice Holdings – Scott’s Richmond, London, UK"
+    - "Aug 2022 – Present - Delivered outstanding customer service and collaboration in a fast-paced setting."
+    - "Promoted within 7 months for leadership and reliability."
+
+    - "Lead Engineer | Nikoplast | Odessa, Ukraine"
+    - "Sep 2016 – Feb 2022 - Leadership role focused on optimising production systems and managing engineering processes."
+    - "Led project execution from planning to deployment, improving process efficiency and achieving company production records."
+    - "Designed and implemented quality management protocols, reducing critical errors and write-offs."
+    - "Mentored and trained 8 team members, fostering growth into leadership positions."
+
+additional:
+  name: Additional
+  modulePoints:
+    - "Languages: English (Professional), Ukrainian (Native), Russian (Native)"
+    - "Work Eligibility: Right to work in the UK"

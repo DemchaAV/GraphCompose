@@ -59,7 +59,7 @@ public class ModelBuilder {
                 .build();
     }
 
-    public Entity infoPanel(List<Entity> entities) {
+    public Entity infoPanel(List<Entity> entities, Anchor anchorContainer, Anchor elements) {
         if (entities == null || entities.isEmpty()) return null;
 
         // Calculate max height for separators based on content
@@ -72,8 +72,10 @@ public class ModelBuilder {
         // Use body color for separators to maintain consistency
         ComponentColor separatorColor = new ComponentColor(theme.bodyColor());
 
+        var defaultAnchor = Anchor.topRight();
         var container = new HContainerBuilder(entityManager, Align.right(5))
-                .anchor(Anchor.topRight());
+                .anchor(anchorContainer == null ? defaultAnchor : anchorContainer);
+
 
         for (int i = 0; i < entities.size(); i++) {
             // Add separator before element (except the first one)
@@ -82,7 +84,7 @@ public class ModelBuilder {
                         .size(new ContentSize(1, height))
                         .fillColor(separatorColor)
                         .margin(0, 2, 0, 2) // Small margins around pipe
-                        .anchor(Anchor.center())
+                        .anchor(elements == null ? defaultAnchor : elements)
                         .build();
                 container.addChild(separator);
             }

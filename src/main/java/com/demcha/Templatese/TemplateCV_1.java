@@ -32,10 +32,10 @@ class TemplateCV_1 {
         Path target = Paths.get("ExpleoGroup_CV_ArtemDemchyshyn.pdf");
 
         EntityManager entityManager = new EntityManager();
-        entityManager.setGuideLines(false);
+        entityManager.setGuideLines(true);
         PDDocument doc = new PDDocument();
         Canvas canvasSize = new PdfCanvas(PDRectangle.A4, 0.0f, 0.0f);
-        canvasSize.addMargin(Margin.of(10));
+        canvasSize.addMargin(Margin.of(20));
 
 
         entityManager.addSystem(new LayoutSystemImpl(canvasSize));
@@ -45,7 +45,7 @@ class TemplateCV_1 {
         ModelBuilder cv = new ModelBuilder(entityManager);
         String pathFolder = "/ai_content/";
 //        MainPageCV data = ConfigLoader.loadConfigWithEnv("cv_data.yml", MainPageCV.class, false);
-        MainPageCV data = ConfigLoader.loadConfigWithEnv("ExpleoGroup2.yml", MainPageCV.class, false);
+        MainPageCV data = ConfigLoader.loadConfigWithEnv("cv_data.yml", MainPageCV.class, false);
 //        MainPageCV data = ConfigLoader.loadConfigWithEnv("royalMailCv.yml", MainPageCV.class, false);
         var number = data.getHeder().getPhoneNumber();
         var address = data.getHeder().getAddress();
@@ -66,7 +66,7 @@ class TemplateCV_1 {
 
         Entity artemDemchyshyn = cv.name(data.getHeder().getName());
 
-        Entity infoPanel = cv.infoPanel(List.of(cv.info(address), cv.info(number)));
+        Entity infoPanel = cv.infoPanel(List.of(cv.info(address), cv.info(number)), null, null);
 
         var linksPanel = cv.infoPanel(List.of(
                         cv.link(
@@ -75,7 +75,7 @@ class TemplateCV_1 {
                                         email.getBody()), email.getDisplayText())
                         , cv.link(new LinkUrl(linkedIn.getLinkUrl().getUrl()), linkedIn.getDisplayText())
                         , cv.link(new LinkUrl(gitHub.getLinkUrl().getUrl()), gitHub.getDisplayText())
-                )
+                ), null, null
         );
 
 

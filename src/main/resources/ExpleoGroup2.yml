@@ -1,76 +1,76 @@
 heder:
-  name: "Artem Demchyshyn"
-  address: "TW8, London, UK"
-  phoneNumber: "+44 7862 139662"
+  name: Artem Demchyshyn
+  address: TW8, London, UK
+  phoneNumber: +44 7862 139662
   email:
-    to: "demchaav@gmail.com"
-    subject: "Application – Junior Java Developer"
-    body: "Dear Hiring Manager,"
-    displayText: "DemchaAV@gmail.com"
+    to: demchaav@gmail.com
+    subject: Job Info hiring
+    body: Dear Artem
+    displayText: DemchaAV@gmail.com
   gitHub:
-    linkUrl: "https://github.com/DemchaAV"
-    displayText: "GitHub"
+    linkUrl: https://github.com/DemchaAV
+    displayText: GitHub
   linkedIn:
-    linkUrl: "https://www.linkedin.com/in/artemdemchyshyn"
-    displayText: "LinkedIn"
+    linkUrl: https://www.linkedin.com/in/artemdemchyshyn
+    displayText: LinkedIn
 
 moduleSummary:
-  moduleName: "Professional Summary"
+  moduleName: Professional Summary
   blockSummary: >
-    Junior Java Developer with a strong focus on backend engineering and integration.
-    Solid core Java, OOP, collections, and REST API skills gained through intensive
-    self-study and practical projects using Spring Boot, databases, and external APIs.
-    Experienced in working with JSON, XML, and HTML data, implementing error handling
-    and structured logging to support troubleshooting. Highly motivated to grow into
-    an integration-focused role and quickly build hands-on experience with IBM
-    Integration Bus (IIB), ESQL, and IBM MQ.
+    Java Developer with a strong foundation in backend logic, data transformation, and system integration. 
+    Experienced in designing RESTful architectures, handling complex XML/JSON data formats, and optimizing SQL 
+    database interactions. Possessing a robust engineering background with a focus on troubleshooting, 
+    process efficiency, and collaborative problem-solving. Eager to apply Object-Oriented principles 
+    to IBM Integration Bus (IIB) workflows and enterprise messaging solutions.
 
 technicalSkills:
-  name: "Technical Skills"
+  name: Technical Skills
   modulePoints:
-    - "• Languages & Core: Java (OOP, Collections, Streams, Lambdas, Generics, Exceptions), SQL"
-    - "• Backend & Integration: Spring Boot, RESTful APIs, HTTP, JSON, XML, CSV, JDBC, JPA/Hibernate (basics)"
-    - "• Integration Concepts: Request/response patterns, data transformation and routing concepts, queues/topics fundamentals, API integration with external services"
-    - "• Tools & Practices: IntelliJ IDEA, Maven, Git, JUnit 5, Mockito, SLF4J/Logback, Postman, Docker (basics); clean code, unit testing, debugging, familiarity with Agile/Scrum"
+    - "- Languages: Java (Core/Advanced), SQL (PL/SQL concepts), ESQL (Basic Syntax)"
+    - "- Integration & Protocols: REST, SOAP principles, HTTP, JSON, XML processing, CSV"
+    - "- Data & Messaging: JDBC, IO/NIO, Multithreading (Concurrency), Queue/Stack logic"
+    - "- Frameworks & Libs: Spring Boot, JPA, Jackson (JSON Parsing), Jsoup (HTML Parsing), Lombok"
+    - "- Databases: MySQL, Oracle SQL, SQLite, MongoDB"
+    - "- Tools: IntelliJ IDEA, Maven (Build/Package), Git/GitHub, Postman, SQL Developer"
+    - "- Core Competencies: Debugging/Trace analysis, Clean Code, Unit Testing, System Optimization"
 
 educationCertifications:
-  name: "Education & Certifications"
+  name: Education & Certifications
   modulePoints:
-    - "• BSc Hydraulic Engineering – Kherson State Agrarian and Economic University, Ukraine"
-    - "• Self-directed Java Backend Development (2023–Present): Core Java, collections, streams, concurrency basics, JDBC, Maven, Git, unit testing"
-    - "• Spring Boot & REST API (online course, ongoing) and Oracle SQL self-study: schema design, joins, aggregations"
+    - "- Oracle SQL & Database Management – Self-Study"
+    - "- 2024 - Mastered DDL/DML, complex joins, transactions, and data integrity logic relevant to enterprise DBs."
+    - "- Advanced Java & Backend Engineering – Self-Study"
+    - "- 2024 - Focused on Multithreading, Streams API, and functional programming for high-performance data handling."
+    - "- Spring Boot & API Development – Ongoing"
+    - "- 2024 - Designing modular endpoints, handling DTO transformations, and implementing security protocols."
+    - "- BSc in Hydraulic Engineering"
+    - "- Kherson State Agrarian and Economic University, Ukraine"
+    - "- Sep 2012 – May 2017 (Grade: 2.1) - Engineering foundation in flow logic and complex system design."
 
 projects:
-  name: "Projects"
+  name: Projects
   modulePoints:
-    - "• Spring-Cart-API – RESTful Backend Service | Java Developer (Self-initiated)"
-    - "• Built RESTful endpoints in Spring Boot using HTTP and JSON for cart and product operations, with validation and centralized exception handling."
-    - "• Designed a normalized relational schema and JPA mappings, and added SLF4J/Logback logging to support easier troubleshooting of integration issues."
-    - "• Gemini Java Client – AI API Integration | Java Developer (Self-initiated)"
-    - "• Implemented a reusable Java client library to call Google Gemini over HTTP/REST, sending and receiving JSON payloads."
-    - "• Designed request/response models with Jackson and added robust error handling and logging around remote API calls."
-    - "• CocktailScrapper – Data Ingestion & Transformation Tool | Java Developer (Self-initiated)"
-    - "• Developed a Java tool with Jsoup to fetch and parse HTML pages, transforming them into structured Java objects and JSON output."
-    - "• Used multithreading (ExecutorService) to process pages in parallel and added detailed logs for each step (fetch, parse, transform, save)."
-    - "• PDF_CV_CREATOR – Document Generation Engine | Java Developer (Self-initiated)"
-    - "• Created a PDF generation engine using Apache PDFBox to render multi-page CVs from YAML/JSON configuration."
-    - "• Implemented layout, alignment, and page-breaking logic with logging and unit tests (JUnit 5) to verify rendering behaviour."
-    - "• Algorithmic Practice & Coding Challenges | Java Developer (Self-initiated)"
-    - "• Solved problems involving arrays, strings, collections, and maps to strengthen core Java and problem-solving skills."
+    - "- RESTful Integration API (Shopping Cart)"
+    - " Designed a secure API handling complex CRUD operations and data validation. Implemented role-based routing and optimized database queries for seamless user interaction."
+    - "- Data Transformation Service (Anki Generator)"
+    - " Built a parser-converter pipeline transforming raw HTML data into structured SQLite formats. Utilized AI API integration for content enrichment and formatting logic."
+    - "- Gemini API Client Connector"
+    - " Developed a custom Java client for external API integration. Managed HTTP request/response cycles, configuration settings, and data streaming capabilities."
+    - "- Multithreaded Data Aggregator (Scraper)"
+    - " Created a high-performance data collector using Jsoup. Implemented concurrent thread handling and anti-bot logic to ensure reliable data ingestion from external sources."
 
 professionalExperience:
-  name: "Professional Experience"
+  name: Professional Experience
   modulePoints:
-    - "• Bartender – Scott’s Richmond, Caprice Holdings, London, UK | 2022 – Present"
-    - "• Provide high-quality customer service in a fast-paced environment, maintaining accuracy and attention to detail under pressure."
-    - "• Collaborate closely with cross-functional teams, developing strong communication, reliability, and teamwork skills relevant to Agile development."
-    - "• Earlier Engineering Background – Ukraine"
-    - "• Experience in an engineering environment, building analytical thinking, structured problem solving, and safety-conscious work habits."
+    - "- Bartender | Caprice Holdings – Scott’s Richmond, London"
+    - " Aug 2022 – Present - Collaborating within cross-functional teams to ensure service excellence. Recognized for reliability and ability to troubleshoot operational issues under pressure."
+    - "- Lead Engineer | Nikoplast | Odessa, Ukraine"
+    - " Sep 2016 – Feb 2022 - Managed full lifecycle of production systems, ensuring process optimization and quality control."
+    - " Oversaw technical workflows and troubleshooting, reducing system errors and improving output efficiency."
+    - " Led a team of 8, fostering a collaborative environment and ensuring strict adherence to engineering standards."
 
 additional:
-  name: "Additional"
+  name: Additional
   modulePoints:
-    - "• Languages: English (Professional working proficiency), Ukrainian (Native), Russian (Native)"
-    - "• Work Eligibility: Full right to work in the UK"
-    - "• Interests: Backend engineering, system integration, messaging, automation, AI-assisted development"
-    - "• Motivation: Strong desire to build practical expertise with IBM Integration Bus, ESQL, and IBM MQ in a mentoring-friendly environment"
+    - "- Languages: English (Professional), Ukrainian (Native), Russian (Native)"
+    - "- Work Eligibility: Right to work in the UK"

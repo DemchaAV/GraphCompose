@@ -175,7 +175,7 @@ public class PageBreaker {
      * @param canvas   The {@link Canvas} object, providing information about page dimensions and margins.
      * @throws IllegalStateException if an entity is missing a required component (e.g., {@code RenderingPosition}).
      */
-    public static void breakPages(@NonNull Map<UUID, Entity> entities, Canvas canvas) {
+    public static void process(@NonNull Map<UUID, Entity> entities, Canvas canvas) {
         Offset yOffset = new Offset();
 
         entities.entrySet().stream()
@@ -249,7 +249,7 @@ public class PageBreaker {
      *
      * @param entityManager The entity manager containing all entities and systems.
      */
-    public static void breakPages(@NonNull EntityManager entityManager) {
+    public static void process(@NonNull EntityManager entityManager) {
         log.info("Breaking pages");
         RenderingSystemECS renderingSystemECS = null;
         log.info("Definition a RenderingSystemECS");
@@ -264,7 +264,7 @@ public class PageBreaker {
             log.error("No RenderingSystemECS found");
             throw new IllegalStateException("No RenderingSystemECS found");
         }
-        breakPages(entityManager.getEntities(), renderingSystemECS.canvas());
+        process(entityManager.getEntities(), renderingSystemECS.canvas());
     }
 
     private static Placement setYInPlacement(Entity entity, double yPosition, int startPage, int endPage) {

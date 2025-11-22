@@ -28,12 +28,17 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Utility class for sorting graphical entities based on their Y-position
- * and for calculating their resulting page and in-page Y coordinates
- * based on a fixed page height.
+ * A utility class responsible for the logic of breaking content across pages.
  * <p>
- * This class is designed to help determine where entities should fall
- * when dividing a continuous coordinate system into discrete pages.
+ * The main responsibilities of this class are:
+ * <ol>
+ *     <li>Sorting entities ({@link Entity}) by their vertical position.</li>
+ *     <li>Calculating and assigning a page number and in-page coordinates for each entity.</li>
+ *     <li>Handling "breakable" entities, such as {@link BlockText}, whose content can
+ *     flow onto the next page.</li>
+ * </ol>
+ * The class operates in a coordinate system where the Y-axis points downwards. It does not create new pages
+ * but rather calculates and assigns {@link Placement} components to entities.
  */
 @Slf4j
 public class PageBreaker {
@@ -44,17 +49,16 @@ public class PageBreaker {
     // === Sorting =============================================================
 
     /**
-     * Sorts the given map of entities based on their Y-position in **descending** order.
+     * Sorts the given map of entities by their Y-position in **descending** order (top to bottom).
      * <p>
-     * The sorting is based on the {@code RenderingPosition} of each {@link Entity}.
-     * The result is a {@link Set} of {@link Map.Entry} objects, preserved in sorted order
-     * by being collected into a {@link LinkedHashSet}.
+     * Sorting is based on the {@code RenderingPosition} component of each {@link Entity}.
+     * The result is a {@link Set} of {@link Map.Entry} objects, with order preserved
+     * by collecting into a {@link LinkedHashSet}.
      *
-     * @param entities A map where keys are {@link UUID}s and values are {@link Entity} objects
-     *                 to be sorted. Must not be null.
-     * @return A {@code Set} of map entries sorted by Y-position, descending (top-to-bottom on a page).
+     * @param entities A map where keys are {@link UUID}s and values are {@link Entity} objects to be sorted. Must not be null.
+     * @return A {@code Set} of map entries, sorted by Y-position in descending order.
      * @throws NullPointerException  if the input map is null.
-     * @throws IllegalStateException if any entity does not have a defined {@code RenderingPosition}.
+     * @throws IllegalStateException if any entity is missing a {@code RenderingPosition}.
      */
     public static Set<Map.Entry<UUID, Entity>> sortByYPosition(Map<UUID, Entity> entities) {
         Objects.requireNonNull(entities, "entities must not be null");
@@ -71,16 +75,15 @@ public class PageBreaker {
     }
 
     /**
-     * Sorts the given map of entities based on their Y-position in **descending** order
+     * Sorts the given map of entities by their Y-position in **descending** order
      * and returns the result as a new {@link LinkedHashMap}.
      * <p>
-     * This provides a convenient map-based view where the iteration order is the sorted order.
+     * This method provides a convenient map-based view where the iteration order matches the sorted order.
      *
-     * @param entities A map where keys are {@link UUID}s and values are {@link Entity} objects
-     *                 to be sorted. Must not be null.
-     * @return A {@code LinkedHashMap} with the entities, ordered by Y-position, descending.
+     * @param entities A map where keys are {@link UUID}s and values are {@link Entity} objects to be sorted. Must not be null.
+     * @return A {@code LinkedHashMap} with entities ordered by Y-position, descending.
      * @throws NullPointerException  if the input map is null.
-     * @throws IllegalStateException if any entity does not have a defined {@code RenderingPosition}.
+     * @throws IllegalStateException if any entity is missing a {@code RenderingPosition}.
      */
     public static LinkedHashMap<UUID, Entity> sortByYPositionToMap(Map<UUID, Entity> entities) {
         Objects.requireNonNull(entities, "entities must not be null");
@@ -96,6 +99,14 @@ public class PageBreaker {
                 ));
     }
 
+    /**
+     * Loads entities by their UUID from an {@link EntityManager} and sorts them by Y-position.
+     *
+     * @param entityManager The entity manager to retrieve {@link Entity} objects from.
+     * @param entityUuids   A set of UUIDs for the entities to be sorted.
+     * @return A {@code LinkedHashMap} with entities ordered by Y-position, descending.
+     * @see #sortByYPositionToMap(Map)
+     */
     public static LinkedHashMap<UUID, Entity> sortByYPositionToMap(EntityManager entityManager, Set<UUID> entityUuids) {
         Objects.requireNonNull(entityUuids, "entities must not be null");
 
@@ -103,6 +114,14 @@ public class PageBreaker {
         return sortByYPositionToMap(entityManager.getSetEntitiesFromUuids(entityUuids));
     }
 
+    /**
+     * Loads entities by their UUID from an {@link EntityManager} and sorts them by Y-position.
+     *
+     * @param entityManager The entity manager to retrieve {@link Entity} objects from.
+     * @param entityUuids   A list of UUIDs for the entities to be sorted.
+     * @return A {@code LinkedHashMap} with entities ordered by Y-position, descending.
+     * @see #sortByYPositionToMap(Map)
+     */
     public static LinkedHashMap<UUID, Entity> sortByYPositionToMap(EntityManager entityManager, List<UUID> entityUuids) {
         Objects.requireNonNull(entityUuids, "entities must not be null");
 
@@ -110,6 +129,13 @@ public class PageBreaker {
         return sortByYPositionToMap(entityManager.getSetEntitiesFromUuids(new HashSet<>(entityUuids)));
     }
 
+    /**
+     * Sorts the given set of entities by their Y-position and returns the result as a {@link LinkedHashMap}.
+     *
+     * @param entities A set of entities to be sorted.
+     * @return A {@code LinkedHashMap} with entities ordered by Y-position, descending.
+     * @see #sortByYPositionToMap(Map)
+     */
     public static LinkedHashMap<UUID, Entity> sortByYPositionToMap(Set<Entity> entities) {
         Objects.requireNonNull(entities, "entities must not be null");
 
@@ -123,7 +149,13 @@ public class PageBreaker {
                 ));
     }
 
-
+    /**
+     * A helper method to extract the Y-coordinate from an entity's {@link RenderingPosition} component.
+     *
+     * @param e The entity from which to extract the coordinate.
+     * @return The Y-coordinate value.
+     * @throws IllegalStateException if the entity is missing a {@code RenderingPosition}.
+     */
     private static double yOf(Entity e) {
         return RenderingPosition.from(e)
                 .map(RenderingPosition::y)
@@ -133,6 +165,16 @@ public class PageBreaker {
 
     // === Paging math =========================================================
 
+    /**
+     * The main method for performing the page-breaking process.
+     * It sorts entities, iterates through them, and calculates their final position ({@link Placement}),
+     * including the page number and in-page coordinates. Special attention is given to "breakable" elements,
+     * such as {@link BlockText}, which require additional processing.
+     *
+     * @param entities The map of entities to process.
+     * @param canvas   The {@link Canvas} object, providing information about page dimensions and margins.
+     * @throws IllegalStateException if an entity is missing a required component (e.g., {@code RenderingPosition}).
+     */
     public static void breakPages(@NonNull Map<UUID, Entity> entities, Canvas canvas) {
         Offset yOffset = new Offset();
 
@@ -151,12 +193,12 @@ public class PageBreaker {
 
                     if (!Breakable.class.isAssignableFrom(entity.getRender().getClass())) {
                         log.info("{} -> {}", entity, Breakable.class);
-                        definePlacement(canvas, e, entity, yOffset, false);
+                        definePlacement(canvas, entity, yOffset, false);
 
                     } else {
 
 
-                        definePlacement(canvas, e, entity, yOffset, true);
+                        definePlacement(canvas, entity, yOffset, true);
                         if (entity.hasAssignable(BlockText.class)) {
                             try {
                                 blockTextDataPositions(entity, canvas, yOffset);
@@ -176,23 +218,37 @@ public class PageBreaker {
                 });
     }
 
-    private static void definePlacement(Canvas canvas, Map.Entry<UUID, Entity> e, Entity entity, Offset yOffset, boolean isBreakable) {
+    /**
+     * Determines and adds a {@link Placement} component to an entity.
+     * This method updates the entity's vertical position based on the total {@code yOffset},
+     * calculates its position on the page, and stores the result in a new {@code Placement} component.
+     *
+     * @param canvas      The canvas configuration.
+     * @param entity      The entity to process.
+     * @param yOffset     The total Y-axis offset accumulated from previous elements.
+     * @param isBreakable A flag indicating whether the element can be broken across pages.
+     */
+    private static void definePlacement(Canvas canvas, Entity entity, Offset yOffset, boolean isBreakable) {
         entity.updateVerticalComputedPosition(yOffset);
         var computedPosition = entity.getComponent(ComputedPosition.class).orElseThrow();
         ContentSize contentSize = entity.getComponent(ContentSize.class)
-                .orElseThrow(() -> new IllegalStateException("Entity " + e + " has no ContentSize"));
+                .orElseThrow(() -> new IllegalStateException("Entity " + entity + " has no ContentSize"));
 
 
-        YPositionOnPage position = definePositionOnPage(computedPosition.y(), canvas.boundingTopLine(), contentSize.height(), 0, canvas, yOffset, isBreakable);
+//        YPositionOnPage position = definePositionOnPage(computedPosition.y(), canvas.boundingTopLine(), contentSize.height(), 0, canvas, yOffset, isBreakable);
+        YPositionOnPage position = definePositionOnPage(computedPosition.y(), entity, 0, canvas, yOffset, isBreakable);
 
         Placement placement = setYInPlacement(entity, position);
         entity.addComponent(placement);
     }
 
-
-
-
-
+    /**
+     * Initiates the page-breaking process for all entities managed by the {@link EntityManager}.
+     * This method automatically finds the active rendering system ({@link RenderingSystemECS}) to retrieve
+     * canvas information ({@link Canvas}).
+     *
+     * @param entityManager The entity manager containing all entities and systems.
+     */
     public static void breakPages(@NonNull EntityManager entityManager) {
         log.info("Breaking pages");
         RenderingSystemECS renderingSystemECS = null;
@@ -221,122 +277,66 @@ public class PageBreaker {
         return setYInPlacement(entity, position.yPosition(), position.startPage(), position.startPage());
     }
 
-
     /**
-     * Calculates a new Y position on the page and the resulting page number.
-     * <p>
-     * This method normalizes the {@code currentPositionY} into the range
-     * {@code [0, pageHeight)} and calculates the page offset relative to
-     * {@code currentPageNumber}.
+     * Determines an object's position on a page based on its current Y-coordinate and dimensions.
+     * This method calculates the page number and the new Y-coordinate within that page.
+     * It also handles situations where an object crosses the bottom boundary of a page,
+     * applying an offset to move it.
      *
-     * @param currentPositionY  The entity's current absolute Y-coordinate.
-     * @param pageHeight        The height of a single page (must be positive and finite).
-     * @param currentPageNumber The current page number (e.g., the page the entity is currently thought to be on).
-     * @return A {@link YPositionOnPage} object containing the normalized Y-position and the final page number.
-     * @throws IllegalArgumentException if {@code pageHeight} is not a finite positive number, or if the
-     *                                  resulting page number is less than zero.
+     * @param currentPositionY   The object's current absolute Y-coordinate.
+     * @param objectHeight       The height of the object.
+     * @param objectMarginTop    The object's top margin.
+     * @param objectMarginBottom The object's bottom margin.
+     * @param currentPageNumber  The current page number (used as a base for calculating the new page).
+     * @param canvas             The canvas object, providing page dimensions.
+     * @param yOffset            An object for tracking and applying vertical offsets.
+     * @param isBreakable        A flag indicating whether the object can be broken.
+     * @return A {@link YPositionOnPage} containing the new Y-position and page number.
      */
     public static YPositionOnPage definePositionOnPage(double currentPositionY,
-                                                       double pageHeight,
-                                                       double objectHeight,
-                                                       int currentPageNumber,
-                                                       double topMargin,
-                                                       double bottomMargin,
-                                                       Offset yOffset,
-                                                       boolean isBreakable) {
-        if (!(pageHeight > 0.0) || Double.isNaN(pageHeight) || Double.isInfinite(pageHeight)) {
-            throw new IllegalArgumentException("pageHeight must be a finite positive number; was " + pageHeight);
-        }
-
-        log.debug("Input: y={}, pageHeight={}, currentPage={}", currentPositionY, pageHeight, currentPageNumber);
-
-        int pageOffset = definePage(currentPositionY, pageHeight); // may be negative, zero, or positive
-        int finalPage = Math.addExact(currentPageNumber, pageOffset); // detect overflow
-        //TODO нужно вернуть выброс ошибки временное решение финальную страницу ставлю как 0
-//        if (finalPage < 0) {
-//           finalPage = 0;
-//        }
-
-        if (finalPage < 0) {
-            log.error("Invalid page number {}", finalPage);
-            throw new IllegalArgumentException("Page number is less than zero after pageOffset: " + finalPage);
-        }
-
-
-        // Normalize y into [0, pageHeight)
-        double yInPage = positiveModulo(currentPositionY, pageHeight);
-        // we
-        if (yInPage < bottomMargin) {
-            double currentOffset = (yInPage + objectHeight) * -1;
-            yInPage = pageHeight - objectHeight;
-            finalPage++;
-            yOffset.incrementY(currentOffset);
-        }
-
-
-        YPositionOnPage result = new YPositionOnPage(yInPage, finalPage);
-
-
-        log.debug("Defined position on page: {}", result);
-        return result;
+                                                       double objectHeight, double objectMarginTop, double objectMarginBottom,
+                                                       int currentPageNumber, Canvas canvas,
+                                                       Offset yOffset, boolean isBreakable) {
+        return definePositionOnPage(currentPositionY, objectHeight, objectMarginTop, objectMarginBottom, currentPageNumber, canvas.boundingTopLine(), canvas.margin().top(), canvas.margin().bottom(), yOffset, isBreakable);
     }
 
-    public static YPositionOnPage definePositionOnPage(double currentPositionY, double pageHeight, double objectHeight, int currentPageNumber, double topMargin, Offset yOffset, boolean isBreakable) {
-        return definePositionOnPage(currentPositionY, pageHeight, objectHeight, currentPageNumber, topMargin, 0.0, yOffset,  isBreakable);
-    }
-
-    public static YPositionOnPage definePositionOnPage(double currentPositionY, double pageHeight, double objectHeight, int currentPageNumber, Canvas canvas, Offset yOffset, boolean isBreakable) {
-        var margin = canvas.margin();
-        return definePositionOnPage(currentPositionY, pageHeight, objectHeight, currentPageNumber, margin.top(), margin.bottom(), yOffset, isBreakable);
-    }
-
-    public static YPositionOnPage definePositionOnPage(double currentPositionY,
-                                                       int currentPageNumber, double objectHeight,
-                                                       double objectMarginTop,
-                                                       double objectMarginBottom,
-                                                       Canvas canvas,
-                                                       Offset yOffset,boolean isBreakable) {
-        var margin = canvas.margin();
-        return definePositionOnPage(currentPositionY, canvas.boundingTopLine(), objectHeight, currentPageNumber, margin.top(), margin.bottom(), yOffset,isBreakable );
-    }
-
+    /** Internal delegate method for {@link #definePositionOnPage}. */
     private static YPositionOnPage definePositionOnPage(double currentPositionY,
-                                                        int currentPageNumber,
                                                         Entity entity,
-                                                        double canvasHigh,
-                                                        double canvasMarginTop,
-                                                        double canvasMarginBottom,
-                                                        Offset yOffset) {
+                                                        int currentPageNumber, double canvasHigh, double canvasMarginTop, double canvasMarginBottom,  //Canvas Settings
+                                                        Offset yOffset,
+                                                        boolean isBreakable) {
         var size = entity.getComponent(ContentSize.class).orElseThrow();
         var margin = entity.getComponent(Margin.class).orElse(Margin.zero());
 
         double objectHeight = size.height();
         double objectMarginTop = margin.top();
         double objectMarginBottom = margin.bottom();
-        return definePositionOnPage(currentPositionY, currentPageNumber, objectHeight, objectMarginTop, objectMarginBottom, canvasHigh, canvasMarginTop, canvasMarginBottom, yOffset);
+        return definePositionOnPage(currentPositionY, objectHeight, objectMarginTop, objectMarginBottom, currentPageNumber, canvasHigh, canvasMarginTop, canvasMarginBottom, yOffset, isBreakable);
 
     }
 
+    /** Internal delegate method for {@link #definePositionOnPage}. */
     private static YPositionOnPage definePositionOnPage(double currentPositionY,
-                                                        int currentPageNumber,
-                                                        Entity entity, Canvas canvas, Offset offset) {
-        //TODO тут должно быть просто
-        double canvasHigh = canvas.height() - canvas.margin().vertical();
-//        double canvasHigh = canvas.boundingTopLine();
-        double top = canvas.margin().top();
-        double bottom = canvas.margin().bottom();
-        return definePositionOnPage(currentPositionY, currentPageNumber, entity, canvasHigh, top, bottom, offset);
+                                                        Entity entity,
+                                                        int currentPageNumber, Canvas canvas,  //Canvas Settings
+                                                        Offset yOffset,
+                                                        boolean isBreakable) {
+        var size = entity.getComponent(ContentSize.class).orElseThrow();
+        var margin = entity.getComponent(Margin.class).orElse(Margin.zero());
+
+        double objectHeight = size.height();
+        double objectMarginTop = margin.top();
+        double objectMarginBottom = margin.bottom();
+        return definePositionOnPage(currentPositionY, objectHeight, objectMarginTop, objectMarginBottom, currentPageNumber, canvas, yOffset, isBreakable);
+
     }
 
+    /** Core logic for calculating the position on a page. */
     private static YPositionOnPage definePositionOnPage(double currentPositionY,
-                                                        int currentPageNumber,
-                                                        double objectHeight,
-                                                        double objectMarginTop,
-                                                        double objectMarginBottom,
-                                                        double canvasHigh,
-                                                        double canvasMarginTop,
-                                                        double canvasMarginBottom,
-                                                        Offset yOffset) {
+                                                        double objectHeight, double objectMarginTop, double objectMarginBottom, //object Settings
+                                                        int currentPageNumber, double canvasHigh, double canvasMarginTop, double canvasMarginBottom,  //Canvas Settings
+                                                        Offset yOffset, boolean isBreakable) {
 
         if (!(canvasHigh > 0.0) || Double.isNaN(canvasHigh) || Double.isInfinite(canvasHigh)) {
             throw new IllegalArgumentException("canvasHigh must be a finite positive number; was " + canvasHigh);
@@ -376,17 +376,17 @@ public class PageBreaker {
      * Calculates the page offset relative to a starting page.
      * <p>
      * Given an absolute Y-coordinate and a fixed {@code pageHeight} ($H$), this
-     * determines how many pages away the coordinate is from the page that
-     * starts at Y=0. The resulting offset is defined such that:
+     * determines how many pages away the coordinate is from the page that starts at Y=0.
+     * The offset is defined as follows (with the Y-axis pointing down):
      * <ul>
-     * <li>$Y$ in $[0, H)$ $\rightarrow$ 0 (Same page)</li>
-     * <li>$Y$ in $[H, 2H)$ $\rightarrow$ -1 (One page down, assuming a coordinate system where positive Y moves down)</li>
-     * <li>$Y$ in $[-H, 0)$ $\rightarrow$ 1 (One page up)</li>
+     * <li>$Y \in [0, H)$ $\rightarrow$ 0 (same page)</li>
+     * <li>$Y \in [H, 2H)$ $\rightarrow$ -1 (one page down)</li>
+     * <li>$Y \in [-H, 0)$ $\rightarrow$ 1 (one page up)</li>
      * </ul>
-     * The calculation is $- \lfloor \frac{Y}{H} \rfloor$.
+     * The calculation formula is: $- \lfloor \frac{Y}{H} \rfloor$.
      *
-     * @param currentPositionY The entity's current absolute Y-coordinate.
-     * @param pageHeight       The height of a single page (must be positive and finite).
+     * @param currentPositionY The entity's absolute Y-coordinate.
+     * @param pageHeight       The height of a single page (must be a finite positive number).
      * @return The integer page offset.
      * @throws IllegalArgumentException if {@code pageHeight} is not a finite positive number.
      */
@@ -405,9 +405,12 @@ public class PageBreaker {
     }
 
     /**
-     * @param a current Position
-     * @param m available high (canvas margin excluded)
-     *          Proper positive modulo for doubles: result in [0, m).
+     * Calculates a true positive modulo for floating-point numbers.
+     * The result is always in the range [0, m).
+     *
+     * @param a The dividend (current position).
+     * @param m The divisor (page height).
+     * @return The remainder in the range [0, m).
      */
     private static double positiveModulo(double a, double m) {
         double r = a % m;
@@ -436,7 +439,19 @@ public class PageBreaker {
         return new BlockText.ValidatedTextData(style, textValue);
     }
 
-
+    /**
+     * Calculates and assigns the position for each line of text within a {@link BlockText}.
+     * This method iterates through the lines, determines their position on the page, handles
+     * page breaks, and updates the entity's {@link BlockTextData} component with the new,
+     * positioned data.
+     *
+     * @param e       The entity containing the {@link BlockText}.
+     * @param canvas  The canvas object for retrieving page dimension information.
+     * @param yOffset The total Y-axis offset, which will be updated based on
+     *                offsets caused by page breaks within the text block.
+     * @throws IOException           if an error occurs while working with fonts.
+     * @throws IllegalStateException if the entity is missing required components.
+     */
     private static void blockTextDataPositions(Entity e, Canvas canvas, @NonNull Offset yOffset) throws IOException {
 
         Offset entityYOffset = new Offset();
@@ -494,7 +509,7 @@ public class PageBreaker {
                 log.debug("Started print a block text, Position Y is {}", startY);
                 isStarted = true;
                 YPositionOnPage yPositionOnPage = PageBreaker
-                        .definePositionOnPage(startY, canvas.boundingTopLine(), textHeight, currentPage, canvas, yOffset, false);
+                        .definePositionOnPage(startY, textHeight, 0.0, 0.0, currentPage, canvas, yOffset, false);
                 startY = (float) yPositionOnPage.yPosition();
                 currentPage = yPositionOnPage.startPage();
             }
@@ -506,7 +521,7 @@ public class PageBreaker {
             assignPositionTextData.add(nltd);
             startY -= (float) (textHeight - spacing);
             YPositionOnPage yPositionOnPage = PageBreaker
-                    .definePositionOnPage(startY, canvas.boundingTopLine(), textHeight, currentPage, canvas, yOffset, false);
+                    .definePositionOnPage(startY, textHeight, 0.0, 0.0, currentPage, canvas, yOffset, false);
 
             if (log.isDebugEnabled()) {
                 log.debug(ltd.toString());
@@ -540,6 +555,15 @@ public class PageBreaker {
 
     }
 
+    /**
+     * Calculates the necessary vertical offset for an element to ensure it does not go outside
+     * the canvas rendering bounds ({@code canvas.boundingTopLine()} and {@code canvas.boundingBottomLine()}).
+     *
+     * @param e      The entity to check.
+     * @param startY The element's current Y-position.
+     * @param canvas The canvas with boundary information.
+     * @return The offset value. Returns 0.0 if no offset is required.
+     */
     private static double shift(Entity e, float startY, Canvas canvas) {
         var margin = e.getComponent(Margin.class).orElse(Margin.zero());
         if (e.hasAssignable(BlockText.class)) {
@@ -556,6 +580,19 @@ public class PageBreaker {
         return 0;
     }
 
+    /**
+     * Core logic for calculating the shift. Checks if the element fits on the page
+     * and does not exceed the top or bottom boundaries.
+     *
+     * @param yPosition     The top Y-coordinate of the element.
+     * @param elementHeight The height of the element.
+     * @param marginTop     The top margin.
+     * @param marginBottom  The bottom margin.
+     * @param canvas        The canvas.
+     * @return The calculated offset. A positive value means shift up, negative means shift down.
+     * @throws BigSizeElementException if a non-breakable element is too large to fit
+     *                                 in the available page space.
+     */
     private static double shift(
             double yPosition,
             double elementHeight,

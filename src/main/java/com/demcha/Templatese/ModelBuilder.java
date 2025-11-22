@@ -59,6 +59,9 @@ public class ModelBuilder {
                 .build();
     }
 
+    public Entity infoPanel(List<Entity> entities ) {
+        return infoPanel(entities, null,null);
+    }
     public Entity infoPanel(List<Entity> entities, Anchor anchorContainer, Anchor elements) {
         if (entities == null || entities.isEmpty()) return null;
 

@@ -196,8 +196,6 @@ public class PageBreaker {
                         definePlacement(canvas, entity, yOffset, false);
 
                     } else {
-
-
                         definePlacement(canvas, entity, yOffset, true);
                         if (entity.hasAssignable(BlockText.class)) {
                             try {
@@ -233,6 +231,7 @@ public class PageBreaker {
         var computedPosition = entity.getComponent(ComputedPosition.class).orElseThrow();
         ContentSize contentSize = entity.getComponent(ContentSize.class)
                 .orElseThrow(() -> new IllegalStateException("Entity " + entity + " has no ContentSize"));
+        log.debug("Defining position for {}", entity);
 
 
 //        YPositionOnPage position = definePositionOnPage(computedPosition.y(), canvas.boundingTopLine(), contentSize.height(), 0, canvas, yOffset, isBreakable);
@@ -300,7 +299,9 @@ public class PageBreaker {
         return definePositionOnPage(currentPositionY, objectHeight, objectMarginTop, objectMarginBottom, currentPageNumber, canvas.boundingTopLine(), canvas.margin().top(), canvas.margin().bottom(), yOffset, isBreakable);
     }
 
-    /** Internal delegate method for {@link #definePositionOnPage}. */
+    /**
+     * Internal delegate method for {@link #definePositionOnPage}.
+     */
     private static YPositionOnPage definePositionOnPage(double currentPositionY,
                                                         Entity entity,
                                                         int currentPageNumber, double canvasHigh, double canvasMarginTop, double canvasMarginBottom,  //Canvas Settings
@@ -316,7 +317,9 @@ public class PageBreaker {
 
     }
 
-    /** Internal delegate method for {@link #definePositionOnPage}. */
+    /**
+     * Internal delegate method for {@link #definePositionOnPage}.
+     */
     private static YPositionOnPage definePositionOnPage(double currentPositionY,
                                                         Entity entity,
                                                         int currentPageNumber, Canvas canvas,  //Canvas Settings
@@ -332,19 +335,37 @@ public class PageBreaker {
 
     }
 
-    /** Core logic for calculating the position on a page. */
+    /**
+     * Core logic for calculating the position on a page.
+     */
     private static YPositionOnPage definePositionOnPage(double currentPositionY,
                                                         double objectHeight, double objectMarginTop, double objectMarginBottom, //object Settings
-                                                        int currentPageNumber, double canvasHigh, double canvasMarginTop, double canvasMarginBottom,  //Canvas Settings
+                                                        int currentPageNumber, double canvasTopBondingLine, double canvasMarginTop, double canvasMarginBottom,  //Canvas Settings
                                                         Offset yOffset, boolean isBreakable) {
 
-        if (!(canvasHigh > 0.0) || Double.isNaN(canvasHigh) || Double.isInfinite(canvasHigh)) {
-            throw new IllegalArgumentException("canvasHigh must be a finite positive number; was " + canvasHigh);
+        if (!(canvasTopBondingLine > 0.0) || Double.isNaN(canvasTopBondingLine) || Double.isInfinite(canvasTopBondingLine)) {
+            throw new IllegalArgumentException("canvasTopBondingLine must be a finite positive number; was " + canvasTopBondingLine);
         }
 
-        log.debug("Input: y={}, pageHeight={}, currentPage={}", currentPositionY, canvasHigh, currentPageNumber);
+        log.debug("""
+                        --- Defining Position On Page ---
+                        Object Settings:
+                          - currentPositionY:   {}
+                          - objectHeight:       {}
+                          - objectMargin (T/B): {}/{}
+                        Canvas Settings:
+                          - canvasTopBondingLine: {}
+                          - canvasMargin (T/B):   {}/{}
+                        State:
+                          - currentPageNumber:  {}
+                          - isBreakable:        {}
+                          - yOffset (before):     {}
+                        """,
+                currentPositionY, objectHeight, objectMarginTop, objectMarginBottom,
+                canvasTopBondingLine, canvasMarginTop, canvasMarginBottom,
+                currentPageNumber, isBreakable, yOffset);
 
-        int pageOffset = definePage(currentPositionY, canvasHigh); // may be negative, zero, or positive
+        int pageOffset = definePage(currentPositionY, canvasTopBondingLine); // may be negative, zero, or positive
         int finalPage = Math.addExact(currentPageNumber, pageOffset); // detect overflow
         if (finalPage < 0) {
             log.error("Invalid page number {}", finalPage);
@@ -353,11 +374,16 @@ public class PageBreaker {
 
 
         // Normalize y into [0, pageHeight)
-        double yInPage = positiveModulo(currentPositionY, canvasHigh);
+        double yInPage = positiveModulo(currentPositionY, canvasTopBondingLine);
         // we
         if (yInPage < canvasMarginBottom) {
+            log.debug("currentPositionY: {}" +
+                      "                                                         objectHeight {} double objectMarginTop, double objectMarginBottom, //object Settings\n" +
+                      "                                                        int currentPageNumber, double canvasTopBondingLine, double canvasMarginTop, double canvasMarginBottom,  //Canvas Settings\n" +
+                      "                                                        Offset yOffset, boolean isBreakable ");
+            shift(yInPage, objectHeight, objectMarginTop, objectMarginBottom, canvasMarginBottom, canvasMarginBottom + canvasTopBondingLine);
             double currentOffset = (yInPage + objectHeight) * -1;
-            yInPage = canvasHigh - objectHeight;
+            yInPage = canvasTopBondingLine - objectHeight;
             finalPage++;
             yOffset.incrementY(currentOffset);
         }
@@ -592,6 +618,7 @@ public class PageBreaker {
      * @return The calculated offset. A positive value means shift up, negative means shift down.
      * @throws BigSizeElementException if a non-breakable element is too large to fit
      *                                 in the available page space.
+     *
      */
     private static double shift(
             double yPosition,
@@ -600,12 +627,22 @@ public class PageBreaker {
             double marginBottom,
             Canvas canvas
     ) {
-        final double top = canvas.boundingTopLine();
-        final double bottom = canvas.boundingBottomLine();
+        return shift(yPosition, elementHeight, marginTop, marginBottom, canvas.boundingBottomLine(), canvas.boundingTopLine());
+
+    }
+
+    private static double shift(
+            double yPosition,
+            double elementHeight,
+            double marginTop,
+            double marginBottom,
+            double canvasBottomBondingLine,
+            double canvasTopBondingLine
+    ) {
 
         // 1) Can it ever fit (including margins)?
         final double requiredHeight = elementHeight + marginTop + marginBottom;
-        final double availableHeight = top - bottom;
+        final double availableHeight = canvasTopBondingLine - canvasBottomBondingLine;
         if (requiredHeight > availableHeight) {
             throw new BigSizeElementException(
                     "Element is too large and non-breakable — it cannot fit between the bounding lines with margins."
@@ -613,22 +650,22 @@ public class PageBreaker {
         }
 
         // 2) Check top overflow
-        if (yPosition + elementHeight + marginTop > top) {
-            double delta = top - (yPosition + elementHeight + marginTop); // negative => move down
-            log.info("Element shifted down by {} from top bound {}", delta, top);
+        if (yPosition + elementHeight + marginTop > canvasTopBondingLine) {
+            double delta = canvasTopBondingLine - (yPosition + elementHeight + marginTop); // negative => move down
+            log.info("Element shifted down by {} from top bound {}", delta, canvasTopBondingLine);
             return delta;
         }
 
         // 3) Check bottom overflow
-        if (yPosition - marginBottom < bottom) {
-            double delta = (bottom + marginBottom) - yPosition; // positive => move up
+        if (yPosition - marginBottom < canvasBottomBondingLine) {
+            double delta = (canvasBottomBondingLine + marginBottom) - yPosition; // positive => move up
             // Re-check (defensive): after moving up, we still must not exceed top
-            if (yPosition + delta + elementHeight + marginTop > top) {
+            if (yPosition + delta + elementHeight + marginTop > canvasTopBondingLine) {
                 throw new BigSizeElementException(
                         "Element is too large and non-breakable — shifting up would exceed the top bound."
                 );
             }
-            log.info("Element shifted up by {} from bottom bound {}", delta, bottom);
+            log.info("Element shifted up by {} from bottom bound {}", delta, canvasBottomBondingLine);
             return delta;
         }
 

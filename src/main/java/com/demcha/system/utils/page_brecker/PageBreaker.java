@@ -644,9 +644,13 @@ public class PageBreaker {
         final double requiredHeight = elementHeight + marginTop + marginBottom;
         final double availableHeight = canvasTopBondingLine - canvasBottomBondingLine;
         if (requiredHeight > availableHeight) {
+            log.error("Element is too large and non-breakable — it cannot fit between the bounding lines with margins.\n" +
+                      "requiredHeight: {} availableHeight: {}", requiredHeight, availableHeight);
+
             throw new BigSizeElementException(
-                    "Element is too large and non-breakable — it cannot fit between the bounding lines with margins."
-            );
+                    String.format("Element is too large and non-breakable — it cannot fit between the bounding lines with margins.\n" +
+                                  "requiredHeight: %s availableHeight: %s", requiredHeight, availableHeight
+                    ));
         }
 
         // 2) Check top overflow

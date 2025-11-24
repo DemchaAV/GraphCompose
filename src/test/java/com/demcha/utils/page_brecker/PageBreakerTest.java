@@ -2,7 +2,7 @@ package com.demcha.utils.page_brecker;
 
 import com.demcha.components.core.Entity;
 import com.demcha.components.layout.coordinator.RenderingPosition;
-import com.demcha.system.utils.page_brecker.PageBreaker;
+import com.demcha.system.utils.page_breaker.PageBreaker;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

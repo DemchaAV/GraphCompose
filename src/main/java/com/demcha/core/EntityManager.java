@@ -4,8 +4,8 @@ import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.core.EntityName;
 import com.demcha.components.layout.ParentComponent;
-import com.demcha.system.intarfaces.Render;
-import com.demcha.system.intarfaces.SystemECS;
+import com.demcha.system.interfaces.Render;
+import com.demcha.system.interfaces.SystemECS;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -288,10 +288,10 @@ public class EntityManager {
 
 
     public void printEntities() {
-        this.entities.values().forEach(entity -> {
+        this.entities.forEach((uuid,entity) -> {
             java.lang.System.out.println(entity.toString());
             entity.view().forEach((k, v) ->
-                    java.lang.System.out.println(v)
+                    java.lang.System.out.printf("UUID[%s] : %s \n",uuid, entity.toString())
             );
         });
     }

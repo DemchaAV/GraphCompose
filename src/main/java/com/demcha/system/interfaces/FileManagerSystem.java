@@ -1,4 +1,4 @@
-package com.demcha.system.intarfaces;
+package com.demcha.system.interfaces;
 
 import java.io.IOException;
 import java.nio.file.Path;

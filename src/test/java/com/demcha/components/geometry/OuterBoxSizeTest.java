@@ -3,7 +3,7 @@ package com.demcha.components.geometry;
 
 import com.demcha.components.core.Entity;
 import com.demcha.components.style.Margin;
-import com.demcha.exeptions.ContentSizeNotFoundException;
+import com.demcha.exceptions.ContentSizeNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

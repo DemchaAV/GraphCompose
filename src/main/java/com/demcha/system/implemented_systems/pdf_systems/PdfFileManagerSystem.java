@@ -1,7 +1,7 @@
 package com.demcha.system.implemented_systems.pdf_systems;
 
 import com.demcha.core.EntityManager;
-import com.demcha.system.intarfaces.FileManagerSystem;
+import com.demcha.system.interfaces.FileManagerSystem;
 import com.demcha.system.utils.files.PdfRebuildOpenInAdobe;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

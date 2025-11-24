@@ -6,10 +6,9 @@ import com.demcha.components.content.shape.Stroke;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.coordinator.Placement;
-import com.demcha.components.layout.coordinator.RenderCoordinateContext;
-import com.demcha.exeptions.ContentSizeNotFoundException;
+import com.demcha.exceptions.ContentSizeNotFoundException;
 import com.demcha.components.geometry.Expendable;
-import com.demcha.system.intarfaces.GuidesRenderer;
+import com.demcha.system.interfaces.GuidesRenderer;
 import com.demcha.system.implemented_systems.pdf_systems.PdfRender;
 import com.demcha.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
 import lombok.EqualsAndHashCode;
@@ -18,7 +17,6 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.io.IOException;
 import java.util.EnumSet;
-import java.util.Optional;
 
 @Slf4j
 @EqualsAndHashCode

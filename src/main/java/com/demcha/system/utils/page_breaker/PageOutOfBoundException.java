@@ -1,6 +1,6 @@
-package com.demcha.system.utils.page_brecker;
+package com.demcha.system.utils.page_breaker;
 
-public class PageOutOfBoundException extends RuntimeException {
+public class PageOutOfBoundException extends Throwable {
     public PageOutOfBoundException(String s) {
         super(s);
     }

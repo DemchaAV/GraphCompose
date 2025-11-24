@@ -18,7 +18,7 @@ import com.demcha.system.LayoutSystemImpl;
 import com.demcha.system.implemented_systems.pdf_systems.PdfCanvas;
 import com.demcha.system.implemented_systems.pdf_systems.PdfFileManagerSystem;
 import com.demcha.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
-import com.demcha.system.utils.page_brecker.PageBreaker;
+import com.demcha.system.utils.page_breaker.PageBreaker;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;

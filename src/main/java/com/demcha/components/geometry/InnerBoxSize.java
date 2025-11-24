@@ -4,7 +4,7 @@ import com.demcha.components.components_builders.ElementBuilder;
 import com.demcha.components.core.Entity;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.style.Padding;
-import com.demcha.exeptions.ContentSizeNotFoundException;
+import com.demcha.exceptions.ContentSizeNotFoundException;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 

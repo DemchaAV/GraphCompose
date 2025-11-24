@@ -24,7 +24,6 @@ public class VContainerBuilder extends ContainerBuilder<VContainerBuilder> {
      */
     public VContainerBuilder(EntityManager entityManager, Align align) {
         super(entityManager,align);
-        entity.addComponent(align);
     }
 
     /**
@@ -32,7 +31,6 @@ public class VContainerBuilder extends ContainerBuilder<VContainerBuilder> {
      * This method calls the common creation logic from the superclass and then
      * adds a {@link VContainer} component to the entity.
      *
-     * @param align The {@link Align} strategy for arranging children within the container.
      * @return This builder instance for method chaining.
      */
 

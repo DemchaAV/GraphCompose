@@ -7,7 +7,7 @@ import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.style.Margin;
 import com.demcha.core.EntityManager;
-import com.demcha.exeptions.ContentSizeNotFoundException;
+import com.demcha.exceptions.ContentSizeNotFoundException;
 import com.demcha.components.geometry.Expendable;
 import com.demcha.system.utils.containerUtils.ContainerExpander;
 import org.junit.jupiter.api.*;

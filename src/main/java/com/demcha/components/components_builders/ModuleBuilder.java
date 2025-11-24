@@ -8,6 +8,7 @@ import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.renderable.HContainer;
+import com.demcha.components.renderable.VContainer;
 import com.demcha.components.style.Margin;
 import com.demcha.core.EntityManager;
 import lombok.extern.slf4j.Slf4j;
@@ -83,7 +84,7 @@ public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
     public void initialize() {
         entity.addComponent(new com.demcha.components.renderable.Module());
         entity.addComponent(StackAxis.VERTICAL);
-        entity.addComponentIfAbsent(new HContainer()); // Add the specific component
+        entity.addComponentIfAbsent(new VContainer()); // Add the specific component
         entity.addComponent(contentSize == null ? new ContentSize(0, 0) : new ContentSize(contentSize.width(), 0));
     }
 

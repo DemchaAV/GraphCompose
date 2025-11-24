@@ -6,14 +6,15 @@ import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
-import com.demcha.exeptions.ContentSizeNotFoundException;
-import com.demcha.system.intarfaces.Render;
-import com.demcha.system.utils.page_brecker.Offset;
+import com.demcha.exceptions.ContentSizeNotFoundException;
+import com.demcha.system.interfaces.Render;
+import com.demcha.system.utils.page_breaker.Offset;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -39,6 +40,7 @@ public final class Entity {
     }
 
     public static Entity createFrom(Entity entity) {
+        log.debug("Creating a copy of entity {}", entity);
         var newEntity = new Entity();
         var values = new HashSet<>(entity.comps.values());
         newEntity.populate(values);
@@ -67,6 +69,7 @@ public final class Entity {
 
     public <T extends Component> Entity addComponent(@NonNull T c) {
         Class<? extends Component> key = c.getClass().asSubclass(Component.class);
+        log.debug("Adding component {} to {}", c, this);
         Component prev = comps.put(key, c);
         if (c instanceof EntityName en) this.name = en;
         if (c instanceof Render) {
@@ -78,12 +81,16 @@ public final class Entity {
             }
 
         }
-        if (prev == null) {
-            log.debug("Added component {} to {}", c, this);
-        } else {
-            log.debug("Replaced component {} on {}", c, this);
-        }
+        debugPutMethod(c, prev, "addComponent");
         return this;
+    }
+
+    private <T extends Component> void debugPutMethod(@NotNull T c, Component prev, String methodName) {
+        if (prev == null) {
+            log.debug("Added component {} to {} through method {}", c, this, methodName);
+        } else {
+            log.debug("Replaced component {} on {} through method {}", c, this, methodName);
+        }
     }
 
     public <T extends Component> Entity forceAddComponent(@NonNull T c) {
@@ -99,11 +106,7 @@ public final class Entity {
             }
 
         }
-        if (prev == null) {
-            log.debug("Added component {} to {}", c, this);
-        } else {
-            log.debug("Replaced component {} on {}", c, this);
-        }
+        debugPutMethod(c, prev, "forceAddComponent");
         return this;
     }
 
@@ -293,17 +296,36 @@ public final class Entity {
         }
     }
 
-    public void printInfo() {
-        System.out.println(this);
-        comps.forEach((k, e) -> {
-            System.out.println(e);
+    private String printChildren(EntityManager manager) {
+        StringBuilder childrenInfo = new StringBuilder();
+        manager.getSetEntitiesFromUuids(new HashSet<>(children)).forEach(entity -> {
+            childrenInfo.append(entity.toString()).append("\n");
         });
+        return childrenInfo.toString();
+
+    }
+
+    public String printInfo() {
+        System.out.println(this);
+        StringBuilder info = new StringBuilder(this + "\n");
+
+        comps.forEach((k, e) -> {
+            info.append(e.toString()).append("\n");
+        });
+        return info.toString();
+    }
+
+    public String printInfoWithChildren(EntityManager entityManager) {
+        StringBuilder info = new StringBuilder(printInfo());
+        info.append(printChildren(entityManager));
+        return info.toString();
     }
 
     @Override
     public String toString() {
         return "Entity[" + name +
                " id: " + uuid +
+               " renderType: " + (render != null ? render.getClass().getSimpleName() : "null") +
                ']';
     }
 

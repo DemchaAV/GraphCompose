@@ -1,4 +1,4 @@
-package com.demcha.system.intarfaces;
+package com.demcha.system.interfaces;
 
 import com.demcha.components.core.Component;
 

@@ -1,8 +1,8 @@
-package com.demcha.system.intarfaces;
+package com.demcha.system.interfaces;
 
 import com.demcha.components.core.Entity;
 import com.demcha.components.layout.coordinator.Placement;
-import com.demcha.exeptions.RenderGuideLinesException;
+import com.demcha.exceptions.RenderGuideLinesException;
 import lombok.NonNull;
 
 import java.io.IOException;

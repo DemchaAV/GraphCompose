@@ -36,7 +36,7 @@ public abstract class EntityBuilderBase<B> implements Layout<B>, EntityCreator<B
      */
     protected void autoName() {
         String simpleName = self().getClass().getSimpleName();
-        String defaultName = simpleName + entity.getUuid().toString().substring(0, 5);
+        String defaultName = simpleName +"__" +  entity.getUuid().toString().substring(0, 5);
         entity.addComponent(new EntityName(defaultName));
     }
 

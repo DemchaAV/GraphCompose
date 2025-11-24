@@ -1,4 +1,4 @@
-package com.demcha.system.intarfaces;
+package com.demcha.system.interfaces;
 
 public interface LayoutSystem extends SystemECS {
 }

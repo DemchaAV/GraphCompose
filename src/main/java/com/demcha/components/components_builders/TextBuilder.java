@@ -8,7 +8,7 @@ import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.renderable.TextComponent;
 import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
-import com.demcha.exeptions.TextComponentException;
+import com.demcha.exceptions.TextComponentException;
 import lombok.extern.slf4j.Slf4j;
 
 //TODO has to be finish with adding essential data type for building b Box

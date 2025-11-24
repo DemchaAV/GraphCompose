@@ -3,11 +3,9 @@ package com.demcha.components.geometry;
 import com.demcha.components.core.Entity;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.style.Margin;
-import com.demcha.exeptions.ContentSizeNotFoundException;
-import lombok.AllArgsConstructor;
+import com.demcha.exceptions.ContentSizeNotFoundException;
 import lombok.Data;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 

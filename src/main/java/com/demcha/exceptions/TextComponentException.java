@@ -1,4 +1,4 @@
-package com.demcha.exeptions;
+package com.demcha.exceptions;
 
 public class TextComponentException extends RuntimeException {
     public TextComponentException(String message) {

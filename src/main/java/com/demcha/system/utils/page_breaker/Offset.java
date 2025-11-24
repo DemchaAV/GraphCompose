@@ -1,4 +1,4 @@
-package com.demcha.system.utils.page_brecker;
+package com.demcha.system.utils.page_breaker;
 
 import lombok.Data;
 import lombok.experimental.Accessors;

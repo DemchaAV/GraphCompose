@@ -3,7 +3,7 @@ package com.demcha.system.implemented_systems.pdf_systems;
 import com.demcha.components.components_builders.Canvas;
 import com.demcha.components.core.Entity;
 import com.demcha.components.layout.coordinator.Placement;
-import com.demcha.system.intarfaces.RenderStream;
+import com.demcha.system.interfaces.RenderStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;

@@ -1,4 +1,4 @@
-package com.demcha.exeptions;
+package com.demcha.exceptions;
 
 import java.io.IOException;
 

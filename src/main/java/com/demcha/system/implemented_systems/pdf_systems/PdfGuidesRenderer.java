@@ -8,10 +8,10 @@ import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderCoordinateContext;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
-import com.demcha.exeptions.RenderGuideLinesException;
+import com.demcha.exceptions.RenderGuideLinesException;
 import com.demcha.system.GuidLineSettings;
-import com.demcha.system.intarfaces.GuidesRenderer;
-import com.demcha.system.utils.page_brecker.Breakable;
+import com.demcha.system.interfaces.GuidesRenderer;
+import com.demcha.system.utils.page_breaker.Breakable;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -211,9 +211,7 @@ public record PdfGuidesRenderer(PdfRenderingSystemECS renderingSystemECS) implem
 
     private boolean boxRenderFromStream(@NonNull Entity e, @NonNull PDPageContentStream cs) throws RenderGuideLinesException {
         var boxSize = e.getComponent(ContentSize.class).orElseThrow();
-        var margin = e.getComponent(Margin.class).orElse(Margin.zero());
         var placement = e.getComponent(Placement.class).orElseThrow();
-//TODO x должен быть просто placement.x() так как это и есть коробка
         double x = placement.x();
         double y = placement.y();
         double w = boxSize.width();

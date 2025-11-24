@@ -1,4 +1,4 @@
-package com.demcha.exeptions;
+package com.demcha.exceptions;
 
 import com.demcha.components.core.Entity;
 

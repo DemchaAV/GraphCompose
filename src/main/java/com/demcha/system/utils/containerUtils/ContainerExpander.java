@@ -6,7 +6,7 @@ import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.layout.Align;
 import com.demcha.core.EntityManager;
-import com.demcha.exeptions.ContentSizeNotFoundException;
+import com.demcha.exceptions.ContentSizeNotFoundException;
 import com.demcha.components.geometry.Expendable;
 import lombok.extern.slf4j.Slf4j;
 

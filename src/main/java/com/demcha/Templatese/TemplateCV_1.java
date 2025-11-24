@@ -4,12 +4,13 @@ import com.demcha.Templatese.data.MainPageCV;
 import com.demcha.Templatese.data.ModuleSummary;
 import com.demcha.Templatese.data.ModuleYml;
 import com.demcha.Templatese.templates_utils.ConfigLoader;
-import com.demcha.components.ModuleContainer;
+import com.demcha.components.ModulesContainer;
 import com.demcha.components.components_builders.Canvas;
 import com.demcha.components.components_builders.ModuleBuilder;
 import com.demcha.components.content.link.Email;
 import com.demcha.components.content.link.LinkUrl;
 import com.demcha.components.core.Entity;
+import com.demcha.components.core.EntityName;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.Anchor;
@@ -44,9 +45,9 @@ class TemplateCV_1 {
 
         ModelBuilder cv = new ModelBuilder(entityManager);
         String pathFolder = "/ai_content/";
-//        MainPageCV data = ConfigLoader.loadConfigWithEnv("cv_data.yml", MainPageCV.class, false);
+//        MainPageCV data = ConfigLoader.loadConfigWithEnv("cv_data_frelance.yml", MainPageCV.class, false);
         MainPageCV data = ConfigLoader.loadConfigWithEnv("cv_data.yml", MainPageCV.class, false);
-//        MainPageCV data = ConfigLoader.loadConfigWithEnv("royalMailCv.yml", MainPageCV.class, false);
+//        MainPageCV data = ConfigLoader.loadConfigWithEnv("ExpleoGroup.yml", MainPageCV.class, false);
         var number = data.getHeder().getPhoneNumber();
         var address = data.getHeder().getAddress();
         var email = data.getHeder().getEmail();
@@ -61,7 +62,8 @@ class TemplateCV_1 {
         ModuleYml additional = data.getAdditional();
 
 
-        var canvas = new ModuleContainer(entityManager, canvasSize);
+        var canvas = new ModulesContainer(entityManager, canvasSize);
+        canvas.addComponent(new EntityName("ModulesContainer"));
 
 
         Entity artemDemchyshyn = cv.name(data.getHeder().getName());
@@ -79,7 +81,10 @@ class TemplateCV_1 {
         );
 
 
-        Entity moduleHeader = new ModuleBuilder(entityManager, Align.middle(5), canvas.innerBoxSize())
+        InnerBoxSize canvasInnerBox = canvas.innerBoxSize();
+
+        Entity moduleHeader = new ModuleBuilder(entityManager, Align.middle(5), canvasInnerBox)
+                .entityName("ModuleHeader")
                 .margin(Margin.of(10))
                 .anchor(Anchor.topRight())
                 .addChild(artemDemchyshyn)
@@ -88,45 +93,51 @@ class TemplateCV_1 {
                 .build();
 
         // 7) Professional Summary
-        Entity moduleProfessionalSummary = cv.moduleBuilder(summary.getModuleName(), canvas.innerBoxSize())
-                .addChild(cv.blockText(summary.getBlockSummary(), canvas.innerBoxSize().width()))
+        Entity moduleProfessionalSummary = cv.moduleBuilder(summary.getModuleName(), canvasInnerBox)
+                .entityName("ModuleProfessionalSummary")
+                .addChild(cv.blockText(summary.getBlockSummary(), canvasInnerBox.width()))
                 .margin(Margin.top(6))
                 .build();
 
         // 8) Technical Skills
-        Entity moduleTechnicalSkills = cv.moduleBuilder(technicalSkills.getName(), canvas.innerBoxSize())
-                .addChild(cv.blockText(technicalSkills.getModulePoints(), canvas.innerBoxSize().width(), "• "))
+        Entity moduleTechnicalSkills = cv.moduleBuilder(technicalSkills.getName(), canvasInnerBox)
+                .entityName("ModuleTechnicalSkills")
+                .addChild(cv.blockText(technicalSkills.getModulePoints(), canvasInnerBox.width(), "• "))
                 .margin(Margin.top(6))
                 .build();
 
         // 9) Education & Certifications
-        Entity moduleEducationCertifications = cv.moduleBuilder(educationCertifications.getName(), canvas.innerBoxSize())
-                .addChild(cv.blockText(educationCertifications.getModulePoints(), canvas.innerBoxSize().width(), null))
+        Entity moduleEducationCertifications = cv.moduleBuilder(educationCertifications.getName(), canvasInnerBox)
+                .entityName("moduleEducationCertifications")
+                .addChild(cv.blockText(educationCertifications.getModulePoints(), canvasInnerBox.width(), null))
                 .margin(Margin.top(6))
                 .build();
 
         // 10) Projects (как modulePoints)
-        Entity moduleProjects = cv.moduleBuilder(projects.getName(), canvas.innerBoxSize())
-                .addChild(cv.blockText(projects.getModulePoints(), canvas.innerBoxSize().width(), null))
+        Entity moduleProjects = cv.moduleBuilder(projects.getName(), canvasInnerBox)
+                .entityName("ModuleProjects")
+                .addChild(cv.blockText(projects.getModulePoints(), canvasInnerBox.width(), null))
                 .margin(Margin.top(6))
                 .build();
 
         // 11) Professional Experience (как modulePoints)
-        Entity moduleProfessionalExperience = cv.moduleBuilder(professionalExperience.getName(), canvas.innerBoxSize())
-                .addChild(cv.blockText(professionalExperience.getModulePoints(), canvas.innerBoxSize().width(), null))
+        Entity moduleProfessionalExperience = cv.moduleBuilder(professionalExperience.getName(), canvasInnerBox)
+                .entityName("ModuleProfessionalExperience")
+                .addChild(cv.blockText(professionalExperience.getModulePoints(), canvasInnerBox.width(), null))
                 .margin(Margin.top(6))
                 .build();
 
         // 12) Additional (как blockText)
-        Entity moduleAdditional = cv.moduleBuilder(additional.getName(), canvas.innerBoxSize())
-                .addChild(cv.blockText(additional.getModulePoints(), canvas.innerBoxSize().width(), null))
+        Entity moduleAdditional = cv.moduleBuilder(additional.getName(), canvasInnerBox)
+                .entityName("ModuleAdditional")
+                .addChild(cv.blockText(additional.getModulePoints(), canvasInnerBox.width(), null))
                 .margin(Margin.top(6))
                 .build();
 
         // 13) Главная вертикальная колонка
-        InnerBoxSize inner = canvas.innerBoxSize();
-        Entity vBox = cv.moduleBuilder(inner)
-                .anchor(Anchor.bottomCenter())
+        InnerBoxSize inner = canvasInnerBox;
+        Entity mainVBoxContainer = cv.moduleBuilder(inner)
+                .entityName("MainVBoxContainer")
                 .addChild(moduleHeader)
                 .addChild(moduleProfessionalSummary)
                 .addChild(moduleTechnicalSkills)
@@ -137,21 +148,13 @@ class TemplateCV_1 {
                 .build();
 
         // 14) Рендер
-        canvas.addModule(vBox).build();
+        canvas.addModule(mainVBoxContainer).build();
 
 
         entityManager.processSystems();
-        System.out.printf("Page number: %s ", doc.getNumberOfPages());
-        entityManager.getEntities().forEach(
-                (u, e) -> {
-                    System.out.println(e.name());
-                    Placement placement = e.getComponent(Placement.class).orElseThrow();
-                    System.out.println(placement);
 
+        entityManager.printEntities();
 
-                }
-
-        );
     }
 }
 

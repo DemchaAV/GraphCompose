@@ -1,8 +1,8 @@
 package com.demcha.system.implemented_systems.word_sustems;
 
 import com.demcha.components.core.Entity;
-import com.demcha.system.intarfaces.Render;
-import com.demcha.system.intarfaces.RenderingSystemECS;
+import com.demcha.system.interfaces.Render;
+import com.demcha.system.interfaces.RenderingSystemECS;
 
 import java.io.IOException;
 

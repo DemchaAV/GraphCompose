@@ -17,10 +17,10 @@ import com.demcha.components.layout.coordinator.Position;
 import com.demcha.components.renderable.TextComponent;
 import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
-import com.demcha.system.intarfaces.SystemECS;
+import com.demcha.system.interfaces.SystemECS;
 import com.demcha.system.utils.containerUtils.ContainerExpander;
 import com.demcha.system.utils.containerUtils.ContainerLayoutManager;
-import com.demcha.system.utils.page_brecker.PageBreaker;
+import com.demcha.system.utils.page_breaker.PageBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

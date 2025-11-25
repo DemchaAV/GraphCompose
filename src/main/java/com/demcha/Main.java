@@ -100,7 +100,7 @@ public class Main {
 
 
         return createVContainer(entityManager, name, row1, row2, buttons, blockTextBuilder)
-                .addComponent(Anchor.topRight());
+                .addComponent(Anchor.center());
     }
 
     private static Entity createASingleObject(EntityManager entityManager, String name) {

@@ -9,7 +9,7 @@ import com.demcha.components.layout.Align;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.exceptions.RenderGuideLinesException;
-import com.demcha.system.interfaces.GuidesRenderer;
+import com.demcha.system.interfaces.guides.GuidesRenderer;
 import com.demcha.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -143,7 +143,7 @@ public class ChunkedBlockText extends Container {
 
 
             if (guideLines) {
-                renderingSystemECS.guideRenderer().guidesRender(e, cs, DEFAULT_GUIDES);
+                renderingSystemECS.guidesRenderer().guidesRender(e, cs, DEFAULT_GUIDES);
             }
         } catch (RenderGuideLinesException ex) {
             throw new RenderGuideLinesException("Error in render in Guideline " + this.getClass().getSimpleName(), ex);

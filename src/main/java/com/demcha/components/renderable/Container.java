@@ -2,7 +2,8 @@ package com.demcha.components.renderable;
 
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.Expendable;
-import com.demcha.system.interfaces.GuidesRenderer;
+import com.demcha.exceptions.RenderGuideLinesException;
+import com.demcha.system.interfaces.guides.GuidesRenderer;
 import com.demcha.system.implemented_systems.pdf_systems.PdfRender;
 import com.demcha.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
 import com.demcha.system.utils.page_breaker.Breakable;
@@ -36,8 +37,8 @@ public class Container implements PdfRender, Expendable, Breakable {
      * @throws IOException If an I/O error occurs during rendering.
      */
     @Override
-    public boolean pdf(Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
-        if (guideLines) return renderingSystemECS.guideRenderer().guidesRender(e, DEFAULT_GUIDES, this);
+    public boolean pdf(Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException, RenderGuideLinesException {
+        if (guideLines) return renderingSystemECS.guidesRenderer().guidesRender(e, DEFAULT_GUIDES);
         return false;
     }
 

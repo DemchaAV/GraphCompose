@@ -1,14 +1,17 @@
 package com.demcha.components.style;
 
 
+import com.demcha.components.content.shape.Stroke;
 import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.RenderCoordinate;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderCoordinateContext;
+import com.demcha.system.interfaces.RenderingSystemECS;
 import lombok.extern.slf4j.Slf4j;
 
+import java.awt.*;
 import java.util.Optional;
 
 @Slf4j
@@ -48,7 +51,7 @@ public record Padding(double top, double right, double bottom, double left) impl
     }
 
     @Override
-    public Optional<RenderCoordinateContext> renderCoordinate(Entity entity) {
+    public <S>Optional<RenderCoordinateContext> renderCoordinate(Entity entity, RenderingSystemECS<S> renderingSystem) {
         if (this.equals(zero())) {
             log.warn("Padding is zero, return empty");
             return Optional.empty();
@@ -69,6 +72,8 @@ public record Padding(double top, double right, double bottom, double left) impl
         y = placement.y()+ bottom();
         width = inner.width();
         height = inner.height();
-        return Optional.of(new RenderCoordinateContext(x, y, width, height, startPage, endPage));
+        Color color = renderingSystem.guidLineSettings().PADDING_COLOR();
+        Stroke stroke = renderingSystem.guidLineSettings().PADDING_STROKE();
+        return Optional.of(new RenderCoordinateContext(x, y, width, height, startPage, endPage,stroke, color));
     }
 }

@@ -8,7 +8,7 @@ import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.exceptions.ContentSizeNotFoundException;
 import com.demcha.components.geometry.Expendable;
-import com.demcha.system.interfaces.GuidesRenderer;
+import com.demcha.system.interfaces.guides.GuidesRenderer;
 import com.demcha.system.implemented_systems.pdf_systems.PdfRender;
 import com.demcha.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
 import lombok.EqualsAndHashCode;
@@ -33,7 +33,7 @@ public class Rectangle implements PdfRender, Expendable {
             drawn = pdfRenderObject(e, cs);
             // if was specified, draw guides
             if (guideLines) {
-                renderingSystemECS.guideRenderer().guidesRender(e, cs, DEFAULT_GUIDES);
+                renderingSystemECS.guidesRenderer().guidesRender(e, cs, DEFAULT_GUIDES);
 
             }
         }

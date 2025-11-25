@@ -1,15 +1,16 @@
 package com.demcha.components.style;
 
 
+import com.demcha.components.content.shape.Stroke;
 import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
-import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.RenderCoordinate;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderCoordinateContext;
+import com.demcha.system.interfaces.RenderingSystemECS;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.Optional;
 
 @Slf4j
@@ -39,7 +40,7 @@ public record Margin(double top, double right, double bottom, double left) imple
         return new Margin(0, 0, 0, value);
     }
 
-    public  Optional<RenderCoordinateContext> renderCoordinate(Entity entity) {
+    public <S>Optional<RenderCoordinateContext> renderCoordinate(Entity entity, RenderingSystemECS<S> renderingSystem) {
         if (this.equals(Margin.zero())) {
             log.warn("Margin is zero, return empty");
             return Optional.empty();
@@ -56,13 +57,13 @@ public record Margin(double top, double right, double bottom, double left) imple
         endPage = placement.endPage();
         width = placement.width() + horizontal();
         height = placement.height() + vertical();
-//        x = placement.x() ;
-        //TODO должно быть так но нужно зафиксить пока временно будет без минус
         x = placement.x() - left();
         y = placement.y() - bottom();
+        Color color = renderingSystem.guidLineSettings().MARGIN_COLOR();
+        Stroke stroke = renderingSystem.guidLineSettings().MARGIN_STROKE();
 
 
-        return Optional.of(new RenderCoordinateContext(x, y, width, height, startPage, endPage));
+        return Optional.of(new RenderCoordinateContext(x, y, width, height, startPage, endPage, stroke, color));
 
     }
 

@@ -2,7 +2,7 @@ package com.demcha.components.renderable;
 
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.Expendable;
-import com.demcha.system.interfaces.GuidesRenderer;
+import com.demcha.system.interfaces.guides.GuidesRenderer;
 import com.demcha.system.implemented_systems.pdf_systems.PdfRender;
 import com.demcha.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -29,9 +29,9 @@ public class Element implements PdfRender,  Expendable {
      */
     @Override
     public boolean pdf(Entity e, PdfRenderingSystemECS pdfRenderingSystem, boolean guideLines) throws IOException {
-        try (PDPageContentStream pdPageContentStream = pdfRenderingSystem.stream().openContentStream (e)) {
-            if (guideLines) pdfRenderingSystem .guideRenderer().guidesRender(e,pdPageContentStream, DEFAULT_GUIDES);
-        }
+
+            if (guideLines) pdfRenderingSystem .guidesRenderer().guidesRender(e, DEFAULT_GUIDES);
+
 
         return true;
     }

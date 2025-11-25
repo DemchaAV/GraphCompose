@@ -205,8 +205,6 @@ public class PageBreaker {
                                     throw new RuntimeException(ex);
                                 }
 
-                                System.out.println("Map Shifts");
-                                System.out.println(yOffset);
                                 if (log.isDebugEnabled()) {
                                     BlockTextData blockTextData = entity.getComponent(BlockTextData.class).orElseThrow();
                                     blockTextData.lines().forEach((t) -> log.debug(t.toString()));
@@ -283,7 +281,7 @@ public class PageBreaker {
     }
 
     private static Placement setYInPlacement(Entity entity, YPositionOnPage position) {
-        return setYInPlacement(entity, position.yPosition(), position.startPage(), position.startPage());
+        return setYInPlacement(entity, position.yPosition(), position.startPage(), position.endPage());
     }
 
     /**

@@ -7,7 +7,7 @@ import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderingPosition;
-import com.demcha.system.interfaces.GuidesRenderer;
+import com.demcha.system.interfaces.guides.GuidesRenderer;
 import com.demcha.system.implemented_systems.pdf_systems.PdfRender;
 import com.demcha.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
 import com.demcha.system.utils.page_breaker.Breakable;
@@ -159,7 +159,7 @@ public class BlockText implements PdfRender, Breakable {
             cs.endText();
             cs.restoreGraphicsState();
             if (guideLines) {
-                renderingSystem.guideRenderer().guidesRender(e, DEFAULT_GUIDES);
+                renderingSystem.guidesRenderer().guidesRender(e, cs, DEFAULT_GUIDES);
             }
 
             result = true;

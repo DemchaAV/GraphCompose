@@ -1,15 +1,17 @@
 package com.demcha.components.layout.coordinator;
 
+import com.demcha.components.content.shape.Stroke;
 import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
-import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.geometry.OuterBoxSize;
-import com.demcha.components.layout.*;
+import com.demcha.components.layout.Anchor;
 import com.demcha.components.style.Margin;
 import com.demcha.components.style.Padding;
+import com.demcha.system.interfaces.RenderingSystemECS;
 import lombok.extern.slf4j.Slf4j;
 
+import java.awt.*;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -26,11 +28,13 @@ import java.util.Optional;
  * @param height The final height, including any vertical margins.
  */
 @Slf4j
-public record Placement(double x, double y, double width, double height, int startPage, int endPage) implements Component {
+public record Placement(double x, double y, double width, double height, int startPage,
+                        int endPage) implements Component {
 
 
     /**
      * Will be assign same page for @link{ #startPage and endPage} it means Entity will be located on one page not breakable
+     *
      * @param outerBoxSize
      * @param positionWithMargins
      * @param pageNumber
@@ -46,22 +50,22 @@ public record Placement(double x, double y, double width, double height, int sta
         var computedPosition = ComputedPosition.from(entity, parrentInnerBoxSize, paddingCoordinate);
         var outBoxSize = OuterBoxSize.from(entity).orElseThrow();
         var padding = entity.getComponent(Padding.class).get();
-        return new Placement(computedPosition.x(), computedPosition.y(), outBoxSize.width(), outBoxSize.height(),pageNumber,pageNumber);
+        return new Placement(computedPosition.x(), computedPosition.y(), outBoxSize.width(), outBoxSize.height(), pageNumber, pageNumber);
 
 
     }
 
-    public static Placement fromWithDefault(Entity entity, InnerBoxSize parrentInnerBoxSize,  PaddingCoordinate paddingCoordinate, int pageNumber) {
+    public static Placement fromWithDefault(Entity entity, InnerBoxSize parrentInnerBoxSize, PaddingCoordinate paddingCoordinate, int pageNumber) {
         var position = entity.getComponent(Position.class).orElse(Position.zero());
         entity.addComponent(position);
         var margin = entity.getComponent(Margin.class).orElse(Margin.zero());
         entity.addComponent(margin);
         var anchor = entity.getComponent(Anchor.class).orElse(Anchor.topLeft());
         entity.addComponent(anchor);
-        return from(entity, parrentInnerBoxSize,  paddingCoordinate, pageNumber);
+        return from(entity, parrentInnerBoxSize, paddingCoordinate, pageNumber);
     }
 
-// TODO надо сделать так что бы считало позицию исходя с родителей
+    // TODO надо сделать так что бы считало позицию исходя с родителей
     public static Placement from(Entity child, Entity parent, int pageNumber) {
         var parrentInnerBoxSize = InnerBoxSize.from(parent).orElseThrow();
         var paddingCoordinate = PaddingCoordinate.from(parent);
@@ -70,7 +74,7 @@ public record Placement(double x, double y, double width, double height, int sta
     }
 
 
-    public Optional<RenderCoordinateContext> renderCoordinate(Entity entity) {
+    public <S> Optional<RenderCoordinateContext> renderCoordinate(Entity entity, RenderingSystemECS<S> renderingSystem) {
         double x;
         double y;
         double width;
@@ -85,6 +89,8 @@ public record Placement(double x, double y, double width, double height, int sta
         y = y();
         width = width();
         height = height();
-        return Optional.of(new RenderCoordinateContext(x, y, width, height, startPage, endPage));
+        Color color = renderingSystem.guidLineSettings().BOX_COLOR();
+        Stroke stroke = renderingSystem.guidLineSettings().BOX_STROKE();
+        return Optional.of(new RenderCoordinateContext(x, y, width, height, startPage, endPage, stroke, color));
     }
 }

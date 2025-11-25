@@ -1,8 +1,10 @@
 package com.demcha.system.implemented_systems.pdf_systems;
 
 import com.demcha.components.components_builders.Canvas;
+import com.demcha.components.content.shape.Side;
 import com.demcha.components.content.shape.Stroke;
 import com.demcha.components.core.Entity;
+import com.demcha.components.layout.coordinator.RenderCoordinateContext;
 import com.demcha.core.EntityManager;
 import com.demcha.system.GuidLineSettings;
 import com.demcha.system.interfaces.RenderingSystemECS;
@@ -17,23 +19,16 @@ import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 
 import java.awt.*;
 import java.io.IOException;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 /**
- * PdfRenderingSystemECS — diagnostics & hardening
- * <p>
- * Goals:
- * 1) PROVE that margins are not sneaking into the drawn width/height.
- * 2) Avoid any chance that a buggy Padding.zero() leaks non-zero values.
- * 3) Atomically save without PDFBox overwrite warning.
+ * In current Class you can render a simple Figure like line rectangle cercl
  */
 @Slf4j
 @Getter
 @Accessors(fluent = true)
-public class PdfRenderingSystemECS implements RenderingSystemECS {
+public class PdfRenderingSystemECS implements RenderingSystemECS<PDPageContentStream> {
     private final PDDocument doc;
     private final Canvas canvas;
     private final GuidLineSettings guidLineSettings;
@@ -104,7 +99,6 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
         return canvas;
     }
 
-
     public boolean renderRectangle(Stroke stroke,
                                    PDPageContentStream cs,
                                    double x, double y,
@@ -134,8 +128,8 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
         return true;
     }
 
-
-    void fillCircle(PDPageContentStream cs, float cx, float cy, float r, Color fill) throws IOException {
+    @Override
+    public void fillCircle(PDPageContentStream cs, float cx, float cy, float r, Color fill) throws IOException {
         if (r <= 0) return;
 
         final float k = 0.552284749831f;
@@ -161,16 +155,80 @@ public class PdfRenderingSystemECS implements RenderingSystemECS {
     }
 
 
-
-
-
-    /**
-     * @return PdfGuidesRenderer
-     */
     @Override
-    public PdfGuidesRenderer guideRenderer() {
-        return (PdfGuidesRenderer)guidesRenderer;
+    public boolean renderBorder(PDPageContentStream stream, RenderCoordinateContext context, boolean lineDash, Set<Side> sides) throws IOException {
+        return renderBorder(stream, context.x(), context.y(), context.width(), context.height(), context.stroke(), context.color(), lineDash, sides);
     }
+
+    @Override
+    public boolean renderRectangle(PDPageContentStream stream, RenderCoordinateContext context, boolean lineDash) throws IOException {
+        return renderRectangle(context.stroke(), stream, context.x(), context.y(), context.width(), context.height(), context.color(), lineDash);
+    }
+
+    public boolean renderBorder(PDPageContentStream stream, double x, double y, double w, double h, Stroke stroke,
+                                Color color, boolean lineDash,
+                                Set<Side> sides) throws IOException { // Changed argument
+
+        // 1. Validation
+        if (w <= 0 || h <= 0 || sides == null || sides.isEmpty()) return false;
+
+        stream.saveGraphicsState();
+        try {
+            // 2. Graphics Setup (Opacity, Dash, Width, Color)
+            var gState = new PDExtendedGraphicsState();
+            // Assuming guidLineSettings is available in context, otherwise pass it or hardcode
+            gState.setStrokingAlphaConstant(1.0f); // Example value
+            stream.setGraphicsStateParameters(gState);
+
+            if (lineDash) {
+                stream.setLineDashPattern(new float[]{3f}, 0);
+            }
+
+            float lineWidth = (stroke != null) ? (float) stroke.width() : 1.0f;
+            stream.setLineWidth(lineWidth);
+            stream.setStrokingColor(color);
+
+            // 3. Drawing Logic
+            // Cast to float once for readability
+            float fx = (float) x;
+            float fy = (float) y;
+            float fw = (float) w;
+            float fh = (float) h;
+
+            // TOP: (x, y+h) -> (x+w, y+h)
+            if (sides.contains(Side.TOP) || sides.contains(Side.ALL)) {
+                stream.moveTo(fx, fy + fh);
+                stream.lineTo(fx + fw, fy + fh);
+            }
+
+            // BOTTOM: (x, y) -> (x+w, y)
+            if (sides.contains(Side.BOTTOM) || sides.contains(Side.ALL)) {
+                stream.moveTo(fx, fy);
+                stream.lineTo(fx + fw, fy);
+            }
+
+            // LEFT: (x, y) -> (x, y+h)
+            if (sides.contains(Side.LEFT) || sides.contains(Side.ALL)) {
+                stream.moveTo(fx, fy);
+                stream.lineTo(fx, fy + fh);
+            }
+
+            // RIGHT: (x+w, y) -> (x+w, y+h)
+            if (sides.contains(Side.RIGHT) || sides.contains(Side.ALL)) {
+                stream.moveTo(fx + fw, fy);
+                stream.lineTo(fx + fw, fy + fh);
+            }
+
+            // 4. Apply Stroke
+            stream.stroke();
+
+        } finally {
+            stream.restoreGraphicsState();
+        }
+        return true;
+    }
+
+
 }
 
 

@@ -16,6 +16,7 @@ import java.io.IOException;
 
 @Slf4j
 public record PdfStream(PDDocument doc, Canvas canvas) implements RenderStream<PDPageContentStream> {
+
     @Override
     public PDPageContentStream openContentStream(int pageIndex) throws IOException {
         int numberOfPages = doc.getNumberOfPages();

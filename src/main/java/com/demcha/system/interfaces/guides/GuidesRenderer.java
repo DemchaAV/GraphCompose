@@ -7,6 +7,7 @@ import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderCoordinateContext;
 import com.demcha.system.GuidLineSettings;
 import com.demcha.system.interfaces.RenderingSystemECS;
+import com.demcha.system.utils.page_breaker.PageOutOfBoundException;
 import lombok.NonNull;
 
 import java.io.IOException;
@@ -58,20 +59,46 @@ public interface GuidesRenderer<S extends AutoCloseable> {
 
     boolean guidesRender(Entity e, S stream, EnumSet<Guide> guides);
 
+    /**
+     * The starting page for this element, counted from the end of the document.
+     * For example, if a document has 3 pages and the element starts on the first page,
+     * its startPage (from the end) would be 3.
+     */
     default boolean guidesRender(Entity e, EnumSet<Guide> guides) throws IOException {
         var placement = e.getComponent(Placement.class).orElseThrow();
+        // The starting page for this element, counted from the end of the document.
+        // For example, if a document has 3 pages and the element starts on the first page,
+        // its startPage (from the end) would be 3.
         var startPage = placement.startPage();
         var endPage = placement.endPage();
-        if (startPage==endPage){
-            try(S stream = renderingSystem().stream().openContentStream(e)){
+        if (startPage == endPage) {
+            try (S stream = renderingSystem().stream().openContentStream(e)) {
                 return guidesRender(e, stream, guides);
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
 
 
-        }else{
-            return false;
+        } else {
+            int i = startPage;
+
+            while (i != endPage) {
+                if (i < 0) {
+                    throw new PageOutOfBoundException(i);
+                }
+                if (i == startPage) {
+                    //StartRendering
+                } else if (i == endPage) {
+                    //EndRendering
+
+                } else {
+                    //MiddleRendering
+                }
+                i--;
+            }
+
+
+            return true;
         }
 
 

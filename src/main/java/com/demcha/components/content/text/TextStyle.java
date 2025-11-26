@@ -19,6 +19,7 @@ import java.io.IOException;
 
 @Slf4j
 @Builder
+//TODO нужно сделать этот класс абстрактным для того что бы не ыбло привчзано к определенному шрифту  типу шрифта
 public record TextStyle(PDFont font, double size, TextDecoration decoration, Color color) implements Component {
 
     // 1) Fonts first

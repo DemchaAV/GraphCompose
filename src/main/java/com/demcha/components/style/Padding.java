@@ -51,7 +51,7 @@ public record Padding(double top, double right, double bottom, double left) impl
     }
 
     @Override
-    public <S>Optional<RenderCoordinateContext> renderCoordinate(Entity entity, RenderingSystemECS<S> renderingSystem) {
+    public <S extends AutoCloseable>Optional<RenderCoordinateContext> renderCoordinate(Entity entity, RenderingSystemECS<S> renderingSystem) {
         if (this.equals(zero())) {
             log.info("Padding is zero, return empty");
             return Optional.empty();

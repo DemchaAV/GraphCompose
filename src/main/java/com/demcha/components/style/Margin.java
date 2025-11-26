@@ -40,7 +40,7 @@ public record Margin(double top, double right, double bottom, double left) imple
         return new Margin(0, 0, 0, value);
     }
 
-    public <S>Optional<RenderCoordinateContext> renderCoordinate(Entity entity, RenderingSystemECS<S> renderingSystem) {
+    public <S extends AutoCloseable>Optional<RenderCoordinateContext> renderCoordinate(Entity entity, RenderingSystemECS<S> renderingSystem) {
         if (this.equals(Margin.zero())) {
             log.info("Margin is zero, return empty");
             return Optional.empty();

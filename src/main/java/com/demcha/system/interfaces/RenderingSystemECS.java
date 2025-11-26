@@ -13,10 +13,10 @@ import java.util.Set;
 /**
  * In current Class you can render a simple Figure like line rectangle cercl
  */
-public interface RenderingSystemECS<S> extends SystemECS {
+public interface RenderingSystemECS<S extends AutoCloseable> extends SystemECS {
     <T extends Canvas> T canvas();
 
-    <T extends GuidesRenderer> T guidesRenderer();
+    GuidesRenderer<S> guidesRenderer();
 
     <T extends RenderStream<S>> T stream();
 

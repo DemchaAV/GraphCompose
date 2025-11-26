@@ -8,6 +8,7 @@ import com.demcha.components.layout.coordinator.RenderCoordinateContext;
 import com.demcha.core.EntityManager;
 import com.demcha.system.GuidLineSettings;
 import com.demcha.system.interfaces.RenderingSystemECS;
+import com.demcha.system.interfaces.guides.GuidesRenderer;
 import com.demcha.system.utils.page_breaker.PageBreaker;
 import lombok.Getter;
 import lombok.NonNull;
@@ -34,7 +35,7 @@ public class PdfRenderingSystemECS implements RenderingSystemECS<PDPageContentSt
     private final GuidLineSettings guidLineSettings;
 
     private final PdfStream stream;
-    private final PdfGuidesRenderer guidesRenderer;
+    private final GuidesRenderer<PDPageContentStream> guidesRenderer;
 
 
     public PdfRenderingSystemECS(PDDocument doc, Canvas canvas) {

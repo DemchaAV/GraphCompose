@@ -74,7 +74,7 @@ public record Placement(double x, double y, double width, double height, int sta
     }
 
 
-    public <S> Optional<RenderCoordinateContext> renderCoordinate(Entity entity, RenderingSystemECS<S> renderingSystem) {
+    public <S extends AutoCloseable> Optional<RenderCoordinateContext> renderCoordinate(Entity entity, RenderingSystemECS<S> renderingSystem) {
         double x;
         double y;
         double width;

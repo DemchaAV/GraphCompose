@@ -7,5 +7,5 @@ import com.demcha.system.interfaces.RenderingSystemECS;
 import java.util.Optional;
 
 public interface RenderCoordinate {
-    <S> Optional<RenderCoordinateContext> renderCoordinate(Entity entity, RenderingSystemECS<S> renderingSystem);
+    <S extends AutoCloseable> Optional<RenderCoordinateContext> renderCoordinate(Entity entity, RenderingSystemECS<S> renderingSystem);
 }

@@ -35,10 +35,12 @@ public class Main {
                                   "    strong foundation in Core/Advanced Java, SQL, and object-oriented design. Passionate about clean " +
                                   "    code, robust architecture, and solving real-world problems. Ready to contribute to modern backend " +
                                   "    development projects and grow within a collaborative team. ";
+    public static Anchor MAIN_ANCHOR = Anchor.topRight();
 
     public static void main(String[] args) throws Exception {
         // 1. Setup Phase
         EntityManager entityManager = setupEntityManager(true);
+
 
         // 2. Content Creation and Layout
         createATableLayout(entityManager, "table");
@@ -83,7 +85,7 @@ public class Main {
                 createLinksColumn(entityManager, "rightColumn")
         );
         var row1 = createVContainer(entityManager, "row1", rows)
-                .addComponent(Anchor.center())
+                .addComponent(com.demcha.components.layout.Anchor.center())
                 .addComponent(Margin.zero());//delete a Margin from rows
 
         var rows2 = List.of(
@@ -100,7 +102,7 @@ public class Main {
 
 
         return createVContainer(entityManager, name, row1, row2, buttons, blockTextBuilder)
-                .addComponent(Anchor.center());
+                .addComponent(MAIN_ANCHOR);
     }
 
     private static Entity createASingleObject(EntityManager entityManager, String name) {

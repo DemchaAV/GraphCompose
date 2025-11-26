@@ -53,7 +53,7 @@ public record Padding(double top, double right, double bottom, double left) impl
     @Override
     public <S>Optional<RenderCoordinateContext> renderCoordinate(Entity entity, RenderingSystemECS<S> renderingSystem) {
         if (this.equals(zero())) {
-            log.warn("Padding is zero, return empty");
+            log.info("Padding is zero, return empty");
             return Optional.empty();
         }
         var inner = InnerBoxSize.from(entity).orElseThrow();

@@ -74,21 +74,27 @@ public interface GuideCoordinate<T extends AutoCloseable> {
     // Existing methods kept as requested
     boolean fromStream(@NonNull Entity entity, T stream);
 
-    default void renderMarkers(T stream, RenderCoordinateContext context) throws IOException {
-        final float radius = 3.5f;
+    default void markers(T stream, RenderCoordinateContext context) throws IOException {
+        final float radius = renderingSystem().guidLineSettings().MARKER_RADIUS();
         float cx = (float) context.x();
         float cy = (float) context.y();
-        renderingSystem().fillCircle(stream, cx, cy, radius, context.color());
-        renderingSystem().fillCircle(stream, cx, cy + (float) context.width(), radius, context.color());
-        renderingSystem().fillCircle(stream, cx + (float) context.width(), cy, radius, context.color());
-        renderingSystem().fillCircle(stream, cx + (float) context.width(), cy + (float) context.height(), radius, context.color());
+        var color = context.color();
+        float w = (float) context.width();
+        float h = (float) context.height();
+
+        renderingSystem().fillCircle(stream, cx, cy, radius, color);
+        renderingSystem().fillCircle(stream, cx, cy + h, radius, color);
+        renderingSystem().fillCircle(stream, cx + w, cy, radius, color);
+        renderingSystem().fillCircle(stream, cx + w, cy + h, radius, color);
+    }
+
+    // ---------------------------------------------------------
+    // 1. The Functional Interface (Contract for the logic)
+    // ---------------------------------------------------------
+    @FunctionalInterface
+    interface StreamRenderer<T> {
+        boolean render(RenderCoordinateContext context, T stream) throws Exception;
     }
 }
 
-// ---------------------------------------------------------
-// 1. The Functional Interface (Contract for the logic)
-// ---------------------------------------------------------
-@FunctionalInterface
-interface StreamRenderer<T> {
-    boolean render(RenderCoordinateContext context, T stream) throws Exception;
-}
+

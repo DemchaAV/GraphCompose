@@ -363,9 +363,7 @@ public class LayoutSystemImpl implements SystemECS {
                     double x = (size.width() - line.width() + padding.left()) / 2;
                     line.x(x);
                 }
-                default -> {
-                    continue;
-                }
+
             }
 
         }

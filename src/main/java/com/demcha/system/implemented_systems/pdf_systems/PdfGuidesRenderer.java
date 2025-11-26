@@ -11,9 +11,9 @@ import com.demcha.system.interfaces.guides.BoxRender;
 import com.demcha.system.interfaces.guides.GuidesRenderer;
 import com.demcha.system.interfaces.guides.MarginRender;
 import com.demcha.system.interfaces.guides.PaddingRender;
-import com.demcha.system.interfaces.guides.pdf_guides.PdfBoxRender;
-import com.demcha.system.interfaces.guides.pdf_guides.PdfMarginRender;
-import com.demcha.system.interfaces.guides.pdf_guides.PdfPaddingRender;
+import com.demcha.system.interfaces.guides.impl.BoxRenderImpl;
+import com.demcha.system.interfaces.guides.impl.MarginRenderImpl;
+import com.demcha.system.interfaces.guides.impl.PaddingRenderImpl;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -29,7 +29,7 @@ public record PdfGuidesRenderer(PdfRenderingSystemECS renderingSystem, BoxRender
                                 MarginRender<PDPageContentStream> margin,
                                 PaddingRender<PDPageContentStream> padding) implements GuidesRenderer<PDPageContentStream> {
     PdfGuidesRenderer(PdfRenderingSystemECS renderingSystem) {
-        this(renderingSystem, new PdfBoxRender<>(renderingSystem), new PdfMarginRender<>(renderingSystem), new PdfPaddingRender<>(renderingSystem));
+        this(renderingSystem, new BoxRenderImpl<>(renderingSystem), new MarginRenderImpl<>(renderingSystem), new PaddingRenderImpl<>(renderingSystem));
     }
 
     public static RenderGuideLinesException rethrowAsGuideLinesException(IOException io, String message) throws RenderGuideLinesException {

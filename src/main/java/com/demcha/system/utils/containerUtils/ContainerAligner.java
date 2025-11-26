@@ -65,7 +65,7 @@ public class ContainerAligner {
             log.debug("Aligning children of {} using {} strategy.", parent, stackAxis);
             strategy.alignChildren(parent, entityManager);
         } else {
-            log.warn("No layout strategy found for StackAxis: {}. No alignment will be performed.", stackAxis);
+            log.info("No layout strategy found for StackAxis: {}. No alignment will be performed.", stackAxis);
         }
     }
 

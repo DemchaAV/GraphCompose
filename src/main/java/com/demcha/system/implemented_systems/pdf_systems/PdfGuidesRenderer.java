@@ -14,7 +14,11 @@ import com.demcha.system.interfaces.guides.PaddingRender;
 import com.demcha.system.interfaces.guides.impl.BoxRenderImpl;
 import com.demcha.system.interfaces.guides.impl.MarginRenderImpl;
 import com.demcha.system.interfaces.guides.impl.PaddingRenderImpl;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
@@ -25,11 +29,13 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 @Slf4j
-public record PdfGuidesRenderer(PdfRenderingSystemECS renderingSystem, BoxRender<PDPageContentStream> box,
-                                MarginRender<PDPageContentStream> margin,
-                                PaddingRender<PDPageContentStream> padding) implements GuidesRenderer<PDPageContentStream> {
+@Getter
+@Accessors(fluent = true)
+public class PdfGuidesRenderer extends GuidesRenderer<PDPageContentStream> {
+
+
     PdfGuidesRenderer(PdfRenderingSystemECS renderingSystem) {
-        this(renderingSystem, new BoxRenderImpl<>(renderingSystem), new MarginRenderImpl<>(renderingSystem), new PaddingRenderImpl<>(renderingSystem));
+        super(renderingSystem, new BoxRenderImpl<>(renderingSystem), new MarginRenderImpl<>(renderingSystem), new PaddingRenderImpl<>(renderingSystem));
     }
 
     public static RenderGuideLinesException rethrowAsGuideLinesException(IOException io, String message) throws RenderGuideLinesException {
@@ -48,15 +54,6 @@ public record PdfGuidesRenderer(PdfRenderingSystemECS renderingSystem, BoxRender
     }
 
 
-    private void renderMarkers(PDPageContentStream cs, double x, double y, double w, double h, Color color) throws IOException {
-        final float radius = 3.5f;
-        float cx = (float) x;
-        float cy = (float) y;
-        renderingSystem.fillCircle(cs, cx, cy, radius, color);
-        renderingSystem.fillCircle(cs, cx, cy + (float) h, radius, color);
-        renderingSystem.fillCircle(cs, cx + (float) w, cy, radius, color);
-        renderingSystem.fillCircle(cs, cx + (float) w, cy + (float) h, radius, color);
-    }
 
 
     public boolean guidesRender(Entity e, PDPageContentStream cs, EnumSet<Guide> guides) throws RenderGuideLinesException {
@@ -69,25 +66,5 @@ public record PdfGuidesRenderer(PdfRenderingSystemECS renderingSystem, BoxRender
     }
 
 
-    private <T extends RenderCoordinate & Component>
-    Optional<RenderCoordinateContext> resolveCoordinateContext(
-            Entity e,
-            @NonNull GuidLineSettings guidLineSettings,
-            Class<T> componentClass,
-            Supplier<T> defaultSupplier
-    ) {
-        if (!renderingSystem.guidLineSettings().showOnlySetGuide()) {
-            return Optional.empty();
-        }
-
-        // Берём компонент или default (Margin.zero() / Padding.zero())
-        T context = e.getComponent(componentClass)
-                .orElseGet(() -> {
-                    log.info("{} is {} ", componentClass, defaultSupplier.get());
-                    return defaultSupplier.get();
-                });
-
-        return context.renderCoordinate(e, renderingSystem());
-    }
 
 }

@@ -7,6 +7,8 @@ import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderingPosition;
+import com.demcha.system.implemented_systems.pdf_systems.PdfStream;
+import com.demcha.system.interfaces.RenderStream;
 import com.demcha.system.interfaces.guides.GuidesRenderer;
 import com.demcha.system.implemented_systems.pdf_systems.PdfRender;
 import com.demcha.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
@@ -137,7 +139,8 @@ public class BlockText implements PdfRender, Breakable {
         boolean result = false;
         PDPageContentStream cs = null;
         try {
-            cs = renderingSystem.stream() .openContentSteamForTextData(currentPage, font, fontSize, color);
+            PdfStream stream = (PdfStream) renderingSystem.stream();
+            cs = stream.openContentSteamForTextData(currentPage, font, fontSize, color);
             boolean isStarted = false;
 
             for (LineTextData ltd : blockTextData) {
@@ -149,7 +152,8 @@ public class BlockText implements PdfRender, Breakable {
 
                 if (currentPage != ltd.page()) {
                     currentPage = ltd.page();
-                    cs = renderingSystem.stream().reopenContentStreamForTextData(cs, currentPage, font, fontSize, color);
+
+                    cs = stream.reopenContentStreamForTextData(cs, currentPage, font, fontSize, color);
                 }
 
                 cs.setTextMatrix(new Matrix(1, 0, 0, 1, (float) ltd.x(), (float) ltd.y()));

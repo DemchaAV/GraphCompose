@@ -53,8 +53,17 @@ public interface GuideCoordinate<T extends AutoCloseable> {
     }
 
     default boolean startFromStream(@NonNull RenderCoordinateContext context, @NonNull T stream) throws RenderGuideLinesException, IOException {
+        float canvasTopLine = renderingSystem().canvas().boundingTopLine();
+        var startHeight = canvasTopLine - context.y();
+        RenderCoordinateContext coordinateContext = new RenderCoordinateContext(context.x(), startHeight, context.width(), context.height(), context.startPage(), context.endPage(), context.stroke(), context.color());
+
+
         Set<Side> sides = Set.of(Side.LEFT, Side.RIGHT, Side.BOTTOM);
-        return renderingSystem().renderBorder(stream, context, true, sides);
+
+        boolean lineDash = !context.stroke().equals(
+                renderingSystem().guidLineSettings().BOX_STROKE()
+        );
+        return renderingSystem().renderBorder(stream, coordinateContext, lineDash, sides);
     }
 
     // ---------------------------------------------------------
@@ -63,12 +72,18 @@ public interface GuideCoordinate<T extends AutoCloseable> {
 
     default boolean middleFromStream(@NonNull RenderCoordinateContext context, @NonNull T stream) throws RenderGuideLinesException, IOException {
         Set<Side> sides = Set.of(Side.LEFT, Side.RIGHT);
-        return renderingSystem().renderBorder(stream, context, true, sides);
+        boolean lineDash = !context.stroke().equals(
+                renderingSystem().guidLineSettings().BOX_STROKE()
+        );
+        return renderingSystem().renderBorder(stream, context, lineDash, sides);
     }
 
     default boolean endFromStream(@NonNull RenderCoordinateContext context, @NonNull T stream) throws RenderGuideLinesException, IOException {
         Set<Side> sides = Set.of(Side.LEFT, Side.RIGHT, Side.TOP);
-        return renderingSystem().renderBorder(stream, context, true, sides);
+        boolean lineDash = !context.stroke().equals(
+                renderingSystem().guidLineSettings().BOX_STROKE()
+        );
+        return renderingSystem().renderBorder(stream, context, lineDash, sides);
     }
 
     // Existing methods kept as requested

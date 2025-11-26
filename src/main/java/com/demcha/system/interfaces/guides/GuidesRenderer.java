@@ -1,5 +1,6 @@
 package com.demcha.system.interfaces.guides;
 
+import com.demcha.components.content.shape.Stroke;
 import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.layout.RenderCoordinate;
@@ -7,18 +8,19 @@ import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderCoordinateContext;
 import com.demcha.exceptions.RenderGuideLinesException;
 import com.demcha.system.GuidLineSettings;
-import com.demcha.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
 import com.demcha.system.interfaces.RenderingSystemECS;
 import com.demcha.system.utils.page_breaker.PageOutOfBoundException;
 import lombok.Data;
 import lombok.NonNull;
+import lombok.ToString;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.io.IOException;
-import java.util.EnumSet;
-import java.util.Optional;
+import java.util.*;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -36,14 +38,22 @@ import java.util.function.Supplier;
 @Data
 @Accessors(fluent = true)
 public abstract class GuidesRenderer<S extends AutoCloseable> {
+    @ToString.Exclude
     protected final RenderingSystemECS<S> renderingSystem;
     protected final BoxRender<S> box;
     protected final MarginRender<S> margin;
     protected final PaddingRender<S> padding;
 
+    private static RenderGuideLinesException rethrowAsGuideLinesException(IOException io, String message) throws RenderGuideLinesException {
+        return new RenderGuideLinesException(message, io);
+    }
 
+    @NotNull
+    private static RenderCoordinateContext update(RenderCoordinateContext contextBreakable, double y, double height) {
+        return new RenderCoordinateContext(contextBreakable.x(), y, contextBreakable.width(), height, contextBreakable.startPage(), contextBreakable.endPage(), contextBreakable.stroke(), contextBreakable.color());
+    }
 
-    protected  <T extends RenderCoordinate & Component>
+    protected <T extends RenderCoordinate & Component>
     Optional<RenderCoordinateContext> resolveCoordinateContext(
             Entity e,
             @NonNull GuidLineSettings guidLineSettings,
@@ -79,47 +89,194 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
      * For example, if a document has 3 pages and the element starts on the first page,
      * its startPage (from the end) would be 3.
      */
-    public boolean guidesRender(Entity e, EnumSet<Guide> guides) throws IOException {
-        var placement = e.getComponent(Placement.class).orElseThrow();
-        // The starting page for this element, counted from the end of the document.
-        // For example, if a document has 3 pages and the element starts on the first page,
-        // its startPage (from the end) would be 3.
+    public boolean guidesRender(Entity e, EnumSet<Guide> guides) {
+        // Java 17+ var usage
+        var placement = e.getComponent(Placement.class)
+                .orElseThrow(() -> new IllegalStateException("Entity missing Placement component"));
+
         var startPage = placement.startPage();
         var endPage = placement.endPage();
-        if (startPage == endPage) {
-            try (S stream = renderingSystem.stream().openContentStream(e)) {
+
+        // Single page scenario
+        if (startPage == endPage || startPage == 0 && endPage == -1) {
+            try (var stream = renderingSystem.stream().openContentStream(e)) {
                 return guidesRender(e, stream, guides);
             } catch (Exception ex) {
-                throw new RuntimeException(ex);
+                log.error("Failed to render guides on single page for entity {}", e, ex);
+                throw new RuntimeException("Rendering failed", ex);
+            }
+        }
+
+        // Multi-page scenario
+        // 1. Break coordinates into fragments (List<Context>)
+        var boxFragments = breakCoordinate(Optional.of(boxCoordinate(e)));
+        var marginFragments = breakCoordinate(margin().margin(e));
+        var paddingFragments = breakCoordinate(padding().padding(e));
+
+        int renderingPage = startPage;
+
+        log.debug("Rendering spanned multiple pages for entity: {}. Start: {}, End: {}", e, startPage, endPage);
+
+        while (renderingPage >= endPage) {
+            if (renderingPage < 0) {
+                throw new PageOutOfBoundException(renderingPage);
             }
 
+            // 2. Calculate Relative Index
+            // If startPage is 10 and we are at 10, index is 0 (First fragment).
+            int fragmentIndex = startPage - renderingPage;
 
-        } else {
-            int i = startPage;
+            // 3. Safety Check (Prevent IndexOutOfBounds on the PRIMARY list)
+            if (fragmentIndex >= boxFragments.size()) {
+                log.error("Fragment index {} exceeds available box fragments {}", fragmentIndex, boxFragments.size());
+                break;
+            }
 
-            while (i != endPage) {
-                if (i < 0) {
-                    throw new PageOutOfBoundException(i);
-                }
-                if (i == startPage) {
-                    //StartRendering
-                } else if (i == endPage) {
-                    //EndRendering
+            try (var stream = renderingSystem.stream().openContentStream(renderingPage)) {
 
+                // 4. Retrieve correct fragments safely
+                // Box is guaranteed by the check above
+                var currentBox = boxFragments.get(fragmentIndex);
+
+                // Margin and Padding might be empty lists if the entity doesn't have them.
+                // We use a safe check to return null if the list is empty or index is out of bounds.
+                var currentMargin = (fragmentIndex < marginFragments.size()) ? marginFragments.get(fragmentIndex) : null;
+                var currentPadding = (fragmentIndex < paddingFragments.size()) ? paddingFragments.get(fragmentIndex) : null;
+
+                // 5. Delegate rendering based on position
+                if (renderingPage == startPage) {
+                    try {
+                        startGuidesFromStream(stream, currentBox, currentMargin, currentPadding);
+                    } catch (Exception ex) {
+                        throw new RuntimeException("Error during rendering Start page  " + renderingPage, ex);
+                    }
+
+
+                } else if (renderingPage == endPage) {
+                    try {
+                        endGuidesFromStream(stream, currentBox, currentMargin, currentPadding);
+                    } catch (Exception ex) {
+                        throw new RuntimeException("Error during rendering end page  " + renderingPage, ex);
+                    }
                 } else {
-                    //MiddleRendering
+                    try {
+                        middleGuidesFromStream(stream, currentBox, currentMargin, currentPadding);
+                    } catch (Exception ex) {
+                        throw new RuntimeException("Error during rendering midlle page  " + renderingPage, ex);
+                    }
                 }
-                i--;
+
+            } catch (Exception ex) {
+                log.error("Failed to render guides on single page for entity {} \n {}", e, e.printInfo(), ex);
+                throw new RuntimeException("Error during rendering page " + renderingPage, ex);
             }
 
+            renderingPage--;
+        }
 
-            return true;
+        return true;
+    }
+
+    private void middleGuidesFromStream(S stream, RenderCoordinateContext boxContext, RenderCoordinateContext marginContext, RenderCoordinateContext paddingContext) throws IOException {
+        if (boxContext != null) {
+
+            box().middleFromStream(boxContext, stream);
+        }
+        if (marginContext != null) {
+
+            margin().middleFromStream(marginContext, stream);
+        }
+        if (paddingContext != null) {
+
+            padding().middleFromStream(paddingContext, stream);
+        }
+
+    }
+
+    private void endGuidesFromStream(S stream, RenderCoordinateContext boxContext, RenderCoordinateContext marginContext, RenderCoordinateContext paddingContext) throws IOException {
+        RenderCoordinateContext margin;
+        if (boxContext != null) {
+
+            box().endFromStream(boxContext, stream);
+        }
+        if (marginContext != null) {
+
+            margin().endFromStream(marginContext, stream);
+        }
+        if (paddingContext != null) {
+
+            padding().endFromStream(paddingContext, stream);
+        }
+
+    }
+
+    public List<RenderCoordinateContext> breakCoordinate(Optional<RenderCoordinateContext> contextOptional) {
+        // 1. Guard Clause: Handle empty Optional immediately
+        if (contextOptional.isEmpty()) {
+            return Collections.emptyList(); // Return immutable empty list
+        }
+
+        var sourceContext = contextOptional.get();
+        var resultSegments = new ArrayList<RenderCoordinateContext>();
+
+        // 2. Setup rendering constants
+        // assuming 'renderingSystem()' is available in this scope
+        var canvas = renderingSystem().canvas();
+        var canvasHeight = canvas.height();
+        double boundingBottom = canvas.boundingBottomLine();
+
+        // 3. Logic Setup
+        double currentY = sourceContext.y();
+        double remainingHeightToRender = sourceContext.height();
+        double currentAccumulatedBoundary = canvasHeight;
+
+        // 4. Loop to slice the content
+        // While the content extends beyond the current page boundary
+        while ((currentY + remainingHeightToRender) > currentAccumulatedBoundary) {
+
+            // Calculate how much fits on the current page
+            double heightOnCurrentPage = currentAccumulatedBoundary - currentY;
+
+            // Add the slice for the current page
+            resultSegments.add(update(sourceContext, currentY, heightOnCurrentPage));
+
+            // Update tracking variables for the NEXT page
+            remainingHeightToRender -= heightOnCurrentPage;
+            currentY = boundingBottom; // New segment starts at top of valid area (bottom line?)
+            currentAccumulatedBoundary += canvasHeight;
+        }
+
+        // 5. Add the final remaining piece
+        if (remainingHeightToRender > 0) {
+            resultSegments.add(update(sourceContext, currentY, remainingHeightToRender));
+        }
+
+        return resultSegments;
+    }
+
+    private void startGuidesFromStream(S stream, RenderCoordinateContext boxContext, RenderCoordinateContext marginContext, RenderCoordinateContext paddingContext) throws IOException {
+        if (boxContext != null) {
+
+            box().startFromStream(boxContext, stream);
+        }
+        if (marginContext != null) {
+
+            margin().startFromStream(marginContext, stream);
+        }
+        if (paddingContext != null) {
+            padding().startFromStream(paddingContext, stream);
+
         }
 
 
     }
-    private static RenderGuideLinesException rethrowAsGuideLinesException(IOException io, String message) throws RenderGuideLinesException {
-        return new RenderGuideLinesException(message, io);
+
+    @NotNull
+    private RenderCoordinateContext boxCoordinate(Entity e) {
+        Stroke stroke = renderingSystem().guidLineSettings().BOX_STROKE();
+        Color color = renderingSystem().guidLineSettings().BOX_COLOR();
+        var context = com.demcha.components.layout.coordinator.RenderCoordinateContext.createBox(e, stroke, color);
+        return context;
     }
 
 

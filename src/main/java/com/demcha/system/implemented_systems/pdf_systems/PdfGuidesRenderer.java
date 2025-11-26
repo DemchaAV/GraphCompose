@@ -14,7 +14,6 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 @Accessors(fluent = true)
 public class PdfGuidesRenderer extends GuidesRenderer<PDPageContentStream> {
 
-
     PdfGuidesRenderer(PdfRenderingSystemECS renderingSystem) {
         super(renderingSystem, new BoxRenderImpl<>(renderingSystem), new MarginRenderImpl<>(renderingSystem), new PaddingRenderImpl<>(renderingSystem));
     }

@@ -7,7 +7,7 @@ import com.demcha.components.core.Entity;
 import com.demcha.components.layout.coordinator.RenderCoordinateContext;
 import com.demcha.core.EntityManager;
 import com.demcha.system.GuidLineSettings;
-import com.demcha.system.interfaces.RenderingSystemECS;
+import com.demcha.system.implemented_systems.RenderingSystemBase;
 import com.demcha.system.interfaces.guides.GuidesRenderer;
 import com.demcha.system.utils.page_breaker.PageBreaker;
 import lombok.Getter;
@@ -29,21 +29,18 @@ import java.util.List;
 @Slf4j
 @Getter
 @Accessors(fluent = true)
-public class PdfRenderingSystemECS implements RenderingSystemECS<PDPageContentStream> {
+public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStream> {
     private final PDDocument doc;
-    private final Canvas canvas;
-    private final GuidLineSettings guidLineSettings;
-
-    private final PdfStream stream;
-    private final GuidesRenderer<PDPageContentStream> guidesRenderer;
-
 
     public PdfRenderingSystemECS(PDDocument doc, Canvas canvas) {
+        super(
+                canvas,
+                new GuidLineSettings(),
+                new PdfStream(doc, canvas)
+        );
         this.doc = doc;
-        this.canvas = canvas;
-        this.stream = new PdfStream(doc, canvas);
-        this.guidLineSettings = new GuidLineSettings();
-        guidesRenderer = new PdfGuidesRenderer(this);
+        guidesRendererInitializer(new PdfGuidesRenderer(this));
+
     }
 
 
@@ -84,6 +81,14 @@ public class PdfRenderingSystemECS implements RenderingSystemECS<PDPageContentSt
 
         }
 
+    }
+
+    /**
+     * @param guidesRenderer
+     */
+    @Override
+    protected void guidesRendererInitializer(GuidesRenderer<PDPageContentStream> guidesRenderer) {
+        guidesRenderer(guidesRenderer);
     }
 
 

@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @UtilityClass
 public class EntitySorter {
-    // === Sorting =============================================================
 
     /**
      * Sorts the given map of entities by their Y-position in **descending** order (top to bottom).

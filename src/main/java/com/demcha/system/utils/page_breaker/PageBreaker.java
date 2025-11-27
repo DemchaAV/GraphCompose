@@ -111,6 +111,10 @@ public class PageBreaker {
                         definePlacement(canvas, entity, yOffset, false);
 
                     } else {
+                        //TODO для дебага надо будет удалить
+                        if (entity.hasAssignable(BlockText.class)) {
+                            log.info(entity.printInfo());
+                        }
                         definePlacement(canvas, entity, yOffset, true);
                         if (entity.hasAssignable(BlockText.class)) {
                             try {

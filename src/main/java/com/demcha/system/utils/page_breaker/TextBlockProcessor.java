@@ -101,6 +101,7 @@ public class TextBlockProcessor {
 
 
         for (LineTextData ltd : blockTextData) {
+
             if (!isStarted) {
                 log.debug("Started print a block text, Position Y is {}", startY);
                 isStarted = true;

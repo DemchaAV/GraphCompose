@@ -2,8 +2,9 @@ package com.demcha;
 
 public class MathTest {
     public static void main(String[] args) {
-        double testNumber = -0.1;
-        double floor = Math.floor(testNumber);
-        System.out.println(floor);
+        for (int i = 0; i < 100; i++) {
+            System.out.println(i + ". Test text line  We will se how we break our text in to the pages");
+
+        }
     }
 }

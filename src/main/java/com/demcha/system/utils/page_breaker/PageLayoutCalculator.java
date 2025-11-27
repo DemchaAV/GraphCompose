@@ -259,7 +259,9 @@ public class PageLayoutCalculator {
                 currentPageNumber, isBreakable, yOffset);
 
         int pageOffset = definePage(currentPositionY, canvasTopBondingLine); // may be negative, zero, or positive
-        int startPage = Math.addExact(currentPageNumber, pageOffset); // detect overflow
+        int startPage =    Math.addExact(currentPageNumber, pageOffset);
+        System.out.println(" Page Offset"+ pageOffset);// detect overflow
+        System.out.println(" Start Page"+ startPage);// detect overflow
         if (startPage < 0) {
             log.error("Invalid page number {}", startPage);
             throw new IllegalArgumentException("Page number is less than zero after pageOffset: " + startPage);

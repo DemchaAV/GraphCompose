@@ -308,25 +308,39 @@ public final class Entity {
 
     public boolean updateParent(EntityManager manager, Offset offset) {
         if (offset == null) {
+            log.error("Offset cannot be null");
+            return false;
+        }
+        return updateParent(manager, offset.y());
+    }
+
+    public boolean updateParent(EntityManager manager, double offsetY) {
+
+        if (offsetY == 0) {
+            log.info("offset is zero");
             return false;
         }
         ParentComponent parentComponent = this.getComponent(ParentComponent.class).orElse(null);
+        if (parentComponent == null) {
+            log.error("Parent component cannot be found for entity [{}] updateSize() aborted", this);
+            return false;
+        }
         var parent = manager.getEntity(parentComponent.uuid()).orElse(null);
         var computedPos = parent.getComponent(ComputedPosition.class).orElseThrow();
         var size = parent.getComponent(ContentSize.class).orElseThrow();
         if (parent == null) {
             return false;
         } else {
-            if (offset.y() < 0) {
-                double y = computedPos.y() + offset.y();
-                double height = size.height() + Math.floor(offset.y());
+            if (offsetY < 0) {
+                double y = computedPos.y() + offsetY;
+                double height = size.height() + Math.floor(offsetY);
                 parent.addComponent(new ComputedPosition(computedPos.x(), y));
                 parent.addComponent(new ContentSize(size.width(), height));
-            }else{
-                double height = size.height() + Math.floor(offset.y());
+            } else {
+                double height = size.height() + Math.floor(offsetY);
                 parent.addComponent(new ContentSize(size.width(), height));
             }
-            parent.updateParent(manager, offset);
+            parent.updateParent(manager, offsetY);
 
         }
         return true;

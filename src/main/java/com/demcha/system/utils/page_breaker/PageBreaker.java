@@ -405,6 +405,7 @@ public class PageBreaker {
             log.debug("Shift: {}", shift);
             if (shift < 0) {
 
+
                 yInPage += shift;
                 startPage++;
                 yOffset.incrementY(shift);

@@ -1,6 +1,7 @@
 package com.demcha.components.core;
 
 import com.demcha.components.geometry.ContentSize;
+import com.demcha.components.layout.ParentComponent;
 import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.style.Margin;
@@ -303,6 +304,32 @@ public final class Entity {
         });
         return childrenInfo.toString();
 
+    }
+
+    public boolean updateParent(EntityManager manager, Offset offset) {
+        if (offset == null) {
+            return false;
+        }
+        ParentComponent parentComponent = this.getComponent(ParentComponent.class).orElse(null);
+        var parent = manager.getEntity(parentComponent.uuid()).orElse(null);
+        var computedPos = parent.getComponent(ComputedPosition.class).orElseThrow();
+        var size = parent.getComponent(ContentSize.class).orElseThrow();
+        if (parent == null) {
+            return false;
+        } else {
+            if (offset.y() < 0) {
+                double y = computedPos.y() + offset.y();
+                double height = size.height() + Math.floor(offset.y());
+                parent.addComponent(new ComputedPosition(computedPos.x(), y));
+                parent.addComponent(new ContentSize(size.width(), height));
+            }else{
+                double height = size.height() + Math.floor(offset.y());
+                parent.addComponent(new ContentSize(size.width(), height));
+            }
+            parent.updateParent(manager, offset);
+
+        }
+        return true;
     }
 
     public String printInfo() {

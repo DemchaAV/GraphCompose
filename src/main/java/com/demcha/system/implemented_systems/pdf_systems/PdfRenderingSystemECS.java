@@ -9,6 +9,7 @@ import com.demcha.core.EntityManager;
 import com.demcha.system.GuidLineSettings;
 import com.demcha.system.implemented_systems.RenderingSystemBase;
 import com.demcha.system.interfaces.guides.GuidesRenderer;
+import com.demcha.system.utils.page_breaker.EntitySorter;
 import com.demcha.system.utils.page_breaker.PageBreaker;
 import lombok.Getter;
 import lombok.NonNull;
@@ -52,9 +53,8 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
 
         for (Map.Entry<Integer, List<UUID>> e : entities.entrySet()) {
             var entitiesUuid = e.getValue();
-            LinkedHashMap<UUID, Entity> uuidEntityLinkedHashMap = PageBreaker.sortByYPositionToMap(entityManager, entitiesUuid);
+            LinkedHashMap<UUID, Entity> uuidEntityLinkedHashMap = EntitySorter.sortByYPositionToMap(entityManager, entitiesUuid);
 
-            PageBreaker.sortByYPositionToMap(entityManager, entitiesUuid);
 
             uuidEntityLinkedHashMap.forEach((uuid, entity) -> {
                 if (entity.hasRender()) {

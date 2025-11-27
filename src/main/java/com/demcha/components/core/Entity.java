@@ -337,7 +337,7 @@ public final class Entity {
                 parent.addComponent(new ComputedPosition(computedPos.x(), y));
                 parent.addComponent(new ContentSize(size.width(), height));
             } else {
-                double height = size.height() + Math.floor(offsetY);
+                double height = size.height() + offsetY;
                 parent.addComponent(new ContentSize(size.width(), height));
             }
             parent.updateParent(manager, offsetY);

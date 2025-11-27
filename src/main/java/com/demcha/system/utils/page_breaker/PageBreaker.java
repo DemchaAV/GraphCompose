@@ -1,13 +1,9 @@
 package com.demcha.system.utils.page_breaker;
 
-import com.demcha.components.LineTextData;
 import com.demcha.components.components_builders.Canvas;
 import com.demcha.components.content.text.BlockTextData;
-import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
-import com.demcha.components.geometry.InnerBoxSize;
-import com.demcha.components.layout.Align;
 import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderingPosition;
@@ -22,12 +18,12 @@ import lombok.Data;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.pdfbox.pdmodel.font.PDFont;
-import org.apache.pdfbox.pdmodel.font.PDFontDescriptor;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.UUID;
+
 
 /**
  * A utility class responsible for the logic of breaking content across pages.
@@ -47,124 +43,17 @@ import java.util.stream.Collectors;
 @Accessors(chain = true)
 public class PageBreaker {
     private final EntityManager entityManager;
+    private PageLayoutCalculator pageLayoutCalculator;
+    private PageLayoutCalculator layoutCalculator;
+    private TextBlockProcessor textBlockProcessor;
 
-
-    // === Sorting =============================================================
-
-    /**
-     * Sorts the given map of entities by their Y-position in **descending** order (top to bottom).
-     * <p>
-     * Sorting is based on the {@code RenderingPosition} component of each {@link Entity}.
-     * The result is a {@link Set} of {@link Map.Entry} objects, with order preserved
-     * by collecting into a {@link LinkedHashSet}.
-     *
-     * @param entities A map where keys are {@link UUID}s and values are {@link Entity} objects to be sorted. Must not be null.
-     * @return A {@code Set} of map entries, sorted by Y-position in descending order.
-     * @throws NullPointerException  if the input map is null.
-     * @throws IllegalStateException if any entity is missing a {@code RenderingPosition}.
-     */
-    public static Set<Map.Entry<UUID, Entity>> sortByYPosition(Map<UUID, Entity> entities) {
-        Objects.requireNonNull(entities, "entities must not be null");
-
-        return entities.entrySet().stream()
-                .sorted(Comparator.comparingDouble((Map.Entry<UUID, Entity> e) -> yOf(e.getValue()))
-                        .reversed())
-                .peek(entry -> {
-                    Optional<RenderingPosition> pos = RenderingPosition.from(entry.getValue());
-                    log.debug("{} -> {}", entry.getValue(), pos.orElse(null));
-                })
-
-                .collect(Collectors.toCollection(LinkedHashSet::new));
+    public PageBreaker(EntityManager entityManager) {
+        this.entityManager = entityManager;
+        this.pageLayoutCalculator = new PageLayoutCalculator(entityManager);
+        this.layoutCalculator = new PageLayoutCalculator(entityManager);
+        this.textBlockProcessor = new TextBlockProcessor(entityManager);
     }
 
-    /**
-     * Sorts the given map of entities by their Y-position in **descending** order
-     * and returns the result as a new {@link LinkedHashMap}.
-     * <p>
-     * This method provides a convenient map-based view where the iteration order matches the sorted order.
-     *
-     * @param entities A map where keys are {@link UUID}s and values are {@link Entity} objects to be sorted. Must not be null.
-     * @return A {@code LinkedHashMap} with entities ordered by Y-position, descending.
-     * @throws NullPointerException  if the input map is null.
-     * @throws IllegalStateException if any entity is missing a {@code RenderingPosition}.
-     */
-    public static LinkedHashMap<UUID, Entity> sortByYPositionToMap(Map<UUID, Entity> entities) {
-        Objects.requireNonNull(entities, "entities must not be null");
-
-        return entities.entrySet().stream()
-                .sorted(Comparator.comparingDouble((Map.Entry<UUID, Entity> e) -> yOf(e.getValue()))
-                        .reversed())
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (a, b) -> a,
-                        LinkedHashMap::new
-                ));
-    }
-
-    /**
-     * Loads entities by their UUID from an {@link EntityManager} and sorts them by Y-position.
-     *
-     * @param entityManager The entity manager to retrieve {@link Entity} objects from.
-     * @param entityUuids   A set of UUIDs for the entities to be sorted.
-     * @return A {@code LinkedHashMap} with entities ordered by Y-position, descending.
-     * @see #sortByYPositionToMap(Map)
-     */
-    public static LinkedHashMap<UUID, Entity> sortByYPositionToMap(EntityManager entityManager, Set<UUID> entityUuids) {
-        Objects.requireNonNull(entityUuids, "entities must not be null");
-
-
-        return sortByYPositionToMap(entityManager.getSetEntitiesFromUuids(entityUuids));
-    }
-
-    /**
-     * Loads entities by their UUID from an {@link EntityManager} and sorts them by Y-position.
-     *
-     * @param entityManager The entity manager to retrieve {@link Entity} objects from.
-     * @param entityUuids   A list of UUIDs for the entities to be sorted.
-     * @return A {@code LinkedHashMap} with entities ordered by Y-position, descending.
-     * @see #sortByYPositionToMap(Map)
-     */
-    public static LinkedHashMap<UUID, Entity> sortByYPositionToMap(EntityManager entityManager, List<UUID> entityUuids) {
-        Objects.requireNonNull(entityUuids, "entities must not be null");
-
-
-        return sortByYPositionToMap(entityManager.getSetEntitiesFromUuids(new HashSet<>(entityUuids)));
-    }
-
-    /**
-     * Sorts the given set of entities by their Y-position and returns the result as a {@link LinkedHashMap}.
-     *
-     * @param entities A set of entities to be sorted.
-     * @return A {@code LinkedHashMap} with entities ordered by Y-position, descending.
-     * @see #sortByYPositionToMap(Map)
-     */
-    public static LinkedHashMap<UUID, Entity> sortByYPositionToMap(Set<Entity> entities) {
-        Objects.requireNonNull(entities, "entities must not be null");
-
-        return entities.stream()
-                .sorted(Comparator.comparingDouble(PageBreaker::yOf).reversed())
-                .collect(Collectors.toMap(
-                        Entity::getUuid,           // key mapper → UUID
-                        e -> e,                  // value mapper → Entity
-                        (a, b) -> a,             // merge function (shouldn't happen)
-                        LinkedHashMap::new       // preserve order
-                ));
-    }
-
-    /**
-     * A helper method to extract the Y-coordinate from an entity's {@link RenderingPosition} component.
-     *
-     * @param e The entity from which to extract the coordinate.
-     * @return The Y-coordinate value.
-     * @throws IllegalStateException if the entity is missing a {@code RenderingPosition}.
-     */
-    private static double yOf(Entity e) {
-        return RenderingPosition.from(e)
-                .map(RenderingPosition::y)
-                .orElseThrow(() -> new IllegalStateException(
-                        "Entity " + e + " has no RenderingPosition"));
-    }
 
     // === Paging math =========================================================
 
@@ -178,192 +67,17 @@ public class PageBreaker {
         return setYInPlacement(entity, position.yPosition(), position.startPage(), position.endPage());
     }
 
-    /**
-     * Calculates the page offset relative to a starting page.
-     * <p>
-     * Given an absolute Y-coordinate and a fixed {@code pageHeight} ($H$), this
-     * determines how many pages away the coordinate is from the page that starts at Y=0.
-     * The offset is defined as follows (with the Y-axis pointing down):
-     * <ul>
-     * <li>$Y \in [0, H)$ $\rightarrow$ 0 (same page)</li>
-     * <li>$Y \in [H, 2H)$ $\rightarrow$ -1 (one page down)</li>
-     * <li>$Y \in [-H, 0)$ $\rightarrow$ 1 (one page up)</li>
-     * </ul>
-     * The calculation formula is: $- \lfloor \frac{Y}{H} \rfloor$.
-     *
-     * @param currentPositionY The entity's absolute Y-coordinate.
-     * @param pageHeight       The height of a single page (must be a finite positive number).
-     * @return The integer page offset.
-     * @throws IllegalArgumentException if {@code pageHeight} is not a finite positive number.
-     */
-    public static int definePage(double currentPositionY, double pageHeight) {
-        if (!(pageHeight > 0.0) || Double.isNaN(pageHeight) || Double.isInfinite(pageHeight)) {
-            throw new IllegalArgumentException("pageHeight must be a finite positive number; was " + pageHeight);
-        }
-        log.debug("definePage: pageHeight={}, y={}", pageHeight, currentPositionY);
-
-        // floor(y / H) is ... -2, -1, 0, 1, 2 ...
-        // We want offset = -floor(y/H)
-        int definedPage = (int) Math.floor(currentPositionY / pageHeight) * -1;
-
-        log.debug("definePage -> offset={}", definedPage);
-        return definedPage;
-    }
-
-    /**
-     * Calculates a true positive modulo for floating-point numbers.
-     * The result is always in the range [0, m).
-     *
-     * @param a The dividend (current position).
-     * @param m The divisor (page height).
-     * @return The remainder in the range [0, m).
-     */
-    private static double positiveModulo(double a, double m) {
-        double r = a % m;
-        return (r < 0) ? r + m : r;
-    }
-
-    private static BlockText.ValidatedTextData getValidatedTextData(Entity e) {
-        var textValueOpt = e.getComponent(BlockTextData.class);
-        var styleOpt = e.getComponent(TextStyle.class);
-
-        BlockTextData textValue;
-        TextStyle style;
-        if (textValueOpt.isEmpty()) {
-            log.info("TextComponent has no BlockTextData; skipping: {}", e);
-            textValue = textValueOpt.orElse(BlockTextData.empty());
-        } else {
-            textValue = textValueOpt.get();
-        }
-        if (styleOpt.isEmpty()) {
-            log.info("TextComponent has no TextStyle; skipping: {}", e);
-            style = styleOpt.orElse(TextStyle.defaultStyle());
-        } else {
-            style = styleOpt.get();
-        }
-
-        return new BlockText.ValidatedTextData(style, textValue);
-    }
-
-    /**
-     * Calculates the necessary vertical offset for an element to ensure it does not go outside
-     * the canvas rendering bounds ({@code canvas.boundingTopLine()} and {@code canvas.boundingBottomLine()}).
-     *
-     * @param e      The entity to check.
-     * @param startY The element's current Y-position.
-     * @param canvas The canvas with boundary information.
-     * @return The offset value. Returns 0.0 if no offset is required.
-     */
-    private static double shift(Entity e, float startY, Canvas canvas) throws BigSizeElementException {
-        var margin = e.getComponent(Margin.class).orElse(Margin.zero());
-        if (e.hasAssignable(BlockText.class)) {
-            var style = e.getComponent(TextStyle.class).orElseThrow(() -> new IllegalStateException("TextComponent has no TextStyle"));
-
-            try {
-                return shift(startY, style.getLineHeight(), 0.0, 0.0, canvas);
-            } catch (BigSizeElementException ex) {
-                throw new BigSizeElementException(startY, style.getLineHeight(), canvas.innerHeigh(), e.printInfo());
-            }
-        } else {
-            if (e.getRender() != null) {
-
-                if (!Breakable.class.isAssignableFrom(e.getRender().getClass())) {
-                    var high = e.getComponent(ContentSize.class).orElseThrow();
-                    try {
-                        return shift(startY, high.height(), margin.top(), margin.bottom(), canvas);
-                    } catch (BigSizeElementException ex) {
-                        throw new BigSizeElementException(startY, high.height(), canvas.innerHeigh(), e.printInfo());
-                    }
-
-                }
-            } else {
-                log.error("Render is null {}", e);
-            }
-        }
-        return 0;
-    }
-
-    /**
-     * Core logic for calculating the shift. Checks if the element fits on the page
-     * and does not exceed the top or bottom boundaries.
-     *
-     * @param yPosition     The top Y-coordinate of the element.
-     * @param elementHeight The height of the element.
-     * @param marginTop     The top margin.
-     * @param marginBottom  The bottom margin.
-     * @param canvas        The canvas.
-     * @return The calculated offset. A positive value means shift up, negative means shift down.
-     * @throws BigSizeElementException if a non-breakable element is too large to fit
-     *                                 in the available page space.
-     *
-     */
-    private static double shift(
-            double yPosition,
-            double elementHeight,
-            double marginTop,
-            double marginBottom,
-            Canvas canvas
-    ) throws BigSizeElementException {
-        return shift(yPosition, elementHeight, marginTop, marginBottom, canvas.boundingBottomLine(), canvas.boundingTopLine());
-
-    }
-
-    private static double shift(
-            double yPosition,
-            double elementHeight,
-            double marginTop,
-            double marginBottom,
-            double canvasBottomBondingLine,
-            double canvasTopBondingLine
-    ) throws BigSizeElementException {
-
-        // 1) Can it ever fit (including margins)?
-        final double requiredHeight = elementHeight + marginTop + marginBottom;
-        final double availableHeight = canvasTopBondingLine - canvasBottomBondingLine;
-        if (requiredHeight > availableHeight) {
-            log.error("Element is too large and non-breakable — it cannot fit between the bounding lines with margins.\n" +
-                      "requiredHeight: {} availableHeight: {}", requiredHeight, availableHeight);
-
-            throw new BigSizeElementException(yPosition, elementHeight, availableHeight);
-        }
-
-        // 2) Check top overflow
-        if (yPosition + elementHeight + marginTop > canvasTopBondingLine) {
-            double delta = canvasTopBondingLine - (yPosition + elementHeight + marginTop); // negative => move down
-            log.info("Element shifted down by {} from top bound {}", delta, canvasTopBondingLine);
-            return delta;
-        }
-
-        // 3) Check bottom overflow
-        if (yPosition - marginBottom < canvasBottomBondingLine) {
-            double delta = (canvasBottomBondingLine + marginBottom) - yPosition; // positive => move up
-            // Re-check (defensive): after moving up, we still must not exceed top
-            if (yPosition + delta + elementHeight + marginTop > canvasTopBondingLine) {
-                throw new BigSizeElementException(
-                        "Element is too large and non-breakable — shifting up would exceed the top bound."
-                );
-            }
-            log.info("Element shifted up by {} from bottom bound {}", delta, canvasBottomBondingLine);
-            return delta;
-        }
-
-        // 4) Already within bounds
-        return 0.0;
-    }
-
     //TODO has to be removed after testing
     public static void main(String[] args) throws BigSizeElementException {
 
-        double y = 50;
+        double y = 10;
         double elementHigh = 50;
-        double marginTop = 5;
+        double marginTop = 10;
         double marginBottom = 5;
-        var canvas = new PdfCanvas(100, 90, 0, 0, Margin.of(5));
+        var canvas = new PdfCanvas(100, 120, 0, 0, Margin.of(20));
+        double firstResult = -5;
 
-        double shift = shift(y, elementHigh, marginTop, marginBottom, canvas);
-        System.out.println(shift);
-        System.out.println(y + shift);
-        System.out.println(shift(y + shift, elementHigh, marginTop, marginBottom, canvas));
+
     }
 
     /**
@@ -401,7 +115,7 @@ public class PageBreaker {
                         if (entity.hasAssignable(BlockText.class)) {
                             try {
                                 try {
-                                    blockTextDataPositions(entity, canvas, yOffset);
+                                    textBlockProcessor.processTextLines(entity, canvas, yOffset);
                                 } catch (BigSizeElementException ex) {
                                     throw new RuntimeException(ex);
                                 }
@@ -435,12 +149,13 @@ public class PageBreaker {
         ContentSize contentSize = entity.getComponent(ContentSize.class)
                 .orElseThrow(() -> new IllegalStateException("Entity " + entity + " has no ContentSize"));
         log.debug("Defining position for {}", entity);
+        PageLayoutCalculator layoutCalculator = new PageLayoutCalculator(entityManager);
 
 
 //        YPositionOnPage position = definePositionOnPage(computedPosition.y(), canvas.boundingTopLine(), contentSize.height(), 0, canvas, yOffset, isBreakable);
         YPositionOnPage position;
         try {
-            position = definePositionOnPage(computedPosition.y(), entity, 0, canvas, yOffset, isBreakable);
+            position = layoutCalculator.definePositionOnPage(computedPosition.y(), entity, 0, canvas, yOffset, isBreakable);
         } catch (Exception e) {
             log.error("{}", entity.printInfo(), e);
             throw new RuntimeException(entity.printInfo(), e);
@@ -473,302 +188,4 @@ public class PageBreaker {
         }
         process(entityManager.getEntities(), renderingSystemECS.canvas());
     }
-
-    /**
-     * Determines an object's position on a page based on its current Y-coordinate and dimensions.
-     * This method calculates the page number and the new Y-coordinate within that page.
-     * It also handles situations where an object crosses the bottom boundary of a page,
-     * applying an offset to move it.
-     *
-     * @param currentPositionY   The object's current absolute Y-coordinate.
-     * @param objectHeight       The height of the object.
-     * @param objectMarginTop    The object's top margin.
-     * @param objectMarginBottom The object's bottom margin.
-     * @param currentPageNumber  The current page number (used as a base for calculating the new page).
-     * @param canvas             The canvas object, providing page dimensions.
-     * @param yOffset            An object for tracking and applying vertical offsets.
-     * @param isBreakable        A flag indicating whether the object can be broken.
-     * @return A {@link YPositionOnPage} containing the new Y-position and page number.
-     */
-    public YPositionOnPage definePositionOnPage(double currentPositionY,
-                                                double objectHeight, double objectMarginTop, double objectMarginBottom,
-                                                int currentPageNumber, Canvas canvas,
-                                                Offset yOffset, boolean isBreakable, Entity entity) throws BigSizeElementException, PageOutOfBoundException {
-        return calculatePageCoordinates(currentPositionY, objectHeight, objectMarginTop, objectMarginBottom, currentPageNumber, canvas.boundingTopLine(), canvas.margin().top(), canvas.margin().bottom(), yOffset, isBreakable, entity);
-    }
-
-    /**
-     * Internal delegate method for {@link #definePositionOnPage}.
-     */
-    private YPositionOnPage definePositionOnPage(double currentPositionY,
-                                                 @NonNull Entity entity,
-                                                 int currentPageNumber, double canvasHigh, double canvasMarginTop, double canvasMarginBottom,  //Canvas Settings
-                                                 @NonNull Offset yOffset,
-                                                 boolean isBreakable) {
-        var size = entity.getComponent(ContentSize.class).orElseThrow();
-        var margin = entity.getComponent(Margin.class).orElse(Margin.zero());
-
-        double objectHeight = size.height();
-        double objectMarginTop = margin.top();
-        double objectMarginBottom = margin.bottom();
-        try {
-            return calculatePageCoordinates(currentPositionY, objectHeight, objectMarginTop, objectMarginBottom, currentPageNumber, canvasHigh, canvasMarginTop, canvasMarginBottom, yOffset, isBreakable, entity);
-        } catch (BigSizeElementException | PageOutOfBoundException e) {
-            throw new RuntimeException(entity.printInfo(), e);
-        }
-
-    }
-
-    /**
-     * Internal delegate method for {@link #definePositionOnPage}.
-     */
-    private YPositionOnPage definePositionOnPage(double currentPositionY,
-                                                 Entity entity,
-                                                 int currentPageNumber, Canvas canvas,  //Canvas Settings
-                                                 Offset yOffset,
-                                                 boolean isBreakable) {
-        log.debug("Defining position on page for {}", entity);
-        log.debug("currentPositionY: {}, currentPageNumber: {} , yOffset: {}, isBreakable: {}", currentPositionY, currentPageNumber, yOffset, isBreakable);
-
-        var size = entity.getComponent(ContentSize.class).orElseThrow();
-        var margin = entity.getComponent(Margin.class).orElse(Margin.zero());
-
-        double objectHeight = size.height();
-        double objectMarginTop = margin.top();
-        double objectMarginBottom = margin.bottom();
-        try {
-            return definePositionOnPage(currentPositionY, objectHeight, objectMarginTop, objectMarginBottom, currentPageNumber, canvas, yOffset, isBreakable,entity);
-        } catch (BigSizeElementException e) {
-            log.error("{}{}", entity.printInfo(), e.getMessage());
-            throw new RuntimeException(entity.printInfo(), e);
-        } catch (PageOutOfBoundException e) {
-            throw new RuntimeException(e);
-        }
-
-
-    }
-
-    /**
-     * Core logic for calculating the position on a page.
-     */
-    private YPositionOnPage calculatePageCoordinates(double currentPositionY,
-                                                     double objectHeight, double objectMarginTop, double objectMarginBottom, //object Settings
-                                                     int currentPageNumber, double canvasTopBondingLine, double canvasMarginTop, double canvasMarginBottom,  //Canvas Settings
-                                                     Offset yOffset, boolean isBreakable, Entity entity) throws BigSizeElementException, PageOutOfBoundException {
-
-        if (!(canvasTopBondingLine > 0.0) || Double.isInfinite(canvasTopBondingLine)) {
-            throw new IllegalArgumentException("canvasTopBondingLine must be a finite positive number; was " + canvasTopBondingLine);
-        }
-
-        log.debug("""
-                        --- Defining Position On Page ---
-                        Object Settings:
-                          - currentPositionY:   {}
-                          - objectHeight:       {}
-                          - objectMargin (T/B): {}/{}
-                        Canvas Settings:
-                          - canvasTopBondingLine: {}
-                          - canvasMargin (T/B):   {}/{}
-                        State:
-                          - currentPageNumber:  {}
-                          - isBreakable:        {}
-                          - yOffset (before):     {}
-                        """,
-                currentPositionY, objectHeight, objectMarginTop, objectMarginBottom,
-                canvasTopBondingLine, canvasMarginTop, canvasMarginBottom,
-                currentPageNumber, isBreakable, yOffset);
-
-        int pageOffset = definePage(currentPositionY, canvasTopBondingLine); // may be negative, zero, or positive
-        int startPage = Math.addExact(currentPageNumber, pageOffset); // detect overflow
-        if (startPage < 0) {
-            log.error("Invalid page number {}", startPage);
-            throw new IllegalArgumentException("Page number is less than zero after pageOffset: " + startPage);
-        }
-
-
-        // Normalize y into [0, pageHeight)
-        double yInPage = positiveModulo(currentPositionY, canvasTopBondingLine);
-        double shift;
-        int endPage = startPage;
-        if (!isBreakable) {
-            shift = shift(yInPage, objectHeight, objectMarginTop, objectMarginBottom, canvasMarginBottom, canvasTopBondingLine);
-            log.debug("Shift: {}", shift);
-            if (entity != null) {
-                entity.updateParent(entityManager, shift);
-            }
-            if (shift < 0) {
-
-
-                yInPage += shift;
-                startPage++;
-                yOffset.incrementY(shift);
-                entity.updateParent(entityManager,  + shift);
-
-            }
-            if (yInPage < canvasMarginBottom) {
-
-                //ShiftTo nextPage
-                double currentOffset = yInPage + objectHeight;
-
-                yInPage = canvasTopBondingLine - objectHeight;
-                if (entity != null) {
-                    entity.updateParent(entityManager, currentOffset + canvasMarginTop * -1);
-                }
-                startPage++;
-                yOffset.incrementY(currentOffset * -1);
-
-            }
-            endPage = startPage;
-        } else {
-            double requireSpace = yInPage + objectHeight + canvasMarginTop;
-            double currentSize = canvasTopBondingLine;
-            if (currentSize < requireSpace) {
-                log.debug("Defining a new endPage: {}", endPage);
-
-                while (requireSpace > currentSize) {
-                    currentSize += canvasMarginTop + canvasTopBondingLine;
-                    endPage--;
-                    if (endPage < 0) {
-                        throw new PageOutOfBoundException("Page out of bound, Current PageNumber" + endPage);
-                    }
-                }
-            }
-        }
-
-
-        YPositionOnPage result = new YPositionOnPage(yInPage, startPage, endPage);
-
-
-        log.debug("Defined position on page: {}", result);
-        return result;
-
-    }
-
-    /**
-     * Calculates and assigns the position for each line of text within a {@link BlockText}.
-     * This method iterates through the lines, determines their position on the page, handles
-     * page breaks, and updates the entity's {@link BlockTextData} component with the new,
-     * positioned data.
-     *
-     * @param e       The entity containing the {@link BlockText}.
-     * @param canvas  The canvas object for retrieving page dimension information.
-     * @param yOffset The total Y-axis offset, which will be updated based on
-     *                offsets caused by page breaks within the text block.
-     * @throws IOException           if an error occurs while working with fonts.
-     * @throws IllegalStateException if the entity is missing required components.
-     */
-    private void blockTextDataPositions(Entity e, Canvas canvas, @NonNull Offset yOffset) throws IOException, BigSizeElementException {
-
-        Offset entityYOffset = new Offset();
-
-        if (!e.hasAssignable(BlockTextData.class)) {
-            log.debug("Entity doesn't have TextComponent; skipping: {}", e);
-            return;
-        }
-
-        var positionOpt = RenderingPosition.from(e);
-        if (positionOpt.isEmpty()) {
-            log.warn("TextComponent has no RenderingPosition; skipping: {}", e);
-            return;
-        }
-
-
-        var placement = e.getComponent(Placement.class).orElseThrow();
-        InnerBoxSize innerBoxSize = InnerBoxSize.from(e).orElseThrow();
-
-        BlockText.ValidatedTextData validateText = getValidatedTextData(e);
-
-
-        var style = validateText.style();
-        float fontSize = (float) style.size();
-        PDFont font = style.font();
-        var textHeight = (float) style.getLineHeight();
-
-        float scale = fontSize / 1000f;
-        PDFontDescriptor fd = font.getFontDescriptor();
-
-        float descentPx = Math.abs((fd != null ? fd.getDescent() : font.getBoundingBox().getLowerLeftY()) * scale);
-
-        var blockTextData = validateText.textValue().lines();
-
-        double spacing = e.getComponent(Align.class).orElseGet(() -> {
-            log.warn("TextComponent has no Align; using default: {}", e);
-            return Align.defaultAlign(2);
-        }).spacing() * -1;
-
-        log.debug("Rendering textBlock '{}' at placement ({}, {}) fontSize={}  textStyle= ", blockTextData, placement.x(), placement.y());
-        log.debug("fontSize={}  textStyle= {}", fontSize, style);
-
-        int currentPage = placement.startPage();
-
-
-        // стартовая позиция (левый верх «абзаца»)
-        float startX = (float) placement.x() - descentPx;
-        float startY = (float) (placement.y() + innerBoxSize.height()) - textHeight + descentPx; // if spacing will be negative
-        boolean isStarted = false;
-        BlockTextData newBlockTextData;
-        List<LineTextData> assignPositionTextData = new ArrayList<>();
-
-        for (LineTextData ltd : blockTextData) {
-            if (!isStarted) {
-                log.debug("Started print a block text, Position Y is {}", startY);
-                isStarted = true;
-                YPositionOnPage yPositionOnPage = null;
-                try {
-                    yPositionOnPage = definePositionOnPage(startY, textHeight, 0.0, 0.0, currentPage, canvas, yOffset, false,e);
-                } catch (BigSizeElementException | PageOutOfBoundException ex) {
-                    log.error("BigSizeElementException {}, {}", ex, e);
-                    throw new RuntimeException(String.format("BigSizeElementException %s, %s", ex, e.printInfo()));
-                }
-                startY = (float) yPositionOnPage.yPosition();
-                currentPage = yPositionOnPage.startPage();
-            }
-
-            float currenPosition = (float) ltd.x() + startX;
-
-
-            LineTextData nltd = new LineTextData(ltd, currenPosition, startY, currentPage);
-            assignPositionTextData.add(nltd);
-            startY -= (float) (textHeight - spacing);
-            YPositionOnPage yPositionOnPage = null;
-            try {
-                yPositionOnPage = definePositionOnPage(startY, textHeight, 0.0, 0.0, currentPage, canvas, yOffset, false,e);
-            } catch (BigSizeElementException | PageOutOfBoundException ex) {
-                log.error("Failed to define position on page: page={}, yOffset={} {}", currentPage, yOffset, e.printInfo(), ex);
-
-                throw new RuntimeException(String.format("Error processing page position"), ex);
-            }
-
-            if (log.isDebugEnabled()) {
-                log.debug(ltd.toString());
-                log.debug("Line placement {}, Current page: {}", ltd.x(), currentPage);
-                log.debug(yPositionOnPage.toString());
-            }
-
-
-            startY = (float) yPositionOnPage.yPosition();
-
-            double shift = shift(e, startY, canvas);
-            if (shift != 0) {
-                double currentShift;
-                currentShift = shift;
-                startY += (float) currentShift;
-                entityYOffset.incrementY(currentShift);
-                log.debug("Current Entity Offset {} {}", entityYOffset, e);
-            }
-            if (currentPage != yPositionOnPage.startPage()) {
-                currentPage = yPositionOnPage.startPage();
-
-            }
-        }
-
-
-        newBlockTextData = new BlockTextData(assignPositionTextData, (float) spacing);
-        e.verticalOffsetAndCorrectionSize(entityYOffset);
-        yOffset.incrementY(entityYOffset);
-        log.debug("Returned Offset:  {} , {}", yOffset, e);
-        e.addComponent(newBlockTextData);
-
-    }
-
 }

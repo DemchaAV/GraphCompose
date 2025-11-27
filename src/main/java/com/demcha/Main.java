@@ -18,6 +18,7 @@ import com.demcha.system.LayoutSystemImpl;
 import com.demcha.system.implemented_systems.pdf_systems.PdfCanvas;
 import com.demcha.system.implemented_systems.pdf_systems.PdfFileManagerSystem;
 import com.demcha.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
+import com.demcha.system.utils.page_breaker.EntitySorter;
 import com.demcha.system.utils.page_breaker.PageBreaker;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -52,7 +53,7 @@ public class Main {
 
         // 3. Final Processing
         entityManager.processSystems();
-        var pageBreaker = PageBreaker.sortByYPosition(entityManager.getEntities());
+        var pageBreaker = EntitySorter.sortByYPosition(entityManager.getEntities());
     }
 
     /**
@@ -197,7 +198,7 @@ public class Main {
         return createHContainer(entityManager, name, Arrays.asList(entities));
     }
 
-    private static Entity blockTextBuilder(EntityManager entityManager, String text, double width, double spacing) {
+    static Entity blockTextBuilder(EntityManager entityManager, String text, double width, double spacing) {
         TextBuilder textBuilder = new TextBuilder(entityManager)
                 .textWithAutoSize(text)
                 .textStyle(TextStyle.builder()

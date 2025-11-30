@@ -252,6 +252,7 @@ class PageLayoutCalculatorTest {
         Margin objMargin = FactoryClasses.margin(objectMarginData);
 
         // Остальная подготовка...
+//        Entity entity = FactoryClasses.entityMock(size, objMargin);
         Entity entity = FactoryClasses.entityMock(size, objMargin);
         Offset offset = FactoryClasses.offsetReal(offsetData);
 

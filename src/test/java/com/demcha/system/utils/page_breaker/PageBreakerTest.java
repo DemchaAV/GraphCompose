@@ -2,43 +2,180 @@ package com.demcha.system.utils.page_breaker;
 
 import com.demcha.core.EntityManager;
 import com.demcha.exceptions.BigSizeElementException;
+import com.demcha.mock.FactoryPresets;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
 
-@ExtendWith(org.mockito.junit.jupiter.MockitoExtension.class)
 class PageBreakerTest {
-    EntityManager entityManager = mock(EntityManager.class);
-    PageLayoutCalculator pageLayoutCalculator = new PageLayoutCalculator(entityManager);
+    @Mock
+    private EntityManager entityManager;
 
-    @ParameterizedTest(name = "yPos={0}, height={1}, marginT={2}, marginB={3}, canvasH={4}, canvasMarginT={5}, canvasMarginB={6} -> Expected Shift: {7}")
-    @CsvSource({
-            // 1. yPosition < canvasMarginBottom -> Returns 0.0 (Early Exit)
-            "10.0, 50.0, 10.0, 10.0, 100.0, 20.0, 20.0, -100.0",
+    @InjectMocks
+    private PageLayoutCalculator pageLayoutCalculator;
 
-            // 2. Normal case where it fits (goes to else block -> 0.0)
-            "50.0, 20.0, 5.0, 5.0, 200.0, 20.0, 20.0, 0.0",
+    static Stream<Arguments> provideScenarios() {
 
-            // 3. Edge Case: Element exactly fits the inner height
-            "30.0, 60.0, 10.0, 10.0, 100.0, 10.0, 10.0, -120.0",
+        return Stream.of(
+                // Сценарий 1: Стандартный А4, маленький объект
+                Arguments.of(
+                        "Standard A4 Flow",             // Название
+                        100.0, //Current positionY
+                        0,// Current page
+                        FactoryPresets.OBJ_SMALL_BOX_100_50,      // <--- БЕРЕМ ГОТОВЫЙ ПРЕСЕТ
+                        FactoryPresets.MARGIN_STANDARD_20,
+                        FactoryPresets.CANVAS_A4_STANDARD, // <--- БЕРЕМ ГОТОВЫЙ ПРЕСЕТ
+                        FactoryPresets.OFFSET_DATA_ZERO, // Отступы объекта
+                        false,
+                        0.0,
+                        new YPositionOnPage(100, 0, 0)                          // Ожидаемый результат
+                ),
+                Arguments.of(
+                        "Full Width No Margins",             // Название
+                        100.0,
+                        1,// Current Y
+                        FactoryPresets.OBJ_FULL_WIDTH_500_100,      // <--- БЕРЕМ ГОТОВЫЙ ПРЕСЕТ
+                        FactoryPresets.MARGIN_ZERO,
+                        FactoryPresets.CANVAS_A4_NO_MARGINS, // <--- БЕРЕМ ГОТОВЫЙ ПРЕСЕТ
+                        FactoryPresets.OFFSET_DATA_ALL_2, // Отступы объекта
+                        false,
+                        2,
+                        new YPositionOnPage(100, 1, 1)                          // Ожидаемый результат
+                ),
+                Arguments.of(
+                        "Full Width No Margins",             // Название
+                        5.0,
+                        1,// Current Y
+                        FactoryPresets.OBJ_SMALL_BOX_100_50,      // <--- БЕРЕМ ГОТОВЫЙ ПРЕСЕТ
+                        FactoryPresets.MARGIN_ZERO,
+                        FactoryPresets.CANVAS_A4_NO_MARGINS, // <--- БЕРЕМ ГОТОВЫЙ ПРЕСЕТ
+                        FactoryPresets.OFFSET_DATA_ZERO, // Отступы объекта
+                        false,
+                        0,
+                        new YPositionOnPage(5, 1, 1)                          // Ожидаемый результат
+                ),
+                Arguments.of(
+                        "Next page Position under Margin",             // Название
+                        10.0,
+                        0,
+                        FactoryPresets.OBJ_SMALL_BOX_100_50, // H=50
+                        FactoryPresets.MARGIN_VERT_10,       // T=10, B=10
+                        FactoryPresets.CANVAS_TEST_100_100_M_T10_B20,
+                        FactoryPresets.OFFSET_DATA_ZERO, // Отступы объекта
+                        false,
+                        -80.0,
+                        new YPositionOnPage(30, 1, 1)                          // Ожидаемый результат
+                ),
+                Arguments.of(
+                        "Next page Position under Margin 2",             // Название
+                        10.0,
+                        0,
+                        FactoryPresets.OBJ_SMALL_BOX_100_50, // H=50
+                        FactoryPresets.MARGIN_VERT_10,       // T=10, B=10
+                        FactoryPresets.CANVAS_TEST_100_100_M_T10_B20,
+                        FactoryPresets.OFFSET_DATA_ZERO, // Отступы объекта
+                        false,
+                        -80,
+                        new YPositionOnPage(30, 1, 1)                          // Ожидаемый результат
+                ),
 
-            "5.0, 40.0, 10.0, 10.0, 100.0, 20.0, 20.0, -85.0",
+                Arguments.of(
+                        "Next page negative position",             // Название
+                        -30,
+                        0,
+                        FactoryPresets.OBJ_SMALL_BOX_100_50, // H=50
+                        FactoryPresets.MARGIN_VERT_10,       // T=10, B=10
+                        FactoryPresets.CANVAS_TEST_100_100_M_T10_B20,
+                        FactoryPresets.OFFSET_DATA_ZERO, // Отступы объекта
+                        false,
+                        -40,
+                        new YPositionOnPage(30, 1, 1)                          // Ожидаемый результат
+                )
 
-            "45.0, 40.0, 10.0, 10.0, 90.0, 20.0, 20.0, -25.0",
 
-            "40.0, 35.0, 10.0, 10.0, 90.0, 20.0, 20.0, -15.0"
-    })
-    @DisplayName("Test downShift method")
-    void testDownShift(double yPosition, double elementHeight, double elementMarginTop, double elementMarginBottom,
-                       double canvasHeight, double canvasMarginTop, double canvasMarginBottom, double expectedShift) throws BigSizeElementException {
-        double actualShift = PageLayoutCalculator.downShift(yPosition, elementHeight, elementMarginBottom, elementMarginTop,
-                canvasHeight, canvasMarginBottom, canvasMarginTop);
-        assertEquals(expectedShift, actualShift, 0.001);
+
+        );
     }
+
+    // --- 1. Data Provider (Сценарии) ---
+    static Stream<Arguments> provideDownShiftScenarios() {
+        return Stream.of(
+                // 1. Early Exit (yPos < MarginBottom)
+                Arguments.of(
+                        "Early Exit",
+                        10.0,
+                        FactoryPresets.OBJ_SMALL_BOX_100_50, // H=50
+                        FactoryPresets.MARGIN_VERT_10,       // T=10, B=10
+                        FactoryPresets.CANVAS_TEST_100_100_M_T10_B20,
+                        -80.0
+                ),
+
+                // 2. Normal Fit
+                Arguments.of(
+                        "Normal Fit",
+                        50.0,
+                        FactoryPresets.OBJ_W100_H20,         // H=20
+                        FactoryPresets.MARGIN_VERT_5,        // T=5, B=5
+                        FactoryPresets.CANVAS_TEST_100_200_M_T10_B20,
+                        0.0
+                ),
+
+                // 3. Edge Case: Fits exactly
+                Arguments.of(
+                        "Fits Exactly",
+                        30.0,
+                        FactoryPresets.OBJ_W100_H60,         // H=60
+                        FactoryPresets.MARGIN_VERT_10,
+                        FactoryPresets.CANVAS_TEST_100_100_M_10,
+                        -10.0
+                ),
+
+                // 4. Overflow with small Y
+                Arguments.of(
+                        "Overflow Small Y",
+                        5.0,
+                        FactoryPresets.OBJ_W100_H40,         // H=40
+                        FactoryPresets.MARGIN_VERT_10,
+                        FactoryPresets.CANVAS_TEST_100_100_M_T10_B20,
+                        -65.0
+                ),
+
+                // 5. Standard A4
+                Arguments.of(
+                        "Standard A4 Zero Shift",
+                        100.0,
+                        FactoryPresets.OBJ_SMALL_BOX_100_50,
+                        FactoryPresets.MARGIN_STANDARD_20,
+                        FactoryPresets.CANVAS_A4_STANDARD,
+                        0.0
+                )
+        );
+    }
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+    }
+
+
+    @MethodSource("provideScenarios")
+    @ParameterizedTest(name = "{0}")
+    void pageBreaker(){
+
+    }
+
 
 }

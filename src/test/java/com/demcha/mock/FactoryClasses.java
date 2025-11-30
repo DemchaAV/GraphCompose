@@ -1,6 +1,7 @@
 package com.demcha.mock;
 
 import com.demcha.components.components_builders.Canvas;
+import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.style.Margin;
@@ -16,12 +17,20 @@ import static org.mockito.Mockito.*;
 
 public class FactoryClasses {
 
-    public static Entity entityMock(ContentSize contentSize, Margin margin) {
+
+    @SafeVarargs
+    public static <T extends Component> Entity entityMock(T... components) {
         Entity e = mock(Entity.class);
-        when(e.getComponent(ContentSize.class)).thenReturn(Optional.of(contentSize));
-        when(e.getComponent(Margin.class)).thenReturn(Optional.of(margin));
+
+        for (T c : components) {
+            doReturn(Optional.of(c))
+                    .when(e)
+                    .getComponent(c.getClass());
+        }
+
         return e;
     }
+
 
     public static Offset offsetMock(OffsetData offsetData) {
         Offset offset = mock(Offset.class);
@@ -29,8 +38,9 @@ public class FactoryClasses {
         when(offset.y()).thenReturn(offsetData.y());
         return offset;
     }
+
     public static Offset offsetReal(OffsetData offsetData) {
-       return new Offset(offsetData.y(), offsetData.x());
+        return new Offset(offsetData.y(), offsetData.x());
     }
 
 

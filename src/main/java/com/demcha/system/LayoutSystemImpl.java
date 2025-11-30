@@ -414,5 +414,5 @@ public class LayoutSystemImpl implements SystemECS {
         return "LayoutSystemImpl";
     }
 
-    private enum Visit {UNSEEN, ACTIVE, DONE;}
+    public enum Visit {UNSEEN, ACTIVE, DONE;}
 }

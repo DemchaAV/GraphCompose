@@ -173,28 +173,6 @@ public class PageLayoutCalculator {
         return downShift(startY, size.height(), margin.bottom(), margin.top(), canvas.height(), canvas.margin().bottom(), canvas.margin().top());
     }
 
-    /**
-     * Determines an object's position on a page based on its current Y-coordinate and dimensions.
-     * This method calculates the page number and the new Y-coordinate within that page.
-     * It also handles situations where an object crosses the bottom boundary of a page,
-     * applying an offset to move it.
-     *
-     * @param currentPositionY   The object's current absolute Y-coordinate.
-     * @param objectHeight       The height of the object.
-     * @param objectMarginTop    The object's top margin.
-     * @param objectMarginBottom The object's bottom margin.
-     * @param currentPageNumber  The current page number (used as a base for calculating the new page).
-     * @param canvas             The canvas object, providing page dimensions.
-     * @param yOffset            An object for tracking and applying vertical offsets.
-     * @param isBreakable        A flag indicating whether the object can be broken.
-     * @return A {@link YPositionOnPage} containing the new Y-position and page number.
-     */
-    public YPositionOnPage definePositionOnPage(double currentPositionY,
-                                                double objectHeight, double objectMarginTop, double objectMarginBottom,
-                                                int currentPageNumber, Canvas canvas,
-                                                Offset yOffset, boolean isBreakable, Entity entity) throws BigSizeElementException, PageOutOfBoundException {
-        return calculatePageCoordinates(currentPositionY, objectHeight, objectMarginTop, objectMarginBottom, currentPageNumber, canvas.height(), canvas.margin().top(), canvas.margin().bottom(), yOffset, isBreakable, entity);
-    }
 
     /**
      * Internal delegate method for {@link #definePositionOnPage}.
@@ -235,8 +213,15 @@ public class PageLayoutCalculator {
         double objectHeight = size.height();
         double objectMarginTop = margin.top();
         double objectMarginBottom = margin.bottom();
+        //canvas
+        double canvasHeight = canvas.height();
+        double canvasMarginTop = canvas.margin().top();
+        double canvasMarginBottom = canvas.margin().bottom();
+
         try {
-            return definePositionOnPage(currentPositionY, objectHeight, objectMarginTop, objectMarginBottom, currentPageNumber, canvas, yOffset, isBreakable, entity);
+
+            return calculatePageCoordinates(currentPositionY, objectHeight, objectMarginTop, objectMarginBottom, currentPageNumber, canvasHeight, canvasMarginTop, canvasMarginBottom, yOffset, isBreakable, entity);
+
         } catch (BigSizeElementException e) {
             log.error("{}{}", entity.printInfo(), e.getMessage());
             throw new RuntimeException(entity.printInfo(), e);
@@ -250,7 +235,7 @@ public class PageLayoutCalculator {
     /**
      * Core logic for calculating the position on a page.
      */
-    private YPositionOnPage calculatePageCoordinates(double currentPositionY,
+    public YPositionOnPage calculatePageCoordinates(double currentPositionY,
                                                      double objectHeight, double objectMarginTop, double objectMarginBottom, //object Settings
                                                      int currentPageNumber, double canvasHeight, double canvasMarginTop, double canvasMarginBottom,  //Canvas Settings
                                                      Offset yOffset, boolean isBreakable, Entity entity) throws BigSizeElementException, PageOutOfBoundException {

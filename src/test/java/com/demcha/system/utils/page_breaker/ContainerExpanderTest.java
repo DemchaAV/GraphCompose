@@ -1,4 +1,4 @@
-package com.demcha.utils.containerUtils;
+package com.demcha.system.utils.page_breaker;
 
 import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;

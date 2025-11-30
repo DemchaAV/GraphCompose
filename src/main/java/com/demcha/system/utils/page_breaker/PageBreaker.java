@@ -135,6 +135,7 @@ public class PageBreaker {
 
                     }
                 });
+        log.debug("hhelo");
     }
 
     /**
@@ -148,18 +149,14 @@ public class PageBreaker {
      * @param isBreakable A flag indicating whether the element can be broken across pages.
      */
     private void definePlacement(Canvas canvas, Entity entity, Offset yOffset, boolean isBreakable) {
-        entity.updateVerticalComputedPosition(yOffset);
         var computedPosition = entity.getComponent(ComputedPosition.class).orElseThrow();
         ContentSize contentSize = entity.getComponent(ContentSize.class)
                 .orElseThrow(() -> new IllegalStateException("Entity " + entity + " has no ContentSize"));
         log.debug("Defining position for {}", entity);
         PageLayoutCalculator layoutCalculator = new PageLayoutCalculator(entityManager);
-
-
-//        YPositionOnPage position = definePositionOnPage(computedPosition.y(), canvas.boundingTopLine(), contentSize.height(), 0, canvas, yOffset, isBreakable);
         YPositionOnPage position;
         try {
-            position = layoutCalculator.definePositionOnPage(computedPosition.y(), entity, 0, canvas, yOffset, isBreakable);
+            position = layoutCalculator.definePositionOnPage(computedPosition.y() + yOffset.y(), entity, 0, canvas, yOffset, isBreakable);
         } catch (Exception e) {
             log.error("{}", entity.printInfo(), e);
             throw new RuntimeException(entity.printInfo(), e);

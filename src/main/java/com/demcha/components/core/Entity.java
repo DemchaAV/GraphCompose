@@ -5,9 +5,7 @@ import com.demcha.components.layout.ParentComponent;
 import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.style.Margin;
-import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
-import com.demcha.exceptions.ContentSizeNotFoundException;
 import com.demcha.system.interfaces.Render;
 import com.demcha.system.utils.page_breaker.Offset;
 import lombok.EqualsAndHashCode;
@@ -150,38 +148,6 @@ public final class Entity {
                 .anyMatch(comp -> comp instanceof Render);
     }
 
-    public Entity verticalOffsetAndCorrectionSize(Offset offset) {
-        if (offset == null || offset.y() == 0.0) {
-            log.trace("Update ComputateioPosition.class and ContentSize.class not requer becouse {}", offset);
-            return this;
-        }
-        log.debug("Checking component ContentSize.class {}", offset);
-        var size = getComponent(ContentSize.class).orElseThrow(ContentSizeNotFoundException::new);
-        log.debug("Updating Component Size to {}", size);
-        addComponent(new ContentSize(size.width(), size.height() + Math.abs(offset.y())));
-
-        return updateVerticalComputedPosition(offset);
-    }
-
-    public Entity updateVerticalComputedPosition(@NonNull Offset offset) {
-        return updateComputedPosition(offset.y(), 0.0);
-    }
-
-    public Entity updateHorizontalComputedPosition(@NonNull Offset offset) {
-        return updateComputedPosition(0.0, offset.y());
-    }
-
-    public Entity updateComputedPosition(double yPosition, double xPosition) {
-        if (yPosition == 0.0 && xPosition == 0.0) {
-            return this;
-        }
-        log.debug("Checking component ComputedPosition.class {}", this);
-        var computedPosition = getComponent(ComputedPosition.class)
-                .orElseThrow(() -> new NoSuchElementException("Missing component ComputedPosition.class"));
-        log.debug("Updating Component ComputedPosition to {}", computedPosition);
-        addComponent(new ComputedPosition(computedPosition.x() + xPosition, computedPosition.y() + yPosition));
-        return this;
-    }
 
     public double boundingTopLine() {
         var placement = getComponent(Placement.class).orElseThrow(() -> {
@@ -229,41 +195,6 @@ public final class Entity {
         return placement.x() - margin.left();
     }
 
-    public void updateSize(EntityManager manager) {
-        var padding = getComponent(Padding.class).orElse(Padding.zero());
-        var thisPlacement = getComponent(Placement.class).orElseThrow(() -> new NoSuchElementException("Missing component Placement.class"));
-        double boundingTopLine = 0.0;
-        double boundingBottomLine = 0.0;
-        double boundingRightLine = 0.0;
-        double boundingLeftLine = 0.0;
-        int pageStarts = thisPlacement.startPage();
-        int pageEnds = thisPlacement.endPage();
-
-        if (getChildren().isEmpty()) {
-            log.error("No children found for entity [{}] updateSize() aborted", this);
-        } else {
-            var children = getChildren();
-            Set<Entity> entities = manager.getSetEntitiesFromUuids(new HashSet<>(children));
-            for (Entity entity : entities) {
-                Placement placement = entity.getComponent(Placement.class).orElseThrow(() -> new NoSuchElementException("Missing component Placement.class"));
-                if (boundingTopLine < entity.boundingTopLine()) {
-                    boundingTopLine = entity.boundingTopLine();
-                    pageStarts = Math.min(pageStarts, placement.startPage());
-                }
-                if ((boundingBottomLine < entity.boundingBottomLine() && thisPlacement.endPage() <= placement.endPage())
-                    || thisPlacement.endPage() < placement.endPage()
-                ) {
-                    boundingBottomLine = entity.boundingBottomLine();
-                    pageEnds = Math.max(pageEnds, placement.endPage());
-                }
-                if (boundingRightLine < entity.boundingRightLine()) boundingRightLine = entity.boundingRightLine();
-                if (boundingLeftLine < entity.boundingLeftLine()) boundingLeftLine = entity.boundingLeftLine();
-            }
-
-            log.trace("Updating component size");
-        }
-    }
-
 
     public <T extends Component> Entity populate(Set<? extends Component> components) {
         log.info("Creating and populating entity");
@@ -306,44 +237,70 @@ public final class Entity {
 
     }
 
-    public boolean updateParent(EntityManager manager, Offset offset) {
+    public boolean updateParentContainer(EntityManager manager, Offset offset) {
         if (offset == null) {
             log.error("Offset cannot be null");
             return false;
         }
-        return updateParent(manager, offset.y());
+        return updateParentContainer(manager, offset.y());
     }
 
-    public boolean updateParent(EntityManager manager, double offsetY) {
 
+    public boolean updateParentContainer(EntityManager manager, double offsetY) {
+
+        // 1. Guard Clause: No offset, no work needed.
         if (offsetY == 0) {
-            log.info("offset is zero");
+            log.info("Update aborted: Offset is zero");
             return false;
         }
-        ParentComponent parentComponent = this.getComponent(ParentComponent.class).orElse(null);
-        if (parentComponent == null) {
-            log.error("Parent component cannot be found for entity [{}] updateSize() aborted", this);
-            return false;
-        }
-        var parent = manager.getEntity(parentComponent.uuid()).orElse(null);
-        var computedPos = parent.getComponent(ComputedPosition.class).orElseThrow();
-        var size = parent.getComponent(ContentSize.class).orElseThrow();
-        if (parent == null) {
-            return false;
-        } else {
-            if (offsetY < 0) {
-                double y = computedPos.y() + offsetY;
-                double height = size.height() + Math.floor(offsetY);
-                parent.addComponent(new ComputedPosition(computedPos.x(), y));
-                parent.addComponent(new ContentSize(size.width(), height));
-            } else {
-                double height = size.height() + offsetY;
-                parent.addComponent(new ContentSize(size.width(), height));
-            }
-            parent.updateParent(manager, offsetY);
 
+        // 2. Get Parent Component Info
+        // Note: 'var' infers the type automatically (Java 10+)
+        var parentComponent = this.getComponent(ParentComponent.class).orElse(null);
+
+        if (parentComponent == null) {
+            // Warning is often better than Error if it's a root element (has no parent)
+            log.warn("Parent component missing for entity [{}]. updateParent() stopped.", this);
+            return false;
         }
-        return true;
+
+        // 3. Fetch Parent Entity
+        var parent = manager.getEntity(parentComponent.uuid()).orElse(null);
+        if (parent == null) {
+            log.error("Parent Entity not found in Manager for UUID: {}", parentComponent.uuid());
+            return false;
+        }
+        return updateEntitySize(manager, offsetY, parent);
+    }
+
+    public boolean updateEntitySize(EntityManager manager, double offsetY, @NonNull Entity entity) {
+
+
+        // 4. Fetch Parent State (Throw if state is corrupt/missing)
+        // Using orElseThrow checks data integrity.
+        var computedPos = entity.getComponent(ComputedPosition.class)
+                .orElseThrow(() -> new IllegalStateException("Parent missing Position"));
+        var size = entity.getComponent(ContentSize.class)
+                .orElseThrow(() -> new IllegalStateException("Parent missing Size"));
+
+        // 5. Calculate New Dimensions
+        // We treat records/components as immutable, creating new instances.
+        if (offsetY < 0) {
+            // EXPAND UPWARDS: Move Y up, Increase Height
+            double newY = computedPos.y() + offsetY;
+            double newHeight = size.height() + Math.abs(offsetY);
+
+            entity.addComponent(new ComputedPosition(computedPos.x(), newY));
+            entity.addComponent(new ContentSize(size.width(), newHeight));
+        } else {
+            // EXPAND DOWNWARDS: Y stays same, Increase Height
+            double newHeight = size.height() + offsetY;
+
+            entity.addComponent(new ContentSize(size.width(), newHeight));
+        }
+
+        // 6. Recursion: Bubble the change up the tree
+        return entity.updateParentContainer(manager, offsetY);
     }
 
     public String printInfo() {
@@ -357,9 +314,7 @@ public final class Entity {
     }
 
     public String printInfoWithChildren(EntityManager entityManager) {
-        StringBuilder info = new StringBuilder(printInfo());
-        info.append(printChildren(entityManager));
-        return info.toString();
+        return printInfo() + printChildren(entityManager);
     }
 
     @Override

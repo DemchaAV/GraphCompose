@@ -1,12 +1,16 @@
 package com.demcha.system.utils.page_breaker;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Data
 @Accessors(fluent = true)
+@AllArgsConstructor
+@NoArgsConstructor
 public class Offset {
     private double y = 0.0;
     private double x = 0.0;

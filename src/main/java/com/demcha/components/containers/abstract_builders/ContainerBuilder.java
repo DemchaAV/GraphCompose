@@ -4,6 +4,7 @@ package com.demcha.components.containers.abstract_builders;
 import com.demcha.components.components_builders.HContainerBuilder;
 import com.demcha.components.components_builders.VContainerBuilder;
 import com.demcha.components.core.Entity;
+import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.Align;
 import com.demcha.core.EntityManager;
 import lombok.extern.slf4j.Slf4j;

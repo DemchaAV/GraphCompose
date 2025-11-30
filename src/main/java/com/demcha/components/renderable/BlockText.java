@@ -157,7 +157,7 @@ public class BlockText implements PdfRender, Breakable {
                 }
 
                 cs.setTextMatrix(new Matrix(1, 0, 0, 1, (float) ltd.x(), (float) ltd.y()));
-                cs.showText(ltd.line());
+                cs.showText(sanitizeText(ltd.line()));
             }
 
             cs.endText();
@@ -175,6 +175,13 @@ public class BlockText implements PdfRender, Breakable {
         }
 
         return result;
+    }
+    public static String sanitizeText(String rawText) {
+        if (rawText == null) {
+            return "";
+        }
+        // \p{C} matches invisible control characters (including \0)
+        return rawText.replaceAll("\\p{C}", "");
     }
 
 

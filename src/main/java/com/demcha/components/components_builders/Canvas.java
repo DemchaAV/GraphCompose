@@ -2,8 +2,6 @@ package com.demcha.components.components_builders;
 
 import com.demcha.components.style.Margin;
 
-import java.util.Optional;
-
 public interface Canvas {
     float width();
 
@@ -30,10 +28,12 @@ public interface Canvas {
     default float boundingLeftLine() {
         return (float) margin().left();
     }
-    default double innerHeigh(){
+
+    default double innerHeigh() {
         return height() - margin().vertical();
     }
-    default double innerWidth(){
+
+    default double innerWidth() {
         return width() - margin().horizontal();
     }
 

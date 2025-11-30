@@ -4,16 +4,32 @@ import com.demcha.components.core.Entity;
 import com.demcha.components.layout.coordinator.RenderCoordinateContext;
 import com.demcha.system.interfaces.RenderingSystemECS;
 import com.demcha.system.interfaces.guides.MarginRender;
+import lombok.Data;
 import lombok.NonNull;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
- * @param renderingSystem
+ *
  */
-public record MarginRenderImpl<T extends AutoCloseable>(
-        RenderingSystemECS<T> renderingSystem) implements MarginRender<T> {
+@Accessors(fluent = true)
+@Data
+public final class MarginRenderImpl<T extends AutoCloseable> implements MarginRender<T> {
+   @ToString.Exclude
+    private final RenderingSystemECS<T> renderingSystem;
+
+    /**
+     * @param renderingSystem
+     */
+    public MarginRenderImpl(
+            RenderingSystemECS<T> renderingSystem) {
+        this.renderingSystem = renderingSystem;
+    }
+
     /**
      * @param entity
      * @param stream
@@ -34,6 +50,30 @@ public record MarginRenderImpl<T extends AutoCloseable>(
         }
         return false;
 
+    }
+
+    @Override
+    public RenderingSystemECS<T> renderingSystem() {
+        return renderingSystem;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) return true;
+        if (obj == null || obj.getClass() != this.getClass()) return false;
+        var that = (MarginRenderImpl) obj;
+        return Objects.equals(this.renderingSystem, that.renderingSystem);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(renderingSystem);
+    }
+
+    @Override
+    public String toString() {
+        return "MarginRenderImpl[" +
+               "renderingSystem=" + renderingSystem + ']';
     }
 
 

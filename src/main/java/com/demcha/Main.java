@@ -19,7 +19,6 @@ import com.demcha.system.implemented_systems.pdf_systems.PdfCanvas;
 import com.demcha.system.implemented_systems.pdf_systems.PdfFileManagerSystem;
 import com.demcha.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
 import com.demcha.system.utils.page_breaker.EntitySorter;
-import com.demcha.system.utils.page_breaker.PageBreaker;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
@@ -31,12 +30,12 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Main {
+    public static Anchor MAIN_ANCHOR = Anchor.topRight();
     static String textBlockData = "Junior Java Backend Developer with hands-on experience building REST APIs using Spring Boot, Spring " +
                                   "    Data JPA, and JWT-based Security. Transitioning from an engineering leadership background with a " +
                                   "    strong foundation in Core/Advanced Java, SQL, and object-oriented design. Passionate about clean " +
                                   "    code, robust architecture, and solving real-world problems. Ready to contribute to modern backend " +
                                   "    development projects and grow within a collaborative team. ";
-    public static Anchor MAIN_ANCHOR = Anchor.topRight();
 
     public static void main(String[] args) throws Exception {
         // 1. Setup Phase
@@ -187,18 +186,19 @@ public class Main {
     private static Entity createHContainer(EntityManager entityManager, String name, List<Entity> entities) {
         HContainerBuilder hContainerBuilder = new HContainerBuilder(entityManager, Align.middle(10))
                 .entityName(name)
-                .margin(new Margin(10,20,5,15))
+                .margin(new Margin(10, 20, 5, 15))
                 .padding(Padding.of(5))
                 .anchor(Anchor.bottomLeft());
         entities.forEach(hContainerBuilder::addChild);
         return hContainerBuilder
                 .build();
     }
+
     private static Entity createHContainer(EntityManager entityManager, String name, Entity... entities) {
         return createHContainer(entityManager, name, Arrays.asList(entities));
     }
 
-    static Entity blockTextBuilder(EntityManager entityManager, String text, double width, double spacing) {
+    static Entity blockTextBuilder(EntityManager entityManager, String text, double width, double spacing, String name) {
         TextBuilder textBuilder = new TextBuilder(entityManager)
                 .textWithAutoSize(text)
                 .textStyle(TextStyle.builder()
@@ -215,8 +215,16 @@ public class Main {
                 .padding(0, 5, 0, 25)
                 .margin(Margin.of(5))
                 .text(textBuilder);
+        if (name!=null && !name.isEmpty()) {
+            blockText.entityName(name);
+        }
 
         return blockText.build();
+    }
+
+    static Entity blockTextBuilder(EntityManager entityManager, String text, double width, double spacing) {
+        return blockTextBuilder(entityManager, text, width, spacing, null);
+
 
     }
 

@@ -40,8 +40,11 @@ import java.util.function.Supplier;
 public abstract class GuidesRenderer<S extends AutoCloseable> {
     @ToString.Exclude
     protected final RenderingSystemECS<S> renderingSystem;
+    @ToString.Exclude
     protected final BoxRender<S> box;
+    @ToString.Exclude
     protected final MarginRender<S> margin;
+    @ToString.Exclude
     protected final PaddingRender<S> padding;
 
     private static RenderGuideLinesException rethrowAsGuideLinesException(IOException io, String message) throws RenderGuideLinesException {
@@ -49,8 +52,8 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
     }
 
     @NotNull
-    private static RenderCoordinateContext update(RenderCoordinateContext contextBreakable, double y, double height) {
-        return new RenderCoordinateContext(contextBreakable.x(), y, contextBreakable.width(), height, contextBreakable.startPage(), contextBreakable.endPage(), contextBreakable.stroke(), contextBreakable.color());
+    private static RenderCoordinateContext update(RenderCoordinateContext contextBreakable, double y, double height, int page) {
+        return new RenderCoordinateContext(contextBreakable.x(), y, contextBreakable.width(), height, page, page, contextBreakable.stroke(), contextBreakable.color());
     }
 
     protected <T extends RenderCoordinate & Component>
@@ -109,9 +112,9 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
 
         // Multi-page scenario
         // 1. Break coordinates into fragments (List<Context>)
-        var boxFragments = breakCoordinate(Optional.of(boxCoordinate(e)));
-        var marginFragments = breakCoordinate(margin().margin(e));
-        var paddingFragments = breakCoordinate(padding().padding(e));
+        var boxFragments = breakCoordinate(Optional.of(boxCoordinate(e)), startPage);
+        var marginFragments = breakCoordinate(margin().margin(e), startPage);
+        var paddingFragments = breakCoordinate(padding().padding(e), startPage);
 
         int renderingPage = startPage;
 
@@ -122,26 +125,17 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
                 throw new PageOutOfBoundException(renderingPage);
             }
 
-            // 2. Calculate Relative Index
-            // If startPage is 10 and we are at 10, index is 0 (First fragment).
-            int fragmentIndex = startPage - renderingPage;
-
-            // 3. Safety Check (Prevent IndexOutOfBounds on the PRIMARY list)
-            if (fragmentIndex >= boxFragments.size()) {
-                log.error("Fragment index {} exceeds available box fragments {}", fragmentIndex, boxFragments.size());
-                break;
-            }
 
             try (var stream = renderingSystem.stream().openContentStream(renderingPage)) {
 
                 // 4. Retrieve correct fragments safely
                 // Box is guaranteed by the check above
-                var currentBox = boxFragments.get(fragmentIndex);
+                var currentBox = boxFragments.get(renderingPage);
 
                 // Margin and Padding might be empty lists if the entity doesn't have them.
                 // We use a safe check to return null if the list is empty or index is out of bounds.
-                var currentMargin = (fragmentIndex < marginFragments.size()) ? marginFragments.get(fragmentIndex) : null;
-                var currentPadding = (fragmentIndex < paddingFragments.size()) ? paddingFragments.get(fragmentIndex) : null;
+                var currentMargin = (renderingPage < marginFragments.size()) ? marginFragments.get(renderingPage) : null;
+                var currentPadding = (renderingPage < paddingFragments.size()) ? paddingFragments.get(renderingPage) : null;
 
                 // 5. Delegate rendering based on position
                 if (renderingPage == startPage) {
@@ -210,45 +204,43 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
 
     }
 
-    public List<RenderCoordinateContext> breakCoordinate(Optional<RenderCoordinateContext> contextOptional) {
+
+    public List<RenderCoordinateContext> breakCoordinate(Optional<RenderCoordinateContext> contextOptional, int pages) {
         // 1. Guard Clause: Handle empty Optional immediately
         if (contextOptional.isEmpty()) {
             return Collections.emptyList(); // Return immutable empty list
         }
-
-        var sourceContext = contextOptional.get();
+        RenderCoordinateContext sourceContext = contextOptional.get();
         var resultSegments = new ArrayList<RenderCoordinateContext>();
 
         // 2. Setup rendering constants
         // assuming 'renderingSystem()' is available in this scope
         var canvas = renderingSystem().canvas();
-        var canvasHeight = canvas.height();
-        double boundingBottom = canvas.boundingBottomLine();
+        float canvasHeight = canvas.height();
 
         // 3. Logic Setup
-        double currentY = sourceContext.y();
-        double remainingHeightToRender = sourceContext.height();
-        double currentAccumulatedBoundary = canvasHeight;
+        double initializedYPosition = sourceContext.y();
+        double sourceHeight = sourceContext.height();
+        double remainingHeight = sourceHeight;
+        double currentY = initializedYPosition;
+        int currentPage = pages-1;
 
         // 4. Loop to slice the content
-        // While the content extends beyond the current page boundary
-        while ((currentY + remainingHeightToRender) > currentAccumulatedBoundary) {
-
-            // Calculate how much fits on the current page
-            double heightOnCurrentPage = currentAccumulatedBoundary - currentY;
-
-            // Add the slice for the current page
-            resultSegments.add(update(sourceContext, currentY, heightOnCurrentPage));
-
-            // Update tracking variables for the NEXT page
-            remainingHeightToRender -= heightOnCurrentPage;
-            currentY = boundingBottom; // New segment starts at top of valid area (bottom line?)
-            currentAccumulatedBoundary += canvasHeight;
-        }
-
-        // 5. Add the final remaining piece
-        if (remainingHeightToRender > 0) {
-            resultSegments.add(update(sourceContext, currentY, remainingHeightToRender));
+        while (remainingHeight > 0) {
+            double heightOnThisPage;
+            // Check if the content fits on the current page from its starting Y
+            if (currentY + remainingHeight <= canvasHeight) {
+                heightOnThisPage = remainingHeight;
+            } else {
+                // Content spills over to the next page
+                heightOnThisPage = canvasHeight - currentY;
+            }
+ 
+            resultSegments.add(update(sourceContext, currentY, heightOnThisPage, currentPage));
+ 
+            remainingHeight -= heightOnThisPage;
+            currentY = 0; // For subsequent pages, the content starts at the top.
+            currentPage--;
         }
 
         return resultSegments;

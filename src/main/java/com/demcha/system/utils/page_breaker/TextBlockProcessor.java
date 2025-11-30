@@ -34,6 +34,20 @@ public class TextBlockProcessor {
 
     }
 
+    private static boolean checkBlockCondition(Entity e) {
+        if (!e.hasAssignable(BlockTextData.class)) {
+            log.debug("Entity doesn't have TextComponent; skipping: {}", e);
+            return true;
+        }
+
+        var positionOpt = RenderingPosition.from(e);
+        if (positionOpt.isEmpty()) {
+            log.warn("TextComponent has no RenderingPosition; skipping: {}", e);
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Calculates and assigns the position for each line of text within a {@link BlockText}.
      * This method iterates through the lines, determines their position on the page, handles
@@ -49,23 +63,13 @@ public class TextBlockProcessor {
      */
     public void processTextLines(Entity e, Canvas canvas, @NonNull Offset yOffset) throws IOException, BigSizeElementException {
 
-        Offset entityYOffset = new Offset();
+//check blockTextCondition
 
-        if (!e.hasAssignable(BlockTextData.class)) {
-            log.debug("Entity doesn't have TextComponent; skipping: {}", e);
-            return;
-        }
-
-        var positionOpt = RenderingPosition.from(e);
-        if (positionOpt.isEmpty()) {
-            log.warn("TextComponent has no RenderingPosition; skipping: {}", e);
-            return;
-        }
+        if (checkBlockCondition(e)) return;
 
 
         var placement = e.getComponent(Placement.class).orElseThrow();
         InnerBoxSize innerBoxSize = InnerBoxSize.from(e).orElseThrow();
-
         BlockText.ValidatedTextData validateText = getValidatedTextData(e);
 
 
@@ -84,10 +88,12 @@ public class TextBlockProcessor {
         double spacing = e.getComponent(Align.class).orElseGet(() -> {
             log.warn("TextComponent has no Align; using default: {}", e);
             return Align.defaultAlign(2);
-        }).spacing() * -1;
+        }).spacing();
+        if (log.isDebugEnabled()) {
+            log.debug("Rendering textBlock '{}' at placement ({}, {})", blockTextData, placement.x(), placement.y());
+            log.debug("fontSize={}  textStyle= {}", fontSize, style);
+        }
 
-        log.debug("Rendering textBlock '{}' at placement ({}, {}) fontSize={}  textStyle= ", blockTextData, placement.x(), placement.y());
-        log.debug("fontSize={}  textStyle= {}", fontSize, style);
 
         int currentPage = placement.startPage();
 
@@ -99,68 +105,59 @@ public class TextBlockProcessor {
         BlockTextData newBlockTextData;
         List<LineTextData> assignPositionTextData = new ArrayList<>();
 
+        Offset entityYOffset = new Offset();
 
+        float currentPositionX = startX;
+        float currentY = startY;
         for (LineTextData ltd : blockTextData) {
-
+            log.trace(ltd.toString());
+            YPositionOnPage yPositionOnPage = null;
             if (!isStarted) {
                 log.debug("Started print a block text, Position Y is {}", startY);
                 isStarted = true;
-                YPositionOnPage yPositionOnPage = null;
                 try {
-                    yPositionOnPage = pageLayoutCalculator.definePositionOnPage(startY, textHeight, 0.0, 0.0, currentPage, canvas, yOffset, false, e);
+                    yPositionOnPage = pageLayoutCalculator.definePositionOnPage(startY, textHeight, 0.0, 0.0, currentPage, canvas, entityYOffset, false, e);
                 } catch (BigSizeElementException | PageOutOfBoundException ex) {
                     log.error("BigSizeElementException {}, {}", ex, e);
                     throw new RuntimeException(String.format("BigSizeElementException %s, %s", ex, e.printInfo()));
                 }
-                startY = (float) yPositionOnPage.yPosition();
                 currentPage = yPositionOnPage.startPage();
+            } else {
+                try {
+                    yPositionOnPage = pageLayoutCalculator.definePositionOnPage(currentY, textHeight, 0.0, 0.0, currentPage, canvas, entityYOffset, false, e);
+                } catch (BigSizeElementException | PageOutOfBoundException ex) {
+                    log.error("Failed to define position on page: page={}, yOffset={} {}", currentPage, yOffset, e.printInfo(), ex);
+
+                    throw new RuntimeException(String.format("Error processing page position"), ex);
+                }
             }
+            currentY = (float) yPositionOnPage.yPosition();
+            currentPositionX = (float) ltd.x() + startX;
 
-            float currenPosition = (float) ltd.x() + startX;
-
-
-            LineTextData nltd = new LineTextData(ltd, currenPosition, startY, currentPage);
-            assignPositionTextData.add(nltd);
-            startY -= (float) (textHeight - spacing);
-            YPositionOnPage yPositionOnPage = null;
-            try {
-                yPositionOnPage = pageLayoutCalculator.definePositionOnPage(startY, textHeight, 0.0, 0.0, currentPage, canvas, yOffset, false, e);
-            } catch (BigSizeElementException | PageOutOfBoundException ex) {
-                log.error("Failed to define position on page: page={}, yOffset={} {}", currentPage, yOffset, e.printInfo(), ex);
-
-                throw new RuntimeException(String.format("Error processing page position"), ex);
-            }
 
             if (log.isDebugEnabled()) {
                 log.debug(ltd.toString());
                 log.debug("Line placement {}, Current page: {}", ltd.x(), currentPage);
                 log.debug(yPositionOnPage.toString());
             }
+            LineTextData nltd = new LineTextData(ltd, currentPositionX, currentY, yPositionOnPage.startPage());
+            currentPage = yPositionOnPage.startPage();
+            currentY = nextLine(currentY, textHeight, spacing);
+            assignPositionTextData.add(nltd);
 
-
-            startY = (float) yPositionOnPage.yPosition();
-
-            double shift = layoutCalculator.shift(e, startY, canvas);
-            if (shift != 0) {
-                double currentShift;
-                currentShift = shift;
-                startY += (float) currentShift;
-                entityYOffset.incrementY(currentShift);
-                log.debug("Current Entity Offset {} {}", entityYOffset, e);
-            }
-            if (currentPage != yPositionOnPage.startPage()) {
-                currentPage = yPositionOnPage.startPage();
-
-            }
         }
 
 
         newBlockTextData = new BlockTextData(assignPositionTextData, (float) spacing);
-        e.verticalOffsetAndCorrectionSize(entityYOffset);
+        e.updateEntitySize(entityManager, entityYOffset.y(),e);
         yOffset.incrementY(entityYOffset);
         log.debug("Returned Offset:  {} , {}", yOffset, e);
         e.addComponent(newBlockTextData);
 
+    }
+
+    private float nextLine(double positionY, float height, double spacing) {
+        return (float) (positionY - (height + spacing));
     }
 
     private BlockText.ValidatedTextData getValidatedTextData(Entity e) {

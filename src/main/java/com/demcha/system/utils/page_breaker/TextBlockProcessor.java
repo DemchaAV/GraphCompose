@@ -11,12 +11,15 @@ import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.components.renderable.BlockText;
+import com.demcha.components.renderable.ChunkedBlockText;
+import com.demcha.components.renderable.TextComponent;
 import com.demcha.core.EntityManager;
 import com.demcha.exceptions.BigSizeElementException;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDFontDescriptor;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -101,26 +104,22 @@ public class TextBlockProcessor {
         // стартовая позиция (левый верх «абзаца»)
         float startX = (float) position.x() - descentPx;
         float startY = (float) (position.y() + innerBoxSize.height()) - textHeight + descentPx; // if spacing will be negative
-        boolean isStarted = false;
         BlockTextData newBlockTextData;
         List<LineTextData> assignPositionTextData = new ArrayList<>();
 
-        Offset entityYOffset = new Offset();
 
         float currentX = startX;
         float currentY = startY;
         for (LineTextData ltd : blockTextData) {
             log.trace(ltd.toString());
 
-
             currentX = (float) ltd.x() + startX;
-
-
             if (log.isDebugEnabled()) {
                 log.debug(ltd.toString());
                 log.debug("Line position {}, Current page: {}", ltd.x(), currentPage);
                 log.debug("currentY {}", currentY);
             }
+
             LineTextData nltd = new LineTextData(ltd, currentX, currentY, 0);
             currentY = nextLine(currentY, textHeight, spacing);
             assignPositionTextData.add(nltd);
@@ -133,91 +132,6 @@ public class TextBlockProcessor {
 
     }
 
-    public void processTextLinesOldMethodforLSystem(Entity e, Canvas canvas, @NonNull Offset yOffset) throws IOException, BigSizeElementException {
-
-        //check blockTextCondition
-
-        if (checkBlockCondition(e)) return;
-
-
-        var placement = e.getComponent(Placement.class).orElseThrow();
-        InnerBoxSize innerBoxSize = InnerBoxSize.from(e).orElseThrow();
-        BlockText.ValidatedTextData validateText = getValidatedTextData(e);
-
-
-        var style = validateText.style();
-        float fontSize = (float) style.size();
-        PDFont font = style.font();
-        var textHeight = (float) style.getLineHeight();
-
-        float scale = fontSize / 1000f;
-        PDFontDescriptor fd = font.getFontDescriptor();
-
-        float descentPx = Math.abs((fd != null ? fd.getDescent() : font.getBoundingBox().getLowerLeftY()) * scale);
-
-        var blockTextData = validateText.textValue().lines();
-
-        double spacing = e.getComponent(Align.class).orElseGet(() -> {
-            log.warn("TextComponent has no Align; using default: {}", e);
-            return Align.defaultAlign(2);
-        }).spacing();
-
-        if (log.isDebugEnabled()) {
-            log.debug("Rendering textBlock '{}' at placement ({}, {})", blockTextData, placement.x(), placement.y());
-            log.debug("fontSize={}  textStyle= {}", fontSize, style);
-        }
-
-
-        int currentPage = placement.startPage();
-
-
-        // стартовая позиция (левый верх «абзаца»)
-        float startX = (float) placement.x() - descentPx;
-        float startY = (float) (placement.y() + innerBoxSize.height()) - textHeight + descentPx; // if spacing will be negative
-        boolean isStarted = false;
-        BlockTextData newBlockTextData;
-        List<LineTextData> assignPositionTextData = new ArrayList<>();
-
-        Offset entityYOffset = new Offset();
-
-        float currentX = startX;
-        float currentY = startY;
-        for (LineTextData ltd : blockTextData) {
-            log.trace(ltd.toString());
-            YPositionOnPage yPositionOnPage = null;
-            if (isStarted) {
-                yPositionOnPage = definePositionOnPage(currentY, textHeight, currentPage, canvas, entityYOffset, false, e);
-            } else {
-                log.debug("Started print a block text, Position Y is {}", startY);
-                isStarted = true;
-                yPositionOnPage = definePositionOnPage(startY, textHeight, currentPage, canvas, entityYOffset, false, e);
-                currentPage = yPositionOnPage.startPage();
-            }
-
-            currentY = (float) yPositionOnPage.yPosition();
-            currentX = (float) ltd.x() + startX;
-
-
-            if (log.isDebugEnabled()) {
-                log.debug(ltd.toString());
-                log.debug("Line placement {}, Current page: {}", ltd.x(), currentPage);
-                log.debug(yPositionOnPage.toString());
-            }
-            LineTextData nltd = new LineTextData(ltd, currentX, currentY, yPositionOnPage.startPage());
-            currentPage = yPositionOnPage.startPage();
-            currentY = nextLine(currentY, textHeight, spacing);
-            assignPositionTextData.add(nltd);
-
-        }
-
-
-        newBlockTextData = new BlockTextData(assignPositionTextData, (float) spacing);
-        e.updateEntitySize(entityManager, entityYOffset.y(), e);
-        yOffset.incrementY(entityYOffset);
-        log.debug("Returned Offset:  {} , {}", yOffset, e);
-        e.addComponent(newBlockTextData);
-
-    }
 
     public void breakBlockTextInToPages(Entity entity, Canvas canvas, @NonNull Offset yOffset) throws IOException, BigSizeElementException {
         //check blockTextCondition
@@ -245,13 +159,18 @@ public class TextBlockProcessor {
             assignPositionTextData.add(newLtd);
         }
 
-        newBlockTextData = new BlockTextData(assignPositionTextData, (float) spacing);
+        finalizePageBreakingAndDefinition(entity, yOffset, assignPositionTextData, (float) spacing, entityYOffset);
+
+    }
+
+    private void finalizePageBreakingAndDefinition(Entity entity, @NotNull Offset yOffset, List<LineTextData> assignPositionTextData, float spacing, Offset entityYOffset) {
+        BlockTextData newBlockTextData;
+        newBlockTextData = new BlockTextData(assignPositionTextData, spacing);
         entity.updateEntitySize(entityManager, entityYOffset.y(), entity);
 
         yOffset.incrementY(entityYOffset);
         log.debug("Returned Offset:  {} , {}", yOffset, entity);
         entity.addComponent(newBlockTextData);
-
     }
 
 
@@ -263,7 +182,7 @@ public class TextBlockProcessor {
         try {
             return pLayatCalculator.calculatePageCoordinates(currentY, textHeight, 0.0, 0.0,
                     currentPage, canvasHeight, canvasMarginTop, canvasMarginBottom,
-                    entityYOffset, false, entity);
+                    entityYOffset, isBreakable, entity);
         } catch (BigSizeElementException e) {
             log.error("BigSizeElementException {}, {}", e, entity);
             throw new RuntimeException(String.format("BigSizeElementException %s, %s", e, entity.printInfo()));
@@ -299,7 +218,4 @@ public class TextBlockProcessor {
         ) throws BigSizeElementException; // Add other exceptions if necessary
     }
 
-    // Helper record for internal data
-    private record ValidatedData(TextStyle style, BlockTextData textValue) {
-    }
 }

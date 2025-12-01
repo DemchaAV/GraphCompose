@@ -14,16 +14,20 @@ import com.demcha.components.layout.ParentComponent;
 import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.PaddingCoordinate;
 import com.demcha.components.layout.coordinator.Position;
+import com.demcha.components.renderable.BlockText;
 import com.demcha.components.renderable.TextComponent;
 import com.demcha.components.style.Padding;
 import com.demcha.core.EntityManager;
+import com.demcha.exceptions.BigSizeElementException;
 import com.demcha.system.interfaces.SystemECS;
 import com.demcha.system.utils.containerUtils.ContainerExpander;
 import com.demcha.system.utils.containerUtils.ContainerLayoutManager;
 import com.demcha.system.utils.page_breaker.PageBreaker;
+import com.demcha.system.utils.page_breaker.TextBlockProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -44,6 +48,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class LayoutSystemImpl implements SystemECS {
     private final Canvas canvas;
+    private TextBlockProcessor textBlockProcessor;
 
 
 
@@ -181,6 +186,7 @@ public class LayoutSystemImpl implements SystemECS {
     @Override
     public void process(EntityManager entityManager) {
         log.info("LayoutSystemImpl: processing...");
+        textBlockProcessor = new TextBlockProcessor(entityManager);
 
         final var entities = entityManager.getEntities();
         if (entities == null || entities.isEmpty()) {
@@ -231,6 +237,9 @@ public class LayoutSystemImpl implements SystemECS {
         // Pagination
         var pageBreaker = new PageBreaker(entityManager);
         pageBreaker.process();
+
+//        PaginationLayoutSystem paginationLayoutSystem = new PaginationLayoutSystem();
+//        paginationLayoutSystem.process(entityManager);
 
     }
 
@@ -332,6 +341,18 @@ public class LayoutSystemImpl implements SystemECS {
                     .orElse(id.toString());
             log.debug("LayoutSystemImpl: {} [depth={}] positioned at ({}, {})",
                     name, depth, computedPosition.x(), computedPosition.y());
+        }
+        if (BlockText.class.isAssignableFrom(childEntity.getRender().getClass())){
+            try {
+                textBlockProcessor.processLayoutSystemTextLines(childEntity);
+            } catch (IOException e) {
+                log.error("Error during processing block text entity {}", childEntity);
+                throw new RuntimeException(String.format("Error during processing block text entity %s", childEntity),e);
+            } catch (BigSizeElementException e) {
+                log.error(String.format( "To big size line in block text, Error during processing block text entity %s", childEntity),e);
+
+                throw new RuntimeException(e);
+            }
         }
 
         // DFS to children with depth+1

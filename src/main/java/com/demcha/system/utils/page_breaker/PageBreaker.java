@@ -119,7 +119,7 @@ public class PageBreaker {
                         if (entity.hasAssignable(BlockText.class)) {
                             try {
                                 try {
-                                    textBlockProcessor.processTextLines(entity, canvas, yOffset);
+                                    textBlockProcessor.breakBlockTextInToPages(entity, canvas, yOffset);
                                 } catch (BigSizeElementException ex) {
                                     throw new RuntimeException(ex);
                                 }

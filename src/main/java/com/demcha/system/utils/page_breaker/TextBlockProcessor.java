@@ -7,6 +7,7 @@ import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.Align;
+import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.components.renderable.BlockText;
@@ -54,14 +55,85 @@ public class TextBlockProcessor {
      * page breaks, and updates the entity's {@link BlockTextData} component with the new,
      * positioned data.
      *
-     * @param e       The entity containing the {@link BlockText}.
-     * @param canvas  The canvas object for retrieving page dimension information.
-     * @param yOffset The total Y-axis offset, which will be updated based on
-     *                offsets caused by page breaks within the text block.
+     * @param e The entity containing the {@link BlockText}.
+     *          offsets caused by page breaks within the text block.
      * @throws IOException           if an error occurs while working with fonts.
      * @throws IllegalStateException if the entity is missing required components.
      */
-    public void processTextLines(Entity e, Canvas canvas, @NonNull Offset yOffset) throws IOException, BigSizeElementException {
+    public void processLayoutSystemTextLines(Entity e) throws IOException, BigSizeElementException {
+
+        //check blockTextCondition
+
+        if (checkBlockCondition(e)) return;
+
+
+        var position = e.getComponent(ComputedPosition.class).orElseThrow();
+        InnerBoxSize innerBoxSize = InnerBoxSize.from(e).orElseThrow();
+        BlockText.ValidatedTextData validateText = getValidatedTextData(e);
+
+
+        var style = validateText.style();
+        float fontSize = (float) style.size();
+        PDFont font = style.font();
+        var textHeight = (float) style.getLineHeight();
+
+        float scale = fontSize / 1000f;
+        PDFontDescriptor fd = font.getFontDescriptor();
+
+        float descentPx = Math.abs((fd != null ? fd.getDescent() : font.getBoundingBox().getLowerLeftY()) * scale);
+
+        var blockTextData = validateText.textValue().lines();
+
+        double spacing = e.getComponent(Align.class).orElseGet(() -> {
+            log.warn("TextComponent has no Align; using default: {}", e);
+            return Align.defaultAlign(2);
+        }).spacing();
+
+        if (log.isDebugEnabled()) {
+            log.debug("Rendering textBlock '{}' at position ({}, {})", blockTextData, position.x(), position.y());
+            log.debug("fontSize={}  textStyle= {}", fontSize, style);
+        }
+
+
+        int currentPage = 0;
+
+
+        // стартовая позиция (левый верх «абзаца»)
+        float startX = (float) position.x() - descentPx;
+        float startY = (float) (position.y() + innerBoxSize.height()) - textHeight + descentPx; // if spacing will be negative
+        boolean isStarted = false;
+        BlockTextData newBlockTextData;
+        List<LineTextData> assignPositionTextData = new ArrayList<>();
+
+        Offset entityYOffset = new Offset();
+
+        float currentX = startX;
+        float currentY = startY;
+        for (LineTextData ltd : blockTextData) {
+            log.trace(ltd.toString());
+
+
+            currentX = (float) ltd.x() + startX;
+
+
+            if (log.isDebugEnabled()) {
+                log.debug(ltd.toString());
+                log.debug("Line position {}, Current page: {}", ltd.x(), currentPage);
+                log.debug("currentY {}", currentY);
+            }
+            LineTextData nltd = new LineTextData(ltd, currentX, currentY, 0);
+            currentY = nextLine(currentY, textHeight, spacing);
+            assignPositionTextData.add(nltd);
+
+        }
+
+
+        newBlockTextData = new BlockTextData(assignPositionTextData, (float) spacing);
+        e.addComponent(newBlockTextData);
+
+    }
+
+    public void processTextLinesOldMethodforLSystem(Entity e, Canvas canvas, @NonNull Offset yOffset) throws IOException, BigSizeElementException {
 
         //check blockTextCondition
 
@@ -146,6 +218,42 @@ public class TextBlockProcessor {
         e.addComponent(newBlockTextData);
 
     }
+
+    public void breakBlockTextInToPages(Entity entity, Canvas canvas, @NonNull Offset yOffset) throws IOException, BigSizeElementException {
+        //check blockTextCondition
+
+        if (checkBlockCondition(entity)) return;
+        BlockText.ValidatedTextData validatedTextData = getValidatedTextData(entity);
+        var blockTextData = validatedTextData.textValue().lines();
+        var textHeight = validatedTextData.style().getLineHeight();
+        double spacing = entity.getComponent(Align.class).orElseGet(() -> {
+            log.warn("TextComponent has no Align; using default: {}", entity);
+            return Align.defaultAlign(2);
+        }).spacing();
+
+
+        final int currentPage = 0;
+        Offset entityYOffset = new Offset();
+
+        List<LineTextData> assignPositionTextData = new ArrayList<>();
+        BlockTextData newBlockTextData;
+        for (LineTextData ltd : blockTextData) {
+            log.trace(ltd.toString());
+            double currentY = ltd.y() + yOffset.y() + entityYOffset.y();
+            YPositionOnPage yPositionOnPage = definePositionOnPage(currentY, textHeight, currentPage, canvas, entityYOffset, false, entity);
+            LineTextData newLtd = new LineTextData(ltd, ltd.x(), yPositionOnPage.yPosition(), yPositionOnPage.startPage());
+            assignPositionTextData.add(newLtd);
+        }
+
+        newBlockTextData = new BlockTextData(assignPositionTextData, (float) spacing);
+        entity.updateEntitySize(entityManager, entityYOffset.y(), entity);
+
+        yOffset.incrementY(entityYOffset);
+        log.debug("Returned Offset:  {} , {}", yOffset, entity);
+        entity.addComponent(newBlockTextData);
+
+    }
+
 
     private YPositionOnPage definePositionOnPage(double currentY, double textHeight, int currentPage, Canvas canvas, Offset entityYOffset, boolean isBreakable, Entity entity) {
         //canvas

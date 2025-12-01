@@ -2,7 +2,6 @@ package com.demcha;
 
 import com.demcha.components.components_builders.Canvas;
 import com.demcha.components.components_builders.VContainerBuilder;
-import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.style.Margin;
@@ -27,10 +26,8 @@ public class TestBigContainer {
     public static void main(String[] args) throws Exception {
 
         EntityManager entityManager = setupEntityManager(true);
-        container(entityManager,500,2100);
+        container(entityManager, 500, 2100);
         entityManager.processSystems();
-
-
 
 
     }
@@ -38,7 +35,7 @@ public class TestBigContainer {
     private static void container(EntityManager entityManager, double width, double height) {
         VContainerBuilder containerBuilder = new VContainerBuilder(entityManager, Align.middle(2));
         containerBuilder
-                .size(width,height)
+                .size(width, height)
                 .anchor(Anchor.topCenter()).build()
                 .addComponent(MARGIN)
                 .addComponent(PADDING)

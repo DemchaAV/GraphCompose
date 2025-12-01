@@ -33,7 +33,7 @@ class TemplateCV_1 {
         Path target = Paths.get("ExpleoGroup_CV_ArtemDemchyshyn.pdf");
 
         EntityManager entityManager = new EntityManager();
-        entityManager.setGuideLines(false);
+        entityManager.setGuideLines(true);
         PDDocument doc = new PDDocument();
         Canvas canvasPdf = new PdfCanvas(PDRectangle.A4, 0.0f, 0.0f);
         canvasPdf.addMargin(Margin.of(10));

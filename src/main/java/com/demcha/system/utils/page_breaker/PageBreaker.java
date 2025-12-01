@@ -78,15 +78,16 @@ public class PageBreaker {
                     Entity entity = e.getValue();
                     log.info("Work with Element {} ", entity);
 
-                    if (!Breakable.class.isAssignableFrom(entity.getRender().getClass())) {
-                        log.info("{} -> {}", entity, Breakable.class);
-                        definePlacement(canvas, entity, yOffset, false);
-                    } else {
+                    if (Breakable.class.isAssignableFrom(entity.getRender().getClass())) {
                         if (entity.hasAssignable(BlockText.class)) {
                             definePlacementForBlockText(canvas, entity, yOffset);
                         } else {
                             definePlacement(canvas, entity, yOffset, true);
                         }
+
+                    } else {
+                        log.info("{} -> {}", entity, Breakable.class);
+                        definePlacement(canvas, entity, yOffset, false);
                     }
                 });
     }

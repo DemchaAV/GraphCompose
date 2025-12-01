@@ -263,7 +263,27 @@ public class PageLayoutCalculator {
 
 
         int endPage = startPage;
-        if (!isBreakable) {
+        if (isBreakable) {
+            double requireSpace = yInPage + objectHeight + objectMarginTop;
+            double currentSize = Math.min(yInPage + requireSpace, canvasHeight - canvasMarginTop);
+            if (currentSize < requireSpace) {
+                log.debug("Defining a new endPage: {}", endPage);
+
+                while (requireSpace >= currentSize) {
+                    currentSize += canvasHeight;
+                    endPage--;
+                    if (endPage < 0) {
+                        endPage = 0;
+                        log.error("Page out of bound, Current PageNumber {}, {}", endPage, entity.printInfo());
+                        //TODO посмотреть почему делает меньше 0
+//                        throw new PageOutOfBoundException( String.format("Page out of bound, Current PageNumber %d, %s", endPage, entity.printInfo()));
+                    }
+                }
+
+            }
+
+
+        } else {
             log.trace("Element is not breakable {}", entity);
             shift = downShift(yInPage, objectHeight, objectMarginBottom, objectMarginTop, canvasHeight, canvasMarginBottom, canvasMarginTop);
             if (shift == 0) {
@@ -275,28 +295,9 @@ public class PageLayoutCalculator {
             startPage += pageOffset;
             log.debug("Shift: {}", shift);
             endPage = startPage;
-
-        } else {
-            double requireSpace = yInPage + objectHeight + objectMarginTop;
-            double currentSize = Math.min(yInPage + requireSpace, canvasHeight - canvasMarginTop);
-            if (currentSize < requireSpace) {
-                log.debug("Defining a new endPage: {}", endPage);
-
-                while (requireSpace >= currentSize) {
-                    currentSize += canvasHeight;
-                    endPage--;
-                    if (endPage < 0) {
-                        endPage=0;
-                        log.error("Page out of bound, Current PageNumber {}, {}", endPage, entity.printInfo());
-                        //TODO посмотреть почему делает меньше 0
-//                        throw new PageOutOfBoundException( String.format("Page out of bound, Current PageNumber %d, %s", endPage, entity.printInfo()));
-                    }
-                }
-
-            }
         }
         if (entity != null) {
-            entity.updateEntitySize(entityManager,shift);
+            entity.updateEntitySize(entityManager, shift);
         }
         yOffset.incrementY(shift);
         YPositionOnPage result = new YPositionOnPage(yInPage, startPage, endPage);

@@ -64,7 +64,7 @@ public class Main {
         Path target = Paths.get("output.pdf");
         PDDocument doc = new PDDocument();
         Canvas canvas = new PdfCanvas(PDRectangle.A4, 0.0f);
-        canvas.addMargin(Margin.of(0));
+        canvas.addMargin(Margin.of(20));
 
         EntityManager entityManager = new EntityManager();
         entityManager.setGuideLines(guidLines);

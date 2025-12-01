@@ -6,6 +6,7 @@ import com.demcha.components.layout.coordinator.RenderCoordinateContext;
 import com.demcha.exceptions.RenderGuideLinesException;
 import com.demcha.system.interfaces.RenderingSystemECS;
 import lombok.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Set;
@@ -53,8 +54,7 @@ public interface GuideCoordinate<T extends AutoCloseable> {
     }
 
     default boolean startFromStream(@NonNull RenderCoordinateContext context, @NonNull T stream) throws RenderGuideLinesException, IOException {
-        float canvasTopLine = renderingSystem().canvas().boundingTopLine();
-        var startHeight =  context.y();
+        var startHeight = context.y();
         RenderCoordinateContext coordinateContext = new RenderCoordinateContext(context.x(), startHeight, context.width(), context.height(), context.startPage(), context.endPage(), context.stroke(), context.color());
 
 
@@ -63,7 +63,19 @@ public interface GuideCoordinate<T extends AutoCloseable> {
         boolean lineDash = !context.stroke().equals(
                 renderingSystem().guidLineSettings().BOX_STROKE()
         );
+
         return renderingSystem().renderBorder(stream, coordinateContext, lineDash, sides);
+    }
+
+    default void startMarkers(@NotNull RenderCoordinateContext context, @NotNull T stream) throws IOException {
+        final float radius = renderingSystem().guidLineSettings().MARKER_RADIUS();
+        float cx = (float) context.x();
+        float cy = (float) context.y();
+        var color = context.color();
+        float w = (float) context.width();
+
+        renderingSystem().fillCircle(stream, cx, cy, radius, color);
+        renderingSystem().fillCircle(stream, cx + w, cy, radius, color);
     }
 
     // ---------------------------------------------------------
@@ -75,7 +87,10 @@ public interface GuideCoordinate<T extends AutoCloseable> {
         boolean lineDash = !context.stroke().equals(
                 renderingSystem().guidLineSettings().BOX_STROKE()
         );
-        return renderingSystem().renderBorder(stream, context, lineDash, sides);
+
+        renderingSystem().renderBorder(stream, context, lineDash, sides);
+
+        return true;
     }
 
     default boolean endFromStream(@NonNull RenderCoordinateContext context, @NonNull T stream) throws RenderGuideLinesException, IOException {
@@ -83,7 +98,20 @@ public interface GuideCoordinate<T extends AutoCloseable> {
         boolean lineDash = !context.stroke().equals(
                 renderingSystem().guidLineSettings().BOX_STROKE()
         );
-        return renderingSystem().renderBorder(stream, context, lineDash, sides);
+        renderingSystem().renderBorder(stream, context, lineDash, sides);
+        return true;
+    }
+
+    default void endMarkers(@NotNull RenderCoordinateContext context, @NotNull T stream) throws IOException {
+        final float radius = renderingSystem().guidLineSettings().MARKER_RADIUS();
+        float cx = (float) context.x();
+        float cy = (float) context.y();
+        var color = context.color();
+        float w = (float) context.width();
+        float h = (float) context.height();
+
+        renderingSystem().fillCircle(stream, cx, cy + h, radius, color);
+        renderingSystem().fillCircle(stream, cx + w, cy + h, radius, color);
     }
 
     // Existing methods kept as requested

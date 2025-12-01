@@ -35,12 +35,12 @@ class TemplateCV_1 {
         EntityManager entityManager = new EntityManager();
         entityManager.setGuideLines(true);
         PDDocument doc = new PDDocument();
-        Canvas canvasSize = new PdfCanvas(PDRectangle.A4, 0.0f, 0.0f);
-        canvasSize.addMargin(Margin.of(20));
+        Canvas canvasPdf = new PdfCanvas(PDRectangle.A4, 0.0f, 0.0f);
+        canvasPdf.addMargin(Margin.of(20));
 
 
-        entityManager.addSystem(new LayoutSystemImpl(canvasSize));
-        entityManager.addSystem(new PdfRenderingSystemECS(doc, canvasSize));
+        entityManager.addSystem(new LayoutSystemImpl(canvasPdf));
+        entityManager.addSystem(new PdfRenderingSystemECS(doc, canvasPdf));
         entityManager.addSystem(new PdfFileManagerSystem(target, doc));
 
         ModelBuilder cv = new ModelBuilder(entityManager);
@@ -62,7 +62,7 @@ class TemplateCV_1 {
         ModuleYml additional = data.getAdditional();
 
 
-        var canvas = new ModulesContainer(entityManager, canvasSize);
+        var canvas = new ModulesContainer(entityManager, canvasPdf);
         canvas.addComponent(new EntityName("ModulesContainer"));
 
 
@@ -81,9 +81,8 @@ class TemplateCV_1 {
         );
 
 
-        InnerBoxSize canvasInnerBox = canvas.innerBoxSize();
 
-        Entity moduleHeader = new ModuleBuilder(entityManager, Align.middle(5), canvasInnerBox)
+        Entity moduleHeader = new ModuleBuilder(entityManager, Align.middle(5), canvasPdf)
                 .entityName("ModuleHeader")
                 .margin(Margin.of(10))
                 .anchor(Anchor.topRight())
@@ -93,50 +92,49 @@ class TemplateCV_1 {
                 .build();
 
         // 7) Professional Summary
-        Entity moduleProfessionalSummary = cv.moduleBuilder(summary.getModuleName(), canvasInnerBox)
+        Entity moduleProfessionalSummary = cv.moduleBuilder(summary.getModuleName(), canvasPdf)
                 .entityName("ModuleProfessionalSummary")
-                .addChild(cv.blockText(summary.getBlockSummary(), canvasInnerBox.width()))
+                .addChild(cv.blockText(summary.getBlockSummary(), canvasPdf.width()))
                 .margin(Margin.top(6))
                 .build();
 
         // 8) Technical Skills
-        Entity moduleTechnicalSkills = cv.moduleBuilder(technicalSkills.getName(), canvasInnerBox)
+        Entity moduleTechnicalSkills = cv.moduleBuilder(technicalSkills.getName(), canvasPdf)
                 .entityName("ModuleTechnicalSkills")
-                .addChild(cv.blockText(technicalSkills.getModulePoints(), canvasInnerBox.width(), "• "))
+                .addChild(cv.blockText(technicalSkills.getModulePoints(), canvasPdf.width(), "• "))
                 .margin(Margin.top(6))
                 .build();
 
         // 9) Education & Certifications
-        Entity moduleEducationCertifications = cv.moduleBuilder(educationCertifications.getName(), canvasInnerBox)
+        Entity moduleEducationCertifications = cv.moduleBuilder(educationCertifications.getName(), canvasPdf)
                 .entityName("moduleEducationCertifications")
-                .addChild(cv.blockText(educationCertifications.getModulePoints(), canvasInnerBox.width(), null))
+                .addChild(cv.blockText(educationCertifications.getModulePoints(), canvasPdf.width(), null))
                 .margin(Margin.top(6))
                 .build();
 
         // 10) Projects (как modulePoints)
-        Entity moduleProjects = cv.moduleBuilder(projects.getName(), canvasInnerBox)
+        Entity moduleProjects = cv.moduleBuilder(projects.getName(), canvasPdf)
                 .entityName("ModuleProjects")
-                .addChild(cv.blockText(projects.getModulePoints(), canvasInnerBox.width(), null))
+                .addChild(cv.blockText(projects.getModulePoints(), canvasPdf.width(), null))
                 .margin(Margin.top(6))
                 .build();
 
         // 11) Professional Experience (как modulePoints)
-        Entity moduleProfessionalExperience = cv.moduleBuilder(professionalExperience.getName(), canvasInnerBox)
+        Entity moduleProfessionalExperience = cv.moduleBuilder(professionalExperience.getName(),canvasPdf)
                 .entityName("ModuleProfessionalExperience")
-                .addChild(cv.blockText(professionalExperience.getModulePoints(), canvasInnerBox.width(), null))
+                .addChild(cv.blockText(professionalExperience.getModulePoints(), canvasPdf.width(), null))
                 .margin(Margin.top(6))
                 .build();
 
         // 12) Additional (как blockText)
-        Entity moduleAdditional = cv.moduleBuilder(additional.getName(), canvasInnerBox)
+        Entity moduleAdditional = cv.moduleBuilder(additional.getName(), canvasPdf)
                 .entityName("ModuleAdditional")
-                .addChild(cv.blockText(additional.getModulePoints(), canvasInnerBox.width(), null))
+                .addChild(cv.blockText(additional.getModulePoints(), canvasPdf.width(), null))
                 .margin(Margin.top(6))
                 .build();
 
         // 13) Главная вертикальная колонка
-        InnerBoxSize inner = canvasInnerBox;
-        Entity mainVBoxContainer = cv.moduleBuilder(inner)
+        Entity mainVBoxContainer = cv.moduleBuilder(canvasPdf)
                 .entityName("MainVBoxContainer")
                 .addChild(moduleHeader)
                 .addChild(moduleProfessionalSummary)

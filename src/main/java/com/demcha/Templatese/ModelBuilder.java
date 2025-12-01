@@ -5,7 +5,6 @@ import com.demcha.components.content.link.LinkUrl;
 import com.demcha.components.content.text.TextStyle;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
-import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.Anchor;
 import com.demcha.components.style.ComponentColor;
@@ -59,9 +58,10 @@ public class ModelBuilder {
                 .build();
     }
 
-    public Entity infoPanel(List<Entity> entities ) {
-        return infoPanel(entities, null,null);
+    public Entity infoPanel(List<Entity> entities) {
+        return infoPanel(entities, null, null);
     }
+
     public Entity infoPanel(List<Entity> entities, Anchor anchorContainer, Anchor elements) {
         if (entities == null || entities.isEmpty()) return null;
 
@@ -135,8 +135,9 @@ public class ModelBuilder {
         return moduleHeader;
     }
 
-    public ModuleBuilder moduleBuilder(String moduleName, InnerBoxSize innerBoxSize) {
-        var moduleHeader = new ModuleBuilder(entityManager, Align.middle(5), innerBoxSize)
+    public ModuleBuilder moduleBuilder(String moduleName, Canvas canvas) {
+        var moduleHeader = new ModuleBuilder(entityManager, Align.middle(5), canvas)
+
                 .margin(Margin.of(5))
                 .anchor(Anchor.topLeft());
 
@@ -149,16 +150,16 @@ public class ModelBuilder {
     /**
      * Shortcut method to build a module with a title and a list of bullet points.
      */
-    public ModuleBuilder moduleBuilder(String moduleName, InnerBoxSize innerBoxSize, List<String> modulePoints) {
-        var moduleHeader = moduleBuilder(moduleName, innerBoxSize);
+    public ModuleBuilder moduleBuilder(String moduleName, Canvas canvas, List<String> modulePoints) {
+        var moduleHeader = moduleBuilder(moduleName, canvas);
 
         // Create a container for the list items
         var vbox = new VContainerBuilder(entityManager, Align.middle(5))
-                .size(new ContentSize(innerBoxSize.width(), 50)); // Height adapts automatically usually
+                .size(new ContentSize(canvas.innerWidth(), 50)); // Height adapts automatically usually
 
         for (String point : modulePoints) {
             vbox.addChild(
-                    blockTextBuilder(point, innerBoxSize.width())
+                    blockTextBuilder(point, canvas.innerWidth())
                             .anchor(Anchor.left())
                             .build()
             );
@@ -173,8 +174,8 @@ public class ModelBuilder {
         return moduleBuilder(null, page);
     }
 
-    public ModuleBuilder moduleBuilder(InnerBoxSize innerBoxSize) {
-        return moduleBuilder(null, innerBoxSize);
+    public ModuleBuilder moduleBuilder(Canvas canvas) {
+        return moduleBuilder(null, canvas);
     }
 
     // ==========================================

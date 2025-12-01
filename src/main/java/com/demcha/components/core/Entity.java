@@ -272,6 +272,7 @@ public final class Entity {
         }
         return updateEntitySizeAndPosition(manager, offsetY, parent);
     }
+
     public boolean updateParentContainerSize(EntityManager manager, double offsetY) {
 
         // 1. Guard Clause: No offset, no work needed.
@@ -328,6 +329,7 @@ public final class Entity {
         // 6. Recursion: Bubble the change up the tree
         return entity.updateParentContainer(manager, offsetY);
     }
+
     public boolean updateEntitySize(EntityManager manager, double offsetY, @NonNull Entity entity) {
 
 
@@ -355,6 +357,35 @@ public final class Entity {
         // 6. Recursion: Bubble the change up the tree
         return entity.updateParentContainerSize(manager, offsetY);
     }
+
+    public boolean updateEntitySize(EntityManager manager, double offsetY) {
+
+
+        // 4. Fetch Parent State (Throw if state is corrupt/missing)
+        // Using orElseThrow checks data integrity.
+        var computedPos = this.getComponent(ComputedPosition.class)
+                .orElseThrow(() -> new IllegalStateException("Parent missing Position"));
+        var size = this.getComponent(ContentSize.class)
+                .orElseThrow(() -> new IllegalStateException("Parent missing Size"));
+
+        // 5. Calculate New Dimensions
+        // We treat records/components as immutable, creating new instances.
+        if (offsetY < 0) {
+            // EXPAND UPWARDS: Move Y up, Increase Height
+            double newHeight = size.height() + Math.abs(offsetY);
+
+            this.addComponent(new ContentSize(size.width(), newHeight));
+        } else {
+            // EXPAND DOWNWARDS: Y stays same, Increase Height
+            double newHeight = size.height() + offsetY;
+
+            this.addComponent(new ContentSize(size.width(), newHeight));
+        }
+
+        // 6. Recursion: Bubble the change up the tree
+        return this.updateParentContainerSize(manager, offsetY);
+    }
+
 
     public String printInfo() {
         System.out.println(this);

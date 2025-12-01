@@ -16,7 +16,7 @@ import org.apache.pdfbox.pdmodel.PDPage;
 
 @Slf4j
 public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
-    private final Canvas contentSize;
+    private final Canvas canvas;
 
     /**
      * Constructs a new {@code ModuleBuilder} associated with a specific Entity Manager.
@@ -27,12 +27,12 @@ public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
         this(entityManager, align, (ContentSize) null);
     }
 
-    public ModuleBuilder(EntityManager entityManager, Align align, ContentSize canvasSize) {
+    public ModuleBuilder(EntityManager entityManager, Align align, ContentSize canvas) {
         super(entityManager, align);
-        this.contentSize = new Canvas() {
+        this.canvas = new Canvas() {
             @Override
             public float width() {
-                return (float) canvasSize.width();
+                return (float) canvas.width();
             }
 
             @Override
@@ -47,7 +47,7 @@ public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
 
             @Override
             public float height() {
-                return (float) canvasSize.height();
+                return (float) canvas.height();
             }
 
             @Override
@@ -66,7 +66,7 @@ public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
 
     public ModuleBuilder(EntityManager entityManager, Align align, Canvas canvas) {
         super(entityManager, align);
-        this.contentSize = canvas;
+        this.canvas = canvas;
 
     }
 
@@ -85,7 +85,7 @@ public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
         entity.addComponent(new com.demcha.components.renderable.Module());
         entity.addComponent(StackAxis.VERTICAL);
         entity.addComponentIfAbsent(new VContainer()); // Add the specific component
-        entity.addComponent(contentSize == null ? new ContentSize(0, 0) : new ContentSize(contentSize.width(), 0));
+        entity.addComponent(canvas == null ? new ContentSize(0, 0) : new ContentSize(canvas.innerWidth(), 0));
     }
 
 

@@ -194,12 +194,12 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
             box().endFromStream(boxContext, stream);
         }
         if (marginContext != null) {
-
             margin().endFromStream(marginContext, stream);
+            margin().endMarkers(marginContext, stream);
         }
         if (paddingContext != null) {
-
             padding().endFromStream(paddingContext, stream);
+            padding().endMarkers(paddingContext, stream);
         }
 
     }
@@ -254,9 +254,11 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
         if (marginContext != null) {
 
             margin().startFromStream(marginContext, stream);
+            margin().startMarkers(marginContext, stream);
         }
         if (paddingContext != null) {
             padding().startFromStream(paddingContext, stream);
+            padding().startMarkers(paddingContext, stream);
 
         }
 

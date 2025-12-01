@@ -282,19 +282,21 @@ public class PageLayoutCalculator {
             if (currentSize < requireSpace) {
                 log.debug("Defining a new endPage: {}", endPage);
 
-                while (requireSpace > currentSize) {
+                while (requireSpace >= currentSize) {
                     currentSize += canvasHeight;
                     endPage--;
                     if (endPage < 0) {
-                        log.error("Page out of bound, Current PageNumber" + endPage);
-                        throw new PageOutOfBoundException("Page out of bound, Current PageNumber" + endPage);
+                        endPage=0;
+                        log.error("Page out of bound, Current PageNumber {}, {}", endPage, entity.printInfo());
+                        //TODO посмотреть почему делает меньше 0
+//                        throw new PageOutOfBoundException( String.format("Page out of bound, Current PageNumber %d, %s", endPage, entity.printInfo()));
                     }
                 }
 
             }
         }
         if (entity != null) {
-            entity.updateParentContainer(entityManager, shift);
+            entity.updateEntitySize(entityManager,shift);
         }
         yOffset.incrementY(shift);
         YPositionOnPage result = new YPositionOnPage(yInPage, startPage, endPage);

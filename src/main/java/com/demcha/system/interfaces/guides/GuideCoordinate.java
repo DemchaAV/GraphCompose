@@ -54,7 +54,7 @@ public interface GuideCoordinate<T extends AutoCloseable> {
 
     default boolean startFromStream(@NonNull RenderCoordinateContext context, @NonNull T stream) throws RenderGuideLinesException, IOException {
         float canvasTopLine = renderingSystem().canvas().boundingTopLine();
-        var startHeight = canvasTopLine - context.y();
+        var startHeight =  context.y();
         RenderCoordinateContext coordinateContext = new RenderCoordinateContext(context.x(), startHeight, context.width(), context.height(), context.startPage(), context.endPage(), context.stroke(), context.color());
 
 

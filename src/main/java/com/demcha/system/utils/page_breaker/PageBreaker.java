@@ -1,17 +1,14 @@
 package com.demcha.system.utils.page_breaker;
 
 import com.demcha.components.components_builders.Canvas;
-import com.demcha.components.content.text.BlockTextData;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
 import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.components.renderable.BlockText;
-import com.demcha.components.style.Margin;
 import com.demcha.core.EntityManager;
 import com.demcha.exceptions.BigSizeElementException;
-import com.demcha.system.implemented_systems.pdf_systems.PdfCanvas;
 import com.demcha.system.interfaces.RenderingSystemECS;
 import com.demcha.system.interfaces.SystemECS;
 import lombok.Data;
@@ -44,13 +41,11 @@ import java.util.UUID;
 public class PageBreaker {
     private final EntityManager entityManager;
     private PageLayoutCalculator pageLayoutCalculator;
-    private PageLayoutCalculator layoutCalculator;
     private TextBlockProcessor textBlockProcessor;
 
     public PageBreaker(EntityManager entityManager) {
         this.entityManager = entityManager;
         this.pageLayoutCalculator = new PageLayoutCalculator(entityManager);
-        this.layoutCalculator = new PageLayoutCalculator(entityManager);
         this.textBlockProcessor = new TextBlockProcessor(entityManager);
     }
 
@@ -67,29 +62,6 @@ public class PageBreaker {
         return setYInPlacement(entity, position.yPosition(), position.startPage(), position.endPage());
     }
 
-    //TODO has to be removed after testing
-    public static void main(String[] args) throws BigSizeElementException {
-
-        double y = 10;
-        double elementHigh = 50;
-        double marginTop = 10;
-        double marginBottom = 5;
-        var canvas = new PdfCanvas(100, 120, 0, 0, Margin.of(20));
-        double firstResult = -5;
-
-
-    }
-
-    /**
-     * The main method for performing the page-breaking process.
-     * It sorts entities, iterates through them, and calculates their final position ({@link Placement}),
-     * including the page number and in-page coordinates. Special attention is given to "breakable" elements,
-     * such as {@link BlockText}, which require additional processing.
-     *
-     * @param entities The map of entities to process.
-     * @param canvas   The {@link Canvas} object, providing information about page dimensions and margins.
-     * @throws IllegalStateException if an entity is missing a required component (e.g., {@code RenderingPosition}).
-     */
     public void process(@NonNull Map<UUID, Entity> entities, Canvas canvas) {
         Offset yOffset = new Offset();
 
@@ -109,33 +81,14 @@ public class PageBreaker {
                     if (!Breakable.class.isAssignableFrom(entity.getRender().getClass())) {
                         log.info("{} -> {}", entity, Breakable.class);
                         definePlacement(canvas, entity, yOffset, false);
-
                     } else {
-                        //TODO для дебага надо будет удалить
                         if (entity.hasAssignable(BlockText.class)) {
-                            log.info(entity.printInfo());
+                            definePlacementForBlockText(canvas, entity, yOffset);
+                        } else {
+                            definePlacement(canvas, entity, yOffset, true);
                         }
-                        definePlacement(canvas, entity, yOffset, true);
-                        if (entity.hasAssignable(BlockText.class)) {
-                            try {
-                                try {
-                                    textBlockProcessor.breakBlockTextInToPages(entity, canvas, yOffset);
-                                } catch (BigSizeElementException ex) {
-                                    throw new RuntimeException(ex);
-                                }
-
-                                if (log.isDebugEnabled()) {
-                                    BlockTextData blockTextData = entity.getComponent(BlockTextData.class).orElseThrow();
-                                    blockTextData.lines().forEach((t) -> log.debug(t.toString()));
-                                }
-                            } catch (IOException ex) {
-                                throw new RuntimeException(ex);
-                            }
-                        }
-
                     }
                 });
-        log.debug("hhelo");
     }
 
     /**
@@ -158,13 +111,27 @@ public class PageBreaker {
         try {
             position = layoutCalculator.definePositionOnPage(computedPosition.y() + yOffset.y(), entity, 0, canvas, yOffset, isBreakable);
         } catch (Exception e) {
-            log.error("{}", entity.printInfo(), e);
+            log.error("Error while defining position for {}", entity.printInfo(), e);
             throw new RuntimeException(entity.printInfo(), e);
         }
 
         Placement placement = setYInPlacement(entity, position);
         entity.addComponent(placement);
     }
+
+    private void definePlacementForBlockText(Canvas canvas, Entity entity, Offset yOffset) {
+        try {
+            //definition a blockText
+            textBlockProcessor.breakBlockTextInToPages(entity, canvas, yOffset);
+            //definition a placementForBlockTextContainer
+            definePlacement(canvas, entity, yOffset, true);
+        } catch (BigSizeElementException | IOException ex) {
+            log.error("Error while defining position for block text {}", entity.printInfo(), ex);
+            throw new RuntimeException(String.format("Error while defining position for block text %s, %s", entity.printInfo(), ex));
+        }
+
+    }
+
 
     /**
      * Initiates the page-breaking process for all entities managed by the {@link EntityManager}.

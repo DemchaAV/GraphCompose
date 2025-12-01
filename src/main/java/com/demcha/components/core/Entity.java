@@ -270,10 +270,36 @@ public final class Entity {
             log.error("Parent Entity not found in Manager for UUID: {}", parentComponent.uuid());
             return false;
         }
+        return updateEntitySizeAndPosition(manager, offsetY, parent);
+    }
+    public boolean updateParentContainerSize(EntityManager manager, double offsetY) {
+
+        // 1. Guard Clause: No offset, no work needed.
+        if (offsetY == 0) {
+            log.info("Update aborted: Offset is zero");
+            return false;
+        }
+
+        // 2. Get Parent Component Info
+        // Note: 'var' infers the type automatically (Java 10+)
+        var parentComponent = this.getComponent(ParentComponent.class).orElse(null);
+
+        if (parentComponent == null) {
+            // Warning is often better than Error if it's a root element (has no parent)
+            log.warn("Parent component missing for entity [{}]. updateParent() stopped.", this);
+            return false;
+        }
+
+        // 3. Fetch Parent Entity
+        var parent = manager.getEntity(parentComponent.uuid()).orElse(null);
+        if (parent == null) {
+            log.error("Parent Entity not found in Manager for UUID: {}", parentComponent.uuid());
+            return false;
+        }
         return updateEntitySize(manager, offsetY, parent);
     }
 
-    public boolean updateEntitySize(EntityManager manager, double offsetY, @NonNull Entity entity) {
+    public boolean updateEntitySizeAndPosition(EntityManager manager, double offsetY, @NonNull Entity entity) {
 
 
         // 4. Fetch Parent State (Throw if state is corrupt/missing)
@@ -301,6 +327,33 @@ public final class Entity {
 
         // 6. Recursion: Bubble the change up the tree
         return entity.updateParentContainer(manager, offsetY);
+    }
+    public boolean updateEntitySize(EntityManager manager, double offsetY, @NonNull Entity entity) {
+
+
+        // 4. Fetch Parent State (Throw if state is corrupt/missing)
+        // Using orElseThrow checks data integrity.
+        var computedPos = entity.getComponent(ComputedPosition.class)
+                .orElseThrow(() -> new IllegalStateException("Parent missing Position"));
+        var size = entity.getComponent(ContentSize.class)
+                .orElseThrow(() -> new IllegalStateException("Parent missing Size"));
+
+        // 5. Calculate New Dimensions
+        // We treat records/components as immutable, creating new instances.
+        if (offsetY < 0) {
+            // EXPAND UPWARDS: Move Y up, Increase Height
+            double newHeight = size.height() + Math.abs(offsetY);
+
+            entity.addComponent(new ContentSize(size.width(), newHeight));
+        } else {
+            // EXPAND DOWNWARDS: Y stays same, Increase Height
+            double newHeight = size.height() + offsetY;
+
+            entity.addComponent(new ContentSize(size.width(), newHeight));
+        }
+
+        // 6. Recursion: Bubble the change up the tree
+        return entity.updateParentContainerSize(manager, offsetY);
     }
 
     public String printInfo() {

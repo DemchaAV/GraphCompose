@@ -223,7 +223,7 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
         double sourceHeight = sourceContext.height();
         double remainingHeight = sourceHeight;
         double currentY = initializedYPosition;
-        int currentPage = pages-1;
+        int currentPage = pages;
 
         // 4. Loop to slice the content
         while (remainingHeight > 0) {
@@ -243,7 +243,7 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
             currentPage--;
         }
 
-        return resultSegments;
+        return resultSegments.reversed();
     }
 
     private void startGuidesFromStream(S stream, RenderCoordinateContext boxContext, RenderCoordinateContext marginContext, RenderCoordinateContext paddingContext) throws IOException {

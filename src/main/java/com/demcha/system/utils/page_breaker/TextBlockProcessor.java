@@ -8,11 +8,8 @@ import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.coordinator.ComputedPosition;
-import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderingPosition;
 import com.demcha.components.renderable.BlockText;
-import com.demcha.components.renderable.ChunkedBlockText;
-import com.demcha.components.renderable.TextComponent;
 import com.demcha.core.EntityManager;
 import com.demcha.exceptions.BigSizeElementException;
 import lombok.NonNull;
@@ -158,7 +155,6 @@ public class TextBlockProcessor {
             LineTextData newLtd = new LineTextData(ltd, ltd.x(), yPositionOnPage.yPosition(), yPositionOnPage.startPage());
             assignPositionTextData.add(newLtd);
         }
-
         finalizePageBreakingAndDefinition(entity, yOffset, assignPositionTextData, (float) spacing, entityYOffset);
 
     }

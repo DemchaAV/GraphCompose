@@ -236,9 +236,9 @@ public class PageLayoutCalculator {
      * Core logic for calculating the position on a page.
      */
     public YPositionOnPage calculatePageCoordinates(double currentPositionY,
-                                                     double objectHeight, double objectMarginTop, double objectMarginBottom, //object Settings
-                                                     int currentPageNumber, double canvasHeight, double canvasMarginTop, double canvasMarginBottom,  //Canvas Settings
-                                                     Offset yOffset, boolean isBreakable, Entity entity) throws BigSizeElementException, PageOutOfBoundException {
+                                                    double objectHeight, double objectMarginTop, double objectMarginBottom, //object Settings
+                                                    int currentPageNumber, double canvasHeight, double canvasMarginTop, double canvasMarginBottom,  //Canvas Settings
+                                                    Offset yOffset, boolean isBreakable, Entity entity) throws BigSizeElementException, PageOutOfBoundException {
 
         if (!(canvasHeight > 0.0) || Double.isInfinite(canvasHeight)) {
             throw new IllegalArgumentException("canvasHeight must be a finite positive number; was " + canvasHeight);

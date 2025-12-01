@@ -199,7 +199,8 @@ public class ModelBuilder {
         // We use the standard body style for lists
         TextStyle style = theme.bodyTextStyle();
 
-        return new BlockTextBuilder(entityManager, Align.left(5))
+
+        return new BlockTextBuilder(entityManager, Align.left(theme.spacing()))
                 .size(width, 2)
                 .padding(0, 5, 0, 25)
                 .text(text, style, null, null, bulletOffset)
@@ -215,7 +216,7 @@ public class ModelBuilder {
                 .textWithAutoSize(text)
                 .textStyle(theme.bodyTextStyle()); // Using Theme Body Style
 
-        return new BlockTextBuilder(entityManager, Align.left(5))
+        return new BlockTextBuilder(entityManager, Align.left(theme.spacing()))
                 .size(width, 2)
                 .padding(0, 5, 0, 25)
                 .text(textBuilder);

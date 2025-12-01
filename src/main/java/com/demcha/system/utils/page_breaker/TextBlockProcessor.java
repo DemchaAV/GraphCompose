@@ -4,6 +4,7 @@ import com.demcha.components.LineTextData;
 import com.demcha.components.components_builders.Canvas;
 import com.demcha.components.content.text.BlockTextData;
 import com.demcha.components.content.text.TextStyle;
+import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.Align;
@@ -147,7 +148,6 @@ public class TextBlockProcessor {
         Offset entityYOffset = new Offset();
 
         List<LineTextData> assignPositionTextData = new ArrayList<>();
-        BlockTextData newBlockTextData;
         for (LineTextData ltd : blockTextData) {
             log.trace(ltd.toString());
             double currentY = ltd.y() + yOffset.y() + entityYOffset.y();
@@ -162,8 +162,9 @@ public class TextBlockProcessor {
     private void finalizePageBreakingAndDefinition(Entity entity, @NotNull Offset yOffset, List<LineTextData> assignPositionTextData, float spacing, Offset entityYOffset) {
         BlockTextData newBlockTextData;
         newBlockTextData = new BlockTextData(assignPositionTextData, spacing);
-        entity.updateEntitySize(entityManager, entityYOffset.y(), entity);
-
+//        entity.updateEntitySize(entityManager, entityYOffset.y(), entity);
+        var component = entity.getComponent(ComputedPosition.class).orElseThrow();
+        entity.addComponent(new ComputedPosition(component.x(), component.y() + entityYOffset.y()));
         yOffset.incrementY(entityYOffset);
         log.debug("Returned Offset:  {} , {}", yOffset, entity);
         entity.addComponent(newBlockTextData);

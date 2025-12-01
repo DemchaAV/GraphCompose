@@ -33,10 +33,10 @@ class TemplateCV_1 {
         Path target = Paths.get("ExpleoGroup_CV_ArtemDemchyshyn.pdf");
 
         EntityManager entityManager = new EntityManager();
-        entityManager.setGuideLines(true);
+        entityManager.setGuideLines(false);
         PDDocument doc = new PDDocument();
         Canvas canvasPdf = new PdfCanvas(PDRectangle.A4, 0.0f, 0.0f);
-        canvasPdf.addMargin(Margin.of(20));
+        canvasPdf.addMargin(Margin.of(10));
 
 
         entityManager.addSystem(new LayoutSystemImpl(canvasPdf));
@@ -92,44 +92,45 @@ class TemplateCV_1 {
                 .build();
 
         // 7) Professional Summary
+        float textBlockWidth = (float) canvasPdf.innerWidth();
         Entity moduleProfessionalSummary = cv.moduleBuilder(summary.getModuleName(), canvasPdf)
                 .entityName("ModuleProfessionalSummary")
-                .addChild(cv.blockText(summary.getBlockSummary(), canvasPdf.width()))
+                .addChild(cv.blockText(summary.getBlockSummary(), textBlockWidth))
                 .margin(Margin.top(6))
                 .build();
 
         // 8) Technical Skills
         Entity moduleTechnicalSkills = cv.moduleBuilder(technicalSkills.getName(), canvasPdf)
                 .entityName("ModuleTechnicalSkills")
-                .addChild(cv.blockText(technicalSkills.getModulePoints(), canvasPdf.width(), "• "))
+                .addChild(cv.blockText(technicalSkills.getModulePoints(), textBlockWidth, "• "))
                 .margin(Margin.top(6))
                 .build();
 
         // 9) Education & Certifications
         Entity moduleEducationCertifications = cv.moduleBuilder(educationCertifications.getName(), canvasPdf)
                 .entityName("moduleEducationCertifications")
-                .addChild(cv.blockText(educationCertifications.getModulePoints(), canvasPdf.width(), null))
+                .addChild(cv.blockText(educationCertifications.getModulePoints(), textBlockWidth, null))
                 .margin(Margin.top(6))
                 .build();
 
         // 10) Projects (как modulePoints)
         Entity moduleProjects = cv.moduleBuilder(projects.getName(), canvasPdf)
                 .entityName("ModuleProjects")
-                .addChild(cv.blockText(projects.getModulePoints(), canvasPdf.width(), null))
+                .addChild(cv.blockText(projects.getModulePoints(), textBlockWidth, null))
                 .margin(Margin.top(6))
                 .build();
 
         // 11) Professional Experience (как modulePoints)
         Entity moduleProfessionalExperience = cv.moduleBuilder(professionalExperience.getName(),canvasPdf)
                 .entityName("ModuleProfessionalExperience")
-                .addChild(cv.blockText(professionalExperience.getModulePoints(), canvasPdf.width(), null))
+                .addChild(cv.blockText(professionalExperience.getModulePoints(), textBlockWidth, null))
                 .margin(Margin.top(6))
                 .build();
 
         // 12) Additional (как blockText)
         Entity moduleAdditional = cv.moduleBuilder(additional.getName(), canvasPdf)
                 .entityName("ModuleAdditional")
-                .addChild(cv.blockText(additional.getModulePoints(), canvasPdf.width(), null))
+                .addChild(cv.blockText(additional.getModulePoints(), textBlockWidth, null))
                 .margin(Margin.top(6))
                 .build();
 

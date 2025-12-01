@@ -235,11 +235,20 @@ public class LayoutSystemImpl implements SystemECS {
         log.info("LayoutSystemImpl: layout complete (nodes: {})", entities.size());
 
 //         Pagination
-        var pageBreaker = new PageBreaker(entityManager);
-        pageBreaker.process();
 
-//        PaginationLayoutSystem paginationLayoutSystem = new PaginationLayoutSystem();
-//        paginationLayoutSystem.process(entityManager);
+         boolean  withPagination = true;
+//         withPagination = false;
+
+         if (withPagination){
+             var pageBreaker = new PageBreaker(entityManager);
+             pageBreaker.process();
+         }else {
+             PaginationLayoutSystem paginationLayoutSystem = new PaginationLayoutSystem();
+             paginationLayoutSystem.process(entityManager);
+         }
+
+
+
 
     }
 

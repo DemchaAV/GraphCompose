@@ -21,7 +21,8 @@ public record CvTheme(
         PDFont bodyFont,
         double nameFontSize,
         double headerFontSize,
-        double bodyFontSize
+        double bodyFontSize,
+        double spacing
 ) {
 
     /* --------- READY TextStyle FACTORIES (semantic) --------- */
@@ -102,7 +103,8 @@ public record CvTheme(
                 new PDType1Font(Standard14Fonts.FontName.HELVETICA),
                 28,        // name
                 17.4,      // header
-                11         // body
+                11,// body
+                6.5 // spacing
         );
     }
 }

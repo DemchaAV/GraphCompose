@@ -72,9 +72,10 @@ public class PageBreaker {
                                         .orElseThrow(
                                                 () -> new IllegalStateException("Entity " + e + " has no RenderingPosition"))
                                         .y())
-                        .reversed())
+                        .reversed()
+                        .thenComparing(e -> e.getKey().toString())) // Added for stable sort
                 //Starting process of breaking Pages
-                .forEach(e -> {
+                .forEachOrdered(e -> { // Changed to forEachOrdered
                     Entity entity = e.getValue();
                     log.info("Work with Element {} ", entity);
 

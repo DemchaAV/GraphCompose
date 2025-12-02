@@ -152,7 +152,6 @@ class TemplateCV_1 {
 
         entityManager.processSystems();
 
-//        entityManager.printEntities();
 
     }
 }

@@ -295,6 +295,14 @@ public class EntityManager {
             );
         });
     }
+    public void printEntitiesWithInfo() {
+        this.entities.forEach((uuid,entity) -> {
+            java.lang.System.out.println(entity.toString());
+            entity.view().forEach((k, v) ->
+                    java.lang.System.out.printf("UUID[%s] : %s \n",uuid, entity.printInfo())
+            );
+        });
+    }
 
 
 }

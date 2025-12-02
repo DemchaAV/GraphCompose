@@ -1,24 +1,24 @@
 package com.demcha;
 
-import com.demcha.components.components_builders.*;
-import com.demcha.components.content.link.Email;
-import com.demcha.components.content.link.LinkUrl;
-import com.demcha.components.content.shape.Stroke;
-import com.demcha.components.content.text.TextDecoration;
-import com.demcha.components.content.text.TextStyle;
-import com.demcha.components.core.Entity;
-import com.demcha.components.geometry.ContentSize;
-import com.demcha.components.layout.Align;
-import com.demcha.components.layout.Anchor;
-import com.demcha.components.style.ComponentColor;
-import com.demcha.components.style.Margin;
-import com.demcha.components.style.Padding;
-import com.demcha.core.EntityManager;
-import com.demcha.system.LayoutSystemImpl;
-import com.demcha.system.implemented_systems.pdf_systems.PdfCanvas;
-import com.demcha.system.implemented_systems.pdf_systems.PdfFileManagerSystem;
-import com.demcha.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
-import com.demcha.system.utils.page_breaker.EntitySorter;
+import com.demcha.loyaut_core.components.components_builders.*;
+import com.demcha.loyaut_core.components.content.link.Email;
+import com.demcha.loyaut_core.components.content.link.LinkUrl;
+import com.demcha.loyaut_core.components.content.shape.Stroke;
+import com.demcha.loyaut_core.components.content.text.TextDecoration;
+import com.demcha.loyaut_core.components.content.text.TextStyle;
+import com.demcha.loyaut_core.components.core.Entity;
+import com.demcha.loyaut_core.components.geometry.ContentSize;
+import com.demcha.loyaut_core.components.layout.Align;
+import com.demcha.loyaut_core.components.layout.Anchor;
+import com.demcha.loyaut_core.components.style.ComponentColor;
+import com.demcha.loyaut_core.components.style.Margin;
+import com.demcha.loyaut_core.components.style.Padding;
+import com.demcha.loyaut_core.core.EntityManager;
+import com.demcha.loyaut_core.system.LayoutSystemImpl;
+import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfCanvas;
+import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfFileManagerSystem;
+import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
+import com.demcha.loyaut_core.system.utils.page_breaker.EntitySorter;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
@@ -85,7 +85,7 @@ public class Main {
                 createLinksColumn(entityManager, "rightColumn")
         );
         var row1 = createVContainer(entityManager, "row1", rows)
-                .addComponent(com.demcha.components.layout.Anchor.center())
+                .addComponent(Anchor.center())
                 .addComponent(Margin.zero());//delete a Margin from rows
 
         var rows2 = List.of(

@@ -1,13 +1,14 @@
 package com.demcha.components.layout;
 
-import com.demcha.components.core.Entity;
-import com.demcha.components.geometry.ContentSize;
-import com.demcha.components.geometry.InnerBoxSize;
-import com.demcha.components.layout.coordinator.ComputedPosition;
-import com.demcha.components.layout.coordinator.PaddingCoordinate;
-import com.demcha.components.layout.coordinator.Position;
-import com.demcha.components.components_builders.Canvas;
-import com.demcha.core.CanvasBox;
+import com.demcha.loyaut_core.components.core.Entity;
+import com.demcha.loyaut_core.components.geometry.ContentSize;
+import com.demcha.loyaut_core.components.geometry.InnerBoxSize;
+import com.demcha.loyaut_core.components.layout.Anchor;
+import com.demcha.loyaut_core.components.layout.coordinator.ComputedPosition;
+import com.demcha.loyaut_core.components.layout.coordinator.PaddingCoordinate;
+import com.demcha.loyaut_core.components.layout.coordinator.Position;
+import com.demcha.loyaut_core.components.components_builders.Canvas;
+import com.demcha.loyaut_core.core.CanvasBox;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

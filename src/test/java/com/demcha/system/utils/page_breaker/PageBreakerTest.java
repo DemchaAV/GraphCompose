@@ -1,14 +1,12 @@
 package com.demcha.system.utils.page_breaker;
 
-import com.demcha.core.EntityManager;
-import com.demcha.exceptions.BigSizeElementException;
+import com.demcha.loyaut_core.core.EntityManager;
+import com.demcha.loyaut_core.system.utils.page_breaker.PageLayoutCalculator;
+import com.demcha.loyaut_core.system.utils.page_breaker.YPositionOnPage;
 import com.demcha.mock.FactoryPresets;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;

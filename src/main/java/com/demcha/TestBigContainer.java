@@ -1,16 +1,16 @@
 package com.demcha;
 
-import com.demcha.components.components_builders.Canvas;
-import com.demcha.components.components_builders.VContainerBuilder;
-import com.demcha.components.layout.Align;
-import com.demcha.components.layout.Anchor;
-import com.demcha.components.style.Margin;
-import com.demcha.components.style.Padding;
-import com.demcha.core.EntityManager;
-import com.demcha.system.LayoutSystemImpl;
-import com.demcha.system.implemented_systems.pdf_systems.PdfCanvas;
-import com.demcha.system.implemented_systems.pdf_systems.PdfFileManagerSystem;
-import com.demcha.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
+import com.demcha.loyaut_core.components.components_builders.Canvas;
+import com.demcha.loyaut_core.components.components_builders.VContainerBuilder;
+import com.demcha.loyaut_core.components.layout.Align;
+import com.demcha.loyaut_core.components.layout.Anchor;
+import com.demcha.loyaut_core.components.style.Margin;
+import com.demcha.loyaut_core.components.style.Padding;
+import com.demcha.loyaut_core.core.EntityManager;
+import com.demcha.loyaut_core.system.LayoutSystemImpl;
+import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfCanvas;
+import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfFileManagerSystem;
+import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 

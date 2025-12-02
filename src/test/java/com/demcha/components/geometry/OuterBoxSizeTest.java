@@ -1,9 +1,11 @@
 package com.demcha.components.geometry;
 
 
-import com.demcha.components.core.Entity;
-import com.demcha.components.style.Margin;
-import com.demcha.exceptions.ContentSizeNotFoundException;
+import com.demcha.loyaut_core.components.core.Entity;
+import com.demcha.loyaut_core.components.geometry.ContentSize;
+import com.demcha.loyaut_core.components.geometry.OuterBoxSize;
+import com.demcha.loyaut_core.components.style.Margin;
+import com.demcha.loyaut_core.exceptions.ContentSizeNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

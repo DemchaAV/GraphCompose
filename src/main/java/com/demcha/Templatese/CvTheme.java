@@ -1,8 +1,8 @@
 package com.demcha.Templatese;
 
-import com.demcha.components.content.text.TextDecoration;
-import com.demcha.components.content.text.TextStyle;
-import com.demcha.components.style.ComponentColor;
+import com.demcha.loyaut_core.components.content.text.TextDecoration;
+import com.demcha.loyaut_core.components.content.text.TextStyle;
+import com.demcha.loyaut_core.components.style.ComponentColor;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;

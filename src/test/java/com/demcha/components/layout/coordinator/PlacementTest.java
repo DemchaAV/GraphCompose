@@ -1,6 +1,7 @@
 package com.demcha.components.layout.coordinator;
 
-import static org.junit.jupiter.api.Assertions.*;
+import com.demcha.loyaut_core.components.layout.coordinator.Placement;
+
 import static org.mockito.Mockito.*;
 
 class PlacementTest {

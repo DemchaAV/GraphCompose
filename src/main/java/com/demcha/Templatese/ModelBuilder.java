@@ -1,15 +1,15 @@
 package com.demcha.Templatese;
 
-import com.demcha.components.components_builders.*;
-import com.demcha.components.content.link.LinkUrl;
-import com.demcha.components.content.text.TextStyle;
-import com.demcha.components.core.Entity;
-import com.demcha.components.geometry.ContentSize;
-import com.demcha.components.layout.Align;
-import com.demcha.components.layout.Anchor;
-import com.demcha.components.style.ComponentColor;
-import com.demcha.components.style.Margin;
-import com.demcha.core.EntityManager;
+import com.demcha.loyaut_core.components.components_builders.*;
+import com.demcha.loyaut_core.components.content.link.LinkUrl;
+import com.demcha.loyaut_core.components.content.text.TextStyle;
+import com.demcha.loyaut_core.components.core.Entity;
+import com.demcha.loyaut_core.components.geometry.ContentSize;
+import com.demcha.loyaut_core.components.layout.Align;
+import com.demcha.loyaut_core.components.layout.Anchor;
+import com.demcha.loyaut_core.components.style.ComponentColor;
+import com.demcha.loyaut_core.components.style.Margin;
+import com.demcha.loyaut_core.core.EntityManager;
 import org.apache.pdfbox.pdmodel.PDPage;
 
 import java.util.List;

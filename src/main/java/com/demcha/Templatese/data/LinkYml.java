@@ -1,6 +1,6 @@
 package com.demcha.Templatese.data;
 
-import com.demcha.components.content.link.LinkUrl;
+import com.demcha.loyaut_core.components.content.link.LinkUrl;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

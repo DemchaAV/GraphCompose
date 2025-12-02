@@ -84,7 +84,7 @@ public class PageLayoutCalculator {
 
 
         if (yPosition - elementMarginBottom < canvasMarginBottom) {
-            return (yPosition + elementHeight + elementMarginTop + canvasMarginTop) * -1;
+            return (yPosition + elementHeight + elementMarginTop + canvasMarginTop ) * -1;
 
         } else {
             return 0.0;
@@ -281,8 +281,6 @@ public class PageLayoutCalculator {
                 }
 
             }
-
-
         } else {
             log.trace("Element is not breakable {}", entity);
             shift = downShift(yInPage, objectHeight, objectMarginBottom, objectMarginTop, canvasHeight, canvasMarginBottom, canvasMarginTop);
@@ -297,7 +295,7 @@ public class PageLayoutCalculator {
             endPage = startPage;
         }
         if (entity != null) {
-            entity.updateEntitySize(entityManager, shift);
+            entity.updateParentContainerSize(entityManager, shift);
         }
         yOffset.incrementY(shift);
         YPositionOnPage result = new YPositionOnPage(yInPage, startPage, endPage);

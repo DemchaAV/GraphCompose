@@ -119,10 +119,15 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
         int renderingPage = startPage;
 
         log.debug("Rendering spanned multiple pages for entity: {}. Start: {}, End: {}", e, startPage, endPage);
+        int boxFragmentsSize = boxFragments.size() - 1;
+        int marginFragmentSize = marginFragments.size() - 1;
+        int paddingFragmentSize = paddingFragments.size() - 1;
+
 
         while (renderingPage >= endPage) {
             if (renderingPage < 0) {
-                throw new PageOutOfBoundException(renderingPage);
+                log.error("Rendering page is out of bound, negative number: {}", renderingPage);
+                throw new PageOutOfBoundException("Rendering page is out of bound, negative number: " + renderingPage);
             }
 
 
@@ -130,12 +135,12 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
 
                 // 4. Retrieve correct fragments safely
                 // Box is guaranteed by the check above
-                var currentBox = boxFragments.get(renderingPage);
+                var currentBox = (boxFragmentsSize < boxFragments.size() && boxFragmentsSize >= 0) ? boxFragments.get(boxFragmentsSize) : null;
 
                 // Margin and Padding might be empty lists if the entity doesn't have them.
                 // We use a safe check to return null if the list is empty or index is out of bounds.
-                var currentMargin = (renderingPage < marginFragments.size()) ? marginFragments.get(renderingPage) : null;
-                var currentPadding = (renderingPage < paddingFragments.size()) ? paddingFragments.get(renderingPage) : null;
+                var currentMargin = (marginFragmentSize < marginFragments.size() && marginFragmentSize >= 0) ? marginFragments.get(marginFragmentSize) : null;
+                var currentPadding = (paddingFragmentSize < paddingFragments.size() && paddingFragmentSize >= 0) ? paddingFragments.get(paddingFragmentSize) : null;
 
                 // 5. Delegate rendering based on position
                 if (renderingPage == startPage) {
@@ -161,10 +166,12 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
                 }
 
             } catch (Exception ex) {
-                log.error("Failed to render guides on single page for entity {} \n {}", e, e.printInfo(), ex);
-                throw new RuntimeException("Error during rendering page " + renderingPage, ex);
+                log.error("Failed to render guides on multiple page for entity {} \n {}", e, e.printInfo(), ex);
+                throw new RuntimeException(String.format("Failed to render guides on multiple page %s for entity  \n %s ", renderingPage, e.printInfo()), ex);
             }
-
+            boxFragmentsSize--;
+            marginFragmentSize--;
+            paddingFragmentSize--;
             renderingPage--;
         }
 
@@ -235,9 +242,9 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
                 // Content spills over to the next page
                 heightOnThisPage = canvasHeight - currentY;
             }
- 
+
             resultSegments.add(update(sourceContext, currentY, heightOnThisPage, currentPage));
- 
+
             remainingHeight -= heightOnThisPage;
             currentY = 0; // For subsequent pages, the content starts at the top.
             currentPage--;

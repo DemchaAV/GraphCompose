@@ -387,6 +387,7 @@ public final class Entity {
     }
 
 
+
     public String printInfo() {
         System.out.println(this);
         StringBuilder info = new StringBuilder(this + "\n");

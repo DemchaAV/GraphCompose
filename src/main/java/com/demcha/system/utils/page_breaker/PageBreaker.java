@@ -123,7 +123,7 @@ public class PageBreaker {
     private void definePlacementForBlockText(Canvas canvas, Entity entity, Offset yOffset) {
         try {
             //definition a blockText
-            textBlockProcessor.breakBlockTextInToPages(entity, canvas, yOffset);
+            textBlockProcessor.breakBlockTextInToPages(entity, entityManager, canvas, yOffset);
             //definition a placementForBlockTextContainer
             definePlacement(canvas, entity, yOffset, true);
         } catch (BigSizeElementException | IOException ex) {

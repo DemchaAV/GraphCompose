@@ -4,7 +4,6 @@ import com.demcha.components.LineTextData;
 import com.demcha.components.components_builders.Canvas;
 import com.demcha.components.content.text.BlockTextData;
 import com.demcha.components.content.text.TextStyle;
-import com.demcha.components.core.Component;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.Align;
@@ -25,15 +24,10 @@ import java.util.List;
 
 @Slf4j
 public class TextBlockProcessor {
-    private final EntityManager entityManager;
-    private PageLayoutCalculator pLayatCalculator;
-    private PageLayoutCalculator layoutCalculator;
+    private final   PageLayoutCalculator pageLayoutCalculator;
 
     public TextBlockProcessor(EntityManager entityManager) {
-        this.entityManager = entityManager;
-        this.pLayatCalculator = new PageLayoutCalculator(entityManager);
-        this.layoutCalculator = new PageLayoutCalculator(entityManager);
-
+        this.pageLayoutCalculator = new PageLayoutCalculator(entityManager);
     }
 
     private static boolean checkBlockCondition(Entity e) {
@@ -131,7 +125,7 @@ public class TextBlockProcessor {
     }
 
 
-    public void breakBlockTextInToPages(Entity entity, Canvas canvas, @NonNull Offset yOffset) throws IOException, BigSizeElementException {
+    public void breakBlockTextInToPages(Entity entity, EntityManager entityManager, Canvas canvas, @NonNull Offset yOffset) throws IOException, BigSizeElementException {
         //check blockTextCondition
 
         if (checkBlockCondition(entity)) return;
@@ -155,16 +149,16 @@ public class TextBlockProcessor {
             LineTextData newLtd = new LineTextData(ltd, ltd.x(), yPositionOnPage.yPosition(), yPositionOnPage.startPage());
             assignPositionTextData.add(newLtd);
         }
-        finalizePageBreakingAndDefinition(entity, yOffset, assignPositionTextData, (float) spacing, entityYOffset);
+        finalizePageBreakingAndDefinition(entity, entityManager, yOffset, assignPositionTextData, (float) spacing, entityYOffset);
 
     }
 
-    private void finalizePageBreakingAndDefinition(Entity entity, @NotNull Offset yOffset, List<LineTextData> assignPositionTextData, float spacing, Offset entityYOffset) {
+    private void finalizePageBreakingAndDefinition(Entity entity, EntityManager entityManager, @NotNull Offset yOffset, List<LineTextData> assignPositionTextData, float spacing, Offset entityYOffset) {
         BlockTextData newBlockTextData;
         newBlockTextData = new BlockTextData(assignPositionTextData, spacing);
-//        entity.updateEntitySize(entityManager, entityYOffset.y(), entity);
+        entity.updateEntitySize(entityManager, entityYOffset.y(), entity);
         var component = entity.getComponent(ComputedPosition.class).orElseThrow();
-        entity.addComponent(new ComputedPosition(component.x(), component.y() + entityYOffset.y()));
+//        entity.addComponent(new ComputedPosition(component.x(), component.y() + entityYOffset.y()));
         yOffset.incrementY(entityYOffset);
         log.debug("Returned Offset:  {} , {}", yOffset, entity);
         entity.addComponent(newBlockTextData);
@@ -177,7 +171,7 @@ public class TextBlockProcessor {
         double canvasMarginTop = canvas.margin().top();
         double canvasMarginBottom = canvas.margin().bottom();
         try {
-            return pLayatCalculator.calculatePageCoordinates(currentY, textHeight, 0.0, 0.0,
+            return pageLayoutCalculator.calculatePageCoordinates(currentY, textHeight, 0.0, 0.0,
                     currentPage, canvasHeight, canvasMarginTop, canvasMarginBottom,
                     entityYOffset, isBreakable, entity);
         } catch (BigSizeElementException e) {

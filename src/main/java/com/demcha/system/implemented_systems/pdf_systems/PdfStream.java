@@ -20,9 +20,9 @@ public record PdfStream(PDDocument doc, Canvas canvas) implements RenderStream<P
 
     @Override
     public PDPageContentStream openContentStream(int pageIndex) throws IOException {
-        int numberOfPages = doc.getNumberOfPages();
-        if (numberOfPages - 1 < pageIndex) {
-            log.info("Page index is: {} available page is 0 to {} create a Page in the document", pageIndex, numberOfPages - 1);
+        int numberOfPages = doc.getNumberOfPages()-1;
+        if (numberOfPages  < pageIndex) {
+            log.info("Page index is: {} available page is 0 to {} create a Page in the document", pageIndex, numberOfPages );
             for (int i = numberOfPages - 1; i < pageIndex; i++) {
                 doc.addPage(new PDPage(new PDRectangle(canvas.x(), canvas.y(), (float) canvas.width(), (float) canvas.height())));
             }

@@ -7,11 +7,10 @@ import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderingPosition;
-import com.demcha.system.implemented_systems.pdf_systems.PdfStream;
-import com.demcha.system.interfaces.RenderStream;
-import com.demcha.system.interfaces.guides.GuidesRenderer;
 import com.demcha.system.implemented_systems.pdf_systems.PdfRender;
 import com.demcha.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
+import com.demcha.system.implemented_systems.pdf_systems.PdfStream;
+import com.demcha.system.interfaces.guides.GuidesRenderer;
 import com.demcha.system.utils.page_breaker.Breakable;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -22,7 +21,7 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.util.Matrix;
 
-import java.awt.Color;
+import java.awt.*;
 import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
@@ -86,6 +85,14 @@ public class BlockText implements PdfRender, Breakable {
         return placementOpt;
     }
 
+    public static String sanitizeText(String rawText) {
+        if (rawText == null) {
+            return "";
+        }
+        // \p{C} matches invisible control characters (including \0)
+        return rawText.replaceAll("\\p{C}", "");
+    }
+
     /**
      * Renders the block of text onto the PDF content stream.
      * This method retrieves text data, style, position, and size from the given {@link Entity}.
@@ -138,6 +145,8 @@ public class BlockText implements PdfRender, Breakable {
     private boolean pdfRenderBlock(Entity e, PdfRenderingSystemECS renderingSystem, boolean guideLines, int currentPage, PDFont font, float fontSize, Color color, List<LineTextData> blockTextData) throws IOException {
         boolean result = false;
         PDPageContentStream cs = null;
+        Placement placement = e.getComponent(Placement.class).orElseThrow();
+        boolean singlePlacement = placement.startPage() == placement.endPage();
         try {
             PdfStream stream = (PdfStream) renderingSystem.stream();
             cs = stream.openContentSteamForTextData(currentPage, font, fontSize, color);
@@ -163,7 +172,10 @@ public class BlockText implements PdfRender, Breakable {
             cs.endText();
             cs.restoreGraphicsState();
             if (guideLines) {
-                renderingSystem.guidesRenderer().guidesRender(e, cs, DEFAULT_GUIDES);
+                if (singlePlacement) {
+                    renderingSystem.guidesRenderer().guidesRender(e, cs, DEFAULT_GUIDES);
+                }
+
             }
 
             result = true;
@@ -174,16 +186,14 @@ public class BlockText implements PdfRender, Breakable {
             }
         }
 
+        if (guideLines) {
+            if (!singlePlacement) {
+                renderingSystem.guidesRenderer().guidesRender(e, DEFAULT_GUIDES);
+            }
+
+        }
         return result;
     }
-    public static String sanitizeText(String rawText) {
-        if (rawText == null) {
-            return "";
-        }
-        // \p{C} matches invisible control characters (including \0)
-        return rawText.replaceAll("\\p{C}", "");
-    }
-
 
     /**
      * A record to hold validated text style and block text data.

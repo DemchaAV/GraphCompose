@@ -83,6 +83,13 @@
             <version>${pdfbox.version}</version>
         </dependency>
 
+        <!-- MARKDOWN -->
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-all</artifactId>
+            <version>0.64.8</version>
+        </dependency>
+
         <!-- YAML -->
         <dependency>
             <groupId>org.yaml</groupId>

@@ -41,7 +41,7 @@ public class TestBreaker {
 
 
 //        List<Entity> data = colorObjectBuilding(entityManager);
-        List<Entity> data = textBuilding(entityManager);
+        List<Entity> data = textBuilding(entityManager,95);
 
 
         var container = createVContainer(entityManager, "mainContainer V",
@@ -79,16 +79,21 @@ public class TestBreaker {
     }
 
     @NotNull
-    private static List<Entity> textBuilding(EntityManager entityManager) {
+    private static List<Entity> textBuilding(EntityManager entityManager,int rows) {
         double w = 302;
         List<Entity> data = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i <= 1000; i++) {
+        for (int i = 0; i <= rows; i++) {
             sb.append(i);
             sb.append(". ");
             sb.append("Test text line  We will se how we break our text in to the pages\n");
 
             if (i>0 && i % 20 == 0) {
+                String string = sb.toString();
+                data.add(blockTextBuilder(entityManager, string, w, 1, "textBlockData" + i / 20));
+                sb = new StringBuilder();
+            }
+            if (i==rows && !sb.isEmpty()){
                 String string = sb.toString();
                 data.add(blockTextBuilder(entityManager, string, w, 1, "textBlockData" + i / 20));
                 sb = new StringBuilder();

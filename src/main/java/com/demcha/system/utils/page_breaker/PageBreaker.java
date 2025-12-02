@@ -3,6 +3,7 @@ package com.demcha.system.utils.page_breaker;
 import com.demcha.components.components_builders.Canvas;
 import com.demcha.components.core.Entity;
 import com.demcha.components.geometry.ContentSize;
+import com.demcha.components.layout.Layer;
 import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.Placement;
 import com.demcha.components.layout.coordinator.RenderingPosition;
@@ -72,8 +73,9 @@ public class PageBreaker {
                                         .orElseThrow(
                                                 () -> new IllegalStateException("Entity " + e + " has no RenderingPosition"))
                                         .y())
+
                         .reversed()
-                        .thenComparing(e -> e.getKey().toString())) // Added for stable sort
+                        .thenComparing(e -> e.getValue().getComponent(Layer.class).orElseThrow().value())) // Added for stable sort
                 //Starting process of breaking Pages
                 .forEachOrdered(e -> { // Changed to forEachOrdered
                     Entity entity = e.getValue();

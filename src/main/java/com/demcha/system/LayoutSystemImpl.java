@@ -10,6 +10,7 @@ import com.demcha.components.geometry.InnerBoxSize;
 import com.demcha.components.geometry.OuterBoxSize;
 import com.demcha.components.layout.Align;
 import com.demcha.components.layout.Anchor;
+import com.demcha.components.layout.Layer;
 import com.demcha.components.layout.ParentComponent;
 import com.demcha.components.layout.coordinator.ComputedPosition;
 import com.demcha.components.layout.coordinator.PaddingCoordinate;
@@ -340,6 +341,7 @@ public class LayoutSystemImpl implements SystemECS {
 
         // IMPORTANT: store the computed position, not (0,0)
         childEntity.addComponent(computedPosition);
+        childEntity.addComponent(new Layer(depth));
 
         if (childEntity.has(Align.class)) {
             alignRearrangeBlockText(childEntity);

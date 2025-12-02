@@ -179,10 +179,7 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
     }
 
     private void middleGuidesFromStream(S stream, RenderCoordinateContext boxContext, RenderCoordinateContext marginContext, RenderCoordinateContext paddingContext) throws IOException {
-        if (boxContext != null) {
 
-            box().middleFromStream(boxContext, stream);
-        }
         if (marginContext != null) {
 
             margin().middleFromStream(marginContext, stream);
@@ -191,15 +188,15 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
 
             padding().middleFromStream(paddingContext, stream);
         }
+        if (boxContext != null) {
+
+            box().middleFromStream(boxContext, stream);
+        }
 
     }
 
     private void endGuidesFromStream(S stream, RenderCoordinateContext boxContext, RenderCoordinateContext marginContext, RenderCoordinateContext paddingContext) throws IOException {
-        RenderCoordinateContext margin;
-        if (boxContext != null) {
 
-            box().endFromStream(boxContext, stream);
-        }
         if (marginContext != null) {
             margin().endFromStream(marginContext, stream);
             margin().endMarkers(marginContext, stream);
@@ -207,6 +204,10 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
         if (paddingContext != null) {
             padding().endFromStream(paddingContext, stream);
             padding().endMarkers(paddingContext, stream);
+        }
+        if (boxContext != null) {
+
+            box().endFromStream(boxContext, stream);
         }
 
     }
@@ -254,10 +255,7 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
     }
 
     private void startGuidesFromStream(S stream, RenderCoordinateContext boxContext, RenderCoordinateContext marginContext, RenderCoordinateContext paddingContext) throws IOException {
-        if (boxContext != null) {
 
-            box().startFromStream(boxContext, stream);
-        }
         if (marginContext != null) {
 
             margin().startFromStream(marginContext, stream);
@@ -267,6 +265,10 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
             padding().startFromStream(paddingContext, stream);
             padding().startMarkers(paddingContext, stream);
 
+        }
+        if (boxContext != null) {
+
+            box().startFromStream(boxContext, stream);
         }
 
 

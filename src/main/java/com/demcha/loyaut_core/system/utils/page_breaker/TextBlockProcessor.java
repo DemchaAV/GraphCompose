@@ -5,6 +5,7 @@ import com.demcha.loyaut_core.components.components_builders.Canvas;
 import com.demcha.loyaut_core.components.content.text.BlockTextData;
 import com.demcha.loyaut_core.components.content.text.TextStyle;
 import com.demcha.loyaut_core.components.core.Entity;
+import com.demcha.loyaut_core.components.geometry.ContentSize;
 import com.demcha.loyaut_core.components.geometry.InnerBoxSize;
 import com.demcha.loyaut_core.components.layout.Align;
 import com.demcha.loyaut_core.components.layout.coordinator.ComputedPosition;
@@ -24,7 +25,7 @@ import java.util.List;
 
 @Slf4j
 public class TextBlockProcessor {
-    private final   PageLayoutCalculator pageLayoutCalculator;
+    private final PageLayoutCalculator pageLayoutCalculator;
 
     public TextBlockProcessor(EntityManager entityManager) {
         this.pageLayoutCalculator = new PageLayoutCalculator(entityManager);
@@ -156,9 +157,13 @@ public class TextBlockProcessor {
     private void finalizePageBreakingAndDefinition(Entity entity, EntityManager entityManager, @NotNull Offset yOffset, List<LineTextData> assignPositionTextData, float spacing, Offset entityYOffset) {
         BlockTextData newBlockTextData;
         newBlockTextData = new BlockTextData(assignPositionTextData, spacing);
-        entity.updateEntitySize(entityManager, entityYOffset.y(), entity);
-        var component = entity.getComponent(ComputedPosition.class).orElseThrow();
-//        entity.addComponent(new ComputedPosition(component.x(), component.y() + entityYOffset.y()));
+
+        //Updating ContainerSize
+        var size = entity.getComponent(ContentSize.class).orElseThrow();
+        var newSize = new ContentSize(size.width(), size.height() + Math.abs(entityYOffset.y()));
+        entity.addComponent(newSize);
+
+
         yOffset.incrementY(entityYOffset);
         log.debug("Returned Offset:  {} , {}", yOffset, entity);
         entity.addComponent(newBlockTextData);

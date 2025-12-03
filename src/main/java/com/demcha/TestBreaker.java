@@ -39,9 +39,18 @@ public class TestBreaker {
         EntityManager entityManager = setupEntityManager(true);
 //        EntityManager entityManager = setupEntityManager_16_16(true);
 
+        boolean  testText  = true;
+//        testText = false;
 
-//        List<Entity> data = colorObjectBuilding(entityManager);
-        List<Entity> data = textBuilding(entityManager,95);
+
+        List<Entity> data;
+        if (testText){
+            data = textBuilding(entityManager,95,3);
+
+        }else {
+            data = colorObjectBuilding(entityManager);
+        }
+
 
 
         var container = createVContainer(entityManager, "mainContainer V",
@@ -79,7 +88,7 @@ public class TestBreaker {
     }
 
     @NotNull
-    private static List<Entity> textBuilding(EntityManager entityManager,int rows) {
+    private static List<Entity> textBuilding(EntityManager entityManager,int rows, double spacing) {
         double w = 302;
         List<Entity> data = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
@@ -90,12 +99,12 @@ public class TestBreaker {
 
             if (i>0 && i % 20 == 0) {
                 String string = sb.toString();
-                data.add(blockTextBuilder(entityManager, string, w, 1, "textBlockData" + i / 20));
+                data.add(blockTextBuilder(entityManager, string, w, spacing, "textBlockData" + i / 20));
                 sb = new StringBuilder();
             }
             if (i==rows && !sb.isEmpty()){
                 String string = sb.toString();
-                data.add(blockTextBuilder(entityManager, string, w, 1, "textBlockData" + i / 20));
+                data.add(blockTextBuilder(entityManager, string, w, spacing, "textBlockData" + i / 20));
                 sb = new StringBuilder();
             }
 

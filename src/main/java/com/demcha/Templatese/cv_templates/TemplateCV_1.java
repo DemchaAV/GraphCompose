@@ -35,7 +35,7 @@ class TemplateCV_1 {
         entityManager.setGuideLines(true);
         PDDocument doc = new PDDocument();
         Canvas canvasPdf = new PdfCanvas(PDRectangle.A4, 0.0f, 0.0f);
-        canvasPdf.addMargin(Margin.of(10));
+        canvasPdf.addMargin(Margin.of(15));
 
 
         entityManager.addSystem(new LayoutSystemImpl(canvasPdf));

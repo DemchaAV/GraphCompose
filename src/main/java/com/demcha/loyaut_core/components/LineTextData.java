@@ -1,8 +1,12 @@
 package com.demcha.loyaut_core.components;
 
+import com.demcha.loyaut_core.components.content.text.TextDecoration;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.experimental.Accessors;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents a line of text with its associated width and x-coordinate for positioning.
@@ -22,6 +26,9 @@ public final class LineTextData {
      * The actual text content of the line. This field is final and immutable.
      */
     private final String line;
+    private  final List<TextDataBody> wordList = new ArrayList<>();
+
+
     /**
      * The calculated width of the text line in a specific font and font size. This field is final and immutable.
      */
@@ -53,4 +60,5 @@ public final class LineTextData {
         this.line = chunkText;
         this.width = textWidth;
     }
+    record TextDataBody(String text, TextDecoration fontType) {}
 }

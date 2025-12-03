@@ -3,6 +3,7 @@ package com.demcha.loyaut_core.components.components_builders;
 import com.demcha.loyaut_core.components.LineTextData;
 import com.demcha.loyaut_core.components.containers.abstract_builders.EmptyBox;
 import com.demcha.loyaut_core.components.content.text.BlockTextData;
+import com.demcha.markdown.MarkDownParser;
 import com.demcha.loyaut_core.components.content.text.Text;
 import com.demcha.loyaut_core.components.content.text.TextStyle;
 import com.demcha.loyaut_core.components.core.Component;
@@ -24,6 +25,7 @@ import java.util.*;
 
 @Slf4j
 public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
+   private final MarkDownParser markDownParser = new MarkDownParser();
     Map<Class<? extends Component>, Component> baseComponents;
     @Setter
     private double lineSpacing = 0.0;

@@ -104,7 +104,7 @@ public record CvTheme(
                 28,        // name
                 17.4,      // header
                 11,// body
-                6.5 // spacing
+                20 // spacing
         );
     }
 }

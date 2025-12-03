@@ -126,10 +126,10 @@ public class TextBlockProcessor {
     }
 
 
-    public void breakBlockTextInToPages(Entity entity, EntityManager entityManager, Canvas canvas, @NonNull Offset yOffset) throws IOException, BigSizeElementException {
+    public Offset processPageBreakerBlockText(Entity entity, EntityManager entityManager, Canvas canvas, @NonNull Offset yOffset) throws IOException, BigSizeElementException {
         //check blockTextCondition
 
-        if (checkBlockCondition(entity)) return;
+        if (checkBlockCondition(entity)) return new Offset();
         BlockText.ValidatedTextData validatedTextData = getValidatedTextData(entity);
         var blockTextData = validatedTextData.textValue().lines();
         var textHeight = validatedTextData.style().getLineHeight();
@@ -151,6 +151,7 @@ public class TextBlockProcessor {
             assignPositionTextData.add(newLtd);
         }
         finalizePageBreakingAndDefinition(entity, entityManager, yOffset, assignPositionTextData, (float) spacing, entityYOffset);
+        return entityYOffset;
 
     }
 

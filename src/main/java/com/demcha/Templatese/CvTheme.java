@@ -3,6 +3,7 @@ package com.demcha.Templatese;
 import com.demcha.loyaut_core.components.content.text.TextDecoration;
 import com.demcha.loyaut_core.components.content.text.TextStyle;
 import com.demcha.loyaut_core.components.style.ComponentColor;
+import com.demcha.loyaut_core.components.style.Margin;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
@@ -22,7 +23,9 @@ public record CvTheme(
         double nameFontSize,
         double headerFontSize,
         double bodyFontSize,
-        double spacing
+        double spacing,
+        Margin modulMargin
+
 ) {
 
     /* --------- READY TextStyle FACTORIES (semantic) --------- */
@@ -104,7 +107,9 @@ public record CvTheme(
                 28,        // name
                 17.4,      // header
                 11,// body
-                20 // spacing
+                5 // spacing
+                ,Margin.top(5)
+
         );
     }
 }

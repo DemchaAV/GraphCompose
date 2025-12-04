@@ -7,6 +7,7 @@ import com.demcha.loyaut_core.components.layout.ParentComponent;
 import com.demcha.loyaut_core.system.interfaces.Render;
 import com.demcha.loyaut_core.system.interfaces.SystemECS;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -71,14 +72,29 @@ public class EntityManager {
     private Map<Integer, List<UUID>> layers;     // NEW: layer → ordered ids
     private Map<UUID, Integer> depthById;
     private boolean guideLines;
+    private boolean markdown = false;
 
 
     public EntityManager() {
+        this(false);
+    }
+
+    public EntityManager(@NonNull List<SystemECS> systems) {
+        this(systems, false);
+    }
+
+    public EntityManager(@NonNull List<SystemECS> systems, boolean markdown) {
+        this(markdown);
+        this.systems.addAll(systems);
+    }
+
+    public EntityManager(boolean markdown) {
         log.info("Creating new EntityManager");
         this.layers = new HashMap<>();
         this.depthById = new HashMap<>();
         this.systems = new ArrayList<>();
         this.entities = new HashMap<>();
+        this.markdown = markdown;
     }
 
 
@@ -288,18 +304,19 @@ public class EntityManager {
 
 
     public void printEntities() {
-        this.entities.forEach((uuid,entity) -> {
+        this.entities.forEach((uuid, entity) -> {
             java.lang.System.out.println(entity.toString());
             entity.view().forEach((k, v) ->
-                    java.lang.System.out.printf("UUID[%s] : %s \n",uuid, entity.toString())
+                    java.lang.System.out.printf("UUID[%s] : %s \n", uuid, entity.toString())
             );
         });
     }
+
     public void printEntitiesWithInfo() {
-        this.entities.forEach((uuid,entity) -> {
+        this.entities.forEach((uuid, entity) -> {
             java.lang.System.out.println(entity.toString());
             entity.view().forEach((k, v) ->
-                    java.lang.System.out.printf("UUID[%s] : %s \n",uuid, entity.printInfo())
+                    java.lang.System.out.printf("UUID[%s] : %s \n", uuid, entity.printInfo())
             );
         });
     }

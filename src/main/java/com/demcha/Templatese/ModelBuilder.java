@@ -10,6 +10,8 @@ import com.demcha.loyaut_core.components.layout.Anchor;
 import com.demcha.loyaut_core.components.style.ComponentColor;
 import com.demcha.loyaut_core.components.style.Margin;
 import com.demcha.loyaut_core.core.EntityManager;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import org.apache.pdfbox.pdmodel.PDPage;
 
 import java.util.List;
@@ -18,8 +20,10 @@ import java.util.List;
  * Builder class responsible for constructing CV components.
  * It uses {@link CvTheme} to determine visual appearance (fonts, colors, sizes).
  */
+@Accessors(fluent = true)
 public class ModelBuilder {
     private final EntityManager entityManager;
+    @Getter
     private final CvTheme theme;
 
     /**
@@ -136,7 +140,7 @@ public class ModelBuilder {
     }
 
     public ModuleBuilder moduleBuilder(String moduleName, Canvas canvas) {
-        var moduleHeader = new ModuleBuilder(entityManager, Align.middle(5), canvas)
+        var moduleHeader = new ModuleBuilder(entityManager, Align.middle(15), canvas)
 
                 .margin(Margin.of(5))
                 .anchor(Anchor.topLeft());

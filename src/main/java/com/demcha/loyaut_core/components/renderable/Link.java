@@ -6,6 +6,7 @@ import com.demcha.loyaut_core.components.core.Entity;
 import com.demcha.loyaut_core.components.geometry.ContentSize;
 import com.demcha.loyaut_core.components.layout.coordinator.Placement;
 import com.demcha.loyaut_core.components.style.Padding;
+import com.demcha.loyaut_core.core.EntityManager;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfRender;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
 import org.apache.pdfbox.cos.COSArray;
@@ -53,7 +54,7 @@ public class Link implements PdfRender {
     }
 
     @Override
-    public boolean pdf(Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
+    public boolean pdf(EntityManager entityManager, Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
 
         // прямоугольник поверх текста
         var renderingPosition = e.getComponent(Placement.class).orElseThrow();

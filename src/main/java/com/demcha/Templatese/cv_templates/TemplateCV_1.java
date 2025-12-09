@@ -16,7 +16,7 @@ import com.demcha.loyaut_core.components.layout.Align;
 import com.demcha.loyaut_core.components.layout.Anchor;
 import com.demcha.loyaut_core.components.style.Margin;
 import com.demcha.loyaut_core.core.EntityManager;
-import com.demcha.loyaut_core.system.LayoutSystemImpl;
+import com.demcha.loyaut_core.system.LayoutSystem;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfCanvas;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfFileManagerSystem;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
@@ -38,9 +38,10 @@ class TemplateCV_1 {
         canvasPdf.addMargin(Margin.of(15));
 
 
-        entityManager.addSystem(new LayoutSystemImpl(canvasPdf));
-        entityManager.addSystem(new PdfRenderingSystemECS(doc, canvasPdf));
-        entityManager.addSystem(new PdfFileManagerSystem(target, doc));
+        PdfRenderingSystemECS renderingSystemECS = new PdfRenderingSystemECS(doc, canvasPdf);
+        entityManager.getSystems().addSystem(new LayoutSystem<>(canvasPdf, renderingSystemECS));
+        entityManager.getSystems().addSystem(renderingSystemECS);
+        entityManager.getSystems().addSystem(new PdfFileManagerSystem(target, doc));
 
         ModelBuilder cv = new ModelBuilder(entityManager);
         String pathFolder = "/ai_content/";
@@ -151,6 +152,7 @@ class TemplateCV_1 {
 
 
         entityManager.processSystems();
+        entityManager.printEntitiesWithInfo();
 
 
     }

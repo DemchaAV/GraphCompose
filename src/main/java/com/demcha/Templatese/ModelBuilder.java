@@ -204,7 +204,7 @@ public class ModelBuilder {
         TextStyle style = theme.bodyTextStyle();
 
 
-        return new BlockTextBuilder(entityManager, Align.left(theme.spacing()))
+        return new BlockTextBuilder(entityManager, Align.left(theme.spacing()), style)
                 .size(width, 2)
                 .padding(0, 5, 0, 25)
                 .text(text, style, null, null, bulletOffset)
@@ -220,7 +220,7 @@ public class ModelBuilder {
                 .textWithAutoSize(text)
                 .textStyle(theme.bodyTextStyle()); // Using Theme Body Style
 
-        return new BlockTextBuilder(entityManager, Align.left(theme.spacing()))
+        return new BlockTextBuilder(entityManager, Align.left(theme.spacing()), theme.bodyTextStyle())
                 .size(width, 2)
                 .padding(0, 5, 0, 25)
                 .text(textBuilder);

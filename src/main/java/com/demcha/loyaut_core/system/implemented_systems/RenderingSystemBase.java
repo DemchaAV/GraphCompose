@@ -5,6 +5,7 @@ import com.demcha.loyaut_core.components.content.shape.Side;
 import com.demcha.loyaut_core.components.layout.coordinator.RenderCoordinateContext;
 import com.demcha.loyaut_core.core.EntityManager;
 import com.demcha.loyaut_core.system.GuidLineSettings;
+import com.demcha.loyaut_core.system.interfaces.Font;
 import com.demcha.loyaut_core.system.interfaces.RenderStream;
 import com.demcha.loyaut_core.system.interfaces.RenderingSystemECS;
 import com.demcha.loyaut_core.system.interfaces.guides.GuidesRenderer;
@@ -29,15 +30,17 @@ public abstract class RenderingSystemBase<T extends AutoCloseable> implements Re
     protected final Canvas canvas;
     protected final GuidLineSettings guidLineSettings;
     protected final RenderStream<T> stream;
-    protected  GuidesRenderer<T> guidesRenderer;
+    protected GuidesRenderer<T> guidesRenderer;
+    public Class<? extends Font<?>> fontClazz;
+
 
     /**
      * Renders a border around a specified context.
      *
-     * @param stream            The rendering stream to draw on.
-     * @param context           The rendering coordinate context defining the area for the border.
-     * @param lineDash          A boolean indicating whether the border should be dashed.
-     * @param sides             A set of {@link Side} enums indicating which sides of the context to render the border.
+     * @param stream   The rendering stream to draw on.
+     * @param context  The rendering coordinate context defining the area for the border.
+     * @param lineDash A boolean indicating whether the border should be dashed.
+     * @param sides    A set of {@link Side} enums indicating which sides of the context to render the border.
      * @return {@code true} if the border was rendered successfully, {@code false} otherwise.
      * @throws IOException If an I/O error occurs during rendering.
      */

@@ -40,7 +40,7 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
         );
         this.doc = doc;
         guidesRendererInitializer(new PdfGuidesRenderer(this));
-
+        this.fontClazz = PdfFont.class;
     }
 
 
@@ -62,7 +62,7 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
                         var guideLines = entity.isGuideLines();
 
                         try {
-                            render.pdf(entity, this, guideLines);
+                            render.pdf(entityManager, entity, this, guideLines);
                         } catch (IOException ex) {
                             log.error("Error processing pdf {}", ex, entity);
                             throw new RuntimeException(ex);

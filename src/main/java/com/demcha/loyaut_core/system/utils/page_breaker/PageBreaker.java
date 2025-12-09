@@ -147,7 +147,7 @@ public class PageBreaker {
         log.info("Breaking pages");
         RenderingSystemECS renderingSystemECS = null;
         log.info("Definition a RenderingSystemECS");
-        for (SystemECS system : entityManager.getSystems()) {
+        for (SystemECS system : entityManager.getSystems().getStream().toList()) {
             if (RenderingSystemECS.class.isAssignableFrom(system.getClass())) {
                 renderingSystemECS = (RenderingSystemECS) system;
                 break;

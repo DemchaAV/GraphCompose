@@ -5,9 +5,13 @@ import com.demcha.loyaut_core.components.content.text.TextStyle;
 import com.demcha.loyaut_core.components.core.Entity;
 import com.demcha.loyaut_core.components.geometry.ContentSize;
 import com.demcha.loyaut_core.components.layout.coordinator.Placement;
-import com.demcha.loyaut_core.system.interfaces.guides.GuidesRenderer;
+import com.demcha.loyaut_core.core.EntityManager;
+import com.demcha.loyaut_core.system.LayoutSystem;
+import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfFont;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfRender;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
+import com.demcha.loyaut_core.system.interfaces.Font;
+import com.demcha.loyaut_core.system.interfaces.guides.GuidesRenderer;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -28,12 +32,13 @@ public class TextComponent implements PdfRender {
             EnumSet.of(GuidesRenderer.Guide.MARGIN, GuidesRenderer.Guide.PADDING);
 
 
-    public static <T extends TextComponent> ContentSize autoMeasureText(Entity entity) throws IOException {
+    public static ContentSize autoMeasureText(Entity entity, EntityManager entityManager) throws IOException {
         Text text = entity.getComponent(Text.class).orElseThrow();
         TextStyle style = entity.getComponent(TextStyle.class).orElseThrow();
-
-        double width = style.getTextWidth(text.value());
-        double height = style.getLineHeight();
+        var aClass = entityManager.getSystems().getSystem(LayoutSystem.class).orElseThrow().getRenderingSystem().fontClazz();
+        var font = (Font) entityManager.getFonts().getFont(style.fontName(), aClass).orElseThrow();
+        double width = font.getTextWidth(style, text.value());
+        double height = font.getLineHeight(style);
         return new ContentSize(width, height);
     }
 
@@ -51,7 +56,7 @@ public class TextComponent implements PdfRender {
         }
         if (styleOpt.isEmpty()) {
             log.info("TextComponent has no TextStyle; skipping: {}", e);
-            style = styleOpt.orElse(TextStyle.defaultStyle());
+            style = styleOpt.orElse(TextStyle.DEFAULT_STYLE);
         } else {
             style = styleOpt.get();
         }
@@ -60,7 +65,7 @@ public class TextComponent implements PdfRender {
     }
 
     @Override
-    public boolean pdf(Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
+    public boolean pdf(EntityManager manager, Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
         if (!e.hasAssignable(TextComponent.class)) return false;
 
         var placementOpt = e.getComponent(Placement.class);
@@ -72,15 +77,16 @@ public class TextComponent implements PdfRender {
             var position = placementOpt.get();
 
             ValidatedTextData v = getValidatedTextData(e);
-            PDFont font = v.style().font();
+            Font<PDFont> font = manager.getFonts().getFont(v.style().fontName(), PdfFont.class).orElseThrow();
+            PDFont pdFont = font.fontType(v.style().decoration());
             float fontSize = (float) v.style().size();
             String text = v.textValue().value();
 
             // ---- compute metrics once
             float scale = fontSize / 1000f;
-            PDFontDescriptor fd = font.getFontDescriptor();
+            PDFontDescriptor fd = pdFont.getFontDescriptor();
 
-            float descentPx = Math.abs((fd != null ? fd.getDescent() : font.getBoundingBox().getLowerLeftY()) * scale);
+            float descentPx = Math.abs((fd != null ? fd.getDescent() : pdFont.getBoundingBox().getLowerLeftY()) * scale);
 
             float topY = (float) position.y();
             float baselineY = topY + descentPx;
@@ -89,7 +95,7 @@ public class TextComponent implements PdfRender {
             float leftX = (float) position.x();
 
             cs.saveGraphicsState();
-            cs.setFont(font, fontSize);
+            cs.setFont(pdFont, fontSize);
             cs.setNonStrokingColor(v.style().color());
 
             cs.beginText();

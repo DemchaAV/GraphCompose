@@ -2,6 +2,7 @@ package com.demcha.loyaut_core.components.renderable;
 
 import com.demcha.loyaut_core.components.core.Entity;
 import com.demcha.loyaut_core.components.geometry.Expendable;
+import com.demcha.loyaut_core.core.EntityManager;
 import com.demcha.loyaut_core.exceptions.RenderGuideLinesException;
 import com.demcha.loyaut_core.system.interfaces.guides.GuidesRenderer;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfRender;
@@ -37,7 +38,7 @@ public class Container implements PdfRender, Expendable, Breakable {
      * @throws IOException If an I/O error occurs during rendering.
      */
     @Override
-    public boolean pdf(Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException, RenderGuideLinesException {
+    public boolean pdf(EntityManager entityManager, Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException, RenderGuideLinesException {
         if (guideLines) return renderingSystemECS.guidesRenderer().guidesRender(e, DEFAULT_GUIDES);
         return false;
     }

@@ -8,17 +8,21 @@ import com.demcha.loyaut_core.components.geometry.InnerBoxSize;
 import com.demcha.loyaut_core.components.layout.Align;
 import com.demcha.loyaut_core.components.layout.coordinator.Placement;
 import com.demcha.loyaut_core.components.layout.coordinator.RenderingPosition;
+import com.demcha.loyaut_core.core.EntityManager;
 import com.demcha.loyaut_core.exceptions.RenderGuideLinesException;
-import com.demcha.loyaut_core.system.interfaces.guides.GuidesRenderer;
+import com.demcha.loyaut_core.system.LayoutSystem;
+import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfFont;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
+import com.demcha.loyaut_core.system.interfaces.Font;
+import com.demcha.loyaut_core.system.interfaces.guides.GuidesRenderer;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDFontDescriptor;
 import org.apache.pdfbox.util.Matrix;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.io.IOException;
@@ -57,7 +61,7 @@ public class ChunkedBlockText extends Container {
         }
         if (styleOpt.isEmpty()) {
             log.info("TextComponent has no TextStyle; skipping: {}", e);
-            style = styleOpt.orElse(TextStyle.defaultStyle());
+            style = styleOpt.orElse(TextStyle.DEFAULT_STYLE);
         } else {
             style = styleOpt.get();
         }
@@ -77,7 +81,7 @@ public class ChunkedBlockText extends Container {
      * @throws IOException If an error occurs during PDF content stream operations.
      */
     @Override
-    public boolean pdf(Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
+    public boolean pdf(EntityManager manager, Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
 
 
         if (!e.hasAssignable(BlockTextData.class)) {
@@ -100,15 +104,17 @@ public class ChunkedBlockText extends Container {
 
 
             var style = validateText.style();
+            TextDataContainer textDataContainer = getTextDataContainer(validateText, manager);
             float fontSize = (float) style.size();
-            PDFont font = style.font();
+            PdfFont font = (PdfFont) textDataContainer.font();
+            var pdfFont = font.fontType(style.decoration());
             Color color = validateText.style().color();
-            var textHeight = (float) style.getLineHeight();
+            var textHeight = (float) textDataContainer.font().getTextHeight(style);
 
             float scale = fontSize / 1000f;
-            PDFontDescriptor fd = font.getFontDescriptor();
+            PDFontDescriptor fd = pdfFont.getFontDescriptor();
 
-            float descentPx = Math.abs((fd != null ? fd.getDescent() : font.getBoundingBox().getLowerLeftY()) * scale);
+            float descentPx = Math.abs((fd != null ? fd.getDescent() : pdfFont.getBoundingBox().getLowerLeftY()) * scale);
 
             var blockTextData = validateText.textValue().lines();
 
@@ -122,7 +128,7 @@ public class ChunkedBlockText extends Container {
 
 
             cs.saveGraphicsState();
-            cs.setFont(font, fontSize);
+            cs.setFont(pdfFont, fontSize);
             cs.setNonStrokingColor(color);
             cs.beginText();
 
@@ -134,7 +140,7 @@ public class ChunkedBlockText extends Container {
             for (LineTextData ltd : blockTextData) {
                 float currenPosition = (float) ltd.x() + startX;
                 cs.setTextMatrix(new Matrix(1, 0, 0, 1, currenPosition, startY));
-                cs.showText(ltd.line());
+//                cs.showText(ltd.line());
                 startY -= (float) (textHeight - spacing);
             }
 
@@ -152,6 +158,17 @@ public class ChunkedBlockText extends Container {
         }
 
         return true;
+    }
+
+    private @NotNull TextDataContainer getTextDataContainer(ValidatedTextData validateText, EntityManager manager) {
+        var style = validateText.style();
+        var classFont = manager.getSystems().getSystem(LayoutSystem.class).orElseThrow().getRenderingSystem().fontClazz();
+        com.demcha.loyaut_core.system.interfaces.Font font = (Font) manager.getFonts().getFont(style.fontName(), classFont).orElseThrow();
+        TextDataContainer result = new TextDataContainer(style, font);
+        return result;
+    }
+
+    private record TextDataContainer(TextStyle style, Font font) {
     }
 
     /**

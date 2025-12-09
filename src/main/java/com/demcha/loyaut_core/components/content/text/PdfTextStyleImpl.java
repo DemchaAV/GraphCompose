@@ -19,7 +19,7 @@ import java.io.IOException;
 //TODO нужно будте передел стиль текста на уже абстрактные спомощью интерфейсов
 @Slf4j
 @Builder
-public record PdfTextStyle(PDFont font, double size, TextDecoration decoration, Color color)  {
+public record PdfTextStyleImpl(PDFont font, double size, TextDecoration decoration, Color color)  {
 
     // 1) Fonts first
     public static final PDFont TIMES_ROMAN = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
@@ -38,27 +38,27 @@ public record PdfTextStyle(PDFont font, double size, TextDecoration decoration, 
     public static final PDFont ZAPF_DINGBATS = new PDType1Font(Standard14Fonts.FontName.ZAPF_DINGBATS);
 
     // 2) Then DEFAULT_STYLE
-    public static final PdfTextStyle DEFAULT_STYLE =
-            new PdfTextStyle(HELVETICA, 14, TextDecoration.DEFAULT, ComponentColor.TITLE);
+    public static final PdfTextStyleImpl DEFAULT_STYLE =
+            new PdfTextStyleImpl(HELVETICA, 14, TextDecoration.DEFAULT, ComponentColor.TITLE);
 
-    public PdfTextStyle(PDFont font, int size, TextDecoration decoration) {
+    public PdfTextStyleImpl(PDFont font, int size, TextDecoration decoration) {
         this(font, size, decoration, Color.BLACK);
     }
 
-    public static PdfTextStyle defaultStyle() {
+    public static PdfTextStyleImpl defaultStyle() {
         log.debug("Getting default style");
-        return new PdfTextStyle(DEFAULT_STYLE.font, DEFAULT_STYLE.size, TextDecoration.DEFAULT, DEFAULT_STYLE.color);
+        return new PdfTextStyleImpl(DEFAULT_STYLE.font, DEFAULT_STYLE.size, TextDecoration.DEFAULT, DEFAULT_STYLE.color);
 
     }
 
 
     // Factory methods for standard fonts
-    public static PdfTextStyle standard14(String family, int size, TextDecoration deco) {
-        return new PdfTextStyle(pickStandard14(family, deco), size, deco, Color.BLACK);
+    public static PdfTextStyleImpl standard14(String family, int size, TextDecoration deco) {
+        return new PdfTextStyleImpl(pickStandard14(family, deco), size, deco, Color.BLACK);
     }
 
-    public static PdfTextStyle standard14(String family, int size, TextDecoration deco, Color color) {
-        return new PdfTextStyle(pickStandard14(family, deco), size, deco, color);
+    public static PdfTextStyleImpl standard14(String family, int size, TextDecoration deco, Color color) {
+        return new PdfTextStyleImpl(pickStandard14(family, deco), size, deco, color);
     }
 
     private static PDType1Font pickStandard14(String family, TextDecoration deco) {
@@ -92,7 +92,7 @@ public record PdfTextStyle(PDFont font, double size, TextDecoration decoration, 
     }
 
     // Adjust font size automatically based on the width of the text and available space
-    public PdfTextStyle adjustFontSizeToFit(String text, float availableWidth) {
+    public PdfTextStyleImpl adjustFontSizeToFit(String text, float availableWidth) {
         double textWidth = getTextWidth(text);
 
         // If textWidth exceeds availableWidth, reduce the font size
@@ -101,7 +101,7 @@ public record PdfTextStyle(PDFont font, double size, TextDecoration decoration, 
             newSize--;  // Reduce size
             textWidth = getTextWidth(text);  // Recalculate text width
         }
-        return new PdfTextStyle(font, size, decoration, color);
+        return new PdfTextStyleImpl(font, size, decoration, color);
     }
 
     // Get the width of the text for the given font and size
@@ -169,7 +169,7 @@ public record PdfTextStyle(PDFont font, double size, TextDecoration decoration, 
      * Tight per-string bounds (slow but exact for hit-areas/links).
      * Computes the glyph path bounds for THIS string.
      */
-    public Rectangle2D getTightBounds(String text) throws IOException {
+    public Rectangle2D getTightBounds(String text) {
         if (text == null || text.isEmpty()) return new Rectangle2D.Float(0,0,0,0);
         GeneralPath path = font.getFontDescriptor().getFontBoundingBox().toGeneralPath();
         AffineTransform at = AffineTransform.getScaleInstance(scale(), scale());

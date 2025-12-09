@@ -12,7 +12,7 @@ import com.demcha.loyaut_core.components.style.ComponentColor;
 import com.demcha.loyaut_core.components.style.Margin;
 import com.demcha.loyaut_core.components.style.Padding;
 import com.demcha.loyaut_core.core.EntityManager;
-import com.demcha.loyaut_core.system.LayoutSystemImpl;
+import com.demcha.loyaut_core.system.LayoutSystem;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfCanvas;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfFileManagerSystem;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
@@ -123,9 +123,10 @@ public class TestBreaker {
         EntityManager entityManager = new EntityManager();
         entityManager.setGuideLines(guidLines);
 
-        entityManager.addSystem(new LayoutSystemImpl(canvas));
-        entityManager.addSystem(new PdfRenderingSystemECS(doc, canvas));
-        entityManager.addSystem(new PdfFileManagerSystem(target, doc));
+        PdfRenderingSystemECS renderingSystemECS = new PdfRenderingSystemECS(doc, canvas);
+        entityManager.getSystems().addSystem(new LayoutSystem(canvas,renderingSystemECS));
+        entityManager.getSystems().addSystem(renderingSystemECS);
+        entityManager.getSystems().addSystem(new PdfFileManagerSystem(target, doc));
 
         return entityManager;
     }
@@ -139,9 +140,10 @@ public class TestBreaker {
         EntityManager entityManager = new EntityManager();
         entityManager.setGuideLines(guidLines);
 
-        entityManager.addSystem(new LayoutSystemImpl(canvas));
-        entityManager.addSystem(new PdfRenderingSystemECS(doc, canvas));
-        entityManager.addSystem(new PdfFileManagerSystem(target, doc));
+        PdfRenderingSystemECS renderingSystemECS = new PdfRenderingSystemECS(doc, canvas);
+        entityManager.getSystems().addSystem(new LayoutSystem(canvas,renderingSystemECS));
+        entityManager.getSystems().addSystem(renderingSystemECS);
+        entityManager.getSystems().addSystem(new PdfFileManagerSystem(target, doc));
 
         return entityManager;
     }

@@ -13,10 +13,10 @@ import com.demcha.loyaut_core.components.layout.coordinator.RenderingPosition;
 import com.demcha.loyaut_core.components.renderable.BlockText;
 import com.demcha.loyaut_core.core.EntityManager;
 import com.demcha.loyaut_core.exceptions.BigSizeElementException;
+import com.demcha.loyaut_core.system.LayoutSystem;
+import com.demcha.loyaut_core.system.interfaces.Font;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.pdfbox.pdmodel.font.PDFont;
-import org.apache.pdfbox.pdmodel.font.PDFontDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -66,17 +66,17 @@ public class TextBlockProcessor {
         var position = e.getComponent(ComputedPosition.class).orElseThrow();
         InnerBoxSize innerBoxSize = InnerBoxSize.from(e).orElseThrow();
         BlockText.ValidatedTextData validateText = getValidatedTextData(e);
+        TextDataContainer result = getTextDataContainer(validateText);
 
 
-        var style = validateText.style();
-        float fontSize = (float) style.size();
-        PDFont font = style.font();
-        var textHeight = (float) style.getLineHeight();
+        float fontSize = (float) result.style().size();
+        var textHeight = (float) result.font().getTextHeight(result.style());
+
 
         float scale = fontSize / 1000f;
-        PDFontDescriptor fd = font.getFontDescriptor();
-
-        float descentPx = Math.abs((fd != null ? fd.getDescent() : font.getBoundingBox().getLowerLeftY()) * scale);
+//        PDFontDescriptor fd = font.getFontDescriptor();
+//
+//        float descentPx = Math.abs((fd != null ? fd.getDescent() : font.getBoundingBox().getLowerLeftY()) * scale);
 
         var blockTextData = validateText.textValue().lines();
 
@@ -87,7 +87,7 @@ public class TextBlockProcessor {
 
         if (log.isDebugEnabled()) {
             log.debug("Rendering textBlock '{}' at position ({}, {})", blockTextData, position.x(), position.y());
-            log.debug("fontSize={}  textStyle= {}", fontSize, style);
+            log.debug("fontSize={}  textStyle= {}", fontSize, result.style());
         }
 
 
@@ -95,8 +95,8 @@ public class TextBlockProcessor {
 
 
         // стартовая позиция (левый верх «абзаца»)
-        float startX = (float) position.x() - descentPx;
-        float startY = (float) (position.y() + innerBoxSize.height()) - textHeight + descentPx; // if spacing will be negative
+        float startX = (float) position.x();
+        float startY = (float) (position.y() + innerBoxSize.height()) - textHeight; // if spacing will be negative
         BlockTextData newBlockTextData;
         List<LineTextData> assignPositionTextData = new ArrayList<>();
 
@@ -125,6 +125,14 @@ public class TextBlockProcessor {
 
     }
 
+    private @NotNull TextDataContainer getTextDataContainer(BlockText.ValidatedTextData validateText) {
+        var style = validateText.style();
+        var classFont = pageLayoutCalculator.getEntityManager().getSystems().getSystem(LayoutSystem.class).orElseThrow().getRenderingSystem().fontClazz();
+        pageLayoutCalculator.getEntityManager().getFonts().getFont(style.fontName(), classFont);
+        Font font = (Font) pageLayoutCalculator.getEntityManager().getFonts().getFont(style.fontName(), classFont).orElseThrow();
+        TextDataContainer result = new TextDataContainer(style, font);
+        return result;
+    }
 
     public Offset processPageBreakerBlockText(Entity entity, EntityManager entityManager, Canvas canvas, @NonNull Offset yOffset) throws IOException, BigSizeElementException {
         //check blockTextCondition
@@ -132,7 +140,8 @@ public class TextBlockProcessor {
         if (checkBlockCondition(entity)) return new Offset();
         BlockText.ValidatedTextData validatedTextData = getValidatedTextData(entity);
         var blockTextData = validatedTextData.textValue().lines();
-        var textHeight = validatedTextData.style().getLineHeight();
+        TextDataContainer textDataContainer = getTextDataContainer(validatedTextData);
+        var textHeight = textDataContainer.font().getTextHeight(textDataContainer.style());
         double spacing = entity.getComponent(Align.class).orElseGet(() -> {
             log.warn("TextComponent has no Align; using default: {}", entity);
             return Align.defaultAlign(2);
@@ -170,7 +179,6 @@ public class TextBlockProcessor {
         entity.addComponent(newBlockTextData);
     }
 
-
     private YPositionOnPage definePositionOnPage(double currentY, double textHeight, int currentPage, Canvas canvas, Offset entityYOffset, boolean isBreakable, Entity entity) {
         //canvas
         double canvasHeight = canvas.height();
@@ -186,14 +194,14 @@ public class TextBlockProcessor {
         }
     }
 
-
     private float nextLine(double positionY, float height, double spacing) {
         return (float) (positionY - (height + spacing));
     }
 
     private BlockText.ValidatedTextData getValidatedTextData(Entity e) {
         var textValue = e.getComponent(BlockTextData.class).orElse(BlockTextData.empty());
-        var style = e.getComponent(TextStyle.class).orElse(TextStyle.defaultStyle());
+        TextStyle style;
+        style = e.getComponent(TextStyle.class).orElse(TextStyle.DEFAULT_STYLE);
         return new BlockText.ValidatedTextData(style, textValue);
     }
 
@@ -213,6 +221,9 @@ public class TextBlockProcessor {
                 boolean isBreakable,
                 Entity entity
         ) throws BigSizeElementException; // Add other exceptions if necessary
+    }
+
+    private record TextDataContainer(TextStyle style, Font font) {
     }
 
 }

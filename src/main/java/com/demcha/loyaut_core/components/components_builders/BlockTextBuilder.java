@@ -3,8 +3,8 @@ package com.demcha.loyaut_core.components.components_builders;
 import com.demcha.loyaut_core.components.LineTextData;
 import com.demcha.loyaut_core.components.containers.abstract_builders.EmptyBox;
 import com.demcha.loyaut_core.components.content.text.BlockTextData;
-import com.demcha.markdown.MarkDownParser;
 import com.demcha.loyaut_core.components.content.text.Text;
+import com.demcha.loyaut_core.components.content.text.TextDataBody;
 import com.demcha.loyaut_core.components.content.text.TextStyle;
 import com.demcha.loyaut_core.components.core.Component;
 import com.demcha.loyaut_core.components.core.Entity;
@@ -17,30 +17,36 @@ import com.demcha.loyaut_core.components.renderable.TextComponent;
 import com.demcha.loyaut_core.components.style.Margin;
 import com.demcha.loyaut_core.components.style.Padding;
 import com.demcha.loyaut_core.core.EntityManager;
+import com.demcha.loyaut_core.system.LayoutSystem;
+import com.demcha.loyaut_core.system.interfaces.Font;
+import com.demcha.markdown.MarkDownParser;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 @Slf4j
 public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
-   private final MarkDownParser markDownParser = new MarkDownParser();
+    private final MarkDownParser markDownParser = new MarkDownParser();
     Map<Class<? extends Component>, Component> baseComponents;
     @Setter
     private double lineSpacing = 0.0;
     private List<LineTextData> lines;
     private TextStyle textStyle;
 
-    public BlockTextBuilder(EntityManager entityManager, Align align) {
+    public BlockTextBuilder(EntityManager entityManager, Align align, TextStyle textStyle) {
         super(entityManager);
         align(align);
+        this.textStyle = textStyle;
+        this.addComponent(textStyle);
     }
 
 
     public BlockTextBuilder text(TextBuilder textBuilder) {
         var rowText = textBuilder.build();
-        var style = rowText.getComponent(TextStyle.class).orElse(TextStyle.DEFAULT_STYLE);
+        var style = rowText.getComponent(TextStyle.class).orElse(textStyle.DEFAULT_STYLE);
         this.textStyle = style;
         lines = new ArrayList<>();
 
@@ -84,7 +90,7 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         // Required components (fail fast but with a clear message)
         var text = entity.getComponent(Text.class)
                 .orElseThrow(() -> new IllegalStateException("Missing Text component"));
-        var style = entity.getComponent(TextStyle.class).orElse(TextStyle.defaultStyle());
+        var style = entity.getComponent(TextStyle.class).orElse(textStyle);
         textStyle = style;
 
         var margin = entity.getComponent(Margin.class).orElse(Margin.zero());
@@ -106,15 +112,16 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
 
         // Split text into tokens (simple space-based; enhance with hyphenation if needed)
         String[] words = text.value().split("\\s+");
+        var fontContainer = getFontContainer();
 
         Deque<String> line = new ArrayDeque<>();
         double lineWidth = horizontalMargins; // start with margins
 
         // Pre-compute space width (if your TextStyle has such a method; otherwise use getTextWidth(" "))
-        double spaceWidth = style.getTextWidth(" ");
+        double spaceWidth = fontContainer.font().getTextWidth(style, " ");
 
         for (String word : words) {
-            double wordWidth = style.getTextWidth(word);
+            double wordWidth = fontContainer.font().getTextWidth(style, word);
 
             // If line is empty, try to place the word even if it overflows
             if (line.isEmpty()) {
@@ -166,9 +173,11 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
     public BlockTextData breakLinesFromList(@NonNull List<String> text, @NonNull InnerBoxSize innerBoxSize, String bulletOffset) {
 
 
-        TextStyle style = (TextStyle) baseComponents.getOrDefault(TextStyle.class, TextStyle.DEFAULT_STYLE);
+        FontContainer fontContainer = getFontContainer();
+        TextStyle style;
+
         Margin margin = (Margin) baseComponents.getOrDefault(Margin.class, Margin.zero());
-        style = style == null ? TextStyle.defaultStyle() : style;
+        style = fontContainer.style() == null ? textStyle : fontContainer.style();
         margin = margin == null ? Margin.zero() : margin;
 
         final double maxWidth = innerBoxSize.width();
@@ -179,7 +188,7 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
 
         for (String textLine : text) {
 
-            if (style.getTextWidth(textLine) <= maxWidth) {
+            if (fontContainer.font().getTextWidth(style, textLine) <= maxWidth) {
                 createLine(List.of(textLine));
                 continue;
             }
@@ -192,10 +201,10 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
             double lineWidth = horizontalMargins; // start with margins
 
             // Pre-compute space width (if your TextStyle has such a method; otherwise use getTextWidth(" "))
-            double spaceWidth = style.getTextWidth(" ");
+            double spaceWidth = fontContainer.font().getTextWidth(style, " ");
 
             for (String word : words) {
-                double wordWidth = style.getTextWidth(word);
+                double wordWidth = fontContainer.font().getTextWidth(style, word);
 
                 // If line is empty, try to place the word even if it overflows
                 if (line.isEmpty()) {
@@ -245,23 +254,51 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         return new BlockTextData(lines, (float) lineSpacing);
     }
 
+    private @NotNull BlockTextBuilder.FontContainer getFontContainer() {
+        TextStyle style = (TextStyle) baseComponents.getOrDefault(TextStyle.class, textStyle);
+        LayoutSystem layoutSystem = entityManager.getSystems().getSystem(LayoutSystem.class).orElseThrow();
+        Class aClass = layoutSystem.getRenderingSystem().fontClazz();
+        Font font = (Font<?>) entityManager.getFonts().getFont(style.fontName(), aClass).orElseThrow();
+        FontContainer result = new FontContainer(style, font);
+        return result;
+    }
+
     private void createLine(List<String> words) {
         // Join with spaces for correct rendering
         String lineText = String.join(" ", words);
-        lines.add(createLineTextData(lineText));
+        FontContainer fontContainer = getFontContainer();
+        lines.add(createLineTextData(lineText, fontContainer.style()));
     }
 
-    private LineTextData createLineTextData(String chunkText) {
+    private LineTextData createLineTextData(String chunkText, TextStyle textStyle) {
         log.debug("createLineTextData: '{}'", chunkText);
-        LineTextData lineTextData = new LineTextData(chunkText, textStyle.getTextWidth(chunkText));
+        LineTextData lineTextData;
+        if (entityManager.isMarkdown()) {
+            List<TextDataBody> body = markDownParser.getBody(chunkText, textStyle);
+            lineTextData = new LineTextData(body, 0);
+        } else {
+            lineTextData = LineTextData.createWithoutMarkdown(chunkText, textStyle, 0);
+        }
         log.debug("createLineTextData: {}", lineTextData);
         return lineTextData;
     }
 
-
     @Override
     public void initialize() {
         entity.addComponent(new BlockText());
+    }
+
+    public BlockTextBuilder align(Align align) {
+        HAnchor h = align.h();
+        if (HAnchor.LEFT != h && HAnchor.RIGHT != h && HAnchor.CENTER != h) {
+
+            log.info("Align has to be HAnchor.LEFT or HAnchor.RIGHT  current {}", align);
+            throw new IllegalStateException("Align has to be HAnchor.LEFT or HAnchor.RIGHT in BlockText");
+
+
+        }
+        entity.addComponent(align);
+        return self();
     }
 
 //
@@ -279,19 +316,6 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
 //        return self();
 //    }
 
-    public BlockTextBuilder align(Align align) {
-        HAnchor h = align.h();
-        if (HAnchor.LEFT != h && HAnchor.RIGHT != h && HAnchor.CENTER != h) {
-
-            log.info("Align has to be HAnchor.LEFT or HAnchor.RIGHT  current {}", align);
-            throw new IllegalStateException("Align has to be HAnchor.LEFT or HAnchor.RIGHT in BlockText");
-
-
-        }
-        entity.addComponent(align);
-        return self();
-    }
-
     /**
      * Compute container size for text
      *
@@ -301,12 +325,17 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
     private ContentSize computeContentSize() {
         Padding padding = entity.getComponent(Padding.class).orElse(Padding.zero());
         var blockTextData = entity.getComponent(BlockTextData.class).orElseThrow();
-        var width = blockTextData.lines().stream().max(Comparator.comparingDouble(LineTextData::width)).map(LineTextData::width).orElseThrow();
+        TextStyle style = entity.getComponent(TextStyle.class).orElse(TextStyle.DEFAULT_STYLE);
+        var fontContainer = getFontContainer();
+
+        var width = blockTextData.lines().stream()
+                .max(Comparator.comparingDouble((LineTextData lineTextData) -> lineTextData.width(fontContainer.font())))
+                .map((LineTextData lineTextData) -> lineTextData.width(fontContainer.font())).orElseThrow();
         var spacingOpt = entity.getComponent(Align.class);
         double spacing = spacingOpt.orElse(Align.defaultAlign(0.0)).spacing();
 
 
-        double textHeight = entity.getComponent(TextStyle.class).orElse(TextStyle.DEFAULT_STYLE).getLineHeight();
+        double textHeight = fontContainer.font().getTextHeight(style);
         double calculatedHigh = (blockTextData.lines().size()) * textHeight;
         double spacingFullHigh = (blockTextData.lines().size() - 1) * spacing;
         double high = calculatedHigh + spacingFullHigh + padding.vertical();
@@ -324,6 +353,9 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         manager().putEntity(entity());
 
         return entity();
+    }
+
+    private record FontContainer(TextStyle style, Font font) {
     }
 
 

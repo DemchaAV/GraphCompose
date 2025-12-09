@@ -6,6 +6,7 @@ import com.demcha.loyaut_core.components.content.shape.Stroke;
 import com.demcha.loyaut_core.components.core.Entity;
 import com.demcha.loyaut_core.components.geometry.ContentSize;
 import com.demcha.loyaut_core.components.layout.coordinator.Placement;
+import com.demcha.loyaut_core.core.EntityManager;
 import com.demcha.loyaut_core.exceptions.ContentSizeNotFoundException;
 import com.demcha.loyaut_core.components.geometry.Expendable;
 import com.demcha.loyaut_core.system.interfaces.guides.GuidesRenderer;
@@ -26,7 +27,7 @@ public class Rectangle implements PdfRender, Expendable {
 
 
     @Override
-    public boolean pdf(Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
+    public boolean pdf(EntityManager manager, Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines) throws IOException {
         // draw an object first
         boolean drawn;
         try (PDPageContentStream cs = renderingSystemECS.stream().openContentStream(e)) {

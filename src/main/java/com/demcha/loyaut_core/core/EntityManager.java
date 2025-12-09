@@ -1,5 +1,7 @@
 package com.demcha.loyaut_core.core;
 
+import com.demcha.font_library.DefaultFonts;
+import com.demcha.font_library.FontLibrary;
 import com.demcha.loyaut_core.components.core.Component;
 import com.demcha.loyaut_core.components.core.Entity;
 import com.demcha.loyaut_core.components.core.EntityName;
@@ -40,7 +42,7 @@ import java.util.stream.Collectors;
  * doc.addComponent(e, new Position(50, 100));
  * doc.addComponent(e, new TextComponent("Hello"));
  *
- * doc.addSystem(new LayoutSystemImpl());
+ * doc.addSystem(new LayoutSystem());
  * doc.addSystem(new RenderSystem());
  *
  * doc.processSystems(); // Systems read/write components via the entityManager
@@ -68,7 +70,8 @@ import java.util.stream.Collectors;
 @Setter
 public class EntityManager {
     private final Map<UUID, Entity> entities;
-    private final List<SystemECS> systems;
+    private final SystemRegistry systems;
+    private final FontLibrary fonts;
     private Map<Integer, List<UUID>> layers;     // NEW: layer → ordered ids
     private Map<UUID, Integer> depthById;
     private boolean guideLines;
@@ -80,21 +83,22 @@ public class EntityManager {
     }
 
     public EntityManager(@NonNull List<SystemECS> systems) {
-        this(systems, false);
+        this(systems, DefaultFonts.library(), true);
     }
 
-    public EntityManager(@NonNull List<SystemECS> systems, boolean markdown) {
-        this(markdown);
-        this.systems.addAll(systems);
+    public EntityManager(@NonNull List<SystemECS> systems, FontLibrary fonts, boolean markdown) {
+        log.info("Creating new EntityManager");
+        this.fonts = fonts;
+        this.markdown = markdown;
+        this.systems = new SystemRegistry();
+        this.systems.addAllSystems(systems);
+        this.entities = new HashMap<>();
+        this.layers = new HashMap<>();
+        this.depthById = new HashMap<>();
     }
 
     public EntityManager(boolean markdown) {
-        log.info("Creating new EntityManager");
-        this.layers = new HashMap<>();
-        this.depthById = new HashMap<>();
-        this.systems = new ArrayList<>();
-        this.entities = new HashMap<>();
-        this.markdown = markdown;
+        this(new ArrayList<>(), DefaultFonts.library(), markdown);
     }
 
 
@@ -289,17 +293,11 @@ public class EntityManager {
      */
     public void processSystems() {
         log.info("Processing Systems");
-        for (SystemECS system : systems) {
+        for (SystemECS system : systems.systems().values()) {
             log.info("Processing SystemECS {}", system);
             system.process(this); // Передаём себя, чтобы система могла получить доступ к компонентам
         }
         log.info("Processed Systems");
-    }
-
-
-    public void addSystem(SystemECS system) {
-        log.info("Adding SystemECS {}", system.getClass().getName());
-        systems.add(system);
     }
 
 

@@ -1,5 +1,6 @@
 package com.demcha.Templatese;
 
+import com.demcha.font_library.FontName;
 import com.demcha.loyaut_core.components.content.text.TextDecoration;
 import com.demcha.loyaut_core.components.content.text.TextStyle;
 import com.demcha.loyaut_core.components.style.ComponentColor;
@@ -18,8 +19,8 @@ public record CvTheme(
         Color secondaryColor,    // e.g. module titles
         Color bodyColor,         // normal text
         Color accentColor,       // links / accents
-        PDFont headerFont,
-        PDFont bodyFont,
+        FontName headerFont,
+        FontName bodyFont,
         double nameFontSize,
         double headerFontSize,
         double bodyFontSize,
@@ -35,7 +36,7 @@ public record CvTheme(
         return TextStyle.builder()
                 .size(nameFontSize)
                 .color(primaryColor)
-                .font(headerFont)
+                .fontName(headerFont)
                 .build();
     }
 
@@ -44,7 +45,7 @@ public record CvTheme(
         return TextStyle.builder()
                 .size(headerFontSize)
                 .color(secondaryColor)
-                .font(headerFont)
+                .fontName(headerFont)
                 .build();
     }
 
@@ -53,7 +54,7 @@ public record CvTheme(
         return TextStyle.builder()
                 .size(bodyFontSize)
                 .color(bodyColor)
-                .font(bodyFont)
+                .fontName(bodyFont)
                 .build();
     }
 
@@ -62,7 +63,7 @@ public record CvTheme(
         return TextStyle.builder()
                 .size(bodyFontSize - 1) // tweak if you want
                 .color(bodyColor)
-                .font(bodyFont)
+                .fontName(bodyFont)
                 .build();
     }
 
@@ -71,7 +72,7 @@ public record CvTheme(
         return TextStyle.builder()
                 .size(bodyFontSize)
                 .color(accentColor)
-                .font(bodyFont)
+                .fontName(bodyFont)
                 .decoration(TextDecoration.UNDERLINE)
                 .build();
     }
@@ -81,7 +82,7 @@ public record CvTheme(
         return TextStyle.builder()
                 .size(bodyFontSize)
                 .color(bodyColor)
-                .font(bodyFont)
+                .fontName(bodyFont)
                 .build();
     }
 
@@ -90,7 +91,7 @@ public record CvTheme(
         return TextStyle.builder()
                 .size(bodyFontSize)
                 .color(primaryColor)
-                .font(bodyFont)
+                .fontName(bodyFont)
                 .build();
     }
 
@@ -102,8 +103,8 @@ public record CvTheme(
                 new Color(41, 128, 185),                    // secondary (headers)
                 ComponentColor.MODULE_LINE_TEXT,            // body text
                 ComponentColor.ROYAL_BLUE,                  // accent / links
-                new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD),
-                new PDType1Font(Standard14Fonts.FontName.HELVETICA),
+                FontName.HELVETICA,
+                FontName.HELVETICA,
                 28,        // name
                 17.4,      // header
                 11,// body

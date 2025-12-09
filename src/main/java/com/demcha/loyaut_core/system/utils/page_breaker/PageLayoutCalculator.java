@@ -6,6 +6,7 @@ import com.demcha.loyaut_core.components.geometry.ContentSize;
 import com.demcha.loyaut_core.components.style.Margin;
 import com.demcha.loyaut_core.core.EntityManager;
 import com.demcha.loyaut_core.exceptions.BigSizeElementException;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,50 +14,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public class PageLayoutCalculator {
+    @Getter
     private final EntityManager entityManager;
 
-//    private static double shift(
-//            double yPosition,
-//            double elementHeight,
-//            double marginTop,
-//            double marginBottom,
-//            double canvasBottomBondingLine,
-//            double canvasTopBondingLine
-//    ) throws BigSizeElementException {
-//
-//        // 1) Can it ever fit (including margins)?
-//        final double requiredHeight = elementHeight + marginTop + marginBottom;
-//        final double availableHeight = canvasTopBondingLine - canvasBottomBondingLine;
-//        if (requiredHeight > availableHeight) {
-//            log.error("Element is too large and non-breakable — it cannot fit between the bounding lines with margins.\n" +
-//                      "requiredHeight: {} availableHeight: {}", requiredHeight, availableHeight);
-//
-//            throw new BigSizeElementException(yPosition, elementHeight, availableHeight);
-//        }
-//
-//        // 2) Check top overflow
-//        if (yPosition + elementHeight + marginTop > canvasTopBondingLine) {
-//            double delta = canvasTopBondingLine - (yPosition + elementHeight + marginTop); // negative => move down
-//            log.info("Element shifted down by {} from top bound {}", delta, canvasTopBondingLine);
-//            return delta;
-//        }
-//
-//        // 3) Check bottom overflow
-//        if (yPosition - marginBottom < canvasBottomBondingLine) {
-//            double delta = (canvasBottomBondingLine + marginBottom) - yPosition; // positive => move up
-//            // Re-check (defensive): after moving up, we still must not exceed top
-//            if (yPosition + delta + elementHeight + marginTop > canvasTopBondingLine) {
-//                throw new BigSizeElementException(
-//                        "Element is too large and non-breakable — shifting up would exceed the top bound."
-//                );
-//            }
-//            log.info("Element shifted up by {} from bottom bound {}", delta, canvasBottomBondingLine);
-//            return delta;
-//        }
-//
-//        // 4) Already within bounds
-//        return 0.0;
-//    }
+
 
     public static double downShift(double yPosition,
                                    double elementHeight,

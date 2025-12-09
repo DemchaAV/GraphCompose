@@ -1,5 +1,6 @@
 package com.demcha;
 
+import com.demcha.font_library.FontName;
 import com.demcha.loyaut_core.components.components_builders.*;
 import com.demcha.loyaut_core.components.content.link.Email;
 import com.demcha.loyaut_core.components.content.link.LinkUrl;
@@ -14,9 +15,10 @@ import com.demcha.loyaut_core.components.style.ComponentColor;
 import com.demcha.loyaut_core.components.style.Margin;
 import com.demcha.loyaut_core.components.style.Padding;
 import com.demcha.loyaut_core.core.EntityManager;
-import com.demcha.loyaut_core.system.LayoutSystemImpl;
+import com.demcha.loyaut_core.system.LayoutSystem;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfCanvas;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfFileManagerSystem;
+import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfFont;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
 import com.demcha.loyaut_core.system.utils.page_breaker.EntitySorter;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -43,9 +45,9 @@ public class Main {
 
 
         // 2. Content Creation and Layout
-        createATableLayout(entityManager, "table");
-//        blockTextBuilder(entityManager, textBlockData, 400, 1);
-
+//        createATableLayout(entityManager, "table");
+        blockTextBuilder(entityManager, textBlockData, 400, 1);
+//
 //        createASingleObject(entityManager, "Hello");
 //        createButtonsVContainer(entityManager, "buttons");
 
@@ -69,9 +71,10 @@ public class Main {
         EntityManager entityManager = new EntityManager();
         entityManager.setGuideLines(guidLines);
 
-        entityManager.addSystem(new LayoutSystemImpl(canvas));
-        entityManager.addSystem(new PdfRenderingSystemECS(doc, canvas));
-        entityManager.addSystem(new PdfFileManagerSystem(target, doc));
+        PdfRenderingSystemECS renderingSystemECS = new PdfRenderingSystemECS(doc, canvas);
+        entityManager.getSystems().addSystem(new LayoutSystem(canvas, renderingSystemECS));
+        entityManager.getSystems().addSystem(renderingSystemECS);
+        entityManager.getSystems().addSystem(new PdfFileManagerSystem(target, doc));
 
         return entityManager;
     }
@@ -156,7 +159,7 @@ public class Main {
         return new ButtonBuilder(entityManager)
                 .text(new TextBuilder(entityManager)
                         .textWithAutoSize(buttonText)
-                        .textStyle(TextStyle.defaultStyle())
+                        .textStyle(new TextStyle(FontName.DEFAULT, 10, TextDecoration.DEFAULT, ComponentColor.BLACK))
                         .anchor(Anchor.center())
                 )
                 .fillColor(ComponentColor.ROYAL_BLUE)
@@ -204,13 +207,13 @@ public class Main {
                 .textStyle(TextStyle.builder()
                         .size(9)
                         .color(ComponentColor.TITLE)
-                        .font(new PDType1Font(Standard14Fonts.FontName.HELVETICA))
+                        .fontName(FontName.HELVETICA)
                         .decoration(TextDecoration.UNDERLINE)
                         .build());
 
 
-        var blockText = new BlockTextBuilder(entityManager, Align.middle(spacing))
-                .size(width, 2)
+        var blockText = new BlockTextBuilder(entityManager, Align.middle(spacing), TextStyle.builder().build() ){
+        }                .size(width, 2)
                 .anchor(Anchor.center())
                 .padding(0, 5, 0, 25)
                 .margin(Margin.of(5))

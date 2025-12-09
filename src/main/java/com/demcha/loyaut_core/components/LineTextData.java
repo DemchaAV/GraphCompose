@@ -1,7 +1,10 @@
 package com.demcha.loyaut_core.components;
 
+import com.demcha.font_library.FontName;
+import com.demcha.loyaut_core.components.content.text.TextDataBody;
 import com.demcha.loyaut_core.components.content.text.TextDecoration;
-import lombok.AllArgsConstructor;
+import com.demcha.loyaut_core.components.content.text.TextStyle;
+import com.demcha.loyaut_core.system.interfaces.Font;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -19,46 +22,48 @@ import java.util.List;
  * </p>
  */
 @Data
-@AllArgsConstructor
 @Accessors(fluent = true)
+
 public final class LineTextData {
     /**
      * The actual text content of the line. This field is final and immutable.
      */
-    private final String line;
-    private  final List<TextDataBody> wordList = new ArrayList<>();
-
-
-    /**
-     * The calculated width of the text line in a specific font and font size. This field is final and immutable.
-     */
-    private final double width;
-    /**
-     * The x-coordinate (horizontal position) where the text line should be drawn.
-     * This field is mutable as its value might be adjusted during layout calculations.
-     */
+    private final List<TextDataBody> wordList = new ArrayList<>();
+    private final int page;
     private double x;
     private double y;
-    private int page;
 
-    public LineTextData(LineTextData lineTextData, double y, int page) {
-        this(lineTextData.line, lineTextData.width(), lineTextData.x(), y, page);
+
+
+    private LineTextData(int page) {
+        this.page = page;
     }
 
-    public LineTextData(LineTextData lineTextData, double x, double y, int page) {
-        this(lineTextData.line, lineTextData.width(), x, y, page);
+    public LineTextData(List<TextDataBody> wordList, int page) {
+        this.page = page;
+        this.wordList.addAll(wordList);
+    }
+    public LineTextData(LineTextData ltd, double x, double y, int page) {
+        this.page = page;
+        this.wordList.addAll(ltd.wordList());
+    }
+
+    public static LineTextData createWithoutMarkdown(String text, TextStyle style, int page) {
+        var ltd = new LineTextData(page);
+        ltd.wordList.add(new TextDataBody(text, style));
+        return ltd;
     }
 
 
-    public LineTextData(String line, double width, double x) {
-        this.line = line;
-        this.width = width;
-        this.x = x;
+    public <T extends Font<?>> double width(TextDataBody textDataBody, T font) {
+        return  font.getTextWidth(textDataBody.textStyle(),textDataBody.text());
     }
 
-    public LineTextData(String chunkText, double textWidth) {
-        this.line = chunkText;
-        this.width = textWidth;
+    public <T extends Font<?>> double  width(T font) {
+        return wordList.stream()
+                .mapToDouble((textDataBody) -> width(textDataBody, font))
+                .sum();
     }
-    record TextDataBody(String text, TextDecoration fontType) {}
+
+
 }

@@ -2,6 +2,7 @@ package com.demcha.markdown;
 
 import com.demcha.loyaut_core.components.content.text.TextDataBody;
 import com.demcha.loyaut_core.components.content.text.TextDecoration;
+import com.demcha.loyaut_core.components.content.text.TextStyle;
 import com.vladsch.flexmark.ast.Emphasis;
 import com.vladsch.flexmark.ast.StrongEmphasis;
 import com.vladsch.flexmark.parser.Parser;
@@ -21,16 +22,16 @@ public class MarkDownParser {
         String markdown = "This is **Sparta**, and **it is** *cool*.";
 
         MarkDownParser parser = new MarkDownParser();
-        List<TextDataBody> body = parser.getBody(markdown);
-
-        body.stream().map(TextDataBody::text).forEach(System.out::print);
-        System.out.println();
-
-        // Visual check
-        body.forEach(System.out::println);
+//        List<TextDataBody> body = parser.getBody(markdown);
+//
+//        body.stream().map(TextDataBody::text).forEach(System.out::print);
+//        System.out.println();
+//
+//        // Visual check
+//        body.forEach(System.out::println);
     }
 
-    public List<TextDataBody> getBody(String markdown) {
+    public List<TextDataBody> getBody(String markdown, TextStyle style) {
         MutableDataSet options = new MutableDataSet();
         Parser parser = Parser.builder(options).build();
         Node document = parser.parse(markdown);
@@ -42,7 +43,9 @@ public class MarkDownParser {
                 new VisitHandler<>(com.vladsch.flexmark.ast.Text.class, textNode -> {
 
                     // Determine style based on parents
-                    TextDecoration style = determineStyle(textNode);
+                    TextDecoration decoration = determineStyle(textNode);
+                    TextStyle newTextStyle = new TextStyle(style.fontName(), style.size(), decoration, style.color());
+
 
                     // Get raw text
                     String rawText = textNode.getChars().toString();
@@ -53,7 +56,7 @@ public class MarkDownParser {
 
                     Arrays.stream(chunks)
                             .filter(s -> !s.isEmpty()) // Safety check
-                            .forEach(chunk -> resultList.add(new TextDataBody(chunk, style)));
+                            .forEach(chunk -> resultList.add(new TextDataBody(chunk, newTextStyle)));
                 })
         );
 

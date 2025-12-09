@@ -1,5 +1,6 @@
 package com.demcha.loyaut_core.components.components_builders;
 
+import com.demcha.font_library.FontName;
 import com.demcha.loyaut_core.components.containers.abstract_builders.ShapeBuilderBase;
 import com.demcha.loyaut_core.components.content.shape.CornerRadius;
 import com.demcha.loyaut_core.components.content.shape.Stroke;
@@ -53,7 +54,7 @@ public class ButtonBuilder extends ShapeBuilderBase<ButtonBuilder> {
                 .textWithAutoSize(textButton)
                 .anchor(Anchor.center())
                 .textStyle(TextStyle.builder()
-                        .font(TextStyle.HELVETICA)
+                        .fontName(FontName.HELVETICA)
                         .size(14)
                         .decoration(TextDecoration.DEFAULT)
                         .color(new Color(19, 19, 19))

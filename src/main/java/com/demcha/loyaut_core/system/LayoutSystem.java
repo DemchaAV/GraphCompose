@@ -3,6 +3,7 @@ package com.demcha.loyaut_core.system;
 import com.demcha.loyaut_core.components.LineTextData;
 import com.demcha.loyaut_core.components.components_builders.Canvas;
 import com.demcha.loyaut_core.components.content.text.BlockTextData;
+import com.demcha.loyaut_core.components.content.text.TextStyle;
 import com.demcha.loyaut_core.components.core.Entity;
 import com.demcha.loyaut_core.components.core.EntityName;
 import com.demcha.loyaut_core.components.geometry.ContentSize;
@@ -20,11 +21,13 @@ import com.demcha.loyaut_core.components.renderable.TextComponent;
 import com.demcha.loyaut_core.components.style.Padding;
 import com.demcha.loyaut_core.core.EntityManager;
 import com.demcha.loyaut_core.exceptions.BigSizeElementException;
+import com.demcha.loyaut_core.system.interfaces.RenderingSystemECS;
 import com.demcha.loyaut_core.system.interfaces.SystemECS;
 import com.demcha.loyaut_core.system.utils.containerUtils.ContainerExpander;
 import com.demcha.loyaut_core.system.utils.containerUtils.ContainerLayoutManager;
 import com.demcha.loyaut_core.system.utils.page_breaker.PageBreaker;
 import com.demcha.loyaut_core.system.utils.page_breaker.TextBlockProcessor;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,7 +35,7 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * <h1>LayoutSystemImpl</h1>
+ * <h1>LayoutSystem</h1>
  * <p>
  * Top-down DFS layout for ECS-model with a CSS-like box model.
  * </p>
@@ -47,12 +50,11 @@ import java.util.*;
  */
 @Slf4j
 @RequiredArgsConstructor
-public class LayoutSystemImpl implements SystemECS {
+public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS {
     private final Canvas canvas;
+    @Getter
+    private final T renderingSystem;
     private TextBlockProcessor textBlockProcessor;
-
-
-
 
     /**
      * Calculates a childEntity's {@link ComputedPosition} relative to its parentEntity entity.
@@ -186,12 +188,12 @@ public class LayoutSystemImpl implements SystemECS {
 
     @Override
     public void process(EntityManager entityManager) {
-        log.info("LayoutSystemImpl: processing...");
+        log.info("LayoutSystem: processing...");
         textBlockProcessor = new TextBlockProcessor(entityManager);
 
         final var entities = entityManager.getEntities();
         if (entities == null || entities.isEmpty()) {
-            log.info("LayoutSystemImpl: no entities to lay out");
+            log.info("LayoutSystem: no entities to lay out");
             return;
         }
 
@@ -230,26 +232,25 @@ public class LayoutSystemImpl implements SystemECS {
                     layers,
                     depthById,
                     1
+                    , entityManager
             );
         }
 
-        log.info("LayoutSystemImpl: layout complete (nodes: {})", entities.size());
+        log.info("LayoutSystem: layout complete (nodes: {})", entities.size());
 
 //         Pagination
 
         //TODO этот иф нужно будет убрать оставить только тот который будет использовать
-         boolean  withPagination = true;
+        boolean withPagination = true;
 //         withPagination = false;
 
-         if (withPagination){
-             var pageBreaker = new PageBreaker(entityManager);
-             pageBreaker.process();
-         }else {
-             PaginationLayoutSystem paginationLayoutSystem = new PaginationLayoutSystem();
-             paginationLayoutSystem.process(entityManager);
-         }
-
-
+        if (withPagination) {
+            var pageBreaker = new PageBreaker(entityManager);
+            pageBreaker.process();
+        } else {
+            PaginationLayoutSystem paginationLayoutSystem = new PaginationLayoutSystem();
+            paginationLayoutSystem.process(entityManager);
+        }
 
 
     }
@@ -278,7 +279,7 @@ public class LayoutSystemImpl implements SystemECS {
 
                 if (pid == null || !entities.containsKey(pid)) {
                     if (roots.add(id)) {
-                        log.warn("LayoutSystemImpl: entity {} references missing parent {} — treating as root", id, pid);
+                        log.warn("LayoutSystem: entity {} references missing parent {} — treating as root", id, pid);
                     }
                 }
             }
@@ -286,7 +287,7 @@ public class LayoutSystemImpl implements SystemECS {
 
         if (roots.isEmpty()) {
             // Defensive: if everything is wired as a child forming a closed cycle, fall back to all nodes
-            log.warn("LayoutSystemImpl: computed empty root set; falling back to all entities as roots");
+            log.warn("LayoutSystem: computed empty root set; falling back to all entities as roots");
             roots.addAll(entities.keySet());
         }
         return roots;
@@ -307,16 +308,18 @@ public class LayoutSystemImpl implements SystemECS {
             Map<UUID, Visit> visit,
             Map<Integer, List<UUID>> layers,     // NEW: layer → ordered ids
             Map<UUID, Integer> depthById,         // NEW: id → depth
-            int depth                              // NEW: current depth
+            int depth,                              // NEW: current depth
+            EntityManager entityManager
+
     ) {
         Visit st = visit.getOrDefault(id, Visit.UNSEEN);
         if (st == Visit.DONE) return;
-        if (st == Visit.ACTIVE) throw new IllegalStateException("LayoutSystemImpl: cycle detected at entity " + id);
+        if (st == Visit.ACTIVE) throw new IllegalStateException("LayoutSystem: cycle detected at entity " + id);
         visit.put(id, Visit.ACTIVE);
 
         Entity childEntity = entities.get(id);
         if (childEntity == null) {
-            log.warn("LayoutSystemImpl: entity {} not found — skipping", id);
+            log.warn("LayoutSystem: entity {} not found — skipping", id);
             visit.put(id, Visit.DONE);
             return;
         }
@@ -332,7 +335,7 @@ public class LayoutSystemImpl implements SystemECS {
             if (parent != null) {
                 computedPosition = ComputedPosition.from(childEntity, parent);
             } else {
-                log.warn("LayoutSystemImpl: parent {} of {} not found — using root positioning (Position + Margin)", parentId, id);
+                log.warn("LayoutSystem: parent {} of {} not found — using root positioning (Position + Margin)", parentId, id);
                 computedPosition = ComputedPosition.from(childEntity, this.canvas);
             }
         } else {
@@ -344,24 +347,24 @@ public class LayoutSystemImpl implements SystemECS {
         childEntity.addComponent(new Layer(depth));
 
         if (childEntity.has(Align.class)) {
-            alignRearrangeBlockText(childEntity);
+            alignRearrangeBlockText(childEntity, entityManager);
         }
 
         if (log.isDebugEnabled()) {
             String name = childEntity.getComponent(EntityName.class)
                     .map(EntityName::value)
                     .orElse(id.toString());
-            log.debug("LayoutSystemImpl: {} [depth={}] positioned at ({}, {})",
+            log.debug("LayoutSystem: {} [depth={}] positioned at ({}, {})",
                     name, depth, computedPosition.x(), computedPosition.y());
         }
-        if (BlockText.class.isAssignableFrom(childEntity.getRender().getClass())){
+        if (BlockText.class.isAssignableFrom(childEntity.getRender().getClass())) {
             try {
                 textBlockProcessor.processLayoutSystemTextLines(childEntity);
             } catch (IOException e) {
                 log.error("Error during processing block text entity {}", childEntity);
-                throw new RuntimeException(String.format("Error during processing block text entity %s", childEntity),e);
+                throw new RuntimeException(String.format("Error during processing block text entity %s", childEntity), e);
             } catch (BigSizeElementException e) {
-                log.error(String.format( "To big size line in block text, Error during processing block text entity %s", childEntity),e);
+                log.error(String.format("To big size line in block text, Error during processing block text entity %s", childEntity), e);
 
                 throw new RuntimeException(e);
             }
@@ -369,18 +372,21 @@ public class LayoutSystemImpl implements SystemECS {
 
         // DFS to children with depth+1
         for (UUID childId : childrenByParent.getOrDefault(id, Collections.emptySet())) {
-            dfsLayout(childId, id, entities, childrenByParent, visit, layers, depthById, depth + 1);
+            dfsLayout(childId, id, entities, childrenByParent, visit, layers, depthById, depth + 1, entityManager);
         }
 
         visit.put(id, Visit.DONE);
     }
 
-    private Entity alignBlockText(Entity blockTextBox) {
+    private Entity alignBlockText(Entity blockTextBox, EntityManager entityManager) {
         Align align = blockTextBox
                 .getComponent(Align.class).orElse(Align.defaultAlign(2));
         var component = blockTextBox.getComponent(BlockTextData.class).orElseThrow();
         var size = blockTextBox.getComponent(ContentSize.class).orElseThrow();
         var padding = blockTextBox.getComponent(Padding.class).orElse(Padding.zero());
+        TextStyle style = blockTextBox.getComponent(TextStyle.class).orElseThrow();
+
+        var font = entityManager.getFonts().getFont(style.fontName(), renderingSystem.fontClazz()).orElseThrow();
 
         var lines = component.lines();
         for (LineTextData line : lines) {
@@ -390,11 +396,11 @@ public class LayoutSystemImpl implements SystemECS {
                     line.x(x);
                 }
                 case RIGHT -> {
-                    double x = size.width() - line.width() - padding.right();
+                    double x = size.width() - line.width(font) - padding.right();
                     line.x(x);
                 }
                 case CENTER -> {
-                    double x = (size.width() - line.width() + padding.left()) / 2;
+                    double x = (size.width() - line.width(font) + padding.left()) / 2;
                     line.x(x);
                 }
 
@@ -406,10 +412,10 @@ public class LayoutSystemImpl implements SystemECS {
         return blockTextBox;
     }
 
-    public Optional<Entity> alignRearrangeBlockText(Entity entity) {
+    public Optional<Entity> alignRearrangeBlockText(Entity entity, EntityManager entityManager) {
 
         if (entity.has(BlockTextData.class)) {
-            return Optional.of(alignBlockText(entity));
+            return Optional.of(alignBlockText(entity, entityManager));
         } else {
             log.info("Entity  is not a BlockTextData");
             return Optional.empty();
@@ -444,7 +450,7 @@ public class LayoutSystemImpl implements SystemECS {
 
     @Override
     public String toString() {
-        return "LayoutSystemImpl";
+        return "LayoutSystem";
     }
 
     public enum Visit {UNSEEN, ACTIVE, DONE;}

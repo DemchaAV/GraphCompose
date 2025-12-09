@@ -9,10 +9,15 @@ import com.demcha.loyaut_core.components.renderable.TextComponent;
 import com.demcha.loyaut_core.components.style.Padding;
 import com.demcha.loyaut_core.core.EntityManager;
 import com.demcha.loyaut_core.exceptions.TextComponentException;
+import com.demcha.loyaut_core.system.implemented_systems.RenderingSystemBase;
+import com.demcha.loyaut_core.system.interfaces.Font;
+import lombok.SneakyThrows;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 
 //TODO has to be finish with adding essential data type for building b Box
 @Slf4j
+@Accessors(fluent = true)
 public class TextBuilder extends EmptyBox<TextBuilder> {
     private boolean autosize;
 
@@ -50,15 +55,21 @@ public class TextBuilder extends EmptyBox<TextBuilder> {
         entity.addComponent(new TextComponent());
     }
 
+    @SneakyThrows
     @Override
+    @SuppressWarnings("unchecked")
     public Entity build() {
         if (entity.hasAssignable(TextComponent.class)) {
             if (autosize) {
-                TextStyle style = entity.getComponent(TextStyle.class).orElse(TextStyle.defaultStyle());
+                TextStyle style = entity.getComponent(TextStyle.class).orElse(TextStyle.DEFAULT_STYLE);
                 Text textValue = entity.getComponent(Text.class).orElseThrow(() -> new TextComponentException("TextComponent Component  has not been initialized"));
                 Padding padding = entity.getComponent(Padding.class).orElse(Padding.zero());
-                double textHeight = style.getLineHeight() + padding.vertical();
-                double textWidth = style.getTextWidth(textValue.value()) + padding.horizontal();
+                var renderingSystem = RenderingSystemBase.class.cast(entityManager.getSystems().getStream()
+                        .filter(system -> system instanceof RenderingSystemBase)
+                        .findFirst().orElseThrow());
+                var font = (Font) entityManager().getFonts().getFont(style.fontName(), renderingSystem.fontClazz()).orElseThrow(()->{ return new TextComponentException("Font not found " + entity.printInfo());});
+                double textHeight = font.getTextHeight(style) + padding.vertical();
+                double textWidth = font.getTextWidth(style, textValue.value()) + padding.horizontal();
                 entity.addComponent(new ContentSize(textWidth, textHeight));
             }
             manager().putEntity(entity);

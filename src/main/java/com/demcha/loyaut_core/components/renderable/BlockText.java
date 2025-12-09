@@ -2,14 +2,20 @@ package com.demcha.loyaut_core.components.renderable;
 
 import com.demcha.loyaut_core.components.LineTextData;
 import com.demcha.loyaut_core.components.content.text.BlockTextData;
+import com.demcha.loyaut_core.components.content.text.Text;
+import com.demcha.loyaut_core.components.content.text.TextDataBody;
 import com.demcha.loyaut_core.components.content.text.TextStyle;
 import com.demcha.loyaut_core.components.core.Entity;
 import com.demcha.loyaut_core.components.geometry.InnerBoxSize;
 import com.demcha.loyaut_core.components.layout.coordinator.Placement;
 import com.demcha.loyaut_core.components.layout.coordinator.RenderingPosition;
+import com.demcha.loyaut_core.core.EntityManager;
+import com.demcha.loyaut_core.system.LayoutSystem;
+import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfFont;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfRender;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfStream;
+import com.demcha.loyaut_core.system.interfaces.Font;
 import com.demcha.loyaut_core.system.interfaces.guides.GuidesRenderer;
 import com.demcha.loyaut_core.system.utils.page_breaker.Breakable;
 import lombok.Builder;
@@ -63,7 +69,7 @@ public class BlockText implements PdfRender, Breakable {
         }
         if (styleOpt.isEmpty()) {
             log.info("TextComponent has no TextStyle; skipping: {}", e);
-            style = styleOpt.orElse(TextStyle.defaultStyle());
+            style = styleOpt.orElse(TextStyle.DEFAULT_STYLE);
         } else {
             style = styleOpt.get();
         }
@@ -106,7 +112,7 @@ public class BlockText implements PdfRender, Breakable {
      */
 
     @Override
-    public boolean pdf(Entity e, PdfRenderingSystemECS renderingSystem, boolean guideLines) throws IOException {
+    public boolean pdf(EntityManager manager, Entity e, PdfRenderingSystemECS renderingSystem, boolean guideLines) throws IOException {
 
         var placementOpt = blockEntityValidate(e);
         if (placementOpt.isEmpty()) return false;
@@ -119,9 +125,12 @@ public class BlockText implements PdfRender, Breakable {
 
         var style = validateText.style();
 
+        var aClass = manager.getSystems().getSystem(LayoutSystem.class).orElseThrow().getRenderingSystem().fontClazz();
+        var font = (PdfFont) manager.getFonts().getFont(style.fontName(), aClass).orElseThrow();
+
         //Font Settings info
         float fontSize = (float) style.size();
-        PDFont font = style.font();
+        PDFont pdfFont = font.fontType(style.decoration()) ;
         Color color = validateText.style().color();
 
 
@@ -138,11 +147,11 @@ public class BlockText implements PdfRender, Breakable {
         // стартовая позиция (левый верх «абзаца»)
 
 
-        return pdfRenderBlock(e, renderingSystem, guideLines, currentPage, font, fontSize, color, blockTextData);
+        return pdfRenderBlock(e, manager,renderingSystem, guideLines, currentPage, pdfFont, fontSize, color, blockTextData);
 //        return true;
     }
 
-    private boolean pdfRenderBlock(Entity e, PdfRenderingSystemECS renderingSystem, boolean guideLines, int currentPage, PDFont font, float fontSize, Color color, List<LineTextData> blockTextData) throws IOException {
+    private boolean pdfRenderBlock(Entity e, EntityManager entityManager, PdfRenderingSystemECS renderingSystem, boolean guideLines, int currentPage, PDFont font, float fontSize, Color color, List<LineTextData> blockTextData) throws IOException {
         boolean result = false;
         PDPageContentStream cs = null;
         Placement placement = e.getComponent(Placement.class).orElseThrow();
@@ -159,14 +168,18 @@ public class BlockText implements PdfRender, Breakable {
                     isStarted = true;
                 }
 
+
                 if (currentPage != ltd.page()) {
                     currentPage = ltd.page();
-
                     cs = stream.reopenContentStreamForTextData(cs, currentPage, font, fontSize, color);
                 }
 
                 cs.setTextMatrix(new Matrix(1, 0, 0, 1, (float) ltd.x(), (float) ltd.y()));
-                cs.showText(sanitizeText(ltd.line()));
+                List<TextDataBody> textDataBodies = ltd.wordList();
+                for (TextDataBody textDataBody : textDataBodies) {
+                    setFont(entityManager, textDataBody, cs);
+                    cs.showText(sanitizeText(textDataBody.text()));
+                }
             }
 
             cs.endText();
@@ -193,6 +206,13 @@ public class BlockText implements PdfRender, Breakable {
 
         }
         return result;
+    }
+
+    private static void setFont(EntityManager entityManager, TextDataBody textDataBody, PDPageContentStream cs) throws IOException {
+        PdfFont pdfFont = entityManager.getFonts().getFont(textDataBody.textStyle().fontName(), PdfFont.class).orElseThrow();
+        PDFont pdFont = pdfFont.fontType(textDataBody.textStyle().decoration());
+        float size = (float) textDataBody.textStyle().size();
+        cs.setFont(pdFont, size);
     }
 
     /**

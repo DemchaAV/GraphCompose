@@ -30,12 +30,14 @@ import java.util.List;
 class TemplateCV_1 {
     public static void main(String[] args) {
         Path target = Paths.get("ExpleoGroup_CV_ArtemDemchyshyn.pdf");
+//        String dataFile = "ATF_cv_data.yml";
+        String dataFile = "cv_data.yml";
 
         EntityManager entityManager = new EntityManager(true);
-        entityManager.setGuideLines(true);
+        entityManager.setGuideLines(false);
         PDDocument doc = new PDDocument();
         Canvas canvasPdf = new PdfCanvas(PDRectangle.A4, 0.0f, 0.0f);
-        canvasPdf.addMargin(Margin.of(15));
+        canvasPdf.addMargin(Margin.of(10));
 
 
         PdfRenderingSystemECS renderingSystemECS = new PdfRenderingSystemECS(doc, canvasPdf);
@@ -44,9 +46,8 @@ class TemplateCV_1 {
         entityManager.getSystems().addSystem(new PdfFileManagerSystem(target, doc));
 
         ModelBuilder cv = new ModelBuilder(entityManager);
-        String pathFolder = "/ai_content/";
 //        MainPageCV data = ConfigLoader.loadConfigWithEnv("cv_data_frelance.yml", MainPageCV.class, false);
-        MainPageCV data = ConfigLoader.loadConfigWithEnv("cv_data.yml", MainPageCV.class, false);
+        MainPageCV data = ConfigLoader.loadConfigWithEnv(dataFile, MainPageCV.class, false);
 //        MainPageCV data = ConfigLoader.loadConfigWithEnv("ExpleoGroup.yml", MainPageCV.class, false);
         var number = data.getHeder().getPhoneNumber();
         var address = data.getHeder().getAddress();
@@ -152,7 +153,6 @@ class TemplateCV_1 {
 
 
         entityManager.processSystems();
-        entityManager.printEntitiesWithInfo();
 
 
     }

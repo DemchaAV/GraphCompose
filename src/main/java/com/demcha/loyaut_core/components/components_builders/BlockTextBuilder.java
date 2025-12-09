@@ -301,20 +301,6 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         return self();
     }
 
-//
-//    /**
-//     * Initializes the container builder with the specified alignment.
-//     * This method calls the common creation logic from the superclass and then
-//     * adds a {@link BlockText} component to the entity.
-//     *
-//     * @param align The {@link Align} strategy for arranging children within the container.
-//     * @return This builder instance for method chaining.
-//     */
-//    public BlockTextBuilder create(Align align) {
-//        align(align);
-//        entity.addComponentIfAbsent(new BlockText()); // Add the specific component
-//        return self();
-//    }
 
     /**
      * Compute container size for text

@@ -140,7 +140,7 @@ public class ModelBuilder {
     }
 
     public ModuleBuilder moduleBuilder(String moduleName, Canvas canvas) {
-        var moduleHeader = new ModuleBuilder(entityManager, Align.middle(15), canvas)
+        var moduleHeader = new ModuleBuilder(entityManager, Align.middle(theme().spacingModuleName()), canvas)
 
                 .margin(Margin.of(5))
                 .anchor(Anchor.topLeft());

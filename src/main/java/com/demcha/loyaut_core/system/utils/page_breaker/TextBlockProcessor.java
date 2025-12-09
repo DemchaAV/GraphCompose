@@ -14,9 +14,12 @@ import com.demcha.loyaut_core.components.renderable.BlockText;
 import com.demcha.loyaut_core.core.EntityManager;
 import com.demcha.loyaut_core.exceptions.BigSizeElementException;
 import com.demcha.loyaut_core.system.LayoutSystem;
+import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfFont;
 import com.demcha.loyaut_core.system.interfaces.Font;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDFontDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -74,9 +77,13 @@ public class TextBlockProcessor {
 
 
         float scale = fontSize / 1000f;
-//        PDFontDescriptor fd = font.getFontDescriptor();
-//
-//        float descentPx = Math.abs((fd != null ? fd.getDescent() : font.getBoundingBox().getLowerLeftY()) * scale);
+        float descentPx = 0.0f;
+        if (result.font().getClass().isAssignableFrom(PdfFont.class)) {
+            PDFont pdFont = (PDFont) result.font().fontType(result.style.decoration());
+            PDFontDescriptor fd = pdFont.getFontDescriptor();
+            Math.abs((fd != null ? fd.getDescent() : pdFont.getBoundingBox().getLowerLeftY()) * scale);
+        }
+
 
         var blockTextData = validateText.textValue().lines();
 
@@ -95,14 +102,15 @@ public class TextBlockProcessor {
 
 
         // стартовая позиция (левый верх «абзаца»)
-        float startX = (float) position.x();
-        float startY = (float) (position.y() + innerBoxSize.height()) - textHeight; // if spacing will be negative
+        float startX = (float) position.x() - descentPx;
+        float startY = (float) (position.y() + innerBoxSize.height()) - textHeight + descentPx;
+        ; // if spacing will be negative
         BlockTextData newBlockTextData;
         List<LineTextData> assignPositionTextData = new ArrayList<>();
 
 
         float currentX = startX;
-        float currentY = startY;
+        float currentY = startY+ (float) spacing/2;
         for (LineTextData ltd : blockTextData) {
             log.trace(ltd.toString());
 

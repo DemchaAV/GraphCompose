@@ -32,6 +32,7 @@ public class MarkDownParser {
     }
 
     public List<TextDataBody> getBody(String markdown, TextStyle style) {
+
         MutableDataSet options = new MutableDataSet();
         Parser parser = Parser.builder(options).build();
         Node document = parser.parse(markdown);

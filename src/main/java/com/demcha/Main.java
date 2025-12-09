@@ -208,7 +208,7 @@ public class Main {
                         .size(9)
                         .color(ComponentColor.TITLE)
                         .fontName(FontName.HELVETICA)
-                        .decoration(TextDecoration.UNDERLINE)
+                        .decoration(TextDecoration.DEFAULT)
                         .build());
 
 

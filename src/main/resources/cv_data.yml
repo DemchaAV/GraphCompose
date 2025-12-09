@@ -17,61 +17,63 @@ heder:
 moduleSummary:
   moduleName: Professional Summary
   blockSummary: >
-    Junior Java Backend Developer with hands-on experience building REST APIs using Spring Boot, Spring 
-    Data JPA, and JWT-based Security. Transitioning from an engineering leadership background with a 
-    strong foundation in Core/Advanced Java, SQL, and object-oriented design. Passionate about clean 
-    code, robust architecture, and solving real-world problems. Ready to contribute to modern backend 
-    development projects and grow within a collaborative team. 
+    **Junior Java Backend Developer** with hands-on experience building **REST APIs** using **Spring Boot**, 
+    **Spring Data JPA**, and **JWT-based Security**. Transitioning from an engineering leadership background 
+    with a strong foundation in **Core/Advanced Java**, **SQL**, and **object-oriented design**. Passionate 
+    about **clean code**, **robust architecture**, and solving real-world problems. Ready to contribute to 
+    modern backend development projects and grow within a collaborative team.
 
 technicalSkills:
   name: Technical Skills
   modulePoints:
-    - "• Languages: Java, SQL"
-    - "• Backend Development: Spring Boot, Spring Data JPA, Spring Security, JWT, MapStruct, Lombok, Swagger, Jackson"
-    - "• Core Java: OOP, Collections, Streams API, Multithreading, Concurrency (ExecutorService, Locks), IO/NIO, JDBC, Reflection, Annotations, Optional, Record"
-    - "• Databases: MySQL, Oracle SQL, SQLite, MongoDB"
-    - "• SQL: DDL, DML, Joins, Subqueries, Set Operators, Transactions, Indexes, Views, Sequences"
-    - "• Security: JWT Authentication, BCrypt, Stateless API Security, Role-based Authorization"
-    - "• Tools: IntelliJ IDEA, Git, GitHub, Maven, Postman, SQL Developer, Flyway"
-    - "• Other: Jsoup, JavaFX (Basic), Regex, File I/O, Project Configuration (.yml/.properties)"
+    - "• **Languages:** Java, SQL"
+    - "• **Backend Development:** Spring Boot, Spring Data JPA, Spring Security, JWT, MapStruct, Lombok, Swagger, Jackson"
+    - "• **Core Java:** OOP, Collections, Streams API, Multithreading, Concurrency (ExecutorService, Locks), IO/NIO, JDBC, Reflection, Annotations, Optional, Record"
+    - "• **Databases:** MySQL, Oracle SQL, SQLite, MongoDB"
+    - "• **SQL:** DDL, DML, Joins, Subqueries, Set Operators, Transactions, Indexes, Views, Sequences"
+    - "• **Security:** JWT Authentication, BCrypt, Stateless API Security, Role-based Authorization"
+    - "• **Tools:** IntelliJ IDEA, Git, GitHub, Maven, Postman, SQL Developer, Flyway"
+    - "• **Other:** Jsoup, JavaFX (Basic), Regex, File I/O, Project Configuration (.yml/.properties)"
 
 educationCertifications:
   name: Education & Certifications
   modulePoints:
-    - "Spring Boot & REST API Mastery – Ongoing"
+    - "**Spring Boot & REST API Mastery** – *Ongoing*"
     - " Apr 2024 – Present - RESTful APIs with Spring Boot, DTOs, Security with JWT, CRUD, Postman testing."
-    - "Oracle SQL Course – Self-Study"
+    - "**Oracle SQL Course** – Self-Study"
     - " Jan 2024 – Jun 2024 - Mastered DDL/DML, joins, transactions, views, and sequences using Oracle SQL tools."
-    - "Advanced Java Course (OCA-aligned) – Self-Study"
+    - "**Advanced Java Course (OCA-aligned)** – Self-Study"
     - " Dec 2023 – Jan 2024 - Covered multithreading, Streams API, JDBC, functional programming, and reflection."
-    - "BSc in Hydraulic Engineering"
-    - "Kherson State Agrarian and Economic University, Ukraine"
-    - " Sep 2012 – May 2017 (Grade: 2.1)"
+    - "**BSc in Hydraulic Engineering**"
+    - " Kherson State Agrarian and Economic University, Ukraine"
+    - " Sep 2012 – May 2017 (*Grade: 2.1*)"
 
 projects:
   name: Projects
   modulePoints:
-    - "Shopping Cart API (Spring Boot + JWT + JPA) – Freelance-style backend e-commerce project."
+    - "**Multi-Format Layout Engine** – ECS-based layout engine for generating PDF, Word, and other document formats."
+    - " Computes page layout for text and components with CSS-like anchors and containers, using an Entity-Component-System design, 
+    pluggable renderers, and Markdown-based templates."
+    - "**Shopping Cart API** *(Spring Boot + JWT + JPA)* – ***Freelance-style*** backend e-commerce project."
     - " Secure API with user authentication, role-based access, product management, and cart operations."
     - " Features: Login/Register, JWT handling, Role checks, CRUD endpoints, validation."
     - " Stack: Spring Boot, JPA, MySQL, Spring Security, Postman, MapStruct, Swagger."
-    - "Custom GeminiConnection – Freelance-style Java client for Google’s Gemini API."
+    - "**Custom GeminiConnection** – ***Freelance-style*** Java client for Google’s Gemini API."
     - " Java client for Google’s Gemini API supporting generation config, streaming responses, and image requests."
-    - "AnkiQuestionGeneration – Freelance-style helper tool for learning workflows."
+    - "**AnkiQuestionGeneration** – ***Freelance-style*** helper tool for learning workflows."
     - " Parser + AI-powered converter that transforms Notion HTML notes into Anki flashcards using Gemini + SQLite."
-    - "CocktailScrapper – Freelance-style data collection tool for cocktail recipes."
+    - "**CocktailScrapper** – ***Freelance-style*** data collection tool for cocktail recipes."
     - " Multithreaded recipe scraper with Jsoup, MongoDB/MySQL support, and anti-bot rotation."
-    - "BlackJack CLI Game – Personal console project demonstrating OOP and control flow."
+    - "**BlackJack CLI Game** – Personal console project demonstrating OOP and control flow."
     - " Java console game implementing object-oriented principles and control flow."
-
 professionalExperience:
   name: Professional Experience
   modulePoints:
-    - "Bartender, Caprice Holdings – Scott’s Richmond, London, UK"
-    - " Aug 2022 – Present - Delivered outstanding customer service and team collaboration in a fast-paced setting."
+    - "**Bartender**, Caprice Holdings – Scott’s Richmond, London, UK"
+    - " *Aug 2022 – Present* - Delivered outstanding customer service and team collaboration in a fast-paced setting."
     - " Promoted within 7 months for leadership and reliability."
-    - " Lead Engineer | Nikoplast | Odessa, Ukraine"
-    - "Sep 2016 – Feb 2022 - A leadership role focused on optimizing complex production systems, managing project lifecycles, and ensuring quality."
+    - "**Lead Engineer** | Nikoplast | Odessa, Ukraine"
+    - "*Sep 2016 – Feb 2022* - A leadership role focused on optimizing complex production systems, managing project lifecycles, and ensuring quality."
     - " Led project execution from planning to deployment, improving process efficiency and achieving a company production record."
     - " Designed and implemented comprehensive quality management protocols, reducing critical errors and write-offs significantly."
     - " Mentored and trained 8 team members, fostering their growth into leadership positions."
@@ -79,5 +81,5 @@ professionalExperience:
 additional:
   name: Additional
   modulePoints:
-    - "Languages: English (Professional), Ukrainian (Native), Russian (Native)"
-    - "Work Eligibility: Right to work in the UK"
+    - "**Languages:** English (Professional), Ukrainian (Native), Russian (Native)"
+    - "**Work Eligibility:** Right to work in the UK"

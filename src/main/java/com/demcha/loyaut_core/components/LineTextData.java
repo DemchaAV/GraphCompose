@@ -45,6 +45,8 @@ public final class LineTextData {
     }
     public LineTextData(LineTextData ltd, double x, double y, int page) {
         this.page = page;
+        this.x = x;
+        this.y = y;
         this.wordList.addAll(ltd.wordList());
     }
 

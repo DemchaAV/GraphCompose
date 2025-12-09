@@ -5,9 +5,6 @@ import com.demcha.loyaut_core.components.content.text.TextDecoration;
 import com.demcha.loyaut_core.components.content.text.TextStyle;
 import com.demcha.loyaut_core.components.style.ComponentColor;
 import com.demcha.loyaut_core.components.style.Margin;
-import org.apache.pdfbox.pdmodel.font.PDFont;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 
 import java.awt.Color;
 
@@ -25,7 +22,8 @@ public record CvTheme(
         double headerFontSize,
         double bodyFontSize,
         double spacing,
-        Margin modulMargin
+        Margin modulMargin,
+        double spacingModuleName
 
 ) {
 
@@ -36,6 +34,7 @@ public record CvTheme(
         return TextStyle.builder()
                 .size(nameFontSize)
                 .color(primaryColor)
+                .decoration(TextDecoration.BOLD)
                 .fontName(headerFont)
                 .build();
     }
@@ -45,6 +44,7 @@ public record CvTheme(
         return TextStyle.builder()
                 .size(headerFontSize)
                 .color(secondaryColor)
+                .decoration(TextDecoration.BOLD)
                 .fontName(headerFont)
                 .build();
     }
@@ -107,9 +107,10 @@ public record CvTheme(
                 FontName.HELVETICA,
                 28,        // name
                 17.4,      // header
-                11,// body
+                10,// body
                 5 // spacing
-                ,Margin.top(5)
+                ,Margin.top(5),
+                5
 
         );
     }

@@ -30,7 +30,7 @@ import java.util.EnumSet;
  */
 @Slf4j
 @Builder
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class ChunkedBlockText extends Container {
     private static final EnumSet<GuidesRenderer.Guide> DEFAULT_GUIDES =

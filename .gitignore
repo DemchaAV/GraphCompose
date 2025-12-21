@@ -44,8 +44,7 @@ build/
 /logs/error.log
 /logs/error-2025-08-14.log
 /logs/error-2025-08-18.log
-/example.pdf
-/output.pdf
+*.pdf
 /patch-root-position.diff
 /rectangle.pdf
 /Test.pdf

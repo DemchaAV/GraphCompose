@@ -16,21 +16,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MarkDownParser {
-
-    //TODO test
-    public static void main(String[] args) {
-        String markdown = "This is **Sparta**, and **it is** *cool*.";
-
-        MarkDownParser parser = new MarkDownParser();
-//        List<TextDataBody> body = parser.getBody(markdown);
-//
-//        body.stream().map(TextDataBody::text).forEach(System.out::print);
-//        System.out.println();
-//
-//        // Visual check
-//        body.forEach(System.out::println);
-    }
-
     public List<TextDataBody> getBody(String markdown, TextStyle style) {
 
         MutableDataSet options = new MutableDataSet();

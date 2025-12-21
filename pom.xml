@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.demcha</groupId>
-    <artifactId>PDF_CV_CREATOR</artifactId>
+    <artifactId>GraphCompose</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <!-- ===================== -->

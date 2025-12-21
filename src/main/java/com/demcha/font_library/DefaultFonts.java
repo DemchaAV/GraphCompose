@@ -21,7 +21,11 @@ public class DefaultFonts {
                 new FontSet(FontName.TIMES_ROMAN, new PdfFont(new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN),
                         new PDType1Font(Standard14Fonts.FontName.TIMES_BOLD),
                         new PDType1Font(Standard14Fonts.FontName.TIMES_ITALIC),
-                        new PDType1Font(Standard14Fonts.FontName.TIMES_BOLD_ITALIC)))
+                        new PDType1Font(Standard14Fonts.FontName.TIMES_BOLD_ITALIC))),
+                new FontSet(FontName.COURIER, new PdfFont(new PDType1Font(Standard14Fonts.FontName.COURIER),
+                        new PDType1Font(Standard14Fonts.FontName.COURIER_BOLD),
+                        new PDType1Font(Standard14Fonts.FontName.COURIER_OBLIQUE),
+                        new PDType1Font(Standard14Fonts.FontName.COURIER_BOLD_OBLIQUE)))
 
         );
 

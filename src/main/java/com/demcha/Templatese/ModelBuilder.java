@@ -39,7 +39,7 @@ public class ModelBuilder {
      * Default constructor uses the default theme.
      */
     public ModelBuilder(EntityManager entityManager) {
-        this(entityManager, CvTheme.timeRoman());
+        this(entityManager, CvTheme.courier());
     }
 
     // ==========================================

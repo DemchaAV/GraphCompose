@@ -8,6 +8,7 @@ import com.demcha.loyaut_core.components.layout.coordinator.ComputedPosition;
 import com.demcha.loyaut_core.components.layout.coordinator.PaddingCoordinate;
 import com.demcha.loyaut_core.components.layout.coordinator.Position;
 import com.demcha.loyaut_core.components.components_builders.Canvas;
+import com.demcha.loyaut_core.components.style.Margin;
 import com.demcha.loyaut_core.core.CanvasBox;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -64,7 +65,7 @@ class ComputedPositionTest {
         when(child.getComponent(ContentSize.class)).thenReturn(Optional.of(new ContentSize(80,80)));
 
         // FIX: Simulate that the Anchor component is MISSING.
-        when(child.getComponent(Anchor.class)).thenReturn(Optional.of(Anchor.defaultAnchor()));
+        when(child.getComponent(Anchor.class)).thenReturn(Optional.empty());
         when (child.getComponent(Position.class)).thenReturn(Optional.of(new Position(5,7)));
 
         // Mock the static method that is *actually* used for the default anchor.
@@ -130,6 +131,7 @@ class ComputedPositionTest {
         Canvas pageSize = mock(CanvasBox.class);
         when(pageSize.width()).thenReturn(595.0f);
         when(pageSize.height()).thenReturn(842.0f);
+        when(pageSize.margin()).thenReturn(Margin.zero());
 
         when(child.getComponent(Anchor.class)).thenReturn(Optional.of(anchor));
         ComputedPosition expected = new ComputedPosition(3, 4);

@@ -5,6 +5,7 @@ import com.demcha.loyaut_core.components.core.Component;
 import com.demcha.loyaut_core.components.core.Entity;
 import com.demcha.loyaut_core.components.geometry.InnerBoxSize;
 import com.demcha.loyaut_core.components.layout.Anchor;
+import com.demcha.loyaut_core.components.style.Margin;
 import com.demcha.loyaut_core.components.style.Padding;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -83,7 +84,7 @@ public record ComputedPosition(double x, double y) implements Component {
      */
     public static ComputedPosition from(@NonNull Entity childEntity, @NonNull Canvas canvas) {
         log.debug("Computing position using default Canvas.");
-        var margin = canvas.margin();
+        var margin = canvas.margin() != null ? canvas.margin() : Margin.zero();
         InnerBoxSize innerBoxSize = new InnerBoxSize(canvas.width()- margin.horizontal(), canvas.height() - margin.vertical());
         var paddingParentCoordinate = new PaddingCoordinate(margin.left(), margin.bottom());
         return from(childEntity, innerBoxSize, paddingParentCoordinate);

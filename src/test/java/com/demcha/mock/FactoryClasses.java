@@ -40,7 +40,10 @@ public class FactoryClasses {
     }
 
     public static Offset offsetReal(OffsetData offsetData) {
-        return new Offset(offsetData.y(), offsetData.x());
+        Offset offset = new Offset();
+        offset.incrementX(offsetData.x());
+        offset.incrementY(offsetData.y());
+        return offset;
     }
 
 

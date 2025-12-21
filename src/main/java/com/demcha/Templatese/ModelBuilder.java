@@ -22,6 +22,7 @@ import java.util.List;
  */
 @Accessors(fluent = true)
 public class ModelBuilder {
+    @Getter
     private final EntityManager entityManager;
     @Getter
     private final CvTheme theme;

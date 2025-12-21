@@ -17,9 +17,15 @@ public class DefaultFonts {
         List<FontSet> fonts = List.of(new FontSet(FontName.HELVETICA, new PdfFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA),
                 new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD),
                 new PDType1Font(Standard14Fonts.FontName.HELVETICA_OBLIQUE),
-                new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD_OBLIQUE),
-                new PDType1Font(Standard14Fonts.FontName.HELVETICA),
-                new PDType1Font(Standard14Fonts.FontName.HELVETICA))));
+                new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD_OBLIQUE))),
+                new FontSet(FontName.TIMES_ROMAN, new PdfFont(new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN),
+                        new PDType1Font(Standard14Fonts.FontName.TIMES_BOLD),
+                        new PDType1Font(Standard14Fonts.FontName.TIMES_ITALIC),
+                        new PDType1Font(Standard14Fonts.FontName.TIMES_BOLD_ITALIC)))
+
+        );
+
+
         fonts.forEach(fontLibrary::addFont);
         return fontLibrary;
     }

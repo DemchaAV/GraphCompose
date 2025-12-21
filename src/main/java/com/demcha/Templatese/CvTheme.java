@@ -114,4 +114,22 @@ public record CvTheme(
 
         );
     }
+
+    public static CvTheme timeRoman() {
+        return new CvTheme(
+                new Color(44, 62, 80),                      // primary (name)
+                new Color(41, 128, 185),                    // secondary (headers)
+                ComponentColor.MODULE_LINE_TEXT,            // body text
+                ComponentColor.BLACK,                  // accent / links
+                FontName.TIMES_ROMAN,
+                FontName.TIMES_ROMAN,
+                28,        // name
+                17.4,      // header
+                10,// body
+                5 // spacing
+                ,Margin.top(5),
+                5
+
+        );
+    }
 }

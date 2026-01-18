@@ -311,19 +311,26 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
     private ContentSize computeContentSize() {
         Padding padding = entity.getComponent(Padding.class).orElse(Padding.zero());
         var blockTextData = entity.getComponent(BlockTextData.class).orElseThrow();
+
+        if (blockTextData.lines().isEmpty()) {
+            return new ContentSize(padding.horizontal(), padding.vertical());
+        }
+
         TextStyle style = entity.getComponent(TextStyle.class).orElse(TextStyle.DEFAULT_STYLE);
         var fontContainer = getFontContainer();
 
         var width = blockTextData.lines().stream()
-                .max(Comparator.comparingDouble((LineTextData lineTextData) -> lineTextData.width(fontContainer.font())))
-                .map((LineTextData lineTextData) -> lineTextData.width(fontContainer.font())).orElseThrow();
+                .mapToDouble(line -> line.width(fontContainer.font()))
+                .max()
+                .orElse(0.0);
+
         var spacingOpt = entity.getComponent(Align.class);
         double spacing = spacingOpt.orElse(Align.defaultAlign(0.0)).spacing();
 
 
         double textHeight = fontContainer.font().getTextHeight(style);
         double calculatedHigh = (blockTextData.lines().size()) * textHeight;
-        double spacingFullHigh = (blockTextData.lines().size() - 1) * spacing;
+        double spacingFullHigh = Math.max(0, (blockTextData.lines().size() - 1) * spacing);
         double high = calculatedHigh + spacingFullHigh + padding.vertical();
 
         return new ContentSize(width + padding.horizontal(), high);
@@ -346,4 +353,3 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
 
 
 }
-

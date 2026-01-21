@@ -65,20 +65,34 @@ The document creation process consists of three stages: System Initialization, E
 import com.graphcompose.core.EntityManager;
 import com.graphcompose.system.LayoutSystem;
 import com.graphcompose.render.pdf.PdfRenderingSystemECS;
+import com.graphcompose.render.pdf.PdfCanvas;
+import com.graphcompose.render.pdf.PdfFileManagerSystem;
 import com.graphcompose.components.Margin;
 import com.graphcompose.components.Anchor;
 import com.graphcompose.components.ComponentColor;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public void generateDocument() {
-    // 1. Configure Entity Manager and Systems
+    // 1. Setup Canvas and Document
+    Path target = Paths.get("output.pdf");
+    PDDocument doc = new PDDocument();
+    Canvas canvas = new PdfCanvas(PDRectangle.A4, 0.0f);
+    canvas.addMargin(Margin.of(20));
+
+    // 2. Configure Entity Manager and Systems
     EntityManager entityManager = new EntityManager();
     PdfRenderingSystemECS renderingSystem = new PdfRenderingSystemECS(doc, canvas);
 
     entityManager.getSystems().addSystem(new LayoutSystem(canvas, renderingSystem));
     entityManager.getSystems().addSystem(renderingSystem);
-    entityManager.getSystems().addSystem(new PdfFileManagerSystem(targetPath, doc));
+    
+    // PdfFileManagerSystem automatically saves the document to disk after processing
+    entityManager.getSystems().addSystem(new PdfFileManagerSystem(target, doc));
 
-    // 2. Create content via Builders
+    // 3. Create content via Builders
     Entity myButton = new ButtonBuilder(entityManager)
             .text(new TextBuilder(entityManager).textWithAutoSize("Download"))
             .fillColor(ComponentColor.ROYAL_BLUE)
@@ -86,7 +100,8 @@ public void generateDocument() {
             .anchor(Anchor.center())
             .build();
 
-    // 3. Run processing — Layout System calculates everything automatically
+    // 4. Run processing — Layout System calculates everything, 
+    // Rendering System draws, and FileManager saves the file.
     entityManager.processSystems();
 }
 ```

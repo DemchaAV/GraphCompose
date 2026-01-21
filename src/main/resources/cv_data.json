@@ -53,25 +53,13 @@
   "projects": {
     "name": "Projects",
     "modulePoints": [
-      "**CVRewriter** *(Spring Boot + React + AI + Scraping)* – ***Freelance-style*** full-stack app for generating tailored CV PDFs from vacancy links.",
-      " Implemented **JWT auth**, vacancy processing pipeline (*Playwright scraping*), **SSE real-time progress**, CV editor, regenerate flow, and record history/status tracking.",
-      " Integrated multiple AI providers (**Gemini / GPT / DeepSeek**), schema-based CV generation, and **token usage analytics** for each request.",
-      " Stack: Java 17+, Spring Boot, Spring Security, JPA, MySQL, Flyway, Playwright, React + TypeScript, Docker Compose, Nginx.",
-      "**GraphCompose** *(Java/Kotlin PDF Layout Engine)* – ***Freelance-style*** declarative document generation engine using **ECS architecture**.",
-      " Built a **layout system** (*VContainer/HContainer*) with alignment, margin/padding, anchors, and a **two-pass** measurement/layout approach.",
-      " Implemented **smart pagination** with **breakable nested containers** to split content across pages while preserving constraints (*padding/borders*).",
-      " Stack: Java 21 / Kotlin, Apache **PDFBox**, Flexmark (*Markdown*), SnakeYAML, Lombok.",
-      "**Shopping Cart API** *(Spring Boot + JWT + JPA)* – ***Freelance-style*** backend e-commerce project.",
-      " Secure API with authentication, role-based access, product management, and cart operations (*CRUD + validation*).",
-      " Stack: Spring Boot, JPA, MySQL, Spring Security, Postman, MapStruct, Swagger.",
-      "**Custom GeminiConnection** – ***Freelance-style*** Java client for Google’s Gemini API.",
-      " Supports generation configuration, **streaming responses**, image requests, and structured **JSON output parsing** for application integration.",
-      "**AnkiQuestionGeneration** – ***Freelance-style*** helper tool for learning workflows.",
-      " Parser + AI-powered converter that transforms Notion HTML notes into Anki flashcards using **Gemini** + SQLite.",
-      "**CocktailScrapper** – ***Freelance-style*** data collection tool for cocktail recipes.",
-      " Multithreaded recipe scraper with Jsoup, storage support (MongoDB/MySQL), and anti-bot rotation (*User-Agent + delays*).",
-      "**BlackJack CLI Game** – Personal console project demonstrating OOP and control flow.",
-      " Java console game implementing object-oriented principles and clean game flow logic."
+      "**CVRewriter** *(Spring Boot + React + AI + Scraping)* – ***Freelance-style*** full-stack app for generating tailored CV PDFs from vacancy links. Implemented **JWT auth**, vacancy processing pipeline (*Playwright scraping*), **SSE real-time progress**, CV editor, regenerate flow, and record history/status tracking. Integrated multiple AI providers (**Gemini / GPT / DeepSeek**), schema-based CV generation, and **token usage analytics** for each request. Stack: Java 17+, Spring Boot, Spring Security, JPA, MySQL, Flyway, Playwright, React + TypeScript, Docker Compose, Nginx.",
+      "**GraphCompose** *(Java/Kotlin PDF Layout Engine)* – ***Freelance-style*** declarative document generation engine using **ECS architecture**. Built a **layout system** (*VContainer/HContainer*) with alignment, margin/padding, anchors, and a **two-pass** measurement/layout approach. Implemented **smart pagination** with **breakable nested containers** to split content across pages while preserving constraints (*padding/borders*). Stack: Java 21 / Kotlin, Apache **PDFBox**, Flexmark (*Markdown*), SnakeYAML, Lombok.",
+      "**Shopping Cart API** *(Spring Boot + JWT + JPA)* – ***Freelance-style*** backend e-commerce project. Secure API with authentication, role-based access, product management, and cart operations (*CRUD + validation*). Stack: Spring Boot, JPA, MySQL, Spring Security, Postman, MapStruct, Swagger.",
+      "**Custom GeminiConnection** – ***Freelance-style*** Java client for Google’s Gemini API. Supports generation configuration, **streaming responses**, image requests, and structured **JSON output parsing** for application integration.",
+      "**AnkiQuestionGeneration** – ***Freelance-style*** helper tool for learning workflows. Parser + AI-powered converter that transforms Notion HTML notes into Anki flashcards using **Gemini** + SQLite.",
+      "**CocktailScrapper** – ***Freelance-style*** data collection tool for cocktail recipes. Multithreaded recipe scraper with Jsoup, storage support (MongoDB/MySQL), and anti-bot rotation (*User-Agent + delays*).",
+      "**BlackJack CLI Game** – Personal console project demonstrating OOP and control flow. Java console game implementing object-oriented principles and clean game flow logic."
     ]
   },
   "professionalExperience": {

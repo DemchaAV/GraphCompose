@@ -64,11 +64,11 @@ public class Main {
      */
     private static EntityManager setupEntityManager(boolean guidLines) throws Exception {
         Path target = Paths.get("output.pdf");
+        EntityManager entityManager = new EntityManager();
         PDDocument doc = new PDDocument();
         Canvas canvas = new PdfCanvas(PDRectangle.A4, 0.0f);
         canvas.addMargin(Margin.of(20));
 
-        EntityManager entityManager = new EntityManager();
         entityManager.setGuideLines(guidLines);
 
         PdfRenderingSystemECS renderingSystemECS = new PdfRenderingSystemECS(doc, canvas);

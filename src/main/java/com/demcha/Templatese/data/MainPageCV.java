@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class MainPageCV {
-    private Heder heder;                          // header
+    private Heder header;                          // header
     private ModuleSummary moduleSummary;          // professionalSummary
     private ModuleYml technicalSkills;            // technicalSkills
     private ModuleYml educationCertifications;    // educationCertifications

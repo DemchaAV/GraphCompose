@@ -40,12 +40,12 @@ It is a **fully-featured Layout System** that handles the calculation of coordin
 
 ```mermaid
 graph TD
-    UserCode[Your Code / Template] -->|Describes structure via Builders| LayoutSystem
-    LayoutSystem[Layout System] -->|Calculates positions, margins, page breaks| Instructions
-    Instructions[Instructions: WHAT, WHERE, ORDER] --> RenderingSystem
-    RenderingSystem[Rendering System] --> PDF[PDF <br/>(Ready)]
-    RenderingSystem --> DOCX[DOCX <br/>(Planned)]
-    RenderingSystem --> PPTX[PPTX <br/>(Planned)]
+    UserCode["Your Code / Template"] -->|Describes structure via Builders| LayoutSystem
+    LayoutSystem["Layout System"] -->|Calculates positions, margins, page breaks| Instructions
+    Instructions["Instructions: WHAT, WHERE, ORDER"] --> RenderingSystem
+    RenderingSystem["Rendering System"] --> PDF["PDF <br/> (Ready)"]
+    RenderingSystem --> DOCX["DOCX <br/> (Planned)"]
+    RenderingSystem --> PPTX["PPTX <br/> (Planned)"]
 ```
 
 > **Note:** The diagram above illustrates the flow from code to final output.

@@ -1,5 +1,6 @@
 package com.demcha.Templatese.cv_templates;
 
+import com.demcha.Templatese.CvTheme;
 import com.demcha.Templatese.ModelBuilder;
 import com.demcha.Templatese.data.MainPageCV;
 import com.demcha.Templatese.templates_utils.ConfigLoader;
@@ -28,7 +29,7 @@ import java.util.List;
 class TemplateCV_1 implements Template {
 
     private static final String OUTPUT_FILE = "ExpleoGroup_CV_ArtemDemchyshyn.pdf";
-    private static final String DATA_FILE = "cv_data.yml";
+    private static final String DATA_FILE = "cv_data.json";
 
     public static void main(String[] args) {
         new TemplateCV_1().process();
@@ -45,7 +46,7 @@ class TemplateCV_1 implements Template {
 
         setupSystems(entityManager, doc, canvasPdf);
 
-        ModelBuilder cv = new ModelBuilder(entityManager);
+        ModelBuilder cv = new ModelBuilder(entityManager, CvTheme.defaultTheme());
         MainPageCV data = ConfigLoader.loadConfigWithEnv(DATA_FILE, MainPageCV.class, false);
 
         float textBlockWidth = (float) canvasPdf.innerWidth();
@@ -103,13 +104,13 @@ class TemplateCV_1 implements Template {
     }
 
     private Entity createHeader(ModelBuilder cv, MainPageCV data, Canvas canvasPdf) {
-        var number = data.getHeder().getPhoneNumber();
-        var address = data.getHeder().getAddress();
-        var email = data.getHeder().getEmail();
-        var linkedIn = data.getHeder().getLinkedIn();
-        var gitHub = data.getHeder().getGitHub();
+        var number = data.getHeader().getPhoneNumber();
+        var address = data.getHeader().getAddress();
+        var email = data.getHeader().getEmail();
+        var linkedIn = data.getHeader().getLinkedIn();
+        var gitHub = data.getHeader().getGitHub();
 
-        Entity artemDemchyshyn = cv.name(data.getHeder().getName());
+        Entity artemDemchyshyn = cv.name(data.getHeader().getName());
 
         Entity infoPanel = cv.infoPanel(List.of(cv.info(address), cv.info(number)), null, null);
 

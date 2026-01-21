@@ -19,6 +19,7 @@ import com.demcha.loyaut_core.components.style.Padding;
 import com.demcha.loyaut_core.core.EntityManager;
 import com.demcha.loyaut_core.system.LayoutSystem;
 import com.demcha.loyaut_core.system.interfaces.Font;
+import com.demcha.loyaut_core.utils.TextSanitizer;
 import com.demcha.markdown.MarkDownParser;
 import lombok.NonNull;
 import lombok.Setter;
@@ -94,7 +95,6 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         textStyle = style;
 
         var margin = entity.getComponent(Margin.class).orElse(Margin.zero());
-        var padding = entity.getComponent(Padding.class).orElse(Padding.zero());
 
         final double maxWidth = innerBoxSize.width();
         final double horizontalMargins = margin.horizontal();
@@ -185,7 +185,7 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
 
         // Make a shallow copy of components (excluding Text, which we will replace)
 
-
+        text = text.stream().map(TextSanitizer::sanitize).toList();
         for (String textLine : text) {
 
             if (fontContainer.font().getTextWidth(style, textLine) <= maxWidth) {

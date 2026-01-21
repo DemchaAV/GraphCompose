@@ -2,7 +2,6 @@ package com.demcha.loyaut_core.components.renderable;
 
 import com.demcha.loyaut_core.components.LineTextData;
 import com.demcha.loyaut_core.components.content.text.BlockTextData;
-import com.demcha.loyaut_core.components.content.text.Text;
 import com.demcha.loyaut_core.components.content.text.TextDataBody;
 import com.demcha.loyaut_core.components.content.text.TextStyle;
 import com.demcha.loyaut_core.components.core.Entity;
@@ -15,7 +14,6 @@ import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfFont;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfRender;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfStream;
-import com.demcha.loyaut_core.system.interfaces.Font;
 import com.demcha.loyaut_core.system.interfaces.guides.GuidesRenderer;
 import com.demcha.loyaut_core.system.utils.page_breaker.Breakable;
 import lombok.Builder;
@@ -29,6 +27,7 @@ import org.apache.pdfbox.util.Matrix;
 
 import java.awt.*;
 import java.io.IOException;
+import java.nio.charset.IllegalCharsetNameException;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
@@ -99,6 +98,13 @@ public class BlockText implements PdfRender, Breakable {
         return rawText.replaceAll("\\p{C}", "");
     }
 
+    private static void setFont(EntityManager entityManager, TextDataBody textDataBody, PDPageContentStream cs) throws IOException {
+        PdfFont pdfFont = entityManager.getFonts().getFont(textDataBody.textStyle().fontName(), PdfFont.class).orElseThrow();
+        PDFont pdFont = pdfFont.fontType(textDataBody.textStyle().decoration());
+        float size = (float) textDataBody.textStyle().size();
+        cs.setFont(pdFont, size);
+    }
+
     /**
      * Renders the block of text onto the PDF content stream.
      * This method retrieves text data, style, position, and size from the given {@link Entity}.
@@ -130,7 +136,7 @@ public class BlockText implements PdfRender, Breakable {
 
         //Font Settings info
         float fontSize = (float) style.size();
-        PDFont pdfFont = font.fontType(style.decoration()) ;
+        PDFont pdfFont = font.fontType(style.decoration());
         Color color = validateText.style().color();
 
 
@@ -147,7 +153,7 @@ public class BlockText implements PdfRender, Breakable {
         // стартовая позиция (левый верх «абзаца»)
 
 
-        return pdfRenderBlock(e, manager,renderingSystem, guideLines, currentPage, pdfFont, fontSize, color, blockTextData);
+        return pdfRenderBlock(e, manager, renderingSystem, guideLines, currentPage, pdfFont, fontSize, color, blockTextData);
 //        return true;
     }
 
@@ -178,7 +184,11 @@ public class BlockText implements PdfRender, Breakable {
                 List<TextDataBody> textDataBodies = ltd.wordList();
                 for (TextDataBody textDataBody : textDataBodies) {
                     setFont(entityManager, textDataBody, cs);
-                    cs.showText(sanitizeText(textDataBody.text()));
+                    try {
+                        cs.showText(textDataBody.text());
+                    } catch (IllegalArgumentException il) {
+                        throw new IllegalCharsetNameException("Exception in rendering char  " + textDataBody.text() + " " + il);
+                    }
                 }
             }
 
@@ -206,13 +216,6 @@ public class BlockText implements PdfRender, Breakable {
 
         }
         return result;
-    }
-
-    private static void setFont(EntityManager entityManager, TextDataBody textDataBody, PDPageContentStream cs) throws IOException {
-        PdfFont pdfFont = entityManager.getFonts().getFont(textDataBody.textStyle().fontName(), PdfFont.class).orElseThrow();
-        PDFont pdFont = pdfFont.fontType(textDataBody.textStyle().decoration());
-        float size = (float) textDataBody.textStyle().size();
-        cs.setFont(pdFont, size);
     }
 
     /**

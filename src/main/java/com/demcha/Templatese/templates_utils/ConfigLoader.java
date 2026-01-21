@@ -1,9 +1,10 @@
 package com.demcha.Templatese.templates_utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.yaml.snakeyaml.LoaderOptions;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -17,7 +18,8 @@ import java.util.regex.Pattern;
 public final class ConfigLoader {
 
 
-    private ConfigLoader() {}
+    private ConfigLoader() {
+    }
 
     /**
      * Load YAML from classpath resource into the given class.
@@ -26,6 +28,15 @@ public final class ConfigLoader {
      */
     public static <T> T loadConfigWithEnv(String fileName, Class<T> clazz, boolean resolveEnv) {
         log.info("Initializing variables from '{}'", fileName);
+        ObjectMapper mapper;
+        if (fileName == null || fileName.isBlank()) throw new RuntimeException("fileName can`t be null or blank");
+
+        if (fileName.endsWith("yaml") || fileName.endsWith("yml")) {
+            mapper = new ObjectMapper(new YAMLFactory());
+        } else {
+            mapper = new ObjectMapper();
+
+        }
 
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         if (cl == null) cl = ConfigLoader.class.getClassLoader();
@@ -51,11 +62,15 @@ public final class ConfigLoader {
 
         String resolved = resolveEnv ? replaceEnvVariables(raw) : raw;
 
-        // Use SnakeYAML with an explicit Constructor for target type
-        LoaderOptions options = new LoaderOptions();
-        Yaml yaml = new Yaml(new Constructor(clazz, options));
+
         log.info("Creating a config YAML object '{}'", clazz.getSimpleName());
-        return yaml.load(resolved);
+        try {
+            log.info("Parsing config '{}'", fileName);
+          return   mapper.readValue(resolved, clazz);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to parse config '{}': {}", fileName, e.toString(), e);
+            throw new RuntimeException( "Failed to parse config: " + fileName, e);
+        }
     }
 
     /**

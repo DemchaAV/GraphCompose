@@ -94,11 +94,6 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         var style = entity.getComponent(TextStyle.class).orElse(textStyle);
         textStyle = style;
 
-        var margin = entity.getComponent(Margin.class).orElse(Margin.zero());
-
-        final double maxWidth = innerBoxSize.width();
-        final double horizontalMargins = margin.horizontal();
-
         // Make a shallow copy of components (excluding Text, which we will replace)
         var components = new HashMap<>(entity.view());
         components.remove(Text.class); // we'll set a new Text per line
@@ -110,148 +105,117 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         // Remove original entity (we're going to replace it with per-line children)
         entityManager.remove(entity);
 
-        // Split text into tokens (simple space-based; enhance with hyphenation if needed)
-        String[] words = text.value().split("\\s+");
-        var fontContainer = getFontContainer();
-
-        Deque<String> line = new ArrayDeque<>();
-        double lineWidth = horizontalMargins; // start with margins
-
-        // Pre-compute space width (if your TextStyle has such a method; otherwise use getTextWidth(" "))
-        double spaceWidth = fontContainer.font().getTextWidth(style, " ");
-
-        for (String word : words) {
-            double wordWidth = fontContainer.font().getTextWidth(style, word);
-
-            // If line is empty, try to place the word even if it overflows
-            if (line.isEmpty()) {
-                if (horizontalMargins + wordWidth <= maxWidth) {
-                    line.addLast(word);
-                    lineWidth = horizontalMargins + wordWidth;
-                } else {
-                    // Long single word: place as its own line and warn
-                    log.warn("Word is too long; can't break line: '{}'", word);
-                    createLine(List.of(word)); // still create a line
-                    line.clear();
-                    lineWidth = horizontalMargins;
-                }
-                continue;
-            }
-
-            // If we already have words, include a space before the next word
-            double candidateWidth = lineWidth + spaceWidth + wordWidth;
-
-            if (candidateWidth <= maxWidth) {
-                line.addLast(word);
-                lineWidth = candidateWidth;
-            } else {
-                // Flush current line
-                createLine(new ArrayList<>(line));
-                // Start a new line with this word
-                line.clear();
-                if (horizontalMargins + wordWidth <= maxWidth) {
-                    line.addLast(word);
-                    lineWidth = horizontalMargins + wordWidth;
-                } else {
-                    log.warn("Word is too long; can't break line: '{}'", word);
-                    createLine(List.of(word));
-                    lineWidth = horizontalMargins;
-                }
-            }
-        }
-
-        // Flush the last line if any
-        if (!line.isEmpty()) {
-            createLine(new ArrayList<>(line));
-        }
-
-
-        BlockTextData blockTextData = new BlockTextData(lines, (float) lineSpacing);
-        return blockTextData;
+        return breakLinesFromList(List.of(text.value()), innerBoxSize, "");
     }
 
     public BlockTextData breakLinesFromList(@NonNull List<String> text, @NonNull InnerBoxSize innerBoxSize, String bulletOffset) {
-
-
         FontContainer fontContainer = getFontContainer();
-        TextStyle style;
-
+        TextStyle style = fontContainer.style() == null ? textStyle : fontContainer.style();
         Margin margin = (Margin) baseComponents.getOrDefault(Margin.class, Margin.zero());
-        style = fontContainer.style() == null ? textStyle : fontContainer.style();
         margin = margin == null ? Margin.zero() : margin;
 
         final double maxWidth = innerBoxSize.width();
         final double horizontalMargins = margin.horizontal();
 
-        // Make a shallow copy of components (excluding Text, which we will replace)
+        String offsetStr = bulletOffset == null ? "" : " ".repeat(bulletOffset.length());
 
         text = text.stream().map(TextSanitizer::sanitize).toList();
-        for (String textLine : text) {
 
-            if (fontContainer.font().getTextWidth(style, textLine) <= maxWidth) {
-                createLine(List.of(textLine));
-                continue;
+        for (String textLine : text) {
+            List<TextDataBody> tokens;
+            if (entityManager.isMarkdown()) {
+                tokens = markDownParser.getBody(textLine, style);
+            } else {
+                String[] words = textLine.split("\\s+");
+                tokens = new ArrayList<>();
+                for (int i = 0; i < words.length; i++) {
+                    tokens.add(new TextDataBody(words[i], style));
+                    if (i < words.length - 1) {
+                        tokens.add(new TextDataBody(" ", style));
+                    }
+                }
             }
 
+            if (tokens.isEmpty()) continue;
 
-            // Split text into tokens (simple space-based; enhance with hyphenation if needed)
-            String[] words = textLine.split("\\s+");
+            Deque<TextDataBody> line = new ArrayDeque<>();
+            double lineWidth = horizontalMargins;
 
-            Deque<String> line = new ArrayDeque<>();
-            double lineWidth = horizontalMargins; // start with margins
+            for (TextDataBody token : tokens) {
+                double tokenWidth = fontContainer.font().getTextWidth(token.textStyle(), token.text());
 
-            // Pre-compute space width (if your TextStyle has such a method; otherwise use getTextWidth(" "))
-            double spaceWidth = fontContainer.font().getTextWidth(style, " ");
+                if (lineWidth + tokenWidth <= maxWidth) {
+                    line.addLast(token);
+                    lineWidth += tokenWidth;
+                } else {
+                    if (isSticky(token.text()) && !line.isEmpty()) {
+                        TextDataBody last = line.peekLast();
+                        if (last != null && !last.text().isBlank()) {
+                            double lastWidth = fontContainer.font().getTextWidth(last.textStyle(), last.text());
 
-            for (String word : words) {
-                double wordWidth = fontContainer.font().getTextWidth(style, word);
+                            line.removeLast();
+                            if (!line.isEmpty()) {
+                                createLineFromBodies(new ArrayList<>(line));
+                            }
+                            line.clear();
+                            lineWidth = horizontalMargins;
 
-                // If line is empty, try to place the word even if it overflows
-                if (line.isEmpty()) {
-                    if (horizontalMargins + wordWidth <= maxWidth) {
-                        line.addLast(word);
-                        lineWidth = horizontalMargins + wordWidth;
+                            line.addLast(last);
+                            lineWidth += lastWidth;
+
+                            line.addLast(token);
+                            lineWidth += tokenWidth;
+
+                            if (lineWidth > maxWidth) {
+                                createLineFromBodies(new ArrayList<>(line));
+                                line.clear();
+                                lineWidth = horizontalMargins;
+                            }
+                            continue;
+                        }
+                    }
+
+                    if (token.text().isBlank()) {
+                        continue;
+                    }
+
+                    if (!line.isEmpty()) {
+                        createLineFromBodies(new ArrayList<>(line));
+                        line.clear();
+                        lineWidth = horizontalMargins;
+
+                        if (!offsetStr.isEmpty()) {
+                            TextDataBody indent = new TextDataBody(offsetStr, style);
+                            double indentWidth = fontContainer.font().getTextWidth(style, offsetStr);
+                            line.addLast(indent);
+                            lineWidth += indentWidth;
+                        }
+                    }
+
+                    if (lineWidth + tokenWidth <= maxWidth) {
+                        line.addLast(token);
+                        lineWidth += tokenWidth;
                     } else {
-                        // Long single word: place as its own line and warn
-                        log.warn("Word is too long; can't break line: '{}'", word);
-                        createLine(List.of(word)); // still create a line
+                        line.addLast(token);
+                        createLineFromBodies(new ArrayList<>(line));
                         line.clear();
                         lineWidth = horizontalMargins;
                     }
-                    continue;
-                }
-
-                // If we already have words, include a space before the next word
-                double candidateWidth = lineWidth + spaceWidth + wordWidth;
-
-                if (candidateWidth <= maxWidth) {
-                    line.addLast(word);
-                    lineWidth = candidateWidth;
-                } else {
-                    // Flush current line
-                    createLine(new ArrayList<>(line));
-                    // Start a new line with this word
-                    line.clear();
-                    if (horizontalMargins + wordWidth <= maxWidth) {
-                        line.addLast(" ".repeat(bulletOffset.length()) + word);
-                        lineWidth = horizontalMargins + wordWidth;
-                    } else {
-                        log.warn("Word is too long; can't break line: '{}'", word);
-                        createLine(List.of(word));
-                        lineWidth = horizontalMargins;
-                    }
                 }
             }
 
-            // Flush the last line if any
             if (!line.isEmpty()) {
-                createLine(new ArrayList<>(line));
+                createLineFromBodies(new ArrayList<>(line));
             }
-
         }
 
-
         return new BlockTextData(lines, (float) lineSpacing);
+    }
+
+    private boolean isSticky(String text) {
+        if (text == null || text.isEmpty()) return false;
+        char first = text.charAt(0);
+        return ",.;:!?)]}".indexOf(first) >= 0;
     }
 
     private @NotNull BlockTextBuilder.FontContainer getFontContainer() {
@@ -268,6 +232,10 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         String lineText = String.join(" ", words);
         FontContainer fontContainer = getFontContainer();
         lines.add(createLineTextData(lineText, fontContainer.style()));
+    }
+
+    private void createLineFromBodies(List<TextDataBody> bodies) {
+        lines.add(new LineTextData(bodies, 0));
     }
 
     private LineTextData createLineTextData(String chunkText, TextStyle textStyle) {

@@ -117,95 +117,111 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         final double maxWidth = innerBoxSize.width();
         final double horizontalMargins = margin.horizontal();
 
-        String offsetStr = bulletOffset == null ? "" : " ".repeat(bulletOffset.length());
+        String offsetStr = bulletOffset == null ? "" : "  ".repeat(bulletOffset.length());
 
         text = text.stream().map(TextSanitizer::sanitize).toList();
 
         for (String textLine : text) {
-            List<TextDataBody> tokens;
-            if (entityManager.isMarkdown()) {
-                tokens = markDownParser.getBody((bulletOffset + textLine), style);
-            } else {
-                String[] words = (bulletOffset + textLine).split("\\s+");
-                tokens = new ArrayList<>();
-                for (int i = 0; i < words.length; i++) {
-                    tokens.add(new TextDataBody(words[i], style));
-                    if (i < words.length - 1) {
-                        tokens.add(new TextDataBody(" ", style));
+            String fullText = bulletOffset + textLine;
+            String[] explicitLines = fullText.split("\\r?\\n");
+
+            for (int k = 0; k < explicitLines.length; k++) {
+                String explicitLine = explicitLines[k];
+                List<TextDataBody> tokens;
+                if (entityManager.isMarkdown()) {
+                    String lineToParse = explicitLine;
+                    if (k > 0 && !offsetStr.isEmpty()) {
+                        lineToParse = offsetStr + explicitLine;
+                    }
+                    tokens = markDownParser.getBody(lineToParse, style);
+                } else {
+                    String[] words = explicitLine.split("\\s+");
+                    tokens = new ArrayList<>();
+
+                    if (k > 0 && !offsetStr.isEmpty()) {
+                        tokens.add(new TextDataBody(offsetStr, style));
+                    }
+
+                    for (int i = 0; i < words.length; i++) {
+                        if (words[i].isEmpty()) continue;
+                        tokens.add(new TextDataBody(words[i], style));
+                        if (i < words.length - 1) {
+                            tokens.add(new TextDataBody(" ", style));
+                        }
                     }
                 }
-            }
 
-            if (tokens.isEmpty()) continue;
+                if (tokens.isEmpty()) continue;
 
-            Deque<TextDataBody> line = new ArrayDeque<>();
-            double lineWidth = horizontalMargins;
+                Deque<TextDataBody> line = new ArrayDeque<>();
+                double lineWidth = horizontalMargins;
 
-            for (TextDataBody token : tokens) {
-                double tokenWidth = fontContainer.font().getTextWidth(token.textStyle(), token.text());
-
-                if (lineWidth + tokenWidth <= maxWidth) {
-                    line.addLast(token);
-                    lineWidth += tokenWidth;
-                } else {
-                    if (isSticky(token.text()) && !line.isEmpty()) {
-                        TextDataBody last = line.peekLast();
-                        if (last != null && !last.text().isBlank()) {
-                            double lastWidth = fontContainer.font().getTextWidth(last.textStyle(), last.text());
-
-                            line.removeLast();
-                            if (!line.isEmpty()) {
-                                createLineFromBodies(new ArrayList<>(line));
-                            }
-                            line.clear();
-                            lineWidth = horizontalMargins;
-
-                            line.addLast(last);
-                            lineWidth += lastWidth;
-
-                            line.addLast(token);
-                            lineWidth += tokenWidth;
-
-                            if (lineWidth > maxWidth) {
-                                createLineFromBodies(new ArrayList<>(line));
-                                line.clear();
-                                lineWidth = horizontalMargins;
-                            }
-                            continue;
-                        }
-                    }
-
-                    if (token.text().isBlank()) {
-                        continue;
-                    }
-
-                    if (!line.isEmpty()) {
-                        createLineFromBodies(new ArrayList<>(line));
-                        line.clear();
-                        lineWidth = horizontalMargins;
-
-                        if (!offsetStr.isEmpty()) {
-                            TextDataBody indent = new TextDataBody(offsetStr, style);
-                            double indentWidth = fontContainer.font().getTextWidth(style, offsetStr);
-                            line.addLast(indent);
-                            lineWidth += indentWidth;
-                        }
-                    }
+                for (TextDataBody token : tokens) {
+                    double tokenWidth = fontContainer.font().getTextWidth(token.textStyle(), token.text());
 
                     if (lineWidth + tokenWidth <= maxWidth) {
                         line.addLast(token);
                         lineWidth += tokenWidth;
                     } else {
-                        line.addLast(token);
-                        createLineFromBodies(new ArrayList<>(line));
-                        line.clear();
-                        lineWidth = horizontalMargins;
+                        if (isSticky(token.text()) && !line.isEmpty()) {
+                            TextDataBody last = line.peekLast();
+                            if (last != null && !last.text().isBlank()) {
+                                double lastWidth = fontContainer.font().getTextWidth(last.textStyle(), last.text());
+
+                                line.removeLast();
+                                if (!line.isEmpty()) {
+                                    createLineFromBodies(new ArrayList<>(line));
+                                }
+                                line.clear();
+                                lineWidth = horizontalMargins;
+
+                                line.addLast(last);
+                                lineWidth += lastWidth;
+
+                                line.addLast(token);
+                                lineWidth += tokenWidth;
+
+                                if (lineWidth > maxWidth) {
+                                    createLineFromBodies(new ArrayList<>(line));
+                                    line.clear();
+                                    lineWidth = horizontalMargins;
+                                }
+                                continue;
+                            }
+                        }
+
+                        if (token.text().isBlank()) {
+                            continue;
+                        }
+
+                        if (!line.isEmpty()) {
+                            createLineFromBodies(new ArrayList<>(line));
+                            line.clear();
+                            lineWidth = horizontalMargins;
+
+                            if (!offsetStr.isEmpty()) {
+                                TextDataBody indent = new TextDataBody(offsetStr, style);
+                                double indentWidth = fontContainer.font().getTextWidth(style, offsetStr);
+                                line.addLast(indent);
+                                lineWidth += indentWidth;
+                            }
+                        }
+
+                        if (lineWidth + tokenWidth <= maxWidth) {
+                            line.addLast(token);
+                            lineWidth += tokenWidth;
+                        } else {
+                            line.addLast(token);
+                            createLineFromBodies(new ArrayList<>(line));
+                            line.clear();
+                            lineWidth = horizontalMargins;
+                        }
                     }
                 }
-            }
 
-            if (!line.isEmpty()) {
-                createLineFromBodies(new ArrayList<>(line));
+                if (!line.isEmpty()) {
+                    createLineFromBodies(new ArrayList<>(line));
+                }
             }
         }
 

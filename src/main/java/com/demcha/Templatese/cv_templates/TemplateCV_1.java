@@ -56,7 +56,7 @@ class TemplateCV_1 implements Template {
         
         Entity moduleProfessionalSummary = createSection(cv, canvasPdf, 
                 data.getModuleSummary().getModuleName(), "ModuleProfessionalSummary", 
-                List.of(data.getModuleSummary().getBlockSummary()), textBlockWidth, whitespace);
+                List.of(data.getModuleSummary().getBlockSummary()), textBlockWidth, null);
 
         Entity moduleTechnicalSkills = createSection(cv, canvasPdf, 
                 data.getTechnicalSkills().getName(), "ModuleTechnicalSkills", 

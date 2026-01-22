@@ -25,15 +25,15 @@
   "technicalSkills": {
     "name": "Technical Skills",
     "modulePoints": [
-      "• **Languages:** Java (*17/21*), SQL, Kotlin (*Basic*)",
-      "• **Backend (Spring):** Spring Boot, Spring MVC, Spring Data JPA (*Hibernate*), Spring Security, **JWT**, Validation, MapStruct, Lombok, Swagger/**OpenAPI**, Jackson",
-      "• **API & Security:** REST design, stateless auth, role-based authorization, BCrypt, CORS, input validation/sanitization",
-      "• **Core Java:** OOP, Collections, Streams API, Multithreading, Concurrency (*ExecutorService*, *Locks*), IO/NIO, JDBC, Reflection, Annotations, Optional, Record",
-      "• **Databases:** MySQL, Oracle SQL, SQLite, MongoDB (*Basic*)",
-      "• **DevOps & Tools:** Git/GitHub, Maven, Docker, Docker Compose, Flyway, Postman, IntelliJ IDEA, Nginx (*Basic*)",
-      "• **Web Scraping:** Playwright (*headless automation*), Jsoup (*HTML parsing*), anti-bot techniques (*User-Agent rotation*, *delays*)",
-      "• **AI Integration:** Google **Gemini API**, OpenAI/**DeepSeek** (*Basic*), prompt design, **JSON schema-driven outputs**, streaming responses, token usage tracking",
-      "• **Document Generation:** Apache **PDFBox**, Markdown rendering (*Flexmark*), YAML config (*SnakeYAML*), layout/templating systems"
+      "**Languages:** Java (*17/21*), SQL, Kotlin (*Basic*)",
+      "**Backend (Spring):** Spring Boot, Spring MVC, Spring Data JPA (*Hibernate*), Spring Security, **JWT**, Validation, MapStruct, Lombok, Swagger/**OpenAPI**, Jackson",
+      "**API & Security:** REST design, stateless auth, role-based authorization, BCrypt, CORS, input validation/sanitization",
+      "**Core Java:** OOP, Collections, Streams API, Multithreading, Concurrency (*ExecutorService*, *Locks*), IO/NIO, JDBC, Reflection, Annotations, Optional, Record",
+      "**Databases:** MySQL, Oracle SQL, SQLite, MongoDB (*Basic*)",
+      "**DevOps & Tools:** Git/GitHub, Maven, Docker, Docker Compose, Flyway, Postman, IntelliJ IDEA, Nginx (*Basic*)",
+      "**Web Scraping:** Playwright (*headless automation*), Jsoup (*HTML parsing*), anti-bot techniques (*User-Agent rotation*, *delays*)",
+      "**AI Integration:** Google **Gemini API**, OpenAI/**DeepSeek** (*Basic*), prompt design, **JSON schema-driven outputs**, streaming responses, token usage tracking",
+      "**Document Generation:** Apache **PDFBox**, Markdown rendering (*Flexmark*), YAML config (*SnakeYAML*), layout/templating systems"
     ]
   },
   "educationCertifications": {
@@ -41,13 +41,9 @@
     "modulePoints": [
       "**Spring Boot & REST API Mastery** – *Ongoing*",
       " Apr 2024 – Present - RESTful APIs with Spring Boot, DTOs, Security with JWT, CRUD, Postman testing.",
-      "**Oracle SQL Course** – Self-Study",
-      " Jan 2024 – Jun 2024 - Mastered DDL/DML, joins, transactions, views, and sequences using Oracle SQL tools.",
-      "**Advanced Java Course (OCA-aligned)** – Self-Study",
-      " Dec 2023 – Jan 2024 - Covered multithreading, Streams API, JDBC, functional programming, and reflection.",
-      "**BSc in Hydraulic Engineering**",
-      " Kherson State Agrarian and Economic University, Ukraine",
-      " Sep 2012 – May 2017 (*Grade: 2.1*)"
+      "**Oracle SQL Course** – Self-Study Jan 2024 – Jun 2024 - Mastered DDL/DML, joins, transactions, views, and sequences using Oracle SQL tools.",
+      "**Advanced Java Course (OCA-aligned)** – Self-Study Dec 2023 – Jan 2024 - Covered multithreading, Streams API, JDBC, functional programming, and reflection.",
+      "**BSc in Hydraulic Engineering** Kherson State Agrarian and Economic University, Ukraine \n Sep 2012 – May 2017 (*Grade: 2.1*)"
     ]
   },
   "projects": {

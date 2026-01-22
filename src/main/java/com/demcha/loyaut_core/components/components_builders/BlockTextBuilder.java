@@ -124,9 +124,9 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         for (String textLine : text) {
             List<TextDataBody> tokens;
             if (entityManager.isMarkdown()) {
-                tokens = markDownParser.getBody(textLine, style);
+                tokens = markDownParser.getBody((bulletOffset + textLine), style);
             } else {
-                String[] words = textLine.split("\\s+");
+                String[] words = (bulletOffset + textLine).split("\\s+");
                 tokens = new ArrayList<>();
                 for (int i = 0; i < words.length; i++) {
                     tokens.add(new TextDataBody(words[i], style));

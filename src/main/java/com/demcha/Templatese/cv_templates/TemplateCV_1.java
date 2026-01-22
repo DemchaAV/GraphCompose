@@ -38,13 +38,14 @@ class TemplateCV_1 implements Template {
     @Override
     public void process() {
         EntityManager entityManager = new EntityManager(true);
-        entityManager.setGuideLines(true);
+        entityManager.setGuideLines(false);
         
         PDDocument doc = new PDDocument();
         Canvas canvasPdf = new PdfCanvas(PDRectangle.A4, 0.0f, 0.0f);
         canvasPdf.addMargin(Margin.of(10));
 
         setupSystems(entityManager, doc, canvasPdf);
+        String whitespace = "  ";
 
         ModelBuilder cv = new ModelBuilder(entityManager, CvTheme.defaultTheme());
         MainPageCV data = ConfigLoader.loadConfigWithEnv(DATA_FILE, MainPageCV.class, false);
@@ -55,7 +56,7 @@ class TemplateCV_1 implements Template {
         
         Entity moduleProfessionalSummary = createSection(cv, canvasPdf, 
                 data.getModuleSummary().getModuleName(), "ModuleProfessionalSummary", 
-                List.of(data.getModuleSummary().getBlockSummary()), textBlockWidth, null);
+                List.of(data.getModuleSummary().getBlockSummary()), textBlockWidth, whitespace);
 
         Entity moduleTechnicalSkills = createSection(cv, canvasPdf, 
                 data.getTechnicalSkills().getName(), "ModuleTechnicalSkills", 
@@ -63,19 +64,19 @@ class TemplateCV_1 implements Template {
 
         Entity moduleEducationCertifications = createSection(cv, canvasPdf, 
                 data.getEducationCertifications().getName(), "moduleEducationCertifications", 
-                data.getEducationCertifications().getModulePoints(), textBlockWidth, null);
+                data.getEducationCertifications().getModulePoints(), textBlockWidth, whitespace);
 
         Entity moduleProjects = createSection(cv, canvasPdf, 
                 data.getProjects().getName(), "ModuleProjects", 
-                data.getProjects().getModulePoints(), textBlockWidth, null);
+                data.getProjects().getModulePoints(), textBlockWidth, whitespace);
 
         Entity moduleProfessionalExperience = createSection(cv, canvasPdf, 
                 data.getProfessionalExperience().getName(), "ModuleProfessionalExperience", 
-                data.getProfessionalExperience().getModulePoints(), textBlockWidth, null);
+                data.getProfessionalExperience().getModulePoints(), textBlockWidth, whitespace);
 
         Entity moduleAdditional = createSection(cv, canvasPdf, 
                 data.getAdditional().getName(), "ModuleAdditional", 
-                data.getAdditional().getModulePoints(), textBlockWidth, null);
+                data.getAdditional().getModulePoints(), textBlockWidth, whitespace);
 
         Entity mainVBoxContainer = cv.moduleBuilder(canvasPdf)
                 .entityName("MainVBoxContainer")

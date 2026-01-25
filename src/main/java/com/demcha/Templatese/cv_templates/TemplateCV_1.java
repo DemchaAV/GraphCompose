@@ -39,11 +39,11 @@ class TemplateCV_1 implements Template {
     @Override
     public void process() {
         EntityManager entityManager = new EntityManager(true);
-        entityManager.setGuideLines(true);
+        entityManager.setGuideLines(false);
         
         PDDocument doc = new PDDocument();
         Canvas canvasPdf = new PdfCanvas(PDRectangle.A4, 0.0f, 0.0f);
-        canvasPdf.addMargin(new Margin(15, 10, 15, 10));
+        canvasPdf.addMargin(new Margin(15, 10, 15, 15));
 
         setupSystems(entityManager, doc, canvasPdf);
         String whitespace = "";

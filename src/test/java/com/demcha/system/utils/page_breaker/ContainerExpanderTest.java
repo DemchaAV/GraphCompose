@@ -1,15 +1,15 @@
 package com.demcha.system.utils.page_breaker;
 
-import com.demcha.loyaut_core.components.core.Component;
-import com.demcha.loyaut_core.components.core.Entity;
-import com.demcha.loyaut_core.components.geometry.ContentSize;
-import com.demcha.loyaut_core.components.geometry.InnerBoxSize;
-import com.demcha.loyaut_core.components.geometry.OuterBoxSize;
-import com.demcha.loyaut_core.components.style.Margin;
-import com.demcha.loyaut_core.core.EntityManager;
-import com.demcha.loyaut_core.exceptions.ContentSizeNotFoundException;
-import com.demcha.loyaut_core.components.geometry.Expendable;
-import com.demcha.loyaut_core.system.utils.containerUtils.ContainerExpander;
+import com.demcha.compose.loyaut_core.components.core.Component;
+import com.demcha.compose.loyaut_core.components.core.Entity;
+import com.demcha.compose.loyaut_core.components.geometry.ContentSize;
+import com.demcha.compose.loyaut_core.components.geometry.InnerBoxSize;
+import com.demcha.compose.loyaut_core.components.geometry.OuterBoxSize;
+import com.demcha.compose.loyaut_core.components.style.Margin;
+import com.demcha.compose.loyaut_core.core.EntityManager;
+import com.demcha.compose.loyaut_core.exceptions.ContentSizeNotFoundException;
+import com.demcha.compose.loyaut_core.components.geometry.Expendable;
+import com.demcha.compose.loyaut_core.system.utils.containerUtils.ContainerExpander;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

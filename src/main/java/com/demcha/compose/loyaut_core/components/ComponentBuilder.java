@@ -3,12 +3,18 @@ package com.demcha.compose.loyaut_core.components;
 import com.demcha.compose.Templatese.CvTheme;
 import com.demcha.compose.Templatese.TemplateBuilder;
 import com.demcha.compose.loyaut_core.components.components_builders.*;
+import com.demcha.compose.loyaut_core.components.containers.abstract_builders.BuildEntity;
 import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
 import com.demcha.compose.loyaut_core.components.layout.Align;
 import com.demcha.compose.loyaut_core.core.EntityManager;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ComponentBuilder {
+    private final List<BuildEntity> builders = new ArrayList<>();
     private EntityManager entityManager;
+
 
     private ComponentBuilder() {
     }
@@ -20,35 +26,51 @@ public class ComponentBuilder {
     }
 
     public BlockTextBuilder blockText(Align align, TextStyle textStyle) {
-        return new BlockTextBuilder(this.entityManager, align, textStyle);
+        BlockTextBuilder blockTextBuilder = new BlockTextBuilder(this.entityManager, align, textStyle);
+        builders.add(blockTextBuilder);
+        return blockTextBuilder;
     }
 
     public ButtonBuilder button() {
-        return new ButtonBuilder(this.entityManager);
+        ButtonBuilder buttonBuilder = new ButtonBuilder(this.entityManager);
+        builders.add(buttonBuilder);
+        return buttonBuilder;
     }
 
     public DisplayUrlTextBuilder displayUrlText() {
-        return new DisplayUrlTextBuilder(this.entityManager);
+        DisplayUrlTextBuilder displayUrlTextBuilder = new DisplayUrlTextBuilder(this.entityManager);
+        builders.add(displayUrlTextBuilder);
+        return displayUrlTextBuilder;
     }
 
     public LinkBuilder link() {
-        return new LinkBuilder(this.entityManager);
+        LinkBuilder linkBuilder = new LinkBuilder(this.entityManager);
+        builders.add(linkBuilder);
+        return linkBuilder;
     }
 
     public ModuleBuilder moduleBuilder(Align align) {
-        return new ModuleBuilder(this.entityManager, Align.middle(5));
+        ModuleBuilder moduleBuilder = new ModuleBuilder(this.entityManager, Align.middle(5));
+        builders.add(moduleBuilder);
+        return moduleBuilder;
     }
 
     public RectangleBuilder rectangle() {
-        return new RectangleBuilder(this.entityManager);
+        RectangleBuilder rectangleBuilder = new RectangleBuilder(this.entityManager);
+        builders.add(rectangleBuilder);
+        return rectangleBuilder;
     }
 
     public TextBuilder text() {
-        return new TextBuilder(this.entityManager);
+        TextBuilder textBuilder = new TextBuilder(this.entityManager);
+        builders.add(textBuilder);
+        return textBuilder;
     }
 
     public RowBuilder row(Align align) {
-        return new RowBuilder(this.entityManager, align);
+        RowBuilder rowBuilder = new RowBuilder(this.entityManager, align);
+        builders.add(rowBuilder);
+        return rowBuilder;
     }
 
     public HContainerBuilder hContainer(Align align) {
@@ -56,18 +78,31 @@ public class ComponentBuilder {
     }
 
     public VContainerBuilder vContainer(Align align) {
-        return new VContainerBuilder(this.entityManager, align);
+        VContainerBuilder vContainerBuilder = new VContainerBuilder(this.entityManager, align);
+        builders.add(vContainerBuilder);
+        return vContainerBuilder;
     }
 
     public TemplateBuilder template(CvTheme theme) {
-        return new TemplateBuilder(this.entityManager, theme);
+        TemplateBuilder templateBuilder = new TemplateBuilder(this.entityManager, theme);
+        builders.add(templateBuilder);
+        return templateBuilder;
     }
 
     public TemplateBuilder template() {
-        return template(null);
+        TemplateBuilder templateBuilder = template(null);
+        builders.add(templateBuilder);
+        return templateBuilder;
     }
 
     public ElementBuilder element() {
-        return new ElementBuilder(this.entityManager);
+        ElementBuilder elementBuilder = new ElementBuilder(this.entityManager);
+        builders.add(elementBuilder);
+        return elementBuilder;
+    }
+
+    public void buildsComponents() {
+        if (builders.isEmpty()) return;
+        builders.forEach(BuildEntity::build);
     }
 }

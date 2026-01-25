@@ -2,7 +2,9 @@ package com.demcha;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.font_library.FontName;
-import com.demcha.compose.loyaut_core.components.components_builders.*;
+import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
+import com.demcha.compose.loyaut_core.components.components_builders.HContainerBuilder;
+import com.demcha.compose.loyaut_core.components.components_builders.TextBuilder;
 import com.demcha.compose.loyaut_core.components.content.link.Email;
 import com.demcha.compose.loyaut_core.components.content.link.LinkUrl;
 import com.demcha.compose.loyaut_core.components.content.shape.Stroke;
@@ -20,7 +22,6 @@ import com.demcha.compose.loyaut_core.system.LayoutSystem;
 import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.PdfCanvas;
 import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.PdfFileManagerSystem;
 import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
-import com.demcha.compose.loyaut_core.system.utils.page_breaker.EntitySorter;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
@@ -35,23 +36,16 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         // 1. Setup Phase
-        EntityManager entityManager = setupEntityManager(true);
-        entityManager.setMarkdown(true);
+
         Path target = Paths.get("output.pdf");
         GraphCompose compose = new GraphCompose(target);
 
-
-        // 2. Content Creation and Layout
-//        createATableLayout(entityManager, "table");
         blockTextBuilder(compose, textBlockData, 400, 1);
-//
-//        createASingleObject(entityManager, "Hello");
-//        createButtonsVContainer(entityManager, "buttons");
+
+        compose.build();
 
 
-        // 3. Final Processing
-       compose.build();
-        var pageBreaker = EntitySorter.sortByYPosition(entityManager.getEntities());
+
     }
 
     /**
@@ -168,8 +162,8 @@ public class Main {
                 .build();
     }
 
-    private static Entity createVContainer(GraphCompose compose,  String name, List<Entity> entities) {
-        var vContainerBuilder = compose.componentBuilder().vContainer( Align.middle(5))
+    private static Entity createVContainer(GraphCompose compose, String name, List<Entity> entities) {
+        var vContainerBuilder = compose.componentBuilder().vContainer(Align.middle(5))
                 .entityName(name)
                 .margin(new Margin(10, 10, 5, 5))
                 .padding(new Padding(5, 5, 10, 10))
@@ -184,7 +178,7 @@ public class Main {
     }
 
     private static Entity createHContainer(GraphCompose compose, String name, List<Entity> entities) {
-        HContainerBuilder hContainerBuilder = compose.componentBuilder().hContainer( Align.middle(10))
+        HContainerBuilder hContainerBuilder = compose.componentBuilder().hContainer(Align.middle(10))
                 .entityName(name)
                 .margin(new Margin(10, 20, 5, 15))
                 .padding(Padding.of(5))

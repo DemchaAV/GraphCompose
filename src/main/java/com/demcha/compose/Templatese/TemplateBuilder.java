@@ -1,6 +1,7 @@
 package com.demcha.compose.Templatese;
 
 import com.demcha.compose.loyaut_core.components.components_builders.*;
+import com.demcha.compose.loyaut_core.components.containers.abstract_builders.BuildEntity;
 import com.demcha.compose.loyaut_core.components.content.link.LinkUrl;
 import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
 import com.demcha.compose.loyaut_core.components.core.Entity;
@@ -21,7 +22,7 @@ import java.util.List;
  * It uses {@link CvTheme} to determine visual appearance (fonts, colors, sizes).
  */
 @Accessors(fluent = true)
-public class TemplateBuilder {
+public class TemplateBuilder implements BuildEntity {
     @Getter
     private final EntityManager entityManager;
     @Getter
@@ -223,5 +224,25 @@ public class TemplateBuilder {
                 .size(width, 2)
                 .padding(0, 5, 0, 25)
                 .text(textBuilder);
+    }
+
+    /**
+     * Returns the {@link EntityManager} associated with this builder.
+     *
+     * @return The associated {@link EntityManager}.
+     */
+    @Override
+    public EntityManager manager() {
+        return entityManager;
+    }
+
+    /**
+     * Returns the {@link Entity} object that is currently being built by this builder.
+     *
+     * @return The entity being built.
+     */
+    @Override
+    public Entity entity() {
+        return null;
     }
 }

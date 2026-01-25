@@ -14,6 +14,7 @@ import com.demcha.loyaut_core.components.core.EntityName;
 import com.demcha.loyaut_core.components.layout.Align;
 import com.demcha.loyaut_core.components.layout.Anchor;
 import com.demcha.loyaut_core.components.style.Margin;
+import com.demcha.loyaut_core.components.style.Padding;
 import com.demcha.loyaut_core.core.EntityManager;
 import com.demcha.loyaut_core.system.LayoutSystem;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfCanvas;
@@ -38,14 +39,14 @@ class TemplateCV_1 implements Template {
     @Override
     public void process() {
         EntityManager entityManager = new EntityManager(true);
-        entityManager.setGuideLines(false);
+        entityManager.setGuideLines(true);
         
         PDDocument doc = new PDDocument();
         Canvas canvasPdf = new PdfCanvas(PDRectangle.A4, 0.0f, 0.0f);
-        canvasPdf.addMargin(Margin.of(10));
+        canvasPdf.addMargin(new Margin(15, 10, 15, 10));
 
         setupSystems(entityManager, doc, canvasPdf);
-        String whitespace = "  ";
+        String whitespace = "";
 
         ModelBuilder cv = new ModelBuilder(entityManager, CvTheme.defaultTheme());
         MainPageCV data = ConfigLoader.loadConfigWithEnv(DATA_FILE, MainPageCV.class, false);
@@ -53,29 +54,29 @@ class TemplateCV_1 implements Template {
         float textBlockWidth = (float) canvasPdf.innerWidth();
 
         Entity moduleHeader = createHeader(cv, data, canvasPdf);
-        
-        Entity moduleProfessionalSummary = createSection(cv, canvasPdf, 
-                data.getModuleSummary().getModuleName(), "ModuleProfessionalSummary", 
+
+        Entity moduleProfessionalSummary = createSection(cv, canvasPdf,
+                data.getModuleSummary().getModuleName(), "ModuleProfessionalSummary",
                 List.of(data.getModuleSummary().getBlockSummary()), textBlockWidth, null);
 
-        Entity moduleTechnicalSkills = createSection(cv, canvasPdf, 
-                data.getTechnicalSkills().getName(), "ModuleTechnicalSkills", 
+        Entity moduleTechnicalSkills = createSection(cv, canvasPdf,
+                data.getTechnicalSkills().getName(), "ModuleTechnicalSkills",
                 data.getTechnicalSkills().getModulePoints(), textBlockWidth, "• ");
 
-        Entity moduleEducationCertifications = createSection(cv, canvasPdf, 
-                data.getEducationCertifications().getName(), "moduleEducationCertifications", 
+        Entity moduleEducationCertifications = createSection(cv, canvasPdf,
+                data.getEducationCertifications().getName(), "moduleEducationCertifications",
                 data.getEducationCertifications().getModulePoints(), textBlockWidth, whitespace);
 
         Entity moduleProjects = createSection(cv, canvasPdf, 
                 data.getProjects().getName(), "ModuleProjects", 
                 data.getProjects().getModulePoints(), textBlockWidth, whitespace);
 
-        Entity moduleProfessionalExperience = createSection(cv, canvasPdf, 
-                data.getProfessionalExperience().getName(), "ModuleProfessionalExperience", 
+        Entity moduleProfessionalExperience = createSection(cv, canvasPdf,
+                data.getProfessionalExperience().getName(), "ModuleProfessionalExperience",
                 data.getProfessionalExperience().getModulePoints(), textBlockWidth, whitespace);
 
-        Entity moduleAdditional = createSection(cv, canvasPdf, 
-                data.getAdditional().getName(), "ModuleAdditional", 
+        Entity moduleAdditional = createSection(cv, canvasPdf,
+                data.getAdditional().getName(), "ModuleAdditional",
                 data.getAdditional().getModulePoints(), textBlockWidth, whitespace);
 
         Entity mainVBoxContainer = cv.moduleBuilder(canvasPdf)
@@ -88,10 +89,6 @@ class TemplateCV_1 implements Template {
                 .addChild(moduleProfessionalExperience)
                 .addChild(moduleAdditional)
                 .build();
-
-        ModulesContainer canvas = new ModulesContainer(entityManager, canvasPdf);
-        canvas.addComponent(new EntityName("ModulesContainer"));
-        canvas.addModule(mainVBoxContainer).build();
 
         entityManager.processSystems();
     }
@@ -127,7 +124,7 @@ class TemplateCV_1 implements Template {
 
         return new ModuleBuilder(cv.entityManager(), Align.middle(5), canvasPdf)
                 .entityName("ModuleHeader")
-                .margin(Margin.of(10))
+                .margin(new Margin(0,10,10,10))
                 .anchor(Anchor.topRight())
                 .addChild(artemDemchyshyn)
                 .addChild(infoPanel)

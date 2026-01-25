@@ -33,15 +33,12 @@ import java.util.List;
 
 public class Main {
     public static Anchor MAIN_ANCHOR = Anchor.topRight();
-    static String textBlockData = "Junior Java Backend Developer with hands-on experience building REST APIs using Spring Boot, Spring " +
-                                  "    Data JPA, and JWT-based Security. Transitioning from an engineering leadership background with a " +
-                                  "    strong foundation in Core/Advanced Java, SQL, and object-oriented design. Passionate about clean " +
-                                  "    code, robust architecture, and solving real-world problems. Ready to contribute to modern backend " +
-                                  "    development projects and grow within a collaborative team. ";
+    static String textBlockData = "**Custom GeminiConnection (API Client Library)** – *Portfolio Project*\\nCreated a custom Java client to **integrate with a third-party solution** (Google's Gemini API). The library supports streaming responses and structured JSON parsing, demonstrating the ability to work effectively with external services and APIs.";
 
     public static void main(String[] args) throws Exception {
         // 1. Setup Phase
         EntityManager entityManager = setupEntityManager(true);
+        entityManager.setMarkdown(true);
 
 
         // 2. Content Creation and Layout

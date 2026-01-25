@@ -17,7 +17,7 @@ public record BlockTextData(List<LineTextData> lines, float lineSpacing) impleme
             return false;
         }
         for (LineTextData line : lines) {
-            if (line.wordList().stream().anyMatch(word -> word.text().contains(text))) {
+            if (line.bodies().stream().anyMatch(word -> word.text().contains(text))) {
                 return true;
             }
         }

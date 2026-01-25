@@ -124,7 +124,7 @@ public class ModelBuilder {
                 .textWithAutoSize(title)
                 .entityName("Title_" + title)
                 .anchor(Anchor.topLeft())
-                .margin(new Margin(5, 5, 5, 10))
+                .margin(new Margin(5, 5, 5, 5))
                 .textStyle(theme.sectionHeaderTextStyle()) // Using Theme Header Style
                 .build();
     }
@@ -142,8 +142,6 @@ public class ModelBuilder {
 
     public ModuleBuilder moduleBuilder(String moduleName, Canvas canvas) {
         var moduleHeader = new ModuleBuilder(entityManager, Align.middle(theme().spacingModuleName()), canvas)
-
-                .margin(Margin.of(5))
                 .anchor(Anchor.topLeft());
 
         if (moduleName != null) {
@@ -207,7 +205,7 @@ public class ModelBuilder {
 
         return new BlockTextBuilder(entityManager, Align.left(theme.spacing()), style)
                 .size(width, 2)
-                .padding(0, 5, 0, 25)
+                .padding(0, 5, 0, 20)
                 .text(text, style, null, null, bulletOffset)
                 .anchor(Anchor.center())
                 .build();

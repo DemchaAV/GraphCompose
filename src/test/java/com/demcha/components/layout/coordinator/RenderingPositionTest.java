@@ -1,10 +1,10 @@
 package com.demcha.components.layout.coordinator;
 
-import com.demcha.loyaut_core.components.core.Component;
-import com.demcha.loyaut_core.components.core.Entity;
-import com.demcha.loyaut_core.components.layout.coordinator.ComputedPosition;
-import com.demcha.loyaut_core.components.layout.coordinator.Position;
-import com.demcha.loyaut_core.components.layout.coordinator.RenderingPosition;
+import com.demcha.compose.loyaut_core.components.core.Component;
+import com.demcha.compose.loyaut_core.components.core.Entity;
+import com.demcha.compose.loyaut_core.components.layout.coordinator.ComputedPosition;
+import com.demcha.compose.loyaut_core.components.layout.coordinator.Position;
+import com.demcha.compose.loyaut_core.components.layout.coordinator.RenderingPosition;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;

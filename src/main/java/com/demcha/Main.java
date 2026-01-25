@@ -1,25 +1,26 @@
 package com.demcha;
 
-import com.demcha.font_library.FontName;
-import com.demcha.loyaut_core.components.components_builders.*;
-import com.demcha.loyaut_core.components.content.link.Email;
-import com.demcha.loyaut_core.components.content.link.LinkUrl;
-import com.demcha.loyaut_core.components.content.shape.Stroke;
-import com.demcha.loyaut_core.components.content.text.TextDecoration;
-import com.demcha.loyaut_core.components.content.text.TextStyle;
-import com.demcha.loyaut_core.components.core.Entity;
-import com.demcha.loyaut_core.components.geometry.ContentSize;
-import com.demcha.loyaut_core.components.layout.Align;
-import com.demcha.loyaut_core.components.layout.Anchor;
-import com.demcha.loyaut_core.components.style.ComponentColor;
-import com.demcha.loyaut_core.components.style.Margin;
-import com.demcha.loyaut_core.components.style.Padding;
-import com.demcha.loyaut_core.core.EntityManager;
-import com.demcha.loyaut_core.system.LayoutSystem;
-import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfCanvas;
-import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfFileManagerSystem;
-import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
-import com.demcha.loyaut_core.system.utils.page_breaker.EntitySorter;
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.font_library.FontName;
+import com.demcha.compose.loyaut_core.components.components_builders.*;
+import com.demcha.compose.loyaut_core.components.content.link.Email;
+import com.demcha.compose.loyaut_core.components.content.link.LinkUrl;
+import com.demcha.compose.loyaut_core.components.content.shape.Stroke;
+import com.demcha.compose.loyaut_core.components.content.text.TextDecoration;
+import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
+import com.demcha.compose.loyaut_core.components.core.Entity;
+import com.demcha.compose.loyaut_core.components.geometry.ContentSize;
+import com.demcha.compose.loyaut_core.components.layout.Align;
+import com.demcha.compose.loyaut_core.components.layout.Anchor;
+import com.demcha.compose.loyaut_core.components.style.ComponentColor;
+import com.demcha.compose.loyaut_core.components.style.Margin;
+import com.demcha.compose.loyaut_core.components.style.Padding;
+import com.demcha.compose.loyaut_core.core.EntityManager;
+import com.demcha.compose.loyaut_core.system.LayoutSystem;
+import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.PdfCanvas;
+import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.PdfFileManagerSystem;
+import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
+import com.demcha.compose.loyaut_core.system.utils.page_breaker.EntitySorter;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
@@ -178,7 +179,7 @@ public class Main {
                 .build();
     }
 
-    private static Entity createVContainer(GraphCompose compose,  String name, Entity... entities) {
+    private static Entity createVContainer(GraphCompose compose, String name, Entity... entities) {
         return createVContainer(compose, name, Arrays.asList(entities));
     }
 

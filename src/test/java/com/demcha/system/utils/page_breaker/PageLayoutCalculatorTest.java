@@ -1,14 +1,14 @@
 package com.demcha.system.utils.page_breaker;
 
-import com.demcha.loyaut_core.components.components_builders.Canvas;
-import com.demcha.loyaut_core.components.core.Entity;
-import com.demcha.loyaut_core.components.geometry.ContentSize;
-import com.demcha.loyaut_core.components.style.Margin;
-import com.demcha.loyaut_core.core.EntityManager;
-import com.demcha.loyaut_core.exceptions.BigSizeElementException;
-import com.demcha.loyaut_core.system.utils.page_breaker.Offset;
-import com.demcha.loyaut_core.system.utils.page_breaker.PageLayoutCalculator;
-import com.demcha.loyaut_core.system.utils.page_breaker.YPositionOnPage;
+import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
+import com.demcha.compose.loyaut_core.components.core.Entity;
+import com.demcha.compose.loyaut_core.components.geometry.ContentSize;
+import com.demcha.compose.loyaut_core.components.style.Margin;
+import com.demcha.compose.loyaut_core.core.EntityManager;
+import com.demcha.compose.loyaut_core.exceptions.BigSizeElementException;
+import com.demcha.compose.loyaut_core.system.utils.page_breaker.Offset;
+import com.demcha.compose.loyaut_core.system.utils.page_breaker.PageLayoutCalculator;
+import com.demcha.compose.loyaut_core.system.utils.page_breaker.YPositionOnPage;
 import com.demcha.mock.FactoryClasses;
 import com.demcha.mock.FactoryPresets;
 import com.demcha.mock.data.CanvasData;

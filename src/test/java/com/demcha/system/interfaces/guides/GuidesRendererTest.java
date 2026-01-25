@@ -1,13 +1,13 @@
 package com.demcha.system.interfaces.guides;
 
-import com.demcha.loyaut_core.components.components_builders.Canvas;
-import com.demcha.loyaut_core.components.layout.coordinator.RenderCoordinateContext;
+import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
+import com.demcha.compose.loyaut_core.components.layout.coordinator.RenderCoordinateContext;
 import com.demcha.mock.FactoryClasses;
 import com.demcha.mock.FactoryPresets;
 import com.demcha.mock.data.CanvasData;
 import com.demcha.mock.data.SizeData;
-import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfGuidesRenderer;
-import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
+import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.PdfGuidesRenderer;
+import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;

@@ -1,8 +1,6 @@
 package com.demcha.loyaut_core.components;
 
-import com.demcha.font_library.FontName;
 import com.demcha.loyaut_core.components.content.text.TextDataBody;
-import com.demcha.loyaut_core.components.content.text.TextDecoration;
 import com.demcha.loyaut_core.components.content.text.TextStyle;
 import com.demcha.loyaut_core.system.interfaces.Font;
 import lombok.Data;
@@ -28,7 +26,7 @@ public final class LineTextData {
     /**
      * The actual text content of the line. This field is final and immutable.
      */
-    private final List<TextDataBody> wordList = new ArrayList<>();
+    private final List<TextDataBody> bodies = new ArrayList<>();
     private final int page;
     private double x;
     private double y;
@@ -39,20 +37,20 @@ public final class LineTextData {
         this.page = page;
     }
 
-    public LineTextData(List<TextDataBody> wordList, int page) {
+    public LineTextData(List<TextDataBody> bodies, int page) {
         this.page = page;
-        this.wordList.addAll(wordList);
+        this.bodies.addAll(bodies);
     }
     public LineTextData(LineTextData ltd, double x, double y, int page) {
         this.page = page;
         this.x = x;
         this.y = y;
-        this.wordList.addAll(ltd.wordList());
+        this.bodies.addAll(ltd.bodies());
     }
 
     public static LineTextData createWithoutMarkdown(String text, TextStyle style, int page) {
         var ltd = new LineTextData(page);
-        ltd.wordList.add(new TextDataBody(text, style));
+        ltd.bodies.add(new TextDataBody(text, style));
         return ltd;
     }
 
@@ -62,7 +60,7 @@ public final class LineTextData {
     }
 
     public <T extends Font<?>> double  width(T font) {
-        return wordList.stream()
+        return bodies.stream()
                 .mapToDouble((textDataBody) -> width(textDataBody, font))
                 .sum();
     }

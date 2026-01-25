@@ -3,8 +3,7 @@ package com.demcha.markdown;
 import com.demcha.loyaut_core.components.content.text.TextDataBody;
 import com.demcha.loyaut_core.components.content.text.TextDecoration;
 import com.demcha.loyaut_core.components.content.text.TextStyle;
-import com.vladsch.flexmark.ast.Emphasis;
-import com.vladsch.flexmark.ast.StrongEmphasis;
+import com.vladsch.flexmark.ast.*;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;
 import com.vladsch.flexmark.util.ast.NodeVisitor;
@@ -16,37 +15,54 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MarkDownParser {
-    public List<TextDataBody> getBody(String markdown, TextStyle style) {
 
+    public List<TextDataBody> getBody(String markdown, TextStyle style) {
         MutableDataSet options = new MutableDataSet();
         Parser parser = Parser.builder(options).build();
         Node document = parser.parse(markdown);
 
         List<TextDataBody> resultList = new ArrayList<>();
 
-        // 3. Visitor Pattern to traverse the AST
-        NodeVisitor visitor = new NodeVisitor(
-                new VisitHandler<>(com.vladsch.flexmark.ast.Text.class, textNode -> {
+        final NodeVisitor[] visitor = new NodeVisitor[1];
+        visitor[0] = new NodeVisitor(
+                // 1) List items: add your own prefix (since '-' is not Text)
+                new VisitHandler<>(ListItem.class, node -> {
+                    TextStyle prefixStyle = new TextStyle(style.fontName(), style.size(), TextDecoration.DEFAULT, style.color());
 
-                    // Determine style based on parents
+                    // New line before each list item (optional; helps readability)
+                    resultList.add(new TextDataBody("\n", prefixStyle));
+
+                    // Use bullet or dash — your choice:
+                    resultList.add(new TextDataBody("• ", prefixStyle));
+                    // resultList.add(new TextDataBody("- ", prefixStyle));
+
+                    // Continue visiting children so text inside item is collected
+                    visitor[0].visitChildren(node);
+                }),
+
+                // 2) Preserve line breaks
+                new VisitHandler<>(SoftLineBreak.class, br ->
+                        resultList.add(new TextDataBody("\n", new TextStyle(style.fontName(), style.size(), TextDecoration.DEFAULT, style.color())))
+                ),
+                new VisitHandler<>(HardLineBreak.class, br ->
+                        resultList.add(new TextDataBody("\n", new TextStyle(style.fontName(), style.size(), TextDecoration.DEFAULT, style.color())))
+                ),
+
+                // 3) Text nodes (your current logic)
+                new VisitHandler<>(Text.class, textNode -> {
                     TextDecoration decoration = determineStyle(textNode);
                     TextStyle newTextStyle = new TextStyle(style.fontName(), style.size(), decoration, style.color());
 
-
-                    // Get raw text
                     String rawText = textNode.getChars().toString();
-
-                    // 4. Split by whitespace but keep the delimiter (Java 17 compatible)
-                    // Regex explanation: Split before a space OR after a space
                     String[] chunks = rawText.split("((?<=\\s)|(?=\\s))");
 
                     Arrays.stream(chunks)
-                            .filter(s -> !s.isEmpty()) // Safety check
+                            .filter(s -> !s.isEmpty())
                             .forEach(chunk -> resultList.add(new TextDataBody(chunk, newTextStyle)));
                 })
         );
 
-        visitor.visit(document);
+        visitor[0].visit(document);
         return resultList;
     }
 
@@ -54,7 +70,6 @@ public class MarkDownParser {
         boolean isBold = false;
         boolean isItalic = false;
 
-        // Traverse up the tree to find styling containers
         Node parent = node.getParent();
         while (parent != null) {
             if (parent instanceof StrongEmphasis) isBold = true;
@@ -67,7 +82,11 @@ public class MarkDownParser {
         if (isItalic) return TextDecoration.ITALIC;
         return TextDecoration.DEFAULT;
     }
+
+    public static void main(String[] args) {
+        String  s = "*Portfolio Project*\nBuilt a secure e-commerce ";
+        MarkDownParser parser = new MarkDownParser();
+        parser.getBody(s, TextStyle.DEFAULT_STYLE).stream().map(TextDataBody::text).forEach(System.out::println);
+
+    }
 }
-
-
-

@@ -181,7 +181,7 @@ public class BlockText implements PdfRender, Breakable {
                 }
 
                 cs.setTextMatrix(new Matrix(1, 0, 0, 1, (float) ltd.x(), (float) ltd.y()));
-                List<TextDataBody> textDataBodies = ltd.wordList();
+                List<TextDataBody> textDataBodies = ltd.bodies();
                 for (TextDataBody textDataBody : textDataBodies) {
                     setFont(entityManager, textDataBody, cs);
                     try {

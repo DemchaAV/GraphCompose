@@ -21,7 +21,7 @@ import java.util.List;
  * It uses {@link CvTheme} to determine visual appearance (fonts, colors, sizes).
  */
 @Accessors(fluent = true)
-public class ModelBuilder {
+public class TemplateBuilder {
     @Getter
     private final EntityManager entityManager;
     @Getter
@@ -30,7 +30,7 @@ public class ModelBuilder {
     /**
      * Constructor with custom theme.
      */
-    public ModelBuilder(EntityManager entityManager, CvTheme theme) {
+    public TemplateBuilder(EntityManager entityManager, CvTheme theme) {
         this.entityManager = entityManager;
         this.theme = theme;
     }
@@ -38,7 +38,7 @@ public class ModelBuilder {
     /**
      * Default constructor uses the default theme.
      */
-    public ModelBuilder(EntityManager entityManager) {
+    public TemplateBuilder(EntityManager entityManager) {
         this(entityManager, CvTheme.courier());
     }
 

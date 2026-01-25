@@ -66,4 +66,8 @@ public class ComponentBuilder {
     public TemplateBuilder template() {
         return template(null);
     }
+
+    public ElementBuilder element() {
+        return new ElementBuilder(this.entityManager);
+    }
 }

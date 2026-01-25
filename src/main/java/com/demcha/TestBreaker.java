@@ -36,7 +36,8 @@ public class TestBreaker {
     public static Margin MARGIN = Margin.of(50);
 
     public static void main(String[] args) throws Exception {
-        EntityManager entityManager = setupEntityManager(true);
+        Path target = Paths.get("output.pdf");
+        GraphCompose compose = new GraphCompose(target);
 //        EntityManager entityManager = setupEntityManager_16_16(true);
 
         boolean  testText  = true;
@@ -45,26 +46,26 @@ public class TestBreaker {
 
         List<Entity> data;
         if (testText){
-            data = textBuilding(entityManager,95,3);
+            data = textBuilding(compose,95,3);
 
         }else {
-            data = colorObjectBuilding(entityManager);
+            data = colorObjectBuilding(compose);
         }
 
 
 
-        var container = createVContainer(entityManager, "mainContainer V",
+        var container = createVContainer(compose, "mainContainer V",
                 data
         );
 
         // 3. Final Processing
-        entityManager.processSystems();
+        compose.build();
 
 
     }
 
     @NotNull
-    private static List<Entity> colorObjectBuilding(EntityManager entityManager) {
+    private static List<Entity> colorObjectBuilding(GraphCompose compose) {
         List<Entity> data = new ArrayList<>();
         var colors = List.of(
                 Color.BLUE,
@@ -76,7 +77,7 @@ public class TestBreaker {
         );
 
         for (int i = 0; i < 5; i++) {
-            var entity = new RectangleBuilder(entityManager)
+            var entity = compose.componentBuilder().rectangle()
                     .size(300, 300)
                     .stroke(new Stroke( ComponentColor.PURPLE,2))
                     .fillColor(colors.get(i))
@@ -88,7 +89,7 @@ public class TestBreaker {
     }
 
     @NotNull
-    private static List<Entity> textBuilding(EntityManager entityManager,int rows, double spacing) {
+    private static List<Entity> textBuilding(GraphCompose entityManager,int rows, double spacing) {
         double w = 302;
         List<Entity> data = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
@@ -148,8 +149,8 @@ public class TestBreaker {
         return entityManager;
     }
 
-    private static Entity createVContainer(EntityManager entityManager, String name, List<Entity> entities) {
-        var vContainerBuilder = new VContainerBuilder(entityManager, Align.middle(10))
+    private static Entity createVContainer(GraphCompose compose, String name, List<Entity> entities) {
+        var vContainerBuilder = compose.componentBuilder().vContainer( Align.middle(10))
                 .entityName(name)
                 .margin(new Margin(10, 10, 5, 5))
                 .padding(new Padding(5, 5, 10, 10))
@@ -159,12 +160,12 @@ public class TestBreaker {
                 .build();
     }
 
-    private static Entity createVContainer(EntityManager entityManager, String name, Entity... entities) {
-        return createVContainer(entityManager, name, Arrays.asList(entities));
+    private static Entity createVContainer(GraphCompose compose,  String name, Entity... entities) {
+        return createVContainer(compose, name, Arrays.asList(entities));
     }
 
-    private static Entity createHContainer(EntityManager entityManager, String name, List<Entity> entities) {
-        HContainerBuilder hContainerBuilder = new HContainerBuilder(entityManager, Align.middle(10))
+    private static Entity createHContainer(GraphCompose compose, String name, List<Entity> entities) {
+        HContainerBuilder hContainerBuilder = compose.componentBuilder().hContainer( Align.middle(10))
                 .entityName(name)
                 .margin(new Margin(10, 20, 5, 15))
                 .padding(Padding.of(5))
@@ -174,7 +175,7 @@ public class TestBreaker {
                 .build();
     }
 
-    private static Entity createHContainer(EntityManager entityManager, String name, Entity... entities) {
-        return createHContainer(entityManager, name, Arrays.asList(entities));
+    private static Entity createHContainer(GraphCompose compose, String name, Entity... entities) {
+        return createHContainer(compose, name, Arrays.asList(entities));
     }
 }

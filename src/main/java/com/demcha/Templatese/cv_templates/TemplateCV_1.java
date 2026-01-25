@@ -1,20 +1,18 @@
 package com.demcha.Templatese.cv_templates;
 
 import com.demcha.Templatese.CvTheme;
-import com.demcha.Templatese.ModelBuilder;
+import com.demcha.Templatese.TemplateBuilder;
 import com.demcha.Templatese.data.MainPageCV;
 import com.demcha.Templatese.templates_utils.ConfigLoader;
-import com.demcha.loyaut_core.components.ModulesContainer;
+import com.demcha.loyaut_core.components.ComponentBuilder;
 import com.demcha.loyaut_core.components.components_builders.Canvas;
 import com.demcha.loyaut_core.components.components_builders.ModuleBuilder;
 import com.demcha.loyaut_core.components.content.link.Email;
 import com.demcha.loyaut_core.components.content.link.LinkUrl;
 import com.demcha.loyaut_core.components.core.Entity;
-import com.demcha.loyaut_core.components.core.EntityName;
 import com.demcha.loyaut_core.components.layout.Align;
 import com.demcha.loyaut_core.components.layout.Anchor;
 import com.demcha.loyaut_core.components.style.Margin;
-import com.demcha.loyaut_core.components.style.Padding;
 import com.demcha.loyaut_core.core.EntityManager;
 import com.demcha.loyaut_core.system.LayoutSystem;
 import com.demcha.loyaut_core.system.implemented_systems.pdf_systems.PdfCanvas;
@@ -40,15 +38,16 @@ class TemplateCV_1 implements Template {
     public void process() {
         EntityManager entityManager = new EntityManager(true);
         entityManager.setGuideLines(false);
-        
+
         PDDocument doc = new PDDocument();
         Canvas canvasPdf = new PdfCanvas(PDRectangle.A4, 0.0f, 0.0f);
         canvasPdf.addMargin(new Margin(15, 10, 15, 15));
 
         setupSystems(entityManager, doc, canvasPdf);
         String whitespace = "";
+        var componentBuilder = ComponentBuilder.builder(entityManager);
 
-        ModelBuilder cv = new ModelBuilder(entityManager, CvTheme.defaultTheme());
+        TemplateBuilder cv = componentBuilder.template(CvTheme.defaultTheme());
         MainPageCV data = ConfigLoader.loadConfigWithEnv(DATA_FILE, MainPageCV.class, false);
 
         float textBlockWidth = (float) canvasPdf.innerWidth();
@@ -67,8 +66,8 @@ class TemplateCV_1 implements Template {
                 data.getEducationCertifications().getName(), "moduleEducationCertifications",
                 data.getEducationCertifications().getModulePoints(), textBlockWidth, whitespace);
 
-        Entity moduleProjects = createSection(cv, canvasPdf, 
-                data.getProjects().getName(), "ModuleProjects", 
+        Entity moduleProjects = createSection(cv, canvasPdf,
+                data.getProjects().getName(), "ModuleProjects",
                 data.getProjects().getModulePoints(), textBlockWidth, whitespace);
 
         Entity moduleProfessionalExperience = createSection(cv, canvasPdf,
@@ -101,7 +100,7 @@ class TemplateCV_1 implements Template {
         entityManager.getSystems().addSystem(new PdfFileManagerSystem(target, doc));
     }
 
-    private Entity createHeader(ModelBuilder cv, MainPageCV data, Canvas canvasPdf) {
+    private Entity createHeader(TemplateBuilder cv, MainPageCV data, Canvas canvasPdf) {
         var number = data.getHeader().getPhoneNumber();
         var address = data.getHeader().getAddress();
         var email = data.getHeader().getEmail();
@@ -124,7 +123,7 @@ class TemplateCV_1 implements Template {
 
         return new ModuleBuilder(cv.entityManager(), Align.middle(5), canvasPdf)
                 .entityName("ModuleHeader")
-                .margin(new Margin(0,10,10,10))
+                .margin(new Margin(0, 10, 10, 10))
                 .anchor(Anchor.topRight())
                 .addChild(artemDemchyshyn)
                 .addChild(infoPanel)
@@ -132,7 +131,7 @@ class TemplateCV_1 implements Template {
                 .build();
     }
 
-    private Entity createSection(ModelBuilder cv, Canvas canvas, String title, String entityName, List<String> content, float width, String bullet) {
+    private Entity createSection(TemplateBuilder cv, Canvas canvas, String title, String entityName, List<String> content, float width, String bullet) {
         return cv.moduleBuilder(title, canvas)
                 .entityName(entityName)
                 .addChild(cv.blockText(content, width, bullet))

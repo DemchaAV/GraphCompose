@@ -38,6 +38,16 @@ public class WordFont extends FontBase<String> {
 
     /**
      * @param style
+     * @param text
+     * @return
+     */
+    @Override
+    public double getTextWidthNoSanitize(TextStyle style, String text) {
+        return 0;
+    }
+
+    /**
+     * @param style
      * @return
      */
     @Override

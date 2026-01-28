@@ -62,10 +62,54 @@ public class PdfFont extends FontBase<PDFont> {
      */
     @Override
     public double getTextWidth(TextStyle style, String text) {
+        if (text == null || text.isEmpty()) return 0;
+
         double size = style.size();
-        String sanitized = textSinitaizer(text);
+
         try {
-            float width = fontType(style.decoration()).getStringWidth(sanitized) / 1000 * (float) size;
+            // ✅ IMPORTANT: preserve whitespace runs exactly
+            boolean whitespaceOnly = text.chars().allMatch(Character::isWhitespace);
+            String measured = whitespaceOnly ? text : textSanitizer(text); // sanitizer must not strip trailing spaces ideally
+
+            double width = fontType(style.decoration()).getStringWidth(measured) / 1000d * size;
+            return width;
+        } catch (Exception e) {
+            log.error("Error while getting text width {}", e.getMessage(), e);
+            return 0;
+        }
+    }
+
+
+    private String prepareForRender(String text) {
+        return textSanitizer(text);
+    }
+
+    /** Keeps spaces, only replaces characters the font can't encode. */
+    private String sanitizeByFont(PDFont font, String s) {
+        StringBuilder sb = new StringBuilder(s.length());
+        s.codePoints().forEach(cp -> {
+            // keep spaces/newlines logic correct for wrapping
+            if (cp == '\n' || cp == '\r') return;
+
+            String ch = new String(Character.toChars(cp));
+            if (canEncode(font, ch)) sb.append(ch);
+            else sb.append('?'); // or " " if you prefer
+        });
+        return sb.toString();
+    }
+
+    private boolean canEncode(PDFont font, String ch) {
+        try {
+            font.encode(ch);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    public double getTextWidthNoSanitize(TextStyle style, String text) {
+        double size = style.size();
+        try {
+            float width = fontType(style.decoration()).getStringWidth(text) / 1000 * (float) size;
             log.debug("Getting text width: " + width);
             return width;
         } catch (Exception e) {
@@ -75,7 +119,7 @@ public class PdfFont extends FontBase<PDFont> {
         }
     }
 
-    private @NotNull String textSinitaizer(String text) {
+    private @NotNull String textSanitizer(String text) {
         String sanitized = text.replace("\r", " ").replace("\n", " ")
                 .replaceAll("[\\p{Cntrl}&&[^\\t]]", " ")
                 .replace('\u00A0', ' ').replaceAll(" +", " ");

@@ -37,6 +37,7 @@ public interface Font<T> {
     }
 
     double getTextWidth(TextStyle style, String text);
+    double getTextWidthNoSanitize(TextStyle style, String text);
 
 
 

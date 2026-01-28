@@ -39,7 +39,6 @@ public class Main {
 
         Path target = Paths.get("output.pdf");
         GraphCompose compose = new GraphCompose(target);
-
         blockTextBuilder(compose, textBlockData, 400, 1);
 
         compose.build();

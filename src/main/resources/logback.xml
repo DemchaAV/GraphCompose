@@ -1,0 +1,17 @@
+<configuration>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="com.demcha.compose.loyaut_core.components.components_builders.BlockTextBuilder" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE" />
+    </logger>
+
+    <root level="OFF">
+        <appender-ref ref="CONSOLE" />
+    </root>
+
+</configuration>

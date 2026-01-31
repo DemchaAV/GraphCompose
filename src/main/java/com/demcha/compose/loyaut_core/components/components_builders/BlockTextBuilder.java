@@ -28,11 +28,25 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+/**
+ * Builder for creating block text components with support for markdown,
+ * indentation strategies,
+ * and text wrapping.
+ * <p>
+ * This builder handles:
+ * <ul>
+ * <li>Markdown parsing</li>
+ * <li>Custom indentation strategies via {@link BlockIndentStrategy}</li>
+ * <li>Smart text wrapping that keeps "sticky" punctuation (like brackets)
+ * attached to their words</li>
+ * <li>Alignment and styling</li>
+ * </ul>
+ */
 @Slf4j
 public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
 
     private final MarkDownParser markDownParser = new MarkDownParser();
-    private  BlockIndentStrategy blockStrategy;
+    private BlockIndentStrategy blockStrategy;
 
     private Map<Class<? extends Component>, Component> baseComponents;
 
@@ -49,6 +63,17 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         this.textStyle = textStyle;
         this.addComponent(textStyle);
         this.blockStrategy = BlockIndentStrategy.NONE;
+    }
+
+    /**
+     * Sets the indentation strategy for the block text.
+     *
+     * @param strategy the strategy to apply
+     * @return this builder
+     */
+    public BlockTextBuilder strategy(BlockIndentStrategy strategy) {
+        this.blockStrategy = strategy;
+        return this;
     }
 
     private static String normalizeBulletPrefix(String bulletOffset) {
@@ -185,10 +210,10 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
     }
 
     public BlockTextBuilder text(List<String> text,
-                                 TextStyle style,
-                                 Padding padding,
-                                 Margin margin,
-                                 String bulletOffset) {
+            TextStyle style,
+            Padding padding,
+            Margin margin,
+            String bulletOffset) {
         this.textStyle = style;
         this.lines = new ArrayList<>();
         this.baseComponents = new HashMap<>();
@@ -238,8 +263,8 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
     }
 
     public BlockTextData breakLinesFromList(@NonNull List<String> text,
-                                            @NonNull InnerBoxSize innerBoxSize,
-                                            String bulletOffset) {
+            @NonNull InnerBoxSize innerBoxSize,
+            String bulletOffset) {
 
         final FontContainer fontContainer = getFontContainer();
         final TextStyle style = fontContainer.style() == null ? textStyle : fontContainer.style();
@@ -272,7 +297,12 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
                 }
 
                 // Soft wrap indent differs from explicit "\n" continuation indent.
-                String wrapIndent = (lineIndex == 0) ? bullet.softWrapIndent() : bullet.hardWrapIndent();
+                // Apply strategy for wrapped lines
+                String wrapIndent = "";
+                if (blockStrategy.indentWrappedLines()) {
+                    wrapIndent = (lineIndex == 0) ? bullet.softWrapIndent() : bullet.hardWrapIndent();
+                }
+
                 wrapTokensIntoLines(tokens, fontContainer, maxWidth, wrapIndent, style);
             }
         }
@@ -296,9 +326,9 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
     }
 
     private List<TextDataBody> tokenizeExplicitLine(String explicitLine,
-                                                    int explicitLineIndex,
-                                                    BulletSpec bullet,
-                                                    TextStyle style) {
+            int explicitLineIndex,
+            BulletSpec bullet,
+            TextStyle style) {
         log.debug("Processing line {}: '{}'", explicitLineIndex, explicitLine);
 
         if (explicitLine == null || explicitLine.isBlank()) {
@@ -328,10 +358,16 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         String[] words = explicitLine.split("\\s+");
         List<TextDataBody> tokens = new ArrayList<>();
 
+        // Apply strategy for first line indent
         if (explicitLineIndex == 0) {
-            appendPrefixBodies(tokens, bullet == null ? "" : bullet.prefix(), style);
+            if (blockStrategy.indentFirstLine()) {
+                appendPrefixBodies(tokens, bullet == null ? "" : bullet.prefix(), style);
+            }
         } else {
-            appendPrefixBodies(tokens, bullet == null ? "" : bullet.hardWrapIndent(), style);
+            // For subsequent explicit lines, apply strategy for wrapped lines
+            if (blockStrategy.indentWrappedLines()) {
+                appendPrefixBodies(tokens, bullet == null ? "" : bullet.hardWrapIndent(), style);
+            }
         }
 
         for (int i = 0; i < words.length; i++) {
@@ -348,13 +384,18 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         return tokens;
     }
 
+    /**
+     * Wraps tokens into lines based on the maximum width.
+     * Handles "sticky" punctuation to prevent orphaned brackets.
+     */
     private void wrapTokensIntoLines(List<TextDataBody> tokens,
-                                     FontContainer fontContainer,
-                                     double maxWidth,
-                                     String offsetStr,
-                                     TextStyle baseStyle) {
+            FontContainer fontContainer,
+            double maxWidth,
+            String offsetStr,
+            TextStyle baseStyle) {
 
-        if (tokens == null || tokens.isEmpty()) return;
+        if (tokens == null || tokens.isEmpty())
+            return;
 
         var font = fontContainer.font();
 
@@ -371,15 +412,16 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         double lineWidth = 0;
         boolean firstLine = true;
 
-        for (TextDataBody token : tokens) {
+        for (int i = 0; i < tokens.size(); i++) {
+            TextDataBody token = tokens.get(i);
             String text = token.text();
 
-            boolean isIndentToken =
-                    !offsetStr.isEmpty()
-                    && text.equals(offsetStr); // your case: "          "
+            boolean isIndentToken = !offsetStr.isEmpty() && text.equals(offsetStr);
 
-            // ✅ Skip leading blanks, BUT keep the indent token
-            if (line.isEmpty() && text.isBlank() && !isIndentToken) {
+            // Skip leading blanks, BUT keep the indent token AND the first token (bullet
+            // prefix)
+            boolean isFirstToken = (i == 0);
+            if (line.isEmpty() && text.isBlank() && !isIndentToken && !isFirstToken) {
                 continue;
             }
 
@@ -387,40 +429,89 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
                     ? indentWidth
                     : font.getTextWidth(token.textStyle(), text);
 
-            // ✅ no "+ indentWidth" here
+            boolean stickyToNext = isStickyToNext(text);
+            boolean stickyToPrev = isSticky(text);
+
+            // Check if fits
             if (lineWidth + tokenWidth <= maxWidth) {
-                line.addLast(token);
-                lineWidth += tokenWidth;
-                continue;
+                // It fits. But if it's sticky to next, check if next fits too.
+                boolean forceWrap = false;
+                if (stickyToNext && i + 1 < tokens.size()) {
+                    TextDataBody nextToken = tokens.get(i + 1);
+                    double nextWidth = font.getTextWidth(nextToken.textStyle(), nextToken.text());
+
+                    // If adding the next token would exceed the width, we force a wrap NOW
+                    // so that the current token (e.g. "(") moves to the next line together with the
+                    // next token.
+                    if (lineWidth + tokenWidth + nextWidth > maxWidth) {
+                        forceWrap = true;
+                    }
+                }
+
+                if (!forceWrap) {
+                    line.addLast(token);
+                    lineWidth += tokenWidth;
+                    continue;
+                }
             }
 
+            // Doesn't fit OR forceWrap
             if (text.isBlank() && !isIndentToken) {
                 continue;
             }
 
-            // Flush current line
-            if (!line.isEmpty()) {
-                createLineFromBodies(new ArrayList<>(line));
+            // If sticky to previous, try to bring previous token to the new line
+            if (stickyToPrev && !line.isEmpty()) {
+                TextDataBody prev = line.removeLast();
+                // Flush the line without 'prev'
+                if (!line.isEmpty()) {
+                    boolean hasContent = false;
+                    for (TextDataBody b : line) {
+                        boolean isIndent = !offsetStr.isEmpty() && b.text().equals(offsetStr);
+                        if (!isIndent && !b.text().isBlank()) {
+                            hasContent = true;
+                            break;
+                        }
+                    }
+
+                    if (hasContent) {
+                        createLineFromBodies(new ArrayList<>(line));
+                    }
+                }
                 line.clear();
                 lineWidth = 0;
                 firstLine = false;
 
-                // add indent for wrapped lines
+                // Add indent for wrapped lines
                 if (!offsetStr.isEmpty()) {
                     line.addLast(new TextDataBody(offsetStr, baseStyle));
                     lineWidth += indentWidth;
                 }
-            }
 
-            // Force token into a new line
-            if (lineWidth + tokenWidth <= maxWidth) {
+                // Add 'prev' to new line
+                line.addLast(prev);
+                lineWidth += font.getTextWidth(prev.textStyle(), prev.text());
+
+                // Add current token
                 line.addLast(token);
                 lineWidth += tokenWidth;
             } else {
+                // Normal wrap
+                if (!line.isEmpty()) {
+                    createLineFromBodies(new ArrayList<>(line));
+                    line.clear();
+                    lineWidth = 0;
+                    firstLine = false;
+
+                    // add indent for wrapped lines
+                    if (!offsetStr.isEmpty()) {
+                        line.addLast(new TextDataBody(offsetStr, baseStyle));
+                        lineWidth += indentWidth;
+                    }
+                }
+
                 line.addLast(token);
-                createLineFromBodies(new ArrayList<>(line));
-                line.clear();
-                lineWidth = 0;
+                lineWidth += tokenWidth;
             }
         }
 
@@ -429,17 +520,32 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         }
     }
 
-
-
     // =========================
     // Line Factories
     // =========================
 
+    /**
+     * Determines if the token should "stick" to the previous token.
+     * For example, closing brackets ')' or punctuation ',' should not be separated
+     * from the word preceding them.
+     */
     private boolean isSticky(String text) {
         if (text == null || text.isEmpty())
             return false;
         char first = text.charAt(0);
         return ",.;:!?)]}".indexOf(first) >= 0;
+    }
+
+    /**
+     * Determines if the token should "stick" to the next token.
+     * For example, opening brackets '(' should not be separated from the word
+     * following them.
+     */
+    private boolean isStickyToNext(String text) {
+        if (text == null || text.isEmpty())
+            return false;
+        char last = text.charAt(text.length() - 1);
+        return "([{".indexOf(last) >= 0;
     }
 
     private @NotNull FontContainer getFontContainer() {
@@ -529,9 +635,9 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
     }
 
     private List<TextDataBody> tokenizeMarkdownLine(String explicitLine,
-                                                    int explicitLineIndex,
-                                                    BulletSpec bullet,
-                                                    TextStyle style) {
+            int explicitLineIndex,
+            BulletSpec bullet,
+            TextStyle style) {
         if (explicitLine == null || explicitLine.isBlank()) {
             return List.of();
         }
@@ -540,11 +646,16 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
 
         // Bullet/first-line indent ONLY on the first explicit line
         if (explicitLineIndex == 0) {
-            appendPrefixBodies(bodies, bullet == null ? "" : bullet.prefix(), style);
+            if (blockStrategy.indentFirstLine()) {
+                appendPrefixBodies(bodies, bullet == null ? "" : bullet.prefix(), style);
+            }
         }
 
         // Continuation indent for lines after explicit "\n"
-        String continuationIndent = (explicitLineIndex > 0 && bullet != null) ? bullet.hardWrapIndent() : "";
+        String continuationIndent = "";
+        if (explicitLineIndex > 0 && bullet != null && blockStrategy.indentWrappedLines()) {
+            continuationIndent = bullet.hardWrapIndent();
+        }
 
         // Remove leading whitespace before parsing markdown (4 spaces / tab becomes a
         // code block)

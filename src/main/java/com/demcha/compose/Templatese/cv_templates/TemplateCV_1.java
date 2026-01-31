@@ -5,6 +5,7 @@ import com.demcha.compose.Templatese.TemplateBuilder;
 import com.demcha.compose.Templatese.data.MainPageCV;
 import com.demcha.compose.Templatese.templates_utils.ConfigLoader;
 import com.demcha.compose.loyaut_core.components.ComponentBuilder;
+import com.demcha.compose.loyaut_core.components.components_builders.BlockIndentStrategy;
 import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
 import com.demcha.compose.loyaut_core.components.components_builders.ModuleBuilder;
 import com.demcha.compose.loyaut_core.components.content.link.Email;
@@ -36,15 +37,19 @@ class TemplateCV_1 implements Template {
 
         @Override
         public void process() {
+                boolean guidLines = false;
+                // guidLines = true;
+
                 EntityManager entityManager = new EntityManager(true);
-                entityManager.setGuideLines(false);
+                entityManager.setGuideLines(guidLines);
 
                 PDDocument doc = new PDDocument();
                 Canvas canvasPdf = new PdfCanvas(PDRectangle.A4, 0.0f, 0.0f);
                 canvasPdf.addMargin(new Margin(15, 10, 15, 15));
 
                 setupSystems(entityManager, doc, canvasPdf);
-                String whitespace = "     ";
+                String whitespace = "-  -";
+                BlockIndentStrategy indentStrategy = BlockIndentStrategy.FROM_SECOND_LINE;
                 var componentBuilder = ComponentBuilder.builder(entityManager);
 
                 TemplateBuilder cv = componentBuilder.template(CvTheme.defaultTheme());
@@ -52,41 +57,47 @@ class TemplateCV_1 implements Template {
 
                 float textBlockWidth = (float) canvasPdf.innerWidth();
 
-                Entity moduleHeader = createHeader(cv, data, canvasPdf);
+                 Entity moduleHeader = createHeader(cv, data, canvasPdf);
 
                 Entity moduleProfessionalSummary = createSection(cv, canvasPdf,
                                 data.getModuleSummary().getModuleName(), "ModuleProfessionalSummary",
-                                List.of(data.getModuleSummary().getBlockSummary()), textBlockWidth, null);
+                                List.of(data.getModuleSummary().getBlockSummary()), textBlockWidth, "    ",
+                                BlockIndentStrategy.FIRST_LINE);
 
-                Entity moduleTechnicalSkills = createSection(cv, canvasPdf,
-                                data.getTechnicalSkills().getName(), "ModuleTechnicalSkills",
-                                data.getTechnicalSkills().getModulePoints(), textBlockWidth, "•  ");
+                 Entity moduleTechnicalSkills = createSection(cv, canvasPdf,
+                 data.getTechnicalSkills().getName(), "ModuleTechnicalSkills",
+                 data.getTechnicalSkills().getModulePoints(), textBlockWidth, "• ",
+                 BlockIndentStrategy.ALL_LINES);
 
-                Entity moduleEducationCertifications = createSection(cv, canvasPdf,
-                                data.getEducationCertifications().getName(), "moduleEducationCertifications",
-                                data.getEducationCertifications().getModulePoints(), textBlockWidth, whitespace);
+                 Entity moduleEducationCertifications = createSection(cv, canvasPdf,
+                 data.getEducationCertifications().getName(), "moduleEducationCertifications",
+                 data.getEducationCertifications().getModulePoints(), textBlockWidth,
+                 whitespace, indentStrategy);
 
-                Entity moduleProjects = createSection(cv, canvasPdf,
-                                data.getProjects().getName(), "ModuleProjects",
-                                data.getProjects().getModulePoints(), textBlockWidth, whitespace);
+                 Entity moduleProjects = createSection(cv, canvasPdf,
+                 data.getProjects().getName(), "ModuleProjects",
+                 data.getProjects().getModulePoints(), textBlockWidth, whitespace,
+                 indentStrategy);
 
-                Entity moduleProfessionalExperience = createSection(cv, canvasPdf,
-                                data.getProfessionalExperience().getName(), "ModuleProfessionalExperience",
-                                data.getProfessionalExperience().getModulePoints(), textBlockWidth, whitespace);
+                 Entity moduleProfessionalExperience = createSection(cv, canvasPdf,
+                 data.getProfessionalExperience().getName(), "ModuleProfessionalExperience",
+                 data.getProfessionalExperience().getModulePoints(), textBlockWidth,
+                 whitespace, indentStrategy);
 
-                Entity moduleAdditional = createSection(cv, canvasPdf,
-                                data.getAdditional().getName(), "ModuleAdditional",
-                                data.getAdditional().getModulePoints(), textBlockWidth, whitespace);
+                 Entity moduleAdditional = createSection(cv, canvasPdf,
+                 data.getAdditional().getName(), "ModuleAdditional",
+                 data.getAdditional().getModulePoints(), textBlockWidth, whitespace,
+                 indentStrategy);
 
                 Entity mainVBoxContainer = cv.moduleBuilder(canvasPdf)
                                 .entityName("MainVBoxContainer")
-                                .addChild(moduleHeader)
+                                 .addChild(moduleHeader)
                                 .addChild(moduleProfessionalSummary)
-                                .addChild(moduleTechnicalSkills)
-                                .addChild(moduleEducationCertifications)
-                                .addChild(moduleProjects)
-                                .addChild(moduleProfessionalExperience)
-                                .addChild(moduleAdditional)
+                                 .addChild(moduleTechnicalSkills)
+                                 .addChild(moduleEducationCertifications)
+                                 .addChild(moduleProjects)
+                                 .addChild(moduleProfessionalExperience)
+                                 .addChild(moduleAdditional)
                                 .build();
 
                 entityManager.processSystems();
@@ -132,10 +143,10 @@ class TemplateCV_1 implements Template {
         }
 
         private Entity createSection(TemplateBuilder cv, Canvas canvas, String title, String entityName,
-                        List<String> content, float width, String bullet) {
+                        List<String> content, float width, String bullet, BlockIndentStrategy strategy) {
                 return cv.moduleBuilder(title, canvas)
                                 .entityName(entityName)
-                                .addChild(cv.blockText(content, width, bullet))
+                                .addChild(cv.blockText(content, width, bullet, strategy))
                                 .margin(cv.theme().modulMargin())
                                 .build();
         }

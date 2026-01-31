@@ -2,9 +2,7 @@ package com.demcha;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.font_library.FontName;
-import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
-import com.demcha.compose.loyaut_core.components.components_builders.HContainerBuilder;
-import com.demcha.compose.loyaut_core.components.components_builders.TextBuilder;
+import com.demcha.compose.loyaut_core.components.components_builders.*;
 import com.demcha.compose.loyaut_core.components.content.link.Email;
 import com.demcha.compose.loyaut_core.components.content.link.LinkUrl;
 import com.demcha.compose.loyaut_core.components.content.shape.Stroke;
@@ -39,7 +37,16 @@ public class Main {
 
         Path target = Paths.get("output.pdf");
         GraphCompose compose = new GraphCompose(target);
-        blockTextBuilder(compose, textBlockData, 400, 1);
+        BlockTextBuilder blockTextBuilder = compose.componentBuilder().blockText(Align.left(2), TextStyle.DEFAULT_STYLE)
+                .size(100, 2)
+        .strategy(BlockIndentStrategy.FIRST_LINE) // Только первая строка
+                .text(
+                        List.of("Custom GeminiConnection (API Client Library)** – *Portfolio Project"),
+                        TextStyle.DEFAULT_STYLE,
+                        Padding.of(5),
+                        Margin.of(5),
+                        "    " // Строка отступа (например, 4 пробела)
+                );
 
         compose.build();
 

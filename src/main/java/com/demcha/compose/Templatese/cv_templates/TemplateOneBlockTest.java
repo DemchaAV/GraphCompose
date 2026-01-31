@@ -5,6 +5,7 @@ import com.demcha.compose.Templatese.TemplateBuilder;
 import com.demcha.compose.Templatese.data.MainPageCV;
 import com.demcha.compose.Templatese.templates_utils.ConfigLoader;
 import com.demcha.compose.loyaut_core.components.ComponentBuilder;
+import com.demcha.compose.loyaut_core.components.components_builders.BlockIndentStrategy;
 import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
 import com.demcha.compose.loyaut_core.components.components_builders.ModuleBuilder;
 import com.demcha.compose.loyaut_core.components.content.link.Email;
@@ -44,7 +45,7 @@ class TemplateOneBlockTest implements Template {
                 canvasPdf.addMargin(new Margin(15, 10, 15, 15));
 
                 setupSystems(entityManager, doc, canvasPdf);
-                String whitespace = "====";
+                String whitespace = "-  -";
                 var componentBuilder = ComponentBuilder.builder(entityManager);
 
                 TemplateBuilder cv = componentBuilder.template(CvTheme.defaultTheme());
@@ -68,7 +69,7 @@ class TemplateOneBlockTest implements Template {
 
                 Entity moduleProjects = createSection(cv, canvasPdf,
                                 data.getProjects().getName(), "ModuleProjects",
-                                data.getProjects().getModulePoints(), textBlockWidth, whitespace);
+                                data.getProjects().getModulePoints(), textBlockWidth, whitespace, BlockIndentStrategy.FROM_SECOND_LINE);
 
 //                Entity moduleProfessionalExperience = createSection(cv, canvasPdf,
 //                                data.getProfessionalExperience().getName(), "ModuleProfessionalExperience",
@@ -132,10 +133,10 @@ class TemplateOneBlockTest implements Template {
         }
 
         private Entity createSection(TemplateBuilder cv, Canvas canvas, String title, String entityName,
-                        List<String> content, float width, String bullet) {
+                                     List<String> content, float width, String bullet, BlockIndentStrategy strategy) {
                 return cv.moduleBuilder(title, canvas)
                                 .entityName(entityName)
-                                .addChild(cv.blockText(content, width, bullet))
+                                .addChild(cv.blockText(content, width, bullet,strategy))
                                 .margin(cv.theme().modulMargin())
                                 .build();
         }

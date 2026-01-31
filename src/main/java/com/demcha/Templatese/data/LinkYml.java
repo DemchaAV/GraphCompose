@@ -1,4 +1,4 @@
-package com.demcha.compose.Templatese.data;
+package com.demcha.Templatese.data;
 
 import com.demcha.compose.loyaut_core.components.content.link.LinkUrl;
 import lombok.Data;

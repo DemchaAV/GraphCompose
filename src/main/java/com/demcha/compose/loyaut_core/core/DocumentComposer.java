@@ -1,7 +1,7 @@
-package com.demcha.compose;
+package com.demcha.compose.loyaut_core.core;
 
+import com.demcha.compose.GraphCompose;
 import com.demcha.compose.loyaut_core.components.ComponentBuilder;
-import com.demcha.compose.loyaut_core.core.EntityManager;
 
 import java.io.Closeable;
 

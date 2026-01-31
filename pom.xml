@@ -6,7 +6,7 @@
 
     <groupId>com.demcha</groupId>
     <artifactId>GraphCompose</artifactId>
-    <version>1.11.8-SNAPSHOT</version>
+    <version>1.11.9-SNAPSHOT</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -119,7 +119,7 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>${logback.version}</version>
-<!--            <scope>test</scope>-->
+            <scope>test</scope>
         </dependency>
 
         <dependency>

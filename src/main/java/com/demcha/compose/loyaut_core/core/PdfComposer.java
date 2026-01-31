@@ -1,9 +1,9 @@
-package com.demcha.compose;
+package com.demcha.compose.loyaut_core.core;
 
+import com.demcha.compose.GraphCompose;
 import com.demcha.compose.loyaut_core.components.ComponentBuilder;
 import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
 import com.demcha.compose.loyaut_core.components.style.Margin;
-import com.demcha.compose.loyaut_core.core.EntityManager;
 import com.demcha.compose.loyaut_core.system.LayoutSystem;
 import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.PdfCanvas;
 import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.PdfFileManagerSystem;

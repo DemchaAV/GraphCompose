@@ -40,12 +40,12 @@ public class BlockTextTest {
                 .strategy(BlockIndentStrategy.ALL_LINES)
                 .size(400, 2)
                 .anchor(Anchor.center())
+                .bulletOffset(whitespace)
                 .text(
                         List.of("**CVRewriter (AI-Powered API Service)** – *Portfolio Project* Developed a full-stack application centred around a **Spring Boot REST API** to generate"),
                         TextStyle.DEFAULT_STYLE,
                         Padding.of(5),
-                        Margin.of(5),
-                        whitespace// Буллит. Первая строка получит "- ", остальные — пробелы той же ширины.
+                        Margin.of(5)// Буллит. Первая строка получит "- ", остальные — пробелы той же ширины.
                 );
         text.padding( Padding.of(5));
         text.margin(Margin.of(5));

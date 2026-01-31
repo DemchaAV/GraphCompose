@@ -56,6 +56,7 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
     private List<LineTextData> lines;
 
     private TextStyle textStyle;
+    private String bulletOffset;
 
     public BlockTextBuilder(EntityManager entityManager, Align align, TextStyle textStyle) {
         super(entityManager);
@@ -212,8 +213,7 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
     public BlockTextBuilder text(List<String> text,
             TextStyle style,
             Padding padding,
-            Margin margin,
-            String bulletOffset) {
+            Margin margin) {
         this.textStyle = style;
         this.lines = new ArrayList<>();
         this.baseComponents = new HashMap<>();
@@ -227,6 +227,10 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
 
         addComponent(blockTextData);
         addComponent(textStyle);
+        return this;
+    }
+    public BlockTextBuilder bulletOffset(String bulletOffset){
+        this.bulletOffset = bulletOffset;
         return this;
     }
 

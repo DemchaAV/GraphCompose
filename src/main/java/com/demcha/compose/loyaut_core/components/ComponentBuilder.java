@@ -30,6 +30,16 @@ public class ComponentBuilder {
         return blockTextBuilder;
     }
 
+    public BlockTextBuilder blockTextParagraph(Align align, TextStyle textStyle, String bulletOffset) {
+        BlockTextBuilder blockTextBuilder = new BlockTextBuilder(this.entityManager, align, textStyle);
+        blockTextBuilder.
+                bulletOffset(bulletOffset)
+                .strategy(BlockIndentStrategy.FIRST_LINE);
+        builders.add(blockTextBuilder);
+        return blockTextBuilder;
+    }
+
+
     public ButtonBuilder button() {
         ButtonBuilder buttonBuilder = new ButtonBuilder(this.entityManager);
         builders.add(buttonBuilder);

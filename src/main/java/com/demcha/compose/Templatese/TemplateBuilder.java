@@ -209,7 +209,8 @@ public class TemplateBuilder implements BuildEntity {
                 .size(width, 2)
                 .strategy(strategy)
                 .padding(0, 5, 0, 20)
-                .text(text, style, null, null, bulletOffset)
+                .bulletOffset(bulletOffset)
+                .text(text, style, null, null)
                 .anchor(Anchor.center())
                 .build();
     }

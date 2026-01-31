@@ -32,13 +32,11 @@ public class ComponentBuilder {
 
     public BlockTextBuilder blockTextParagraph(Align align, TextStyle textStyle, String bulletOffset) {
         BlockTextBuilder blockTextBuilder = new BlockTextBuilder(this.entityManager, align, textStyle);
-        blockTextBuilder.
-                bulletOffset(bulletOffset)
+        blockTextBuilder.bulletOffset(bulletOffset)
                 .strategy(BlockIndentStrategy.FIRST_LINE);
         builders.add(blockTextBuilder);
         return blockTextBuilder;
     }
-
 
     public ButtonBuilder button() {
         ButtonBuilder buttonBuilder = new ButtonBuilder(this.entityManager);
@@ -95,9 +93,10 @@ public class ComponentBuilder {
     }
 
     public TemplateBuilder template(CvTheme theme) {
-        TemplateBuilder templateBuilder = new TemplateBuilder(this.entityManager, theme);
-        builders.add(templateBuilder);
-        return templateBuilder;
+        // TemplateBuilder is a factory for other builders, not an entity builder
+        // itself.
+        // Do NOT add to builders list - it has no entity to build.
+        return new TemplateBuilder(this.entityManager, theme);
     }
 
     public TemplateBuilder template() {

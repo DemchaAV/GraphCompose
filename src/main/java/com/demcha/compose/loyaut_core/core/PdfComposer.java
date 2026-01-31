@@ -128,6 +128,30 @@ public final class PdfComposer implements DocumentComposer {
 
     @Override
     public byte[] toBytes() throws Exception {
+        toPDDocument(); // Reuse common processing logic
+
+        // Write PDF to byte array
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            doc.save(baos);
+            return baos.toByteArray();
+        }
+    }
+
+    /**
+     * Builds the document and returns the underlying {@link PDDocument}.
+     * <p>
+     * Use this when you need direct access to the PDDocument for further
+     * manipulation without writing to the file system.
+     * </p>
+     * <p>
+     * <b>Important:</b> The caller is responsible for closing the document
+     * when done, or use this within a try-with-resources on the PdfComposer.
+     * </p>
+     *
+     * @return The processed {@link PDDocument} instance.
+     * @throws Exception if an error occurs during processing.
+     */
+    public PDDocument toPDDocument() throws Exception {
         componentBuilder.buildsComponents();
 
         // Process layout and rendering systems (but not file manager)
@@ -135,11 +159,7 @@ public final class PdfComposer implements DocumentComposer {
                 .ifPresent(sys -> sys.process(entityManager));
         renderingSystem.process(entityManager);
 
-        // Write PDF to byte array
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            doc.save(baos);
-            return baos.toByteArray();
-        }
+        return doc;
     }
 
     @Override

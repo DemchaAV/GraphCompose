@@ -17,21 +17,21 @@ import java.io.IOException;
 @Slf4j
 public record PdfStream(PDDocument doc, Canvas canvas) implements RenderStream<PDPageContentStream> {
 
-
     @Override
     public PDPageContentStream openContentStream(int pageIndex) throws IOException {
-        int numberOfPages = doc.getNumberOfPages()-1;
-        if (numberOfPages  < pageIndex) {
-            log.info("Page index is: {} available page is 0 to {} create a Page in the document", pageIndex, numberOfPages );
-            for (int i = numberOfPages - 1; i < pageIndex; i++) {
-                doc.addPage(new PDPage(new PDRectangle(canvas.x(), canvas.y(), (float) canvas.width(), (float) canvas.height())));
+        int numberOfPages = doc.getNumberOfPages();
+        if (numberOfPages <= pageIndex) {
+            log.info("Page index is: {} available pages: {} - creating new page(s)", pageIndex, numberOfPages);
+            for (int i = numberOfPages; i <= pageIndex; i++) {
+                doc.addPage(new PDPage(
+                        new PDRectangle(canvas.x(), canvas.y(), (float) canvas.width(), (float) canvas.height())));
             }
         }
         return new PDPageContentStream(
                 doc, doc.getPage(pageIndex),
-                PDPageContentStream.AppendMode.APPEND,   // keep existing content if any
-                true,                                    // compress
-                true                                     // resetContext: isolates graphics state (PDFBox 3)
+                PDPageContentStream.AppendMode.APPEND, // keep existing content if any
+                true, // compress
+                true // resetContext: isolates graphics state (PDFBox 3)
         );
     }
 
@@ -46,7 +46,8 @@ public record PdfStream(PDDocument doc, Canvas canvas) implements RenderStream<P
 
     }
 
-    public PDPageContentStream reopenContentStreamForTextData(PDPageContentStream cs, int currentPage, PDFont font, float fontSize, Color color) throws IOException {
+    public PDPageContentStream reopenContentStreamForTextData(PDPageContentStream cs, int currentPage, PDFont font,
+            float fontSize, Color color) throws IOException {
         if (cs != null) {
             cs.endText();
             cs.restoreGraphicsState();
@@ -55,7 +56,8 @@ public record PdfStream(PDDocument doc, Canvas canvas) implements RenderStream<P
         return openContentSteamForTextData(currentPage, font, fontSize, color);
     }
 
-    public PDPageContentStream openContentSteamForTextData(int currentPage, PDFont font, float fontSize, Color color) throws IOException {
+    public PDPageContentStream openContentSteamForTextData(int currentPage, PDFont font, float fontSize, Color color)
+            throws IOException {
         PDPageContentStream newStream = openContentStream(currentPage);
         newStream.saveGraphicsState();
         newStream.setFont(font, fontSize);

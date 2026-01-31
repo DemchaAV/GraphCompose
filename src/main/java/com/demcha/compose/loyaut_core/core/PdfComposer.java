@@ -54,7 +54,7 @@ public final class PdfComposer implements DocumentComposer {
      * Package-private constructor. Use {@link GraphCompose#pdf(Path)} to create
      * instances.
      */
-    PdfComposer(Path outputFile, boolean markdown, boolean guideLines, PDRectangle pageSize, Margin margin) {
+    public PdfComposer(Path outputFile, boolean markdown, boolean guideLines, PDRectangle pageSize, Margin margin) {
         this.outputFile = outputFile;
 
         this.entityManager = new EntityManager(markdown);

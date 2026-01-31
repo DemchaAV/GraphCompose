@@ -38,7 +38,7 @@ class TemplateCV_1 implements Template {
         @Override
         public void process() {
                 boolean guidLines = false;
-                // guidLines = true;
+                 guidLines = true;
 
                 EntityManager entityManager = new EntityManager(true);
                 entityManager.setGuideLines(guidLines);
@@ -48,7 +48,7 @@ class TemplateCV_1 implements Template {
                 canvasPdf.addMargin(new Margin(15, 10, 15, 15));
 
                 setupSystems(entityManager, doc, canvasPdf);
-                String whitespace = "-  -";
+                String whitespace = "  ";
                 BlockIndentStrategy indentStrategy = BlockIndentStrategy.FROM_SECOND_LINE;
                 var componentBuilder = ComponentBuilder.builder(entityManager);
 

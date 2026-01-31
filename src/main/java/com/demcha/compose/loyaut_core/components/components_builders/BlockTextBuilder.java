@@ -399,13 +399,23 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
 
         var font = fontContainer.font();
 
+        // Find the style of the first non-blank token (for accurate space width
+        // calculation)
+        TextStyle styleForIndent = baseStyle;
+        for (TextDataBody t : tokens) {
+            if (t.text() != null && !t.text().isBlank()) {
+                styleForIndent = t.textStyle();
+                break;
+            }
+        }
+
         // Measure indent reliably (10 spaces => 10 * spaceWidth)
         double indentWidth = 0;
         if (!offsetStr.isEmpty() && offsetStr.isBlank()) {
-            double spaceW = font.getTextWidth(baseStyle, " ");
+            double spaceW = font.getTextWidth(styleForIndent, " ");
             indentWidth = spaceW * offsetStr.length();
         } else if (!offsetStr.isEmpty()) {
-            indentWidth = font.getTextWidth(baseStyle, offsetStr);
+            indentWidth = font.getTextWidth(styleForIndent, offsetStr);
         }
 
         Deque<TextDataBody> line = new ArrayDeque<>();

@@ -192,6 +192,7 @@ public class TemplateBuilder implements BuildEntity {
 
     public Entity blockText(String text, double width) {
         return blockTextBuilder(text, width)
+                .strategy(BlockIndentStrategy.FIRST_LINE)
                 .anchor(Anchor.center())
                 .build();
     }
@@ -199,13 +200,14 @@ public class TemplateBuilder implements BuildEntity {
     /**
      * Creates a block of text (potentially multi-line or with bullets).
      */
-    public Entity blockText(List<String> text, double width, String bulletOffset) {
+    public Entity blockText(List<String> text, double width, String bulletOffset, BlockIndentStrategy strategy) {
         // We use the standard body style for lists
         TextStyle style = theme.bodyTextStyle();
 
 
         return new BlockTextBuilder(entityManager, Align.left(theme.spacing()), style)
                 .size(width, 2)
+                .strategy(strategy)
                 .padding(0, 5, 0, 20)
                 .text(text, style, null, null, bulletOffset)
                 .anchor(Anchor.center())

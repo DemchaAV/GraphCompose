@@ -1,6 +1,7 @@
 package com.demcha.compose;
 
 import com.demcha.compose.loyaut_core.components.style.Margin;
+import com.demcha.compose.loyaut_core.core.PdfComposer;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;

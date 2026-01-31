@@ -1,11 +1,11 @@
-package com.demcha.compose.Templatese.cv_templates;
+package com.demcha.Templatese.cv_templates;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.PdfComposer;
-import com.demcha.compose.Templatese.CvTheme;
-import com.demcha.compose.Templatese.TemplateBuilder;
-import com.demcha.compose.Templatese.data.MainPageCV;
-import com.demcha.compose.Templatese.templates_utils.ConfigLoader;
+import com.demcha.compose.loyaut_core.core.PdfComposer;
+import com.demcha.Templatese.CvTheme;
+import com.demcha.Templatese.TemplateBuilder;
+import com.demcha.Templatese.data.MainPageCV;
+import com.demcha.Templatese.templates_utils.ConfigLoader;
 import com.demcha.compose.loyaut_core.components.components_builders.BlockIndentStrategy;
 import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
 import com.demcha.compose.loyaut_core.components.components_builders.ModuleBuilder;

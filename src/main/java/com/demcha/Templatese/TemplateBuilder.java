@@ -1,4 +1,4 @@
-package com.demcha.compose.Templatese;
+package com.demcha.Templatese;
 
 import com.demcha.compose.loyaut_core.components.components_builders.*;
 import com.demcha.compose.loyaut_core.components.containers.abstract_builders.BuildEntity;

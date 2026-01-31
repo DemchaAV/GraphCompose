@@ -1,7 +1,7 @@
 package com.demcha;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.PdfComposer;
+import com.demcha.compose.loyaut_core.core.PdfComposer;
 import com.demcha.compose.font_library.FontName;
 import com.demcha.compose.loyaut_core.components.components_builders.*;
 import com.demcha.compose.loyaut_core.components.content.link.Email;

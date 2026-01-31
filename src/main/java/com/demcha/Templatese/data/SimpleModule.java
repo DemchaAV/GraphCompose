@@ -1,4 +1,4 @@
-package com.demcha.compose.Templatese.data;
+package com.demcha.Templatese.data;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

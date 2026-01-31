@@ -1,7 +1,7 @@
 package com.demcha.compose.loyaut_core.components;
 
-import com.demcha.compose.Templatese.CvTheme;
-import com.demcha.compose.Templatese.TemplateBuilder;
+import com.demcha.Templatese.CvTheme;
+import com.demcha.Templatese.TemplateBuilder;
 import com.demcha.compose.loyaut_core.components.components_builders.*;
 import com.demcha.compose.loyaut_core.components.containers.abstract_builders.BuildEntity;
 import com.demcha.compose.loyaut_core.components.content.text.TextStyle;

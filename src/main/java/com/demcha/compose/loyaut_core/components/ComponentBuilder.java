@@ -15,7 +15,6 @@ public class ComponentBuilder {
     private final List<BuildEntity> builders = new ArrayList<>();
     private EntityManager entityManager;
 
-
     private ComponentBuilder() {
     }
 
@@ -50,7 +49,7 @@ public class ComponentBuilder {
     }
 
     public ModuleBuilder moduleBuilder(Align align) {
-        ModuleBuilder moduleBuilder = new ModuleBuilder(this.entityManager, Align.middle(5));
+        ModuleBuilder moduleBuilder = new ModuleBuilder(this.entityManager, align);
         builders.add(moduleBuilder);
         return moduleBuilder;
     }
@@ -74,7 +73,9 @@ public class ComponentBuilder {
     }
 
     public HContainerBuilder hContainer(Align align) {
-        return new HContainerBuilder(this.entityManager, align);
+        HContainerBuilder hContainerBuilder = new HContainerBuilder(this.entityManager, align);
+        builders.add(hContainerBuilder);
+        return hContainerBuilder;
     }
 
     public VContainerBuilder vContainer(Align align) {
@@ -90,9 +91,7 @@ public class ComponentBuilder {
     }
 
     public TemplateBuilder template() {
-        TemplateBuilder templateBuilder = template(null);
-        builders.add(templateBuilder);
-        return templateBuilder;
+        return template(null);
     }
 
     public ElementBuilder element() {
@@ -102,7 +101,8 @@ public class ComponentBuilder {
     }
 
     public void buildsComponents() {
-        if (builders.isEmpty()) return;
+        if (builders.isEmpty())
+            return;
         builders.forEach(BuildEntity::build);
     }
 }

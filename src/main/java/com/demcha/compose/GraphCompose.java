@@ -1,153 +1,162 @@
 package com.demcha.compose;
 
-import com.demcha.compose.loyaut_core.components.ComponentBuilder;
-import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
-import com.demcha.compose.loyaut_core.components.containers.abstract_builders.EntityBuilderBase;
 import com.demcha.compose.loyaut_core.components.style.Margin;
-import com.demcha.compose.loyaut_core.core.EntityManager;
-import com.demcha.compose.loyaut_core.system.LayoutSystem;
-import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.PdfCanvas;
-import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.PdfFileManagerSystem;
-import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
-import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
-import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 /**
- * The main entry point for composing and generating PDF documents using the GraphCompose framework.
+ * Factory class for creating document composers.
  * <p>
- * This class orchestrates the Entity Component System (ECS), manages the PDF document lifecycle,
- * and configures the layout and rendering systems. It implements {@link AutoCloseable} to ensure
- * the underlying {@link PDDocument} is closed properly.
+ * This is the main entry point for the GraphCompose framework.
+ * Use the static factory methods to create composers for different document
+ * formats.
  * </p>
  *
- * <h3>Usage Example:</h3>
+ * <h3>PDF Example:</h3>
+ * 
  * <pre>
- * try (GraphCompose compose = new GraphCompose(outputPath)) {
- *     compose.componentBuilder().addText("Hello World");
- *     compose.build();
+ * try (var composer = GraphCompose.pdf(Paths.get("output.pdf"))
+ *         .pageSize(PDRectangle.A4)
+ *         .margin(new Margin(15, 10, 15, 15))
+ *         .markdown(true)
+ *         .create()) {
+ *
+ *     var builder = composer.componentBuilder();
+ *     // ... build your document
+ *     composer.build();
+ * }
+ * </pre>
+ *
+ * <h3>Get bytes instead of file:</h3>
+ * 
+ * <pre>
+ * try (var composer = GraphCompose.pdf()
+ *         .pageSize(PDRectangle.A4)
+ *         .create()) {
+ *
+ *     // ... build your document
+ *     byte[] pdfBytes = composer.toBytes();
  * }
  * </pre>
  */
-public final class GraphCompose implements AutoCloseable {
+public final class GraphCompose {
 
-    private final EntityManager entityManager;
-    private final ComponentBuilder componentBuilder;
+    private GraphCompose() {
+        // Factory class, no instantiation
+    }
 
-
-    private final PDDocument doc;
-    private final Canvas canvas;
-    private final PdfRenderingSystemECS renderingSystem;
-    private final Path outputFile;
+    // ===== PDF Factory =====
 
     /**
-     * Creates a new GraphCompose instance with default settings:
-     * A4 page size, Markdown enabled, and Guide Lines disabled.
+     * Creates a PDF composer builder that will save to the specified file.
      *
      * @param outputFile The path where the generated PDF will be saved.
+     * @return A builder to configure the PDF composer.
      */
-    public GraphCompose(Path outputFile) {
-        this(outputFile, true, false, PDRectangle.A4);
+    public static PdfBuilder pdf(Path outputFile) {
+        return new PdfBuilder(outputFile);
     }
 
     /**
-     * Initializes a new GraphCompose instance with specific configuration.
+     * Creates a PDF composer builder for in-memory generation (use
+     * {@code toBytes()}).
      *
-     * @param outputFile The path where the generated PDF will be saved.
-     * @param markdown   If true, enables Markdown parsing for text components.
-     * @param guideLines If true, renders visual guide lines for debugging layout boundaries.
-     * @param pageSize   The size of the PDF pages (e.g., {@link PDRectangle#A4}).
+     * @return A builder to configure the PDF composer.
      */
-    public GraphCompose(Path outputFile, boolean markdown, boolean guideLines, PDRectangle pageSize) {
-        this.outputFile = Objects.requireNonNull(outputFile, "outputFile");
-
-        this.entityManager = new EntityManager(markdown);
-        this.entityManager.setGuideLines(guideLines);
-
-        this.doc = new PDDocument();
-        this.canvas = new PdfCanvas(pageSize, 0.0f, 0.0f);
-
-        this.renderingSystem = new PdfRenderingSystemECS(doc, canvas);
-
-        setupPdfSystems(this.renderingSystem, this.outputFile);
-
-        this.componentBuilder = ComponentBuilder.builder(entityManager);
+    public static PdfBuilder pdf() {
+        return new PdfBuilder(null);
     }
+
+    // ===== Word Factory (placeholder for future) =====
+
+    // public static WordBuilder word(Path outputFile) {
+    // return new WordBuilder(outputFile);
+    // }
+
+    // ===== PDF Builder =====
 
     /**
-     * Toggles Markdown parsing for text entities.
-     *
-     * @param setMarkdown true to enable markdown, false to disable.
+     * Fluent builder for configuring and creating a {@link PdfComposer}.
      */
-    public void markdown(boolean setMarkdown) {
-        this.entityManager.setMarkdown(setMarkdown);
-    }
+    public static final class PdfBuilder {
+        private final Path outputFile;
+        private PDRectangle pageSize = PDRectangle.A4;
+        private Margin margin = null;
+        private boolean markdown = true;
+        private boolean guideLines = false;
 
-    /**
-     * Toggles visual guide lines for debugging layout.
-     *
-     * @param setGuideLines true to render guide lines, false to hide them.
-     */
-    public void guideLines(boolean setGuideLines) {
-        this.entityManager.setGuideLines(setGuideLines);
-    }
+        private PdfBuilder(Path outputFile) {
+            this.outputFile = outputFile;
+        }
 
-    /**
-     * Adds a margin to the document canvas.
-     *
-     * @param margin The margin configuration to apply.
-     */
-    public void margin(Margin margin) {
-        canvas.addMargin(margin);
-    }
+        /**
+         * Sets the page size for the PDF document.
+         *
+         * @param pageSize The page size (e.g., {@link PDRectangle#A4},
+         *                 {@link PDRectangle#LETTER}).
+         * @return This builder for method chaining.
+         */
+        public PdfBuilder pageSize(PDRectangle pageSize) {
+            this.pageSize = Objects.requireNonNull(pageSize, "pageSize");
+            return this;
+        }
 
-    /**
-     * Returns the builder used to create and attach components to the document.
-     *
-     * @return The {@link ComponentBuilder} instance.
-     */
-    public ComponentBuilder componentBuilder() {
-        return this.componentBuilder;
-    }
+        /**
+         * Sets the margin for the PDF document.
+         *
+         * @param margin The margin configuration.
+         * @return This builder for method chaining.
+         */
+        public PdfBuilder margin(Margin margin) {
+            this.margin = margin;
+            return this;
+        }
 
-    /**
-     * Returns the underlying Entity Manager.
-     *
-     * @return The {@link EntityManager} instance.
-     */
-    public EntityManager entityManager() {
-        return this.entityManager;
-    }
+        /**
+         * Convenience method for setting margin with individual values.
+         *
+         * @param top    Top margin in points.
+         * @param right  Right margin in points.
+         * @param bottom Bottom margin in points.
+         * @param left   Left margin in points.
+         * @return This builder for method chaining.
+         */
+        public PdfBuilder margin(float top, float right, float bottom, float left) {
+            this.margin = new Margin(top, right, bottom, left);
+            return this;
+        }
 
-    private void setupPdfSystems(PdfRenderingSystemECS renderingSystemECS, Path outputFile) {
-        entityManager.getSystems().addSystem(new LayoutSystem<>(canvas, renderingSystemECS));
-        entityManager.getSystems().addSystem(renderingSystemECS);
-        entityManager.getSystems().addSystem(new PdfFileManagerSystem(outputFile, renderingSystemECS.doc()));
-    }
+        /**
+         * Enables or disables Markdown parsing for text components.
+         *
+         * @param enabled true to enable markdown (default), false to disable.
+         * @return This builder for method chaining.
+         */
+        public PdfBuilder markdown(boolean enabled) {
+            this.markdown = enabled;
+            return this;
+        }
 
-    /**
-     * Processes all registered ECS systems to layout, render, and save the PDF document.
-     *
-     * @throws Exception if an error occurs during layout, rendering, or file I/O.
-     */
-    public void build() throws Exception {
-        componentBuilder.buildsComponents();
-        entityManager.processSystems();
-    }
+        /**
+         * Enables or disables visual guide lines for debugging layout.
+         *
+         * @param enabled true to render guide lines, false to hide them (default).
+         * @return This builder for method chaining.
+         */
+        public PdfBuilder guideLines(boolean enabled) {
+            this.guideLines = enabled;
+            return this;
+        }
 
-
-    @Override
-    /**
-     * Closes the underlying {@link PDDocument} to release resources.
-     *
-     * @throws IOException if an error occurs while closing the document.
-     */
-    public void close() throws IOException {
-        doc.close();
+        /**
+         * Creates the configured PDF composer.
+         *
+         * @return A new {@link PdfComposer} instance ready for use.
+         */
+        public PdfComposer create() {
+            return new PdfComposer(outputFile, markdown, guideLines, pageSize, margin);
+        }
     }
 }

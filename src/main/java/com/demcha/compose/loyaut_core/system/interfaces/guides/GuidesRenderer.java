@@ -119,9 +119,9 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
         int renderingPage = startPage;
 
         log.debug("Rendering spanned multiple pages for entity: {}. Start: {}, End: {}", e, startPage, endPage);
-        int boxFragmentsSize = boxFragments.size() - 1;
-        int marginFragmentSize = marginFragments.size() - 1;
-        int paddingFragmentSize = paddingFragments.size() - 1;
+        int boxFragmentIndex = 0;
+        int marginFragmentIndex = 0;
+        int paddingFragmentIndex = 0;
 
 
         while (renderingPage >= endPage) {
@@ -135,12 +135,12 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
 
                 // 4. Retrieve correct fragments safely
                 // Box is guaranteed by the check above
-                var currentBox = (boxFragmentsSize < boxFragments.size() && boxFragmentsSize >= 0) ? boxFragments.get(boxFragmentsSize) : null;
+                var currentBox = (boxFragmentIndex < boxFragments.size() && boxFragmentIndex >= 0) ? boxFragments.get(boxFragmentIndex) : null;
 
                 // Margin and Padding might be empty lists if the entity doesn't have them.
                 // We use a safe check to return null if the list is empty or index is out of bounds.
-                var currentMargin = (marginFragmentSize < marginFragments.size() && marginFragmentSize >= 0) ? marginFragments.get(marginFragmentSize) : null;
-                var currentPadding = (paddingFragmentSize < paddingFragments.size() && paddingFragmentSize >= 0) ? paddingFragments.get(paddingFragmentSize) : null;
+                var currentMargin = (marginFragmentIndex < marginFragments.size() && marginFragmentIndex >= 0) ? marginFragments.get(marginFragmentIndex) : null;
+                var currentPadding = (paddingFragmentIndex < paddingFragments.size() && paddingFragmentIndex >= 0) ? paddingFragments.get(paddingFragmentIndex) : null;
 
                 // 5. Delegate rendering based on position
                 if (renderingPage == startPage) {
@@ -169,9 +169,9 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
                 log.error("Failed to render guides on multiple page for entity {} \n {}", e, e.printInfo(), ex);
                 throw new RuntimeException(String.format("Failed to render guides on multiple page %s for entity  \n %s ", renderingPage, e.printInfo()), ex);
             }
-            boxFragmentsSize--;
-            marginFragmentSize--;
-            paddingFragmentSize--;
+            boxFragmentIndex++;
+            marginFragmentIndex++;
+            paddingFragmentIndex++;
             renderingPage--;
         }
 
@@ -231,7 +231,7 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
         double sourceHeight = sourceContext.height();
         double remainingHeight = sourceHeight;
         double currentY = initializedYPosition;
-        int currentPage = pages;
+        int currentPage = pages - 1;
 
         // 4. Loop to slice the content
         while (remainingHeight > 0) {
@@ -251,7 +251,7 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
             currentPage--;
         }
 
-        return resultSegments.reversed();
+        return resultSegments;
     }
 
     private void startGuidesFromStream(S stream, RenderCoordinateContext boxContext, RenderCoordinateContext marginContext, RenderCoordinateContext paddingContext) throws IOException {

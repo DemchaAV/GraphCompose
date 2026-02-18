@@ -16,10 +16,8 @@ public class FontLibrary implements PdfFontGetter {
      * Получаем конкретный тип шрифта: PdfFont, WordFont и т.д.
      */
     public <F extends Font<?>> Optional<F> getFont(FontName fontName, Class<F> fontClass) {
-        if (FontName.DEFAULT.equals(fontName)){
-            fontName = FontName.HELVETICA;
-        }
-        var fontRegistry = fonts.get(fontName);
+        FontName resolvedName = resolveBaseFont(fontName);
+        var fontRegistry = fonts.get(resolvedName);
         if (fontRegistry == null) {
             return Optional.empty();
         }
@@ -31,6 +29,18 @@ public class FontLibrary implements PdfFontGetter {
         }
 
         return Optional.empty();
+    }
+
+    private FontName resolveBaseFont(FontName fontName) {
+        if (fontName == null || FontName.DEFAULT.equals(fontName)) {
+            return FontName.HELVETICA;
+        }
+        return switch (fontName) {
+            case HELVETICA, HELVETICA_BOLD, HELVETICA_OBLIQUE, HELVETICA_BOLD_OBLIQUE -> FontName.HELVETICA;
+            case TIMES_ROMAN, TIMES_BOLD, TIMES_ITALIC, TIMES_BOLD_ITALIC -> FontName.TIMES_ROMAN;
+            case COURIER, COURIER_BOLD, COURIER_OBLIQUE, COURIER_BOLD_OBLIQUE -> FontName.COURIER;
+            default -> fontName;
+        };
     }
 
     /**

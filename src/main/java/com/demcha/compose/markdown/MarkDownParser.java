@@ -3,6 +3,7 @@ package com.demcha.compose.markdown;
 import com.demcha.compose.loyaut_core.components.content.text.TextDataBody;
 import com.demcha.compose.loyaut_core.components.content.text.TextDecoration;
 import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
+import com.demcha.compose.font_library.FontName;
 import com.vladsch.flexmark.ast.*;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;
@@ -103,7 +104,8 @@ public class MarkDownParser {
                 // 4) Text nodes (your current logic)
                 new VisitHandler<>(Text.class, textNode -> {
                     TextDecoration decoration = determineStyle(textNode);
-                    TextStyle newTextStyle = new TextStyle(style.fontName(), style.size(), decoration, style.color());
+                    FontName decoratedFont = decoratedFontName(style.fontName(), decoration);
+                    TextStyle newTextStyle = new TextStyle(decoratedFont, style.size(), decoration, style.color());
 
                     String rawText = textNode.getChars().toString();
                     String[] chunks = rawText.split("((?<=\\s)|(?=\\s))");
@@ -137,6 +139,34 @@ public class MarkDownParser {
         if (isItalic)
             return TextDecoration.ITALIC;
         return TextDecoration.DEFAULT;
+    }
+
+    private FontName decoratedFontName(FontName base, TextDecoration decoration) {
+        if (base == null || decoration == null) {
+            return base == null ? FontName.HELVETICA : base;
+        }
+
+        return switch (base) {
+            case HELVETICA, HELVETICA_BOLD, HELVETICA_OBLIQUE, HELVETICA_BOLD_OBLIQUE -> switch (decoration) {
+                case BOLD -> FontName.HELVETICA_BOLD;
+                case ITALIC -> FontName.HELVETICA_OBLIQUE;
+                case BOLD_ITALIC -> FontName.HELVETICA_BOLD_OBLIQUE;
+                default -> FontName.HELVETICA;
+            };
+            case TIMES_ROMAN, TIMES_BOLD, TIMES_ITALIC, TIMES_BOLD_ITALIC -> switch (decoration) {
+                case BOLD -> FontName.TIMES_BOLD;
+                case ITALIC -> FontName.TIMES_ITALIC;
+                case BOLD_ITALIC -> FontName.TIMES_BOLD_ITALIC;
+                default -> FontName.TIMES_ROMAN;
+            };
+            case COURIER, COURIER_BOLD, COURIER_OBLIQUE, COURIER_BOLD_OBLIQUE -> switch (decoration) {
+                case BOLD -> FontName.COURIER_BOLD;
+                case ITALIC -> FontName.COURIER_OBLIQUE;
+                case BOLD_ITALIC -> FontName.COURIER_BOLD_OBLIQUE;
+                default -> FontName.COURIER;
+            };
+            default -> base;
+        };
     }
 
     public static void main(String[] args) {

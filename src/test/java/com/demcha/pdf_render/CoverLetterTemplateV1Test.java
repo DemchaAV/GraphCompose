@@ -1,8 +1,8 @@
 package com.demcha.pdf_render;
 
-import com.demcha.Templatese.CoverLetterTemplate;
 import com.demcha.Templatese.JobDetails;
 import com.demcha.Templatese.data.Header;
+import com.demcha.Templatese.templates.CoverLetterTemplateV1;
 import com.demcha.mock.CoverLetterMock;
 import com.demcha.mock.MainPageCVMock;
 import org.apache.pdfbox.Loader;
@@ -20,39 +20,47 @@ class CoverLetterTemplateV1Test {
 
     private final MainPageCVMock cvMock = new MainPageCVMock();
     private final String letter = CoverLetterMock.letter.replace("${companyName}", "Visual Test Company");
+    private final CoverLetterTemplateV1 template = new CoverLetterTemplateV1();
 
     @Test
-    void shouldRenderCoverLetterWithGuidesEnabled() throws Exception {
-        Path outputFile = VISUAL_DIR.resolve("cover_letter_guides_on.pdf");
-        renderAndSave(true, outputFile);
-        assertPdfLooksValid(outputFile);
-    }
-
-    @Test
-    void shouldRenderCoverLetterWithGuidesDisabled() throws Exception {
-        Path outputFile = VISUAL_DIR.resolve("cover_letter_guides_off.pdf");
-        renderAndSave(false, outputFile);
-        assertPdfLooksValid(outputFile);
-    }
-
-    private void renderAndSave(boolean guideLines, Path outputFile) throws Exception {
+    void shouldRenderCoverLetterAsDocument() throws Exception {
+        Path outputFile = VISUAL_DIR.resolve("cover_letter_render_document.pdf");
         Files.createDirectories(VISUAL_DIR);
         Files.deleteIfExists(outputFile);
 
         Header header = cvMock.getMainPageCV().getHeader();
-        JobDetails jobDetails = new JobDetails(
+        JobDetails jobDetails = testJobDetails();
+
+        try (PDDocument document = template.render(header, letter, jobDetails)) {
+            document.save(outputFile.toFile());
+        }
+
+        assertPdfLooksValid(outputFile);
+    }
+
+    @Test
+    void shouldRenderCoverLetterDirectlyToFile() throws Exception {
+        Path outputFile = VISUAL_DIR.resolve("cover_letter_render_file.pdf");
+        Files.createDirectories(VISUAL_DIR);
+        Files.deleteIfExists(outputFile);
+
+        Header header = cvMock.getMainPageCV().getHeader();
+        JobDetails jobDetails = testJobDetails();
+
+        template.render(header, letter, jobDetails, outputFile);
+
+        assertPdfLooksValid(outputFile);
+    }
+
+    private JobDetails testJobDetails() {
+        return new JobDetails(
                 "https://linkedin.com/jobs/view/visual-test",
                 "Software Engineer",
                 "Visual Test Company",
                 "Remote",
                 "Visual verification test",
                 "Mid",
-                "Full-time"
-        );
-
-        try (PDDocument document = new CoverLetterTemplate().render(header, letter, jobDetails, guideLines)) {
-            document.save(outputFile.toFile());
-        }
+                "Full-time");
     }
 
     private void assertPdfLooksValid(Path outputFile) throws Exception {

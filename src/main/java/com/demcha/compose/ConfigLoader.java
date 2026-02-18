@@ -1,4 +1,4 @@
-package com.demcha.Templatese.templates_utils;
+package com.demcha.compose;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

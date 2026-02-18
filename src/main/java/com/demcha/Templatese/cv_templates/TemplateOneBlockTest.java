@@ -29,7 +29,7 @@ import java.util.List;
 class TemplateOneBlockTest implements Template {
 
         private static final String OUTPUT_FILE = "ExpleoGroup_CV_ArtemDemchyshyn.pdf";
-        private static final String DATA_FILE = "cv_data.json";
+        private static final String DATA_FILE = "data/cv_data.json";
 
         public static void main(String[] args) {
                 new TemplateOneBlockTest().process();

@@ -27,10 +27,11 @@ public class MarkDownParser {
         visitor[0] = new NodeVisitor(
                 // 1) List items: add your own prefix (since '-' is not Text)
                 new VisitHandler<>(ListItem.class, node -> {
-                    TextStyle prefixStyle = new TextStyle(style.fontName(), style.size(), TextDecoration.DEFAULT, style.color());
+                    TextStyle prefixStyle = new TextStyle(style.fontName(), style.size(), TextDecoration.DEFAULT,
+                            style.color());
 
                     // New line before each list item (optional; helps readability)
-                    resultList.add(new TextDataBody("\n", prefixStyle));
+                    // resultList.add(new TextDataBody("\n", prefixStyle));
 
                     // Use bullet or dash — your choice:
                     resultList.add(new TextDataBody("• ", prefixStyle));
@@ -41,14 +42,65 @@ public class MarkDownParser {
                 }),
 
                 // 2) Preserve line breaks
-                new VisitHandler<>(SoftLineBreak.class, br ->
-                        resultList.add(new TextDataBody("\n", new TextStyle(style.fontName(), style.size(), TextDecoration.DEFAULT, style.color())))
-                ),
-                new VisitHandler<>(HardLineBreak.class, br ->
-                        resultList.add(new TextDataBody("\n", new TextStyle(style.fontName(), style.size(), TextDecoration.DEFAULT, style.color())))
-                ),
+                new VisitHandler<>(SoftLineBreak.class,
+                        br -> resultList.add(new TextDataBody(" ",
+                                new TextStyle(style.fontName(), style.size(), TextDecoration.DEFAULT, style.color())))),
+                new VisitHandler<>(HardLineBreak.class,
+                        br -> resultList.add(new TextDataBody(" ",
+                                new TextStyle(style.fontName(), style.size(), TextDecoration.DEFAULT, style.color())))),
 
-                // 3) Text nodes (your current logic)
+                // 3) Headers
+                new VisitHandler<>(Heading.class, node -> {
+                    int level = node.getLevel();
+                    double scale = switch (level) {
+                        case 1 -> 2.0;
+                        case 2 -> 1.5;
+                        case 3 -> 1.25;
+                        default -> 1.0;
+                    };
+                    double newSize = style.size() * scale;
+                    TextStyle headerStyle = new TextStyle(style.fontName(), newSize, TextDecoration.BOLD,
+                            style.color());
+
+                    // Add newline before header for better separation
+                    // resultList.add(new TextDataBody("\n",
+                    //        new TextStyle(style.fontName(), style.size(), TextDecoration.DEFAULT, style.color())));
+
+                    // We need to visit children (the text inside the header) but force our new
+                    // headerStyle
+                    // The problem is visitChildren(node) uses the global 'style' or doesn't pass
+                    // context easily
+                    // unless we refactor to pass style recursively.
+                    // A simpler approach for this visitor structure: manually iterate children and
+                    // apply style.
+
+                    Node child = node.getFirstChild();
+                    while (child != null) {
+                        if (child instanceof Text) {
+                            String text = child.getChars().toString();
+                            resultList.add(new TextDataBody(text, headerStyle));
+                        } else {
+                            // If there are other nodes (like emphasis inside header), we might miss them if
+                            // we don't recurse.
+                            // But recursion here with a DIFFERENT style requires changing the getBody
+                            // signature or helper.
+                            // For now, let's just grab the text content of the header.
+                            // Or better: use a helper method if we want to support bold inside header.
+                            // Given existing recursive structure uses scope-scope variables or just 'style'
+                            // param which is fixed for getBody...
+                            // Actually, let's just grab the string content of the header node to keep it
+                            // simple and robust for now.
+                            resultList.add(new TextDataBody(child.getChars().toString(), headerStyle));
+                        }
+                        child = child.getNext();
+                    }
+
+                    // Add newline after header
+                    // resultList.add(new TextDataBody("\n",
+                    //        new TextStyle(style.fontName(), style.size(), TextDecoration.DEFAULT, style.color())));
+                }),
+
+                // 4) Text nodes (your current logic)
                 new VisitHandler<>(Text.class, textNode -> {
                     TextDecoration decoration = determineStyle(textNode);
                     TextStyle newTextStyle = new TextStyle(style.fontName(), style.size(), decoration, style.color());
@@ -59,8 +111,7 @@ public class MarkDownParser {
                     Arrays.stream(chunks)
                             .filter(s -> !s.isEmpty())
                             .forEach(chunk -> resultList.add(new TextDataBody(chunk, newTextStyle)));
-                })
-        );
+                }));
 
         visitor[0].visit(document);
         return resultList;
@@ -72,21 +123,30 @@ public class MarkDownParser {
 
         Node parent = node.getParent();
         while (parent != null) {
-            if (parent instanceof StrongEmphasis) isBold = true;
-            if (parent instanceof Emphasis) isItalic = true;
+            if (parent instanceof StrongEmphasis)
+                isBold = true;
+            if (parent instanceof Emphasis)
+                isItalic = true;
             parent = parent.getParent();
         }
 
-        if (isBold && isItalic) return TextDecoration.BOLD_ITALIC;
-        if (isBold) return TextDecoration.BOLD;
-        if (isItalic) return TextDecoration.ITALIC;
+        if (isBold && isItalic)
+            return TextDecoration.BOLD_ITALIC;
+        if (isBold)
+            return TextDecoration.BOLD;
+        if (isItalic)
+            return TextDecoration.ITALIC;
         return TextDecoration.DEFAULT;
     }
 
     public static void main(String[] args) {
-        String  s = "*Portfolio Project*\nBuilt a secure e-commerce ";
+        String s = "# Header 1\n## Header 2\nNormal text";
         MarkDownParser parser = new MarkDownParser();
-        parser.getBody(s, TextStyle.DEFAULT_STYLE).stream().map(TextDataBody::text).forEach(System.out::println);
+        List<TextDataBody> body = parser.getBody(s, TextStyle.DEFAULT_STYLE);
 
+        for (TextDataBody b : body) {
+            System.out.println("Text: '" + b.text().replace("\n", "\\n") + "' | Size: " + b.textStyle().size()
+                    + " | Decor: " + b.textStyle().decoration());
+        }
     }
 }

@@ -185,9 +185,12 @@ public class BlockText implements PdfRender, Breakable {
                 for (TextDataBody textDataBody : textDataBodies) {
                     setFont(entityManager, textDataBody, cs);
                     try {
-                        cs.showText(textDataBody.text());
+                        String text = sanitizeText(textDataBody.text());
+                        if (!text.isEmpty()) {
+                            cs.showText(text);
+                        }
                     } catch (IllegalArgumentException il) {
-                        throw new IllegalCharsetNameException("Exception in rendering char  " + textDataBody.text() + " " + il);
+                        throw new IllegalCharsetNameException("Exception in rendering char  " + textDataBody.text() + "\n "+ textDataBodies +"\n" + il);
                     }
                 }
             }

@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class Heder {
+public class Header {
     private String name;
     private String address;
     private String phoneNumber;

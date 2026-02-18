@@ -15,10 +15,19 @@ public enum FontName {
      * Helvetica font.
      */
     HELVETICA("Helvetica"), //
+    HELVETICA_BOLD("Helvetica-Bold"),
+    HELVETICA_OBLIQUE("Helvetica-Oblique"),
+    HELVETICA_BOLD_OBLIQUE("Helvetica-BoldOblique"),
     /**
      * Courier font.
      */
     COURIER("Courier"), //
+    COURIER_BOLD("Courier-Bold"),
+    COURIER_OBLIQUE("Courier-Oblique"),
+    COURIER_BOLD_OBLIQUE("Courier-BoldOblique"),
+    TIMES_BOLD("Times-Bold"),
+    TIMES_ITALIC("Times-Italic"),
+    TIMES_BOLD_ITALIC("Times-BoldItalic"),
     /**
      * Symbol font.
      */

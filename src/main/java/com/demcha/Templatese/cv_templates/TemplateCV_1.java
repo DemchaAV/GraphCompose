@@ -20,6 +20,7 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Objects;
 
 class TemplateCV_1 implements Template {
 
@@ -32,9 +33,13 @@ class TemplateCV_1 implements Template {
 
         @Override
         public void process() {
-                boolean guideLines = true;
+                MainPageCV data = ConfigLoader.loadConfigWithEnv(DATA_FILE, MainPageCV.class, false);
+                process(data, Paths.get(OUTPUT_FILE), true);
+        }
 
-                Path target = Paths.get(OUTPUT_FILE);
+        void process(MainPageCV data, Path target, boolean guideLines) {
+                Objects.requireNonNull(data, "data");
+                Objects.requireNonNull(target, "target");
 
                 try (PdfComposer composer = GraphCompose.pdf(target)
                                 .pageSize(PDRectangle.A4)
@@ -48,7 +53,6 @@ class TemplateCV_1 implements Template {
                         BlockIndentStrategy indentStrategy = BlockIndentStrategy.FROM_SECOND_LINE;
 
                         TemplateBuilder cv = composer.componentBuilder().template(CvTheme.defaultTheme());
-                        MainPageCV data = ConfigLoader.loadConfigWithEnv(DATA_FILE, MainPageCV.class, false);
 
                         float textBlockWidth = (float) canvas.innerWidth();
 
@@ -84,7 +88,7 @@ class TemplateCV_1 implements Template {
                                         data.getAdditional().getModulePoints(), textBlockWidth, whitespace,
                                         indentStrategy);
 
-                        Entity mainVBoxContainer = cv.moduleBuilder(canvas)
+                        cv.moduleBuilder(canvas)
                                         .entityName("MainVBoxContainer")
                                         .addChild(moduleHeader)
                                         .addChild(moduleProfessionalSummary)

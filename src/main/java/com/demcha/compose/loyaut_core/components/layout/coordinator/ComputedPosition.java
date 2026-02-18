@@ -38,26 +38,17 @@ public record ComputedPosition(double x, double y) implements Component {
      * @return computed position for the child
      */
     public static ComputedPosition from(@NonNull Entity child, @NonNull InnerBoxSize parentInnerBoxSize, PaddingCoordinate paddingParentCoordinate) {
-        var anchor = child.getComponent(Anchor.class).orElseGet(() -> {
+        var anchorOptional = child.getComponent(Anchor.class);
+        var anchor = anchorOptional.orElseGet(() -> {
             log.warn("No Anchor found for {}. Using default Anchor (top-left).", child);
             Anchor defaultAnchor = Anchor.defaultAnchor();
             child.addComponent(defaultAnchor);
             return defaultAnchor;
         });
         ComputedPosition computedPosition = anchor.getComputedPosition(child, parentInnerBoxSize);
-        double x;
-        double y;
-
-        if (anchor.equals(Anchor.defaultAnchor())) {
-            var position = child.getComponent(Position.class).orElse(Position.zero());
-            x = computedPosition.x + paddingParentCoordinate.x() + position.x();
-            y = computedPosition.y + paddingParentCoordinate.y() + position.y();
-        }
-        x = computedPosition.x + paddingParentCoordinate.x();
-        y = computedPosition.y + paddingParentCoordinate.y();
-        computedPosition = new ComputedPosition(x, y);
-
-        return computedPosition;
+        double x = computedPosition.x + paddingParentCoordinate.x();
+        double y = computedPosition.y + paddingParentCoordinate.y();
+        return new ComputedPosition(x, y);
     }
 
     /**

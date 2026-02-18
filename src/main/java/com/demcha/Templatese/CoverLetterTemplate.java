@@ -1,6 +1,4 @@
-package com.demcha;
-import com.demcha.Templatese.CvTheme;
-import com.demcha.Templatese.TemplateBuilder;
+package com.demcha.Templatese;
 import com.demcha.Templatese.data.EmailYaml;
 import com.demcha.Templatese.data.Header;
 import com.demcha.Templatese.data.LinkYml;
@@ -107,7 +105,10 @@ public class CoverLetterTemplate  {
      * @return A PDDocument that can be saved or streamed
      */
     public PDDocument render(Header header, String wroteLetter, JobDetails jobDetails) {
-        boolean guideLines = true;
+        return render(header, wroteLetter, jobDetails, true);
+    }
+
+    public PDDocument render(Header header, String wroteLetter, JobDetails jobDetails, boolean guideLines) {
         try {
             // Do NOT use try-with-resources here!
             // The PDDocument must remain open for the caller to stream/save it.
@@ -120,7 +121,7 @@ public class CoverLetterTemplate  {
                     .create();
 
             Canvas canvas = composer.canvas();
-            String whitespace = "  ";
+            String whitespace = "";
             BlockIndentStrategy indentStrategy = BlockIndentStrategy.FIRST_LINE;
 
             TemplateBuilder cv = composer.componentBuilder().template(CvTheme.defaultTheme());
@@ -131,12 +132,16 @@ public class CoverLetterTemplate  {
 
 
             Entity coverLetter = letterSection(cv, wroteLetter, textBlockWidth, whitespace, indentStrategy);
+            Entity regards = cv.blockText("King Regards,\nArtem Demchyshyn");
+            regards.addComponent(Margin.top(10));
+            regards.addComponent(Anchor.topRight());
 
 
             cv.moduleBuilder(canvas)
                     .entityName("MainVBoxContainer")
                     .addChild(moduleHeader)
                     .addChild(coverLetter)
+                    .addChild(regards)
                     .build();
 
             return composer.toPDDocument();

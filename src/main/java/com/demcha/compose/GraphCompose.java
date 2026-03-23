@@ -10,34 +10,60 @@ import java.util.Objects;
 /**
  * Factory class for creating document composers.
  * <p>
- * This is the main entry point for the GraphCompose framework.
- * Use the static factory methods to create composers for different document
- * formats.
+ * This is the main entry point for the GraphCompose engine.
+ * Use the static factory methods to create document composers for supported
+ * output formats.
  * </p>
  *
- * <h3>PDF Example:</h3>
- * 
+ * <h3>Build a PDF file</h3>
  * <pre>
- * try (var composer = GraphCompose.pdf(Paths.get("output.pdf"))
+ * try (var composer = GraphCompose.pdf(outputFile)
  *         .pageSize(PDRectangle.A4)
- *         .margin(new Margin(15, 10, 15, 15))
+ *         .margin(new Margin(24, 24, 24, 24))
  *         .markdown(true)
  *         .create()) {
  *
- *     var builder = composer.componentBuilder();
- *     // ... build your document
+ *     var cb = composer.componentBuilder();
+ *     cb.text()
+ *             .textWithAutoSize("Hello GraphCompose")
+ *             .textStyle(TextStyle.DEFAULT_STYLE)
+ *             .anchor(Anchor.topLeft())
+ *             .build();
+ *
  *     composer.build();
  * }
  * </pre>
  *
- * <h3>Get bytes instead of file:</h3>
- * 
+ * <h3>Get bytes instead of writing to disk</h3>
  * <pre>
  * try (var composer = GraphCompose.pdf()
  *         .pageSize(PDRectangle.A4)
  *         .create()) {
  *
- *     // ... build your document
+ *     composer.componentBuilder()
+ *             .text()
+ *             .textWithAutoSize("In-memory PDF")
+ *             .textStyle(TextStyle.DEFAULT_STYLE)
+ *             .anchor(Anchor.topLeft())
+ *             .build();
+ *
+ *     byte[] pdfBytes = composer.toBytes();
+ * }
+ * </pre>
+ *
+ * <h3>Optional template layer</h3>
+ * <pre>
+ * try (var composer = GraphCompose.pdf().create()) {
+ *     var template = TemplateBuilder.from(
+ *             composer.componentBuilder(),
+ *             CvTheme.defaultTheme());
+ *
+ *     template.moduleBuilder("Profile", composer.canvas())
+ *             .addChild(template.blockText(
+ *                     "Analytical engineer focused on reliable platform design.",
+ *                     composer.canvas().innerWidth()))
+ *             .build();
+ *
  *     byte[] pdfBytes = composer.toBytes();
  * }
  * </pre>

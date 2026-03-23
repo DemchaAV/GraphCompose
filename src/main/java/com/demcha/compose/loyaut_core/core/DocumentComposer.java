@@ -9,18 +9,38 @@ import java.io.Closeable;
  * Base interface for document composers supporting different output formats
  * (PDF, Word, etc.).
  * <p>
- * Implementations handle the lifecycle of creating, building, and saving
- * documents.
- * Use {@link GraphCompose} factory to obtain instances.
+ * Implementations handle the lifecycle of creating, building, and exporting
+ * documents. Use {@link GraphCompose} to obtain instances.
  * </p>
  *
- * <h3>Usage Example:</h3>
- * 
+ * <h3>Engine flow</h3>
  * <pre>
  * try (DocumentComposer composer = GraphCompose.pdf(outputPath).create()) {
- *     var builder = composer.componentBuilder();
- *     // ... build components
+ *     var cb = composer.componentBuilder();
+ *     cb.text()
+ *             .textWithAutoSize("Hello GraphCompose")
+ *             .textStyle(TextStyle.DEFAULT_STYLE)
+ *             .anchor(Anchor.topLeft())
+ *             .build();
+ *
  *     composer.build();
+ * }
+ * </pre>
+ *
+ * <h3>Template flow</h3>
+ * <pre>
+ * try (var composer = GraphCompose.pdf().create()) {
+ *     var template = TemplateBuilder.from(
+ *             composer.componentBuilder(),
+ *             CvTheme.defaultTheme());
+ *
+ *     template.moduleBuilder("Profile", composer.canvas())
+ *             .addChild(template.blockText(
+ *                     "Analytical engineer focused on reliable platform design.",
+ *                     composer.canvas().innerWidth()))
+ *             .build();
+ *
+ *     byte[] pdfBytes = composer.toBytes();
  * }
  * </pre>
  */

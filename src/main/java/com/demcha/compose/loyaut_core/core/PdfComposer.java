@@ -19,26 +19,38 @@ import java.nio.file.Path;
  * PDF implementation of {@link DocumentComposer}.
  * <p>
  * Orchestrates the Entity Component System (ECS), manages the PDF document
- * lifecycle,
- * and configures the layout and rendering systems.
+ * lifecycle, and configures the layout and rendering systems.
  * </p>
  *
- * <h3>Usage via factory:</h3>
- * 
+ * <h3>Build to file</h3>
  * <pre>
  * try (var composer = GraphCompose.pdf(outputPath).create()) {
- *     composer.componentBuilder().addText("Hello World");
+ *     composer.componentBuilder()
+ *             .text()
+ *             .textWithAutoSize("Hello GraphCompose")
+ *             .textStyle(TextStyle.DEFAULT_STYLE)
+ *             .anchor(Anchor.topLeft())
+ *             .build();
+ *
  *     composer.build();
  * }
  * </pre>
  *
- * <h3>Or get bytes directly:</h3>
- * 
+ * <h3>Or get bytes directly</h3>
  * <pre>
- * byte[] pdfBytes = GraphCompose.pdf()
+ * try (var composer = GraphCompose.pdf()
  *         .pageSize(PDRectangle.A4)
- *         .create()
- *         .toBytes();
+ *         .create()) {
+ *
+ *     composer.componentBuilder()
+ *             .text()
+ *             .textWithAutoSize("In-memory PDF")
+ *             .textStyle(TextStyle.DEFAULT_STYLE)
+ *             .anchor(Anchor.topLeft())
+ *             .build();
+ *
+ *     byte[] pdfBytes = composer.toBytes();
+ * }
  * </pre>
  */
 public final class PdfComposer implements DocumentComposer {

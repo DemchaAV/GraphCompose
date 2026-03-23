@@ -1,122 +1,163 @@
 # GraphCompose
 
-**GraphCompose** is a powerful Java/Kotlin engine for programmatic document generation based on **ECS (Entity Component System)** architecture. Unlike classic libraries where you draw using static coordinates, here you build a document using components and containers, similar to modern UI frameworks (like Jetpack Compose or Flexbox).
+**GraphCompose** is a Java document-layout engine for building PDFs from components instead of fixed coordinates. You describe the structure, the layout core calculates placement and pagination, and the PDF renderer turns that into a finished document.
 
-## 🚀 What is it?
+This repository currently ships a production-ready PDF path and a template layer for CV and cover-letter generation built on top of the same engine.
 
-It is a **fully-featured Layout System** that handles the calculation of coordinates, margins, alignment, and page breaks. You describe *what* should be in the document, and the system decides *where* to place it.
+## Why GraphCompose
 
-> **Core Concept:** One template — thousands of documents. Create a layout once, and GraphCompose generates documents for any number of users by automatically calculating the positioning of all elements.
+- Build documents declaratively with builders and containers.
+- Let the layout core handle spacing, alignment, and page flow.
+- Reuse the same engine for simple PDFs and higher-level templates.
+- Generate to a file or keep the result in memory as `byte[]`.
 
-### Key Features
+## Current Scope
 
-| Feature | Description |
-|:---|:---|
-| **ECS Architecture** | Flexible element management via Entities and Components |
-| **Layout System** | `VContainer` (Vertical) and `HContainer` (Horizontal) with flexible alignment |
-| **Anchor System** | Anchor, Margin, and Padding for precise positioning |
-| **Rich Content** | Text, Links (URL/Email), Buttons, Shapes, Markdown support |
-| **Auto-paging** | Correct distribution of content across multiple pages |
-| **Unified Font Library** | Register fonts once — use them everywhere |
-| **Multi-rendering** | Architecture ready for PDF, DOCX, PPTX, and other formats |
+- `com.demcha.compose.GraphCompose` is the main entrypoint.
+- PDF generation is the supported rendering flow today.
+- CV and cover-letter templates live in `com.demcha.Templatese` as examples built on top of the engine.
+- Internal package names such as `loyaut_core` and `Templatese` remain in place for compatibility during this docs refresh.
 
-## 🎯 Why is this needed?
+## Quick Start
 
-1.  **Automation** — Generate thousands of unique documents based on DB or YAML data.
-2.  **Flexibility** — Easily change the design without manually recalculating coordinates.
-3.  **Rendering Abstraction** — The system calculates *what* and *where* to render, while the specific renderer (PDF, DOCX, PPTX) handles *how*.
-4.  **Reusability** — Fonts, styles, and components are connected to a shared library.
-5.  **Clean Code** — A declarative approach to describing document structure.
-
-## 🛠 Tech Stack
-
--   **Java 21 / Kotlin 2.2**
--   **Apache PDFBox 3.0** — Core engine for PDF operations
--   **Flexmark** — Markdown parsing
--   **SnakeYAML** — Configuration management
--   **Lombok** — Boilerplate reduction
-
-## 🏗 Architecture
-
-```mermaid
-graph TD
-    UserCode["Your Code / Template"] -->|Describes structure via Builders| LayoutSystem
-    LayoutSystem["Layout System"] -->|Calculates positions, margins, page breaks| Instructions
-    Instructions["Instructions: WHAT, WHERE, ORDER"] --> RenderingSystem
-    RenderingSystem["Rendering System"] --> PDF["PDF <br/> (Ready)"]
-    RenderingSystem --> DOCX["DOCX <br/> (Planned)"]
-    RenderingSystem --> PPTX["PPTX <br/> (Planned)"]
-```
-
-> **Note:** The diagram above illustrates the flow from code to final output.
-
-### 📦 Project Modules
-
-*   **layout_core** — System core: geometry components, styles, and base entities.
-*   **system** — LayoutSystem (position calculation) and RenderingSystem (drawing).
-*   **markdown** — Converts Markdown markup into document blocks.
-*   **font_library** — Manages fonts and their variations.
-
-## 📖 How to use?
-
-The document creation process consists of three stages: System Initialization, Entity Tree Construction, and Rendering.
+Build a PDF directly to disk with the current engine-first API:
 
 ```java
-import com.graphcompose.core.EntityManager;
-import com.graphcompose.system.LayoutSystem;
-import com.graphcompose.render.pdf.PdfRenderingSystemECS;
-import com.graphcompose.render.pdf.PdfCanvas;
-import com.graphcompose.render.pdf.PdfFileManagerSystem;
-import com.graphcompose.components.Margin;
-import com.graphcompose.components.Anchor;
-import com.graphcompose.components.ComponentColor;
-import org.apache.pdfbox.pdmodel.PDDocument;
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.loyaut_core.components.ComponentBuilder;
+import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
+import com.demcha.compose.loyaut_core.components.layout.Align;
+import com.demcha.compose.loyaut_core.components.layout.Anchor;
+import com.demcha.compose.loyaut_core.components.style.Margin;
+import com.demcha.compose.loyaut_core.core.PdfComposer;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
-public void generateDocument() {
-    // 1. Setup Canvas and Document
-    Path target = Paths.get("output.pdf");
-    PDDocument doc = new PDDocument();
-    Canvas canvas = new PdfCanvas(PDRectangle.A4, 0.0f);
-    canvas.addMargin(Margin.of(20));
+Path output = Path.of("target", "hello-graphcompose.pdf");
 
-    // 2. Configure Entity Manager and Systems
-    EntityManager entityManager = new EntityManager();
-    PdfRenderingSystemECS renderingSystem = new PdfRenderingSystemECS(doc, canvas);
+try (PdfComposer composer = GraphCompose.pdf(output)
+        .pageSize(PDRectangle.A4)
+        .margin(24, 24, 24, 24)
+        .markdown(true)
+        .create()) {
 
-    entityManager.getSystems().addSystem(new LayoutSystem(canvas, renderingSystem));
-    entityManager.getSystems().addSystem(renderingSystem);
-    
-    // PdfFileManagerSystem automatically saves the document to disk after processing
-    entityManager.getSystems().addSystem(new PdfFileManagerSystem(target, doc));
+    ComponentBuilder cb = composer.componentBuilder();
 
-    // 3. Create content via Builders
-    Entity myButton = new ButtonBuilder(entityManager)
-            .text(new TextBuilder(entityManager).textWithAutoSize("Download"))
-            .fillColor(ComponentColor.ROYAL_BLUE)
-            .margin(Margin.of(10))
-            .anchor(Anchor.center())
+    cb.vContainer(Align.middle(8))
+            .anchor(Anchor.topLeft())
+            .margin(Margin.of(8))
+            .addChild(cb.text()
+                    .textWithAutoSize("Hello GraphCompose")
+                    .textStyle(TextStyle.DEFAULT_STYLE)
+                    .anchor(Anchor.topLeft())
+                    .build())
             .build();
 
-    // 4. Run processing — Layout System calculates everything, 
-    // Rendering System draws, and FileManager saves the file.
-    entityManager.processSystems();
+    composer.build();
 }
 ```
 
-## 🚀 Quick Start
+Generate a PDF in memory with the same builder flow:
 
-1.  **Clone the repository**
-2.  **Build the project:**
+```java
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.loyaut_core.components.ComponentBuilder;
+import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
+import com.demcha.compose.loyaut_core.components.layout.Align;
+import com.demcha.compose.loyaut_core.components.layout.Anchor;
+import com.demcha.compose.loyaut_core.components.style.Margin;
+import com.demcha.compose.loyaut_core.core.PdfComposer;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
-```bash
-mvn clean install
+try (PdfComposer composer = GraphCompose.pdf()
+        .pageSize(PDRectangle.A4)
+        .margin(24, 24, 24, 24)
+        .create()) {
+
+    ComponentBuilder cb = composer.componentBuilder();
+
+    cb.vContainer(Align.middle(8))
+            .anchor(Anchor.topLeft())
+            .margin(Margin.of(8))
+            .addChild(cb.text()
+                    .textWithAutoSize("In-memory PDF")
+                    .textStyle(TextStyle.DEFAULT_STYLE)
+                    .anchor(Anchor.topLeft())
+                    .build())
+            .build();
+
+    byte[] pdfBytes = composer.toBytes();
+}
 ```
 
-3.  **Run the example:** Execute `Main.java` to generate an example `output.pdf`.
+## Template Layer Example
 
-## 📄 License
+The template layer is optional. Use it when you want higher-level CV or cover-letter building blocks while keeping the same `GraphCompose` engine underneath.
+
+```java
+import com.demcha.Templatese.CvTheme;
+import com.demcha.Templatese.TemplateBuilder;
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.loyaut_core.core.PdfComposer;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+
+try (PdfComposer composer = GraphCompose.pdf()
+        .pageSize(PDRectangle.A4)
+        .margin(24, 24, 24, 24)
+        .create()) {
+
+    TemplateBuilder template = TemplateBuilder.from(
+            composer.componentBuilder(),
+            CvTheme.defaultTheme());
+
+    template.moduleBuilder("Profile", composer.canvas())
+            .addChild(template.blockText(
+                    "Analytical engineer focused on reliable platform design.",
+                    composer.canvas().innerWidth()))
+            .build();
+
+    byte[] pdfBytes = composer.toBytes();
+}
+```
+
+## Architecture
+
+```mermaid
+graph TD
+    UserCode["Your code or template"] --> Builders["Component builders"]
+    Builders --> Layout["Layout core"]
+    Layout --> Render["PDF renderer"]
+    Render --> Output["File or byte[] output"]
+```
+
+GraphCompose separates document description from rendering:
+
+- Builders create entities and containers.
+- The layout core calculates positions, margins, and pagination.
+- The renderer writes the final PDF.
+- Templates are a higher-level layer, not a separate rendering engine.
+
+## Build And Test
+
+```bash
+mvn test
+```
+
+Use the quick-start snippets above or the tests under `src/test/java` as executable references. Good starting points are:
+
+- `src/test/java/com/demcha/documentation/DocumentationExamplesTest.java`
+- `src/test/java/com/demcha/Templatese/cv_templates/TemplateCV1RenderTest.java`
+- `src/test/java/com/demcha/pdf_render/CoverLetterTemplateV1Test.java`
+
+## Tech Stack
+
+- Java 21
+- Apache PDFBox 3
+- Flexmark
+- SnakeYAML
+- Lombok
+
+## License
 
 This project is licensed under the MIT License.

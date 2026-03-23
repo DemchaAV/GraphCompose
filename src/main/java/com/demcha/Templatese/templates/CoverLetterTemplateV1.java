@@ -37,7 +37,7 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
      */
     @Override
     public String getTemplateId() {
-        return "";
+        return "cover-letter-v1";
     }
 
     /**
@@ -46,7 +46,7 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
      */
     @Override
     public String getTemplateName() {
-        return "";
+        return "Cover Letter V1";
     }
 
     /**
@@ -54,7 +54,7 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
      */
     @Override
     public String getDescription() {
-        return CoverLetterTemplate.super.getDescription();
+        return "A cover letter template with header details, contact links, and a single-column letter body.";
     }
 
     /**
@@ -69,7 +69,7 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
     public PDDocument render(Header header, String wroteLetter, JobDetails jobDetails) {
         boolean guideLines = false;
         try {
-            PdfComposer composer = createpdfComposer(guideLines);
+            PdfComposer composer = createPdfComposer(guideLines);
             designLetter(header, wroteLetter, jobDetails, composer);
             return composer.toPDDocument();
 
@@ -81,8 +81,7 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
     @Override
     public void render(Header header, String wroteLetter, JobDetails jobDetails, Path path) {
         boolean guideLines = false;
-        try {
-            PdfComposer composer = createpdfComposer(path, guideLines);
+        try (PdfComposer composer = createPdfComposer(path, guideLines)) {
 
             designLetter(header, wroteLetter, jobDetails, composer);
 
@@ -101,7 +100,7 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
         String whitespace = "  ";
         BlockIndentStrategy indentStrategy = BlockIndentStrategy.FIRST_LINE;
 
-        TemplateBuilder cv = composer.componentBuilder().template(CvTheme.defaultTheme());
+        TemplateBuilder cv = TemplateBuilder.from(composer.componentBuilder(), CvTheme.defaultTheme());
 
         float textBlockWidth = (float) composer.canvas().innerWidth();
 
@@ -112,7 +111,7 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
         var kingRegards = composer.componentBuilder()
                 .blockText(Align.left(CvTheme.courier().spacing()), CvTheme.defaultTheme().bodyTextStyle())
                 .size(canvas.innerWidth(), 2)
-                .text(List.of("King regards,", header.getName()), CvTheme.defaultTheme().bodyTextStyle(), Padding.zero(), new Margin(20, 20, 0, 0))
+                .text(List.of("Kind regards,", header.getName()), CvTheme.defaultTheme().bodyTextStyle(), Padding.zero(), new Margin(20, 20, 0, 0))
                 .build();
         kingRegards
                 .addComponent(Anchor.topRight());
@@ -126,7 +125,7 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
                 .build();
     }
 
-    private PdfComposer createpdfComposer(Path path, boolean guideLines) {
+    private PdfComposer createPdfComposer(Path path, boolean guideLines) {
         GraphCompose.PdfBuilder composer;
         if (path != null) {
             composer = GraphCompose.pdf(path);
@@ -142,8 +141,8 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
         return composer.create();
     }
 
-    private PdfComposer createpdfComposer(boolean guideLines) {
-        return createpdfComposer(null, guideLines);
+    private PdfComposer createPdfComposer(boolean guideLines) {
+        return createPdfComposer(null, guideLines);
     }
 
     private Entity createHeader(TemplateBuilder cv, Header header, Canvas canvas) {

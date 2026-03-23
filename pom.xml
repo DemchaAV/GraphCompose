@@ -13,14 +13,13 @@
         <maven.compiler.release>21</maven.compiler.release>
 
         <assertj.version>3.27.3</assertj.version>
-        <bytebuddy.version>1.17.7</bytebuddy.version>
         <flexmark.version>0.64.8</flexmark.version>
+        <jackson.bom.version>2.20.1</jackson.bom.version>
         <junit.bom.version>5.12.2</junit.bom.version>
         <kotlin.version>2.2.20</kotlin.version>
         <logback.version>1.5.18</logback.version>
         <lombok.version>1.18.38</lombok.version>
         <mockito.version>5.20.0</mockito.version>
-        <mockito.inline.version>5.2.0</mockito.inline.version>
         <pdfbox.version>3.0.5</pdfbox.version>
         <slf4j.version>2.0.17</slf4j.version>
         <snakeyaml.version>2.4</snakeyaml.version>
@@ -35,6 +34,13 @@
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
                 <version>${junit.bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson.bom.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -76,31 +82,26 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
-            <version>2.20</version>
         </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>2.20.1</version>
         </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.20.1</version>
         </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
-            <version>2.19.2</version>
         </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-jsonSchema</artifactId>
-            <version>2.20.1</version>
         </dependency>
 
         <dependency>
@@ -197,8 +198,15 @@
                             <version>${lombok.version}</version>
                         </path>
                     </annotationProcessorPaths>
-                    <source>16</source>
-                    <target>16</target>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.surefire.plugin.version}</version>
+                <configuration>
+                    <argLine>-javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar</argLine>
                 </configuration>
             </plugin>
         </plugins>

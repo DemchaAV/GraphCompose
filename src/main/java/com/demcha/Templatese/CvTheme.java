@@ -27,6 +27,10 @@ public record CvTheme(
 
 ) {
 
+    public Margin moduleMargin() {
+        return modulMargin;
+    }
+
     /* --------- READY TextStyle FACTORIES (semantic) --------- */
 
     /** Big name at the top. */
@@ -115,7 +119,12 @@ public record CvTheme(
         );
     }
 
+    @Deprecated(forRemoval = false)
     public static CvTheme timeRoman() {
+        return timesRoman();
+    }
+
+    public static CvTheme timesRoman() {
         return new CvTheme(
                 new Color(44, 62, 80),                      // primary (name)
                 new Color(41, 128, 185),                    // secondary (headers)

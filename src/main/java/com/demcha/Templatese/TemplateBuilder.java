@@ -1,5 +1,6 @@
 package com.demcha.Templatese;
 
+import com.demcha.compose.loyaut_core.components.ComponentBuilder;
 import com.demcha.compose.loyaut_core.components.components_builders.*;
 import com.demcha.compose.loyaut_core.components.containers.abstract_builders.BuildEntity;
 import com.demcha.compose.loyaut_core.components.content.link.LinkUrl;
@@ -16,6 +17,7 @@ import lombok.experimental.Accessors;
 import org.apache.pdfbox.pdmodel.PDPage;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Builder class responsible for constructing CV components.
@@ -33,7 +35,7 @@ public class TemplateBuilder implements BuildEntity {
      */
     public TemplateBuilder(EntityManager entityManager, CvTheme theme) {
         this.entityManager = entityManager;
-        this.theme = theme;
+        this.theme = Objects.requireNonNullElse(theme, CvTheme.courier());
     }
 
     /**
@@ -41,6 +43,14 @@ public class TemplateBuilder implements BuildEntity {
      */
     public TemplateBuilder(EntityManager entityManager) {
         this(entityManager, CvTheme.courier());
+    }
+
+    public static TemplateBuilder from(ComponentBuilder componentBuilder) {
+        return new TemplateBuilder(componentBuilder.entityManager());
+    }
+
+    public static TemplateBuilder from(ComponentBuilder componentBuilder, CvTheme theme) {
+        return new TemplateBuilder(componentBuilder.entityManager(), theme);
     }
 
     // ==========================================

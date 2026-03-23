@@ -23,6 +23,13 @@ class CoverLetterTemplateV1Test {
     private final CoverLetterTemplateV1 template = new CoverLetterTemplateV1();
 
     @Test
+    void shouldExposeTemplateMetadata() {
+        assertThat(template.getTemplateId()).isEqualTo("cover-letter-v1");
+        assertThat(template.getTemplateName()).isEqualTo("Cover Letter V1");
+        assertThat(template.getDescription()).isNotBlank();
+    }
+
+    @Test
     void shouldRenderCoverLetterAsDocument() throws Exception {
         Path outputFile = VISUAL_DIR.resolve("cover_letter_render_document.pdf");
         Files.createDirectories(VISUAL_DIR);

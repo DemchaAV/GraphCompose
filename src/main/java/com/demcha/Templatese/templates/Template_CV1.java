@@ -55,7 +55,7 @@ public class Template_CV1 implements CvTemplate {
             String whitespace = "  ";
             BlockIndentStrategy indentStrategy = BlockIndentStrategy.FROM_SECOND_LINE;
 
-            TemplateBuilder cv = composer.componentBuilder().template(CvTheme.defaultTheme());
+            TemplateBuilder cv = TemplateBuilder.from(composer.componentBuilder(), CvTheme.defaultTheme());
 
             float textBlockWidth = (float) canvas.innerWidth();
 
@@ -115,22 +115,18 @@ public class Template_CV1 implements CvTemplate {
 
         boolean guideLines = false;
 
-        try {
-            // Do NOT use try-with-resources here!
-            // The PDDocument must remain open for the caller to stream/save it.
-            // The caller (StreamingResponseBody) is responsible for closing it.
-            PdfComposer composer = GraphCompose.pdf(path)
+        try (PdfComposer composer = GraphCompose.pdf(path)
                     .pageSize(PDRectangle.A4)
                     .margin(15, 10, 15, 15)
                     .markdown(true)
                     .guideLines(guideLines)
-                    .create();
+                    .create()) {
 
             Canvas canvas = composer.canvas();
             String whitespace = "  ";
             BlockIndentStrategy indentStrategy = BlockIndentStrategy.FROM_SECOND_LINE;
 
-            TemplateBuilder cv = composer.componentBuilder().template(CvTheme.defaultTheme());
+            TemplateBuilder cv = TemplateBuilder.from(composer.componentBuilder(), CvTheme.defaultTheme());
 
             float textBlockWidth = (float) canvas.innerWidth();
 
@@ -178,7 +174,7 @@ public class Template_CV1 implements CvTemplate {
                     .build();
 
             composer.build();
-            log.info("File have been saved in to the path {}", path.toAbsolutePath());
+            log.info("File has been saved to {}", path.toAbsolutePath());
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate CV", e);
@@ -221,7 +217,7 @@ public class Template_CV1 implements CvTemplate {
         return cv.moduleBuilder(title, canvas)
                 .entityName(entityName)
                 .addChild(cv.blockText(content, width, bullet, strategy))
-                .margin(cv.theme().modulMargin())
+                .margin(cv.theme().moduleMargin())
                 .build();
     }
 

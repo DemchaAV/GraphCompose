@@ -1,7 +1,5 @@
 package com.demcha.compose.loyaut_core.components;
 
-import com.demcha.Templatese.CvTheme;
-import com.demcha.Templatese.TemplateBuilder;
 import com.demcha.compose.loyaut_core.components.components_builders.*;
 import com.demcha.compose.loyaut_core.components.containers.abstract_builders.BuildEntity;
 import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
@@ -92,21 +90,14 @@ public class ComponentBuilder {
         return vContainerBuilder;
     }
 
-    public TemplateBuilder template(CvTheme theme) {
-        // TemplateBuilder is a factory for other builders, not an entity builder
-        // itself.
-        // Do NOT add to builders list - it has no entity to build.
-        return new TemplateBuilder(this.entityManager, theme);
-    }
-
-    public TemplateBuilder template() {
-        return template(null);
-    }
-
     public ElementBuilder element() {
         ElementBuilder elementBuilder = new ElementBuilder(this.entityManager);
         builders.add(elementBuilder);
         return elementBuilder;
+    }
+
+    public EntityManager entityManager() {
+        return entityManager;
     }
 
     public void buildsComponents() {

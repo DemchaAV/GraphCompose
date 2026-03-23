@@ -40,7 +40,7 @@ import java.util.*;
  * Top-down DFS layout for ECS-model with a CSS-like box model.
  * </p>
  * <p>
- * Box TemplateBuilder:
+ * Box model:
  * <ul>
  *   <li>OuterBoxSize = content size (inner size, excludes padding/margin)</li>
  *   <li>Placement = final rendered box (content + padding + margin)</li>

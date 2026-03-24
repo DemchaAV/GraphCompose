@@ -12,13 +12,13 @@ import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.Pdf
 import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
 import com.demcha.compose.loyaut_core.system.interfaces.Font;
 import com.demcha.compose.loyaut_core.system.interfaces.guides.GuidesRenderer;
+import com.demcha.compose.loyaut_core.components.style.Padding;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDFont;
-import org.apache.pdfbox.pdmodel.font.PDFontDescriptor;
 
 import java.io.IOException;
 import java.util.EnumSet;
@@ -39,6 +39,8 @@ public class TextComponent implements PdfRender {
         var font = (Font) entityManager.getFonts().getFont(style.fontName(), aClass).orElseThrow();
         double width = font.getTextWidth(style, text.value());
         double height = font.getLineHeight(style);
+        log.debug("Auto-measured single-line text entity {} -> width={} height={} style={}",
+                entity, width, height, style);
         return new ContentSize(width, height);
     }
 
@@ -81,25 +83,27 @@ public class TextComponent implements PdfRender {
             PDFont pdFont = font.fontType(v.style().decoration());
             float fontSize = (float) v.style().size();
             String text = v.textValue().value();
+            Padding padding = e.getComponent(Padding.class).orElse(Padding.zero());
+            PdfFont.VerticalMetrics metrics = resolveVerticalMetrics(font, v.style());
 
-            // ---- compute metrics once
-            float scale = fontSize / 1000f;
-            PDFontDescriptor fd = pdFont.getFontDescriptor();
+            // Placement.x/y describe the bottom-left corner of the content box.
+            // The text itself starts inside that box after applying the entity's own padding.
+            float contentLeftX = (float) position.x();
+            float contentBottomY = (float) position.y();
+            float leftX = contentLeftX + (float) padding.left();
+            float baselineY = contentBottomY
+                    + (float) padding.bottom()
+                    + (float) metrics.baselineOffsetFromBottom();
 
-            float descentPx = Math.abs((fd != null ? fd.getDescent() : pdFont.getBoundingBox().getLowerLeftY()) * scale);
-
-            float topY = (float) position.y();
-            float baselineY = topY + descentPx;
-
-
-            float leftX = (float) position.x();
+            log.debug("Rendering single-line text entity {} -> placement=({}, {}) padding={} baseline=({}, {}) metrics={}",
+                    e, contentLeftX, contentBottomY, padding, leftX, baselineY, metrics);
 
             cs.saveGraphicsState();
             cs.setFont(pdFont, fontSize);
             cs.setNonStrokingColor(v.style().color());
 
             cs.beginText();
-            cs.newLineAtOffset(leftX, baselineY); // << baseline, no extra "different*2"
+            cs.newLineAtOffset(leftX, baselineY);
             cs.showText(text);
             cs.endText();
 
@@ -114,6 +118,13 @@ public class TextComponent implements PdfRender {
 
 
     public record ValidatedTextData(TextStyle style, Text textValue) {
+    }
+
+    private static PdfFont.VerticalMetrics resolveVerticalMetrics(Font<PDFont> font, TextStyle style) {
+        if (font instanceof PdfFont pdfFont) {
+            return pdfFont.verticalMetrics(style);
+        }
+        throw new IllegalStateException("Expected PdfFont for PDF text rendering but got " + font.getClass().getName());
     }
 
 

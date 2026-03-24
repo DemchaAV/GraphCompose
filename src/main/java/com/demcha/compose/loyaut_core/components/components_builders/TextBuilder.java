@@ -9,8 +9,6 @@ import com.demcha.compose.loyaut_core.components.renderable.TextComponent;
 import com.demcha.compose.loyaut_core.components.style.Padding;
 import com.demcha.compose.loyaut_core.core.EntityManager;
 import com.demcha.compose.loyaut_core.exceptions.TextComponentException;
-import com.demcha.compose.loyaut_core.system.implemented_systems.RenderingSystemBase;
-import com.demcha.compose.loyaut_core.system.interfaces.Font;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
@@ -61,15 +59,14 @@ public class TextBuilder extends EmptyBox<TextBuilder> {
     public Entity build() {
         if (entity.hasAssignable(TextComponent.class)) {
             if (autosize) {
-                TextStyle style = entity.getComponent(TextStyle.class).orElse(TextStyle.DEFAULT_STYLE);
-                Text textValue = entity.getComponent(Text.class).orElseThrow(() -> new TextComponentException("TextComponent Component  has not been initialized"));
                 Padding padding = entity.getComponent(Padding.class).orElse(Padding.zero());
-                var renderingSystem = RenderingSystemBase.class.cast(entityManager.getSystems().getStream()
-                        .filter(system -> system instanceof RenderingSystemBase)
-                        .findFirst().orElseThrow());
-                var font = (Font) entityManager().getFonts().getFont(style.fontName(), renderingSystem.fontClazz()).orElseThrow(()->{ return new TextComponentException("Font not found " + entity.printInfo());});
-                double textHeight = font.getTextHeight(style) + padding.vertical();
-                double textWidth = font.getTextWidth(style, textValue.value()) + padding.horizontal();
+                ContentSize measuredText = TextComponent.autoMeasureText(entity, entityManager);
+                double textHeight = measuredText.height() + padding.vertical();
+                double textWidth = measuredText.width() + padding.horizontal();
+
+                log.debug("Autosized single-line text entity {} -> measuredText={} padding={} finalSize=({}, {})",
+                        entity, measuredText, padding, textWidth, textHeight);
+
                 entity.addComponent(new ContentSize(textWidth, textHeight));
             }
             manager().putEntity(entity);

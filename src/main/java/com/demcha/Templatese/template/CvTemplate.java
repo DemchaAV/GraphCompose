@@ -40,13 +40,15 @@ public interface CvTemplate {
 
     /**
      * Renders a PDF document using this template.
-     * 
+     *
      * @param originalCv  The original CV data (contains personal info like phone,
      *                    address).
      * @param rewrittenCv The rewritten CV data (contains optimized content).
      * @return A PDDocument that can be saved or streamed.
      */
     PDDocument render(MainPageCV originalCv, MainPageCvDTO rewrittenCv);
+
+    PDDocument render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, boolean guideLines);
 
     /**
      * Renders a PDF document using this template and saves it to the specified path.
@@ -56,4 +58,6 @@ public interface CvTemplate {
      * @param path        The file path where the generated PDF should be saved.
      */
     void render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, Path path);
+
+    void render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, Path path, boolean guideLines);
 }

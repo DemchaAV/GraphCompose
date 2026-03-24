@@ -57,17 +57,7 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
         return "A cover letter template with header details, contact links, and a single-column letter body.";
     }
 
-    /**
-     * Renders a PDF document using this template.
-     *
-     * @param header
-     * @param wroteLetter
-     * @param jobDetails
-     * @return A PDDocument that can be saved or streamed
-     */
-    @Override
-    public PDDocument render(Header header, String wroteLetter, JobDetails jobDetails) {
-        boolean guideLines = false;
+    public PDDocument render(Header header, String wroteLetter, JobDetails jobDetails, boolean guideLines) {
         try {
             PdfComposer composer = createPdfComposer(guideLines);
             designLetter(header, wroteLetter, jobDetails, composer);
@@ -78,9 +68,21 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
         }
     }
 
+    /**
+     * Renders a PDF document using this template.
+     *
+     * @param header
+     * @param wroteLetter
+     * @param jobDetails
+     * @return A PDDocument that can be saved or streamed
+     */
+
     @Override
-    public void render(Header header, String wroteLetter, JobDetails jobDetails, Path path) {
-        boolean guideLines = false;
+    public PDDocument render(Header header, String wroteLetter, JobDetails jobDetails) {
+        return render(header, wroteLetter, jobDetails, false);
+    }
+
+    public void render(Header header, String wroteLetter, JobDetails jobDetails, Path path, boolean guideLines) {
         try (PdfComposer composer = createPdfComposer(path, guideLines)) {
 
             designLetter(header, wroteLetter, jobDetails, composer);
@@ -91,6 +93,11 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate CV", e);
         }
+    }
+
+    @Override
+    public void render(Header header, String wroteLetter, JobDetails jobDetails, Path path) {
+        render(header, wroteLetter, jobDetails, path, false);
     }
 
     private void designLetter(Header header, String wroteLetter, JobDetails jobDetails, PdfComposer composer) {

@@ -42,6 +42,19 @@ class TemplateCV1RenderTest {
 
         Template_CV1 template = new Template_CV1();
         template.render(original, rewritten, outputFile);
+        System.out.printf("Document saves %s",outputFile.toAbsolutePath());
+
+        assertPdfLooksValid(outputFile);
+    }
+    @Test
+    void shouldRenderTemplateCvDirectlyToFileWithGuideLines() throws Exception {
+        Path outputFile = VISUAL_DIR.resolve("template_cv_1_render_file_with_guide_lines.pdf");
+        Files.createDirectories(VISUAL_DIR);
+        Files.deleteIfExists(outputFile);
+
+        Template_CV1 template = new Template_CV1();
+        template.render(original, rewritten, outputFile,true);
+        System.out.printf("Document saves %s",outputFile.toAbsolutePath());
 
         assertPdfLooksValid(outputFile);
     }

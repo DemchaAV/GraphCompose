@@ -59,6 +59,20 @@ class CoverLetterTemplateV1Test {
         assertPdfLooksValid(outputFile);
     }
 
+    @Test
+    void shouldRenderCoverLetterDirectlyToFileWithGuideLines() throws Exception {
+        Path outputFile = VISUAL_DIR.resolve("cover_letter_render_file_with_guiede_lines.pdf");
+        Files.createDirectories(VISUAL_DIR);
+        Files.deleteIfExists(outputFile);
+
+        Header header = cvMock.getMainPageCV().getHeader();
+        JobDetails jobDetails = testJobDetails();
+
+        template.render(header, letter, jobDetails, outputFile,true);
+
+        assertPdfLooksValid(outputFile);
+    }
+
     private JobDetails testJobDetails() {
         return new JobDetails(
                 "https://linkedin.com/jobs/view/visual-test",

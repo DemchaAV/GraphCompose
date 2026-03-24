@@ -34,11 +34,9 @@ public class Template_CV1 implements CvTemplate {
      * @param rewrittenCv The rewritten CV data (contains optimized content)
      * @return A PDDocument that can be saved or streamed
      */
-    @Override
-    public PDDocument render(MainPageCV originalCv, MainPageCvDTO rewrittenCv) {
+    public PDDocument render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, boolean guideLines) {
         MainPageCV data = rewrittenCv.merge(originalCv);
 
-        boolean guideLines = false;
 
         try {
             // Do NOT use try-with-resources here!
@@ -110,17 +108,20 @@ public class Template_CV1 implements CvTemplate {
     }
 
     @Override
-    public void render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, Path path) {
+    public PDDocument render(MainPageCV originalCv, MainPageCvDTO rewrittenCv) {
+        return render(originalCv, rewrittenCv, false);
+    }
+
+    public void render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, Path path, boolean guideLines) {
         MainPageCV data = rewrittenCv.merge(originalCv);
 
-        boolean guideLines = false;
 
         try (PdfComposer composer = GraphCompose.pdf(path)
-                    .pageSize(PDRectangle.A4)
-                    .margin(15, 10, 15, 15)
-                    .markdown(true)
-                    .guideLines(guideLines)
-                    .create()) {
+                .pageSize(PDRectangle.A4)
+                .margin(15, 10, 15, 15)
+                .markdown(true)
+                .guideLines(guideLines)
+                .create()) {
 
             Canvas canvas = composer.canvas();
             String whitespace = "  ";
@@ -179,6 +180,11 @@ public class Template_CV1 implements CvTemplate {
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate CV", e);
         }
+    }
+
+    @Override
+    public void render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, Path path) {
+        render(originalCv, rewrittenCv, path, false);
     }
 
     private Entity createHeader(TemplateBuilder cv, MainPageCV data, Canvas canvas) {

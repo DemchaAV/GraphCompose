@@ -147,6 +147,15 @@ Bundled Google Fonts:
 - `Gentium Plus`
 - `Tinos`
 - `Cousine`
+- `Fira Sans Condensed`
+- `Kanit`
+- `Volkhov`
+- `Taviraj`
+- `Trirong`
+- `Sarabun`
+- `Prompt`
+- `Andika`
+- `Bai Jamjuree`
 
 Use any bundled family directly via `TextStyle`:
 

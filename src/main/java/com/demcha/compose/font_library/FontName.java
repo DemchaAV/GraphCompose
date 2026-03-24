@@ -47,6 +47,15 @@ public final class FontName {
     public static final FontName GENTIUM_PLUS = of("Gentium Plus");
     public static final FontName TINOS = of("Tinos");
     public static final FontName COUSINE = of("Cousine");
+    public static final FontName FIRA_SANS_CONDENSED = of("Fira Sans Condensed");
+    public static final FontName KANIT = of("Kanit");
+    public static final FontName VOLKHOV = of("Volkhov");
+    public static final FontName TAVIRAJ = of("Taviraj");
+    public static final FontName TRIRONG = of("Trirong");
+    public static final FontName SARABUN = of("Sarabun");
+    public static final FontName PROMPT = of("Prompt");
+    public static final FontName ANDIKA = of("Andika");
+    public static final FontName BAI_JAMJUREE = of("Bai Jamjuree");
 
     private final String name;
     private final String normalizedName;

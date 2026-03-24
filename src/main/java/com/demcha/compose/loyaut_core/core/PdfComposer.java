@@ -1,6 +1,8 @@
 package com.demcha.compose.loyaut_core.core;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.font_library.DefaultFonts;
+import com.demcha.compose.font_library.FontFamilyDefinition;
 import com.demcha.compose.loyaut_core.components.ComponentBuilder;
 import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
 import com.demcha.compose.loyaut_core.components.style.Margin;
@@ -14,6 +16,8 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * PDF implementation of {@link DocumentComposer}.
@@ -66,13 +70,13 @@ public final class PdfComposer implements DocumentComposer {
      * Package-private constructor. Use {@link GraphCompose#pdf(Path)} to create
      * instances.
      */
-    public PdfComposer(Path outputFile, boolean markdown, boolean guideLines, PDRectangle pageSize, Margin margin) {
+    public PdfComposer(Path outputFile, boolean markdown, boolean guideLines, PDRectangle pageSize, Margin margin,
+            Collection<FontFamilyDefinition> customFontFamilies) {
         this.outputFile = outputFile;
 
-        this.entityManager = new EntityManager(markdown);
-        this.entityManager.setGuideLines(guideLines);
-
         this.doc = new PDDocument();
+        this.entityManager = new EntityManager(DefaultFonts.library(doc, customFontFamilies), markdown);
+        this.entityManager.setGuideLines(guideLines);
         this.canvas = new PdfCanvas(pageSize, 0.0f, 0.0f);
 
         if (margin != null) {
@@ -130,6 +134,10 @@ public final class PdfComposer implements DocumentComposer {
      */
     public Canvas canvas() {
         return this.canvas;
+    }
+
+    public List<com.demcha.compose.font_library.FontName> availableFonts() {
+        return List.copyOf(entityManager.getFonts().availableFonts());
     }
 
     @Override

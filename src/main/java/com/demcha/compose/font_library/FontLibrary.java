@@ -4,13 +4,22 @@ import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.Pdf
 import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.PdfFontGetter;
 import com.demcha.compose.loyaut_core.system.interfaces.Font;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class FontLibrary implements PdfFontGetter {
 
-    private final Map<FontName, Map<Class<?>, Font<?>>> fonts = new HashMap<>();
+    private static final Map<FontName, FontName> FONT_ALIASES = Map.ofEntries(
+            Map.entry(FontName.HELVETICA_BOLD, FontName.HELVETICA),
+            Map.entry(FontName.HELVETICA_OBLIQUE, FontName.HELVETICA),
+            Map.entry(FontName.HELVETICA_BOLD_OBLIQUE, FontName.HELVETICA),
+            Map.entry(FontName.TIMES_BOLD, FontName.TIMES_ROMAN),
+            Map.entry(FontName.TIMES_ITALIC, FontName.TIMES_ROMAN),
+            Map.entry(FontName.TIMES_BOLD_ITALIC, FontName.TIMES_ROMAN),
+            Map.entry(FontName.COURIER_BOLD, FontName.COURIER),
+            Map.entry(FontName.COURIER_OBLIQUE, FontName.COURIER),
+            Map.entry(FontName.COURIER_BOLD_OBLIQUE, FontName.COURIER));
+
+    private final Map<FontName, Map<Class<?>, Font<?>>> fonts = new LinkedHashMap<>();
 
     /**
      * Получаем конкретный тип шрифта: PdfFont, WordFont и т.д.
@@ -35,12 +44,7 @@ public class FontLibrary implements PdfFontGetter {
         if (fontName == null || FontName.DEFAULT.equals(fontName)) {
             return FontName.HELVETICA;
         }
-        return switch (fontName) {
-            case HELVETICA, HELVETICA_BOLD, HELVETICA_OBLIQUE, HELVETICA_BOLD_OBLIQUE -> FontName.HELVETICA;
-            case TIMES_ROMAN, TIMES_BOLD, TIMES_ITALIC, TIMES_BOLD_ITALIC -> FontName.TIMES_ROMAN;
-            case COURIER, COURIER_BOLD, COURIER_OBLIQUE, COURIER_BOLD_OBLIQUE -> FontName.COURIER;
-            default -> fontName;
-        };
+        return FONT_ALIASES.getOrDefault(fontName, fontName);
     }
 
     /**
@@ -67,6 +71,10 @@ public class FontLibrary implements PdfFontGetter {
     @SuppressWarnings("unchecked")
     public <F extends Font<?>> void addFont(FontSet set) {
         addFont(set.name(), (Class<F>) set.font().getClass(), (F) set.font());
+    }
+
+    public Set<FontName> availableFonts() {
+        return Collections.unmodifiableSet(new LinkedHashSet<>(fonts.keySet()));
     }
 
     /**

@@ -3,6 +3,7 @@ package com.demcha.documentation;
 import com.demcha.Templatese.CvTheme;
 import com.demcha.Templatese.TemplateBuilder;
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.font_library.FontName;
 import com.demcha.compose.loyaut_core.components.ComponentBuilder;
 import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
 import com.demcha.compose.loyaut_core.components.layout.Align;
@@ -104,6 +105,17 @@ class DocumentationExamplesTest {
         }
 
         assertPdfBytesLookValid(pdfBytes, tempDir.resolve("template-builder-bytes.pdf"));
+    }
+
+    @Test
+    void shouldRenderAvailableFontsPreviewExample() throws Exception {
+        Path outputFile = tempDir.resolve("available-fonts-preview.pdf");
+
+        GraphCompose.renderAvailableFontsPreview(outputFile);
+
+        assertThat(GraphCompose.availableFonts())
+                .contains(FontName.HELVETICA, FontName.LATO, FontName.SPECTRAL);
+        assertPdfFileLooksValid(outputFile);
     }
 
     private void assertPdfBytesLookValid(byte[] pdfBytes, Path outputFile) throws Exception {

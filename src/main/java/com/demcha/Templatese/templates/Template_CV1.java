@@ -25,6 +25,15 @@ import java.util.List;
 
 @Slf4j
 public class Template_CV1 implements CvTemplate {
+    private final CvTheme theme;
+
+    public Template_CV1() {
+        this(CvTheme.defaultTheme());
+    }
+
+    public Template_CV1(CvTheme theme) {
+        this.theme = theme == null ? CvTheme.defaultTheme() : theme;
+    }
 
     /**
      * Renders a PDF document using this template.
@@ -55,7 +64,7 @@ public class Template_CV1 implements CvTemplate {
             String whitespace = "  ";
             BlockIndentStrategy indentStrategy = BlockIndentStrategy.FROM_SECOND_LINE;
 
-            TemplateBuilder cv = TemplateBuilder.from(composer.componentBuilder(), CvTheme.defaultTheme());
+            TemplateBuilder cv = TemplateBuilder.from(composer.componentBuilder(), theme);
 
             float textBlockWidth = (float) canvas.innerWidth();
 
@@ -130,7 +139,7 @@ public class Template_CV1 implements CvTemplate {
             String whitespace = "  ";
             BlockIndentStrategy indentStrategy = BlockIndentStrategy.FROM_SECOND_LINE;
 
-            TemplateBuilder cv = TemplateBuilder.from(composer.componentBuilder(), CvTheme.defaultTheme());
+            TemplateBuilder cv = TemplateBuilder.from(composer.componentBuilder(), theme);
 
             float textBlockWidth = (float) canvas.innerWidth();
 

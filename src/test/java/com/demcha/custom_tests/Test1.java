@@ -6,6 +6,7 @@ import com.demcha.compose.loyaut_core.components.layout.Anchor;
 import com.demcha.compose.loyaut_core.components.style.Margin;
 import com.demcha.compose.loyaut_core.components.style.Padding;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -13,6 +14,8 @@ import java.nio.file.Path;
 
 public class Test1 {
     private final String pathOut = "C:\\Users\\Demch\\OneDrive\\Java\\PDF_CV_CREATOR\\target\\visual-tests";
+
+    @Disabled("Manual visual repro for single-line text alignment; writes to a fixed output path.")
     @Test
     void testComposeBuilder() {
 
@@ -30,7 +33,7 @@ public class Test1 {
                     .margin(Margin.of(5))
                     .padding(Padding.of(5))
                     .textStyle(TextStyle.DEFAULT_STYLE)
-                    .anchor(Anchor.topLeft())
+                    .anchor(Anchor.bottomRight())
                     .build();
 
             composer.build();

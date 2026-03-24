@@ -43,11 +43,27 @@ public class PdfFont extends FontBase<PDFont> {
         return new TextStyle(style.fontName(), newSize, style.decoration(), style.color());
     }
 
+    public VerticalMetrics verticalMetrics(TextStyle style) {
+        PDFont pdfFont = fontType(style.decoration());
+        PDFontDescriptor descriptor = pdfFont.getFontDescriptor();
+        BoundingBox boundingBox = boundingBox(pdfFont);
+
+        double ascent = (descriptor != null ? descriptor.getAscent() : boundingBox.getUpperRightY()) * scale(style.size());
+        double descent = Math.abs((descriptor != null ? descriptor.getDescent() : boundingBox.getLowerLeftY()) * scale(style.size()));
+        double leading = (descriptor != null ? descriptor.getLeading() : 0) * scale(style.size());
+        double lineHeight = ascent + descent + leading;
+
+        VerticalMetrics metrics = new VerticalMetrics(ascent, descent, leading, lineHeight);
+        log.debug("Resolved PDF vertical metrics for font={} size={}: {}",
+                pdfFont.getName(), style.size(), metrics);
+        return metrics;
+    }
+
     public double getTextHeight(TextStyle style) {
         double size = style.size();
         try {
             float v = fontType(style.decoration()).getBoundingBox().getHeight() / 1000 * (float) size;
-            log.debug("getTextHeight with default font:  ");
+            log.debug("Measured PDF text bounding-box height: {}", v);
             return v;
         } catch (IOException e) {
             e.printStackTrace();
@@ -131,18 +147,7 @@ public class PdfFont extends FontBase<PDFont> {
      * Uses ascent, descent (usually negative), and optional leading if present.
      */
     public double getLineHeight(TextStyle style) {
-        PDFontDescriptor fd = defaultFont().getFontDescriptor();
-        BoundingBox boundingBox = null;
-        try {
-            boundingBox = defaultFont().getBoundingBox();
-        } catch (IOException e) {
-            log.error("Error while getting text height with default font {}", e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
-        float ascent = (fd != null ? fd.getAscent() : boundingBox.getUpperRightY());
-        float descent = (fd != null ? fd.getDescent() : boundingBox.getLowerLeftY()); // often negative
-        float leading = (fd != null ? fd.getLeading() : 0);
-        return (ascent - descent + leading) * scale(style.size());
+        return verticalMetrics(style).lineHeight();
     }
 
 
@@ -182,6 +187,21 @@ public class PdfFont extends FontBase<PDFont> {
         var contentSize = new ContentSize(bounds2D.getWidth(), bounds2D.getHeight());
 
         return contentSize; // width/height in user units; y is relative to baseline
+    }
+
+    private BoundingBox boundingBox(PDFont pdfFont) {
+        try {
+            return pdfFont.getBoundingBox();
+        } catch (IOException e) {
+            log.error("Error while getting bounding box for font {}", pdfFont, e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    public record VerticalMetrics(double ascent, double descent, double leading, double lineHeight) {
+        public double baselineOffsetFromBottom() {
+            return descent;
+        }
     }
 
 }

@@ -1,10 +1,17 @@
 package com.demcha.compose;
 
+import com.demcha.compose.font_library.FontFamilyDefinition;
+import com.demcha.compose.font_library.FontName;
+import com.demcha.compose.font_library.FontShowcase;
+import com.demcha.compose.font_library.DefaultFonts;
 import com.demcha.compose.loyaut_core.components.style.Margin;
 import com.demcha.compose.loyaut_core.core.PdfComposer;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -96,6 +103,27 @@ public final class GraphCompose {
         return new PdfBuilder(null);
     }
 
+    /**
+     * Returns bundled font families available out of the box.
+     */
+    public static List<FontName> availableFonts() {
+        return DefaultFonts.bundledFontNames();
+    }
+
+    /**
+     * Generates a PDF preview that shows all bundled font families.
+     */
+    public static void renderAvailableFontsPreview(Path outputFile) throws Exception {
+        FontShowcase.renderAvailableFontsPreview(outputFile);
+    }
+
+    /**
+     * Generates a PDF preview as bytes that shows all bundled font families.
+     */
+    public static byte[] renderAvailableFontsPreview() throws Exception {
+        return FontShowcase.renderAvailableFontsPreview();
+    }
+
     // ===== Word Factory (placeholder for future) =====
 
     // public static WordBuilder word(Path outputFile) {
@@ -113,6 +141,7 @@ public final class GraphCompose {
         private Margin margin = null;
         private boolean markdown = true;
         private boolean guideLines = false;
+        private final List<FontFamilyDefinition> customFontFamilies = new ArrayList<>();
 
         private PdfBuilder(Path outputFile) {
             this.outputFile = outputFile;
@@ -178,12 +207,70 @@ public final class GraphCompose {
         }
 
         /**
+         * Registers a custom font family so it is available to the current PDF
+         * document and future backends reusing the shared font catalog.
+         */
+        public PdfBuilder registerFontFamily(FontFamilyDefinition definition) {
+            this.customFontFamilies.add(Objects.requireNonNull(definition, "definition"));
+            return this;
+        }
+
+        /**
+         * Registers a custom font family from local TTF/OTF files.
+         */
+        public PdfBuilder registerFontFamily(FontName familyName, Path regular) {
+            return registerFontFamily(FontFamilyDefinition.files(familyName, regular).build());
+        }
+
+        /**
+         * Registers a custom font family from local TTF/OTF files.
+         */
+        public PdfBuilder registerFontFamily(String familyName, Path regular) {
+            return registerFontFamily(FontName.of(familyName), regular);
+        }
+
+        /**
+         * Registers a custom font family from local TTF/OTF files.
+         */
+        public PdfBuilder registerFontFamily(FontName familyName, Path regular, Path bold, Path italic) {
+            return registerFontFamily(FontFamilyDefinition.files(familyName, regular)
+                    .boldPath(bold)
+                    .italicPath(italic)
+                    .build());
+        }
+
+        /**
+         * Registers a custom font family from local TTF/OTF files.
+         */
+        public PdfBuilder registerFontFamily(String familyName, Path regular, Path bold, Path italic) {
+            return registerFontFamily(FontName.of(familyName), regular, bold, italic);
+        }
+
+        /**
+         * Registers a custom font family from local TTF/OTF files.
+         */
+        public PdfBuilder registerFontFamily(FontName familyName, Path regular, Path bold, Path italic, Path boldItalic) {
+            return registerFontFamily(FontFamilyDefinition.files(familyName, regular)
+                    .boldPath(bold)
+                    .italicPath(italic)
+                    .boldItalicPath(boldItalic)
+                    .build());
+        }
+
+        /**
+         * Registers a custom font family from local TTF/OTF files.
+         */
+        public PdfBuilder registerFontFamily(String familyName, Path regular, Path bold, Path italic, Path boldItalic) {
+            return registerFontFamily(FontName.of(familyName), regular, bold, italic, boldItalic);
+        }
+
+        /**
          * Creates the configured PDF composer.
          *
          * @return A new {@link PdfComposer} instance ready for use.
          */
         public PdfComposer create() {
-            return new PdfComposer(outputFile, markdown, guideLines, pageSize, margin);
+            return new PdfComposer(outputFile, markdown, guideLines, pageSize, margin, List.copyOf(customFontFamilies));
         }
     }
 }

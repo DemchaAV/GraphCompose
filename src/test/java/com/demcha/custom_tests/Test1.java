@@ -1,6 +1,7 @@
 package com.demcha.custom_tests;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.font_library.FontName;
 import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
 import com.demcha.compose.loyaut_core.components.core.Entity;
 import com.demcha.compose.loyaut_core.components.layout.Align;
@@ -11,6 +12,7 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -34,7 +36,11 @@ public class Test1 {
                     .textWithAutoSize("In-memory PDF")
                     .margin(Margin.of(5))
                     .padding(Padding.of(5))
-                    .textStyle(TextStyle.DEFAULT_STYLE)
+                    .textStyle(TextStyle.builder()
+                            .fontName(FontName.GENTIUM_PLUS)
+                            .color(Color.BLACK)
+                            .size(15)
+                            .build())
                     .anchor(Anchor.center())
                     .build();
             composer.build();

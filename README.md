@@ -121,6 +121,79 @@ try (PdfComposer composer = GraphCompose.pdf()
 }
 ```
 
+## Fonts
+
+The PDF builder now ships with the core PDF Standard 14 families plus a bundled Google Fonts preset so templates can use a richer catalog out of the box.
+
+Bundled Google Fonts:
+
+- `Lato`
+- `PT Sans`
+- `PT Serif`
+- `Fira Sans`
+- `Ubuntu`
+- `Alegreya Sans`
+- `Carlito`
+- `Poppins`
+- `Barlow`
+- `Barlow Condensed`
+- `Asap Condensed`
+- `Arsenal`
+- `IBM Plex Serif`
+- `IBM Plex Mono`
+- `Crimson Text`
+- `Spectral`
+- `Zilla Slab`
+- `Gentium Plus`
+- `Tinos`
+- `Cousine`
+
+Use any bundled family directly via `TextStyle`:
+
+```java
+import com.demcha.compose.font_library.FontName;
+import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
+
+TextStyle heading = TextStyle.builder()
+        .fontName(FontName.POPPINS)
+        .size(18)
+        .build();
+```
+
+List the bundled families and generate a preview PDF with all of them:
+
+```java
+import com.demcha.compose.GraphCompose;
+
+System.out.println(GraphCompose.availableFonts());
+GraphCompose.renderAvailableFontsPreview(Path.of("target", "available-fonts-preview.pdf"));
+```
+
+The generated PDF shows every bundled family with regular, bold, italic, and bold-italic sample lines so you can compare them visually.
+
+Register your own family from local font files before calling `create()`:
+
+```java
+import com.demcha.compose.font_library.FontName;
+
+try (PdfComposer composer = GraphCompose.pdf(Path.of("target", "custom-fonts.pdf"))
+        .registerFontFamily(
+                "Brand Sans",
+                Path.of("fonts", "BrandSans-Regular.ttf"),
+                Path.of("fonts", "BrandSans-Bold.ttf"),
+                Path.of("fonts", "BrandSans-Italic.ttf"),
+                Path.of("fonts", "BrandSans-BoldItalic.ttf"))
+        .create()) {
+
+    TextStyle brandStyle = TextStyle.builder()
+            .fontName(FontName.of("Brand Sans"))
+            .size(12)
+            .build();
+}
+```
+
+If you have only a regular file right now, `registerFontFamily(name, regularPath)` is also supported and the remaining styles fall back to the regular face until you add dedicated variants.
+
 ## Architecture
 
 ```mermaid
@@ -161,3 +234,5 @@ Use the quick-start snippets above or the tests under `src/test/java` as executa
 ## License
 
 This project is licensed under the MIT License.
+
+Bundled Google Fonts remain under their respective upstream licenses. See the license file inside each folder under `src/main/resources/fonts/google`.

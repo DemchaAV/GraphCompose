@@ -4,23 +4,41 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @Slf4j
 public class Pdf_FontLoader {
-    public static PDType0Font loadFont(String path) {
-        try (PDDocument doc = new PDDocument()) {
-            var page = new org.apache.pdfbox.pdmodel.PDPage();
-            doc.addPage(page);
 
-            // Подключаем шрифт из файла
-            var font = PDType0Font.load(doc, new File(path));
+    private Pdf_FontLoader() {
+    }
 
-            return font;
+    public static PDType0Font loadFont(PDDocument document, Path path) {
+        try (InputStream inputStream = Files.newInputStream(path)) {
+            return loadFont(document, inputStream, path.toAbsolutePath().toString());
         } catch (IOException e) {
-            log.error(e.getMessage(), path);
+            log.error("Unable to load font from path {}", path, e);
             throw new RuntimeException(e);
         }
+    }
+
+    public static PDType0Font loadFont(PDDocument document, InputStream inputStream, String sourceDescription) {
+        try (InputStream closableStream = inputStream) {
+            return PDType0Font.load(document, closableStream, true);
+        } catch (IOException e) {
+            log.error("Unable to load font from {}", sourceDescription, e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * @deprecated PDFBox fonts must be loaded into a concrete {@link PDDocument}.
+     */
+    @Deprecated(forRemoval = false)
+    public static PDType0Font loadFont(String path) {
+        throw new UnsupportedOperationException(
+                "Use loadFont(PDDocument, Path) or loadFont(PDDocument, InputStream, String) instead");
     }
 }

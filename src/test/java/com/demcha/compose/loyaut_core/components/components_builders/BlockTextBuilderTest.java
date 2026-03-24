@@ -88,15 +88,15 @@ class BlockTextBuilderTest {
                 // But we can check if we have at least some bold text.
                 boolean hasBold = blockTextData.lines().stream()
                                 .flatMap(line -> line.bodies().stream())
-                                .anyMatch(body -> body.textStyle().fontName().name().toLowerCase().contains("bold"));
+                                .anyMatch(body -> body.textStyle().decoration() == TextDecoration.BOLD
+                                                || body.textStyle().decoration() == TextDecoration.BOLD_ITALIC);
 
                 assertTrue(hasBold, "Should contain bold text segments");
 
                 boolean hasItalic = blockTextData.lines().stream()
                                 .flatMap(line -> line.bodies().stream())
-                                .anyMatch(body -> body.textStyle().fontName().name().toLowerCase().contains("oblique")
-                                                ||
-                                                body.textStyle().fontName().name().toLowerCase().contains("italic"));
+                                .anyMatch(body -> body.textStyle().decoration() == TextDecoration.ITALIC
+                                                || body.textStyle().decoration() == TextDecoration.BOLD_ITALIC);
 
                 assertTrue(hasItalic, "Should contain italic text segments");
         }

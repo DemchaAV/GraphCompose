@@ -83,7 +83,7 @@ public class EntityManager {
     }
 
     public EntityManager(@NonNull List<SystemECS> systems) {
-        this(systems, DefaultFonts.library(), true);
+        this(systems, DefaultFonts.standardLibrary(), true);
     }
 
     public EntityManager(@NonNull List<SystemECS> systems, FontLibrary fonts, boolean markdown) {
@@ -98,7 +98,11 @@ public class EntityManager {
     }
 
     public EntityManager(boolean markdown) {
-        this(new ArrayList<>(), DefaultFonts.library(), markdown);
+        this(new ArrayList<>(), DefaultFonts.standardLibrary(), markdown);
+    }
+
+    public EntityManager(FontLibrary fonts, boolean markdown) {
+        this(new ArrayList<>(), fonts, markdown);
     }
 
 

@@ -20,7 +20,6 @@ public final class TextSanitizer {
             Map.entry(0x201D, "\""),   // ”
             Map.entry(0x2026, "..."),  // … ellipsis
             Map.entry(0x00A0, " ")    // NBSP
-//            Map.entry(0x000A, " - ")   // \n (LF) newline
     );
 
     private TextSanitizer() {}

@@ -31,9 +31,11 @@ public class Template_CV1 implements CvTemplate {
      *
      * @param originalCv  The original CV data (contains personal info like phone,
      *                    address)
+     * @param guideLines on or off guide lines on rendering document
      * @param rewrittenCv The rewritten CV data (contains optimized content)
      * @return A PDDocument that can be saved or streamed
      */
+    @Override
     public PDDocument render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, boolean guideLines) {
         MainPageCV data = rewrittenCv.merge(originalCv);
 
@@ -112,6 +114,7 @@ public class Template_CV1 implements CvTemplate {
         return render(originalCv, rewrittenCv, false);
     }
 
+    @Override
     public void render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, Path path, boolean guideLines) {
         MainPageCV data = rewrittenCv.merge(originalCv);
 

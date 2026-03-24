@@ -15,8 +15,10 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.nio.file.Files;
+import java.nio.file.FileSystemException;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.UUID;
 import java.util.stream.Stream;
 import java.util.regex.Pattern;
 
@@ -31,9 +33,7 @@ class TemplateCV1RenderTest {
 
     @Test
     void shouldRenderTemplateCvAsDocument() throws Exception {
-        Path outputFile = VISUAL_DIR.resolve("template_cv_1_render_document.pdf");
-        Files.createDirectories(VISUAL_DIR);
-        Files.deleteIfExists(outputFile);
+        Path outputFile = prepareOutputFile("template_cv_1_render_document");
 
         Template_CV1 template = new Template_CV1();
 
@@ -46,9 +46,7 @@ class TemplateCV1RenderTest {
 
     @Test
     void shouldRenderTemplateCvDirectlyToFile() throws Exception {
-        Path outputFile = VISUAL_DIR.resolve("template_cv_1_render_file.pdf");
-        Files.createDirectories(VISUAL_DIR);
-        Files.deleteIfExists(outputFile);
+        Path outputFile = prepareOutputFile("template_cv_1_render_file");
 
         Template_CV1 template = new Template_CV1();
         template.render(original, rewritten, outputFile);
@@ -58,9 +56,7 @@ class TemplateCV1RenderTest {
     }
     @Test
     void shouldRenderTemplateCvDirectlyToFileWithGuideLines() throws Exception {
-        Path outputFile = VISUAL_DIR.resolve("template_cv_1_render_file_with_guide_lines.pdf");
-        Files.createDirectories(VISUAL_DIR);
-        Files.deleteIfExists(outputFile);
+        Path outputFile = prepareOutputFile("template_cv_1_render_file_with_guide_lines");
 
         Template_CV1 template = new Template_CV1();
         template.render(original, rewritten, outputFile,true);
@@ -76,9 +72,7 @@ class TemplateCV1RenderTest {
                 .toLowerCase(Locale.ROOT)
                 .replace(' ', '_')
                 .replace('-', '_');
-        Path outputFile = VISUAL_DIR.resolve("template_cv_1_render_" + slug + ".pdf");
-        Files.createDirectories(VISUAL_DIR);
-        Files.deleteIfExists(outputFile);
+        Path outputFile = prepareOutputFile("template_cv_1_render_" + slug);
 
         Template_CV1 template = new Template_CV1(themeWith(fontName));
 
@@ -128,6 +122,17 @@ class TemplateCV1RenderTest {
         return NON_ALPHANUMERIC.matcher(value.toLowerCase(Locale.ROOT)).replaceAll("");
     }
 
+    private static Path prepareOutputFile(String baseName) throws Exception {
+        Files.createDirectories(VISUAL_DIR);
+        Path outputFile = VISUAL_DIR.resolve(baseName + ".pdf");
+        try {
+            Files.deleteIfExists(outputFile);
+            return outputFile;
+        } catch (FileSystemException ignored) {
+            return VISUAL_DIR.resolve(baseName + "_" + UUID.randomUUID() + ".pdf");
+        }
+    }
+
     private static CvTheme themeWith(FontName fontName) {
         CvTheme base = CvTheme.defaultTheme();
         return new CvTheme(
@@ -153,6 +158,9 @@ class TemplateCV1RenderTest {
                 Arguments.of(FontName.PT_SERIF, "PT Serif"),
                 Arguments.of(FontName.POPPINS, "Poppins"),
                 Arguments.of(FontName.IBM_PLEX_SERIF, "IBMPlexSerif"),
-                Arguments.of(FontName.SPECTRAL, "Spectral"));
+                Arguments.of(FontName.SPECTRAL, "Spectral"),
+                Arguments.of(FontName.KANIT, "Kanit"),
+                Arguments.of(FontName.VOLKHOV, "Volkhov"),
+                Arguments.of(FontName.ANDIKA, "Andika"));
     }
 }

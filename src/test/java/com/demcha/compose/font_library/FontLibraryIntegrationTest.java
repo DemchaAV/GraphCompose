@@ -18,9 +18,12 @@ class FontLibraryIntegrationTest {
             FontLibrary fonts = composer.entityManager().getFonts();
 
             assertThat(fonts.availableFonts())
-                    .contains(FontName.HELVETICA, FontName.LATO, FontName.IBM_PLEX_SERIF, FontName.ZILLA_SLAB);
+                    .contains(FontName.HELVETICA, FontName.LATO, FontName.IBM_PLEX_SERIF, FontName.ZILLA_SLAB,
+                            FontName.KANIT, FontName.VOLKHOV, FontName.ANDIKA);
             assertThat(fonts.getFont(FontName.LATO, PdfFont.class)).isPresent();
             assertThat(fonts.getFont(FontName.LATO, WordFont.class)).isPresent();
+            assertThat(fonts.getFont(FontName.KANIT, PdfFont.class)).isPresent();
+            assertThat(fonts.getFont(FontName.KANIT, WordFont.class)).isPresent();
         }
     }
 

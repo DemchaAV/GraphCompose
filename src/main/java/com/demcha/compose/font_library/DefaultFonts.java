@@ -49,7 +49,16 @@ public class DefaultFonts {
             google(FontName.ZILLA_SLAB, "zillaslab", "ZillaSlab"),
             google(FontName.GENTIUM_PLUS, "gentiumplus", "GentiumPlus"),
             google(FontName.TINOS, "tinos", "Tinos"),
-            google(FontName.COUSINE, "cousine", "Cousine"));
+            google(FontName.COUSINE, "cousine", "Cousine"),
+            google(FontName.FIRA_SANS_CONDENSED, "firasanscondensed", "FiraSansCondensed"),
+            google(FontName.KANIT, "kanit", "Kanit"),
+            google(FontName.VOLKHOV, "volkhov", "Volkhov"),
+            google(FontName.TAVIRAJ, "taviraj", "Taviraj"),
+            google(FontName.TRIRONG, "trirong", "Trirong"),
+            google(FontName.SARABUN, "sarabun", "Sarabun"),
+            google(FontName.PROMPT, "prompt", "Prompt"),
+            google(FontName.ANDIKA, "andika", "Andika"),
+            google(FontName.BAI_JAMJUREE, "baijamjuree", "BaiJamjuree"));
 
     private DefaultFonts() {
     }

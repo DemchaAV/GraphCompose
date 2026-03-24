@@ -2,6 +2,8 @@ package com.demcha.custom_tests;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
+import com.demcha.compose.loyaut_core.components.core.Entity;
+import com.demcha.compose.loyaut_core.components.layout.Align;
 import com.demcha.compose.loyaut_core.components.layout.Anchor;
 import com.demcha.compose.loyaut_core.components.style.Margin;
 import com.demcha.compose.loyaut_core.components.style.Padding;
@@ -27,14 +29,59 @@ public class Test1 {
                 .guideLines(true)
                 .create()) {
 
-            composer.componentBuilder()
+          composer.componentBuilder()
                     .text()
                     .textWithAutoSize("In-memory PDF")
                     .margin(Margin.of(5))
                     .padding(Padding.of(5))
                     .textStyle(TextStyle.DEFAULT_STYLE)
-                    .anchor(Anchor.bottomRight())
+                    .anchor(Anchor.center())
                     .build();
+            composer.build();
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    @Disabled("Manual visual repro for vBlock text alignment; writes to a fixed output path.")
+    @Test
+    void testComposeBuilderVBlock() {
+
+        var path = Path.of(pathOut, "test1_vblock.pdf");
+
+
+        try (var composer = GraphCompose.pdf(path)
+                .pageSize(PDRectangle.A4)
+                .guideLines(true)
+                .create()) {
+
+            Entity e1 = composer.componentBuilder()
+                    .text()
+                    .textWithAutoSize("In-memory PDF")
+                    .margin(Margin.of(5))
+                    .padding(Padding.of(5))
+                    .textStyle(TextStyle.DEFAULT_STYLE)
+                    .anchor(Anchor.center())
+                    .build();
+            Entity e2 = composer.componentBuilder()
+                    .text()
+                    .textWithAutoSize("Next line")
+                    .margin(Margin.of(5))
+                    .padding(Padding.of(5))
+                    .textStyle(TextStyle.DEFAULT_STYLE)
+                    .anchor(Anchor.center())
+                    .build();
+            composer.componentBuilder().vContainer(Align.middle(5))
+                    .anchor(Anchor.topCenter())
+                    .margin(Margin.of(5))
+                    .addChild(e1)
+                    .addChild(e2)
+                    .build();
+
 
             composer.build();
 

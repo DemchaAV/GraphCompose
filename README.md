@@ -150,9 +150,9 @@ graph TD
     DOCX["<i>DOCX</i><br/>(Planned)"]
     PPTX["<i>PPTX</i><br/>(Planned)"]
 
-    %% Flow
-    UserCode -->|Declarative Entity Tree| LayoutSystem
-    LayoutSystem -->|O(N) single-pass traversal| Instructions
+    %% Flow with quotes to avoid parsing errors
+    UserCode -->|"Declarative Entity Tree"| LayoutSystem
+    LayoutSystem -->|"O(N) single-pass traversal"| Instructions
     Instructions --> RenderingSystem
 
     RenderingSystem --> PDF

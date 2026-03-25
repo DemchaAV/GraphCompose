@@ -141,9 +141,9 @@ graph TD
     UserCode["YOUR APPLICATION CODE<br/>(Builder API / document tree)"]
 
     subgraph Core["GraphCompose Pipeline"]
-        LayoutSystem["LAYOUT CORE<br/>LayoutSystem<br/>alignments, margins, bounds"]
-        Instructions["RESOLVED GEOMETRY<br/>WHAT / WHERE / ORDER"]
-        RenderingSystem["RENDERING SYSTEM<br/>geometry -> draw calls"]
+        LayoutSystem["Layout Core"]
+        Instructions["Resolved Geometry<br/>WHAT / WHERE / ORDER"]
+        RenderingSystem["Rendering System<br/>geometry -> draw calls"]
     end
 
     PDF["PDF<br/>(Ready)"]
@@ -158,8 +158,7 @@ graph TD
     RenderingSystem -.-> DOCX
     RenderingSystem -.-> PPTX
 
-    classDef default stroke:#6e7781,stroke-width:1.5px,color:#24292f;
-    classDef planned stroke:#6e7781,stroke-width:1.5px,stroke-dasharray: 5 5;
+    classDef planned stroke-dasharray: 5 5;
     class DOCX,PPTX planned;
 ```
 ### Project modules

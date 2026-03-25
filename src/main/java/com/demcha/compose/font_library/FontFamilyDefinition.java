@@ -37,12 +37,14 @@ public final class FontFamilyDefinition {
     }
 
     public void register(FontLibrary library, PDDocument document) {
-        try {
-            library.addFont(name, pdfFontFactory.create(document));
-            library.addFont(name, new WordFont(wordFamily));
-        } catch (IOException e) {
-            throw new IllegalStateException("Unable to register font family " + name, e);
-        }
+        library.addFontFactory(name, PdfFont.class, () -> {
+            try {
+                return pdfFontFactory.create(document);
+            } catch (IOException e) {
+                throw new IllegalStateException("Unable to register pdf font family " + name, e);
+            }
+        });
+        library.addFontFactory(name, WordFont.class, () -> new WordFont(wordFamily));
     }
 
     public static FontFamilyDefinition standard14(FontName name,

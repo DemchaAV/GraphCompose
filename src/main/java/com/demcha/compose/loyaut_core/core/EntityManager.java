@@ -19,23 +19,28 @@ import java.util.stream.Collectors;
 /**
  * # EntityManager
  * <p>
- * A minimal ECS-style (Entity–Component–SystemECS) registry for your PDF domain.
+ * A minimal ECS-style (Entity–Component–SystemECS) registry for your PDF
+ * domain.
  * <p>
  * - **Entities** are identified by {@link UUID}.<br>
- * - **Components** are plain data objects keyed by their concrete {@link Class}.<br>
- * - **Systems** implement domain logic via {@link SystemECS#process(EntityManager)} and
+ * - **Components** are plain data objects keyed by their concrete
+ * {@link Class}.<br>
+ * - **Systems** implement domain logic via
+ * {@link SystemECS#process(EntityManager)} and
  * operate on entities/components stored here.
  * </p>
  *
  * <h2>Key characteristics</h2>
  * <ul>
- *   <li>Not thread-safe — confine to a single thread or add external synchronization.</li>
- *   <li>Component lookup is O(1) by class per entity.</li>
- *   <li>{@link #getEntitiesWithComponent(Class)} is O(N) over all entities.</li>
- *   <li>Logging via SLF4J for traceability.</li>
+ * <li>Not thread-safe — confine to a single thread or add external
+ * synchronization.</li>
+ * <li>Component lookup is O(1) by class per entity.</li>
+ * <li>{@link #getEntitiesWithComponent(Class)} is O(N) over all entities.</li>
+ * <li>Logging via SLF4J for traceability.</li>
  * </ul>
  *
  * <h2>Typical usage</h2>
+ * 
  * <pre>{@code
  * EntityManager doc = new EntityManager();
  * UUID e = doc.createEntity();
@@ -50,20 +55,25 @@ import java.util.stream.Collectors;
  *
  * <h2>Gotchas</h2>
  * <ul>
- *   <li>{@link #addComponent(UUID, Component)} assumes the entity exists and will throw
- *       a {@link NullPointerException} if it does not.</li>
- *   <li>{@link #getComponent(UUID, Class)} returns {@code null} when the entity or component
- *       is missing — check for {@code null}.</li>
- *   <li>{@link #getEntitiesWithComponent(Class)} may return {@code null} when none are found
- *       (current implementation). Treat accordingly.</li>
- *   <li>The type cast in {@link #getComponent(UUID, Class)} is unchecked; ensure you request
- *       the correct component class.</li>
- *   <li>The interface name {@code com.demcha.system.intarfaces.SystemECS} shadows {@link java.lang.System};
- *       import carefully or fully qualify when needed.</li>
+ * <li>{@link #addComponent(UUID, Component)} assumes the entity exists and will
+ * throw
+ * a {@link NullPointerException} if it does not.</li>
+ * <li>{@link #getComponent(UUID, Class)} returns {@code null} when the entity
+ * or component
+ * is missing — check for {@code null}.</li>
+ * <li>{@link #getEntitiesWithComponent(Class)} may return {@code null} when
+ * none are found
+ * (current implementation). Treat accordingly.</li>
+ * <li>The type cast in {@link #getComponent(UUID, Class)} is unchecked; ensure
+ * you request
+ * the correct component class.</li>
+ * <li>The interface name {@code com.demcha.system.intarfaces.SystemECS} shadows
+ * {@link java.lang.System};
+ * import carefully or fully qualify when needed.</li>
  * </ul>
  *
- * @author Your Name
- * @since 0.1
+ * @author Artem Demchyshyn
+ * @since 1.0.0
  */
 @Slf4j
 @Getter
@@ -72,11 +82,10 @@ public class EntityManager {
     private final Map<UUID, Entity> entities;
     private final SystemRegistry systems;
     private final FontLibrary fonts;
-    private Map<Integer, List<UUID>> layers;     // NEW: layer → ordered ids
+    private Map<Integer, List<UUID>> layers;
     private Map<UUID, Integer> depthById;
     private boolean guideLines;
     private boolean markdown = false;
-
 
     public EntityManager() {
         this(false);
@@ -87,7 +96,7 @@ public class EntityManager {
     }
 
     public EntityManager(@NonNull List<SystemECS> systems, FontLibrary fonts, boolean markdown) {
-        log.info("Creating new EntityManager");
+        log.debug("Creating new EntityManager");
         this.fonts = fonts;
         this.markdown = markdown;
         this.systems = new SystemRegistry();
@@ -104,7 +113,6 @@ public class EntityManager {
     public EntityManager(FontLibrary fonts, boolean markdown) {
         this(new ArrayList<>(), fonts, markdown);
     }
-
 
     public Entity createEntity() {
         return createEntity(null);
@@ -161,7 +169,6 @@ public class EntityManager {
         return entities.put(uuid, entity);
     }
 
-
     public String displayName(UUID id) {
         var entity = getEntity(id);
 
@@ -199,7 +206,8 @@ public class EntityManager {
         if (entityIds == null || entityIds.isEmpty()) {
             log.warn("No component with id {} found", componentType.getName());
         }
-        log.debug("Found [{}] entities  with component {}", entityIds == null ? 0 : entityIds.size(), componentType.getName());
+        log.debug("Found [{}] entities  with component {}", entityIds == null ? 0 : entityIds.size(),
+                componentType.getName());
         return Optional.ofNullable(entityIds);
     }
 
@@ -291,7 +299,6 @@ public class EntityManager {
 
     }
 
-
     /**
      * SystemECS
      */
@@ -304,24 +311,18 @@ public class EntityManager {
         log.info("Processed Systems");
     }
 
-
     public void printEntities() {
         this.entities.forEach((uuid, entity) -> {
             java.lang.System.out.println(entity.toString());
-            entity.view().forEach((k, v) ->
-                    java.lang.System.out.printf("UUID[%s] : %s \n", uuid, entity.toString())
-            );
+            entity.view().forEach((k, v) -> java.lang.System.out.printf("UUID[%s] : %s \n", uuid, entity.toString()));
         });
     }
 
     public void printEntitiesWithInfo() {
         this.entities.forEach((uuid, entity) -> {
             java.lang.System.out.println(entity.toString());
-            entity.view().forEach((k, v) ->
-                    java.lang.System.out.printf("UUID[%s] : %s \n", uuid, entity.printInfo())
-            );
+            entity.view().forEach((k, v) -> java.lang.System.out.printf("UUID[%s] : %s \n", uuid, entity.printInfo()));
         });
     }
-
 
 }

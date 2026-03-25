@@ -20,6 +20,7 @@ import java.io.IOException;
 @Accessors(fluent = true)
 public class PdfFont extends FontBase<PDFont> {
 
+
     public PdfFont(PDFont defaultFont, PDFont bold, PDFont italic, PDFont boldItalic, PDFont underline, PDFont strikethrough) {
         super(defaultFont, bold, italic, boldItalic, underline, strikethrough);
     }
@@ -136,9 +137,14 @@ public class PdfFont extends FontBase<PDFont> {
     }
 
     private @NotNull String textSanitizer(String text) {
-        String sanitized = text.replace("\r", " ").replace("\n", " ")
-                .replaceAll("[\\p{Cntrl}&&[^\\t]]", " ")
-                .replace('\u00A0', ' ').replaceAll(" +", " ");
+        String sanitized = text.replace("\r", " ").replace("\n", " ");
+
+        sanitized = CONTROL_CHARS_PATTERN.matcher(sanitized).replaceAll(" ");
+
+        sanitized = sanitized.replace('\u00A0', ' ');
+
+        sanitized = MULTIPLE_SPACES_PATTERN.matcher(sanitized).replaceAll(" ");
+
         return sanitized;
     }
 

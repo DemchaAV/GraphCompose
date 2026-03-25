@@ -73,10 +73,17 @@ import com.demcha.compose.loyaut_core.components.style.Padding;
 import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
+import java.nio.file.Path;
+
 public class GraphComposeExample {
     public static void main(String[] args) throws Exception {
-        // 1. Initialize the Composer (In-Memory by default)
-        try (var composer = GraphCompose.pdf()
+        
+        // 1. Initialize the Composer. 
+        // Provide a Path to automatically save to disk, or leave empty for In-Memory buffering.
+        Path outputPath = Path.of("output.pdf");
+
+        try (var composer = GraphCompose.pdf(outputPath) // To save directly to file!
+             // var composer = GraphCompose.pdf()        // ...or use this to keep in memory
                 .pageSize(PDRectangle.A4)
                 .margin(24, 24, 24, 24) // Doc margins
                 .create()) {
@@ -111,9 +118,9 @@ public class GraphComposeExample {
             // 4. Resolve architecture (O(N) layout traversal) and flush drawing instructions
             composer.build(); 
 
-            // 5. Instantly available as `byte[]` for backend REST return
-            byte[] pdfBytes = composer.toBytes();
-            System.out.println("Engine rendered " + pdfBytes.length + " bytes.");
+            // 5. Done! The engine flushed and saved everything to your target Path.
+            // (Note: If using memory mode, simply call `composer.toBytes()` instead)
+            System.out.println("Document efficiently rendered and saved to: " + outputPath.toAbsolutePath());
         }
     }
 }

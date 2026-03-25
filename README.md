@@ -134,7 +134,6 @@ GraphCompose is designed for reusable layouts, automatic pagination, and structu
 ---
 
 ## 🏗 Architecture
-
 GraphCompose follows a unidirectional pipeline:
 ```mermaid
 graph TD

@@ -64,7 +64,59 @@ Add the JitPack repository and the library dependency to your `pom.xml`:
 ## Quick Start
 
 ```java
-// TODO: Add code snippet here
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.loyaut_core.components.core.Entity;
+import com.demcha.compose.loyaut_core.components.layout.Align;
+import com.demcha.compose.loyaut_core.components.layout.Anchor;
+import com.demcha.compose.loyaut_core.components.style.Margin;
+import com.demcha.compose.loyaut_core.components.style.Padding;
+import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+
+public class GraphComposeExample {
+    public static void main(String[] args) throws Exception {
+        // 1. Initialize the Composer (In-Memory by default)
+        try (var composer = GraphCompose.pdf()
+                .pageSize(PDRectangle.A4)
+                .margin(24, 24, 24, 24) // Doc margins
+                .create()) {
+
+            // 2. Declaratively build immutable Text Entities
+            Entity title = composer.componentBuilder()
+                    .text()
+                    .textWithAutoSize("Hello from GraphCompose!")
+                    .margin(Margin.of(10))
+                    .padding(Padding.of(5))
+                    .textStyle(TextStyle.DEFAULT_STYLE)
+                    .anchor(Anchor.center())
+                    .build();
+
+            Entity subtitle = composer.componentBuilder()
+                    .text()
+                    .textWithAutoSize("Fast, Declarative Layouts for Java 21")
+                    .margin(Margin.of(5))
+                    .textStyle(TextStyle.DEFAULT_STYLE)
+                    .anchor(Anchor.center())
+                    .build();
+
+            // 3. Assemble components via Vertical Container
+            composer.componentBuilder()
+                    .vContainer(Align.middle(10)) // 10px gap between children
+                    .anchor(Anchor.topCenter())
+                    .margin(Margin.of(40))
+                    .addChild(title)
+                    .addChild(subtitle)
+                    .build();
+
+            // 4. Resolve architecture (O(N) layout traversal) and flush drawing instructions
+            composer.build(); 
+
+            // 5. Instantly available as `byte[]` for backend REST return
+            byte[] pdfBytes = composer.toBytes();
+            System.out.println("Engine rendered " + pdfBytes.length + " bytes.");
+        }
+    }
+}
 ```
 
 ## Architecture

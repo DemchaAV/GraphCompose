@@ -73,7 +73,6 @@ class BlockTextIntegrationTest {
                 .create()) {
 
             ComponentBuilder cb = composer.componentBuilder();
-
             cb.blockText(Align.left(5), TextStyle.DEFAULT_STYLE)
                     .strategy(BlockIndentStrategy.FIRST_LINE)
                     .size(400, 2)

@@ -138,12 +138,32 @@ GraphCompose is designed for reusable layouts, automatic pagination, and structu
 GraphCompose follows a unidirectional pipeline:
 ```mermaid
 graph TD
-    UserCode["Your Code / Template"] -->|Describes structure via Builders| LayoutSystem
-    LayoutSystem["Layout System"] -->|Calculates positions, margins, page breaks| Instructions
-    Instructions["Instructions: WHAT, WHERE, ORDER"] --> RenderingSystem
-    RenderingSystem["Rendering System"] --> PDF["PDF <br/> (Ready)"]
-    RenderingSystem --> DOCX["DOCX <br/> (Planned)"]
-    RenderingSystem --> PPTX["PPTX <br/> (Planned)"]
+    UserCode["<b>YOUR APPLICATION CODE</b><br/>(Builder API — Compose your document tree)"]
+
+    subgraph Core ["GraphCompose Pipeline"]
+        LayoutSystem["<b>LAYOUT CORE</b><br/>LayoutSystem: resolves alignments,<br/>margins, bounding boxes"]
+        Instructions["<b>Resolved Physical Geometry</b><br/>Instructions: WHAT, WHERE, ORDER"]
+        RenderingSystem["<b>RENDERING SYSTEM</b><br/>Translates geometry to draw calls"]
+    end
+
+    PDF["<b>PDF</b><br/>(Ready)"]
+    DOCX["<i>DOCX</i><br/>(Planned)"]
+    PPTX["<i>PPTX</i><br/>(Planned)"]
+
+    %% Flow
+    UserCode -->|Declarative Entity Tree| LayoutSystem
+    LayoutSystem -->|O(N) single-pass traversal| Instructions
+    Instructions --> RenderingSystem
+
+    RenderingSystem --> PDF
+    RenderingSystem -.-> DOCX
+    RenderingSystem -.-> PPTX
+
+    %% Styling
+    style UserCode fill:#f9f,stroke:#333,stroke-width:2px
+    style LayoutSystem fill:#bbf,stroke:#333,stroke-width:2px
+    style RenderingSystem fill:#bfb,stroke:#333,stroke-width:2px
+    style PDF fill:#fff,stroke:#333,stroke-width:2px
 ```
 ### Project modules
 

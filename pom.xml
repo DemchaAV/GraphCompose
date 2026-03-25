@@ -8,6 +8,38 @@
     <artifactId>GraphCompose</artifactId>
     <version>v1.0.0</version>
 
+    <name>GraphCompose</name>
+    <description>A declarative layout engine for programmatic document generation in Java &amp; Kotlin.</description>
+    <url>https://github.com/DemchaAV/GraphCompose</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>DemchaAV</id>
+            <name>Artem Demchyshyn</name>
+            <email>demchyshyn.artem@gmail.com</email> <!-- Placeholder or if known -->
+            <url>https://github.com/DemchaAV</url>
+            <roles>
+                <role>Lead Developer</role>
+                <role>Architect</role>
+            </roles>
+            <timezone>UTC+3</timezone>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/DemchaAV/GraphCompose.git</connection>
+        <developerConnection>scm:git:ssh://github.com:DemchaAV/GraphCompose.git</developerConnection>
+        <url>https://github.com/DemchaAV/GraphCompose/tree/main</url>
+    </scm>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>

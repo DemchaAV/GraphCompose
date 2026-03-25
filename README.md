@@ -136,25 +136,15 @@ GraphCompose is designed for reusable layouts, automatic pagination, and structu
 ## 🏗 Architecture
 
 GraphCompose follows a unidirectional pipeline:
-┌─────────────────────────────────────────────────────────────┐
-│                    YOUR APPLICATION CODE                     │
-│          (Builder API — Compose your document tree)          │
-└────────────────────────────┬────────────────────────────────┘
-                             │  Declarative Entity Tree
-                             ▼
-┌─────────────────────────────────────────────────────────────┐
-│                       LAYOUT CORE                            │
-│  LayoutSystem: resolves alignments, margins, bounding boxes  │
-│  O(N) single-pass tree traversal — no reflows               │
-└────────────────────────────┬────────────────────────────────┘
-                             │  Resolved Physical Geometry
-                             ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    RENDERING SYSTEM                          │
-│  RenderingSystem: translates geometry → PDFBox draw calls    │
-│  Outputs to File or byte[] stream                            │
-└─────────────────────────────────────────────────────────────┘
-
+```mermaid
+graph TD
+    UserCode["Your Code / Template"] -->|Describes structure via Builders| LayoutSystem
+    LayoutSystem["Layout System"] -->|Calculates positions, margins, page breaks| Instructions
+    Instructions["Instructions: WHAT, WHERE, ORDER"] --> RenderingSystem
+    RenderingSystem["Rendering System"] --> PDF["PDF <br/> (Ready)"]
+    RenderingSystem --> DOCX["DOCX <br/> (Planned)"]
+    RenderingSystem --> PPTX["PPTX <br/> (Planned)"]
+```
 ### Project modules
 
 | Module         | Responsibility                                                 |

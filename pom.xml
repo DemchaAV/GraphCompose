@@ -6,7 +6,7 @@
 
     <groupId>com.demcha</groupId>
     <artifactId>GraphCompose</artifactId>
-    <version>1.11.10-SNAPSHOT</version>
+    <version>1.11.11-SNAPSHOT</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

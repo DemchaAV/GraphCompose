@@ -123,15 +123,15 @@ public class EntityManager {
 
         if (name != null && !name.isBlank()) {
             entity.addComponent(new EntityName(name));
-            log.info("Created {}", entity);
+            log.trace("Created {}", entity);
         } else {
-            log.info("Created entity with no EntityName {}", entity.getUuid());
+            log.trace("Created entity with no EntityName {}", entity.getUuid());
         }
         return entity;
     }
 
     public Optional<Entity> getEntity(UUID id) {
-        log.info("Getting  Entity id  {}", id);
+        log.trace("Getting  Entity id  {}", id);
         return Optional.ofNullable(entities.get(id));
     }
 
@@ -144,13 +144,13 @@ public class EntityManager {
 
     public Entity putEntity(Entity entity) {
         UUID uuid = entity.getUuid();
-        log.info("Putting Entity id {}", uuid);
+        log.trace("Putting Entity id {}", uuid);
 
         Optional<Entity> existing = getEntity(uuid);
 
         if (existing.isPresent()) {
             if (entity.equals(existing)) {
-                log.info("Entity already exists and is identical");
+                log.trace("Entity already exists and is identical");
                 return existing.orElse(null);
             } else {
                 log.warn("Entity conflict detected for id {}. Replacing old entity.", uuid);

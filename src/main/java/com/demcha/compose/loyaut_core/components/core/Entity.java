@@ -34,7 +34,7 @@ public final class Entity {
 
     public Entity() {
         UUID uuid = UUID.randomUUID();
-        log.info("Creating entity {}", uuid);
+        log.debug("Creating entity {}", uuid);
         this.uuid = uuid;
     }
 
@@ -389,7 +389,6 @@ public final class Entity {
 
 
     public String printInfo() {
-        System.out.println(this);
         StringBuilder info = new StringBuilder(this + "\n");
 
         comps.forEach((k, e) -> {

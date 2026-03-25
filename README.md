@@ -138,32 +138,29 @@ GraphCompose is designed for reusable layouts, automatic pagination, and structu
 GraphCompose follows a unidirectional pipeline:
 ```mermaid
 graph TD
-    UserCode["<b>YOUR APPLICATION CODE</b><br/>(Builder API — Compose your document tree)"]
+    UserCode["YOUR APPLICATION CODE<br/>(Builder API / document tree)"]
 
-    subgraph Core ["GraphCompose Pipeline"]
-        LayoutSystem["<b>LAYOUT CORE</b><br/>LayoutSystem: resolves alignments,<br/>margins, bounding boxes"]
-        Instructions["<b>Resolved Physical Geometry</b><br/>Instructions: WHAT, WHERE, ORDER"]
-        RenderingSystem["<b>RENDERING SYSTEM</b><br/>Translates geometry to draw calls"]
+    subgraph Core["GraphCompose Pipeline"]
+        LayoutSystem["LAYOUT CORE<br/>LayoutSystem<br/>alignments, margins, bounds"]
+        Instructions["RESOLVED GEOMETRY<br/>WHAT / WHERE / ORDER"]
+        RenderingSystem["RENDERING SYSTEM<br/>geometry -> draw calls"]
     end
 
-    PDF["<b>PDF</b><br/>(Ready)"]
-    DOCX["<i>DOCX</i><br/>(Planned)"]
-    PPTX["<i>PPTX</i><br/>(Planned)"]
+    PDF["PDF<br/>(Ready)"]
+    DOCX["DOCX<br/>(Planned)"]
+    PPTX["PPTX<br/>(Planned)"]
 
-    %% Flow with quotes to avoid parsing errors
-    UserCode -->|"Declarative Entity Tree"| LayoutSystem
-    LayoutSystem -->|"O(N) single-pass traversal"| Instructions
+    UserCode -->|"Declarative entity tree"| LayoutSystem
+    LayoutSystem -->|"Layout pass"| Instructions
     Instructions --> RenderingSystem
 
     RenderingSystem --> PDF
     RenderingSystem -.-> DOCX
     RenderingSystem -.-> PPTX
 
-    %% Styling
-    style UserCode fill:#f9f,stroke:#333,stroke-width:2px
-    style LayoutSystem fill:#bbf,stroke:#333,stroke-width:2px
-    style RenderingSystem fill:#bfb,stroke:#333,stroke-width:2px
-    style PDF fill:#fff,stroke:#333,stroke-width:2px
+    classDef default stroke:#6e7781,stroke-width:1.5px,color:#24292f;
+    classDef planned stroke:#6e7781,stroke-width:1.5px,stroke-dasharray: 5 5;
+    class DOCX,PPTX planned;
 ```
 ### Project modules
 

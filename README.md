@@ -141,7 +141,7 @@ graph TD
 
     subgraph Core["GraphCompose Pipeline"]
         LayoutSystem["Layout Core"]
-        Instructions["Resolved Geometry<br/>WHAT / WHERE / ORDER"]
+        Instructions["Resolved Geometry<br/>WHAT / WHERE / ORDER / LAYERS"]
         RenderingSystem["Rendering System<br/>geometry -> draw calls"]
     end
 

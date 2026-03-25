@@ -19,7 +19,7 @@ import java.util.List;
 
 public class MainPageCVMock {
     private static final Logger log = LoggerFactory.getLogger(MainPageCVMock.class);
-    private static final Path RAW_CV_PATH = Path.of("src", "test", "resources", "data", "Artem Demchyshyn-raw.json");
+    private static final Path RAW_CV_PATH = Path.of("src", "test", "resources", "data", "raw_cv_test.json");
 
     private final MainPageCV mainPageCV;
 

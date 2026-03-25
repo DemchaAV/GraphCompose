@@ -1,85 +1,87 @@
 header:
-  name: Artem Demchyshyn
-  address: TW8, London, UK
-  phoneNumber: +44 7862 139662
+  name: Alex Carter
+  address: EH2, Edinburgh, UK
+  phoneNumber: +44 7700 900123
   email:
-    to: demchaav@gmail.com
-    subject: Job Info hiring
-    body: Dear Artem
-    displayText: DemchaAV@gmail.com
+    to: alex.carter@example.dev
+    subject: Demo Opportunity Update
+    body: Dear Alex
+    displayText: alex.carter@example.dev
   gitHub:
-    linkUrl: https://github.com/DemchaAV
+    linkUrl: https://github.com/example/alex-carter
     displayText: GitHub
   linkedIn:
-    linkUrl: https://www.linkedin.com/in/artemdemchyshyn
+    linkUrl: https://www.linkedin.com/in/alex-carter-demo
     displayText: LinkedIn
 
 moduleSummary:
   moduleName: Professional Summary
   blockSummary: >
-    **Junior Java Backend Developer** with hands-on experience building **REST APIs** using **Spring Boot**, 
-    **Spring Data JPA**, and **JWT-based Security**. Transitioning from an engineering leadership background 
-    with a strong foundation in **Core/Advanced Java**, **SQL**, and **object-oriented design**. Passionate 
-    about **clean code**, **robust architecture**, and solving real-world problems. Ready to contribute to 
-    modern backend development projects and grow within a collaborative team.
+    **Backend Java Developer** with practical experience building **REST APIs**
+    using **Spring Boot**, **Spring Data JPA**, and **token-based security**.
+    Backed by a strong foundation in **Core Java**, **SQL**, and
+    **object-oriented design**. Interested in **clean architecture**,
+    **maintainable systems**, and creating backend solutions for real business
+    scenarios. Ready to contribute to modern development teams and scalable
+    software products.
 
 technicalSkills:
   name: Technical Skills
   modulePoints:
-    - "• **Languages:** Java, SQL"
+    - "• **Languages:** Java, SQL, Kotlin"
     - "• **Backend Development:** Spring Boot, Spring Data JPA, Spring Security, JWT, MapStruct, Lombok, Swagger, Jackson"
-    - "• **Core Java:** OOP, Collections, Streams API, Multithreading, Concurrency (ExecutorService, Locks), IO/NIO, JDBC, Reflection, Annotations, Optional, Record"
-    - "• **Databases:** MySQL, Oracle SQL, SQLite, MongoDB"
+    - "• **Core Java:** OOP, Collections, Streams API, Multithreading, Concurrency (ExecutorService, CompletableFuture), IO/NIO, JDBC, Reflection, Annotations, Optional, Record"
+    - "• **Databases:** PostgreSQL, MySQL, SQLite, MongoDB"
     - "• **SQL:** DDL, DML, Joins, Subqueries, Set Operators, Transactions, Indexes, Views, Sequences"
     - "• **Security:** JWT Authentication, BCrypt, Stateless API Security, Role-based Authorization"
-    - "• **Tools:** IntelliJ IDEA, Git, GitHub, Maven, Postman, SQL Developer, Flyway"
+    - "• **Tools:** IntelliJ IDEA, Git, GitHub, Maven, Postman, Docker, Flyway"
     - "• **Other:** Jsoup, JavaFX (Basic), Regex, File I/O, Project Configuration (.yml/.properties)"
 
 educationCertifications:
   name: Education & Certifications
   modulePoints:
-    - "**Spring Boot & REST API Mastery** – *Ongoing*"
-    - " Apr 2024 – Present - RESTful APIs with Spring Boot, DTOs, Security with JWT, CRUD, Postman testing."
-    - "**Oracle SQL Course** – Self-Study"
-    - " Jan 2024 – Jun 2024 - Mastered DDL/DML, joins, transactions, views, and sequences using Oracle SQL tools."
-    - "**Advanced Java Course (OCA-aligned)** – Self-Study"
-    - " Dec 2023 – Jan 2024 - Covered multithreading, Streams API, JDBC, functional programming, and reflection."
-    - "**BSc in Hydraulic Engineering**"
-    - " Kherson State Agrarian and Economic University, Ukraine"
-    - " Sep 2012 – May 2017 (*Grade: 2.1*)"
+    - "**Spring Boot Backend Development Track** – *Ongoing*"
+    - " Jan 2025 – Present - REST APIs with Spring Boot, DTO mapping, validation, authentication, CRUD flows, and API testing."
+    - "**Relational Databases & SQL Practice** – Self-Study"
+    - " Sep 2024 – Dec 2024 - Covered DDL/DML, joins, transactions, views, indexes, and schema design using SQL tools."
+    - "**Advanced Java Programming Path** – Self-Study"
+    - " Jun 2024 – Aug 2024 - Studied multithreading, Streams API, JDBC, functional programming, and reflection."
+    - "**BSc in Computer Systems Engineering**"
+    - " Northbridge Institute of Technology, UK"
+    - " Sep 2018 – Jun 2022 (*Grade: 2.1*)"
 
 projects:
   name: Projects
   modulePoints:
-    - "**Multi-Format Layout Engine** – ECS-based layout engine for generating PDF, Word, and other document formats."
-    - " Computes page layout for text and components with CSS-like anchors and containers, using an Entity-Component-System design, 
-    pluggable renderers, and Markdown-based templates."
-    - "**Shopping Cart API** *(Spring Boot + JWT + JPA)* – ***Freelance-style*** backend e-commerce project."
-    - " Secure API with user authentication, role-based access, product management, and cart operations."
-    - " Features: Login/Register, JWT handling, Role checks, CRUD endpoints, validation."
-    - " Stack: Spring Boot, JPA, MySQL, Spring Security, Postman, MapStruct, Swagger."
-    - "**Custom GeminiConnection** – ***Freelance-style*** Java client for Google’s Gemini API."
-    - " Java client for Google’s Gemini API supporting generation config, streaming responses, and image requests."
-    - "**AnkiQuestionGeneration** – ***Freelance-style*** helper tool for learning workflows."
-    - " Parser + AI-powered converter that transforms Notion HTML notes into Anki flashcards using Gemini + SQLite."
-    - "**CocktailScrapper** – ***Freelance-style*** data collection tool for cocktail recipes."
-    - " Multithreaded recipe scraper with Jsoup, MongoDB/MySQL support, and anti-bot rotation."
+    - "**Multi-Format Document Engine** – ECS-based layout engine for generating PDF, DOCX, and presentation-ready documents."
+    - " Computes dynamic page layouts for text and UI-like blocks using container composition, pluggable renderers, and template-driven content."
+    - "**Warehouse Control API** *(Spring Boot + JWT + JPA)* – ***Demo-style*** backend inventory management project."
+    - " Secure API with authentication, role-based access, item management, and stock operations."
+    - " Features: Login/Register, token handling, role checks, CRUD endpoints, validation."
+    - " Stack: Spring Boot, JPA, PostgreSQL, Spring Security, Postman, MapStruct, Swagger."
+    - "**Custom NovaAI Client** – ***Demo-style*** Java client for an AI text generation platform."
+    - " Java client supporting generation config, streaming responses, and structured JSON parsing."
+    - "**Flashcard Builder Tool** – ***Demo-style*** helper application for study workflows."
+    - " Parser + AI-assisted converter that transforms study notes into flashcards using a local database and structured prompts."
+    - "**RecipeCollector** – ***Demo-style*** data collection tool for recipe aggregation."
+    - " Multithreaded scraper with Jsoup, PostgreSQL/MySQL support, and request rotation."
     - "**BlackJack CLI Game** – Personal console project demonstrating OOP and control flow."
-    - " Java console game implementing object-oriented principles and control flow."
+    - " Java console game implementing object-oriented design and game state handling."
+
 professionalExperience:
   name: Professional Experience
   modulePoints:
-    - "**Bartender**, Caprice Holdings – Scott’s Richmond, London, UK"
-    - " *Aug 2022 – Present* - Delivered outstanding customer service and team collaboration in a fast-paced setting."
-    - " Promoted within 7 months for leadership and reliability."
-    - "**Lead Engineer** | Nikoplast | Odessa, Ukraine"
-    - "*Sep 2016 – Feb 2022* - A leadership role focused on optimizing complex production systems, managing project lifecycles, and ensuring quality."
-    - " Led project execution from planning to deployment, improving process efficiency and achieving a company production record."
-    - " Designed and implemented comprehensive quality management protocols, reducing critical errors and write-offs significantly."
-    - " Mentored and trained 8 team members, fostering their growth into leadership positions."
+    - "**Operations Associate**, Riverstone Hospitality – Bristol, UK"
+    - " *May 2023 – Present* - Delivered strong customer service and teamwork in a fast-paced environment."
+    - " Recognized for consistency, communication, and reliability."
+    - "**Technical Team Coordinator** | BrightForge Systems | Manchester, UK"
+    - "*Jul 2019 – Apr 2023* - Leadership-focused role involving process optimization, task coordination, and quality oversight."
+    - " Managed project execution from planning to delivery, improving workflow efficiency across multiple teams."
+    - " Designed and maintained internal quality procedures, reducing repeat errors and improving consistency."
+    - " Supported onboarding and mentoring of junior team members."
 
 additional:
   name: Additional
   modulePoints:
-    - "**Languages:** English (Professional), Ukrainian (Native), Russian (Native)"
-    - "**Work Eligibility:** Right to work in the UK"
+    - "**Languages:** English (Fluent), German (Intermediate), Spanish (Basic)"
+    - "**Work Eligibility:** Eligible to work in the UK"

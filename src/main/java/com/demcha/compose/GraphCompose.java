@@ -22,6 +22,8 @@ import java.util.Objects;
  * output formats.
  * </p>
  *
+ * @author Artem Demchyshyn
+ *
  * <h3>Build a PDF file</h3>
  * <pre>
  * try (var composer = GraphCompose.pdf(outputFile)

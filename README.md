@@ -519,6 +519,10 @@ SOFTWARE.
 
 ---
 
-<p align="center">
-  Built with ❤️ by <a href="https://github.com/DemchaAV">Artem Demchyshyn</a>
-</p>
+## 👨‍💻 Author & Maintainer
+
+**Artem Demchyshyn**  
+- GitHub: [@DemchaAV](https://github.com/DemchaAV)  
+- Email: [demchaav@gmail.com](mailto:demchaav@gmail.com)
+
+Built with ❤️ by [Artem Demchyshyn](https://github.com/DemchaAV)

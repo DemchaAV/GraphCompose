@@ -136,24 +136,24 @@ GraphCompose is designed for reusable layouts, automatic pagination, and structu
 ## 🏗 Architecture
 
 GraphCompose follows a unidirectional pipeline:
-
-```text
-Application Code
-      │
-      ▼
-Declarative Entity Tree
-      │
-      ▼
-Layout System
-(resolves bounds, alignment, spacing, flow)
-      │
-      ▼
-Resolved Geometry
-      │
-      ▼
-Rendering System
-(PDFBox today, other renderers possible later)
-```
+┌─────────────────────────────────────────────────────────────┐
+│                    YOUR APPLICATION CODE                     │
+│          (Builder API — Compose your document tree)          │
+└────────────────────────────┬────────────────────────────────┘
+                             │  Declarative Entity Tree
+                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│                       LAYOUT CORE                            │
+│  LayoutSystem: resolves alignments, margins, bounding boxes  │
+│  O(N) single-pass tree traversal — no reflows               │
+└────────────────────────────┬────────────────────────────────┘
+                             │  Resolved Physical Geometry
+                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    RENDERING SYSTEM                          │
+│  RenderingSystem: translates geometry → PDFBox draw calls    │
+│  Outputs to File or byte[] stream                            │
+└─────────────────────────────────────────────────────────────┘
 
 ### Project modules
 

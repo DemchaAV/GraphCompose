@@ -1,0 +1,84 @@
+{
+  "header": {
+    "address": "EH3, Edinburgh, UK",
+    "email": {
+      "body": "Dear Alex",
+      "displayText": "alex.carter@example.dev",
+      "subject": "Demo Application Update",
+      "to": "alex.carter@example.dev"
+    },
+    "gitHub": {
+      "displayText": "GitHub",
+      "linkUrl": "https://github.com/example/alex-carter"
+    },
+    "linkedIn": {
+      "displayText": "LinkedIn",
+      "linkUrl": "https://www.linkedin.com/in/alex-carter-demo"
+    },
+    "name": "Alex Carter",
+    "phoneNumber": "+44 7700 900123"
+  },
+  "modules": [
+    {
+      "id": "summary",
+      "name": "Professional Summary",
+      "type": "summary",
+      "content": "**Backend Java Developer** building **Spring Boot microservices** with **Spring Security**, **Spring Data JPA**, and **PostgreSQL**. Created demo products including a **task automation platform** with **real-time updates** and a **document rendering engine** with **dynamic layout calculation**. Strong background in **Java fundamentals**, API design, and structured backend development. Focused on **scalable architecture**, **maintainable code**, and **developer productivity**."
+    },
+    {
+      "id": "1f3d92a4-5b67-4d2e-9c90-6a3e2d1b7f10",
+      "name": "Technical Skills",
+      "type": "list",
+      "items": [
+        "**Languages:** Java (*21*), SQL, Kotlin (*Intermediate*)",
+        "**Backend (Spring):** Spring Boot, Spring MVC, Spring Data JPA (*Hibernate*), Spring Security, Validation, Lombok, MapStruct",
+        "**API & Security:** REST design, Swagger/**OpenAPI**, Jackson, stateless authentication, role-based authorization, **JWT**, BCrypt, CORS, request validation",
+        "**Core Java:** OOP, Collections, Streams API, Multithreading/Concurrency (*ExecutorService*, *CompletableFuture*), JDBC, IO/NIO, Optional, Record",
+        "**Databases:** PostgreSQL, MySQL, SQLite",
+        "**Testing & Debugging:** JUnit 5, AssertJ, Mockito, logging, Postman",
+        "**Tools & Delivery:** Git/GitHub, Maven, Docker, Docker Compose, Flyway",
+        ""
+      ]
+    },
+    {
+      "id": "2a4f0c8b-8d11-4f43-b3cf-5e2b4b51a901",
+      "name": "Education & Certifications",
+      "type": "list",
+      "items": [
+        "**Spring Boot Backend Engineering** – *Ongoing* | Jan 2025 – Present - Building REST APIs, DTO mapping, validation, authentication, and production-style backend modules.",
+        "**SQL and Relational Database Design** – Self-Study | Sep 2024 – Dec 2024 - Schema design, joins, transactions, indexes, constraints, and query optimization basics.",
+        "**Advanced Java Programming** – Self-Study | Jun 2024 – Aug 2024 - Concurrency, Streams API, exception handling, generics, JDBC, and functional programming patterns.",
+        "**BSc in Computer Systems Engineering** – Northbridge Technical University, UK | Sep 2018 – Jun 2022 (*Grade: 2.1*)"
+      ]
+    },
+    {
+      "id": "39d19f0e-18d6-4f80-92ab-3a7d52e42c77",
+      "name": "Projects",
+      "type": "list",
+      "items": [
+        "**TaskFlow Studio** *(Spring Boot + React + AI)* – Demo full-stack platform for managing internal workflows and generating automated task suggestions. Implemented **JWT authentication**, task pipelines, **real-time progress updates**, and configurable dashboards. Integrated AI-assisted content generation with structured **JSON-based responses**. Stack: Java 21, Spring Boot, Spring Security, JPA, PostgreSQL, Docker Compose.",
+        "**RenderGrid Engine** *(Java/Kotlin Document Layout Engine)* – Demo library for declarative PDF rendering using a modular layout system. Built support for nested containers, spacing, alignment, and **automatic pagination** with multi-page splitting. Stack: Java 21 / Kotlin, Apache **PDFBox**, Flexmark, SnakeYAML.",
+        "**Inventory Control API** *(Spring Boot + JWT + JPA)* – Demo backend for warehouse item management. Built secure endpoints for stock operations, categories, and reporting with **CRUD**, validation, and DTO mapping. Documented APIs with Swagger/**OpenAPI**. Stack: Spring Boot, Spring Security, JPA, MySQL, Flyway, Postman.",
+        "**NovaAI Client** *(Java Integration Library)* – Demo Java client for an AI text platform. Supports request configuration, **streaming responses**, structured **JSON parsing**, and reusable service integration patterns."
+      ]
+    },
+    {
+      "id": "4c0fd1f2-f4f8-47be-a83a-8f98d70bbd44",
+      "name": "Professional Experience",
+      "type": "list",
+      "items": [
+        "**Operations Coordinator**, BrightWave Services, Manchester, UK | *May 2023 – Present* - Coordinated daily operations, improved team communication, and maintained consistency in a fast-paced service environment.",
+        "**Technical Team Lead**, NovaBuild Solutions, Leeds, UK | *Jul 2019 – Apr 2023* - Led task planning, quality control, and execution across multiple internal projects; supported onboarding and mentoring of junior team members."
+      ]
+    },
+    {
+      "id": "5e7a3dc1-9f01-4fcb-b4f7-0fd7f9f51e8b",
+      "name": "Additional Information",
+      "type": "list",
+      "items": [
+        "**Languages:** English (Fluent), German (Intermediate), Spanish (Basic)",
+        "**Work Eligibility:** Eligible to work in the UK"
+      ]
+    }
+  ]
+}

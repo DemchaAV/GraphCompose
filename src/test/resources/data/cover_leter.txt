@@ -1,15 +1,19 @@
 Dear ${companyName},
-I am writing to express my strong interest in the **Junior Java Developer** position at **${companyName}**. While I am currently transitioning into my first commercial role, I bring a robust technical foundation in **Java 17/21** and **Spring Boot 3+**, alongside a proven track record of resilience and rapid self-directed learning.
 
-## An Unconventional Path Built on Logic
-My journey into software development is rooted in a lifelong fascination with technology. Long before my formal transition, I spent my time designing media player skins for **AIMP** and writing scripts for **Photoshop**. Although I initially trained as a **Hydraulic Engineer** in Ukraine, the core of my background has always been about solving complex structural problems — a mindset I now apply to backend architecture.
-## From Resilience to Technical Proficiency
-Relocating to London from an occupied region near Crimea presented a significant challenge. I arrived with limited English and took a role in hospitality to support myself. Within seven months, I was promoted for my leadership and consistency, all while teaching myself English, Java, and Spring Boot in my limited free time.
-My recent work demonstrates a shift from basic learning to building production-ready systems:
-- **GraphCompose:** I developed a declarative PDF generation library using an **Entity Component System (ECS)** architecture, implementing complex two-pass layout algorithms and smart pagination.
-- **CVRewriter:** I built a full-stack AI-powered application that integrates **Gemini AI**, utilizes **Playwright** for web scraping, and provides real-time updates via **Server-Sent Events (SSE)**.
-- **Infrastructure & Security:** My projects consistently utilize **JWT authentication**, **Docker**, **Flyway** for database migrations, and **Spring Data JPA** with **MySQL**.
-## Why I Am a Fit for Your Team
-What sets me apart is the combination of engineering logic and real-world discipline. I don’t just write code; I focus on clean architecture, modularity, and reliable services. My experience leading a team of eight in my previous engineering career has equipped me with the communication skills and accountability necessary for a high-performing development team.
-Thank you for your time and consideration. I am eager to discuss how my technical skills and unique background can contribute to **${companyName}**. I am available for an interview at your earliest convenience.
-                
+I am writing to express my strong interest in the **Junior Backend Developer** position at **${companyName}**. While I am at the beginning of my professional software career, I bring a solid technical foundation in **Java 21**, **Spring Boot**, and **SQL**, along with a strong record of disciplined self-learning and problem-solving.
+
+## A Technical Journey Shaped by Curiosity
+My interest in software development started long before I formally focused on backend engineering. I was always drawn to systems, automation, and digital tools, from experimenting with interface customization to building small utilities for personal workflows. Although my earlier academic path was in a different technical discipline, it trained me to think in terms of structure, logic, and reliability — skills that now shape how I design backend applications.
+
+## From Self-Learning to Practical Development
+Over time, I moved from studying programming fundamentals to building complete applications and reusable tools. My recent work reflects both technical growth and a focus on real-world software design:
+
+- **RenderGrid:** I created a modular document rendering engine capable of generating structured layouts with dynamic pagination and reusable containers.
+- **TaskFlow App:** I built a full-stack web application with **Spring Boot** and a modern frontend, including authentication, data persistence, and real-time task updates.
+- **AI Integration Projects:** I implemented structured API integrations for AI-powered features, including streaming responses, request configuration, and JSON-based result handling.
+- **Infrastructure & Delivery:** My projects regularly include **JWT authentication**, **Docker**, **Flyway**, and **Spring Data JPA** with relational databases.
+
+## Why I Am a Good Fit for Your Team
+What I believe makes me a strong candidate is my combination of technical focus, consistency, and ownership. I care not only about making features work, but also about writing clear code, designing maintainable systems, and understanding why a solution is structured in a certain way. I enjoy learning quickly, adapting to new tools, and contributing in a reliable and team-oriented manner.
+
+Thank you for your time and consideration. I would be glad to discuss how my skills, motivation, and practical project experience could contribute to **${companyName}**. I am available for an interview at your convenience.

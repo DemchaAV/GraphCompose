@@ -18,21 +18,18 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class Pdf_FontLoader {
 
-    // 1. Глобальный кэш сырых байтов (читаем с диска 1 раз на всё приложение)
     private static final Map<String, byte[]> RAW_FONT_CACHE = new ConcurrentHashMap<>();
 
-    // 2. МАГИЯ: Локальный кэш для КАЖДОГО ПОТОКА отдельно.
-    // Поток парсит шрифт 1 раз для себя и переиспользует его. Нет конфликтов курсоров!
-    private static final ThreadLocal<Map<String, TrueTypeFont>> THREAD_LOCAL_TTF_CACHE =
-            ThreadLocal.withInitial(HashMap::new);
+    private static final ThreadLocal<Map<String, TrueTypeFont>> THREAD_LOCAL_TTF_CACHE = ThreadLocal
+            .withInitial(HashMap::new);
 
-    private Pdf_FontLoader() {}
+    private Pdf_FontLoader() {
+    }
 
     public static PDType0Font loadFont(PDDocument document, Path path) {
         String absolutePath = path.toAbsolutePath().toString();
 
         try {
-            // 1. Берем байты из общего кэша
             byte[] fontBytes = RAW_FONT_CACHE.computeIfAbsent(absolutePath, key -> {
                 try {
                     return Files.readAllBytes(path);
@@ -41,10 +38,8 @@ public class Pdf_FontLoader {
                 }
             });
 
-            // 2. Берем распарсенный TTF из ЛИЧНОГО кэша текущего потока
             TrueTypeFont ttf = THREAD_LOCAL_TTF_CACHE.get().computeIfAbsent(absolutePath, key -> {
                 try {
-                    // Создаем личный буфер и парсим (выполнится ровно 50 раз - по 1 разу на поток)
                     RandomAccessReadBuffer buffer = new RandomAccessReadBuffer(fontBytes);
                     return new TTFParser().parse(buffer);
                 } catch (IOException e) {
@@ -52,7 +47,6 @@ public class Pdf_FontLoader {
                 }
             });
 
-            // 3. Мгновенно привязываем к документу
             return PDType0Font.load(document, ttf, true);
 
         } catch (IOException e) {
@@ -63,7 +57,6 @@ public class Pdf_FontLoader {
 
     public static PDType0Font loadFont(PDDocument document, InputStream inputStream, String sourceDescription) {
         try (InputStream streamToClose = inputStream) {
-            // Для InputStream применяем ту же магию ThreadLocal
             byte[] fontBytes = RAW_FONT_CACHE.computeIfAbsent(sourceDescription, key -> {
                 try {
                     return streamToClose.readAllBytes();

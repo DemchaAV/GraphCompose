@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ImageIntegrationTest {
 
     private static final Path VISUAL_DIR = Path.of("target", "visual-tests");
+    private static final Path COVER_ASSET = Path.of("assets", "GraphCoposeCover.png");
 
     @Test
     void shouldRenderSingleImageWithGuides() throws Exception {
@@ -119,6 +120,59 @@ class ImageIntegrationTest {
         assertPdfExists(outputFile, 2);
         assertThat(imagePlacement.startPage()).isEqualTo(imagePlacement.endPage());
         assertThat(imagePlacement.startPage()).isGreaterThan(0);
+    }
+
+    @Test
+    void shouldRenderFifteenCoverImagesInCenteredVContainer() throws Exception {
+        Path outputFile = VISUAL_DIR.resolve("image_vcontainer_cover_column.pdf");
+        assertThat(COVER_ASSET).exists();
+
+        Entity[] images = new Entity[15];
+        Placement[] placements = new Placement[15];
+
+        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+                .pageSize(PDRectangle.A4)
+                .margin(20, 20, 20, 20)
+                .guideLines(true)
+                .create()) {
+
+            ComponentBuilder cb = composer.componentBuilder();
+            var container = cb.vContainer(Align.middle(10))
+                    .entityName("CoverImageColumn")
+                    .anchor(Anchor.topCenter())
+                    .margin(Margin.of(10));
+
+            for (int i = 0; i < placements.length; i++) {
+                Entity image = cb.image()
+                        .image(COVER_ASSET)
+                        .scale(0.22)
+                        .padding(Padding.of(6))
+                        .margin(Margin.of(8))
+                        .anchor(Anchor.center())
+                        .entityName("CoverImage" + i)
+                        .build();
+                container.addChild(image);
+                images[i] = image;
+            }
+
+            container.build();
+            composer.build();
+
+            for (int i = 0; i < placements.length; i++) {
+                placements[i] = images[i].getComponent(Placement.class).orElseThrow();
+            }
+        }
+
+        assertThat(outputFile).exists();
+        assertThat(outputFile).isNotEmptyFile();
+
+        try (PDDocument document = Loader.loadPDF(outputFile.toFile())) {
+            assertThat(document.getNumberOfPages()).isGreaterThanOrEqualTo(3);
+        }
+
+        for (Placement placement : placements) {
+            assertThat(placement.startPage()).isEqualTo(placement.endPage());
+        }
     }
 
     private void assertPdfExists(Path outputFile, int minPages) throws Exception {

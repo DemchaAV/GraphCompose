@@ -10,6 +10,7 @@ import com.demcha.compose.loyaut_core.components.style.ComponentColor;
 import com.demcha.compose.loyaut_core.components.style.Margin;
 import com.demcha.compose.loyaut_core.components.style.Padding;
 import com.demcha.compose.loyaut_core.core.PdfComposer;
+import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -129,6 +130,7 @@ class ImageIntegrationTest {
 
         Entity[] images = new Entity[15];
         Placement[] placements = new Placement[15];
+        PdfRenderingSystemECS.ImageCacheStats cacheStats;
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
@@ -158,6 +160,12 @@ class ImageIntegrationTest {
             container.build();
             composer.build();
 
+            PdfRenderingSystemECS renderingSystem = composer.entityManager()
+                    .getSystems()
+                    .getSystem(PdfRenderingSystemECS.class)
+                    .orElseThrow();
+            cacheStats = renderingSystem.imageCacheStats();
+
             for (int i = 0; i < placements.length; i++) {
                 placements[i] = images[i].getComponent(Placement.class).orElseThrow();
             }
@@ -170,8 +178,59 @@ class ImageIntegrationTest {
             assertThat(document.getNumberOfPages()).isGreaterThanOrEqualTo(3);
         }
 
+        assertThat(cacheStats.scaledVariantCount()).isEqualTo(1);
+        assertThat(cacheStats.originalCount()).isZero();
+
         for (Placement placement : placements) {
             assertThat(placement.startPage()).isEqualTo(placement.endPage());
+        }
+    }
+
+    @Test
+    void shouldReuseOriginalAndCreateOnlyNeededVariantsInComposer() throws Exception {
+        try (PdfComposer composer = GraphCompose.pdf()
+                .pageSize(PDRectangle.A4)
+                .margin(20, 20, 20, 20)
+                .create()) {
+
+            ComponentBuilder cb = composer.componentBuilder();
+
+            cb.vContainer(Align.middle(10))
+                    .entityName("MixedImageSizes")
+                    .anchor(Anchor.topCenter())
+                    .margin(Margin.of(10))
+                    .addChild(cb.image()
+                            .image(createPngBytes(200, 100))
+                            .fitToBounds(150, 80)
+                            .padding(Padding.of(6))
+                            .margin(Margin.of(8))
+                            .anchor(Anchor.center())
+                            .build())
+                    .addChild(cb.image()
+                            .image(createPngBytes(200, 100))
+                            .fitToBounds(40, 20)
+                            .padding(Padding.of(6))
+                            .margin(Margin.of(8))
+                            .anchor(Anchor.center())
+                            .build())
+                    .addChild(cb.image()
+                            .image(createPngBytes(200, 100))
+                            .fitToBounds(50, 25)
+                            .padding(Padding.of(6))
+                            .margin(Margin.of(8))
+                            .anchor(Anchor.center())
+                            .build())
+                    .build();
+
+            composer.toPDDocument();
+
+            PdfRenderingSystemECS renderingSystem = composer.entityManager()
+                    .getSystems()
+                    .getSystem(PdfRenderingSystemECS.class)
+                    .orElseThrow();
+
+            assertThat(renderingSystem.imageCacheStats().originalCount()).isEqualTo(1);
+            assertThat(renderingSystem.imageCacheStats().scaledVariantCount()).isEqualTo(2);
         }
     }
 

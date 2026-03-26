@@ -1,0 +1,156 @@
+package com.demcha.integration;
+
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.loyaut_core.components.ComponentBuilder;
+import com.demcha.compose.loyaut_core.components.core.Entity;
+import com.demcha.compose.loyaut_core.components.layout.Align;
+import com.demcha.compose.loyaut_core.components.layout.Anchor;
+import com.demcha.compose.loyaut_core.components.layout.coordinator.Placement;
+import com.demcha.compose.loyaut_core.components.style.ComponentColor;
+import com.demcha.compose.loyaut_core.components.style.Margin;
+import com.demcha.compose.loyaut_core.components.style.Padding;
+import com.demcha.compose.loyaut_core.core.PdfComposer;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.junit.jupiter.api.Test;
+
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.nio.file.Path;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class ImageIntegrationTest {
+
+    private static final Path VISUAL_DIR = Path.of("target", "visual-tests");
+
+    @Test
+    void shouldRenderSingleImageWithGuides() throws Exception {
+        Path outputFile = VISUAL_DIR.resolve("image_single_guides.pdf");
+
+        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+                .pageSize(PDRectangle.A4)
+                .margin(20, 20, 20, 20)
+                .guideLines(true)
+                .create()) {
+
+            composer.componentBuilder()
+                    .image()
+                    .image(createPngBytes(320, 180))
+                    .fitToBounds(320, 220)
+                    .padding(Padding.of(10))
+                    .margin(Margin.of(15))
+                    .anchor(Anchor.topCenter())
+                    .build();
+
+            composer.build();
+        }
+
+        assertPdfExists(outputFile, 1);
+    }
+
+    @Test
+    void shouldRenderSingleImageWithoutGuides() throws Exception {
+        Path outputFile = VISUAL_DIR.resolve("image_single_clean.pdf");
+
+        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+                .pageSize(PDRectangle.A4)
+                .margin(20, 20, 20, 20)
+                .guideLines(false)
+                .create()) {
+
+            composer.componentBuilder()
+                    .image()
+                    .image(createPngBytes(320, 180))
+                    .fitToBounds(320, 220)
+                    .padding(Padding.of(10))
+                    .margin(Margin.of(15))
+                    .anchor(Anchor.topCenter())
+                    .build();
+
+            composer.build();
+        }
+
+        assertPdfExists(outputFile, 1);
+    }
+
+    @Test
+    void shouldRenderImageInsideVContainer() throws Exception {
+        Path outputFile = VISUAL_DIR.resolve("image_vcontainer_pagination.pdf");
+        Placement imagePlacement;
+
+        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+                .pageSize(PDRectangle.A4)
+                .margin(20, 20, 20, 20)
+                .guideLines(true)
+                .create()) {
+
+            ComponentBuilder cb = composer.componentBuilder();
+
+            Entity spacer = cb.rectangle()
+                    .size(500, 700)
+                    .fillColor(ComponentColor.LIGHT_GRAY)
+                    .margin(Margin.of(5))
+                    .build();
+
+            Entity image = cb.image()
+                    .image(createPngBytes(320, 180))
+                    .fitToBounds(320, 220)
+                    .padding(Padding.of(10))
+                    .margin(Margin.of(10))
+                    .anchor(Anchor.center())
+                    .build();
+
+            cb.vContainer(Align.middle(10))
+                    .entityName("ImageStack")
+                    .anchor(Anchor.topCenter())
+                    .margin(Margin.of(10))
+                    .addChild(spacer)
+                    .addChild(image)
+                    .build();
+
+            composer.build();
+            imagePlacement = image.getComponent(Placement.class).orElseThrow();
+        }
+
+        assertPdfExists(outputFile, 2);
+        assertThat(imagePlacement.startPage()).isEqualTo(imagePlacement.endPage());
+        assertThat(imagePlacement.startPage()).isGreaterThan(0);
+    }
+
+    private void assertPdfExists(Path outputFile, int minPages) throws Exception {
+        assertThat(outputFile).exists();
+        assertThat(outputFile).isNotEmptyFile();
+
+        try (PDDocument document = Loader.loadPDF(outputFile.toFile())) {
+            assertThat(document.getNumberOfPages()).isGreaterThanOrEqualTo(minPages);
+        }
+    }
+
+    private byte[] createPngBytes(int width, int height) {
+        try {
+            BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+            Graphics2D graphics = image.createGraphics();
+            try {
+                graphics.setColor(new Color(31, 45, 72));
+                graphics.fillRect(0, 0, width, height);
+                graphics.setColor(new Color(255, 196, 61));
+                graphics.fillRoundRect(width / 8, height / 6, width * 3 / 4, height * 2 / 3, 18, 18);
+                graphics.setColor(Color.WHITE);
+                graphics.drawRect(0, 0, width - 1, height - 1);
+                graphics.drawLine(0, 0, width - 1, height - 1);
+            } finally {
+                graphics.dispose();
+            }
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            ImageIO.write(image, "png", outputStream);
+            return outputStream.toByteArray();
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to create test PNG", e);
+        }
+    }
+}

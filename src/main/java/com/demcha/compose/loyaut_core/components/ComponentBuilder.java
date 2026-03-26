@@ -66,6 +66,12 @@ public class ComponentBuilder {
         return rectangleBuilder;
     }
 
+    public ImageBuilder image() {
+        ImageBuilder imageBuilder = new ImageBuilder(this.entityManager);
+        builders.add(imageBuilder);
+        return imageBuilder;
+    }
+
     public TextBuilder text() {
         TextBuilder textBuilder = new TextBuilder(this.entityManager);
         builders.add(textBuilder);

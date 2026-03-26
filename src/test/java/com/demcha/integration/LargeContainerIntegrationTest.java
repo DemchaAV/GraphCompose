@@ -22,12 +22,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class LargeContainerIntegrationTest {
 
-    @TempDir
-    Path tempDir;
+    private static final Path VISUAL_DIR = Path.of("target", "visual-tests");
 
     @Test
     void shouldRenderLargeContainerAcrossMultiplePages() throws Exception {
-        Path outputFile = tempDir.resolve("large_container_test.pdf");
+        Path outputFile = VISUAL_DIR .resolve("large_container_test.pdf");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
@@ -60,7 +59,7 @@ class LargeContainerIntegrationTest {
 
     @Test
     void shouldRenderSmallContainerOnSinglePage() throws Exception {
-        Path outputFile = tempDir.resolve("small_container_test.pdf");
+        Path outputFile = VISUAL_DIR .resolve("small_container_test.pdf");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)

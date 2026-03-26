@@ -22,12 +22,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class SmartPaginationTest {
 
-    @TempDir
-    Path tempDir;
+    private static final Path VISUAL_DIR = Path.of("target", "visual-tests");
 
     @Test
     void testMassiveTextBlockPagination() throws Exception {
-        Path outputFile = tempDir.resolve("massive_text.pdf");
+        Path outputFile = VISUAL_DIR .resolve("massive_text.pdf");
         
         // Generate ~10,000 characters
         StringBuilder sb = new StringBuilder();
@@ -59,7 +58,7 @@ public class SmartPaginationTest {
 
     @Test
     void testContainerSplitWithGuides() throws Exception {
-        Path outputFile = tempDir.resolve("container_split.pdf");
+        Path outputFile = VISUAL_DIR .resolve("container_split.pdf");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)

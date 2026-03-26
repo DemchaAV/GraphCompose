@@ -23,12 +23,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class BlockTextIntegrationTest {
 
-    @TempDir
-    Path tempDir;
+    private static final Path VISUAL_DIR = Path.of("target", "visual-tests");
 
     @Test
     void shouldRenderBlockTextWithBulletOffset() throws Exception {
-        Path outputFile = tempDir.resolve("block_text_bullet_test.pdf");
+        Path outputFile = VISUAL_DIR .resolve("block_text_bullet_test.pdf");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
@@ -63,7 +62,7 @@ class BlockTextIntegrationTest {
 
     @Test
     void shouldRenderBlockTextWithWhitespaceIndent() throws Exception {
-        Path outputFile = tempDir.resolve("block_text_whitespace_test.pdf");
+        Path outputFile = VISUAL_DIR .resolve("block_text_whitespace_test.pdf");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
@@ -97,7 +96,7 @@ class BlockTextIntegrationTest {
 
     @Test
     void shouldRenderBlockTextWithMarkdownFormatting() throws Exception {
-        Path outputFile = tempDir.resolve("block_text_markdown_test.pdf");
+        Path outputFile = VISUAL_DIR .resolve("block_text_markdown_test.pdf");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)

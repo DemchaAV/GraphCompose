@@ -31,12 +31,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class PageBreakerIntegrationTest {
 
-    @TempDir
-    Path tempDir;
+    private static final Path VISUAL_DIR = Path.of("target", "visual-tests");
 
     @Test
     void shouldBreakTextAcrossPages() throws Exception {
-        Path outputFile = tempDir.resolve("page_breaker_text_test.pdf");
+        Path outputFile = VISUAL_DIR .resolve("page_breaker_text_test.pdf");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
@@ -71,7 +70,7 @@ class PageBreakerIntegrationTest {
 
     @Test
     void shouldBreakColoredRectanglesAcrossPages() throws Exception {
-        Path outputFile = tempDir.resolve("page_breaker_rectangles_test.pdf");
+        Path outputFile = VISUAL_DIR .resolve("page_breaker_rectangles_test.pdf");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)

@@ -24,12 +24,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DocumentationExamplesTest {
 
-    @TempDir
-    Path tempDir;
+    private static final Path VISUAL_DIR = Path.of("target", "visual-tests");
 
     @Test
     void shouldRenderQuickStartExampleToFile() throws Exception {
-        Path outputFile = tempDir.resolve("quick-start.pdf");
+        Path outputFile = VISUAL_DIR .resolve("quick-start.pdf");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
@@ -79,7 +78,7 @@ class DocumentationExamplesTest {
             pdfBytes = composer.toBytes();
         }
 
-        assertPdfBytesLookValid(pdfBytes, tempDir.resolve("quick-start-bytes.pdf"));
+        assertPdfBytesLookValid(pdfBytes, VISUAL_DIR .resolve("quick-start-bytes.pdf"));
     }
 
     @Test
@@ -104,12 +103,12 @@ class DocumentationExamplesTest {
             pdfBytes = composer.toBytes();
         }
 
-        assertPdfBytesLookValid(pdfBytes, tempDir.resolve("template-builder-bytes.pdf"));
+        assertPdfBytesLookValid(pdfBytes, VISUAL_DIR .resolve("template-builder-bytes.pdf"));
     }
 
     @Test
     void shouldRenderAvailableFontsPreviewExample() throws Exception {
-        Path outputFile = tempDir.resolve("available-fonts-preview.pdf");
+        Path outputFile = VISUAL_DIR .resolve("available-fonts-preview.pdf");
 
         GraphCompose.renderAvailableFontsPreview(outputFile);
 

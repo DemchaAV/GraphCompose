@@ -9,11 +9,6 @@ import com.demcha.compose.loyaut_core.components.renderable.ImageComponent;
 import com.demcha.compose.loyaut_core.components.style.Padding;
 import com.demcha.compose.loyaut_core.core.EntityManager;
 import lombok.extern.slf4j.Slf4j;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.nio.file.Path;
 
 @Slf4j
@@ -84,7 +79,7 @@ public class ImageBuilder extends EmptyBox<ImageBuilder> {
         ImageData imageData = entity.getComponent(ImageData.class).orElseThrow(() ->
                 new IllegalStateException("ImageBuilder requires ImageData before build()"));
 
-        ImageIntrinsicSize intrinsicSize = resolveIntrinsicSize(imageData);
+        ImageIntrinsicSize intrinsicSize = imageData.getMetadata().intrinsicSize();
         entity.addComponent(intrinsicSize);
 
         if (!entity.has(ContentSize.class)) {
@@ -120,18 +115,6 @@ public class ImageBuilder extends EmptyBox<ImageBuilder> {
         }
 
         return new ContentSize(drawableWidth + padding.horizontal(), drawableHeight + padding.vertical());
-    }
-
-    private ImageIntrinsicSize resolveIntrinsicSize(ImageData imageData) {
-        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(imageData.getBytes())) {
-            BufferedImage image = ImageIO.read(inputStream);
-            if (image == null) {
-                throw new IllegalArgumentException("Unsupported or undecodable raster image");
-            }
-            return new ImageIntrinsicSize(image.getWidth(), image.getHeight());
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to decode image bytes", e);
-        }
     }
 
     private void validatePositive(String name, double value) {

@@ -42,11 +42,7 @@ public class ImageComponent implements PdfRender {
 
         try (PDPageContentStream cs = renderingSystemECS.stream().openContentStream(e)) {
             if (width > 0.0 && height > 0.0) {
-                PDImageXObject image = PDImageXObject.createFromByteArray(
-                        renderingSystemECS.doc(),
-                        imageData.getBytes(),
-                        e.getUuid().toString()
-                );
+                PDImageXObject image = renderingSystemECS.getOrCreateImageXObject(imageData, width, height);
                 cs.drawImage(image, (float) x, (float) y, (float) width, (float) height);
             }
 

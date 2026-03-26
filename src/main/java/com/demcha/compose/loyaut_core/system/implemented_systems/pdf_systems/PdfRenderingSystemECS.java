@@ -1,6 +1,7 @@
 package com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems;
 
 import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
+import com.demcha.compose.loyaut_core.components.content.ImageData;
 import com.demcha.compose.loyaut_core.components.content.shape.Side;
 import com.demcha.compose.loyaut_core.components.content.shape.Stroke;
 import com.demcha.compose.loyaut_core.components.core.Entity;
@@ -16,6 +17,7 @@ import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 
 import java.awt.*;
@@ -31,6 +33,7 @@ import java.util.List;
 @Accessors(fluent = true)
 public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStream> {
     private final PDDocument doc;
+    private final PdfImageCache imageCache;
 
     public PdfRenderingSystemECS(PDDocument doc, Canvas canvas) {
         super(
@@ -39,6 +42,7 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
                 new PdfStream(doc, canvas)
         );
         this.doc = doc;
+        this.imageCache = new PdfImageCache(doc);
         guidesRendererInitializer(new PdfGuidesRenderer(this));
         this.fontClazz = PdfFont.class;
     }
@@ -102,6 +106,18 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
     @Override
     public Canvas canvas() {
         return canvas;
+    }
+
+    public PDImageXObject getOrCreateImageXObject(ImageData imageData) throws IOException {
+        return imageCache.getOrCreateOriginal(imageData);
+    }
+
+    public PDImageXObject getOrCreateImageXObject(ImageData imageData, double targetWidth, double targetHeight) throws IOException {
+        return imageCache.getOrCreateBestFit(imageData, targetWidth, targetHeight);
+    }
+
+    public ImageCacheStats imageCacheStats() {
+        return imageCache.stats();
     }
 
     public boolean renderRectangle(Stroke stroke,
@@ -234,6 +250,8 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
     }
 
 
+    public record ImageCacheStats(int originalCount, int scaledVariantCount) {
+    }
 }
 
 

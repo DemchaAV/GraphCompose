@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -15,6 +16,13 @@ import java.nio.file.Path;
 public final class ImageData implements Component {
     private byte[] bytes;
 
+    public static ImageData create(byte[] bytes) {
+        if (bytes == null || bytes.length == 0) {
+            throw new IllegalArgumentException("Image bytes cannot be null or empty");
+        }
+        return new ImageData(Arrays.copyOf(bytes, bytes.length));
+    }
+
     public static ImageData create(Path path) {
 
         log.info("Create an image from path: {}", path);
@@ -22,12 +30,10 @@ public final class ImageData implements Component {
         try {
             bytes = Files.readAllBytes(path);
         } catch (IOException e) {
-            log.error(e.getMessage());
-            log.error(e.getStackTrace().toString());
-            e.printStackTrace();
-            throw new RuntimeException(e);
+            log.error("Failed to read image from path {}", path, e);
+            throw new IllegalStateException("Failed to read image from path " + path, e);
         }
-        return new ImageData(bytes);
+        return create(bytes);
     }
 
     public static ImageData create(String path) {

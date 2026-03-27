@@ -2,7 +2,7 @@ package com.demcha.compose;
 
 import com.demcha.templates.data.MainPageCV;
 import com.demcha.templates.api.MainPageCvDTO;
-import com.demcha.templates.builtins.Template_CV1;
+import com.demcha.templates.builtins.CvTemplateV1;
 import com.demcha.mock.MainPageCVMock;
 import org.apache.pdfbox.pdmodel.PDDocument;
 
@@ -21,7 +21,7 @@ public class FullCvBenchmark {
 
         MainPageCV original = new MainPageCVMock().getMainPageCV();
         MainPageCvDTO rewritten = MainPageCvDTO.from(original);
-        Template_CV1 template = new Template_CV1();
+        CvTemplateV1 template = new CvTemplateV1();
 
         // 1. Фаза прогрева (Warmup)
         System.out.println("🔥 Прогрев JVM (JIT-компиляция, кэширование шрифтов)...");
@@ -44,7 +44,7 @@ public class FullCvBenchmark {
         printStatistics(durationsNs);
     }
 
-    private static void generateCvInMemory(Template_CV1 template, MainPageCV original, MainPageCvDTO rewritten) {
+    private static void generateCvInMemory(CvTemplateV1 template, MainPageCV original, MainPageCvDTO rewritten) {
         try (PDDocument document = template.render(original, rewritten)) {
             // Рендерим в байты, так как I/O диска испортит метрики процессора
             ByteArrayOutputStream out = new ByteArrayOutputStream();

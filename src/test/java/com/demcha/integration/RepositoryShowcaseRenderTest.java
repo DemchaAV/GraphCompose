@@ -39,22 +39,31 @@ class RepositoryShowcaseRenderTest {
     private static final Color TABLE_BORDER_STRONG = new Color(136, 157, 181);
 
     @Test
-    void shouldRenderRepositoryShowcaseOnSinglePageWithGuideLines() throws Exception {
-        Path outputFile = VisualTestOutputs.preparePdf("repository_showcase_render_guides", "guides", "integration");
+    void shouldRenderRepositoryShowcaseOnSinglePageWithoutGuideLines() throws Exception {
+        Path outputFile = VisualTestOutputs.preparePdf("repository_showcase_render", "clean", "integration");
 
-        renderRepositoryShowcase(outputFile);
+        renderRepositoryShowcase(outputFile, false);
 
         assertSinglePagePdfLooksValid(outputFile);
     }
 
-    private void renderRepositoryShowcase(Path outputFile) throws Exception {
+    @Test
+    void shouldRenderRepositoryShowcaseOnSinglePageWithGuideLines() throws Exception {
+        Path outputFile = VisualTestOutputs.preparePdf("repository_showcase_render_guides", "guides", "integration");
+
+        renderRepositoryShowcase(outputFile, true);
+
+        assertSinglePagePdfLooksValid(outputFile);
+    }
+
+    private void renderRepositoryShowcase(Path outputFile, boolean guideLines) throws Exception {
         assertThat(COVER_ASSET).exists();
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(16, 16, 16, 16)
                 .markdown(true)
-                .guideLines(true)
+                .guideLines(guideLines)
                 .create()) {
 
             ComponentBuilder cb = composer.componentBuilder();

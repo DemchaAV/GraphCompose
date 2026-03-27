@@ -44,7 +44,7 @@ class EditorialBlueCvTemplateRenderTest {
         assertThat(outputFile).isNotEmptyFile();
 
         try (PDDocument saved = Loader.loadPDF(outputFile.toFile())) {
-            assertThat(saved.getNumberOfPages()).isGreaterThan(0);
+            assertThat(saved.getNumberOfPages()).isEqualTo(1);
         }
     }
 }

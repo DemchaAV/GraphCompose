@@ -26,10 +26,6 @@ import java.util.List;
 
 @Slf4j
 public class CoverLetterTemplateV1 implements CoverLetterTemplate {
-    public static void main(String[] args) {
-
-    }
-
     /**
      * Unique identifier for this template.
      * Used to select template via API (e.g., "modern-professional", "classic",

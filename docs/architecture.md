@@ -14,6 +14,8 @@ This layer is the reusable document engine. It is responsible for turning entiti
 
 - `Templatese` contains higher-level CV and cover-letter builders, DTOs, themes, and template registries.
 - These classes sit on top of the engine and package common document structures into reusable templates.
+- `Templatese.template` contains template-facing contracts and registry/helper types.
+- `Templatese.templates` contains concrete template implementations.
 
 ## Legacy package names
 
@@ -27,3 +29,8 @@ These names are known typos, but package renames are deferred to a future migrat
 
 - The PDF backend is the main supported rendering path.
 - The Word backend under `...implemented_systems.word_sustems` is experimental and should be treated as less stable than the PDF path.
+
+## Developer tools
+
+- `dev-tools/` contains local developer helpers and maintenance scripts.
+- Files in `dev-tools/` are not part of the runtime library API or the published Maven artifact.

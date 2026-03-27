@@ -20,6 +20,8 @@ That separation is the core project concept. Builders describe intent, component
 
 For pagination-sensitive trees, GraphCompose relies on a child-first page-breaking order. Fixed leaf objects are resolved before their parent containers so parent `ContentSize` can reflect child shifts before container placement is finalized.
 
+See [pagination-ordering.md](./pagination-ordering.md) for the detailed explanation of why this rule exists and how ordering bugs can look like render bugs.
+
 ## Engine layer: `com.demcha.compose.*`
 
 - `layout_core` contains the document model, geometry, layout resolution, pagination, and rendering systems.

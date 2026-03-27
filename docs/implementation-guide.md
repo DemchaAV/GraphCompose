@@ -237,6 +237,8 @@ In practice:
 - the builder is just the place where you attach those components
 - during pagination, descendants should be resolved before parent containers so parent size updates caused by child page shifts are reflected before parent placement is finalized
 
+See [pagination-ordering.md](./pagination-ordering.md) for a focused explanation of this rule, including why a `Circle` case can fail while an `Image` case appears to work.
+
 If those components are missing or inconsistent, the renderer cannot save you later.
 
 ## When to add a method to `ComponentBuilder`

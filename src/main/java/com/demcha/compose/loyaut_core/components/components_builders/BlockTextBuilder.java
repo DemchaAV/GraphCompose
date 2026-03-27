@@ -1,6 +1,6 @@
 package com.demcha.compose.loyaut_core.components.components_builders;
 
-import com.demcha.compose.loyaut_core.components.LineTextData;
+import com.demcha.compose.loyaut_core.components.content.text.LineTextData;
 import com.demcha.compose.loyaut_core.components.containers.abstract_builders.EmptyBox;
 import com.demcha.compose.loyaut_core.components.content.text.BlockTextData;
 import com.demcha.compose.loyaut_core.components.content.text.Text;
@@ -775,3 +775,4 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
     private record FontContainer(TextStyle style, Font font) {
     }
 }
+

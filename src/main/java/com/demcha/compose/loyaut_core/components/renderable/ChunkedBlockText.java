@@ -1,6 +1,6 @@
 package com.demcha.compose.loyaut_core.components.renderable;
 
-import com.demcha.compose.loyaut_core.components.LineTextData;
+import com.demcha.compose.loyaut_core.components.content.text.LineTextData;
 import com.demcha.compose.loyaut_core.components.content.text.BlockTextData;
 import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
 import com.demcha.compose.loyaut_core.components.core.Entity;
@@ -183,3 +183,4 @@ public class ChunkedBlockText extends Container {
 
 
 }
+

@@ -1,4 +1,4 @@
-package com.demcha.compose.loyaut_core.core;
+package com.demcha.compose.loyaut_core.system;
 
 import com.demcha.compose.loyaut_core.system.interfaces.SystemECS;
 import lombok.Getter;

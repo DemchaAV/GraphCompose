@@ -1,7 +1,7 @@
 package com.demcha.integration;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.loyaut_core.components.ComponentBuilder;
+import com.demcha.compose.loyaut_core.components.components_builders.ComponentBuilder;
 import com.demcha.compose.loyaut_core.components.layout.Align;
 import com.demcha.compose.loyaut_core.components.layout.Anchor;
 import com.demcha.compose.loyaut_core.components.style.Margin;
@@ -87,3 +87,4 @@ class LargeContainerIntegrationTest {
         }
     }
 }
+

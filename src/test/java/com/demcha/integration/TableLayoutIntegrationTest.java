@@ -1,7 +1,7 @@
 package com.demcha.integration;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.loyaut_core.components.ComponentBuilder;
+import com.demcha.compose.loyaut_core.components.components_builders.ComponentBuilder;
 import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
 import com.demcha.compose.loyaut_core.components.core.Entity;
 import com.demcha.compose.loyaut_core.components.layout.Align;
@@ -95,3 +95,4 @@ class TableLayoutIntegrationTest {
                 .build();
     }
 }
+

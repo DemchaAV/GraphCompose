@@ -6,6 +6,7 @@ import com.demcha.compose.loyaut_core.components.core.Component;
 import com.demcha.compose.loyaut_core.components.core.Entity;
 import com.demcha.compose.loyaut_core.components.core.EntityName;
 import com.demcha.compose.loyaut_core.components.layout.ParentComponent;
+import com.demcha.compose.loyaut_core.system.SystemRegistry;
 import com.demcha.compose.loyaut_core.system.interfaces.Render;
 import com.demcha.compose.loyaut_core.system.interfaces.SystemECS;
 import lombok.Getter;

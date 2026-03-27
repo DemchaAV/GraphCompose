@@ -1,7 +1,5 @@
-package com.demcha.compose.loyaut_core.components;
+package com.demcha.compose.loyaut_core.components.content.text;
 
-import com.demcha.compose.loyaut_core.components.content.text.TextDataBody;
-import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
 import com.demcha.compose.loyaut_core.system.interfaces.Font;
 import lombok.Data;
 import lombok.experimental.Accessors;

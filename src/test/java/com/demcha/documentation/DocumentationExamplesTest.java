@@ -4,7 +4,7 @@ import com.demcha.Templatese.CvTheme;
 import com.demcha.Templatese.TemplateBuilder;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.font_library.FontName;
-import com.demcha.compose.loyaut_core.components.ComponentBuilder;
+import com.demcha.compose.loyaut_core.components.components_builders.ComponentBuilder;
 import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
 import com.demcha.compose.loyaut_core.components.layout.Align;
 import com.demcha.compose.loyaut_core.components.layout.Anchor;
@@ -136,3 +136,4 @@ class DocumentationExamplesTest {
         }
     }
 }
+

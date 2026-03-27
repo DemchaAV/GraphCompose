@@ -1,4 +1,4 @@
-package com.demcha.compose.loyaut_core.components.components_builders;
+package com.demcha.compose.loyaut_core.core;
 
 import com.demcha.compose.loyaut_core.components.style.Margin;
 

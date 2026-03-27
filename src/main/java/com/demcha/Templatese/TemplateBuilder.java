@@ -1,7 +1,14 @@
 package com.demcha.Templatese;
 
 import com.demcha.compose.loyaut_core.components.components_builders.ComponentBuilder;
-import com.demcha.compose.loyaut_core.components.components_builders.*;
+import com.demcha.compose.loyaut_core.components.components_builders.BlockIndentStrategy;
+import com.demcha.compose.loyaut_core.components.components_builders.BlockTextBuilder;
+import com.demcha.compose.loyaut_core.components.components_builders.DisplayUrlTextBuilder;
+import com.demcha.compose.loyaut_core.components.components_builders.HContainerBuilder;
+import com.demcha.compose.loyaut_core.components.components_builders.ModuleBuilder;
+import com.demcha.compose.loyaut_core.components.components_builders.RectangleBuilder;
+import com.demcha.compose.loyaut_core.components.components_builders.TextBuilder;
+import com.demcha.compose.loyaut_core.components.components_builders.VContainerBuilder;
 import com.demcha.compose.loyaut_core.components.containers.abstract_builders.BuildEntity;
 import com.demcha.compose.loyaut_core.components.content.link.LinkUrl;
 import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
@@ -11,6 +18,7 @@ import com.demcha.compose.loyaut_core.components.layout.Align;
 import com.demcha.compose.loyaut_core.components.layout.Anchor;
 import com.demcha.compose.loyaut_core.components.style.ComponentColor;
 import com.demcha.compose.loyaut_core.components.style.Margin;
+import com.demcha.compose.loyaut_core.core.Canvas;
 import com.demcha.compose.loyaut_core.core.EntityManager;
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -25,6 +33,12 @@ import java.util.Objects;
  */
 @Accessors(fluent = true)
 public class TemplateBuilder implements BuildEntity {
+    private static final double DEFAULT_BLOCK_TEXT_WIDTH = 500;
+    private static final double INFO_PANEL_SEPARATOR_WIDTH = 1;
+    private static final double INFO_PANEL_SEPARATOR_FALLBACK_HEIGHT = 10;
+    private static final double INFO_PANEL_SEPARATOR_MARGIN = 2;
+    private static final double TITLE_MARGIN = 5;
+
     @Getter
     private final EntityManager entityManager;
     @Getter
@@ -79,33 +93,23 @@ public class TemplateBuilder implements BuildEntity {
     }
 
     public Entity infoPanel(List<Entity> entities, Anchor anchorContainer, Anchor elements) {
-        if (entities == null || entities.isEmpty()) return null;
+        if (entities == null || entities.isEmpty()) {
+            return null;
+        }
 
-        // Calculate max height for separators based on content
         double height = entities.stream()
                 .map(entity -> entity.getComponent(ContentSize.class).orElse(new ContentSize(0, 10)))
                 .map(ContentSize::height)
                 .max(Double::compareTo)
-                .orElse(10.0);
+                .orElse(INFO_PANEL_SEPARATOR_FALLBACK_HEIGHT);
 
-        // Use body color for separators to maintain consistency
-        ComponentColor separatorColor = new ComponentColor(theme.bodyColor());
-
-        var defaultAnchor = Anchor.topRight();
+        Anchor defaultAnchor = Anchor.topRight();
         var container = new HContainerBuilder(entityManager, Align.right(5))
-                .anchor(anchorContainer == null ? defaultAnchor : anchorContainer);
-
+                .anchor(resolveAnchor(anchorContainer, defaultAnchor));
 
         for (int i = 0; i < entities.size(); i++) {
-            // Add separator before element (except the first one)
             if (i > 0) {
-                var separator = new RectangleBuilder(entityManager)
-                        .size(new ContentSize(1, height))
-                        .fillColor(separatorColor)
-                        .margin(0, 2, 0, 2) // Small margins around pipe
-                        .anchor(elements == null ? defaultAnchor : elements)
-                        .build();
-                container.addChild(separator);
+                container.addChild(createInfoSeparator(height, resolveAnchor(elements, defaultAnchor)));
             }
             container.addChild(entities.get(i));
         }
@@ -135,8 +139,8 @@ public class TemplateBuilder implements BuildEntity {
                 .textWithAutoSize(title)
                 .entityName("Title_" + title)
                 .anchor(Anchor.topLeft())
-                .margin(new Margin(5, 5, 5, 5))
-                .textStyle(theme.sectionHeaderTextStyle()) // Using Theme Header Style
+                .margin(Margin.of(TITLE_MARGIN))
+                .textStyle(theme.sectionHeaderTextStyle())
                 .build();
     }
 
@@ -145,9 +149,7 @@ public class TemplateBuilder implements BuildEntity {
                 .margin(Margin.of(20))
                 .anchor(Anchor.topRight());
 
-        if (moduleName != null) {
-            moduleHeader.addChild(createModuleTitle(moduleName));
-        }
+        addModuleTitleIfPresent(moduleHeader, moduleName);
         return moduleHeader;
     }
 
@@ -155,9 +157,7 @@ public class TemplateBuilder implements BuildEntity {
         var moduleHeader = new ModuleBuilder(entityManager, Align.middle(theme().spacingModuleName()), canvas)
                 .anchor(Anchor.topLeft());
 
-        if (moduleName != null) {
-            moduleHeader.addChild(createModuleTitle(moduleName));
-        }
+        addModuleTitleIfPresent(moduleHeader, moduleName);
         return moduleHeader;
     }
 
@@ -167,16 +167,13 @@ public class TemplateBuilder implements BuildEntity {
     public ModuleBuilder moduleBuilder(String moduleName, Canvas canvas, List<String> modulePoints) {
         var moduleHeader = moduleBuilder(moduleName, canvas);
 
-        // Create a container for the list items
         var vbox = new VContainerBuilder(entityManager, Align.middle(5))
-                .size(new ContentSize(canvas.innerWidth(), 50)); // Height adapts automatically usually
+                .size(new ContentSize(canvas.innerWidth(), 50));
 
         for (String point : modulePoints) {
-            vbox.addChild(
-                    blockTextBuilder(point, canvas.innerWidth())
-                            .anchor(Anchor.left())
-                            .build()
-            );
+            vbox.addChild(blockTextBuilder(point, canvas.innerWidth())
+                    .anchor(Anchor.left())
+                    .build());
         }
         moduleHeader.addChild(vbox.build());
 
@@ -197,7 +194,7 @@ public class TemplateBuilder implements BuildEntity {
     // ==========================================
 
     public Entity blockText(String text) {
-        return blockText(text, 500);
+        return blockText(text, DEFAULT_BLOCK_TEXT_WIDTH);
     }
 
     public Entity blockText(String text, double width) {
@@ -211,11 +208,8 @@ public class TemplateBuilder implements BuildEntity {
      * Creates a block of text (potentially multi-line or with bullets).
      */
     public Entity blockText(List<String> text, double width, String bulletOffset, BlockIndentStrategy strategy) {
-        // We use the standard body style for lists
         TextStyle style = theme.bodyTextStyle();
-
-
-        return new BlockTextBuilder(entityManager, Align.left(theme.spacing()), style)
+        return new BlockTextBuilder(entityManager, bodyAlign(), style)
                 .size(width, 2)
                 .strategy(strategy)
                 .padding(0, 5, 0, 20)
@@ -229,14 +223,38 @@ public class TemplateBuilder implements BuildEntity {
      * Internal helper to create the text builder with the correct theme.
      */
     private BlockTextBuilder blockTextBuilder(String text, double width) {
+        TextStyle bodyStyle = theme.bodyTextStyle();
         TextBuilder textBuilder = new TextBuilder(entityManager)
                 .textWithAutoSize(text)
-                .textStyle(theme.bodyTextStyle()); // Using Theme Body Style
+                .textStyle(bodyStyle);
 
-        return new BlockTextBuilder(entityManager, Align.left(theme.spacing()), theme.bodyTextStyle())
+        return new BlockTextBuilder(entityManager, bodyAlign(), bodyStyle)
                 .size(width, 2)
                 .padding(0, 5, 0, 25)
                 .text(textBuilder);
+    }
+
+    private Align bodyAlign() {
+        return Align.left(theme.spacing());
+    }
+
+    private Anchor resolveAnchor(Anchor anchor, Anchor fallback) {
+        return anchor != null ? anchor : fallback;
+    }
+
+    private Entity createInfoSeparator(double height, Anchor anchor) {
+        return new RectangleBuilder(entityManager)
+                .size(new ContentSize(INFO_PANEL_SEPARATOR_WIDTH, height))
+                .fillColor(new ComponentColor(theme.bodyColor()))
+                .margin(0, INFO_PANEL_SEPARATOR_MARGIN, 0, INFO_PANEL_SEPARATOR_MARGIN)
+                .anchor(anchor)
+                .build();
+    }
+
+    private void addModuleTitleIfPresent(ModuleBuilder moduleBuilder, String moduleName) {
+        if (moduleName != null) {
+            moduleBuilder.addChild(createModuleTitle(moduleName));
+        }
     }
 
     /**

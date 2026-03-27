@@ -1,6 +1,6 @@
 package com.demcha.system.interfaces.guides;
 
-import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
+import com.demcha.compose.loyaut_core.core.Canvas;
 import com.demcha.compose.loyaut_core.components.layout.coordinator.RenderCoordinateContext;
 import com.demcha.mock.FactoryClasses;
 import com.demcha.mock.FactoryPresets;

@@ -1,6 +1,6 @@
 package com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems;
 
-import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
+import com.demcha.compose.loyaut_core.core.Canvas;
 import com.demcha.compose.loyaut_core.components.style.Margin;
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -65,5 +65,6 @@ public final class PdfCanvas implements Canvas {
         this.margin = margin;
     }
 }
+
 
 

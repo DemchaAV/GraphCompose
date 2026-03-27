@@ -1,7 +1,7 @@
 package com.demcha.compose.loyaut_core.system;
 
 import com.demcha.compose.loyaut_core.components.content.text.LineTextData;
-import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
+import com.demcha.compose.loyaut_core.core.Canvas;
 import com.demcha.compose.loyaut_core.components.content.text.BlockTextData;
 import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
 import com.demcha.compose.loyaut_core.components.core.Entity;
@@ -455,4 +455,5 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
 
     public enum Visit {UNSEEN, ACTIVE, DONE;}
 }
+
 

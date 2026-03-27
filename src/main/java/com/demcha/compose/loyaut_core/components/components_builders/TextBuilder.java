@@ -13,7 +13,6 @@ import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 
-//TODO has to be finish with adding essential data type for building b Box
 @Slf4j
 @Accessors(fluent = true)
 public class TextBuilder extends EmptyBox<TextBuilder> {

@@ -1,6 +1,6 @@
 package com.demcha.mock;
 
-import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
+import com.demcha.compose.loyaut_core.core.Canvas;
 import com.demcha.compose.loyaut_core.components.core.Component;
 import com.demcha.compose.loyaut_core.components.core.Entity;
 import com.demcha.compose.loyaut_core.components.geometry.ContentSize;
@@ -102,3 +102,4 @@ public class FactoryClasses {
         return canvas;
     }
 }
+

@@ -1,7 +1,7 @@
 package com.demcha.compose.loyaut_core.system.utils.page_breaker;
 
 import com.demcha.compose.loyaut_core.components.content.text.LineTextData;
-import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
+import com.demcha.compose.loyaut_core.core.Canvas;
 import com.demcha.compose.loyaut_core.components.content.text.BlockTextData;
 import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
 import com.demcha.compose.loyaut_core.components.core.Entity;
@@ -235,3 +235,4 @@ public class TextBlockProcessor {
     }
 
 }
+

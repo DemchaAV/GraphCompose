@@ -1,6 +1,6 @@
 package com.demcha.compose.loyaut_core.system.interfaces;
 
-import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
+import com.demcha.compose.loyaut_core.core.Canvas;
 import com.demcha.compose.loyaut_core.components.content.shape.Side;
 import com.demcha.compose.loyaut_core.components.layout.coordinator.RenderCoordinateContext;
 import com.demcha.compose.loyaut_core.system.GuidLineSettings;
@@ -32,3 +32,4 @@ public interface RenderingSystemECS<S extends AutoCloseable> extends SystemECS {
     void fillCircle(S stream, float cx, float cy, float r, Color fill) throws IOException;
 
 }
+

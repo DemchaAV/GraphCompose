@@ -7,98 +7,78 @@ import com.demcha.compose.loyaut_core.core.EntityManager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ComponentBuilder {
     private final List<BuildEntity> builders = new ArrayList<>();
-    private EntityManager entityManager;
+    private final EntityManager entityManager;
 
-    private ComponentBuilder() {
+    private ComponentBuilder(EntityManager entityManager) {
+        this.entityManager = Objects.requireNonNull(entityManager, "entityManager");
     }
 
     public static ComponentBuilder builder(EntityManager entityManager) {
-        ComponentBuilder builder = new ComponentBuilder();
-        builder.entityManager = entityManager;
+        return new ComponentBuilder(entityManager);
+    }
+
+    private <T extends BuildEntity> T register(T builder) {
+        builders.add(builder);
         return builder;
     }
 
     public BlockTextBuilder blockText(Align align, TextStyle textStyle) {
-        BlockTextBuilder blockTextBuilder = new BlockTextBuilder(this.entityManager, align, textStyle);
-        builders.add(blockTextBuilder);
-        return blockTextBuilder;
+        return register(new BlockTextBuilder(entityManager, align, textStyle));
     }
 
     public BlockTextBuilder blockTextParagraph(Align align, TextStyle textStyle, String bulletOffset) {
-        BlockTextBuilder blockTextBuilder = new BlockTextBuilder(this.entityManager, align, textStyle);
+        BlockTextBuilder blockTextBuilder = register(new BlockTextBuilder(entityManager, align, textStyle));
         blockTextBuilder.bulletOffset(bulletOffset)
                 .strategy(BlockIndentStrategy.FIRST_LINE);
-        builders.add(blockTextBuilder);
         return blockTextBuilder;
     }
 
     public ButtonBuilder button() {
-        ButtonBuilder buttonBuilder = new ButtonBuilder(this.entityManager);
-        builders.add(buttonBuilder);
-        return buttonBuilder;
+        return register(new ButtonBuilder(entityManager));
     }
 
     public DisplayUrlTextBuilder displayUrlText() {
-        DisplayUrlTextBuilder displayUrlTextBuilder = new DisplayUrlTextBuilder(this.entityManager);
-        builders.add(displayUrlTextBuilder);
-        return displayUrlTextBuilder;
+        return register(new DisplayUrlTextBuilder(entityManager));
     }
 
     public LinkBuilder link() {
-        LinkBuilder linkBuilder = new LinkBuilder(this.entityManager);
-        builders.add(linkBuilder);
-        return linkBuilder;
+        return register(new LinkBuilder(entityManager));
     }
 
     public ModuleBuilder moduleBuilder(Align align) {
-        ModuleBuilder moduleBuilder = new ModuleBuilder(this.entityManager, align);
-        builders.add(moduleBuilder);
-        return moduleBuilder;
+        return register(new ModuleBuilder(entityManager, align));
     }
 
     public RectangleBuilder rectangle() {
-        RectangleBuilder rectangleBuilder = new RectangleBuilder(this.entityManager);
-        builders.add(rectangleBuilder);
-        return rectangleBuilder;
+        return register(new RectangleBuilder(entityManager));
     }
 
     public ImageBuilder image() {
-        ImageBuilder imageBuilder = new ImageBuilder(this.entityManager);
-        builders.add(imageBuilder);
-        return imageBuilder;
+        return register(new ImageBuilder(entityManager));
     }
 
     public TextBuilder text() {
-        TextBuilder textBuilder = new TextBuilder(this.entityManager);
-        builders.add(textBuilder);
-        return textBuilder;
+        return register(new TextBuilder(entityManager));
     }
 
     public RowBuilder row(Align align) {
-        RowBuilder rowBuilder = new RowBuilder(this.entityManager, align);
-        builders.add(rowBuilder);
-        return rowBuilder;
+        return register(new RowBuilder(entityManager, align));
     }
 
     public HContainerBuilder hContainer(Align align) {
-        HContainerBuilder hContainerBuilder = new HContainerBuilder(this.entityManager, align);
-        builders.add(hContainerBuilder);
-        return hContainerBuilder;
+        return register(new HContainerBuilder(entityManager, align));
     }
 
     public VContainerBuilder vContainer(Align align) {
-        VContainerBuilder vContainerBuilder = new VContainerBuilder(this.entityManager, align);
-        builders.add(vContainerBuilder);
-        return vContainerBuilder;
+        return register(new VContainerBuilder(entityManager, align));
     }
 
     public ElementBuilder element() {
-        ElementBuilder elementBuilder = new ElementBuilder(this.entityManager);
-        builders.add(elementBuilder);
-        return elementBuilder;
+        return register(new ElementBuilder(entityManager));
     }
 
     public EntityManager entityManager() {

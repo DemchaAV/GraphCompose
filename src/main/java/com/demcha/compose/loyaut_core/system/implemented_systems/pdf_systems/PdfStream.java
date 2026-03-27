@@ -1,6 +1,6 @@
 package com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems;
 
-import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
+import com.demcha.compose.loyaut_core.core.Canvas;
 import com.demcha.compose.loyaut_core.components.core.Entity;
 import com.demcha.compose.loyaut_core.components.layout.coordinator.Placement;
 import com.demcha.compose.loyaut_core.system.interfaces.RenderStream;
@@ -66,3 +66,4 @@ public record PdfStream(PDDocument doc, Canvas canvas) implements RenderStream<P
         return newStream;
     }
 }
+

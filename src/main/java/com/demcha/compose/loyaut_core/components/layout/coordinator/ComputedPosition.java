@@ -1,6 +1,6 @@
 package com.demcha.compose.loyaut_core.components.layout.coordinator;
 
-import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
+import com.demcha.compose.loyaut_core.core.Canvas;
 import com.demcha.compose.loyaut_core.components.core.Component;
 import com.demcha.compose.loyaut_core.components.core.Entity;
 import com.demcha.compose.loyaut_core.components.geometry.InnerBoxSize;
@@ -98,3 +98,4 @@ public record ComputedPosition(double x, double y) implements Component {
         return new PaddingCoordinate(x, y);
     }
 }
+

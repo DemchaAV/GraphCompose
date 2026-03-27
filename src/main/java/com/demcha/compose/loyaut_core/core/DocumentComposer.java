@@ -1,7 +1,7 @@
 package com.demcha.compose.loyaut_core.core;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.loyaut_core.components.ComponentBuilder;
+import com.demcha.compose.loyaut_core.components.components_builders.ComponentBuilder;
 
 import java.io.Closeable;
 
@@ -90,3 +90,4 @@ public interface DocumentComposer extends Closeable {
      */
     byte[] toBytes() throws Exception;
 }
+

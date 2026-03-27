@@ -1,6 +1,5 @@
-package com.demcha.compose.loyaut_core.components;
+package com.demcha.compose.loyaut_core.components.components_builders;
 
-import com.demcha.compose.loyaut_core.components.components_builders.*;
 import com.demcha.compose.loyaut_core.components.containers.abstract_builders.BuildEntity;
 import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
 import com.demcha.compose.loyaut_core.components.layout.Align;

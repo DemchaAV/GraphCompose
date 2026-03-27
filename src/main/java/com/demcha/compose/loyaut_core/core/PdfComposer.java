@@ -3,7 +3,7 @@ package com.demcha.compose.loyaut_core.core;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.font_library.DefaultFonts;
 import com.demcha.compose.font_library.FontFamilyDefinition;
-import com.demcha.compose.loyaut_core.components.ComponentBuilder;
+import com.demcha.compose.loyaut_core.components.components_builders.ComponentBuilder;
 import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
 import com.demcha.compose.loyaut_core.components.style.Margin;
 import com.demcha.compose.loyaut_core.system.LayoutSystem;
@@ -187,3 +187,4 @@ public final class PdfComposer implements DocumentComposer {
         doc.close();
     }
 }
+

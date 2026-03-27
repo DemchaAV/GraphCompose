@@ -1,6 +1,6 @@
 package com.demcha.compose.loyaut_core.components.content.text;
 
-import com.demcha.compose.loyaut_core.components.LineTextData;
+import com.demcha.compose.loyaut_core.components.content.text.LineTextData;
 import com.demcha.compose.loyaut_core.components.core.Component;
 
 import java.util.List;
@@ -24,4 +24,5 @@ public record BlockTextData(List<LineTextData> lines, float lineSpacing) impleme
         return false;
     }
 }
+
 

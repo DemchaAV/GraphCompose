@@ -2,6 +2,22 @@
 
 GraphCompose is split into two practical layers.
 
+## Pipeline overview
+
+The engine flow is:
+
+1. application code uses builders to create entities
+2. builders attach components that describe content, style, size, and parent/child relationships
+3. `EntityManager` stores the entity graph
+4. `LayoutSystem` resolves geometry, placement, and pagination
+5. the active rendering system turns resolved entities into output bytes
+
+In short, the runtime pipeline is:
+
+`builder -> entity/components -> layout -> render`
+
+That separation is the core project concept. Builders describe intent, components hold the data, layout resolves geometry, and renderers only draw already-resolved output.
+
 ## Engine layer: `com.demcha.compose.*`
 
 - `loyaut_core` contains the document model, geometry, layout resolution, pagination, and rendering systems.
@@ -29,6 +45,12 @@ These names are known typos, but package renames are deferred to a future migrat
 
 - The PDF backend is the main supported rendering path.
 - The Word backend under `...implemented_systems.word_sustems` is experimental and should be treated as less stable than the PDF path.
+
+## Language status
+
+- Java is the primary implementation language.
+- The build currently includes Kotlin runtime/plugin support, but the repository does not currently ship production `.kt` sources.
+- Public docs should therefore treat GraphCompose as a Java-first library with Kotlin compatibility in the build setup, not as a full dual-language codebase.
 
 ## Developer tools
 

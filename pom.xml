@@ -9,7 +9,7 @@
     <version>v1.0.0</version>
 
     <name>GraphCompose</name>
-    <description>A declarative layout engine for programmatic document generation in Java &amp; Kotlin.</description>
+    <description>A declarative layout engine for programmatic document generation, implemented primarily in Java.</description>
     <url>https://github.com/DemchaAV/GraphCompose</url>
 
     <licenses>

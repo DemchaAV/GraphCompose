@@ -43,6 +43,8 @@ Think of it as **Jetpack Compose or Flexbox for server-side document generation*
 
 > **Core idea:** define a layout once, feed it data many times, and generate consistent documents with predictable structure.
 
+See [docs/architecture.md](docs/architecture.md) for a package-level map and [CONTRIBUTING.md](CONTRIBUTING.md) for build and contribution workflow notes.
+
 ---
 
 ## 🎯 Why GraphCompose?
@@ -160,14 +162,16 @@ graph TD
     classDef planned stroke-dasharray: 5 5;
     class DOCX,PPTX planned;
 ```
-### Project modules
+### Main packages
 
-| Module         | Responsibility                                                 |
-| -------------- | -------------------------------------------------------------- |
-| `layout_core`  | Core geometry, styles, components, and base entity definitions |
-| `system`       | Layout resolution and rendering pipeline                       |
-| `markdown`     | Markdown parsing and conversion into document entities         |
-| `font_library` | Font registration, variant management, and metric caching      |
+| Package / layer | Responsibility                                                                  |
+| --------------- | ------------------------------------------------------------------------------- |
+| `loyaut_core`   | Core geometry, styles, entities, components, and the layout/render pipeline     |
+| `markdown`      | Markdown parsing and conversion into document entities                          |
+| `font_library`  | Font registration, variant management, and metric caching                       |
+| `Templatese`    | Optional higher-level CV and cover-letter template helpers                      |
+
+> `loyaut_core` and `Templatese` are the current package names in the public codebase and are preserved for compatibility.
 
 ### Mental model
 
@@ -224,12 +228,12 @@ Document creation follows three stages:
 
 ```java
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.layout_core.components.content.text.TextStyle;
-import com.demcha.compose.layout_core.components.core.Entity;
-import com.demcha.compose.layout_core.components.layout.Align;
-import com.demcha.compose.layout_core.components.layout.Anchor;
-import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.components.style.Padding;
+import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
+import com.demcha.compose.loyaut_core.components.core.Entity;
+import com.demcha.compose.loyaut_core.components.layout.Align;
+import com.demcha.compose.loyaut_core.components.layout.Anchor;
+import com.demcha.compose.loyaut_core.components.style.Margin;
+import com.demcha.compose.loyaut_core.components.style.Padding;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;

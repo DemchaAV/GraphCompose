@@ -6,14 +6,14 @@ import java.nio.file.Path;
 
 public class CoverLetterMock {
 
-    private static final Path LETTER_PATH = Path.of("src", "test", "resources", "data", "cover_leter.txt");
+    private static final Path LETTER_PATH = Path.of("src", "test", "resources", "data", "cover_letter.txt");
     public static String letter;
 
     static {
         try {
             letter = Files.readString(LETTER_PATH);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to load cover_leter.txt",e);
+            throw new RuntimeException("Failed to load cover_letter.txt",e);
         }
     }
 }

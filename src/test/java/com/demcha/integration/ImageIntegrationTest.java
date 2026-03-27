@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ImageIntegrationTest {
 
     private static final Path VISUAL_DIR = Path.of("target", "visual-tests");
-    private static final Path COVER_ASSET = Path.of("assets", "GraphCoposeCover.png");
+    private static final Path COVER_ASSET = Path.of("assets", "GraphComposeCover.png");
 
     @Test
     void shouldRenderSingleImageWithGuides() throws Exception {

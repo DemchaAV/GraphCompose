@@ -24,7 +24,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 @Slf4j
-public class Template_CV1 implements CvTemplate {
+public class CvTemplateV1 implements CvTemplate {
     private static final String MAIN_CONTAINER_NAME = "MainVBoxContainer";
     private static final String HEADER_ENTITY_NAME = "ModuleHeader";
     private static final String DEFAULT_BULLET_OFFSET = "  ";
@@ -33,11 +33,11 @@ public class Template_CV1 implements CvTemplate {
 
     private final CvTheme theme;
 
-    public Template_CV1() {
+    public CvTemplateV1() {
         this(CvTheme.defaultTheme());
     }
 
-    public Template_CV1(CvTheme theme) {
+    public CvTemplateV1(CvTheme theme) {
         this.theme = theme == null ? CvTheme.defaultTheme() : theme;
     }
 

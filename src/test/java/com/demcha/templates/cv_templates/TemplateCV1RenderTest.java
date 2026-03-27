@@ -3,7 +3,7 @@ package com.demcha.templates.cv_templates;
 import com.demcha.templates.CvTheme;
 import com.demcha.templates.data.MainPageCV;
 import com.demcha.templates.api.MainPageCvDTO;
-import com.demcha.templates.builtins.Template_CV1;
+import com.demcha.templates.builtins.CvTemplateV1;
 import com.demcha.compose.font_library.FontName;
 import com.demcha.mock.MainPageCVMock;
 import org.apache.pdfbox.Loader;
@@ -35,7 +35,7 @@ class TemplateCV1RenderTest {
     void shouldRenderTemplateCvAsDocument() throws Exception {
         Path outputFile = prepareOutputFile("template_cv_1_render_document");
 
-        Template_CV1 template = new Template_CV1();
+        CvTemplateV1 template = new CvTemplateV1();
 
         try (PDDocument document = template.render(original, rewritten)) {
             document.save(outputFile.toFile());
@@ -48,7 +48,7 @@ class TemplateCV1RenderTest {
     void shouldRenderTemplateCvDirectlyToFile() throws Exception {
         Path outputFile = prepareOutputFile("template_cv_1_render_file");
 
-        Template_CV1 template = new Template_CV1();
+        CvTemplateV1 template = new CvTemplateV1();
         template.render(original, rewritten, outputFile);
         System.out.printf("Document saves %s",outputFile.toAbsolutePath());
 
@@ -58,7 +58,7 @@ class TemplateCV1RenderTest {
     void shouldRenderTemplateCvDirectlyToFileWithGuideLines() throws Exception {
         Path outputFile = prepareOutputFile("template_cv_1_render_file_with_guide_lines");
 
-        Template_CV1 template = new Template_CV1();
+        CvTemplateV1 template = new CvTemplateV1();
         template.render(original, rewritten, outputFile,true);
         System.out.printf("Document saves %s",outputFile.toAbsolutePath());
 
@@ -74,7 +74,7 @@ class TemplateCV1RenderTest {
                 .replace('-', '_');
         Path outputFile = prepareOutputFile("template_cv_1_render_" + slug);
 
-        Template_CV1 template = new Template_CV1(themeWith(fontName));
+        CvTemplateV1 template = new CvTemplateV1(themeWith(fontName));
 
         try (PDDocument document = template.render(original, rewritten)) {
             document.save(outputFile.toFile());

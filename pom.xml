@@ -24,7 +24,7 @@
         <developer>
             <id>DemchaAV</id>
             <name>Artem Demchyshyn</name>
-            <email>demchyshyn.artem@gmail.com</email> <!-- Placeholder or if known -->
+            <email>demchyshyn.artem@gmail.com</email>
             <url>https://github.com/DemchaAV</url>
             <roles>
                 <role>Lead Developer</role>
@@ -41,21 +41,26 @@
     </scm>
 
     <properties>
+        <!-- Toolchain -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
 
+        <!-- Runtime / library dependencies -->
         <assertj.version>3.27.3</assertj.version>
         <flexmark.version>0.64.8</flexmark.version>
         <jackson.bom.version>2.20.1</jackson.bom.version>
-        <junit.bom.version>5.12.2</junit.bom.version>
         <kotlin.version>2.2.20</kotlin.version>
         <logback.version>1.5.18</logback.version>
         <lombok.version>1.18.38</lombok.version>
-        <mockito.version>5.20.0</mockito.version>
         <pdfbox.version>3.0.5</pdfbox.version>
         <slf4j.version>2.0.17</slf4j.version>
         <snakeyaml.version>2.4</snakeyaml.version>
 
+        <!-- Test dependencies -->
+        <junit.bom.version>5.12.2</junit.bom.version>
+        <mockito.version>5.20.0</mockito.version>
+
+        <!-- Build plugins -->
         <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
         <maven.surefire.plugin.version>3.2.5</maven.surefire.plugin.version>
     </properties>
@@ -80,6 +85,7 @@
     </dependencyManagement>
 
     <dependencies>
+        <!-- Main dependencies -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -142,12 +148,14 @@
             <version>${snakeyaml.version}</version>
         </dependency>
 
+        <!-- Kotlin compatibility -->
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib-jdk8</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
 
+        <!-- Test dependencies -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
@@ -185,7 +193,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Benchmarking Competitors -->
+        <!-- Benchmark-only comparison dependencies -->
         <dependency>
             <groupId>com.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-pdfbox</artifactId>
@@ -214,6 +222,7 @@
 
     <build>
         <plugins>
+            <!-- Kotlin compatibility / mixed-source support -->
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>
@@ -221,7 +230,9 @@
                 <executions>
                     <execution>
                         <id>compile</id>
-                        <goals><goal>compile</goal></goals>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
                         <configuration>
                             <sourceDirs>
                                 <sourceDir>${project.basedir}/src/main/java</sourceDir>
@@ -230,7 +241,9 @@
                     </execution>
                     <execution>
                         <id>test-compile</id>
-                        <goals><goal>test-compile</goal></goals>
+                        <goals>
+                            <goal>test-compile</goal>
+                        </goals>
                         <configuration>
                             <sourceDirs>
                                 <sourceDir>${project.basedir}/src/test/java</sourceDir>
@@ -243,6 +256,7 @@
                 </configuration>
             </plugin>
 
+            <!-- Java compilation -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -259,6 +273,7 @@
                 </configuration>
             </plugin>
 
+            <!-- Test execution -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>

@@ -7,10 +7,11 @@ import com.demcha.compose.layout_core.components.components_builders.BlockTextBu
 import com.demcha.compose.layout_core.components.components_builders.ComponentBuilder;
 import com.demcha.compose.layout_core.components.components_builders.ElementBuilder;
 import com.demcha.compose.layout_core.components.components_builders.HContainerBuilder;
-import com.demcha.compose.layout_core.components.components_builders.ModuleBuilder;
-import com.demcha.compose.layout_core.components.components_builders.RectangleBuilder;
+import com.demcha.compose.layout_core.components.components_builders.TableCellStyle;
+import com.demcha.compose.layout_core.components.components_builders.TableColumnSpec;
 import com.demcha.compose.layout_core.components.components_builders.TextBuilder;
 import com.demcha.compose.layout_core.components.components_builders.VContainerBuilder;
+import com.demcha.compose.layout_core.components.content.shape.Stroke;
 import com.demcha.compose.layout_core.components.content.text.TextDecoration;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.core.Entity;
@@ -37,6 +38,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,22 +47,26 @@ import java.util.regex.Pattern;
 public class EditorialBlueCvTemplate implements CvTemplate {
     private static final String ROOT_NAME = "EditorialBlueRoot";
     private static final String HEADER_NAME = "EditorialBlueHeader";
-    private static final String SUMMARY_NAME = "EditorialBlueSummary";
+    private static final String PROFILE_NAME = "EditorialBlueProfile";
     private static final String EXPERIENCE_NAME = "EditorialBlueExperience";
     private static final String PROJECTS_NAME = "EditorialBlueProjects";
     private static final String EDUCATION_NAME = "EditorialBlueEducation";
     private static final String SKILLS_NAME = "EditorialBlueSkills";
-    private static final String ADDITIONAL_NAME = "EditorialBlueAdditional";
+    private static final String FOOTER_NAME = "EditorialBlueFooter";
 
-    private static final float PAGE_MARGIN = 24f;
-    private static final double ROOT_SPACING = 10;
-    private static final double HEADER_SPACING = 4;
-    private static final double SECTION_SPACING = 4;
-    private static final double ENTRY_SPACING = 3;
-    private static final double BLOCK_LINE_SPACING = 2;
-    private static final double DIVIDER_HEIGHT = 1.6;
-    private static final double MUTED_DIVIDER_HEIGHT = 0.8;
-    private static final double SKILL_ROW_HEIGHT = 28;
+    private static final float PAGE_MARGIN = 18f;
+    private static final double ROOT_SPACING = 7;
+    private static final double HEADER_SPACING = 2;
+    private static final double SECTION_SPACING = 3;
+    private static final double ENTRY_SPACING = 1.8;
+    private static final double BODY_LINE_SPACING = 1.8;
+    private static final double DETAIL_INDENT = 14;
+    private static final double RULE_HEIGHT = 6;
+    private static final double SECTION_RULE_STROKE = 1.25;
+    private static final double HEADER_RULE_STROKE = 1.5;
+    private static final double FOOTER_RULE_STROKE = 0.8;
+    private static final double DATE_COLUMN_WIDTH = 126;
+    private static final double HEADER_ROW_GAP = 8;
     private static final int SKILL_COLUMNS = 4;
     private static final int MAX_GRID_SKILLS = 12;
 
@@ -69,6 +75,8 @@ public class EditorialBlueCvTemplate implements CvTemplate {
             "^\\*\\*(.+?)\\*\\*,\\s*(.+?)\\s*\\|\\s*\\*(.+?)\\*\\s*[\\u2013-]\\s*(.+)$");
     private static final Pattern PROJECT_PATTERN = Pattern.compile(
             "^\\*\\*(.+?)\\*\\*\\s*(?:\\*\\((.+?)\\)\\*)?\\s*[\\u2013-]\\s*(.+)$");
+    private static final Pattern EDUCATION_PATTERN = Pattern.compile(
+            "^\\*\\*(.+?)\\*\\*\\s*[\\u2013-]\\s*(.+?)(?:\\s*\\|\\s*(.+?))?(?:\\s+-\\s+(.+))?$");
     private static final Pattern PAREN_PATTERN = Pattern.compile("\\([^)]*\\)");
 
     private final CvTheme theme;
@@ -129,7 +137,7 @@ public class EditorialBlueCvTemplate implements CvTemplate {
 
     @Override
     public String getDescription() {
-        return "A single-column editorial CV with centered header, blue section rules, and compact skills grid.";
+        return "A light editorial CV with a centered header, blue section rules, and a structured skills table.";
     }
 
     private PdfComposer createComposer(Path path, boolean guideLines) {
@@ -153,7 +161,7 @@ public class EditorialBlueCvTemplate implements CvTemplate {
                 .anchor(Anchor.topLeft());
 
         root.addChild(createHeader(cb, data, width));
-        root.addChild(createSummarySection(cb, data.getModuleSummary(), width));
+        root.addChild(createProfileSection(cb, data.getModuleSummary(), width));
         root.addChild(createExperienceSection(cb, data.getProfessionalExperience(), width));
 
         Entity projectsSection = createProjectsSection(cb, data.getProjects(), width);
@@ -161,45 +169,60 @@ public class EditorialBlueCvTemplate implements CvTemplate {
             root.addChild(projectsSection);
         }
 
-        root.addChild(createEducationSection(cb, data.getEducationCertifications(), width));
-        root.addChild(createSkillsSection(cb, data.getTechnicalSkills(), width));
-
-        Entity additionalSection = createAdditionalSection(cb, data.getAdditional(), width);
-        if (additionalSection != null) {
-            root.addChild(additionalSection);
+        Entity educationSection = createEducationSection(cb, data.getEducationCertifications(), width);
+        if (educationSection != null) {
+            root.addChild(educationSection);
         }
 
+        Entity skillsSection = createSkillsSection(cb, data.getTechnicalSkills(), width);
+        if (skillsSection != null) {
+            root.addChild(skillsSection);
+        }
+
+        root.addChild(createFooter(cb, width));
         root.build();
     }
 
     private Entity createHeader(ComponentBuilder cb, MainPageCV data, double width) {
-        String headline = extractHeadline(data.getModuleSummary());
-        String contactLine = String.join(" | ",
-                safe(data.getHeader().getPhoneNumber()),
-                safe(data.getHeader().getEmail().getDisplayText()),
-                safe(data.getHeader().getAddress()));
-        String linksLine = String.join(" | ",
-                safe(data.getHeader().getLinkedIn().getDisplayText()),
-                safe(data.getHeader().getGitHub().getDisplayText()));
-
         VContainerBuilder header = cb.vContainer(Align.middle(HEADER_SPACING))
                 .entityName(HEADER_NAME)
                 .size(width, 0)
                 .anchor(Anchor.topLeft())
-                .margin(Margin.bottom(6));
+                .margin(Margin.bottom(2));
 
-        header.addChild(createSingleLineText(cb, data.getHeader().getName(), nameStyle(), Anchor.topCenter(), Margin.bottom(2)));
-        header.addChild(createSingleLineText(cb, headline, headlineStyle(), Anchor.topCenter(), Margin.zero()));
-        header.addChild(createSingleLineText(cb, contactLine, metaStyle(), Anchor.topCenter(), Margin.top(2)));
-        header.addChild(createSingleLineText(cb, linksLine, linksStyle(), Anchor.topCenter(), Margin.zero()));
-        header.addChild(createDivider(cb, width, accentColor(), DIVIDER_HEIGHT, Margin.top(8)));
+        header.addChild(createSingleLineText(
+                cb,
+                safe(data.getHeader().getName()).toUpperCase(Locale.ROOT),
+                nameStyle(),
+                Anchor.topCenter(),
+                Margin.zero()));
 
+        String headline = extractHeadline(data.getModuleSummary());
+        if (!headline.isBlank()) {
+            header.addChild(createSingleLineText(cb, headline, headlineStyle(), Anchor.topCenter(), Margin.zero()));
+        }
+
+        header.addChild(createSingleLineText(
+                cb,
+                joinNonBlank(" - ",
+                        safe(data.getHeader().getPhoneNumber()),
+                        safe(data.getHeader().getEmail().getDisplayText()),
+                        safe(data.getHeader().getAddress())),
+                metaStyle(),
+                Anchor.topCenter(),
+                Margin.top(1)));
+
+        header.addChild(createRule(cb, width, accentColor(), HEADER_RULE_STROKE, Margin.top(6)));
         return header.build();
     }
 
-    private Entity createSummarySection(ComponentBuilder cb, ModuleSummary summary, double width) {
-        VContainerBuilder section = sectionContainer(cb, SUMMARY_NAME, width, "PROFESSIONAL PROFILE");
-        section.addChild(createParagraph(cb, List.of(summary.getBlockSummary()), width, Margin.top(2)));
+    private Entity createProfileSection(ComponentBuilder cb, ModuleSummary summary, double width) {
+        VContainerBuilder section = sectionContainer(cb, PROFILE_NAME, width, "PROFESSIONAL PROFILE");
+        section.addChild(createParagraph(
+                cb,
+                List.of(stripMarkdown(summary.getBlockSummary())),
+                width,
+                Margin.top(2)));
         return section.build();
     }
 
@@ -216,49 +239,56 @@ public class EditorialBlueCvTemplate implements CvTemplate {
             return null;
         }
 
-        VContainerBuilder section = sectionContainer(cb, PROJECTS_NAME, width, "SELECTED PROJECTS");
-        int limit = Math.min(2, projects.getModulePoints().size());
-        for (int i = 0; i < limit; i++) {
-            section.addChild(createProjectEntry(cb, parseProjectEntry(projects.getModulePoints().get(i)), width));
+        VContainerBuilder section = sectionContainer(cb, PROJECTS_NAME, width, "PROJECTS");
+        List<ProjectEntry> entries = parseProjectEntries(projects.getModulePoints());
+        int limit = Math.min(2, entries.size());
+
+        for (int index = 0; index < limit; index++) {
+            section.addChild(createProjectEntry(cb, entries.get(index), width));
         }
+
         return section.build();
     }
 
     private Entity createEducationSection(ComponentBuilder cb, ModuleYml education, double width) {
+        if (education == null || education.getModulePoints().isEmpty()) {
+            return null;
+        }
+
         VContainerBuilder section = sectionContainer(cb, EDUCATION_NAME, width, "EDUCATION");
-        section.addChild(createBulletParagraph(cb, education.getModulePoints(), width, Margin.top(2)));
+        for (EducationEntry entry : parseEducationEntries(education.getModulePoints())) {
+            section.addChild(createEducationEntry(cb, entry, width));
+        }
         return section.build();
     }
 
     private Entity createSkillsSection(ComponentBuilder cb, ModuleYml skillsModule, double width) {
-        VContainerBuilder section = sectionContainer(cb, SKILLS_NAME, width, "KEY SKILLS");
         List<String> skills = extractSkillTokens(skillsModule);
         if (skills.isEmpty()) {
-            return section.build();
-        }
-
-        double separatorWidth = 1;
-        double totalSeparatorWidth = separatorWidth * (SKILL_COLUMNS - 1);
-        double cellWidth = (width - totalSeparatorWidth) / SKILL_COLUMNS;
-
-        section.addChild(createDivider(cb, width, mutedBorderColor(), MUTED_DIVIDER_HEIGHT, Margin.top(2)));
-
-        for (int index = 0; index < skills.size(); index += SKILL_COLUMNS) {
-            List<String> row = skills.subList(index, Math.min(index + SKILL_COLUMNS, skills.size()));
-            section.addChild(createSkillsRow(cb, row, width, cellWidth, separatorWidth));
-            section.addChild(createDivider(cb, width, mutedBorderColor(), MUTED_DIVIDER_HEIGHT, Margin.zero()));
-        }
-        return section.build();
-    }
-
-    private Entity createAdditionalSection(ComponentBuilder cb, ModuleYml additional, double width) {
-        if (additional == null || additional.getModulePoints().isEmpty()) {
             return null;
         }
 
-        VContainerBuilder section = sectionContainer(cb, ADDITIONAL_NAME, width, "ADDITIONAL INFORMATION");
-        section.addChild(createBulletParagraph(cb, additional.getModulePoints(), width, Margin.top(2)));
+        VContainerBuilder section = sectionContainer(cb, SKILLS_NAME, width, "KEY SKILLS");
+        section.addChild(createSkillsTable(cb, skills, width));
         return section.build();
+    }
+
+    private Entity createFooter(ComponentBuilder cb, double width) {
+        VContainerBuilder footer = cb.vContainer(Align.middle(2))
+                .entityName(FOOTER_NAME)
+                .size(width, 0)
+                .anchor(Anchor.topLeft())
+                .margin(Margin.top(2));
+
+        footer.addChild(createRule(cb, width, mutedBorderColor(), FOOTER_RULE_STROKE, Margin.zero()));
+        footer.addChild(createSingleLineText(
+                cb,
+                "References available upon request.",
+                footerStyle(),
+                Anchor.topCenter(),
+                Margin.top(3)));
+
+        return footer.build();
     }
 
     private VContainerBuilder sectionContainer(ComponentBuilder cb, String entityName, double width, String title) {
@@ -266,17 +296,17 @@ public class EditorialBlueCvTemplate implements CvTemplate {
                 .entityName(entityName)
                 .size(width, 0)
                 .anchor(Anchor.topLeft())
-                .margin(Margin.bottom(4));
+                .margin(Margin.bottom(2));
         section.addChild(createSectionHeader(cb, title, width));
         return section;
     }
 
     private Entity createSectionHeader(ComponentBuilder cb, String title, double width) {
-        VContainerBuilder header = cb.vContainer(Align.left(2))
+        VContainerBuilder header = cb.vContainer(Align.left(1))
                 .size(width, 0)
                 .anchor(Anchor.topLeft());
         header.addChild(createSingleLineText(cb, title, sectionHeaderStyle(), Anchor.topLeft(), Margin.zero()));
-        header.addChild(createDivider(cb, width, accentColor(), DIVIDER_HEIGHT, Margin.zero()));
+        header.addChild(createRule(cb, width, accentColor(), SECTION_RULE_STROKE, Margin.zero()));
         return header.build();
     }
 
@@ -284,82 +314,147 @@ public class EditorialBlueCvTemplate implements CvTemplate {
         VContainerBuilder container = cb.vContainer(Align.left(ENTRY_SPACING))
                 .size(width, 0)
                 .anchor(Anchor.topLeft())
-                .margin(Margin.bottom(6));
+                .margin(Margin.bottom(4));
 
-        Entity role = createSingleLineText(cb, entry.role(), roleStyle(), Anchor.topLeft(), Margin.zero());
-        Entity dates = createSingleLineText(cb, entry.dateRange(), dateStyle(), Anchor.topLeft(), Margin.zero());
-        container.addChild(createBalancedRow(cb, dates, role, width));
-        container.addChild(createSingleLineText(cb, entry.company(), companyStyle(), Anchor.topLeft(), Margin.zero()));
-        container.addChild(createBulletParagraph(cb, entry.details(), width, Margin.zero()));
+        container.addChild(createHeaderRow(
+                cb,
+                entry.role(),
+                roleStyle(),
+                entry.dateRange(),
+                dateStyle(),
+                width));
+
+        if (!entry.company().isBlank()) {
+            container.addChild(createSingleLineText(cb, entry.company(), companyStyle(), Anchor.topLeft(), Margin.zero()));
+        }
+
+        if (!entry.details().isEmpty()) {
+            container.addChild(createBulletParagraph(
+                    cb,
+                    entry.details(),
+                    width - DETAIL_INDENT,
+                    new Margin(0, 0, 0, DETAIL_INDENT)));
+        }
 
         return container.build();
     }
 
     private Entity createProjectEntry(ComponentBuilder cb, ProjectEntry entry, double width) {
-        VContainerBuilder container = cb.vContainer(Align.left(ENTRY_SPACING))
+        VContainerBuilder container = cb.vContainer(Align.left(1.6))
                 .size(width, 0)
                 .anchor(Anchor.topLeft())
-                .margin(Margin.bottom(6));
+                .margin(Margin.bottom(4));
 
-        container.addChild(createSingleLineText(cb, entry.title(), roleStyle(), Anchor.topLeft(), Margin.zero()));
+        container.addChild(createSingleLineText(cb, entry.title(), educationTitleStyle(), Anchor.topLeft(), Margin.zero()));
+
         if (!entry.stack().isBlank()) {
             container.addChild(createSingleLineText(cb, entry.stack(), companyStyle(), Anchor.topLeft(), Margin.zero()));
         }
+
         container.addChild(createParagraph(cb, List.of(entry.description()), width, Margin.zero()));
+        return container.build();
+    }
+
+    private Entity createEducationEntry(ComponentBuilder cb, EducationEntry entry, double width) {
+        VContainerBuilder container = cb.vContainer(Align.left(1.2))
+                .size(width, 0)
+                .anchor(Anchor.topLeft())
+                .margin(Margin.bottom(3));
+
+        container.addChild(createHeaderRow(
+                cb,
+                entry.title(),
+                educationTitleStyle(),
+                entry.dateRange(),
+                dateStyle(),
+                width));
+
+        if (!entry.organization().isBlank()) {
+            container.addChild(createSingleLineText(cb, entry.organization(), companyStyle(), Anchor.topLeft(), Margin.zero()));
+        }
 
         return container.build();
     }
 
-    private Entity createSkillsRow(ComponentBuilder cb, List<String> skills, double width, double cellWidth, double separatorWidth) {
-        HContainerBuilder row = cb.hContainer(Align.left(0))
-                .size(width, SKILL_ROW_HEIGHT)
-                .anchor(Anchor.topLeft());
-
-        for (int index = 0; index < SKILL_COLUMNS; index++) {
-            String skill = index < skills.size() ? skills.get(index) : "";
-            row.addChild(createSkillCell(cb, skill, cellWidth));
-            if (index < SKILL_COLUMNS - 1) {
-                row.addChild(createDivider(cb, separatorWidth, mutedBorderColor(), SKILL_ROW_HEIGHT, Margin.zero()));
-            }
+    private Entity createSkillsTable(ComponentBuilder cb, List<String> skills, double width) {
+        double columnWidth = width / SKILL_COLUMNS;
+        List<String> paddedSkills = new ArrayList<>(skills);
+        while (paddedSkills.size() % SKILL_COLUMNS != 0) {
+            paddedSkills.add("");
         }
-        return row.build();
-    }
 
-    private Entity createSkillCell(ComponentBuilder cb, String skill, double cellWidth) {
-        VContainerBuilder cell = cb.vContainer(Align.left(0))
-                .size(cellWidth, SKILL_ROW_HEIGHT)
+        TextStyle skillStyle = skillStyle();
+        var table = cb.table()
+                .entityName(SKILLS_NAME + "Table")
                 .anchor(Anchor.topLeft())
-                .padding(Padding.of(4));
+                .columns(
+                        TableColumnSpec.fixed(columnWidth),
+                        TableColumnSpec.fixed(columnWidth),
+                        TableColumnSpec.fixed(columnWidth),
+                        TableColumnSpec.fixed(columnWidth))
+                .width(width)
+                .defaultCellStyle(TableCellStyle.builder()
+                        .padding(new Padding(5, 8, 5, 8))
+                        .fillColor(skillFillColor())
+                        .stroke(new Stroke(mutedBorderColor(), 0.9))
+                        .textStyle(skillStyle)
+                        .textAnchor(Anchor.centerLeft())
+                        .build());
 
-        if (!skill.isBlank()) {
-            cell.addChild(createSingleLineText(cb, skill, skillStyle(), Anchor.centerLeft(), Margin.zero()));
-        } else {
-            cell.addChild(createSpacer(cb, cellWidth, 1));
+        for (int index = 0; index < paddedSkills.size(); index += SKILL_COLUMNS) {
+            table.row(
+                    decorateSkill(paddedSkills.get(index)),
+                    decorateSkill(paddedSkills.get(index + 1)),
+                    decorateSkill(paddedSkills.get(index + 2)),
+                    decorateSkill(paddedSkills.get(index + 3)));
         }
-        return cell.build();
+
+        return table.build();
     }
 
-    private Entity createBalancedRow(ComponentBuilder cb, Entity left, Entity right, double width) {
-        double leftWidth = left.getComponent(ContentSize.class).map(ContentSize::width).orElse(0.0);
-        double rightWidth = right.getComponent(ContentSize.class).map(ContentSize::width).orElse(0.0);
-        double spacerWidth = Math.max(8.0, width - leftWidth - rightWidth);
+    private Entity createHeaderRow(ComponentBuilder cb,
+                                   String leftText,
+                                   TextStyle leftStyle,
+                                   String rightText,
+                                   TextStyle rightStyle,
+                                   double width) {
+        Entity left = createSingleLineText(cb, leftText, leftStyle, Anchor.topLeft(), Margin.zero());
+        if (safe(rightText).isBlank()) {
+            return left;
+        }
+
+        Entity right = createSingleLineText(cb, rightText, rightStyle, Anchor.topRight(), Margin.zero());
+        double leftColumnWidth = Math.max(80.0, width - DATE_COLUMN_WIDTH - HEADER_ROW_GAP);
 
         HContainerBuilder row = cb.hContainer(Align.left(0))
                 .size(width, 0)
                 .anchor(Anchor.topLeft());
-        row.addChild(left);
-        row.addChild(createSpacer(cb, spacerWidth, 1));
-        row.addChild(right);
+
+        row.addChild(createAlignedCell(cb, left, leftColumnWidth, Anchor.topLeft()));
+        row.addChild(createSpacer(cb, HEADER_ROW_GAP, 1));
+        row.addChild(createAlignedCell(cb, right, DATE_COLUMN_WIDTH, Anchor.topRight()));
         return row.build();
     }
 
-    private Entity createDivider(ComponentBuilder cb, double width, Color color, double height, Margin margin) {
-        RectangleBuilder line = cb.rectangle()
-                .size(width, height)
-                .fillColor(color)
+    private Entity createAlignedCell(ComponentBuilder cb, Entity child, double width, Anchor childAnchor) {
+        VContainerBuilder cell = cb.vContainer(Align.left(0))
+                .size(width, 0)
+                .anchor(Anchor.topLeft());
+
+        child.addComponent(childAnchor);
+        cell.addChild(child);
+        return cell.build();
+    }
+
+    private Entity createRule(ComponentBuilder cb, double width, Color color, double strokeWidth, Margin margin) {
+        return cb.line()
+                .horizontal()
+                .size(width, RULE_HEIGHT)
+                .padding(Padding.of(1))
+                .stroke(new Stroke(color, strokeWidth))
                 .anchor(Anchor.topLeft())
-                .margin(margin);
-        return line.build();
+                .margin(margin)
+                .build();
     }
 
     private Entity createSpacer(ComponentBuilder cb, double width, double height) {
@@ -371,7 +466,7 @@ public class EditorialBlueCvTemplate implements CvTemplate {
 
     private Entity createSingleLineText(ComponentBuilder cb, String text, TextStyle style, Anchor anchor, Margin margin) {
         TextBuilder builder = cb.text()
-                .textWithAutoSize(text)
+                .textWithAutoSize(safe(text))
                 .textStyle(style)
                 .anchor(anchor)
                 .margin(margin);
@@ -379,25 +474,31 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     }
 
     private Entity createParagraph(ComponentBuilder cb, List<String> paragraphs, double width, Margin margin) {
-        BlockTextBuilder builder = cb.blockText(Align.left(BLOCK_LINE_SPACING), bodyStyle())
+        List<String> sanitized = paragraphs.stream()
+                .map(EditorialBlueCvTemplate::stripMarkdown)
+                .filter(value -> !value.isBlank())
+                .toList();
+
+        BlockTextBuilder builder = cb.blockText(Align.left(BODY_LINE_SPACING), bodyStyle())
                 .size(width, 2)
                 .strategy(BlockIndentStrategy.FIRST_LINE)
                 .anchor(Anchor.topLeft())
                 .margin(margin)
                 .padding(Padding.zero())
-                .text(paragraphs, bodyStyle(), Padding.zero(), Margin.zero());
+                .text(sanitized, bodyStyle(), Padding.zero(), Margin.zero());
         return builder.build();
     }
 
     private Entity createBulletParagraph(ComponentBuilder cb, List<String> items, double width, Margin margin) {
         List<String> sanitized = items.stream()
+                .map(EditorialBlueCvTemplate::stripMarkdown)
                 .filter(item -> item != null && !item.isBlank())
                 .toList();
 
-        BlockTextBuilder builder = cb.blockText(Align.left(BLOCK_LINE_SPACING), bodyStyle())
+        BlockTextBuilder builder = cb.blockText(Align.left(BODY_LINE_SPACING), bodyStyle())
                 .size(width, 2)
                 .strategy(BlockIndentStrategy.FROM_SECOND_LINE)
-                .bulletOffset("-")
+                .bulletOffset("•")
                 .anchor(Anchor.topLeft())
                 .margin(margin)
                 .padding(Padding.zero())
@@ -408,33 +509,58 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     private List<ExperienceEntry> parseExperienceEntries(List<String> items) {
         List<ExperienceEntry> result = new ArrayList<>();
         for (String item : items) {
-            Matcher matcher = EXPERIENCE_PATTERN.matcher(item);
+            Matcher matcher = EXPERIENCE_PATTERN.matcher(safe(item));
             if (matcher.matches()) {
                 result.add(new ExperienceEntry(
                         stripMarkdown(matcher.group(1)),
                         stripMarkdown(matcher.group(2)),
                         stripMarkdown(matcher.group(3)),
                         splitDetails(matcher.group(4))));
-            } else {
+            } else if (!safe(item).isBlank()) {
                 result.add(new ExperienceEntry("Experience", "", "", List.of(stripMarkdown(item))));
             }
         }
         return result;
     }
 
-    private ProjectEntry parseProjectEntry(String item) {
-        Matcher matcher = PROJECT_PATTERN.matcher(item);
-        if (!matcher.matches()) {
-            return new ProjectEntry("Project", "", stripMarkdown(item));
+    private List<ProjectEntry> parseProjectEntries(List<String> items) {
+        List<ProjectEntry> result = new ArrayList<>();
+        for (String item : items) {
+            Matcher matcher = PROJECT_PATTERN.matcher(safe(item));
+            if (matcher.matches()) {
+                result.add(new ProjectEntry(
+                        stripMarkdown(matcher.group(1)),
+                        stripMarkdown(safe(matcher.group(2))),
+                        compactProjectDescription(matcher.group(3))));
+            } else if (!safe(item).isBlank()) {
+                result.add(new ProjectEntry("Project", "", stripMarkdown(item)));
+            }
         }
+        return result;
+    }
 
-        String title = stripMarkdown(matcher.group(1));
-        String stack = stripMarkdown(safe(matcher.group(2)));
-        String description = stripMarkdown(matcher.group(3));
-        return new ProjectEntry(title, stack, description);
+    private List<EducationEntry> parseEducationEntries(List<String> items) {
+        List<EducationEntry> result = new ArrayList<>();
+        for (String item : items) {
+            Matcher matcher = EDUCATION_PATTERN.matcher(safe(item));
+            if (matcher.matches()) {
+                result.add(new EducationEntry(
+                        stripMarkdown(matcher.group(1)),
+                        stripMarkdown(safe(matcher.group(2))),
+                        stripMarkdown(safe(matcher.group(3))),
+                        stripMarkdown(safe(matcher.group(4)))));
+            } else if (!safe(item).isBlank()) {
+                result.add(new EducationEntry(stripMarkdown(item), "", "", ""));
+            }
+        }
+        return result;
     }
 
     private List<String> extractSkillTokens(ModuleYml technicalSkills) {
+        if (technicalSkills == null) {
+            return List.of();
+        }
+
         LinkedHashSet<String> tokens = new LinkedHashSet<>();
         for (String line : technicalSkills.getModulePoints()) {
             if (line == null || line.isBlank()) {
@@ -446,7 +572,7 @@ public class EditorialBlueCvTemplate implements CvTemplate {
             String values = colonIndex >= 0 ? clean.substring(colonIndex + 1) : clean;
 
             for (String rawToken : values.split(",")) {
-                String token = PAREN_PATTERN.matcher(rawToken).replaceAll("").trim();
+                String token = normalizeSkillToken(rawToken);
                 if (!token.isBlank()) {
                     tokens.add(token);
                 }
@@ -458,6 +584,28 @@ public class EditorialBlueCvTemplate implements CvTemplate {
         return List.copyOf(tokens);
     }
 
+    private String normalizeSkillToken(String rawToken) {
+        String token = PAREN_PATTERN.matcher(safe(rawToken)).replaceAll("").trim();
+        if (token.isBlank()) {
+            return "";
+        }
+
+        token = token.replace("Swagger/OpenAPI", "OpenAPI");
+        token = token.replace("REST design", "REST API Design");
+        token = token.replace("Multithreading/Concurrency", "Concurrency");
+        token = token.replace("Git/GitHub", "Git & GitHub");
+        token = token.replace("Spring Data JPA", "Spring Data JPA");
+        token = token.replace("Docker Compose", "Docker");
+
+        if (token.length() > 24) {
+            token = token.replace("stateless authentication", "Authentication");
+            token = token.replace("role-based authorization", "Authorization");
+            token = token.replace("request validation", "Validation");
+        }
+
+        return token.length() > 28 ? "" : token;
+    }
+
     private String extractHeadline(ModuleSummary summary) {
         Matcher matcher = BOLD_PATTERN.matcher(summary.getBlockSummary());
         if (matcher.find()) {
@@ -466,6 +614,21 @@ public class EditorialBlueCvTemplate implements CvTemplate {
         String plain = stripMarkdown(summary.getBlockSummary());
         int period = plain.indexOf('.');
         return period > 0 ? plain.substring(0, period) : plain;
+    }
+
+    private String compactProjectDescription(String rawDescription) {
+        String normalized = stripMarkdown(rawDescription).trim();
+        int stackIndex = normalized.indexOf("Stack:");
+        if (stackIndex >= 0) {
+            normalized = normalized.substring(0, stackIndex).trim();
+        }
+
+        int lastSentenceEnd = normalized.indexOf(". ", Math.min(40, normalized.length()));
+        if (lastSentenceEnd > 0) {
+            normalized = normalized.substring(0, lastSentenceEnd + 1).trim();
+        }
+
+        return normalized;
     }
 
     private List<String> splitDetails(String rawDetails) {
@@ -482,8 +645,8 @@ public class EditorialBlueCvTemplate implements CvTemplate {
         return details;
     }
 
-    private String sectionTitle(String value) {
-        return safe(value).toUpperCase();
+    private String decorateSkill(String skill) {
+        return skill.isBlank() ? "" : "• " + skill;
     }
 
     private static String stripMarkdown(String value) {
@@ -498,10 +661,20 @@ public class EditorialBlueCvTemplate implements CvTemplate {
         return value == null ? "" : value;
     }
 
+    private String joinNonBlank(String delimiter, String... values) {
+        List<String> nonBlank = new ArrayList<>();
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                nonBlank.add(value.trim());
+            }
+        }
+        return String.join(delimiter, nonBlank);
+    }
+
     private TextStyle nameStyle() {
         return TextStyle.builder()
                 .fontName(theme.headerFont())
-                .size(28)
+                .size(22)
                 .decoration(TextDecoration.BOLD)
                 .color(primaryTextColor())
                 .build();
@@ -510,7 +683,7 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     private TextStyle headlineStyle() {
         return TextStyle.builder()
                 .fontName(theme.bodyFont())
-                .size(12)
+                .size(11.5)
                 .decoration(TextDecoration.DEFAULT)
                 .color(primaryTextColor())
                 .build();
@@ -519,25 +692,16 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     private TextStyle metaStyle() {
         return TextStyle.builder()
                 .fontName(theme.bodyFont())
-                .size(10)
+                .size(9.4)
                 .decoration(TextDecoration.DEFAULT)
                 .color(bodyTextColor())
-                .build();
-    }
-
-    private TextStyle linksStyle() {
-        return TextStyle.builder()
-                .fontName(theme.bodyFont())
-                .size(9.5)
-                .decoration(TextDecoration.DEFAULT)
-                .color(accentColor())
                 .build();
     }
 
     private TextStyle sectionHeaderStyle() {
         return TextStyle.builder()
                 .fontName(theme.headerFont())
-                .size(12)
+                .size(10.6)
                 .decoration(TextDecoration.BOLD)
                 .color(accentColor())
                 .build();
@@ -546,7 +710,16 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     private TextStyle roleStyle() {
         return TextStyle.builder()
                 .fontName(theme.headerFont())
-                .size(11.5)
+                .size(11.4)
+                .decoration(TextDecoration.BOLD)
+                .color(primaryTextColor())
+                .build();
+    }
+
+    private TextStyle educationTitleStyle() {
+        return TextStyle.builder()
+                .fontName(theme.headerFont())
+                .size(10.4)
                 .decoration(TextDecoration.BOLD)
                 .color(primaryTextColor())
                 .build();
@@ -555,7 +728,7 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     private TextStyle companyStyle() {
         return TextStyle.builder()
                 .fontName(theme.bodyFont())
-                .size(10)
+                .size(9.6)
                 .decoration(TextDecoration.ITALIC)
                 .color(bodyTextColor())
                 .build();
@@ -564,7 +737,7 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     private TextStyle dateStyle() {
         return TextStyle.builder()
                 .fontName(theme.bodyFont())
-                .size(10)
+                .size(9.2)
                 .decoration(TextDecoration.DEFAULT)
                 .color(bodyTextColor())
                 .build();
@@ -573,7 +746,7 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     private TextStyle bodyStyle() {
         return TextStyle.builder()
                 .fontName(theme.bodyFont())
-                .size(10)
+                .size(9.6)
                 .decoration(TextDecoration.DEFAULT)
                 .color(bodyTextColor())
                 .build();
@@ -582,9 +755,18 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     private TextStyle skillStyle() {
         return TextStyle.builder()
                 .fontName(theme.bodyFont())
-                .size(9.5)
+                .size(9.2)
                 .decoration(TextDecoration.DEFAULT)
                 .color(primaryTextColor())
+                .build();
+    }
+
+    private TextStyle footerStyle() {
+        return TextStyle.builder()
+                .fontName(theme.bodyFont())
+                .size(9.0)
+                .decoration(TextDecoration.ITALIC)
+                .color(bodyTextColor())
                 .build();
     }
 
@@ -593,30 +775,34 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     }
 
     private Color bodyTextColor() {
-        return theme.bodyColor();
+        return new Color(60, 72, 106);
     }
 
     private Color accentColor() {
-        return new Color(62, 122, 255);
+        return new Color(86, 136, 255);
     }
 
     private Color mutedBorderColor() {
-        return new Color(195, 205, 230);
+        return new Color(196, 208, 231);
+    }
+
+    private Color skillFillColor() {
+        return new Color(245, 247, 252);
     }
 
     private static CvTheme defaultTheme() {
         return new CvTheme(
                 new Color(18, 31, 72),
-                new Color(62, 122, 255),
-                new Color(55, 71, 102),
-                new Color(62, 122, 255),
+                new Color(86, 136, 255),
+                new Color(60, 72, 106),
+                new Color(86, 136, 255),
                 FontName.HELVETICA,
                 FontName.HELVETICA,
-                28,
-                12,
-                10,
-                4,
-                Margin.top(4),
+                22,
+                10.6,
+                9.6,
+                3,
+                Margin.top(3),
                 0);
     }
 
@@ -624,5 +810,8 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     }
 
     private record ProjectEntry(String title, String stack, String description) {
+    }
+
+    private record EducationEntry(String title, String organization, String dateRange, String note) {
     }
 }

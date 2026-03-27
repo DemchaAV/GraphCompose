@@ -71,16 +71,22 @@ GraphCompose moves those concerns into the engine:
 
 These screenshots were refreshed from the current repository render outputs on March 27, 2026.
 
+### Repository showcase render
+
+<p align="center">
+  <img src="./assets/readme/repository_showcase_render.png" alt="GraphCompose repository showcase render preview" width="850"/>
+</p>
+
+### Repository showcase with guide lines
+
+<p align="center">
+  <img src="./assets/readme/repository_showcase_render_guides.png" alt="GraphCompose repository showcase guide-lines preview" width="850"/>
+</p>
+
 ### Final CV render
 
 <p align="center">
   <img src="./assets/readme/cv-preview-clean.png" alt="GraphCompose CV render preview" width="850"/>
-</p>
-
-### Layout debugging with guide lines
-
-<p align="center">
-  <img src="./assets/readme/cv-layout-debug.png" alt="GraphCompose layout debug preview" width="850"/>
 </p>
 
 ### Available fonts preview

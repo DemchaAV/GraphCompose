@@ -25,6 +25,12 @@ import java.util.List;
 
 @Slf4j
 public class Template_CV1 implements CvTemplate {
+    private static final String MAIN_CONTAINER_NAME = "MainVBoxContainer";
+    private static final String HEADER_ENTITY_NAME = "ModuleHeader";
+    private static final String DEFAULT_BULLET_OFFSET = "  ";
+    private static final String SUMMARY_BULLET_OFFSET = "    ";
+    private static final String SKILLS_BULLET = "• ";
+
     private final CvTheme theme;
 
     public Template_CV1() {
@@ -48,71 +54,10 @@ public class Template_CV1 implements CvTemplate {
     public PDDocument render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, boolean guideLines) {
         MainPageCV data = rewrittenCv.merge(originalCv);
 
-
         try {
-            // Do NOT use try-with-resources here!
-            // The PDDocument must remain open for the caller to stream/save it.
-            // The caller (StreamingResponseBody) is responsible for closing it.
-            PdfComposer composer = GraphCompose.pdf()
-                    .pageSize(PDRectangle.A4)
-                    .margin(15, 10, 15, 15)
-                    .markdown(true)
-                    .guideLines(guideLines)
-                    .create();
-
-            Canvas canvas = composer.canvas();
-            String whitespace = "  ";
-            BlockIndentStrategy indentStrategy = BlockIndentStrategy.FROM_SECOND_LINE;
-
-            TemplateBuilder cv = TemplateBuilder.from(composer.componentBuilder(), theme);
-
-            float textBlockWidth = (float) canvas.innerWidth();
-
-            Entity moduleHeader = createHeader(cv, data, canvas);
-
-            Entity moduleProfessionalSummary = createSection(cv, canvas,
-                    data.getModuleSummary().getModuleName(), "ModuleProfessionalSummary",
-                    List.of(data.getModuleSummary().getBlockSummary()), textBlockWidth, "    ",
-                    BlockIndentStrategy.FIRST_LINE);
-
-            Entity moduleTechnicalSkills = createSection(cv, canvas,
-                    data.getTechnicalSkills().getName(), "ModuleTechnicalSkills",
-                    data.getTechnicalSkills().getModulePoints(), textBlockWidth, "• ",
-                    BlockIndentStrategy.ALL_LINES);
-
-            Entity moduleEducationCertifications = createSection(cv, canvas,
-                    data.getEducationCertifications().getName(), "moduleEducationCertifications",
-                    data.getEducationCertifications().getModulePoints(), textBlockWidth,
-                    whitespace, indentStrategy);
-
-            Entity moduleProjects = createSection(cv, canvas,
-                    data.getProjects().getName(), "ModuleProjects",
-                    data.getProjects().getModulePoints(), textBlockWidth, whitespace,
-                    indentStrategy);
-
-            Entity moduleProfessionalExperience = createSection(cv, canvas,
-                    data.getProfessionalExperience().getName(), "ModuleProfessionalExperience",
-                    data.getProfessionalExperience().getModulePoints(), textBlockWidth,
-                    whitespace, indentStrategy);
-
-            Entity moduleAdditional = createSection(cv, canvas,
-                    data.getAdditional().getName(), "ModuleAdditional",
-                    data.getAdditional().getModulePoints(), textBlockWidth, whitespace,
-                    indentStrategy);
-
-            cv.moduleBuilder(canvas)
-                    .entityName("MainVBoxContainer")
-                    .addChild(moduleHeader)
-                    .addChild(moduleProfessionalSummary)
-                    .addChild(moduleTechnicalSkills)
-                    .addChild(moduleEducationCertifications)
-                    .addChild(moduleProjects)
-                    .addChild(moduleProfessionalExperience)
-                    .addChild(moduleAdditional)
-                    .build();
-
+            PdfComposer composer = createPdfComposer(null, guideLines);
+            designDocument(composer, data);
             return composer.toPDDocument();
-
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate CV", e);
         }
@@ -127,68 +72,10 @@ public class Template_CV1 implements CvTemplate {
     public void render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, Path path, boolean guideLines) {
         MainPageCV data = rewrittenCv.merge(originalCv);
 
-
-        try (PdfComposer composer = GraphCompose.pdf(path)
-                .pageSize(PDRectangle.A4)
-                .margin(15, 10, 15, 15)
-                .markdown(true)
-                .guideLines(guideLines)
-                .create()) {
-
-            Canvas canvas = composer.canvas();
-            String whitespace = "  ";
-            BlockIndentStrategy indentStrategy = BlockIndentStrategy.FROM_SECOND_LINE;
-
-            TemplateBuilder cv = TemplateBuilder.from(composer.componentBuilder(), theme);
-
-            float textBlockWidth = (float) canvas.innerWidth();
-
-            Entity moduleHeader = createHeader(cv, data, canvas);
-
-            Entity moduleProfessionalSummary = createSection(cv, canvas,
-                    data.getModuleSummary().getModuleName(), "ModuleProfessionalSummary",
-                    List.of(data.getModuleSummary().getBlockSummary()), textBlockWidth, "    ",
-                    BlockIndentStrategy.FIRST_LINE);
-
-            Entity moduleTechnicalSkills = createSection(cv, canvas,
-                    data.getTechnicalSkills().getName(), "ModuleTechnicalSkills",
-                    data.getTechnicalSkills().getModulePoints(), textBlockWidth, "• ",
-                    BlockIndentStrategy.ALL_LINES);
-
-            Entity moduleEducationCertifications = createSection(cv, canvas,
-                    data.getEducationCertifications().getName(), "moduleEducationCertifications",
-                    data.getEducationCertifications().getModulePoints(), textBlockWidth,
-                    whitespace, indentStrategy);
-
-            Entity moduleProjects = createSection(cv, canvas,
-                    data.getProjects().getName(), "ModuleProjects",
-                    data.getProjects().getModulePoints(), textBlockWidth, whitespace,
-                    indentStrategy);
-
-            Entity moduleProfessionalExperience = createSection(cv, canvas,
-                    data.getProfessionalExperience().getName(), "ModuleProfessionalExperience",
-                    data.getProfessionalExperience().getModulePoints(), textBlockWidth,
-                    whitespace, indentStrategy);
-
-            Entity moduleAdditional = createSection(cv, canvas,
-                    data.getAdditional().getName(), "ModuleAdditional",
-                    data.getAdditional().getModulePoints(), textBlockWidth, whitespace,
-                    indentStrategy);
-
-            cv.moduleBuilder(canvas)
-                    .entityName("MainVBoxContainer")
-                    .addChild(moduleHeader)
-                    .addChild(moduleProfessionalSummary)
-                    .addChild(moduleTechnicalSkills)
-                    .addChild(moduleEducationCertifications)
-                    .addChild(moduleProjects)
-                    .addChild(moduleProfessionalExperience)
-                    .addChild(moduleAdditional)
-                    .build();
-
+        try (PdfComposer composer = createPdfComposer(path, guideLines)) {
+            designDocument(composer, data);
             composer.build();
             log.info("File has been saved to {}", path.toAbsolutePath());
-
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate CV", e);
         }
@@ -197,6 +84,88 @@ public class Template_CV1 implements CvTemplate {
     @Override
     public void render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, Path path) {
         render(originalCv, rewrittenCv, path, false);
+    }
+
+    private PdfComposer createPdfComposer(Path path, boolean guideLines) {
+        GraphCompose.PdfBuilder builder = path != null ? GraphCompose.pdf(path) : GraphCompose.pdf();
+        return builder.pageSize(PDRectangle.A4)
+                .margin(15, 10, 15, 15)
+                .markdown(true)
+                .guideLines(guideLines)
+                .create();
+    }
+
+    private void designDocument(PdfComposer composer, MainPageCV data) {
+        Canvas canvas = composer.canvas();
+        TemplateBuilder cv = TemplateBuilder.from(composer.componentBuilder(), theme);
+        float textBlockWidth = (float) canvas.innerWidth();
+
+        Entity moduleHeader = createHeader(cv, data, canvas);
+        Entity moduleProfessionalSummary = createSection(
+                cv,
+                canvas,
+                data.getModuleSummary().getModuleName(),
+                "ModuleProfessionalSummary",
+                List.of(data.getModuleSummary().getBlockSummary()),
+                textBlockWidth,
+                SUMMARY_BULLET_OFFSET,
+                BlockIndentStrategy.FIRST_LINE);
+        Entity moduleTechnicalSkills = createSection(
+                cv,
+                canvas,
+                data.getTechnicalSkills().getName(),
+                "ModuleTechnicalSkills",
+                data.getTechnicalSkills().getModulePoints(),
+                textBlockWidth,
+                SKILLS_BULLET,
+                BlockIndentStrategy.ALL_LINES);
+        Entity moduleEducationCertifications = createSection(
+                cv,
+                canvas,
+                data.getEducationCertifications().getName(),
+                "moduleEducationCertifications",
+                data.getEducationCertifications().getModulePoints(),
+                textBlockWidth,
+                DEFAULT_BULLET_OFFSET,
+                BlockIndentStrategy.FROM_SECOND_LINE);
+        Entity moduleProjects = createSection(
+                cv,
+                canvas,
+                data.getProjects().getName(),
+                "ModuleProjects",
+                data.getProjects().getModulePoints(),
+                textBlockWidth,
+                DEFAULT_BULLET_OFFSET,
+                BlockIndentStrategy.FROM_SECOND_LINE);
+        Entity moduleProfessionalExperience = createSection(
+                cv,
+                canvas,
+                data.getProfessionalExperience().getName(),
+                "ModuleProfessionalExperience",
+                data.getProfessionalExperience().getModulePoints(),
+                textBlockWidth,
+                DEFAULT_BULLET_OFFSET,
+                BlockIndentStrategy.FROM_SECOND_LINE);
+        Entity moduleAdditional = createSection(
+                cv,
+                canvas,
+                data.getAdditional().getName(),
+                "ModuleAdditional",
+                data.getAdditional().getModulePoints(),
+                textBlockWidth,
+                DEFAULT_BULLET_OFFSET,
+                BlockIndentStrategy.FROM_SECOND_LINE);
+
+        cv.moduleBuilder(canvas)
+                .entityName(MAIN_CONTAINER_NAME)
+                .addChild(moduleHeader)
+                .addChild(moduleProfessionalSummary)
+                .addChild(moduleTechnicalSkills)
+                .addChild(moduleEducationCertifications)
+                .addChild(moduleProjects)
+                .addChild(moduleProfessionalExperience)
+                .addChild(moduleAdditional)
+                .build();
     }
 
     private Entity createHeader(TemplateBuilder cv, MainPageCV data, Canvas canvas) {
@@ -221,7 +190,7 @@ public class Template_CV1 implements CvTemplate {
                 null);
 
         return new ModuleBuilder(cv.entityManager(), Align.middle(5), canvas)
-                .entityName("ModuleHeader")
+                .entityName(HEADER_ENTITY_NAME)
                 .margin(new Margin(0, 10, 10, 10))
                 .anchor(Anchor.topRight())
                 .addChild(artemDemchyshyn)
@@ -262,6 +231,5 @@ public class Template_CV1 implements CvTemplate {
     public String getDescription() {
         return "A clean, professional template with centered header and well-organized sections.";
     }
-
 }
 

@@ -26,6 +26,11 @@ import java.util.List;
 
 @Slf4j
 public class CoverLetterTemplateV1 implements CoverLetterTemplate {
+    private static final String MAIN_CONTAINER_NAME = "MainVBoxContainer";
+    private static final String HEADER_ENTITY_NAME = "ModuleHeader";
+    private static final String DEFAULT_BULLET_OFFSET = "  ";
+    private static final String KIND_REGARDS = "Kind regards,";
+
     /**
      * Unique identifier for this template.
      * Used to select template via API (e.g., "modern-professional", "classic",
@@ -98,33 +103,16 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
 
     private void designLetter(Header header, String wroteLetter, JobDetails jobDetails, PdfComposer composer) {
         Canvas canvas = composer.canvas();
-        wroteLetter = wroteLetter.replace("${companyName}", jobDetails.company());
-
-        String whitespace = "  ";
-        BlockIndentStrategy indentStrategy = BlockIndentStrategy.FIRST_LINE;
-
         TemplateBuilder cv = TemplateBuilder.from(composer.componentBuilder(), CvTheme.defaultTheme());
-
-        float textBlockWidth = (float) composer.canvas().innerWidth();
-
         Entity moduleHeader = createHeader(cv, header, canvas);
-
-
-        Entity coverLetter = letterSection(cv, List.of(wroteLetter), textBlockWidth, whitespace, indentStrategy);
-        var kingRegards = composer.componentBuilder()
-                .blockText(Align.left(CvTheme.courier().spacing()), CvTheme.defaultTheme().bodyTextStyle())
-                .size(canvas.innerWidth(), 2)
-                .text(List.of("Kind regards,", header.getName()), CvTheme.defaultTheme().bodyTextStyle(), Padding.zero(), new Margin(20, 20, 0, 0))
-                .build();
-        kingRegards
-                .addComponent(Anchor.topRight());
-
+        Entity coverLetter = createLetterSection(cv, wroteLetter, jobDetails, canvas);
+        Entity kindRegards = createClosingSignature(composer, header, canvas);
 
         cv.moduleBuilder(canvas)
-                .entityName("MainVBoxContainer")
+                .entityName(MAIN_CONTAINER_NAME)
                 .addChild(moduleHeader)
                 .addChild(coverLetter)
-                .addChild(kingRegards)
+                .addChild(kindRegards)
                 .build();
     }
 
@@ -171,7 +159,7 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
                 null);
 
         return new ModuleBuilder(cv.entityManager(), Align.middle(5), canvas)
-                .entityName("ModuleHeader")
+                .entityName(HEADER_ENTITY_NAME)
                 .margin(new Margin(0, 10, 10, 10))
                 .anchor(Anchor.topRight())
                 .addChild(artemDemchyshyn)
@@ -180,9 +168,27 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
                 .build();
     }
 
-    private Entity letterSection(TemplateBuilder cv,
-                                 List<String> content, float width, String bullet, BlockIndentStrategy strategy) {
-        return cv.blockText(content, width, bullet, strategy);
+    private Entity createLetterSection(TemplateBuilder cv, String wroteLetter, JobDetails jobDetails, Canvas canvas) {
+        String resolvedLetter = wroteLetter.replace("${companyName}", jobDetails.company());
+        return cv.blockText(
+                List.of(resolvedLetter),
+                (float) canvas.innerWidth(),
+                DEFAULT_BULLET_OFFSET,
+                BlockIndentStrategy.FIRST_LINE);
+    }
+
+    private Entity createClosingSignature(PdfComposer composer, Header header, Canvas canvas) {
+        Entity kindRegards = composer.componentBuilder()
+                .blockText(Align.left(CvTheme.courier().spacing()), CvTheme.defaultTheme().bodyTextStyle())
+                .size(canvas.innerWidth(), 2)
+                .text(
+                        List.of(KIND_REGARDS, header.getName()),
+                        CvTheme.defaultTheme().bodyTextStyle(),
+                        Padding.zero(),
+                        new Margin(20, 20, 0, 0))
+                .build();
+        kindRegards.addComponent(Anchor.topRight());
+        return kindRegards;
     }
 }
 

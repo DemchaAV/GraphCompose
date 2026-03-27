@@ -5,6 +5,7 @@ import com.demcha.compose.loyaut_core.components.components_builders.BlockIndent
 import com.demcha.compose.loyaut_core.components.components_builders.BlockTextBuilder;
 import com.demcha.compose.loyaut_core.components.components_builders.DisplayUrlTextBuilder;
 import com.demcha.compose.loyaut_core.components.components_builders.HContainerBuilder;
+import com.demcha.compose.loyaut_core.components.components_builders.LinkBuilder;
 import com.demcha.compose.loyaut_core.components.components_builders.ModuleBuilder;
 import com.demcha.compose.loyaut_core.components.components_builders.RectangleBuilder;
 import com.demcha.compose.loyaut_core.components.components_builders.TextBuilder;

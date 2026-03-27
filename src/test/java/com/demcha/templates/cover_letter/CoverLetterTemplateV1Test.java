@@ -5,18 +5,16 @@ import com.demcha.templates.data.Header;
 import com.demcha.templates.builtins.CoverLetterTemplateV1;
 import com.demcha.mock.CoverLetterMock;
 import com.demcha.mock.MainPageCVMock;
+import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.junit.jupiter.api.Test;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CoverLetterTemplateV1Test {
-
-    private static final Path VISUAL_DIR = Path.of("target", "visual-tests");
 
     private final MainPageCVMock cvMock = new MainPageCVMock();
     private final String letter = CoverLetterMock.letter.replace("${companyName}", "Visual Test Company");
@@ -31,9 +29,7 @@ class CoverLetterTemplateV1Test {
 
     @Test
     void shouldRenderCoverLetterAsDocument() throws Exception {
-        Path outputFile = VISUAL_DIR.resolve("cover_letter_render_document.pdf");
-        Files.createDirectories(VISUAL_DIR);
-        Files.deleteIfExists(outputFile);
+        Path outputFile = VisualTestOutputs.preparePdf("cover_letter_render_document", "clean", "templates", "cover-letter");
 
         Header header = cvMock.getMainPageCV().getHeader();
         JobDetails jobDetails = testJobDetails();
@@ -47,9 +43,7 @@ class CoverLetterTemplateV1Test {
 
     @Test
     void shouldRenderCoverLetterDirectlyToFile() throws Exception {
-        Path outputFile = VISUAL_DIR.resolve("cover_letter_render_file.pdf");
-        Files.createDirectories(VISUAL_DIR);
-        Files.deleteIfExists(outputFile);
+        Path outputFile = VisualTestOutputs.preparePdf("cover_letter_render_file", "clean", "templates", "cover-letter");
 
         Header header = cvMock.getMainPageCV().getHeader();
         JobDetails jobDetails = testJobDetails();
@@ -61,9 +55,7 @@ class CoverLetterTemplateV1Test {
 
     @Test
     void shouldRenderCoverLetterDirectlyToFileWithGuideLines() throws Exception {
-        Path outputFile = VISUAL_DIR.resolve("cover_letter_render_file_with_guiede_lines.pdf");
-        Files.createDirectories(VISUAL_DIR);
-        Files.deleteIfExists(outputFile);
+        Path outputFile = VisualTestOutputs.preparePdf("cover_letter_render_file_with_guiede_lines", "guides", "templates", "cover-letter");
 
         Header header = cvMock.getMainPageCV().getHeader();
         JobDetails jobDetails = testJobDetails();

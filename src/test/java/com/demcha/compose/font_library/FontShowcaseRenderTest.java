@@ -1,24 +1,20 @@
 package com.demcha.compose.font_library;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.junit.jupiter.api.Test;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FontShowcaseRenderTest {
 
-    private static final Path VISUAL_DIR = Path.of("target", "visual-tests");
-
     @Test
     void shouldRenderAvailableFontsPreviewToVisualTestsDirectory() throws Exception {
-        Path outputFile = VISUAL_DIR.resolve("available-fonts-preview.pdf");
-        Files.createDirectories(VISUAL_DIR);
-        Files.deleteIfExists(outputFile);
+        Path outputFile = VisualTestOutputs.preparePdf("available-fonts-preview", "clean", "fonts");
 
         GraphCompose.renderAvailableFontsPreview(outputFile);
 

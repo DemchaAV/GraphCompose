@@ -7,6 +7,7 @@ import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -18,12 +19,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TextPaginationIntegrationTest {
 
-    private static final Path VISUAL_DIR = Path.of("target", "visual-tests");
     private static final int TEXT_COMPONENTS_COUNT = 72;
 
     @Test
     void shouldFillThreePagesWithText() throws Exception {
-        Path outputFile = VISUAL_DIR.resolve("text_pagination_three_pages.pdf");
+        Path outputFile = VisualTestOutputs.preparePdf("text_pagination_three_pages", "clean", "integration");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)

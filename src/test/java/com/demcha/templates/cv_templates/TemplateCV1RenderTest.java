@@ -6,6 +6,7 @@ import com.demcha.templates.api.MainPageCvDTO;
 import com.demcha.templates.builtins.CvTemplateV1;
 import com.demcha.compose.font_library.FontName;
 import com.demcha.mock.MainPageCVMock;
+import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.font.PDFont;
@@ -14,11 +15,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.nio.file.Files;
-import java.nio.file.FileSystemException;
 import java.nio.file.Path;
 import java.util.Locale;
-import java.util.UUID;
 import java.util.stream.Stream;
 import java.util.regex.Pattern;
 
@@ -27,13 +25,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TemplateCV1RenderTest {
     private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^a-z0-9]");
 
-    private static final Path VISUAL_DIR = Path.of("target", "visual-tests");
     private final MainPageCV original = new MainPageCVMock().getMainPageCV();
     private final MainPageCvDTO rewritten = MainPageCvDTO.from(original);
 
     @Test
     void shouldRenderTemplateCvAsDocument() throws Exception {
-        Path outputFile = prepareOutputFile("template_cv_1_render_document");
+        Path outputFile = VisualTestOutputs.preparePdf("template_cv_1_render_document", "clean", "templates", "cv");
 
         CvTemplateV1 template = new CvTemplateV1();
 
@@ -46,7 +43,7 @@ class TemplateCV1RenderTest {
 
     @Test
     void shouldRenderTemplateCvDirectlyToFile() throws Exception {
-        Path outputFile = prepareOutputFile("template_cv_1_render_file");
+        Path outputFile = VisualTestOutputs.preparePdf("template_cv_1_render_file", "clean", "templates", "cv");
 
         CvTemplateV1 template = new CvTemplateV1();
         template.render(original, rewritten, outputFile);
@@ -56,7 +53,7 @@ class TemplateCV1RenderTest {
     }
     @Test
     void shouldRenderTemplateCvDirectlyToFileWithGuideLines() throws Exception {
-        Path outputFile = prepareOutputFile("template_cv_1_render_file_with_guide_lines");
+        Path outputFile = VisualTestOutputs.preparePdf("template_cv_1_render_file_with_guide_lines", "guides", "templates", "cv");
 
         CvTemplateV1 template = new CvTemplateV1();
         template.render(original, rewritten, outputFile,true);
@@ -72,7 +69,7 @@ class TemplateCV1RenderTest {
                 .toLowerCase(Locale.ROOT)
                 .replace(' ', '_')
                 .replace('-', '_');
-        Path outputFile = prepareOutputFile("template_cv_1_render_" + slug);
+        Path outputFile = VisualTestOutputs.preparePdf("template_cv_1_render_" + slug, "clean", "templates", "cv", "font-themes");
 
         CvTemplateV1 template = new CvTemplateV1(themeWith(fontName));
 
@@ -121,18 +118,6 @@ class TemplateCV1RenderTest {
     private static String normalizeFontName(String value) {
         return NON_ALPHANUMERIC.matcher(value.toLowerCase(Locale.ROOT)).replaceAll("");
     }
-
-    private static Path prepareOutputFile(String baseName) throws Exception {
-        Files.createDirectories(VISUAL_DIR);
-        Path outputFile = VISUAL_DIR.resolve(baseName + ".pdf");
-        try {
-            Files.deleteIfExists(outputFile);
-            return outputFile;
-        } catch (FileSystemException ignored) {
-            return VISUAL_DIR.resolve(baseName + "_" + UUID.randomUUID() + ".pdf");
-        }
-    }
-
     private static CvTheme themeWith(FontName fontName) {
         CvTheme base = CvTheme.defaultTheme();
         return new CvTheme(

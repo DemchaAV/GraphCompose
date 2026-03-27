@@ -9,9 +9,9 @@ import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -23,11 +23,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class BlockTextIntegrationTest {
 
-    private static final Path VISUAL_DIR = Path.of("target", "visual-tests");
-
     @Test
     void shouldRenderBlockTextWithBulletOffset() throws Exception {
-        Path outputFile = VISUAL_DIR .resolve("block_text_bullet_test.pdf");
+        Path outputFile = VisualTestOutputs.preparePdf("block_text_bullet_test", "guides", "integration");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
@@ -62,7 +60,7 @@ class BlockTextIntegrationTest {
 
     @Test
     void shouldRenderBlockTextWithWhitespaceIndent() throws Exception {
-        Path outputFile = VISUAL_DIR .resolve("block_text_whitespace_test.pdf");
+        Path outputFile = VisualTestOutputs.preparePdf("block_text_whitespace_test", "guides", "integration");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
@@ -96,7 +94,7 @@ class BlockTextIntegrationTest {
 
     @Test
     void shouldRenderBlockTextWithMarkdownFormatting() throws Exception {
-        Path outputFile = VISUAL_DIR .resolve("block_text_markdown_test.pdf");
+        Path outputFile = VisualTestOutputs.preparePdf("block_text_markdown_test", "clean", "integration");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)

@@ -11,6 +11,7 @@ import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
+import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -26,12 +27,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ImageIntegrationTest {
 
-    private static final Path VISUAL_DIR = Path.of("target", "visual-tests");
     private static final Path COVER_ASSET = Path.of("assets", "GraphComposeCover.png");
 
     @Test
     void shouldRenderSingleImageWithGuides() throws Exception {
-        Path outputFile = VISUAL_DIR.resolve("image_single_guides.pdf");
+        Path outputFile = VisualTestOutputs.preparePdf("image_single_guides", "guides", "integration");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
@@ -56,7 +56,7 @@ class ImageIntegrationTest {
 
     @Test
     void shouldRenderSingleImageWithoutGuides() throws Exception {
-        Path outputFile = VISUAL_DIR.resolve("image_single_clean.pdf");
+        Path outputFile = VisualTestOutputs.preparePdf("image_single_clean", "clean", "integration");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
@@ -81,7 +81,7 @@ class ImageIntegrationTest {
 
     @Test
     void shouldRenderImageInsideVContainer() throws Exception {
-        Path outputFile = VISUAL_DIR.resolve("image_vcontainer_pagination.pdf");
+        Path outputFile = VisualTestOutputs.preparePdf("image_vcontainer_pagination", "guides", "integration");
         Placement imagePlacement;
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
@@ -125,7 +125,7 @@ class ImageIntegrationTest {
 
     @Test
     void shouldRenderFifteenCoverImagesInCenteredVContainer() throws Exception {
-        Path outputFile = VISUAL_DIR.resolve("image_vcontainer_cover_column.pdf");
+        Path outputFile = VisualTestOutputs.preparePdf("image_vcontainer_cover_column", "guides", "integration");
         assertThat(COVER_ASSET).exists();
 
         Entity[] images = new Entity[15];

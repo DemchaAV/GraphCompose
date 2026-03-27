@@ -5,11 +5,11 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 
@@ -22,11 +22,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class SmartPaginationTest {
 
-    private static final Path VISUAL_DIR = Path.of("target", "visual-tests");
-
     @Test
     void testMassiveTextBlockPagination() throws Exception {
-        Path outputFile = VISUAL_DIR .resolve("massive_text.pdf");
+        Path outputFile = VisualTestOutputs.preparePdf("massive_text", "clean", "integration");
         
         // Generate ~10,000 characters
         StringBuilder sb = new StringBuilder();
@@ -58,7 +56,7 @@ public class SmartPaginationTest {
 
     @Test
     void testContainerSplitWithGuides() throws Exception {
-        Path outputFile = VISUAL_DIR .resolve("container_split.pdf");
+        Path outputFile = VisualTestOutputs.preparePdf("container_split", "guides", "integration");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)

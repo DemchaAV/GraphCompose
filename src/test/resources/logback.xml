@@ -69,14 +69,27 @@
     </appender>
 
     <!-- Console for global WARN+ERROR -->
-<!--    <appender name="CONSOLE_WARN_ERROR" class="ch.qos.logback.core.ConsoleAppender">-->
-<!--        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">-->
-<!--            <level>WARN</level>-->
-<!--        </filter>-->
-<!--        <encoder>-->
-<!--            <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>-->
-<!--        </encoder>-->
-<!--    </appender>-->
+    <appender name="CONSOLE_WARN_ERROR" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>WARN</level>
+        </filter>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Dedicated DEBUG trace for layout / pagination investigation in tests -->
+    <appender name="LAYOUT_TRACE_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/layout-trace.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/layout-trace-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>14</maxHistory>
+            <totalSizeCap>512MB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{48} - %msg%n</pattern>
+        </encoder>
+    </appender>
 
     <!-- Root: only files + WARN/ERROR console -->
     <root level="DEBUG">
@@ -86,9 +99,25 @@
         <appender-ref ref="CONSOLE_WARN_ERROR"/>
     </root>
 
-    <!-- LayoutSystem: full DEBUG console -->
-    <logger name="com.demcha.system.utils.page_breaker" level="OFF" additivity="false">
-        <appender-ref ref="CONSOLE_LAYOUT_SYSTEM"/>
+    <!-- Layout / pagination tracing during tests -->
+    <logger name="com.demcha.compose.layout_core.system.utils.page_breaker" level="DEBUG" additivity="false">
+        <appender-ref ref="LAYOUT_TRACE_FILE"/>
+    </logger>
+
+    <logger name="com.demcha.compose.layout_core.system.utils.containerUtils" level="DEBUG" additivity="false">
+        <appender-ref ref="LAYOUT_TRACE_FILE"/>
+    </logger>
+
+    <logger name="com.demcha.compose.layout_core.components.core.Entity" level="DEBUG" additivity="false">
+        <appender-ref ref="LAYOUT_TRACE_FILE"/>
+    </logger>
+
+    <logger name="com.demcha.compose.layout_core.components.layout.coordinator" level="DEBUG" additivity="false">
+        <appender-ref ref="LAYOUT_TRACE_FILE"/>
+    </logger>
+
+    <logger name="com.demcha.compose.layout_core.system.interfaces.guides" level="DEBUG" additivity="false">
+        <appender-ref ref="LAYOUT_TRACE_FILE"/>
     </logger>
 
 </configuration>

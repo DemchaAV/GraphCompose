@@ -11,29 +11,26 @@ import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
 
 import java.awt.Color;
-import java.nio.file.FileSystemException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.nio.file.Path;
 import java.util.Set;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CircleIntegrationTest {
-    private static final Path VISUAL_DIR = Path.of("target", "visual-tests");
 
     @Test
     void shouldRenderSingleCircleWithoutGuides() throws Exception {
-        Path outputFile = prepareOutputFile("circle_single_clean");
+        Path outputFile = VisualTestOutputs.preparePdf("circle_single_clean", "clean", "integration");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
@@ -58,7 +55,7 @@ class CircleIntegrationTest {
 
     @Test
     void shouldRenderSingleCircleWithGuides() throws Exception {
-        Path outputFile = prepareOutputFile("circle_single_guides");
+        Path outputFile = VisualTestOutputs.preparePdf("circle_single_guides", "guides", "integration");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
@@ -84,7 +81,7 @@ class CircleIntegrationTest {
 
     @Test
     void shouldPaginateCircleColumnAcrossPages() throws Exception {
-        Path outputFile = prepareOutputFile("circle_pagination_test");
+        Path outputFile = VisualTestOutputs.preparePdf("circle_pagination_test", "guides", "integration");
         List<Entity> circles;
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
@@ -162,16 +159,5 @@ class CircleIntegrationTest {
             circles.add(circle);
         }
         return circles;
-    }
-
-    private static Path prepareOutputFile(String baseName) throws Exception {
-        Files.createDirectories(VISUAL_DIR);
-        Path outputFile = VISUAL_DIR.resolve(baseName + ".pdf");
-        try {
-            Files.deleteIfExists(outputFile);
-            return outputFile;
-        } catch (FileSystemException ignored) {
-            return VISUAL_DIR.resolve(baseName + "_" + UUID.randomUUID() + ".pdf");
-        }
     }
 }

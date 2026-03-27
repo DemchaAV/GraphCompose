@@ -12,11 +12,11 @@ import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.compose.font_library.FontName;
+import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import java.awt.*;
 import java.nio.file.Path;
@@ -31,11 +31,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class PageBreakerIntegrationTest {
 
-    private static final Path VISUAL_DIR = Path.of("target", "visual-tests");
-
     @Test
     void shouldBreakTextAcrossPages() throws Exception {
-        Path outputFile = VISUAL_DIR .resolve("page_breaker_text_test.pdf");
+        Path outputFile = VisualTestOutputs.preparePdf("page_breaker_text_test", "guides", "integration");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
@@ -70,7 +68,7 @@ class PageBreakerIntegrationTest {
 
     @Test
     void shouldBreakColoredRectanglesAcrossPages() throws Exception {
-        Path outputFile = VISUAL_DIR .resolve("page_breaker_rectangles_test.pdf");
+        Path outputFile = VisualTestOutputs.preparePdf("page_breaker_rectangles_test", "guides", "integration");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)

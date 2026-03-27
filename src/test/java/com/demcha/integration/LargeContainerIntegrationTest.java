@@ -7,11 +7,11 @@ import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 
@@ -22,11 +22,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class LargeContainerIntegrationTest {
 
-    private static final Path VISUAL_DIR = Path.of("target", "visual-tests");
-
     @Test
     void shouldRenderLargeContainerAcrossMultiplePages() throws Exception {
-        Path outputFile = VISUAL_DIR .resolve("large_container_test.pdf");
+        Path outputFile = VisualTestOutputs.preparePdf("large_container_test", "guides", "integration");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
@@ -59,7 +57,7 @@ class LargeContainerIntegrationTest {
 
     @Test
     void shouldRenderSmallContainerOnSinglePage() throws Exception {
-        Path outputFile = VISUAL_DIR .resolve("small_container_test.pdf");
+        Path outputFile = VisualTestOutputs.preparePdf("small_container_test", "guides", "integration");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)

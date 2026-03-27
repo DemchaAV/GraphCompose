@@ -117,6 +117,7 @@ If a change affects public docs, examples, or screenshots, update those assets i
 - Keep benchmark values clearly dated when they are refreshed.
 - Keep `assets/readme/*` screenshots consistent with the current render outputs.
 - If you add a new extension point or contribution pattern, update [docs/implementation-guide.md](./docs/implementation-guide.md) as part of the same change.
+- Visual PDF artifacts are grouped under `target/visual-tests/clean/*` and `target/visual-tests/guides/*` so guide-line renders are easy to find separately from clean outputs.
 
 ## Package naming
 

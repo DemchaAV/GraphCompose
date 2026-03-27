@@ -10,11 +10,11 @@ import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -24,11 +24,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DocumentationExamplesTest {
 
-    private static final Path VISUAL_DIR = Path.of("target", "visual-tests");
-
     @Test
     void shouldRenderQuickStartExampleToFile() throws Exception {
-        Path outputFile = VISUAL_DIR .resolve("quick-start.pdf");
+        Path outputFile = VisualTestOutputs.preparePdf("quick-start", "clean", "documentation");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
@@ -57,6 +55,7 @@ class DocumentationExamplesTest {
     @Test
     void shouldRenderInMemoryQuickStartExampleToBytes() throws Exception {
         byte[] pdfBytes;
+        Path outputFile = VisualTestOutputs.preparePdf("quick-start-bytes", "clean", "documentation");
 
         try (PdfComposer composer = GraphCompose.pdf()
                 .pageSize(PDRectangle.A4)
@@ -78,12 +77,13 @@ class DocumentationExamplesTest {
             pdfBytes = composer.toBytes();
         }
 
-        assertPdfBytesLookValid(pdfBytes, VISUAL_DIR .resolve("quick-start-bytes.pdf"));
+        assertPdfBytesLookValid(pdfBytes, outputFile);
     }
 
     @Test
     void shouldRenderTemplateBuilderExampleToBytes() throws Exception {
         byte[] pdfBytes;
+        Path outputFile = VisualTestOutputs.preparePdf("template-builder-bytes", "clean", "documentation");
 
         try (PdfComposer composer = GraphCompose.pdf()
                 .pageSize(PDRectangle.A4)
@@ -103,12 +103,12 @@ class DocumentationExamplesTest {
             pdfBytes = composer.toBytes();
         }
 
-        assertPdfBytesLookValid(pdfBytes, VISUAL_DIR .resolve("template-builder-bytes.pdf"));
+        assertPdfBytesLookValid(pdfBytes, outputFile);
     }
 
     @Test
     void shouldRenderAvailableFontsPreviewExample() throws Exception {
-        Path outputFile = VISUAL_DIR .resolve("available-fonts-preview.pdf");
+        Path outputFile = VisualTestOutputs.preparePdf("available-fonts-preview", "clean", "documentation");
 
         GraphCompose.renderAvailableFontsPreview(outputFile);
 

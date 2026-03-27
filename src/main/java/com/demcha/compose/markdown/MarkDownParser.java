@@ -139,14 +139,4 @@ public class MarkDownParser {
         return TextDecoration.DEFAULT;
     }
 
-    public static void main(String[] args) {
-        String s = "# Header 1\n## Header 2\nNormal text";
-        MarkDownParser parser = new MarkDownParser();
-        List<TextDataBody> body = parser.getBody(s, TextStyle.DEFAULT_STYLE);
-
-        for (TextDataBody b : body) {
-            System.out.println("Text: '" + b.text().replace("\n", "\\n") + "' | Size: " + b.textStyle().size()
-                    + " | Decor: " + b.textStyle().decoration());
-        }
-    }
 }

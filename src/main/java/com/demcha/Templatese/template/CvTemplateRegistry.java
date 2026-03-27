@@ -7,15 +7,15 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Registry for managing available CV templates.
- * Templates are auto-discovered via Spring's dependency injection.
+ * Registry for available CV templates.
+ * Templates are provided explicitly by the caller and looked up by template ID.
  */
 public class CvTemplateRegistry {
 
     private final Map<String, CvTemplate> templates = new HashMap<>();
 
     /**
-     * Constructor that auto-registers all CvTemplate beans.
+     * Constructor that registers the provided template instances.
      */
     public CvTemplateRegistry(List<CvTemplate> templateList) {
         for (CvTemplate template : templateList) {

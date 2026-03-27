@@ -4,6 +4,7 @@ import com.demcha.compose.layout_core.components.content.shape.FillColor;
 import com.demcha.compose.layout_core.components.content.shape.Stroke;
 import com.demcha.compose.layout_core.components.core.Entity;
 import com.demcha.compose.layout_core.components.layout.coordinator.Placement;
+import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfRender;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
@@ -19,16 +20,28 @@ import java.util.EnumSet;
 @EqualsAndHashCode
 public class Circle implements PdfRender {
     private static final EnumSet<GuidesRenderer.Guide> DEFAULT_GUIDES =
-            EnumSet.of(GuidesRenderer.Guide.MARGIN, GuidesRenderer.Guide.PADDING);
+            EnumSet.of(GuidesRenderer.Guide.MARGIN, GuidesRenderer.Guide.PADDING, GuidesRenderer.Guide.BOX);
 
     private static final float BEZIER_CIRCLE = 0.552284749831f;
 
     @Override
     public boolean pdf(EntityManager manager, Entity e, PdfRenderingSystemECS renderingSystemECS, boolean guideLines)
             throws IOException {
+        Placement placement = e.getComponent(Placement.class).orElse(null);
+        if (placement == null) {
+            log.warn("Skipping circle render because Placement is missing for {}", e);
+            return false;
+        }
+
+        Padding padding = e.getComponent(Padding.class).orElse(Padding.zero());
+        double x = placement.x() + padding.left();
+        double y = placement.y() + padding.bottom();
+        double width = Math.max(0.0, placement.width() - padding.horizontal());
+        double height = Math.max(0.0, placement.height() - padding.vertical());
+
         boolean drawn;
         try (PDPageContentStream cs = renderingSystemECS.stream().openContentStream(e)) {
-            drawn = pdfRenderObject(e, cs);
+            drawn = pdfRenderObject(e, cs, x, y, width, height);
             if (guideLines) {
                 renderingSystemECS.guidesRenderer().guidesRender(e, cs, DEFAULT_GUIDES);
             }
@@ -36,24 +49,21 @@ public class Circle implements PdfRender {
         return drawn;
     }
 
-    private boolean pdfRenderObject(Entity e, PDPageContentStream cs) throws IOException {
+    private boolean pdfRenderObject(Entity e,
+                                    PDPageContentStream cs,
+                                    double x,
+                                    double y,
+                                    double width,
+                                    double height) throws IOException {
         if (!e.hasAssignable(Circle.class)) {
             log.debug("No Circle on {}", e);
             return false;
         }
 
-        Placement placement = e.getComponent(Placement.class).orElseThrow();
         FillColor fillColor = e.getComponent(FillColor.class).orElse(FillColor.defaultColor());
         Stroke stroke = e.getComponent(Stroke.class).orElse(null);
 
-        return pdfRenderCircle(
-                cs,
-                placement.x(),
-                placement.y(),
-                placement.width(),
-                placement.height(),
-                stroke,
-                fillColor);
+        return pdfRenderCircle(cs, x, y, width, height, stroke, fillColor);
     }
 
     private boolean pdfRenderCircle(PDPageContentStream cs,

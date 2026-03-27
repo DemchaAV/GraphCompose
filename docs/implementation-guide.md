@@ -31,6 +31,7 @@ Examples in the codebase:
 
 - [TextBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/TextBuilder.java)
 - [ImageBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/ImageBuilder.java)
+- [CircleBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/CircleBuilder.java)
 - [LinkBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/LinkBuilder.java)
 - [ElementBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/ElementBuilder.java)
 
@@ -103,7 +104,7 @@ Examples:
 - `Container` is both `Expendable` and `Breakable` because it owns children and may span pages
 - `BlockText` is `Breakable` because its content can flow across pages
 - `ImageComponent` is neither `Expendable` nor `Breakable`; it is a fixed leaf renderable
-- `Circle` is a fixed leaf renderable; it renders, but it should not be marked `Expendable`
+- `Circle` is a fixed leaf renderable like `ImageComponent`; it renders, but it should not be marked `Expendable`
 
 Important:
 

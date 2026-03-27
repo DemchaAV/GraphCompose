@@ -3,11 +3,14 @@ package com.demcha.compose.layout_core.components;
 import com.demcha.templates.TemplateBuilder;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.font_library.FontName;
+import com.demcha.compose.layout_core.components.components_builders.CircleBuilder;
 import com.demcha.compose.layout_core.components.renderable.Circle;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.geometry.ContentSize;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,5 +42,16 @@ class ComponentBuilderTest {
                         assertThat(size.height()).isEqualTo(30);
                     });
         }
+    }
+
+    @Test
+    void circleBuilderShouldStayLeafLikeAndNotExposeRectangleOnlyShapeMethods() {
+        var methodNames = Arrays.stream(CircleBuilder.class.getMethods())
+                .map(method -> method.getName())
+                .toList();
+
+        assertThat(methodNames)
+                .contains("fillColor", "stroke", "size", "padding", "margin", "anchor")
+                .doesNotContain("cornerRadius", "rectangle");
     }
 }

@@ -32,6 +32,7 @@ public class ComparativeBenchmark {
     private static JasperReport compiledJasperReport;
 
     public static void main(String[] args) throws Exception {
+        BenchmarkSupport.configureQuietLogging();
         System.out.println("🚀 Starting FAIR Comparative Benchmark...");
         System.out.println("------------------------------------------------------------");
 

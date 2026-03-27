@@ -30,6 +30,19 @@ See [pagination-ordering.md](./pagination-ordering.md) for the detailed explanat
 
 This layer is the reusable document engine. It is responsible for turning entities and styles into positioned render output.
 
+### TableBuilder v1 in the engine
+
+The current table implementation lives in the engine layer, not in templates.
+
+Its shape is intentionally hybrid:
+
+- `ComponentBuilder.table()` creates a public engine-level builder
+- the table root materializes as a breakable vertical container
+- rows materialize as atomic leaf entities with precomputed cell payload
+- row rendering is page-aware, which lets the engine draw both fragment edges at page breaks without double-drawing separators inside a page
+
+This keeps table pagination consistent with the rest of the engine while avoiding a separate ad-hoc table layout subsystem.
+
 ## Template layer: `com.demcha.templates.*`
 
 - `templates` contains higher-level CV and cover-letter builders, DTOs, themes, and template registries.

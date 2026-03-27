@@ -280,6 +280,8 @@ The short version:
 - extend `EmptyBox<T>` for a leaf entity that does not manage children
 - extend `ShapeBuilderBase<T>` for shape-like leaf objects that need fill/stroke helpers
 - extend `ContainerBuilder<T>` for entities that own child entities
+- add `Expendable` only when the entity should grow because of child content
+- add `Breakable` only when the entity itself can continue across pages
 - add a factory method to `ComponentBuilder` if the new object should be available from `composer.componentBuilder()`
 - make sure the built entity receives the components the layout system and renderer expect
 - if the object needs custom drawing, add a renderable component that implements the appropriate render contract
@@ -287,13 +289,14 @@ The short version:
 The guide includes:
 
 - what to inherit for different cases
+- what `Expendable` and `Breakable` mean in the engine
 - which components are required for sizing, layout, parenting, and rendering
 - where to add builder wiring
 - how the layout and rendering systems pick the object up
 
 ## Performance and benchmarks
 
-The numbers below were rerun locally on March 27, 2026 against the current repository state. They are environment-dependent and should be treated as project benchmarks, not cross-machine guarantees.
+The numbers below were rerun locally on March 27, 2026 against the current repository state after the latest layout/pagination fixes. They are environment-dependent and should be treated as project benchmarks, not cross-machine guarantees.
 
 ### Comparative benchmark
 
@@ -301,9 +304,9 @@ Source: `src/test/java/com/demcha/compose/ComparativeBenchmark.java`
 
 | Library | Avg Time (ms) | Avg Heap (MB) | License |
 | --- | ---: | ---: | --- |
-| GraphCompose | 2.82 | 0.29 | MIT |
-| iText 5 (Old) | 1.55 | 0.16 | AGPL |
-| JasperReports | 4.38 | 0.19 | LGPL |
+| GraphCompose | 2.83 | 0.29 | MIT |
+| iText 5 (Old) | 1.54 | 0.16 | AGPL |
+| JasperReports | 4.24 | 0.19 | LGPL |
 
 ### Core engine benchmark
 
@@ -311,12 +314,12 @@ Source: `src/test/java/com/demcha/compose/GraphComposeBenchmark.java`
 
 | Metric | Latency |
 | --- | ---: |
-| Min | 1.09 ms |
+| Min | 1.13 ms |
 | Avg | 1.99 ms |
-| p50 | 1.84 ms |
-| p95 | 3.34 ms |
-| p99 | 3.92 ms |
-| Max | 6.24 ms |
+| p50 | 1.73 ms |
+| p95 | 3.67 ms |
+| p99 | 4.87 ms |
+| Max | 7.03 ms |
 
 ### Full CV benchmark
 
@@ -324,12 +327,12 @@ Source: `src/test/java/com/demcha/compose/FullCvBenchmark.java`
 
 | Metric | Latency |
 | --- | ---: |
-| Min | 5.50 ms |
-| Avg | 8.30 ms |
-| p50 | 7.83 ms |
-| p95 | 11.92 ms |
-| p99 | 15.14 ms |
-| Max | 23.50 ms |
+| Min | 5.35 ms |
+| Avg | 9.36 ms |
+| p50 | 9.30 ms |
+| p95 | 12.82 ms |
+| p99 | 14.64 ms |
+| Max | 16.23 ms |
 
 ### Scalability benchmark
 
@@ -337,11 +340,11 @@ Source: `src/test/java/com/demcha/compose/ScalabilityBenchmark.java`
 
 | Threads | Total Docs | Throughput |
 | ---: | ---: | ---: |
-| 1 | 100 | 395.84 docs/sec |
-| 2 | 200 | 834.96 docs/sec |
-| 4 | 400 | 1772.31 docs/sec |
-| 8 | 800 | 3657.10 docs/sec |
-| 16 | 1600 | 5055.15 docs/sec |
+| 1 | 100 | 362.41 docs/sec |
+| 2 | 200 | 858.30 docs/sec |
+| 4 | 400 | 1966.02 docs/sec |
+| 8 | 800 | 3826.88 docs/sec |
+| 16 | 1600 | 5841.52 docs/sec |
 
 ### Stress test
 
@@ -353,7 +356,7 @@ Source: `src/test/java/com/demcha/compose/GraphComposeStressTest.java`
 | Tasks submitted | 5,000 |
 | Successful | 5,000 |
 | Errors | 0 |
-| Total time | 4,031 ms |
+| Total time | 4,029 ms |
 
 ### Endurance run
 
@@ -362,7 +365,7 @@ Source: `src/test/java/com/demcha/compose/EnduranceTest.java`
 | Parameter | Value |
 | --- | --- |
 | Documents generated | 100,000 |
-| Total time | 40,635 ms |
+| Total time | 41,635 ms |
 | Heap behavior | Repeated GC drops observed during the run |
 | Result | Completed successfully |
 

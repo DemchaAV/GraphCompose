@@ -30,7 +30,7 @@
                 <role>Lead Developer</role>
                 <role>Architect</role>
             </roles>
-            <timezone>UTC+3</timezone>
+            <timezone>UTC 0</timezone>
         </developer>
     </developers>
 

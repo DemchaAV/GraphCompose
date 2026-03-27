@@ -60,6 +60,12 @@ For a visible object, the implementation usually needs all of the following:
 - layout metadata such as `Anchor`, `Margin`, `Padding`, and parent/child links when needed
 - a renderable component that the renderer understands
 
+Marker rule of thumb:
+
+- add `Expendable` only to parent-like boxes that should grow because of child content
+- add `Breakable` only to entities whose own content may continue across pages
+- do not treat `Expendable` as a pagination flag
+
 The layout pass is driven by components and entity relationships, not by builder classes directly. See:
 
 - [LayoutSystem.java](./src/main/java/com/demcha/compose/layout_core/system/LayoutSystem.java)

@@ -267,5 +267,4 @@ public class PageLayoutCalculator {
 
     }
 
-
 }

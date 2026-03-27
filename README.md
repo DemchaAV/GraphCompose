@@ -9,181 +9,117 @@
 </p>
 
 <p align="center">
-  <b>A declarative layout engine for programmatic document generation in Java & Kotlin.</b><br/>
-  Build documents the way you build UIs — with components, containers, and constraints. Not with coordinates.
+  <b>A declarative layout engine for programmatic document generation in Java and Kotlin.</b><br/>
+  Build documents through entities, builders, layout rules, and renderers instead of hand-written PDF coordinates.
+</p>
+
+<p align="center">
+  <a href="./docs/architecture.md">Architecture</a>
+  ·
+  <a href="./docs/implementation-guide.md">Implementation Guide</a>
+  ·
+  <a href="./CONTRIBUTING.md">Contributing</a>
 </p>
 
 ---
 
-## Table of Contents
+## What GraphCompose is
 
-* [What is GraphCompose?](#-what-is-graphcompose)
-* [Why GraphCompose?](#-why-graphcompose)
-* [Visual Preview](#-visual-preview)
-* [Features](#-features)
-* [Architecture](#-architecture)
-* [Installation](#-installation)
-* [Quick Start](#-quick-start)
-* [Core Concepts](#-core-concepts)
-* [Performance & Benchmarks](#-performance--benchmarks)
-* [Tech Stack](#-tech-stack)
-* [Roadmap](#-roadmap)
-* [Contributing](#-contributing)
-* [License](#-license)
+GraphCompose is a document generation engine built around an ECS-style model:
 
----
+- builders create `Entity` trees;
+- layout systems calculate size and placement;
+- rendering systems turn resolved geometry into output bytes.
 
-## 🚀 What is GraphCompose?
-
-GraphCompose is a **Java/Kotlin document generation engine** built around an **ECS (Entity Component System)** architecture and a reusable **layout system**.
-
-Instead of drawing text and shapes with manual X/Y coordinates, you define a document as a **tree of components**. GraphCompose resolves alignment, spacing, wrapping, and page flow for you.
-
-Think of it as **Jetpack Compose or Flexbox for server-side document generation**.
-
-> **Core idea:** define a layout once, feed it data many times, and generate consistent documents with predictable structure.
-
-See [docs/architecture.md](docs/architecture.md) for a package-level map and [CONTRIBUTING.md](CONTRIBUTING.md) for build and contribution workflow notes.
-
----
-
-## 🎯 Why GraphCompose?
-
-### The problem with raw PDF libraries
-
-Working directly with **Apache PDFBox** usually means manual coordinate math for every text block, divider, and container. That approach becomes difficult to maintain when:
-
-* content length changes,
-* sections become optional,
-* layouts span multiple pages,
-* fonts and spacing must stay consistent.
-
-### Where GraphCompose helps
-
-GraphCompose adds a higher-level layout layer on top of PDF rendering, so application code can focus on **document structure** instead of low-level positioning.
-
-| Pain Point                    | GraphCompose Approach                                       |
-| ----------------------------- | ----------------------------------------------------------- |
-| Manual coordinate math        | Declarative layout via containers, anchors, margin, padding |
-| Dynamic content breaks layout | Layout is resolved from content and container rules         |
-| Multi-page documents          | Automatic page flow and pagination support                  |
-| Repeated font setup           | Centralized font registration and reusable text styles      |
-| Tight renderer coupling       | Layout and rendering are separated by design                |
-
-### Typical use cases
+The current production path is PDF output via Apache PDFBox. The source tree also contains early Word-related classes, but the PDF path is the supported renderer today.
 
 GraphCompose is a good fit for:
 
-* CV and resume generation
-* invoices and reports
-* contracts and internal documents
-* REST APIs that stream PDFs from memory
-* applications that need reusable document templates
+- CV and resume generation
+- cover letters and profile documents
+- invoices and reports
+- multi-page server-side PDF generation
+- reusable document templates on top of a lower-level layout engine
 
----
+## Why use it
 
-## 🖼 Visual Preview
+Raw PDF libraries are powerful, but they push layout responsibility into application code:
 
-GraphCompose is designed for reusable layouts, automatic pagination, and structured document rendering.
+- text wrapping depends on manual font measurement
+- optional sections break absolute positioning
+- pagination becomes custom logic
+- style consistency becomes repetitive boilerplate
 
-### 1. Final Output
+GraphCompose moves those concerns into the engine:
 
-<p align="center">
-  <img src="./assets/readme/cv-preview-clean.png" alt="Final PDF output rendered by GraphCompose" width="850"/>
-</p>
+| Problem | GraphCompose approach |
+| --- | --- |
+| Manual coordinate math | Compose entities with containers, anchors, padding, and margin |
+| Dynamic content | Let the layout system measure and place content |
+| Multi-page output | Use page-breaking and pagination logic in the engine |
+| Repeated styling | Reuse shared text styles, themes, and font registration |
+| Hard-to-maintain templates | Build reusable document structures on top of `TemplateBuilder` |
 
-<p align="center">
-  <em>Example of a clean final document generated from declarative layout components.</em>
-</p>
+## Visual preview
 
-### 2. Layout Debugging
+These screenshots were refreshed from the current repository render outputs on March 27, 2026.
 
-<p align="center">
-  <img src="./assets/readme/cv-layout-debug.png" alt="Layout debugging overlay in GraphCompose" width="850"/>
-</p>
-
-<p align="center">
-  <em>Debug overlay showing resolved container boundaries, text regions, and spacing behavior.</em>
-</p>
-
-### 3. Font Rendering
+### Final CV render
 
 <p align="center">
-  <img src="./assets/readme/fonts-preview.png" alt="Font rendering preview in GraphCompose" width="850"/>
+  <img src="./assets/readme/cv-preview-clean.png" alt="GraphCompose CV render preview" width="850"/>
 </p>
+
+### Layout debugging with guide lines
 
 <p align="center">
-  <em>Preview of available font families and style variants.</em>
+  <img src="./assets/readme/cv-layout-debug.png" alt="GraphCompose layout debug preview" width="850"/>
 </p>
 
----
+### Available fonts preview
 
-## ✨ Features
+<p align="center">
+  <img src="./assets/readme/fonts-preview.png" alt="GraphCompose fonts preview" width="850"/>
+</p>
 
-| Feature                  | Description                                                                 |
-| ------------------------ | --------------------------------------------------------------------------- |
-| **ECS Architecture**     | Flexible document composition with entities and components                  |
-| **Layout System**        | `VContainer` and `HContainer` with alignment, spacing, and size constraints |
-| **Anchor System**        | Declarative positioning through `Anchor`, `Margin`, and `Padding`           |
-| **Rich Content**         | Text, links, shapes, and Markdown-based blocks                              |
-| **Auto-Pagination**      | Multi-page layout flow with preserved spacing and styling                   |
-| **Unified Font Library** | Register fonts once and reuse them across documents                         |
-| **In-Memory Rendering**  | Render to `byte[]` for streaming from REST APIs without disk I/O            |
-| **Concurrent Usage**     | Designed for multi-threaded server-side rendering workloads                 |
-| **Markdown Support**     | Rich-text block generation through Flexmark                                 |
-| **Renderer Separation**  | Layout and rendering are separated, making future renderers easier to add   |
+## Architecture at a glance
 
----
-
-## 🏗 Architecture
-GraphCompose follows a unidirectional pipeline:
 ```mermaid
 graph TD
-    UserCode["YOUR APPLICATION CODE<br/>(Builder API / document tree)"]
+    UserCode["Application code<br/>builders and entity tree"]
 
-    subgraph Core["GraphCompose Pipeline"]
-        LayoutSystem["Layout Core"]
-        Instructions["Resolved Geometry<br/>WHAT / WHERE / ORDER / LAYERS"]
-        RenderingSystem["Rendering System<br/>geometry -> draw calls"]
+    subgraph Core["GraphCompose pipeline"]
+        LayoutSystem["Layout system"]
+        Geometry["Resolved geometry<br/>size, placement, pages"]
+        Renderer["Rendering system"]
     end
 
-    PDF["PDF<br/>(Ready)"]
-    DOCX["DOCX<br/>(Planned)"]
-    PPTX["PPTX<br/>(Planned)"]
+    PDF["PDF output"]
+    Future["Future renderers"]
 
-    UserCode -->|"Declarative entity tree"| LayoutSystem
-    LayoutSystem -->|"Layout pass"| Instructions
-    Instructions --> RenderingSystem
-
-    RenderingSystem --> PDF
-    RenderingSystem -.-> DOCX
-    RenderingSystem -.-> PPTX
-
-    classDef planned stroke-dasharray: 5 5;
-    class DOCX,PPTX planned;
+    UserCode --> LayoutSystem
+    LayoutSystem --> Geometry
+    Geometry --> Renderer
+    Renderer --> PDF
+    Renderer -.-> Future
 ```
-### Main packages
 
-| Package / layer | Responsibility                                                                  |
-| --------------- | ------------------------------------------------------------------------------- |
-| `loyaut_core`   | Core geometry, styles, entities, components, and the layout/render pipeline     |
-| `markdown`      | Markdown parsing and conversion into document entities                          |
-| `font_library`  | Font registration, variant management, and metric caching                       |
-| `Templatese`    | Optional higher-level CV and cover-letter template helpers                      |
+Main layers:
 
-> `loyaut_core` and `Templatese` are the current package names in the public codebase and are preserved for compatibility.
+- `com.demcha.compose.loyaut_core.*`
+  Core engine: entities, builders, geometry, layout, pagination, render systems
+- `com.demcha.compose.font_library.*`
+  Font registration and PDF font helpers
+- `com.demcha.compose.markdown.*`
+  Markdown parsing helpers used by text/block text builders
+- `com.demcha.Templatese.*`
+  Higher-level templates, themes, DTOs, and template contracts
 
-### Mental model
+For the full package map, see [docs/architecture.md](./docs/architecture.md).
 
-`Builder API -> entity tree -> layout resolution -> render output`
+## Installation
 
-This separation helps keep layout logic reusable and rendering concerns isolated.
-
----
-
-## 🔧 Installation
-
-GraphCompose can be published through **JitPack**.
+GraphCompose can be consumed through JitPack.
 
 ### Maven
 
@@ -214,61 +150,42 @@ dependencies {
 }
 ```
 
-> Update the repository slug and version tag if your published JitPack coordinates differ.
+## Quick start
 
----
-
-## ⚡ Quick Start
-
-Document creation follows three stages:
-
-1. initialize the composer
-2. build the entity tree
-3. render the document
+The example below matches the current documentation test suite.
 
 ```java
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.loyaut_core.components.components_builders.ComponentBuilder;
 import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
-import com.demcha.compose.loyaut_core.components.core.Entity;
 import com.demcha.compose.loyaut_core.components.layout.Align;
 import com.demcha.compose.loyaut_core.components.layout.Anchor;
 import com.demcha.compose.loyaut_core.components.style.Margin;
-import com.demcha.compose.loyaut_core.components.style.Padding;
+import com.demcha.compose.loyaut_core.core.PdfComposer;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
 
 public class QuickStart {
-
     public static void main(String[] args) throws Exception {
-        try (var composer = GraphCompose.pdf(Path.of("output.pdf"))
+        Path outputFile = Path.of("quick-start.pdf");
+
+        try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(24, 24, 24, 24)
+                .markdown(true)
                 .create()) {
 
-            Entity title = composer.componentBuilder()
-                    .text()
-                    .textWithAutoSize("Hello from GraphCompose!")
-                    .margin(Margin.of(10))
-                    .padding(Padding.of(5))
-                    .textStyle(TextStyle.DEFAULT_STYLE)
-                    .anchor(Anchor.center())
-                    .build();
+            ComponentBuilder cb = composer.componentBuilder();
 
-            Entity subtitle = composer.componentBuilder()
-                    .text()
-                    .textWithAutoSize("Declarative layouts for Java 21")
-                    .margin(Margin.of(5))
-                    .textStyle(TextStyle.DEFAULT_STYLE)
-                    .anchor(Anchor.center())
-                    .build();
-
-            composer.componentBuilder()
-                    .vContainer(Align.middle(10))
-                    .anchor(Anchor.topCenter())
-                    .margin(Margin.of(40))
-                    .addChild(title)
-                    .addChild(subtitle)
+            cb.vContainer(Align.middle(8))
+                    .anchor(Anchor.topLeft())
+                    .margin(Margin.of(8))
+                    .addChild(cb.text()
+                            .textWithAutoSize("Hello GraphCompose")
+                            .textStyle(TextStyle.DEFAULT_STYLE)
+                            .anchor(Anchor.topLeft())
+                            .build())
                     .build();
 
             composer.build();
@@ -277,256 +194,210 @@ public class QuickStart {
 }
 ```
 
-### In-memory rendering
+### In-memory output
 
 ```java
-try (var composer = GraphCompose.pdf().pageSize(PDRectangle.A4).create()) {
-    // build the document tree
+try (PdfComposer composer = GraphCompose.pdf()
+        .pageSize(PDRectangle.A4)
+        .margin(24, 24, 24, 24)
+        .create()) {
+
+    ComponentBuilder cb = composer.componentBuilder();
+
+    cb.vContainer(Align.middle(8))
+            .anchor(Anchor.topLeft())
+            .margin(Margin.of(8))
+            .addChild(cb.text()
+                    .textWithAutoSize("In-memory PDF")
+                    .textStyle(TextStyle.DEFAULT_STYLE)
+                    .anchor(Anchor.topLeft())
+                    .build())
+            .build();
+
     byte[] pdfBytes = composer.toBytes();
 }
 ```
 
-This is useful for Spring Boot endpoints that return a generated PDF directly.
-
----
-
-## 📚 Core Concepts
-
-### 1. Declarative layout instead of coordinate math
-
-#### Raw PDF-style approach
+### Template layer example
 
 ```java
-float width = 500;
-float startX = 50;
-float startY = 700;
-String[] words = text.split(" ");
-StringBuilder line = new StringBuilder();
-for (String word : words) {
-    if (font.getStringWidth(line + word) / 1000 * fontSize > width) {
-        contentStream.beginText();
-        contentStream.newLineAtOffset(startX, startY);
-        contentStream.showText(line.toString().trim());
-        contentStream.endText();
-        startY -= leading;
-        line = new StringBuilder();
-    }
-    line.append(word).append(" ");
-}
-```
+import com.demcha.Templatese.CvTheme;
+import com.demcha.Templatese.TemplateBuilder;
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.loyaut_core.core.PdfComposer;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
-#### GraphCompose-style approach
-
-```java
-template.moduleBuilder("Profile", canvas)
-        .addChild(template.blockText("Some long text...", width))
-        .build();
-```
-
-The goal is to spend less time on manual layout plumbing and more time on document structure.
-
-### 2. Containers
-
-```java
-composer.componentBuilder()
-        .vContainer(Align.middle(8))
-        .anchor(Anchor.topLeft())
-        .addChild(header)
-        .addChild(body)
-        .build();
-
-composer.componentBuilder()
-        .hContainer(Align.middle(16))
-        .anchor(Anchor.topLeft())
-        .addChild(leftColumn)
-        .addChild(rightColumn)
-        .build();
-```
-
-### 3. Fonts
-
-```java
-FontLibrary library = FontLibrary.getInstance();
-library.register("Inter", Path.of("fonts/Inter-Regular.ttf"), FontVariant.REGULAR);
-library.register("Inter", Path.of("fonts/Inter-Bold.ttf"), FontVariant.BOLD);
-
-TextStyle style = TextStyle.builder()
-        .fontFamily("Inter")
-        .variant(FontVariant.BOLD)
-        .size(14)
-        .color(Color.BLACK)
-        .build();
-```
-
-### 4. Markdown blocks
-
-```java
-try (PdfComposer composer = GraphCompose.pdf(outputFile)
+try (PdfComposer composer = GraphCompose.pdf()
         .pageSize(PDRectangle.A4)
-        .margin(15, 10, 15, 15)
-        .markdown(true)
+        .margin(24, 24, 24, 24)
         .create()) {
 
-    // composer elements
+    TemplateBuilder template = TemplateBuilder.from(
+            composer.componentBuilder(),
+            CvTheme.defaultTheme());
+
+    template.moduleBuilder("Profile", composer.canvas())
+            .addChild(template.blockText(
+                    "Analytical engineer focused on reliable platform design.",
+                    composer.canvas().innerWidth()))
+            .build();
+
+    byte[] pdfBytes = composer.toBytes();
 }
 ```
 
----
+## Core concepts
 
-## 📊 Performance & Benchmarks
+### 1. Everything becomes an entity with components
 
-GraphCompose is designed for server-side rendering workloads, and early benchmarks show promising results.
+Builders do not draw directly. They create `Entity` instances and attach the components needed by the engine:
+
+- renderable marker component
+- content/style components
+- size and placement-related components
+- parent/child relationships for containers
+
+### 2. Layout and rendering are separate stages
+
+The layout pass calculates geometry first. Rendering happens after placement is resolved. That separation is what makes pagination, guide lines, and alternative renderers possible.
+
+### 3. Containers express structure
+
+Use container builders such as `vContainer(...)`, `hContainer(...)`, and `moduleBuilder(...)` to express document flow instead of absolute coordinates.
+
+### 4. The template layer sits on top of the engine
+
+`TemplateBuilder`, `CvTheme`, and the classes under `com.demcha.Templatese.templates` are convenience layers for reusable personal-document layouts. They are not required for one-off PDFs, but they simplify repeatable template design.
+
+## Extending GraphCompose
+
+If you want to add a new object type, builder, or renderer integration, start with [docs/implementation-guide.md](./docs/implementation-guide.md).
+
+The short version:
+
+- extend `EmptyBox<T>` for a leaf entity that does not manage children
+- extend `ShapeBuilderBase<T>` for shape-like leaf objects that need fill/stroke helpers
+- extend `ContainerBuilder<T>` for entities that own child entities
+- add a factory method to `ComponentBuilder` if the new object should be available from `composer.componentBuilder()`
+- make sure the built entity receives the components the layout system and renderer expect
+- if the object needs custom drawing, add a renderable component that implements the appropriate render contract
+
+The guide includes:
+
+- what to inherit for different cases
+- which components are required for sizing, layout, parenting, and rendering
+- where to add builder wiring
+- how the layout and rendering systems pick the object up
+
+## Performance and benchmarks
+
+The numbers below were rerun locally on March 27, 2026 against the current repository state. They are environment-dependent and should be treated as project benchmarks, not cross-machine guarantees.
 
 ### Comparative benchmark
 
-Generating a standard **invoice** document after JVM warmup.
+Source: `src/test/java/com/demcha/compose/ComparativeBenchmark.java`
 
-| Library          | Avg Time    | Heap Allocated | License |
-| :--------------- | :---------- | :------------- | :------ |
-| **GraphCompose** | **2.70 ms** | **0.29 MB**    | **MIT** |
-| iText 5          | 1.28 ms     | 0.16 MB        | AGPL    |
-| JasperReports    | 3.47 ms     | 0.18 MB        | LGPL    |
-
-### Full CV benchmark
-
-Rendering a multi-section CV after warmup.
-
-| Metric | Latency  |
-| :----- | :------- |
-| Min    | 6.28 ms  |
-| Avg    | 8.44 ms  |
-| p50    | 8.34 ms  |
-| p95    | 10.81 ms |
-| p99    | 13.06 ms |
-| Max    | 14.07 ms |
+| Library | Avg Time (ms) | Avg Heap (MB) | License |
+| --- | ---: | ---: | --- |
+| GraphCompose | 2.82 | 0.29 | MIT |
+| iText 5 (Old) | 1.55 | 0.16 | AGPL |
+| JasperReports | 4.38 | 0.19 | LGPL |
 
 ### Core engine benchmark
 
-Isolated layout + render without template overhead.
+Source: `src/test/java/com/demcha/compose/GraphComposeBenchmark.java`
 
 | Metric | Latency |
-| :----- | :------ |
-| Min    | 0.99 ms |
-| Avg    | 1.83 ms |
-| p50    | 1.58 ms |
-| p95    | 3.60 ms |
-| p99    | 4.26 ms |
-| Max    | 7.18 ms |
+| --- | ---: |
+| Min | 1.09 ms |
+| Avg | 1.99 ms |
+| p50 | 1.84 ms |
+| p95 | 3.34 ms |
+| p99 | 3.92 ms |
+| Max | 6.24 ms |
 
-### Concurrency scaling
+### Full CV benchmark
 
-| Threads | Docs/sec | Scaling Factor |
-| :------ | :------- | :------------- |
-| 1       | 355      | 1.0x           |
-| 2       | 751      | 2.1x           |
-| 4       | 2,158    | 6.1x           |
-| 8       | 3,937    | 11.1x          |
-| 16      | 6,171    | 17.4x          |
+Source: `src/test/java/com/demcha/compose/FullCvBenchmark.java`
 
-### Endurance test
+| Metric | Latency |
+| --- | ---: |
+| Min | 5.50 ms |
+| Avg | 8.30 ms |
+| p50 | 7.83 ms |
+| p95 | 11.92 ms |
+| p99 | 15.14 ms |
+| Max | 23.50 ms |
 
-| Parameter           | Value                                  |
-| :------------------ | :------------------------------------- |
-| Documents generated | 100,000                                |
-| Total time          | 44,553 ms                              |
-| Heap behavior       | Normal GC oscillation, no leak noticed |
-| Result              | Completed without OOM or GC thrashing  |
+### Scalability benchmark
 
-### Concurrent stress test
+Source: `src/test/java/com/demcha/compose/ScalabilityBenchmark.java`
 
-| Parameter        | Value      |
-| :--------------- | :--------- |
-| Thread pool size | 50 threads |
-| Tasks submitted  | 5,000      |
-| Successful       | 5,000      |
-| Errors           | 0          |
-| Total time       | 4,581 ms   |
+| Threads | Total Docs | Throughput |
+| ---: | ---: | ---: |
+| 1 | 100 | 395.84 docs/sec |
+| 2 | 200 | 834.96 docs/sec |
+| 4 | 400 | 1772.31 docs/sec |
+| 8 | 800 | 3657.10 docs/sec |
+| 16 | 1600 | 5055.15 docs/sec |
 
-> These numbers should be treated as project benchmarks, not yet as formal independent benchmarks. Publishing benchmark code, fixtures, and hardware details is recommended for full reproducibility.
+### Stress test
 
----
+Source: `src/test/java/com/demcha/compose/GraphComposeStressTest.java`
 
-## 🛠 Tech Stack
+| Parameter | Value |
+| --- | --- |
+| Thread pool size | 50 |
+| Tasks submitted | 5,000 |
+| Successful | 5,000 |
+| Errors | 0 |
+| Total time | 4,031 ms |
 
-| Technology    | Version | Role                            |
-| ------------- | ------- | ------------------------------- |
-| Java          | 21      | Primary language                |
-| Kotlin        | 2.2     | Alternative API / internal DSL  |
-| Apache PDFBox | 3.0.5   | Low-level PDF rendering engine  |
-| Flexmark      | 0.64.8  | Markdown parsing                |
-| SnakeYAML     | 2.4     | Configuration and template data |
-| Lombok        | 1.18.38 | Boilerplate reduction           |
-| Logback       | 1.5.18  | Logging                         |
-| JUnit 5       | 5.12.2  | Testing                         |
-| Mockito       | 5.20.0  | Mocking                         |
+### Endurance run
 
----
+Source: `src/test/java/com/demcha/compose/EnduranceTest.java`
 
-## 🗺 Roadmap
+| Parameter | Value |
+| --- | --- |
+| Documents generated | 100,000 |
+| Total time | 40,635 ms |
+| Heap behavior | Repeated GC drops observed during the run |
+| Result | Completed successfully |
 
-* [x] PDF rendering via Apache PDFBox
-* [x] VContainer / HContainer layout system
-* [x] Auto-pagination with border and padding preservation
-* [x] In-memory font metric caching
-* [x] Markdown support
-* [x] Concurrent rendering support
-* [ ] DOCX renderer
-* [ ] PPTX renderer
-* [ ] XLSX renderer
-* [ ] Image component with aspect-ratio constraints
-* [ ] Table component with column width negotiation
-* [ ] Spring Boot starter (`graphcompose-spring-boot-starter`)
-* [ ] Stable release pipeline
+Note: the endurance run above was executed without a forced low-heap JVM flag. If you want a constrained-memory proof, rerun the same class with an explicit `-Xmx` limit.
 
----
+## Tech stack
 
-## 🤝 Contributing
+| Technology | Version | Role |
+| --- | --- | --- |
+| Java | 21 | Primary language |
+| Kotlin | 2.2 | Secondary language / DSL experiments |
+| Apache PDFBox | 3.0.5 | PDF rendering backend |
+| Flexmark | 0.64.8 | Markdown parsing |
+| SnakeYAML | 2.4 | Config/template data |
+| Lombok | 1.18.38 | Boilerplate reduction |
+| Logback | 1.5.18 | Logging |
+| JUnit 5 | 5.12.2 | Testing |
+| Mockito | 5.20.0 | Mocking |
 
-Contributions are welcome.
+## Roadmap
 
-If you find a bug, have a feature request, or want to add a renderer:
+- [x] PDF rendering
+- [x] VContainer / HContainer layout system
+- [x] Auto-pagination
+- [x] Markdown support
+- [x] Shared font registration
+- [x] Concurrent rendering support
+- [ ] DOCX renderer
+- [ ] PPTX renderer
+- [ ] XLSX renderer
+- [ ] Table component with negotiated column widths
+- [ ] Stable release pipeline
 
-1. Fork the repository
-2. Create a branch: `git checkout -b feature/docx-renderer`
-3. Commit your changes with clear messages
-4. Open a Pull Request with a short explanation of what changed and why
+## Contributing
 
-Please include tests or benchmark coverage where appropriate.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the current workflow and [docs/implementation-guide.md](./docs/implementation-guide.md) for extension-oriented guidance.
 
----
+## License
 
-## 📄 License
-
-```text
-MIT License
-
-Copyright (c) 2025 Artem Demchyshyn
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
----
-
-## 👨‍💻 Author & Maintainer
-
-**Artem Demchyshyn**  
-- GitHub: [@DemchaAV](https://github.com/DemchaAV)  
-- Email: [demchaav@gmail.com](mailto:demchaav@gmail.com)
-
-Built with ❤️ by [Artem Demchyshyn](https://github.com/DemchaAV)
+MIT. See [LICENSE](./LICENSE).

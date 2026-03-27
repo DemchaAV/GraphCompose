@@ -36,6 +36,12 @@ import java.util.UUID;
  * </ol>
  * The class operates in a coordinate system where the Y-axis points downwards. It does not create new pages
  * but rather calculates and assigns {@link Placement} components to entities.
+ * <p>
+ * A critical invariant of this class is that descendants must be processed before their ancestor containers.
+ * A non-breakable leaf may be shifted onto the next page, and that shift can expand the effective
+ * {@link ContentSize} of its parent container. If the parent container were processed first, it could receive
+ * a stale {@link Placement} based on the pre-shift size, which would make multi-page container guides and
+ * span boxes appear too short.
  */
 @Slf4j
 @Data
@@ -64,6 +70,16 @@ public class PageBreaker {
         return setYInPlacement(entity, position.yPosition(), position.startPage(), position.endPage());
     }
 
+    /**
+     * Runs page-breaking for the current entity set.
+     * <p>
+     * The ordering step is intentionally not a simple visual Y-sort. Parent/child relationships take precedence:
+     * any descendant must be paginated before its ancestors. Only after that invariant is satisfied do we use
+     * geometric ordering and layer ordering for unrelated entities.
+     * <p>
+     * This prevents a common failure mode where a child is moved to the next page, updates its parent's
+     * {@link ContentSize}, but the parent has already received a stale {@link Placement}.
+     */
     public void process(@NonNull Map<UUID, Entity> entities, Canvas canvas) {
         Offset yOffset = new Offset();
 
@@ -88,6 +104,19 @@ public class PageBreaker {
                 });
     }
 
+    /**
+     * Compares two entities for pagination order.
+     * <p>
+     * Rules:
+     * <ol>
+     *     <li>If one entity is an ancestor of the other, the descendant must come first.</li>
+     *     <li>Otherwise order by {@link ComputedPosition#y()} from top to bottom.</li>
+     *     <li>If Y is equal, order by layer.</li>
+     *     <li>If still equal, fall back to UUID for deterministic output.</li>
+     * </ol>
+     * This comparator is the core fix for cases where a fixed leaf object, such as a circle or image,
+     * is moved to the next page and needs its parent container to be sized only after the child shift is known.
+     */
     private int compareForPagination(Map.Entry<UUID, Entity> left, Map.Entry<UUID, Entity> right) {
         Entity leftEntity = left.getValue();
         Entity rightEntity = right.getValue();
@@ -112,18 +141,36 @@ public class PageBreaker {
         return left.getKey().toString().compareTo(right.getKey().toString());
     }
 
+    /**
+     * Returns the resolved layout Y-coordinate used for pagination ordering.
+     * <p>
+     * We use {@link ComputedPosition} rather than renderer-specific coordinates because pagination operates on
+     * the layout result, before the final rendering pass writes output streams.
+     */
     private double positionY(Entity entity) {
         return entity.getComponent(ComputedPosition.class)
                 .orElseThrow(() -> new IllegalStateException("Entity " + entity + " has no ComputedPosition"))
                 .y();
     }
 
+    /**
+     * Returns the layer value used as a stable secondary ordering key when two unrelated entities share
+     * the same computed Y-position.
+     */
     private int layerValue(Entity entity) {
         return entity.getComponent(Layer.class)
                 .orElseThrow(() -> new IllegalStateException("Entity " + entity + " has no Layer"))
                 .value();
     }
 
+    /**
+     * Returns {@code true} if {@code candidateAncestor} appears in the parent chain of {@code entity}.
+     * <p>
+     * This check is used by the pagination comparator to guarantee child-first processing.
+     * The rule is especially important for fixed leaf elements that are not themselves breakable:
+     * when such an element overflows and is shifted onto the next page, it may expand the size of its
+     * parent container. The parent must therefore be processed after the child.
+     */
     private boolean isAncestor(Entity candidateAncestor, Entity entity) {
         UUID ancestorId = candidateAncestor.getUuid();
         Optional<ParentComponent> currentParent = entity.getComponent(ParentComponent.class);
@@ -144,6 +191,9 @@ public class PageBreaker {
      * Determines and adds a {@link Placement} component to an entity.
      * This method updates the entity's vertical position based on the total {@code yOffset},
      * calculates its position on the page, and stores the result in a new {@code Placement} component.
+     * <p>
+     * For non-breakable entities, the calculator may shift the whole object to the next page. That shift can
+     * propagate upward into parent container sizing before this method writes the final placement.
      *
      * @param canvas      The canvas configuration.
      * @param entity      The entity to process.

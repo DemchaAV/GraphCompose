@@ -33,7 +33,7 @@ class LineIntegrationTest {
     private static final double RENDER_SCALE = RENDER_DPI / 72.0;
 
     @Test
-    void shouldRenderHorizontalVerticalAndDiagonalLines() throws Exception {
+    void shouldRenderLineVariantsWithoutGuides() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("line_variants", "clean", "integration");
 
         Entity horizontal;
@@ -94,7 +94,7 @@ class LineIntegrationTest {
     }
 
     @Test
-    void shouldRenderSingleLineWithGuides() throws Exception {
+    void shouldRenderSingleLineWithGuideLines() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("line_single_guides", "guides", "integration");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
@@ -118,7 +118,7 @@ class LineIntegrationTest {
     }
 
     @Test
-    void shouldRenderLineVariantsWithGuides() throws Exception {
+    void shouldRenderLineVariantsWithGuideLines() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("line_variants_guides", "guides", "integration");
         List<Entity> lines = new ArrayList<>();
 
@@ -177,7 +177,7 @@ class LineIntegrationTest {
     }
 
     @Test
-    void shouldPaginateLineColumnAcrossPages() throws Exception {
+    void shouldPaginateLineColumnAcrossPagesWithGuideLines() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("line_pagination", "guides", "integration");
         List<Entity> lines = new ArrayList<>();
 

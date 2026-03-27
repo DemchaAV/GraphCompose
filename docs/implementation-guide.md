@@ -84,6 +84,33 @@ Examples:
 
 Those renderable components implement the renderer contract used by the current PDF renderer.
 
+### Engine markers with different jobs
+
+There are three different ideas in the engine that are easy to mix up:
+
+- render marker: tells the active renderer how to draw the entity
+- `Expendable`: tells the container expansion phase that the parent box may grow to fit children
+- `Breakable`: tells the page breaker that the entity's own content may continue across pages
+
+Use them for different reasons:
+
+- add a render marker when the object is visible
+- add `Expendable` only when the entity is a true parent-like box that should resize because of child content
+- add `Breakable` only when the entity itself can be split or continued during pagination
+
+Examples:
+
+- `Container` is both `Expendable` and `Breakable` because it owns children and may span pages
+- `BlockText` is `Breakable` because its content can flow across pages
+- `ImageComponent` is neither `Expendable` nor `Breakable`; it is a fixed leaf renderable
+- `Circle` is a fixed leaf renderable; it renders, but it should not be marked `Expendable`
+
+Important:
+
+- `Expendable` is not a pagination flag
+- `Breakable` is not a child-sizing flag
+- if a long leaf object is not `Breakable`, the engine treats it as a single block and moves it to the next page when needed
+
 ### Content / style components
 
 Attach the components that describe what the object is and how it should look.
@@ -139,6 +166,11 @@ Steps:
 5. register the entity through `build()`
 6. add a factory method to [ComponentBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/ComponentBuilder.java) if you want `composer.componentBuilder().yourObject()`
 
+Leaf rule of thumb:
+
+- most leaf renderables should not implement `Expendable`
+- only implement `Breakable` if the leaf's content can really continue across pages
+
 ### Case 2: add a new container-like object
 
 Use this when the object owns child entities and arranges them.
@@ -150,6 +182,12 @@ Steps:
 3. ensure the container has the alignment / axis semantics it needs
 4. use `addChild(...)` to wire child entities
 5. provide `ContentSize` or logic that lets layout compute it correctly
+
+Container rule of thumb:
+
+- containers that must resize around children usually need `Expendable`
+- containers whose content may continue on another page usually need `Breakable`
+- some containers need both markers
 
 ### Case 3: add a purely logical helper object
 
@@ -207,6 +245,8 @@ Do not add a method there if the new object is only an internal helper for templ
 
 - choose the correct builder base class
 - add the render marker in `initialize()` if the object is drawable
+- add `Expendable` only for parent-like boxes that should grow because of children
+- add `Breakable` only for entities whose own content can span pages
 - attach content/style components through fluent methods
 - provide `ContentSize` directly or calculate it in `build()`
 - attach `Anchor` / `Margin` / `Padding` as needed

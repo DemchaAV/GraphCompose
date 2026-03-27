@@ -41,6 +41,10 @@ public class ComponentBuilder {
         return register(new ButtonBuilder(entityManager));
     }
 
+    public CircleBuilder circle() {
+        return register(new CircleBuilder(entityManager));
+    }
+
     public DisplayUrlTextBuilder displayUrlText() {
         return register(new DisplayUrlTextBuilder(entityManager));
     }

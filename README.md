@@ -2,14 +2,14 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Java-21-orange?style=for-the-badge&logo=openjdk" alt="Java 21"/>
-  <img src="https://img.shields.io/badge/Kotlin-2.2-purple?style=for-the-badge&logo=kotlin" alt="Kotlin 2.2"/>
+  <img src="https://img.shields.io/badge/Kotlin%20Build-2.2-purple?style=for-the-badge&logo=kotlin" alt="Kotlin build setup 2.2"/>
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License"/>
   <img src="https://img.shields.io/badge/PDFBox-3.0-red?style=for-the-badge" alt="PDFBox 3.0"/>
   <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge" alt="Active"/>
 </p>
 
 <p align="center">
-  <b>A declarative layout engine for programmatic document generation in Java and Kotlin.</b><br/>
+  <b>A declarative layout engine for programmatic document generation, implemented primarily in Java.</b><br/>
   Build documents through entities, builders, layout rules, and renderers instead of hand-written PDF coordinates.
 </p>
 
@@ -32,6 +32,8 @@ GraphCompose is a document generation engine built around an ECS-style model:
 - rendering systems turn resolved geometry into output bytes.
 
 The current production path is PDF output via Apache PDFBox. The source tree also contains early Word-related classes, but the PDF path is the supported renderer today.
+
+The library is Java-first today. The build includes Kotlin support, but the repository does not currently contain production `.kt` sources.
 
 GraphCompose is a good fit for:
 
@@ -371,7 +373,7 @@ Note: the endurance run above was executed without a forced low-heap JVM flag. I
 | Technology | Version | Role |
 | --- | --- | --- |
 | Java | 21 | Primary language |
-| Kotlin | 2.2 | Secondary language / DSL experiments |
+| Kotlin | 2.2 | Build/runtime compatibility layer; no production `.kt` sources in the repository today |
 | Apache PDFBox | 3.0.5 | PDF rendering backend |
 | Flexmark | 0.64.8 | Markdown parsing |
 | SnakeYAML | 2.4 | Config/template data |

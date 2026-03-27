@@ -1,15 +1,15 @@
 package com.demcha.documentation;
 
-import com.demcha.Templatese.CvTheme;
-import com.demcha.Templatese.TemplateBuilder;
+import com.demcha.templates.CvTheme;
+import com.demcha.templates.TemplateBuilder;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.font_library.FontName;
-import com.demcha.compose.loyaut_core.components.components_builders.ComponentBuilder;
-import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
-import com.demcha.compose.loyaut_core.components.layout.Align;
-import com.demcha.compose.loyaut_core.components.layout.Anchor;
-import com.demcha.compose.loyaut_core.components.style.Margin;
-import com.demcha.compose.loyaut_core.core.PdfComposer;
+import com.demcha.compose.layout_core.components.components_builders.ComponentBuilder;
+import com.demcha.compose.layout_core.components.content.text.TextStyle;
+import com.demcha.compose.layout_core.components.layout.Align;
+import com.demcha.compose.layout_core.components.layout.Anchor;
+import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.layout_core.core.PdfComposer;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;

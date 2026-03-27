@@ -1,9 +1,9 @@
 package com.demcha.compose.font_library;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.loyaut_core.core.PdfComposer;
-import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.PdfFont;
-import com.demcha.compose.loyaut_core.system.implemented_systems.word_sustems.WordFont;
+import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFont;
+import com.demcha.compose.layout_core.system.implemented_systems.word_systems.WordFont;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;

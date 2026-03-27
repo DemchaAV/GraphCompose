@@ -1,7 +1,7 @@
 package com.demcha.compose.font_library;
 
-import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.PdfFont;
-import com.demcha.compose.loyaut_core.system.implemented_systems.word_sustems.WordFont;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFont;
+import com.demcha.compose.layout_core.system.implemented_systems.word_systems.WordFont;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;

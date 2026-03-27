@@ -1,8 +1,8 @@
 package com.demcha.compose;
 
-import com.demcha.Templatese.CvTheme;
-import com.demcha.Templatese.TemplateBuilder;
-import com.demcha.compose.loyaut_core.core.PdfComposer;
+import com.demcha.templates.CvTheme;
+import com.demcha.templates.TemplateBuilder;
+import com.demcha.compose.layout_core.core.PdfComposer;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.util.concurrent.ExecutorService;

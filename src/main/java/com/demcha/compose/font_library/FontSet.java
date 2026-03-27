@@ -1,6 +1,6 @@
 package com.demcha.compose.font_library;
 
-import com.demcha.compose.loyaut_core.system.interfaces.Font;
+import com.demcha.compose.layout_core.system.interfaces.Font;
 import lombok.experimental.Accessors;
 
 /**

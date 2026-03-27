@@ -1,12 +1,12 @@
 package com.demcha.mock;
 
-import com.demcha.Templatese.data.EmailYaml;
-import com.demcha.Templatese.data.Header;
-import com.demcha.Templatese.data.LinkYml;
-import com.demcha.Templatese.data.MainPageCV;
-import com.demcha.Templatese.data.ModuleSummary;
-import com.demcha.Templatese.data.ModuleYml;
-import com.demcha.compose.loyaut_core.components.content.link.LinkUrl;
+import com.demcha.templates.data.EmailYaml;
+import com.demcha.templates.data.Header;
+import com.demcha.templates.data.LinkYml;
+import com.demcha.templates.data.MainPageCV;
+import com.demcha.templates.data.ModuleSummary;
+import com.demcha.templates.data.ModuleYml;
+import com.demcha.compose.layout_core.components.content.link.LinkUrl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;

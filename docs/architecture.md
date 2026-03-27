@@ -20,31 +20,29 @@ That separation is the core project concept. Builders describe intent, component
 
 ## Engine layer: `com.demcha.compose.*`
 
-- `loyaut_core` contains the document model, geometry, layout resolution, pagination, and rendering systems.
+- `layout_core` contains the document model, geometry, layout resolution, pagination, and rendering systems.
 - `font_library` contains font registration, lookup, and PDF font helpers.
 - `markdown` contains markdown-to-text-token parsing helpers used by the engine.
 
 This layer is the reusable document engine. It is responsible for turning entities and styles into positioned render output.
 
-## Template layer: `com.demcha.Templatese.*`
+## Template layer: `com.demcha.templates.*`
 
-- `Templatese` contains higher-level CV and cover-letter builders, DTOs, themes, and template registries.
+- `templates` contains higher-level CV and cover-letter builders, DTOs, themes, and template registries.
 - These classes sit on top of the engine and package common document structures into reusable templates.
-- `Templatese.template` contains template-facing contracts and registry/helper types.
-- `Templatese.templates` contains concrete template implementations.
+- `templates.api` contains template-facing contracts and registry/helper types.
+- `templates.builtins` contains concrete template implementations.
 
-## Legacy package names
+## Current package roots
 
-- `loyaut_core` is the current engine package name and remains in place for compatibility.
-- `word_sustems` is also a legacy name and is preserved as-is for now.
-- `Templatese` is the current template package name and is likewise preserved for compatibility.
-
-These names are known typos, but package renames are deferred to a future migration so public paths do not change unexpectedly.
+- `com.demcha.compose.layout_core.*` contains the engine internals and public builder-facing layout layer.
+- `com.demcha.compose.layout_core.system.implemented_systems.word_systems.*` contains the experimental Word-specific rendering path.
+- `com.demcha.templates.*` contains the higher-level template layer.
 
 ## Experimental areas
 
 - The PDF backend is the main supported rendering path.
-- The Word backend under `...implemented_systems.word_sustems` is experimental and should be treated as less stable than the PDF path.
+- The Word backend under `...implemented_systems.word_systems` is experimental and should be treated as less stable than the PDF path.
 
 ## Language status
 

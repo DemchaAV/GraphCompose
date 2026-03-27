@@ -1,10 +1,10 @@
 package com.demcha.integration;
 
-import com.demcha.Templatese.TemplateBuilder;
+import com.demcha.templates.TemplateBuilder;
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.loyaut_core.components.layout.Align;
-import com.demcha.compose.loyaut_core.components.style.ComponentColor;
-import com.demcha.compose.loyaut_core.core.PdfComposer;
+import com.demcha.compose.layout_core.components.layout.Align;
+import com.demcha.compose.layout_core.components.style.ComponentColor;
+import com.demcha.compose.layout_core.core.PdfComposer;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;

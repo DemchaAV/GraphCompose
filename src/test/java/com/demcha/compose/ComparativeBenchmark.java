@@ -1,11 +1,11 @@
 package com.demcha.compose;
 
-import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
-import com.demcha.compose.loyaut_core.components.core.Entity;
-import com.demcha.compose.loyaut_core.components.layout.Align;
-import com.demcha.compose.loyaut_core.components.layout.Anchor;
-import com.demcha.compose.loyaut_core.components.style.Margin;
-import com.demcha.compose.loyaut_core.core.PdfComposer;
+import com.demcha.compose.layout_core.components.content.text.TextStyle;
+import com.demcha.compose.layout_core.components.core.Entity;
+import com.demcha.compose.layout_core.components.layout.Align;
+import com.demcha.compose.layout_core.components.layout.Anchor;
+import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.layout_core.core.PdfComposer;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfPTable;

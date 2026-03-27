@@ -108,13 +108,13 @@ graph TD
 
 Main layers:
 
-- `com.demcha.compose.loyaut_core.*`
+- `com.demcha.compose.layout_core.*`
   Core engine: entities, builders, geometry, layout, pagination, render systems
 - `com.demcha.compose.font_library.*`
   Font registration and PDF font helpers
 - `com.demcha.compose.markdown.*`
   Markdown parsing helpers used by text/block text builders
-- `com.demcha.Templatese.*`
+- `com.demcha.templates.*`
   Higher-level templates, themes, DTOs, and template contracts
 
 For the full package map, see [docs/architecture.md](./docs/architecture.md).
@@ -158,12 +158,12 @@ The example below matches the current documentation test suite.
 
 ```java
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.loyaut_core.components.components_builders.ComponentBuilder;
-import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
-import com.demcha.compose.loyaut_core.components.layout.Align;
-import com.demcha.compose.loyaut_core.components.layout.Anchor;
-import com.demcha.compose.loyaut_core.components.style.Margin;
-import com.demcha.compose.loyaut_core.core.PdfComposer;
+import com.demcha.compose.layout_core.components.components_builders.ComponentBuilder;
+import com.demcha.compose.layout_core.components.content.text.TextStyle;
+import com.demcha.compose.layout_core.components.layout.Align;
+import com.demcha.compose.layout_core.components.layout.Anchor;
+import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.layout_core.core.PdfComposer;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
@@ -223,10 +223,10 @@ try (PdfComposer composer = GraphCompose.pdf()
 ### Template layer example
 
 ```java
-import com.demcha.Templatese.CvTheme;
-import com.demcha.Templatese.TemplateBuilder;
+import com.demcha.templates.CvTheme;
+import com.demcha.templates.TemplateBuilder;
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.loyaut_core.core.PdfComposer;
+import com.demcha.compose.layout_core.core.PdfComposer;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 try (PdfComposer composer = GraphCompose.pdf()
@@ -269,7 +269,7 @@ Use container builders such as `vContainer(...)`, `hContainer(...)`, and `module
 
 ### 4. The template layer sits on top of the engine
 
-`TemplateBuilder`, `CvTheme`, and the classes under `com.demcha.Templatese.templates` are convenience layers for reusable personal-document layouts. They are not required for one-off PDFs, but they simplify repeatable template design.
+`TemplateBuilder`, `CvTheme`, and the classes under `com.demcha.templates.builtins` are convenience layers for reusable personal-document layouts. They are not required for one-off PDFs, but they simplify repeatable template design.
 
 ## Extending GraphCompose
 

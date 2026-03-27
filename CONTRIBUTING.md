@@ -22,13 +22,13 @@ They explain the current public surface, the engine/template split, and the reco
 
 - `src/main/java/com/demcha/compose/*`
   Core engine: entities, builders, layout, pagination, render systems
-- `src/main/java/com/demcha/Templatese/*`
+- `src/main/java/com/demcha/templates/*`
   Higher-level template layer for CV and cover-letter composition
 - `src/test/java/com/demcha/documentation/*`
   Examples used to keep README/documentation snippets honest
 - `src/test/java/com/demcha/integration/*`
   End-to-end behavior checks for layout, pagination, rendering, and containers
-- `src/test/java/com/demcha/Templatese/*`
+- `src/test/java/com/demcha/templates/*`
   Template rendering tests
 - `assets/readme/*`
   Screenshots used by the README
@@ -46,9 +46,9 @@ If you add a new engine object, decide first what kind of object it is.
 
 ### Use the right builder base class
 
-- Extend [EmptyBox.java](./src/main/java/com/demcha/compose/loyaut_core/components/containers/abstract_builders/EmptyBox.java) for a leaf object that does not manage children.
-- Extend [ShapeBuilderBase.java](./src/main/java/com/demcha/compose/loyaut_core/components/containers/abstract_builders/ShapeBuilderBase.java) for a leaf object that needs common shape behavior such as fill, stroke, or corner radius.
-- Extend [ContainerBuilder.java](./src/main/java/com/demcha/compose/loyaut_core/components/containers/abstract_builders/ContainerBuilder.java) for a parent object that owns child entities and participates in container layout.
+- Extend [EmptyBox.java](./src/main/java/com/demcha/compose/layout_core/components/containers/abstract_builders/EmptyBox.java) for a leaf object that does not manage children.
+- Extend [ShapeBuilderBase.java](./src/main/java/com/demcha/compose/layout_core/components/containers/abstract_builders/ShapeBuilderBase.java) for a leaf object that needs common shape behavior such as fill, stroke, or corner radius.
+- Extend [ContainerBuilder.java](./src/main/java/com/demcha/compose/layout_core/components/containers/abstract_builders/ContainerBuilder.java) for a parent object that owns child entities and participates in container layout.
 
 ### Make the object participate in the engine
 
@@ -62,21 +62,21 @@ For a visible object, the implementation usually needs all of the following:
 
 The layout pass is driven by components and entity relationships, not by builder classes directly. See:
 
-- [LayoutSystem.java](./src/main/java/com/demcha/compose/loyaut_core/system/LayoutSystem.java)
-- [PdfRenderingSystemECS.java](./src/main/java/com/demcha/compose/loyaut_core/system/implemented_systems/pdf_systems/PdfRenderingSystemECS.java)
+- [LayoutSystem.java](./src/main/java/com/demcha/compose/layout_core/system/LayoutSystem.java)
+- [PdfRenderingSystemECS.java](./src/main/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderingSystemECS.java)
 
-If the object should be available from `composer.componentBuilder()`, add a factory method to [ComponentBuilder.java](./src/main/java/com/demcha/compose/loyaut_core/components/components_builders/ComponentBuilder.java).
+If the object should be available from `composer.componentBuilder()`, add a factory method to [ComponentBuilder.java](./src/main/java/com/demcha/compose/layout_core/components/components_builders/ComponentBuilder.java).
 
 ### Useful examples to copy
 
 - Leaf builder with measured content:
-  [TextBuilder.java](./src/main/java/com/demcha/compose/loyaut_core/components/components_builders/TextBuilder.java)
+  [TextBuilder.java](./src/main/java/com/demcha/compose/layout_core/components/components_builders/TextBuilder.java)
 - Shape-style builder:
-  [RectangleBuilder.java](./src/main/java/com/demcha/compose/loyaut_core/components/components_builders/RectangleBuilder.java)
+  [RectangleBuilder.java](./src/main/java/com/demcha/compose/layout_core/components/components_builders/RectangleBuilder.java)
 - Container builder:
-  [ModuleBuilder.java](./src/main/java/com/demcha/compose/loyaut_core/components/components_builders/ModuleBuilder.java)
+  [ModuleBuilder.java](./src/main/java/com/demcha/compose/layout_core/components/components_builders/ModuleBuilder.java)
 - Template-level composition helper:
-  [TemplateBuilder.java](./src/main/java/com/demcha/Templatese/TemplateBuilder.java)
+  [TemplateBuilder.java](./src/main/java/com/demcha/templates/TemplateBuilder.java)
 
 ## Testing expectations
 
@@ -85,14 +85,14 @@ Choose the smallest tests that match the change:
 - For README or docs examples:
   [DocumentationExamplesTest.java](./src/test/java/com/demcha/documentation/DocumentationExamplesTest.java)
 - For public builder registration or factory changes:
-  [ComponentBuilderTest.java](./src/test/java/com/demcha/compose/loyaut_core/components/ComponentBuilderTest.java)
+  [ComponentBuilderTest.java](./src/test/java/com/demcha/compose/layout_core/components/ComponentBuilderTest.java)
 - For layout/positioning behavior:
   [ComputedPositionTest.java](./src/test/java/com/demcha/components/layout/ComputedPositionTest.java)
 - For pagination and multi-page behavior:
   [PageBreakerIntegrationTest.java](./src/test/java/com/demcha/integration/PageBreakerIntegrationTest.java)
 - For concrete templates:
-  [TemplateCV1RenderTest.java](./src/test/java/com/demcha/Templatese/cv_templates/TemplateCV1RenderTest.java)
-  [CoverLetterTemplateV1Test.java](./src/test/java/com/demcha/Templatese/cover_letter/CoverLetterTemplateV1Test.java)
+  [TemplateCV1RenderTest.java](./src/test/java/com/demcha/templates/cv_templates/TemplateCV1RenderTest.java)
+  [CoverLetterTemplateV1Test.java](./src/test/java/com/demcha/templates/cover_letter/CoverLetterTemplateV1Test.java)
 
 If a change affects public docs, examples, or screenshots, update those assets in the same PR so the repository stays internally consistent.
 
@@ -112,6 +112,8 @@ If a change affects public docs, examples, or screenshots, update those assets i
 - Keep `assets/readme/*` screenshots consistent with the current render outputs.
 - If you add a new extension point or contribution pattern, update [docs/implementation-guide.md](./docs/implementation-guide.md) as part of the same change.
 
-## Legacy package names
+## Package naming
 
-The repository still uses legacy package names such as `loyaut_core`, `word_sustems`, and `Templatese`. Package renames are planned, but they are not applied yet. Until that migration is scheduled, contributors should work with the current names instead of renaming packages opportunistically.
+The repository now uses the normalized package roots `layout_core`, `word_systems`, and `com.demcha.templates`.
+
+Please treat these names as the current source of truth in code, tests, examples, and docs. Do not introduce aliases or partial fallback imports.

@@ -18,6 +18,8 @@ import java.util.Map;
 @Slf4j
 final class PdfImageCache {
     private static final double SCALED_VARIANT_THRESHOLD = 0.5d;
+    private static final double SCALED_VARIANT_DPI = 144.0d;
+    private static final double PDF_POINTS_PER_INCH = 72.0d;
     private static final String DRAW_MODE = "draw";
 
     private final PDDocument document;
@@ -76,12 +78,17 @@ final class PdfImageCache {
     }
 
     private ScaledImageKey toVariantKey(ImageData imageData, double targetWidth, double targetHeight) {
-        int roundedWidth = Math.max(1, (int) Math.round(targetWidth));
-        int roundedHeight = Math.max(1, (int) Math.round(targetHeight));
         if (Double.isNaN(targetWidth) || Double.isInfinite(targetWidth) || Double.isNaN(targetHeight) || Double.isInfinite(targetHeight)) {
             return null;
         }
+        int roundedWidth = pointsToPixels(targetWidth);
+        int roundedHeight = pointsToPixels(targetHeight);
         return new ScaledImageKey(imageData.getFingerprint(), roundedWidth, roundedHeight, DRAW_MODE);
+    }
+
+    private int pointsToPixels(double points) {
+        double pixels = points * (SCALED_VARIANT_DPI / PDF_POINTS_PER_INCH);
+        return Math.max(1, (int) Math.round(pixels));
     }
 
     private byte[] scaleImageBytes(ImageData imageData, int targetWidth, int targetHeight) throws IOException {

@@ -36,10 +36,25 @@ class PdfRenderingSystemECSImageCacheTest {
             PdfRenderingSystemECS renderingSystem = new PdfRenderingSystemECS(document, new PdfCanvas(PDRectangle.A4, 0.0f));
             ImageData imageData = ImageData.create(createPngBytes(200, 100));
 
-            PDImageXObject first = renderingSystem.getOrCreateImageXObject(imageData, 24.2, 16.2);
-            PDImageXObject second = renderingSystem.getOrCreateImageXObject(imageData, 24.4, 16.4);
+            PDImageXObject first = renderingSystem.getOrCreateImageXObject(imageData, 24.20, 16.20);
+            PDImageXObject second = renderingSystem.getOrCreateImageXObject(imageData, 24.24, 16.24);
 
             assertThat(second).isSameAs(first);
+            assertThat(renderingSystem.imageCacheStats().originalCount()).isEqualTo(0);
+            assertThat(renderingSystem.imageCacheStats().scaledVariantCount()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void shouldCreateScaledVariantAtHigherThanPointDensity() throws Exception {
+        try (PDDocument document = new PDDocument()) {
+            PdfRenderingSystemECS renderingSystem = new PdfRenderingSystemECS(document, new PdfCanvas(PDRectangle.A4, 0.0f));
+            ImageData imageData = ImageData.create(createPngBytes(400, 200));
+
+            PDImageXObject scaled = renderingSystem.getOrCreateImageXObject(imageData, 40, 20);
+
+            assertThat(scaled.getWidth()).isEqualTo(80);
+            assertThat(scaled.getHeight()).isEqualTo(40);
             assertThat(renderingSystem.imageCacheStats().originalCount()).isEqualTo(0);
             assertThat(renderingSystem.imageCacheStats().scaledVariantCount()).isEqualTo(1);
         }

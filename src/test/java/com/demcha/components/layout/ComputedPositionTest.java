@@ -7,9 +7,8 @@ import com.demcha.compose.loyaut_core.components.layout.Anchor;
 import com.demcha.compose.loyaut_core.components.layout.coordinator.ComputedPosition;
 import com.demcha.compose.loyaut_core.components.layout.coordinator.PaddingCoordinate;
 import com.demcha.compose.loyaut_core.components.layout.coordinator.Position;
-import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
+import com.demcha.compose.loyaut_core.core.Canvas;
 import com.demcha.compose.loyaut_core.components.style.Margin;
-import com.demcha.compose.loyaut_core.core.CanvasBox;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -128,7 +127,7 @@ class ComputedPositionTest {
         // Arrange
         Entity child = mock(Entity.class);
         Anchor anchor = mock(Anchor.class);
-        Canvas pageSize = mock(CanvasBox.class);
+        Canvas pageSize = mock(Canvas.class);
         when(pageSize.width()).thenReturn(595.0f);
         when(pageSize.height()).thenReturn(842.0f);
         when(pageSize.margin()).thenReturn(Margin.zero());
@@ -153,3 +152,4 @@ class ComputedPositionTest {
         verify(anchor).getComputedPosition(eq(child), any(InnerBoxSize.class));
     }
 }
+

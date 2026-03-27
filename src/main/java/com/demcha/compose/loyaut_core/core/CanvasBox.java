@@ -1,6 +1,5 @@
 package com.demcha.compose.loyaut_core.core;
 
-import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
 import com.demcha.compose.loyaut_core.components.style.Margin;
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -39,3 +38,4 @@ public final class CanvasBox implements Canvas {
         this.margin = margin;
     }
 }
+

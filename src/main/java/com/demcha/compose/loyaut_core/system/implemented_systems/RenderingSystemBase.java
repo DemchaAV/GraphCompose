@@ -1,6 +1,6 @@
 package com.demcha.compose.loyaut_core.system.implemented_systems;
 
-import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
+import com.demcha.compose.loyaut_core.core.Canvas;
 import com.demcha.compose.loyaut_core.components.content.shape.Side;
 import com.demcha.compose.loyaut_core.components.layout.coordinator.RenderCoordinateContext;
 import com.demcha.compose.loyaut_core.core.EntityManager;
@@ -106,3 +106,4 @@ public abstract class RenderingSystemBase<T extends AutoCloseable> implements Re
     protected abstract void guidesRendererInitializer(GuidesRenderer<T> guidesRenderer);
 
 }
+

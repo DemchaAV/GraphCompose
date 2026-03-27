@@ -1,6 +1,6 @@
 package com.demcha.system.utils.page_breaker;
 
-import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
+import com.demcha.compose.loyaut_core.core.Canvas;
 import com.demcha.compose.loyaut_core.components.core.Entity;
 import com.demcha.compose.loyaut_core.components.geometry.ContentSize;
 import com.demcha.compose.loyaut_core.components.style.Margin;

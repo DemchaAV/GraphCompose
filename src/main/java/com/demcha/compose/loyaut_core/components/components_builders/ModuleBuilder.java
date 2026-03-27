@@ -7,7 +7,8 @@ import com.demcha.compose.loyaut_core.components.geometry.InnerBoxSize;
 import com.demcha.compose.loyaut_core.components.layout.Align;
 import com.demcha.compose.loyaut_core.components.renderable.Module;
 import com.demcha.compose.loyaut_core.components.renderable.VContainer;
-import com.demcha.compose.loyaut_core.components.style.Margin;
+import com.demcha.compose.loyaut_core.core.Canvas;
+import com.demcha.compose.loyaut_core.core.CanvasBox;
 import com.demcha.compose.loyaut_core.core.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -71,40 +72,8 @@ public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
 
     /**
      * Creates a Canvas adapter from ContentSize.
-     * Note: ContentSize doesn't support margins.
      */
     private static Canvas createCanvasFromContentSize(ContentSize size) {
-        return new Canvas() {
-            @Override
-            public float width() {
-                return (float) size.width();
-            }
-
-            @Override
-            public float x() {
-                return 0;
-            }
-
-            @Override
-            public float y() {
-                return 0;
-            }
-
-            @Override
-            public float height() {
-                return (float) size.height();
-            }
-
-            @Override
-            public Margin margin() {
-                log.warn("ContentSize-based canvas doesn't support margin, returning Margin.zero()");
-                return Margin.zero();
-            }
-
-            @Override
-            public void addMargin(Margin margin) {
-                log.warn("ContentSize-based canvas doesn't support margin, ignoring addMargin()");
-            }
-        };
+        return new CanvasBox((float) size.width(), (float) size.height(), 0, 0);
     }
 }

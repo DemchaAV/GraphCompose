@@ -7,7 +7,7 @@ import com.demcha.Templatese.data.Header;
 import com.demcha.Templatese.template.CoverLetterTemplate;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.loyaut_core.components.components_builders.BlockIndentStrategy;
-import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
+import com.demcha.compose.loyaut_core.core.Canvas;
 import com.demcha.compose.loyaut_core.components.components_builders.ModuleBuilder;
 import com.demcha.compose.loyaut_core.components.content.link.Email;
 import com.demcha.compose.loyaut_core.components.content.link.LinkUrl;
@@ -185,3 +185,4 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
         return cv.blockText(content, width, bullet, strategy);
     }
 }
+

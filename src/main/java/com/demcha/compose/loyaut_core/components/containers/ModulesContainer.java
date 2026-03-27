@@ -1,6 +1,5 @@
-package com.demcha.compose.loyaut_core.components;
+package com.demcha.compose.loyaut_core.components.containers;
 
-import com.demcha.compose.loyaut_core.components.components_builders.Canvas;
 import com.demcha.compose.loyaut_core.components.containers.abstract_builders.ContainerBuilder;
 import com.demcha.compose.loyaut_core.components.containers.abstract_builders.StackAxis;
 import com.demcha.compose.loyaut_core.components.core.Entity;
@@ -13,6 +12,7 @@ import com.demcha.compose.loyaut_core.components.layout.coordinator.Position;
 import com.demcha.compose.loyaut_core.components.renderable.Container;
 import com.demcha.compose.loyaut_core.components.style.Margin;
 import com.demcha.compose.loyaut_core.components.style.Padding;
+import com.demcha.compose.loyaut_core.core.Canvas;
 import com.demcha.compose.loyaut_core.core.EntityManager;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;

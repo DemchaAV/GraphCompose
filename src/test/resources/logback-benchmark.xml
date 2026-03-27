@@ -1,0 +1,6 @@
+<configuration>
+    <logger name="org.apache.fontbox" level="ERROR"/>
+    <logger name="org.apache.pdfbox" level="ERROR"/>
+    <logger name="com.demcha.compose" level="ERROR"/>
+    <root level="ERROR"/>
+</configuration>

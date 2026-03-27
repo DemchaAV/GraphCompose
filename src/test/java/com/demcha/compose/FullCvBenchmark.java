@@ -17,6 +17,7 @@ public class FullCvBenchmark {
     private static final int MEASUREMENT_ITERATIONS = 500;
 
     public static void main(String[] args) {
+        BenchmarkSupport.configureQuietLogging();
         System.out.println("🚀 Запуск бенчмарка FullCvBenchmark...");
 
         MainPageCV original = new MainPageCVMock().getMainPageCV();

@@ -6,6 +6,7 @@ import com.demcha.compose.layout_core.components.components_builders.TableColumn
 import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -15,38 +16,38 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TableLayoutIntegrationTest {
+class TableStylingIntegrationTest {
 
     @Test
-    void shouldRenderTableWithNegotiatedColumns() throws Exception {
-        Path outputFile = VisualTestOutputs.preparePdf("table_layout_test", "clean", "integration");
+    void shouldRenderScopedTableStyles() throws Exception {
+        Path outputFile = VisualTestOutputs.preparePdf("table_styling_test", "clean", "integration");
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
-                .margin(20, 20, 20, 20)
+                .margin(24, 24, 24, 24)
                 .guideLines(false)
                 .create()) {
 
             composer.componentBuilder()
                     .table()
-                    .entityName("RoadmapTable")
+                    .entityName("StylingTable")
                     .anchor(Anchor.topCenter())
-                    .margin(Margin.of(16))
-                    .columns(
-                            TableColumnSpec.fixed(90),
-                            TableColumnSpec.auto(),
-                            TableColumnSpec.auto()
-                    )
+                    .margin(Margin.of(12))
+                    .columns(TableColumnSpec.fixed(110), TableColumnSpec.auto(), TableColumnSpec.auto())
                     .defaultCellStyle(TableCellStyle.builder()
                             .fillColor(ComponentColor.WHITE)
+                            .padding(Padding.of(6))
                             .build())
                     .columnStyle(0, TableCellStyle.builder()
                             .fillColor(ComponentColor.LIGHT_GRAY)
                             .build())
-                    .row("Q1", "Foundations", "Layout engine baseline")
-                    .row("Q2", "Tables", "Negotiated widths and row pagination")
-                    .row("Q3", "Templates", "Resume and letter refinements")
-                    .row("Q4", "Exports", "Renderer stabilization")
+                    .rowStyle(0, TableCellStyle.builder()
+                            .fillColor(ComponentColor.LIGHT_BLUE)
+                            .padding(Padding.of(10))
+                            .build())
+                    .row("Role", "Owner", "Status")
+                    .row("Engine", "GraphCompose", "Stable")
+                    .row("Feature", "Table Builder", "In progress")
                     .build();
 
             composer.build();

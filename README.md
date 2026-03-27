@@ -1,6 +1,10 @@
 # GraphCompose
 
 <p align="center">
+  <img src="./assets/GraphComposeLogo.png" alt="GraphCompose logo" width="320"/>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Java-21-orange?style=for-the-badge&logo=openjdk" alt="Java 21"/>
   <img src="https://img.shields.io/badge/Kotlin%20Build-2.2-purple?style=for-the-badge&logo=kotlin" alt="Kotlin build setup 2.2"/>
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License"/>
@@ -40,6 +44,7 @@ GraphCompose is a good fit for:
 - CV and resume generation
 - cover letters and profile documents
 - invoices and reports
+- negotiated tables and tabular summaries
 - multi-page server-side PDF generation
 - reusable document templates on top of a lower-level layout engine
 
@@ -248,6 +253,52 @@ try (PdfComposer composer = GraphCompose.pdf()
 }
 ```
 
+## Table Builder v1
+
+The engine now ships a public table builder through `composer.componentBuilder().table()`.
+
+What is implemented:
+
+- fixed and auto column negotiation through `TableColumnSpec.fixed(...)` and `TableColumnSpec.auto()`
+- shared default cell styling with row-scoped and column-scoped overrides through `TableCellStyle`
+- single-line text cells with padding, fill, stroke, and text alignment support
+- row-atomic pagination, so a row is moved as a unit instead of being split across pages
+- page-break-aware separators, so the last row on one page keeps its bottom edge and the first row on the next page gets its own top edge
+
+Current v1 limits:
+
+- no `rowspan` / `colspan`
+- no wrapped multi-line cell content
+- no repeated header rows
+- no cell-level override API beyond row/column/default scopes
+
+Minimal example:
+
+```java
+Entity table = composer.componentBuilder()
+        .table()
+        .entityName("StatusTable")
+        .columns(
+                TableColumnSpec.fixed(90),
+                TableColumnSpec.auto(),
+                TableColumnSpec.auto()
+        )
+        .width(520)
+        .defaultCellStyle(TableCellStyle.builder()
+                .padding(Padding.of(6))
+                .build())
+        .row("Role", "Owner", "Status")
+        .row("Engine", "GraphCompose", "Stable")
+        .row("Feature", "Table Builder", "In progress")
+        .build();
+```
+
+Verification status for this feature:
+
+- unit coverage for width negotiation, style precedence, border ownership, fill insets, and page-fragment separators
+- integration coverage for layout, styling, and multi-page pagination
+- visual outputs generated under `target/visual-tests/clean/integration`
+
 ## Core concepts
 
 ### 1. Everything becomes an entity with components
@@ -297,7 +348,11 @@ The guide includes:
 
 ## Performance and benchmarks
 
-The numbers below were rerun locally on March 27, 2026 against the current repository state after the latest layout/pagination fixes. They are environment-dependent and should be treated as project benchmarks, not cross-machine guarantees.
+The comparative, core-engine, full-CV, and scalability numbers below were rerun locally on March 27, 2026 against the current repository state after the `TableBuilder v1` implementation and pagination-border fixes. They are environment-dependent and should be treated as project benchmarks, not cross-machine guarantees.
+
+The benchmark entry points now boot with a dedicated quiet logging config from `src/test/resources/logback-benchmark.xml`, so the numbers reflect document generation work instead of debug layout tracing and file-appender I/O.
+
+The stress and endurance entries further below are retained as the latest long-run verification records; they were not rerun as part of this documentation refresh.
 
 ### Comparative benchmark
 
@@ -305,9 +360,9 @@ Source: `src/test/java/com/demcha/compose/ComparativeBenchmark.java`
 
 | Library | Avg Time (ms) | Avg Heap (MB) | License |
 | --- | ---: | ---: | --- |
-| GraphCompose | 2.83 | 0.29 | MIT |
-| iText 5 (Old) | 1.54 | 0.16 | AGPL |
-| JasperReports | 4.24 | 0.19 | LGPL |
+| GraphCompose | 2.89 | 0.21 | MIT |
+| iText 5 (Old) | 1.80 | 0.16 | AGPL |
+| JasperReports | 4.50 | 0.19 | LGPL |
 
 ### Core engine benchmark
 
@@ -315,12 +370,12 @@ Source: `src/test/java/com/demcha/compose/GraphComposeBenchmark.java`
 
 | Metric | Latency |
 | --- | ---: |
-| Min | 1.13 ms |
-| Avg | 1.99 ms |
-| p50 | 1.73 ms |
-| p95 | 3.67 ms |
-| p99 | 4.87 ms |
-| Max | 7.03 ms |
+| Min | 1.02 ms |
+| Avg | 1.94 ms |
+| p50 | 1.77 ms |
+| p95 | 3.42 ms |
+| p99 | 4.44 ms |
+| Max | 5.08 ms |
 
 ### Full CV benchmark
 
@@ -328,12 +383,12 @@ Source: `src/test/java/com/demcha/compose/FullCvBenchmark.java`
 
 | Metric | Latency |
 | --- | ---: |
-| Min | 5.35 ms |
-| Avg | 9.36 ms |
-| p50 | 9.30 ms |
-| p95 | 12.82 ms |
-| p99 | 14.64 ms |
-| Max | 16.23 ms |
+| Min | 4.94 ms |
+| Avg | 8.20 ms |
+| p50 | 7.77 ms |
+| p95 | 12.35 ms |
+| p99 | 15.29 ms |
+| Max | 18.64 ms |
 
 ### Scalability benchmark
 
@@ -341,11 +396,11 @@ Source: `src/test/java/com/demcha/compose/ScalabilityBenchmark.java`
 
 | Threads | Total Docs | Throughput |
 | ---: | ---: | ---: |
-| 1 | 100 | 362.41 docs/sec |
-| 2 | 200 | 858.30 docs/sec |
-| 4 | 400 | 1966.02 docs/sec |
-| 8 | 800 | 3826.88 docs/sec |
-| 16 | 1600 | 5841.52 docs/sec |
+| 1 | 100 | 395.33 docs/sec |
+| 2 | 200 | 961.26 docs/sec |
+| 4 | 400 | 2016.51 docs/sec |
+| 8 | 800 | 3746.97 docs/sec |
+| 16 | 1600 | 5607.87 docs/sec |
 
 ### Stress test
 
@@ -394,10 +449,10 @@ Note: the endurance run above was executed without a forced low-heap JVM flag. I
 - [x] Markdown support
 - [x] Shared font registration
 - [x] Concurrent rendering support
+- [x] Table component with negotiated column widths
 - [ ] DOCX renderer
 - [ ] PPTX renderer
 - [ ] XLSX renderer
-- [ ] Table component with negotiated column widths
 - [ ] Stable release pipeline
 
 ## Contributing

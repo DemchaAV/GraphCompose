@@ -19,6 +19,7 @@ public class ScalabilityBenchmark {
     private static final int WARMUP_DOCS = 100;
 
     public static void main(String[] args) throws Exception {
+        BenchmarkSupport.configureQuietLogging();
         System.out.println("🚀 Starting Scalability Benchmark: Linear Scalability");
         System.out.println("------------------------------------------------------------");
 

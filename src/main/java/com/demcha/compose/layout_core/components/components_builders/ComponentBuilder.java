@@ -81,6 +81,10 @@ public class ComponentBuilder {
         return register(new VContainerBuilder(entityManager, align));
     }
 
+    public TableBuilder table() {
+        return register(new TableBuilder(entityManager));
+    }
+
     public ElementBuilder element() {
         return register(new ElementBuilder(entityManager));
     }

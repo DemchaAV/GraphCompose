@@ -196,6 +196,41 @@ Container rule of thumb:
 - containers whose content may continue on another page usually need `Breakable`
 - some containers need both markers
 
+### Case 2.5: build a hybrid object with a breakable root and atomic leaf rows
+
+Some engine objects look like containers from the outside, but still need their own leaf rendering contract inside.
+
+`TableBuilder v1` is the current example:
+
+- the table root is a breakable vertical container
+- each row is a non-breakable leaf entity with explicit `ContentSize`
+- each row renders all of its cells through a dedicated row renderable instead of exposing each cell as a separate child entity
+
+This pattern is useful when:
+
+- the parent object should flow across pages
+- one logical child block must stay atomic
+- rendering needs sibling-aware behavior, such as page-break separators
+
+Why the table uses this contract:
+
+- rows must move to the next page as units
+- column widths are negotiated once at the table level
+- cell borders and page-break separators are easier to render consistently from a row-level payload
+
+Relevant files:
+
+- [TableBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/TableBuilder.java)
+- [TableRow.java](./../src/main/java/com/demcha/compose/layout_core/components/renderable/TableRow.java)
+- [TableCellBox.java](./../src/main/java/com/demcha/compose/layout_core/components/renderable/TableCellBox.java)
+- [TableResolvedCell.java](./../src/main/java/com/demcha/compose/layout_core/components/content/table/TableResolvedCell.java)
+
+Rule of thumb:
+
+- make the root breakable only if the object as a whole can continue across pages
+- keep logical row-like units as fixed leaves when the user would perceive splitting them as a bug
+- if separators depend on where page fragments start or end, compute that in the render phase from resolved `Placement`, not only from builder-time metadata
+
 ### Case 3: add a purely logical helper object
 
 If the object is not directly rendered and mostly groups behavior, it may not need a new render component at all. In that case you may only need:

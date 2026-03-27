@@ -1,16 +1,41 @@
 package com.demcha.compose.layout_core.components.components_builders;
 
-import com.demcha.compose.layout_core.components.containers.abstract_builders.ShapeBuilderBase;
+import com.demcha.compose.layout_core.components.containers.abstract_builders.EmptyBox;
+import com.demcha.compose.layout_core.components.content.shape.FillColor;
+import com.demcha.compose.layout_core.components.content.shape.Stroke;
 import com.demcha.compose.layout_core.components.renderable.Circle;
+import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.core.EntityManager;
 
-public class CircleBuilder extends ShapeBuilderBase<CircleBuilder> {
+import java.awt.Color;
+
+public class CircleBuilder extends EmptyBox<CircleBuilder> {
     public CircleBuilder(EntityManager entityManager) {
         super(entityManager);
     }
 
     public CircleBuilder circle(Circle circle) {
         return addComponent(circle);
+    }
+
+    public CircleBuilder fillColor(FillColor fillColor) {
+        return addComponent(fillColor);
+    }
+
+    public CircleBuilder fillColor(Color fillColor) {
+        return fillColor(new FillColor(fillColor));
+    }
+
+    public CircleBuilder fillColor(ComponentColor fillColor) {
+        return fillColor(new FillColor(fillColor));
+    }
+
+    public CircleBuilder fillColor(int r, int g, int b) {
+        return fillColor(new FillColor(new Color(r, g, b)));
+    }
+
+    public CircleBuilder stroke(Stroke stroke) {
+        return addComponent(stroke);
     }
 
     @Override

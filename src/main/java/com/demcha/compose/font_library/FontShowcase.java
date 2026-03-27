@@ -1,16 +1,16 @@
 package com.demcha.compose.font_library;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.loyaut_core.components.components_builders.ModuleBuilder;
-import com.demcha.compose.loyaut_core.components.components_builders.TextBuilder;
-import com.demcha.compose.loyaut_core.components.content.text.TextDecoration;
-import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
-import com.demcha.compose.loyaut_core.components.core.Entity;
-import com.demcha.compose.loyaut_core.components.layout.Align;
-import com.demcha.compose.loyaut_core.components.layout.Anchor;
-import com.demcha.compose.loyaut_core.components.style.Margin;
-import com.demcha.compose.loyaut_core.core.EntityManager;
-import com.demcha.compose.loyaut_core.core.PdfComposer;
+import com.demcha.compose.layout_core.components.components_builders.ModuleBuilder;
+import com.demcha.compose.layout_core.components.components_builders.TextBuilder;
+import com.demcha.compose.layout_core.components.content.text.TextDecoration;
+import com.demcha.compose.layout_core.components.content.text.TextStyle;
+import com.demcha.compose.layout_core.components.core.Entity;
+import com.demcha.compose.layout_core.components.layout.Align;
+import com.demcha.compose.layout_core.components.layout.Anchor;
+import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.layout_core.core.EntityManager;
+import com.demcha.compose.layout_core.core.PdfComposer;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.awt.Color;

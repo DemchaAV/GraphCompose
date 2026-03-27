@@ -1,14 +1,14 @@
 package com.demcha.integration;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.loyaut_core.components.components_builders.ComponentBuilder;
-import com.demcha.compose.loyaut_core.components.components_builders.BlockIndentStrategy;
-import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
-import com.demcha.compose.loyaut_core.components.layout.Align;
-import com.demcha.compose.loyaut_core.components.layout.Anchor;
-import com.demcha.compose.loyaut_core.components.style.Margin;
-import com.demcha.compose.loyaut_core.components.style.Padding;
-import com.demcha.compose.loyaut_core.core.PdfComposer;
+import com.demcha.compose.layout_core.components.components_builders.ComponentBuilder;
+import com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy;
+import com.demcha.compose.layout_core.components.content.text.TextStyle;
+import com.demcha.compose.layout_core.components.layout.Align;
+import com.demcha.compose.layout_core.components.layout.Anchor;
+import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.layout_core.components.style.Padding;
+import com.demcha.compose.layout_core.core.PdfComposer;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

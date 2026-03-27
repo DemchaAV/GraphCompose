@@ -1,8 +1,8 @@
 package com.demcha.compose;
 
-import com.demcha.Templatese.data.MainPageCV;
-import com.demcha.Templatese.template.MainPageCvDTO;
-import com.demcha.Templatese.templates.Template_CV1;
+import com.demcha.templates.data.MainPageCV;
+import com.demcha.templates.api.MainPageCvDTO;
+import com.demcha.templates.builtins.Template_CV1;
 import com.demcha.mock.MainPageCVMock;
 import org.apache.pdfbox.pdmodel.PDDocument;
 

@@ -1,14 +1,14 @@
 package com.demcha.integration;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
-import com.demcha.compose.loyaut_core.components.core.Entity;
-import com.demcha.compose.loyaut_core.components.layout.Anchor;
-import com.demcha.compose.loyaut_core.components.layout.coordinator.Placement;
-import com.demcha.compose.loyaut_core.components.style.Margin;
-import com.demcha.compose.loyaut_core.components.style.Padding;
-import com.demcha.compose.loyaut_core.core.PdfComposer;
-import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.PdfFont;
+import com.demcha.compose.layout_core.components.content.text.TextStyle;
+import com.demcha.compose.layout_core.components.core.Entity;
+import com.demcha.compose.layout_core.components.layout.Anchor;
+import com.demcha.compose.layout_core.components.layout.coordinator.Placement;
+import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.layout_core.components.style.Padding;
+import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFont;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.text.PDFTextStripper;

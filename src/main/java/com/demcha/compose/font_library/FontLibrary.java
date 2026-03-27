@@ -1,8 +1,8 @@
 package com.demcha.compose.font_library;
 
-import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.PdfFont;
-import com.demcha.compose.loyaut_core.system.implemented_systems.pdf_systems.PdfFontGetter;
-import com.demcha.compose.loyaut_core.system.interfaces.Font;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFont;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFontGetter;
+import com.demcha.compose.layout_core.system.interfaces.Font;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;

@@ -1,8 +1,8 @@
 package com.demcha.system.utils.page_breaker;
 
-import com.demcha.compose.loyaut_core.core.EntityManager;
-import com.demcha.compose.loyaut_core.system.utils.page_breaker.PageLayoutCalculator;
-import com.demcha.compose.loyaut_core.system.utils.page_breaker.YPositionOnPage;
+import com.demcha.compose.layout_core.core.EntityManager;
+import com.demcha.compose.layout_core.system.utils.page_breaker.PageLayoutCalculator;
+import com.demcha.compose.layout_core.system.utils.page_breaker.YPositionOnPage;
 import com.demcha.mock.FactoryPresets;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;

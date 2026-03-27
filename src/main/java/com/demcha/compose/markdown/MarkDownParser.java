@@ -1,8 +1,8 @@
 package com.demcha.compose.markdown;
 
-import com.demcha.compose.loyaut_core.components.content.text.TextDataBody;
-import com.demcha.compose.loyaut_core.components.content.text.TextDecoration;
-import com.demcha.compose.loyaut_core.components.content.text.TextStyle;
+import com.demcha.compose.layout_core.components.content.text.TextDataBody;
+import com.demcha.compose.layout_core.components.content.text.TextDecoration;
+import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.vladsch.flexmark.ast.*;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;

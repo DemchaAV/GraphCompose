@@ -4,8 +4,8 @@ import com.demcha.compose.font_library.FontFamilyDefinition;
 import com.demcha.compose.font_library.FontName;
 import com.demcha.compose.font_library.FontShowcase;
 import com.demcha.compose.font_library.DefaultFonts;
-import com.demcha.compose.loyaut_core.components.style.Margin;
-import com.demcha.compose.loyaut_core.core.PdfComposer;
+import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.layout_core.core.PdfComposer;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;

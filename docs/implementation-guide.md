@@ -112,6 +112,12 @@ Important:
 - `Breakable` is not a child-sizing flag
 - if a long leaf object is not `Breakable`, the engine treats it as a single block and moves it to the next page when needed
 
+Leaf parity rule:
+
+- if two objects are conceptually fixed leaf renderables, such as `ImageComponent` and `Circle`, they should use the same layout contract
+- that usually means the same kind of `ContentSize`, the same padding-aware inner draw area, and the same non-breakable pagination behavior
+- if one of them behaves differently in containers or multi-page flow, first check the render/layout contract before changing pagination rules
+
 ### Content / style components
 
 Attach the components that describe what the object is and how it should look.
@@ -229,6 +235,7 @@ In practice:
 
 - `Anchor`, `Margin`, `Padding`, `ContentSize`, and parent/child links are what matter to layout
 - the builder is just the place where you attach those components
+- during pagination, descendants should be resolved before parent containers so parent size updates caused by child page shifts are reflected before parent placement is finalized
 
 If those components are missing or inconsistent, the renderer cannot save you later.
 

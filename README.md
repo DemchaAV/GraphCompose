@@ -280,6 +280,7 @@ The short version:
 - extend `EmptyBox<T>` for a leaf entity that does not manage children
 - extend `ShapeBuilderBase<T>` for shape-like leaf objects that need fill/stroke helpers
 - extend `ContainerBuilder<T>` for entities that own child entities
+- keep fixed leaf renderables such as `Image` and `Circle` on the same layout contract: fixed `ContentSize`, padding-aware draw area, and no `Expendable`/`Breakable` unless they truly need it
 - add `Expendable` only when the entity should grow because of child content
 - add `Breakable` only when the entity itself can continue across pages
 - add a factory method to `ComponentBuilder` if the new object should be available from `composer.componentBuilder()`

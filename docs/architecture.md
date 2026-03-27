@@ -18,6 +18,8 @@ In short, the runtime pipeline is:
 
 That separation is the core project concept. Builders describe intent, components hold the data, layout resolves geometry, and renderers only draw already-resolved output.
 
+For pagination-sensitive trees, GraphCompose relies on a child-first page-breaking order. Fixed leaf objects are resolved before their parent containers so parent `ContentSize` can reflect child shifts before container placement is finalized.
+
 ## Engine layer: `com.demcha.compose.*`
 
 - `layout_core` contains the document model, geometry, layout resolution, pagination, and rendering systems.

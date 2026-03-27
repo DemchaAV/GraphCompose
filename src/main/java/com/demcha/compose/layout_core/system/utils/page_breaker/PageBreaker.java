@@ -4,9 +4,9 @@ import com.demcha.compose.layout_core.core.Canvas;
 import com.demcha.compose.layout_core.components.core.Entity;
 import com.demcha.compose.layout_core.components.geometry.ContentSize;
 import com.demcha.compose.layout_core.components.layout.Layer;
+import com.demcha.compose.layout_core.components.layout.ParentComponent;
 import com.demcha.compose.layout_core.components.layout.coordinator.ComputedPosition;
 import com.demcha.compose.layout_core.components.layout.coordinator.Placement;
-import com.demcha.compose.layout_core.components.layout.coordinator.RenderingPosition;
 import com.demcha.compose.layout_core.components.renderable.BlockText;
 import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.exceptions.BigSizeElementException;
@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -67,15 +68,7 @@ public class PageBreaker {
         Offset yOffset = new Offset();
 
         entities.entrySet().stream()
-                // Sorting our Entitles in to  by Rendering position to  make Shifting lees accessible
-                .sorted(Comparator.comparingDouble((Map.Entry<UUID, Entity> e) ->
-                                RenderingPosition.from(e.getValue())
-                                        .orElseThrow(
-                                                () -> new IllegalStateException("Entity " + e + " has no RenderingPosition"))
-                                        .y())
-
-                        .reversed()
-                        .thenComparing(e -> e.getValue().getComponent(Layer.class).orElseThrow().value())) // Added for stable sort
+                .sorted(this::compareForPagination)
                 //Starting process of breaking Pages
                 .forEachOrdered(e -> { // Changed to forEachOrdered
                     Entity entity = e.getValue();
@@ -93,6 +86,58 @@ public class PageBreaker {
                         definePlacement(canvas, entity, yOffset, false);
                     }
                 });
+    }
+
+    private int compareForPagination(Map.Entry<UUID, Entity> left, Map.Entry<UUID, Entity> right) {
+        Entity leftEntity = left.getValue();
+        Entity rightEntity = right.getValue();
+
+        if (isAncestor(leftEntity, rightEntity)) {
+            return 1;
+        }
+        if (isAncestor(rightEntity, leftEntity)) {
+            return -1;
+        }
+
+        int byComputedY = Double.compare(positionY(rightEntity), positionY(leftEntity));
+        if (byComputedY != 0) {
+            return byComputedY;
+        }
+
+        int byLayer = Integer.compare(layerValue(rightEntity), layerValue(leftEntity));
+        if (byLayer != 0) {
+            return byLayer;
+        }
+
+        return left.getKey().toString().compareTo(right.getKey().toString());
+    }
+
+    private double positionY(Entity entity) {
+        return entity.getComponent(ComputedPosition.class)
+                .orElseThrow(() -> new IllegalStateException("Entity " + entity + " has no ComputedPosition"))
+                .y();
+    }
+
+    private int layerValue(Entity entity) {
+        return entity.getComponent(Layer.class)
+                .orElseThrow(() -> new IllegalStateException("Entity " + entity + " has no Layer"))
+                .value();
+    }
+
+    private boolean isAncestor(Entity candidateAncestor, Entity entity) {
+        UUID ancestorId = candidateAncestor.getUuid();
+        Optional<ParentComponent> currentParent = entity.getComponent(ParentComponent.class);
+
+        while (currentParent.isPresent()) {
+            UUID parentId = currentParent.get().uuid();
+            if (ancestorId.equals(parentId)) {
+                return true;
+            }
+            currentParent = entityManager.getEntity(parentId)
+                    .flatMap(parent -> parent.getComponent(ParentComponent.class));
+        }
+
+        return false;
     }
 
     /**

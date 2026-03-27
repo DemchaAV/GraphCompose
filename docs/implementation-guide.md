@@ -32,6 +32,7 @@ Examples in the codebase:
 - [TextBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/TextBuilder.java)
 - [ImageBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/ImageBuilder.java)
 - [CircleBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/CircleBuilder.java)
+- [LineBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/LineBuilder.java)
 - [LinkBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/LinkBuilder.java)
 - [ElementBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/ElementBuilder.java)
 
@@ -105,6 +106,7 @@ Examples:
 - `BlockText` is `Breakable` because its content can flow across pages
 - `ImageComponent` is neither `Expendable` nor `Breakable`; it is a fixed leaf renderable
 - `Circle` is a fixed leaf renderable like `ImageComponent`; it renders, but it should not be marked `Expendable`
+- `Line` is also a fixed leaf renderable; it draws inside its resolved box and should stay non-breakable unless the engine gets a true multi-page line contract later
 
 Important:
 
@@ -114,7 +116,7 @@ Important:
 
 Leaf parity rule:
 
-- if two objects are conceptually fixed leaf renderables, such as `ImageComponent` and `Circle`, they should use the same layout contract
+- if two objects are conceptually fixed leaf renderables, such as `ImageComponent`, `Circle`, and `Line`, they should use the same layout contract
 - that usually means the same kind of `ContentSize`, the same padding-aware inner draw area, and the same non-breakable pagination behavior
 - if one of them behaves differently in containers or multi-page flow, first check the render/layout contract before changing pagination rules
 
@@ -305,6 +307,8 @@ Do not add a method there if the new object is only an internal helper for templ
   [TextBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/TextBuilder.java)
 - shape-like object:
   [RectangleBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/RectangleBuilder.java)
+- fixed leaf line object:
+  [LineBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/LineBuilder.java)
 - container:
   [ModuleBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/ModuleBuilder.java)
 - template-level composition helper:

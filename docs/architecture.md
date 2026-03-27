@@ -43,6 +43,12 @@ Its shape is intentionally hybrid:
 
 This keeps table pagination consistent with the rest of the engine while avoiding a separate ad-hoc table layout subsystem.
 
+Fixed leaf primitives such as `Rectangle`, `Circle`, `Image`, and `Line` follow the same general engine contract:
+
+- they materialize as regular entities with render/content/layout components
+- they rely on normal `ContentSize`, `Padding`, `Margin`, and `Placement`
+- they do not introduce a separate layout subsystem or pagination model
+
 ## Template layer: `com.demcha.templates.*`
 
 - `templates` contains higher-level CV and cover-letter builders, DTOs, themes, and template registries.

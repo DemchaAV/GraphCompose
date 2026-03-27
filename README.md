@@ -299,6 +299,37 @@ Verification status for this feature:
 - integration coverage for layout, styling, and multi-page pagination
 - visual outputs generated under `target/visual-tests/clean/integration`
 
+## Line primitive
+
+The engine now ships a public line builder through `composer.componentBuilder().line()`.
+
+Implementation notes:
+
+- `Line` is a fixed leaf renderable, so it plugs into the existing ECS/layout/render pipeline like `Circle` and `Image`
+- the line occupies a normal `ContentSize` box, then draws its path inside the padding-aware inner area
+- pagination stays leaf-like and non-breakable: a line moves as a unit to the next page when needed
+- the default path is horizontal, with helpers for vertical and diagonal variants
+
+Minimal example:
+
+```java
+Entity line = composer.componentBuilder()
+        .line()
+        .horizontal()
+        .size(220, 16)
+        .padding(Padding.of(6))
+        .stroke(new Stroke(ComponentColor.ROYAL_BLUE, 3))
+        .build();
+```
+
+Available path helpers:
+
+- `horizontal()`
+- `vertical()`
+- `diagonalAscending()`
+- `diagonalDescending()`
+- `path(startX, startY, endX, endY)` for custom normalized coordinates inside the draw box
+
 ## Core concepts
 
 ### 1. Everything becomes an entity with components
@@ -331,7 +362,7 @@ The short version:
 - extend `EmptyBox<T>` for a leaf entity that does not manage children
 - extend `ShapeBuilderBase<T>` for shape-like leaf objects that need fill/stroke helpers
 - extend `ContainerBuilder<T>` for entities that own child entities
-- keep fixed leaf renderables such as `Image` and `Circle` on the same layout contract: fixed `ContentSize`, padding-aware draw area, and no `Expendable`/`Breakable` unless they truly need it
+- keep fixed leaf renderables such as `Image`, `Circle`, and `Line` on the same layout contract: fixed `ContentSize`, padding-aware draw area, and no `Expendable`/`Breakable` unless they truly need it
 - add `Expendable` only when the entity should grow because of child content
 - add `Breakable` only when the entity itself can continue across pages
 - add a factory method to `ComponentBuilder` if the new object should be available from `composer.componentBuilder()`

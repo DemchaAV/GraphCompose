@@ -53,6 +53,10 @@ public class ComponentBuilder {
         return register(new LinkBuilder(entityManager));
     }
 
+    public LineBuilder line() {
+        return register(new LineBuilder(entityManager));
+    }
+
     public ModuleBuilder moduleBuilder(Align align) {
         return register(new ModuleBuilder(entityManager, align));
     }

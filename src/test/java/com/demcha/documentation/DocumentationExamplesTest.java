@@ -5,10 +5,13 @@ import com.demcha.templates.TemplateBuilder;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.font_library.FontName;
 import com.demcha.compose.layout_core.components.components_builders.ComponentBuilder;
+import com.demcha.compose.layout_core.components.content.shape.Stroke;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.Anchor;
+import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
@@ -114,6 +117,42 @@ class DocumentationExamplesTest {
 
         assertThat(GraphCompose.availableFonts())
                 .contains(FontName.HELVETICA, FontName.LATO, FontName.SPECTRAL);
+        assertPdfFileLooksValid(outputFile);
+    }
+
+    @Test
+    void shouldRenderLinePrimitiveExampleToFile() throws Exception {
+        Path outputFile = VisualTestOutputs.preparePdf("line-primitive", "clean", "documentation");
+
+        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+                .pageSize(PDRectangle.A4)
+                .margin(24, 24, 24, 24)
+                .create()) {
+
+            ComponentBuilder cb = composer.componentBuilder();
+
+            cb.vContainer(Align.left(12))
+                    .anchor(Anchor.topLeft())
+                    .margin(Margin.of(8))
+                    .addChild(cb.line()
+                            .horizontal()
+                            .size(220, 16)
+                            .padding(Padding.of(6))
+                            .stroke(new Stroke(ComponentColor.ROYAL_BLUE, 3))
+                            .anchor(Anchor.topLeft())
+                            .build())
+                    .addChild(cb.line()
+                            .vertical()
+                            .size(16, 90)
+                            .padding(Padding.of(6))
+                            .stroke(new Stroke(ComponentColor.ORANGE, 3))
+                            .anchor(Anchor.topLeft())
+                            .build())
+                    .build();
+
+            composer.build();
+        }
+
         assertPdfFileLooksValid(outputFile);
     }
 

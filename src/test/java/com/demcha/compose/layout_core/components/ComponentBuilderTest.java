@@ -10,7 +10,7 @@ import com.demcha.compose.layout_core.components.renderable.Circle;
 import com.demcha.compose.layout_core.components.renderable.Line;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.geometry.ContentSize;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.layout_core.core.DocumentComposer;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -21,7 +21,7 @@ class ComponentBuilderTest {
 
     @Test
     void templateWithoutExplicitThemeShouldUseDefaultTemplateBuilderTheme() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (DocumentComposer composer = GraphCompose.pdf().create()) {
             var entity = TemplateBuilder.from(composer.componentBuilder())
                     .name("Jane Doe");
 
@@ -32,7 +32,7 @@ class ComponentBuilderTest {
 
     @Test
     void shouldCreateCircleFromComponentBuilderFactory() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (DocumentComposer composer = GraphCompose.pdf().create()) {
             var entity = composer.componentBuilder()
                     .circle()
                     .size(40, 30)
@@ -49,7 +49,7 @@ class ComponentBuilderTest {
 
     @Test
     void shouldCreateLineFromComponentBuilderFactory() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (DocumentComposer composer = GraphCompose.pdf().create()) {
             var entity = composer.componentBuilder()
                     .line()
                     .size(120, 8)

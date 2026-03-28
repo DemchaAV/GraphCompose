@@ -9,6 +9,7 @@ import com.demcha.compose.layout_core.components.core.Entity;
 import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.layout_core.core.DocumentComposer;
 import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -65,7 +66,7 @@ public final class FontShowcase {
         }
     }
 
-    public static void buildShowcase(PdfComposer composer, Collection<FontName> fonts) {
+    public static void buildShowcase(DocumentComposer composer, Collection<FontName> fonts) {
         EntityManager entityManager = composer.entityManager();
 
         Entity title = text(entityManager, "Available Fonts Preview", FontName.HELVETICA, 22, TextDecoration.BOLD,
@@ -88,7 +89,7 @@ public final class FontShowcase {
         root.build();
     }
 
-    private static Entity fontSection(EntityManager entityManager, PdfComposer composer, FontName fontName) {
+    private static Entity fontSection(EntityManager entityManager, DocumentComposer composer, FontName fontName) {
         Entity label = text(entityManager, fontName.name(), FontName.HELVETICA, 12, TextDecoration.BOLD,
                 new Color(25, 25, 25), Margin.bottom(2));
         Entity regular = text(entityManager, "Regular: " + SAMPLE_TEXT, fontName, 11, TextDecoration.DEFAULT,

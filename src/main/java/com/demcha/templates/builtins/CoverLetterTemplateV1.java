@@ -16,6 +16,7 @@ import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
+import com.demcha.compose.layout_core.core.DocumentComposer;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -101,7 +102,7 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
         render(header, wroteLetter, jobDetails, path, false);
     }
 
-    private void designLetter(Header header, String wroteLetter, JobDetails jobDetails, PdfComposer composer) {
+    private void designLetter(Header header, String wroteLetter, JobDetails jobDetails, DocumentComposer composer) {
         Canvas canvas = composer.canvas();
         TemplateBuilder cv = TemplateBuilder.from(composer.componentBuilder(), CvTheme.defaultTheme());
         Entity moduleHeader = createHeader(cv, header, canvas);
@@ -177,7 +178,7 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
                 BlockIndentStrategy.FIRST_LINE);
     }
 
-    private Entity createClosingSignature(PdfComposer composer, Header header, Canvas canvas) {
+    private Entity createClosingSignature(DocumentComposer composer, Header header, Canvas canvas) {
         Entity kindRegards = composer.componentBuilder()
                 .blockText(Align.left(CvTheme.courier().spacing()), CvTheme.defaultTheme().bodyTextStyle())
                 .size(canvas.innerWidth(), 2)

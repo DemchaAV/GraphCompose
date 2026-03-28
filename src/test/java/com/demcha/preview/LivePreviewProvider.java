@@ -10,6 +10,7 @@ import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
+import com.demcha.compose.layout_core.core.DocumentComposer;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.templates.CvTheme;
 import com.demcha.templates.TemplateBuilder;
@@ -60,7 +61,7 @@ public final class LivePreviewProvider implements DevToolPreviewProvider, DevToo
                 .create();
     }
 
-    private void composeDocument(PdfComposer composer) {
+    private void composeDocument(DocumentComposer composer) {
         var cb = composer.componentBuilder();
         var theme = CvTheme.defaultTheme();
         var template = TemplateBuilder.from(cb, theme);

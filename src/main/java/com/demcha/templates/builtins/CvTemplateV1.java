@@ -16,6 +16,7 @@ import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.layout_core.core.DocumentComposer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -95,7 +96,7 @@ public class CvTemplateV1 implements CvTemplate {
                 .create();
     }
 
-    private void designDocument(PdfComposer composer, MainPageCV data) {
+    private void designDocument(DocumentComposer composer, MainPageCV data) {
         Canvas canvas = composer.canvas();
         TemplateBuilder cv = TemplateBuilder.from(composer.componentBuilder(), theme);
         float textBlockWidth = (float) canvas.innerWidth();

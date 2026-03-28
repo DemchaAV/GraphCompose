@@ -3,8 +3,6 @@ package com.demcha.compose.layout_core.core;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.font_library.DefaultFonts;
 import com.demcha.compose.font_library.FontFamilyDefinition;
-import com.demcha.compose.layout_core.components.components_builders.ComponentBuilder;
-import com.demcha.compose.layout_core.core.Canvas;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.system.LayoutSystem;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfCanvas;
@@ -58,12 +56,9 @@ import java.util.List;
  * }
  * </pre>
  */
-public final class PdfComposer implements DocumentComposer {
+public final class PdfComposer extends AbstractDocumentComposer {
 
-    private final EntityManager entityManager;
-    private final ComponentBuilder componentBuilder;
     private final PDDocument doc;
-    private final Canvas canvas;
     private final PdfRenderingSystemECS renderingSystem;
     @Nullable
     private final Path outputFile; // null if output to bytes only
@@ -74,50 +69,42 @@ public final class PdfComposer implements DocumentComposer {
      */
     public PdfComposer(Path outputFile, boolean markdown, boolean guideLines, PDRectangle pageSize, Margin margin,
             Collection<FontFamilyDefinition> customFontFamilies) {
+        this(createState(markdown, guideLines, pageSize, margin, customFontFamilies), outputFile);
+    }
+
+    private PdfComposer(PdfComposerState state, @Nullable Path outputFile) {
+        super(state.entityManager(), state.canvas());
+        this.doc = state.doc();
+        this.renderingSystem = state.renderingSystem();
         this.outputFile = outputFile;
+        setupPdfSystems();
+    }
 
-        this.doc = new PDDocument();
-        this.entityManager = new EntityManager(DefaultFonts.library(doc, customFontFamilies), markdown);
-        this.entityManager.setGuideLines(guideLines);
-        this.canvas = new PdfCanvas(pageSize, 0.0f, 0.0f);
+    private static PdfComposerState createState(boolean markdown,
+                                                boolean guideLines,
+                                                PDRectangle pageSize,
+                                                Margin margin,
+                                                Collection<FontFamilyDefinition> customFontFamilies) {
+        PDDocument doc = new PDDocument();
+        EntityManager entityManager = new EntityManager(DefaultFonts.library(doc, customFontFamilies), markdown);
+        entityManager.setGuideLines(guideLines);
 
+        Canvas canvas = new PdfCanvas(pageSize, 0.0f, 0.0f);
         if (margin != null) {
-            this.canvas.addMargin(margin);
+            canvas.addMargin(margin);
         }
 
-        this.renderingSystem = new PdfRenderingSystemECS(doc, canvas);
-        setupPdfSystems();
-
-        this.componentBuilder = ComponentBuilder.builder(entityManager);
+        PdfRenderingSystemECS renderingSystem = new PdfRenderingSystemECS(doc, canvas);
+        return new PdfComposerState(doc, entityManager, canvas, renderingSystem);
     }
 
     private void setupPdfSystems() {
-        entityManager.getSystems().addSystem(new LayoutSystem<>(canvas, renderingSystem));
-        entityManager.getSystems().addSystem(renderingSystem);
+        entityManager().getSystems().addSystem(new LayoutSystem<>(canvas(), renderingSystem));
+        entityManager().getSystems().addSystem(renderingSystem);
 
         if (outputFile != null) {
-            entityManager.getSystems().addSystem(new PdfFileManagerSystem(outputFile, doc));
+            entityManager().getSystems().addSystem(new PdfFileManagerSystem(outputFile, doc));
         }
-    }
-
-    @Override
-    public ComponentBuilder componentBuilder() {
-        return this.componentBuilder;
-    }
-
-    @Override
-    public EntityManager entityManager() {
-        return this.entityManager;
-    }
-
-    @Override
-    public void markdown(boolean enabled) {
-        this.entityManager.setMarkdown(enabled);
-    }
-
-    @Override
-    public void guideLines(boolean enabled) {
-        this.entityManager.setGuideLines(enabled);
     }
 
     /**
@@ -126,33 +113,21 @@ public final class PdfComposer implements DocumentComposer {
      * @param margin The margin configuration to apply.
      */
     public void margin(Margin margin) {
-        canvas.addMargin(margin);
-    }
-
-    /**
-     * Returns the canvas for this PDF document.
-     *
-     * @return The {@link Canvas} instance.
-     */
-    public Canvas canvas() {
-        return this.canvas;
+        canvas().addMargin(margin);
     }
 
     public List<com.demcha.compose.font_library.FontName> availableFonts() {
-        return List.copyOf(entityManager.getFonts().availableFonts());
+        return List.copyOf(entityManager().getFonts().availableFonts());
     }
 
     @Override
-    public void build() throws Exception {
-        componentBuilder.buildsComponents();
-        entityManager.processSystems();
+    protected void buildDocument() throws Exception {
+        entityManager().processSystems();
     }
 
     @Override
-    public byte[] toBytes() throws Exception {
-        toPDDocument(); // Reuse common processing logic
-
-        // Write PDF to byte array
+    protected byte[] exportBytes() throws Exception {
+        processInMemoryRender();
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             doc.save(baos);
             return baos.toByteArray();
@@ -174,19 +149,28 @@ public final class PdfComposer implements DocumentComposer {
      * @throws Exception if an error occurs during processing.
      */
     public PDDocument toPDDocument() throws Exception {
-        componentBuilder.buildsComponents();
-
-        // Process layout and rendering systems (but not file manager)
-        entityManager.getSystems().getSystem(LayoutSystem.class)
-                .ifPresent(sys -> sys.process(entityManager));
-        renderingSystem.process(entityManager);
+        buildComponents();
+        processInMemoryRender();
 
         return doc;
+    }
+
+    private void processInMemoryRender() throws Exception {
+        entityManager().getSystems().getSystem(LayoutSystem.class)
+                .ifPresent(sys -> sys.process(entityManager()));
+        renderingSystem.process(entityManager());
     }
 
     @Override
     public void close() throws IOException {
         doc.close();
+    }
+
+    private record PdfComposerState(
+            PDDocument doc,
+            EntityManager entityManager,
+            Canvas canvas,
+            PdfRenderingSystemECS renderingSystem) {
     }
 }
 

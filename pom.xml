@@ -53,6 +53,7 @@
         <logback.version>1.5.18</logback.version>
         <lombok.version>1.18.38</lombok.version>
         <pdfbox.version>3.0.5</pdfbox.version>
+        <javafx.version>21.0.2</javafx.version>
         <slf4j.version>2.0.17</slf4j.version>
         <snakeyaml.version>2.4</snakeyaml.version>
 
@@ -190,6 +191,18 @@
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-test</artifactId>
             <version>${kotlin.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+            <version>${javafx.version}</version>
             <scope>test</scope>
         </dependency>
 

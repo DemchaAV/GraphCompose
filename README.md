@@ -150,7 +150,7 @@ GraphCompose can be consumed through JitPack.
 <dependency>
     <groupId>com.github.DemchaAV</groupId>
     <artifactId>GraphCompose</artifactId>
-    <version>v1.0.0</version>
+    <version>v1.0.3</version>
 </dependency>
 ```
 
@@ -162,7 +162,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.DemchaAV:GraphCompose:v1.0.0")
+    implementation("com.github.DemchaAV:GraphCompose:v1.0.3")
 }
 ```
 

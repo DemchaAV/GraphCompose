@@ -12,6 +12,7 @@ import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
+import com.demcha.compose.layout_core.core.DocumentComposer;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
@@ -31,7 +32,7 @@ class DocumentationExamplesTest {
     void shouldRenderQuickStartExampleToFile() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("quick-start", "clean", "documentation");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (DocumentComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(24, 24, 24, 24)
                 .markdown(true)
@@ -60,7 +61,7 @@ class DocumentationExamplesTest {
         byte[] pdfBytes;
         Path outputFile = VisualTestOutputs.preparePdf("quick-start-bytes", "clean", "documentation");
 
-        try (PdfComposer composer = GraphCompose.pdf()
+        try (DocumentComposer composer = GraphCompose.pdf()
                 .pageSize(PDRectangle.A4)
                 .margin(24, 24, 24, 24)
                 .create()) {
@@ -88,7 +89,7 @@ class DocumentationExamplesTest {
         byte[] pdfBytes;
         Path outputFile = VisualTestOutputs.preparePdf("template-builder-bytes", "clean", "documentation");
 
-        try (PdfComposer composer = GraphCompose.pdf()
+        try (DocumentComposer composer = GraphCompose.pdf()
                 .pageSize(PDRectangle.A4)
                 .margin(24, 24, 24, 24)
                 .create()) {

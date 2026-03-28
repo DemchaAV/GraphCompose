@@ -61,6 +61,13 @@ public interface DocumentComposer extends Closeable {
     EntityManager entityManager();
 
     /**
+     * Returns the layout canvas shared by all document backends.
+     *
+     * @return The backend-neutral {@link Canvas}.
+     */
+    Canvas canvas();
+
+    /**
      * Toggles Markdown parsing for text entities.
      *
      * @param enabled true to enable markdown, false to disable.

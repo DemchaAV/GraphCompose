@@ -5,6 +5,7 @@ import com.demcha.compose.font_library.FontName;
 import com.demcha.compose.font_library.FontShowcase;
 import com.demcha.compose.font_library.DefaultFonts;
 import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.layout_core.core.DocumentComposer;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
@@ -25,7 +26,7 @@ import java.util.Objects;
  *
  * <h3>Build a PDF file</h3>
  * <pre>
- * try (var composer = GraphCompose.pdf(outputFile)
+ * try (DocumentComposer composer = GraphCompose.pdf(outputFile)
  *         .pageSize(PDRectangle.A4)
  *         .margin(new Margin(24, 24, 24, 24))
  *         .markdown(true)
@@ -44,7 +45,7 @@ import java.util.Objects;
  *
  * <h3>Get bytes instead of writing to disk</h3>
  * <pre>
- * try (var composer = GraphCompose.pdf()
+ * try (DocumentComposer composer = GraphCompose.pdf()
  *         .pageSize(PDRectangle.A4)
  *         .create()) {
  *
@@ -61,7 +62,7 @@ import java.util.Objects;
  *
  * <h3>Optional template layer</h3>
  * <pre>
- * try (var composer = GraphCompose.pdf().create()) {
+ * try (DocumentComposer composer = GraphCompose.pdf().create()) {
  *     var template = TemplateBuilder.from(
  *             composer.componentBuilder(),
  *             CvTheme.defaultTheme());

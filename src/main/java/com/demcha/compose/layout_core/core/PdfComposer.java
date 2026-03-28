@@ -12,6 +12,7 @@ import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.Pdf
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -64,6 +65,7 @@ public final class PdfComposer implements DocumentComposer {
     private final PDDocument doc;
     private final Canvas canvas;
     private final PdfRenderingSystemECS renderingSystem;
+    @Nullable
     private final Path outputFile; // null if output to bytes only
 
     /**

@@ -27,6 +27,8 @@ import java.util.regex.Pattern;
 public final class PreviewCompiler {
     private static final Pattern LOMBOK_VERSION_PATTERN =
             Pattern.compile("<lombok\\.version>([^<]+)</lombok\\.version>");
+    private volatile List<String> cachedCompilerClasspath;
+    private volatile Optional<Path> cachedLombokJar;
 
     public CompilationResult compile(DevToolWorkspace workspace, long revision) {
         Objects.requireNonNull(workspace, "workspace");
@@ -41,9 +43,12 @@ public final class PreviewCompiler {
 
         List<Path> sourceFiles;
         try {
-            sourceFiles = workspace.collectJavaSources();
+            sourceFiles = workspace.collectExplicitCompilationUnits();
         } catch (IOException ex) {
-            return CompilationResult.failure("Failed to collect Java sources:%n%s".formatted(stackTrace(ex)), 0, 0);
+            return CompilationResult.failure(
+                    "Failed to resolve preview compilation units:%n%s".formatted(stackTrace(ex)),
+                    0,
+                    0);
         }
 
         if (sourceFiles.isEmpty()) {
@@ -76,7 +81,7 @@ public final class PreviewCompiler {
             fileManager.setLocationFromPaths(StandardLocation.SOURCE_PATH, workspace.existingJavaRoots());
 
             var compilationUnits = fileManager.getJavaFileObjectsFromPaths(sourceFiles);
-            var compilerClasspath = buildCompilerClasspath(workspace);
+            var compilerClasspath = compilerClasspath(workspace);
 
             var options = new ArrayList<String>();
             options.add("--release");
@@ -133,12 +138,26 @@ public final class PreviewCompiler {
         }
     }
 
-    private List<String> buildCompilerClasspath(DevToolWorkspace workspace) {
+    private List<String> compilerClasspath(DevToolWorkspace workspace) {
+        List<String> existing = cachedCompilerClasspath;
+        if (existing != null) {
+            return existing;
+        }
+
+        synchronized (this) {
+            if (cachedCompilerClasspath == null) {
+                cachedCompilerClasspath = List.copyOf(buildCompilerClasspath(resolveCachedLombokJar(workspace)));
+            }
+            return cachedCompilerClasspath;
+        }
+    }
+
+    private List<String> buildCompilerClasspath(Optional<Path> lombokJar) {
         var separator = System.getProperty("path.separator");
         var entries = new ArrayList<>(List.of(System.getProperty("java.class.path", "").split(Pattern.quote(separator))));
         entries.removeIf(String::isBlank);
 
-        findLombokJar(workspace).ifPresent(path -> {
+        lombokJar.ifPresent(path -> {
             String lombokPath = path.toAbsolutePath().normalize().toString();
             if (!entries.contains(lombokPath)) {
                 entries.add(lombokPath);
@@ -146,6 +165,20 @@ public final class PreviewCompiler {
         });
 
         return entries;
+    }
+
+    private Optional<Path> resolveCachedLombokJar(DevToolWorkspace workspace) {
+        Optional<Path> existing = cachedLombokJar;
+        if (existing != null) {
+            return existing;
+        }
+
+        synchronized (this) {
+            if (cachedLombokJar == null) {
+                cachedLombokJar = findLombokJar(workspace);
+            }
+            return cachedLombokJar;
+        }
     }
 
     private Optional<Path> findLombokJar(DevToolWorkspace workspace) {

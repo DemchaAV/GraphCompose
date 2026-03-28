@@ -1,5 +1,6 @@
 package com.demcha.compose.devtool;
 
+import java.awt.Desktop;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -24,6 +25,7 @@ import javafx.embed.swing.SwingFXUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Path;
@@ -36,7 +38,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -46,13 +47,14 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class GraphComposeDevTool extends Application {
     private static final double WINDOW_WIDTH = 1480;
     private static final double WINDOW_HEIGHT = 940;
-    private static final float PREVIEW_SCALE = 1.5f;
+    private static final double PREVIEW_CANVAS_PADDING = 24;
     private static final long FILE_DEBOUNCE_MILLIS = 250;
     private static final List<String> CHILD_FIRST_PREFIXES = List.of("com.demcha.");
     private static final List<String> PARENT_FIRST_PREFIXES = List.of("com.demcha.compose.devtool.");
 
     private final DevToolWorkspace workspace = DevToolWorkspace.currentProject();
     private final PreviewCompiler compiler = new PreviewCompiler();
+    private final float previewScale = PreviewScaleResolver.fromSystemProperties();
     private final ExecutorService refreshExecutor = Executors.newSingleThreadExecutor(
             Thread.ofPlatform()
                     .daemon()
@@ -63,11 +65,14 @@ public final class GraphComposeDevTool extends Application {
                     .daemon()
                     .name("graphcompose-devtool-debounce-", 0)
                     .factory());
-    private final AtomicLong latestRevision = new AtomicLong();
     private final AtomicReference<RefreshRequest> pendingRequest = new AtomicReference<>();
     private final AtomicReference<ScheduledFuture<?>> pendingDebounce = new AtomicReference<>();
     private final AtomicReference<LoadedPreview> currentPreview = new AtomicReference<>();
     private final ArrayDeque<Path> retainedOutputDirs = new ArrayDeque<>();
+    private final CoalescingRefreshWorker<RefreshRequest> refreshWorker = new CoalescingRefreshWorker<>(
+            refreshExecutor,
+            RefreshRequest::merge,
+            pending -> performRefresh(pending.revision(), pending.request()));
 
     private RecursivePathWatcher watcher;
     private Label providerValue;
@@ -75,6 +80,8 @@ public final class GraphComposeDevTool extends Application {
     private Label compileStatusValue;
     private Label timingValue;
     private Label footerStatus;
+    private Button savePdfButton;
+    private Button openPdfButton;
     private TextArea watchedRootsArea;
     private TextArea diagnosticsArea;
     private ImageView imageView;
@@ -135,6 +142,14 @@ public final class GraphComposeDevTool extends Application {
             requestRefresh(RefreshRequest.manual(), false);
         });
 
+        savePdfButton = new Button("Save PDF");
+        savePdfButton.setDisable(true);
+        savePdfButton.setOnAction(event -> exportCurrentPreview(false));
+
+        openPdfButton = new Button("Open PDF");
+        openPdfButton.setDisable(true);
+        openPdfButton.setOnAction(event -> exportCurrentPreview(true));
+
         var content = new VBox(
                 12,
                 sectionTitle("Preview Provider"),
@@ -149,6 +164,8 @@ public final class GraphComposeDevTool extends Application {
                 sectionTitle("Timing"),
                 timingValue,
                 reloadButton,
+                savePdfButton,
+                openPdfButton,
                 new Separator(),
                 sectionTitle("Diagnostics"),
                 diagnosticsArea);
@@ -170,13 +187,30 @@ public final class GraphComposeDevTool extends Application {
 
         var canvas = new StackPane(imageView, emptyState);
         canvas.setAlignment(Pos.TOP_CENTER);
-        canvas.setPadding(new Insets(24));
+        canvas.setPadding(new Insets(PREVIEW_CANVAS_PADDING));
         canvas.setStyle("-fx-background-color: linear-gradient(to bottom, #e2e8f0, #cbd5e1);");
 
         var scrollPane = new ScrollPane(canvas);
-        scrollPane.setFitToHeight(true);
+        scrollPane.setFitToWidth(true);
         scrollPane.setPannable(true);
         scrollPane.setStyle("-fx-background: transparent; -fx-border-color: transparent;");
+
+        imageView.fitWidthProperty().bind(Bindings.createDoubleBinding(() -> {
+                    Image image = imageView.getImage();
+                    if (image == null) {
+                        return 0.0;
+                    }
+
+                    double viewportWidth = scrollPane.getViewportBounds().getWidth();
+                    double availableWidth = viewportWidth - (PREVIEW_CANVAS_PADDING * 2);
+                    if (availableWidth <= 0.0) {
+                        return image.getWidth();
+                    }
+
+                    return Math.min(image.getWidth(), availableWidth);
+                },
+                imageView.imageProperty(),
+                scrollPane.viewportBoundsProperty()));
         return scrollPane;
     }
 
@@ -196,6 +230,7 @@ public final class GraphComposeDevTool extends Application {
         compileStatusValue.setText("Watching");
         timingValue.setText("Waiting for the first render");
         footerStatus.setText("Watching source files and waiting for the first preview build...");
+        updateExportButtons(null);
     }
 
     private void startWatcher() {
@@ -244,30 +279,30 @@ public final class GraphComposeDevTool extends Application {
 
         if (debounced) {
             ScheduledFuture<?> scheduled = debounceExecutor.schedule(
-                    this::submitPendingRefresh,
+                    this::flushPendingRefresh,
                     FILE_DEBOUNCE_MILLIS,
                     TimeUnit.MILLISECONDS);
             pendingDebounce.set(scheduled);
         } else {
-            submitPendingRefresh();
+            flushPendingRefresh();
         }
     }
 
-    private void submitPendingRefresh() {
+    private void flushPendingRefresh() {
         RefreshRequest request = pendingRequest.getAndSet(null);
         if (request == null) {
             return;
         }
 
-        long revision = latestRevision.incrementAndGet();
-        refreshExecutor.submit(() -> performRefresh(revision, request));
+        refreshWorker.offer(request);
+        refreshWorker.start();
     }
 
     private void performRefresh(long revision, RefreshRequest request) {
         LoadedPreview previousPreview = currentPreview.get();
         boolean shouldCompile = request.forceCompilation() || request.requiresCompilation() || previousPreview == null;
 
-        if (revision != latestRevision.get()) {
+        if (isStaleRevision(revision)) {
             return;
         }
 
@@ -285,7 +320,7 @@ public final class GraphComposeDevTool extends Application {
         if (shouldCompile) {
             compilationResult = compiler.compile(workspace, revision);
             if (!compilationResult.success()) {
-                if (revision == latestRevision.get()) {
+                if (!isStaleRevision(revision)) {
                     setFailureState(
                             "Not compiled",
                             "Compile failed",
@@ -302,7 +337,7 @@ public final class GraphComposeDevTool extends Application {
         }
 
         if (compiledOutputDir == null) {
-            if (revision == latestRevision.get()) {
+            if (!isStaleRevision(revision)) {
                 setFailureState("Not compiled",
                         "No compiled preview available",
                         "Compile the preview provider once before doing resource-only reloads.",
@@ -320,7 +355,7 @@ public final class GraphComposeDevTool extends Application {
                     PARENT_FIRST_PREFIXES);
 
             PreviewFrame frame = renderFrame(loader, revision, compiledOutputDir, sourceCount, compilationResult);
-            if (revision != latestRevision.get()) {
+            if (isStaleRevision(revision)) {
                 closeLoader(loader);
                 if (shouldCompile) {
                     PreviewCompiler.deleteDirectoryQuietly(compiledOutputDir);
@@ -328,7 +363,7 @@ public final class GraphComposeDevTool extends Application {
                 return;
             }
 
-            LoadedPreview loadedPreview = new LoadedPreview(loader, compiledOutputDir, sourceCount);
+            LoadedPreview loadedPreview = new LoadedPreview(loader, compiledOutputDir, sourceCount, frame.fileProvider());
             LoadedPreview oldPreview = currentPreview.getAndSet(loadedPreview);
             closePreview(oldPreview);
 
@@ -349,7 +384,7 @@ public final class GraphComposeDevTool extends Application {
                 PreviewCompiler.deleteDirectoryQuietly(compiledOutputDir);
             }
 
-            if (revision == latestRevision.get()) {
+            if (!isStaleRevision(revision)) {
                 long compileMillis = compilationResult == null ? 0 : compilationResult.compileMillis();
                 String timing = shouldCompile
                         ? "compile %d ms | render failed".formatted(compileMillis)
@@ -364,7 +399,7 @@ public final class GraphComposeDevTool extends Application {
                                      Path compiledOutputDir,
                                      int sourceCount,
                                      PreviewCompiler.CompilationResult compilationResult) throws Exception {
-        if (revision != latestRevision.get()) {
+        if (isStaleRevision(revision)) {
             throw new CancellationException("Stale refresh request");
         }
 
@@ -377,6 +412,9 @@ public final class GraphComposeDevTool extends Application {
         }
 
         DevToolPreviewProvider provider = (DevToolPreviewProvider) providerType.getDeclaredConstructor().newInstance();
+        DevToolPreviewFileProvider fileProvider = provider instanceof DevToolPreviewFileProvider exportable
+                ? exportable
+                : null;
         long renderStartedAt = System.nanoTime();
 
         try (PDDocument document = Objects.requireNonNull(provider.buildPreview(),
@@ -386,8 +424,8 @@ public final class GraphComposeDevTool extends Application {
                 throw new IllegalStateException("Preview provider returned a document without pages.");
             }
 
-            BufferedImage bufferedImage = PdfRenderBridge.renderToImage(document, 0, PREVIEW_SCALE);
-            if (revision != latestRevision.get()) {
+            BufferedImage bufferedImage = PdfRenderBridge.renderToImage(document, 0, previewScale);
+            if (isStaleRevision(revision)) {
                 throw new CancellationException("Stale refresh request");
             }
 
@@ -403,8 +441,13 @@ public final class GraphComposeDevTool extends Application {
                     renderMillis,
                     sourceCount,
                     compilationResult != null,
+                    fileProvider,
                     compiledOutputDir);
         }
+    }
+
+    private boolean isStaleRevision(long revision) {
+        return revision != refreshWorker.latestRevision();
     }
 
     private void retainSuccessfulOutputDir(Path outputDir) {
@@ -427,6 +470,7 @@ public final class GraphComposeDevTool extends Application {
         imageView.setImage(frame.image());
         diagnosticsArea.clear();
         compileStatusValue.setText("Rendered");
+        updateExportButtons(currentPreview.get());
         timingValue.setText(frame.compilationTriggered()
                 ? "compile %d ms | render %d ms | %d sources".formatted(
                         frame.compileMillis(),
@@ -448,6 +492,72 @@ public final class GraphComposeDevTool extends Application {
             diagnosticsArea.setText(diagnostics == null ? "" : diagnostics);
             timingValue.setText(timing);
         });
+    }
+
+    private void exportCurrentPreview(boolean openAfterSave) {
+        LoadedPreview preview = currentPreview.get();
+        if (preview == null || preview.fileProvider() == null) {
+            updateActionFeedback("Current preview provider does not support saving to a PDF file.", false);
+            return;
+        }
+
+        Platform.runLater(() -> footerStatus.setText(openAfterSave
+                ? "Saving and opening current preview PDF..."
+                : "Saving current preview PDF..."));
+
+        refreshExecutor.submit(() -> {
+            try {
+                Path savedPath = normalizeWorkspacePath(preview.fileProvider().savePreviewDocument());
+                if (openAfterSave) {
+                    openPdf(savedPath);
+                    updateActionFeedback("Saved and opened %s".formatted(workspace.displayPath(savedPath)), true);
+                } else {
+                    updateActionFeedback("Saved %s".formatted(workspace.displayPath(savedPath)), true);
+                }
+            } catch (Exception ex) {
+                updateActionFeedback("Failed to export preview PDF:%n%n%s".formatted(formatThrowable(ex)), false);
+            }
+        });
+    }
+
+    private Path normalizeWorkspacePath(Path path) {
+        if (path == null) {
+            throw new IllegalStateException("Preview provider returned no output path.");
+        }
+
+        return path.isAbsolute()
+                ? path.normalize()
+                : workspace.projectRoot().resolve(path).toAbsolutePath().normalize();
+    }
+
+    private void openPdf(Path path) throws IOException {
+        if (!Desktop.isDesktopSupported() || !Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+            throw new IOException("Desktop open action is not supported on this system.");
+        }
+
+        Desktop.getDesktop().open(path.toFile());
+    }
+
+    private void updateActionFeedback(String message, boolean success) {
+        Platform.runLater(() -> {
+            footerStatus.setText(message.replace(System.lineSeparator(), " "));
+            if (success) {
+                diagnosticsArea.clear();
+            } else {
+                diagnosticsArea.setText(message);
+            }
+            updateExportButtons(currentPreview.get());
+        });
+    }
+
+    private void updateExportButtons(LoadedPreview preview) {
+        boolean enabled = preview != null && preview.fileProvider() != null;
+        if (savePdfButton != null) {
+            savePdfButton.setDisable(!enabled);
+        }
+        if (openPdfButton != null) {
+            openPdfButton.setDisable(!enabled);
+        }
     }
 
     private void updateLastEvent(String text) {
@@ -541,7 +651,11 @@ public final class GraphComposeDevTool extends Application {
         }
     }
 
-    private record LoadedPreview(SelectiveChildFirstClassLoader classLoader, Path outputDir, int sourceCount) {
+    private record LoadedPreview(
+            SelectiveChildFirstClassLoader classLoader,
+            Path outputDir,
+            int sourceCount,
+            DevToolPreviewFileProvider fileProvider) {
     }
 
     private record PreviewFrame(
@@ -552,6 +666,7 @@ public final class GraphComposeDevTool extends Application {
             long renderMillis,
             int sourceCount,
             boolean compilationTriggered,
+            DevToolPreviewFileProvider fileProvider,
             Path outputDir) {
     }
 }

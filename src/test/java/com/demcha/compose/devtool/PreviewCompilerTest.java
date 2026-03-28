@@ -60,6 +60,7 @@ class PreviewCompilerTest {
         var compiler = new PreviewCompiler();
         var firstCompilation = compiler.compile(workspace, 1);
         assertThat(firstCompilation.success()).isTrue();
+        assertThat(firstCompilation.sourceCount()).isEqualTo(2);
 
         try (var staleParent = new URLClassLoader(
                 workspace.buildClassLoaderUrls(firstCompilation.outputDir()),
@@ -84,6 +85,7 @@ class PreviewCompilerTest {
 
             var secondCompilation = compiler.compile(workspace, 2);
             assertThat(secondCompilation.success()).isTrue();
+            assertThat(secondCompilation.sourceCount()).isEqualTo(2);
 
             try (var reloaded = new SelectiveChildFirstClassLoader(
                     workspace.buildClassLoaderUrls(secondCompilation.outputDir()),
@@ -156,6 +158,74 @@ class PreviewCompilerTest {
     }
 
     @Test
+    void shouldCompilePreviewProviderWithReferencedTestHelpersWithoutCompilingUnrelatedTests() throws Exception {
+        var workspace = createWorkspace("com.demcha.preview.HelperBackedProvider");
+
+        writeSource(
+                workspace.projectRoot().resolve("src/test/java/com/demcha/preview/PreviewText.java"),
+                """
+                        package com.demcha.preview;
+
+                        public final class PreviewText {
+                            private PreviewText() {
+                            }
+
+                            public static String value() {
+                                return "helper-value";
+                            }
+                        }
+                        """);
+
+        writeSource(
+                workspace.projectRoot().resolve("src/test/java/com/demcha/preview/HelperBackedProvider.java"),
+                """
+                        package com.demcha.preview;
+
+                        import com.demcha.compose.devtool.DevToolPreviewProvider;
+                        import org.apache.pdfbox.pdmodel.PDDocument;
+                        import org.apache.pdfbox.pdmodel.PDPage;
+
+                        public final class HelperBackedProvider implements DevToolPreviewProvider {
+                            @Override
+                            public PDDocument buildPreview() {
+                                var document = new PDDocument();
+                                document.addPage(new PDPage());
+                                document.getDocumentInformation().setTitle(PreviewText.value());
+                                return document;
+                            }
+                        }
+                        """);
+
+        writeSource(
+                workspace.projectRoot().resolve("src/test/java/com/demcha/benchmark/BrokenBenchmark.java"),
+                """
+                        package com.demcha.benchmark;
+
+                        public final class BrokenBenchmark {
+                            public void broken() {
+                                this does not compile
+                            }
+                        }
+                        """);
+
+        var result = new PreviewCompiler().compile(workspace, 1);
+
+        assertThat(result.success()).isTrue();
+        assertThat(result.sourceCount()).isEqualTo(1);
+        assertThat(result.outputDir().resolve("com/demcha/preview/PreviewText.class")).exists();
+        assertThat(result.outputDir().resolve("com/demcha/benchmark/BrokenBenchmark.class")).doesNotExist();
+
+        try (var loader = new SelectiveChildFirstClassLoader(
+                workspace.buildClassLoaderUrls(result.outputDir()),
+                PreviewCompilerTest.class.getClassLoader(),
+                List.of("com.demcha."),
+                List.of("com.demcha.compose.devtool."))) {
+
+            assertThat(documentTitle(loader, workspace.previewProviderClassName())).isEqualTo("helper-value");
+        }
+    }
+
+    @Test
     void shouldReturnCompilerDiagnosticsForBrokenSources() throws Exception {
         var workspace = createWorkspace("com.demcha.preview.BrokenProvider");
 
@@ -191,7 +261,8 @@ class PreviewCompilerTest {
 
         return new DevToolWorkspace(
                 root,
-                List.of(root.resolve("src/main/java"), root.resolve("src/test/java")),
+                List.of(root.resolve("src/main/java")),
+                List.of(root.resolve("src/test/java")),
                 List.of(root.resolve("src/main/resources"), root.resolve("src/test/resources")),
                 root.resolve("target/devtool-classes"),
                 providerClassName);

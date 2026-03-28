@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
@@ -15,7 +16,8 @@ import java.util.stream.Stream;
  */
 public record DevToolWorkspace(
         Path projectRoot,
-        List<Path> javaRoots,
+        List<Path> mainJavaRoots,
+        List<Path> previewJavaRoots,
         List<Path> resourceRoots,
         Path compiledOutputRoot,
         String previewProviderClassName) {
@@ -25,7 +27,8 @@ public record DevToolWorkspace(
 
     public DevToolWorkspace {
         projectRoot = normalize(projectRoot);
-        javaRoots = List.copyOf(javaRoots.stream().map(DevToolWorkspace::normalize).toList());
+        mainJavaRoots = List.copyOf(mainJavaRoots.stream().map(DevToolWorkspace::normalize).toList());
+        previewJavaRoots = List.copyOf(previewJavaRoots.stream().map(DevToolWorkspace::normalize).toList());
         resourceRoots = List.copyOf(resourceRoots.stream().map(DevToolWorkspace::normalize).toList());
         compiledOutputRoot = normalize(compiledOutputRoot);
         previewProviderClassName = Objects.requireNonNull(previewProviderClassName, "previewProviderClassName");
@@ -37,14 +40,17 @@ public record DevToolWorkspace(
 
         return new DevToolWorkspace(
                 root,
-                List.of(root.resolve("src/main/java"), root.resolve("src/test/java")),
+                List.of(root.resolve("src/main/java")),
+                List.of(root.resolve("src/test/java")),
                 List.of(root.resolve("src/main/resources"), root.resolve("src/test/resources")),
                 root.resolve("target/devtool-classes"),
                 previewClass);
     }
 
     public List<Path> watchRoots() {
-        return Stream.concat(javaRoots.stream(), resourceRoots.stream()).toList();
+        return Stream.concat(
+                Stream.concat(mainJavaRoots.stream(), previewJavaRoots.stream()),
+                resourceRoots.stream()).toList();
     }
 
     public List<Path> existingWatchRoots() {
@@ -52,19 +58,50 @@ public record DevToolWorkspace(
     }
 
     public List<Path> existingJavaRoots() {
-        return javaRoots.stream().filter(Files::isDirectory).toList();
+        return Stream.concat(existingMainJavaRoots().stream(), existingPreviewJavaRoots().stream()).toList();
+    }
+
+    public List<Path> existingMainJavaRoots() {
+        return mainJavaRoots.stream().filter(Files::isDirectory).toList();
+    }
+
+    public List<Path> existingPreviewJavaRoots() {
+        return previewJavaRoots.stream().filter(Files::isDirectory).toList();
     }
 
     public List<Path> existingResourceRoots() {
         return resourceRoots.stream().filter(Files::isDirectory).toList();
     }
 
-    public List<Path> collectJavaSources() throws IOException {
+    public List<Path> collectExplicitCompilationUnits() throws IOException {
+        Optional<Path> previewProviderSource = findPreviewProviderSource();
+        if (previewProviderSource.isEmpty()) {
+            throw new IOException("Preview provider source not found for %s.".formatted(previewProviderClassName));
+        }
+
+        var sources = new ArrayList<>(collectJavaSources(existingMainJavaRoots()));
+        Path providerSource = previewProviderSource.get();
+        if (!sources.contains(providerSource)) {
+            sources.add(providerSource);
+        }
+        return List.copyOf(sources);
+    }
+
+    public Optional<Path> findPreviewProviderSource() {
+        String relativeSourcePath = previewProviderClassName.replace('.', '/') + ".java";
+        return existingJavaRoots().stream()
+                .map(root -> normalize(root.resolve(relativeSourcePath)))
+                .filter(Files::isRegularFile)
+                .findFirst();
+    }
+
+    private static List<Path> collectJavaSources(List<Path> roots) throws IOException {
         var sources = new ArrayList<Path>();
-        for (Path root : existingJavaRoots()) {
+        for (Path root : roots) {
             try (var stream = Files.walk(root)) {
                 stream.filter(Files::isRegularFile)
                         .filter(path -> path.getFileName().toString().endsWith(".java"))
+                        .map(DevToolWorkspace::normalize)
                         .sorted()
                         .forEach(sources::add);
             }
@@ -76,7 +113,8 @@ public record DevToolWorkspace(
         return path != null
                 && path.getFileName() != null
                 && path.getFileName().toString().endsWith(".java")
-                && javaRoots.stream().anyMatch(root -> isUnderRoot(root, path));
+                && Stream.concat(mainJavaRoots.stream(), previewJavaRoots.stream())
+                        .anyMatch(root -> isUnderRoot(root, path));
     }
 
     public boolean isResourcePath(Path path) {

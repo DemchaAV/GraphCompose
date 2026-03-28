@@ -10,6 +10,9 @@
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License"/>
   <img src="https://img.shields.io/badge/PDFBox-3.0-red?style=for-the-badge" alt="PDFBox 3.0"/>
   <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge" alt="Active"/>
+  <a href="https://jitpack.io/#DemchaAV/GraphCompose">
+    <img src="https://jitpack.io/v/DemchaAV/GraphCompose.svg" alt="JitPack"/>
+  </a>
 </p>
 
 <p align="center">

@@ -19,7 +19,7 @@ public class ImageBuilder extends EmptyBox<ImageBuilder> {
     private Double fitWidth;
     private Double fitHeight;
 
-    public ImageBuilder(EntityManager entityManager) {
+    ImageBuilder(EntityManager entityManager) {
         super(entityManager);
     }
 
@@ -88,8 +88,7 @@ public class ImageBuilder extends EmptyBox<ImageBuilder> {
             entity.addComponent(resolveContentSize(intrinsicSize, padding));
         }
 
-        manager().putEntity(entity);
-        return entity;
+        return registerBuiltEntity();
     }
 
     private ContentSize resolveContentSize(ImageIntrinsicSize intrinsicSize, Padding padding) {

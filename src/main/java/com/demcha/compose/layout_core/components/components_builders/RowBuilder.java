@@ -13,7 +13,7 @@ public class RowBuilder extends ContainerBuilder<RowBuilder> {
      *
      * @param entityManager The {@link EntityManager} to which the container and its entities will belong.
      */
-    public RowBuilder(EntityManager entityManager, Align align) {
+    RowBuilder(EntityManager entityManager, Align align) {
         super(entityManager,align);
     }
 

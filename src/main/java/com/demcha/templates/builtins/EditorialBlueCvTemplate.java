@@ -22,7 +22,6 @@ import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.Canvas;
 import com.demcha.compose.layout_core.core.DocumentComposer;
-import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.templates.CvTheme;
 import com.demcha.templates.api.CvTemplate;
@@ -153,10 +152,9 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     private void designDocument(DocumentComposer composer, MainPageCV data) {
         Canvas canvas = composer.canvas();
         ComponentBuilder cb = composer.componentBuilder();
-        EntityManager entityManager = cb.entityManager();
         double width = canvas.innerWidth();
 
-        VContainerBuilder root = new VContainerBuilder(entityManager, Align.left(ROOT_SPACING))
+        VContainerBuilder root = cb.vContainer(Align.left(ROOT_SPACING))
                 .entityName(ROOT_NAME)
                 .size(width, 0)
                 .anchor(Anchor.topLeft());

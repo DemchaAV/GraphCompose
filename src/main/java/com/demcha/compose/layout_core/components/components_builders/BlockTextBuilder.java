@@ -58,7 +58,7 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
     private TextStyle textStyle;
     private String bulletOffset;
 
-    public BlockTextBuilder(EntityManager entityManager, Align align, TextStyle textStyle) {
+    BlockTextBuilder(EntityManager entityManager, Align align, TextStyle textStyle) {
         super(entityManager);
         align(align);
         this.textStyle = textStyle;
@@ -644,8 +644,7 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
     public Entity build() {
         ContentSize contentSize = computeContentSize();
         entity.addComponent(contentSize);
-        manager().putEntity(entity());
-        return entity();
+        return registerBuiltEntity();
     }
 
     private List<TextDataBody> tokenizeMarkdownLine(String explicitLine,

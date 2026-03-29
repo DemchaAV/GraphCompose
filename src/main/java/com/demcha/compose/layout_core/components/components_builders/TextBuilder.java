@@ -18,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 public class TextBuilder extends EmptyBox<TextBuilder> {
     private boolean autosize;
 
-    public TextBuilder(EntityManager entityManager) {
+    TextBuilder(EntityManager entityManager) {
         super(entityManager);
     }
 
@@ -68,8 +68,7 @@ public class TextBuilder extends EmptyBox<TextBuilder> {
 
                 entity.addComponent(new ContentSize(textWidth, textHeight));
             }
-            manager().putEntity(entity);
-            return entity;
+            return registerBuiltEntity();
         } else {
             log.error("TextComponent Component  has not been initialized");
             throw new TextComponentException(TextComponent.class + " Component  has not been initialized");

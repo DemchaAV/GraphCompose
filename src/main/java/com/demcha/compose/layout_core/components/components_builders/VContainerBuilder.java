@@ -13,7 +13,7 @@ public class VContainerBuilder extends ContainerBuilder<VContainerBuilder> {
      *
      * @param entityManager The {@link EntityManager} to which the container will be added.
      */
-    public VContainerBuilder(EntityManager entityManager, Align align) {
+    VContainerBuilder(EntityManager entityManager, Align align) {
         super(entityManager,align);
     }
 

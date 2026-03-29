@@ -20,7 +20,6 @@ import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.core.Canvas;
-import com.demcha.compose.layout_core.core.EntityManager;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -33,7 +32,7 @@ import java.util.Objects;
  * It uses {@link CvTheme} to determine visual appearance (fonts, colors, sizes).
  */
 @Accessors(fluent = true)
-public class TemplateBuilder implements BuildEntity {
+public class TemplateBuilder {
     private static final double DEFAULT_BLOCK_TEXT_WIDTH = 500;
     private static final double INFO_PANEL_SEPARATOR_WIDTH = 1;
     private static final double INFO_PANEL_SEPARATOR_FALLBACK_HEIGHT = 10;
@@ -41,31 +40,24 @@ public class TemplateBuilder implements BuildEntity {
     private static final double TITLE_MARGIN = 5;
 
     @Getter
-    private final EntityManager entityManager;
+    private final ComponentBuilder componentBuilder;
     @Getter
     private final CvTheme theme;
 
     /**
      * Constructor with custom theme.
      */
-    public TemplateBuilder(EntityManager entityManager, CvTheme theme) {
-        this.entityManager = entityManager;
+    private TemplateBuilder(ComponentBuilder componentBuilder, CvTheme theme) {
+        this.componentBuilder = Objects.requireNonNull(componentBuilder, "componentBuilder");
         this.theme = Objects.requireNonNullElse(theme, CvTheme.courier());
     }
 
-    /**
-     * Default constructor uses the default theme.
-     */
-    public TemplateBuilder(EntityManager entityManager) {
-        this(entityManager, CvTheme.courier());
-    }
-
     public static TemplateBuilder from(ComponentBuilder componentBuilder) {
-        return new TemplateBuilder(componentBuilder.entityManager());
+        return new TemplateBuilder(componentBuilder, CvTheme.courier());
     }
 
     public static TemplateBuilder from(ComponentBuilder componentBuilder, CvTheme theme) {
-        return new TemplateBuilder(componentBuilder.entityManager(), theme);
+        return new TemplateBuilder(componentBuilder, theme);
     }
 
     // ==========================================
@@ -73,7 +65,7 @@ public class TemplateBuilder implements BuildEntity {
     // ==========================================
 
     public Entity name(String name) {
-        return new TextBuilder(entityManager)
+        return componentBuilder.text()
                 .textWithAutoSize(name)
                 .anchor(Anchor.topRight()) // Anchor can be parameterized if needed
                 .margin(Margin.bottom(5))
@@ -82,7 +74,7 @@ public class TemplateBuilder implements BuildEntity {
     }
 
     public Entity info(String info) {
-        return new TextBuilder(entityManager)
+        return componentBuilder.text()
                 .textWithAutoSize(info)
                 .anchor(Anchor.center())
                 .textStyle(theme.smallBodyTextStyle()) // Using Theme
@@ -105,7 +97,7 @@ public class TemplateBuilder implements BuildEntity {
                 .orElse(INFO_PANEL_SEPARATOR_FALLBACK_HEIGHT);
 
         Anchor defaultAnchor = Anchor.topRight();
-        var container = new HContainerBuilder(entityManager, Align.right(5))
+        var container = componentBuilder.hContainer(Align.right(5))
                 .anchor(resolveAnchor(anchorContainer, defaultAnchor));
 
         for (int i = 0; i < entities.size(); i++) {
@@ -118,10 +110,10 @@ public class TemplateBuilder implements BuildEntity {
     }
 
     public <T extends LinkUrl> Entity link(T link, String displayText) {
-        return new LinkBuilder(entityManager)
+        return componentBuilder.link()
                 .linkUrl(link)
                 .anchor(Anchor.centerRight())
-                .displayText(new DisplayUrlTextBuilder(entityManager)
+                .displayText(componentBuilder.displayUrlText()
                         .textWithAutoSize(displayText)
                         .textStyle(theme.linkTextStyle()) // Using Theme Link Style
                 )
@@ -136,7 +128,7 @@ public class TemplateBuilder implements BuildEntity {
      * Private helper to create consistently styled section titles.
      */
     private Entity createModuleTitle(String title) {
-        return new TextBuilder(entityManager)
+        return componentBuilder.text()
                 .textWithAutoSize(title)
                 .entityName("Title_" + title)
                 .anchor(Anchor.topLeft())
@@ -146,7 +138,7 @@ public class TemplateBuilder implements BuildEntity {
     }
 
     public ModuleBuilder moduleBuilder(String moduleName, PDPage page) {
-        var moduleHeader = new ModuleBuilder(entityManager, Align.middle(5), page)
+        var moduleHeader = componentBuilder.moduleBuilder(Align.middle(5), page)
                 .margin(Margin.of(20))
                 .anchor(Anchor.topRight());
 
@@ -155,7 +147,7 @@ public class TemplateBuilder implements BuildEntity {
     }
 
     public ModuleBuilder moduleBuilder(String moduleName, Canvas canvas) {
-        var moduleHeader = new ModuleBuilder(entityManager, Align.middle(theme().spacingModuleName()), canvas)
+        var moduleHeader = componentBuilder.moduleBuilder(Align.middle(theme().spacingModuleName()), canvas)
                 .anchor(Anchor.topLeft());
 
         addModuleTitleIfPresent(moduleHeader, moduleName);
@@ -168,7 +160,7 @@ public class TemplateBuilder implements BuildEntity {
     public ModuleBuilder moduleBuilder(String moduleName, Canvas canvas, List<String> modulePoints) {
         var moduleHeader = moduleBuilder(moduleName, canvas);
 
-        var vbox = new VContainerBuilder(entityManager, Align.middle(5))
+        var vbox = componentBuilder.vContainer(Align.middle(5))
                 .size(new ContentSize(canvas.innerWidth(), 50));
 
         for (String point : modulePoints) {
@@ -210,7 +202,7 @@ public class TemplateBuilder implements BuildEntity {
      */
     public Entity blockText(List<String> text, double width, String bulletOffset, BlockIndentStrategy strategy) {
         TextStyle style = theme.bodyTextStyle();
-        return new BlockTextBuilder(entityManager, bodyAlign(), style)
+        return componentBuilder.blockText(bodyAlign(), style)
                 .size(width, 2)
                 .strategy(strategy)
                 .padding(0, 5, 0, 20)
@@ -225,11 +217,11 @@ public class TemplateBuilder implements BuildEntity {
      */
     private BlockTextBuilder blockTextBuilder(String text, double width) {
         TextStyle bodyStyle = theme.bodyTextStyle();
-        TextBuilder textBuilder = new TextBuilder(entityManager)
+        TextBuilder textBuilder = componentBuilder.text()
                 .textWithAutoSize(text)
                 .textStyle(bodyStyle);
 
-        return new BlockTextBuilder(entityManager, bodyAlign(), bodyStyle)
+        return componentBuilder.blockText(bodyAlign(), bodyStyle)
                 .size(width, 2)
                 .padding(0, 5, 0, 25)
                 .text(textBuilder);
@@ -244,7 +236,7 @@ public class TemplateBuilder implements BuildEntity {
     }
 
     private Entity createInfoSeparator(double height, Anchor anchor) {
-        return new RectangleBuilder(entityManager)
+        return componentBuilder.rectangle()
                 .size(new ContentSize(INFO_PANEL_SEPARATOR_WIDTH, height))
                 .fillColor(new ComponentColor(theme.bodyColor()))
                 .margin(0, INFO_PANEL_SEPARATOR_MARGIN, 0, INFO_PANEL_SEPARATOR_MARGIN)
@@ -256,26 +248,6 @@ public class TemplateBuilder implements BuildEntity {
         if (moduleName != null) {
             moduleBuilder.addChild(createModuleTitle(moduleName));
         }
-    }
-
-    /**
-     * Returns the {@link EntityManager} associated with this builder.
-     *
-     * @return The associated {@link EntityManager}.
-     */
-    @Override
-    public EntityManager manager() {
-        return entityManager;
-    }
-
-    /**
-     * Returns the {@link Entity} object that is currently being built by this builder.
-     *
-     * @return The entity being built.
-     */
-    @Override
-    public Entity entity() {
-        return null;
     }
 }
 

@@ -1,11 +1,10 @@
 package com.demcha.compose.layout_core.components.containers.abstract_builders;
 
 import com.demcha.compose.layout_core.components.core.Entity;
-import com.demcha.compose.layout_core.core.EntityManager;
 
 /**
  * The {@code BuildEntity} interface defines a contract for classes that are responsible for building an {@link Entity} object.
- * It provides methods to build the entity, access the associated {@link EntityManager}, and retrieve the entity being built.
+ * It provides methods to build the entity and retrieve the entity being built.
  * <p>
  * Implementations of this interface are typically used in builder patterns to construct complex {@link Entity} objects step-by-step.
  */
@@ -17,18 +16,9 @@ public interface BuildEntity {
      *
      * @return The fully constructed and assembled {@link Entity} object.
      */
-    default Entity build(){
-        manager().putEntity(entity());
-        return entity();
-    }
+    Entity build();
 
-
-    /**
-     * Returns the {@link EntityManager} associated with this builder.
-     *
-     * @return The associated {@link EntityManager}.
-     */
-    EntityManager manager();
+    boolean built();
 
     /**
      * Returns the {@link Entity} object that is currently being built by this builder.

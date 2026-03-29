@@ -8,8 +8,10 @@ import com.demcha.compose.layout_core.components.components_builders.LineBuilder
 import com.demcha.compose.layout_core.components.content.shape.LinePath;
 import com.demcha.compose.layout_core.components.renderable.Circle;
 import com.demcha.compose.layout_core.components.renderable.Line;
+import com.demcha.compose.layout_core.components.renderable.Module;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.geometry.ContentSize;
+import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.core.DocumentComposer;
 import org.junit.jupiter.api.Test;
 
@@ -62,6 +64,30 @@ class ComponentBuilderTest {
                         assertThat(size.width()).isEqualTo(120);
                         assertThat(size.height()).isEqualTo(8);
                     });
+        }
+    }
+
+    @Test
+    void shouldCreateModuleUsingCanvasOverload() throws Exception {
+        try (DocumentComposer composer = GraphCompose.pdf().create()) {
+            var entity = composer.componentBuilder()
+                    .moduleBuilder(Align.middle(4), composer.canvas())
+                    .build();
+
+            assertThat(entity.hasAssignable(Module.class)).isTrue();
+            assertThat(entity.getComponent(ContentSize.class)).isPresent();
+        }
+    }
+
+    @Test
+    void shouldCreateModuleUsingContentSizeOverload() throws Exception {
+        try (DocumentComposer composer = GraphCompose.pdf().create()) {
+            var entity = composer.componentBuilder()
+                    .moduleBuilder(Align.middle(4), new ContentSize(240, 120))
+                    .build();
+
+            assertThat(entity.hasAssignable(Module.class)).isTrue();
+            assertThat(entity.getComponent(ContentSize.class)).isPresent();
         }
     }
 

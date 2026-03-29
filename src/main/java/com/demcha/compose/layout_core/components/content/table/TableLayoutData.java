@@ -1,6 +1,7 @@
 package com.demcha.compose.layout_core.components.content.table;
 
 import com.demcha.compose.layout_core.components.core.Component;
+import com.demcha.compose.layout_core.components.core.Entity;
 
 import java.util.List;
 import java.util.Objects;
@@ -13,10 +14,13 @@ public record TableLayoutData(
         double naturalWidth,
         double finalWidth,
         int rowCount,
-        int columnCount
+        int columnCount,
+        List<Entity> rowEntities
 ) implements Component {
     public TableLayoutData {
         Objects.requireNonNull(columnWidths, "columnWidths");
+        Objects.requireNonNull(rowEntities, "rowEntities");
         columnWidths = List.copyOf(columnWidths);
+        rowEntities = List.copyOf(rowEntities);
     }
 }

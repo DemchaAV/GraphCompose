@@ -190,7 +190,8 @@ public class CvTemplateV1 implements CvTemplate {
                         cv.link(new LinkUrl(gitHub.getLinkUrl().getUrl()), gitHub.getDisplayText())), null,
                 null);
 
-        return new ModuleBuilder(cv.entityManager(), Align.middle(5), canvas)
+        return cv.componentBuilder()
+                .moduleBuilder(Align.middle(5), canvas)
                 .entityName(HEADER_ENTITY_NAME)
                 .margin(new Margin(0, 10, 10, 10))
                 .anchor(Anchor.topRight())

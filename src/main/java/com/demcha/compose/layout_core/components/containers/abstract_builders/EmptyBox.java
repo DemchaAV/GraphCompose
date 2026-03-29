@@ -29,6 +29,7 @@ public abstract class EmptyBox<T> extends EntityBuilderBase<T> implements BuildE
      * and is used by concrete implementations to interact with the PDF.
      */
     protected final EntityManager entityManager;
+    private boolean built;
 
     protected EmptyBox(EntityManager entityManager) {
         this.entityManager = entityManager;
@@ -61,7 +62,18 @@ public abstract class EmptyBox<T> extends EntityBuilderBase<T> implements BuildE
     }
 
     @Override
-    public EntityManager manager() {
-        return entityManager;
+    public boolean built() {
+        return built;
+    }
+
+    @Override
+    public Entity build() {
+        return registerBuiltEntity();
+    }
+
+    protected final Entity registerBuiltEntity() {
+        entityManager.putEntity(entity);
+        built = true;
+        return entity;
     }
 }

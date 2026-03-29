@@ -21,7 +21,7 @@ public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
      * Constructs a new {@code ModuleBuilder} without a canvas.
      * Width will default to 0 in initialize().
      */
-    public ModuleBuilder(EntityManager entityManager, Align align) {
+    ModuleBuilder(EntityManager entityManager, Align align) {
         super(entityManager, align);
         this.canvas = null;
     }
@@ -29,7 +29,7 @@ public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
     /**
      * Constructs a new {@code ModuleBuilder} with a ContentSize-based canvas.
      */
-    public ModuleBuilder(EntityManager entityManager, Align align, ContentSize contentSize) {
+    ModuleBuilder(EntityManager entityManager, Align align, ContentSize contentSize) {
         super(entityManager, align);
         if (contentSize == null) {
             this.canvas = null;
@@ -41,7 +41,7 @@ public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
     /**
      * Constructs a new {@code ModuleBuilder} with an actual Canvas.
      */
-    public ModuleBuilder(EntityManager entityManager, Align align, Canvas canvas) {
+    ModuleBuilder(EntityManager entityManager, Align align, Canvas canvas) {
         super(entityManager, align);
         this.canvas = canvas;
     }
@@ -49,14 +49,14 @@ public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
     /**
      * Constructs a new {@code ModuleBuilder} with a PDPage.
      */
-    public ModuleBuilder(EntityManager entityManager, Align align, PDPage page) {
+    ModuleBuilder(EntityManager entityManager, Align align, PDPage page) {
         this(entityManager, align, new ContentSize(page.getMediaBox().getWidth(), page.getMediaBox().getHeight()));
     }
 
     /**
      * Constructs a new {@code ModuleBuilder} with an InnerBoxSize.
      */
-    public ModuleBuilder(EntityManager entityManager, Align align, InnerBoxSize innerBoxSize) {
+    ModuleBuilder(EntityManager entityManager, Align align, InnerBoxSize innerBoxSize) {
         this(entityManager, align, new ContentSize(innerBoxSize.width(), innerBoxSize.height()));
     }
 

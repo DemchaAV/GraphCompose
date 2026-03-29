@@ -31,7 +31,7 @@ class TableBuilderTest {
                     .build();
 
             TableLayoutData layoutData = table.getComponent(TableLayoutData.class).orElseThrow();
-            Entity firstRow = child(table, composer, 0);
+            Entity firstRow = child(table, 0);
             TableRowData rowData = firstRow.getComponent(TableRowData.class).orElseThrow();
 
             assertThat(layoutData.columnWidths()).hasSize(2);
@@ -107,13 +107,13 @@ class TableBuilderTest {
                     .row("C", "D")
                     .build();
 
-            TableResolvedCell firstRowFirstCell = child(table, composer, 0)
+            TableResolvedCell firstRowFirstCell = child(table, 0)
                     .getComponent(TableRowData.class)
                     .orElseThrow()
                     .cells()
                     .getFirst();
 
-            TableResolvedCell secondRowFirstCell = child(table, composer, 1)
+            TableResolvedCell secondRowFirstCell = child(table, 1)
                     .getComponent(TableRowData.class)
                     .orElseThrow()
                     .cells()
@@ -163,7 +163,7 @@ class TableBuilderTest {
                     .row("A", "B")
                     .build();
 
-            Entity row = child(table, composer, 0);
+            Entity row = child(table, 0);
             TableResolvedCell cell = row.getComponent(TableRowData.class).orElseThrow().cells().getFirst();
 
             assertThat(row.getComponent(EntityName.class)).hasValue(new EntityName("Orders__row_0"));
@@ -181,19 +181,19 @@ class TableBuilderTest {
                     .row("C", "D")
                     .build();
 
-            TableResolvedCell firstRowFirstCell = child(table, composer, 0)
+            TableResolvedCell firstRowFirstCell = child(table, 0)
                     .getComponent(TableRowData.class)
                     .orElseThrow()
                     .cells()
                     .getFirst();
 
-            TableResolvedCell firstRowSecondCell = child(table, composer, 0)
+            TableResolvedCell firstRowSecondCell = child(table, 0)
                     .getComponent(TableRowData.class)
                     .orElseThrow()
                     .cells()
                     .get(1);
 
-            TableResolvedCell secondRowSecondCell = child(table, composer, 1)
+            TableResolvedCell secondRowSecondCell = child(table, 1)
                     .getComponent(TableRowData.class)
                     .orElseThrow()
                     .cells()
@@ -224,7 +224,7 @@ class TableBuilderTest {
                     .row("C", "D")
                     .build();
 
-            TableResolvedCell secondRowSecondCell = child(table, composer, 1)
+            TableResolvedCell secondRowSecondCell = child(table, 1)
                     .getComponent(TableRowData.class)
                     .orElseThrow()
                     .cells()
@@ -237,7 +237,8 @@ class TableBuilderTest {
         }
     }
 
-    private Entity child(Entity parent, PdfComposer composer, int index) {
-        return composer.entityManager().getEntity(parent.getChildren().get(index)).orElseThrow();
+    private Entity child(Entity parent, int index) {
+        TableLayoutData layoutData = parent.getComponent(TableLayoutData.class).orElseThrow();
+        return layoutData.rowEntities().get(index);
     }
 }

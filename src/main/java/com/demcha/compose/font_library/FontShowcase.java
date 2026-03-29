@@ -1,8 +1,8 @@
 package com.demcha.compose.font_library;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.layout_core.components.components_builders.ComponentBuilder;
 import com.demcha.compose.layout_core.components.components_builders.ModuleBuilder;
-import com.demcha.compose.layout_core.components.components_builders.TextBuilder;
 import com.demcha.compose.layout_core.components.content.text.TextDecoration;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.core.Entity;
@@ -10,7 +10,6 @@ import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.core.DocumentComposer;
-import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
@@ -67,15 +66,15 @@ public final class FontShowcase {
     }
 
     public static void buildShowcase(DocumentComposer composer, Collection<FontName> fonts) {
-        EntityManager entityManager = composer.entityManager();
+        ComponentBuilder cb = composer.componentBuilder();
 
-        Entity title = text(entityManager, "Available Fonts Preview", FontName.HELVETICA, 22, TextDecoration.BOLD,
+        Entity title = text(cb, "Available Fonts Preview", FontName.HELVETICA, 22, TextDecoration.BOLD,
                 new Color(34, 34, 34), Margin.bottom(6));
-        Entity subtitle = text(entityManager,
+        Entity subtitle = text(cb,
                 "Each section shows the family name and sample lines in regular, bold, italic and bold-italic styles.",
                 FontName.HELVETICA, 10, TextDecoration.DEFAULT, new Color(90, 90, 90), Margin.bottom(12));
 
-        ModuleBuilder root = new ModuleBuilder(entityManager, Align.middle(16), composer.canvas())
+        ModuleBuilder root = cb.moduleBuilder(Align.middle(16), composer.canvas())
                 .entityName("AvailableFontsPreview")
                 .anchor(Anchor.topLeft());
 
@@ -83,25 +82,25 @@ public final class FontShowcase {
         root.addChild(subtitle);
 
         for (FontName fontName : fonts) {
-            root.addChild(fontSection(entityManager, composer, fontName));
+            root.addChild(fontSection(cb, composer, fontName));
         }
 
         root.build();
     }
 
-    private static Entity fontSection(EntityManager entityManager, DocumentComposer composer, FontName fontName) {
-        Entity label = text(entityManager, fontName.name(), FontName.HELVETICA, 12, TextDecoration.BOLD,
+    private static Entity fontSection(ComponentBuilder cb, DocumentComposer composer, FontName fontName) {
+        Entity label = text(cb, fontName.name(), FontName.HELVETICA, 12, TextDecoration.BOLD,
                 new Color(25, 25, 25), Margin.bottom(2));
-        Entity regular = text(entityManager, "Regular: " + SAMPLE_TEXT, fontName, 11, TextDecoration.DEFAULT,
+        Entity regular = text(cb, "Regular: " + SAMPLE_TEXT, fontName, 11, TextDecoration.DEFAULT,
                 Color.BLACK, Margin.bottom(1));
-        Entity bold = text(entityManager, "Bold: " + SAMPLE_TEXT, fontName, 11, TextDecoration.BOLD, Color.BLACK,
+        Entity bold = text(cb, "Bold: " + SAMPLE_TEXT, fontName, 11, TextDecoration.BOLD, Color.BLACK,
                 Margin.bottom(1));
-        Entity italic = text(entityManager, "Italic: " + SAMPLE_TEXT, fontName, 11, TextDecoration.ITALIC,
+        Entity italic = text(cb, "Italic: " + SAMPLE_TEXT, fontName, 11, TextDecoration.ITALIC,
                 Color.BLACK, Margin.bottom(1));
-        Entity boldItalic = text(entityManager, "Bold Italic: " + SAMPLE_TEXT, fontName, 11,
+        Entity boldItalic = text(cb, "Bold Italic: " + SAMPLE_TEXT, fontName, 11,
                 TextDecoration.BOLD_ITALIC, Color.BLACK, Margin.bottom(4));
 
-        return new ModuleBuilder(entityManager, Align.middle(2), composer.canvas())
+        return cb.moduleBuilder(Align.middle(2), composer.canvas())
                 .entityName("FontSection_" + fontName.name())
                 .anchor(Anchor.topLeft())
                 .margin(Margin.bottom(8))
@@ -113,7 +112,7 @@ public final class FontShowcase {
                 .build();
     }
 
-    private static Entity text(EntityManager entityManager,
+    private static Entity text(ComponentBuilder cb,
             String value,
             FontName fontName,
             double size,
@@ -121,7 +120,7 @@ public final class FontShowcase {
             Color color,
             Margin margin) {
 
-        return new TextBuilder(entityManager)
+        return cb.text()
                 .textWithAutoSize(value)
                 .textStyle(new TextStyle(fontName, size, decoration, color))
                 .anchor(Anchor.topLeft())

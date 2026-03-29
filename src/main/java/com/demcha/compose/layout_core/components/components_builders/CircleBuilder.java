@@ -10,7 +10,7 @@ import com.demcha.compose.layout_core.core.EntityManager;
 import java.awt.Color;
 
 public class CircleBuilder extends EmptyBox<CircleBuilder> {
-    public CircleBuilder(EntityManager entityManager) {
+    CircleBuilder(EntityManager entityManager) {
         super(entityManager);
     }
 

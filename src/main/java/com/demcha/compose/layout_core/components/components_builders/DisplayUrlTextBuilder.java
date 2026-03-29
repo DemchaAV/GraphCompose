@@ -5,7 +5,7 @@ import com.demcha.compose.layout_core.core.EntityManager;
 
 public class DisplayUrlTextBuilder extends TextBuilder{
 
-    public DisplayUrlTextBuilder(EntityManager entityManager) {
+    DisplayUrlTextBuilder(EntityManager entityManager) {
         super(entityManager);
     }
 

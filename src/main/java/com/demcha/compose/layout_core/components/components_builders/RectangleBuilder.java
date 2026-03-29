@@ -5,7 +5,7 @@ import com.demcha.compose.layout_core.components.renderable.Rectangle;
 import com.demcha.compose.layout_core.core.EntityManager;
 
 public class RectangleBuilder extends ShapeBuilderBase<RectangleBuilder> {
-    public RectangleBuilder(EntityManager entityManager) {
+    RectangleBuilder(EntityManager entityManager) {
         super(entityManager);
     }
 

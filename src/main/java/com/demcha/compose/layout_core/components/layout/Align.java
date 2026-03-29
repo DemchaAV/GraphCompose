@@ -7,8 +7,16 @@ import com.demcha.compose.layout_core.components.layout.coordinator.Position;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Align = like Anchor, but used when local Position is absent.
- * If Position is present, Align acts as a base; Position is an offset from that base.
+ * Container-oriented alignment metadata.
+ * <p>
+ * {@code Align} describes how children should be arranged inside a parent
+ * container and what spacing should separate siblings. It plays a role similar
+ * to {@link Anchor}, but at the container layout level rather than the per-entity
+ * absolute placement level.
+ * </p>
+ *
+ * <p>Builders usually attach this component to containers, and layout utilities
+ * later consume it when distributing children inside the parent's inner box.</p>
  */
 @Slf4j
 public record Align(HAnchor h, VAnchor v, double spacing) implements Component {

@@ -13,15 +13,15 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Objects;
 
 /**
- * Represents an object that can be anchored to a specific position.
+ * Per-entity placement anchor used during layout.
+ * <p>
+ * {@code Anchor} tells the layout system how an entity should be positioned
+ * inside its available area. Combined with {@code Position}, margin, padding,
+ * and parent inner size, it produces the entity's {@code ComputedPosition}.
+ * </p>
  *
- * <p>Implementations of this interface provide access to an {@link Anchor}
- * that defines how the object is positioned or aligned within its container
- * or relative to another element.</p>
- *
- * <p>The meaning of the anchor depends on the context — for example, in a
- * UI layout system it might define alignment (e.g., top-left, center, bottom-right),
- * while in a graphics system it might define a fixed reference point.</p>
+ * <p>Builders attach anchors while describing the document; layout later
+ * consumes them to convert relative intent into absolute coordinates.</p>
  */
 @Slf4j
 public record Anchor(HAnchor h, VAnchor v) implements Component {
@@ -69,6 +69,10 @@ public record Anchor(HAnchor h, VAnchor v) implements Component {
         return new Anchor(HAnchor.DEFAULT, VAnchor.DEFAULT);
     }
 
+    /**
+     * Converts a computed outer-box position into a rendering origin inside the
+     * entity's margin box.
+     */
     public static RenderingPosition renderingPosition(ComputedPosition computedPosition, Margin margin) {
         Objects.requireNonNull(computedPosition, "computedPosition cannot be null");
         Objects.requireNonNull(margin, "margin cannot be null");
@@ -83,6 +87,9 @@ public record Anchor(HAnchor h, VAnchor v) implements Component {
         return renderingPosition;
     }
 
+    /**
+     * Computes a child's anchored position inside a parent inner box.
+     */
     public ComputedPosition getComputedPosition(Entity child, InnerBoxSize perrentInnerBoxSize) {
         log.debug("Starting calculation of computed position for {} ", child);
         var position = child.getComponent(Position.class).orElse(Position.zero());

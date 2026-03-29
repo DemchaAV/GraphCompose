@@ -13,18 +13,15 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * An abstract base class for building container components (e.g., HContainer, VContainer)
- * within a Entity Manager. This class provides common functionality for managing child entities,
- * handling alignment, and calculating container dimensions.
+ * Base class for builders that own child entities and participate in container layout.
+ * <p>
+ * Container builders extend the basic entity registration behavior from
+ * {@link EmptyBox} and add a parent/child contract. Child entities are linked
+ * through {@code ParentComponent}, and the layout system later uses those links
+ * to compute hierarchy-aware size expansion, alignment, and placement.
+ * </p>
  *
- * <p>Subclasses are responsible for implementing specific layout logic, such as how child
- * positions are updated and how container dimensions are calculated based on the children
- * and the container's type (horizontal or vertical).</p>
- * <p>This class provides a fluent API for building container components.</p>
- * <p>It extends {@link EmptyBox}, inheriting basic entity creation and naming capabilities.</p>
- *
- * @param <T> The type of the concrete builder extending this abstract class,
- *            allowing for method chaining (fluent API).
+ * @param <T> the concrete container builder type
  * @see HContainerBuilder
  * @see VContainerBuilder
  * @see EmptyBox
@@ -40,27 +37,26 @@ public abstract class ContainerBuilder<T extends ContainerBuilder<T>> extends Em
 
 
     /**
-     * Returns the set of child entities currently added to this container builder.
+     * Returns the UUIDs of entities currently attached as children.
      *
-     * @return A {@link Set} of {@link Entity} objects representing the children.
+     * <p>The list reflects builder-time hierarchy; the layout system later uses
+     * the same relationship to resolve geometry.</p>
+     *
+     * @return child entity identifiers in insertion order
      */
-
     public List<UUID> children() {
         return this.entity.getChildren();
     }
 
 
     /**
-     * Adds a child {@link Entity} to this container.
-     * This method sets the parent component for the child, updates the child's position,
-     * and recalculates the container's dimensions.
-     * <p>
-     * The {@link Entity} to add as a child.
+     * Replaces the container alignment metadata.
      *
-     * @return The builder instance for method chaining.
+     * <p>This alignment is later read during container layout to determine how
+     * children should be arranged inside the container's inner box.</p>
+     *
+     * @return the current builder
      */
-
-
     public T addAlin(Align align) {
         log.debug("add alin to entity {}", this.entity);
         this.entity.addComponent(align);
@@ -68,11 +64,12 @@ public abstract class ContainerBuilder<T extends ContainerBuilder<T>> extends Em
     }
 
     /**
-     * Builds the container entity and its children, adding them to the {@link EntityManager}.
-     * This method calculates the final content size of the container, considering padding,
-     * and then registers the container and all its child entities with the entityManager.
+     * Registers the container entity after child relationships have been declared.
      *
-     * @return The built container {@link Entity}.
+     * <p>Container geometry is still finalized later by layout systems; the build
+     * step mainly persists the entity graph into the registry.</p>
+     *
+     * @return the built container entity
      */
     @Override
     public Entity build() {

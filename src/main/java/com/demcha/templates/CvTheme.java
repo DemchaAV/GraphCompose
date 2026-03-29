@@ -9,7 +9,13 @@ import com.demcha.compose.layout_core.components.style.Margin;
 import java.awt.Color;
 
 /**
- * Visual theme for CV: colours + fonts + sizes + ready TextStyles.
+ * Reusable visual theme for the template layer.
+ * <p>
+ * {@code CvTheme} groups the font families, colors, font sizes, spacing values,
+ * and semantic text styles used by {@link TemplateBuilder}. It keeps styling
+ * decisions separate from layout structure so templates can stay readable and
+ * easy to swap between themes.
+ * </p>
  */
 public record CvTheme(
         Color primaryColor,      // e.g. name colour
@@ -33,7 +39,9 @@ public record CvTheme(
 
     /* --------- READY TextStyle FACTORIES (semantic) --------- */
 
-    /** Big name at the top. */
+    /**
+     * Style for the main display name at the top of a document.
+     */
     public TextStyle nameTextStyle() {
         return TextStyle.builder()
                 .size(nameFontSize)
@@ -43,7 +51,9 @@ public record CvTheme(
                 .build();
     }
 
-    /** Section/module headers (e.g. "Professional Experience"). */
+    /**
+     * Style for module and section headings.
+     */
     public TextStyle sectionHeaderTextStyle() {
         return TextStyle.builder()
                 .size(headerFontSize)
@@ -53,7 +63,9 @@ public record CvTheme(
                 .build();
     }
 
-    /** Normal body text. */
+    /**
+     * Default body text style.
+     */
     public TextStyle bodyTextStyle() {
         return TextStyle.builder()
                 .size(bodyFontSize)
@@ -62,7 +74,9 @@ public record CvTheme(
                 .build();
     }
 
-    /** Small muted body text (e.g. address, phone, meta). */
+    /**
+     * Secondary body text style for metadata such as phone, address, or labels.
+     */
     public TextStyle smallBodyTextStyle() {
         return TextStyle.builder()
                 .size(bodyFontSize - 1) // tweak if you want
@@ -71,7 +85,9 @@ public record CvTheme(
                 .build();
     }
 
-    /** Link text (email, LinkedIn, GitHub). */
+    /**
+     * Style for link-like values such as email or profile URLs.
+     */
     public TextStyle linkTextStyle() {
         return TextStyle.builder()
                 .size(bodyFontSize)
@@ -81,7 +97,9 @@ public record CvTheme(
                 .build();
     }
 
-    /** Bullet / list item title (e.g. skill name). */
+    /**
+     * Style for bullet-like labels or short list item titles.
+     */
     public TextStyle bulletTitleTextStyle() {
         return TextStyle.builder()
                 .size(bodyFontSize)
@@ -90,7 +108,9 @@ public record CvTheme(
                 .build();
     }
 
-    /** Optional: emphasised text inside body. */
+    /**
+     * Optional emphasis style for highlighted text inside body content.
+     */
     public TextStyle emphasisTextStyle() {
         return TextStyle.builder()
                 .size(bodyFontSize)
@@ -101,6 +121,9 @@ public record CvTheme(
 
     /* --------- DEFAULT THEME --------- */
 
+    /**
+     * Returns the default bundled theme used by documentation examples.
+     */
     public static CvTheme defaultTheme() {
         return new CvTheme(
                 new Color(44, 62, 80),                      // primary (name)
@@ -119,11 +142,17 @@ public record CvTheme(
         );
     }
 
+    /**
+     * Legacy compatibility alias for {@link #timesRoman()}.
+     */
     @Deprecated(forRemoval = false)
     public static CvTheme timeRoman() {
         return timesRoman();
     }
 
+    /**
+     * Returns a Times-Roman based theme.
+     */
     public static CvTheme timesRoman() {
         return new CvTheme(
                 new Color(44, 62, 80),                      // primary (name)
@@ -141,6 +170,9 @@ public record CvTheme(
 
         );
     }
+    /**
+     * Returns a Courier-based theme.
+     */
     public static CvTheme courier() {
         return new CvTheme(
                 new Color(44, 62, 80),                      // primary (name)

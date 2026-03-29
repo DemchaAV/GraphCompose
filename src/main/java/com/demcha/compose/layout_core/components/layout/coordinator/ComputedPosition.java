@@ -11,31 +11,31 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Represents the computed absolute position (x, y) of an {@link Entity}.
+ * Resolved position of an entity relative to its layout context.
  * <p>
- * A {@code ComputedPosition} is usually calculated based on:
- * <ul>
- *   <li>The parent entity's {@link InnerBoxSize}</li>
- *   <li>The {@link Anchor} of the child</li>
- *   <li>Page size (for root-level entities)</li>
- * </ul>
+ * {@code ComputedPosition} is produced by layout from builder-time metadata such
+ * as {@link Anchor}, {@code Position}, parent inner size, padding offsets, and
+ * canvas geometry. It is the bridge between declarative placement intent and the
+ * fully resolved coordinates later used to build {@link Placement}.
+ * </p>
  */
 @Slf4j
 public record ComputedPosition(double x, double y) implements Component {
     /**
-     * Returns a zero position (0, 0).
+     * Returns a zero coordinate.
      */
     public static ComputedPosition zero() {
         return new ComputedPosition(0, 0);
     }
 
     /**
-     * Computes the position of a child entity relative to its parent's inner box size.
-     * If the child has no {@link Anchor}, a default {@link Anchor#topLeft()} is added.
+     * Resolves a child's position inside a parent inner box and applies the
+     * parent's padding coordinate offset.
      *
-     * @param child              the child entity
-     * @param parentInnerBoxSize the inner box size of the parent
-     * @return computed position for the child
+     * @param child the child entity being placed
+     * @param parentInnerBoxSize the available inner box of the parent
+     * @param paddingParentCoordinate the drawing origin inside the parent's padding box
+     * @return the resolved position for the child
      */
     public static ComputedPosition from(@NonNull Entity child, @NonNull InnerBoxSize parentInnerBoxSize, PaddingCoordinate paddingParentCoordinate) {
         var anchorOptional = child.getComponent(Anchor.class);
@@ -52,11 +52,11 @@ public record ComputedPosition(double x, double y) implements Component {
     }
 
     /**
-     * Computes the position of a child relative to its parent entity.
+     * Resolves a child's position directly from a parent entity.
      *
-     * @param child  the child entity
-     * @param parent the parent entity
-     * @return computed position
+     * @param child the child entity
+     * @param parent the parent entity supplying inner box and padding context
+     * @return the resolved position
      * @throws java.util.NoSuchElementException if the parent has no {@link InnerBoxSize}
      */
     public static ComputedPosition from(@NonNull Entity child, @NonNull Entity parent) {
@@ -66,12 +66,11 @@ public record ComputedPosition(double x, double y) implements Component {
     }
 
     /**
-     * Computes the position of a child entity relative to a {@link Canvas}.
-     * This is typically used for root-level entities (no parent).
+     * Resolves the position of a root-level entity against a document canvas.
      *
-     * @param childEntity the child entity
-     * @param canvas    the page size
-     * @return computed position
+     * @param childEntity the entity being positioned
+     * @param canvas the document canvas
+     * @return the resolved position
      */
     public static ComputedPosition from(@NonNull Entity childEntity, @NonNull Canvas canvas) {
         log.debug("Computing position using default Canvas.");
@@ -82,10 +81,10 @@ public record ComputedPosition(double x, double y) implements Component {
     }
 
     /**
-     * Computes a {@link PaddingCoordinate} by applying the given padding to this position.
+     * Converts this resolved position into a padding-aware coordinate origin.
      *
      * @param padding the padding to apply
-     * @return padding-adjusted coordinate
+     * @return a coordinate shifted inside the padding box
      */
     public PaddingCoordinate paddingCoordinate(@NonNull Padding padding) {
 

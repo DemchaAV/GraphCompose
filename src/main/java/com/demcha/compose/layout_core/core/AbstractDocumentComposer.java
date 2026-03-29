@@ -2,6 +2,7 @@ package com.demcha.compose.layout_core.core;
 
 import com.demcha.compose.layout_core.components.components_builders.ComponentBuilder;
 
+import java.lang.reflect.Constructor;
 import java.util.Objects;
 
 /**
@@ -15,7 +16,7 @@ public abstract class AbstractDocumentComposer implements DocumentComposer {
     protected AbstractDocumentComposer(EntityManager entityManager, Canvas canvas) {
         this.entityManager = Objects.requireNonNull(entityManager, "entityManager");
         this.canvas = Objects.requireNonNull(canvas, "canvas");
-        this.componentBuilder = ComponentBuilder.builder(entityManager);
+        this.componentBuilder = createComponentBuilder(entityManager);
     }
 
     @Override
@@ -23,8 +24,7 @@ public abstract class AbstractDocumentComposer implements DocumentComposer {
         return componentBuilder;
     }
 
-    @Override
-    public EntityManager entityManager() {
+    protected final EntityManager entityManager() {
         return entityManager;
     }
 
@@ -57,6 +57,16 @@ public abstract class AbstractDocumentComposer implements DocumentComposer {
 
     protected final void buildComponents() {
         componentBuilder.buildsComponents();
+    }
+
+    private static ComponentBuilder createComponentBuilder(EntityManager entityManager) {
+        try {
+            Constructor<ComponentBuilder> constructor = ComponentBuilder.class.getDeclaredConstructor(EntityManager.class);
+            constructor.setAccessible(true);
+            return constructor.newInstance(entityManager);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Failed to create internal ComponentBuilder", e);
+        }
     }
 
     protected abstract void buildDocument() throws Exception;

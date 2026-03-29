@@ -2,8 +2,12 @@ package com.demcha.compose.layout_core.components.components_builders;
 
 import com.demcha.compose.layout_core.components.containers.abstract_builders.BuildEntity;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
+import com.demcha.compose.layout_core.components.geometry.ContentSize;
+import com.demcha.compose.layout_core.components.geometry.InnerBoxSize;
 import com.demcha.compose.layout_core.components.layout.Align;
+import com.demcha.compose.layout_core.core.Canvas;
 import com.demcha.compose.layout_core.core.EntityManager;
+import org.apache.pdfbox.pdmodel.PDPage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,10 +19,6 @@ public class ComponentBuilder {
 
     private ComponentBuilder(EntityManager entityManager) {
         this.entityManager = Objects.requireNonNull(entityManager, "entityManager");
-    }
-
-    public static ComponentBuilder builder(EntityManager entityManager) {
-        return new ComponentBuilder(entityManager);
     }
 
     private <T extends BuildEntity> T register(T builder) {
@@ -61,6 +61,22 @@ public class ComponentBuilder {
         return register(new ModuleBuilder(entityManager, align));
     }
 
+    public ModuleBuilder moduleBuilder(Align align, Canvas canvas) {
+        return register(new ModuleBuilder(entityManager, align, canvas));
+    }
+
+    public ModuleBuilder moduleBuilder(Align align, ContentSize contentSize) {
+        return register(new ModuleBuilder(entityManager, align, contentSize));
+    }
+
+    public ModuleBuilder moduleBuilder(Align align, InnerBoxSize innerBoxSize) {
+        return register(new ModuleBuilder(entityManager, align, innerBoxSize));
+    }
+
+    public ModuleBuilder moduleBuilder(Align align, PDPage page) {
+        return register(new ModuleBuilder(entityManager, align, page));
+    }
+
     public RectangleBuilder rectangle() {
         return register(new RectangleBuilder(entityManager));
     }
@@ -93,13 +109,11 @@ public class ComponentBuilder {
         return register(new ElementBuilder(entityManager));
     }
 
-    public EntityManager entityManager() {
-        return entityManager;
-    }
-
     public void buildsComponents() {
         if (builders.isEmpty())
             return;
-        builders.forEach(BuildEntity::build);
+        builders.stream()
+                .filter(builder -> !builder.built())
+                .forEach(BuildEntity::build);
     }
 }

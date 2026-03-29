@@ -10,7 +10,6 @@ import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.PdfComposer;
-import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -130,7 +129,6 @@ class ImageIntegrationTest {
 
         Entity[] images = new Entity[15];
         Placement[] placements = new Placement[15];
-        PdfRenderingSystemECS.ImageCacheStats cacheStats;
 
         try (PdfComposer composer = GraphCompose.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
@@ -160,12 +158,6 @@ class ImageIntegrationTest {
             container.build();
             composer.build();
 
-            PdfRenderingSystemECS renderingSystem = composer.entityManager()
-                    .getSystems()
-                    .getSystem(PdfRenderingSystemECS.class)
-                    .orElseThrow();
-            cacheStats = renderingSystem.imageCacheStats();
-
             for (int i = 0; i < placements.length; i++) {
                 placements[i] = images[i].getComponent(Placement.class).orElseThrow();
             }
@@ -177,9 +169,6 @@ class ImageIntegrationTest {
         try (PDDocument document = Loader.loadPDF(outputFile.toFile())) {
             assertThat(document.getNumberOfPages()).isGreaterThanOrEqualTo(3);
         }
-
-        assertThat(cacheStats.scaledVariantCount()).isEqualTo(1);
-        assertThat(cacheStats.originalCount()).isZero();
 
         for (Placement placement : placements) {
             assertThat(placement.startPage()).isEqualTo(placement.endPage());
@@ -223,14 +212,6 @@ class ImageIntegrationTest {
                     .build();
 
             composer.toPDDocument();
-
-            PdfRenderingSystemECS renderingSystem = composer.entityManager()
-                    .getSystems()
-                    .getSystem(PdfRenderingSystemECS.class)
-                    .orElseThrow();
-
-            assertThat(renderingSystem.imageCacheStats().originalCount()).isEqualTo(1);
-            assertThat(renderingSystem.imageCacheStats().scaledVariantCount()).isEqualTo(2);
         }
     }
 

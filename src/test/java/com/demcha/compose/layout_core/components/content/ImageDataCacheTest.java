@@ -1,13 +1,9 @@
 package com.demcha.compose.layout_core.components.content;
 
+import com.demcha.compose.GraphCompose;
 import com.demcha.compose.layout_core.components.components_builders.ImageBuilder;
 import com.demcha.compose.layout_core.components.geometry.ContentSize;
-import com.demcha.compose.layout_core.core.EntityManager;
-import com.demcha.compose.layout_core.system.LayoutSystem;
-import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfCanvas;
-import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import com.demcha.compose.layout_core.core.PdfComposer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,17 +23,9 @@ class ImageDataCacheTest {
     @TempDir
     Path tempDir;
 
-    private EntityManager entityManager;
-
     @BeforeEach
     void setUp() {
         ImageSourceCache.clearForTests();
-        entityManager = new EntityManager();
-        PDDocument document = new PDDocument();
-        PdfCanvas canvas = new PdfCanvas(PDRectangle.A4, 0.0f);
-        PdfRenderingSystemECS renderingSystem = new PdfRenderingSystemECS(document, canvas);
-        entityManager.getSystems().addSystem(new LayoutSystem(canvas, renderingSystem));
-        entityManager.getSystems().addSystem(renderingSystem);
     }
 
     @AfterEach
@@ -64,7 +52,7 @@ class ImageDataCacheTest {
     }
 
     @Test
-    void shouldReuseMetadataCacheAndAvoidBuilderRedecode() {
+    void shouldReuseMetadataCacheAndAvoidBuilderRedecode() throws Exception {
         byte[] bytes = createPngBytes(200, 100, new Color(42, 52, 110));
 
         ImageData first = ImageData.create(bytes);
@@ -74,15 +62,17 @@ class ImageDataCacheTest {
         assertThat(ImageSourceCache.metadataCacheSize()).isEqualTo(1);
         assertThat(ImageSourceCache.metadataDecodeCount()).isEqualTo(1);
 
-        var entity = new ImageBuilder(entityManager)
-                .image(first)
-                .fitToBounds(100, 100)
-                .build();
+        try (PdfComposer composer = GraphCompose.pdf().create()) {
+            ImageBuilder builder = composer.componentBuilder()
+                    .image()
+                    .image(first)
+                    .fitToBounds(100, 100);
 
-        ContentSize contentSize = entity.getComponent(ContentSize.class).orElseThrow();
+            ContentSize contentSize = builder.build().getComponent(ContentSize.class).orElseThrow();
 
-        assertThat(contentSize.width()).isEqualTo(100);
-        assertThat(contentSize.height()).isEqualTo(50);
+            assertThat(contentSize.width()).isEqualTo(100);
+            assertThat(contentSize.height()).isEqualTo(50);
+        }
         assertThat(ImageSourceCache.metadataDecodeCount()).isEqualTo(1);
     }
 

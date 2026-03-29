@@ -7,7 +7,7 @@ import com.demcha.compose.layout_core.components.renderable.Line;
 import com.demcha.compose.layout_core.core.EntityManager;
 
 public class LineBuilder extends EmptyBox<LineBuilder> {
-    public LineBuilder(EntityManager entityManager) {
+    LineBuilder(EntityManager entityManager) {
         super(entityManager);
     }
 

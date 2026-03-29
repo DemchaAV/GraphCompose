@@ -77,8 +77,7 @@ public abstract class ContainerBuilder<T extends ContainerBuilder<T>> extends Em
     @Override
     public Entity build() {
         log.info("building entity {}", this.entity);
-        entityManager.putEntity(this.entity);
-        return entity;
+        return registerBuiltEntity();
     }
 
 

@@ -54,13 +54,6 @@ public interface DocumentComposer extends Closeable {
     ComponentBuilder componentBuilder();
 
     /**
-     * Returns the underlying Entity Manager.
-     *
-     * @return The {@link EntityManager} instance.
-     */
-    EntityManager entityManager();
-
-    /**
      * Returns the layout canvas shared by all document backends.
      *
      * @return The backend-neutral {@link Canvas}.

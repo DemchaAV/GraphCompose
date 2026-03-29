@@ -24,7 +24,7 @@ public class HContainerBuilder extends ContainerBuilder<HContainerBuilder> {
      *
      * @param entityManager The {@link EntityManager} to which the container and its entities will belong.
      */
-    public HContainerBuilder(EntityManager entityManager, Align align) {
+    HContainerBuilder(EntityManager entityManager, Align align) {
         super(entityManager, align);
     }
 

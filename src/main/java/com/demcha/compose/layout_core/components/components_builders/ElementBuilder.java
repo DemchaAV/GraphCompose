@@ -17,7 +17,7 @@ public class ElementBuilder extends EmptyBox<ElementBuilder>  {
     private boolean filledVertically;
 
 
-    public ElementBuilder(EntityManager entityManager) {
+    ElementBuilder(EntityManager entityManager) {
         super(entityManager);
     }
 

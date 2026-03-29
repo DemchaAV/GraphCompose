@@ -1,6 +1,7 @@
 package com.demcha.integration;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.font_library.DefaultFonts;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.core.Entity;
 import com.demcha.compose.layout_core.components.layout.Anchor;
@@ -45,11 +46,13 @@ class SingleLineTextIntegrationTest {
             PDDocument document = composer.toPDDocument();
             TextPosition firstGlyph = firstVisibleGlyph(document);
             Placement placement = textEntity.getComponent(Placement.class).orElseThrow();
-            PdfFont pdfFont = (PdfFont) composer.entityManager()
-                    .getFonts()
-                    .getFont(style.fontName(), PdfFont.class)
-                    .orElseThrow();
-            PdfFont.VerticalMetrics metrics = pdfFont.verticalMetrics(style);
+            PdfFont.VerticalMetrics metrics;
+            try (PDDocument fontDocument = new PDDocument()) {
+                PdfFont pdfFont = (PdfFont) DefaultFonts.library(fontDocument)
+                        .getFont(style.fontName(), PdfFont.class)
+                        .orElseThrow();
+                metrics = pdfFont.verticalMetrics(style);
+            }
 
             assertThat(firstGlyph).isNotNull();
             assertThat(firstGlyph.getUnicode()).startsWith("I");

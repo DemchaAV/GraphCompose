@@ -18,7 +18,7 @@ import java.awt.*;
 
 
 public class ButtonBuilder extends ShapeBuilderBase<ButtonBuilder> {
-    public ButtonBuilder(EntityManager entityManager) {
+    ButtonBuilder(EntityManager entityManager) {
         super(entityManager);
     }
 

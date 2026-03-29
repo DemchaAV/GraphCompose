@@ -3,6 +3,7 @@ package com.demcha.integration;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.layout_core.components.components_builders.TableBuilder;
 import com.demcha.compose.layout_core.components.components_builders.TableColumnSpec;
+import com.demcha.compose.layout_core.components.content.table.TableLayoutData;
 import com.demcha.compose.layout_core.components.core.Entity;
 import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.layout.coordinator.Placement;
@@ -51,10 +52,8 @@ class TablePaginationIntegrationTest {
             table = builder.build();
             composer.build();
 
-            for (var rowId : table.getChildren()) {
-                Placement placement = composer.entityManager().getEntity(rowId)
-                        .orElseThrow()
-                        .getComponent(Placement.class)
+            for (Entity row : table.getComponent(TableLayoutData.class).orElseThrow().rowEntities()) {
+                Placement placement = row.getComponent(Placement.class)
                         .orElseThrow();
 
                 assertThat(placement.startPage()).isEqualTo(placement.endPage());

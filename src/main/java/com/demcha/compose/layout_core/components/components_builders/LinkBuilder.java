@@ -10,7 +10,7 @@ import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.EntityManager;
 
 public class LinkBuilder extends EmptyBox<LinkBuilder> {
-    public LinkBuilder(EntityManager entityManager) {
+    LinkBuilder(EntityManager entityManager) {
         super(entityManager);
     }
 

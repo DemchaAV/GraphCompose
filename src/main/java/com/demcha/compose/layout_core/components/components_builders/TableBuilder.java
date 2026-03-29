@@ -42,7 +42,7 @@ public class TableBuilder extends ContainerBuilder<TableBuilder> {
     private Double requestedWidth;
     private boolean materialized;
 
-    public TableBuilder(EntityManager entityManager) {
+    TableBuilder(EntityManager entityManager) {
         super(entityManager, Align.defaultAlign(0));
     }
 
@@ -122,13 +122,22 @@ public class TableBuilder extends ContainerBuilder<TableBuilder> {
         double[] finalWidths = resolveFinalColumnWidths(normalizedSpecs, naturalWidths, naturalWidth);
         double finalWidth = sum(finalWidths);
 
-        entity.addComponent(new TableLayoutData(toList(finalWidths), naturalWidth, finalWidth, rows.size(), columnCount));
+        List<Entity> rowEntities = new ArrayList<>(rows.size());
 
         for (int rowIndex = 0; rowIndex < rows.size(); rowIndex++) {
             Entity rowEntity = buildRowEntity(rowIndex, rows.get(rowIndex), stylesByRow, finalWidths);
             addChild(rowEntity);
             entityManager.putEntity(rowEntity);
+            rowEntities.add(rowEntity);
         }
+
+        entity.addComponent(new TableLayoutData(
+                toList(finalWidths),
+                naturalWidth,
+                finalWidth,
+                rows.size(),
+                columnCount,
+                List.copyOf(rowEntities)));
     }
 
     private Entity buildRowEntity(int rowIndex,

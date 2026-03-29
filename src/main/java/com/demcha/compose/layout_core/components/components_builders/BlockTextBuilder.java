@@ -29,18 +29,17 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 /**
- * Builder for creating block text components with support for markdown,
- * indentation strategies,
- * and text wrapping.
+ * Builder for breakable multi-line text blocks.
  * <p>
- * This builder handles:
- * <ul>
- * <li>Markdown parsing</li>
- * <li>Custom indentation strategies via {@link BlockIndentStrategy}</li>
- * <li>Smart text wrapping that keeps "sticky" punctuation (like brackets)
- * attached to their words</li>
- * <li>Alignment and styling</li>
- * </ul>
+ * This builder is used when text should behave like paragraph content rather
+ * than a single measured line. It can parse markdown, normalize bullet prefixes,
+ * wrap lines to the available width, and emit the line metadata later consumed
+ * by layout, pagination, and rendering.
+ * </p>
+ *
+ * <p>Compared with {@link TextBuilder}, this builder is the better choice for
+ * profile sections, descriptions, lists, and any content that may need to span
+ * multiple lines or pages.</p>
  */
 @Slf4j
 public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
@@ -67,9 +66,9 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
     }
 
     /**
-     * Sets the indentation strategy for the block text.
+     * Sets the indentation strategy used when wrapped lines are generated.
      *
-     * @param strategy the strategy to apply
+     * @param strategy the indent strategy to apply
      * @return this builder
      */
     public BlockTextBuilder strategy(BlockIndentStrategy strategy) {

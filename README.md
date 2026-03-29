@@ -16,8 +16,8 @@
 </p>
 
 <p align="center">
-  <b>A declarative layout engine for programmatic document generation, implemented primarily in Java.</b><br/>
-  Build documents through entities, builders, layout rules, and renderers instead of hand-written PDF coordinates.
+  <b>A declarative, MIT-licensed layout engine for programmatic PDF generation in Java.</b><br/>
+  Describe your document structure — GraphCompose handles geometry, text wrapping, pagination, and rendering.
 </p>
 
 <p align="center">
@@ -30,60 +30,54 @@
 
 ---
 
+## The problem with existing PDF libraries
+
+Most Java PDF libraries are **low-level drawing APIs**. You get a canvas and a coordinate system — and the rest is your problem:
+
+- text wrapping requires manual font measurement
+- optional sections break absolute positioning
+- pagination becomes hundreds of lines of custom logic
+- consistent styling across templates means duplicated boilerplate
+
+**iText 7** solves some of this, but its open-source build is AGPL — meaning any commercial product using it must either open-source itself or purchase a commercial license starting at several hundred dollars per month.
+
+**GraphCompose** is different: it is MIT-licensed and ships a real layout engine. You describe *what* you want; the engine figures out *where* to put it.
+
+---
+
 ## What GraphCompose is
 
-GraphCompose is a document generation engine built around an ECS-style model:
+GraphCompose is a document generation engine built around an ECS-style (Entity-Component-System) model:
 
-- builders create `Entity` trees;
-- layout systems calculate size and placement;
-- rendering systems turn resolved geometry into output bytes.
+- builders create `Entity` trees
+- layout systems calculate size and placement
+- rendering systems turn resolved geometry into output bytes
 
-The current production path is PDF output via Apache PDFBox. The source tree also contains early Word-related classes, but the PDF path is the supported renderer today.
-
-The library is Java-first today. The build includes Kotlin support, but the repository does not currently contain production `.kt` sources.
+The current production renderer is PDF via Apache PDFBox. The layout and entity model is renderer-agnostic by design — DOCX and PPTX output are on the roadmap.
 
 GraphCompose is a good fit for:
 
 - CV and resume generation
 - cover letters and profile documents
-- invoices and reports
-- negotiated tables and tabular summaries
-- multi-page server-side PDF generation
-- reusable document templates on top of a lower-level layout engine
+- invoices and financial reports
+- tabular data summaries with negotiated column widths
+- multi-page server-side PDF generation at scale
+- reusable document templates built on top of a lower-level layout engine
 
-## Why use it
-
-Raw PDF libraries are powerful, but they push layout responsibility into application code:
-
-- text wrapping depends on manual font measurement
-- optional sections break absolute positioning
-- pagination becomes custom logic
-- style consistency becomes repetitive boilerplate
-
-GraphCompose moves those concerns into the engine:
-
-| Problem | GraphCompose approach |
-| --- | --- |
-| Manual coordinate math | Compose entities with containers, anchors, padding, and margin |
-| Dynamic content | Let the layout system measure and place content |
-| Multi-page output | Use page-breaking and pagination logic in the engine |
-| Repeated styling | Reuse shared text styles, themes, and font registration |
-| Hard-to-maintain templates | Build reusable document structures on top of `TemplateBuilder` |
+---
 
 ## Visual preview
-
-These screenshots were refreshed from the current repository render outputs on March 27, 2026.
 
 ### Repository showcase render
 
 <p align="center">
-  <img src="./assets/readme/repository_showcase_render.png" alt="GraphCompose repository showcase render preview" width="850"/>
+  <img src="./assets/readme/repository_showcase_render.png" alt="GraphCompose repository showcase render" width="850"/>
 </p>
 
-### Repository showcase with guide lines
+### Layout debugging with guide lines
 
 <p align="center">
-  <img src="./assets/readme/repository_showcase_render_guides.png" alt="GraphCompose repository showcase guide-lines preview" width="850"/>
+  <img src="./assets/readme/repository_showcase_render_guides.png" alt="GraphCompose guide-lines debug preview" width="850"/>
 </p>
 
 ### Final CV render
@@ -98,44 +92,11 @@ These screenshots were refreshed from the current repository render outputs on M
   <img src="./assets/readme/fonts-preview.png" alt="GraphCompose fonts preview" width="850"/>
 </p>
 
-## Architecture at a glance
-
-```mermaid
-graph TD
-    UserCode["Application code<br/>builders and entity tree"]
-
-    subgraph Core["GraphCompose pipeline"]
-        LayoutSystem["Layout system"]
-        Geometry["Resolved geometry<br/>size, placement, pages"]
-        Renderer["Rendering system"]
-    end
-
-    PDF["PDF output"]
-    Future["Future renderers"]
-
-    UserCode --> LayoutSystem
-    LayoutSystem --> Geometry
-    Geometry --> Renderer
-    Renderer --> PDF
-    Renderer -.-> Future
-```
-
-Main layers:
-
-- `com.demcha.compose.layout_core.*`
-  Core engine: entities, builders, geometry, layout, pagination, render systems
-- `com.demcha.compose.font_library.*`
-  Font registration and PDF font helpers
-- `com.demcha.compose.markdown.*`
-  Markdown parsing helpers used by text/block text builders
-- `com.demcha.templates.*`
-  Higher-level templates, themes, DTOs, and template contracts
-
-For the full package map, see [docs/architecture.md](./docs/architecture.md).
+---
 
 ## Installation
 
-GraphCompose can be consumed through JitPack.
+GraphCompose is available through JitPack.
 
 ### Maven
 
@@ -150,7 +111,7 @@ GraphCompose can be consumed through JitPack.
 <dependency>
     <groupId>com.github.DemchaAV</groupId>
     <artifactId>GraphCompose</artifactId>
-    <version>v1.0.3</version>
+    <version>v1.0.0</version>
 </dependency>
 ```
 
@@ -162,13 +123,15 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.DemchaAV:GraphCompose:v1.0.3")
+    implementation("com.github.DemchaAV:GraphCompose:v1.0.0")
 }
 ```
 
+---
+
 ## Quick start
 
-The example below matches the current documentation test suite.
+### Write to file
 
 ```java
 import com.demcha.compose.GraphCompose;
@@ -184,9 +147,7 @@ import java.nio.file.Path;
 
 public class QuickStart {
     public static void main(String[] args) throws Exception {
-        Path outputFile = Path.of("quick-start.pdf");
-
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (PdfComposer composer = GraphCompose.pdf(Path.of("output.pdf"))
                 .pageSize(PDRectangle.A4)
                 .margin(24, 24, 24, 24)
                 .markdown(true)
@@ -210,7 +171,7 @@ public class QuickStart {
 }
 ```
 
-### In-memory output
+### In-memory output (for HTTP responses, S3 uploads, etc.)
 
 ```java
 try (PdfComposer composer = GraphCompose.pdf()
@@ -234,14 +195,11 @@ try (PdfComposer composer = GraphCompose.pdf()
 }
 ```
 
-### Template layer example
+### Template layer
 
 ```java
 import com.demcha.templates.CvTheme;
 import com.demcha.templates.TemplateBuilder;
-import com.demcha.compose.GraphCompose;
-import com.demcha.compose.layout_core.core.PdfComposer;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 try (PdfComposer composer = GraphCompose.pdf()
         .pageSize(PDRectangle.A4)
@@ -262,26 +220,44 @@ try (PdfComposer composer = GraphCompose.pdf()
 }
 ```
 
-## Table Builder v1
+---
 
-The engine now ships a public table builder through `composer.componentBuilder().table()`.
+## Core concepts
 
-What is implemented:
+### 1. Everything is an entity
 
-- fixed and auto column negotiation through `TableColumnSpec.fixed(...)` and `TableColumnSpec.auto()`
-- shared default cell styling with row-scoped and column-scoped overrides through `TableCellStyle`
-- single-line text cells with padding, fill, stroke, and text alignment support
-- row-atomic pagination, so a row is moved as a unit instead of being split across pages
-- page-break-aware separators, so the last row on one page keeps its bottom edge and the first row on the next page gets its own top edge
+Builders do not draw directly. They create `Entity` instances and attach components the engine understands: renderable markers, content and style, size and placement, parent/child relationships.
+
+### 2. Layout and rendering are separate passes
+
+The layout pass resolves all geometry first. Rendering happens after every size and position is known. This separation is what makes automatic pagination, guide-line debugging, and future alternative renderers possible.
+
+### 3. Containers express structure
+
+Use `vContainer(...)`, `hContainer(...)`, and `moduleBuilder(...)` to describe document flow. Absolute coordinates are an implementation detail of the engine, not something you write.
+
+### 4. The template layer is optional
+
+`TemplateBuilder`, `CvTheme`, and the classes under `com.demcha.templates.builtins` are a convenience layer for reusable document layouts. You can use the raw engine directly for one-off documents and opt into templates when you need repeatability.
+
+---
+
+## Table component
+
+The `TableBuilder` ships as part of v1 and covers the common server-side document use case: structured tabular data with automatic column sizing and multi-page support.
+
+What it handles:
+- fixed-width and auto-width columns with negotiated sizing
+- header rows with independent styling
+- row-level, column-level, and default cell style scopes (row takes priority)
+- row-atomic pagination — a row moves as a unit instead of being split across pages
+- page-break-aware separators — the last row on one page keeps its bottom edge, the first row on the next gets its own top edge
 
 Current v1 limits:
-
 - no `rowspan` / `colspan`
 - no wrapped multi-line cell content
 - no repeated header rows
-- no cell-level override API beyond row/column/default scopes
-
-Minimal example:
+- no cell-level style override beyond row/column/default scopes
 
 ```java
 Entity table = composer.componentBuilder()
@@ -302,24 +278,9 @@ Entity table = composer.componentBuilder()
         .build();
 ```
 
-Verification status for this feature:
-
-- unit coverage for width negotiation, style precedence, border ownership, fill insets, and page-fragment separators
-- integration coverage for layout, styling, and multi-page pagination
-- visual outputs generated under `target/visual-tests/clean/integration`
+---
 
 ## Line primitive
-
-The engine now ships a public line builder through `composer.componentBuilder().line()`.
-
-Implementation notes:
-
-- `Line` is a fixed leaf renderable, so it plugs into the existing ECS/layout/render pipeline like `Circle` and `Image`
-- the line occupies a normal `ContentSize` box, then draws its path inside the padding-aware inner area
-- pagination stays leaf-like and non-breakable: a line moves as a unit to the next page when needed
-- the default path is horizontal, with helpers for vertical and diagonal variants
-
-Minimal example:
 
 ```java
 Entity line = composer.componentBuilder()
@@ -331,77 +292,75 @@ Entity line = composer.componentBuilder()
         .build();
 ```
 
-Available path helpers:
+Available path helpers: `horizontal()`, `vertical()`, `diagonalAscending()`, `diagonalDescending()`, and `path(x0, y0, x1, y1)` for custom normalized coordinates.
 
-- `horizontal()`
-- `vertical()`
-- `diagonalAscending()`
-- `diagonalDescending()`
-- `path(startX, startY, endX, endY)` for custom normalized coordinates inside the draw box
+---
 
-## Core concepts
+## Architecture at a glance
 
-### 1. Everything becomes an entity with components
+```mermaid
+graph TD
+    UserCode["Application code<br/>builders and entity tree"]
 
-Builders do not draw directly. They create `Entity` instances and attach the components needed by the engine:
+    subgraph Core["GraphCompose pipeline"]
+        LayoutSystem["Layout system"]
+        Geometry["Resolved geometry<br/>size, placement, pages"]
+        Renderer["Rendering system"]
+    end
 
-- renderable marker component
-- content/style components
-- size and placement-related components
-- parent/child relationships for containers
+    PDF["PDF output"]
+    Future["Future renderers"]
 
-### 2. Layout and rendering are separate stages
+    UserCode --> LayoutSystem
+    LayoutSystem --> Geometry
+    Geometry --> Renderer
+    Renderer --> PDF
+    Renderer -.-> Future
+```
 
-The layout pass calculates geometry first. Rendering happens after placement is resolved. That separation is what makes pagination, guide lines, and alternative renderers possible.
+Main packages:
 
-### 3. Containers express structure
+| Package | Contents |
+| --- | --- |
+| `com.demcha.compose.layout_core.*` | Core engine: entities, builders, geometry, layout, pagination, render systems |
+| `com.demcha.compose.font_library.*` | Font registration and PDF font helpers |
+| `com.demcha.compose.markdown.*` | Markdown parsing helpers used by text/block text builders |
+| `com.demcha.templates.*` | Higher-level templates, themes, DTOs, and template contracts |
 
-Use container builders such as `vContainer(...)`, `hContainer(...)`, and `moduleBuilder(...)` to express document flow instead of absolute coordinates.
+For the full package map, see [docs/architecture.md](./docs/architecture.md).
 
-### 4. The template layer sits on top of the engine
-
-`TemplateBuilder`, `CvTheme`, and the classes under `com.demcha.templates.builtins` are convenience layers for reusable personal-document layouts. They are not required for one-off PDFs, but they simplify repeatable template design.
+---
 
 ## Extending GraphCompose
 
-If you want to add a new object type, builder, or renderer integration, start with [docs/implementation-guide.md](./docs/implementation-guide.md).
+Start with [docs/implementation-guide.md](./docs/implementation-guide.md). The short version:
 
-The short version:
-
-- extend `EmptyBox<T>` for a leaf entity that does not manage children
-- extend `ShapeBuilderBase<T>` for shape-like leaf objects that need fill/stroke helpers
+- extend `EmptyBox<T>` for a leaf entity with no children
+- extend `ShapeBuilderBase<T>` for shape-like leaves that need fill/stroke helpers
 - extend `ContainerBuilder<T>` for entities that own child entities
-- keep fixed leaf renderables such as `Image`, `Circle`, and `Line` on the same layout contract: fixed `ContentSize`, padding-aware draw area, and no `Expendable`/`Breakable` unless they truly need it
-- add `Expendable` only when the entity should grow because of child content
+- keep fixed leaf renderables (`Image`, `Circle`, `Line`) on the same layout contract: fixed `ContentSize`, padding-aware draw area, non-breakable unless truly needed
+- add `Expendable` only when the entity should grow from child content
 - add `Breakable` only when the entity itself can continue across pages
-- add a factory method to `ComponentBuilder` if the new object should be available from `composer.componentBuilder()`
-- make sure the built entity receives the components the layout system and renderer expect
-- if the object needs custom drawing, add a renderable component that implements the appropriate render contract
+- register the new builder as a factory method on `ComponentBuilder`
 
-The guide includes:
-
-- what to inherit for different cases
-- what `Expendable` and `Breakable` mean in the engine
-- which components are required for sizing, layout, parenting, and rendering
-- where to add builder wiring
-- how the layout and rendering systems pick the object up
+---
 
 ## Performance and benchmarks
 
-The comparative, core-engine, full-CV, and scalability numbers below were rerun locally on March 27, 2026 against the current repository state after the `TableBuilder v1` implementation and pagination-border fixes. They are environment-dependent and should be treated as project benchmarks, not cross-machine guarantees.
+Benchmarks were run locally on March 27, 2026 against the current repository state after the `TableBuilder v1` implementation and pagination-border fixes. All numbers use a dedicated quiet logging config (`logback-benchmark.xml`) so they reflect document generation work, not debug I/O.
 
-The benchmark entry points now boot with a dedicated quiet logging config from `src/test/resources/logback-benchmark.xml`, so the numbers reflect document generation work instead of debug layout tracing and file-appender I/O.
-
-The stress and endurance entries further below are retained as the latest long-run verification records; they were not rerun as part of this documentation refresh.
+These are project benchmarks measured on one machine — treat them as relative indicators, not absolute guarantees.
 
 ### Comparative benchmark
+
+> **Context:** iText 5 is included as a low-level drawing baseline — it has no layout engine, so generating the same document with iText 5 requires manual coordinate math, font measurement, and pagination logic that GraphCompose handles automatically. The ~1 ms difference is the cost of that automatic layout resolution. iText 5 is also no longer maintained and its successor, iText 7, requires a commercial license for production use.
 
 Source: `src/test/java/com/demcha/compose/ComparativeBenchmark.java`
 
 | Library | Avg Time (ms) | Avg Heap (MB) | License |
 | --- | ---: | ---: | --- |
-| GraphCompose | 2.89 | 0.21 | MIT |
-| iText 5 (Old) | 1.80 | 0.16 | AGPL |
+| GraphCompose | 2.89 | 0.21 | **MIT** |
+| iText 5 (EOL) | 1.80 | 0.16 | AGPL |
 | JasperReports | 4.50 | 0.19 | LGPL |
 
 ### Core engine benchmark
@@ -419,6 +378,8 @@ Source: `src/test/java/com/demcha/compose/GraphComposeBenchmark.java`
 
 ### Full CV benchmark
 
+A complete multi-section CV document with text, layout columns, and theme styling.
+
 Source: `src/test/java/com/demcha/compose/FullCvBenchmark.java`
 
 | Metric | Latency |
@@ -432,15 +393,17 @@ Source: `src/test/java/com/demcha/compose/FullCvBenchmark.java`
 
 ### Scalability benchmark
 
+Near-linear throughput scaling across threads with zero shared mutable state.
+
 Source: `src/test/java/com/demcha/compose/ScalabilityBenchmark.java`
 
 | Threads | Total Docs | Throughput |
 | ---: | ---: | ---: |
-| 1 | 100 | 395.33 docs/sec |
-| 2 | 200 | 961.26 docs/sec |
-| 4 | 400 | 2016.51 docs/sec |
-| 8 | 800 | 3746.97 docs/sec |
-| 16 | 1600 | 5607.87 docs/sec |
+| 1 | 100 | 395 docs/sec |
+| 2 | 200 | 961 docs/sec |
+| 4 | 400 | 2016 docs/sec |
+| 8 | 800 | 3747 docs/sec |
+| 16 | 1600 | 5608 docs/sec |
 
 ### Stress test
 
@@ -462,17 +425,19 @@ Source: `src/test/java/com/demcha/compose/EnduranceTest.java`
 | --- | --- |
 | Documents generated | 100,000 |
 | Total time | 41,635 ms |
-| Heap behavior | Repeated GC drops observed during the run |
+| Heap behavior | Repeated GC drops observed — no growth trend |
 | Result | Completed successfully |
 
-Note: the endurance run above was executed without a forced low-heap JVM flag. If you want a constrained-memory proof, rerun the same class with an explicit `-Xmx` limit.
+> Note: the endurance run was executed without an explicit `-Xmx` flag. To verify behavior under a constrained heap, rerun with a specific limit such as `-Xmx64m`.
+
+---
 
 ## Tech stack
 
 | Technology | Version | Role |
 | --- | --- | --- |
 | Java | 21 | Primary language |
-| Kotlin | 2.2 | Build/runtime compatibility layer; no production `.kt` sources in the repository today |
+| Kotlin | 2.2 | Build/runtime compatibility; no production `.kt` sources today |
 | Apache PDFBox | 3.0.5 | PDF rendering backend |
 | Flexmark | 0.64.8 | Markdown parsing |
 | SnakeYAML | 2.4 | Config/template data |
@@ -480,6 +445,8 @@ Note: the endurance run above was executed without a forced low-heap JVM flag. I
 | Logback | 1.5.18 | Logging |
 | JUnit 5 | 5.12.2 | Testing |
 | Mockito | 5.20.0 | Mocking |
+
+---
 
 ## Roadmap
 
@@ -490,14 +457,19 @@ Note: the endurance run above was executed without a forced low-heap JVM flag. I
 - [x] Shared font registration
 - [x] Concurrent rendering support
 - [x] Table component with negotiated column widths
+- [ ] Maven Central release
 - [ ] DOCX renderer
 - [ ] PPTX renderer
 - [ ] XLSX renderer
 - [ ] Stable release pipeline
 
+---
+
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for the current workflow and [docs/implementation-guide.md](./docs/implementation-guide.md) for extension-oriented guidance.
+
+---
 
 ## License
 

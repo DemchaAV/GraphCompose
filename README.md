@@ -7,6 +7,9 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Java-21-orange?style=for-the-badge&logo=openjdk" alt="Java 21"/>
   <img src="https://img.shields.io/badge/Kotlin%20Build-2.2-purple?style=for-the-badge&logo=kotlin" alt="Kotlin build setup 2.2"/>
+  <a href="https://github.com/DemchaAV/GraphCompose/actions/workflows/ci.yml">
+    <img src="https://github.com/DemchaAV/GraphCompose/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"/>
+  </a>
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License"/>
   <img src="https://img.shields.io/badge/PDFBox-3.0-red?style=for-the-badge" alt="PDFBox 3.0"/>
   <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge" alt="Active"/>

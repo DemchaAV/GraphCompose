@@ -6,12 +6,18 @@ import com.demcha.compose.layout_core.components.components_builders.ComponentBu
 import java.io.Closeable;
 
 /**
- * Base interface for document composers supporting different output formats
- * (PDF, Word, etc.).
+ * Backend-neutral document composition contract.
  * <p>
- * Implementations handle the lifecycle of creating, building, and exporting
- * documents. Use {@link GraphCompose} to obtain instances.
+ * A {@code DocumentComposer} owns the composition lifecycle for one document.
+ * Callers use it to obtain builders, inspect the canvas, toggle document-wide
+ * parsing and debug settings, and finally trigger layout and rendering.
  * </p>
+ *
+ * <p>The interface deliberately separates two phases:</p>
+ * <ol>
+ *   <li>describe the document by building entities</li>
+ *   <li>materialize the document by calling {@link #build()} or {@link #toBytes()}</li>
+ * </ol>
  *
  * <h3>Engine flow</h3>
  * <pre>
@@ -47,46 +53,59 @@ import java.io.Closeable;
 public interface DocumentComposer extends Closeable {
 
     /**
-     * Returns the component builder for creating entities.
+     * Returns the root builder facade used to create document entities.
      *
-     * @return The {@link ComponentBuilder} instance.
+     * <p>Builders created from this facade register entities into the composer's
+     * underlying {@code EntityManager}. They describe the document but do not
+     * execute layout immediately.</p>
+     *
+     * @return the document's shared {@link ComponentBuilder}
      */
     ComponentBuilder componentBuilder();
 
     /**
-     * Returns the layout canvas shared by all document backends.
+     * Returns the canvas that defines the current document's base page geometry.
      *
-     * @return The backend-neutral {@link Canvas}.
+     * <p>Root-level entities are ultimately resolved relative to this canvas and
+     * its margin-adjusted inner box.</p>
+     *
+     * @return the backend-neutral {@link Canvas}
      */
     Canvas canvas();
 
     /**
-     * Toggles Markdown parsing for text entities.
+     * Toggles markdown parsing for text-oriented builders used by this composer.
      *
-     * @param enabled true to enable markdown, false to disable.
+     * @param enabled {@code true} to enable markdown parsing
      */
     void markdown(boolean enabled);
 
     /**
-     * Toggles visual guide lines for debugging layout.
+     * Toggles visual guide lines used to inspect resolved layout geometry.
      *
-     * @param enabled true to render guide lines, false to hide them.
+     * @param enabled {@code true} to render guide lines
      */
     void guideLines(boolean enabled);
 
     /**
-     * Processes all systems to layout, render, and save the document.
+     * Runs the full document pipeline and persists the result if the backend was
+     * configured with an output target.
      *
-     * @throws Exception if an error occurs during processing.
+     * <p>Implementations typically ensure builders are materialized, run layout,
+     * then invoke one or more rendering/output systems.</p>
+     *
+     * @throws Exception if layout, rendering, or output fails
      */
     void build() throws Exception;
 
     /**
-     * Builds the document and returns it as a byte array.
-     * Does NOT save to file.
+     * Runs the full document pipeline and returns the rendered document as bytes.
      *
-     * @return The document content as bytes.
-     * @throws Exception if an error occurs during processing.
+     * <p>This path is useful for HTTP responses, tests, or pipelines that need an
+     * in-memory representation instead of a file on disk.</p>
+     *
+     * @return the rendered document bytes
+     * @throws Exception if layout or rendering fails
      */
     byte[] toBytes() throws Exception;
 }

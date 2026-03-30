@@ -8,15 +8,17 @@ import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Abstract base class for building entities that represent an empty box or a container
- * within a Entity Manager. This class extends {@link EntityBuilderBase} and implements
- * {@link BuildEntity}, providing a foundation for components that might not render
- * visible content themselves but serve as structural elements or placeholders.
+ * Base builder for entity-producing builders that do not manage a specialized
+ * child layout contract of their own.
+ * <p>
+ * {@code EmptyBox} creates the underlying {@code Entity}, applies shared builder
+ * behavior inherited from {@code EntityBuilderBase}, and knows how to register
+ * the final entity in the shared {@code EntityManager}. Leaf builders such as
+ * text, image, line, and shape builders typically extend this class directly.
+ * Container-oriented builders also inherit from it through {@code ContainerBuilder}.
+ * </p>
  *
- * <p>It is designed to be extended by concrete builder classes that define how to
- * construct specific empty box-like entities within the PDF.
- *
- * @param <T> The type of the entity that this builder will construct.
+ * @param <T> the concrete builder type for fluent chaining
  */
 @Slf4j
 @Getter
@@ -24,9 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class EmptyBox<T> extends EntityBuilderBase<T> implements BuildEntity {
 
     /**
-     * The Entity Manager instance to which the built entity will be added or associated.
-     * This entityManager is typically provided during the construction of the builder
-     * and is used by concrete implementations to interact with the PDF.
+     * Shared entity registry that receives the built entity.
      */
     protected final EntityManager entityManager;
     private boolean built;
@@ -66,6 +66,12 @@ public abstract class EmptyBox<T> extends EntityBuilderBase<T> implements BuildE
         return built;
     }
 
+    /**
+     * Finalizes and registers the current entity in the {@code EntityManager}.
+     *
+     * <p>Most subclasses only need to attach the right components before
+     * delegating to this behavior.</p>
+     */
     @Override
     public Entity build() {
         return registerBuiltEntity();

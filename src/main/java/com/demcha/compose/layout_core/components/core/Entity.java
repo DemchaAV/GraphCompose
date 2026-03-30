@@ -17,6 +17,18 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+/**
+ * Core runtime node in the GraphCompose entity-component model.
+ * <p>
+ * An {@code Entity} is a lightweight container for components such as text,
+ * style, size, layout metadata, and render markers. Builders create entities and
+ * attach those components; systems later read and enrich the same entity as the
+ * document moves through layout, pagination, and rendering.
+ * </p>
+ *
+ * <p>In other words, builders describe intent on the entity, while systems turn
+ * that intent into resolved geometry and final output.</p>
+ */
 @Slf4j
 @EqualsAndHashCode
 public final class Entity {
@@ -210,9 +222,9 @@ public final class Entity {
 
 
     /**
-     * That method will return a copy of hashMap Entities as unmodifiableMap
+     * Returns a read-only view of all components currently attached to the entity.
      *
-     * @return <p>Map<Class<? extends Component>, Component></p>
+     * @return an unmodifiable component map keyed by concrete component class
      */
     public Map<Class<? extends Component>, Component> view() {
         log.debug("Viewing component {} {}", uuid, this);

@@ -15,12 +15,21 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Factory class for creating document composers.
+ * Main entry point for creating GraphCompose document composers.
  * <p>
- * This is the main entry point for the GraphCompose engine.
- * Use the static factory methods to create document composers for supported
- * output formats.
+ * This factory sits above the rest of the engine. Application code starts here,
+ * obtains a composer, creates entities through {@code ComponentBuilder} or the
+ * template layer, and then lets the layout and rendering systems process that
+ * entity graph into a final document.
  * </p>
+ *
+ * <p>The typical runtime flow is:</p>
+ * <ol>
+ *   <li>create a composer with {@link #pdf(Path)} or {@link #pdf()}</li>
+ *   <li>use {@code composer.componentBuilder()} to create entities</li>
+ *   <li>optionally use {@code TemplateBuilder} on top of the builder layer</li>
+ *   <li>call {@code build()} to write to disk or {@code toBytes()} to render in memory</li>
+ * </ol>
  *
  * @author Artem Demchyshyn
  *
@@ -86,41 +95,56 @@ public final class GraphCompose {
     // ===== PDF Factory =====
 
     /**
-     * Creates a PDF composer builder that will save to the specified file.
+     * Starts a PDF composition flow that writes the rendered document to a file.
      *
-     * @param outputFile The path where the generated PDF will be saved.
-     * @return A builder to configure the PDF composer.
+     * <p>The returned builder only captures configuration. No layout or rendering
+     * work happens until {@link PdfBuilder#create()} creates the composer and the
+     * caller later invokes {@code build()} or {@code toBytes()}.</p>
+     *
+     * @param outputFile the target file path for the generated PDF
+     * @return a fluent builder for configuring the {@link PdfComposer}
      */
     public static PdfBuilder pdf(Path outputFile) {
         return new PdfBuilder(outputFile);
     }
 
     /**
-     * Creates a PDF composer builder for in-memory generation (use
-     * {@code toBytes()}).
+     * Starts a PDF composition flow for in-memory generation.
      *
-     * @return A builder to configure the PDF composer.
+     * <p>Use this overload when the document should be consumed as bytes or as a
+     * {@code PDDocument} instead of being written directly to disk.</p>
+     *
+     * @return a fluent builder for configuring the {@link PdfComposer}
      */
     public static PdfBuilder pdf() {
         return new PdfBuilder(null);
     }
 
     /**
-     * Returns bundled font families available out of the box.
+     * Returns the logical font families bundled with GraphCompose out of the box.
+     *
+     * <p>The returned names are the identifiers used by {@code TextStyle},
+     * {@code CvTheme}, and the font library. They describe what can be referenced
+     * immediately without registering custom font families.</p>
      */
     public static List<FontName> availableFonts() {
         return DefaultFonts.bundledFontNames();
     }
 
     /**
-     * Generates a PDF preview that shows all bundled font families.
+     * Renders a PDF showcase of all bundled font families to disk.
+     *
+     * <p>This is primarily a discovery helper for developers choosing a family for
+     * {@code TextStyle}, templates, or themes.</p>
      */
     public static void renderAvailableFontsPreview(Path outputFile) throws Exception {
         FontShowcase.renderAvailableFontsPreview(outputFile);
     }
 
     /**
-     * Generates a PDF preview as bytes that shows all bundled font families.
+     * Renders a PDF showcase of all bundled font families in memory.
+     *
+     * @return the generated preview document as PDF bytes
      */
     public static byte[] renderAvailableFontsPreview() throws Exception {
         return FontShowcase.renderAvailableFontsPreview();
@@ -135,7 +159,12 @@ public final class GraphCompose {
     // ===== PDF Builder =====
 
     /**
-     * Fluent builder for configuring and creating a {@link PdfComposer}.
+     * Fluent configuration builder for {@link PdfComposer}.
+     *
+     * <p>This builder captures document-wide settings such as page size, canvas
+     * margin, markdown handling, guideline rendering, and per-document custom
+     * font registrations. It does not create any entities by itself; entity
+     * creation starts after {@link #create()} returns a composer.</p>
      */
     public static final class PdfBuilder {
         private final Path outputFile;
@@ -150,11 +179,13 @@ public final class GraphCompose {
         }
 
         /**
-         * Sets the page size for the PDF document.
+         * Sets the physical page size used by the PDF canvas.
          *
-         * @param pageSize The page size (e.g., {@link PDRectangle#A4},
-         *                 {@link PDRectangle#LETTER}).
-         * @return This builder for method chaining.
+         * <p>This defines the outer drawing area before canvas margins are applied.</p>
+         *
+         * @param pageSize the target page size, for example {@link PDRectangle#A4}
+         *                 or {@link PDRectangle#LETTER}
+         * @return this builder
          */
         public PdfBuilder pageSize(PDRectangle pageSize) {
             this.pageSize = Objects.requireNonNull(pageSize, "pageSize");
@@ -162,10 +193,13 @@ public final class GraphCompose {
         }
 
         /**
-         * Sets the margin for the PDF document.
+         * Sets the canvas margin used as the initial inner drawing area.
          *
-         * @param margin The margin configuration.
-         * @return This builder for method chaining.
+         * <p>Root entities are positioned relative to the page after this margin
+         * is subtracted from the page rectangle.</p>
+         *
+         * @param margin the document-wide canvas margin
+         * @return this builder
          */
         public PdfBuilder margin(Margin margin) {
             this.margin = margin;
@@ -173,13 +207,13 @@ public final class GraphCompose {
         }
 
         /**
-         * Convenience method for setting margin with individual values.
+         * Convenience overload for setting the canvas margin in points.
          *
-         * @param top    Top margin in points.
-         * @param right  Right margin in points.
-         * @param bottom Bottom margin in points.
-         * @param left   Left margin in points.
-         * @return This builder for method chaining.
+         * @param top top margin
+         * @param right right margin
+         * @param bottom bottom margin
+         * @param left left margin
+         * @return this builder
          */
         public PdfBuilder margin(float top, float right, float bottom, float left) {
             this.margin = new Margin(top, right, bottom, left);
@@ -187,10 +221,14 @@ public final class GraphCompose {
         }
 
         /**
-         * Enables or disables Markdown parsing for text components.
+         * Enables or disables markdown parsing for text-related builders in the
+         * created composer.
          *
-         * @param enabled true to enable markdown (default), false to disable.
-         * @return This builder for method chaining.
+         * <p>When enabled, builders such as {@code BlockTextBuilder} may tokenize
+         * and style supported markdown content instead of treating input as plain text.</p>
+         *
+         * @param enabled {@code true} to enable markdown parsing
+         * @return this builder
          */
         public PdfBuilder markdown(boolean enabled) {
             this.markdown = enabled;
@@ -198,10 +236,13 @@ public final class GraphCompose {
         }
 
         /**
-         * Enables or disables visual guide lines for debugging layout.
+         * Enables or disables visual guide-line rendering for layout debugging.
          *
-         * @param enabled true to render guide lines, false to hide them (default).
-         * @return This builder for method chaining.
+         * <p>Guide lines help inspect resolved placement and box geometry without
+         * changing the actual layout calculations.</p>
+         *
+         * @param enabled {@code true} to render guide lines
+         * @return this builder
          */
         public PdfBuilder guideLines(boolean enabled) {
             this.guideLines = enabled;
@@ -209,8 +250,10 @@ public final class GraphCompose {
         }
 
         /**
-         * Registers a custom font family so it is available to the current PDF
-         * document and future backends reusing the shared font catalog.
+         * Registers a custom font family for the composer created by this builder.
+         *
+         * <p>The registration becomes part of the document-specific font catalog and
+         * can then be referenced through {@code FontName} values in styles and themes.</p>
          */
         public PdfBuilder registerFontFamily(FontFamilyDefinition definition) {
             this.customFontFamilies.add(Objects.requireNonNull(definition, "definition"));
@@ -218,21 +261,21 @@ public final class GraphCompose {
         }
 
         /**
-         * Registers a custom font family from local TTF/OTF files.
+         * Registers a custom family backed by a single regular font file.
          */
         public PdfBuilder registerFontFamily(FontName familyName, Path regular) {
             return registerFontFamily(FontFamilyDefinition.files(familyName, regular).build());
         }
 
         /**
-         * Registers a custom font family from local TTF/OTF files.
+         * Registers a custom family backed by a single regular font file.
          */
         public PdfBuilder registerFontFamily(String familyName, Path regular) {
             return registerFontFamily(FontName.of(familyName), regular);
         }
 
         /**
-         * Registers a custom font family from local TTF/OTF files.
+         * Registers a custom family backed by regular, bold, and italic files.
          */
         public PdfBuilder registerFontFamily(FontName familyName, Path regular, Path bold, Path italic) {
             return registerFontFamily(FontFamilyDefinition.files(familyName, regular)
@@ -242,14 +285,14 @@ public final class GraphCompose {
         }
 
         /**
-         * Registers a custom font family from local TTF/OTF files.
+         * Registers a custom family backed by regular, bold, and italic files.
          */
         public PdfBuilder registerFontFamily(String familyName, Path regular, Path bold, Path italic) {
             return registerFontFamily(FontName.of(familyName), regular, bold, italic);
         }
 
         /**
-         * Registers a custom font family from local TTF/OTF files.
+         * Registers a custom family backed by regular, bold, italic, and bold-italic files.
          */
         public PdfBuilder registerFontFamily(FontName familyName, Path regular, Path bold, Path italic, Path boldItalic) {
             return registerFontFamily(FontFamilyDefinition.files(familyName, regular)
@@ -260,16 +303,20 @@ public final class GraphCompose {
         }
 
         /**
-         * Registers a custom font family from local TTF/OTF files.
+         * Registers a custom family backed by regular, bold, italic, and bold-italic files.
          */
         public PdfBuilder registerFontFamily(String familyName, Path regular, Path bold, Path italic, Path boldItalic) {
             return registerFontFamily(FontName.of(familyName), regular, bold, italic, boldItalic);
         }
 
         /**
-         * Creates the configured PDF composer.
+         * Creates a fully configured {@link PdfComposer}.
          *
-         * @return A new {@link PdfComposer} instance ready for use.
+         * <p>After this point, application code can start building entities. The
+         * composer remains empty until builders register entities into its
+         * {@code EntityManager}.</p>
+         *
+         * @return a new {@link PdfComposer} ready for document composition
          */
         public PdfComposer create() {
             return new PdfComposer(outputFile, markdown, guideLines, pageSize, margin, List.copyOf(customFontFamilies));

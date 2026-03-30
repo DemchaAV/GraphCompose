@@ -3,11 +3,16 @@ package com.demcha.compose.font_library;
 import java.util.Objects;
 
 /**
- * Logical font family identifier used across rendering backends.
+ * Logical font family identifier used throughout GraphCompose.
  * <p>
- * The class keeps compatibility with the previous enum-style API through static
- * constants while also allowing callers to register arbitrary custom family
- * names at runtime via {@link #of(String)}.
+ * {@code FontName} is the stable name that flows through public APIs such as
+ * {@code TextStyle}, themes, and custom font registration. The same identifier
+ * can be resolved to backend-specific font implementations by the active
+ * {@code FontLibrary}.
+ * </p>
+ *
+ * <p>The class preserves enum-like constants for bundled families while still
+ * allowing callers to create document-specific custom names through {@link #of(String)}.</p>
  */
 public final class FontName {
 
@@ -69,18 +74,33 @@ public final class FontName {
         this.normalizedName = normalizedInput;
     }
 
+    /**
+     * Creates a logical font family identifier from a user-supplied name.
+     *
+     * <p>The returned value is suitable for custom font registration and later
+     * style lookup.</p>
+     */
     public static FontName of(String name) {
         return new FontName(name);
     }
 
+    /**
+     * Returns the original display name.
+     */
     public String name() {
         return name;
     }
 
+    /**
+     * Returns the canonical normalized key used for equality and lookup.
+     */
     public String normalizedName() {
         return normalizedName;
     }
 
+    /**
+     * Returns whether both identifiers refer to the same logical family.
+     */
     public boolean sameFamily(FontName other) {
         return equals(other);
     }

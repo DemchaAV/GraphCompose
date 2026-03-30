@@ -18,60 +18,24 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * # EntityManager
+ * Central registry for entities, systems, and document-scoped engine state.
  * <p>
- * A minimal ECS-style (Entity–Component–SystemECS) registry for your PDF
- * domain.
- * <p>
- * - **Entities** are identified by {@link UUID}.<br>
- * - **Components** are plain data objects keyed by their concrete
- * {@link Class}.<br>
- * - **Systems** implement domain logic via
- * {@link SystemECS#process(EntityManager)} and
- * operate on entities/components stored here.
+ * {@code EntityManager} is the runtime hub of GraphCompose. Builders register
+ * entities here, systems query and mutate those entities during layout and
+ * rendering, and composer implementations use the registry to orchestrate the
+ * full document pipeline.
  * </p>
  *
- * <h2>Key characteristics</h2>
- * <ul>
- * <li>Not thread-safe — confine to a single thread or add external
- * synchronization.</li>
- * <li>Component lookup is O(1) by class per entity.</li>
- * <li>{@link #getEntitiesWithComponent(Class)} is O(N) over all entities.</li>
- * <li>Logging via SLF4J for traceability.</li>
- * </ul>
+ * <p>Besides storing entities, the manager also owns system registration, the
+ * active font library, layer/depth metadata used by layout, and document-wide
+ * flags such as markdown and guide-line rendering.</p>
  *
- * <h2>Typical usage</h2>
- * 
- * <pre>{@code
- * EntityManager doc = new EntityManager();
- * UUID e = doc.createEntity();
- * doc.addComponent(e, new Position(50, 100));
- * doc.addComponent(e, new TextComponent("Hello"));
- *
- * doc.addSystem(new LayoutSystem());
- * doc.addSystem(new RenderSystem());
- *
- * doc.processSystems(); // Systems read/write components via the entityManager
- * }</pre>
- *
- * <h2>Gotchas</h2>
- * <ul>
- * <li>{@link #addComponent(UUID, Component)} assumes the entity exists and will
- * throw
- * a {@link NullPointerException} if it does not.</li>
- * <li>{@link #getComponent(UUID, Class)} returns {@code null} when the entity
- * or component
- * is missing — check for {@code null}.</li>
- * <li>{@link #getEntitiesWithComponent(Class)} may return {@code null} when
- * none are found
- * (current implementation). Treat accordingly.</li>
- * <li>The type cast in {@link #getComponent(UUID, Class)} is unchecked; ensure
- * you request
- * the correct component class.</li>
- * <li>The interface name {@code com.demcha.system.intarfaces.SystemECS} shadows
- * {@link java.lang.System};
- * import carefully or fully qualify when needed.</li>
- * </ul>
+ * <h2>Typical role in the pipeline</h2>
+ * <ol>
+ *   <li>builders create entities and register them here</li>
+ *   <li>layout systems compute sizes, positions, and pagination metadata</li>
+ *   <li>rendering systems read renderable entities and draw the final output</li>
+ * </ol>
  *
  * @author Artem Demchyshyn
  * @since 1.0.0
@@ -120,10 +84,10 @@ public class EntityManager {
     }
 
     /**
-     * Method create
+     * Creates and registers a new entity, optionally assigning an {@link EntityName}.
      *
-     * @param name
-     * @return
+     * @param name optional logical name used for diagnostics and debugging
+     * @return the newly created entity
      */
     public Entity createEntity(String name) {
         var entity = new Entity();

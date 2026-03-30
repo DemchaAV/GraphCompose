@@ -35,18 +35,23 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * <h1>LayoutSystem</h1>
+ * Main layout pass for GraphCompose entities.
  * <p>
- * Top-down DFS layout for ECS-model with a CSS-like box model.
+ * This system turns builder-produced entities into resolved geometry. It walks
+ * the entity hierarchy, computes container relationships, expands parent boxes
+ * when needed, resolves per-entity positions, and finally delegates to the
+ * pagination stage so entities receive final {@code Placement} metadata.
  * </p>
- * <p>
- * Box model:
+ *
+ * <p>Conceptually this is the "builder intent to geometry" phase of the engine.</p>
+ *
+ * <p>Box model summary:</p>
  * <ul>
- *   <li>OuterBoxSize = content size (inner size, excludes padding/margin)</li>
- *   <li>Placement = final rendered box (content + padding + margin)</li>
- *   <li>InnerBoxSize (computed) = parent's content area minus parent's padding</li>
+ *   <li>{@code ContentSize}: declared content dimensions</li>
+ *   <li>{@code InnerBoxSize}: available child area after padding</li>
+ *   <li>{@code OuterBoxSize}: content plus padding and margin</li>
+ *   <li>{@code Placement}: final bounding box and page span</li>
  * </ul>
- * </p>
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -57,18 +62,13 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
     private TextBlockProcessor textBlockProcessor;
 
     /**
-     * Calculates a childEntity's {@link ComputedPosition} relative to its parentEntity entity.
+     * Resolves an entity position from its parent context, walking the ancestor
+     * chain when intermediate computed positions are still missing.
      *
-     * <p>If the parentEntity is {@code null}, the childEntity is treated as the root and aligned
-     * to the page using {@link #positionWithAnchor(Entity, InnerBoxSize, PaddingCoordinate)}.</p>
-     *
-     * <p>If a parentEntity is present, its {@link InnerBoxSize} is used as the reference
-     * area for alignment (delegating to {@code alignPositionWithAnchor}).</p>
-     *
-     * @param childEntity   the entity to position
-     * @param parentEntity  the parentEntity entity, or {@code null} if the childEntity is the root
-     * @param entityManager the entityManager providing page size information
-     * @return an {@link Optional} with the computed position
+     * @param childEntity the entity to position
+     * @param parentEntity the parent entity, or {@code null} for a root entity
+     * @param entityManager entity registry providing parent lookups
+     * @return the resolved position when computation succeeds
      */
 
     private Optional<ComputedPosition> calculatePositionFromParent(Entity childEntity,
@@ -151,7 +151,7 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
                 childLocal.y() + parentAbs.y()
         );
 
-        // ✅ Final summary log
+        //  Final summary log
         log.debug("Position calculation summary: nodesTraversed={}, depth={}, finalPosition={}",
                 chain.size(), depth, childAbs);
 
@@ -159,21 +159,13 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
     }
 
     /**
-     * Aligns a child {@link Entity} inside a parent area using its {@link Anchor}.
+     * Computes a child's anchored position inside the supplied parent area and
+     * stores the result back on the entity.
      *
-     * <p>The method computes a {@link ComputedPosition} based on:
-     * <ul>
-     *   <li>{@link OuterBoxSize} – full size including content, padding, and margin</li>
-     *   <li>{@link InnerBoxSize} – parent’s available area</li>
-     *   <li>{@link Anchor} – alignment point (LEFT/CENTER/RIGHT × TOP/MIDDLE/BOTTOM)</li>
-     *   <li>{@link Position} – offset from the anchor</li>
-     * </ul>
-     *
-     * @param child              entity to align
-     * @param parentInnerBoxSize parent’s content area
-     * @return the computed position, also added to the entity
-     *
-     * <p><b>Note:</b> OuterBoxSize already includes margin, so do not add it again in formulas.</p>
+     * @param child entity being positioned
+     * @param parentInnerBoxSize available parent area
+     * @param paddingCoordinate parent padding origin
+     * @return the computed position, also attached to the entity
      */
 
     private ComputedPosition positionWithAnchor(Entity child, InnerBoxSize parentInnerBoxSize, PaddingCoordinate paddingCoordinate) {
@@ -240,9 +232,7 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
 
 //         Pagination
 
-        //TODO этот иф нужно будет убрать оставить только тот который будет использовать
         boolean withPagination = true;
-//         withPagination = false;
 
         if (withPagination) {
             var pageBreaker = new PageBreaker(entityManager);
@@ -256,8 +246,10 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
     }
 
     /**
-     * Computes the root entities in the system. A root entity is one that is not a child of any other entity,
-     * or whose declared parent does not exist.
+     * Computes the root entities that should start independent layout traversals.
+     *
+     * <p>An entity is treated as a root when it is not referenced as a child or
+     * when its declared parent cannot be resolved.</p>
      */
     private Set<UUID> computeRoots(Map<UUID, Entity> entities,
                                    Set<UUID> childIds,
@@ -294,10 +286,10 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
     }
 
     /**
-     * Performs a Depth-First Search (DFS) layout for entities, calculating their positions and bounding boxes.
-     * This method recursively traverses the entity hierarchy, ensuring that parent entities are processed before their children.
-     * It also handles cycle detection to prevent infinite loops in case of malformed parent-child relationships.
-     * The computed positions and bounding boxes are added as components to the respective entities.
+     * Performs the recursive layout traversal for one hierarchy branch.
+     *
+     * <p>Parents are processed before children so child layout can depend on
+     * parent inner size, padding coordinates, and container ordering metadata.</p>
      */
 
     private void dfsLayout(
@@ -437,8 +429,8 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
      * @return {@code true} to skip expansion; {@code false} to allow it
      */
 
+    @Deprecated
     private boolean isExpandable(Entity entity) {
-        //TODO Restrictions if we need to skip a some entitie and deny expend execution
         if (entity.has(TextComponent.class)) {
             // Forbidden expend text Entitie
             return false;

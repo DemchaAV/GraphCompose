@@ -8,10 +8,20 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
+/**
+ * Document-scoped font registry and resolver.
+ * <p>
+ * {@code FontLibrary} maps logical {@link FontName} values to concrete backend
+ * font implementations such as {@code PdfFont}. Builders and styles only deal
+ * with logical names; measurement and rendering phases resolve those names
+ * through this library when they need backend-specific font objects.
+ * </p>
+ *
+ * <p>The library supports both eagerly registered fonts and lazily created
+ * fonts through factories.</p>
+ */
 public class FontLibrary implements PdfFontGetter {
 
-    // Эта мапа неизменяемая (Map.ofEntries создает ImmutableMap),
-    // поэтому она на 100% потокобезопасна изначально.
     private static final Map<FontName, FontName> FONT_ALIASES = Map.ofEntries(
             Map.entry(FontName.HELVETICA_BOLD, FontName.HELVETICA),
             Map.entry(FontName.HELVETICA_OBLIQUE, FontName.HELVETICA),
@@ -28,7 +38,11 @@ public class FontLibrary implements PdfFontGetter {
     private final Map<FontName, Map<Class<?>, Supplier<Font<?>>>> fontFactories = new ConcurrentHashMap<>();
 
     /**
-     * Получаем конкретный тип шрифта: PdfFont, WordFont и т.д.
+     * Resolves a font family to a concrete backend font implementation.
+     *
+     * @param fontName logical family requested by styles or templates
+     * @param fontClass backend font type to resolve
+     * @return the matching backend font when available
      */
     @SuppressWarnings("unchecked")
     public <F extends Font<?>> Optional<F> getFont(FontName fontName, Class<F> fontClass) {
@@ -65,7 +79,7 @@ public class FontLibrary implements PdfFontGetter {
     }
 
     /**
-     * Добавляем шрифт с явным указанием класса.
+     * Registers an already created backend font instance under a logical family.
      */
     public <F extends Font<?>> void addFont(FontName name, Class<F> fontClass, F font) {
         if (!fontClass.isInstance(font)) {
@@ -73,13 +87,12 @@ public class FontLibrary implements PdfFontGetter {
                     "Font instance does not match the provided class type"
             );
         }
-        // 2. ЗАМЕНА: Внутренняя мапа тоже должна быть ConcurrentHashMap
         fonts.computeIfAbsent(name, k -> new ConcurrentHashMap<>())
                 .put(fontClass, font);
     }
 
     /**
-     * Добавляем фабрику для отложенного инстанцирования шрифта
+     * Registers a lazy factory for a backend font implementation.
      */
     public <F extends Font<?>> void addFontFactory(FontName name, Class<F> fontClass, Supplier<F> factory) {
         // Safe cast in factory wrapping since we expect supplier returning F
@@ -88,18 +101,24 @@ public class FontLibrary implements PdfFontGetter {
     }
 
     /**
-     * Удобный метод: кладём под runtime-класс.
+     * Convenience overload that registers a font under its runtime class.
      */
     @SuppressWarnings("unchecked")
     public <F extends Font<?>> void addFont(FontName name, F font) {
         addFont(name, (Class<F>) font.getClass(), font);
     }
 
+    /**
+     * Registers a font from a logical family plus concrete font pair.
+     */
     @SuppressWarnings("unchecked")
     public <F extends Font<?>> void addFont(FontSet set) {
         addFont(set.name(), (Class<F>) set.font().getClass(), (F) set.font());
     }
 
+    /**
+     * Returns the set of logical families currently known to this library.
+     */
     public Set<FontName> availableFonts() {
         Set<FontName> all = new LinkedHashSet<>();
         all.addAll(fonts.keySet());
@@ -108,8 +127,10 @@ public class FontLibrary implements PdfFontGetter {
     }
 
     /**
-     * @param fontName
-     * @return
+     * Resolves the PDF font implementation for a logical family.
+     *
+     * @param fontName logical family requested by the renderer
+     * @return the PDF font implementation
      */
     @Override
     public PdfFont getPdfFont(FontName fontName) {

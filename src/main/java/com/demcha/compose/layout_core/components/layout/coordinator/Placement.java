@@ -16,16 +16,20 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Represents the final size and position of a component, including any calculated margins.
+ * Final layout bounding box for an entity.
  * <p>
- * This component stores the absolute coordinates and dimensions (the "bounding box")
- * for an entity after all layout calculations, such as margins and parent container
- * constraints, have been applied.
+ * {@code Placement} is the layout-phase component closest to what renderers
+ * consume. It combines resolved position, outer size, and page span information
+ * into a single record that tells the rendering layer where the entity lives in
+ * document space.
+ * </p>
  *
- * @param x      The final horizontal position (X-coordinate), including margins.
- * @param y      The final vertical position (Y-coordinate), including margins.
- * @param width  The final width, including any horizontal margins.
- * @param height The final height, including any vertical margins.
+ * @param x final horizontal position
+ * @param y final vertical position
+ * @param width final outer width
+ * @param height final outer height
+ * @param startPage first page containing this entity
+ * @param endPage last page containing this entity
  */
 @Slf4j
 public record Placement(double x, double y, double width, double height, int startPage,
@@ -33,12 +37,7 @@ public record Placement(double x, double y, double width, double height, int sta
 
 
     /**
-     * Will be assign same page for @link{ #startPage and endPage} it means Entity will be located on one page not breakable
-     *
-     * @param outerBoxSize
-     * @param positionWithMargins
-     * @param pageNumber
-     * @return
+     * Creates a single-page placement from an already resolved outer size and position.
      */
     private static Placement from(OuterBoxSize outerBoxSize, Position positionWithMargins, int pageNumber) {
         Objects.requireNonNull(outerBoxSize);
@@ -65,7 +64,6 @@ public record Placement(double x, double y, double width, double height, int sta
         return from(entity, parrentInnerBoxSize, paddingCoordinate, pageNumber);
     }
 
-    // TODO надо сделать так что бы считало позицию исходя с родителей
     public static Placement from(Entity child, Entity parent, int pageNumber) {
         var parrentInnerBoxSize = InnerBoxSize.from(parent).orElseThrow();
         var paddingCoordinate = PaddingCoordinate.from(parent);
@@ -74,6 +72,9 @@ public record Placement(double x, double y, double width, double height, int sta
     }
 
 
+    /**
+     * Converts this placement into guideline rendering coordinates for debugging.
+     */
     public <S extends AutoCloseable> Optional<RenderCoordinateContext> renderCoordinate(Entity entity, RenderingSystemECS<S> renderingSystem) {
         double x;
         double y;

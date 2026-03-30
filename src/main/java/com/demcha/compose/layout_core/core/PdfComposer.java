@@ -19,11 +19,21 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * PDF implementation of {@link DocumentComposer}.
+ * PDF-backed implementation of {@link DocumentComposer}.
  * <p>
- * Orchestrates the Entity Component System (ECS), manages the PDF document
- * lifecycle, and configures the layout and rendering systems.
+ * This class assembles the concrete runtime pieces for the supported production
+ * backend: a PDFBox document, an {@code EntityManager}, a canvas, the layout
+ * system, the PDF rendering system, and an optional file output system.
  * </p>
+ *
+ * <p>In practice it is the bridge between the declarative entity graph and the
+ * final PDF bytes:</p>
+ * <ol>
+ *   <li>builders register entities into the manager</li>
+ *   <li>layout resolves geometry and pagination</li>
+ *   <li>the PDF renderer draws resolved entities</li>
+ *   <li>the result is written to a file or returned as bytes</li>
+ * </ol>
  *
  * <h3>Build to file</h3>
  * <pre>
@@ -64,8 +74,10 @@ public final class PdfComposer extends AbstractDocumentComposer {
     private final Path outputFile; // null if output to bytes only
 
     /**
-     * Package-private constructor. Use {@link GraphCompose#pdf(Path)} to create
-     * instances.
+     * Internal constructor used by {@link GraphCompose.PdfBuilder}.
+     *
+     * <p>Callers normally obtain instances via {@link GraphCompose#pdf(Path)} or
+     * {@link GraphCompose#pdf()} and never construct this type directly.</p>
      */
     public PdfComposer(Path outputFile, boolean markdown, boolean guideLines, PDRectangle pageSize, Margin margin,
             Collection<FontFamilyDefinition> customFontFamilies) {
@@ -108,9 +120,13 @@ public final class PdfComposer extends AbstractDocumentComposer {
     }
 
     /**
-     * Adds a margin to the document canvas.
+     * Adds an additional margin to the current canvas.
      *
-     * @param margin The margin configuration to apply.
+     * <p>This mutates the canvas configuration for subsequent root-level layout
+     * calculations. It does not retroactively re-render the document until a build
+     * operation is triggered.</p>
+     *
+     * @param margin the margin to apply to the canvas
      */
     public void margin(Margin margin) {
         canvas().addMargin(margin);
@@ -135,18 +151,18 @@ public final class PdfComposer extends AbstractDocumentComposer {
     }
 
     /**
-     * Builds the document and returns the underlying {@link PDDocument}.
+     * Builds the document and exposes the underlying {@link PDDocument}.
      * <p>
-     * Use this when you need direct access to the PDDocument for further
-     * manipulation without writing to the file system.
-     * </p>
-     * <p>
-     * <b>Important:</b> The caller is responsible for closing the document
-     * when done, or use this within a try-with-resources on the PdfComposer.
+     * Use this when a caller needs to continue working with PDFBox directly after
+     * GraphCompose has completed entity materialization, layout, and PDF rendering.
      * </p>
      *
-     * @return The processed {@link PDDocument} instance.
-     * @throws Exception if an error occurs during processing.
+     * <p><b>Lifecycle note:</b> the returned document is still owned by this
+     * composer. Keep normal resource handling in mind and close the composer when
+     * the PDF document is no longer needed.</p>
+     *
+     * @return the processed {@link PDDocument}
+     * @throws Exception if layout or rendering fails
      */
     public PDDocument toPDDocument() throws Exception {
         buildComponents();

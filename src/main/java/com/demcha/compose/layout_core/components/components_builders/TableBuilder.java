@@ -28,7 +28,17 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Public builder for v1 tables with negotiated column widths, scoped styling, and row-atomic pagination.
+ * Engine-level builder for v1 tables.
+ * <p>
+ * The table implementation is intentionally hybrid. The table root is a
+ * breakable vertical container, while each row is materialized as an atomic
+ * leaf entity carrying precomputed cell payload. That design lets the engine
+ * negotiate widths once at the table level while keeping pagination row-safe.
+ * </p>
+ *
+ * <p>Use this builder when you need column width negotiation, scoped row/column
+ * styling, and table pagination that behaves consistently with the rest of the
+ * layout engine.</p>
  */
 public class TableBuilder extends ContainerBuilder<TableBuilder> {
     private static final double EPS = 1e-6;
@@ -286,6 +296,7 @@ public class TableBuilder extends ContainerBuilder<TableBuilder> {
         return measureText(sanitizeCellText(text), style).height() + padding.vertical();
     }
 
+    //TODO Have a think about this method
     private ContentSize measureText(String text, TableCellStyle style) {
         Class<? extends Font<?>> fontType = entityManager.getSystems()
                 .getSystem(LayoutSystem.class)

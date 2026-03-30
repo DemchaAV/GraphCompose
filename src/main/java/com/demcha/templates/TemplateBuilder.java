@@ -28,8 +28,16 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Builder class responsible for constructing CV components.
- * It uses {@link CvTheme} to determine visual appearance (fonts, colors, sizes).
+ * Higher-level builder layer for reusable CV-like document sections.
+ * <p>
+ * {@code TemplateBuilder} sits above the engine-level {@code ComponentBuilder}.
+ * It packages common composition patterns such as names, info panels, modules,
+ * and themed text blocks so application code can work with reusable document
+ * structures instead of assembling every low-level entity manually.
+ * </p>
+ *
+ * <p>The template layer still produces normal engine entities. Layout and
+ * rendering are therefore handled by the same pipeline as manually built content.</p>
  */
 @Accessors(fluent = true)
 public class TemplateBuilder {
@@ -45,7 +53,7 @@ public class TemplateBuilder {
     private final CvTheme theme;
 
     /**
-     * Constructor with custom theme.
+     * Creates a template builder bound to a component builder and theme.
      */
     private TemplateBuilder(ComponentBuilder componentBuilder, CvTheme theme) {
         this.componentBuilder = Objects.requireNonNull(componentBuilder, "componentBuilder");
@@ -125,7 +133,7 @@ public class TemplateBuilder {
     // ==========================================
 
     /**
-     * Private helper to create consistently styled section titles.
+     * Creates a consistently themed section title entity.
      */
     private Entity createModuleTitle(String title) {
         return componentBuilder.text()
@@ -155,7 +163,7 @@ public class TemplateBuilder {
     }
 
     /**
-     * Shortcut method to build a module with a title and a list of bullet points.
+     * Convenience overload that creates a module and fills it with block-text bullet items.
      */
     public ModuleBuilder moduleBuilder(String moduleName, Canvas canvas, List<String> modulePoints) {
         var moduleHeader = moduleBuilder(moduleName, canvas);
@@ -198,7 +206,7 @@ public class TemplateBuilder {
     }
 
     /**
-     * Creates a block of text (potentially multi-line or with bullets).
+     * Creates a themed block-text entity, optionally with bullet-aware indentation.
      */
     public Entity blockText(List<String> text, double width, String bulletOffset, BlockIndentStrategy strategy) {
         TextStyle style = theme.bodyTextStyle();
@@ -213,7 +221,7 @@ public class TemplateBuilder {
     }
 
     /**
-     * Internal helper to create the text builder with the correct theme.
+     * Creates the underlying block-text builder configured with the current theme.
      */
     private BlockTextBuilder blockTextBuilder(String text, double width) {
         TextStyle bodyStyle = theme.bodyTextStyle();

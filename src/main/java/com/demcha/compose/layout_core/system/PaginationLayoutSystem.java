@@ -7,12 +7,24 @@ import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.system.interfaces.SystemECS;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Simple pagination fallback that converts resolved positions into single-page
+ * {@code Placement} components.
+ * <p>
+ * This implementation does not perform advanced page breaking. Instead it maps
+ * each entity's existing {@code ComputedPosition} and {@code ContentSize} to a
+ * placement on page {@code 0}. It is therefore mainly useful as a minimal
+ * placement bridge when the full page-breaker path is not used.
+ * </p>
+ */
 @Slf4j
 public class PaginationLayoutSystem implements SystemECS {
 
 
     /**
-     * @param entityManager
+     * Converts each positioned entity into a basic single-page placement.
+     *
+     * @param entityManager registry containing entities with computed positions
      */
     @Override
     public void process(EntityManager entityManager) {

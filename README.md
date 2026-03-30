@@ -10,11 +10,11 @@
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License"/>
   <img src="https://img.shields.io/badge/PDFBox-3.0-red?style=for-the-badge" alt="PDFBox 3.0"/>
   <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge" alt="Active"/>
-   <a href="https://github.com/DemchaAV/GraphCompose/actions/workflows/ci.yml">
-      <img src="https://github.com/DemchaAV/GraphCompose/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"/>
-    </a>
+  <a href="https://github.com/DemchaAV/GraphCompose/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/DemchaAV/GraphCompose/ci.yml?branch=main&style=for-the-badge&label=CI&logo=github" alt="CI"/>
+  </a>
   <a href="https://jitpack.io/#DemchaAV/GraphCompose">
-    <img src="https://jitpack.io/v/DemchaAV/GraphCompose.svg" alt="JitPack"/>
+    <img src="https://img.shields.io/jitpack/v/github/DemchaAV/GraphCompose?style=for-the-badge&label=JitPack" alt="JitPack"/>
   </a>
 </p>
 

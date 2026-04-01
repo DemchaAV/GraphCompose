@@ -72,6 +72,13 @@ Examples:
 
 Use this path when the object should call `addChild(...)` and arrange nested entities.
 
+Special note for modules:
+
+- `ModuleBuilder` is the semantic section primitive
+- it resolves to the full available width of its parent minus its own horizontal margin
+- it should usually live under a normal root `vContainer(...)` or `TemplateBuilder.pageFlow(...)`
+- nested horizontal/vertical composition should happen inside the module through regular containers
+
 ## Minimum components a new object usually needs
 
 ### Render marker
@@ -197,6 +204,7 @@ Container rule of thumb:
 - containers that must resize around children usually need `Expendable`
 - containers whose content may continue on another page usually need `Breakable`
 - some containers need both markers
+- if the container is a semantic section like `ModuleBuilder`, decide whether width should be inherited from the parent before letting child layout run
 
 ### Case 2.5: build a hybrid object with a breakable root and atomic leaf rows
 

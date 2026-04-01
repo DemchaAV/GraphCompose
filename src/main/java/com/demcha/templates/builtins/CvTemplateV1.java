@@ -157,7 +157,7 @@ public class CvTemplateV1 implements CvTemplate {
                 DEFAULT_BULLET_OFFSET,
                 BlockIndentStrategy.FROM_SECOND_LINE);
 
-        cv.moduleBuilder(canvas)
+        cv.pageFlow(canvas)
                 .entityName(MAIN_CONTAINER_NAME)
                 .addChild(moduleHeader)
                 .addChild(moduleProfessionalSummary)
@@ -193,7 +193,7 @@ public class CvTemplateV1 implements CvTemplate {
         return cv.componentBuilder()
                 .moduleBuilder(Align.middle(5), canvas)
                 .entityName(HEADER_ENTITY_NAME)
-                .margin(new Margin(0, 10, 10, 10))
+                .margin(new Margin(0, 10, 5, 0))
                 .anchor(Anchor.topRight())
                 .addChild(artemDemchyshyn)
                 .addChild(infoPanel)

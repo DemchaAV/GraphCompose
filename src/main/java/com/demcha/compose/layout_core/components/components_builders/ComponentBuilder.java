@@ -99,36 +99,43 @@ public class ComponentBuilder {
     }
 
     /**
-     * Creates a module/container builder aligned within its parent according to
+     * Creates a semantic section module aligned within its parent according to
      * the supplied {@link Align}.
+     *
+     * <p>Modules resolve to the full available width of their parent minus their
+     * own horizontal margins, stack children vertically, and grow primarily in
+     * height as content is added.</p>
      */
     public ModuleBuilder moduleBuilder(Align align) {
         return register(new ModuleBuilder(entityManager, align));
     }
 
     /**
-     * Creates a module/container builder sized against a canvas-based reference area.
+     * Creates a semantic section module with a root-width seed based on a canvas
+     * reference area.
      */
     public ModuleBuilder moduleBuilder(Align align, Canvas canvas) {
         return register(new ModuleBuilder(entityManager, align, canvas));
     }
 
     /**
-     * Creates a module/container builder sized against an explicit content box.
+     * Creates a semantic section module with an explicit root-width seed.
      */
     public ModuleBuilder moduleBuilder(Align align, ContentSize contentSize) {
         return register(new ModuleBuilder(entityManager, align, contentSize));
     }
 
     /**
-     * Creates a module/container builder sized against a precomputed inner box.
+     * Creates a semantic section module with a root-width seed based on a
+     * precomputed inner box.
      */
     public ModuleBuilder moduleBuilder(Align align, InnerBoxSize innerBoxSize) {
         return register(new ModuleBuilder(entityManager, align, innerBoxSize));
     }
 
     /**
-     * Creates a module/container builder using a PDF page as the initial reference.
+     * Creates a semantic section module with a root-width seed based on a PDF
+     * page width.
      */
     public ModuleBuilder moduleBuilder(Align align, PDPage page) {
         return register(new ModuleBuilder(entityManager, align, page));

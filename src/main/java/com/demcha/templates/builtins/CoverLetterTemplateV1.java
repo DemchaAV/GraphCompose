@@ -109,7 +109,7 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
         Entity coverLetter = createLetterSection(cv, wroteLetter, jobDetails, canvas);
         Entity kindRegards = createClosingSignature(composer, header, canvas);
 
-        cv.moduleBuilder(canvas)
+        cv.pageFlow(canvas)
                 .entityName(MAIN_CONTAINER_NAME)
                 .addChild(moduleHeader)
                 .addChild(coverLetter)
@@ -172,11 +172,14 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
 
     private Entity createLetterSection(TemplateBuilder cv, String wroteLetter, JobDetails jobDetails, Canvas canvas) {
         String resolvedLetter = wroteLetter.replace("${companyName}", jobDetails.company());
-        return cv.blockText(
-                List.of(resolvedLetter),
-                (float) canvas.innerWidth(),
-                DEFAULT_BULLET_OFFSET,
-                BlockIndentStrategy.FIRST_LINE);
+        return cv.moduleBuilder(canvas)
+                .entityName("CoverLetterBody")
+                .addChild(cv.blockText(
+                        List.of(resolvedLetter),
+                        (float) canvas.innerWidth(),
+                        DEFAULT_BULLET_OFFSET,
+                        BlockIndentStrategy.FIRST_LINE))
+                .build();
     }
 
     private Entity createClosingSignature(DocumentComposer composer, Header header, Canvas canvas) {
@@ -190,7 +193,11 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
                         new Margin(20, 20, 0, 0))
                 .build();
         kindRegards.addComponent(Anchor.topRight());
-        return kindRegards;
+        return composer.componentBuilder()
+                .moduleBuilder(Align.middle(CvTheme.defaultTheme().spacing()), canvas)
+                .entityName("CoverLetterClosingSignature")
+                .addChild(kindRegards)
+                .build();
     }
 }
 

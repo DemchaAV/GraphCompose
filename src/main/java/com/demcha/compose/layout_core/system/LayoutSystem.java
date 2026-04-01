@@ -25,6 +25,7 @@ import com.demcha.compose.layout_core.system.interfaces.RenderingSystemECS;
 import com.demcha.compose.layout_core.system.interfaces.SystemECS;
 import com.demcha.compose.layout_core.system.utils.containerUtils.ContainerExpander;
 import com.demcha.compose.layout_core.system.utils.containerUtils.ContainerLayoutManager;
+import com.demcha.compose.layout_core.system.utils.containerUtils.ModuleWidthResolver;
 import com.demcha.compose.layout_core.system.utils.page_breaker.PageBreaker;
 import com.demcha.compose.layout_core.system.utils.page_breaker.TextBlockProcessor;
 import lombok.Getter;
@@ -198,7 +199,8 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
         final Map<UUID, Set<UUID>> childrenByParent = entityManager
                 .childrenByParent(childIds)
                 .orElseGet(Map::of);
-
+//TODO currently en testing stage
+        ModuleWidthResolver.process(entityManager, canvas);
         ContainerLayoutManager.process(childrenByParent, entityManager);
 
         // 3) Expand parent boxes if needed (any child larger than parent)

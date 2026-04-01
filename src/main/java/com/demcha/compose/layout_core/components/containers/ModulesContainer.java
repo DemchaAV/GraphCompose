@@ -17,6 +17,13 @@ import com.demcha.compose.layout_core.core.EntityManager;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
+/**
+ * Legacy root container kept for backward compatibility.
+ *
+ * @deprecated prefer a regular {@code vContainer(...)} page flow as the root and
+ *             semantic {@code moduleBuilder(...)} sections beneath it.
+ */
+@Deprecated(forRemoval = false)
 public class ModulesContainer extends ContainerBuilder<ModulesContainer> {
     private float width;
     private float height;

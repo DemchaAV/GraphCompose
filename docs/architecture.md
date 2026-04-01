@@ -30,6 +30,15 @@ See [pagination-ordering.md](./pagination-ordering.md) for the detailed explanat
 
 This layer is the reusable document engine. It is responsible for turning entities and styles into positioned render output.
 
+### Semantic modules in the engine
+
+`ModuleBuilder` now represents a semantic full-width section rather than a plain vertical container alias.
+
+- modules resolve their width from the parent inner box
+- modules keep that width stable even if one child is wider
+- modules primarily grow in height as content is added
+- page roots should therefore be regular `vContainer(...)` flows that stack modules
+
 ### TableBuilder v1 in the engine
 
 The current table implementation lives in the engine layer, not in templates.
@@ -55,6 +64,7 @@ Fixed leaf primitives such as `Rectangle`, `Circle`, `Image`, and `Line` follow 
 - These classes sit on top of the engine and package common document structures into reusable templates.
 - `templates.api` contains template-facing contracts and registry/helper types.
 - `templates.builtins` contains concrete template implementations.
+- `TemplateBuilder.pageFlow(...)` is the canonical template root that stacks semantic modules in document order.
 
 ## Current package roots
 

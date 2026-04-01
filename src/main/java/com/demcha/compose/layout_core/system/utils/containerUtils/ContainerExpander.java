@@ -5,6 +5,7 @@ import com.demcha.compose.layout_core.components.geometry.ContentSize;
 import com.demcha.compose.layout_core.components.geometry.InnerBoxSize;
 import com.demcha.compose.layout_core.components.geometry.OuterBoxSize;
 import com.demcha.compose.layout_core.components.layout.Align;
+import com.demcha.compose.layout_core.components.renderable.Module;
 import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.exceptions.ContentSizeNotFoundException;
 import com.demcha.compose.layout_core.components.geometry.Expendable;
@@ -37,6 +38,10 @@ public final class ContainerExpander {
             return false;
         }
 
+        if (parent.has(Module.class)) {
+            return expandModuleContentHeightByChildren(parent, children);
+        }
+
         final InnerBoxSize inner = InnerBoxSize.from(parent).orElseThrow(() ->
                 new IllegalStateException("Parent is missing InnerBoxSize: " + parent));
 
@@ -63,6 +68,27 @@ public final class ContainerExpander {
         }
 
         return applyContentSizeIfLarger(parent, requiredContentWidth, requiredContentHeight);
+    }
+
+    private static boolean expandModuleContentHeightByChildren(Entity parent, Set<Entity> children) {
+        final InnerBoxSize inner = InnerBoxSize.from(parent).orElseThrow(() ->
+                new IllegalStateException("Parent is missing InnerBoxSize: " + parent));
+
+        double requiredContentHeight = inner.height();
+
+        for (Entity child : children) {
+            Optional<OuterBoxSize> childOuterOpt = OuterBoxSize.from(child);
+            if (childOuterOpt.isEmpty()) continue;
+
+            OuterBoxSize childOuter = childOuterOpt.get();
+            if (childOuter.width() > inner.width() + EPS) {
+                log.warn("Child {} exceeds module {} inner width: childOuter={} innerWidth={}",
+                        child, parent, childOuter.width(), inner.width());
+            }
+            requiredContentHeight = Math.max(requiredContentHeight, childOuter.height());
+        }
+
+        return applyHeightIfLarger(parent, requiredContentHeight);
     }
 
     /**
@@ -99,6 +125,32 @@ public final class ContainerExpander {
 
         log.info("Expanded ContentSize for {}: {}x{} -> {}x{}",
                 parent, current.width(), current.height(), newWidth, newHeight);
+        return true;
+    }
+
+    private static boolean applyHeightIfLarger(Entity parent, double requiredInnerHeight) {
+        final InnerBoxSize inner = InnerBoxSize.from(parent).orElseThrow(() ->
+                new IllegalStateException("Parent is missing InnerBoxSize: " + parent));
+
+        final boolean taller = requiredInnerHeight > inner.height() + EPS;
+        if (!taller) {
+            log.debug("Parent {} height not expanded (required <= inner).", parent);
+            return false;
+        }
+
+        final ContentSize current = parent.getComponent(ContentSize.class).orElseThrow(() -> {
+            log.error("All objects must have a ContentSize. Object {} doesn't have one.", parent);
+            return new ContentSizeNotFoundException(parent);
+        });
+
+        final double newHeight = current.height() + (requiredInnerHeight - inner.height());
+        if (Math.abs(newHeight - current.height()) < EPS) {
+            log.debug("Computed height equals current ContentSize (within EPS); skipping update for {}", parent);
+            return false;
+        }
+
+        parent.addComponent(new ContentSize(current.width(), newHeight));
+        log.info("Expanded module height for {}: {} -> {}", parent, current.height(), newHeight);
         return true;
     }
 

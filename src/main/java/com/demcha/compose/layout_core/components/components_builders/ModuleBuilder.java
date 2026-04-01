@@ -4,60 +4,66 @@ import com.demcha.compose.layout_core.components.containers.abstract_builders.Co
 import com.demcha.compose.layout_core.components.containers.abstract_builders.StackAxis;
 import com.demcha.compose.layout_core.components.geometry.ContentSize;
 import com.demcha.compose.layout_core.components.geometry.InnerBoxSize;
+import com.demcha.compose.layout_core.components.geometry.ModuleWidthSeed;
 import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.renderable.Module;
 import com.demcha.compose.layout_core.components.renderable.VContainer;
 import com.demcha.compose.layout_core.core.Canvas;
-import com.demcha.compose.layout_core.core.CanvasBox;
 import com.demcha.compose.layout_core.core.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDPage;
 
 @Slf4j
 public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
-    private final Canvas canvas;
-
     /**
-     * Constructs a new {@code ModuleBuilder} without a canvas.
-     * Width will default to 0 in initialize().
+     * Constructs a new {@code ModuleBuilder} with layout-resolved full-width
+     * semantics and no explicit root-width seed.
      */
     ModuleBuilder(EntityManager entityManager, Align align) {
         super(entityManager, align);
-        this.canvas = null;
     }
 
     /**
-     * Constructs a new {@code ModuleBuilder} with a ContentSize-based canvas.
+     * Constructs a new {@code ModuleBuilder} with a root-width seed derived from
+     * the supplied content size.
      */
     ModuleBuilder(EntityManager entityManager, Align align, ContentSize contentSize) {
-        super(entityManager, align);
-        if (contentSize == null) {
-            this.canvas = null;
-        } else {
-            this.canvas = createCanvasFromContentSize(contentSize);
+        this(entityManager, align);
+        if (contentSize != null) {
+            seedWidth(contentSize.width());
+            entity.addComponent(contentSize);
         }
     }
 
     /**
-     * Constructs a new {@code ModuleBuilder} with an actual Canvas.
+     * Constructs a new {@code ModuleBuilder} with a root-width seed based on the
+     * canvas inner width.
      */
     ModuleBuilder(EntityManager entityManager, Align align, Canvas canvas) {
-        super(entityManager, align);
-        this.canvas = canvas;
+        this(entityManager, align);
+        if (canvas != null) {
+            double seedWidth = canvas.innerWidth();
+            seedWidth(seedWidth);
+            entity.addComponent(new ContentSize(seedWidth, 0));
+        }
     }
 
     /**
-     * Constructs a new {@code ModuleBuilder} with a PDPage.
+     * Constructs a new {@code ModuleBuilder} with a root-width seed based on a
+     * page width.
      */
     ModuleBuilder(EntityManager entityManager, Align align, PDPage page) {
-        this(entityManager, align, new ContentSize(page.getMediaBox().getWidth(), page.getMediaBox().getHeight()));
+        this(entityManager, align,
+                page == null ? null : new ContentSize(page.getMediaBox().getWidth(), page.getMediaBox().getHeight()));
     }
 
     /**
-     * Constructs a new {@code ModuleBuilder} with an InnerBoxSize.
+     * Constructs a new {@code ModuleBuilder} with a root-width seed based on a
+     * precomputed inner box.
      */
     ModuleBuilder(EntityManager entityManager, Align align, InnerBoxSize innerBoxSize) {
-        this(entityManager, align, new ContentSize(innerBoxSize.width(), innerBoxSize.height()));
+        this(entityManager, align,
+                innerBoxSize == null ? null : new ContentSize(innerBoxSize.width(), innerBoxSize.height()));
     }
 
     @Override
@@ -65,15 +71,10 @@ public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
         entity.addComponent(new Module());
         entity.addComponent(StackAxis.VERTICAL);
         entity.addComponentIfAbsent(new VContainer());
-        entity.addComponent(canvas == null
-                ? new ContentSize(0, 0)
-                : new ContentSize(canvas.innerWidth(), 0));
+        entity.addComponentIfAbsent(new ContentSize(0, 0));
     }
 
-    /**
-     * Creates a Canvas adapter from ContentSize.
-     */
-    private static Canvas createCanvasFromContentSize(ContentSize size) {
-        return new CanvasBox((float) size.width(), (float) size.height(), 0, 0);
+    private void seedWidth(double width) {
+        entity.addComponent(new ModuleWidthSeed(Math.max(0, width)));
     }
 }

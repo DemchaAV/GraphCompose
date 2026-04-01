@@ -133,6 +133,19 @@ public class TemplateBuilder {
     // ==========================================
 
     /**
+     * Creates the canonical root page flow for template documents.
+     *
+     * <p>The page flow is an ordinary vertical container that owns page-level
+     * semantic modules. Each nested module then resolves its width against this
+     * root container rather than acting as the document root itself.</p>
+     */
+    public VContainerBuilder pageFlow(Canvas canvas) {
+        return componentBuilder.vContainer(Align.middle(theme().spacingModuleName()))
+                .size(canvas.innerWidth(), 0)
+                .anchor(Anchor.topLeft());
+    }
+
+    /**
      * Creates a consistently themed section title entity.
      */
     private Entity createModuleTitle(String title) {
@@ -216,7 +229,7 @@ public class TemplateBuilder {
                 .padding(0, 5, 0, 20)
                 .bulletOffset(bulletOffset)
                 .text(text, style, null, null)
-                .anchor(Anchor.center())
+                .anchor(Anchor.left())
                 .build();
     }
 

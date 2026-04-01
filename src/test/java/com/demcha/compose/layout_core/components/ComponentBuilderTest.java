@@ -12,7 +12,10 @@ import com.demcha.compose.layout_core.components.renderable.Module;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.geometry.ContentSize;
 import com.demcha.compose.layout_core.components.layout.Align;
+import com.demcha.compose.layout_core.components.layout.Anchor;
+import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.core.DocumentComposer;
+import com.demcha.compose.layout_core.core.PdfComposer;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -88,6 +91,90 @@ class ComponentBuilderTest {
 
             assertThat(entity.hasAssignable(Module.class)).isTrue();
             assertThat(entity.getComponent(ContentSize.class)).isPresent();
+        }
+    }
+
+    @Test
+    void rootModuleShouldUseCanvasWidthMinusOwnHorizontalMargin() throws Exception {
+        try (PdfComposer composer = GraphCompose.pdf()
+                .margin(24, 24, 24, 24)
+                .create()) {
+            var cb = composer.componentBuilder();
+            var module = cb.moduleBuilder(Align.middle(4))
+                    .anchor(Anchor.topLeft())
+                    .margin(new Margin(0, 12, 0, 8))
+                    .addChild(cb.rectangle().size(60, 20).build())
+                    .build();
+
+            composer.toBytes();
+
+            assertThat(module.getComponent(ContentSize.class))
+                    .hasValueSatisfying(size -> {
+                        assertThat(size.width()).isEqualTo(composer.canvas().innerWidth() - 20);
+                        assertThat(size.height()).isGreaterThan(0);
+                    });
+        }
+    }
+
+    @Test
+    void nestedModuleShouldUseParentInnerWidthInsteadOfWidestChild() throws Exception {
+        try (PdfComposer composer = GraphCompose.pdf().create()) {
+            var cb = composer.componentBuilder();
+            var module = cb.moduleBuilder(Align.left(4))
+                    .anchor(Anchor.topLeft())
+                    .margin(new Margin(0, 10, 0, 10))
+                    .addChild(cb.rectangle().size(220, 20).build())
+                    .build();
+
+            cb.vContainer(Align.left(0))
+                    .size(200, 0)
+                    .anchor(Anchor.topLeft())
+                    .addChild(module)
+                    .build();
+
+            composer.toBytes();
+
+            assertThat(module.getComponent(ContentSize.class))
+                    .hasValueSatisfying(size -> {
+                        assertThat(size.width()).isEqualTo(180);
+                        assertThat(size.height()).isGreaterThan(0);
+                    });
+        }
+    }
+
+    @Test
+    void moduleShouldGrowVerticallyWithoutGrowingHorizontally() throws Exception {
+        try (PdfComposer composer = GraphCompose.pdf().create()) {
+            var cb = composer.componentBuilder();
+            var module = cb.moduleBuilder(Align.middle(4), new ContentSize(240, 10))
+                    .anchor(Anchor.topLeft())
+                    .addChild(cb.rectangle().size(100, 30).build())
+                    .addChild(cb.rectangle().size(120, 40).build())
+                    .build();
+
+            composer.toBytes();
+
+            assertThat(module.getComponent(ContentSize.class))
+                    .hasValueSatisfying(size -> {
+                        assertThat(size.width()).isEqualTo(240);
+                        assertThat(size.height()).isEqualTo(74);
+                    });
+        }
+    }
+
+    @Test
+    void oversizedChildShouldNotForceModuleToExpandHorizontally() throws Exception {
+        try (PdfComposer composer = GraphCompose.pdf().create()) {
+            var cb = composer.componentBuilder();
+            var module = cb.moduleBuilder(Align.middle(4), new ContentSize(180, 0))
+                    .anchor(Anchor.topLeft())
+                    .addChild(cb.rectangle().size(320, 20).build())
+                    .build();
+
+            composer.toBytes();
+
+            assertThat(module.getComponent(ContentSize.class))
+                    .hasValueSatisfying(size -> assertThat(size.width()).isEqualTo(180));
         }
     }
 

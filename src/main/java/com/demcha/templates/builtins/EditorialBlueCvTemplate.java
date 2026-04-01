@@ -7,6 +7,7 @@ import com.demcha.compose.layout_core.components.components_builders.BlockTextBu
 import com.demcha.compose.layout_core.components.components_builders.ComponentBuilder;
 import com.demcha.compose.layout_core.components.components_builders.ElementBuilder;
 import com.demcha.compose.layout_core.components.components_builders.HContainerBuilder;
+import com.demcha.compose.layout_core.components.components_builders.ModuleBuilder;
 import com.demcha.compose.layout_core.components.components_builders.TableCellStyle;
 import com.demcha.compose.layout_core.components.components_builders.TableColumnSpec;
 import com.demcha.compose.layout_core.components.components_builders.TextBuilder;
@@ -43,6 +44,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+//TODO change to module bilder aproach
 @Slf4j
 public class EditorialBlueCvTemplate implements CvTemplate {
     private static final String ROOT_NAME = "EditorialBlueRoot";
@@ -183,9 +185,8 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     }
 
     private Entity createHeader(ComponentBuilder cb, MainPageCV data, double width) {
-        VContainerBuilder header = cb.vContainer(Align.middle(HEADER_SPACING))
+        ModuleBuilder header = cb.moduleBuilder(Align.middle(HEADER_SPACING))
                 .entityName(HEADER_NAME)
-                .size(width, 0)
                 .anchor(Anchor.topLeft())
                 .margin(Margin.bottom(2));
 
@@ -216,7 +217,7 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     }
 
     private Entity createProfileSection(ComponentBuilder cb, ModuleSummary summary, double width) {
-        VContainerBuilder section = sectionContainer(cb, PROFILE_NAME, width, "PROFESSIONAL PROFILE");
+        ModuleBuilder section = sectionContainer(cb, PROFILE_NAME, width, "PROFESSIONAL PROFILE");
         section.addChild(createParagraph(
                 cb,
                 List.of(stripMarkdown(summary.getBlockSummary())),
@@ -226,7 +227,7 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     }
 
     private Entity createExperienceSection(ComponentBuilder cb, ModuleYml experience, double width) {
-        VContainerBuilder section = sectionContainer(cb, EXPERIENCE_NAME, width, "EMPLOYMENT HISTORY");
+        ModuleBuilder section = sectionContainer(cb, EXPERIENCE_NAME, width, "EMPLOYMENT HISTORY");
         for (ExperienceEntry entry : parseExperienceEntries(experience.getModulePoints())) {
             section.addChild(createExperienceEntry(cb, entry, width));
         }
@@ -238,7 +239,7 @@ public class EditorialBlueCvTemplate implements CvTemplate {
             return null;
         }
 
-        VContainerBuilder section = sectionContainer(cb, PROJECTS_NAME, width, "PROJECTS");
+        ModuleBuilder section = sectionContainer(cb, PROJECTS_NAME, width, "PROJECTS");
         List<ProjectEntry> entries = parseProjectEntries(projects.getModulePoints());
         int limit = Math.min(2, entries.size());
 
@@ -254,7 +255,7 @@ public class EditorialBlueCvTemplate implements CvTemplate {
             return null;
         }
 
-        VContainerBuilder section = sectionContainer(cb, EDUCATION_NAME, width, "EDUCATION");
+        ModuleBuilder section = sectionContainer(cb, EDUCATION_NAME, width, "EDUCATION");
         for (EducationEntry entry : parseEducationEntries(education.getModulePoints())) {
             section.addChild(createEducationEntry(cb, entry, width));
         }
@@ -267,15 +268,14 @@ public class EditorialBlueCvTemplate implements CvTemplate {
             return null;
         }
 
-        VContainerBuilder section = sectionContainer(cb, SKILLS_NAME, width, "KEY SKILLS");
+        ModuleBuilder section = sectionContainer(cb, SKILLS_NAME, width, "KEY SKILLS");
         section.addChild(createSkillsTable(cb, skills, width));
         return section.build();
     }
 
     private Entity createFooter(ComponentBuilder cb, double width) {
-        VContainerBuilder footer = cb.vContainer(Align.middle(2))
+        ModuleBuilder footer = cb.moduleBuilder(Align.middle(2))
                 .entityName(FOOTER_NAME)
-                .size(width, 0)
                 .anchor(Anchor.topLeft())
                 .margin(Margin.top(2));
 
@@ -290,10 +290,9 @@ public class EditorialBlueCvTemplate implements CvTemplate {
         return footer.build();
     }
 
-    private VContainerBuilder sectionContainer(ComponentBuilder cb, String entityName, double width, String title) {
-        VContainerBuilder section = cb.vContainer(Align.left(SECTION_SPACING))
+    private ModuleBuilder sectionContainer(ComponentBuilder cb, String entityName, double width, String title) {
+        ModuleBuilder section = cb.moduleBuilder(Align.left(SECTION_SPACING))
                 .entityName(entityName)
-                .size(width, 0)
                 .anchor(Anchor.topLeft())
                 .margin(Margin.bottom(2));
         section.addChild(createSectionHeader(cb, title, width));

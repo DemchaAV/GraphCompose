@@ -213,10 +213,14 @@ try (PdfComposer composer = GraphCompose.pdf()
             composer.componentBuilder(),
             CvTheme.defaultTheme());
 
-    template.moduleBuilder("Profile", composer.canvas())
+    var profile = template.moduleBuilder("Profile", composer.canvas())
             .addChild(template.blockText(
                     "Analytical engineer focused on reliable platform design.",
                     composer.canvas().innerWidth()))
+            .build();
+
+    template.pageFlow(composer.canvas())
+            .addChild(profile)
             .build();
 
     byte[] pdfBytes = composer.toBytes();
@@ -237,7 +241,7 @@ The layout pass resolves all geometry first. Rendering happens after every size 
 
 ### 3. Containers express structure
 
-Use `vContainer(...)`, `hContainer(...)`, and `moduleBuilder(...)` to describe document flow. Absolute coordinates are an implementation detail of the engine, not something you write.
+Use `vContainer(...)` and `hContainer(...)` for structural layout, then compose page sections with `moduleBuilder(...)` inside a page flow. Absolute coordinates are an implementation detail of the engine, not something you write.
 
 ### 4. The template layer is optional
 

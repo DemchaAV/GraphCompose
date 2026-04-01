@@ -40,8 +40,12 @@ public class SmartPaginationTest {
                 .create()) {
 
             TemplateBuilder template = TemplateBuilder.from(composer.componentBuilder());
-            template.moduleBuilder("MassiveText", composer.canvas())
+            var massiveTextModule = template.moduleBuilder("MassiveText", composer.canvas())
                     .addChild(template.blockText(massiveText, composer.canvas().innerWidth()))
+                    .build();
+
+            template.pageFlow(composer.canvas())
+                    .addChild(massiveTextModule)
                     .build();
 
             composer.build();

@@ -3,6 +3,7 @@ package com.demcha.compose.layout_core.system.utils.containerUtils;
 import com.demcha.compose.layout_core.components.containers.abstract_builders.StackAxis;
 import com.demcha.compose.layout_core.components.core.Entity;
 import com.demcha.compose.layout_core.components.geometry.ContentSize;
+import com.demcha.compose.layout_core.components.geometry.InnerBoxSize;
 import com.demcha.compose.layout_core.components.geometry.OuterBoxSize;
 import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.Anchor;
@@ -10,6 +11,7 @@ import com.demcha.compose.layout_core.components.layout.HAnchor;
 import com.demcha.compose.layout_core.components.layout.VAnchor;
 import com.demcha.compose.layout_core.components.layout.coordinator.Position;
 import com.demcha.compose.layout_core.components.renderable.Container;
+import com.demcha.compose.layout_core.components.renderable.Module;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.EntityManager;
@@ -42,6 +44,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class ContainerAligner {
+    private static final double EPS = 1e-6;
 
     private static final Map<StackAxis, LayoutStrategy> STRATEGIES = Map.of(
             StackAxis.HORIZONTAL, new HorizontalStrategy(),
@@ -59,7 +62,9 @@ public class ContainerAligner {
         StackAxis stackAxis = parent.getComponent(StackAxis.class)
                 .orElseThrow(() -> new IllegalStateException("Container Entity must have a StackAxis component."));
 
-        LayoutStrategy strategy = STRATEGIES.get(stackAxis);
+        LayoutStrategy strategy = parent.has(Module.class)
+                ? new ModuleVerticalStrategy()
+                : STRATEGIES.get(stackAxis);
 
         if (strategy != null) {
             log.debug("Aligning children of {} using {} strategy.", parent, stackAxis);
@@ -228,6 +233,54 @@ public class ContainerAligner {
         @Override
         protected ContentSize getFinalContentSize(Axes axes, Padding padding) {
             return delegate.getFinalContentSize(axes, padding);
+        }
+    }
+
+    private static class ModuleVerticalStrategy implements LayoutStrategy {
+        @Override
+        public void alignChildren(Entity parent, EntityManager entityManager) {
+            Align align = parent.getComponent(Align.class).orElseThrow();
+            List<Entity> children = parent.getChildren().stream()
+                    .map(id -> entityManager.getEntity(id).orElseThrow())
+                    .collect(Collectors.toList()).reversed();
+
+            double main = 0;
+            double resolvedWidth = parent.getComponent(ContentSize.class)
+                    .orElseThrow(() -> new IllegalStateException("Module missing ContentSize: " + parent))
+                    .width();
+            double innerWidth = InnerBoxSize.from(parent)
+                    .orElseThrow(() -> new IllegalStateException("Module missing InnerBoxSize: " + parent))
+                    .width();
+
+            for (int i = 0; i < children.size(); i++) {
+                Entity child = children.get(i);
+                boolean isLastChild = (i == children.size() - 1);
+
+                ContainerAligner.align(child, entityManager);
+
+                Position currentPos = child.getComponent(Position.class).orElse(Position.zero());
+                Anchor anchor = child.getComponent(Anchor.class).orElse(Anchor.defaultAnchor());
+                Margin margin = child.getComponent(Margin.class).orElse(Margin.zero());
+
+                child.addComponent(new Position(currentPos.x(), main + margin.bottom()));
+                child.addComponent(new Anchor(anchor.h(), VAnchor.DEFAULT));
+
+                OuterBoxSize childOuter = OuterBoxSize.from(child).orElseThrow();
+                if (childOuter.width() > innerWidth + EPS) {
+                    log.warn("Child {} overflows module {} width contract: childOuter={} innerWidth={}",
+                            child, parent, childOuter.width(), innerWidth);
+                }
+
+                main += childOuter.height();
+                if (!isLastChild) {
+                    main += align.spacing();
+                }
+            }
+
+            Padding parentPadding = parent.getComponent(Padding.class).orElse(Padding.zero());
+            ContentSize current = parent.getComponent(ContentSize.class).orElseThrow();
+            double finalHeight = Math.max(current.height(), main + parentPadding.vertical());
+            parent.addComponent(new ContentSize(resolvedWidth, finalHeight));
         }
     }
 }

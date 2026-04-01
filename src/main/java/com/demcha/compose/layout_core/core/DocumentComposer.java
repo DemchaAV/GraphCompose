@@ -40,10 +40,14 @@ import java.io.Closeable;
  *             composer.componentBuilder(),
  *             CvTheme.defaultTheme());
  *
- *     template.moduleBuilder("Profile", composer.canvas())
+ *     var profile = template.moduleBuilder("Profile", composer.canvas())
  *             .addChild(template.blockText(
  *                     "Analytical engineer focused on reliable platform design.",
  *                     composer.canvas().innerWidth()))
+ *             .build();
+ *
+ *     template.pageFlow(composer.canvas())
+ *             .addChild(profile)
  *             .build();
  *
  *     byte[] pdfBytes = composer.toBytes();

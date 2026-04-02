@@ -1,15 +1,20 @@
 package com.demcha.integration;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.font_library.DefaultFonts;
 import com.demcha.compose.layout_core.components.components_builders.ComponentBuilder;
 import com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy;
+import com.demcha.compose.layout_core.components.content.text.BlockTextData;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
+import com.demcha.compose.layout_core.components.core.Entity;
 import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFont;
 import com.demcha.testing.VisualTestOutputs;
+import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
 
@@ -123,6 +128,47 @@ class BlockTextIntegrationTest {
 
         assertThat(outputFile).exists();
         assertThat(outputFile).isNotEmptyFile();
+    }
+
+    @Test
+    void shouldIncreaseVerticalGapAroundMarkdownHeading() throws Exception {
+        TextStyle style = TextStyle.DEFAULT_STYLE;
+        Entity entity;
+
+        try (PdfComposer composer = GraphCompose.pdf()
+                .pageSize(PDRectangle.A4)
+                .margin(20, 20, 20, 20)
+                .markdown(true)
+                .create()) {
+
+            ComponentBuilder cb = composer.componentBuilder();
+            entity = cb.blockText(Align.left(2), style)
+                    .size(360, 2)
+                    .anchor(Anchor.topLeft())
+                    .padding(Padding.zero())
+                    .margin(Margin.zero())
+                    .text(List.of("First line\n# Heading\nThird line"), style, Padding.zero(), Margin.zero())
+                    .build();
+
+            composer.build();
+        }
+
+        BlockTextData blockTextData = entity.getComponent(BlockTextData.class).orElseThrow();
+        assertThat(blockTextData.lines()).hasSize(3);
+
+        double gapBeforeHeading = blockTextData.lines().get(0).y() - blockTextData.lines().get(1).y();
+        double gapAfterHeading = blockTextData.lines().get(1).y() - blockTextData.lines().get(2).y();
+
+        double baseStep;
+        try (PDDocument fontDocument = new PDDocument()) {
+            PdfFont font = (PdfFont) DefaultFonts.library(fontDocument)
+                    .getFont(style.fontName(), PdfFont.class)
+                    .orElseThrow();
+            baseStep = font.getLineHeight(style) + 2.0;
+        }
+
+        assertThat(gapBeforeHeading).isGreaterThan(baseStep);
+        assertThat(gapAfterHeading).isGreaterThan(baseStep);
     }
 }
 

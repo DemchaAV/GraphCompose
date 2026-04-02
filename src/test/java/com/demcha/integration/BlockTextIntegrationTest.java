@@ -5,10 +5,12 @@ import com.demcha.compose.font_library.DefaultFonts;
 import com.demcha.compose.layout_core.components.components_builders.ComponentBuilder;
 import com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy;
 import com.demcha.compose.layout_core.components.content.text.BlockTextData;
+import com.demcha.compose.layout_core.components.content.text.LineTextData;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.core.Entity;
 import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.Anchor;
+import com.demcha.compose.layout_core.components.layout.coordinator.Placement;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.PdfComposer;
@@ -22,6 +24,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 /**
  * Integration test for BlockTextBuilder with markdown and bullet offsets.
@@ -169,6 +172,49 @@ class BlockTextIntegrationTest {
 
         assertThat(gapBeforeHeading).isGreaterThan(baseStep);
         assertThat(gapAfterHeading).isGreaterThan(baseStep);
+    }
+
+    @Test
+    void shouldRespectOwnPaddingWhenPositioningBlockTextLines() throws Exception {
+        TextStyle style = TextStyle.DEFAULT_STYLE;
+        Padding padding = Padding.of(8);
+        Entity entity;
+
+        try (PdfComposer composer = GraphCompose.pdf()
+                .pageSize(PDRectangle.A4)
+                .margin(20, 20, 20, 20)
+                .markdown(true)
+                .create()) {
+
+            ComponentBuilder cb = composer.componentBuilder();
+            entity = cb.blockText(Align.left(2), style)
+                    .size(360, 2)
+                    .anchor(Anchor.topLeft())
+                    .padding(padding)
+                    .margin(Margin.zero())
+                    .text(List.of("First line\nSecond line\nThird line"), style, Padding.zero(), Margin.zero())
+                    .build();
+
+            composer.build();
+        }
+
+        BlockTextData blockTextData = entity.getComponent(BlockTextData.class).orElseThrow();
+        Placement placement = entity.getComponent(Placement.class).orElseThrow();
+
+        double baselineOffsetFromBottom;
+        try (PDDocument fontDocument = new PDDocument()) {
+            PdfFont font = (PdfFont) DefaultFonts.library(fontDocument)
+                    .getFont(style.fontName(), PdfFont.class)
+                    .orElseThrow();
+            baselineOffsetFromBottom = font.verticalMetrics(style).baselineOffsetFromBottom();
+        }
+
+        LineTextData firstLine = blockTextData.lines().get(0);
+        LineTextData lastLine = blockTextData.lines().get(blockTextData.lines().size() - 1);
+
+        assertThat(firstLine.x()).isCloseTo(placement.x() + padding.left(), within(0.5));
+        assertThat(lastLine.y() - baselineOffsetFromBottom)
+                .isCloseTo(placement.y() + padding.bottom(), within(0.5));
     }
 }
 

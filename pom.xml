@@ -6,7 +6,7 @@
 
     <groupId>com.demcha</groupId>
     <artifactId>GraphCompose</artifactId>
-    <version>v1.0.0</version>
+    <version>v1.0.3</version>
 
     <name>GraphCompose</name>
     <description>A declarative layout engine for programmatic document generation, implemented primarily in Java.</description>

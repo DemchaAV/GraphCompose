@@ -229,6 +229,26 @@ try (PdfComposer composer = GraphCompose.pdf()
 
 ---
 
+## Runnable examples
+
+The repository includes a standalone [`examples/`](./examples) module with file-render demos for:
+
+- CV
+- cover letter
+- invoice
+- proposal
+
+Typical workflow:
+
+```powershell
+mvn -DskipTests install
+mvn -f examples/pom.xml exec:java -Dexec.mainClass=com.demcha.examples.GenerateAllExamples
+```
+
+Generated PDFs are written to `examples/target/generated-pdfs/`.
+
+---
+
 ## Core concepts
 
 ### 1. Everything is an entity

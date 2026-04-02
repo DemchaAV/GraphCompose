@@ -63,6 +63,9 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     private static final double ENTRY_SPACING = 1.8;
     private static final double BODY_LINE_SPACING = 1.8;
     private static final double DETAIL_INDENT = 14;
+    private static final double HEADER_NAME_MAX_WIDTH = 440;
+    private static final double HEADER_HEADLINE_MAX_WIDTH = 470;
+    private static final double HEADER_META_MAX_WIDTH = 410;
     private static final double RULE_HEIGHT = 6;
     private static final double SECTION_RULE_STROKE = 1.25;
     private static final double HEADER_RULE_STROKE = 1.5;
@@ -190,27 +193,38 @@ public class EditorialBlueCvTemplate implements CvTemplate {
                 .anchor(Anchor.topLeft())
                 .margin(Margin.bottom(2));
 
-        header.addChild(createSingleLineText(
+        header.addChild(createCenteredParagraph(
                 cb,
-                safe(data.getHeader().getName()).toUpperCase(Locale.ROOT),
+                List.of(safe(data.getHeader().getName()).toUpperCase(Locale.ROOT)),
+                Math.min(width, HEADER_NAME_MAX_WIDTH),
                 nameStyle(),
-                Anchor.topCenter(),
-                Margin.zero()));
+                Margin.zero(),
+                "EditorialBlueName"));
 
         String headline = extractHeadline(data.getModuleSummary());
         if (!headline.isBlank()) {
-            header.addChild(createSingleLineText(cb, headline, headlineStyle(), Anchor.topCenter(), Margin.zero()));
+            header.addChild(createCenteredParagraph(
+                    cb,
+                    List.of(headline),
+                    Math.min(width, HEADER_HEADLINE_MAX_WIDTH),
+                    headlineStyle(),
+                    Margin.zero(),
+                    "EditorialBlueHeadline"));
         }
 
-        header.addChild(createSingleLineText(
-                cb,
-                joinNonBlank(" - ",
-                        safe(data.getHeader().getPhoneNumber()),
-                        safe(data.getHeader().getEmail().getDisplayText()),
-                        safe(data.getHeader().getAddress())),
-                metaStyle(),
-                Anchor.topCenter(),
-                Margin.top(1)));
+        String metaLine = joinNonBlank(" - ",
+                safe(data.getHeader().getPhoneNumber()),
+                safe(data.getHeader().getEmail().getDisplayText()),
+                safe(data.getHeader().getAddress()));
+        if (!metaLine.isBlank()) {
+            header.addChild(createCenteredParagraph(
+                    cb,
+                    List.of(metaLine),
+                    Math.min(width, HEADER_META_MAX_WIDTH),
+                    metaStyle(),
+                    Margin.top(1),
+                    "EditorialBlueMeta"));
+        }
 
         header.addChild(createRule(cb, width, accentColor(), HEADER_RULE_STROKE, Margin.top(6)));
         return header.build();
@@ -394,7 +408,7 @@ public class EditorialBlueCvTemplate implements CvTemplate {
                 .defaultCellStyle(TableCellStyle.builder()
                         .padding(new Padding(5, 8, 5, 8))
                         .fillColor(skillFillColor())
-                        .stroke(new Stroke(mutedBorderColor(), 0.9))
+                        .stroke(new Stroke(mutedBorderColor(), 1.1))
                         .textStyle(skillStyle)
                         .textAnchor(Anchor.centerLeft())
                         .build());
@@ -484,6 +498,24 @@ public class EditorialBlueCvTemplate implements CvTemplate {
                 .margin(margin)
                 .padding(Padding.zero())
                 .text(sanitized, bodyStyle(), Padding.zero(), Margin.zero());
+        return builder.build();
+    }
+
+    private Entity createCenteredParagraph(ComponentBuilder cb, List<String> paragraphs, double width, TextStyle style,
+            Margin margin, String entityName) {
+        List<String> sanitized = paragraphs.stream()
+                .map(EditorialBlueCvTemplate::stripMarkdown)
+                .filter(value -> !value.isBlank())
+                .toList();
+
+        BlockTextBuilder builder = cb.blockText(Align.middle(1.2), style)
+                .entityName(entityName)
+                .size(width, 2)
+                .strategy(BlockIndentStrategy.FIRST_LINE)
+                .anchor(Anchor.topCenter())
+                .margin(margin)
+                .padding(Padding.zero())
+                .text(sanitized, style, Padding.zero(), Margin.zero());
         return builder.build();
     }
 
@@ -672,7 +704,7 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     private TextStyle nameStyle() {
         return TextStyle.builder()
                 .fontName(theme.headerFont())
-                .size(22)
+                .size(21.2)
                 .decoration(TextDecoration.BOLD)
                 .color(primaryTextColor())
                 .build();
@@ -690,7 +722,7 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     private TextStyle metaStyle() {
         return TextStyle.builder()
                 .fontName(theme.bodyFont())
-                .size(9.4)
+                .size(9.1)
                 .decoration(TextDecoration.DEFAULT)
                 .color(bodyTextColor())
                 .build();
@@ -781,7 +813,7 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     }
 
     private Color mutedBorderColor() {
-        return new Color(196, 208, 231);
+        return new Color(174, 190, 219);
     }
 
     private Color skillFillColor() {

@@ -1,8 +1,8 @@
 package com.demcha.compose.layout_core.system.utils.page_breaker;
 
-import com.demcha.compose.layout_core.components.content.text.LineTextData;
-import com.demcha.compose.layout_core.core.Canvas;
 import com.demcha.compose.layout_core.components.content.text.BlockTextData;
+import com.demcha.compose.layout_core.components.content.text.BlockTextLineMetrics;
+import com.demcha.compose.layout_core.components.content.text.LineTextData;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.core.Entity;
 import com.demcha.compose.layout_core.components.geometry.ContentSize;
@@ -11,15 +11,11 @@ import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.coordinator.ComputedPosition;
 import com.demcha.compose.layout_core.components.layout.coordinator.RenderingPosition;
 import com.demcha.compose.layout_core.components.renderable.BlockText;
+import com.demcha.compose.layout_core.core.Canvas;
 import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.exceptions.BigSizeElementException;
-import com.demcha.compose.layout_core.system.LayoutSystem;
-import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFont;
-import com.demcha.compose.layout_core.system.interfaces.Font;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.pdfbox.pdmodel.font.PDFont;
-import org.apache.pdfbox.pdmodel.font.PDFontDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -61,31 +57,22 @@ public class TextBlockProcessor {
      */
     public void processLayoutSystemTextLines(Entity e) throws IOException, BigSizeElementException {
 
-        //check blockTextCondition
-
-        if (checkBlockCondition(e)) return;
-
+        if (checkBlockCondition(e)) {
+            return;
+        }
 
         var position = e.getComponent(ComputedPosition.class).orElseThrow();
         InnerBoxSize innerBoxSize = InnerBoxSize.from(e).orElseThrow();
         BlockText.ValidatedTextData validateText = getValidatedTextData(e);
-        TextDataContainer result = getTextDataContainer(validateText);
-
-
-        float fontSize = (float) result.style().size();
-        var textHeight = (float) result.font().getTextHeight(result.style());
-
-
-        float scale = fontSize / 1000f;
-        float descentPx = 0.0f;
-        if (result.font().getClass().isAssignableFrom(PdfFont.class)) {
-            PDFont pdFont = (PDFont) result.font().fontType(result.style.decoration());
-            PDFontDescriptor fd = pdFont.getFontDescriptor();
-            Math.abs((fd != null ? fd.getDescent() : pdFont.getBoundingBox().getLowerLeftY()) * scale);
-        }
-
-
         var blockTextData = validateText.textValue().lines();
+
+        List<BlockTextLineMetrics.LineMetrics> lineMetrics = BlockTextLineMetrics.resolveLineMetrics(
+                pageLayoutCalculator.getEntityManager(),
+                blockTextData,
+                validateText.style());
+        BlockTextLineMetrics.LineMetrics baseMetrics = BlockTextLineMetrics.resolveStyleMetrics(
+                pageLayoutCalculator.getEntityManager(),
+                validateText.style());
 
         double spacing = e.getComponent(Align.class).orElseGet(() -> {
             log.warn("TextComponent has no Align; using default: {}", e);
@@ -94,122 +81,133 @@ public class TextBlockProcessor {
 
         if (log.isDebugEnabled()) {
             log.debug("Rendering textBlock '{}' at position ({}, {})", blockTextData, position.x(), position.y());
-            log.debug("fontSize={}  textStyle= {}", fontSize, result.style());
+            log.debug("baseTextStyle={}", validateText.style());
         }
 
+        double startX = position.x();
+        double cursorTop = position.y() + innerBoxSize.height();
+        List<LineTextData> assignPositionTextData = new ArrayList<>(blockTextData.size());
 
-        int currentPage = 0;
+        for (int i = 0; i < blockTextData.size(); i++) {
+            LineTextData ltd = blockTextData.get(i);
+            BlockTextLineMetrics.LineMetrics metrics = lineMetrics.get(i);
+            double currentX = ltd.x() + startX;
+            double baselineY = cursorTop - (metrics.ascent() + metrics.leading());
 
-
-        // стартовая позиция (левый верх «абзаца»)
-        float startX = (float) position.x() - descentPx;
-        float startY = (float) (position.y() + innerBoxSize.height()) - textHeight + descentPx;
-        ; // if spacing will be negative
-        BlockTextData newBlockTextData;
-        List<LineTextData> assignPositionTextData = new ArrayList<>();
-
-
-        float currentX = startX;
-        float currentY = startY+ (float) spacing/2;
-        for (LineTextData ltd : blockTextData) {
-            log.trace(ltd.toString());
-
-            currentX = (float) ltd.x() + startX;
             if (log.isDebugEnabled()) {
-                log.debug(ltd.toString());
-                log.debug("Line position {}, Current page: {}", ltd.x(), currentPage);
-                log.debug("currentY {}", currentY);
+                log.debug("line {} metrics={} baselineY={}", i, metrics, baselineY);
             }
 
-            LineTextData nltd = new LineTextData(ltd, currentX, currentY, 0);
-            currentY = nextLine(currentY, textHeight, spacing);
-            assignPositionTextData.add(nltd);
+            assignPositionTextData.add(new LineTextData(ltd, currentX, baselineY, 0));
 
+            cursorTop -= metrics.lineHeight();
+            if (i < lineMetrics.size() - 1) {
+                cursorTop -= BlockTextLineMetrics.interLineGap(
+                        metrics,
+                        lineMetrics.get(i + 1),
+                        baseMetrics,
+                        spacing);
+            }
         }
 
-
-        newBlockTextData = new BlockTextData(assignPositionTextData, (float) spacing);
-        e.addComponent(newBlockTextData);
-
+        e.addComponent(new BlockTextData(assignPositionTextData, (float) spacing));
     }
 
-    private @NotNull TextDataContainer getTextDataContainer(BlockText.ValidatedTextData validateText) {
-        var style = validateText.style();
-        var classFont = pageLayoutCalculator.getEntityManager().getSystems().getSystem(LayoutSystem.class).orElseThrow().getRenderingSystem().fontClazz();
-        pageLayoutCalculator.getEntityManager().getFonts().getFont(style.fontName(), classFont);
-        Font font = (Font) pageLayoutCalculator.getEntityManager().getFonts().getFont(style.fontName(), classFont).orElseThrow();
-        TextDataContainer result = new TextDataContainer(style, font);
-        return result;
-    }
+    public Offset processPageBreakerBlockText(Entity entity,
+                                              EntityManager entityManager,
+                                              Canvas canvas,
+                                              @NonNull Offset yOffset) throws IOException, BigSizeElementException {
+        if (checkBlockCondition(entity)) {
+            return new Offset();
+        }
 
-    public Offset processPageBreakerBlockText(Entity entity, EntityManager entityManager, Canvas canvas, @NonNull Offset yOffset) throws IOException, BigSizeElementException {
-        //check blockTextCondition
-
-        if (checkBlockCondition(entity)) return new Offset();
         BlockText.ValidatedTextData validatedTextData = getValidatedTextData(entity);
         var blockTextData = validatedTextData.textValue().lines();
-        TextDataContainer textDataContainer = getTextDataContainer(validatedTextData);
-        var textHeight = textDataContainer.font().getTextHeight(textDataContainer.style());
+        List<BlockTextLineMetrics.LineMetrics> lineMetrics = BlockTextLineMetrics.resolveLineMetrics(
+                pageLayoutCalculator.getEntityManager(),
+                blockTextData,
+                validatedTextData.style());
+
         double spacing = entity.getComponent(Align.class).orElseGet(() -> {
             log.warn("TextComponent has no Align; using default: {}", entity);
             return Align.defaultAlign(2);
         }).spacing();
 
-
         final int currentPage = 0;
         Offset entityYOffset = new Offset();
+        List<LineTextData> assignPositionTextData = new ArrayList<>(blockTextData.size());
 
-        List<LineTextData> assignPositionTextData = new ArrayList<>();
-        for (LineTextData ltd : blockTextData) {
-            log.trace(ltd.toString());
-            double currentY = ltd.y() + yOffset.y() + entityYOffset.y();
-            YPositionOnPage yPositionOnPage = definePositionOnPage(currentY, textHeight, currentPage, canvas, entityYOffset, false, entity);
-            LineTextData newLtd = new LineTextData(ltd, ltd.x(), yPositionOnPage.yPosition(), yPositionOnPage.startPage());
-            assignPositionTextData.add(newLtd);
+        for (int i = 0; i < blockTextData.size(); i++) {
+            LineTextData ltd = blockTextData.get(i);
+            BlockTextLineMetrics.LineMetrics metrics = lineMetrics.get(i);
+            double currentBottomY = ltd.y() - metrics.baselineOffsetFromBottom() + yOffset.y() + entityYOffset.y();
+
+            YPositionOnPage yPositionOnPage = definePositionOnPage(
+                    currentBottomY,
+                    metrics.lineHeight(),
+                    currentPage,
+                    canvas,
+                    entityYOffset,
+                    false,
+                    entity);
+
+            double baselineY = yPositionOnPage.yPosition() + metrics.baselineOffsetFromBottom();
+            assignPositionTextData.add(new LineTextData(ltd, ltd.x(), baselineY, yPositionOnPage.startPage()));
         }
+
         finalizePageBreakingAndDefinition(entity, entityManager, yOffset, assignPositionTextData, (float) spacing, entityYOffset);
         return entityYOffset;
-
     }
 
-    private void finalizePageBreakingAndDefinition(Entity entity, EntityManager entityManager, @NotNull Offset yOffset, List<LineTextData> assignPositionTextData, float spacing, Offset entityYOffset) {
-        BlockTextData newBlockTextData;
-        newBlockTextData = new BlockTextData(assignPositionTextData, spacing);
+    private void finalizePageBreakingAndDefinition(Entity entity,
+                                                   EntityManager entityManager,
+                                                   @NotNull Offset yOffset,
+                                                   List<LineTextData> assignPositionTextData,
+                                                   float spacing,
+                                                   Offset entityYOffset) {
+        BlockTextData newBlockTextData = new BlockTextData(assignPositionTextData, spacing);
 
-        //Updating ContainerSize
         var size = entity.getComponent(ContentSize.class).orElseThrow();
         var newSize = new ContentSize(size.width(), size.height() + Math.abs(entityYOffset.y()));
         entity.addComponent(newSize);
-
 
         yOffset.incrementY(entityYOffset);
         log.debug("Returned Offset:  {} , {}", yOffset, entity);
         entity.addComponent(newBlockTextData);
     }
 
-    private YPositionOnPage definePositionOnPage(double currentY, double textHeight, int currentPage, Canvas canvas, Offset entityYOffset, boolean isBreakable, Entity entity) {
-        //canvas
+    private YPositionOnPage definePositionOnPage(double currentY,
+                                                 double textHeight,
+                                                 int currentPage,
+                                                 Canvas canvas,
+                                                 Offset entityYOffset,
+                                                 boolean isBreakable,
+                                                 Entity entity) {
         double canvasHeight = canvas.height();
         double canvasMarginTop = canvas.margin().top();
         double canvasMarginBottom = canvas.margin().bottom();
         try {
-            return pageLayoutCalculator.calculatePageCoordinates(currentY, textHeight, 0.0, 0.0,
-                    currentPage, canvasHeight, canvasMarginTop, canvasMarginBottom,
-                    entityYOffset, isBreakable, entity);
-        } catch (BigSizeElementException e) {
-            log.error("BigSizeElementException {}, {}", e, entity);
-            throw new RuntimeException(String.format("BigSizeElementException %s, %s", e, entity.printInfo()));
+            return pageLayoutCalculator.calculatePageCoordinates(
+                    currentY,
+                    textHeight,
+                    0.0,
+                    0.0,
+                    currentPage,
+                    canvasHeight,
+                    canvasMarginTop,
+                    canvasMarginBottom,
+                    entityYOffset,
+                    isBreakable,
+                    entity);
+        } catch (BigSizeElementException ex) {
+            log.error("BigSizeElementException {}, {}", ex, entity);
+            throw new RuntimeException(String.format("BigSizeElementException %s, %s", ex, entity.printInfo()));
         }
-    }
-
-    private float nextLine(double positionY, float height, double spacing) {
-        return (float) (positionY - (height + spacing));
     }
 
     private BlockText.ValidatedTextData getValidatedTextData(Entity e) {
         var textValue = e.getComponent(BlockTextData.class).orElse(BlockTextData.empty());
-        TextStyle style;
-        style = e.getComponent(TextStyle.class).orElse(TextStyle.DEFAULT_STYLE);
+        TextStyle style = e.getComponent(TextStyle.class).orElse(TextStyle.DEFAULT_STYLE);
         return new BlockText.ValidatedTextData(style, textValue);
     }
 
@@ -228,11 +226,6 @@ public class TextBlockProcessor {
                 Offset yOffset,
                 boolean isBreakable,
                 Entity entity
-        ) throws BigSizeElementException; // Add other exceptions if necessary
+        ) throws BigSizeElementException;
     }
-
-    private record TextDataContainer(TextStyle style, Font font) {
-    }
-
 }
-

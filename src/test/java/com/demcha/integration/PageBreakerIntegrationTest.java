@@ -100,6 +100,84 @@ class PageBreakerIntegrationTest {
         }
     }
 
+    @Test
+    void shouldBreakNestedContainersWithMarkdownHeadingsAcrossPages() throws Exception {
+        Path outputFile = VisualTestOutputs.preparePdf(
+                "page_breaker_nested_container_markdown_heading_test",
+                "guides",
+                "integration");
+
+        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+                .pageSize(PDRectangle.A4)
+                .margin(18, 18, 18, 18)
+                .markdown(true)
+                .guideLines(true)
+                .create()) {
+
+            ComponentBuilder cb = composer.componentBuilder();
+
+            Entity title = cb.text()
+                    .textWithAutoSize("Nested Container Markdown Heading Pagination Preview")
+                    .textStyle(TextStyle.builder()
+                            .fontName(FontName.HELVETICA)
+                            .size(12)
+                            .decoration(com.demcha.compose.layout_core.components.content.text.TextDecoration.BOLD)
+                            .color(ComponentColor.BLACK)
+                            .build())
+                    .anchor(Anchor.topLeft())
+                    .padding(Padding.zero())
+                    .margin(Margin.zero())
+                    .entityName("NestedPreviewTitle")
+                    .build();
+
+            Entity markdownBlock = cb.blockText(Align.left(2), TextStyle.builder()
+                            .fontName(FontName.HELVETICA)
+                            .size(9)
+                            .color(ComponentColor.BLACK)
+                            .build())
+                    .size(320, 2)
+                    .anchor(Anchor.topLeft())
+                    .padding(Padding.of(6))
+                    .margin(Margin.of(4))
+                    .entityName("NestedMarkdownHeadingBlock")
+                    .text(List.of(createNestedMarkdownHeadingText(20)),
+                            TextStyle.builder()
+                                    .fontName(FontName.HELVETICA)
+                                    .size(9)
+                                    .color(ComponentColor.BLACK)
+                                    .build(),
+                            Padding.zero(),
+                            Margin.zero())
+                    .build();
+
+            Entity innerContainer = cb.vContainer(Align.middle(8))
+                    .entityName("InnerMarkdownContainer")
+                    .anchor(Anchor.topLeft())
+                    .padding(Padding.of(12))
+                    .margin(Margin.of(8))
+                    .addChild(markdownBlock)
+                    .build();
+
+            cb.vContainer(Align.middle(12))
+                    .entityName("OuterPreviewContainer")
+                    .anchor(Anchor.topCenter())
+                    .padding(Padding.of(10))
+                    .margin(Margin.of(24))
+                    .addChild(title)
+                    .addChild(innerContainer)
+                    .build();
+
+            composer.build();
+        }
+
+        assertThat(outputFile).exists();
+        assertThat(outputFile).isNotEmptyFile();
+
+        try (PDDocument doc = Loader.loadPDF(outputFile.toFile())) {
+            assertThat(doc.getNumberOfPages()).isGreaterThan(1);
+        }
+    }
+
     private List<Entity> createLargeTextContent(ComponentBuilder cb, int rows, double spacing) {
         List<Entity> data = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
@@ -147,6 +225,26 @@ class PageBreakerIntegrationTest {
             data.add(rect);
         }
         return data;
+    }
+
+    private String createNestedMarkdownHeadingText(int sections) {
+        String paragraph = "This paragraph lives inside a nested container and is intentionally long so the page breaker " +
+                "has to keep recalculating line positions while markdown headings change the local line metrics. " +
+                "We want to see that the heading breathes a bit more than the body text and that the container still " +
+                "flows correctly across page boundaries without collapsing the reserved height. ";
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 1; i <= sections; i++) {
+            sb.append("# Section ").append(i).append('\n');
+            sb.append(paragraph.repeat(3)).append('\n');
+            sb.append("Continuation line for section ").append(i)
+                    .append(" with **bold text** and *italic text* so markdown token styles stay mixed inside the same block.")
+                    .append('\n');
+            sb.append("Another continuation line for section ").append(i)
+                    .append(" to force wrapping inside the inner container and expose page splitting more clearly.")
+                    .append('\n');
+        }
+        return sb.toString();
     }
 }
 

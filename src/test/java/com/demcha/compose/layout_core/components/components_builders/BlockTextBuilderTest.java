@@ -100,4 +100,36 @@ class BlockTextBuilderTest {
 
                 assertTrue(hasItalic, "Should contain italic text segments");
         }
+
+        @Test
+        void shouldIncreasePrecomputedHeightWhenMarkdownContainsHeadingLine() {
+                TextStyle textStyle = TextStyle.builder()
+                                .size(10)
+                                .color(ComponentColor.BLACK)
+                                .fontName(FontName.HELVETICA)
+                                .decoration(TextDecoration.DEFAULT)
+                                .build();
+
+                BlockTextBuilder plainBuilder = new BlockTextBuilder(entityManager, Align.left(2.0), textStyle);
+                plainBuilder.size(new ContentSize(320, 100));
+                plainBuilder.padding(Padding.zero());
+                plainBuilder.margin(Margin.zero());
+                plainBuilder.anchor(Anchor.topLeft());
+                plainBuilder.text(List.of("First line\nSecond line\nThird line"), textStyle, Padding.zero(), Margin.zero());
+                Entity plainEntity = plainBuilder.build();
+
+                BlockTextBuilder headingBuilder = new BlockTextBuilder(entityManager, Align.left(2.0), textStyle);
+                headingBuilder.size(new ContentSize(320, 100));
+                headingBuilder.padding(Padding.zero());
+                headingBuilder.margin(Margin.zero());
+                headingBuilder.anchor(Anchor.topLeft());
+                headingBuilder.text(List.of("First line\n# Section heading\nThird line"), textStyle, Padding.zero(), Margin.zero());
+                Entity headingEntity = headingBuilder.build();
+
+                double plainHeight = plainEntity.getComponent(ContentSize.class).orElseThrow().height();
+                double headingHeight = headingEntity.getComponent(ContentSize.class).orElseThrow().height();
+
+                assertTrue(headingHeight > plainHeight,
+                                "Heading line should enlarge ContentSize before rendering so containers reserve more height");
+        }
 }

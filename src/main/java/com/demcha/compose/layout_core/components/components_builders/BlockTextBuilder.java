@@ -1,8 +1,9 @@
 package com.demcha.compose.layout_core.components.components_builders;
 
-import com.demcha.compose.layout_core.components.content.text.LineTextData;
 import com.demcha.compose.layout_core.components.containers.abstract_builders.EmptyBox;
 import com.demcha.compose.layout_core.components.content.text.BlockTextData;
+import com.demcha.compose.layout_core.components.content.text.BlockTextLineMetrics;
+import com.demcha.compose.layout_core.components.content.text.LineTextData;
 import com.demcha.compose.layout_core.components.content.text.Text;
 import com.demcha.compose.layout_core.components.content.text.TextDataBody;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
@@ -627,10 +628,22 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         var spacingOpt = entity.getComponent(Align.class);
         double spacing = spacingOpt.orElse(Align.defaultAlign(0.0)).spacing();
 
-        double textHeight = fontContainer.font().getTextHeight(style);
-        double calculatedHigh = (blockTextData.lines().size()) * textHeight;
-        double spacingFullHigh = Math.max(0, (blockTextData.lines().size() - 1) * spacing);
-        double high = calculatedHigh + spacingFullHigh + padding.vertical();
+        BlockTextLineMetrics.LineMetrics baseMetrics =
+                BlockTextLineMetrics.resolveStyleMetrics(entityManager, style);
+        List<BlockTextLineMetrics.LineMetrics> lineMetrics =
+                BlockTextLineMetrics.resolveLineMetrics(entityManager, blockTextData.lines(), style);
+
+        double high = padding.vertical();
+        for (int i = 0; i < lineMetrics.size(); i++) {
+            high += lineMetrics.get(i).lineHeight();
+            if (i < lineMetrics.size() - 1) {
+                high += BlockTextLineMetrics.interLineGap(
+                        lineMetrics.get(i),
+                        lineMetrics.get(i + 1),
+                        baseMetrics,
+                        spacing);
+            }
+        }
 
         return new ContentSize(width + padding.horizontal(), high);
     }

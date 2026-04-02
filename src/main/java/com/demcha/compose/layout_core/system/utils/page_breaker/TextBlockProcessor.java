@@ -11,6 +11,7 @@ import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.coordinator.ComputedPosition;
 import com.demcha.compose.layout_core.components.layout.coordinator.RenderingPosition;
 import com.demcha.compose.layout_core.components.renderable.BlockText;
+import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.Canvas;
 import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.exceptions.BigSizeElementException;
@@ -63,6 +64,7 @@ public class TextBlockProcessor {
 
         var position = e.getComponent(ComputedPosition.class).orElseThrow();
         InnerBoxSize innerBoxSize = InnerBoxSize.from(e).orElseThrow();
+        Padding padding = e.getComponent(Padding.class).orElse(Padding.zero());
         BlockText.ValidatedTextData validateText = getValidatedTextData(e);
         var blockTextData = validateText.textValue().lines();
 
@@ -85,7 +87,7 @@ public class TextBlockProcessor {
         }
 
         double startX = position.x();
-        double cursorTop = position.y() + innerBoxSize.height();
+        double cursorTop = position.y() + padding.bottom() + innerBoxSize.height();
         List<LineTextData> assignPositionTextData = new ArrayList<>(blockTextData.size());
 
         for (int i = 0; i < blockTextData.size(); i++) {

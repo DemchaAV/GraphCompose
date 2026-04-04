@@ -5,6 +5,7 @@ import com.demcha.compose.layout_core.components.content.shape.Side;
 import com.demcha.compose.layout_core.components.layout.coordinator.RenderCoordinateContext;
 import com.demcha.compose.layout_core.system.GuidLineSettings;
 import com.demcha.compose.layout_core.system.interfaces.guides.GuidesRenderer;
+import com.demcha.compose.layout_core.system.rendering.RenderHandlerRegistry;
 
 import java.awt.*;
 import java.io.IOException;
@@ -18,6 +19,7 @@ public interface RenderingSystemECS<S extends AutoCloseable> extends SystemECS {
 
     GuidesRenderer<S> guidesRenderer();
     Class<? extends Font<?>> fontClazz();
+    RenderHandlerRegistry renderHandlers();
 
     <T extends RenderStream<S>> T stream();
 

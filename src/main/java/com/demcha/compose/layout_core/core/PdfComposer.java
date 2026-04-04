@@ -5,9 +5,11 @@ import com.demcha.compose.font_library.DefaultFonts;
 import com.demcha.compose.font_library.FontFamilyDefinition;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.system.LayoutSystem;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFont;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfCanvas;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFileManagerSystem;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
+import com.demcha.compose.layout_core.system.measurement.FontLibraryTextMeasurementSystem;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.jetbrains.annotations.Nullable;
@@ -111,6 +113,7 @@ public final class PdfComposer extends AbstractDocumentComposer {
     }
 
     private void setupPdfSystems() {
+        entityManager().getSystems().addSystem(new FontLibraryTextMeasurementSystem(entityManager().getFonts(), PdfFont.class));
         entityManager().getSystems().addSystem(new LayoutSystem<>(canvas(), renderingSystem));
         entityManager().getSystems().addSystem(renderingSystem);
 

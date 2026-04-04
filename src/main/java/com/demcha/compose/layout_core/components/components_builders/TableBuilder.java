@@ -44,7 +44,7 @@ public class TableBuilder extends ContainerBuilder<TableBuilder> {
     private static final double EPS = 1e-6;
 
     private final List<TableColumnSpec> columnSpecs = new ArrayList<>();
-    private final List<List<String>> rows = new ArrayList<>();
+    private final List<List<TableCellSpec>> rows = new ArrayList<>();
     private final Map<Integer, TableCellStyle> rowStyles = new HashMap<>();
     private final Map<Integer, TableCellStyle> columnStyles = new HashMap<>();
 
@@ -99,15 +99,26 @@ public class TableBuilder extends ContainerBuilder<TableBuilder> {
         return self();
     }
 
-    public TableBuilder row(String... cells) {
+    public TableBuilder row(TableCellSpec... cells) {
         ensureMutable();
         Objects.requireNonNull(cells, "cells");
-        List<String> values = new ArrayList<>(cells.length);
-        for (String cell : cells) {
-            values.add(cell == null ? "" : cell);
+
+        List<TableCellSpec> values = new ArrayList<>(cells.length);
+        for (TableCellSpec cell : cells) {
+            values.add(cell == null ? TableCellSpec.text("") : cell);
         }
         rows.add(List.copyOf(values));
         return self();
+    }
+
+    public TableBuilder row(String... cells) {
+        Objects.requireNonNull(cells, "cells");
+
+        TableCellSpec[] values = new TableCellSpec[cells.length];
+        for (int i = 0; i < cells.length; i++) {
+            values[i] = TableCellSpec.text(cells[i]);
+        }
+        return row(values);
     }
 
     @Override
@@ -151,7 +162,7 @@ public class TableBuilder extends ContainerBuilder<TableBuilder> {
     }
 
     private Entity buildRowEntity(int rowIndex,
-                                  List<String> rowValues,
+                                  List<TableCellSpec> rowValues,
                                   List<List<TableCellStyle>> stylesByRow,
                                   double[] columnWidths) {
         List<TableCellStyle> resolvedStyles = stylesByRow.get(rowIndex);
@@ -168,7 +179,7 @@ public class TableBuilder extends ContainerBuilder<TableBuilder> {
                     x,
                     columnWidths[columnIndex],
                     rowHeight,
-                    sanitizeCellText(rowValues.get(columnIndex)),
+                    sanitizeCellLines(rowValues.get(columnIndex)),
                     resolvedStyles.get(columnIndex),
                     fillInsets(stylesByRow, rowIndex, columnIndex),
                     borderSides(rowIndex, columnIndex)
@@ -196,6 +207,7 @@ public class TableBuilder extends ContainerBuilder<TableBuilder> {
             for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
                 TableCellStyle resolved = TableCellStyle.merge(tableDefault, columnStyles.get(columnIndex));
                 resolved = TableCellStyle.merge(resolved, rowOverride);
+                resolved = TableCellStyle.merge(resolved, rows.get(rowIndex).get(columnIndex).styleOverride());
                 rowResult.add(resolved);
             }
 
@@ -286,17 +298,25 @@ public class TableBuilder extends ContainerBuilder<TableBuilder> {
         return Math.max(columnSpecs.size(), maxRowColumns);
     }
 
-    private double cellNaturalWidth(String text, TableCellStyle style) {
+    private double cellNaturalWidth(TableCellSpec cell, TableCellStyle style) {
         Padding padding = style.padding() == null ? Padding.zero() : style.padding();
-        return measureText(sanitizeCellText(text), style).width() + padding.horizontal();
+        double maxWidth = 0.0;
+        for (String line : sanitizeCellLines(cell)) {
+            maxWidth = Math.max(maxWidth, measureText(line, style).width());
+        }
+        return maxWidth + padding.horizontal();
     }
 
-    private double cellNaturalHeight(String text, TableCellStyle style) {
+    private double cellNaturalHeight(TableCellSpec cell, TableCellStyle style) {
         Padding padding = style.padding() == null ? Padding.zero() : style.padding();
-        return measureText(sanitizeCellText(text), style).height() + padding.vertical();
+        int lineCount = Math.max(1, sanitizeCellLines(cell).size());
+        return (lineCount * measureLineHeight(style)) + padding.vertical();
     }
 
-    //TODO Have a think about this method
+    private double measureLineHeight(TableCellStyle style) {
+        return measureText("", style).height();
+    }
+
     private ContentSize measureText(String text, TableCellStyle style) {
         Class<? extends Font<?>> fontType = entityManager.getSystems()
                 .getSystem(LayoutSystem.class)
@@ -369,7 +389,15 @@ public class TableBuilder extends ContainerBuilder<TableBuilder> {
         return total;
     }
 
-    private String sanitizeCellText(String value) {
+    private List<String> sanitizeCellLines(TableCellSpec cell) {
+        List<String> sanitized = new ArrayList<>(cell.lines().size());
+        for (String line : cell.lines()) {
+            sanitized.add(sanitizeCellLine(line));
+        }
+        return List.copyOf(sanitized);
+    }
+
+    private String sanitizeCellLine(String value) {
         if (value == null) {
             return "";
         }

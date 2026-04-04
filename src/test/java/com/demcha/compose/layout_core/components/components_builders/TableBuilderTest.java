@@ -130,6 +130,112 @@ class TableBuilderTest {
     }
 
     @Test
+    void shouldApplyCellOverrideAfterDefaultColumnAndRowStyles() throws Exception {
+        try (PdfComposer composer = GraphCompose.pdf().create()) {
+            TableCellStyle tableDefault = TableCellStyle.builder()
+                    .fillColor(ComponentColor.LIGHT_GRAY)
+                    .padding(Padding.of(2))
+                    .build();
+
+            TableCellStyle columnOverride = TableCellStyle.builder()
+                    .textStyle(TextStyle.builder()
+                            .fontName(TextStyle.DEFAULT_STYLE.fontName())
+                            .size(18)
+                            .decoration(TextStyle.DEFAULT_STYLE.decoration())
+                            .color(TextStyle.DEFAULT_STYLE.color())
+                            .build())
+                    .build();
+
+            TableCellStyle rowOverride = TableCellStyle.builder()
+                    .fillColor(ComponentColor.RED)
+                    .padding(Padding.of(8))
+                    .build();
+
+            TableCellStyle cellOverride = TableCellStyle.builder()
+                    .fillColor(ComponentColor.GREEN)
+                    .textAnchor(com.demcha.compose.layout_core.components.layout.Anchor.centerRight())
+                    .build();
+
+            Entity table = composer.componentBuilder()
+                    .table()
+                    .entityName("StyledTableWithCellOverride")
+                    .defaultCellStyle(tableDefault)
+                    .columnStyle(0, columnOverride)
+                    .rowStyle(0, rowOverride)
+                    .row(
+                            TableCellSpec.text("A").withStyle(cellOverride),
+                            TableCellSpec.text("B"))
+                    .build();
+
+            TableResolvedCell firstCell = child(table, 0)
+                    .getComponent(TableRowData.class)
+                    .orElseThrow()
+                    .cells()
+                    .getFirst();
+
+            assertThat(firstCell.style().fillColor()).isEqualTo(ComponentColor.GREEN);
+            assertThat(firstCell.style().padding()).isEqualTo(Padding.of(8));
+            assertThat(firstCell.style().textStyle().size()).isEqualTo(18);
+            assertThat(firstCell.style().textAnchor()).isEqualTo(com.demcha.compose.layout_core.components.layout.Anchor.centerRight());
+        }
+    }
+
+    @Test
+    void shouldPreserveStringRowApiAsSingleLineCellSpec() throws Exception {
+        try (PdfComposer composer = GraphCompose.pdf().create()) {
+            Entity table = composer.componentBuilder()
+                    .table()
+                    .entityName("StringApiTable")
+                    .row("Alpha", "Beta")
+                    .build();
+
+            TableResolvedCell firstCell = child(table, 0)
+                    .getComponent(TableRowData.class)
+                    .orElseThrow()
+                    .cells()
+                    .getFirst();
+
+            assertThat(firstCell.lines()).containsExactly("Alpha");
+        }
+    }
+
+    @Test
+    void shouldMeasureMultilineCellsUsingLongestLineAndLineCount() throws Exception {
+        try (PdfComposer composer = GraphCompose.pdf().create()) {
+            Entity multilineTable = composer.componentBuilder()
+                    .table()
+                    .entityName("MultilineTable")
+                    .row(TableCellSpec.lines("Short", "Longest visible metric label"))
+                    .build();
+
+            Entity longestLineTable = composer.componentBuilder()
+                    .table()
+                    .entityName("LongestLineTable")
+                    .row("Longest visible metric label")
+                    .build();
+
+            TableResolvedCell multilineCell = child(multilineTable, 0)
+                    .getComponent(TableRowData.class)
+                    .orElseThrow()
+                    .cells()
+                    .getFirst();
+
+            TableResolvedCell singleLineCell = child(longestLineTable, 0)
+                    .getComponent(TableRowData.class)
+                    .orElseThrow()
+                    .cells()
+                    .getFirst();
+
+            double paddingVertical = TableCellStyle.DEFAULT.padding().vertical();
+            double expectedMultilineHeight = (2 * (singleLineCell.height() - paddingVertical)) + paddingVertical;
+
+            assertThat(multilineCell.width()).isEqualTo(singleLineCell.width());
+            assertThat(multilineCell.height()).isEqualTo(expectedMultilineHeight);
+            assertThat(multilineCell.lines()).containsExactly("Short", "Longest visible metric label");
+        }
+    }
+
+    @Test
     void shouldRejectEmptyTable() throws Exception {
         try (PdfComposer composer = GraphCompose.pdf().create()) {
             assertThatThrownBy(() -> composer.componentBuilder()

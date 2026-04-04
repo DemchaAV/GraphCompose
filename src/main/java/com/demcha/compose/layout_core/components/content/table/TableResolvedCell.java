@@ -4,6 +4,7 @@ import com.demcha.compose.layout_core.components.components_builders.TableCellSt
 import com.demcha.compose.layout_core.components.content.shape.Side;
 import com.demcha.compose.layout_core.components.style.Padding;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -15,17 +16,18 @@ public record TableResolvedCell(
         double x,
         double width,
         double height,
-        String text,
+        List<String> lines,
         TableCellStyle style,
         Padding fillInsets,
         Set<Side> borderSides
 ) {
     public TableResolvedCell {
         Objects.requireNonNull(name, "name");
-        Objects.requireNonNull(text, "text");
+        Objects.requireNonNull(lines, "lines");
         Objects.requireNonNull(style, "style");
         Objects.requireNonNull(fillInsets, "fillInsets");
         Objects.requireNonNull(borderSides, "borderSides");
+        lines = List.copyOf(lines);
         borderSides = Set.copyOf(borderSides);
     }
 }

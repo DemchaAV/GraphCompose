@@ -10,5 +10,6 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + CoverLetterFileExample.generate());
         System.out.println("Generated: " + InvoiceFileExample.generate());
         System.out.println("Generated: " + ProposalFileExample.generate());
+        System.out.println("Generated: " + WeeklyScheduleFileExample.generate());
     }
 }

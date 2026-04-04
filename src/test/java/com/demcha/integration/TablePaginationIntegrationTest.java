@@ -2,6 +2,7 @@ package com.demcha.integration;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.layout_core.components.components_builders.TableBuilder;
+import com.demcha.compose.layout_core.components.components_builders.TableCellSpec;
 import com.demcha.compose.layout_core.components.components_builders.TableColumnSpec;
 import com.demcha.compose.layout_core.components.content.table.TableLayoutData;
 import com.demcha.compose.layout_core.components.core.Entity;
@@ -43,9 +44,11 @@ class TablePaginationIntegrationTest {
 
             for (int i = 0; i < 95; i++) {
                 builder.row(
-                        String.valueOf(i + 1),
-                        "Category " + (i % 7),
-                        "Single line value " + i + " for negotiated table pagination"
+                        TableCellSpec.text(String.valueOf(i + 1)),
+                        TableCellSpec.text("Category " + (i % 7)),
+                        TableCellSpec.lines(
+                                "Single line value " + i + " for negotiated table pagination",
+                                "Backup slot " + i + " 18:00-22:00")
                 );
             }
 

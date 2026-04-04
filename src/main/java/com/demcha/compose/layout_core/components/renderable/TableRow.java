@@ -18,12 +18,14 @@ import com.demcha.compose.layout_core.system.interfaces.guides.GuidesRenderer;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 /**
- * Atomic row renderable that draws all cell boxes and their single-line text on one page.
+ * Atomic row renderable that draws all cell boxes and their multiline text on one page.
  */
 public class TableRow implements PdfRender {
     private static final EnumSet<GuidesRenderer.Guide> DEFAULT_GUIDES =
@@ -132,12 +134,33 @@ public class TableRow implements PdfRender {
                 .getFont(style.textStyle().fontName(), PdfFont.class)
                 .orElseThrow();
 
-        String safeText = BlockText.sanitizeText(cell.text())
-                .replace('\r', ' ')
-                .replace('\n', ' ');
+        List<ResolvedTextLine> lines = resolveTextLines(font, cell, cellX, cellY);
 
-        double textWidth = font.getTextWidth(style.textStyle(), safeText);
-        double textHeight = font.getLineHeight(style.textStyle());
+        stream.saveGraphicsState();
+        try {
+            stream.setFont(font.fontType(style.textStyle().decoration()), (float) style.textStyle().size());
+            stream.setNonStrokingColor(style.textStyle().color());
+            for (ResolvedTextLine line : lines) {
+                if (line.text().isEmpty()) {
+                    continue;
+                }
+                stream.beginText();
+                stream.newLineAtOffset((float) line.x(), (float) line.baselineY());
+                stream.showText(line.text());
+                stream.endText();
+            }
+        } finally {
+            stream.restoreGraphicsState();
+        }
+    }
+
+    List<ResolvedTextLine> resolveTextLines(PdfFont font,
+                                            TableResolvedCell cell,
+                                            double cellX,
+                                            double cellY) {
+        TableCellStyle style = cell.style();
+        List<String> safeLines = sanitizeLines(cell.lines());
+        double lineHeight = font.getLineHeight(style.textStyle());
         Padding padding = style.padding() == null ? Padding.zero() : style.padding();
         Anchor anchor = style.textAnchor() == null ? Anchor.centerLeft() : style.textAnchor();
 
@@ -145,31 +168,48 @@ public class TableRow implements PdfRender {
         double innerY = cellY + padding.bottom();
         double innerWidth = Math.max(0, cell.width() - padding.horizontal());
         double innerHeight = Math.max(0, cell.height() - padding.vertical());
+        double blockHeight = lineHeight * Math.max(1, safeLines.size());
 
-        double textBoxX = switch (anchor.h()) {
-            case RIGHT -> innerX + innerWidth - textWidth;
-            case CENTER -> innerX + (innerWidth - textWidth) / 2.0;
-            case LEFT, DEFAULT -> innerX;
-        };
-        double textBoxY = switch (anchor.v()) {
-            case TOP -> innerY + innerHeight - textHeight;
-            case MIDDLE -> innerY + (innerHeight - textHeight) / 2.0;
+        double blockY = switch (anchor.v()) {
+            case TOP -> innerY + innerHeight - blockHeight;
+            case MIDDLE -> innerY + (innerHeight - blockHeight) / 2.0;
             case BOTTOM, DEFAULT -> innerY;
         };
 
         PdfFont.VerticalMetrics metrics = font.verticalMetrics(style.textStyle());
-        double baselineY = textBoxY + metrics.baselineOffsetFromBottom();
+        List<ResolvedTextLine> resolved = new ArrayList<>(safeLines.size());
 
-        stream.saveGraphicsState();
-        try {
-            stream.setFont(font.fontType(style.textStyle().decoration()), (float) style.textStyle().size());
-            stream.setNonStrokingColor(style.textStyle().color());
-            stream.beginText();
-            stream.newLineAtOffset((float) textBoxX, (float) baselineY);
-            stream.showText(safeText);
-            stream.endText();
-        } finally {
-            stream.restoreGraphicsState();
+        for (int lineIndex = 0; lineIndex < safeLines.size(); lineIndex++) {
+            String line = safeLines.get(lineIndex);
+            double lineWidth = font.getTextWidth(style.textStyle(), line);
+            double lineX = switch (anchor.h()) {
+                case RIGHT -> innerX + innerWidth - lineWidth;
+                case CENTER -> innerX + (innerWidth - lineWidth) / 2.0;
+                case LEFT, DEFAULT -> innerX;
+            };
+
+            double lineBoxY = blockY + lineHeight * (safeLines.size() - lineIndex - 1);
+            double baselineY = lineBoxY + metrics.baselineOffsetFromBottom();
+            resolved.add(new ResolvedTextLine(line, lineX, baselineY));
         }
+
+        return List.copyOf(resolved);
+    }
+
+    private List<String> sanitizeLines(List<String> lines) {
+        if (lines == null || lines.isEmpty()) {
+            return List.of("");
+        }
+
+        List<String> result = new ArrayList<>(lines.size());
+        for (String line : lines) {
+            result.add(BlockText.sanitizeText(line == null ? "" : line)
+                    .replace('\r', ' ')
+                    .replace('\n', ' '));
+        }
+        return List.copyOf(result);
+    }
+
+    record ResolvedTextLine(String text, double x, double baselineY) {
     }
 }

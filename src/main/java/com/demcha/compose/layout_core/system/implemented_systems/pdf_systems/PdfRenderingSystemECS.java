@@ -9,7 +9,10 @@ import com.demcha.compose.layout_core.components.layout.coordinator.RenderCoordi
 import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.system.GuidLineSettings;
 import com.demcha.compose.layout_core.system.implemented_systems.RenderingSystemBase;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfTableRowRenderHandler;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfTextRenderHandler;
 import com.demcha.compose.layout_core.system.interfaces.guides.GuidesRenderer;
+import com.demcha.compose.layout_core.system.rendering.RenderHandler;
 import com.demcha.compose.layout_core.system.utils.page_breaker.EntitySorter;
 import lombok.Getter;
 import lombok.NonNull;
@@ -45,6 +48,8 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
         this.imageCache = new PdfImageCache(doc);
         guidesRendererInitializer(new PdfGuidesRenderer(this));
         this.fontClazz = PdfFont.class;
+        renderHandlers().register(new PdfTextRenderHandler());
+        renderHandlers().register(new PdfTableRowRenderHandler());
     }
 
 
@@ -61,22 +66,25 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
 
             uuidEntityLinkedHashMap.forEach((uuid, entity) -> {
                 if (entity.hasRender()) {
-                    if (PdfRender.class.isAssignableFrom(entity.getRender().getClass())) {
-                        PdfRender render = (PdfRender) entity.getRender();
-                        var guideLines = entity.isGuideLines();
+                    var guideLines = entity.isGuideLines();
+                    try {
+                        var render = entity.getRender();
+                        var handler = renderHandlers().find(render);
 
-                        try {
-                            render.pdf(entityManager, entity, this, guideLines);
-                        } catch (IOException ex) {
-                            log.error("Error processing pdf {}", ex, entity);
-                            throw new RuntimeException(ex);
+                        if (handler.isPresent()) {
+                            @SuppressWarnings("unchecked")
+                            RenderHandler<com.demcha.compose.layout_core.system.interfaces.Render, PdfRenderingSystemECS> typedHandler =
+                                    (RenderHandler<com.demcha.compose.layout_core.system.interfaces.Render, PdfRenderingSystemECS>) (RenderHandler<?, ?>) handler.get();
+                            typedHandler.render(entityManager, entity, render, this, guideLines);
+                        } else if (render instanceof PdfRender legacyPdfRender) {
+                            legacyPdfRender.pdf(entityManager, entity, this, guideLines);
+                        } else {
+                            throw new IllegalStateException("No PDF render handler registered for " + render.getClass().getName());
                         }
-
-                    } else {
-                        log.error("CurrentRender is not supported, Has to be PdfRender.class");
+                    } catch (IOException ex) {
+                        log.error("Error processing pdf {}", ex, entity);
+                        throw new RuntimeException(ex);
                     }
-
-
                 } else {
                     log.error("{} has no PdfRender", entity);
                 }

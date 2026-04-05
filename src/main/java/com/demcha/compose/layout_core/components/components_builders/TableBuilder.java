@@ -17,8 +17,7 @@ import com.demcha.compose.layout_core.components.renderable.TableRow;
 import com.demcha.compose.layout_core.components.renderable.VContainer;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.EntityManager;
-import com.demcha.compose.layout_core.system.LayoutSystem;
-import com.demcha.compose.layout_core.system.interfaces.Font;
+import com.demcha.compose.layout_core.system.interfaces.TextMeasurementSystem;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -314,23 +313,17 @@ public class TableBuilder extends ContainerBuilder<TableBuilder> {
     }
 
     private double measureLineHeight(TableCellStyle style) {
-        return measureText("", style).height();
+        return textMeasurementSystem().lineHeight(style.textStyle());
     }
 
     private ContentSize measureText(String text, TableCellStyle style) {
-        Class<? extends Font<?>> fontType = entityManager.getSystems()
-                .getSystem(LayoutSystem.class)
-                .orElseThrow(() -> new IllegalStateException("LayoutSystem is required to measure table text."))
-                .getRenderingSystem()
-                .fontClazz();
+        return textMeasurementSystem().measure(style.textStyle(), text);
+    }
 
-        Font<?> font = entityManager.getFonts()
-                .getFont(style.textStyle().fontName(), fontType)
-                .orElseThrow(() -> new IllegalStateException("Font not found for table cell style: " + style.textStyle().fontName()));
-
-        double width = font.getTextWidth(style.textStyle(), text);
-        double height = font.getLineHeight(style.textStyle());
-        return new ContentSize(width, height);
+    private TextMeasurementSystem textMeasurementSystem() {
+        return entityManager.getSystems()
+                .getSystem(TextMeasurementSystem.class)
+                .orElseThrow(() -> new IllegalStateException("TextMeasurementSystem is required to measure table text."));
     }
 
     private EnumSet<Side> borderSides(int rowIndex, int columnIndex) {

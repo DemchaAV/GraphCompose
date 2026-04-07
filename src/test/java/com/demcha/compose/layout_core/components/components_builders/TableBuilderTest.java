@@ -1,6 +1,7 @@
 package com.demcha.compose.layout_core.components.components_builders;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.layout_core.system.measurement.FontLibraryTextMeasurementSystem;
 import com.demcha.compose.layout_core.components.content.table.TableLayoutData;
 import com.demcha.compose.layout_core.components.content.table.TableResolvedCell;
 import com.demcha.compose.layout_core.components.content.table.TableRowData;
@@ -11,7 +12,9 @@ import com.demcha.compose.layout_core.components.core.EntityName;
 import com.demcha.compose.layout_core.components.content.shape.Side;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Padding;
+import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFont;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -233,6 +236,21 @@ class TableBuilderTest {
             assertThat(multilineCell.height()).isEqualTo(expectedMultilineHeight);
             assertThat(multilineCell.lines()).containsExactly("Short", "Longest visible metric label");
         }
+    }
+
+    @Test
+    void shouldBuildWithoutLayoutSystemWhenTextMeasurementSystemIsRegistered() {
+        EntityManager entityManager = new EntityManager();
+        entityManager.getSystems().addSystem(new FontLibraryTextMeasurementSystem(entityManager.getFonts(), PdfFont.class));
+
+        Entity table = new TableBuilder(entityManager)
+                .entityName("MeasurementOnlyTable")
+                .row("Alpha", "Beta")
+                .build();
+
+        TableLayoutData layoutData = table.getComponent(TableLayoutData.class).orElseThrow();
+        assertThat(layoutData.columnWidths()).hasSize(2);
+        assertThat(layoutData.finalWidth()).isGreaterThan(0.0);
     }
 
     @Test

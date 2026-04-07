@@ -1,17 +1,13 @@
 package com.demcha.compose.layout_core.components.components_builders;
 
+import com.demcha.compose.layout_core.system.measurement.FontLibraryTextMeasurementSystem;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.core.Entity;
 import com.demcha.compose.layout_core.components.geometry.ContentSize;
 import com.demcha.compose.layout_core.components.renderable.TextComponent;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.EntityManager;
-import com.demcha.compose.layout_core.system.LayoutSystem;
-import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfCanvas;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFont;
-import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -25,11 +21,7 @@ class TextBuilderTest {
     @BeforeEach
     void setUp() {
         entityManager = new EntityManager();
-        PDDocument doc = new PDDocument();
-        PdfCanvas canvas = new PdfCanvas(PDRectangle.A4, 0.0f);
-        PdfRenderingSystemECS renderingSystemECS = new PdfRenderingSystemECS(doc, canvas);
-        entityManager.getSystems().addSystem(new LayoutSystem(canvas, renderingSystemECS));
-        entityManager.getSystems().addSystem(renderingSystemECS);
+        entityManager.getSystems().addSystem(new FontLibraryTextMeasurementSystem(entityManager.getFonts(), PdfFont.class));
     }
 
     @Test
@@ -71,5 +63,15 @@ class TextBuilderTest {
 
         assertThat(measuredText.height()).isCloseTo(metrics.lineHeight(), within(0.001));
         assertThat(contentSize.height() - padding.vertical()).isCloseTo(measuredText.height(), within(0.001));
+    }
+
+    @Test
+    void shouldAutosizeWithoutLayoutSystemWhenMeasurementSystemIsRegistered() {
+        Entity entity = new TextBuilder(entityManager)
+                .textWithAutoSize("Layout-free measurement")
+                .textStyle(TextStyle.DEFAULT_STYLE)
+                .build();
+
+        assertThat(entity.getComponent(ContentSize.class)).isPresent();
     }
 }

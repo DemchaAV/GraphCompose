@@ -1,4 +1,4 @@
-package com.demcha.compose.layout_core.components.renderable;
+package com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers;
 
 import com.demcha.compose.font_library.DefaultFonts;
 import com.demcha.compose.layout_core.components.components_builders.TableCellStyle;
@@ -20,9 +20,9 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TableRowTest {
+class PdfTableRowRenderHandlerTest {
 
-    private final TableRow tableRow = new TableRow();
+    private final PdfTableRowRenderHandler handler = new PdfTableRowRenderHandler();
 
     @Test
     void shouldTreatFirstRowOnNewPageAsNewFragment() {
@@ -57,9 +57,9 @@ class TableRowTest {
                 Set.of(Side.RIGHT, Side.BOTTOM)
         );
 
-        assertThat(tableRow.startsPageFragment(manager, currentRow)).isTrue();
-        assertThat(tableRow.effectiveBorderSides(cell, true)).containsExactlyInAnyOrder(Side.TOP, Side.RIGHT, Side.BOTTOM);
-        assertThat(tableRow.effectiveFillInsets(cell, true))
+        assertThat(handler.startsPageFragment(manager, currentRow)).isTrue();
+        assertThat(handler.effectiveBorderSides(cell, true)).containsExactlyInAnyOrder(Side.TOP, Side.RIGHT, Side.BOTTOM);
+        assertThat(handler.effectiveFillInsets(cell, true))
                 .isEqualTo(new Padding(1.0, 0.5, 0.5, 0.5));
     }
 
@@ -96,9 +96,9 @@ class TableRowTest {
                 Set.of(Side.RIGHT, Side.BOTTOM)
         );
 
-        assertThat(tableRow.startsPageFragment(manager, currentRow)).isFalse();
-        assertThat(tableRow.effectiveBorderSides(cell, false)).containsExactlyInAnyOrder(Side.RIGHT, Side.BOTTOM);
-        assertThat(tableRow.effectiveFillInsets(cell, false))
+        assertThat(handler.startsPageFragment(manager, currentRow)).isFalse();
+        assertThat(handler.effectiveBorderSides(cell, false)).containsExactlyInAnyOrder(Side.RIGHT, Side.BOTTOM);
+        assertThat(handler.effectiveFillInsets(cell, false))
                 .isEqualTo(new Padding(3.0, 0.5, 0.5, 0.5));
     }
 
@@ -132,8 +132,8 @@ class TableRowTest {
                 Set.of(Side.TOP, Side.LEFT, Side.RIGHT, Side.BOTTOM)
         );
 
-        var topLines = tableRow.resolveTextLines(font, topCell, 0, 0);
-        var middleLines = tableRow.resolveTextLines(font, middleCell, 0, 0);
+        var topLines = handler.resolveTextLines(font, topCell, 0, 0);
+        var middleLines = handler.resolveTextLines(font, middleCell, 0, 0);
         double lineHeight = font.getLineHeight(topCell.style().textStyle());
 
         assertThat(topLines).hasSize(2);

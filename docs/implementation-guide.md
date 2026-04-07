@@ -91,7 +91,7 @@ Examples:
 - [Rectangle.java](./../src/main/java/com/demcha/compose/layout_core/components/renderable/Rectangle.java)
 - [ImageComponent.java](./../src/main/java/com/demcha/compose/layout_core/components/renderable/ImageComponent.java)
 
-Those renderable components implement the renderer contract used by the current PDF renderer.
+Those renderable components are render markers. Prefer keeping them backend-neutral and let renderer-owned handlers perform format-specific drawing.
 
 ### Engine markers with different jobs
 
@@ -252,6 +252,13 @@ If the object is not directly rendered and mostly groups behavior, it may not ne
 ## Where rendering hooks in
 
 The current PDF path works through renderable components and the PDF renderer system.
+
+Preferred extension pattern for new backends:
+
+1. keep engine components as format-neutral render markers
+2. register a backend-specific `TextMeasurementSystem`
+3. register renderer-side handlers for marker types
+4. use legacy `PdfRender` / `WordRender` only as temporary fallback during migration
 
 Important files:
 

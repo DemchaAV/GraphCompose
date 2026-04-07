@@ -52,6 +52,13 @@ Its shape is intentionally hybrid:
 
 This keeps table pagination consistent with the rest of the engine while avoiding a separate ad-hoc table layout subsystem.
 
+### Measurement and renderer ownership
+
+- Engine builders and layout helpers should consume an engine-level `TextMeasurementSystem` instead of reaching through `LayoutSystem` into the active renderer.
+- Render marker components should primarily identify what needs to be rendered.
+- Backend-specific drawing logic should live in renderer-owned handler packages such as `...pdf_systems.handlers` and future `...word_systems.handlers` / `...pptx_systems.handlers`.
+- Legacy `PdfRender` / `WordRender` interfaces can remain as migration fallbacks, but they are no longer the preferred extension seam.
+
 Fixed leaf primitives such as `Rectangle`, `Circle`, `Image`, and `Line` follow the same general engine contract:
 
 - they materialize as regular entities with render/content/layout components
@@ -76,6 +83,7 @@ Fixed leaf primitives such as `Rectangle`, `Circle`, `Image`, and `Line` follow 
 
 - The PDF backend is the main supported rendering path.
 - The Word backend under `...implemented_systems.word_systems` is experimental and should be treated as less stable than the PDF path.
+- Future backends should add their own rendering system, text measurement system, and handler set without changing engine builders such as tables or template data models.
 
 ## Language status
 

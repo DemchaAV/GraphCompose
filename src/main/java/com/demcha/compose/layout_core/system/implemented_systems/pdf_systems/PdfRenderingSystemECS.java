@@ -9,7 +9,10 @@ import com.demcha.compose.layout_core.components.layout.coordinator.RenderCoordi
 import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.system.GuidLineSettings;
 import com.demcha.compose.layout_core.system.implemented_systems.RenderingSystemBase;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfBlockTextRenderHandler;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfCircleRenderHandler;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfChunkedBlockTextRenderHandler;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfContainerRenderHandler;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfElementRenderHandler;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfImageRenderHandler;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfLineRenderHandler;
@@ -54,7 +57,10 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
         this.imageCache = new PdfImageCache(doc);
         guidesRendererInitializer(new PdfGuidesRenderer(this));
         this.fontClazz = PdfFont.class;
+        renderHandlers().register(new PdfBlockTextRenderHandler());
         renderHandlers().register(new PdfCircleRenderHandler());
+        renderHandlers().register(new PdfChunkedBlockTextRenderHandler());
+        renderHandlers().register(new PdfContainerRenderHandler());
         renderHandlers().register(new PdfElementRenderHandler());
         renderHandlers().register(new PdfImageRenderHandler());
         renderHandlers().register(new PdfLineRenderHandler());

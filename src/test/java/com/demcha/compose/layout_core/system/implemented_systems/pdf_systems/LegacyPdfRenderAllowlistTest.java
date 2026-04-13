@@ -16,13 +16,7 @@ class LegacyPdfRenderAllowlistTest {
 
     private static final Set<String> ALLOWLIST = Set.of(
             "src/main/java/com/demcha/compose/layout_core/components/renderable/BlockText.java",
-            "src/main/java/com/demcha/compose/layout_core/components/renderable/Circle.java",
             "src/main/java/com/demcha/compose/layout_core/components/renderable/Container.java",
-            "src/main/java/com/demcha/compose/layout_core/components/renderable/Element.java",
-            "src/main/java/com/demcha/compose/layout_core/components/renderable/ImageComponent.java",
-            "src/main/java/com/demcha/compose/layout_core/components/renderable/Line.java",
-            "src/main/java/com/demcha/compose/layout_core/components/renderable/Link.java",
-            "src/main/java/com/demcha/compose/layout_core/components/renderable/Rectangle.java",
             "src/main/java/com/demcha/compose/layout_core/components/renderable/TableCellBox.java"
     );
 

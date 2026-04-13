@@ -1,0 +1,557 @@
+{
+  "formatVersion" : "1.0",
+  "canvas" : {
+    "pageWidth" : 595.276,
+    "pageHeight" : 841.89,
+    "innerWidth" : 547.276,
+    "innerHeight" : 793.89,
+    "margin" : {
+      "top" : 24.0,
+      "right" : 24.0,
+      "bottom" : 24.0,
+      "left" : 24.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "BarcodeShowcaseRoot[0]",
+    "entityName" : "BarcodeShowcaseRoot",
+    "entityKind" : "VContainer",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 24.0,
+    "computedY" : 198.952,
+    "placementX" : 24.0,
+    "placementY" : 198.952,
+    "placementWidth" : 547.276,
+    "placementHeight" : 618.937,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 547.276,
+    "contentHeight" : 618.937,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BarcodeShowcaseRoot[0]/BarcodeShowcaseTitle[0]",
+    "entityName" : "BarcodeShowcaseTitle",
+    "entityKind" : "TextComponent",
+    "parentPath" : "BarcodeShowcaseRoot[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 24.0,
+    "computedY" : 797.54,
+    "placementX" : 24.0,
+    "placementY" : 797.54,
+    "placementWidth" : 286.088,
+    "placementHeight" : 20.35,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 286.088,
+    "contentHeight" : 20.35,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 4.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BarcodeShowcaseRoot[0]/BarcodeShowcaseLead[1]",
+    "entityName" : "BarcodeShowcaseLead",
+    "entityKind" : "BlockText",
+    "parentPath" : "BarcodeShowcaseRoot[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 24.0,
+    "computedY" : 751.965,
+    "placementX" : 24.0,
+    "placementY" : 751.965,
+    "placementWidth" : 533.863,
+    "placementHeight" : 29.575,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 533.863,
+    "contentHeight" : 29.575,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 4.0,
+      "right" : 4.0,
+      "bottom" : 4.0,
+      "left" : 4.0
+    }
+  }, {
+    "path" : "BarcodeShowcaseRoot[0]/BarcodeQrModule[2]",
+    "entityName" : "BarcodeQrModule",
+    "entityKind" : "Module",
+    "parentPath" : "BarcodeShowcaseRoot[0]",
+    "childIndex" : 2,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 24.0,
+    "computedY" : 539.365,
+    "placementX" : 24.0,
+    "placementY" : 539.365,
+    "placementWidth" : 547.276,
+    "placementHeight" : 198.6,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 547.276,
+    "contentHeight" : 198.6,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BarcodeShowcaseRoot[0]/BarcodeQrModule[2]/BarcodeQrModuleHeading[0]",
+    "entityName" : "BarcodeQrModuleHeading",
+    "entityKind" : "TextComponent",
+    "parentPath" : "BarcodeShowcaseRoot[0]/BarcodeQrModule[2]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 24.0,
+    "computedY" : 725.94,
+    "placementX" : 24.0,
+    "placementY" : 725.94,
+    "placementWidth" : 55.614,
+    "placementHeight" : 12.025,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 55.614,
+    "contentHeight" : 12.025,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BarcodeShowcaseRoot[0]/BarcodeQrModule[2]/BarcodeQrModuleDivider[1]",
+    "entityName" : "BarcodeQrModuleDivider",
+    "entityKind" : "Line",
+    "parentPath" : "BarcodeShowcaseRoot[0]/BarcodeQrModule[2]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 24.0,
+    "computedY" : 704.94,
+    "placementX" : 24.0,
+    "placementY" : 704.94,
+    "placementWidth" : 547.276,
+    "placementHeight" : 13.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 547.276,
+    "contentHeight" : 13.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 6.0,
+      "right" : 0.0,
+      "bottom" : 6.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BarcodeShowcaseRoot[0]/BarcodeQrModule[2]/BarcodeQrSample[2]",
+    "entityName" : "BarcodeQrSample",
+    "entityKind" : "BarcodeComponent",
+    "parentPath" : "BarcodeShowcaseRoot[0]/BarcodeQrModule[2]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 238.638,
+    "computedY" : 578.94,
+    "placementX" : 238.638,
+    "placementY" : 578.94,
+    "placementWidth" : 118.0,
+    "placementHeight" : 118.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 118.0,
+    "contentHeight" : 118.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BarcodeShowcaseRoot[0]/BarcodeQrModule[2]/BarcodeQrModuleBody[3]",
+    "entityName" : "BarcodeQrModuleBody",
+    "entityKind" : "BlockText",
+    "parentPath" : "BarcodeShowcaseRoot[0]/BarcodeQrModule[2]",
+    "childIndex" : 3,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 24.0,
+    "computedY" : 541.365,
+    "placementX" : 24.0,
+    "placementY" : 541.365,
+    "placementWidth" : 528.087,
+    "placementHeight" : 29.575,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 528.087,
+    "contentHeight" : 29.575,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 4.0,
+      "right" : 4.0,
+      "bottom" : 4.0,
+      "left" : 4.0
+    }
+  }, {
+    "path" : "BarcodeShowcaseRoot[0]/BarcodeCode128Module[3]",
+    "entityName" : "BarcodeCode128Module",
+    "entityKind" : "Module",
+    "parentPath" : "BarcodeShowcaseRoot[0]",
+    "childIndex" : 3,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 24.0,
+    "computedY" : 387.552,
+    "placementX" : 24.0,
+    "placementY" : 387.552,
+    "placementWidth" : 547.276,
+    "placementHeight" : 139.812,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 547.276,
+    "contentHeight" : 139.812,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BarcodeShowcaseRoot[0]/BarcodeCode128Module[3]/BarcodeCode128ModuleHeading[0]",
+    "entityName" : "BarcodeCode128ModuleHeading",
+    "entityKind" : "TextComponent",
+    "parentPath" : "BarcodeShowcaseRoot[0]/BarcodeCode128Module[3]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 24.0,
+    "computedY" : 515.34,
+    "placementX" : 24.0,
+    "placementY" : 515.34,
+    "placementWidth" : 154.596,
+    "placementHeight" : 12.025,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 154.596,
+    "contentHeight" : 12.025,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BarcodeShowcaseRoot[0]/BarcodeCode128Module[3]/BarcodeCode128ModuleDivider[1]",
+    "entityName" : "BarcodeCode128ModuleDivider",
+    "entityKind" : "Line",
+    "parentPath" : "BarcodeShowcaseRoot[0]/BarcodeCode128Module[3]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 24.0,
+    "computedY" : 494.34,
+    "placementX" : 24.0,
+    "placementY" : 494.34,
+    "placementWidth" : 547.276,
+    "placementHeight" : 13.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 547.276,
+    "contentHeight" : 13.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 6.0,
+      "right" : 0.0,
+      "bottom" : 6.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BarcodeShowcaseRoot[0]/BarcodeCode128Module[3]/BarcodeCode128Sample[2]",
+    "entityName" : "BarcodeCode128Sample",
+    "entityKind" : "BarcodeComponent",
+    "parentPath" : "BarcodeShowcaseRoot[0]/BarcodeCode128Module[3]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 137.638,
+    "computedY" : 414.34,
+    "placementX" : 137.638,
+    "placementY" : 414.34,
+    "placementWidth" : 320.0,
+    "placementHeight" : 72.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 320.0,
+    "contentHeight" : 72.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BarcodeShowcaseRoot[0]/BarcodeCode128Module[3]/BarcodeCode128ModuleBody[3]",
+    "entityName" : "BarcodeCode128ModuleBody",
+    "entityKind" : "BlockText",
+    "parentPath" : "BarcodeShowcaseRoot[0]/BarcodeCode128Module[3]",
+    "childIndex" : 3,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 24.0,
+    "computedY" : 389.552,
+    "placementX" : 24.0,
+    "placementY" : 389.552,
+    "placementWidth" : 493.754,
+    "placementHeight" : 16.787,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 493.754,
+    "contentHeight" : 16.787,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 4.0,
+      "right" : 4.0,
+      "bottom" : 4.0,
+      "left" : 4.0
+    }
+  }, {
+    "path" : "BarcodeShowcaseRoot[0]/BarcodeEan13Module[4]",
+    "entityName" : "BarcodeEan13Module",
+    "entityKind" : "Module",
+    "parentPath" : "BarcodeShowcaseRoot[0]",
+    "childIndex" : 4,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 24.0,
+    "computedY" : 198.952,
+    "placementX" : 24.0,
+    "placementY" : 198.952,
+    "placementWidth" : 547.276,
+    "placementHeight" : 176.6,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 547.276,
+    "contentHeight" : 176.6,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BarcodeShowcaseRoot[0]/BarcodeEan13Module[4]/BarcodeEan13ModuleHeading[0]",
+    "entityName" : "BarcodeEan13ModuleHeading",
+    "entityKind" : "TextComponent",
+    "parentPath" : "BarcodeShowcaseRoot[0]/BarcodeEan13Module[4]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 24.0,
+    "computedY" : 363.527,
+    "placementX" : 24.0,
+    "placementY" : 363.527,
+    "placementWidth" : 121.355,
+    "placementHeight" : 12.025,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 121.355,
+    "contentHeight" : 12.025,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BarcodeShowcaseRoot[0]/BarcodeEan13Module[4]/BarcodeEan13ModuleDivider[1]",
+    "entityName" : "BarcodeEan13ModuleDivider",
+    "entityKind" : "Line",
+    "parentPath" : "BarcodeShowcaseRoot[0]/BarcodeEan13Module[4]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 24.0,
+    "computedY" : 342.527,
+    "placementX" : 24.0,
+    "placementY" : 342.527,
+    "placementWidth" : 547.276,
+    "placementHeight" : 13.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 547.276,
+    "contentHeight" : 13.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 6.0,
+      "right" : 0.0,
+      "bottom" : 6.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BarcodeShowcaseRoot[0]/BarcodeEan13Module[4]/BarcodeEan13Sample[2]",
+    "entityName" : "BarcodeEan13Sample",
+    "entityKind" : "BarcodeComponent",
+    "parentPath" : "BarcodeShowcaseRoot[0]/BarcodeEan13Module[4]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 177.638,
+    "computedY" : 238.527,
+    "placementX" : 177.638,
+    "placementY" : 238.527,
+    "placementWidth" : 240.0,
+    "placementHeight" : 96.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 240.0,
+    "contentHeight" : 96.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BarcodeShowcaseRoot[0]/BarcodeEan13Module[4]/BarcodeEan13ModuleBody[3]",
+    "entityName" : "BarcodeEan13ModuleBody",
+    "entityKind" : "BlockText",
+    "parentPath" : "BarcodeShowcaseRoot[0]/BarcodeEan13Module[4]",
+    "childIndex" : 3,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 24.0,
+    "computedY" : 200.952,
+    "placementX" : 24.0,
+    "placementY" : 200.952,
+    "placementWidth" : 540.703,
+    "placementHeight" : 29.575,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 540.703,
+    "contentHeight" : 29.575,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 4.0,
+      "right" : 4.0,
+      "bottom" : 4.0,
+      "left" : 4.0
+    }
+  } ]
+}

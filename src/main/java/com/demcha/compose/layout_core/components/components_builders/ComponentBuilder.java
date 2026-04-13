@@ -140,6 +140,17 @@ public class ComponentBuilder {
     }
 
     /**
+     * Creates a builder for a barcode or QR-code leaf entity.
+     *
+     * <p>The resulting entity renders a barcode image at draw time using
+     * ZXing. Like images, barcodes are fixed-size leaves positioned by
+     * anchor and sized explicitly.</p>
+     */
+    public BarcodeBuilder barcode() {
+        return register(new BarcodeBuilder(entityManager));
+    }
+
+    /**
      * Creates a builder for an image leaf entity.
      */
     public ImageBuilder image() {
@@ -189,6 +200,26 @@ public class ComponentBuilder {
      */
     public ElementBuilder element() {
         return register(new ElementBuilder(entityManager));
+    }
+
+    /**
+     * Creates a forced page-break entity.
+     *
+     * <p>When this entity is encountered during pagination, the layout system
+     * advances to the next page.</p>
+     */
+    public PageBreakBuilder pageBreak() {
+        return register(new PageBreakBuilder(entityManager));
+    }
+
+    /**
+     * Creates a horizontal divider line with sensible defaults.
+     *
+     * <p>This is a convenience wrapper around the line primitive. Use
+     * {@code divider().width(520).thickness(1)} to customize appearance.</p>
+     */
+    public DividerBuilder divider() {
+        return register(new DividerBuilder(entityManager));
     }
 
     /**

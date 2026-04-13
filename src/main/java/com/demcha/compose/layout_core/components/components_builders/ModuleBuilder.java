@@ -2,6 +2,7 @@ package com.demcha.compose.layout_core.components.components_builders;
 
 import com.demcha.compose.layout_core.components.containers.abstract_builders.ContainerBuilder;
 import com.demcha.compose.layout_core.components.containers.abstract_builders.StackAxis;
+import com.demcha.compose.layout_core.components.content.bookmark.BookmarkEntry;
 import com.demcha.compose.layout_core.components.geometry.ContentSize;
 import com.demcha.compose.layout_core.components.geometry.InnerBoxSize;
 import com.demcha.compose.layout_core.components.geometry.ModuleWidthSeed;
@@ -66,5 +67,31 @@ public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
 
     private void seedWidth(double width) {
         entity.addComponent(new ModuleWidthSeed(Math.max(0, width)));
+    }
+
+    /**
+     * Marks this module as a PDF bookmark entry.
+     *
+     * <p>The bookmark title will appear in the PDF reader's outline panel,
+     * pointing to the page and Y-position of this module.</p>
+     *
+     * @param title the bookmark display title
+     * @return this builder
+     */
+    public ModuleBuilder bookmark(String title) {
+        entity.addComponent(new BookmarkEntry(title));
+        return this;
+    }
+
+    /**
+     * Marks this module as a nested PDF bookmark entry.
+     *
+     * @param title the bookmark display title
+     * @param level nesting level (0 = root, 1 = child, etc.)
+     * @return this builder
+     */
+    public ModuleBuilder bookmark(String title, int level) {
+        entity.addComponent(new BookmarkEntry(title, level));
+        return this;
     }
 }

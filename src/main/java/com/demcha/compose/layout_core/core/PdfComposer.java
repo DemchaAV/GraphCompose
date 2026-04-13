@@ -5,20 +5,32 @@ import com.demcha.compose.font_library.DefaultFonts;
 import com.demcha.compose.font_library.FontFamilyDefinition;
 import com.demcha.compose.layout_core.debug.LayoutSnapshot;
 import com.demcha.compose.layout_core.debug.LayoutSnapshotExtractor;
+import com.demcha.compose.layout_core.components.content.header_footer.HeaderFooterConfig;
+import com.demcha.compose.layout_core.components.content.header_footer.HeaderFooterZone;
+import com.demcha.compose.layout_core.components.content.metadata.DocumentMetadata;
+import com.demcha.compose.layout_core.components.content.protection.PdfProtectionConfig;
+import com.demcha.compose.layout_core.components.content.watermark.WatermarkConfig;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.system.LayoutSystem;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFont;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfCanvas;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFileManagerSystem;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.helpers.PdfBookmarkBuilder;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.helpers.PdfHeaderFooterRenderer;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.helpers.PdfWatermarkRenderer;
 import com.demcha.compose.layout_core.system.measurement.FontLibraryTextMeasurementSystem;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
+import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -80,6 +92,13 @@ public final class PdfComposer extends AbstractDocumentComposer {
     @Nullable
     private final PdfFileManagerSystem fileManagerSystem;
 
+    // ===== Document-level feature configs =====
+    private final List<HeaderFooterConfig> headerFooterConfigs = new ArrayList<>();
+    @Nullable private WatermarkConfig watermarkConfig;
+    @Nullable private DocumentMetadata documentMetadata;
+    @Nullable private PdfProtectionConfig protectionConfig;
+    private boolean postProcessed = false;
+
     /**
      * Internal constructor used by {@link GraphCompose.PdfBuilder}.
      *
@@ -123,10 +142,8 @@ public final class PdfComposer extends AbstractDocumentComposer {
         entityManager().getSystems().addSystem(new FontLibraryTextMeasurementSystem(entityManager().getFonts(), PdfFont.class));
         entityManager().getSystems().addSystem(layoutSystem);
         entityManager().getSystems().addSystem(renderingSystem);
-
-        if (fileManagerSystem != null) {
-            entityManager().getSystems().addSystem(fileManagerSystem);
-        }
+        // Note: PdfFileManagerSystem is NOT added to the system pipeline.
+        // File saving is done explicitly in buildDocument() AFTER post-processing.
     }
 
     /**
@@ -145,6 +162,127 @@ public final class PdfComposer extends AbstractDocumentComposer {
     public List<com.demcha.compose.font_library.FontName> availableFonts() {
         return List.copyOf(entityManager().getFonts().availableFonts());
     }
+
+    // ===== Document-level feature API =====
+
+    /**
+     * Configures a page header that repeats on every page.
+     *
+     * <p>Text may contain placeholders: {@code {page}}, {@code {pages}}, {@code {date}}.</p>
+     *
+     * @param config the header configuration
+     * @return this composer
+     */
+    public PdfComposer header(HeaderFooterConfig config) {
+        this.headerFooterConfigs.add(HeaderFooterConfig.builder()
+                .zone(HeaderFooterZone.HEADER)
+                .height(config.getHeight())
+                .leftText(config.getLeftText())
+                .centerText(config.getCenterText())
+                .rightText(config.getRightText())
+                .fontSize(config.getFontSize())
+                .textColor(config.getTextColor())
+                .showSeparator(config.isShowSeparator())
+                .separatorColor(config.getSeparatorColor())
+                .separatorThickness(config.getSeparatorThickness())
+                .build());
+        return this;
+    }
+
+    /**
+     * Convenience: configure a simple header with left/center/right text.
+     */
+    public PdfComposer header(String leftText, String centerText, String rightText) {
+        this.headerFooterConfigs.add(HeaderFooterConfig.builder()
+                .zone(HeaderFooterZone.HEADER)
+                .leftText(leftText)
+                .centerText(centerText)
+                .rightText(rightText)
+                .showSeparator(true)
+                .build());
+        return this;
+    }
+
+    /**
+     * Configures a page footer that repeats on every page.
+     *
+     * <p>Text may contain placeholders: {@code {page}}, {@code {pages}}, {@code {date}}.</p>
+     *
+     * @param config the footer configuration
+     * @return this composer
+     */
+    public PdfComposer footer(HeaderFooterConfig config) {
+        this.headerFooterConfigs.add(HeaderFooterConfig.builder()
+                .zone(HeaderFooterZone.FOOTER)
+                .height(config.getHeight())
+                .leftText(config.getLeftText())
+                .centerText(config.getCenterText())
+                .rightText(config.getRightText())
+                .fontSize(config.getFontSize())
+                .textColor(config.getTextColor())
+                .showSeparator(config.isShowSeparator())
+                .separatorColor(config.getSeparatorColor())
+                .separatorThickness(config.getSeparatorThickness())
+                .build());
+        return this;
+    }
+
+    /**
+     * Convenience: configure a simple footer with page numbers.
+     */
+    public PdfComposer footer(String leftText, String centerText, String rightText) {
+        this.headerFooterConfigs.add(HeaderFooterConfig.builder()
+                .zone(HeaderFooterZone.FOOTER)
+                .leftText(leftText)
+                .centerText(centerText)
+                .rightText(rightText)
+                .showSeparator(true)
+                .build());
+        return this;
+    }
+
+    /**
+     * Configures a document-wide watermark.
+     *
+     * @param config the watermark configuration
+     * @return this composer
+     */
+    public PdfComposer watermark(WatermarkConfig config) {
+        this.watermarkConfig = config;
+        return this;
+    }
+
+    /**
+     * Convenience: configure a text watermark with default settings.
+     */
+    public PdfComposer watermark(String text) {
+        this.watermarkConfig = WatermarkConfig.builder().text(text).build();
+        return this;
+    }
+
+    /**
+     * Sets document metadata (title, author, subject, keywords).
+     *
+     * @param metadata the metadata configuration
+     * @return this composer
+     */
+    public PdfComposer metadata(DocumentMetadata metadata) {
+        this.documentMetadata = metadata;
+        return this;
+    }
+
+    /**
+     * Configures PDF encryption and access permissions.
+     *
+     * @param config the protection configuration
+     * @return this composer
+     */
+    public PdfComposer protect(PdfProtectionConfig config) {
+        this.protectionConfig = config;
+        return this;
+    }
+
+    // ===== Debug / Snapshot =====
 
     /**
      * Resolves the document layout and returns a deterministic debug snapshot of
@@ -171,11 +309,17 @@ public final class PdfComposer extends AbstractDocumentComposer {
     @Override
     protected void buildDocument() throws Exception {
         entityManager().processSystems();
+        applyPostProcessing();
+        // Save to file AFTER post-processing (metadata, watermarks, etc.)
+        if (fileManagerSystem != null) {
+            fileManagerSystem.process(entityManager());
+        }
     }
 
     @Override
     protected byte[] exportBytes() throws Exception {
         processInMemoryRender();
+        applyPostProcessing();
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             doc.save(baos);
             return baos.toByteArray();
@@ -199,6 +343,7 @@ public final class PdfComposer extends AbstractDocumentComposer {
     public PDDocument toPDDocument() throws Exception {
         buildComponents();
         processInMemoryRender();
+        applyPostProcessing();
         return doc;
     }
 
@@ -208,6 +353,65 @@ public final class PdfComposer extends AbstractDocumentComposer {
         if (renderingSystem != null) {
             renderingSystem.process(entityManager());
         }
+    }
+
+    /**
+     * Applies document-level post-processing features after all entities have
+     * been laid out and rendered: watermarks, headers/footers, bookmarks,
+     * metadata, and protection.
+     */
+    private void applyPostProcessing() throws IOException {
+        if (postProcessed) return;
+        postProcessed = true;
+        // 1. Watermark (behind content is applied via prepend at rendering time)
+        if (watermarkConfig != null) {
+            PdfWatermarkRenderer.apply(doc, watermarkConfig);
+        }
+
+        // 2. Headers and footers
+        if (!headerFooterConfigs.isEmpty()) {
+            Margin canvasMargin = canvas().margin();
+            float marginLeft = canvasMargin != null ? (float) canvasMargin.left() : 24f;
+            float marginRight = canvasMargin != null ? (float) canvasMargin.right() : 24f;
+            PdfHeaderFooterRenderer.apply(doc, headerFooterConfigs, marginLeft, marginRight);
+        }
+
+        // 3. Bookmarks
+        PdfBookmarkBuilder.buildOutline(doc, entityManager());
+
+        // 4. Document metadata
+        if (documentMetadata != null) {
+            PDDocumentInformation info = doc.getDocumentInformation();
+            if (documentMetadata.getTitle() != null) info.setTitle(documentMetadata.getTitle());
+            if (documentMetadata.getAuthor() != null) info.setAuthor(documentMetadata.getAuthor());
+            if (documentMetadata.getSubject() != null) info.setSubject(documentMetadata.getSubject());
+            if (documentMetadata.getKeywords() != null) info.setKeywords(documentMetadata.getKeywords());
+            if (documentMetadata.getCreator() != null) info.setCreator(documentMetadata.getCreator());
+            if (documentMetadata.getProducer() != null) info.setProducer(documentMetadata.getProducer());
+        }
+
+        // 5. PDF protection
+        if (protectionConfig != null) {
+            applyProtection();
+        }
+    }
+
+    private void applyProtection() throws IOException {
+        AccessPermission ap = new AccessPermission();
+        ap.setCanPrint(protectionConfig.isCanPrint());
+        ap.setCanExtractContent(protectionConfig.isCanCopyContent());
+        ap.setCanModify(protectionConfig.isCanModify());
+        ap.setCanFillInForm(protectionConfig.isCanFillForms());
+        ap.setCanExtractForAccessibility(protectionConfig.isCanExtractForAccessibility());
+        ap.setCanAssembleDocument(protectionConfig.isCanAssemble());
+        ap.setCanPrintFaithful(protectionConfig.isCanPrintHighQuality());
+
+        StandardProtectionPolicy policy = new StandardProtectionPolicy(
+                protectionConfig.getOwnerPassword(),
+                protectionConfig.getUserPassword(),
+                ap);
+        policy.setEncryptionKeyLength(protectionConfig.getKeyLength());
+        doc.protect(policy);
     }
 
     @Override

@@ -1,20 +1,17 @@
 package com.demcha.templates.builtins;
 
-import com.demcha.compose.GraphCompose;
 import com.demcha.compose.layout_core.core.DocumentComposer;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.templates.WeeklyScheduleTheme;
 import com.demcha.templates.api.WeeklyScheduleTemplate;
 import com.demcha.templates.data.WeeklyScheduleData;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
 import java.util.Objects;
 
-@Slf4j
-public class WeeklyScheduleTemplateV1 implements WeeklyScheduleTemplate {
+public class WeeklyScheduleTemplateV1 extends PdfTemplateAdapterSupport implements WeeklyScheduleTemplate {
     private static final float PAGE_MARGIN = 18f;
 
     private final WeeklyScheduleSceneBuilder sceneBuilder;
@@ -52,13 +49,11 @@ public class WeeklyScheduleTemplateV1 implements WeeklyScheduleTemplate {
     @Override
     @Deprecated(forRemoval = false)
     public PDDocument render(WeeklyScheduleData data, boolean guideLines) {
-        try {
-            PdfComposer composer = createComposer(null, guideLines);
-            compose(composer, data);
-            return composer.toPDDocument();
-        } catch (Exception ex) {
-            throw new RuntimeException("Failed to generate weekly schedule", ex);
-        }
+        return renderToDocument(
+                guideLines,
+                "Failed to generate weekly schedule",
+                this::createComposer,
+                composer -> compose(composer, data));
     }
 
     @Override
@@ -70,22 +65,17 @@ public class WeeklyScheduleTemplateV1 implements WeeklyScheduleTemplate {
     @Override
     @Deprecated(forRemoval = false)
     public void render(WeeklyScheduleData data, Path path, boolean guideLines) {
-        try (PdfComposer composer = createComposer(path, guideLines)) {
-            compose(composer, data);
-            composer.build();
-            log.info("Weekly schedule saved to {}", path.toAbsolutePath());
-        } catch (Exception ex) {
-            throw new RuntimeException("Failed to generate weekly schedule", ex);
-        }
+        renderToFile(
+                path,
+                guideLines,
+                "Failed to generate weekly schedule",
+                "Weekly schedule saved to {}",
+                this::createComposer,
+                composer -> compose(composer, data));
     }
 
     private PdfComposer createComposer(Path path, boolean guideLines) {
-        GraphCompose.PdfBuilder builder = path != null ? GraphCompose.pdf(path) : GraphCompose.pdf();
-        return builder.pageSize(landscapeA4())
-                .margin(PAGE_MARGIN, PAGE_MARGIN, PAGE_MARGIN, PAGE_MARGIN)
-                .markdown(true)
-                .guideLines(guideLines)
-                .create();
+        return createPdfComposer(path, guideLines, landscapeA4(), PAGE_MARGIN);
     }
 
     @Override

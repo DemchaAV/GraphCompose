@@ -1,20 +1,16 @@
 package com.demcha.templates.builtins;
 
-import com.demcha.compose.GraphCompose;
 import com.demcha.compose.layout_core.core.DocumentComposer;
-import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.templates.CvTheme;
 import com.demcha.templates.JobDetails;
 import com.demcha.templates.api.CoverLetterTemplate;
 import com.demcha.templates.data.Header;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
 
-@Slf4j
-public class CoverLetterTemplateV1 implements CoverLetterTemplate {
+public class CoverLetterTemplateV1 extends PdfTemplateAdapterSupport implements CoverLetterTemplate {
     private final CoverLetterSceneBuilder sceneBuilder;
 
     public CoverLetterTemplateV1() {
@@ -34,13 +30,11 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
      */
     @Deprecated(forRemoval = false)
     public PDDocument render(Header header, String wroteLetter, JobDetails jobDetails, boolean guideLines) {
-        try {
-            PdfComposer composer = createPdfComposer(guideLines);
-            compose(composer, header, wroteLetter, jobDetails);
-            return composer.toPDDocument();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to generate CV", e);
-        }
+        return renderToDocument(
+                guideLines,
+                "Failed to generate cover letter",
+                this::createPdfComposer,
+                composer -> compose(composer, header, wroteLetter, jobDetails));
     }
 
     /**
@@ -57,13 +51,13 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
      */
     @Deprecated(forRemoval = false)
     public void render(Header header, String wroteLetter, JobDetails jobDetails, Path path, boolean guideLines) {
-        try (PdfComposer composer = createPdfComposer(path, guideLines)) {
-            compose(composer, header, wroteLetter, jobDetails);
-            composer.build();
-            log.info("Cover letter saved to {}", path.toAbsolutePath());
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to generate CV", e);
-        }
+        renderToFile(
+                path,
+                guideLines,
+                "Failed to generate cover letter",
+                "Cover letter saved to {}",
+                this::createPdfComposer,
+                composer -> compose(composer, header, wroteLetter, jobDetails));
     }
 
     /**
@@ -75,17 +69,8 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
         render(header, wroteLetter, jobDetails, path, false);
     }
 
-    private PdfComposer createPdfComposer(Path path, boolean guideLines) {
-        GraphCompose.PdfBuilder composer = path != null ? GraphCompose.pdf(path) : GraphCompose.pdf();
-        return composer.pageSize(PDRectangle.A4)
-                .margin(15, 10, 15, 15)
-                .markdown(true)
-                .guideLines(guideLines)
-                .create();
-    }
-
-    private PdfComposer createPdfComposer(boolean guideLines) {
-        return createPdfComposer(null, guideLines);
+    private com.demcha.compose.layout_core.core.PdfComposer createPdfComposer(Path path, boolean guideLines) {
+        return createPdfComposer(path, guideLines, PDRectangle.A4, 15, 10, 15, 15);
     }
 
     @Override

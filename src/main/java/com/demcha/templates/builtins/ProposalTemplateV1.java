@@ -1,18 +1,15 @@
 package com.demcha.templates.builtins;
 
-import com.demcha.compose.GraphCompose;
 import com.demcha.compose.layout_core.core.DocumentComposer;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.templates.api.ProposalTemplate;
 import com.demcha.templates.data.ProposalData;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
 
-@Slf4j
-public class ProposalTemplateV1 implements ProposalTemplate {
+public class ProposalTemplateV1 extends PdfTemplateAdapterSupport implements ProposalTemplate {
     private static final float PAGE_MARGIN = 22f;
 
     private final ProposalSceneBuilder sceneBuilder;
@@ -59,13 +56,11 @@ public class ProposalTemplateV1 implements ProposalTemplate {
     @Deprecated(forRemoval = false)
     @Override
     public PDDocument render(ProposalData data, boolean guideLines) {
-        try {
-            PdfComposer composer = createComposer(null, guideLines);
-            compose(composer, data);
-            return composer.toPDDocument();
-        } catch (Exception ex) {
-            throw new RuntimeException("Failed to generate proposal", ex);
-        }
+        return renderToDocument(
+                guideLines,
+                "Failed to generate proposal",
+                this::createComposer,
+                composer -> compose(composer, data));
     }
 
     /**
@@ -83,21 +78,16 @@ public class ProposalTemplateV1 implements ProposalTemplate {
     @Deprecated(forRemoval = false)
     @Override
     public void render(ProposalData data, Path path, boolean guideLines) {
-        try (PdfComposer composer = createComposer(path, guideLines)) {
-            compose(composer, data);
-            composer.build();
-            log.info("Proposal saved to {}", path.toAbsolutePath());
-        } catch (Exception ex) {
-            throw new RuntimeException("Failed to generate proposal", ex);
-        }
+        renderToFile(
+                path,
+                guideLines,
+                "Failed to generate proposal",
+                "Proposal saved to {}",
+                this::createComposer,
+                composer -> compose(composer, data));
     }
 
     private PdfComposer createComposer(Path path, boolean guideLines) {
-        GraphCompose.PdfBuilder builder = path != null ? GraphCompose.pdf(path) : GraphCompose.pdf();
-        return builder.pageSize(PDRectangle.A4)
-                .margin(PAGE_MARGIN, PAGE_MARGIN, PAGE_MARGIN, PAGE_MARGIN)
-                .markdown(true)
-                .guideLines(guideLines)
-                .create();
+        return createPdfComposer(path, guideLines, PDRectangle.A4, PAGE_MARGIN);
     }
 }

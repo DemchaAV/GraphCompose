@@ -40,6 +40,7 @@ They explain the current public surface, the engine/template split, and the reco
 2. Keep structural cleanup separate from behavior changes whenever possible.
 3. If you touch public examples or screenshots, update the related docs in the same change.
 4. Run the smallest relevant tests while iterating, then run `mvn test` before opening a pull request.
+5. For quick visual iteration on a template, you can use the experimental live preview tool in test scope by running [GraphComposeDevTool.java](./src/test/java/com/demcha/compose/devtool/GraphComposeDevTool.java) and editing [LivePreviewProvider.java](./src/test/java/com/demcha/preview/LivePreviewProvider.java).
 
 ## Contributor architecture rules
 

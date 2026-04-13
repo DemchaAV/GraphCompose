@@ -30,6 +30,8 @@
   ·
   <a href="./docs/layout-snapshot-testing.md">Layout Snapshot Testing</a>
   ·
+  <a href="./CHANGELOG.md">Changelog</a>
+  ·
   <a href="./CONTRIBUTING.md">Contributing</a>
 </p>
 
@@ -71,6 +73,22 @@ GraphCompose is a good fit for:
 
 ---
 
+## New in v1.1.0
+
+- compose-first template usage is now the documented default for built-in templates
+- backend-neutral `DocumentComposer` and handler-driven rendering make the engine less PDF-centric internally
+- layout snapshot testing is now part of the practical regression workflow for pagination and geometry changes
+- runnable examples now cover CV, cover letter, invoice, proposal, and weekly schedule generation
+- new PDF document features include QR/barcodes, watermarks, headers/footers, bookmarks, metadata, protection, explicit page breaks, and dividers
+- architecture guard rails now cover template scene builders in CI, not just the engine layer
+- visual showcase tests now make pagination, document chrome, and barcode output easier to inspect
+- benchmark tooling now includes current-speed, comparative, and diffable JSON/CSV reports
+- an experimental live preview dev tool is available in test scope for fast template iteration
+
+See [CHANGELOG.md](./CHANGELOG.md) for the release summary.
+
+---
+
 ## Visual preview
 
 ### Repository showcase render
@@ -89,6 +107,18 @@ GraphCompose is a good fit for:
 
 <p align="center">
   <img src="./assets/readme/cv-preview-clean.png" alt="GraphCompose CV render preview" width="850"/>
+</p>
+
+### Barcode and QR showcase
+
+<p align="center">
+  <img src="./assets/readme/barcode-showcase.png" alt="GraphCompose barcode and QR showcase" width="850"/>
+</p>
+
+### Compose-first invoice template
+
+<p align="center">
+  <img src="./assets/readme/compose-first-invoice-template.png" alt="GraphCompose compose-first invoice template" width="850"/>
 </p>
 
 ### Available fonts preview
@@ -116,7 +146,7 @@ GraphCompose is available through JitPack.
 <dependency>
     <groupId>com.github.DemchaAV</groupId>
     <artifactId>GraphCompose</artifactId>
-    <version>v1.0.0</version>
+    <version>v1.1.0</version>
 </dependency>
 ```
 
@@ -128,9 +158,11 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.DemchaAV:GraphCompose:v1.0.0")
+    implementation("com.github.DemchaAV:GraphCompose:v1.1.0")
 }
 ```
+
+JitPack consumers can keep using older tagged releases by pinning the tag they want, for example `v1.0.3` or `v1.0.2`.
 
 ---
 
@@ -317,6 +349,24 @@ mvn -f examples/pom.xml exec:java '-Dexec.mainClass=com.demcha.examples.Generate
 ```
 
 Generated PDFs are written to `examples/target/generated-pdfs/`.
+
+---
+
+## Experimental live preview
+
+For fast local iteration on a template or test document, the repository includes an experimental live preview workflow in test scope:
+
+- [GraphComposeDevTool.java](./src/test/java/com/demcha/compose/devtool/GraphComposeDevTool.java)
+- [LivePreviewProvider.java](./src/test/java/com/demcha/preview/LivePreviewProvider.java)
+
+Recommended usage today:
+
+1. run `GraphComposeDevTool` from your IDE
+2. edit `LivePreviewProvider`
+3. save the file and let the preview refresh
+4. use the built-in buttons to save or open the current PDF
+
+This tool is still under active development, so treat it as a practical dev/test helper rather than a stable public API. It is already useful for visually checking template composition, pagination, spacing, and first-page output while you iterate.
 
 ---
 

@@ -473,6 +473,29 @@ Benchmarks were run locally on March 27, 2026 against the current repository sta
 
 These are project benchmarks measured on one machine — treat them as relative indicators, not absolute guarantees.
 
+For the easiest full local run, use the PowerShell wrapper:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1
+```
+
+That single command:
+
+- builds the test classpath once
+- runs `CurrentSpeedBenchmark`, `ComparativeBenchmark`, `GraphComposeBenchmark`, `FullCvBenchmark`, `ScalabilityBenchmark`, and `GraphComposeStressTest`
+- writes per-benchmark logs under `target/benchmark-runs/<timestamp>/logs/`
+- writes a run summary to `target/benchmark-runs/<timestamp>/SUMMARY.md`
+- refreshes JSON/CSV artifacts in `target/benchmarks/`
+- runs benchmark diffs automatically when at least two prior reports exist
+
+Optional flags:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -IncludeEndurance
+powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -OpenResults
+powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -Warmup 20 -Iterations 80 -DocsPerThread 20 -Threads 1,2,4,8
+```
+
 For fresh local numbers against the current checkout, run the manual suite in `src/test/java/com/demcha/compose/CurrentSpeedBenchmark.java`:
 
 ```powershell

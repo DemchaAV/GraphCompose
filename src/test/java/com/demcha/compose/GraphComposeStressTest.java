@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class GraphComposeStressTest {
     public  static void main(String[] args) {
+        BenchmarkSupport.configureQuietLogging();
         System.out.println("🚀 СТАРТ: Инициализация стресс-теста...");
 
         int threadCount = 50;

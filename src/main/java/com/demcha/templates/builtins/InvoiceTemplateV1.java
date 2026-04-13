@@ -1,18 +1,15 @@
 package com.demcha.templates.builtins;
 
-import com.demcha.compose.GraphCompose;
 import com.demcha.compose.layout_core.core.DocumentComposer;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.templates.api.InvoiceTemplate;
 import com.demcha.templates.data.InvoiceData;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
 
-@Slf4j
-public class InvoiceTemplateV1 implements InvoiceTemplate {
+public class InvoiceTemplateV1 extends PdfTemplateAdapterSupport implements InvoiceTemplate {
     private static final float PAGE_MARGIN = 22f;
 
     private final InvoiceSceneBuilder sceneBuilder;
@@ -59,13 +56,11 @@ public class InvoiceTemplateV1 implements InvoiceTemplate {
     @Deprecated(forRemoval = false)
     @Override
     public PDDocument render(InvoiceData data, boolean guideLines) {
-        try {
-            PdfComposer composer = createComposer(null, guideLines);
-            compose(composer, data);
-            return composer.toPDDocument();
-        } catch (Exception ex) {
-            throw new RuntimeException("Failed to generate invoice", ex);
-        }
+        return renderToDocument(
+                guideLines,
+                "Failed to generate invoice",
+                this::createComposer,
+                composer -> compose(composer, data));
     }
 
     /**
@@ -83,21 +78,16 @@ public class InvoiceTemplateV1 implements InvoiceTemplate {
     @Deprecated(forRemoval = false)
     @Override
     public void render(InvoiceData data, Path path, boolean guideLines) {
-        try (PdfComposer composer = createComposer(path, guideLines)) {
-            compose(composer, data);
-            composer.build();
-            log.info("Invoice saved to {}", path.toAbsolutePath());
-        } catch (Exception ex) {
-            throw new RuntimeException("Failed to generate invoice", ex);
-        }
+        renderToFile(
+                path,
+                guideLines,
+                "Failed to generate invoice",
+                "Invoice saved to {}",
+                this::createComposer,
+                composer -> compose(composer, data));
     }
 
     private PdfComposer createComposer(Path path, boolean guideLines) {
-        GraphCompose.PdfBuilder builder = path != null ? GraphCompose.pdf(path) : GraphCompose.pdf();
-        return builder.pageSize(PDRectangle.A4)
-                .margin(PAGE_MARGIN, PAGE_MARGIN, PAGE_MARGIN, PAGE_MARGIN)
-                .markdown(true)
-                .guideLines(guideLines)
-                .create();
+        return createPdfComposer(path, guideLines, PDRectangle.A4, PAGE_MARGIN);
     }
 }

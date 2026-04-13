@@ -1,6 +1,5 @@
 package com.demcha.templates.builtins;
 
-import com.demcha.compose.GraphCompose;
 import com.demcha.compose.font_library.FontName;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.core.DocumentComposer;
@@ -9,7 +8,6 @@ import com.demcha.templates.CvTheme;
 import com.demcha.templates.api.CvTemplate;
 import com.demcha.templates.api.MainPageCvDTO;
 import com.demcha.templates.data.MainPageCV;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
@@ -17,8 +15,7 @@ import java.awt.Color;
 import java.nio.file.Path;
 import java.util.Objects;
 
-@Slf4j
-public class EditorialBlueCvTemplate implements CvTemplate {
+public class EditorialBlueCvTemplate extends PdfTemplateAdapterSupport implements CvTemplate {
     private static final float PAGE_MARGIN = 18f;
 
     private final EditorialBlueCvSceneBuilder sceneBuilder;
@@ -55,13 +52,11 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     @Deprecated(forRemoval = false)
     @Override
     public PDDocument render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, boolean guideLines) {
-        try {
-            PdfComposer composer = createComposer(null, guideLines);
-            compose(composer, originalCv, rewrittenCv);
-            return composer.toPDDocument();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to generate editorial CV", e);
-        }
+        return renderToDocument(
+                guideLines,
+                "Failed to generate editorial CV",
+                this::createComposer,
+                composer -> compose(composer, originalCv, rewrittenCv));
     }
 
     /**
@@ -79,13 +74,13 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     @Deprecated(forRemoval = false)
     @Override
     public void render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, Path path, boolean guideLines) {
-        try (PdfComposer composer = createComposer(path, guideLines)) {
-            compose(composer, originalCv, rewrittenCv);
-            composer.build();
-            log.info("File has been saved to {}", path.toAbsolutePath());
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to generate editorial CV", e);
-        }
+        renderToFile(
+                path,
+                guideLines,
+                "Failed to generate editorial CV",
+                "File has been saved to {}",
+                this::createComposer,
+                composer -> compose(composer, originalCv, rewrittenCv));
     }
 
     @Override
@@ -104,12 +99,7 @@ public class EditorialBlueCvTemplate implements CvTemplate {
     }
 
     private PdfComposer createComposer(Path path, boolean guideLines) {
-        GraphCompose.PdfBuilder builder = path != null ? GraphCompose.pdf(path) : GraphCompose.pdf();
-        return builder.pageSize(PDRectangle.A4)
-                .margin(PAGE_MARGIN, PAGE_MARGIN, PAGE_MARGIN, PAGE_MARGIN)
-                .markdown(true)
-                .guideLines(guideLines)
-                .create();
+        return createPdfComposer(path, guideLines, PDRectangle.A4, PAGE_MARGIN);
     }
 
     private static CvTheme defaultTheme() {

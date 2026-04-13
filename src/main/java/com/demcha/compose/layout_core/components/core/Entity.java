@@ -88,7 +88,7 @@ public final class Entity {
                 this.render = (Render) c;
             } else {
                 log.warn("Render Component Already signed in {}", this);
-                throw new IllegalStateException("%sPdfRender Component Already signed in %s".formatted(c, this.render));
+                throw new IllegalStateException("%s Render component already assigned in %s".formatted(c, this.render));
             }
 
         }

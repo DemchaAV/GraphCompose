@@ -7,7 +7,6 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -52,24 +51,7 @@ class PdfRenderingSystemECSDispatchTest {
     }
 
     @Test
-    void shouldFallbackToLegacyPdfRenderWhenNoHandlerExists() throws Exception {
-        try (PDDocument document = new PDDocument()) {
-            PdfRenderingSystemECS renderingSystem = new PdfRenderingSystemECS(document, new PdfCanvas(PDRectangle.A4, 0.0f));
-            EntityManager manager = new EntityManager();
-            Entity entity = new Entity();
-            LegacyPdfRender legacyRender = new LegacyPdfRender();
-            entity.addComponent(legacyRender);
-            manager.putEntity(entity);
-            manager.setLayers(Map.of(0, List.of(entity.getUuid())));
-
-            renderingSystem.process(manager);
-
-            assertThat(legacyRender.called).isTrue();
-        }
-    }
-
-    @Test
-    void shouldFailWhenRenderHasNoHandlerAndNoLegacyFallback() throws Exception {
+    void shouldFailWhenRenderHasNoHandler() throws Exception {
         try (PDDocument document = new PDDocument()) {
             PdfRenderingSystemECS renderingSystem = new PdfRenderingSystemECS(document, new PdfCanvas(PDRectangle.A4, 0.0f));
             EntityManager manager = new EntityManager();
@@ -88,15 +70,5 @@ class PdfRenderingSystemECSDispatchTest {
     }
 
     private static final class UnsupportedRender implements com.demcha.compose.layout_core.system.interfaces.Render {
-    }
-
-    private static final class LegacyPdfRender implements PdfRender {
-        private boolean called;
-
-        @Override
-        public boolean pdf(EntityManager manager, Entity e, PdfRenderingSystemECS pdfRenderingSystem, boolean guideLines) throws IOException {
-            called = true;
-            return true;
-        }
     }
 }

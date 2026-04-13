@@ -14,9 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LegacyPdfRenderAllowlistTest {
 
-    private static final Set<String> ALLOWLIST = Set.of(
-            "src/main/java/com/demcha/compose/layout_core/components/renderable/TableCellBox.java"
-    );
+    private static final Set<String> ALLOWLIST = Set.of();
 
     private static final Pattern PDF_RENDER_PATTERN = Pattern.compile(
             "implements\\s+[^\\{;]*\\bPdfRender\\b",
@@ -24,7 +22,7 @@ class LegacyPdfRenderAllowlistTest {
     );
 
     @Test
-    void shouldKeepLegacyPdfRenderUsageExplicitlyAllowlisted() throws IOException {
+    void shouldNotAllowLegacyPdfRenderUsageInMainSources() throws IOException {
         Path projectRoot = Path.of("").toAbsolutePath().normalize();
         Path sourceRoot = projectRoot.resolve("src/main/java");
 

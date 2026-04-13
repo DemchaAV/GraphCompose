@@ -232,7 +232,7 @@ Relevant files:
 
 - [TableBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/TableBuilder.java)
 - [TableRow.java](./../src/main/java/com/demcha/compose/layout_core/components/renderable/TableRow.java)
-- [TableCellBox.java](./../src/main/java/com/demcha/compose/layout_core/components/renderable/TableCellBox.java)
+- [TableCellBox.java](./../src/main/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/helpers/TableCellBox.java)
 - [TableResolvedCell.java](./../src/main/java/com/demcha/compose/layout_core/components/content/table/TableResolvedCell.java)
 
 Rule of thumb:
@@ -258,6 +258,26 @@ Preferred extension pattern for new backends:
 1. keep engine components as format-neutral render markers
 2. register a backend-specific `TextMeasurementSystem`
 3. register renderer-side handlers for marker types
+4. keep backend-only helper drawing in renderer-owned helper packages when the code is not an entity render marker
+
+Important files:
+
+- [Render.java](./../src/main/java/com/demcha/compose/layout_core/system/interfaces/Render.java)
+- [PdfRenderingSystemECS.java](./../src/main/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderingSystemECS.java)
+
+Migration rule for new engine components:
+
+- implement backend-neutral `Render`, not `PdfRender`
+- move PDF drawing into `...pdf_systems.handlers`
+- use `TextMeasurementSystem` for text width and line metrics instead of reaching through `LayoutSystem`
+- place PDF-only helper objects in `...pdf_systems.helpers`
+- register a render handler for every engine render marker because the PDF entity path no longer supports a `PdfRender` fallback
+
+The practical rule is:
+
+- the builder creates the entity and attaches the right renderable component
+- during rendering, GraphCompose checks `entity.hasRender()`
+- if the render component supports the active renderer, the renderer executes its drawing logic
 
 ## Testing layout-sensitive changes
 
@@ -272,25 +292,6 @@ Recommended rule:
 Prefer pairing a snapshot assertion with an existing render test when the document is complex or business-critical.
 
 See [layout-snapshot-testing.md](./layout-snapshot-testing.md) for the baseline locations, update flow, and concrete examples.
-4. use legacy `PdfRender` / `WordRender` only as temporary fallback during migration
-
-Important files:
-
-- [Render.java](./../src/main/java/com/demcha/compose/layout_core/system/interfaces/Render.java)
-- [PdfRenderingSystemECS.java](./../src/main/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderingSystemECS.java)
-
-Migration rule for new engine components:
-
-- implement backend-neutral `Render`, not `PdfRender`
-- move PDF drawing into `...pdf_systems.handlers`
-- use `TextMeasurementSystem` for text width and line metrics instead of reaching through `LayoutSystem`
-- treat `PdfRender` only as a temporary migration fallback for the explicit legacy allowlist
-
-The practical rule is:
-
-- the builder creates the entity and attaches the right renderable component
-- during rendering, GraphCompose checks `entity.hasRender()`
-- if the render component supports the active renderer, the renderer executes its drawing logic
 
 So if your new object needs custom drawing, it is not enough to add a builder. You also need a renderable component with the correct renderer implementation.
 

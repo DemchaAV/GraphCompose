@@ -176,7 +176,7 @@ public class EntityManager {
         return Optional.ofNullable(entityIds);
     }
 
-    public Set<UUID> getEntitiesWithAnyPdfRender() {
+    public Set<UUID> getEntitiesWithAnyRender() {
         Set<UUID> result = new HashSet<>();
         for (Map.Entry<UUID, Entity> e : entities.entrySet()) {
             boolean hasRenderable = e.getValue().view().values().stream()
@@ -196,7 +196,7 @@ public class EntityManager {
         return entities.remove(entity.getUuid()) != null;
     }
 
-    public Set<UUID> getEntitiesWithPdfRender(Class<? extends Render> componentType) {
+    public Set<UUID> getEntitiesWithRender(Class<? extends Render> componentType) {
         log.debug("Searching for entities with component type {}", componentType.getName());
 
         Set<UUID> result = new HashSet<>();

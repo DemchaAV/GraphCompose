@@ -58,15 +58,16 @@ This keeps table pagination consistent with the rest of the engine while avoidin
 
 - Engine builders and layout helpers should consume an engine-level `TextMeasurementSystem` instead of reaching through `LayoutSystem` into the active renderer.
 - Render marker components should primarily identify what needs to be rendered.
-- Backend-specific drawing logic should live in renderer-owned handler packages such as `...pdf_systems.handlers` and future `...word_systems.handlers` / `...pptx_systems.handlers`.
-- Legacy `PdfRender` / `WordRender` interfaces can remain as migration fallbacks, but they are no longer the preferred extension seam.
+- Backend-specific drawing logic should live in renderer-owned handler packages such as `...pdf_systems.handlers` and backend helper packages such as `...pdf_systems.helpers`.
+- The PDF entity path dispatches through registered render handlers only; backend-specific render interfaces are not part of the preferred engine extension seam.
 
 ### Migration rule for new renderables
 
 - New engine entity renderables must implement backend-neutral `Render`, not `PdfRender`.
 - New PDF drawing code must live in renderer-owned handlers under `...pdf_systems.handlers`.
+- PDF-only helper objects that are not entity render markers should live under renderer-owned helper packages such as `...pdf_systems.helpers`.
 - Engine-side text sizing and line metrics must come from `TextMeasurementSystem`, not from `LayoutSystem -> RenderingSystem`.
-- Legacy `PdfRender` usage is temporary and explicitly allowlisted until the remaining renderables are migrated.
+- The PDF entity path no longer supports a legacy `PdfRender` fallback.
 
 Fixed leaf primitives such as `Rectangle`, `Circle`, `Image`, and `Line` follow the same general engine contract:
 

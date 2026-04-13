@@ -1,51 +1,22 @@
-package com.demcha.compose.layout_core.components.renderable;
+package com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.helpers;
 
-import com.demcha.compose.layout_core.components.content.shape.BorderSides;
 import com.demcha.compose.layout_core.components.content.shape.FillColor;
 import com.demcha.compose.layout_core.components.content.shape.Side;
 import com.demcha.compose.layout_core.components.content.shape.Stroke;
-import com.demcha.compose.layout_core.components.core.Entity;
-import com.demcha.compose.layout_core.components.layout.coordinator.Placement;
 import com.demcha.compose.layout_core.components.layout.coordinator.RenderCoordinateContext;
 import com.demcha.compose.layout_core.components.style.Padding;
-import com.demcha.compose.layout_core.core.EntityManager;
-import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfRender;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
-import com.demcha.compose.layout_core.system.interfaces.guides.GuidesRenderer;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.awt.*;
 import java.io.IOException;
-import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * Rectangle-like box with selective border ownership used by table cells.
+ * PDF-only helper that paints a rectangle-like table cell box with selective
+ * border ownership.
  */
-public class TableCellBox implements PdfRender {
-    private static final EnumSet<GuidesRenderer.Guide> DEFAULT_GUIDES =
-            EnumSet.of(GuidesRenderer.Guide.MARGIN, GuidesRenderer.Guide.PADDING);
-
-    @Override
-    public boolean pdf(EntityManager manager, Entity e, PdfRenderingSystemECS renderingSystem, boolean guideLines) throws IOException {
-        if (!e.hasAssignable(TableCellBox.class)) {
-            return false;
-        }
-
-        Placement placement = e.getComponent(Placement.class).orElseThrow();
-        FillColor fillColor = e.getComponent(FillColor.class).orElse(null);
-        Stroke stroke = e.getComponent(Stroke.class).orElse(null);
-        Set<Side> sides = e.getComponent(BorderSides.class).map(BorderSides::sides).orElse(Set.of(Side.ALL));
-
-        try (PDPageContentStream stream = renderingSystem.stream().openContentStream(e)) {
-            render(stream, renderingSystem, placement.x(), placement.y(), placement.width(), placement.height(), fillColor, stroke, sides);
-            if (guideLines) {
-                renderingSystem.guidesRenderer().guidesRender(e, stream, DEFAULT_GUIDES);
-            }
-        }
-        return true;
-    }
-
+public final class TableCellBox {
     public boolean render(PDPageContentStream stream,
                           PdfRenderingSystemECS renderingSystem,
                           double x,

@@ -94,8 +94,6 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
                             RenderHandler<com.demcha.compose.layout_core.system.interfaces.Render, PdfRenderingSystemECS> typedHandler =
                                     (RenderHandler<com.demcha.compose.layout_core.system.interfaces.Render, PdfRenderingSystemECS>) (RenderHandler<?, ?>) handler.get();
                             typedHandler.render(entityManager, entity, render, this, guideLines);
-                        } else if (render instanceof PdfRender legacyPdfRender) {
-                            legacyPdfRender.pdf(entityManager, entity, this, guideLines);
                         } else {
                             throw new IllegalStateException("No PDF render handler registered for " + render.getClass().getName());
                         }

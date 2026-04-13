@@ -473,6 +473,26 @@ Benchmarks were run locally on March 27, 2026 against the current repository sta
 
 These are project benchmarks measured on one machine — treat them as relative indicators, not absolute guarantees.
 
+For fresh local numbers against the current checkout, run the manual suite in `src/test/java/com/demcha/compose/CurrentSpeedBenchmark.java`:
+
+```powershell
+mvn --% -B -ntp -DskipTests test-compile dependency:build-classpath -DincludeScope=test -Dmdep.outputFile=target/benchmark.classpath
+$cp = (Get-Content 'target/benchmark.classpath' -Raw).Trim()
+java -cp "target\test-classes;target\classes;$cp" com.demcha.compose.CurrentSpeedBenchmark
+```
+
+To compare GraphCompose against iText 5 and JasperReports with the same test classpath:
+
+```powershell
+$cp = (Get-Content 'target/benchmark.classpath' -Raw).Trim()
+java -cp "target\test-classes;target\classes;$cp" com.demcha.compose.ComparativeBenchmark
+```
+
+Both suites now persist timestamped JSON/CSV artifacts plus `latest-*` copies under:
+
+- `target/benchmarks/current-speed/`
+- `target/benchmarks/comparative/`
+
 ### Comparative benchmark
 
 > **Context:** iText 5 is included as a low-level drawing baseline — it has no layout engine, so generating the same document with iText 5 requires manual coordinate math, font measurement, and pagination logic that GraphCompose handles automatically. The ~1 ms difference is the cost of that automatic layout resolution. iText 5 is also no longer maintained and its successor, iText 7, requires a commercial license for production use.

@@ -15,8 +15,11 @@ import net.sf.jasperreports.engine.design.*;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.io.ByteArrayOutputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Fair Comparative Benchmark (CPU & RAM)
@@ -25,6 +28,7 @@ import java.util.HashMap;
  */
 public class ComparativeBenchmark {
 
+    private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final int WARMUP_ITERATIONS = 50;
     private static final int MEASUREMENT_ITERATIONS = 100;
 
@@ -34,6 +38,7 @@ public class ComparativeBenchmark {
     public static void main(String[] args) throws Exception {
         BenchmarkSupport.configureQuietLogging();
         System.out.println("🚀 Starting FAIR Comparative Benchmark...");
+        System.out.println("Timestamp: " + LocalDateTime.now().format(TIMESTAMP_FORMAT));
         System.out.println("------------------------------------------------------------");
 
         // Подготавливаем Jasper 1 раз (как в Production)
@@ -52,12 +57,34 @@ public class ComparativeBenchmark {
         System.out.println(String.format("%-20s | %-12s | %-12s", "Library", "Avg Time (ms)", "Avg Heap (MB)"));
         System.out.println("------------------------------------------------------------");
 
-        runBenchmark("GraphCompose", ComparativeBenchmark::benchmarkGraphCompose);
-        runBenchmark("iText 5 (Old)", ComparativeBenchmark::benchmarkIText);
-        runBenchmark("JasperReports", ComparativeBenchmark::benchmarkJasper);
+        List<ComparativeRow> rows = List.of(
+                runBenchmark("GraphCompose", ComparativeBenchmark::benchmarkGraphCompose),
+                runBenchmark("iText 5 (Old)", ComparativeBenchmark::benchmarkIText),
+                runBenchmark("JasperReports", ComparativeBenchmark::benchmarkJasper)
+        );
+
+        BenchmarkReportWriter.BenchmarkArtifacts artifacts = BenchmarkReportWriter.prepare("comparative");
+        ComparativeReport report = new ComparativeReport(
+                LocalDateTime.now().format(TIMESTAMP_FORMAT),
+                WARMUP_ITERATIONS,
+                MEASUREMENT_ITERATIONS,
+                rows);
+        var jsonPath = artifacts.writeJson(report);
+        var csvPath = artifacts.writeCsv(
+                "libraries",
+                List.of("library", "avg_time_ms", "avg_heap_mb"),
+                rows.stream()
+                        .map(row -> List.of(
+                                row.library(),
+                                "%.2f".formatted(row.avgTimeMs()),
+                                "%.2f".formatted(row.avgHeapMb())))
+                        .toList());
+        System.out.println("------------------------------------------------------------");
+        System.out.println("Saved JSON benchmark report to " + jsonPath);
+        System.out.println("Saved CSV benchmark report to " + csvPath);
     }
 
-    private static void runBenchmark(String name, BenchmarkTask task) throws Exception {
+    private static ComparativeRow runBenchmark(String name, BenchmarkTask task) throws Exception {
         long totalTimeNs = 0;
         long totalAllocatedBytes = 0;
         long dummyAccumulator = 0; // Защита от Dead Code Elimination
@@ -88,6 +115,12 @@ public class ComparativeBenchmark {
 
         // Печатаем dummy-переменную, чтобы JIT не вырезал код генерации
         if (dummyAccumulator == 0) System.out.println("Error: No bytes generated");
+
+        return new ComparativeRow(
+                name,
+                round(avgTimeMs),
+                round(avgMemMb)
+        );
     }
 
     /**
@@ -177,5 +210,18 @@ public class ComparativeBenchmark {
     @FunctionalInterface
     public interface BenchmarkTask {
         byte[] runAndGetBytes() throws Exception;
+    }
+
+    private static double round(double value) {
+        return Math.round(value * 100.0) / 100.0;
+    }
+
+    private record ComparativeRow(String library, double avgTimeMs, double avgHeapMb) {
+    }
+
+    private record ComparativeReport(String timestamp,
+                                     int warmupIterations,
+                                     int measurementIterations,
+                                     List<ComparativeRow> libraries) {
     }
 }

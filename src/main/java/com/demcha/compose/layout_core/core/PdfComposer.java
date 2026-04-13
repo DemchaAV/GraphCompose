@@ -79,10 +79,6 @@ public final class PdfComposer extends AbstractDocumentComposer {
     private final Path outputFile; // null if output to bytes only
     @Nullable
     private final PdfFileManagerSystem fileManagerSystem;
-    private boolean layoutResolved;
-    private boolean rendered;
-    @Nullable
-    private LayoutSnapshot cachedLayoutSnapshot;
 
     /**
      * Internal constructor used by {@link GraphCompose.PdfBuilder}.
@@ -158,28 +154,28 @@ public final class PdfComposer extends AbstractDocumentComposer {
      * regression tests, debugging, and dev tooling that needs geometry rather
      * than pixels.</p>
      *
+     * <p>This debug API is intentionally isolated from the normal production
+     * pipeline. Calling {@link #build()}, {@link #toBytes()}, or
+     * {@link #toPDDocument()} does not depend on this method and does not reuse
+     * any debug snapshot state.</p>
+     *
      * @return resolved layout snapshot for the current document
      * @throws Exception if layout resolution fails
      */
     public LayoutSnapshot layoutSnapshot() throws Exception {
-        ensureLayoutResolved();
-        if (cachedLayoutSnapshot == null) {
-            cachedLayoutSnapshot = LayoutSnapshotExtractor.extract(entityManager(), canvas());
-        }
-        return cachedLayoutSnapshot;
+        buildComponents();
+        layoutSystem.process(entityManager());
+        return LayoutSnapshotExtractor.extract(entityManager(), canvas());
     }
 
     @Override
     protected void buildDocument() throws Exception {
-        ensureRendered();
-        if (fileManagerSystem != null) {
-            fileManagerSystem.process(entityManager());
-        }
+        entityManager().processSystems();
     }
 
     @Override
     protected byte[] exportBytes() throws Exception {
-        ensureRendered();
+        processInMemoryRender();
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             doc.save(baos);
             return baos.toByteArray();
@@ -201,27 +197,17 @@ public final class PdfComposer extends AbstractDocumentComposer {
      * @throws Exception if layout or rendering fails
      */
     public PDDocument toPDDocument() throws Exception {
-        ensureRendered();
+        buildComponents();
+        processInMemoryRender();
         return doc;
     }
 
-    private void ensureLayoutResolved() {
-        if (layoutResolved) {
-            return;
+    private void processInMemoryRender() throws Exception {
+        entityManager().getSystems().getSystem(LayoutSystem.class)
+                .ifPresent(sys -> sys.process(entityManager()));
+        if (renderingSystem != null) {
+            renderingSystem.process(entityManager());
         }
-        buildComponents();
-        layoutSystem.process(entityManager());
-        layoutResolved = true;
-        cachedLayoutSnapshot = null;
-    }
-
-    private void ensureRendered() throws Exception {
-        ensureLayoutResolved();
-        if (rendered) {
-            return;
-        }
-        renderingSystem.process(entityManager());
-        rendered = true;
     }
 
     @Override

@@ -102,6 +102,8 @@ Choose the smallest tests that match the change:
 
 If a change affects public docs, examples, or screenshots, update those assets in the same PR so the repository stays internally consistent.
 
+If a change affects resolved geometry, pagination, or ordering, prefer adding or updating a layout snapshot test as well. Snapshot coverage is debug-only and test-oriented: it should validate layout state without being wired into the normal production PDF pipeline.
+
 ## Contribution guidelines
 
 - Preserve existing public Java class names and package paths unless a planned migration explicitly says otherwise.

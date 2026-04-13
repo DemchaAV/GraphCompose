@@ -6,50 +6,85 @@ They sit between unit-level layout math tests and final PDF render tests:
 
 1. unit tests validate isolated geometry rules
 2. layout snapshot tests validate the resolved document tree after layout and pagination
-3. PDF render tests remain the outer smoke and visual inspection layer
+3. PDF render tests remain the outer smoke and human inspection layer
 
-This keeps regressions cheap to detect:
+This ordering makes regressions cheap to diagnose:
 
 - if coordinates drift, the JSON snapshot fails immediately
 - if layering or pagination changes unexpectedly, the diff shows it directly
 - if the snapshot still matches but the final PDF looks wrong, the issue is likely in rendering rather than layout
 
-## What is captured
+## Purpose
 
-`PdfComposer.layoutSnapshot()` resolves the document through `LayoutSystem` and `PageBreaker`, then extracts a deterministic JSON snapshot of the resolved entity tree.
+Visual PDF tests are still useful, but they are expensive to inspect and harder to diff precisely.
 
-The snapshot intentionally contains stable layout data only:
+Layout snapshots solve a different problem: they let the library compare resolved geometry directly, before rendered pixels become the source of truth.
 
-- canvas and page metadata
-- total page count
-- deterministic node paths
-- parent/child ordering
-- depth and layer
-- computed coordinates
-- placement box coordinates, size, and page span
-- content size
-- margin and padding
+Use them when you want to know that:
 
-It intentionally excludes unstable or noisy values such as:
+- a node moved to a different coordinate
+- a page break started or ended on a different page
+- sibling ordering changed
+- `Layer(depth)` resolution changed
+- a template still resolves to the same layout after internal engine changes
 
-- UUIDs
-- raw text payload
-- colors
-- PDF resource ids
+## Pipeline position
 
-## Where files live
+`PdfComposer.layoutSnapshot()` captures the document after layout and pagination, but before PDF rendering.
 
-Committed baselines:
+That means the coordinates in the snapshot are:
 
-- `src/test/resources/layout-snapshots/...`
+- after `LayoutSystem`
+- after page-breaking decisions have been applied
+- before any PDFBox drawing happens
 
-Mismatch artifacts generated during normal test runs:
+In other words, the snapshot represents the layout engine's resolved truth, not the renderer's output.
 
-- `target/visual-tests/layout-snapshots/.../*.actual.json`
+## Debug-only API contract
 
-## Recommended test pattern
+`layoutSnapshot()` is a debug and test API.
 
-Use a layout snapshot assertion on the same `PdfComposer` instance that you later render.
+It is intentionally isolated from the normal production pipeline:
+
+- `build()`
+- `toBytes()`
+- `toPDDocument()`
+
+do not depend on snapshot generation and do not reuse snapshot state.
+
+This matters for two reasons:
+
+1. the runtime PDF path stays clean and predictable for normal library users
+2. layout snapshot testing remains an explicit opt-in tool for engine debugging and regression coverage
+
+If application code never calls `layoutSnapshot()`, this feature does not change the normal output pipeline.
+
+## Public API
+
+### Capture a raw layout snapshot
+
+```java
+try (PdfComposer composer = GraphCompose.pdf()
+        .pageSize(PDRectangle.A4)
+        .margin(24, 24, 24, 24)
+        .create()) {
+
+    ComponentBuilder cb = composer.componentBuilder();
+
+    cb.text()
+            .entityName("Title")
+            .textWithAutoSize("Hello GraphCompose")
+            .textStyle(TextStyle.DEFAULT_STYLE)
+            .anchor(Anchor.topLeft())
+            .build();
+
+    LayoutSnapshot snapshot = composer.layoutSnapshot();
+}
+```
+
+### Assert a committed JSON baseline
+
+Use the test harness for normal snapshot regression coverage:
 
 ```java
 @Test
@@ -69,10 +104,58 @@ void shouldMatchInvoiceLayoutSnapshotAndRenderPdf() throws Exception {
 }
 ```
 
-That gives one test two kinds of feedback:
+This gives one test two kinds of feedback:
 
 - machine-precise layout regression coverage
 - a PDF artifact for visual inspection
+
+## Snapshot contents
+
+`PdfComposer.layoutSnapshot()` extracts a deterministic JSON snapshot of the resolved entity tree.
+
+The snapshot intentionally contains stable layout data only:
+
+- format version
+- canvas and page metadata
+- total page count
+- deterministic node paths
+- parent path and child index
+- depth and layer
+- computed coordinates
+- placement box coordinates, size, and page span
+- content size
+- margin and padding
+
+It intentionally excludes unstable or noisy values such as:
+
+- UUIDs
+- raw text payload
+- colors
+- PDF resource ids
+
+## Identity and determinism
+
+Each node is identified by stable tree order plus semantic naming.
+
+The extractor uses the following strategy:
+
+- prefer `EntityName` when it exists
+- otherwise fall back to `<entityKind>[childIndex]`
+- build the final identity from the full parent path
+
+This keeps sibling collisions deterministic and makes diffs readable even when many nodes share the same render kind.
+
+The extractor also normalizes numeric values before serialization. The current default is rounding doubles to 3 decimal places so snapshots stay stable across tiny floating-point differences while still catching real layout regressions.
+
+## Where files live
+
+Committed baselines:
+
+- `src/test/resources/layout-snapshots/...`
+
+Mismatch artifacts generated during normal test runs:
+
+- `target/visual-tests/layout-snapshots/.../*.actual.json`
 
 ## Snapshot naming
 
@@ -85,7 +168,7 @@ Prefer semantic names that describe the document state:
 
 The last path segment becomes the JSON file name. The preceding segments become folders.
 
-## Update flow
+## Local workflow
 
 Normal mode compares against committed baselines:
 
@@ -105,14 +188,43 @@ Or update a focused test only:
 ./mvnw "-Dgraphcompose.updateSnapshots=true" "-Dtest=InvoiceTemplateV1LayoutSnapshotTest" test
 ```
 
-CI should run without `graphcompose.updateSnapshots`.
+In normal mode:
 
-## Adding snapshot coverage to an existing visual test
+- expected JSON stays committed in `src/test/resources/layout-snapshots`
+- mismatches write an `.actual.json` artifact under `target/visual-tests/layout-snapshots`
+- the assertion failure points to both expected and actual paths
 
-1. If the test already creates a `PdfComposer`, add `LayoutSnapshotAssertions.assertMatches(...)` before `build()`.
-2. If a template hides the composer inside `render(...)`, add a package-private `compose(...)` method inside the built-in template and let `render(...)` delegate to it.
-3. Keep the existing PDF render assertion. Do not replace it.
-4. Generate the baseline once with `-Dgraphcompose.updateSnapshots=true`.
+In update mode:
+
+- the baseline JSON is overwritten intentionally
+- the `.actual.json` mismatch artifact is removed if it exists
+
+## CI expectations
+
+CI should never enable `graphcompose.updateSnapshots`.
+
+The expected behavior in CI is strict comparison only:
+
+- match the committed baseline
+- write `.actual.json` when there is a mismatch
+- fail fast so the diff can be reviewed locally
+
+This keeps baseline updates explicit and prevents accidental golden-file drift in automated pipelines.
+
+## Recommended adoption pattern
+
+When adding snapshot coverage to an existing visual test:
+
+1. if the test already creates a `PdfComposer`, add `LayoutSnapshotAssertions.assertMatches(...)` before `build()`
+2. if a template hides the composer inside `render(...)`, add a package-private `compose(...)` method and let `render(...)` delegate to it
+3. keep the existing PDF render assertion and artifact generation
+4. generate the baseline once with `-Dgraphcompose.updateSnapshots=true`
+
+The recommended developer flow is:
+
+1. unit tests for local layout math
+2. layout snapshot tests for full-document geometry regressions
+3. PDF render tests for final visual confidence
 
 ## What to snapshot first
 
@@ -129,17 +241,40 @@ Prioritize documents that are most sensitive to layout regressions:
 - `RepositoryShowcaseRenderTest`
 - `SmartPaginationTest`
 - `TablePaginationIntegrationTest`
+- `FontShowcaseLayoutSnapshotTest`
 - `CvTemplateV1LayoutSnapshotTest`
+- `EditorialBlueCvTemplateLayoutSnapshotTest`
 - `InvoiceTemplateV1LayoutSnapshotTest`
 - `ProposalTemplateV1LayoutSnapshotTest`
 - `WeeklyScheduleTemplateV1LayoutSnapshotTest`
+- `CoverLetterTemplateV1LayoutSnapshotTest`
 
-## Troubleshooting
+## Interpreting a mismatch
 
 If a snapshot fails:
 
 1. open the `.actual.json` file under `target/visual-tests/layout-snapshots`
-2. compare path, coordinates, pages, and layer/order changes
+2. compare path, coordinates, page span, and layer/order changes
 3. decide whether the change is expected
 4. if expected, re-run with `-Dgraphcompose.updateSnapshots=true`
 5. if not expected, investigate the layout math before trusting the rendered PDF
+
+Useful signals to check first:
+
+- `startPage` and `endPage`
+- `computedX` and `computedY`
+- `placementX`, `placementY`, `width`, and `height`
+- node `path`
+- `layer`
+
+## When not to use snapshots
+
+Layout snapshots are not a replacement for every test.
+
+Do not use them as the only safety net when:
+
+- you are testing renderer-specific drawing behavior
+- the failure you care about is pixel-level rather than geometry-level
+- a small unit test can prove the same rule more directly
+
+They work best as the middle layer in the test pyramid, not as the only layer.

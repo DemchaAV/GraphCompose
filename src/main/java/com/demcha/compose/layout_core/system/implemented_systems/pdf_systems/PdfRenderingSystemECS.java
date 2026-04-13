@@ -18,6 +18,7 @@ import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.han
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfImageRenderHandler;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfLineRenderHandler;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfLinkRenderHandler;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfPageBreakRenderHandler;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfRectangleRenderHandler;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfTableRowRenderHandler;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfTextRenderHandler;
@@ -66,6 +67,7 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
         renderHandlers().register(new PdfImageRenderHandler());
         renderHandlers().register(new PdfLineRenderHandler());
         renderHandlers().register(new PdfLinkRenderHandler());
+        renderHandlers().register(new PdfPageBreakRenderHandler());
         renderHandlers().register(new PdfRectangleRenderHandler());
         renderHandlers().register(new PdfTextRenderHandler());
         renderHandlers().register(new PdfTableRowRenderHandler());

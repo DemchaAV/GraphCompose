@@ -284,6 +284,17 @@ The recommended developer flow is:
 
 See [Layout Snapshot Testing](./docs/layout-snapshot-testing.md) for the workflow and examples.
 
+For quick manual inspection of pagination, barcodes, QR codes, and document-level PDF chrome, run focused visual smoke tests such as:
+
+```powershell
+mvn "-Dtest=FeatureShowcaseRenderTest,RepositoryShowcaseRenderTest,SmartPaginationTest" test
+```
+
+Generated PDFs are written under `target/visual-tests/`, including:
+
+- `target/visual-tests/clean/integration/features/`
+- `target/visual-tests/guides/integration/features/`
+
 ---
 
 ## Runnable examples

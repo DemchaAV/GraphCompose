@@ -407,6 +407,16 @@ When you add or refactor engine features, follow these project rules:
 - `layout_core/components/*` should stay free of PDFBox and `...pdf_systems` imports
 - new render markers should be wired into `PdfRenderingSystemECS` and covered by at least one dispatch-oriented test
 
+### Contributor rules for built-in templates
+
+Built-in templates now follow a compose-first split:
+
+- the public contract lives on `templates.api.*Template` through `compose(DocumentComposer, ...)`
+- each built-in template class in `com.demcha.templates.builtins` is a thin PDF adapter responsible for page setup, `GraphCompose.pdf(...)`, and deprecated compatibility `render(...)` methods
+- the actual document composition belongs in a dedicated backend-neutral scene builder such as `CvSceneBuilder`, `InvoiceSceneBuilder`, or `WeeklyScheduleSceneBuilder`
+- scene builders should stay free of `PDDocument`, `PDPage`, `PDRectangle`, and `PdfComposer` imports
+- the deprecated `render(...)` overloads remain supported for compatibility, but new integrations and new built-in templates should extend the compose-first seam
+
 If you are contributing new engine objects, read [CONTRIBUTING.md](./CONTRIBUTING.md), [docs/architecture.md](./docs/architecture.md), and [docs/implementation-guide.md](./docs/implementation-guide.md) together before coding.
 
 ---

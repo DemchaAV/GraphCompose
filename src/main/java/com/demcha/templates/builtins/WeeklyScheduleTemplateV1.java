@@ -1,6 +1,7 @@
 package com.demcha.templates.builtins;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.layout_core.core.DocumentComposer;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.templates.WeeklyScheduleTheme;
 import com.demcha.templates.api.WeeklyScheduleTemplate;
@@ -43,11 +44,13 @@ public class WeeklyScheduleTemplateV1 implements WeeklyScheduleTemplate {
     }
 
     @Override
+    @Deprecated(forRemoval = false)
     public PDDocument render(WeeklyScheduleData data) {
         return render(data, false);
     }
 
     @Override
+    @Deprecated(forRemoval = false)
     public PDDocument render(WeeklyScheduleData data, boolean guideLines) {
         try {
             PdfComposer composer = createComposer(null, guideLines);
@@ -59,11 +62,13 @@ public class WeeklyScheduleTemplateV1 implements WeeklyScheduleTemplate {
     }
 
     @Override
+    @Deprecated(forRemoval = false)
     public void render(WeeklyScheduleData data, Path path) {
         render(data, path, false);
     }
 
     @Override
+    @Deprecated(forRemoval = false)
     public void render(WeeklyScheduleData data, Path path, boolean guideLines) {
         try (PdfComposer composer = createComposer(path, guideLines)) {
             compose(composer, data);
@@ -83,7 +88,8 @@ public class WeeklyScheduleTemplateV1 implements WeeklyScheduleTemplate {
                 .create();
     }
 
-    void compose(PdfComposer composer, WeeklyScheduleData data) {
+    @Override
+    public void compose(DocumentComposer composer, WeeklyScheduleData data) {
         sceneBuilder.design(composer, data);
     }
 

@@ -1,14 +1,18 @@
 package com.demcha.templates.api;
 
+import com.demcha.compose.layout_core.core.DocumentComposer;
 import com.demcha.templates.data.MainPageCV;
 import org.apache.pdfbox.pdmodel.PDDocument;
 
 import java.nio.file.Path;
 
 /**
- * Interface for CV PDF templates.
- * Implement this interface to create reusable PDF templates that can be
- * selected by users.
+ * Compose-first contract for reusable CV templates.
+ * <p>
+ * Implementations should describe the document against a backend-neutral
+ * {@link DocumentComposer}. The deprecated {@code render(...)} overloads remain
+ * as convenience adapters for callers that still want PDFBox output directly.
+ * </p>
  */
 public interface CvTemplate {
 
@@ -39,25 +43,49 @@ public interface CvTemplate {
     }
 
     /**
-     * Renders a PDF document using this template.
+     * Composes this template into the provided document composer.
      *
      * @param originalCv  The original CV data (contains personal info like phone,
      *                    address).
      * @param rewrittenCv The rewritten CV data (contains optimized content).
-     * @return A PDDocument that can be saved or streamed.
      */
+    void compose(DocumentComposer composer, MainPageCV originalCv, MainPageCvDTO rewrittenCv);
+
+    /**
+     * Convenience PDF adapter for callers that still want a {@link PDDocument}.
+     * Prefer {@link #compose(DocumentComposer, MainPageCV, MainPageCvDTO)} for
+     * new integrations.
+     */
+    @Deprecated(forRemoval = false)
     PDDocument render(MainPageCV originalCv, MainPageCvDTO rewrittenCv);
 
+    /**
+     * Convenience PDF adapter for callers that still want a {@link PDDocument}.
+     * Prefer {@link #compose(DocumentComposer, MainPageCV, MainPageCvDTO)} for
+     * new integrations.
+     */
+    @Deprecated(forRemoval = false)
     PDDocument render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, boolean guideLines);
 
     /**
-     * Renders a PDF document using this template and saves it to the specified path.
+     * Convenience PDF adapter for callers that still want file output written by
+     * the template itself. Prefer
+     * {@link #compose(DocumentComposer, MainPageCV, MainPageCvDTO)} for new
+     * integrations.
      *
      * @param originalCv  The original CV data (contains personal info like phone, address).
      * @param rewrittenCv The rewritten CV data (contains optimized content).
      * @param path        The file path where the generated PDF should be saved.
      */
+    @Deprecated(forRemoval = false)
     void render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, Path path);
 
+    /**
+     * Convenience PDF adapter for callers that still want file output written by
+     * the template itself. Prefer
+     * {@link #compose(DocumentComposer, MainPageCV, MainPageCvDTO)} for new
+     * integrations.
+     */
+    @Deprecated(forRemoval = false)
     void render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, Path path, boolean guideLines);
 }

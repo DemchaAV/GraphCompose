@@ -249,6 +249,30 @@ If the object is not directly rendered and mostly groups behavior, it may not ne
 - a composition pattern over existing entities
 - or a template-layer helper in `templates`
 
+### Case 4: add or refactor a built-in template
+
+Built-in templates now use an additive compose-first contract.
+
+Use this split:
+
+1. a public template interface in `com.demcha.templates.api` exposes `compose(DocumentComposer, ...)`
+2. a built-in template class acts as a thin backend adapter
+3. a dedicated scene builder under `com.demcha.templates.builtins` owns document composition
+
+Practical rules:
+
+- keep current `render(...): PDDocument` and `render(..., Path)` overloads only as deprecated compatibility adapters
+- put `GraphCompose.pdf(...)`, page size selection, margins, `composer.toPDDocument()`, and `composer.build()` in the adapter class
+- put the actual document structure, sections, tables, and block text assembly in the scene builder
+- keep scene builders backend-neutral: no `PDDocument`, `PDPage`, `PDRectangle`, or `PdfComposer` imports
+- pass theme or style collaborators into the scene builder constructor instead of hard-wiring backend assumptions into composition code
+- when a built-in template already has a good scene split, extend that pattern instead of reintroducing backend-specific logic into the composition layer
+
+Rule of thumb:
+
+- `*TemplateV1` should feel like a bridge to a backend
+- `*SceneBuilder` should feel like the reusable document composition core
+
 ## Where rendering hooks in
 
 The current PDF path works through renderable components and the PDF renderer system.

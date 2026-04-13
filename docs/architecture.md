@@ -81,6 +81,8 @@ Fixed leaf primitives such as `Rectangle`, `Circle`, `Image`, and `Line` follow 
 - These classes sit on top of the engine and package common document structures into reusable templates.
 - `templates.api` contains template-facing contracts and registry/helper types.
 - `templates.builtins` contains concrete template implementations.
+- template contracts are now compose-first: `compose(DocumentComposer, ...)` is the primary seam, while PDF-returning `render(...)` overloads remain deprecated compatibility adapters.
+- built-in templates should be split into a thin backend adapter plus a backend-neutral scene/composition builder.
 - `TemplateBuilder.pageFlow(...)` is the canonical template root that stacks semantic modules in document order.
 
 ## Current package roots

@@ -493,6 +493,24 @@ Both suites now persist timestamped JSON/CSV artifacts plus `latest-*` copies un
 - `target/benchmarks/current-speed/`
 - `target/benchmarks/comparative/`
 
+To compare the two newest runs for a suite:
+
+```powershell
+$cp = (Get-Content 'target/benchmark.classpath' -Raw).Trim()
+java -cp "target\test-classes;target\classes;$cp" com.demcha.compose.BenchmarkDiffTool current-speed
+java -cp "target\test-classes;target\classes;$cp" com.demcha.compose.BenchmarkDiffTool comparative
+```
+
+Or diff two explicit report files:
+
+```powershell
+java -cp "target\test-classes;target\classes;$cp" com.demcha.compose.BenchmarkDiffTool `
+  target/benchmarks/current-speed/run-20260413-195758.json `
+  target/benchmarks/current-speed/run-20260413-200500.json
+```
+
+Diff artifacts are saved under `target/benchmarks/diffs/`.
+
 ### Comparative benchmark
 
 > **Context:** iText 5 is included as a low-level drawing baseline — it has no layout engine, so generating the same document with iText 5 requires manual coordinate math, font measurement, and pagination logic that GraphCompose handles automatically. The ~1 ms difference is the cost of that automatic layout resolution. iText 5 is also no longer maintained and its successor, iText 7, requires a commercial license for production use.

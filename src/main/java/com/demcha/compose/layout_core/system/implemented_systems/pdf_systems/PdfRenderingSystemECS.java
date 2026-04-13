@@ -9,6 +9,7 @@ import com.demcha.compose.layout_core.components.layout.coordinator.RenderCoordi
 import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.system.GuidLineSettings;
 import com.demcha.compose.layout_core.system.implemented_systems.RenderingSystemBase;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfBarcodeRenderHandler;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfBlockTextRenderHandler;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfCircleRenderHandler;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfChunkedBlockTextRenderHandler;
@@ -56,6 +57,7 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
         this.doc = doc;
         this.imageCache = new PdfImageCache(doc);
         guidesRendererInitializer(new PdfGuidesRenderer(this));
+        renderHandlers().register(new PdfBarcodeRenderHandler());
         renderHandlers().register(new PdfBlockTextRenderHandler());
         renderHandlers().register(new PdfCircleRenderHandler());
         renderHandlers().register(new PdfChunkedBlockTextRenderHandler());

@@ -1,6 +1,7 @@
 package com.demcha.compose.layout_core.components.content.text;
 
 import com.demcha.compose.layout_core.system.interfaces.Font;
+import com.demcha.compose.layout_core.system.interfaces.TextMeasurementSystem;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -60,6 +61,15 @@ public final class LineTextData {
     public <T extends Font<?>> double  width(T font) {
         return bodies.stream()
                 .mapToDouble((textDataBody) -> width(textDataBody, font))
+                .sum();
+    }
+
+    public double width(TextMeasurementSystem measurementSystem, TextStyle fallbackStyle) {
+        return bodies.stream()
+                .mapToDouble(body -> {
+                    TextStyle style = body.textStyle() == null ? fallbackStyle : body.textStyle();
+                    return measurementSystem.textWidth(style, body.text());
+                })
                 .sum();
     }
 

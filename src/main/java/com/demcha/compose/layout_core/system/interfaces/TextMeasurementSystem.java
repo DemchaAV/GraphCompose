@@ -14,6 +14,30 @@ import com.demcha.compose.layout_core.core.EntityManager;
 public interface TextMeasurementSystem extends SystemECS {
 
     /**
+     * Vertical metrics for one resolved text style.
+     *
+     * @param ascent   distance from baseline to glyph top
+     * @param descent  distance from baseline to glyph bottom
+     * @param leading  extra line-leading applied by the backend font metrics
+     */
+    record LineMetrics(double ascent, double descent, double leading) {
+        public double lineHeight() {
+            return ascent + descent + leading;
+        }
+
+        public double baselineOffsetFromBottom() {
+            return descent;
+        }
+
+        public double outerGap(LineMetrics base) {
+            if (base == null) {
+                return 0.0;
+            }
+            return Math.max(0.0, lineHeight() - base.lineHeight()) / 2.0;
+        }
+    }
+
+    /**
      * Measures the dimensions (width and height) of a given text string
      * when rendered with a specific style.
      *
@@ -24,6 +48,26 @@ public interface TextMeasurementSystem extends SystemECS {
     ContentSize measure(TextStyle style, String text);
 
     /**
+     * Measures only the width of a text run while preserving the backend-specific
+     * line metrics contract for the supplied style.
+     *
+     * @param style the text style used for measurement
+     * @param text  the text run to measure
+     * @return the measured width in document units
+     */
+    default double textWidth(TextStyle style, String text) {
+        return measure(style, text).width();
+    }
+
+    /**
+     * Resolves detailed line metrics for the supplied text style.
+     *
+     * @param style the style whose metrics should be resolved
+     * @return backend-aware line metrics including ascent, descent, and leading
+     */
+    LineMetrics lineMetrics(TextStyle style);
+
+    /**
      * Calculates the baseline-to-baseline line height for a specific text style.
      * <p>
      * This height is useful for vertical layout calculations, determining line spacing,
@@ -32,7 +76,9 @@ public interface TextMeasurementSystem extends SystemECS {
      * @param style The {@link TextStyle} defining the font and its size.
      * @return The overall vertical space required for a single line of text in this style.
      */
-    double lineHeight(TextStyle style);
+    default double lineHeight(TextStyle style) {
+        return lineMetrics(style).lineHeight();
+    }
 
     /**
      * A no-op implementation of the standard ECS system processing method.

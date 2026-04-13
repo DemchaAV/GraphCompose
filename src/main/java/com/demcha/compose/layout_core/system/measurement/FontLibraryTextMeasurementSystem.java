@@ -23,16 +23,32 @@ public final class FontLibraryTextMeasurementSystem implements TextMeasurementSy
 
     @Override
     public ContentSize measure(TextStyle style, String text) {
-        Font<?> font = resolveFont(style);
+        TextStyle safeStyle = style == null ? TextStyle.DEFAULT_STYLE : style;
+        Font<?> font = resolveFont(safeStyle);
         return new ContentSize(
-                font.getTextWidth(style, text == null ? "" : text),
-                font.getLineHeight(style)
+                font.getTextWidth(safeStyle, text == null ? "" : text),
+                lineMetrics(safeStyle).lineHeight()
         );
     }
 
     @Override
-    public double lineHeight(TextStyle style) {
-        return resolveFont(style).getLineHeight(style);
+    public double textWidth(TextStyle style, String text) {
+        TextStyle safeStyle = style == null ? TextStyle.DEFAULT_STYLE : style;
+        return resolveFont(safeStyle).getTextWidth(safeStyle, text == null ? "" : text);
+    }
+
+    @Override
+    public LineMetrics lineMetrics(TextStyle style) {
+        TextStyle safeStyle = style == null ? TextStyle.DEFAULT_STYLE : style;
+        Font<?> font = resolveFont(safeStyle);
+
+        if (font instanceof com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFont pdfFont) {
+            var metrics = pdfFont.verticalMetrics(safeStyle);
+            return new LineMetrics(metrics.ascent(), metrics.descent(), metrics.leading());
+        }
+
+        double lineHeight = Math.max(0.0, font.getLineHeight(safeStyle));
+        return new LineMetrics(lineHeight, 0.0, 0.0);
     }
 
     private Font<?> resolveFont(TextStyle style) {

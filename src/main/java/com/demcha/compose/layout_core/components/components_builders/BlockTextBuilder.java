@@ -18,8 +18,7 @@ import com.demcha.compose.layout_core.components.renderable.TextComponent;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.EntityManager;
-import com.demcha.compose.layout_core.system.LayoutSystem;
-import com.demcha.compose.layout_core.system.interfaces.Font;
+import com.demcha.compose.layout_core.system.interfaces.TextMeasurementSystem;
 import com.demcha.compose.layout_core.utils.TextSanitizer;
 import com.demcha.compose.markdown.MarkDownParser;
 import lombok.NonNull;
@@ -97,12 +96,12 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
      * This is crucial for custom bullets like "===" where char-count based indents
      * are wrong.
      */
-    private static String computeIndentFromPrefix(FontContainer fontContainer, TextStyle style, String prefix) {
+    private static String computeIndentFromPrefix(TextMeasurementSystem measurementSystem, TextStyle style, String prefix) {
         if (prefix == null || prefix.isEmpty())
             return "";
 
-        double target = fontContainer.font().getTextWidth(style, prefix);
-        double spaceW = fontContainer.font().getTextWidth(style, " ");
+        double target = measurementSystem.textWidth(style, prefix);
+        double spaceW = measurementSystem.textWidth(style, " ");
 
         if (spaceW <= 0)
             return "";
@@ -111,7 +110,7 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         String indent = " ".repeat(Math.max(0, spaces));
 
         // Debug: confirm we actually match the prefix width.
-        double indentW = fontContainer.font().getTextWidth(style, indent);
+        double indentW = measurementSystem.textWidth(style, indent);
         log.debug("Bullet indent compute | prefix='{}' prefixW={} spaceW={} spaces={} indentW={}",
                 vis(prefix), target, spaceW, spaces, indentW);
 
@@ -270,8 +269,8 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
             @NonNull InnerBoxSize innerBoxSize,
             String bulletOffset) {
 
-        final FontContainer fontContainer = getFontContainer();
-        final TextStyle style = fontContainer.style() == null ? textStyle : fontContainer.style();
+        final TextMeasurementSystem measurementSystem = textMeasurementSystem();
+        final TextStyle style = measurementStyle();
 
         Margin margin = (Margin) baseComponents.getOrDefault(Margin.class, Margin.zero());
         margin = margin == null ? Margin.zero() : margin;
@@ -279,7 +278,7 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         final double maxWidth = innerBoxSize.width();
         final double horizontalMargins = margin.horizontal();
 
-        final BulletSpec bullet = BulletSpec.from(bulletOffset, fontContainer, style);
+        final BulletSpec bullet = BulletSpec.from(bulletOffset, measurementSystem, style);
 
         log.debug(
                 "breakLinesFromList | markdown={} | listSize={} | maxWidth={} | hMargins={} | bulletPrefix='{}' | softIndent='{}' | hardIndent='{}'",
@@ -307,7 +306,7 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
                     wrapIndent = (lineIndex == 0) ? bullet.softWrapIndent() : bullet.hardWrapIndent();
                 }
 
-                wrapTokensIntoLines(tokens, fontContainer, maxWidth, wrapIndent, style);
+                wrapTokensIntoLines(tokens, measurementSystem, maxWidth, wrapIndent, style);
             }
         }
 
@@ -393,15 +392,13 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
      * Handles "sticky" punctuation to prevent orphaned brackets.
      */
     private void wrapTokensIntoLines(List<TextDataBody> tokens,
-            FontContainer fontContainer,
+            TextMeasurementSystem measurementSystem,
             double maxWidth,
             String offsetStr,
             TextStyle baseStyle) {
 
         if (tokens == null || tokens.isEmpty())
             return;
-
-        var font = fontContainer.font();
 
         // Find the style of the first non-blank token (for accurate space width
         // calculation)
@@ -416,10 +413,10 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         // Measure indent reliably (10 spaces => 10 * spaceWidth)
         double indentWidth = 0;
         if (!offsetStr.isEmpty() && offsetStr.isBlank()) {
-            double spaceW = font.getTextWidth(styleForIndent, " ");
+            double spaceW = measurementSystem.textWidth(styleForIndent, " ");
             indentWidth = spaceW * offsetStr.length();
         } else if (!offsetStr.isEmpty()) {
-            indentWidth = font.getTextWidth(styleForIndent, offsetStr);
+            indentWidth = measurementSystem.textWidth(styleForIndent, offsetStr);
         }
 
         Deque<TextDataBody> line = new ArrayDeque<>();
@@ -441,7 +438,7 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
 
             double tokenWidth = isIndentToken
                     ? indentWidth
-                    : font.getTextWidth(token.textStyle(), text);
+                    : measurementSystem.textWidth(token.textStyle(), text);
 
             boolean stickyToNext = isStickyToNext(text);
             boolean stickyToPrev = isSticky(text);
@@ -452,7 +449,7 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
                 boolean forceWrap = false;
                 if (stickyToNext && i + 1 < tokens.size()) {
                     TextDataBody nextToken = tokens.get(i + 1);
-                    double nextWidth = font.getTextWidth(nextToken.textStyle(), nextToken.text());
+                    double nextWidth = measurementSystem.textWidth(nextToken.textStyle(), nextToken.text());
 
                     // If adding the next token would exceed the width, we force a wrap NOW
                     // so that the current token (e.g. "(") moves to the next line together with the
@@ -504,7 +501,7 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
 
                 // Add 'prev' to new line
                 line.addLast(prev);
-                lineWidth += font.getTextWidth(prev.textStyle(), prev.text());
+                lineWidth += measurementSystem.textWidth(prev.textStyle(), prev.text());
 
                 // Add current token
                 line.addLast(token);
@@ -562,18 +559,25 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         return "([{".indexOf(last) >= 0;
     }
 
-    private @NotNull FontContainer getFontContainer() {
-        TextStyle style = (TextStyle) baseComponents.getOrDefault(TextStyle.class, textStyle);
-        LayoutSystem layoutSystem = entityManager.getSystems().getSystem(LayoutSystem.class).orElseThrow();
-        Class aClass = layoutSystem.getRenderingSystem().fontClazz();
-        Font font = (Font<?>) entityManager.getFonts().getFont(style.fontName(), aClass).orElseThrow();
-        return new FontContainer(style, font);
+    private @NotNull TextMeasurementSystem textMeasurementSystem() {
+        return entityManager.getSystems()
+                .getSystem(TextMeasurementSystem.class)
+                .orElseThrow(() -> new IllegalStateException("TextMeasurementSystem is required to build block text."));
+    }
+
+    private @NotNull TextStyle measurementStyle() {
+        if (baseComponents != null) {
+            TextStyle style = (TextStyle) baseComponents.get(TextStyle.class);
+            if (style != null) {
+                return style;
+            }
+        }
+        return textStyle == null ? TextStyle.DEFAULT_STYLE : textStyle;
     }
 
     private void createLine(List<String> words) {
         String lineText = String.join(" ", words);
-        FontContainer fontContainer = getFontContainer();
-        lines.add(createLineTextData(lineText, fontContainer.style()));
+        lines.add(createLineTextData(lineText, measurementStyle()));
     }
 
     private void createLineFromBodies(List<TextDataBody> bodies) {
@@ -618,19 +622,19 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         }
 
         TextStyle style = entity.getComponent(TextStyle.class).orElse(TextStyle.DEFAULT_STYLE);
-        var fontContainer = getFontContainer();
+        TextMeasurementSystem measurementSystem = textMeasurementSystem();
 
         var width = blockTextData.lines().stream()
-                .mapToDouble(line -> line.width(fontContainer.font()))
+                .mapToDouble(line -> line.width(measurementSystem, style))
                 .max()
                 .orElse(0.0);
 
         var spacingOpt = entity.getComponent(Align.class);
         double spacing = spacingOpt.orElse(Align.defaultAlign(0.0)).spacing();
 
-        BlockTextLineMetrics.LineMetrics baseMetrics =
+        TextMeasurementSystem.LineMetrics baseMetrics =
                 BlockTextLineMetrics.resolveStyleMetrics(entityManager, style);
-        List<BlockTextLineMetrics.LineMetrics> lineMetrics =
+        List<TextMeasurementSystem.LineMetrics> lineMetrics =
                 BlockTextLineMetrics.resolveLineMetrics(entityManager, blockTextData.lines(), style);
 
         double high = padding.vertical();
@@ -759,14 +763,14 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
      */
     private record BulletSpec(String prefix, String softWrapIndent, String hardWrapIndent) {
 
-        static BulletSpec from(String bulletOffset, FontContainer fontContainer, TextStyle style) {
+        static BulletSpec from(String bulletOffset, TextMeasurementSystem measurementSystem, TextStyle style) {
             String raw = bulletOffset == null ? "" : bulletOffset;
 
             boolean hasVisibleChars = raw.chars().anyMatch(ch -> !Character.isWhitespace(ch));
 
             if (hasVisibleChars) {
                 String prefix = normalizeBulletPrefix(raw);
-                String indent = computeIndentFromPrefix(fontContainer, style, prefix);
+                String indent = computeIndentFromPrefix(measurementSystem, style, prefix);
 
                 // For visible bullets, both soft-wrap and explicit "\n" continuation should
                 // align under the content.
@@ -781,9 +785,6 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
             String prefix = raw;
             return new BulletSpec(prefix, prefix, prefix);
         }
-    }
-
-    private record FontContainer(TextStyle style, Font font) {
     }
 }
 

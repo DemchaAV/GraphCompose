@@ -14,6 +14,11 @@ import java.io.IOException;
  * active rendering system. This interface remains as a migration fallback while
  * older renderables are still being moved out of engine components.
  * </p>
+ *
+ * <p><strong>Migration rule:</strong> do not add new engine entity renderables
+ * that implement {@code PdfRender}. New components should implement the
+ * backend-neutral {@code Render} marker and move PDF drawing into
+ * {@code ...pdf_systems.handlers}.</p>
  */
 public interface PdfRender extends Render {
 

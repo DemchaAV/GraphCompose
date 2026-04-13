@@ -16,6 +16,7 @@ public class EnduranceTest {
     private static final int LOG_INTERVAL = 1_000;
 
     public static void main(String[] args) throws Exception {
+        BenchmarkSupport.configureQuietLogging();
         System.out.println("🚀 Starting Endurance Test: 100,000 documents");
         System.out.println("Heap limit should be set (e.g., -Xmx128m)");
         System.out.println("------------------------------------------------------------");

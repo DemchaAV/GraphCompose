@@ -20,26 +20,19 @@ public interface Font<T> {
     T strikethrough();
 
     default T fontType(TextDecoration textDecoration) {
-        switch (textDecoration) {
-            case BOLD:
-                return bold();
-            case ITALIC:
-                return italic();
-            case UNDERLINE:
-                return underline();
-            case BOLD_ITALIC:
-                return boldItalic();
-            case STRIKETHROUGH:
-                return strikethrough();
-            case null, default:
-                return defaultFont();
-        }
+        return switch (textDecoration) {
+            case BOLD -> bold();
+            case ITALIC -> italic();
+            case UNDERLINE -> underline();
+            case BOLD_ITALIC -> boldItalic();
+            case STRIKETHROUGH -> strikethrough();
+            case null, default -> defaultFont();
+        };
     }
 
     double getTextWidth(TextStyle style, String text);
+
     double getTextWidthNoSanitize(TextStyle style, String text);
-
-
 
 
     double getLineHeight(TextStyle style);

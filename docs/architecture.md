@@ -63,11 +63,11 @@ This keeps table pagination consistent with the rest of the engine while avoidin
 
 ### Migration rule for new renderables
 
-- New engine entity renderables must implement backend-neutral `Render`, not `PdfRender`.
+- New engine entity renderables must implement backend-neutral `Render`, not backend-specific render interfaces.
 - New PDF drawing code must live in renderer-owned handlers under `...pdf_systems.handlers`.
 - PDF-only helper objects that are not entity render markers should live under renderer-owned helper packages such as `...pdf_systems.helpers`.
 - Engine-side text sizing and line metrics must come from `TextMeasurementSystem`, not from `LayoutSystem -> RenderingSystem`.
-- The PDF entity path no longer supports a legacy `PdfRender` fallback.
+- The PDF entity path no longer supports a legacy backend-specific render fallback.
 
 Fixed leaf primitives such as `Rectangle`, `Circle`, `Image`, and `Line` follow the same general engine contract:
 

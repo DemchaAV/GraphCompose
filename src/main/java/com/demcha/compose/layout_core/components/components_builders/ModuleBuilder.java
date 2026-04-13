@@ -11,7 +11,6 @@ import com.demcha.compose.layout_core.components.renderable.VContainer;
 import com.demcha.compose.layout_core.core.Canvas;
 import com.demcha.compose.layout_core.core.EntityManager;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.pdfbox.pdmodel.PDPage;
 
 @Slf4j
 public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
@@ -46,15 +45,6 @@ public class ModuleBuilder extends ContainerBuilder<ModuleBuilder> {
             seedWidth(seedWidth);
             entity.addComponent(new ContentSize(seedWidth, 0));
         }
-    }
-
-    /**
-     * Constructs a new {@code ModuleBuilder} with a root-width seed based on a
-     * page width.
-     */
-    ModuleBuilder(EntityManager entityManager, Align align, PDPage page) {
-        this(entityManager, align,
-                page == null ? null : new ContentSize(page.getMediaBox().getWidth(), page.getMediaBox().getHeight()));
     }
 
     /**

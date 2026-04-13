@@ -34,11 +34,33 @@ public final class LayoutSnapshotAssertions {
     private LayoutSnapshotAssertions() {
     }
 
+    /**
+     * Resolves and compares a snapshot using a slash-delimited logical path.
+     *
+     * <p>For example, passing {@code templates/invoice/invoice_standard_layout}
+     * compares against
+     * {@code src/test/resources/layout-snapshots/templates/invoice/invoice_standard_layout.json}.</p>
+     *
+     * @param composer composed document whose layout should be snapshotted
+     * @param snapshotPath logical snapshot path relative to the snapshot root
+     * @throws Exception if snapshot extraction or comparison fails
+     */
     public static void assertMatches(PdfComposer composer, String snapshotPath) throws Exception {
         SnapshotTarget target = parseSnapshotPath(snapshotPath);
         assertMatches(composer, target.snapshotName(), target.folders());
     }
 
+    /**
+     * Resolves and compares a snapshot using an explicit file name plus folders.
+     *
+     * <p>This overload is useful when tests already carry the folder structure as
+     * separate values.</p>
+     *
+     * @param composer composed document whose layout should be snapshotted
+     * @param snapshotName file name without the {@code .json} suffix
+     * @param folders optional folder segments under the snapshot root
+     * @throws Exception if snapshot extraction or comparison fails
+     */
     public static void assertMatches(PdfComposer composer, String snapshotName, String... folders) throws Exception {
         assertMatches(
                 composer.layoutSnapshot(),

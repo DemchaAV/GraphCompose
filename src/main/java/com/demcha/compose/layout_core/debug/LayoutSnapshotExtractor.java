@@ -28,7 +28,16 @@ import java.util.stream.Collectors;
 import java.util.regex.Pattern;
 
 /**
- * Extracts a deterministic, renderer-agnostic snapshot from resolved layout state.
+ * Extracts deterministic, renderer-agnostic layout snapshots from resolved ECS state.
+ *
+ * <p>The extractor walks the entity tree in deterministic depth-first order,
+ * reads post-layout components such as {@link ComputedPosition} and
+ * {@link Placement}, and projects them into stable snapshot records that are
+ * suitable for regression testing and debugging.</p>
+ *
+ * <p>The extractor is intentionally strict: if required post-layout components
+ * are missing after the layout pass, extraction fails fast with a descriptive
+ * error rather than silently producing an incomplete snapshot.</p>
  */
 public final class LayoutSnapshotExtractor {
     public static final String FORMAT_VERSION = "1.0";
@@ -38,6 +47,17 @@ public final class LayoutSnapshotExtractor {
     private LayoutSnapshotExtractor() {
     }
 
+    /**
+     * Builds a deterministic snapshot from the current entity manager state.
+     *
+     * <p>This method expects layout resolution and pagination to have already
+     * happened. It does not run rendering and does not mutate renderer-owned
+     * output state.</p>
+     *
+     * @param entityManager entity graph and resolved post-layout components
+     * @param canvas resolved canvas used during layout
+     * @return snapshot of the current resolved layout tree
+     */
     public static LayoutSnapshot extract(EntityManager entityManager, Canvas canvas) {
         Objects.requireNonNull(entityManager, "entityManager");
         Objects.requireNonNull(canvas, "canvas");

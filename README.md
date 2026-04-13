@@ -233,14 +233,17 @@ try (PdfComposer composer = GraphCompose.pdf()
 
 ## Testing layout regressions
 
-GraphCompose now supports deterministic post-layout JSON snapshots through `PdfComposer.layoutSnapshot()`.
+GraphCompose now supports deterministic post-layout JSON snapshots through the debug-only `PdfComposer.layoutSnapshot()` API.
 
 Use them to catch geometry regressions before a developer has to inspect the rendered PDF by eye:
 
 - compare resolved coordinates, page spans, and ordering
+- capture state after layout and pagination, before PDF rendering
 - keep committed baselines under `src/test/resources/layout-snapshots`
 - inspect mismatches under `target/visual-tests/layout-snapshots`
 - update expected baselines locally with `-Dgraphcompose.updateSnapshots=true`
+
+Normal production calls to `build()`, `toBytes()`, and `toPDDocument()` do not depend on snapshot generation. If application code never calls `layoutSnapshot()`, this feature does not affect the standard PDF pipeline.
 
 The recommended developer flow is:
 

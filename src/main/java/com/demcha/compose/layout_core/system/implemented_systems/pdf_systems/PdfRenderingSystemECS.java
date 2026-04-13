@@ -9,6 +9,12 @@ import com.demcha.compose.layout_core.components.layout.coordinator.RenderCoordi
 import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.system.GuidLineSettings;
 import com.demcha.compose.layout_core.system.implemented_systems.RenderingSystemBase;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfCircleRenderHandler;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfElementRenderHandler;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfImageRenderHandler;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfLineRenderHandler;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfLinkRenderHandler;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfRectangleRenderHandler;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfTableRowRenderHandler;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfTextRenderHandler;
 import com.demcha.compose.layout_core.system.interfaces.guides.GuidesRenderer;
@@ -48,6 +54,12 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
         this.imageCache = new PdfImageCache(doc);
         guidesRendererInitializer(new PdfGuidesRenderer(this));
         this.fontClazz = PdfFont.class;
+        renderHandlers().register(new PdfCircleRenderHandler());
+        renderHandlers().register(new PdfElementRenderHandler());
+        renderHandlers().register(new PdfImageRenderHandler());
+        renderHandlers().register(new PdfLineRenderHandler());
+        renderHandlers().register(new PdfLinkRenderHandler());
+        renderHandlers().register(new PdfRectangleRenderHandler());
         renderHandlers().register(new PdfTextRenderHandler());
         renderHandlers().register(new PdfTableRowRenderHandler());
     }
@@ -86,7 +98,7 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
                         throw new RuntimeException(ex);
                     }
                 } else {
-                    log.error("{} has no PdfRender", entity);
+                    log.error("{} has no Render component", entity);
                 }
             });
 

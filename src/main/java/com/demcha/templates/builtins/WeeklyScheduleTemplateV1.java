@@ -51,7 +51,7 @@ public class WeeklyScheduleTemplateV1 implements WeeklyScheduleTemplate {
     public PDDocument render(WeeklyScheduleData data, boolean guideLines) {
         try {
             PdfComposer composer = createComposer(null, guideLines);
-            sceneBuilder.design(composer, data);
+            compose(composer, data);
             return composer.toPDDocument();
         } catch (Exception ex) {
             throw new RuntimeException("Failed to generate weekly schedule", ex);
@@ -66,7 +66,7 @@ public class WeeklyScheduleTemplateV1 implements WeeklyScheduleTemplate {
     @Override
     public void render(WeeklyScheduleData data, Path path, boolean guideLines) {
         try (PdfComposer composer = createComposer(path, guideLines)) {
-            sceneBuilder.design(composer, data);
+            compose(composer, data);
             composer.build();
             log.info("Weekly schedule saved to {}", path.toAbsolutePath());
         } catch (Exception ex) {
@@ -81,6 +81,10 @@ public class WeeklyScheduleTemplateV1 implements WeeklyScheduleTemplate {
                 .markdown(true)
                 .guideLines(guideLines)
                 .create();
+    }
+
+    void compose(PdfComposer composer, WeeklyScheduleData data) {
+        sceneBuilder.design(composer, data);
     }
 
     private PDRectangle landscapeA4() {

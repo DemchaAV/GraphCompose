@@ -76,7 +76,7 @@ public class InvoiceTemplateV1 implements InvoiceTemplate {
     public PDDocument render(InvoiceData data, boolean guideLines) {
         try {
             PdfComposer composer = createComposer(null, guideLines);
-            designDocument(composer, safeData(data));
+            compose(composer, data);
             return composer.toPDDocument();
         } catch (Exception ex) {
             throw new RuntimeException("Failed to generate invoice", ex);
@@ -91,7 +91,7 @@ public class InvoiceTemplateV1 implements InvoiceTemplate {
     @Override
     public void render(InvoiceData data, Path path, boolean guideLines) {
         try (PdfComposer composer = createComposer(path, guideLines)) {
-            designDocument(composer, safeData(data));
+            compose(composer, data);
             composer.build();
             log.info("Invoice saved to {}", path.toAbsolutePath());
         } catch (Exception ex) {
@@ -106,6 +106,10 @@ public class InvoiceTemplateV1 implements InvoiceTemplate {
                 .markdown(true)
                 .guideLines(guideLines)
                 .create();
+    }
+
+    void compose(DocumentComposer composer, InvoiceData data) {
+        designDocument(composer, safeData(data));
     }
 
     private void designDocument(DocumentComposer composer, InvoiceData data) {

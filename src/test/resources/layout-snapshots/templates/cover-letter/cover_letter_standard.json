@@ -1,0 +1,617 @@
+{
+  "formatVersion" : "1.0",
+  "canvas" : {
+    "pageWidth" : 595.276,
+    "pageHeight" : 841.89,
+    "innerWidth" : 570.276,
+    "innerHeight" : 811.89,
+    "margin" : {
+      "top" : 15.0,
+      "right" : 10.0,
+      "bottom" : 15.0,
+      "left" : 15.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "MainVBoxContainer[0]",
+    "entityName" : "MainVBoxContainer",
+    "entityKind" : "VContainer",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 15.0,
+    "computedY" : 334.352,
+    "placementX" : 15.0,
+    "placementY" : 334.352,
+    "placementWidth" : 570.276,
+    "placementHeight" : 492.537,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 570.276,
+    "contentHeight" : 492.537,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "MainVBoxContainer[0]/ModuleHeader[0]",
+    "entityName" : "ModuleHeader",
+    "entityKind" : "Module",
+    "parentPath" : "MainVBoxContainer[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 25.0,
+    "computedY" : 768.415,
+    "placementX" : 25.0,
+    "placementY" : 768.415,
+    "placementWidth" : 550.276,
+    "placementHeight" : 58.475,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 550.276,
+    "contentHeight" : 58.475,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 10.0,
+      "bottom" : 10.0,
+      "left" : 10.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "MainVBoxContainer[0]/ModuleHeader[0]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "MainVBoxContainer[0]/ModuleHeader[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 425.896,
+    "computedY" : 800.99,
+    "placementX" : 425.896,
+    "placementY" : 800.99,
+    "placementWidth" : 149.38,
+    "placementHeight" : 25.9,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 149.38,
+    "contentHeight" : 25.9,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 5.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[1]",
+    "entityName" : null,
+    "entityKind" : "HContainer",
+    "parentPath" : "MainVBoxContainer[0]/ModuleHeader[0]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 408.932,
+    "computedY" : 782.665,
+    "placementX" : 408.932,
+    "placementY" : 782.665,
+    "placementWidth" : 166.344,
+    "placementHeight" : 8.325,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 166.344,
+    "contentHeight" : 8.325,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[1]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 494.24,
+    "computedY" : 782.665,
+    "placementX" : 494.24,
+    "placementY" : 782.665,
+    "placementWidth" : 81.036,
+    "placementHeight" : 8.325,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 81.036,
+    "contentHeight" : 8.325,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[1]/Rectangle[1]",
+    "entityName" : null,
+    "entityKind" : "Rectangle",
+    "parentPath" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 486.24,
+    "computedY" : 782.665,
+    "placementX" : 486.24,
+    "placementY" : 782.665,
+    "placementWidth" : 1.0,
+    "placementHeight" : 8.325,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 1.0,
+    "contentHeight" : 8.325,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 2.0,
+      "bottom" : 0.0,
+      "left" : 2.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[1]/TextComponent[2]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[1]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 408.932,
+    "computedY" : 782.665,
+    "placementX" : 408.932,
+    "placementY" : 782.665,
+    "placementWidth" : 70.308,
+    "placementHeight" : 8.325,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 70.308,
+    "contentHeight" : 8.325,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[2]",
+    "entityName" : null,
+    "entityKind" : "HContainer",
+    "parentPath" : "MainVBoxContainer[0]/ModuleHeader[0]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 362.836,
+    "computedY" : 768.415,
+    "placementX" : 362.836,
+    "placementY" : 768.415,
+    "placementWidth" : 212.44,
+    "placementHeight" : 9.25,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.44,
+    "contentHeight" : 9.25,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[2]/Link[0]",
+    "entityName" : null,
+    "entityKind" : "Link",
+    "parentPath" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[2]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 461.756,
+    "computedY" : 768.415,
+    "placementX" : 461.756,
+    "placementY" : 768.415,
+    "placementWidth" : 113.52,
+    "placementHeight" : 9.25,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 113.52,
+    "contentHeight" : 9.25,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[2]/Link[0]/DisplayText[0]",
+    "entityName" : null,
+    "entityKind" : "DisplayText",
+    "parentPath" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[2]/Link[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 461.756,
+    "computedY" : 768.415,
+    "placementX" : 461.756,
+    "placementY" : 768.415,
+    "placementWidth" : 113.52,
+    "placementHeight" : 9.25,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 113.52,
+    "contentHeight" : 9.25,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[2]/Rectangle[1]",
+    "entityName" : null,
+    "entityKind" : "Rectangle",
+    "parentPath" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[2]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 453.756,
+    "computedY" : 768.415,
+    "placementX" : 453.756,
+    "placementY" : 768.415,
+    "placementWidth" : 1.0,
+    "placementHeight" : 9.25,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 1.0,
+    "contentHeight" : 9.25,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 2.0,
+      "bottom" : 0.0,
+      "left" : 2.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[2]/Link[2]",
+    "entityName" : null,
+    "entityKind" : "Link",
+    "parentPath" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[2]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 408.956,
+    "computedY" : 768.415,
+    "placementX" : 408.956,
+    "placementY" : 768.415,
+    "placementWidth" : 37.8,
+    "placementHeight" : 9.25,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 37.8,
+    "contentHeight" : 9.25,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[2]/Link[2]/DisplayText[0]",
+    "entityName" : null,
+    "entityKind" : "DisplayText",
+    "parentPath" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[2]/Link[2]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 408.956,
+    "computedY" : 768.415,
+    "placementX" : 408.956,
+    "placementY" : 768.415,
+    "placementWidth" : 37.8,
+    "placementHeight" : 9.25,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 37.8,
+    "contentHeight" : 9.25,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[2]/Rectangle[3]",
+    "entityName" : null,
+    "entityKind" : "Rectangle",
+    "parentPath" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[2]",
+    "childIndex" : 3,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 400.956,
+    "computedY" : 768.415,
+    "placementX" : 400.956,
+    "placementY" : 768.415,
+    "placementWidth" : 1.0,
+    "placementHeight" : 9.25,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 1.0,
+    "contentHeight" : 9.25,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 2.0,
+      "bottom" : 0.0,
+      "left" : 2.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[2]/Link[4]",
+    "entityName" : null,
+    "entityKind" : "Link",
+    "parentPath" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[2]",
+    "childIndex" : 4,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 362.836,
+    "computedY" : 768.415,
+    "placementX" : 362.836,
+    "placementY" : 768.415,
+    "placementWidth" : 31.12,
+    "placementHeight" : 9.25,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 31.12,
+    "contentHeight" : 9.25,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[2]/Link[4]/DisplayText[0]",
+    "entityName" : null,
+    "entityKind" : "DisplayText",
+    "parentPath" : "MainVBoxContainer[0]/ModuleHeader[0]/HContainer[2]/Link[4]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 362.836,
+    "computedY" : 768.415,
+    "placementX" : 362.836,
+    "placementY" : 768.415,
+    "placementWidth" : 31.12,
+    "placementHeight" : 9.25,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 31.12,
+    "contentHeight" : 9.25,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "MainVBoxContainer[0]/CoverLetterBody[1]",
+    "entityName" : "CoverLetterBody",
+    "entityKind" : "Module",
+    "parentPath" : "MainVBoxContainer[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 15.0,
+    "computedY" : 357.852,
+    "placementX" : 15.0,
+    "placementY" : 357.852,
+    "placementWidth" : 570.276,
+    "placementHeight" : 400.562,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 570.276,
+    "contentHeight" : 400.562,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "MainVBoxContainer[0]/CoverLetterBody[1]/BlockText[0]",
+    "entityName" : null,
+    "entityKind" : "BlockText",
+    "parentPath" : "MainVBoxContainer[0]/CoverLetterBody[1]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 15.0,
+    "computedY" : 357.852,
+    "placementX" : 15.0,
+    "placementY" : 357.852,
+    "placementWidth" : 569.14,
+    "placementHeight" : 400.562,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 569.14,
+    "contentHeight" : 400.562,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 5.0,
+      "bottom" : 0.0,
+      "left" : 20.0
+    }
+  }, {
+    "path" : "MainVBoxContainer[0]/CoverLetterClosingSignature[2]",
+    "entityName" : "CoverLetterClosingSignature",
+    "entityKind" : "Module",
+    "parentPath" : "MainVBoxContainer[0]",
+    "childIndex" : 2,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 15.0,
+    "computedY" : 334.352,
+    "placementX" : 15.0,
+    "placementY" : 334.352,
+    "placementWidth" : 570.276,
+    "placementHeight" : 23.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 570.276,
+    "contentHeight" : 23.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "MainVBoxContainer[0]/CoverLetterClosingSignature[2]/BlockText[0]",
+    "entityName" : null,
+    "entityKind" : "BlockText",
+    "parentPath" : "MainVBoxContainer[0]/CoverLetterClosingSignature[2]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 525.806,
+    "computedY" : 334.352,
+    "placementX" : 525.806,
+    "placementY" : 334.352,
+    "placementWidth" : 59.47,
+    "placementHeight" : 23.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 59.47,
+    "contentHeight" : 23.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

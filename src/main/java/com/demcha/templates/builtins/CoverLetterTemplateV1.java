@@ -62,7 +62,7 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
     public PDDocument render(Header header, String wroteLetter, JobDetails jobDetails, boolean guideLines) {
         try {
             PdfComposer composer = createPdfComposer(guideLines);
-            designLetter(header, wroteLetter, jobDetails, composer);
+            compose(composer, header, wroteLetter, jobDetails);
             return composer.toPDDocument();
 
         } catch (Exception e) {
@@ -87,7 +87,7 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
     public void render(Header header, String wroteLetter, JobDetails jobDetails, Path path, boolean guideLines) {
         try (PdfComposer composer = createPdfComposer(path, guideLines)) {
 
-            designLetter(header, wroteLetter, jobDetails, composer);
+            compose(composer, header, wroteLetter, jobDetails);
 
             composer.build();
             log.info("Cover letter saved to {}", path.toAbsolutePath());
@@ -135,6 +135,10 @@ public class CoverLetterTemplateV1 implements CoverLetterTemplate {
 
     private PdfComposer createPdfComposer(boolean guideLines) {
         return createPdfComposer(null, guideLines);
+    }
+
+    void compose(DocumentComposer composer, Header header, String wroteLetter, JobDetails jobDetails) {
+        designLetter(header, wroteLetter, jobDetails, composer);
     }
 
     private Entity createHeader(TemplateBuilder cv, Header header, Canvas canvas) {

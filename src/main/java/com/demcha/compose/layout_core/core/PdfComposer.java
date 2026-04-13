@@ -3,6 +3,8 @@ package com.demcha.compose.layout_core.core;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.font_library.DefaultFonts;
 import com.demcha.compose.font_library.FontFamilyDefinition;
+import com.demcha.compose.layout_core.debug.LayoutSnapshot;
+import com.demcha.compose.layout_core.debug.LayoutSnapshotExtractor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.system.LayoutSystem;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFont;
@@ -71,9 +73,16 @@ import java.util.List;
 public final class PdfComposer extends AbstractDocumentComposer {
 
     private final PDDocument doc;
+    private final LayoutSystem<PdfRenderingSystemECS> layoutSystem;
     private final PdfRenderingSystemECS renderingSystem;
     @Nullable
     private final Path outputFile; // null if output to bytes only
+    @Nullable
+    private final PdfFileManagerSystem fileManagerSystem;
+    private boolean layoutResolved;
+    private boolean rendered;
+    @Nullable
+    private LayoutSnapshot cachedLayoutSnapshot;
 
     /**
      * Internal constructor used by {@link GraphCompose.PdfBuilder}.
@@ -91,6 +100,8 @@ public final class PdfComposer extends AbstractDocumentComposer {
         this.doc = state.doc();
         this.renderingSystem = state.renderingSystem();
         this.outputFile = outputFile;
+        this.layoutSystem = new LayoutSystem<>(canvas(), renderingSystem);
+        this.fileManagerSystem = outputFile == null ? null : new PdfFileManagerSystem(outputFile, doc);
         setupPdfSystems();
     }
 
@@ -114,11 +125,11 @@ public final class PdfComposer extends AbstractDocumentComposer {
 
     private void setupPdfSystems() {
         entityManager().getSystems().addSystem(new FontLibraryTextMeasurementSystem(entityManager().getFonts(), PdfFont.class));
-        entityManager().getSystems().addSystem(new LayoutSystem<>(canvas(), renderingSystem));
+        entityManager().getSystems().addSystem(layoutSystem);
         entityManager().getSystems().addSystem(renderingSystem);
 
-        if (outputFile != null) {
-            entityManager().getSystems().addSystem(new PdfFileManagerSystem(outputFile, doc));
+        if (fileManagerSystem != null) {
+            entityManager().getSystems().addSystem(fileManagerSystem);
         }
     }
 
@@ -139,14 +150,36 @@ public final class PdfComposer extends AbstractDocumentComposer {
         return List.copyOf(entityManager().getFonts().availableFonts());
     }
 
+    /**
+     * Resolves the document layout and returns a deterministic debug snapshot of
+     * the layout tree after pagination.
+     *
+     * <p>This method does not render the PDF stream. It is intended for layout
+     * regression tests, debugging, and dev tooling that needs geometry rather
+     * than pixels.</p>
+     *
+     * @return resolved layout snapshot for the current document
+     * @throws Exception if layout resolution fails
+     */
+    public LayoutSnapshot layoutSnapshot() throws Exception {
+        ensureLayoutResolved();
+        if (cachedLayoutSnapshot == null) {
+            cachedLayoutSnapshot = LayoutSnapshotExtractor.extract(entityManager(), canvas());
+        }
+        return cachedLayoutSnapshot;
+    }
+
     @Override
     protected void buildDocument() throws Exception {
-        entityManager().processSystems();
+        ensureRendered();
+        if (fileManagerSystem != null) {
+            fileManagerSystem.process(entityManager());
+        }
     }
 
     @Override
     protected byte[] exportBytes() throws Exception {
-        processInMemoryRender();
+        ensureRendered();
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             doc.save(baos);
             return baos.toByteArray();
@@ -168,16 +201,27 @@ public final class PdfComposer extends AbstractDocumentComposer {
      * @throws Exception if layout or rendering fails
      */
     public PDDocument toPDDocument() throws Exception {
-        buildComponents();
-        processInMemoryRender();
-
+        ensureRendered();
         return doc;
     }
 
-    private void processInMemoryRender() throws Exception {
-        entityManager().getSystems().getSystem(LayoutSystem.class)
-                .ifPresent(sys -> sys.process(entityManager()));
+    private void ensureLayoutResolved() {
+        if (layoutResolved) {
+            return;
+        }
+        buildComponents();
+        layoutSystem.process(entityManager());
+        layoutResolved = true;
+        cachedLayoutSnapshot = null;
+    }
+
+    private void ensureRendered() throws Exception {
+        ensureLayoutResolved();
+        if (rendered) {
+            return;
+        }
         renderingSystem.process(entityManager());
+        rendered = true;
     }
 
     @Override

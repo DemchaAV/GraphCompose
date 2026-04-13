@@ -1,0 +1,107 @@
+{
+  "formatVersion" : "1.0",
+  "canvas" : {
+    "pageWidth" : 595.276,
+    "pageHeight" : 841.89,
+    "innerWidth" : 495.276,
+    "innerHeight" : 741.89,
+    "margin" : {
+      "top" : 50.0,
+      "right" : 50.0,
+      "bottom" : 50.0,
+      "left" : 50.0
+    }
+  },
+  "totalPages" : 2,
+  "nodes" : [ {
+    "path" : "SplitContainer[0]",
+    "entityName" : "SplitContainer",
+    "entityKind" : "VContainer",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 50.0,
+    "computedY" : 50.0,
+    "placementX" : 50.0,
+    "placementY" : 491.89,
+    "placementWidth" : 500.0,
+    "placementHeight" : 1310.0,
+    "startPage" : 1,
+    "endPage" : 0,
+    "contentWidth" : 500.0,
+    "contentHeight" : 1310.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SplitContainer[0]/Rectangle[0]",
+    "entityName" : null,
+    "entityKind" : "Rectangle",
+    "parentPath" : "SplitContainer[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 50.0,
+    "computedY" : 360.0,
+    "placementX" : 50.0,
+    "placementY" : 191.89,
+    "placementWidth" : 500.0,
+    "placementHeight" : 600.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 500.0,
+    "contentHeight" : 600.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SplitContainer[0]/Rectangle[1]",
+    "entityName" : null,
+    "entityKind" : "Rectangle",
+    "parentPath" : "SplitContainer[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 50.0,
+    "computedY" : 50.0,
+    "placementX" : 50.0,
+    "placementY" : 491.89,
+    "placementWidth" : 500.0,
+    "placementHeight" : 300.0,
+    "startPage" : 1,
+    "endPage" : 1,
+    "contentWidth" : 500.0,
+    "contentHeight" : 300.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

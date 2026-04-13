@@ -1,0 +1,1097 @@
+{
+  "formatVersion" : "1.0",
+  "canvas" : {
+    "pageWidth" : 841.89,
+    "pageHeight" : 595.276,
+    "innerWidth" : 805.89,
+    "innerHeight" : 559.276,
+    "margin" : {
+      "top" : 18.0,
+      "right" : 18.0,
+      "bottom" : 18.0,
+      "left" : 18.0
+    }
+  },
+  "totalPages" : 2,
+  "nodes" : [ {
+    "path" : "WeeklyScheduleRoot[0]",
+    "entityName" : "WeeklyScheduleRoot",
+    "entityKind" : "VContainer",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 18.0,
+    "computedY" : -87.184,
+    "placementX" : 18.0,
+    "placementY" : 460.016,
+    "placementWidth" : 805.89,
+    "placementHeight" : 712.536,
+    "startPage" : 1,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 712.536,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/VContainer[0]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "WeeklyScheduleRoot[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 531.876,
+    "placementX" : 18.0,
+    "placementY" : 531.876,
+    "placementWidth" : 805.89,
+    "placementHeight" : 45.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 45.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/VContainer[0]/HContainer[0]",
+    "entityName" : null,
+    "entityKind" : "HContainer",
+    "parentPath" : "WeeklyScheduleRoot[0]/VContainer[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 540.876,
+    "placementX" : 18.0,
+    "placementY" : 540.876,
+    "placementWidth" : 590.629,
+    "placementHeight" : 36.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 590.629,
+    "contentHeight" : 36.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/VContainer[0]/HContainer[0]/VContainer[0]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "WeeklyScheduleRoot[0]/VContainer[0]/HContainer[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 212.623,
+    "computedY" : 540.876,
+    "placementX" : 212.623,
+    "placementY" : 540.876,
+    "placementWidth" : 396.006,
+    "placementHeight" : 36.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 396.006,
+    "contentHeight" : 36.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/VContainer[0]/HContainer[0]/VContainer[0]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "WeeklyScheduleRoot[0]/VContainer[0]/HContainer[0]/VContainer[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 212.623,
+    "computedY" : 540.876,
+    "placementX" : 212.623,
+    "placementY" : 540.876,
+    "placementWidth" : 396.006,
+    "placementHeight" : 36.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 396.006,
+    "contentHeight" : 36.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/VContainer[0]/HContainer[0]/VContainer[1]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "WeeklyScheduleRoot[0]/VContainer[0]/HContainer[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 212.623,
+    "computedY" : 577.276,
+    "placementX" : 212.623,
+    "placementY" : 577.276,
+    "placementWidth" : 0.0,
+    "placementHeight" : 0.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 0.0,
+    "contentHeight" : 0.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/VContainer[0]/HContainer[0]/VContainer[2]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "WeeklyScheduleRoot[0]/VContainer[0]/HContainer[0]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 551.076,
+    "placementX" : 18.0,
+    "placementY" : 551.076,
+    "placementWidth" : 194.623,
+    "placementHeight" : 26.2,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 194.623,
+    "contentHeight" : 26.2,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/VContainer[0]/HContainer[0]/VContainer[2]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "WeeklyScheduleRoot[0]/VContainer[0]/HContainer[0]/VContainer[2]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 18.0,
+    "computedY" : 551.076,
+    "placementX" : 18.0,
+    "placementY" : 551.076,
+    "placementWidth" : 194.623,
+    "placementHeight" : 18.2,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 194.623,
+    "contentHeight" : 18.2,
+    "margin" : {
+      "top" : 8.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/VContainer[0]/Line[1]",
+    "entityName" : null,
+    "entityKind" : "Line",
+    "parentPath" : "WeeklyScheduleRoot[0]/VContainer[0]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 531.876,
+    "placementX" : 18.0,
+    "placementY" : 531.876,
+    "placementWidth" : 805.89,
+    "placementHeight" : 5.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 5.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 1.0,
+      "right" : 1.0,
+      "bottom" : 1.0,
+      "left" : 1.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleDayLabels[1]",
+    "entityName" : "WeeklyScheduleDayLabels",
+    "entityKind" : "VContainer",
+    "parentPath" : "WeeklyScheduleRoot[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 481.516,
+    "placementX" : 18.0,
+    "placementY" : 481.516,
+    "placementWidth" : 805.89,
+    "placementHeight" : 43.36,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 43.36,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleDayLabels[1]/WeeklyScheduleDayLabels__row_0[0]",
+    "entityName" : "WeeklyScheduleDayLabels__row_0",
+    "entityKind" : "TableRow",
+    "parentPath" : "WeeklyScheduleRoot[0]/WeeklyScheduleDayLabels[1]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 481.516,
+    "placementX" : 18.0,
+    "placementY" : 481.516,
+    "placementWidth" : 805.89,
+    "placementHeight" : 43.36,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 43.36,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleDayNotes[2]",
+    "entityName" : "WeeklyScheduleDayNotes",
+    "entityKind" : "VContainer",
+    "parentPath" : "WeeklyScheduleRoot[0]",
+    "childIndex" : 2,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 429.956,
+    "placementX" : 18.0,
+    "placementY" : 429.956,
+    "placementWidth" : 805.89,
+    "placementHeight" : 44.56,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 44.56,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleDayNotes[2]/WeeklyScheduleDayNotes__row_0[0]",
+    "entityName" : "WeeklyScheduleDayNotes__row_0",
+    "entityKind" : "TableRow",
+    "parentPath" : "WeeklyScheduleRoot[0]/WeeklyScheduleDayNotes[2]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 429.956,
+    "placementX" : 18.0,
+    "placementY" : 429.956,
+    "placementWidth" : 805.89,
+    "placementHeight" : 44.56,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 44.56,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleDayCategories[3]",
+    "entityName" : "WeeklyScheduleDayCategories",
+    "entityKind" : "VContainer",
+    "parentPath" : "WeeklyScheduleRoot[0]",
+    "childIndex" : 3,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 397.796,
+    "placementX" : 18.0,
+    "placementY" : 397.796,
+    "placementWidth" : 805.89,
+    "placementHeight" : 25.16,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 25.16,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleDayCategories[3]/WeeklyScheduleDayCategories__row_0[0]",
+    "entityName" : "WeeklyScheduleDayCategories__row_0",
+    "entityKind" : "TableRow",
+    "parentPath" : "WeeklyScheduleRoot[0]/WeeklyScheduleDayCategories[3]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 397.796,
+    "placementX" : 18.0,
+    "placementY" : 397.796,
+    "placementWidth" : 805.89,
+    "placementHeight" : 25.16,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 25.16,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleMetricCOVERS[4]",
+    "entityName" : "WeeklyScheduleMetricCOVERS",
+    "entityKind" : "VContainer",
+    "parentPath" : "WeeklyScheduleRoot[0]",
+    "childIndex" : 4,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 365.636,
+    "placementX" : 18.0,
+    "placementY" : 365.636,
+    "placementWidth" : 805.89,
+    "placementHeight" : 25.16,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 25.16,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleMetricCOVERS[4]/WeeklyScheduleMetricCOVERS__row_0[0]",
+    "entityName" : "WeeklyScheduleMetricCOVERS__row_0",
+    "entityKind" : "TableRow",
+    "parentPath" : "WeeklyScheduleRoot[0]/WeeklyScheduleMetricCOVERS[4]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 365.636,
+    "placementX" : 18.0,
+    "placementY" : 365.636,
+    "placementWidth" : 805.89,
+    "placementHeight" : 25.16,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 25.16,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleMetricTEAMFOCUS[5]",
+    "entityName" : "WeeklyScheduleMetricTEAMFOCUS",
+    "entityKind" : "VContainer",
+    "parentPath" : "WeeklyScheduleRoot[0]",
+    "childIndex" : 5,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 333.476,
+    "placementX" : 18.0,
+    "placementY" : 333.476,
+    "placementWidth" : 805.89,
+    "placementHeight" : 25.16,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 25.16,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleMetricTEAMFOCUS[5]/WeeklyScheduleMetricTEAMFOCUS__row_0[0]",
+    "entityName" : "WeeklyScheduleMetricTEAMFOCUS__row_0",
+    "entityKind" : "TableRow",
+    "parentPath" : "WeeklyScheduleRoot[0]/WeeklyScheduleMetricTEAMFOCUS[5]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 333.476,
+    "placementX" : 18.0,
+    "placementY" : 333.476,
+    "placementWidth" : 805.89,
+    "placementHeight" : 25.16,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 25.16,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]",
+    "entityName" : "WeeklyScheduleRoster",
+    "entityKind" : "VContainer",
+    "parentPath" : "WeeklyScheduleRoot[0]",
+    "childIndex" : 6,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : -29.744,
+    "placementX" : 18.0,
+    "placementY" : 517.456,
+    "placementWidth" : 805.89,
+    "placementHeight" : 404.296,
+    "startPage" : 1,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 404.296,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]/WeeklyScheduleRoster__row_0[0]",
+    "entityName" : "WeeklyScheduleRoster__row_0",
+    "entityKind" : "TableRow",
+    "parentPath" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 296.566,
+    "placementX" : 18.0,
+    "placementY" : 296.566,
+    "placementWidth" : 805.89,
+    "placementHeight" : 29.91,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 29.91,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]/WeeklyScheduleRoster__row_1[1]",
+    "entityName" : "WeeklyScheduleRoster__row_1",
+    "entityKind" : "TableRow",
+    "parentPath" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 268.006,
+    "placementX" : 18.0,
+    "placementY" : 268.006,
+    "placementWidth" : 805.89,
+    "placementHeight" : 28.56,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 28.56,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]/WeeklyScheduleRoster__row_2[2]",
+    "entityName" : "WeeklyScheduleRoster__row_2",
+    "entityKind" : "TableRow",
+    "parentPath" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 238.096,
+    "placementX" : 18.0,
+    "placementY" : 238.096,
+    "placementWidth" : 805.89,
+    "placementHeight" : 29.91,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 29.91,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]/WeeklyScheduleRoster__row_3[3]",
+    "entityName" : "WeeklyScheduleRoster__row_3",
+    "entityKind" : "TableRow",
+    "parentPath" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]",
+    "childIndex" : 3,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 208.186,
+    "placementX" : 18.0,
+    "placementY" : 208.186,
+    "placementWidth" : 805.89,
+    "placementHeight" : 29.91,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 29.91,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]/WeeklyScheduleRoster__row_4[4]",
+    "entityName" : "WeeklyScheduleRoster__row_4",
+    "entityKind" : "TableRow",
+    "parentPath" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]",
+    "childIndex" : 4,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 178.276,
+    "placementX" : 18.0,
+    "placementY" : 178.276,
+    "placementWidth" : 805.89,
+    "placementHeight" : 29.91,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 29.91,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]/WeeklyScheduleRoster__row_5[5]",
+    "entityName" : "WeeklyScheduleRoster__row_5",
+    "entityKind" : "TableRow",
+    "parentPath" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]",
+    "childIndex" : 5,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 148.366,
+    "placementX" : 18.0,
+    "placementY" : 148.366,
+    "placementWidth" : 805.89,
+    "placementHeight" : 29.91,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 29.91,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]/WeeklyScheduleRoster__row_6[6]",
+    "entityName" : "WeeklyScheduleRoster__row_6",
+    "entityKind" : "TableRow",
+    "parentPath" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]",
+    "childIndex" : 6,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 118.456,
+    "placementX" : 18.0,
+    "placementY" : 118.456,
+    "placementWidth" : 805.89,
+    "placementHeight" : 29.91,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 29.91,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]/WeeklyScheduleRoster__row_7[7]",
+    "entityName" : "WeeklyScheduleRoster__row_7",
+    "entityKind" : "TableRow",
+    "parentPath" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]",
+    "childIndex" : 7,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 89.896,
+    "placementX" : 18.0,
+    "placementY" : 89.896,
+    "placementWidth" : 805.89,
+    "placementHeight" : 28.56,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 28.56,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]/WeeklyScheduleRoster__row_8[8]",
+    "entityName" : "WeeklyScheduleRoster__row_8",
+    "entityKind" : "TableRow",
+    "parentPath" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]",
+    "childIndex" : 8,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 59.986,
+    "placementX" : 18.0,
+    "placementY" : 59.986,
+    "placementWidth" : 805.89,
+    "placementHeight" : 29.91,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 29.91,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]/WeeklyScheduleRoster__row_9[9]",
+    "entityName" : "WeeklyScheduleRoster__row_9",
+    "entityKind" : "TableRow",
+    "parentPath" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]",
+    "childIndex" : 9,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 30.076,
+    "placementX" : 18.0,
+    "placementY" : 30.076,
+    "placementWidth" : 805.89,
+    "placementHeight" : 29.91,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 29.91,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]/WeeklyScheduleRoster__row_10[10]",
+    "entityName" : "WeeklyScheduleRoster__row_10",
+    "entityKind" : "TableRow",
+    "parentPath" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]",
+    "childIndex" : 10,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 0.166,
+    "placementX" : 18.0,
+    "placementY" : 547.366,
+    "placementWidth" : 805.89,
+    "placementHeight" : 29.91,
+    "startPage" : 1,
+    "endPage" : 1,
+    "contentWidth" : 805.89,
+    "contentHeight" : 29.91,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]/WeeklyScheduleRoster__row_11[11]",
+    "entityName" : "WeeklyScheduleRoster__row_11",
+    "entityKind" : "TableRow",
+    "parentPath" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[6]",
+    "childIndex" : 11,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : -29.744,
+    "placementX" : 18.0,
+    "placementY" : 517.456,
+    "placementWidth" : 805.89,
+    "placementHeight" : 29.91,
+    "startPage" : 1,
+    "endPage" : 1,
+    "contentWidth" : 805.89,
+    "contentHeight" : 29.91,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/VContainer[7]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "WeeklyScheduleRoot[0]",
+    "childIndex" : 7,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : -87.184,
+    "placementX" : 18.0,
+    "placementY" : 460.016,
+    "placementWidth" : 805.89,
+    "placementHeight" : 48.44,
+    "startPage" : 1,
+    "endPage" : 1,
+    "contentWidth" : 805.89,
+    "contentHeight" : 48.44,
+    "margin" : {
+      "top" : 2.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/VContainer[7]/Line[0]",
+    "entityName" : null,
+    "entityKind" : "Line",
+    "parentPath" : "WeeklyScheduleRoot[0]/VContainer[7]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : -43.744,
+    "placementX" : 18.0,
+    "placementY" : 503.456,
+    "placementWidth" : 805.89,
+    "placementHeight" : 5.0,
+    "startPage" : 1,
+    "endPage" : 1,
+    "contentWidth" : 805.89,
+    "contentHeight" : 5.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 1.0,
+      "right" : 1.0,
+      "bottom" : 1.0,
+      "left" : 1.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/VContainer[7]/TextComponent[1]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "WeeklyScheduleRoot[0]/VContainer[7]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : -63.904,
+    "placementX" : 18.0,
+    "placementY" : 483.296,
+    "placementWidth" : 27.909,
+    "placementHeight" : 13.16,
+    "startPage" : 1,
+    "endPage" : 1,
+    "contentWidth" : 27.909,
+    "contentHeight" : 13.16,
+    "margin" : {
+      "top" : 2.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/VContainer[7]/WeeklyScheduleFooterNotes[2]",
+    "entityName" : "WeeklyScheduleFooterNotes",
+    "entityKind" : "BlockText",
+    "parentPath" : "WeeklyScheduleRoot[0]/VContainer[7]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : -87.184,
+    "placementX" : 18.0,
+    "placementY" : 460.016,
+    "placementWidth" : 314.978,
+    "placementHeight" : 18.28,
+    "startPage" : 1,
+    "endPage" : 1,
+    "contentWidth" : 314.978,
+    "contentHeight" : 18.28,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

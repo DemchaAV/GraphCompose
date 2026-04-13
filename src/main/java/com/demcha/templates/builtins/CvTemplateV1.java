@@ -53,11 +53,9 @@ public class CvTemplateV1 implements CvTemplate {
      */
     @Override
     public PDDocument render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, boolean guideLines) {
-        MainPageCV data = rewrittenCv.merge(originalCv);
-
         try {
             PdfComposer composer = createPdfComposer(null, guideLines);
-            designDocument(composer, data);
+            compose(composer, originalCv, rewrittenCv);
             return composer.toPDDocument();
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate CV", e);
@@ -71,10 +69,8 @@ public class CvTemplateV1 implements CvTemplate {
 
     @Override
     public void render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, Path path, boolean guideLines) {
-        MainPageCV data = rewrittenCv.merge(originalCv);
-
         try (PdfComposer composer = createPdfComposer(path, guideLines)) {
-            designDocument(composer, data);
+            compose(composer, originalCv, rewrittenCv);
             composer.build();
             log.info("File has been saved to {}", path.toAbsolutePath());
         } catch (Exception e) {
@@ -94,6 +90,11 @@ public class CvTemplateV1 implements CvTemplate {
                 .markdown(true)
                 .guideLines(guideLines)
                 .create();
+    }
+
+    void compose(DocumentComposer composer, MainPageCV originalCv, MainPageCvDTO rewrittenCv) {
+        MainPageCV data = rewrittenCv.merge(originalCv);
+        designDocument(composer, data);
     }
 
     private void designDocument(DocumentComposer composer, MainPageCV data) {

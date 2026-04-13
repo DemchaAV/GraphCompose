@@ -1,0 +1,2777 @@
+{
+  "formatVersion" : "1.0",
+  "canvas" : {
+    "pageWidth" : 595.276,
+    "pageHeight" : 841.89,
+    "innerWidth" : 559.276,
+    "innerHeight" : 805.89,
+    "margin" : {
+      "top" : 18.0,
+      "right" : 18.0,
+      "bottom" : 18.0,
+      "left" : 18.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "EditorialBlueRoot[0]",
+    "entityName" : "EditorialBlueRoot",
+    "entityKind" : "VContainer",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 18.0,
+    "computedY" : 235.975,
+    "placementX" : 18.0,
+    "placementY" : 235.975,
+    "placementWidth" : 559.276,
+    "placementHeight" : 587.915,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 587.915,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueHeader[0]",
+    "entityName" : "EditorialBlueHeader",
+    "entityKind" : "Module",
+    "parentPath" : "EditorialBlueRoot[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 766.225,
+    "placementX" : 18.0,
+    "placementY" : 766.225,
+    "placementWidth" : 559.276,
+    "placementHeight" : 57.665,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 57.665,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueHeader[0]/EditorialBlueName[0]",
+    "entityName" : "EditorialBlueName",
+    "entityKind" : "BlockText",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueHeader[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 224.01,
+    "computedY" : 804.28,
+    "placementX" : 224.01,
+    "placementY" : 804.28,
+    "placementWidth" : 147.255,
+    "placementHeight" : 19.61,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 147.255,
+    "contentHeight" : 19.61,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueHeader[0]/EditorialBlueHeadline[1]",
+    "entityName" : "EditorialBlueHeadline",
+    "entityKind" : "BlockText",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueHeader[0]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 233.721,
+    "computedY" : 791.642,
+    "placementX" : 233.721,
+    "placementY" : 791.642,
+    "placementWidth" : 127.834,
+    "placementHeight" : 10.638,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 127.834,
+    "contentHeight" : 10.638,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueHeader[0]/EditorialBlueMeta[2]",
+    "entityName" : "EditorialBlueMeta",
+    "entityKind" : "BlockText",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueHeader[0]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 161.384,
+    "computedY" : 780.225,
+    "placementX" : 161.384,
+    "placementY" : 780.225,
+    "placementWidth" : 272.509,
+    "placementHeight" : 8.418,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 272.509,
+    "contentHeight" : 8.418,
+    "margin" : {
+      "top" : 1.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueHeader[0]/Line[3]",
+    "entityName" : null,
+    "entityKind" : "Line",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueHeader[0]",
+    "childIndex" : 3,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 766.225,
+    "placementX" : 18.0,
+    "placementY" : 766.225,
+    "placementWidth" : 559.276,
+    "placementHeight" : 6.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 6.0,
+    "margin" : {
+      "top" : 6.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 1.0,
+      "right" : 1.0,
+      "bottom" : 1.0,
+      "left" : 1.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueProfile[1]",
+    "entityName" : "EditorialBlueProfile",
+    "entityKind" : "Module",
+    "parentPath" : "EditorialBlueRoot[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 694.5,
+    "placementX" : 18.0,
+    "placementY" : 694.5,
+    "placementWidth" : 559.276,
+    "placementHeight" : 62.725,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 62.725,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueProfile[1]/VContainer[0]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueProfile[1]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 740.42,
+    "placementX" : 18.0,
+    "placementY" : 740.42,
+    "placementWidth" : 559.276,
+    "placementHeight" : 16.805,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 16.805,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueProfile[1]/VContainer[0]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueProfile[1]/VContainer[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 747.42,
+    "placementX" : 18.0,
+    "placementY" : 747.42,
+    "placementWidth" : 132.521,
+    "placementHeight" : 9.805,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 132.521,
+    "contentHeight" : 9.805,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueProfile[1]/VContainer[0]/Line[1]",
+    "entityName" : null,
+    "entityKind" : "Line",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueProfile[1]/VContainer[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 740.42,
+    "placementX" : 18.0,
+    "placementY" : 740.42,
+    "placementWidth" : 559.276,
+    "placementHeight" : 6.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 6.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 1.0,
+      "right" : 1.0,
+      "bottom" : 1.0,
+      "left" : 1.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueProfile[1]/BlockText[1]",
+    "entityName" : null,
+    "entityKind" : "BlockText",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueProfile[1]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 694.5,
+    "placementX" : 18.0,
+    "placementY" : 694.5,
+    "placementWidth" : 551.712,
+    "placementHeight" : 40.92,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 551.712,
+    "contentHeight" : 40.92,
+    "margin" : {
+      "top" : 2.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]",
+    "entityName" : "EditorialBlueExperience",
+    "entityKind" : "Module",
+    "parentPath" : "EditorialBlueRoot[0]",
+    "childIndex" : 2,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 580.205,
+    "placementX" : 18.0,
+    "placementY" : 580.205,
+    "placementWidth" : 559.276,
+    "placementHeight" : 105.295,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 105.295,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[0]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 668.695,
+    "placementX" : 18.0,
+    "placementY" : 668.695,
+    "placementWidth" : 559.276,
+    "placementHeight" : 16.805,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 16.805,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[0]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 675.695,
+    "placementX" : 18.0,
+    "placementY" : 675.695,
+    "placementWidth" : 124.857,
+    "placementHeight" : 9.805,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 124.857,
+    "contentHeight" : 9.805,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[0]/Line[1]",
+    "entityName" : null,
+    "entityKind" : "Line",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 668.695,
+    "placementX" : 18.0,
+    "placementY" : 668.695,
+    "placementWidth" : 559.276,
+    "placementHeight" : 6.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 6.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 1.0,
+      "right" : 1.0,
+      "bottom" : 1.0,
+      "left" : 1.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[1]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 633.79,
+    "placementX" : 18.0,
+    "placementY" : 633.79,
+    "placementWidth" : 552.886,
+    "placementHeight" : 31.905,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 552.886,
+    "contentHeight" : 31.905,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 4.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[1]/HContainer[0]",
+    "entityName" : null,
+    "entityKind" : "HContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 655.15,
+    "placementX" : 18.0,
+    "placementY" : 655.15,
+    "placementWidth" : 218.911,
+    "placementHeight" : 10.545,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 218.911,
+    "contentHeight" : 10.545,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[1]/HContainer[0]/VContainer[0]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[1]/HContainer[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 108.331,
+    "computedY" : 655.15,
+    "placementX" : 108.331,
+    "placementY" : 655.15,
+    "placementWidth" : 128.581,
+    "placementHeight" : 10.545,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 128.581,
+    "contentHeight" : 10.545,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[1]/HContainer[0]/VContainer[0]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[1]/HContainer[0]/VContainer[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 108.331,
+    "computedY" : 655.15,
+    "placementX" : 108.331,
+    "placementY" : 655.15,
+    "placementWidth" : 128.581,
+    "placementHeight" : 10.545,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 128.581,
+    "contentHeight" : 10.545,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[1]/HContainer[0]/Element[1]",
+    "entityName" : null,
+    "entityKind" : "Element",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[1]/HContainer[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 100.331,
+    "computedY" : 664.695,
+    "placementX" : 100.331,
+    "placementY" : 664.695,
+    "placementWidth" : 8.0,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 8.0,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[1]/HContainer[0]/VContainer[2]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[1]/HContainer[0]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 18.0,
+    "computedY" : 657.185,
+    "placementX" : 18.0,
+    "placementY" : 657.185,
+    "placementWidth" : 82.331,
+    "placementHeight" : 8.51,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 82.331,
+    "contentHeight" : 8.51,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[1]/HContainer[0]/VContainer[2]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[1]/HContainer[0]/VContainer[2]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 18.0,
+    "computedY" : 657.185,
+    "placementX" : 18.0,
+    "placementY" : 657.185,
+    "placementWidth" : 82.331,
+    "placementHeight" : 8.51,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 82.331,
+    "contentHeight" : 8.51,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[1]/TextComponent[1]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 644.47,
+    "placementX" : 18.0,
+    "placementY" : 644.47,
+    "placementWidth" : 163.248,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 163.248,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[1]/BlockText[2]",
+    "entityName" : null,
+    "entityKind" : "BlockText",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[1]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 32.0,
+    "computedY" : 633.79,
+    "placementX" : 32.0,
+    "placementY" : 633.79,
+    "placementWidth" : 538.886,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 538.886,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 14.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[2]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 584.205,
+    "placementX" : 18.0,
+    "placementY" : 584.205,
+    "placementWidth" : 356.019,
+    "placementHeight" : 42.585,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 356.019,
+    "contentHeight" : 42.585,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 4.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[2]/HContainer[0]",
+    "entityName" : null,
+    "entityKind" : "HContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[2]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 616.245,
+    "placementX" : 18.0,
+    "placementY" : 616.245,
+    "placementWidth" : 205.651,
+    "placementHeight" : 10.545,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 205.651,
+    "contentHeight" : 10.545,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[2]/HContainer[0]/VContainer[0]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[2]/HContainer[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 108.34,
+    "computedY" : 616.245,
+    "placementX" : 108.34,
+    "placementY" : 616.245,
+    "placementWidth" : 115.311,
+    "placementHeight" : 10.545,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 115.311,
+    "contentHeight" : 10.545,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[2]/HContainer[0]/VContainer[0]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[2]/HContainer[0]/VContainer[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 108.34,
+    "computedY" : 616.245,
+    "placementX" : 108.34,
+    "placementY" : 616.245,
+    "placementWidth" : 115.311,
+    "placementHeight" : 10.545,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 115.311,
+    "contentHeight" : 10.545,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[2]/HContainer[0]/Element[1]",
+    "entityName" : null,
+    "entityKind" : "Element",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[2]/HContainer[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 100.34,
+    "computedY" : 625.79,
+    "placementX" : 100.34,
+    "placementY" : 625.79,
+    "placementWidth" : 8.0,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 8.0,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[2]/HContainer[0]/VContainer[2]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[2]/HContainer[0]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 18.0,
+    "computedY" : 618.28,
+    "placementX" : 18.0,
+    "placementY" : 618.28,
+    "placementWidth" : 82.34,
+    "placementHeight" : 8.51,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 82.34,
+    "contentHeight" : 8.51,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[2]/HContainer[0]/VContainer[2]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[2]/HContainer[0]/VContainer[2]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 18.0,
+    "computedY" : 618.28,
+    "placementX" : 18.0,
+    "placementY" : 618.28,
+    "placementWidth" : 82.34,
+    "placementHeight" : 8.51,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 82.34,
+    "contentHeight" : 8.51,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[2]/TextComponent[1]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[2]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 605.565,
+    "placementX" : 18.0,
+    "placementY" : 605.565,
+    "placementWidth" : 136.061,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 136.061,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[2]/BlockText[2]",
+    "entityName" : null,
+    "entityKind" : "BlockText",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueExperience[2]/VContainer[2]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 32.0,
+    "computedY" : 584.205,
+    "placementX" : 32.0,
+    "placementY" : 584.205,
+    "placementWidth" : 342.019,
+    "placementHeight" : 19.56,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 342.019,
+    "contentHeight" : 19.56,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 14.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]",
+    "entityName" : "EditorialBlueProjects",
+    "entityKind" : "Module",
+    "parentPath" : "EditorialBlueRoot[0]",
+    "childIndex" : 3,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 479.24,
+    "placementX" : 18.0,
+    "placementY" : 479.24,
+    "placementWidth" : 559.276,
+    "placementHeight" : 91.965,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 91.965,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]/VContainer[0]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 554.4,
+    "placementX" : 18.0,
+    "placementY" : 554.4,
+    "placementWidth" : 559.276,
+    "placementHeight" : 16.805,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 16.805,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]/VContainer[0]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]/VContainer[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 561.4,
+    "placementX" : 18.0,
+    "placementY" : 561.4,
+    "placementWidth" : 57.134,
+    "placementHeight" : 9.805,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 57.134,
+    "contentHeight" : 9.805,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]/VContainer[0]/Line[1]",
+    "entityName" : null,
+    "entityKind" : "Line",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]/VContainer[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 554.4,
+    "placementX" : 18.0,
+    "placementY" : 554.4,
+    "placementWidth" : 559.276,
+    "placementHeight" : 6.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 6.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 1.0,
+      "right" : 1.0,
+      "bottom" : 1.0,
+      "left" : 1.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]/VContainer[1]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 520.82,
+    "placementX" : 18.0,
+    "placementY" : 520.82,
+    "placementWidth" : 432.71,
+    "placementHeight" : 30.58,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 432.71,
+    "contentHeight" : 30.58,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 4.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]/VContainer[1]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]/VContainer[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 541.78,
+    "placementX" : 18.0,
+    "placementY" : 541.78,
+    "placementWidth" : 82.638,
+    "placementHeight" : 9.62,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 82.638,
+    "contentHeight" : 9.62,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]/VContainer[1]/TextComponent[1]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]/VContainer[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 531.3,
+    "placementX" : 18.0,
+    "placementY" : 531.3,
+    "placementWidth" : 106.195,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 106.195,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]/VContainer[1]/BlockText[2]",
+    "entityName" : null,
+    "entityKind" : "BlockText",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]/VContainer[1]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 520.82,
+    "placementX" : 18.0,
+    "placementY" : 520.82,
+    "placementWidth" : 432.71,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 432.71,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]/VContainer[2]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 483.24,
+    "placementX" : 18.0,
+    "placementY" : 483.24,
+    "placementWidth" : 317.434,
+    "placementHeight" : 30.58,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 317.434,
+    "contentHeight" : 30.58,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 4.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]/VContainer[2]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]/VContainer[2]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 504.2,
+    "placementX" : 18.0,
+    "placementY" : 504.2,
+    "placementWidth" : 94.775,
+    "placementHeight" : 9.62,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 94.775,
+    "contentHeight" : 9.62,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]/VContainer[2]/TextComponent[1]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]/VContainer[2]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 493.72,
+    "placementX" : 18.0,
+    "placementY" : 493.72,
+    "placementWidth" : 157.411,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 157.411,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]/VContainer[2]/BlockText[2]",
+    "entityName" : null,
+    "entityKind" : "BlockText",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueProjects[3]/VContainer[2]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 483.24,
+    "placementX" : 18.0,
+    "placementY" : 483.24,
+    "placementWidth" : 317.434,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 317.434,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]",
+    "entityName" : "EditorialBlueEducation",
+    "entityKind" : "Module",
+    "parentPath" : "EditorialBlueRoot[0]",
+    "childIndex" : 4,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 350.635,
+    "placementX" : 18.0,
+    "placementY" : 350.635,
+    "placementWidth" : 559.276,
+    "placementHeight" : 119.605,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 119.605,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[0]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 453.435,
+    "placementX" : 18.0,
+    "placementY" : 453.435,
+    "placementWidth" : 559.276,
+    "placementHeight" : 16.805,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 16.805,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[0]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 460.435,
+    "placementX" : 18.0,
+    "placementY" : 460.435,
+    "placementWidth" : 63.006,
+    "placementHeight" : 9.805,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 63.006,
+    "contentHeight" : 9.805,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[0]/Line[1]",
+    "entityName" : null,
+    "entityKind" : "Line",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 453.435,
+    "placementX" : 18.0,
+    "placementY" : 453.435,
+    "placementWidth" : 559.276,
+    "placementHeight" : 6.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 6.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 1.0,
+      "right" : 1.0,
+      "bottom" : 1.0,
+      "left" : 1.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[1]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 430.735,
+    "placementX" : 18.0,
+    "placementY" : 430.735,
+    "placementWidth" : 256.522,
+    "placementHeight" : 19.7,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 256.522,
+    "contentHeight" : 19.7,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[1]/HContainer[0]",
+    "entityName" : null,
+    "entityKind" : "HContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 440.815,
+    "placementX" : 18.0,
+    "placementY" : 440.815,
+    "placementWidth" : 256.522,
+    "placementHeight" : 9.62,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 256.522,
+    "contentHeight" : 9.62,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[1]/HContainer[0]/VContainer[0]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[1]/HContainer[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 105.782,
+    "computedY" : 440.815,
+    "placementX" : 105.782,
+    "placementY" : 440.815,
+    "placementWidth" : 168.74,
+    "placementHeight" : 9.62,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 168.74,
+    "contentHeight" : 9.62,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[1]/HContainer[0]/VContainer[0]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[1]/HContainer[0]/VContainer[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 105.782,
+    "computedY" : 440.815,
+    "placementX" : 105.782,
+    "placementY" : 440.815,
+    "placementWidth" : 168.74,
+    "placementHeight" : 9.62,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 168.74,
+    "contentHeight" : 9.62,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[1]/HContainer[0]/Element[1]",
+    "entityName" : null,
+    "entityKind" : "Element",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[1]/HContainer[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 97.782,
+    "computedY" : 449.435,
+    "placementX" : 97.782,
+    "placementY" : 449.435,
+    "placementWidth" : 8.0,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 8.0,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[1]/HContainer[0]/VContainer[2]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[1]/HContainer[0]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 18.0,
+    "computedY" : 441.925,
+    "placementX" : 18.0,
+    "placementY" : 441.925,
+    "placementWidth" : 79.782,
+    "placementHeight" : 8.51,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 79.782,
+    "contentHeight" : 8.51,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[1]/HContainer[0]/VContainer[2]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[1]/HContainer[0]/VContainer[2]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 18.0,
+    "computedY" : 441.925,
+    "placementX" : 18.0,
+    "placementY" : 441.925,
+    "placementWidth" : 79.782,
+    "placementHeight" : 8.51,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 79.782,
+    "contentHeight" : 8.51,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[1]/TextComponent[1]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 430.735,
+    "placementX" : 18.0,
+    "placementY" : 430.735,
+    "placementWidth" : 36.288,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 36.288,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[2]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 405.035,
+    "placementX" : 18.0,
+    "placementY" : 405.035,
+    "placementWidth" : 279.044,
+    "placementHeight" : 19.7,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 279.044,
+    "contentHeight" : 19.7,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[2]/HContainer[0]",
+    "entityName" : null,
+    "entityKind" : "HContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[2]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 415.115,
+    "placementX" : 18.0,
+    "placementY" : 415.115,
+    "placementWidth" : 279.044,
+    "placementHeight" : 9.62,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 279.044,
+    "contentHeight" : 9.62,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[2]/HContainer[0]/VContainer[0]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[2]/HContainer[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 114.992,
+    "computedY" : 415.115,
+    "placementX" : 114.992,
+    "placementY" : 415.115,
+    "placementWidth" : 182.052,
+    "placementHeight" : 9.62,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 182.052,
+    "contentHeight" : 9.62,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[2]/HContainer[0]/VContainer[0]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[2]/HContainer[0]/VContainer[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 114.992,
+    "computedY" : 415.115,
+    "placementX" : 114.992,
+    "placementY" : 415.115,
+    "placementWidth" : 182.052,
+    "placementHeight" : 9.62,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 182.052,
+    "contentHeight" : 9.62,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[2]/HContainer[0]/Element[1]",
+    "entityName" : null,
+    "entityKind" : "Element",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[2]/HContainer[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 106.992,
+    "computedY" : 423.735,
+    "placementX" : 106.992,
+    "placementY" : 423.735,
+    "placementWidth" : 8.0,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 8.0,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[2]/HContainer[0]/VContainer[2]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[2]/HContainer[0]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 18.0,
+    "computedY" : 416.225,
+    "placementX" : 18.0,
+    "placementY" : 416.225,
+    "placementWidth" : 88.992,
+    "placementHeight" : 8.51,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 88.992,
+    "contentHeight" : 8.51,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[2]/HContainer[0]/VContainer[2]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[2]/HContainer[0]/VContainer[2]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 18.0,
+    "computedY" : 416.225,
+    "placementX" : 18.0,
+    "placementY" : 416.225,
+    "placementWidth" : 88.992,
+    "placementHeight" : 8.51,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 88.992,
+    "contentHeight" : 8.51,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[2]/TextComponent[1]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[2]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 405.035,
+    "placementX" : 18.0,
+    "placementY" : 405.035,
+    "placementWidth" : 44.285,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 44.285,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[3]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]",
+    "childIndex" : 3,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 379.335,
+    "placementX" : 18.0,
+    "placementY" : 379.335,
+    "placementWidth" : 241.688,
+    "placementHeight" : 19.7,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 241.688,
+    "contentHeight" : 19.7,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[3]/HContainer[0]",
+    "entityName" : null,
+    "entityKind" : "HContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[3]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 389.415,
+    "placementX" : 18.0,
+    "placementY" : 389.415,
+    "placementWidth" : 241.688,
+    "placementHeight" : 9.62,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 241.688,
+    "contentHeight" : 9.62,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[3]/HContainer[0]/VContainer[0]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[3]/HContainer[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 113.464,
+    "computedY" : 389.415,
+    "placementX" : 113.464,
+    "placementY" : 389.415,
+    "placementWidth" : 146.224,
+    "placementHeight" : 9.62,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 146.224,
+    "contentHeight" : 9.62,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[3]/HContainer[0]/VContainer[0]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[3]/HContainer[0]/VContainer[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 113.464,
+    "computedY" : 389.415,
+    "placementX" : 113.464,
+    "placementY" : 389.415,
+    "placementWidth" : 146.224,
+    "placementHeight" : 9.62,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 146.224,
+    "contentHeight" : 9.62,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[3]/HContainer[0]/Element[1]",
+    "entityName" : null,
+    "entityKind" : "Element",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[3]/HContainer[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 105.464,
+    "computedY" : 398.035,
+    "placementX" : 105.464,
+    "placementY" : 398.035,
+    "placementWidth" : 8.0,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 8.0,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[3]/HContainer[0]/VContainer[2]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[3]/HContainer[0]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 18.0,
+    "computedY" : 390.525,
+    "placementX" : 18.0,
+    "placementY" : 390.525,
+    "placementWidth" : 87.464,
+    "placementHeight" : 8.51,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 87.464,
+    "contentHeight" : 8.51,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[3]/HContainer[0]/VContainer[2]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[3]/HContainer[0]/VContainer[2]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 18.0,
+    "computedY" : 390.525,
+    "placementX" : 18.0,
+    "placementY" : 390.525,
+    "placementWidth" : 87.464,
+    "placementHeight" : 8.51,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 87.464,
+    "contentHeight" : 8.51,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[3]/TextComponent[1]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[3]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 379.335,
+    "placementX" : 18.0,
+    "placementY" : 379.335,
+    "placementWidth" : 44.285,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 44.285,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[4]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]",
+    "childIndex" : 4,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 353.635,
+    "placementX" : 18.0,
+    "placementY" : 353.635,
+    "placementWidth" : 340.643,
+    "placementHeight" : 19.7,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 340.643,
+    "contentHeight" : 19.7,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[4]/HContainer[0]",
+    "entityName" : null,
+    "entityKind" : "HContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[4]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 363.715,
+    "placementX" : 18.0,
+    "placementY" : 363.715,
+    "placementWidth" : 340.643,
+    "placementHeight" : 9.62,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 340.643,
+    "contentHeight" : 9.62,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[4]/HContainer[0]/VContainer[0]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[4]/HContainer[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 165.619,
+    "computedY" : 363.715,
+    "placementX" : 165.619,
+    "placementY" : 363.715,
+    "placementWidth" : 193.024,
+    "placementHeight" : 9.62,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 193.024,
+    "contentHeight" : 9.62,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[4]/HContainer[0]/VContainer[0]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[4]/HContainer[0]/VContainer[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 165.619,
+    "computedY" : 363.715,
+    "placementX" : 165.619,
+    "placementY" : 363.715,
+    "placementWidth" : 193.024,
+    "placementHeight" : 9.62,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 193.024,
+    "contentHeight" : 9.62,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[4]/HContainer[0]/Element[1]",
+    "entityName" : null,
+    "entityKind" : "Element",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[4]/HContainer[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 157.619,
+    "computedY" : 372.335,
+    "placementX" : 157.619,
+    "placementY" : 372.335,
+    "placementWidth" : 8.0,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 8.0,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[4]/HContainer[0]/VContainer[2]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[4]/HContainer[0]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 18.0,
+    "computedY" : 364.825,
+    "placementX" : 18.0,
+    "placementY" : 364.825,
+    "placementWidth" : 139.619,
+    "placementHeight" : 8.51,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 139.619,
+    "contentHeight" : 8.51,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[4]/HContainer[0]/VContainer[2]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[4]/HContainer[0]/VContainer[2]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 18.0,
+    "computedY" : 364.825,
+    "placementX" : 18.0,
+    "placementY" : 364.825,
+    "placementWidth" : 139.619,
+    "placementHeight" : 8.51,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 139.619,
+    "contentHeight" : 8.51,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[4]/TextComponent[1]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueEducation[4]/VContainer[4]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 353.635,
+    "placementX" : 18.0,
+    "placementY" : 353.635,
+    "placementWidth" : 157.373,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 157.373,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueSkills[5]",
+    "entityName" : "EditorialBlueSkills",
+    "entityKind" : "Module",
+    "parentPath" : "EditorialBlueRoot[0]",
+    "childIndex" : 5,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 266.3,
+    "placementX" : 18.0,
+    "placementY" : 266.3,
+    "placementWidth" : 559.276,
+    "placementHeight" : 75.335,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 75.335,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueSkills[5]/VContainer[0]",
+    "entityName" : null,
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueSkills[5]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 324.83,
+    "placementX" : 18.0,
+    "placementY" : 324.83,
+    "placementWidth" : 559.276,
+    "placementHeight" : 16.805,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 16.805,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueSkills[5]/VContainer[0]/TextComponent[0]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueSkills[5]/VContainer[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 331.83,
+    "placementX" : 18.0,
+    "placementY" : 331.83,
+    "placementWidth" : 62.434,
+    "placementHeight" : 9.805,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 62.434,
+    "contentHeight" : 9.805,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueSkills[5]/VContainer[0]/Line[1]",
+    "entityName" : null,
+    "entityKind" : "Line",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueSkills[5]/VContainer[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 324.83,
+    "placementX" : 18.0,
+    "placementY" : 324.83,
+    "placementWidth" : 559.276,
+    "placementHeight" : 6.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 6.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 1.0,
+      "right" : 1.0,
+      "bottom" : 1.0,
+      "left" : 1.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueSkills[5]/EditorialBlueSkillsTable[1]",
+    "entityName" : "EditorialBlueSkillsTable",
+    "entityKind" : "VContainer",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueSkills[5]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 266.3,
+    "placementX" : 18.0,
+    "placementY" : 266.3,
+    "placementWidth" : 559.276,
+    "placementHeight" : 55.53,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 55.53,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueSkills[5]/EditorialBlueSkillsTable[1]/EditorialBlueSkillsTable__row_0[0]",
+    "entityName" : "EditorialBlueSkillsTable__row_0",
+    "entityKind" : "TableRow",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueSkills[5]/EditorialBlueSkillsTable[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 303.32,
+    "placementX" : 18.0,
+    "placementY" : 303.32,
+    "placementWidth" : 559.276,
+    "placementHeight" : 18.51,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 18.51,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueSkills[5]/EditorialBlueSkillsTable[1]/EditorialBlueSkillsTable__row_1[1]",
+    "entityName" : "EditorialBlueSkillsTable__row_1",
+    "entityKind" : "TableRow",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueSkills[5]/EditorialBlueSkillsTable[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 284.81,
+    "placementX" : 18.0,
+    "placementY" : 284.81,
+    "placementWidth" : 559.276,
+    "placementHeight" : 18.51,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 18.51,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueSkills[5]/EditorialBlueSkillsTable[1]/EditorialBlueSkillsTable__row_2[2]",
+    "entityName" : "EditorialBlueSkillsTable__row_2",
+    "entityKind" : "TableRow",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueSkills[5]/EditorialBlueSkillsTable[1]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 18.0,
+    "computedY" : 266.3,
+    "placementX" : 18.0,
+    "placementY" : 266.3,
+    "placementWidth" : 559.276,
+    "placementHeight" : 18.51,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 18.51,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueFooter[6]",
+    "entityName" : "EditorialBlueFooter",
+    "entityKind" : "Module",
+    "parentPath" : "EditorialBlueRoot[0]",
+    "childIndex" : 6,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 235.975,
+    "placementX" : 18.0,
+    "placementY" : 235.975,
+    "placementWidth" : 559.276,
+    "placementHeight" : 19.325,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 19.325,
+    "margin" : {
+      "top" : 2.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueFooter[6]/Line[0]",
+    "entityName" : null,
+    "entityKind" : "Line",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueFooter[6]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 18.0,
+    "computedY" : 249.3,
+    "placementX" : 18.0,
+    "placementY" : 249.3,
+    "placementWidth" : 559.276,
+    "placementHeight" : 6.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 559.276,
+    "contentHeight" : 6.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 1.0,
+      "right" : 1.0,
+      "bottom" : 1.0,
+      "left" : 1.0
+    }
+  }, {
+    "path" : "EditorialBlueRoot[0]/EditorialBlueFooter[6]/TextComponent[1]",
+    "entityName" : null,
+    "entityKind" : "TextComponent",
+    "parentPath" : "EditorialBlueRoot[0]/EditorialBlueFooter[6]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 226.853,
+    "computedY" : 235.975,
+    "placementX" : 226.853,
+    "placementY" : 235.975,
+    "placementWidth" : 141.57,
+    "placementHeight" : 8.325,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 141.57,
+    "contentHeight" : 8.325,
+    "margin" : {
+      "top" : 3.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

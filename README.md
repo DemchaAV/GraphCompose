@@ -28,6 +28,8 @@
   ·
   <a href="./docs/implementation-guide.md">Implementation Guide</a>
   ·
+  <a href="./docs/layout-snapshot-testing.md">Layout Snapshot Testing</a>
+  ·
   <a href="./CONTRIBUTING.md">Contributing</a>
 </p>
 
@@ -226,6 +228,27 @@ try (PdfComposer composer = GraphCompose.pdf()
     byte[] pdfBytes = composer.toBytes();
 }
 ```
+
+---
+
+## Testing layout regressions
+
+GraphCompose now supports deterministic post-layout JSON snapshots through `PdfComposer.layoutSnapshot()`.
+
+Use them to catch geometry regressions before a developer has to inspect the rendered PDF by eye:
+
+- compare resolved coordinates, page spans, and ordering
+- keep committed baselines under `src/test/resources/layout-snapshots`
+- inspect mismatches under `target/visual-tests/layout-snapshots`
+- update expected baselines locally with `-Dgraphcompose.updateSnapshots=true`
+
+The recommended developer flow is:
+
+1. unit tests for isolated geometry rules
+2. layout snapshot tests for full-document layout regressions
+3. PDF render tests for human-readable visual confirmation
+
+See [Layout Snapshot Testing](./docs/layout-snapshot-testing.md) for the workflow and examples.
 
 ---
 

@@ -51,11 +51,21 @@ These rules reflect the current engine design and should be treated as project p
 - Keep `src/main/java/com/demcha/compose/layout_core/components/*` free of `org.apache.pdfbox` and `...implemented_systems.pdf_systems` imports.
 - When you add a new render marker, register its handler in `PdfRenderingSystemECS` and add/update dispatch coverage.
 
+For built-in templates, use the template-layer split as project policy as well:
+
+- public template contracts are compose-first: prefer `compose(DocumentComposer, ...)` over direct PDF-returning APIs
+- built-in template classes in `src/main/java/com/demcha/templates/builtins/` should stay thin backend adapters
+- document structure and scene assembly belong in dedicated backend-neutral scene builder classes
+- keep PDF-only setup in the adapter class: page size, margins, `GraphCompose.pdf(...)`, `composer.toPDDocument()`, and `composer.build()`
+- do not import `PDDocument`, `PDPage`, `PDRectangle`, or `PdfComposer` into scene builder classes
+- keep deprecated `render(...)` methods working for compatibility, but do not add new template features only through the PDF-centric path
+
 The current guard rails for these rules live in:
 
 - [EnginePdfBoundaryTest.java](./src/test/java/com/demcha/compose/layout_core/architecture/EnginePdfBoundaryTest.java)
 - [LegacyPdfRenderAllowlistTest.java](./src/test/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/LegacyPdfRenderAllowlistTest.java)
 - [PdfRenderingSystemECSDispatchTest.java](./src/test/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderingSystemECSDispatchTest.java)
+- [DocumentationExamplesTest.java](./src/test/java/com/demcha/documentation/DocumentationExamplesTest.java)
 
 ## Adding or changing engine objects
 

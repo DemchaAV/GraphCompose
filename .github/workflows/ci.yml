@@ -29,5 +29,8 @@ jobs:
           java-version: '21'
           cache: maven
 
+      - name: Architecture and Documentation Guards
+        run: mvn -B -ntp "-Dtest=EnginePdfBoundaryTest,LegacyPdfRenderAllowlistTest,PdfRenderingSystemECSDispatchTest,DocumentationExamplesTest" test
+
       - name: Build and run tests
         run: mvn -B -ntp verify

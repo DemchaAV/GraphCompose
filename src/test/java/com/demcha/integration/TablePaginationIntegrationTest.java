@@ -10,6 +10,7 @@ import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.layout.coordinator.Placement;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.testing.layout.LayoutSnapshotAssertions;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -53,6 +54,7 @@ class TablePaginationIntegrationTest {
             }
 
             table = builder.build();
+            LayoutSnapshotAssertions.assertMatches(composer, "table_pagination_test", "integration");
             composer.build();
 
             for (Entity row : table.getComponent(TableLayoutData.class).orElseThrow().rowEntities()) {

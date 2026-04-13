@@ -18,6 +18,8 @@ In short, the runtime pipeline is:
 
 That separation is the core project concept. Builders describe intent, components hold the data, layout resolves geometry, and renderers only draw already-resolved output.
 
+The same separation also enables layout snapshot regression tests. Test code can inspect the resolved document after layout and pagination, before rendering, through `PdfComposer.layoutSnapshot()`.
+
 For pagination-sensitive trees, GraphCompose relies on a child-first page-breaking order. Fixed leaf objects are resolved before their parent containers so parent `ContentSize` can reflect child shifts before container placement is finalized.
 
 See [pagination-ordering.md](./pagination-ordering.md) for the detailed explanation of why this rule exists and how ordering bugs can look like render bugs.
@@ -95,3 +97,13 @@ Fixed leaf primitives such as `Rectangle`, `Circle`, `Image`, and `Line` follow 
 
 - `dev-tools/` contains local developer helpers and maintenance scripts.
 - Files in `dev-tools/` are not part of the runtime library API or the published Maven artifact.
+
+## Regression testing pyramid
+
+GraphCompose now uses a practical three-layer regression strategy:
+
+1. layout math unit tests for isolated calculations
+2. layout snapshot tests for deterministic full-document geometry checks
+3. PDF render tests for visual smoke coverage and artifact inspection
+
+See [layout-snapshot-testing.md](./layout-snapshot-testing.md) for the snapshot workflow and developer conventions.

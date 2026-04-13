@@ -258,6 +258,20 @@ Preferred extension pattern for new backends:
 1. keep engine components as format-neutral render markers
 2. register a backend-specific `TextMeasurementSystem`
 3. register renderer-side handlers for marker types
+
+## Testing layout-sensitive changes
+
+When a feature can affect resolved coordinates, layering, child order, or pagination, add or update a layout snapshot test in addition to any unit tests.
+
+Recommended rule:
+
+- unit tests prove the local math
+- layout snapshot tests prove the composed document geometry
+- PDF render tests prove the final backend output still looks sane
+
+Prefer pairing a snapshot assertion with an existing render test when the document is complex or business-critical.
+
+See [layout-snapshot-testing.md](./layout-snapshot-testing.md) for the baseline locations, update flow, and concrete examples.
 4. use legacy `PdfRender` / `WordRender` only as temporary fallback during migration
 
 Important files:

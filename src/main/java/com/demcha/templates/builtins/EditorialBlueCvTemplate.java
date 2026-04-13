@@ -101,11 +101,9 @@ public class EditorialBlueCvTemplate implements CvTemplate {
 
     @Override
     public PDDocument render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, boolean guideLines) {
-        MainPageCV data = rewrittenCv.merge(originalCv);
-
         try {
             PdfComposer composer = createComposer(null, guideLines);
-            designDocument(composer, data);
+            compose(composer, originalCv, rewrittenCv);
             return composer.toPDDocument();
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate editorial CV", e);
@@ -119,10 +117,8 @@ public class EditorialBlueCvTemplate implements CvTemplate {
 
     @Override
     public void render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, Path path, boolean guideLines) {
-        MainPageCV data = rewrittenCv.merge(originalCv);
-
         try (PdfComposer composer = createComposer(path, guideLines)) {
-            designDocument(composer, data);
+            compose(composer, originalCv, rewrittenCv);
             composer.build();
             log.info("File has been saved to {}", path.toAbsolutePath());
         } catch (Exception e) {
@@ -152,6 +148,10 @@ public class EditorialBlueCvTemplate implements CvTemplate {
                 .markdown(true)
                 .guideLines(guideLines)
                 .create();
+    }
+
+    void compose(DocumentComposer composer, MainPageCV originalCv, MainPageCvDTO rewrittenCv) {
+        designDocument(composer, rewrittenCv.merge(originalCv));
     }
 
     private void designDocument(DocumentComposer composer, MainPageCV data) {

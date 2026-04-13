@@ -74,7 +74,7 @@ public class ProposalTemplateV1 implements ProposalTemplate {
     public PDDocument render(ProposalData data, boolean guideLines) {
         try {
             PdfComposer composer = createComposer(null, guideLines);
-            designDocument(composer, safeData(data));
+            compose(composer, data);
             return composer.toPDDocument();
         } catch (Exception ex) {
             throw new RuntimeException("Failed to generate proposal", ex);
@@ -89,7 +89,7 @@ public class ProposalTemplateV1 implements ProposalTemplate {
     @Override
     public void render(ProposalData data, Path path, boolean guideLines) {
         try (PdfComposer composer = createComposer(path, guideLines)) {
-            designDocument(composer, safeData(data));
+            compose(composer, data);
             composer.build();
             log.info("Proposal saved to {}", path.toAbsolutePath());
         } catch (Exception ex) {
@@ -104,6 +104,10 @@ public class ProposalTemplateV1 implements ProposalTemplate {
                 .markdown(true)
                 .guideLines(guideLines)
                 .create();
+    }
+
+    void compose(DocumentComposer composer, ProposalData data) {
+        designDocument(composer, safeData(data));
     }
 
     private void designDocument(DocumentComposer composer, ProposalData data) {

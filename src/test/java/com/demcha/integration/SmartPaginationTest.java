@@ -5,6 +5,7 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.testing.layout.LayoutSnapshotAssertions;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -48,6 +49,7 @@ public class SmartPaginationTest {
                     .addChild(massiveTextModule)
                     .build();
 
+            LayoutSnapshotAssertions.assertMatches(composer, "massive_text", "integration");
             composer.build();
         }
 
@@ -78,6 +80,7 @@ public class SmartPaginationTest {
                 .addChild(cb.rectangle().size(500, 300).fillColor(ComponentColor.BLUE).build())
                 .build();
 
+            LayoutSnapshotAssertions.assertMatches(composer, "container_split", "integration");
             composer.build();
         }
 

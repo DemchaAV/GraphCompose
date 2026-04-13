@@ -396,6 +396,19 @@ Start with [docs/implementation-guide.md](./docs/implementation-guide.md). The s
 - add `Breakable` only when the entity itself can continue across pages
 - register the new builder as a factory method on `ComponentBuilder`
 
+### Contributor rules for engine changes
+
+When you add or refactor engine features, follow these project rules:
+
+- engine renderables are backend-neutral markers; they implement `Render` and describe intent, but do not draw directly
+- PDF drawing belongs in `src/main/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/handlers/*`
+- PDF-only helper objects that are not entity render markers belong in `...pdf_systems/helpers/*`
+- builders and layout helpers must use `TextMeasurementSystem` for text width and line metrics instead of reaching into renderer internals
+- `layout_core/components/*` should stay free of PDFBox and `...pdf_systems` imports
+- new render markers should be wired into `PdfRenderingSystemECS` and covered by at least one dispatch-oriented test
+
+If you are contributing new engine objects, read [CONTRIBUTING.md](./CONTRIBUTING.md), [docs/architecture.md](./docs/architecture.md), and [docs/implementation-guide.md](./docs/implementation-guide.md) together before coding.
+
 ---
 
 ## Performance and benchmarks
@@ -520,7 +533,7 @@ Source: `src/test/java/com/demcha/compose/EnduranceTest.java`
 
 ## Contributing
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for the current workflow and [docs/implementation-guide.md](./docs/implementation-guide.md) for extension-oriented guidance.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the current workflow and contributor rules, and [docs/implementation-guide.md](./docs/implementation-guide.md) for extension-oriented guidance.
 
 ---
 

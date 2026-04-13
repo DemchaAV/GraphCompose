@@ -40,6 +40,23 @@ They explain the current public surface, the engine/template split, and the reco
 3. If you touch public examples or screenshots, update the related docs in the same change.
 4. Run the smallest relevant tests while iterating, then run `mvn test` before opening a pull request.
 
+## Contributor architecture rules
+
+These rules reflect the current engine design and should be treated as project policy, not just suggestions.
+
+- Engine render markers must implement backend-neutral `Render`. Do not add backend-specific render interfaces back into `layout_core/components`.
+- Rendering logic for PDF belongs in `src/main/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/handlers/`.
+- Backend-only helper objects belong in renderer-owned helper packages such as `...pdf_systems/helpers/`, not in `components/renderable`.
+- Builders and layout code must get text width and line metrics from `TextMeasurementSystem`, not from `LayoutSystem -> RenderingSystem`, `PdfFont`, or PDFBox objects.
+- Keep `src/main/java/com/demcha/compose/layout_core/components/*` free of `org.apache.pdfbox` and `...implemented_systems.pdf_systems` imports.
+- When you add a new render marker, register its handler in `PdfRenderingSystemECS` and add/update dispatch coverage.
+
+The current guard rails for these rules live in:
+
+- [EnginePdfBoundaryTest.java](./src/test/java/com/demcha/compose/layout_core/architecture/EnginePdfBoundaryTest.java)
+- [LegacyPdfRenderAllowlistTest.java](./src/test/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/LegacyPdfRenderAllowlistTest.java)
+- [PdfRenderingSystemECSDispatchTest.java](./src/test/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderingSystemECSDispatchTest.java)
+
 ## Adding or changing engine objects
 
 If you add a new engine object, decide first what kind of object it is.
@@ -58,7 +75,7 @@ For a visible object, the implementation usually needs all of the following:
 - the components that describe content and style
 - a size signal such as `ContentSize`
 - layout metadata such as `Anchor`, `Margin`, `Padding`, and parent/child links when needed
-- a renderable component that the renderer understands
+- a backend-neutral renderable marker plus a backend-owned render handler
 
 Marker rule of thumb:
 
@@ -70,6 +87,12 @@ The layout pass is driven by components and entity relationships, not by builder
 
 - [LayoutSystem.java](./src/main/java/com/demcha/compose/layout_core/system/LayoutSystem.java)
 - [PdfRenderingSystemECS.java](./src/main/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderingSystemECS.java)
+
+For text-heavy objects, also read:
+
+- [TextMeasurementSystem.java](./src/main/java/com/demcha/compose/layout_core/system/interfaces/TextMeasurementSystem.java)
+- [docs/architecture.md](./docs/architecture.md)
+- [docs/implementation-guide.md](./docs/implementation-guide.md)
 
 If the object should be available from `composer.componentBuilder()`, add a factory method to [ComponentBuilder.java](./src/main/java/com/demcha/compose/layout_core/components/components_builders/ComponentBuilder.java).
 
@@ -90,8 +113,13 @@ Choose the smallest tests that match the change:
 
 - For README or docs examples:
   [DocumentationExamplesTest.java](./src/test/java/com/demcha/documentation/DocumentationExamplesTest.java)
+- For engine/backend boundary changes:
+  [EnginePdfBoundaryTest.java](./src/test/java/com/demcha/compose/layout_core/architecture/EnginePdfBoundaryTest.java)
+  [LegacyPdfRenderAllowlistTest.java](./src/test/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/LegacyPdfRenderAllowlistTest.java)
 - For public builder registration or factory changes:
   [ComponentBuilderTest.java](./src/test/java/com/demcha/compose/layout_core/components/ComponentBuilderTest.java)
+- For render-marker dispatch changes:
+  [PdfRenderingSystemECSDispatchTest.java](./src/test/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderingSystemECSDispatchTest.java)
 - For layout/positioning behavior:
   [ComputedPositionTest.java](./src/test/java/com/demcha/components/layout/ComputedPositionTest.java)
 - For pagination and multi-page behavior:
@@ -118,7 +146,7 @@ If a change affects resolved geometry, pagination, or ordering, prefer adding or
 - Keep [README.md](./README.md) aligned with the tested examples.
 - Keep benchmark values clearly dated when they are refreshed.
 - Keep `assets/readme/*` screenshots consistent with the current render outputs.
-- If you add a new extension point or contribution pattern, update [docs/implementation-guide.md](./docs/implementation-guide.md) as part of the same change.
+- If you add a new extension point or contribution pattern, update [README.md](./README.md), [docs/architecture.md](./docs/architecture.md), and [docs/implementation-guide.md](./docs/implementation-guide.md) as part of the same change.
 - Visual PDF artifacts are grouped under `target/visual-tests/clean/*` and `target/visual-tests/guides/*` so guide-line renders are easy to find separately from clean outputs.
 
 ## Package naming

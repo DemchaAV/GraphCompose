@@ -56,7 +56,6 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
         this.doc = doc;
         this.imageCache = new PdfImageCache(doc);
         guidesRendererInitializer(new PdfGuidesRenderer(this));
-        this.fontClazz = PdfFont.class;
         renderHandlers().register(new PdfBlockTextRenderHandler());
         renderHandlers().register(new PdfCircleRenderHandler());
         renderHandlers().register(new PdfChunkedBlockTextRenderHandler());

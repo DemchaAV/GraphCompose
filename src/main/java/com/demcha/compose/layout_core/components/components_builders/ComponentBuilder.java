@@ -7,7 +7,6 @@ import com.demcha.compose.layout_core.components.geometry.InnerBoxSize;
 import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.core.Canvas;
 import com.demcha.compose.layout_core.core.EntityManager;
-import org.apache.pdfbox.pdmodel.PDPage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -131,14 +130,6 @@ public class ComponentBuilder {
      */
     public ModuleBuilder moduleBuilder(Align align, InnerBoxSize innerBoxSize) {
         return register(new ModuleBuilder(entityManager, align, innerBoxSize));
-    }
-
-    /**
-     * Creates a semantic section module with a root-width seed based on a PDF
-     * page width.
-     */
-    public ModuleBuilder moduleBuilder(Align align, PDPage page) {
-        return register(new ModuleBuilder(entityManager, align, page));
     }
 
     /**

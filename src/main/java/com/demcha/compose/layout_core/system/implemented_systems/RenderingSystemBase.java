@@ -5,7 +5,6 @@ import com.demcha.compose.layout_core.components.content.shape.Side;
 import com.demcha.compose.layout_core.components.layout.coordinator.RenderCoordinateContext;
 import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.system.GuidLineSettings;
-import com.demcha.compose.layout_core.system.interfaces.Font;
 import com.demcha.compose.layout_core.system.interfaces.RenderStream;
 import com.demcha.compose.layout_core.system.interfaces.RenderingSystemECS;
 import com.demcha.compose.layout_core.system.interfaces.guides.GuidesRenderer;
@@ -32,7 +31,6 @@ public abstract class RenderingSystemBase<T extends AutoCloseable> implements Re
     protected final GuidLineSettings guidLineSettings;
     protected final RenderStream<T> stream;
     protected GuidesRenderer<T> guidesRenderer;
-    public Class<? extends Font<?>> fontClazz;
     protected final RenderHandlerRegistry renderHandlers = new RenderHandlerRegistry();
 
 

@@ -267,11 +267,11 @@ Important files:
 
 Migration rule for new engine components:
 
-- implement backend-neutral `Render`, not `PdfRender`
+- implement backend-neutral `Render`, not backend-specific render interfaces
 - move PDF drawing into `...pdf_systems.handlers`
 - use `TextMeasurementSystem` for text width and line metrics instead of reaching through `LayoutSystem`
 - place PDF-only helper objects in `...pdf_systems.helpers`
-- register a render handler for every engine render marker because the PDF entity path no longer supports a `PdfRender` fallback
+- register a render handler for every engine render marker because the PDF entity path no longer supports a backend-specific render fallback
 
 The practical rule is:
 

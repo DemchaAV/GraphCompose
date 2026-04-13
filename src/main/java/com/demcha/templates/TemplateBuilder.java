@@ -22,7 +22,6 @@ import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.core.Canvas;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import org.apache.pdfbox.pdmodel.PDPage;
 
 import java.util.List;
 import java.util.Objects;
@@ -158,15 +157,6 @@ public class TemplateBuilder {
                 .build();
     }
 
-    public ModuleBuilder moduleBuilder(String moduleName, PDPage page) {
-        var moduleHeader = componentBuilder.moduleBuilder(Align.middle(5), page)
-                .margin(Margin.of(20))
-                .anchor(Anchor.topRight());
-
-        addModuleTitleIfPresent(moduleHeader, moduleName);
-        return moduleHeader;
-    }
-
     public ModuleBuilder moduleBuilder(String moduleName, Canvas canvas) {
         var moduleHeader = componentBuilder.moduleBuilder(Align.middle(theme().spacingModuleName()), canvas)
                 .anchor(Anchor.topLeft());
@@ -192,11 +182,6 @@ public class TemplateBuilder {
         moduleHeader.addChild(vbox.build());
 
         return moduleHeader;
-    }
-
-    // Overloads for convenience
-    public ModuleBuilder moduleBuilder(PDPage page) {
-        return moduleBuilder(null, page);
     }
 
     public ModuleBuilder moduleBuilder(Canvas canvas) {

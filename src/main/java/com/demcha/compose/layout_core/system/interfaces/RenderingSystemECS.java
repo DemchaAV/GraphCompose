@@ -18,7 +18,6 @@ public interface RenderingSystemECS<S extends AutoCloseable> extends SystemECS {
     <T extends Canvas> T canvas();
 
     GuidesRenderer<S> guidesRenderer();
-    Class<? extends Font<?>> fontClazz();
     RenderHandlerRegistry renderHandlers();
 
     <T extends RenderStream<S>> T stream();

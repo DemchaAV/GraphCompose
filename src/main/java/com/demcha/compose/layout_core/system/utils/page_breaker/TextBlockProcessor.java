@@ -15,6 +15,7 @@ import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.Canvas;
 import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.exceptions.BigSizeElementException;
+import com.demcha.compose.layout_core.system.interfaces.TextMeasurementSystem;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -68,11 +69,11 @@ public class TextBlockProcessor {
         BlockText.ValidatedTextData validateText = getValidatedTextData(e);
         var blockTextData = validateText.textValue().lines();
 
-        List<BlockTextLineMetrics.LineMetrics> lineMetrics = BlockTextLineMetrics.resolveLineMetrics(
+        List<TextMeasurementSystem.LineMetrics> lineMetrics = BlockTextLineMetrics.resolveLineMetrics(
                 pageLayoutCalculator.getEntityManager(),
                 blockTextData,
                 validateText.style());
-        BlockTextLineMetrics.LineMetrics baseMetrics = BlockTextLineMetrics.resolveStyleMetrics(
+        TextMeasurementSystem.LineMetrics baseMetrics = BlockTextLineMetrics.resolveStyleMetrics(
                 pageLayoutCalculator.getEntityManager(),
                 validateText.style());
 
@@ -92,7 +93,7 @@ public class TextBlockProcessor {
 
         for (int i = 0; i < blockTextData.size(); i++) {
             LineTextData ltd = blockTextData.get(i);
-            BlockTextLineMetrics.LineMetrics metrics = lineMetrics.get(i);
+            TextMeasurementSystem.LineMetrics metrics = lineMetrics.get(i);
             double currentX = ltd.x() + startX;
             double baselineY = cursorTop - (metrics.ascent() + metrics.leading());
 
@@ -125,7 +126,7 @@ public class TextBlockProcessor {
 
         BlockText.ValidatedTextData validatedTextData = getValidatedTextData(entity);
         var blockTextData = validatedTextData.textValue().lines();
-        List<BlockTextLineMetrics.LineMetrics> lineMetrics = BlockTextLineMetrics.resolveLineMetrics(
+        List<TextMeasurementSystem.LineMetrics> lineMetrics = BlockTextLineMetrics.resolveLineMetrics(
                 pageLayoutCalculator.getEntityManager(),
                 blockTextData,
                 validatedTextData.style());
@@ -141,7 +142,7 @@ public class TextBlockProcessor {
 
         for (int i = 0; i < blockTextData.size(); i++) {
             LineTextData ltd = blockTextData.get(i);
-            BlockTextLineMetrics.LineMetrics metrics = lineMetrics.get(i);
+            TextMeasurementSystem.LineMetrics metrics = lineMetrics.get(i);
             double currentBottomY = ltd.y() - metrics.baselineOffsetFromBottom() + yOffset.y() + entityYOffset.y();
 
             YPositionOnPage yPositionOnPage = definePositionOnPage(

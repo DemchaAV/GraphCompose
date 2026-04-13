@@ -1,9 +1,7 @@
 package com.demcha.compose.layout_core.components.content.text;
 
 import com.demcha.compose.layout_core.core.EntityManager;
-import com.demcha.compose.layout_core.system.LayoutSystem;
-import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFont;
-import com.demcha.compose.layout_core.system.interfaces.Font;
+import com.demcha.compose.layout_core.system.interfaces.TextMeasurementSystem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,29 +15,14 @@ public final class BlockTextLineMetrics {
     private BlockTextLineMetrics() {
     }
 
-    public static LineMetrics resolveStyleMetrics(EntityManager entityManager, TextStyle style) {
+    public static TextMeasurementSystem.LineMetrics resolveStyleMetrics(EntityManager entityManager, TextStyle style) {
         TextStyle safeStyle = style == null ? TextStyle.DEFAULT_STYLE : style;
-        @SuppressWarnings("unchecked")
-        Class<? extends Font<?>> fontClass = (Class<? extends Font<?>>) entityManager.getSystems()
-                .getSystem(LayoutSystem.class)
-                .orElseThrow(() -> new IllegalStateException("LayoutSystem is required to resolve text metrics"))
-                .getRenderingSystem()
-                .fontClazz();
-
-        Font<?> font = (Font<?>) entityManager.getFonts()
-                .getFont(safeStyle.fontName(), fontClass)
-                .orElseThrow(() -> new IllegalStateException("Font is not registered: " + safeStyle.fontName()));
-
-        if (font instanceof PdfFont pdfFont) {
-            PdfFont.VerticalMetrics metrics = pdfFont.verticalMetrics(safeStyle);
-            return new LineMetrics(metrics.ascent(), metrics.descent(), metrics.leading());
-        }
-
-        double lineHeight = Math.max(0.0, font.getLineHeight(safeStyle));
-        return new LineMetrics(lineHeight, 0.0, 0.0);
+        return measurementSystem(entityManager).lineMetrics(safeStyle);
     }
 
-    public static LineMetrics resolveLineMetrics(EntityManager entityManager, LineTextData line, TextStyle fallbackStyle) {
+    public static TextMeasurementSystem.LineMetrics resolveLineMetrics(EntityManager entityManager,
+                                                                       LineTextData line,
+                                                                       TextStyle fallbackStyle) {
         if (line == null || line.bodies().isEmpty()) {
             return resolveStyleMetrics(entityManager, fallbackStyle);
         }
@@ -59,7 +42,7 @@ public final class BlockTextLineMetrics {
                 continue;
             }
 
-            LineMetrics metrics = resolveStyleMetrics(entityManager, style);
+            TextMeasurementSystem.LineMetrics metrics = resolveStyleMetrics(entityManager, style);
             ascent = Math.max(ascent, metrics.ascent());
             descent = Math.max(descent, metrics.descent());
             leading = Math.max(leading, metrics.leading());
@@ -70,44 +53,29 @@ public final class BlockTextLineMetrics {
             return resolveStyleMetrics(entityManager, fallbackStyle);
         }
 
-        return new LineMetrics(ascent, descent, leading);
+        return new TextMeasurementSystem.LineMetrics(ascent, descent, leading);
     }
 
-    public static List<LineMetrics> resolveLineMetrics(EntityManager entityManager,
-                                                       List<LineTextData> lines,
-                                                       TextStyle fallbackStyle) {
-        List<LineMetrics> result = new ArrayList<>(lines.size());
+    public static List<TextMeasurementSystem.LineMetrics> resolveLineMetrics(EntityManager entityManager,
+                                                                              List<LineTextData> lines,
+                                                                              TextStyle fallbackStyle) {
+        List<TextMeasurementSystem.LineMetrics> result = new ArrayList<>(lines.size());
         for (LineTextData line : lines) {
             result.add(resolveLineMetrics(entityManager, line, fallbackStyle));
         }
         return result;
     }
 
-    public static double interLineGap(LineMetrics previous,
-                                      LineMetrics next,
-                                      LineMetrics base,
+    public static double interLineGap(TextMeasurementSystem.LineMetrics previous,
+                                      TextMeasurementSystem.LineMetrics next,
+                                      TextMeasurementSystem.LineMetrics base,
                                       double spacing) {
         return spacing + previous.outerGap(base) / 2.0 + next.outerGap(base) / 2.0;
     }
 
-    public record LineMetrics(double ascent, double descent, double leading) {
-        public double lineHeight() {
-            return ascent + descent + leading;
-        }
-
-        public double baselineOffsetFromBottom() {
-            return descent;
-        }
-
-        /**
-         * Larger markdown lines such as headings get a small outer gap so they
-         * visually breathe before and after neighboring body lines.
-         */
-        public double outerGap(LineMetrics base) {
-            if (base == null) {
-                return 0.0;
-            }
-            return Math.max(0.0, lineHeight() - base.lineHeight()) / 2.0;
-        }
+    private static TextMeasurementSystem measurementSystem(EntityManager entityManager) {
+        return entityManager.getSystems()
+                .getSystem(TextMeasurementSystem.class)
+                .orElseThrow(() -> new IllegalStateException("TextMeasurementSystem is required to resolve block text metrics."));
     }
 }

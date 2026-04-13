@@ -12,11 +12,8 @@ import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.EntityManager;
-import com.demcha.compose.layout_core.system.LayoutSystem;
-import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfCanvas;
-import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfRenderingSystemECS;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFont;
+import com.demcha.compose.layout_core.system.measurement.FontLibraryTextMeasurementSystem;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -31,11 +28,7 @@ class BlockTextBuilderTest {
         @BeforeEach
         void setUp() {
                 entityManager = new EntityManager();
-                PDDocument doc = new PDDocument();
-                PdfCanvas canvas = new PdfCanvas(PDRectangle.A4, 0.0f);
-                PdfRenderingSystemECS renderingSystemECS = new PdfRenderingSystemECS(doc, canvas);
-                entityManager.getSystems().addSystem(new LayoutSystem(canvas, renderingSystemECS));
-                entityManager.getSystems().addSystem(renderingSystemECS);
+                entityManager.getSystems().addSystem(new FontLibraryTextMeasurementSystem(entityManager.getFonts(), PdfFont.class));
                 entityManager.setMarkdown(true);
         }
 
@@ -131,5 +124,26 @@ class BlockTextBuilderTest {
 
                 assertTrue(headingHeight > plainHeight,
                                 "Heading line should enlarge ContentSize before rendering so containers reserve more height");
+        }
+
+        @Test
+        void shouldBuildBlockTextWithoutLayoutSystemWhenMeasurementSystemIsRegistered() {
+                TextStyle textStyle = TextStyle.builder()
+                                .size(10)
+                                .color(ComponentColor.BLACK)
+                                .fontName(FontName.HELVETICA)
+                                .decoration(TextDecoration.DEFAULT)
+                                .build();
+
+                Entity entity = new BlockTextBuilder(entityManager, Align.left(2.0), textStyle)
+                                .size(new ContentSize(320, 100))
+                                .padding(Padding.zero())
+                                .margin(Margin.zero())
+                                .anchor(Anchor.topLeft())
+                                .text(List.of("Line one\n# Heading\nLine three"), textStyle, Padding.zero(), Margin.zero())
+                                .build();
+
+                assertTrue(entity.getComponent(BlockTextData.class).isPresent());
+                assertTrue(entity.getComponent(ContentSize.class).isPresent());
         }
 }

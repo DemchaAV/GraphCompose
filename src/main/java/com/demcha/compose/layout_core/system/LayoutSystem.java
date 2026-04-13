@@ -23,6 +23,7 @@ import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.exceptions.BigSizeElementException;
 import com.demcha.compose.layout_core.system.interfaces.RenderingSystemECS;
 import com.demcha.compose.layout_core.system.interfaces.SystemECS;
+import com.demcha.compose.layout_core.system.interfaces.TextMeasurementSystem;
 import com.demcha.compose.layout_core.system.utils.containerUtils.ContainerExpander;
 import com.demcha.compose.layout_core.system.utils.containerUtils.ContainerLayoutManager;
 import com.demcha.compose.layout_core.system.utils.containerUtils.ModuleWidthResolver;
@@ -379,22 +380,24 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
         var size = blockTextBox.getComponent(ContentSize.class).orElseThrow();
         var padding = blockTextBox.getComponent(Padding.class).orElse(Padding.zero());
         TextStyle style = blockTextBox.getComponent(TextStyle.class).orElseThrow();
-
-        var font = entityManager.getFonts().getFont(style.fontName(), renderingSystem.fontClazz()).orElseThrow();
+        TextMeasurementSystem measurementSystem = entityManager.getSystems()
+                .getSystem(TextMeasurementSystem.class)
+                .orElseThrow(() -> new IllegalStateException("TextMeasurementSystem is required to align block text."));
 
         var lines = component.lines();
         for (LineTextData line : lines) {
+            double lineWidth = line.width(measurementSystem, style);
             switch (align.h()) {
                 case LEFT -> {
                     double x = line.x() + padding.left();
                     line.x(x);
                 }
                 case RIGHT -> {
-                    double x = size.width() - line.width(font) - padding.right();
+                    double x = size.width() - lineWidth - padding.right();
                     line.x(x);
                 }
                 case CENTER -> {
-                    double x = (size.width() - line.width(font) + padding.left()) / 2;
+                    double x = (size.width() - lineWidth + padding.left()) / 2;
                     line.x(x);
                 }
 

@@ -279,6 +279,13 @@ Important files:
 - [Render.java](./../src/main/java/com/demcha/compose/layout_core/system/interfaces/Render.java)
 - [PdfRenderingSystemECS.java](./../src/main/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderingSystemECS.java)
 
+Migration rule for new engine components:
+
+- implement backend-neutral `Render`, not `PdfRender`
+- move PDF drawing into `...pdf_systems.handlers`
+- use `TextMeasurementSystem` for text width and line metrics instead of reaching through `LayoutSystem`
+- treat `PdfRender` only as a temporary migration fallback for the explicit legacy allowlist
+
 The practical rule is:
 
 - the builder creates the entity and attaches the right renderable component

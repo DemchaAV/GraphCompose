@@ -200,13 +200,44 @@ try (PdfComposer composer = GraphCompose.pdf()
 }
 ```
 
-### Template layer
+### Built-in templates (compose-first)
 
 ```java
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.layout_core.core.DocumentComposer;
+import com.demcha.templates.api.InvoiceTemplate;
+import com.demcha.templates.builtins.InvoiceTemplateV1;
+import com.demcha.templates.data.InvoiceData;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+
+import java.nio.file.Path;
+
+InvoiceData invoiceData = ...;
+InvoiceTemplate template = new InvoiceTemplateV1();
+
+try (DocumentComposer composer = GraphCompose.pdf(Path.of("invoice.pdf"))
+        .pageSize(PDRectangle.A4)
+        .margin(22, 22, 22, 22)
+        .markdown(true)
+        .create()) {
+
+    template.compose(composer, invoiceData);
+    composer.build();
+}
+```
+
+The deprecated `render(...)` overloads remain available as convenience adapters for older integrations, but new examples should call `compose(...)` against an explicit `DocumentComposer`.
+
+### Lower-level template builder
+
+```java
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.layout_core.core.DocumentComposer;
 import com.demcha.templates.CvTheme;
 import com.demcha.templates.TemplateBuilder;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
-try (PdfComposer composer = GraphCompose.pdf()
+try (DocumentComposer composer = GraphCompose.pdf()
         .pageSize(PDRectangle.A4)
         .margin(24, 24, 24, 24)
         .create()) {
@@ -257,18 +288,21 @@ See [Layout Snapshot Testing](./docs/layout-snapshot-testing.md) for the workflo
 
 ## Runnable examples
 
-The repository includes a standalone [`examples/`](./examples) module with file-render demos for:
+The repository includes a standalone [`examples/`](./examples) module with compose-first file demos for:
 
 - CV
 - cover letter
 - invoice
 - proposal
+- weekly schedule
+
+Each example creates an explicit `DocumentComposer`, calls `template.compose(...)`, then finalizes with `composer.build()`.
 
 Typical workflow:
 
 ```powershell
 mvn -DskipTests install
-mvn -f examples/pom.xml exec:java -Dexec.mainClass=com.demcha.examples.GenerateAllExamples
+mvn -f examples/pom.xml exec:java '-Dexec.mainClass=com.demcha.examples.GenerateAllExamples'
 ```
 
 Generated PDFs are written to `examples/target/generated-pdfs/`.
@@ -415,6 +449,7 @@ Built-in templates now follow a compose-first split:
 - each built-in template class in `com.demcha.templates.builtins` is a thin PDF adapter responsible for page setup, `GraphCompose.pdf(...)`, and deprecated compatibility `render(...)` methods
 - the actual document composition belongs in a dedicated backend-neutral scene builder such as `CvSceneBuilder`, `InvoiceSceneBuilder`, or `WeeklyScheduleSceneBuilder`
 - scene builders should stay free of `PDDocument`, `PDPage`, `PDRectangle`, and `PdfComposer` imports
+- `TemplateScenePdfBoundaryTest` enforces that `*SceneBuilder` stays free of PDFBox and `PdfComposer` dependencies
 - the deprecated `render(...)` overloads remain supported for compatibility, but new integrations and new built-in templates should extend the compose-first seam
 
 If you are contributing new engine objects, read [CONTRIBUTING.md](./CONTRIBUTING.md), [docs/architecture.md](./docs/architecture.md), and [docs/implementation-guide.md](./docs/implementation-guide.md) together before coding.

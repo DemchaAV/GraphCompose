@@ -1,7 +1,5 @@
 package com.demcha.documentation;
 
-import com.demcha.templates.CvTheme;
-import com.demcha.templates.TemplateBuilder;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.font_library.FontName;
 import com.demcha.compose.layout_core.components.components_builders.ComponentBuilder;
@@ -14,15 +12,24 @@ import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.DocumentComposer;
 import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.mock.InvoiceDataFixtures;
 import com.demcha.testing.VisualTestOutputs;
+import com.demcha.templates.CvTheme;
+import com.demcha.templates.TemplateBuilder;
+import com.demcha.templates.api.InvoiceTemplate;
+import com.demcha.templates.builtins.InvoiceTemplateV1;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -115,6 +122,41 @@ class DocumentationExamplesTest {
     }
 
     @Test
+    void shouldRenderComposeFirstBuiltInTemplateExampleToFile() throws Exception {
+        Path outputFile = VisualTestOutputs.preparePdf("compose-first-invoice-template", "clean", "documentation");
+        InvoiceTemplate template = new InvoiceTemplateV1();
+
+        try (DocumentComposer composer = GraphCompose.pdf(outputFile)
+                .pageSize(PDRectangle.A4)
+                .margin(22, 22, 22, 22)
+                .markdown(true)
+                .create()) {
+            template.compose(composer, InvoiceDataFixtures.standardInvoice());
+            composer.build();
+        }
+
+        assertPdfFileLooksValid(outputFile);
+    }
+
+    @Test
+    void runnableExamplesShouldUseComposeFirstTemplates() throws IOException {
+        Path examplesRoot = Path.of("examples/src/main/java/com/demcha/examples").toAbsolutePath().normalize();
+
+        try (var paths = Files.walk(examplesRoot)) {
+            List<String> violations = new TreeSet<>(paths
+                    .filter(Files::isRegularFile)
+                    .filter(path -> path.toString().endsWith(".java"))
+                    .filter(this::usesDeprecatedRenderShortcut)
+                    .map(path -> examplesRoot.relativize(path).toString().replace('\\', '/'))
+                    .collect(Collectors.toList()))
+                    .stream()
+                    .toList();
+
+            assertThat(violations).isEmpty();
+        }
+    }
+
+    @Test
     void shouldRenderAvailableFontsPreviewExample() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("available-fonts-preview", "clean", "documentation");
 
@@ -177,6 +219,14 @@ class DocumentationExamplesTest {
 
         try (PDDocument saved = Loader.loadPDF(outputFile.toFile())) {
             assertThat(saved.getNumberOfPages()).isGreaterThan(0);
+        }
+    }
+
+    private boolean usesDeprecatedRenderShortcut(Path path) {
+        try {
+            return Files.readString(path).contains(".render(");
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to inspect " + path, e);
         }
     }
 }

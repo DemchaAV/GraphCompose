@@ -16,6 +16,7 @@ They explain the current public surface, the engine/template split, and the reco
 
 - Build the library with `mvn package`.
 - Run the full test suite with `mvn test`.
+- Run the guard-focused suite with `mvn -Dtest=EnginePdfBoundaryTest,TemplateScenePdfBoundaryTest,LegacyPdfRenderAllowlistTest,PdfRenderingSystemECSDispatchTest,DocumentationExamplesTest,TemplateComposeApiTest test`.
 - Run a focused documentation sanity check with `mvn -Dtest=DocumentationExamplesTest test`.
 
 ## Repository map
@@ -59,10 +60,12 @@ For built-in templates, use the template-layer split as project policy as well:
 - keep PDF-only setup in the adapter class: page size, margins, `GraphCompose.pdf(...)`, `composer.toPDDocument()`, and `composer.build()`
 - do not import `PDDocument`, `PDPage`, `PDRectangle`, or `PdfComposer` into scene builder classes
 - keep deprecated `render(...)` methods working for compatibility, but do not add new template features only through the PDF-centric path
+- new README snippets, runnable examples, and integration docs should show `compose(DocumentComposer, ...)` first and mention `render(...)` only as a compatibility shortcut
 
 The current guard rails for these rules live in:
 
 - [EnginePdfBoundaryTest.java](./src/test/java/com/demcha/compose/layout_core/architecture/EnginePdfBoundaryTest.java)
+- [TemplateScenePdfBoundaryTest.java](./src/test/java/com/demcha/templates/architecture/TemplateScenePdfBoundaryTest.java)
 - [LegacyPdfRenderAllowlistTest.java](./src/test/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/LegacyPdfRenderAllowlistTest.java)
 - [PdfRenderingSystemECSDispatchTest.java](./src/test/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderingSystemECSDispatchTest.java)
 - [DocumentationExamplesTest.java](./src/test/java/com/demcha/documentation/DocumentationExamplesTest.java)

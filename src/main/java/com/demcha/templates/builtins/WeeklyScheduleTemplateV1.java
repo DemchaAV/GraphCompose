@@ -90,7 +90,7 @@ public class WeeklyScheduleTemplateV1 implements WeeklyScheduleTemplate {
 
     @Override
     public void compose(DocumentComposer composer, WeeklyScheduleData data) {
-        sceneBuilder.design(composer, data);
+        sceneBuilder.compose(composer, data);
     }
 
     private PDRectangle landscapeA4() {

@@ -55,7 +55,7 @@ final class WeeklyScheduleSceneBuilder {
         this.theme = Objects.requireNonNull(theme, "theme");
     }
 
-    void design(DocumentComposer composer, WeeklyScheduleData data) {
+    void compose(DocumentComposer composer, WeeklyScheduleData data) {
         WeeklyScheduleData safeData = safeData(data);
         validateData(safeData);
 

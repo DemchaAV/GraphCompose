@@ -265,8 +265,14 @@ Practical rules:
 - put `GraphCompose.pdf(...)`, page size selection, margins, `composer.toPDDocument()`, and `composer.build()` in the adapter class
 - put the actual document structure, sections, tables, and block text assembly in the scene builder
 - keep scene builders backend-neutral: no `PDDocument`, `PDPage`, `PDRectangle`, or `PdfComposer` imports
+- keep public examples and integration docs compose-first: show `compose(DocumentComposer, ...)` before any deprecated `render(...)` convenience path
 - pass theme or style collaborators into the scene builder constructor instead of hard-wiring backend assumptions into composition code
 - when a built-in template already has a good scene split, extend that pattern instead of reintroducing backend-specific logic into the composition layer
+
+Current guard rails:
+
+- `TemplateScenePdfBoundaryTest` keeps `*SceneBuilder` classes free of `PDDocument`, `PDPage`, `PDRectangle`, and `PdfComposer`
+- `TemplateComposeApiTest` keeps the compose-first public contract and deprecated compatibility adapters aligned
 
 Rule of thumb:
 

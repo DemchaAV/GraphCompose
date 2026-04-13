@@ -224,24 +224,24 @@ class TemplateCV1RenderTest {
         expanded.setProjects(copyModuleWithExtraPoints(
                 base.getProjects(),
                 List.of(
-                        "GraphCompose Template Extensions | Built reusable CV, proposal, invoice, and cover-letter template layers with markdown-aware block text, theme support, and render validation.",
-                        "Document Preview Tooling | Added local preview workflows, scale resolution helpers, and visual fixtures that shorten iteration time for layout-heavy documents.",
-                        "Developer Experience Improvements | Reduced friction around sample data, test outputs, and template exploration so contributors can validate changes quickly.")));
+                        "**GraphCompose Template Extensions** | Built reusable CV, proposal, invoice, and cover-letter template layers with markdown-aware block text, theme support, and render validation.",
+                        "**Document Preview Tooling** | Added local preview workflows, scale resolution helpers, and visual fixtures that shorten iteration time for layout-heavy documents.",
+                        "**Developer Experience Improvements** | Reduced friction around sample data, test outputs, and template exploration so contributors can validate changes quickly.")));
 
         expanded.setProfessionalExperience(copyModuleWithExtraPoints(
                 base.getProfessionalExperience(),
                 List.of(
-                        "Senior Backend Engineer | Led a multi-quarter modernization effort for internal services, introduced clearer service boundaries, and documented rollout plans for critical migrations.",
-                        "Platform Engineer | Worked closely with product and operations to stabilize releases, improve observability, and simplify deployment pipelines for cross-team tools.",
-                        "Technical Lead | Mentored engineers through design reviews, introduced stronger testing expectations, and maintained delivery momentum during periods of changing requirements.",
-                        "Consulting Engineer | Delivered bespoke automation and reporting features, often combining backend APIs, file generation, and presentation-friendly exports for client teams.")));
+                        "**Senior Backend Engineer** | Led a multi-quarter modernization effort for internal services, introduced clearer service boundaries, and documented rollout plans for critical migrations.",
+                        "**Platform Engineer** | Worked closely with product and operations to stabilize releases, improve observability, and simplify deployment pipelines for cross-team tools.",
+                        "**Technical Lead **| Mentored engineers through design reviews, introduced stronger testing expectations, and maintained delivery momentum during periods of changing requirements.",
+                        "**Consulting Engineer** | Delivered bespoke automation and reporting features, often combining backend APIs, file generation, and presentation-friendly exports for client teams.")));
 
         expanded.setAdditional(copyModuleWithExtraPoints(
                 base.getAdditional(),
                 List.of(
-                        "Languages: Ukrainian (native), English (professional working proficiency).",
-                        "Open-source interests: document tooling, rendering systems, developer productivity, and maintainable test suites.",
-                        "Working style: calm under ambiguity, highly collaborative, and strongly biased toward clear interfaces and observable behaviour.")));
+                        "**Languages:** Ukrainian (native), English (professional working proficiency).",
+                        "**Open-source interests:** document tooling, rendering systems, developer productivity, and maintainable test suites.",
+                        "**Working style:** calm under ambiguity, highly collaborative, and strongly biased toward clear interfaces and observable behaviour.")));
 
         return expanded;
     }

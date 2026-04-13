@@ -15,8 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class LegacyPdfRenderAllowlistTest {
 
     private static final Set<String> ALLOWLIST = Set.of(
-            "src/main/java/com/demcha/compose/layout_core/components/renderable/BlockText.java",
-            "src/main/java/com/demcha/compose/layout_core/components/renderable/Container.java",
             "src/main/java/com/demcha/compose/layout_core/components/renderable/TableCellBox.java"
     );
 

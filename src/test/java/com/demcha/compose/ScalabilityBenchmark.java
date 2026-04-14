@@ -20,7 +20,7 @@ public class ScalabilityBenchmark {
 
     public static void main(String[] args) throws Exception {
         BenchmarkSupport.configureQuietLogging();
-        System.out.println("🚀 Starting Scalability Benchmark: Linear Scalability");
+        System.out.println("Starting Scalability Benchmark: Linear Scalability");
         System.out.println("------------------------------------------------------------");
 
         // Warmup

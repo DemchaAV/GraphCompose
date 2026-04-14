@@ -37,7 +37,7 @@ public class ComparativeBenchmark {
 
     public static void main(String[] args) throws Exception {
         BenchmarkSupport.configureQuietLogging();
-        System.out.println("🚀 Starting FAIR Comparative Benchmark...");
+        System.out.println("Starting FAIR Comparative Benchmark...");
         System.out.println("Timestamp: " + LocalDateTime.now().format(TIMESTAMP_FORMAT));
         System.out.println("------------------------------------------------------------");
 
@@ -45,7 +45,7 @@ public class ComparativeBenchmark {
         setupJasper();
 
         // Прогрев JVM (JIT компилятор)
-        System.out.println("🔥 Warming up JVM...");
+        System.out.println("Warming up JVM...");
         for (int i = 0; i < WARMUP_ITERATIONS; i++) {
             benchmarkGraphCompose();
             benchmarkIText();
@@ -53,7 +53,7 @@ public class ComparativeBenchmark {
         }
 
         // Замер
-        System.out.println("⏱️ Measuring performance (" + MEASUREMENT_ITERATIONS + " iterations)...");
+        System.out.println("Measuring performance (" + MEASUREMENT_ITERATIONS + " iterations)...");
         System.out.println(String.format("%-20s | %-12s | %-12s", "Library", "Avg Time (ms)", "Avg Heap (MB)"));
         System.out.println("------------------------------------------------------------");
 

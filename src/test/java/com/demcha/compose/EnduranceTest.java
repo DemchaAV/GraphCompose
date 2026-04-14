@@ -17,7 +17,7 @@ public class EnduranceTest {
 
     public static void main(String[] args) throws Exception {
         BenchmarkSupport.configureQuietLogging();
-        System.out.println("🚀 Starting Endurance Test: 100,000 documents");
+        System.out.println("Starting Endurance Test: 100,000 documents");
         System.out.println("Heap limit should be set (e.g., -Xmx128m)");
         System.out.println("------------------------------------------------------------");
 
@@ -36,7 +36,7 @@ public class EnduranceTest {
 
         long totalTime = System.currentTimeMillis() - startTime;
         System.out.println("------------------------------------------------------------");
-        System.out.printf("✅ Successfully generated %d documents in %d ms%n", TOTAL_DOCUMENTS, totalTime);
+        System.out.printf("Successfully generated %d documents in %d ms%n", TOTAL_DOCUMENTS, totalTime);
     }
 
     private static void generateOne(int id) throws Exception {

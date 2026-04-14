@@ -32,6 +32,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -56,10 +57,14 @@ import java.util.concurrent.Future;
 public final class CurrentSpeedBenchmark {
 
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private static final int DEFAULT_WARMUP_ITERATIONS = Integer.getInteger("graphcompose.benchmark.warmup", 12);
-    private static final int DEFAULT_MEASUREMENT_ITERATIONS = Integer.getInteger("graphcompose.benchmark.iterations", 40);
-    private static final int DEFAULT_DOCS_PER_THREAD = Integer.getInteger("graphcompose.benchmark.docsPerThread", 12);
-    private static final String DEFAULT_THREAD_COUNTS = System.getProperty("graphcompose.benchmark.threads", "1,2,4,8");
+    private static final int DEFAULT_FULL_WARMUP_ITERATIONS = 12;
+    private static final int DEFAULT_FULL_MEASUREMENT_ITERATIONS = 40;
+    private static final int DEFAULT_FULL_DOCS_PER_THREAD = 12;
+    private static final String DEFAULT_FULL_THREAD_COUNTS = "1,2,4,8";
+    private static final int DEFAULT_SMOKE_WARMUP_ITERATIONS = 2;
+    private static final int DEFAULT_SMOKE_MEASUREMENT_ITERATIONS = 5;
+    private static final int DEFAULT_SMOKE_DOCS_PER_THREAD = 0;
+    private static final String DEFAULT_SMOKE_THREAD_COUNTS = "";
     private static final String REPOSITORY_URL = "https://github.com/DemchaAV/GraphCompose";
 
     private static final TextStyle TITLE_STYLE = TextStyle.builder()
@@ -87,17 +92,20 @@ public final class CurrentSpeedBenchmark {
     }
 
     private void run() throws Exception {
-        int warmupIterations = DEFAULT_WARMUP_ITERATIONS;
-        int measurementIterations = DEFAULT_MEASUREMENT_ITERATIONS;
-        int docsPerThread = DEFAULT_DOCS_PER_THREAD;
-        int[] threadCounts = parseThreadCounts(DEFAULT_THREAD_COUNTS);
+        BenchmarkProfile profile = BenchmarkProfile.from(System.getProperty("graphcompose.benchmark.profile", "full"));
+        BenchmarkConfig config = resolveConfig(profile);
+        boolean enforceGate = Boolean.parseBoolean(System.getProperty(
+                "graphcompose.benchmark.enforceGate",
+                Boolean.toString(profile == BenchmarkProfile.SMOKE)));
 
         System.out.println("GraphCompose Current Speed Benchmark");
         System.out.println("Timestamp: " + LocalDateTime.now().format(TIMESTAMP_FORMAT));
-        System.out.println("Warmup iterations: " + warmupIterations);
-        System.out.println("Measurement iterations: " + measurementIterations);
-        System.out.println("Docs per thread (throughput): " + docsPerThread);
-        System.out.println("Thread counts: " + Arrays.toString(threadCounts));
+        System.out.println("Profile: " + profile.id());
+        System.out.println("Warmup iterations: " + config.warmupIterations());
+        System.out.println("Measurement iterations: " + config.measurementIterations());
+        System.out.println("Docs per thread (throughput): " + config.docsPerThread());
+        System.out.println("Thread counts: " + Arrays.toString(config.threadCounts()));
+        System.out.println("Perf gate: " + (enforceGate ? "enabled" : "disabled"));
         System.out.println();
 
         List<Scenario> scenarios = List.of(
@@ -109,14 +117,14 @@ public final class CurrentSpeedBenchmark {
         );
 
         System.out.println("Latency benchmark");
-        System.out.printf("%-18s | %10s | %10s | %10s | %10s | %11s | %10s%n",
-                "Scenario", "Avg ms", "p50 ms", "p95 ms", "Max ms", "Docs/sec", "Avg KB");
-        System.out.println("-".repeat(98));
+        System.out.printf("%-18s | %10s | %10s | %10s | %10s | %11s | %10s | %10s%n",
+                "Scenario", "Avg ms", "p50 ms", "p95 ms", "Max ms", "Docs/sec", "Avg KB", "Peak MB");
+        System.out.println("-".repeat(111));
 
         long totalBenchmarkBytes = 0;
         List<LatencyRow> latencyRows = new ArrayList<>();
         for (Scenario scenario : scenarios) {
-            Result result = benchmarkScenario(scenario, warmupIterations, measurementIterations);
+            Result result = benchmarkScenario(scenario, config.warmupIterations(), config.measurementIterations());
             totalBenchmarkBytes += result.totalBytes();
             latencyRows.add(new LatencyRow(
                     scenario.name(),
@@ -126,36 +134,39 @@ public final class CurrentSpeedBenchmark {
                     round(result.p95Millis()),
                     round(result.maxMillis()),
                     round(result.docsPerSecond()),
-                    round(result.avgKilobytes())));
+                    round(result.avgKilobytes()),
+                    round(result.peakHeapMb())));
             printLatencyRow(scenario, result);
         }
 
-        System.out.println();
-        System.out.println("Parallel throughput benchmark");
-        System.out.println("Scenario: invoice-template");
-        System.out.printf("%-10s | %12s | %16s | %14s%n",
-                "Threads", "Total docs", "Throughput", "Avg doc ms");
-        System.out.println("-".repeat(64));
-
         List<ThroughputRow> throughputRows = new ArrayList<>();
-        for (int threadCount : threadCounts) {
-            ThroughputResult result = runThroughputBenchmark(
-                    "invoice-template",
-                    this::renderInvoiceTemplateDocument,
-                    threadCount,
-                    docsPerThread);
-            totalBenchmarkBytes += result.totalBytes();
-            throughputRows.add(new ThroughputRow(
-                    result.scenarioName(),
-                    threadCount,
-                    result.totalDocs(),
-                    round(result.docsPerSecond()),
-                    round(result.avgMillisPerDoc())));
-            System.out.printf("%-10d | %12d | %13.2f/s | %14.2f%n",
-                    threadCount,
-                    result.totalDocs(),
-                    result.docsPerSecond(),
-                    result.avgMillisPerDoc());
+        if (profile.includesThroughput()) {
+            System.out.println();
+            System.out.println("Parallel throughput benchmark");
+            System.out.println("Scenario: invoice-template");
+            System.out.printf("%-10s | %12s | %16s | %14s%n",
+                    "Threads", "Total docs", "Throughput", "Avg doc ms");
+            System.out.println("-".repeat(64));
+
+            for (int threadCount : config.threadCounts()) {
+                ThroughputResult result = runThroughputBenchmark(
+                        "invoice-template",
+                        this::renderInvoiceTemplateDocument,
+                        threadCount,
+                        config.docsPerThread());
+                totalBenchmarkBytes += result.totalBytes();
+                throughputRows.add(new ThroughputRow(
+                        result.scenarioName(),
+                        threadCount,
+                        result.totalDocs(),
+                        round(result.docsPerSecond()),
+                        round(result.avgMillisPerDoc())));
+                System.out.printf("%-10d | %12d | %13.2f/s | %14.2f%n",
+                        threadCount,
+                        result.totalDocs(),
+                        result.docsPerSecond(),
+                        result.avgMillisPerDoc());
+            }
         }
 
         System.out.println();
@@ -164,15 +175,24 @@ public final class CurrentSpeedBenchmark {
         BenchmarkReportWriter.BenchmarkArtifacts artifacts = BenchmarkReportWriter.prepare("current-speed");
         PathSummary summary = writeReports(
                 artifacts,
-                warmupIterations,
-                measurementIterations,
-                docsPerThread,
-                threadCounts,
+                profile.id(),
+                config.warmupIterations(),
+                config.measurementIterations(),
+                config.docsPerThread(),
+                config.threadCounts(),
                 latencyRows,
                 throughputRows,
                 totalBenchmarkBytes);
         System.out.println("Saved JSON benchmark report to " + summary.jsonPath());
         System.out.println("Saved CSV benchmark reports to " + summary.latencyCsvPath() + " and " + summary.throughputCsvPath());
+
+        if (enforceGate) {
+            PerformanceGateResult gateResult = evaluatePerformanceGate(profile, latencyRows);
+            System.out.println(gateResult.message());
+            if (!gateResult.passed()) {
+                throw new IllegalStateException(gateResult.message());
+            }
+        }
     }
 
     private Result benchmarkScenario(Scenario scenario, int warmupIterations, int measurementIterations) throws Exception {
@@ -182,6 +202,7 @@ public final class CurrentSpeedBenchmark {
 
         long[] durationsNs = new long[measurementIterations];
         long totalBytes = 0;
+        long peakHeapBytes = 0;
 
         for (int i = 0; i < measurementIterations; i++) {
             long start = System.nanoTime();
@@ -190,6 +211,7 @@ public final class CurrentSpeedBenchmark {
 
             durationsNs[i] = end - start;
             totalBytes += pdfBytes.length;
+            peakHeapBytes = Math.max(peakHeapBytes, usedHeapBytes());
         }
 
         long[] sorted = Arrays.copyOf(durationsNs, durationsNs.length);
@@ -203,6 +225,7 @@ public final class CurrentSpeedBenchmark {
                 sorted[sorted.length - 1] / 1_000_000.0,
                 1_000_000_000.0 / avgNs,
                 (totalBytes / (double) measurementIterations) / 1024.0,
+                bytesToMegabytes(peakHeapBytes),
                 totalBytes
         );
     }
@@ -241,14 +264,15 @@ public final class CurrentSpeedBenchmark {
     }
 
     private void printLatencyRow(Scenario scenario, Result result) {
-        System.out.printf("%-18s | %10.2f | %10.2f | %10.2f | %10.2f | %11.2f | %10.2f%n",
+        System.out.printf("%-18s | %10.2f | %10.2f | %10.2f | %10.2f | %11.2f | %10.2f | %10.2f%n",
                 scenario.name(),
                 result.avgMillis(),
                 result.p50Millis(),
                 result.p95Millis(),
                 result.maxMillis(),
                 result.docsPerSecond(),
-                result.avgKilobytes());
+                result.avgKilobytes(),
+                result.peakHeapMb());
     }
 
     private double percentileMillis(long[] sortedDurationsNs, double percentile) {
@@ -263,6 +287,72 @@ public final class CurrentSpeedBenchmark {
                 .mapToInt(Integer::parseInt)
                 .filter(value -> value > 0)
                 .toArray();
+    }
+
+    private BenchmarkConfig resolveConfig(BenchmarkProfile profile) {
+        int defaultWarmupIterations = profile == BenchmarkProfile.SMOKE
+                ? DEFAULT_SMOKE_WARMUP_ITERATIONS
+                : DEFAULT_FULL_WARMUP_ITERATIONS;
+        int defaultMeasurementIterations = profile == BenchmarkProfile.SMOKE
+                ? DEFAULT_SMOKE_MEASUREMENT_ITERATIONS
+                : DEFAULT_FULL_MEASUREMENT_ITERATIONS;
+        int defaultDocsPerThread = profile == BenchmarkProfile.SMOKE
+                ? DEFAULT_SMOKE_DOCS_PER_THREAD
+                : DEFAULT_FULL_DOCS_PER_THREAD;
+        String defaultThreadCounts = profile == BenchmarkProfile.SMOKE
+                ? DEFAULT_SMOKE_THREAD_COUNTS
+                : DEFAULT_FULL_THREAD_COUNTS;
+
+        return new BenchmarkConfig(
+                Integer.getInteger("graphcompose.benchmark.warmup", defaultWarmupIterations),
+                Integer.getInteger("graphcompose.benchmark.iterations", defaultMeasurementIterations),
+                Integer.getInteger("graphcompose.benchmark.docsPerThread", defaultDocsPerThread),
+                parseThreadCounts(System.getProperty("graphcompose.benchmark.threads", defaultThreadCounts)));
+    }
+
+    private PerformanceGateResult evaluatePerformanceGate(BenchmarkProfile profile, List<LatencyRow> latencyRows) {
+        if (profile != BenchmarkProfile.SMOKE) {
+            return new PerformanceGateResult(true, "Performance gate skipped for profile " + profile.id());
+        }
+
+        List<String> failures = new ArrayList<>();
+        for (LatencyRow row : latencyRows) {
+            SmokeThreshold threshold = profile.smokeThresholds().get(row.scenario());
+            if (threshold == null) {
+                continue;
+            }
+
+            double maxAvgMillis = Double.parseDouble(System.getProperty(
+                    "graphcompose.benchmark.gate." + row.scenario() + ".maxAvgMillis",
+                    Double.toString(threshold.maxAvgMillis())));
+            double maxPeakHeapMb = Double.parseDouble(System.getProperty(
+                    "graphcompose.benchmark.gate." + row.scenario() + ".maxPeakHeapMb",
+                    Double.toString(threshold.maxPeakHeapMb())));
+
+            if (row.avgMillis() > maxAvgMillis) {
+                failures.add(row.scenario() + " avg " + format(row.avgMillis()) + " ms > " + format(maxAvgMillis) + " ms");
+            }
+            if (row.peakHeapMb() > maxPeakHeapMb) {
+                failures.add(row.scenario() + " peak heap " + format(row.peakHeapMb()) + " MB > " + format(maxPeakHeapMb) + " MB");
+            }
+        }
+
+        if (failures.isEmpty()) {
+            return new PerformanceGateResult(true, "Performance gate passed for profile " + profile.id());
+        }
+
+        return new PerformanceGateResult(
+                false,
+                "Performance gate failed for profile " + profile.id() + ": " + String.join("; ", failures));
+    }
+
+    private long usedHeapBytes() {
+        Runtime runtime = Runtime.getRuntime();
+        return runtime.totalMemory() - runtime.freeMemory();
+    }
+
+    private double bytesToMegabytes(long bytes) {
+        return bytes / (1024.0 * 1024.0);
     }
 
     private byte[] renderEngineSimpleDocument() throws Exception {
@@ -446,6 +536,7 @@ public final class CurrentSpeedBenchmark {
     }
 
     private PathSummary writeReports(BenchmarkReportWriter.BenchmarkArtifacts artifacts,
+                                     String profileId,
                                      int warmupIterations,
                                      int measurementIterations,
                                      int docsPerThread,
@@ -455,6 +546,7 @@ public final class CurrentSpeedBenchmark {
                                      long totalBenchmarkBytes) throws Exception {
         CurrentSpeedReport report = new CurrentSpeedReport(
                 LocalDateTime.now().format(TIMESTAMP_FORMAT),
+                profileId,
                 warmupIterations,
                 measurementIterations,
                 docsPerThread,
@@ -466,7 +558,7 @@ public final class CurrentSpeedBenchmark {
         var jsonPath = artifacts.writeJson(report);
         var latencyCsvPath = artifacts.writeCsv(
                 "latency",
-                List.of("scenario", "description", "avg_ms", "p50_ms", "p95_ms", "max_ms", "docs_per_sec", "avg_kb"),
+                List.of("scenario", "description", "avg_ms", "p50_ms", "p95_ms", "max_ms", "docs_per_sec", "avg_kb", "peak_heap_mb"),
                 latencyRows.stream()
                         .map(row -> List.of(
                                 row.scenario(),
@@ -476,7 +568,8 @@ public final class CurrentSpeedBenchmark {
                                 format(row.p95Millis()),
                                 format(row.maxMillis()),
                                 format(row.docsPerSecond()),
-                                format(row.avgKilobytes())))
+                                format(row.avgKilobytes()),
+                                format(row.peakHeapMb())))
                         .toList());
         var throughputCsvPath = artifacts.writeCsv(
                 "throughput",
@@ -515,6 +608,7 @@ public final class CurrentSpeedBenchmark {
                           double maxMillis,
                           double docsPerSecond,
                           double avgKilobytes,
+                          double peakHeapMb,
                           long totalBytes) {
     }
 
@@ -532,7 +626,8 @@ public final class CurrentSpeedBenchmark {
                               double p95Millis,
                               double maxMillis,
                               double docsPerSecond,
-                              double avgKilobytes) {
+                              double avgKilobytes,
+                              double peakHeapMb) {
     }
 
     private record ThroughputRow(String scenario,
@@ -543,6 +638,7 @@ public final class CurrentSpeedBenchmark {
     }
 
     private record CurrentSpeedReport(String timestamp,
+                                      String profile,
                                       int warmupIterations,
                                       int measurementIterations,
                                       int docsPerThread,
@@ -553,5 +649,59 @@ public final class CurrentSpeedBenchmark {
     }
 
     private record PathSummary(String jsonPath, String latencyCsvPath, String throughputCsvPath) {
+    }
+
+    private record BenchmarkConfig(int warmupIterations,
+                                   int measurementIterations,
+                                   int docsPerThread,
+                                   int[] threadCounts) {
+    }
+
+    private record SmokeThreshold(double maxAvgMillis, double maxPeakHeapMb) {
+    }
+
+    private record PerformanceGateResult(boolean passed, String message) {
+    }
+
+    private enum BenchmarkProfile {
+        FULL("full", true, Map.of()),
+        SMOKE("smoke", false, Map.of(
+                "engine-simple", new SmokeThreshold(800.0, 512.0),
+                "invoice-template", new SmokeThreshold(1200.0, 640.0),
+                "cv-template", new SmokeThreshold(1500.0, 640.0),
+                "proposal-template", new SmokeThreshold(2400.0, 768.0),
+                "feature-rich", new SmokeThreshold(2600.0, 768.0)
+        ));
+
+        private final String id;
+        private final boolean includesThroughput;
+        private final Map<String, SmokeThreshold> smokeThresholds;
+
+        BenchmarkProfile(String id, boolean includesThroughput, Map<String, SmokeThreshold> smokeThresholds) {
+            this.id = id;
+            this.includesThroughput = includesThroughput;
+            this.smokeThresholds = smokeThresholds;
+        }
+
+        String id() {
+            return id;
+        }
+
+        boolean includesThroughput() {
+            return includesThroughput;
+        }
+
+        Map<String, SmokeThreshold> smokeThresholds() {
+            return smokeThresholds;
+        }
+
+        static BenchmarkProfile from(String raw) {
+            for (BenchmarkProfile profile : values()) {
+                if (profile.id.equalsIgnoreCase(raw)) {
+                    return profile;
+                }
+            }
+            throw new IllegalArgumentException("Unknown benchmark profile: " + raw);
+        }
     }
 }

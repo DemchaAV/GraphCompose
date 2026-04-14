@@ -4,6 +4,7 @@ import com.demcha.compose.layout_core.core.Canvas;
 import com.demcha.compose.layout_core.components.content.shape.Side;
 import com.demcha.compose.layout_core.components.layout.coordinator.RenderCoordinateContext;
 import com.demcha.compose.layout_core.core.EntityManager;
+import com.demcha.compose.layout_core.system.interfaces.RenderPassSession;
 import com.demcha.compose.layout_core.system.GuidLineSettings;
 import com.demcha.compose.layout_core.system.interfaces.RenderStream;
 import com.demcha.compose.layout_core.system.interfaces.RenderingSystemECS;
@@ -14,6 +15,7 @@ import lombok.experimental.Accessors;
 
 import java.awt.*;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -32,6 +34,7 @@ public abstract class RenderingSystemBase<T extends AutoCloseable> implements Re
     protected final RenderStream<T> stream;
     protected GuidesRenderer<T> guidesRenderer;
     protected final RenderHandlerRegistry renderHandlers = new RenderHandlerRegistry();
+    protected RenderPassSession<T> activeRenderSession;
 
 
     /**
@@ -80,6 +83,11 @@ public abstract class RenderingSystemBase<T extends AutoCloseable> implements Re
      * @param entityManager The entity manager containing the entities to be processed.
      */
     public abstract void process(EntityManager entityManager);
+
+    @Override
+    public Optional<RenderPassSession<T>> activeRenderSession() {
+        return Optional.ofNullable(activeRenderSession);
+    }
 
     /**
      * Initializes the {@link GuidesRenderer}.

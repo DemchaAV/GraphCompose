@@ -63,33 +63,32 @@ public final class PdfTextRenderHandler implements RenderHandler<TextComponent, 
             return false;
         }
 
-        try (PDPageContentStream contentStream = renderingSystem.stream().openContentStream(entity)) {
-            TextComponent.ValidatedTextData data = TextComponent.validatedTextData(entity);
-            Font<PDFont> font = manager.getFonts().getFont(data.style().fontName(), PdfFont.class).orElseThrow();
-            PDFont pdfFont = font.fontType(data.style().decoration());
-            Padding padding = entity.getComponent(Padding.class).orElse(Padding.zero());
-            PdfFont.VerticalMetrics metrics = resolveVerticalMetrics(font, data.style());
+        PDPageContentStream contentStream = renderingSystem.pageSurface(entity);
+        TextComponent.ValidatedTextData data = TextComponent.validatedTextData(entity);
+        Font<PDFont> font = manager.getFonts().getFont(data.style().fontName(), PdfFont.class).orElseThrow();
+        PDFont pdfFont = font.fontType(data.style().decoration());
+        Padding padding = entity.getComponent(Padding.class).orElse(Padding.zero());
+        PdfFont.VerticalMetrics metrics = resolveVerticalMetrics(font, data.style());
 
-            float baselineX = (float) position.x() + (float) padding.left();
-            float baselineY = (float) position.y()
-                    + (float) padding.bottom()
-                    + (float) metrics.baselineOffsetFromBottom();
+        float baselineX = (float) position.x() + (float) padding.left();
+        float baselineY = (float) position.y()
+                + (float) padding.bottom()
+                + (float) metrics.baselineOffsetFromBottom();
 
-            contentStream.saveGraphicsState();
-            try {
-                contentStream.setFont(pdfFont, (float) data.style().size());
-                contentStream.setNonStrokingColor(data.style().color());
-                contentStream.beginText();
-                contentStream.newLineAtOffset(baselineX, baselineY);
-                contentStream.showText(data.textValue().value());
-                contentStream.endText();
-            } finally {
-                contentStream.restoreGraphicsState();
-            }
+        contentStream.saveGraphicsState();
+        try {
+            contentStream.setFont(pdfFont, (float) data.style().size());
+            contentStream.setNonStrokingColor(data.style().color());
+            contentStream.beginText();
+            contentStream.newLineAtOffset(baselineX, baselineY);
+            contentStream.showText(data.textValue().value());
+            contentStream.endText();
+        } finally {
+            contentStream.restoreGraphicsState();
+        }
 
-            if (guideLines) {
-                renderingSystem.guidesRenderer().guidesRender(entity, contentStream, DEFAULT_GUIDES);
-            }
+        if (guideLines) {
+            renderingSystem.guidesRenderer().guidesRender(entity, contentStream, DEFAULT_GUIDES);
         }
 
         return true;

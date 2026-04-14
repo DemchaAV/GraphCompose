@@ -34,7 +34,6 @@ public final class BenchmarkDiffTool {
 
     private static final ObjectMapper JSON = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private static final Path BENCHMARK_ROOT = Path.of("target", "benchmarks");
 
     public static void main(String[] args) throws Exception {
         BenchmarkSupport.configureQuietLogging();
@@ -47,6 +46,9 @@ public final class BenchmarkDiffTool {
         JsonNode candidate = JSON.readTree(Files.readAllBytes(input.candidatePath()));
 
         SuiteType suiteType = detectSuiteType(baseline, candidate);
+        if (suiteType == SuiteType.CURRENT_SPEED) {
+            validateCurrentSpeedProfiles(baseline, candidate);
+        }
 
         System.out.println("Benchmark diff");
         System.out.println("Timestamp: " + LocalDateTime.now().format(TIMESTAMP_FORMAT));
@@ -55,6 +57,10 @@ public final class BenchmarkDiffTool {
         System.out.println("Candidate: " + input.candidatePath());
         System.out.println("Baseline timestamp: " + baseline.path("timestamp").asText("?"));
         System.out.println("Candidate timestamp: " + candidate.path("timestamp").asText("?"));
+        if (suiteType == SuiteType.CURRENT_SPEED) {
+            System.out.println("Baseline profile: " + baseline.path("profile").asText("?"));
+            System.out.println("Candidate profile: " + candidate.path("profile").asText("?"));
+        }
         System.out.println();
 
         BenchmarkReportWriter.BenchmarkArtifacts artifacts = BenchmarkReportWriter.prepare("diffs/" + suiteType.id);
@@ -72,16 +78,17 @@ public final class BenchmarkDiffTool {
         CurrentSpeedDiffReport report = buildCurrentSpeedDiff(input, baseline, candidate);
 
         System.out.println("Latency diff");
-        System.out.printf("%-18s | %10s | %10s | %10s | %10s%n",
-                "Scenario", "Avg pct", "p95 pct", "Docs/s pct", "KB pct");
-        System.out.println("-".repeat(72));
+        System.out.printf("%-18s | %10s | %10s | %10s | %10s | %10s%n",
+                "Scenario", "Avg pct", "p95 pct", "Docs/s pct", "KB pct", "Heap pct");
+        System.out.println("-".repeat(85));
         for (CurrentSpeedLatencyDiff row : report.latency()) {
-            System.out.printf("%-18s | %10s | %10s | %10s | %10s%n",
+            System.out.printf("%-18s | %10s | %10s | %10s | %10s | %10s%n",
                     row.scenario(),
                     signedPercent(row.avgMillisDeltaPct()),
                     signedPercent(row.p95MillisDeltaPct()),
                     signedPercent(row.docsPerSecondDeltaPct()),
-                    signedPercent(row.avgKilobytesDeltaPct()));
+                    signedPercent(row.avgKilobytesDeltaPct()),
+                    signedPercent(row.peakHeapMbDeltaPct()));
         }
 
         System.out.println();
@@ -100,7 +107,7 @@ public final class BenchmarkDiffTool {
         Path jsonPath = artifacts.writeJson(report);
         Path latencyCsv = artifacts.writeCsv(
                 "latency-diff",
-                List.of("scenario", "baseline_avg_ms", "candidate_avg_ms", "avg_delta_pct", "baseline_p95_ms", "candidate_p95_ms", "p95_delta_pct", "baseline_docs_per_sec", "candidate_docs_per_sec", "docs_per_sec_delta_pct", "baseline_avg_kb", "candidate_avg_kb", "avg_kb_delta_pct"),
+                List.of("scenario", "baseline_avg_ms", "candidate_avg_ms", "avg_delta_pct", "baseline_p95_ms", "candidate_p95_ms", "p95_delta_pct", "baseline_docs_per_sec", "candidate_docs_per_sec", "docs_per_sec_delta_pct", "baseline_avg_kb", "candidate_avg_kb", "avg_kb_delta_pct", "baseline_peak_heap_mb", "candidate_peak_heap_mb", "peak_heap_delta_pct"),
                 report.latency().stream()
                         .map(row -> List.of(
                                 row.scenario(),
@@ -115,7 +122,10 @@ public final class BenchmarkDiffTool {
                                 format(row.docsPerSecondDeltaPct()),
                                 format(row.baselineAvgKilobytes()),
                                 format(row.candidateAvgKilobytes()),
-                                format(row.avgKilobytesDeltaPct())))
+                                format(row.avgKilobytesDeltaPct()),
+                                format(row.baselinePeakHeapMb()),
+                                format(row.candidatePeakHeapMb()),
+                                format(row.peakHeapMbDeltaPct())))
                         .toList());
         Path throughputCsv = artifacts.writeCsv(
                 "throughput-diff",
@@ -195,7 +205,10 @@ public final class BenchmarkDiffTool {
                             percentDelta(before.path("docsPerSecond").asDouble(), after.path("docsPerSecond").asDouble()),
                             before.path("avgKilobytes").asDouble(),
                             after.path("avgKilobytes").asDouble(),
-                            percentDelta(before.path("avgKilobytes").asDouble(), after.path("avgKilobytes").asDouble()));
+                            percentDelta(before.path("avgKilobytes").asDouble(), after.path("avgKilobytes").asDouble()),
+                            before.path("peakHeapMb").asDouble(),
+                            after.path("peakHeapMb").asDouble(),
+                            percentDelta(before.path("peakHeapMb").asDouble(), after.path("peakHeapMb").asDouble()));
                 })
                 .toList();
 
@@ -310,8 +323,13 @@ public final class BenchmarkDiffTool {
                 """);
     }
 
-    private static DiffInput resolveLatestRuns(String suiteName) throws IOException {
-        Path suiteDir = BENCHMARK_ROOT.resolve(suiteName);
+    static DiffInput resolveLatestRuns(String suiteName) throws IOException {
+        ResolvedRunPair pair = resolveLatestRunPaths(benchmarkRoot(), suiteName);
+        return new DiffInput(pair.baselinePath(), pair.candidatePath());
+    }
+
+    static ResolvedRunPair resolveLatestRunPaths(Path benchmarkRoot, String suiteName) throws IOException {
+        Path suiteDir = benchmarkRoot.resolve(suiteName);
         if (!Files.isDirectory(suiteDir)) {
             throw new IllegalArgumentException("Benchmark suite directory not found: " + suiteDir);
         }
@@ -326,7 +344,29 @@ public final class BenchmarkDiffTool {
             throw new IllegalArgumentException("Need at least two run-*.json files in " + suiteDir + " to diff latest runs.");
         }
 
-        return new DiffInput(runs.get(runs.size() - 2), runs.get(runs.size() - 1));
+        if (SuiteType.CURRENT_SPEED.id.equals(suiteName)) {
+            Path latestRun = runs.get(runs.size() - 1);
+            String latestProfile = currentSpeedProfile(latestRun);
+            List<Path> comparableRuns = runs.stream()
+                    .filter(path -> latestProfile.equals(currentSpeedProfile(path)))
+                    .toList();
+
+            if (comparableRuns.size() < 2) {
+                throw new IllegalArgumentException(
+                        "Need at least two current-speed run-*.json files with profile '" + latestProfile + "' in "
+                                + suiteDir + " to diff latest runs.");
+            }
+
+            return new ResolvedRunPair(
+                    comparableRuns.get(comparableRuns.size() - 2),
+                    comparableRuns.get(comparableRuns.size() - 1));
+        }
+
+        return new ResolvedRunPair(runs.get(runs.size() - 2), runs.get(runs.size() - 1));
+    }
+
+    private static Path benchmarkRoot() {
+        return Path.of(System.getProperty("graphcompose.benchmark.root", Path.of("target", "benchmarks").toString()));
     }
 
     private SuiteType detectSuiteType(JsonNode baseline, JsonNode candidate) {
@@ -346,6 +386,28 @@ public final class BenchmarkDiffTool {
             return SuiteType.COMPARATIVE;
         }
         throw new IllegalArgumentException("Unknown benchmark report schema.");
+    }
+
+    private static void validateCurrentSpeedProfiles(JsonNode baseline, JsonNode candidate) {
+        String baselineProfile = baseline.path("profile").asText("");
+        String candidateProfile = candidate.path("profile").asText("");
+        if (!baselineProfile.equals(candidateProfile)) {
+            throw new IllegalArgumentException(
+                    "Current-speed benchmark profiles do not match: baseline='"
+                            + baselineProfile
+                            + "', candidate='"
+                            + candidateProfile
+                            + "'. Compare runs from the same profile only.");
+        }
+    }
+
+    private static String currentSpeedProfile(Path reportPath) {
+        try {
+            JsonNode report = JSON.readTree(Files.readAllBytes(reportPath));
+            return report.path("profile").asText("full");
+        } catch (IOException ex) {
+            throw new IllegalArgumentException("Failed to read benchmark report: " + reportPath, ex);
+        }
     }
 
     private static double percentDelta(double baseline, double candidate) {
@@ -377,6 +439,9 @@ public final class BenchmarkDiffTool {
     private record DiffInput(Path baselinePath, Path candidatePath) {
     }
 
+    record ResolvedRunPair(Path baselinePath, Path candidatePath) {
+    }
+
     private record CurrentSpeedLatencyDiff(String scenario,
                                            String description,
                                            double baselineAvgMillis,
@@ -390,7 +455,10 @@ public final class BenchmarkDiffTool {
                                            double docsPerSecondDeltaPct,
                                            double baselineAvgKilobytes,
                                            double candidateAvgKilobytes,
-                                           double avgKilobytesDeltaPct) {
+                                           double avgKilobytesDeltaPct,
+                                           double baselinePeakHeapMb,
+                                           double candidatePeakHeapMb,
+                                           double peakHeapMbDeltaPct) {
     }
 
     private record CurrentSpeedThroughputDiff(String scenario,

@@ -9,10 +9,17 @@ import com.demcha.compose.layout_core.system.rendering.RenderHandlerRegistry;
 
 import java.awt.*;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.Set;
 
 /**
- * In current Class you can render a simple Figure like line rectangle cercl
+ * Backend-neutral rendering system contract.
+ *
+ * <p>The shared engine knows how to orchestrate a render pass, but not how a
+ * concrete backend materializes page surfaces. Implementations expose the
+ * active {@link RenderPassSession} during {@code process(...)} so handlers can
+ * reuse backend-local page resources without leaking PDF/DOCX/PPTX details into
+ * engine/template code.</p>
  */
 public interface RenderingSystemECS<S extends AutoCloseable> extends SystemECS {
     <T extends Canvas> T canvas();
@@ -21,6 +28,19 @@ public interface RenderingSystemECS<S extends AutoCloseable> extends SystemECS {
     RenderHandlerRegistry renderHandlers();
 
     <T extends RenderStream<S>> T stream();
+    Optional<RenderPassSession<S>> activeRenderSession();
+
+    /**
+     * Returns the current render-pass session.
+     *
+     * <p>This is only valid while a rendering system is actively processing a
+     * document. Callers that need ad-hoc rendering outside a normal pass should
+     * open their own short-lived session from {@link #stream()}.</p>
+     */
+    default RenderPassSession<S> renderSession() {
+        return activeRenderSession()
+                .orElseThrow(() -> new IllegalStateException("No active render session is available"));
+    }
 
     boolean renderBorder(S stream, RenderCoordinateContext context,
                          boolean lineDash,

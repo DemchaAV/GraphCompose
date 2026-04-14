@@ -50,7 +50,8 @@ public final class PdfChunkedBlockTextRenderHandler implements RenderHandler<Chu
             return false;
         }
 
-        try (PDPageContentStream contentStream = renderingSystem.stream().openContentStream(entity)) {
+        try {
+            PDPageContentStream contentStream = renderingSystem.pageSurface(entity);
             var placement = placementOpt.get();
             InnerBoxSize innerBoxSize = InnerBoxSize.from(entity).orElseThrow();
             BlockTextData textValue = entity.getComponent(BlockTextData.class).orElse(BlockTextData.empty());
@@ -73,21 +74,24 @@ public final class PdfChunkedBlockTextRenderHandler implements RenderHandler<Chu
             }).spacing() * -1;
 
             contentStream.saveGraphicsState();
-            contentStream.setFont(pdfFont, fontSize);
-            contentStream.setNonStrokingColor(color);
-            contentStream.beginText();
+            try {
+                contentStream.setFont(pdfFont, fontSize);
+                contentStream.setNonStrokingColor(color);
+                contentStream.beginText();
 
-            float startX = (float) placement.x() - descentPx;
-            float startY = (float) (placement.y() + innerBoxSize.height()) - textHeight + descentPx;
+                float startX = (float) placement.x() - descentPx;
+                float startY = (float) (placement.y() + innerBoxSize.height()) - textHeight + descentPx;
 
-            for (LineTextData line : blockTextData) {
-                float currentPosition = (float) line.x() + startX;
-                contentStream.setTextMatrix(new Matrix(1, 0, 0, 1, currentPosition, startY));
-                startY -= (float) (textHeight - spacing);
+                for (LineTextData line : blockTextData) {
+                    float currentPosition = (float) line.x() + startX;
+                    contentStream.setTextMatrix(new Matrix(1, 0, 0, 1, currentPosition, startY));
+                    startY -= (float) (textHeight - spacing);
+                }
+
+                contentStream.endText();
+            } finally {
+                contentStream.restoreGraphicsState();
             }
-
-            contentStream.endText();
-            contentStream.restoreGraphicsState();
 
             if (guideLines) {
                 renderingSystem.guidesRenderer().guidesRender(entity, contentStream, DEFAULT_GUIDES);

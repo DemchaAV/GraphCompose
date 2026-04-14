@@ -14,7 +14,6 @@ import org.apache.pdfbox.cos.COSArray;
 import org.apache.pdfbox.cos.COSInteger;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.interactive.action.PDActionURI;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
@@ -51,15 +50,9 @@ public final class PdfLinkRenderHandler implements RenderHandler<Link, PdfRender
         position.setUpperRightY(y + (float) (size.height() + padding.vertical()));
 
         int pageIndex = placement.startPage();
-        ensurePageExists(renderingSystem, pageIndex);
+        renderingSystem.ensurePage(pageIndex);
         addLink(renderingSystem.doc().getPage(pageIndex), position, url);
         return true;
-    }
-
-    private void ensurePageExists(PdfRenderingSystemECS renderingSystem, int pageIndex) throws IOException {
-        try (PDPageContentStream ignored = renderingSystem.stream().openContentStream(pageIndex)) {
-            // Opening the stream ensures the page exists before attaching the annotation.
-        }
     }
 
     private void addLink(PDPage page, PDRectangle position, LinkUrl url) throws IOException {

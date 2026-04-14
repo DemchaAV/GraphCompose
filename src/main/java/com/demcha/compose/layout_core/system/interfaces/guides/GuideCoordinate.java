@@ -4,6 +4,7 @@ import com.demcha.compose.layout_core.components.content.shape.Side;
 import com.demcha.compose.layout_core.components.core.Entity;
 import com.demcha.compose.layout_core.components.layout.coordinator.RenderCoordinateContext;
 import com.demcha.compose.layout_core.exceptions.RenderGuideLinesException;
+import com.demcha.compose.layout_core.system.interfaces.RenderPassSession;
 import com.demcha.compose.layout_core.system.interfaces.RenderingSystemECS;
 import lombok.NonNull;
 import org.jetbrains.annotations.NotNull;
@@ -24,13 +25,26 @@ public interface GuideCoordinate<T extends AutoCloseable> {
     // 2. The "Execute Around" Method (Handles the boilerplate)
     // ---------------------------------------------------------
     default boolean executeOnStream(@NonNull RenderCoordinateContext context, int pageNumber, StreamRenderer<T> action) throws RenderGuideLinesException {
-        try (T stream = renderingSystem().stream().openContentStream(pageNumber)) {
-            // 💡 This runs the specific logic passed in
+        var activeSession = renderingSystem().activeRenderSession();
+        if (activeSession.isPresent()) {
+            try {
+                return action.render(context, activeSession.get().pageSurface(pageNumber));
+            } catch (RenderGuideLinesException e) {
+                throw e;
+            } catch (IOException e) {
+                throw new RenderGuideLinesException("Error occurred during guide rendering on the active session", e);
+            } catch (Exception e) {
+                throw new RenderGuideLinesException("Failed to process the active guide stream", e);
+            }
+        }
+
+        try (RenderPassSession<T> session = renderingSystem().stream().openRenderPass()) {
+            T stream = session.pageSurface(pageNumber);
             return action.render(context, stream);
         } catch (RenderGuideLinesException e) {
             throw e;
         } catch (IOException e) {
-            throw new RenderGuideLinesException("Error occurred during an opening stream", e);
+            throw new RenderGuideLinesException("Error occurred during guide stream session handling", e);
         } catch (Exception e) {
             throw new RenderGuideLinesException("Failed to close or process the stream", e);
         }

@@ -63,6 +63,7 @@ GraphCompose is a document generation engine built around an ECS-style (Entity-C
 - rendering systems turn resolved geometry into output bytes
 
 The current production renderer is PDF via Apache PDFBox. The layout and entity model is renderer-agnostic by design — DOCX and PPTX output are on the roadmap.
+The shared rendering seam now stops at render-pass lifetime through a backend-neutral `RenderPassSession`: the engine stays free of PDFBox lifecycle code, while the PDF backend is free to reuse page-local resources efficiently.
 
 GraphCompose is a good fit for:
 
@@ -79,12 +80,13 @@ GraphCompose is a good fit for:
 
 - compose-first template usage is now the documented default for built-in templates
 - backend-neutral `DocumentComposer` and handler-driven rendering make the engine less PDF-centric internally
+- the PDF render path now uses page-scoped render sessions, reusing one `PDPageContentStream` per page during a render pass instead of reopening a stream per entity
 - layout snapshot testing is now part of the practical regression workflow for pagination and geometry changes
 - runnable examples now cover CV, cover letter, invoice, proposal, and weekly schedule generation
 - new PDF document features include QR/barcodes, watermarks, headers/footers, bookmarks, metadata, protection, explicit page breaks, and dividers
 - architecture guard rails now cover template scene builders in CI, not just the engine layer
 - visual showcase tests now make pagination, document chrome, and barcode output easier to inspect
-- benchmark tooling now includes current-speed, comparative, and diffable JSON/CSV reports
+- benchmark tooling now includes coarse PR smoke checks, fuller scheduled/manual current-speed runs, diffable JSON/CSV reports, and repeated median-based local comparisons
 - an experimental live preview dev tool is available in test scope for fast template iteration
 
 See [CHANGELOG.md](./CHANGELOG.md) for the release summary.
@@ -384,6 +386,8 @@ Builders do not draw directly. They create `Entity` instances and attach compone
 
 The layout pass resolves all geometry first. Rendering happens after every size and position is known. This separation is what makes automatic pagination, guide-line debugging, and future alternative renderers possible.
 
+Inside one render pass, the engine now exposes a backend-neutral session seam instead of reopening a fresh page surface per entity. In the PDF backend this means one cached `PDPageContentStream` per page for the lifetime of the pass, which cuts per-entity PDFBox overhead while preserving current layer and z-order traversal.
+
 ### 3. Layout traversal is deterministic
 
 Each layout pass now builds one deterministic hierarchy snapshot before pagination and rendering continue:
@@ -538,26 +542,31 @@ If you are contributing new engine objects, read [CONTRIBUTING.md](./CONTRIBUTIN
 
 The repository ships a benchmark harness for both feature work and regression checking. All benchmark runs use a dedicated quiet logging config (`logback-benchmark.xml`) so the numbers reflect document generation work, not debug I/O.
 
-These are project benchmarks measured on one machine — treat them as relative indicators, not absolute guarantees.
+Treat local numbers as relative signals, not absolute promises. For meaningful comparisons:
 
-### Latest focused regression run
+- compare runs from the same benchmark profile only
+- expect small local shifts on Windows and busy developer machines
+- prefer repeated runs with median aggregation when making decisions from local results
+- use CI smoke thresholds only as coarse regression guards, not as precision performance measurements
 
-The latest focused engine regression run was recorded locally on April 14, 2026 after the deterministic traversal and pagination-ordering refactor.
+### Current benchmark workflow
 
-`CurrentSpeedBenchmark` baseline `run-20260414-191839.json` versus candidate `run-20260414-192900.json`:
+`CurrentSpeedBenchmark` now supports two profiles:
 
-- `proposal-template`: `-31.14%` average latency
-- `feature-rich`: `-12.57%` average latency
-- `cv-template`: `-11.36%` average latency
-- `invoice-template`: `-4.56%` average latency
-- `engine-simple`: `+4.75%`, which is within the team's normal noise band for this suite
+- `smoke`: bounded latency-only checks meant for pull requests and coarse local spot-checks
+- `full`: wider warmup/measurement windows plus throughput checks for scheduled runs and local investigation
 
-Other focused checks from the same April 14, 2026 run:
+The repository uses that split in two places:
 
-- `GraphComposeBenchmark`: average latency improved from `1.86 ms` to `1.83 ms`
-- `ScalabilityBenchmark`: throughput improved from `395/892/1877/4292/5993` to `414/1029/2127/4451/6569 docs/sec` at `1/2/4/8/16` threads
+- PR CI runs targeted architecture/layout/render tests plus a coarse performance smoke check
+- scheduled/manual CI runs the fuller current-speed benchmark, uploads JSON/CSV artifacts, and diffs the newest compatible reports
 
-For performance interpretation inside the project, treat changes within roughly `5%` as noise unless the same direction repeats across reruns.
+Local benchmark artifacts are written under:
+
+- `target/benchmarks/current-speed/`
+- `target/benchmarks/comparative/`
+- `target/benchmarks/diffs/`
+- `target/benchmarks/aggregates/`
 
 For the easiest full local run, use the PowerShell wrapper:
 
@@ -572,13 +581,21 @@ That single command:
 - writes per-benchmark logs under `target/benchmark-runs/<timestamp>/logs/`
 - writes a run summary to `target/benchmark-runs/<timestamp>/SUMMARY.md`
 - refreshes JSON/CSV artifacts in `target/benchmarks/`
-- runs benchmark diffs automatically when at least two prior reports exist
+- runs benchmark diffs automatically when at least two compatible prior reports exist
+
+Useful options:
+
+- `-CurrentSpeedProfile smoke` to run the bounded current-speed profile
+- `-CurrentSpeedProfile full` to run the fuller current-speed profile explicitly
+- `-Repeat 3` or `-Repeat 5` to rerun `current-speed` and `comparative` several times, aggregate medians, and diff median-vs-median on later runs
 
 Optional flags:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -IncludeEndurance
 powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -OpenResults
+powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -CurrentSpeedProfile smoke
+powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -Repeat 3
 powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -Warmup 20 -Iterations 80 -DocsPerThread 20 -Threads 1,2,4,8
 ```
 
@@ -588,6 +605,12 @@ For fresh local numbers against the current checkout, run the manual suite in `s
 mvn --% -B -ntp -DskipTests test-compile dependency:build-classpath -DincludeScope=test -Dmdep.outputFile=target/benchmark.classpath
 $cp = (Get-Content 'target/benchmark.classpath' -Raw).Trim()
 java -cp "target\test-classes;target\classes;$cp" com.demcha.compose.CurrentSpeedBenchmark
+```
+
+To run the bounded smoke profile directly:
+
+```powershell
+java -Dgraphcompose.benchmark.profile=smoke -cp "target\test-classes;target\classes;$cp" com.demcha.compose.CurrentSpeedBenchmark
 ```
 
 To compare GraphCompose against iText 5 and JasperReports with the same test classpath:
@@ -601,6 +624,11 @@ Both suites now persist timestamped JSON/CSV artifacts plus `latest-*` copies un
 
 - `target/benchmarks/current-speed/`
 - `target/benchmarks/comparative/`
+
+Repeated local runs can also be aggregated into median reports under:
+
+- `target/benchmarks/aggregates/current-speed/<profile>/`
+- `target/benchmarks/aggregates/comparative/`
 
 To compare the two newest runs for a suite:
 
@@ -619,6 +647,8 @@ java -cp "target\test-classes;target\classes;$cp" com.demcha.compose.BenchmarkDi
 ```
 
 Diff artifacts are saved under `target/benchmarks/diffs/`.
+
+When you care about local decision-making more than raw speed of execution, prefer the wrapper with `-Repeat` over ad-hoc one-off diffs. It reduces “lucky” and “unlucky” local runs and makes the README-level numbers easier to trust.
 
 ### Benchmark suites in the repository
 

@@ -75,16 +75,15 @@ public final class PdfBarcodeRenderHandler implements RenderHandler<BarcodeCompo
         double width = Math.max(0.0, placement.width() - padding.horizontal());
         double height = Math.max(0.0, placement.height() - padding.vertical());
 
-        try (PDPageContentStream stream = renderingSystem.stream().openContentStream(entity)) {
-            if (width > 0.0 && height > 0.0) {
-                BufferedImage barcodeImage = generateBarcodeImage(barcodeData, (int) width, (int) height);
-                PDImageXObject xObject = createXObject(renderingSystem, barcodeImage);
-                stream.drawImage(xObject, (float) x, (float) y, (float) width, (float) height);
-            }
+        PDPageContentStream stream = renderingSystem.pageSurface(entity);
+        if (width > 0.0 && height > 0.0) {
+            BufferedImage barcodeImage = generateBarcodeImage(barcodeData, (int) width, (int) height);
+            PDImageXObject xObject = createXObject(renderingSystem, barcodeImage);
+            stream.drawImage(xObject, (float) x, (float) y, (float) width, (float) height);
+        }
 
-            if (guideLines) {
-                renderingSystem.guidesRenderer().guidesRender(entity, stream, DEFAULT_GUIDES);
-            }
+        if (guideLines) {
+            renderingSystem.guidesRenderer().guidesRender(entity, stream, DEFAULT_GUIDES);
         }
 
         return width > 0.0 && height > 0.0;

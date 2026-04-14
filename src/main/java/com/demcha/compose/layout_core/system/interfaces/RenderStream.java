@@ -1,19 +1,16 @@
 package com.demcha.compose.layout_core.system.interfaces;
 
-import com.demcha.compose.layout_core.components.core.Entity;
-
 import java.io.IOException;
 
 /**
- * This interface serve to open a stream classes for our systems
+ * Factory for backend-specific render-pass sessions.
  *
- * @param <T> type of stream which will be open
+ * <p>The engine does not ask the backend to open a fresh surface per entity.
+ * Instead it opens one session per render pass, and the backend can decide how
+ * to reuse page-local resources inside that pass.</p>
+ *
+ * @param <T> backend-specific surface type
  */
-
-public interface RenderStream<T> {
-    T openContentStream(int pageIndex) throws IOException;
-
-    T openContentStream(Entity entity) throws IOException;
-
-
+public interface RenderStream<T extends AutoCloseable> {
+    RenderPassSession<T> openRenderPass() throws IOException;
 }

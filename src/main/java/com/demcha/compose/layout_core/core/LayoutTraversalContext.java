@@ -71,18 +71,47 @@ public final class LayoutTraversalContext {
                 Collections.unmodifiableSet(roots));
     }
 
+    /**
+     * Returns an unmodifiable map from each child entity ID to its parent entity ID.
+     *
+     * <p>Only entities that carry a {@link ParentComponent} appear as keys.</p>
+     *
+     * @return child → parent mapping, never {@code null}
+     */
     public Map<UUID, UUID> parentById() {
         return parentById;
     }
 
+    /**
+     * Returns an unmodifiable map from each parent entity ID to its ordered list of
+     * child entity IDs.
+     *
+     * <p>The child order follows {@link Entity#getChildren()} when consistent with
+     * {@link ParentComponent}. Inconsistencies are resolved deterministically and
+     * logged as warnings.</p>
+     *
+     * @return parent → ordered children mapping, never {@code null}
+     */
     public Map<UUID, List<UUID>> childrenByParent() {
         return childrenByParent;
     }
 
+    /**
+     * Returns the set of root entity IDs — entities that have no resolved parent.
+     *
+     * <p>If no roots can be computed (e.g. due to a cycle), the set falls back to all
+     * known entities so the cycle becomes visible at traversal time.</p>
+     *
+     * @return root entity IDs in insertion order, never {@code null} or empty
+     */
     public Set<UUID> roots() {
         return roots;
     }
 
+    /**
+     * Walks all entities and indexes child → parent relationships from
+     * {@link ParentComponent}. Insertion order mirrors the entity map.
+     */
     private static Map<UUID, UUID> buildParentById(Map<UUID, Entity> entities) {
         Map<UUID, UUID> parentById = new LinkedHashMap<>();
 
@@ -95,6 +124,11 @@ public final class LayoutTraversalContext {
         return parentById;
     }
 
+    /**
+     * Builds the ordered children map by reconciling {@link Entity#getChildren()}
+     * with {@link ParentComponent}. Stale or inconsistent references are logged and
+     * handled deterministically.
+     */
     private static Map<UUID, List<UUID>> buildChildrenByParent(Map<UUID, Entity> entities,
                                                                Map<UUID, UUID> parentById) {
         Map<UUID, List<UUID>> childrenByParent = new LinkedHashMap<>();
@@ -153,6 +187,10 @@ public final class LayoutTraversalContext {
         return immutableChildren;
     }
 
+    /**
+     * Identifies root entities — those with no parent or whose parent is missing
+     * from the entity set. Falls back to all entities if no roots are found.
+     */
     private static Set<UUID> buildRoots(Map<UUID, Entity> entities, Map<UUID, UUID> parentById) {
         Set<UUID> roots = new LinkedHashSet<>();
 

@@ -182,6 +182,19 @@ public class PageBreaker {
 
     /**
      * Ready-queue ordering for unrelated nodes in the pagination walk.
+     *
+     * <p>The priority keys are chosen so that visually higher entities and deeper
+     * subtree leaves are processed first:</p>
+     * <ol>
+     *   <li>Y-position descending — top-of-page entities come first in engine coordinates</li>
+     *   <li>Depth descending — deeper children break ties in favour of leaves</li>
+     *   <li>UUID string — deterministic fallback for bit-identical layouts</li>
+     * </ol>
+     *
+     * @param entities  entity map used during this pagination pass
+     * @param depthById precomputed depth map from the layout traversal
+     * @return comparator for the {@link java.util.PriorityQueue} used in
+     *         {@link #orderedForPagination}
      */
     private Comparator<UUID> paginationPriority(Map<UUID, Entity> entities, Map<UUID, Integer> depthById) {
         return Comparator
@@ -191,6 +204,14 @@ public class PageBreaker {
                 .thenComparing(UUID::toString);
     }
 
+    /**
+     * Retrieves an entity from the pagination map, throwing if absent.
+     *
+     * @param entities entity map active during the current pagination pass
+     * @param entityId id to look up
+     * @return the entity, never {@code null}
+     * @throws IllegalStateException if the entity is missing
+     */
     private Entity requireEntity(Map<UUID, Entity> entities, UUID entityId) {
         Entity entity = entities.get(entityId);
         if (entity == null) {
@@ -199,6 +220,15 @@ public class PageBreaker {
         return entity;
     }
 
+    /**
+     * Returns the layout depth of an entity, falling back to its {@link Layer}
+     * value when the depth map has no entry (e.g. for dynamically added entities).
+     *
+     * @param entityId entity id to look up
+     * @param entity   the resolved entity instance
+     * @param depthById precomputed depth map from the layout traversal
+     * @return depth value, zero if neither source has a value
+     */
     private int depthOf(UUID entityId, Entity entity, Map<UUID, Integer> depthById) {
         return depthById.getOrDefault(entityId, entity.getComponent(Layer.class)
                 .map(Layer::value)

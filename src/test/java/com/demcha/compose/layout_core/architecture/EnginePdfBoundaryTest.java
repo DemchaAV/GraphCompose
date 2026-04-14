@@ -33,6 +33,26 @@ class EnginePdfBoundaryTest {
         }
     }
 
+    @Test
+    void engineRenderInterfacesShouldStayBackendNeutral() throws IOException {
+        Path projectRoot = Path.of("").toAbsolutePath().normalize();
+        Path sourceRoot = projectRoot.resolve("src/main/java/com/demcha/compose/layout_core/system/interfaces");
+
+        try (var paths = Files.walk(sourceRoot)) {
+            List<String> violations = new TreeSet<>(paths
+                    .filter(Files::isRegularFile)
+                    .filter(path -> path.toString().endsWith(".java"))
+                    .filter(this::containsForbiddenImports)
+                    .map(projectRoot::relativize)
+                    .map(path -> path.toString().replace('\\', '/'))
+                    .collect(Collectors.toList()))
+                    .stream()
+                    .toList();
+
+            assertThat(violations).isEmpty();
+        }
+    }
+
     private boolean containsForbiddenImports(Path path) {
         try {
             String source = Files.readString(path);

@@ -294,7 +294,10 @@ Preferred extension pattern for new backends:
 Important files:
 
 - [Render.java](./../src/main/java/com/demcha/compose/layout_core/system/interfaces/Render.java)
+- [RenderPassSession.java](./../src/main/java/com/demcha/compose/layout_core/system/interfaces/RenderPassSession.java)
+- [RenderStream.java](./../src/main/java/com/demcha/compose/layout_core/system/interfaces/RenderStream.java)
 - [PdfRenderingSystemECS.java](./../src/main/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderingSystemECS.java)
+- [PdfRenderSession.java](./../src/main/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderSession.java)
 - [EntityRenderOrder.java](./../src/main/java/com/demcha/compose/layout_core/system/rendering/EntityRenderOrder.java)
 
 Migration rule for new engine components:
@@ -303,8 +306,22 @@ Migration rule for new engine components:
 - move PDF drawing into `...pdf_systems.handlers`
 - use `TextMeasurementSystem` for text width and line metrics instead of reaching through `LayoutSystem`
 - place PDF-only helper objects in `...pdf_systems.helpers`
+- keep page-surface lifetime in a backend-specific `RenderPassSession`, not in engine builders or render markers
 - keep resolved draw ordering in renderer-owned or renderer-neutral rendering helpers such as `EntityRenderOrder`
 - register a render handler for every engine render marker because the PDF entity path no longer supports a backend-specific render fallback
+
+### Render-pass session rules
+
+The current render seam is deliberately narrower than a full backend abstraction. Use these rules when extending it:
+
+- `RenderStream<T>` should create one render-pass session, not one stream per entity
+- renderer orchestrators such as `PdfRenderingSystemECS.process(...)` should open one session for the whole pass
+- single-page handlers should use the session-managed page surface directly
+- multi-page handlers should request page surfaces explicitly per fragment or page
+- page creation or annotation-only work should use the session's page-availability helper instead of opening a dummy drawing surface
+- handlers must restore graphics state and text state before returning
+- handlers must never close a session-owned surface
+- backend-specific text lifecycle helpers belong in backend handlers or backend sessions, not in shared engine interfaces
 
 The practical rule is:
 

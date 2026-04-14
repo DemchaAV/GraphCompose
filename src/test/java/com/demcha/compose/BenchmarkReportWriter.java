@@ -16,7 +16,6 @@ import java.util.List;
  */
 final class BenchmarkReportWriter {
 
-    private static final Path ROOT = Path.of("target", "benchmarks");
     private static final DateTimeFormatter FILE_TIMESTAMP = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
     private static final ObjectMapper JSON = new ObjectMapper()
             .enable(SerializationFeature.INDENT_OUTPUT);
@@ -25,9 +24,13 @@ final class BenchmarkReportWriter {
     }
 
     static BenchmarkArtifacts prepare(String suiteName) throws IOException {
-        Path directory = ROOT.resolve(suiteName);
+        Path directory = root().resolve(suiteName);
         Files.createDirectories(directory);
         return new BenchmarkArtifacts(directory, LocalDateTime.now().format(FILE_TIMESTAMP));
+    }
+
+    private static Path root() {
+        return Path.of(System.getProperty("graphcompose.benchmark.root", Path.of("target", "benchmarks").toString()));
     }
 
     static final class BenchmarkArtifacts {

@@ -3,6 +3,10 @@ param(
     [switch]$IncludeEndurance,
     [switch]$OpenResults,
     [switch]$SkipDiff,
+    [ValidateSet("full", "smoke")]
+    [string]$CurrentSpeedProfile = "full",
+    [ValidateRange(1, 10)]
+    [int]$Repeat = 1,
     [int]$Warmup = -1,
     [int]$Iterations = -1,
     [int]$DocsPerThread = -1,
@@ -109,14 +113,104 @@ function Invoke-JavaMain {
 function Get-RunCount {
     param([string]$SuiteName)
 
+    return @(Get-RunFiles -SuiteName $SuiteName).Count
+}
+
+function Get-RunFiles {
+    param([string]$SuiteName)
+
     $suiteDir = Join-Path $repoRoot "target\benchmarks\$SuiteName"
     if (-not (Test-Path $suiteDir)) {
-        return 0
+        return @()
     }
 
     return @(
-        Get-ChildItem -Path $suiteDir -Filter "run-*.json" -File -ErrorAction SilentlyContinue
-    ).Count
+        Get-ChildItem -Path $suiteDir -Filter "run-*.json" -File -ErrorAction SilentlyContinue |
+            Sort-Object Name |
+            ForEach-Object { $_.FullName }
+    )
+}
+
+function Get-RunPair {
+    param([string]$SuiteName)
+
+    $runFiles = @(Get-RunFiles -SuiteName $SuiteName)
+    if ($runFiles.Count -lt 2) {
+        return $null
+    }
+
+    return @($runFiles[$runFiles.Count - 2], $runFiles[$runFiles.Count - 1])
+}
+
+function Invoke-RepeatedBenchmark {
+    param(
+        [string]$NamePrefix,
+        [string]$SuiteName,
+        [string]$Classpath,
+        [string]$MainClass,
+        [string[]]$SystemProperties = @(),
+        [string[]]$JavaOptions = @(),
+        [string[]]$Arguments = @(),
+        [int]$RepeatCount = 1
+    )
+
+    $createdRuns = @()
+    for ($index = 1; $index -le $RepeatCount; $index++) {
+        $beforeRuns = @(Get-RunFiles -SuiteName $SuiteName)
+        $stepName = if ($RepeatCount -gt 1) {
+            "{0}-{1:d2}-of-{2:d2}" -f $NamePrefix, $index, $RepeatCount
+        } else {
+            $NamePrefix
+        }
+
+        Invoke-JavaMain -Name $stepName `
+            -Classpath $Classpath `
+            -MainClass $MainClass `
+            -SystemProperties $SystemProperties `
+            -JavaOptions $JavaOptions `
+            -Arguments $Arguments | Out-Null
+
+        $afterRuns = @(Get-RunFiles -SuiteName $SuiteName)
+        $newRuns = @($afterRuns | Where-Object { $_ -notin $beforeRuns })
+        if ($newRuns.Count -gt 0) {
+            $createdRuns += ($newRuns | Sort-Object | Select-Object -Last 1)
+        } elseif ($afterRuns.Count -gt 0) {
+            $createdRuns += $afterRuns[$afterRuns.Count - 1]
+        } else {
+            throw "Benchmark '$NamePrefix' did not produce any run-*.json files in suite '$SuiteName'"
+        }
+    }
+
+    return @($createdRuns)
+}
+
+function Invoke-MedianAggregation {
+    param(
+        [string]$Name,
+        [string]$SuiteName,
+        [string]$AggregateSuiteName,
+        [string]$Classpath,
+        [string[]]$InputPaths
+    )
+
+    if ($InputPaths.Count -lt 2) {
+        return $null
+    }
+
+    $beforeRuns = @(Get-RunFiles -SuiteName $AggregateSuiteName)
+    $arguments = @($SuiteName) + $InputPaths
+    Invoke-JavaMain -Name $Name -Classpath $Classpath -MainClass "com.demcha.compose.BenchmarkMedianTool" -Arguments $arguments | Out-Null
+
+    $afterRuns = @(Get-RunFiles -SuiteName $AggregateSuiteName)
+    $newRuns = @($afterRuns | Where-Object { $_ -notin $beforeRuns })
+    if ($newRuns.Count -gt 0) {
+        return ($newRuns | Sort-Object | Select-Object -Last 1)
+    }
+    if ($afterRuns.Count -gt 0) {
+        return $afterRuns[$afterRuns.Count - 1]
+    }
+
+    throw "Median aggregation '$Name' did not produce any run-*.json files in suite '$AggregateSuiteName'"
 }
 
 function Get-IfExists {
@@ -136,6 +230,8 @@ Add-Content -Path $summaryPath -Value @(
     ("- Repository: ``{0}``" -f $repoRoot),
     ("- Include endurance: ``{0}``" -f $IncludeEndurance),
     ("- Skip diff: ``{0}``" -f $SkipDiff),
+    ("- Current speed profile: ``{0}``" -f $CurrentSpeedProfile),
+    ("- Repeat current-speed/comparative: ``{0}``" -f $Repeat),
     ("- Logs folder: ``{0}``" -f $logRoot),
     ""
 )
@@ -151,6 +247,7 @@ try {
     $javaClasspath = "target\test-classes;target\classes;$dependencyClasspath"
 
     $currentSpeedProperties = @()
+    $currentSpeedProperties += "-Dgraphcompose.benchmark.profile=$CurrentSpeedProfile"
     if ($Warmup -gt 0) {
         $currentSpeedProperties += "-Dgraphcompose.benchmark.warmup=$Warmup"
     }
@@ -164,8 +261,39 @@ try {
         $currentSpeedProperties += "-Dgraphcompose.benchmark.threads=$Threads"
     }
 
-    Invoke-JavaMain -Name "02-current-speed" -Classpath $javaClasspath -MainClass "com.demcha.compose.CurrentSpeedBenchmark" -SystemProperties $currentSpeedProperties
-    Invoke-JavaMain -Name "03-comparative" -Classpath $javaClasspath -MainClass "com.demcha.compose.ComparativeBenchmark"
+    $currentSpeedRuns = Invoke-RepeatedBenchmark `
+        -NamePrefix "02-current-speed" `
+        -SuiteName "current-speed" `
+        -Classpath $javaClasspath `
+        -MainClass "com.demcha.compose.CurrentSpeedBenchmark" `
+        -SystemProperties $currentSpeedProperties `
+        -RepeatCount $Repeat
+    $currentSpeedAggregateSuite = "aggregates/current-speed/$CurrentSpeedProfile"
+    if ($Repeat -gt 1) {
+        Invoke-MedianAggregation `
+            -Name "02a-current-speed-median" `
+            -SuiteName "current-speed" `
+            -AggregateSuiteName $currentSpeedAggregateSuite `
+            -Classpath $javaClasspath `
+            -InputPaths $currentSpeedRuns | Out-Null
+    }
+
+    $comparativeRuns = Invoke-RepeatedBenchmark `
+        -NamePrefix "03-comparative" `
+        -SuiteName "comparative" `
+        -Classpath $javaClasspath `
+        -MainClass "com.demcha.compose.ComparativeBenchmark" `
+        -RepeatCount $Repeat
+    $comparativeAggregateSuite = "aggregates/comparative"
+    if ($Repeat -gt 1) {
+        Invoke-MedianAggregation `
+            -Name "03a-comparative-median" `
+            -SuiteName "comparative" `
+            -AggregateSuiteName $comparativeAggregateSuite `
+            -Classpath $javaClasspath `
+            -InputPaths $comparativeRuns | Out-Null
+    }
+
     Invoke-JavaMain -Name "04-core-engine" -Classpath $javaClasspath -MainClass "com.demcha.compose.GraphComposeBenchmark"
     Invoke-JavaMain -Name "05-full-cv" -Classpath $javaClasspath -MainClass "com.demcha.compose.FullCvBenchmark"
     Invoke-JavaMain -Name "06-scalability" -Classpath $javaClasspath -MainClass "com.demcha.compose.ScalabilityBenchmark"
@@ -179,18 +307,40 @@ try {
     }
 
     if (-not $SkipDiff) {
-        if ((Get-RunCount "current-speed") -ge 2) {
-            Invoke-JavaMain -Name "09-diff-current-speed" -Classpath $javaClasspath -MainClass "com.demcha.compose.BenchmarkDiffTool" -Arguments @("current-speed")
+        if ($Repeat -gt 1) {
+            $currentSpeedDiffPair = Get-RunPair -SuiteName $currentSpeedAggregateSuite
         } else {
-            Add-SummaryLine("- ``09-diff-current-speed``: skipped")
-            Add-SummaryLine("  - Reason: need at least two current-speed runs")
+            $currentSpeedDiffPair = Get-RunPair -SuiteName "current-speed"
         }
 
-        if ((Get-RunCount "comparative") -ge 2) {
-            Invoke-JavaMain -Name "10-diff-comparative" -Classpath $javaClasspath -MainClass "com.demcha.compose.BenchmarkDiffTool" -Arguments @("comparative")
+        if ($null -ne $currentSpeedDiffPair) {
+            $currentSpeedDiffName = if ($Repeat -gt 1) { "09-diff-current-speed-median" } else { "09-diff-current-speed" }
+            Invoke-JavaMain -Name $currentSpeedDiffName -Classpath $javaClasspath -MainClass "com.demcha.compose.BenchmarkDiffTool" -Arguments $currentSpeedDiffPair
+        } else {
+            Add-SummaryLine("- ``09-diff-current-speed``: skipped")
+            if ($Repeat -gt 1) {
+                Add-SummaryLine("  - Reason: need at least two current-speed median aggregates")
+            } else {
+                Add-SummaryLine("  - Reason: need at least two current-speed runs")
+            }
+        }
+
+        if ($Repeat -gt 1) {
+            $comparativeDiffPair = Get-RunPair -SuiteName $comparativeAggregateSuite
+        } else {
+            $comparativeDiffPair = Get-RunPair -SuiteName "comparative"
+        }
+
+        if ($null -ne $comparativeDiffPair) {
+            $comparativeDiffName = if ($Repeat -gt 1) { "10-diff-comparative-median" } else { "10-diff-comparative" }
+            Invoke-JavaMain -Name $comparativeDiffName -Classpath $javaClasspath -MainClass "com.demcha.compose.BenchmarkDiffTool" -Arguments $comparativeDiffPair
         } else {
             Add-SummaryLine("- ``10-diff-comparative``: skipped")
-            Add-SummaryLine("  - Reason: need at least two comparative runs")
+            if ($Repeat -gt 1) {
+                Add-SummaryLine("  - Reason: need at least two comparative median aggregates")
+            } else {
+                Add-SummaryLine("  - Reason: need at least two comparative runs")
+            }
         }
     } else {
         Add-SummaryLine("- ``09-10-diff``: skipped")
@@ -201,14 +351,24 @@ try {
     $comparativeLatest = Get-IfExists (Join-Path $repoRoot "target\benchmarks\comparative\latest.json")
     $currentSpeedDiffLatest = Get-IfExists (Join-Path $repoRoot "target\benchmarks\diffs\current-speed\latest.json")
     $comparativeDiffLatest = Get-IfExists (Join-Path $repoRoot "target\benchmarks\diffs\comparative\latest.json")
+    if ($Repeat -gt 1) {
+        $currentSpeedMedianLatest = Get-IfExists (Join-Path $repoRoot "target\benchmarks\$currentSpeedAggregateSuite\latest.json")
+        $comparativeMedianLatest = Get-IfExists (Join-Path $repoRoot "target\benchmarks\$comparativeAggregateSuite\latest.json")
+    }
 
     Add-SummaryLine("")
     Add-SummaryLine("## Artifacts")
     if ($currentSpeedLatest) {
         Add-SummaryLine(("- Current speed latest: ``{0}``" -f $currentSpeedLatest))
     }
+    if ($Repeat -gt 1 -and $currentSpeedMedianLatest) {
+        Add-SummaryLine(("- Current speed median latest: ``{0}``" -f $currentSpeedMedianLatest))
+    }
     if ($comparativeLatest) {
         Add-SummaryLine(("- Comparative latest: ``{0}``" -f $comparativeLatest))
+    }
+    if ($Repeat -gt 1 -and $comparativeMedianLatest) {
+        Add-SummaryLine(("- Comparative median latest: ``{0}``" -f $comparativeMedianLatest))
     }
     if ($currentSpeedDiffLatest) {
         Add-SummaryLine(("- Current speed diff latest: ``{0}``" -f $currentSpeedDiffLatest))

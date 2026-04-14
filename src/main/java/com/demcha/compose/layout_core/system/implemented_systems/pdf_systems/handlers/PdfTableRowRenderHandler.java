@@ -51,30 +51,29 @@ public final class PdfTableRowRenderHandler implements RenderHandler<TableRow, P
         TableRowData rowData = entity.getComponent(TableRowData.class).orElseThrow();
         boolean startsNewPageFragment = startsPageFragment(manager, entity);
 
-        try (PDPageContentStream stream = renderingSystem.stream().openContentStream(entity)) {
-            for (TableResolvedCell cell : rowData.cells()) {
-                double cellX = placement.x() + cell.x();
-                double cellY = placement.y();
-                TableCellStyle style = cell.style();
+        PDPageContentStream stream = renderingSystem.pageSurface(entity);
+        for (TableResolvedCell cell : rowData.cells()) {
+            double cellX = placement.x() + cell.x();
+            double cellY = placement.y();
+            TableCellStyle style = cell.style();
 
-                cellRenderer.render(
-                        stream,
-                        renderingSystem,
-                        cellX,
-                        cellY,
-                        cell.width(),
-                        cell.height(),
-                        style.fillColor() == null ? null : new FillColor(style.fillColor()),
-                        style.stroke(),
-                        effectiveFillInsets(cell, startsNewPageFragment),
-                        effectiveBorderSides(cell, startsNewPageFragment)
-                );
-                renderCellText(stream, manager, cell, cellX, cellY);
-            }
+            cellRenderer.render(
+                    stream,
+                    renderingSystem,
+                    cellX,
+                    cellY,
+                    cell.width(),
+                    cell.height(),
+                    style.fillColor() == null ? null : new FillColor(style.fillColor()),
+                    style.stroke(),
+                    effectiveFillInsets(cell, startsNewPageFragment),
+                    effectiveBorderSides(cell, startsNewPageFragment)
+            );
+            renderCellText(stream, manager, cell, cellX, cellY);
+        }
 
-            if (guideLines) {
-                renderingSystem.guidesRenderer().guidesRender(entity, stream, DEFAULT_GUIDES);
-            }
+        if (guideLines) {
+            renderingSystem.guidesRenderer().guidesRender(entity, stream, DEFAULT_GUIDES);
         }
 
         return true;

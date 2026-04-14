@@ -34,12 +34,10 @@ public final class PdfRectangleRenderHandler implements RenderHandler<Rectangle,
                           Rectangle renderComponent,
                           PdfRenderingSystemECS renderingSystem,
                           boolean guideLines) throws IOException {
-        boolean drawn;
-        try (PDPageContentStream stream = renderingSystem.stream().openContentStream(entity)) {
-            drawn = renderRectangle(entity, stream);
-            if (guideLines) {
-                renderingSystem.guidesRenderer().guidesRender(entity, stream, DEFAULT_GUIDES);
-            }
+        PDPageContentStream stream = renderingSystem.pageSurface(entity);
+        boolean drawn = renderRectangle(entity, stream);
+        if (guideLines) {
+            renderingSystem.guidesRenderer().guidesRender(entity, stream, DEFAULT_GUIDES);
         }
         return drawn;
     }

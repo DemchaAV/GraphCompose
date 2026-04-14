@@ -8,6 +8,8 @@ on:
     branches:
       - main
   workflow_dispatch:
+  schedule:
+    - cron: '0 5 * * 1'
 
 permissions:
   contents: read
@@ -15,6 +17,7 @@ permissions:
 jobs:
   architecture-and-documentation-guards:
     name: Architecture and Documentation Guards
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     env:
       JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -35,6 +38,7 @@ jobs:
 
   build-and-test:
     name: Build and run tests
+    if: github.event_name != 'schedule'
     needs: architecture-and-documentation-guards
     runs-on: ubuntu-latest
     env:
@@ -53,3 +57,102 @@ jobs:
 
       - name: Build and run tests
         run: mvn -B -ntp verify
+
+  perf-smoke:
+    name: Performance Smoke Check
+    if: github.event_name == 'pull_request'
+    needs: architecture-and-documentation-guards
+    runs-on: ubuntu-latest
+    env:
+      JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Temurin JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Run coarse performance smoke benchmark
+        run: |
+          ./mvnw -B -ntp -DskipTests test-compile \
+            "org.codehaus.mojo:exec-maven-plugin:3.5.0:java" \
+            "-Dexec.mainClass=com.demcha.compose.CurrentSpeedBenchmark" \
+            "-Dexec.classpathScope=test" \
+            "-Dgraphcompose.benchmark.profile=smoke"
+
+      - name: Upload smoke benchmark artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-smoke-${{ github.run_id }}
+          path: target/benchmarks/current-speed/**
+          if-no-files-found: ignore
+
+  benchmark-diff:
+    name: Weekly Benchmark Diff
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Temurin JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Restore benchmark history cache
+        uses: actions/cache@v4
+        with:
+          path: target/benchmarks/current-speed
+          key: benchmark-current-speed-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            benchmark-current-speed-${{ github.ref_name }}-
+            benchmark-current-speed-
+
+      - name: Run full benchmark suite
+        run: |
+          ./mvnw -B -ntp -DskipTests test-compile \
+            "org.codehaus.mojo:exec-maven-plugin:3.5.0:java" \
+            "-Dexec.mainClass=com.demcha.compose.CurrentSpeedBenchmark" \
+            "-Dexec.classpathScope=test" \
+            "-Dgraphcompose.benchmark.profile=full" \
+            "-Dgraphcompose.benchmark.enforceGate=false"
+
+      - name: Count available benchmark runs
+        id: benchmark-runs
+        run: |
+          count=0
+          if [ -d target/benchmarks/current-speed ]; then
+            count=$(find target/benchmarks/current-speed -maxdepth 1 -name 'run-*.json' | wc -l | tr -d ' ')
+          fi
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+
+      - name: Diff newest benchmark reports
+        if: steps.benchmark-runs.outputs.count != '0' && steps.benchmark-runs.outputs.count != '1'
+        run: |
+          ./mvnw -B -ntp -DskipTests test-compile \
+            "org.codehaus.mojo:exec-maven-plugin:3.5.0:java" \
+            "-Dexec.mainClass=com.demcha.compose.BenchmarkDiffTool" \
+            "-Dexec.classpathScope=test" \
+            "-Dexec.args=current-speed"
+
+      - name: Upload benchmark artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-full-${{ github.run_id }}
+          path: |
+            target/benchmarks/current-speed/**
+            target/benchmarks/diffs/current-speed/**
+          if-no-files-found: ignore

@@ -40,7 +40,13 @@ import java.util.*;
 import java.util.List;
 
 /**
- * In current Class you can render a simple Figure like line rectangle cercl
+ * PDF rendering system that keeps PDFBox lifecycle concerns inside the PDF
+ * backend.
+ *
+ * <p>The shared engine interacts with this renderer through the backend-neutral
+ * render-session SPI. This class owns the PDF-specific policy for opening one
+ * {@link PdfRenderSession} per render pass and for exposing session-managed
+ * page surfaces to handlers.</p>
  */
 @Slf4j
 @Getter
@@ -79,39 +85,44 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
         log.info("Processing PdfRenderingSystemECS");
 
         var layers = entityManager.getLayers();
+        try (var renderSession = stream().openRenderPass()) {
+            activeRenderSession = renderSession;
 
-        for (Map.Entry<Integer, List<UUID>> layerEntry : layers.entrySet()) {
-            int layerDepth = layerEntry.getKey();
-            var layerEntityIds = layerEntry.getValue();
-            LinkedHashMap<UUID, Entity> orderedLayerEntities = EntityRenderOrder.sortByRenderingPosition(entityManager, layerEntityIds);
+            for (Map.Entry<Integer, List<UUID>> layerEntry : layers.entrySet()) {
+                int layerDepth = layerEntry.getKey();
+                var layerEntityIds = layerEntry.getValue();
+                LinkedHashMap<UUID, Entity> orderedLayerEntities = EntityRenderOrder.sortByRenderingPosition(entityManager, layerEntityIds);
 
-            log.debug("Rendering layer {} with {} entities", layerDepth, orderedLayerEntities.size());
-            orderedLayerEntities.forEach((uuid, entity) -> {
-                if (entity.hasRender()) {
-                    var guideLines = entity.isGuideLines();
-                    try {
-                        var render = entity.getRender();
-                        var handler = renderHandlers().find(render);
+                log.debug("Rendering layer {} with {} entities", layerDepth, orderedLayerEntities.size());
+                orderedLayerEntities.forEach((uuid, entity) -> {
+                    if (entity.hasRender()) {
+                        var guideLines = entity.isGuideLines();
+                        try {
+                            var render = entity.getRender();
+                            var handler = renderHandlers().find(render);
 
-                        if (handler.isPresent()) {
-                            @SuppressWarnings("unchecked")
-                            RenderHandler<com.demcha.compose.layout_core.system.interfaces.Render, PdfRenderingSystemECS> typedHandler =
-                                    (RenderHandler<com.demcha.compose.layout_core.system.interfaces.Render, PdfRenderingSystemECS>) (RenderHandler<?, ?>) handler.get();
-                            typedHandler.render(entityManager, entity, render, this, guideLines);
-                        } else {
-                            throw new IllegalStateException("No PDF render handler registered for " + render.getClass().getName());
+                            if (handler.isPresent()) {
+                                @SuppressWarnings("unchecked")
+                                RenderHandler<com.demcha.compose.layout_core.system.interfaces.Render, PdfRenderingSystemECS> typedHandler =
+                                        (RenderHandler<com.demcha.compose.layout_core.system.interfaces.Render, PdfRenderingSystemECS>) (RenderHandler<?, ?>) handler.get();
+                                typedHandler.render(entityManager, entity, render, this, guideLines);
+                            } else {
+                                throw new IllegalStateException("No PDF render handler registered for " + render.getClass().getName());
+                            }
+                        } catch (IOException ex) {
+                            log.error("Error processing pdf {}", ex, entity);
+                            throw new RuntimeException(ex);
                         }
-                    } catch (IOException ex) {
-                        log.error("Error processing pdf {}", ex, entity);
-                        throw new RuntimeException(ex);
+                    } else {
+                        log.error("{} has no Render component", entity);
                     }
-                } else {
-                    log.error("{} has no Render component", entity);
-                }
-            });
-
+                });
+            }
+        } catch (IOException ex) {
+            throw new RuntimeException("Failed to open or close PDF render session", ex);
+        } finally {
+            activeRenderSession = null;
         }
-
     }
 
     /**
@@ -146,6 +157,43 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
 
     public ImageCacheStats imageCacheStats() {
         return imageCache.stats();
+    }
+
+    /**
+     * Returns the session-owned PDF content stream for the target page.
+     *
+     * <p>Handlers must restore graphics/text state before returning and must
+     * never close the returned stream. The enclosing {@link PdfRenderSession}
+     * closes it once at the end of the render pass.</p>
+     */
+    public PDPageContentStream pageSurface(int pageIndex) throws IOException {
+        return renderSession().pageSurface(pageIndex);
+    }
+
+    /**
+     * Convenience helper for handlers that render on exactly one resolved page.
+     */
+    public PDPageContentStream pageSurface(Entity entity) throws IOException {
+        return renderSession().pageSurface(entity);
+    }
+
+    /**
+     * Ensures the target page exists before attaching PDF structures such as
+     * annotations.
+     *
+     * <p>When called outside an active render pass this opens a short-lived
+     * render session, keeping page creation policy in the PDF backend rather
+     * than leaking PDFBox document management into handlers.</p>
+     */
+    public void ensurePage(int pageIndex) throws IOException {
+        var session = activeRenderSession();
+        if (session.isPresent()) {
+            session.get().ensurePage(pageIndex);
+            return;
+        }
+        try (var temporarySession = stream().openRenderPass()) {
+            temporarySession.ensurePage(pageIndex);
+        }
     }
 
     public boolean renderRectangle(Stroke stroke,

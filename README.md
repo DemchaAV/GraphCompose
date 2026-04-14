@@ -35,6 +35,8 @@
   <a href="./CONTRIBUTING.md">Contributing</a>
 </p>
 
+Layout regression tests are supported through the public `com.demcha.compose.testing.layout` helpers. See [Layout Snapshot Testing](./docs/layout-snapshot-testing.md) for the consumer workflow and when snapshot tests should use `PdfComposer` instead of the broader `DocumentComposer` abstraction.
+
 ---
 
 ## The problem with existing PDF libraries

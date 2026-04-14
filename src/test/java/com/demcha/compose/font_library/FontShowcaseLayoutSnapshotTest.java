@@ -2,7 +2,7 @@ package com.demcha.compose.font_library;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.layout_core.core.PdfComposer;
-import com.demcha.testing.layout.LayoutSnapshotAssertions;
+import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
 

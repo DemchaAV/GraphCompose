@@ -4,7 +4,7 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.mock.ProposalDataFixtures;
 import com.demcha.templates.data.ProposalData;
-import com.demcha.testing.layout.LayoutSnapshotAssertions;
+import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
 

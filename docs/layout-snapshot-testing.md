@@ -87,6 +87,8 @@ try (PdfComposer composer = GraphCompose.pdf()
 Use the test harness for normal snapshot regression coverage:
 
 ```java
+import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
+
 @Test
 void shouldMatchInvoiceLayoutSnapshotAndRenderPdf() throws Exception {
     Path outputFile = VisualTestOutputs.preparePdf("invoice_render_file", "clean", "templates", "invoice");
@@ -108,6 +110,50 @@ This gives one test two kinds of feedback:
 
 - machine-precise layout regression coverage
 - a PDF artifact for visual inspection
+
+## Using snapshots in downstream projects
+
+Library consumers can use the same public helpers that GraphCompose uses in its own tests:
+
+```java
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.layout_core.core.DocumentComposer;
+import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.junit.jupiter.api.Test;
+
+class InvoiceTemplateSnapshotTest {
+
+    @Test
+    void shouldKeepInvoiceLayoutStable() throws Exception {
+        InvoiceTemplateV1 template = new InvoiceTemplateV1();
+        InvoiceData data = invoiceFixture();
+
+        try (PdfComposer composer = GraphCompose.pdf()
+                .pageSize(PDRectangle.A4)
+                .margin(22, 22, 22, 22)
+                .markdown(true)
+                .create()) {
+
+            template.compose(composer, data);
+            LayoutSnapshotAssertions.assertMatches(composer, "templates/invoice/invoice_standard_layout");
+        }
+    }
+}
+```
+
+Your template contracts can still stay written against `DocumentComposer`. The important distinction is that snapshot tests should instantiate `PdfComposer`, because the debug-only `layoutSnapshot()` API lives on that PDF-backed composer.
+
+If you want different baseline folders in your own project, use the public overloads with custom roots:
+
+```java
+LayoutSnapshotAssertions.assertMatches(
+        composer,
+        Path.of("src", "test", "resources", "layout-snapshots"),
+        Path.of("target", "visual-tests", "layout-snapshots"),
+        "consumer/invoice_layout");
+```
 
 ## Snapshot contents
 
@@ -187,6 +233,8 @@ Or update a focused test only:
 ```powershell
 ./mvnw "-Dgraphcompose.updateSnapshots=true" "-Dtest=InvoiceTemplateV1LayoutSnapshotTest" test
 ```
+
+The same property works for downstream projects that use `LayoutSnapshotAssertions` from the published GraphCompose artifact.
 
 In normal mode:
 

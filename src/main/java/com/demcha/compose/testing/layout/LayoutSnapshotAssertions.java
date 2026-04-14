@@ -1,33 +1,36 @@
-package com.demcha.testing.layout;
+package com.demcha.compose.testing.layout;
 
-import com.demcha.compose.layout_core.debug.LayoutSnapshot;
 import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.layout_core.debug.LayoutSnapshot;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-
-import static org.assertj.core.api.Assertions.fail;
+import java.util.Objects;
 
 /**
- * Assertion helper for deterministic post-layout snapshots.
+ * Assertion helpers for deterministic post-layout snapshots.
  *
  * <p>The intended workflow is:</p>
  * <ol>
  *   <li>compose the document into a {@link PdfComposer}</li>
- *   <li>call {@link #assertMatches(PdfComposer, String)} or
- *       {@link #assertMatches(PdfComposer, String, String...)}</li>
+ *   <li>call one of the {@code assertMatches(...)} overloads</li>
  *   <li>optionally render the same composer to PDF for human inspection</li>
  * </ol>
  *
- * <p>Expected baselines are committed under {@code src/test/resources/layout-snapshots}.
- * On mismatch, an {@code .actual.json} artifact is written under
- * {@code target/visual-tests/layout-snapshots}. Local baseline updates are opt-in via
- * {@code -Dgraphcompose.updateSnapshots=true}.</p>
+ * <p>By default, expected baselines are resolved under
+ * {@code src/test/resources/layout-snapshots}. On mismatch, an
+ * {@code .actual.json} artifact is written under
+ * {@code target/visual-tests/layout-snapshots}. Local baseline updates are
+ * opt-in via {@value #UPDATE_PROPERTY}.</p>
  */
 public final class LayoutSnapshotAssertions {
-    static final String UPDATE_PROPERTY = "graphcompose.updateSnapshots";
+    /**
+     * System property that enables overwriting expected JSON baselines.
+     */
+    public static final String UPDATE_PROPERTY = "graphcompose.updateSnapshots";
+
     private static final Path EXPECTED_ROOT = Path.of("src", "test", "resources", "layout-snapshots");
     private static final Path ACTUAL_ROOT = Path.of("target", "visual-tests", "layout-snapshots");
 
@@ -42,7 +45,7 @@ public final class LayoutSnapshotAssertions {
      * {@code src/test/resources/layout-snapshots/templates/invoice/invoice_standard_layout.json}.</p>
      *
      * @param composer composed document whose layout should be snapshotted
-     * @param snapshotPath logical snapshot path relative to the snapshot root
+     * @param snapshotPath logical snapshot path relative to the default snapshot root
      * @throws Exception if snapshot extraction or comparison fails
      */
     public static void assertMatches(PdfComposer composer, String snapshotPath) throws Exception {
@@ -53,12 +56,9 @@ public final class LayoutSnapshotAssertions {
     /**
      * Resolves and compares a snapshot using an explicit file name plus folders.
      *
-     * <p>This overload is useful when tests already carry the folder structure as
-     * separate values.</p>
-     *
      * @param composer composed document whose layout should be snapshotted
      * @param snapshotName file name without the {@code .json} suffix
-     * @param folders optional folder segments under the snapshot root
+     * @param folders optional folder segments under the default snapshot root
      * @throws Exception if snapshot extraction or comparison fails
      */
     public static void assertMatches(PdfComposer composer, String snapshotName, String... folders) throws Exception {
@@ -69,6 +69,86 @@ public final class LayoutSnapshotAssertions {
                 Boolean.getBoolean(UPDATE_PROPERTY),
                 snapshotName,
                 folders);
+    }
+
+    /**
+     * Resolves and compares a snapshot using a slash-delimited logical path and
+     * caller-provided baseline roots.
+     *
+     * @param composer composed document whose layout should be snapshotted
+     * @param expectedRoot root folder that stores committed JSON baselines
+     * @param actualRoot root folder for mismatch artifacts
+     * @param snapshotPath logical snapshot path relative to {@code expectedRoot}
+     * @throws Exception if snapshot extraction or comparison fails
+     */
+    public static void assertMatches(PdfComposer composer,
+                                     Path expectedRoot,
+                                     Path actualRoot,
+                                     String snapshotPath) throws Exception {
+        SnapshotTarget target = parseSnapshotPath(snapshotPath);
+        assertMatches(composer, expectedRoot, actualRoot, target.snapshotName(), target.folders());
+    }
+
+    /**
+     * Resolves and compares a snapshot using an explicit file name plus folders
+     * and caller-provided baseline roots.
+     *
+     * @param composer composed document whose layout should be snapshotted
+     * @param expectedRoot root folder that stores committed JSON baselines
+     * @param actualRoot root folder for mismatch artifacts
+     * @param snapshotName file name without the {@code .json} suffix
+     * @param folders optional folder segments under {@code expectedRoot}
+     * @throws Exception if snapshot extraction or comparison fails
+     */
+    public static void assertMatches(PdfComposer composer,
+                                     Path expectedRoot,
+                                     Path actualRoot,
+                                     String snapshotName,
+                                     String... folders) throws Exception {
+        assertMatches(
+                composer.layoutSnapshot(),
+                expectedRoot,
+                actualRoot,
+                Boolean.getBoolean(UPDATE_PROPERTY),
+                snapshotName,
+                folders);
+    }
+
+    /**
+     * Compares a precomputed layout snapshot against a slash-delimited logical
+     * path under caller-provided baseline roots.
+     *
+     * @param snapshot resolved snapshot to compare
+     * @param expectedRoot root folder that stores committed JSON baselines
+     * @param actualRoot root folder for mismatch artifacts
+     * @param snapshotPath logical snapshot path relative to {@code expectedRoot}
+     * @throws IOException if reading or writing snapshot files fails
+     */
+    public static void assertMatches(LayoutSnapshot snapshot,
+                                     Path expectedRoot,
+                                     Path actualRoot,
+                                     String snapshotPath) throws IOException {
+        SnapshotTarget target = parseSnapshotPath(snapshotPath);
+        assertMatches(snapshot, expectedRoot, actualRoot, Boolean.getBoolean(UPDATE_PROPERTY), target.snapshotName(), target.folders());
+    }
+
+    /**
+     * Compares a precomputed layout snapshot against an explicit file name plus
+     * folders under caller-provided baseline roots.
+     *
+     * @param snapshot resolved snapshot to compare
+     * @param expectedRoot root folder that stores committed JSON baselines
+     * @param actualRoot root folder for mismatch artifacts
+     * @param snapshotName file name without the {@code .json} suffix
+     * @param folders optional folder segments under {@code expectedRoot}
+     * @throws IOException if reading or writing snapshot files fails
+     */
+    public static void assertMatches(LayoutSnapshot snapshot,
+                                     Path expectedRoot,
+                                     Path actualRoot,
+                                     String snapshotName,
+                                     String... folders) throws IOException {
+        assertMatches(snapshot, expectedRoot, actualRoot, Boolean.getBoolean(UPDATE_PROPERTY), snapshotName, folders);
     }
 
     static void assertMatches(LayoutSnapshot snapshot,
@@ -86,6 +166,11 @@ public final class LayoutSnapshotAssertions {
                               boolean updateSnapshots,
                               String snapshotName,
                               String... folders) throws IOException {
+        Objects.requireNonNull(snapshot, "snapshot");
+        Objects.requireNonNull(expectedRoot, "expectedRoot");
+        Objects.requireNonNull(actualRoot, "actualRoot");
+        Objects.requireNonNull(snapshotName, "snapshotName");
+
         String actualJson = LayoutSnapshotJson.toJson(snapshot);
         Path expectedPath = resolveExpectedPath(expectedRoot, snapshotName, folders);
         Path actualPath = resolveActualPath(actualRoot, snapshotName, folders);
@@ -98,7 +183,7 @@ public final class LayoutSnapshotAssertions {
 
         if (Files.notExists(expectedPath)) {
             writeFile(actualPath, actualJson);
-            fail("Missing expected layout snapshot at %s. Generated actual snapshot at %s. Re-run with -D%s=true to accept it."
+            throw new AssertionError("Missing expected layout snapshot at %s. Generated actual snapshot at %s. Re-run with -D%s=true to accept it."
                     .formatted(expectedPath.toAbsolutePath(), actualPath.toAbsolutePath(), UPDATE_PROPERTY));
         }
 
@@ -109,7 +194,7 @@ public final class LayoutSnapshotAssertions {
 
         if (!expectedJson.equals(actualJson)) {
             writeFile(actualPath, actualJson);
-            fail("Layout snapshot mismatch for %s. Expected: %s Actual: %s. Re-run with -D%s=true to update the baseline."
+            throw new AssertionError("Layout snapshot mismatch for %s. Expected: %s Actual: %s. Re-run with -D%s=true to update the baseline."
                     .formatted(snapshotName, expectedPath.toAbsolutePath(), actualPath.toAbsolutePath(), UPDATE_PROPERTY));
         }
 

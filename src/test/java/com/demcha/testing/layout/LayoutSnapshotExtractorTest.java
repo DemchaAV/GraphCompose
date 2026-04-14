@@ -1,4 +1,4 @@
-package com.demcha.testing.layout;
+package com.demcha.compose.testing.layout;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.layout_core.components.components_builders.ComponentBuilder;

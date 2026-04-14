@@ -289,11 +289,13 @@ Preferred extension pattern for new backends:
 2. register a backend-specific `TextMeasurementSystem`
 3. register renderer-side handlers for marker types
 4. keep backend-only helper drawing in renderer-owned helper packages when the code is not an entity render marker
+5. keep renderer ordering policy in the rendering layer rather than in pagination utilities
 
 Important files:
 
 - [Render.java](./../src/main/java/com/demcha/compose/layout_core/system/interfaces/Render.java)
 - [PdfRenderingSystemECS.java](./../src/main/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderingSystemECS.java)
+- [EntityRenderOrder.java](./../src/main/java/com/demcha/compose/layout_core/system/rendering/EntityRenderOrder.java)
 
 Migration rule for new engine components:
 
@@ -301,6 +303,7 @@ Migration rule for new engine components:
 - move PDF drawing into `...pdf_systems.handlers`
 - use `TextMeasurementSystem` for text width and line metrics instead of reaching through `LayoutSystem`
 - place PDF-only helper objects in `...pdf_systems.helpers`
+- keep resolved draw ordering in renderer-owned or renderer-neutral rendering helpers such as `EntityRenderOrder`
 - register a render handler for every engine render marker because the PDF entity path no longer supports a backend-specific render fallback
 
 The practical rule is:
@@ -331,6 +334,7 @@ The layout side uses entity components, not builder classes directly.
 
 Important files:
 
+- [LayoutTraversalContext.java](./../src/main/java/com/demcha/compose/layout_core/core/LayoutTraversalContext.java)
 - [LayoutSystem.java](./../src/main/java/com/demcha/compose/layout_core/system/LayoutSystem.java)
 - [ComputedPosition.java](./../src/main/java/com/demcha/compose/layout_core/components/layout/coordinator/ComputedPosition.java)
 - [PageBreaker.java](./../src/main/java/com/demcha/compose/layout_core/system/utils/page_breaker/PageBreaker.java)
@@ -339,6 +343,9 @@ In practice:
 
 - `Anchor`, `Margin`, `Padding`, `ContentSize`, and parent/child links are what matter to layout
 - the builder is just the place where you attach those components
+- `LayoutTraversalContext` should build one deterministic hierarchy snapshot per pass instead of letting each subsystem rediscover roots and children independently
+- `ParentComponent` is the authoritative parent relation, while `Entity.children` is the canonical sibling order
+- if those two sources disagree, traversal code should warn loudly and use a deterministic fallback rather than silently hiding the inconsistency
 - during pagination, descendants should be resolved before parent containers so parent size updates caused by child page shifts are reflected before parent placement is finalized
 
 See [pagination-ordering.md](./pagination-ordering.md) for a focused explanation of this rule, including why a `Circle` case can fail while an `Image` case appears to work.

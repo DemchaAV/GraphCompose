@@ -34,11 +34,14 @@ class PdfComposerLayoutSnapshotRenderParityTest {
 
             composer.layoutSnapshot();
             double lineXAfterSnapshot = firstLineX(composer, "ProbeBlock");
+            double lineWidthAfterSnapshot = firstLineWidth(composer, "ProbeBlock");
 
             composer.build();
             double lineXAfterBuild = firstLineX(composer, "ProbeBlock");
+            double lineWidthAfterBuild = firstLineWidth(composer, "ProbeBlock");
 
             assertThat(lineXAfterBuild).isEqualTo(lineXAfterSnapshot);
+            assertThat(lineWidthAfterBuild).isEqualTo(lineWidthAfterSnapshot);
         }
     }
 
@@ -130,6 +133,14 @@ class PdfComposerLayoutSnapshotRenderParityTest {
     }
 
     private double firstLineX(PdfComposer composer, String entityName) throws Exception {
+        return firstLine(composer, entityName).x();
+    }
+
+    private double firstLineWidth(PdfComposer composer, String entityName) throws Exception {
+        return firstLine(composer, entityName).lineWidth();
+    }
+
+    private com.demcha.compose.layout_core.components.content.text.LineTextData firstLine(PdfComposer composer, String entityName) throws Exception {
         EntityManager entityManager = entityManager(composer);
 
         Entity blockEntity = entityManager.getEntities().values().stream()
@@ -143,7 +154,7 @@ class PdfComposerLayoutSnapshotRenderParityTest {
         BlockTextData textData = blockEntity.getComponent(BlockTextData.class)
                 .orElseThrow(() -> new AssertionError("Missing BlockTextData for " + entityName));
 
-        return textData.lines().getFirst().x();
+        return textData.lines().getFirst();
     }
 
     private EntityManager entityManager(PdfComposer composer) throws Exception {

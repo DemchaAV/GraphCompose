@@ -7,8 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Resolves per-line vertical metrics for block text so layout can react to
- * mixed markdown styles such as headings inside one block.
+ * Resolves per-line vertical metrics for block text.
+ *
+ * <p>The helper prefers line-local cached metrics when they are already present
+ * and only falls back to the active {@link TextMeasurementSystem} for
+ * uncached/manual lines. That keeps layout and page-breaking logic backend-
+ * neutral while avoiding repeated measurement work during ordinary block-text
+ * processing.</p>
  */
 public final class BlockTextLineMetrics {
 
@@ -23,16 +28,31 @@ public final class BlockTextLineMetrics {
     public static TextMeasurementSystem.LineMetrics resolveLineMetrics(EntityManager entityManager,
                                                                        LineTextData line,
                                                                        TextStyle fallbackStyle) {
-        if (line == null || line.bodies().isEmpty()) {
+        if (line != null && line.hasCachedLineMetrics()) {
+            return line.lineMetrics();
+        }
+
+        if (line == null) {
             return resolveStyleMetrics(entityManager, fallbackStyle);
         }
 
+        return resolveBodiesMetrics(entityManager, line.bodies(), fallbackStyle);
+    }
+
+    public static TextMeasurementSystem.LineMetrics resolveBodiesMetrics(EntityManager entityManager,
+                                                                         List<TextDataBody> bodies,
+                                                                         TextStyle fallbackStyle) {
+        if (bodies == null || bodies.isEmpty()) {
+            return resolveStyleMetrics(entityManager, fallbackStyle);
+        }
+
+        TextMeasurementSystem measurementSystem = measurementSystem(entityManager);
         double ascent = 0.0;
         double descent = 0.0;
         double leading = 0.0;
         boolean hasMetrics = false;
 
-        for (TextDataBody body : line.bodies()) {
+        for (TextDataBody body : bodies) {
             if (body == null) {
                 continue;
             }
@@ -42,7 +62,7 @@ public final class BlockTextLineMetrics {
                 continue;
             }
 
-            TextMeasurementSystem.LineMetrics metrics = resolveStyleMetrics(entityManager, style);
+            TextMeasurementSystem.LineMetrics metrics = measurementSystem.lineMetrics(style);
             ascent = Math.max(ascent, metrics.ascent());
             descent = Math.max(descent, metrics.descent());
             leading = Math.max(leading, metrics.leading());

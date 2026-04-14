@@ -20,6 +20,7 @@ import com.demcha.compose.layout_core.components.renderable.BlockText;
 import com.demcha.compose.layout_core.components.renderable.TextComponent;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.EntityManager;
+import com.demcha.compose.layout_core.core.LayoutTraversalContext;
 import com.demcha.compose.layout_core.exceptions.BigSizeElementException;
 import com.demcha.compose.layout_core.system.interfaces.RenderingSystemECS;
 import com.demcha.compose.layout_core.system.interfaces.SystemECS;
@@ -184,6 +185,7 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
     public void process(EntityManager entityManager) {
         log.info("LayoutSystem: processing...");
         textBlockProcessor = new TextBlockProcessor(entityManager);
+        LayoutTraversalContext.resetTraversalState(entityManager);
 
         final var entities = entityManager.getEntities();
         if (entities == null || entities.isEmpty()) {
@@ -191,15 +193,11 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
             return;
         }
 
-        // 1) Collect all nodes that have a ParentComponent (i.e., are children)
-        final Set<UUID> childIds = entityManager
-                .getEntitiesWithComponent(ParentComponent.class)
-                .orElseGet(Set::of);
-
-        // 2) Build parent -> children map
-        final Map<UUID, Set<UUID>> childrenByParent = entityManager
-                .childrenByParent(childIds)
-                .orElseGet(Map::of);
+        // Build one canonical hierarchy snapshot for the whole pass so layout,
+        // pagination, and future backends all reason over the same sibling order.
+        final LayoutTraversalContext traversalContext = LayoutTraversalContext.from(entityManager);
+        final Map<UUID, UUID> parentById = traversalContext.parentById();
+        final Map<UUID, List<UUID>> childrenByParent = traversalContext.childrenByParent();
 //TODO currently en testing stage
         ModuleWidthResolver.process(entityManager, canvas);
         ContainerLayoutManager.process(childrenByParent, entityManager);
@@ -208,7 +206,7 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
         ContainerExpander.process(childrenByParent, entityManager);
 
         // 4) Compute roots
-        final Set<UUID> roots = computeRoots(entities, childIds, entityManager);
+        final Set<UUID> roots = traversalContext.roots();
 
         // 5) DFS with cycle detection
         final Map<UUID, Visit> visit = new HashMap<>(entities.size());
@@ -239,53 +237,13 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
 
         if (withPagination) {
             var pageBreaker = new PageBreaker(entityManager);
-            pageBreaker.process();
+            pageBreaker.process(entities, renderingSystem.canvas(), traversalContext, depthById);
         } else {
             PaginationLayoutSystem paginationLayoutSystem = new PaginationLayoutSystem();
             paginationLayoutSystem.process(entityManager);
         }
 
 
-    }
-
-    /**
-     * Computes the root entities that should start independent layout traversals.
-     *
-     * <p>An entity is treated as a root when it is not referenced as a child or
-     * when its declared parent cannot be resolved.</p>
-     */
-    private Set<UUID> computeRoots(Map<UUID, Entity> entities,
-                                   Set<UUID> childIds,
-                                   EntityManager entityManager) {
-        final Set<UUID> roots = new LinkedHashSet<>(entities.keySet());
-        // Nodes that are never children are roots
-        roots.removeAll(childIds);
-
-        // Nodes with missing/invalid parent are also roots
-        entityManager.getEntitiesWithComponent(ParentComponent.class).ifPresent(parentEntities -> {
-            for (UUID id : parentEntities) {
-                final var eOpt = entityManager.getEntity(id);
-                if (eOpt.isEmpty()) continue;
-
-                final UUID pid = eOpt.get()
-                        .getComponent(ParentComponent.class)
-                        .map(ParentComponent::uuid)
-                        .orElse(null);
-
-                if (pid == null || !entities.containsKey(pid)) {
-                    if (roots.add(id)) {
-                        log.warn("LayoutSystem: entity {} references missing parent {} — treating as root", id, pid);
-                    }
-                }
-            }
-        });
-
-        if (roots.isEmpty()) {
-            // Defensive: if everything is wired as a child forming a closed cycle, fall back to all nodes
-            log.warn("LayoutSystem: computed empty root set; falling back to all entities as roots");
-            roots.addAll(entities.keySet());
-        }
-        return roots;
     }
 
     /**
@@ -299,7 +257,7 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
             UUID id,
             UUID parentId,
             Map<UUID, Entity> entities,
-            Map<UUID, Set<UUID>> childrenByParent,
+            Map<UUID, List<UUID>> childrenByParent,
             Map<UUID, Visit> visit,
             Map<Integer, List<UUID>> layers,     // NEW: layer → ordered ids
             Map<UUID, Integer> depthById,         // NEW: id → depth
@@ -366,7 +324,7 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
         }
 
         // DFS to children with depth+1
-        for (UUID childId : childrenByParent.getOrDefault(id, Collections.emptySet())) {
+        for (UUID childId : childrenByParent.getOrDefault(id, Collections.emptyList())) {
             dfsLayout(childId, id, entities, childrenByParent, visit, layers, depthById, depth + 1, entityManager);
         }
 

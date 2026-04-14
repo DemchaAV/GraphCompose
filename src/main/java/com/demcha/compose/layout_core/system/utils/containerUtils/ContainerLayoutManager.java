@@ -19,7 +19,7 @@ public class ContainerLayoutManager {
      * A parent container is aligned only after all of its container-children are aligned.
      * Non-container parents are just marked as processed (nothing to align).
      */
-    public static void process(Map<UUID, Set<UUID>> childrenByParent, EntityManager entityManager) {
+    public static void process(Map<UUID, ? extends Collection<UUID>> childrenByParent, EntityManager entityManager) {
         if (childrenByParent == null || childrenByParent.isEmpty()) {
             log.debug("process(): nothing to do, childrenByParent is null or empty");
             return;
@@ -47,7 +47,7 @@ public class ContainerLayoutManager {
      */
     private static void alignContainer(
             UUID parentId,
-            Map<UUID, Set<UUID>> childrenByParent,
+            Map<UUID, ? extends Collection<UUID>> childrenByParent,
             Set<UUID> visited,
             EntityManager entityManager,
             Deque<UUID> stackForCycleCheck
@@ -60,7 +60,10 @@ public class ContainerLayoutManager {
         }
 
         // Iterate children safely (use empty set when absent)
-        Set<UUID> children = childrenByParent.getOrDefault(parentId, Collections.emptySet());
+        Collection<UUID> children = childrenByParent.get(parentId);
+        if (children == null) {
+            children = Collections.emptyList();
+        }
         for (UUID childId : children) {
             if (visited.contains(childId)) continue;
 

@@ -22,6 +22,14 @@ The same separation also enables layout snapshot regression tests. Test code can
 
 For pagination-sensitive trees, GraphCompose relies on a child-first page-breaking order. Fixed leaf objects are resolved before their parent containers so parent `ContentSize` can reflect child shifts before container placement is finalized.
 
+The engine now materializes one deterministic hierarchy snapshot per layout pass:
+
+- parent links come from `ParentComponent`
+- sibling order comes from `Entity.children`
+- roots, layers, and depth metadata are rebuilt for every pass instead of being reused across runs
+
+That keeps layout, pagination, snapshot extraction, and render backends aligned on the same tree semantics.
+
 See [pagination-ordering.md](./pagination-ordering.md) for the detailed explanation of why this rule exists and how ordering bugs can look like render bugs.
 
 ## Engine layer: `com.demcha.compose.*`
@@ -60,6 +68,7 @@ This keeps table pagination consistent with the rest of the engine while avoidin
 - Render marker components should primarily identify what needs to be rendered.
 - Backend-specific drawing logic should live in renderer-owned handler packages such as `...pdf_systems.handlers` and backend helper packages such as `...pdf_systems.helpers`.
 - The PDF entity path dispatches through registered render handlers only; backend-specific render interfaces are not part of the preferred engine extension seam.
+- Renderer-specific draw ordering should be backend-neutral at the policy level and backend-owned at the integration level. In practice the engine exposes resolved layout coordinates, while each backend chooses how to consume the shared deterministic render order for its output format.
 
 ### Migration rule for new renderables
 

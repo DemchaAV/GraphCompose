@@ -7,6 +7,7 @@ import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.core.Entity;
 import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.Anchor;
+import com.demcha.compose.layout_core.components.layout.coordinator.Placement;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
@@ -176,6 +177,71 @@ class PageBreakerIntegrationTest {
         try (PDDocument doc = Loader.loadPDF(outputFile.toFile())) {
             assertThat(doc.getNumberOfPages()).isGreaterThan(1);
         }
+    }
+
+    @Test
+    void shouldExpandParentPlacementAfterLeafMovesToNextPage() throws Exception {
+        Path outputFile = VisualTestOutputs.preparePdf(
+                "page_breaker_parent_after_leaf_shift_test",
+                "guides",
+                "integration");
+
+        Placement parentPlacement;
+        Placement leafPlacement;
+
+        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+                .pageSize(PDRectangle.A4)
+                .margin(20, 20, 20, 20)
+                .guideLines(true)
+                .create()) {
+
+            ComponentBuilder cb = composer.componentBuilder();
+
+            Entity spacer = cb.rectangle()
+                    .size(320, 680)
+                    .fillColor(ComponentColor.LIGHT_GRAY)
+                    .margin(Margin.of(8))
+                    .entityName("PaginationSpacer")
+                    .build();
+
+            Entity shiftedLeaf = cb.rectangle()
+                    .size(320, 220)
+                    .fillColor(ComponentColor.ROYAL_BLUE)
+                    .stroke(new Stroke(ComponentColor.DARK_BLUE, 2))
+                    .margin(Margin.of(8))
+                    .entityName("ShiftedLeaf")
+                    .build();
+
+            Entity container = cb.vContainer(Align.middle(10))
+                    .entityName("ShiftedLeafContainer")
+                    .anchor(Anchor.topCenter())
+                    .margin(Margin.of(24))
+                    .addChild(spacer)
+                    .addChild(shiftedLeaf)
+                    .build();
+
+            composer.build();
+
+            parentPlacement = container.getComponent(Placement.class).orElseThrow();
+            leafPlacement = shiftedLeaf.getComponent(Placement.class).orElseThrow();
+        }
+
+        assertThat(outputFile).exists();
+        assertThat(outputFile).isNotEmptyFile();
+
+        try (PDDocument doc = Loader.loadPDF(outputFile.toFile())) {
+            assertThat(doc.getNumberOfPages()).isGreaterThan(1);
+        }
+
+        assertThat(leafPlacement.startPage()).isEqualTo(leafPlacement.endPage());
+        assertThat(leafPlacement.startPage()).isGreaterThan(0);
+
+        int parentFirstPage = Math.min(parentPlacement.startPage(), parentPlacement.endPage());
+        int parentLastPage = Math.max(parentPlacement.startPage(), parentPlacement.endPage());
+
+        assertThat(parentFirstPage).isEqualTo(0);
+        assertThat(parentLastPage).isGreaterThan(parentFirstPage);
+        assertThat(leafPlacement.startPage()).isBetween(parentFirstPage, parentLastPage);
     }
 
     private List<Entity> createLargeTextContent(ComponentBuilder cb, int rows, double spacing) {

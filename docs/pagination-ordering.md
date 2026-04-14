@@ -52,6 +52,19 @@ For pagination, GraphCompose should follow this ordering contract:
 This rule guarantees that parent containers see all child-induced page shifts before their own
 `Placement` is finalized.
 
+## Current implementation shape
+
+The current engine implementation does not enforce this rule with a pairwise ancestor comparator.
+Instead it builds one deterministic traversal context for the whole pass:
+
+- `ParentComponent` provides the authoritative parent relation
+- `Entity.children` provides canonical sibling order
+- the page breaker runs a priority-based topological walk where only nodes with no unresolved children can enter the ready queue
+- within that ready queue, unrelated nodes are ordered by `ComputedPosition.y`, then depth, then UUID
+
+This keeps the algorithm fast on larger trees because it does not repeatedly walk parent chains during sorting.
+It also keeps the rule renderer-agnostic: pagination still reasons over engine layout data, not PDF-specific output state.
+
 ## Practical symptom
 
 If you see one of these behaviors, check pagination ordering first:

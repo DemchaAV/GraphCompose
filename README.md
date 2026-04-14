@@ -318,6 +318,8 @@ The recommended developer flow is:
 
 See [Layout Snapshot Testing](./docs/layout-snapshot-testing.md) for the workflow and examples.
 
+If you are adding a new feature or template test, the same guide now includes a short copy-paste recipe for creating a new snapshot baseline and verifying it locally.
+
 For quick manual inspection of pagination, barcodes, QR codes, and document-level PDF chrome, run focused visual smoke tests such as:
 
 ```powershell

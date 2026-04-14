@@ -114,6 +114,67 @@ This gives one test two kinds of feedback:
 - machine-precise layout regression coverage
 - a PDF artifact for visual inspection
 
+## Quick recipe for adding a snapshot test
+
+If you are adding a new feature, template, or pagination case, the fastest way to add snapshot coverage is:
+
+1. create a JUnit test that instantiates a `PdfComposer`
+2. compose the document into that composer
+3. call `LayoutSnapshotAssertions.assertMatches(...)`
+4. optionally call `build()` if you also want a PDF artifact for visual inspection
+
+Minimal pattern:
+
+```java
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.junit.jupiter.api.Test;
+
+class MyFeatureLayoutSnapshotTest {
+
+    @Test
+    void shouldKeepMyFeatureLayoutStable() throws Exception {
+        try (PdfComposer composer = GraphCompose.pdf()
+                .pageSize(PDRectangle.A4)
+                .margin(22, 22, 22, 22)
+                .markdown(true)
+                .create()) {
+
+            feature.compose(composer, fixtureData());
+
+            LayoutSnapshotAssertions.assertMatches(
+                    composer,
+                    "features/my_feature_layout");
+        }
+    }
+}
+```
+
+First run for a brand-new snapshot:
+
+```powershell
+./mvnw "-Dgraphcompose.updateSnapshots=true" "-Dtest=MyFeatureLayoutSnapshotTest" test
+```
+
+That creates the committed baseline under:
+
+- `src/test/resources/layout-snapshots/features/my_feature_layout.json`
+
+Normal verification run after that:
+
+```powershell
+./mvnw "-Dtest=MyFeatureLayoutSnapshotTest" test
+```
+
+If the test fails, compare:
+
+- expected baseline in `src/test/resources/layout-snapshots/...`
+- generated actual file in `target/visual-tests/layout-snapshots/.../*.actual.json`
+
+Use snapshot tests when the thing you care about is layout stability. If you need visual confirmation too, keep `composer.build()` in the same test or pair the snapshot test with a render test.
+
 ## Using snapshots in downstream projects
 
 Library consumers can use the same public helpers that GraphCompose uses in its own tests:

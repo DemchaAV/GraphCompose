@@ -161,11 +161,11 @@ public final class ContainerExpander {
      *
      * @param childrenByParents map already sorted by parent
      */
-    public static void process(Map<UUID, Set<UUID>> childrenByParents, EntityManager entityManager) {
+    public static void process(Map<UUID, ? extends Collection<UUID>> childrenByParents, EntityManager entityManager) {
         log.info("Box size normalizer");
 
 
-        for (Map.Entry<UUID, Set<UUID>> parentUuid : childrenByParents.entrySet()) {
+        for (Map.Entry<UUID, ? extends Collection<UUID>> parentUuid : childrenByParents.entrySet()) {
 
             var entityParentOpt = entityManager.getEntity(parentUuid.getKey());
             if (entityParentOpt.isEmpty()) {
@@ -177,7 +177,7 @@ public final class ContainerExpander {
                 continue;
             }
             // Retriven Entiti
-            var childrenEntities = entityManager.getSetEntitiesFromUuids(parentUuid.getValue());
+            var childrenEntities = entityManager.getSetEntitiesFromUuids(new LinkedHashSet<>(parentUuid.getValue()));
 
 
             if (parentEntity.has(Align.class)) {

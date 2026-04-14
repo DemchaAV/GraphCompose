@@ -4,11 +4,11 @@ import com.demcha.compose.layout_core.core.Canvas;
 import com.demcha.compose.layout_core.components.core.Entity;
 import com.demcha.compose.layout_core.components.geometry.ContentSize;
 import com.demcha.compose.layout_core.components.layout.Layer;
-import com.demcha.compose.layout_core.components.layout.ParentComponent;
 import com.demcha.compose.layout_core.components.layout.coordinator.ComputedPosition;
 import com.demcha.compose.layout_core.components.layout.coordinator.Placement;
 import com.demcha.compose.layout_core.components.renderable.BlockText;
 import com.demcha.compose.layout_core.core.EntityManager;
+import com.demcha.compose.layout_core.core.LayoutTraversalContext;
 import com.demcha.compose.layout_core.exceptions.BigSizeElementException;
 import com.demcha.compose.layout_core.system.interfaces.RenderingSystemECS;
 import com.demcha.compose.layout_core.system.interfaces.SystemECS;
@@ -18,9 +18,12 @@ import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.PriorityQueue;
 import java.util.UUID;
 
 
@@ -29,7 +32,7 @@ import java.util.UUID;
  * <p>
  * The main responsibilities of this class are:
  * <ol>
- *     <li>Sorting entities ({@link Entity}) by their vertical position.</li>
+ *     <li>building a child-first pagination order from the resolved hierarchy</li>
  *     <li>Calculating and assigning a page number and in-page coordinates for each entity.</li>
  *     <li>Handling "breakable" entities, such as {@link BlockText}, whose content can
  *     flow onto the next page.</li>
@@ -38,10 +41,10 @@ import java.util.UUID;
  * but rather calculates and assigns {@link Placement} components to entities.
  * <p>
  * A critical invariant of this class is that descendants must be processed before their ancestor containers.
- * A non-breakable leaf may be shifted onto the next page, and that shift can expand the effective
- * {@link ContentSize} of its parent container. If the parent container were processed first, it could receive
- * a stale {@link Placement} based on the pre-shift size, which would make multi-page container guides and
- * span boxes appear too short.
+ * The current implementation enforces that rule with a priority-based topological walk over the resolved
+ * hierarchy: only nodes whose children are already processed can enter the ready queue, and unrelated nodes
+ * are then ordered by layout position and depth. This keeps the algorithm renderer-agnostic while avoiding
+ * repeated ancestor-chain walks inside a comparator.
  */
 @Slf4j
 @Data
@@ -73,72 +76,96 @@ public class PageBreaker {
     /**
      * Runs page-breaking for the current entity set.
      * <p>
-     * The ordering step is intentionally not a simple visual Y-sort. Parent/child relationships take precedence:
-     * any descendant must be paginated before its ancestors. Only after that invariant is satisfied do we use
-     * geometric ordering and layer ordering for unrelated entities.
-     * <p>
-     * This prevents a common failure mode where a child is moved to the next page, updates its parent's
-     * {@link ContentSize}, but the parent has already received a stale {@link Placement}.
+     * The ordering step guarantees that descendants are processed before ancestors while still preferring
+     * top-to-bottom layout order between unrelated subtrees.
      */
     public void process(@NonNull Map<UUID, Entity> entities, Canvas canvas) {
+        LayoutTraversalContext traversalContext = LayoutTraversalContext.from(entityManager);
+        process(entities, canvas, traversalContext, entityManager.getDepthById());
+    }
+
+    public void process(@NonNull Map<UUID, Entity> entities,
+                        Canvas canvas,
+                        @NonNull LayoutTraversalContext traversalContext,
+                        @NonNull Map<UUID, Integer> depthById) {
         Offset yOffset = new Offset();
+        List<Map.Entry<UUID, Entity>> orderedEntities = orderedForPagination(
+                entities,
+                traversalContext.parentById(),
+                traversalContext.childrenByParent(),
+                depthById);
 
-        entities.entrySet().stream()
-                .sorted(this::compareForPagination)
-                //Starting process of breaking Pages
-                .forEachOrdered(e -> { // Changed to forEachOrdered
-                    Entity entity = e.getValue();
-                    log.info("Work with Element {} ", entity);
+        orderedEntities.forEach(e -> {
+            Entity entity = e.getValue();
+            log.info("Work with Element {} ", entity);
 
-                    if (Breakable.class.isAssignableFrom(entity.getRender().getClass())) {
-                        if (entity.hasAssignable(BlockText.class)) {
-                            definePlacementForBlockText(canvas, entity, yOffset);
-                        } else {
-                            definePlacement(canvas, entity, yOffset, true);
-                        }
+            if (Breakable.class.isAssignableFrom(entity.getRender().getClass())) {
+                if (entity.hasAssignable(BlockText.class)) {
+                    definePlacementForBlockText(canvas, entity, yOffset);
+                } else {
+                    definePlacement(canvas, entity, yOffset, true);
+                }
 
-                    } else {
-                        log.info("{} -> {}", entity, Breakable.class);
-                        definePlacement(canvas, entity, yOffset, false);
-                    }
-                });
+            } else {
+                log.info("{} -> {}", entity, Breakable.class);
+                definePlacement(canvas, entity, yOffset, false);
+            }
+        });
     }
 
     /**
-     * Compares two entities for pagination order.
-     * <p>
-     * Rules:
-     * <ol>
-     *     <li>If one entity is an ancestor of the other, the descendant must come first.</li>
-     *     <li>Otherwise order by {@link ComputedPosition#y()} from top to bottom.</li>
-     *     <li>If Y is equal, order by layer.</li>
-     *     <li>If still equal, fall back to UUID for deterministic output.</li>
-     * </ol>
-     * This comparator is the core fix for cases where a fixed leaf object, such as a circle or image,
-     * is moved to the next page and needs its parent container to be sized only after the child shift is known.
+     * Builds one pagination order for the whole pass without repeated pairwise ancestry checks.
+     *
+     * <p>The queue only admits nodes whose descendants are already processed, which preserves
+     * the child-before-parent contract. Between unrelated ready nodes we still use layout
+     * geometry so the order remains visually intuitive and deterministic.</p>
      */
-    private int compareForPagination(Map.Entry<UUID, Entity> left, Map.Entry<UUID, Entity> right) {
-        Entity leftEntity = left.getValue();
-        Entity rightEntity = right.getValue();
+    private List<Map.Entry<UUID, Entity>> orderedForPagination(Map<UUID, Entity> entities,
+                                                               Map<UUID, UUID> parentById,
+                                                               Map<UUID, List<UUID>> childrenByParent,
+                                                               Map<UUID, Integer> depthById) {
+        Map<UUID, Integer> remainingChildren = new LinkedHashMap<>();
+        PriorityQueue<UUID> ready = new PriorityQueue<>(paginationPriority(entities, depthById));
+        List<Map.Entry<UUID, Entity>> ordered = new ArrayList<>(entities.size());
 
-        if (isAncestor(leftEntity, rightEntity)) {
-            return 1;
-        }
-        if (isAncestor(rightEntity, leftEntity)) {
-            return -1;
-        }
-
-        int byComputedY = Double.compare(positionY(rightEntity), positionY(leftEntity));
-        if (byComputedY != 0) {
-            return byComputedY;
-        }
-
-        int byLayer = Integer.compare(layerValue(rightEntity), layerValue(leftEntity));
-        if (byLayer != 0) {
-            return byLayer;
+        for (UUID entityId : entities.keySet()) {
+            int childCount = 0;
+            for (UUID childId : childrenByParent.getOrDefault(entityId, List.of())) {
+                if (entities.containsKey(childId)) {
+                    childCount++;
+                }
+            }
+            remainingChildren.put(entityId, childCount);
+            if (childCount == 0) {
+                ready.add(entityId);
+            }
         }
 
-        return left.getKey().toString().compareTo(right.getKey().toString());
+        while (!ready.isEmpty()) {
+            UUID entityId = ready.poll();
+            Entity entity = entities.get(entityId);
+            if (entity == null) {
+                continue;
+            }
+
+            ordered.add(Map.entry(entityId, entity));
+
+            UUID parentId = parentById.get(entityId);
+            if (parentId == null || !remainingChildren.containsKey(parentId)) {
+                continue;
+            }
+
+            int unresolvedChildren = remainingChildren.merge(parentId, -1, Integer::sum);
+            if (unresolvedChildren == 0) {
+                ready.add(parentId);
+            }
+        }
+
+        if (ordered.size() != entities.size()) {
+            throw new IllegalStateException("Cycle detected while computing pagination order.");
+        }
+
+        return ordered;
     }
 
     /**
@@ -154,37 +181,28 @@ public class PageBreaker {
     }
 
     /**
-     * Returns the layer value used as a stable secondary ordering key when two unrelated entities share
-     * the same computed Y-position.
+     * Ready-queue ordering for unrelated nodes in the pagination walk.
      */
-    private int layerValue(Entity entity) {
-        return entity.getComponent(Layer.class)
-                .orElseThrow(() -> new IllegalStateException("Entity " + entity + " has no Layer"))
-                .value();
+    private Comparator<UUID> paginationPriority(Map<UUID, Entity> entities, Map<UUID, Integer> depthById) {
+        return Comparator
+                .comparingDouble((UUID entityId) -> positionY(requireEntity(entities, entityId)))
+                .reversed()
+                .thenComparing(Comparator.comparingInt((UUID entityId) -> depthOf(entityId, requireEntity(entities, entityId), depthById)).reversed())
+                .thenComparing(UUID::toString);
     }
 
-    /**
-     * Returns {@code true} if {@code candidateAncestor} appears in the parent chain of {@code entity}.
-     * <p>
-     * This check is used by the pagination comparator to guarantee child-first processing.
-     * The rule is especially important for fixed leaf elements that are not themselves breakable:
-     * when such an element overflows and is shifted onto the next page, it may expand the size of its
-     * parent container. The parent must therefore be processed after the child.
-     */
-    private boolean isAncestor(Entity candidateAncestor, Entity entity) {
-        UUID ancestorId = candidateAncestor.getUuid();
-        Optional<ParentComponent> currentParent = entity.getComponent(ParentComponent.class);
-
-        while (currentParent.isPresent()) {
-            UUID parentId = currentParent.get().uuid();
-            if (ancestorId.equals(parentId)) {
-                return true;
-            }
-            currentParent = entityManager.getEntity(parentId)
-                    .flatMap(parent -> parent.getComponent(ParentComponent.class));
+    private Entity requireEntity(Map<UUID, Entity> entities, UUID entityId) {
+        Entity entity = entities.get(entityId);
+        if (entity == null) {
+            throw new IllegalStateException("Entity not found for pagination: " + entityId);
         }
+        return entity;
+    }
 
-        return false;
+    private int depthOf(UUID entityId, Entity entity, Map<UUID, Integer> depthById) {
+        return depthById.getOrDefault(entityId, entity.getComponent(Layer.class)
+                .map(Layer::value)
+                .orElse(0));
     }
 
     /**
@@ -205,10 +223,9 @@ public class PageBreaker {
         ContentSize contentSize = entity.getComponent(ContentSize.class)
                 .orElseThrow(() -> new IllegalStateException("Entity " + entity + " has no ContentSize"));
         log.debug("Defining position for {}", entity);
-        PageLayoutCalculator layoutCalculator = new PageLayoutCalculator(entityManager);
         YPositionOnPage position;
         try {
-            position = layoutCalculator.definePositionOnPage(computedPosition.y() + yOffset.y(), entity, 0, canvas, yOffset, isBreakable);
+            position = pageLayoutCalculator.definePositionOnPage(computedPosition.y() + yOffset.y(), entity, 0, canvas, yOffset, isBreakable);
         } catch (Exception e) {
             log.error("Error while defining position for {}", entity.printInfo(), e);
             throw new RuntimeException(entity.printInfo(), e);
@@ -221,7 +238,7 @@ public class PageBreaker {
     private void definePlacementForBlockText(Canvas canvas, Entity entity, Offset yOffset) {
         try {
             //definition a blockText
-            Offset entityOffset = textBlockProcessor.processPageBreakerBlockText(entity, entityManager, canvas, yOffset);
+            textBlockProcessor.processPageBreakerBlockText(entity, entityManager, canvas, yOffset);
             //definition a placementForBlockTextContainer
             definePlacement(canvas, entity, yOffset, true);
         } catch (BigSizeElementException | IOException ex) {

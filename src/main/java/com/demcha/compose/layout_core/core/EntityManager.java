@@ -14,7 +14,15 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -66,9 +74,9 @@ public class EntityManager {
         this.markdown = markdown;
         this.systems = new SystemRegistry();
         this.systems.addAllSystems(systems);
-        this.entities = new HashMap<>();
-        this.layers = new HashMap<>();
-        this.depthById = new HashMap<>();
+        this.entities = new LinkedHashMap<>();
+        this.layers = new TreeMap<>();
+        this.depthById = new LinkedHashMap<>();
     }
 
     public EntityManager(boolean markdown) {
@@ -162,7 +170,7 @@ public class EntityManager {
             if (components.has(componentType)) {
                 log.debug("Found entity id [{}]  with component {}", entityId, componentType.getName());
                 if (entityIds == null) {
-                    entityIds = new HashSet<>();
+                    entityIds = new LinkedHashSet<>();
                 }
                 log.debug("Adding entity [{}], to list  with component {}", entityId, componentType.getName());
                 entityIds.add(entityId);
@@ -177,7 +185,7 @@ public class EntityManager {
     }
 
     public Set<UUID> getEntitiesWithAnyRender() {
-        Set<UUID> result = new HashSet<>();
+        Set<UUID> result = new LinkedHashSet<>();
         for (Map.Entry<UUID, Entity> e : entities.entrySet()) {
             boolean hasRenderable = e.getValue().view().values().stream()
                     .anyMatch(comp -> comp instanceof Render);
@@ -199,7 +207,7 @@ public class EntityManager {
     public Set<UUID> getEntitiesWithRender(Class<? extends Render> componentType) {
         log.debug("Searching for entities with component type {}", componentType.getName());
 
-        Set<UUID> result = new HashSet<>();
+        Set<UUID> result = new LinkedHashSet<>();
         for (Map.Entry<UUID, Entity> e : entities.entrySet()) {
             UUID entityId = e.getKey();
             Entity entity = e.getValue();
@@ -223,31 +231,6 @@ public class EntityManager {
         return result;
     }
 
-    public Optional<Map<UUID, Set<UUID>>> childrenByParent() {
-        Optional<Set<UUID>> entitiesWithComponent = getEntitiesWithComponent(ParentComponent.class);
-
-        if (entitiesWithComponent.isEmpty()) {
-            return Optional.empty();
-        }
-
-        return childrenByParent(entitiesWithComponent.get());
-    }
-
-    public Optional<Map<UUID, Set<UUID>>> childrenByParent(Set<UUID> childrenWithParent) {
-        Map<UUID, Set<UUID>> childrenByParent = new HashMap<>();
-
-        for (UUID childId : childrenWithParent) {
-            getComponent(childId, ParentComponent.class).ifPresent(parentComponent -> {
-                UUID parentId = parentComponent.uuid(); // assuming ParentComponent has uuid()
-                childrenByParent
-                        .computeIfAbsent(parentId, k -> new HashSet<>())
-                        .add(childId);
-            });
-        }
-
-        return Optional.of(childrenByParent);
-    }
-
     /**
      * Retrive Entities from UUUIDs Set
      *
@@ -260,7 +243,7 @@ public class EntityManager {
                 .map(this::getEntity)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toCollection(LinkedHashSet::new));
 
     }
 

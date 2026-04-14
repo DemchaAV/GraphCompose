@@ -114,6 +114,34 @@ class LayoutSnapshotExtractorTest {
     }
 
     @Test
+    void shouldKeepStableRootOrderWhenRootsShareSameCoordinates() throws Exception {
+        String firstJson = renderSnapshotJsonForEqualCoordinateRoots();
+        String secondJson = renderSnapshotJsonForEqualCoordinateRoots();
+
+        assertThat(secondJson).isEqualTo(firstJson);
+
+        try (PdfComposer composer = GraphCompose.pdf()
+                .pageSize(PDRectangle.A4)
+                .margin(18, 18, 18, 18)
+                .create()) {
+            ComponentBuilder cb = composer.componentBuilder();
+            cb.rectangle()
+                    .size(80, 24)
+                    .anchor(Anchor.topLeft())
+                    .build();
+            cb.rectangle()
+                    .size(80, 24)
+                    .anchor(Anchor.topLeft())
+                    .build();
+
+            LayoutSnapshot snapshot = composer.layoutSnapshot();
+            assertThat(snapshot.nodes())
+                    .extracting(LayoutNodeSnapshot::path)
+                    .containsExactly("Rectangle[0]", "Rectangle[1]");
+        }
+    }
+
+    @Test
     void shouldCaptureTotalPagesFromPlacementSpan() {
         EntityManager entityManager = new EntityManager(false);
         Entity entity = new Entity();
@@ -157,6 +185,25 @@ class LayoutSnapshotExtractorTest {
                     .anchor(Anchor.topLeft())
                     .addChild(heading)
                     .addChild(box)
+                    .build();
+
+            return LayoutSnapshotJson.toJson(composer.layoutSnapshot());
+        }
+    }
+
+    private String renderSnapshotJsonForEqualCoordinateRoots() throws Exception {
+        try (PdfComposer composer = GraphCompose.pdf()
+                .pageSize(PDRectangle.A4)
+                .margin(18, 18, 18, 18)
+                .create()) {
+            ComponentBuilder cb = composer.componentBuilder();
+            cb.rectangle()
+                    .size(80, 24)
+                    .anchor(Anchor.topLeft())
+                    .build();
+            cb.rectangle()
+                    .size(80, 24)
+                    .anchor(Anchor.topLeft())
                     .build();
 
             return LayoutSnapshotJson.toJson(composer.layoutSnapshot());

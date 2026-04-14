@@ -24,7 +24,7 @@ import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.han
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.handlers.PdfTextRenderHandler;
 import com.demcha.compose.layout_core.system.interfaces.guides.GuidesRenderer;
 import com.demcha.compose.layout_core.system.rendering.RenderHandler;
-import com.demcha.compose.layout_core.system.utils.page_breaker.EntitySorter;
+import com.demcha.compose.layout_core.system.rendering.EntityRenderOrder;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -78,14 +78,15 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
     public void process(EntityManager entityManager) {
         log.info("Processing PdfRenderingSystemECS");
 
-        var entities = entityManager.getLayers();
+        var layers = entityManager.getLayers();
 
-        for (Map.Entry<Integer, List<UUID>> e : entities.entrySet()) {
-            var entitiesUuid = e.getValue();
-            LinkedHashMap<UUID, Entity> uuidEntityLinkedHashMap = EntitySorter.sortByYPositionToMap(entityManager, entitiesUuid);
+        for (Map.Entry<Integer, List<UUID>> layerEntry : layers.entrySet()) {
+            int layerDepth = layerEntry.getKey();
+            var layerEntityIds = layerEntry.getValue();
+            LinkedHashMap<UUID, Entity> orderedLayerEntities = EntityRenderOrder.sortByRenderingPosition(entityManager, layerEntityIds);
 
-
-            uuidEntityLinkedHashMap.forEach((uuid, entity) -> {
+            log.debug("Rendering layer {} with {} entities", layerDepth, orderedLayerEntities.size());
+            orderedLayerEntities.forEach((uuid, entity) -> {
                 if (entity.hasRender()) {
                     var guideLines = entity.isGuideLines();
                     try {

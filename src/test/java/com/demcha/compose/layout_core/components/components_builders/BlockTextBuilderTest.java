@@ -2,6 +2,8 @@ package com.demcha.compose.layout_core.components.components_builders;
 
 import com.demcha.compose.font_library.FontName;
 import com.demcha.compose.layout_core.components.content.text.BlockTextData;
+import com.demcha.compose.layout_core.components.content.text.BlockTextLineMetrics;
+import com.demcha.compose.layout_core.components.content.text.LineTextData;
 import com.demcha.compose.layout_core.components.content.text.TextDecoration;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.core.Entity;
@@ -13,6 +15,7 @@ import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFont;
+import com.demcha.compose.layout_core.system.interfaces.TextMeasurementSystem;
 import com.demcha.compose.layout_core.system.measurement.FontLibraryTextMeasurementSystem;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -121,9 +124,15 @@ class BlockTextBuilderTest {
 
                 double plainHeight = plainEntity.getComponent(ContentSize.class).orElseThrow().height();
                 double headingHeight = headingEntity.getComponent(ContentSize.class).orElseThrow().height();
+                BlockTextData headingBlockTextData = headingEntity.getComponent(BlockTextData.class).orElseThrow();
 
                 assertTrue(headingHeight > plainHeight,
                                 "Heading line should enlarge ContentSize before rendering so containers reserve more height");
+                assertCachedMeasurementsPresent(headingBlockTextData);
+                assertTrue(headingBlockTextData.lines().get(1).lineMetrics().lineHeight()
+                                > headingBlockTextData.lines().get(0).lineMetrics().lineHeight(),
+                                "Heading line should carry taller cached metrics than the body lines");
+                assertContentSizeMatchesCachedMeasurements(headingEntity, headingBlockTextData);
         }
 
         @Test
@@ -145,5 +154,55 @@ class BlockTextBuilderTest {
 
                 assertTrue(entity.getComponent(BlockTextData.class).isPresent());
                 assertTrue(entity.getComponent(ContentSize.class).isPresent());
+
+                BlockTextData blockTextData = entity.getComponent(BlockTextData.class).orElseThrow();
+                assertCachedMeasurementsPresent(blockTextData);
+                assertContentSizeMatchesCachedMeasurements(entity, blockTextData);
+        }
+
+        private void assertCachedMeasurementsPresent(BlockTextData blockTextData) {
+                assertFalse(blockTextData.lines().isEmpty(), "Expected cached lines to be present");
+
+                for (LineTextData line : blockTextData.lines()) {
+                        assertTrue(line.hasCachedLineWidth(), "Line width cache should be populated");
+                        assertTrue(line.hasCachedLineMetrics(), "Line metrics cache should be populated");
+                        assertTrue(line.hasCachedBaselineOffset(), "Baseline cache should be populated");
+                        assertEquals(line.lineMetrics().baselineOffsetFromBottom(), line.baselineOffset(), 0.0001,
+                                        "Cached baseline should match the cached line metrics");
+                }
+        }
+
+        private void assertContentSizeMatchesCachedMeasurements(Entity entity, BlockTextData blockTextData) {
+                ContentSize contentSize = entity.getComponent(ContentSize.class).orElseThrow();
+                Padding padding = entity.getComponent(Padding.class).orElse(Padding.zero());
+                Align align = entity.getComponent(Align.class).orElse(Align.defaultAlign(0.0));
+                TextStyle style = entity.getComponent(TextStyle.class).orElse(TextStyle.DEFAULT_STYLE);
+
+                double expectedWidth = blockTextData.lines().stream()
+                                .mapToDouble(LineTextData::lineWidth)
+                                .max()
+                                .orElse(0.0) + padding.horizontal();
+
+                TextMeasurementSystem.LineMetrics baseMetrics =
+                                BlockTextLineMetrics.resolveStyleMetrics(entityManager, style);
+
+                double expectedHeight = padding.vertical();
+                List<LineTextData> lines = blockTextData.lines();
+                for (int i = 0; i < lines.size(); i++) {
+                        TextMeasurementSystem.LineMetrics metrics = lines.get(i).lineMetrics();
+                        expectedHeight += metrics.lineHeight();
+                        if (i < lines.size() - 1) {
+                                expectedHeight += BlockTextLineMetrics.interLineGap(
+                                                metrics,
+                                                lines.get(i + 1).lineMetrics(),
+                                                baseMetrics,
+                                                align.spacing());
+                        }
+                }
+
+                assertEquals(expectedWidth, contentSize.width(), 0.001,
+                                "Content width should be derived from cached line widths");
+                assertEquals(expectedHeight, contentSize.height(), 0.001,
+                                "Content height should be derived from cached line metrics");
         }
 }

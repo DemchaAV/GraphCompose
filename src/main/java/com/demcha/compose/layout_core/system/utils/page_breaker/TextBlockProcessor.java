@@ -67,12 +67,10 @@ public class TextBlockProcessor {
         InnerBoxSize innerBoxSize = InnerBoxSize.from(e).orElseThrow();
         Padding padding = e.getComponent(Padding.class).orElse(Padding.zero());
         BlockText.ValidatedTextData validateText = getValidatedTextData(e);
-        var blockTextData = validateText.textValue().lines();
+        BlockTextData blockTextComponent = validateText.textValue();
+        var blockTextData = blockTextComponent.lines();
 
-        List<TextMeasurementSystem.LineMetrics> lineMetrics = BlockTextLineMetrics.resolveLineMetrics(
-                pageLayoutCalculator.getEntityManager(),
-                blockTextData,
-                validateText.style());
+        List<TextMeasurementSystem.LineMetrics> lineMetrics = resolveLineMetrics(blockTextData, validateText.style());
         TextMeasurementSystem.LineMetrics baseMetrics = BlockTextLineMetrics.resolveStyleMetrics(
                 pageLayoutCalculator.getEntityManager(),
                 validateText.style());
@@ -94,13 +92,15 @@ public class TextBlockProcessor {
         for (int i = 0; i < blockTextData.size(); i++) {
             LineTextData ltd = blockTextData.get(i);
             TextMeasurementSystem.LineMetrics metrics = lineMetrics.get(i);
+            double baselineOffset = baselineOffset(ltd, metrics);
             double currentX = ltd.x() + startX;
-            double baselineY = cursorTop - (metrics.ascent() + metrics.leading());
+            double baselineY = cursorTop - metrics.lineHeight() + baselineOffset;
 
             if (log.isDebugEnabled()) {
                 log.debug("line {} metrics={} baselineY={}", i, metrics, baselineY);
             }
 
+            // Preserve cached measurement payload and only rewrite resolved placement.
             assignPositionTextData.add(new LineTextData(ltd, currentX, baselineY, 0));
 
             cursorTop -= metrics.lineHeight();
@@ -113,7 +113,7 @@ public class TextBlockProcessor {
             }
         }
 
-        e.addComponent(new BlockTextData(assignPositionTextData, (float) spacing));
+        e.addComponent(blockTextComponent.withLines(assignPositionTextData));
     }
 
     public Offset processPageBreakerBlockText(Entity entity,
@@ -125,11 +125,9 @@ public class TextBlockProcessor {
         }
 
         BlockText.ValidatedTextData validatedTextData = getValidatedTextData(entity);
-        var blockTextData = validatedTextData.textValue().lines();
-        List<TextMeasurementSystem.LineMetrics> lineMetrics = BlockTextLineMetrics.resolveLineMetrics(
-                pageLayoutCalculator.getEntityManager(),
-                blockTextData,
-                validatedTextData.style());
+        BlockTextData blockTextComponent = validatedTextData.textValue();
+        var blockTextData = blockTextComponent.lines();
+        List<TextMeasurementSystem.LineMetrics> lineMetrics = resolveLineMetrics(blockTextData, validatedTextData.style());
 
         double spacing = entity.getComponent(Align.class).orElseGet(() -> {
             log.warn("TextComponent has no Align; using default: {}", entity);
@@ -143,7 +141,8 @@ public class TextBlockProcessor {
         for (int i = 0; i < blockTextData.size(); i++) {
             LineTextData ltd = blockTextData.get(i);
             TextMeasurementSystem.LineMetrics metrics = lineMetrics.get(i);
-            double currentBottomY = ltd.y() - metrics.baselineOffsetFromBottom() + yOffset.y() + entityYOffset.y();
+            double baselineOffset = baselineOffset(ltd, metrics);
+            double currentBottomY = ltd.y() - baselineOffset + yOffset.y() + entityYOffset.y();
 
             YPositionOnPage yPositionOnPage = definePositionOnPage(
                     currentBottomY,
@@ -154,21 +153,21 @@ public class TextBlockProcessor {
                     false,
                     entity);
 
-            double baselineY = yPositionOnPage.yPosition() + metrics.baselineOffsetFromBottom();
+            double baselineY = yPositionOnPage.yPosition() + baselineOffset;
+            // Preserve cached measurement payload and only rewrite page-local placement.
             assignPositionTextData.add(new LineTextData(ltd, ltd.x(), baselineY, yPositionOnPage.startPage()));
         }
 
-        finalizePageBreakingAndDefinition(entity, entityManager, yOffset, assignPositionTextData, (float) spacing, entityYOffset);
+        finalizePageBreakingAndDefinition(entity, blockTextComponent, yOffset, assignPositionTextData, entityYOffset);
         return entityYOffset;
     }
 
     private void finalizePageBreakingAndDefinition(Entity entity,
-                                                   EntityManager entityManager,
+                                                   BlockTextData blockTextData,
                                                    @NotNull Offset yOffset,
                                                    List<LineTextData> assignPositionTextData,
-                                                   float spacing,
                                                    Offset entityYOffset) {
-        BlockTextData newBlockTextData = new BlockTextData(assignPositionTextData, spacing);
+        BlockTextData newBlockTextData = blockTextData.withLines(assignPositionTextData);
 
         var size = entity.getComponent(ContentSize.class).orElseThrow();
         var newSize = new ContentSize(size.width(), size.height() + Math.abs(entityYOffset.y()));
@@ -212,6 +211,26 @@ public class TextBlockProcessor {
         var textValue = e.getComponent(BlockTextData.class).orElse(BlockTextData.empty());
         TextStyle style = e.getComponent(TextStyle.class).orElse(TextStyle.DEFAULT_STYLE);
         return new BlockText.ValidatedTextData(style, textValue);
+    }
+
+    private List<TextMeasurementSystem.LineMetrics> resolveLineMetrics(List<LineTextData> lines, TextStyle fallbackStyle) {
+        List<TextMeasurementSystem.LineMetrics> metrics = new ArrayList<>(lines.size());
+        for (LineTextData line : lines) {
+            metrics.add(line.hasCachedLineMetrics()
+                    ? line.lineMetrics()
+                    : BlockTextLineMetrics.resolveLineMetrics(
+                            pageLayoutCalculator.getEntityManager(),
+                            line,
+                            fallbackStyle));
+        }
+        return metrics;
+    }
+
+    private double baselineOffset(LineTextData line, TextMeasurementSystem.LineMetrics metrics) {
+        if (line.hasCachedBaselineOffset()) {
+            return line.baselineOffset();
+        }
+        return metrics.baselineOffsetFromBottom();
     }
 
     /**

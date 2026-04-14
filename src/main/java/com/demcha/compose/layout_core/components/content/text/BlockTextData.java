@@ -5,6 +5,10 @@ import com.demcha.compose.layout_core.components.core.Component;
 
 import java.util.List;
 
+/**
+ * Immutable block-text payload consisting of positioned/measured lines plus
+ * the block's inter-line spacing contract.
+ */
 public record BlockTextData(List<LineTextData> lines, float lineSpacing) implements Component {
     public static final BlockTextData EMPTY = new BlockTextData(List.of(), 0);
 
@@ -22,6 +26,14 @@ public record BlockTextData(List<LineTextData> lines, float lineSpacing) impleme
             }
         }
         return false;
+    }
+
+    /**
+     * Rebuilds the block payload with a new line list while preserving the
+     * original spacing contract.
+     */
+    public BlockTextData withLines(List<LineTextData> updatedLines) {
+        return new BlockTextData(updatedLines, lineSpacing);
     }
 }
 

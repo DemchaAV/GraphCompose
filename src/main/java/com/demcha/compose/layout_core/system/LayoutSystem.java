@@ -338,13 +338,21 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
         var size = blockTextBox.getComponent(ContentSize.class).orElseThrow();
         var padding = blockTextBox.getComponent(Padding.class).orElse(Padding.zero());
         TextStyle style = blockTextBox.getComponent(TextStyle.class).orElseThrow();
-        TextMeasurementSystem measurementSystem = entityManager.getSystems()
-                .getSystem(TextMeasurementSystem.class)
-                .orElseThrow(() -> new IllegalStateException("TextMeasurementSystem is required to align block text."));
+        TextMeasurementSystem measurementSystem = null;
 
         var lines = component.lines();
         for (LineTextData line : lines) {
-            double lineWidth = line.width(measurementSystem, style);
+            // Ordinary block-text lines already carry builder-time width caches.
+            // The fallback is only for manually assembled/un-cached payloads.
+            double lineWidth = line.lineWidth();
+            if (Double.isNaN(lineWidth)) {
+                if (measurementSystem == null) {
+                    measurementSystem = entityManager.getSystems()
+                            .getSystem(TextMeasurementSystem.class)
+                            .orElseThrow(() -> new IllegalStateException("TextMeasurementSystem is required to align block text."));
+                }
+                lineWidth = line.width(measurementSystem, style);
+            }
             switch (align.h()) {
                 case LEFT -> {
                     double x = line.x() + padding.left();

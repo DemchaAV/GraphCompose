@@ -3,6 +3,8 @@ package com.demcha.integration;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.layout_core.components.components_builders.ComponentBuilder;
 import com.demcha.compose.layout_core.components.content.shape.Stroke;
+import com.demcha.compose.layout_core.components.content.text.BlockTextData;
+import com.demcha.compose.layout_core.components.content.text.LineTextData;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.core.Entity;
 import com.demcha.compose.layout_core.components.layout.Align;
@@ -23,6 +25,7 @@ import java.awt.*;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -62,6 +65,69 @@ class PageBreakerIntegrationTest {
         assertThat(outputFile).isNotEmptyFile();
 
         // Verify multiple pages were created
+        try (PDDocument doc = Loader.loadPDF(outputFile.toFile())) {
+            assertThat(doc.getNumberOfPages()).isGreaterThan(1);
+        }
+    }
+
+    @Test
+    void shouldPreserveCachedLineMeasurementsAcrossPageBreakCopies() throws Exception {
+        Path outputFile = VisualTestOutputs.preparePdf("page_breaker_block_text_cache_test", "clean", "integration");
+        Entity blockText;
+        List<Double> widthsBeforeLayout;
+        List<Double> baselinesBeforeLayout;
+
+        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+                .pageSize(PDRectangle.A4)
+                .margin(20, 20, 20, 20)
+                .markdown(true)
+                .create()) {
+
+            ComponentBuilder cb = composer.componentBuilder();
+            blockText = cb.blockText(Align.left(3), TextStyle.builder()
+                            .fontName(FontName.HELVETICA)
+                            .size(9)
+                            .color(ComponentColor.BLACK)
+                            .build())
+                    .size(320, 2)
+                    .anchor(Anchor.topLeft())
+                    .padding(Padding.of(6))
+                    .margin(Margin.of(8))
+                    .entityName("PageBreakCacheProbe")
+                    .text(List.of(createNestedMarkdownHeadingText(22)),
+                            TextStyle.builder()
+                                    .fontName(FontName.HELVETICA)
+                                    .size(9)
+                                    .color(ComponentColor.BLACK)
+                                    .build(),
+                            Padding.zero(),
+                            Margin.zero())
+                    .build();
+
+            BlockTextData beforeLayout = blockText.getComponent(BlockTextData.class).orElseThrow();
+            widthsBeforeLayout = beforeLayout.lines().stream()
+                    .map(LineTextData::lineWidth)
+                    .collect(Collectors.toList());
+            baselinesBeforeLayout = beforeLayout.lines().stream()
+                    .map(LineTextData::baselineOffset)
+                    .collect(Collectors.toList());
+
+            composer.build();
+        }
+
+        BlockTextData afterLayout = blockText.getComponent(BlockTextData.class).orElseThrow();
+        assertThat(afterLayout.lines()).isNotEmpty();
+        assertThat(afterLayout.lines()).allSatisfy(line -> {
+            assertThat(line.hasCachedLineWidth()).isTrue();
+            assertThat(line.hasCachedLineMetrics()).isTrue();
+            assertThat(line.hasCachedBaselineOffset()).isTrue();
+        });
+        assertThat(afterLayout.lines().stream().map(LineTextData::lineWidth).toList())
+                .containsExactlyElementsOf(widthsBeforeLayout);
+        assertThat(afterLayout.lines().stream().map(LineTextData::baselineOffset).toList())
+                .containsExactlyElementsOf(baselinesBeforeLayout);
+        assertThat(afterLayout.lines().stream().map(LineTextData::page).distinct().count()).isGreaterThan(1);
+
         try (PDDocument doc = Loader.loadPDF(outputFile.toFile())) {
             assertThat(doc.getNumberOfPages()).isGreaterThan(1);
         }

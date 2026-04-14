@@ -158,6 +158,9 @@ class BlockTextIntegrationTest {
 
         BlockTextData blockTextData = entity.getComponent(BlockTextData.class).orElseThrow();
         assertThat(blockTextData.lines()).hasSize(3);
+        assertThat(blockTextData.lines().get(1).hasCachedLineMetrics()).isTrue();
+        assertThat(blockTextData.lines().get(1).lineMetrics().lineHeight())
+                .isGreaterThan(blockTextData.lines().get(0).lineMetrics().lineHeight());
 
         double gapBeforeHeading = blockTextData.lines().get(0).y() - blockTextData.lines().get(1).y();
         double gapAfterHeading = blockTextData.lines().get(1).y() - blockTextData.lines().get(2).y();
@@ -212,8 +215,12 @@ class BlockTextIntegrationTest {
         LineTextData firstLine = blockTextData.lines().get(0);
         LineTextData lastLine = blockTextData.lines().get(blockTextData.lines().size() - 1);
 
+        assertThat(firstLine.hasCachedLineWidth()).isTrue();
+        assertThat(firstLine.hasCachedLineMetrics()).isTrue();
+        assertThat(firstLine.hasCachedBaselineOffset()).isTrue();
+        assertThat(lastLine.baselineOffset()).isCloseTo(baselineOffsetFromBottom, within(0.001));
         assertThat(firstLine.x()).isCloseTo(placement.x() + padding.left(), within(0.5));
-        assertThat(lastLine.y() - baselineOffsetFromBottom)
+        assertThat(lastLine.y() - lastLine.baselineOffset())
                 .isCloseTo(placement.y() + padding.bottom(), within(0.5));
     }
 }

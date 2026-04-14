@@ -421,7 +421,6 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
 
         Deque<TextDataBody> line = new ArrayDeque<>();
         double lineWidth = 0;
-        boolean firstLine = true;
 
         for (int i = 0; i < tokens.size(); i++) {
             TextDataBody token = tokens.get(i);
@@ -474,6 +473,8 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
             // If sticky to previous, try to bring previous token to the new line
             if (stickyToPrev && !line.isEmpty()) {
                 TextDataBody prev = line.removeLast();
+                double previousWidth = measuredTokenWidth(prev, offsetStr, indentWidth, measurementSystem);
+                lineWidth -= previousWidth;
                 // Flush the line without 'prev'
                 if (!line.isEmpty()) {
                     boolean hasContent = false;
@@ -486,12 +487,11 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
                     }
 
                     if (hasContent) {
-                        createLineFromBodies(new ArrayList<>(line));
+                        createLineFromBodies(new ArrayList<>(line), lineWidth, baseStyle);
                     }
                 }
                 line.clear();
                 lineWidth = 0;
-                firstLine = false;
 
                 // Add indent for wrapped lines
                 if (!offsetStr.isEmpty()) {
@@ -501,7 +501,7 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
 
                 // Add 'prev' to new line
                 line.addLast(prev);
-                lineWidth += measurementSystem.textWidth(prev.textStyle(), prev.text());
+                lineWidth += previousWidth;
 
                 // Add current token
                 line.addLast(token);
@@ -509,10 +509,9 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
             } else {
                 // Normal wrap
                 if (!line.isEmpty()) {
-                    createLineFromBodies(new ArrayList<>(line));
+                    createLineFromBodies(new ArrayList<>(line), lineWidth, baseStyle);
                     line.clear();
                     lineWidth = 0;
-                    firstLine = false;
 
                     // add indent for wrapped lines
                     if (!offsetStr.isEmpty()) {
@@ -527,8 +526,22 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         }
 
         if (!line.isEmpty()) {
-            createLineFromBodies(new ArrayList<>(line));
+            createLineFromBodies(new ArrayList<>(line), lineWidth, baseStyle);
         }
+    }
+
+    private double measuredTokenWidth(TextDataBody token,
+                                      String offsetStr,
+                                      double indentWidth,
+                                      TextMeasurementSystem measurementSystem) {
+        if (token == null) {
+            return 0.0;
+        }
+
+        boolean isIndentToken = !offsetStr.isEmpty() && offsetStr.equals(token.text());
+        return isIndentToken
+                ? indentWidth
+                : measurementSystem.textWidth(token.textStyle(), token.text());
     }
 
     // =========================
@@ -575,27 +588,18 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         return textStyle == null ? TextStyle.DEFAULT_STYLE : textStyle;
     }
 
-    private void createLine(List<String> words) {
-        String lineText = String.join(" ", words);
-        lines.add(createLineTextData(lineText, measurementStyle()));
-    }
-
-    private void createLineFromBodies(List<TextDataBody> bodies) {
+    private void createLineFromBodies(List<TextDataBody> bodies,
+                                      double lineWidth,
+                                      TextStyle fallbackStyle) {
         log.debug("createLineFromBodies: {}", bodies);
-        lines.add(new LineTextData(bodies, 0));
-    }
-
-    private LineTextData createLineTextData(String chunkText, TextStyle textStyle) {
-        log.debug("createLineTextData: '{}'", chunkText);
-        LineTextData lineTextData;
-        if (entityManager.isMarkdown()) {
-            List<TextDataBody> body = markDownParser.getBody(chunkText, textStyle);
-            lineTextData = new LineTextData(body, 0);
-        } else {
-            lineTextData = LineTextData.createWithoutMarkdown(chunkText, textStyle, 0);
-        }
-        log.debug("createLineTextData: {}", lineTextData);
-        return lineTextData;
+        TextMeasurementSystem.LineMetrics lineMetrics =
+                BlockTextLineMetrics.resolveBodiesMetrics(entityManager, bodies, fallbackStyle);
+        lines.add(new LineTextData(
+                bodies,
+                0,
+                lineWidth,
+                lineMetrics,
+                lineMetrics.baselineOffsetFromBottom()));
     }
 
     @Override
@@ -625,7 +629,9 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         TextMeasurementSystem measurementSystem = textMeasurementSystem();
 
         var width = blockTextData.lines().stream()
-                .mapToDouble(line -> line.width(measurementSystem, style))
+                .mapToDouble(line -> line.hasCachedLineWidth()
+                        ? line.lineWidth()
+                        : line.width(measurementSystem, style))
                 .max()
                 .orElse(0.0);
 
@@ -634,8 +640,9 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
 
         TextMeasurementSystem.LineMetrics baseMetrics =
                 BlockTextLineMetrics.resolveStyleMetrics(entityManager, style);
-        List<TextMeasurementSystem.LineMetrics> lineMetrics =
-                BlockTextLineMetrics.resolveLineMetrics(entityManager, blockTextData.lines(), style);
+        List<TextMeasurementSystem.LineMetrics> lineMetrics = blockTextData.lines().stream()
+                .map(line -> BlockTextLineMetrics.resolveLineMetrics(entityManager, line, style))
+                .toList();
 
         double high = padding.vertical();
         for (int i = 0; i < lineMetrics.size(); i++) {

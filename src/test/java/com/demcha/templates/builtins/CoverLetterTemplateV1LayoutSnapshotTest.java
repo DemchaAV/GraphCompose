@@ -6,7 +6,7 @@ import com.demcha.mock.CoverLetterMock;
 import com.demcha.mock.MainPageCVMock;
 import com.demcha.templates.JobDetails;
 import com.demcha.templates.data.Header;
-import com.demcha.testing.layout.LayoutSnapshotAssertions;
+import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
 

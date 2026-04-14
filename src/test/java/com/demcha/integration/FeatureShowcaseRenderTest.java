@@ -17,7 +17,7 @@ import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.testing.VisualTestOutputs;
-import com.demcha.testing.layout.LayoutSnapshotAssertions;
+import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;

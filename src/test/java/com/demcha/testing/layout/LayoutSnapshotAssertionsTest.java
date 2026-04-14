@@ -1,4 +1,4 @@
-package com.demcha.testing.layout;
+package com.demcha.compose.testing.layout;
 
 import com.demcha.compose.layout_core.debug.LayoutCanvasSnapshot;
 import com.demcha.compose.layout_core.debug.LayoutInsetsSnapshot;
@@ -94,16 +94,39 @@ class LayoutSnapshotAssertionsTest {
         Path expectedRoot = tempDir.resolve("expected");
         Path actualRoot = tempDir.resolve("actual");
 
-        LayoutSnapshotAssertions.assertMatches(
+        withUpdateSnapshotsEnabled(() -> LayoutSnapshotAssertions.assertMatches(
                 sampleSnapshot(40),
                 expectedRoot,
                 actualRoot,
-                true,
-                "templates/cv/example_snapshot");
+                "templates/cv/example_snapshot"));
 
         assertThat(expectedRoot.resolve("templates").resolve("cv").resolve("example_snapshot.json"))
                 .exists()
                 .isRegularFile();
+    }
+
+    @Test
+    void shouldHonorCustomRootsThroughPublicSnapshotOverload() throws Exception {
+        Path expectedRoot = tempDir.resolve("expected");
+        Path actualRoot = tempDir.resolve("actual");
+
+        withUpdateSnapshotsEnabled(() -> LayoutSnapshotAssertions.assertMatches(
+                sampleSnapshot(55),
+                expectedRoot,
+                actualRoot,
+                "consumer/custom_root_case"));
+
+        LayoutSnapshotAssertions.assertMatches(
+                sampleSnapshot(55),
+                expectedRoot,
+                actualRoot,
+                "consumer/custom_root_case");
+
+        assertThat(expectedRoot.resolve("consumer").resolve("custom_root_case.json"))
+                .exists()
+                .isRegularFile();
+        assertThat(actualRoot.resolve("consumer").resolve("custom_root_case.actual.json"))
+                .doesNotExist();
     }
 
     private LayoutSnapshot sampleSnapshot(double placementY) {
@@ -134,5 +157,28 @@ class LayoutSnapshotAssertionsTest {
                 new LayoutCanvasSnapshot(595.0, 842.0, 555.0, 802.0, insets),
                 1,
                 List.of(node));
+    }
+
+    private void withUpdateSnapshotsEnabled(ThrowingRunnable action) throws Exception {
+        String previous = System.getProperty(LayoutSnapshotAssertions.UPDATE_PROPERTY);
+        try {
+            System.setProperty(LayoutSnapshotAssertions.UPDATE_PROPERTY, "true");
+            action.run();
+        } finally {
+            restoreSystemProperty(previous);
+        }
+    }
+
+    private void restoreSystemProperty(String previous) {
+        if (previous == null) {
+            System.clearProperty(LayoutSnapshotAssertions.UPDATE_PROPERTY);
+            return;
+        }
+        System.setProperty(LayoutSnapshotAssertions.UPDATE_PROPERTY, previous);
+    }
+
+    @FunctionalInterface
+    private interface ThrowingRunnable {
+        void run() throws Exception;
     }
 }

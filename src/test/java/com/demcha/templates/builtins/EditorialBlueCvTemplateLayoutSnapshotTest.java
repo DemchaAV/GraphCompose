@@ -5,7 +5,7 @@ import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.mock.MainPageCVMock;
 import com.demcha.templates.api.MainPageCvDTO;
 import com.demcha.templates.data.MainPageCV;
-import com.demcha.testing.layout.LayoutSnapshotAssertions;
+import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
 

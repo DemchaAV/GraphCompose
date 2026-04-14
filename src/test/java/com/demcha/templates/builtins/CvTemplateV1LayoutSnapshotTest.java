@@ -13,7 +13,7 @@ import com.demcha.templates.data.MainPageCV;
 import com.demcha.templates.data.ModuleSummary;
 import com.demcha.templates.data.ModuleYml;
 import com.demcha.testing.VisualTestOutputs;
-import com.demcha.testing.layout.LayoutSnapshotAssertions;
+import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;

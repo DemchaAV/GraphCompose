@@ -44,18 +44,21 @@ In other words, the snapshot represents the layout engine's resolved truth, not 
 
 `layoutSnapshot()` is a debug and test API.
 
-It is intentionally isolated from the normal production pipeline:
+It does not render the PDF by itself.
+
+If you later call:
 
 - `build()`
 - `toBytes()`
 - `toPDDocument()`
 
-do not depend on snapshot generation and do not reuse snapshot state.
+on the same `PdfComposer`, GraphCompose reuses the already resolved layout so the
+debug snapshot and final PDF stay in sync.
 
 This matters for two reasons:
 
 1. the runtime PDF path stays clean and predictable for normal library users
-2. layout snapshot testing remains an explicit opt-in tool for engine debugging and regression coverage
+2. snapshot-first regression tests can still render the exact same resolved layout for inspection
 
 If application code never calls `layoutSnapshot()`, this feature does not change the normal output pipeline.
 

@@ -98,6 +98,8 @@ public final class PdfComposer extends AbstractDocumentComposer {
     @Nullable private DocumentMetadata documentMetadata;
     @Nullable private PdfProtectionConfig protectionConfig;
     private boolean postProcessed = false;
+    private boolean layoutResolved = false;
+    private boolean rendered = false;
 
     /**
      * Internal constructor used by {@link GraphCompose.PdfBuilder}.
@@ -292,23 +294,24 @@ public final class PdfComposer extends AbstractDocumentComposer {
      * regression tests, debugging, and dev tooling that needs geometry rather
      * than pixels.</p>
      *
-     * <p>This debug API is intentionally isolated from the normal production
-     * pipeline. Calling {@link #build()}, {@link #toBytes()}, or
-     * {@link #toPDDocument()} does not depend on this method and does not reuse
-     * any debug snapshot state.</p>
+     * <p>This debug API remains opt-in and does not render PDF bytes by itself.
+     * When callers later invoke {@link #build()}, {@link #toBytes()}, or
+     * {@link #toPDDocument()} on the same composer without further composition
+     * changes, the composer reuses the already resolved layout to keep debug and
+     * render output in sync.</p>
      *
      * @return resolved layout snapshot for the current document
      * @throws Exception if layout resolution fails
      */
     public LayoutSnapshot layoutSnapshot() throws Exception {
         buildComponents();
-        layoutSystem.process(entityManager());
+        ensureLayoutResolved();
         return LayoutSnapshotExtractor.extract(entityManager(), canvas());
     }
 
     @Override
     protected void buildDocument() throws Exception {
-        entityManager().processSystems();
+        ensureRendered();
         applyPostProcessing();
         // Save to file AFTER post-processing (metadata, watermarks, etc.)
         if (fileManagerSystem != null) {
@@ -318,7 +321,7 @@ public final class PdfComposer extends AbstractDocumentComposer {
 
     @Override
     protected byte[] exportBytes() throws Exception {
-        processInMemoryRender();
+        ensureRendered();
         applyPostProcessing();
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             doc.save(baos);
@@ -342,17 +345,28 @@ public final class PdfComposer extends AbstractDocumentComposer {
      */
     public PDDocument toPDDocument() throws Exception {
         buildComponents();
-        processInMemoryRender();
+        ensureRendered();
         applyPostProcessing();
         return doc;
     }
 
-    private void processInMemoryRender() throws Exception {
-        entityManager().getSystems().getSystem(LayoutSystem.class)
-                .ifPresent(sys -> sys.process(entityManager()));
+    private void ensureLayoutResolved() throws Exception {
+        if (layoutResolved) {
+            return;
+        }
+        layoutSystem.process(entityManager());
+        layoutResolved = true;
+    }
+
+    private void ensureRendered() throws Exception {
+        ensureLayoutResolved();
+        if (rendered) {
+            return;
+        }
         if (renderingSystem != null) {
             renderingSystem.process(entityManager());
         }
+        rendered = true;
     }
 
     /**

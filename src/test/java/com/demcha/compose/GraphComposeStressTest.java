@@ -14,12 +14,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class GraphComposeStressTest {
     public  static void main(String[] args) {
         BenchmarkSupport.configureQuietLogging();
-        System.out.println("🚀 СТАРТ: Инициализация стресс-теста...");
+        System.out.println("Starting GraphCompose stress test...");
 
         int threadCount = 50;
         int totalTasks = 5000;
 
-        System.out.println("⚙️ Создаем пул на " + threadCount + " потоков для " + totalTasks + " задач...");
+        System.out.println("Creating a pool with " + threadCount + " threads for " + totalTasks + " tasks...");
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
 
         AtomicInteger successCount = new AtomicInteger(0);
@@ -32,36 +32,36 @@ public class GraphComposeStressTest {
                 try {
                     generateCvInMemory();
                     successCount.incrementAndGet();
-                } catch (Throwable t) { // Ловим вообще всё, даже системные Error
+                } catch (Throwable t) { // Catch everything, including system Errors
                     if (errorCount.getAndIncrement() == 0) {
-                        System.err.println("\n🔥 ПОЙМАЛИ ПЕРВУЮ ОШИБКУ! ВОТ ЕЁ ПРИЧИНА:");
+                        System.err.println("\nFirst error captured. Root cause:");
                         t.printStackTrace();
                     } else {
-                        System.err.print("x"); // Печатаем крестик для последующих ошибок
+                        System.err.print("x"); // Mark subsequent errors compactly
                     }
                 }
             });
         }
 
-        System.out.println("⏳ Все задачи отправлены в пул. Ждем выполнения (максимум 1 минуту)...");
+        System.out.println("All tasks submitted. Waiting for completion (up to 1 minute)...");
         executor.shutdown();
 
         try {
             boolean finished = executor.awaitTermination(1, TimeUnit.MINUTES);
             if (!finished) {
-                System.err.println("\n⚠️ ВРЕМЯ ВЫШЛО! Потоки зависли (Deadlock) или работают слишком медленно.");
+                System.err.println("\nTimeout reached. Threads may be deadlocked or running too slowly.");
             }
         } catch (InterruptedException e) {
-            System.err.println("\n⚠️ Главный поток был прерван!");
+            System.err.println("\nMain thread was interrupted.");
             e.printStackTrace();
         }
 
         long end = System.currentTimeMillis();
 
-        System.out.println("\n\n📊 ИТОГИ СТРЕСС-ТЕСТА:");
-        System.out.println("✅ Успешно: " + successCount.get());
-        System.out.println("❌ Ошибок:  " + errorCount.get());
-        System.out.println("⏱️ Время:   " + (end - start) + " мс");
+        System.out.println("\n\nStress test summary:");
+        System.out.println("Successful: " + successCount.get());
+        System.out.println("Errors:     " + errorCount.get());
+        System.out.println("Time:       " + (end - start) + " ms");
     }
 
     private static void generateCvInMemory() throws Exception {

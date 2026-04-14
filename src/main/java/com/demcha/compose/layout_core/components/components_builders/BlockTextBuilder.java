@@ -530,6 +530,16 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         }
     }
 
+    /**
+     * Returns the measured width of a token, using a precomputed indent width for
+     * indent-only tokens and the measurement system for all other tokens.
+     *
+     * @param token             token to measure
+     * @param offsetStr         current wrap-indent string (empty when no indent is active)
+     * @param indentWidth       precomputed pixel width of the indent string
+     * @param measurementSystem active text measurement system
+     * @return measured width in layout units, or {@code 0.0} if the token is {@code null}
+     */
     private double measuredTokenWidth(TextDataBody token,
                                       String offsetStr,
                                       double indentWidth,
@@ -588,6 +598,15 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         return textStyle == null ? TextStyle.DEFAULT_STYLE : textStyle;
     }
 
+    /**
+     * Creates a new {@link LineTextData} from the accumulated token bodies, caching
+     * the measured line width and resolved line metrics so that layout, alignment,
+     * and pagination can reuse them without re-measuring.
+     *
+     * @param bodies        ordered text bodies forming one visual line
+     * @param lineWidth     precomputed total width of the line in layout units
+     * @param fallbackStyle style used to resolve metrics for bodies without explicit styles
+     */
     private void createLineFromBodies(List<TextDataBody> bodies,
                                       double lineWidth,
                                       TextStyle fallbackStyle) {

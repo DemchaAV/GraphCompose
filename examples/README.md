@@ -6,6 +6,7 @@ Runnable file-render examples for the main document scenarios:
 - cover letter
 - invoice
 - proposal
+- weekly schedule
 
 ## Workflow
 
@@ -33,3 +34,4 @@ You can also run a single example by changing `exec.mainClass` to one of:
 - `com.demcha.examples.CoverLetterFileExample`
 - `com.demcha.examples.InvoiceFileExample`
 - `com.demcha.examples.ProposalFileExample`
+- `com.demcha.examples.WeeklyScheduleFileExample`

@@ -20,11 +20,27 @@ public final class BlockTextLineMetrics {
     private BlockTextLineMetrics() {
     }
 
+    /**
+     * Resolves line metrics from a single {@link TextStyle} using the active
+     * measurement system.
+     *
+     * @param entityManager entity manager providing the measurement system
+     * @param style         text style to measure, defaults to {@link TextStyle#DEFAULT_STYLE}
+     * @return resolved line metrics (ascent, descent, leading)
+     */
     public static TextMeasurementSystem.LineMetrics resolveStyleMetrics(EntityManager entityManager, TextStyle style) {
         TextStyle safeStyle = style == null ? TextStyle.DEFAULT_STYLE : style;
         return measurementSystem(entityManager).lineMetrics(safeStyle);
     }
 
+    /**
+     * Resolves line metrics for a single line, preferring cached values when present.
+     *
+     * @param entityManager entity manager providing the measurement system
+     * @param line          line to resolve metrics for, may be {@code null}
+     * @param fallbackStyle style to fall back to when the line or its bodies lack style info
+     * @return resolved line metrics
+     */
     public static TextMeasurementSystem.LineMetrics resolveLineMetrics(EntityManager entityManager,
                                                                        LineTextData line,
                                                                        TextStyle fallbackStyle) {
@@ -39,6 +55,19 @@ public final class BlockTextLineMetrics {
         return resolveBodiesMetrics(entityManager, line.bodies(), fallbackStyle);
     }
 
+    /**
+     * Resolves mixed-style line metrics from a list of text bodies by taking the
+     * maximum ascent, descent, and leading across all non-null body styles.
+     *
+     * <p>This method always measures from scratch and does not use any cache.
+     * It is called by {@link com.demcha.compose.layout_core.components.components_builders.BlockTextBuilder}
+     * at line-creation time to populate the per-line cache.</p>
+     *
+     * @param entityManager entity manager providing the measurement system
+     * @param bodies        text bodies to measure
+     * @param fallbackStyle style to use when a body has no style
+     * @return resolved line metrics
+     */
     public static TextMeasurementSystem.LineMetrics resolveBodiesMetrics(EntityManager entityManager,
                                                                          List<TextDataBody> bodies,
                                                                          TextStyle fallbackStyle) {
@@ -76,6 +105,14 @@ public final class BlockTextLineMetrics {
         return new TextMeasurementSystem.LineMetrics(ascent, descent, leading);
     }
 
+    /**
+     * Batch-resolves line metrics for a list of lines.
+     *
+     * @param entityManager entity manager providing the measurement system
+     * @param lines         lines to measure
+     * @param fallbackStyle style to fall back to for lines without cached metrics
+     * @return list of metrics in the same order as the input lines
+     */
     public static List<TextMeasurementSystem.LineMetrics> resolveLineMetrics(EntityManager entityManager,
                                                                               List<LineTextData> lines,
                                                                               TextStyle fallbackStyle) {
@@ -86,6 +123,16 @@ public final class BlockTextLineMetrics {
         return result;
     }
 
+    /**
+     * Computes the vertical gap between two adjacent lines, taking into account
+     * outer gap contributions from both lines relative to the base metrics.
+     *
+     * @param previous metrics of the line above
+     * @param next     metrics of the line below
+     * @param base     baseline metrics (usually from the block's default style)
+     * @param spacing  additional line spacing configured on the block
+     * @return total inter-line gap in layout units
+     */
     public static double interLineGap(TextMeasurementSystem.LineMetrics previous,
                                       TextMeasurementSystem.LineMetrics next,
                                       TextMeasurementSystem.LineMetrics base,

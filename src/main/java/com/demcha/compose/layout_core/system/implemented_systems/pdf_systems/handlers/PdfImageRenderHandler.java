@@ -46,15 +46,14 @@ public final class PdfImageRenderHandler implements RenderHandler<ImageComponent
         double width = Math.max(0.0, placement.width() - padding.horizontal());
         double height = Math.max(0.0, placement.height() - padding.vertical());
 
-        try (PDPageContentStream stream = renderingSystem.stream().openContentStream(entity)) {
-            if (width > 0.0 && height > 0.0) {
-                PDImageXObject image = renderingSystem.getOrCreateImageXObject(imageData, width, height);
-                stream.drawImage(image, (float) x, (float) y, (float) width, (float) height);
-            }
+        PDPageContentStream stream = renderingSystem.pageSurface(entity);
+        if (width > 0.0 && height > 0.0) {
+            PDImageXObject image = renderingSystem.getOrCreateImageXObject(imageData, width, height);
+            stream.drawImage(image, (float) x, (float) y, (float) width, (float) height);
+        }
 
-            if (guideLines) {
-                renderingSystem.guidesRenderer().guidesRender(entity, stream, DEFAULT_GUIDES);
-            }
+        if (guideLines) {
+            renderingSystem.guidesRenderer().guidesRender(entity, stream, DEFAULT_GUIDES);
         }
 
         return width > 0.0 && height > 0.0;

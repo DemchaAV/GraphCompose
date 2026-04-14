@@ -32,6 +32,16 @@ import java.util.stream.Collectors;
 @UtilityClass
 public class EntityRenderOrder {
 
+    /**
+     * Resolves entities from the manager and returns them sorted by rendering position.
+     *
+     * <p>Duplicate or missing entity IDs are silently skipped. The returned map
+     * preserves the computed render order.</p>
+     *
+     * @param entityManager entity registry to resolve entities from
+     * @param entityUuids   ordered list of entity IDs to include
+     * @return entities sorted by the {@linkplain #renderOrderComparator rendering order}
+     */
     public static LinkedHashMap<UUID, Entity> sortByRenderingPosition(EntityManager entityManager, List<UUID> entityUuids) {
         Objects.requireNonNull(entityManager, "entityManager must not be null");
         Objects.requireNonNull(entityUuids, "entityUuids must not be null");
@@ -58,6 +68,10 @@ public class EntityRenderOrder {
                         LinkedHashMap::new));
     }
 
+    /**
+     * Builds the render-order comparator using Y descending, X ascending, original
+     * layer index, and UUID string as the final deterministic fallback.
+     */
     private static Comparator<Map.Entry<UUID, Entity>> renderOrderComparator(Map<UUID, Integer> originalOrder) {
         return Comparator
                 .comparingDouble((Map.Entry<UUID, Entity> entry) -> renderingPosition(entry.getValue()).y())

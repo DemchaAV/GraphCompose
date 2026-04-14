@@ -20,6 +20,15 @@ That separation is the core project concept. Builders describe intent, component
 
 The same separation also enables layout snapshot regression tests. Test code can inspect the resolved document after layout and pagination, before rendering, through `PdfComposer.layoutSnapshot()`.
 
+The rendering layer now also has an explicit render-pass seam:
+
+- the engine opens one backend-neutral render session for one document render pass
+- the session owns page availability and page-local drawing surfaces
+- handlers may change graphics or text state while drawing, but they must restore that state before returning
+- handlers must never close session-owned surfaces directly
+
+For the PDF backend this seam is implemented as a page-scoped session that reuses one `PDPageContentStream` per page for the lifetime of the pass. That keeps PDFBox lifecycle concerns inside the PDF renderer while still letting the engine stay format-neutral for future DOCX/PPTX-style backends.
+
 For pagination-sensitive trees, GraphCompose relies on a child-first page-breaking order. Fixed leaf objects are resolved before their parent containers so parent `ContentSize` can reflect child shifts before container placement is finalized.
 
 The engine now materializes one deterministic hierarchy snapshot per layout pass:
@@ -67,6 +76,8 @@ This keeps table pagination consistent with the rest of the engine while avoidin
 - Engine builders and layout helpers should consume an engine-level `TextMeasurementSystem` instead of reaching through `LayoutSystem` into the active renderer.
 - Render marker components should primarily identify what needs to be rendered.
 - Backend-specific drawing logic should live in renderer-owned handler packages such as `...pdf_systems.handlers` and backend helper packages such as `...pdf_systems.helpers`.
+- `RenderStream` should act as a session factory, not as a per-entity content-stream opener.
+- `RenderPassSession` is the shared seam for page lifetime and page-surface reuse; it must stay free of PDFBox and backend package imports.
 - The PDF entity path dispatches through registered render handlers only; backend-specific render interfaces are not part of the preferred engine extension seam.
 - Renderer-specific draw ordering should be backend-neutral at the policy level and backend-owned at the integration level. In practice the engine exposes resolved layout coordinates, while each backend chooses how to consume the shared deterministic render order for its output format.
 
@@ -104,7 +115,8 @@ Fixed leaf primitives such as `Rectangle`, `Circle`, `Image`, and `Line` follow 
 
 - The PDF backend is the main supported rendering path.
 - The Word backend under `...implemented_systems.word_systems` is experimental and should be treated as less stable than the PDF path.
-- Future backends should add their own rendering system, text measurement system, and handler set without changing engine builders such as tables or template data models.
+- Future backends should add their own rendering system, render-pass session, text measurement system, and handler set without changing engine builders such as tables or template data models.
+- The shared abstraction intentionally stops at render-pass lifetime. PDF text mode, PDF annotations, and `PDPageContentStream` state management stay inside `...pdf_systems`.
 
 ## Language status
 

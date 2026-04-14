@@ -44,12 +44,10 @@ public final class PdfLineRenderHandler implements RenderHandler<Line, PdfRender
         double width = Math.max(0.0, placement.width() - padding.horizontal());
         double height = Math.max(0.0, placement.height() - padding.vertical());
 
-        boolean drawn;
-        try (PDPageContentStream stream = renderingSystem.stream().openContentStream(entity)) {
-            drawn = renderLine(stream, entity, x, y, width, height);
-            if (guideLines) {
-                renderingSystem.guidesRenderer().guidesRender(entity, stream, DEFAULT_GUIDES);
-            }
+        PDPageContentStream stream = renderingSystem.pageSurface(entity);
+        boolean drawn = renderLine(stream, entity, x, y, width, height);
+        if (guideLines) {
+            renderingSystem.guidesRenderer().guidesRender(entity, stream, DEFAULT_GUIDES);
         }
         return drawn;
     }

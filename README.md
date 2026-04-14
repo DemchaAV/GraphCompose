@@ -384,11 +384,21 @@ Builders do not draw directly. They create `Entity` instances and attach compone
 
 The layout pass resolves all geometry first. Rendering happens after every size and position is known. This separation is what makes automatic pagination, guide-line debugging, and future alternative renderers possible.
 
-### 3. Containers express structure
+### 3. Layout traversal is deterministic
+
+Each layout pass now builds one deterministic hierarchy snapshot before pagination and rendering continue:
+
+- parent links come from `ParentComponent`
+- sibling order comes from `Entity.children`
+- roots, layers, and depth metadata are rebuilt per pass instead of being reused across runs
+
+This keeps layout snapshots, page breaking, and future backends aligned on the same tree semantics.
+
+### 4. Containers express structure
 
 Use `vContainer(...)` and `hContainer(...)` for structural layout, then compose page sections with `moduleBuilder(...)` inside a page flow. Absolute coordinates are an implementation detail of the engine, not something you write.
 
-### 4. The template layer is optional
+### 5. The template layer is optional
 
 `TemplateBuilder`, `CvTheme`, and the classes under `com.demcha.templates.builtins` are a convenience layer for reusable document layouts. You can use the raw engine directly for one-off documents and opt into templates when you need repeatability.
 
@@ -503,6 +513,9 @@ When you add or refactor engine features, follow these project rules:
 - PDF drawing belongs in `src/main/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/handlers/*`
 - PDF-only helper objects that are not entity render markers belong in `...pdf_systems/helpers/*`
 - builders and layout helpers must use `TextMeasurementSystem` for text width and line metrics instead of reaching into renderer internals
+- traversal metadata should be materialized once per layout pass through a shared helper such as `LayoutTraversalContext`, not rebuilt ad hoc in unrelated systems
+- `ParentComponent` is the authoritative parent relation, while `Entity.children` is the canonical sibling order
+- renderer draw ordering belongs in the rendering layer, not inside pagination utilities
 - `layout_core/components/*` should stay free of PDFBox and `...pdf_systems` imports
 - new render markers should be wired into `PdfRenderingSystemECS` and covered by at least one dispatch-oriented test
 
@@ -523,9 +536,28 @@ If you are contributing new engine objects, read [CONTRIBUTING.md](./CONTRIBUTIN
 
 ## Performance and benchmarks
 
-Benchmarks were run locally on March 27, 2026 against the current repository state after the `TableBuilder v1` implementation and pagination-border fixes. All numbers use a dedicated quiet logging config (`logback-benchmark.xml`) so they reflect document generation work, not debug I/O.
+The repository ships a benchmark harness for both feature work and regression checking. All benchmark runs use a dedicated quiet logging config (`logback-benchmark.xml`) so the numbers reflect document generation work, not debug I/O.
 
 These are project benchmarks measured on one machine — treat them as relative indicators, not absolute guarantees.
+
+### Latest focused regression run
+
+The latest focused engine regression run was recorded locally on April 14, 2026 after the deterministic traversal and pagination-ordering refactor.
+
+`CurrentSpeedBenchmark` baseline `run-20260414-191839.json` versus candidate `run-20260414-192900.json`:
+
+- `proposal-template`: `-31.14%` average latency
+- `feature-rich`: `-12.57%` average latency
+- `cv-template`: `-11.36%` average latency
+- `invoice-template`: `-4.56%` average latency
+- `engine-simple`: `+4.75%`, which is within the team's normal noise band for this suite
+
+Other focused checks from the same April 14, 2026 run:
+
+- `GraphComposeBenchmark`: average latency improved from `1.86 ms` to `1.83 ms`
+- `ScalabilityBenchmark`: throughput improved from `395/892/1877/4292/5993` to `414/1029/2127/4451/6569 docs/sec` at `1/2/4/8/16` threads
+
+For performance interpretation inside the project, treat changes within roughly `5%` as noise unless the same direction repeats across reruns.
 
 For the easiest full local run, use the PowerShell wrapper:
 
@@ -582,90 +614,25 @@ Or diff two explicit report files:
 
 ```powershell
 java -cp "target\test-classes;target\classes;$cp" com.demcha.compose.BenchmarkDiffTool `
-  target/benchmarks/current-speed/run-20260413-195758.json `
-  target/benchmarks/current-speed/run-20260413-200500.json
+  target/benchmarks/current-speed/run-20260414-191839.json `
+  target/benchmarks/current-speed/run-20260414-192900.json
 ```
 
 Diff artifacts are saved under `target/benchmarks/diffs/`.
 
-### Comparative benchmark
+### Benchmark suites in the repository
 
-> **Context:** iText 5 is included as a low-level drawing baseline — it has no layout engine, so generating the same document with iText 5 requires manual coordinate math, font measurement, and pagination logic that GraphCompose handles automatically. The ~1 ms difference is the cost of that automatic layout resolution. iText 5 is also no longer maintained and its successor, iText 7, requires a commercial license for production use.
+The repository keeps several benchmark entry points because a single number is not enough to reason about regressions:
 
-Source: `src/test/java/com/demcha/compose/ComparativeBenchmark.java`
+- `CurrentSpeedBenchmark`: scenario-oriented latency checks across representative templates and engine-heavy examples
+- `GraphComposeBenchmark`: core engine latency guard for a compact document composition path
+- `ScalabilityBenchmark`: throughput scaling across thread counts
+- `ComparativeBenchmark`: low-level comparison against iText 5 and JasperReports
+- `FullCvBenchmark`: a larger compose-first document path
+- `GraphComposeStressTest`: concurrent stability and failure-rate guard
+- `EnduranceTest`: long-running allocation and heap-behavior guard
 
-| Library | Avg Time (ms) | Avg Heap (MB) | License |
-| --- | ---: | ---: | --- |
-| GraphCompose | 2.89 | 0.21 | **MIT** |
-| iText 5 (EOL) | 1.80 | 0.16 | AGPL |
-| JasperReports | 4.50 | 0.19 | LGPL |
-
-### Core engine benchmark
-
-Source: `src/test/java/com/demcha/compose/GraphComposeBenchmark.java`
-
-| Metric | Latency |
-| --- | ---: |
-| Min | 1.02 ms |
-| Avg | 1.94 ms |
-| p50 | 1.77 ms |
-| p95 | 3.42 ms |
-| p99 | 4.44 ms |
-| Max | 5.08 ms |
-
-### Full CV benchmark
-
-A complete multi-section CV document with text, layout columns, and theme styling.
-
-Source: `src/test/java/com/demcha/compose/FullCvBenchmark.java`
-
-| Metric | Latency |
-| --- | ---: |
-| Min | 4.94 ms |
-| Avg | 8.20 ms |
-| p50 | 7.77 ms |
-| p95 | 12.35 ms |
-| p99 | 15.29 ms |
-| Max | 18.64 ms |
-
-### Scalability benchmark
-
-Near-linear throughput scaling across threads with zero shared mutable state.
-
-Source: `src/test/java/com/demcha/compose/ScalabilityBenchmark.java`
-
-| Threads | Total Docs | Throughput |
-| ---: | ---: | ---: |
-| 1 | 100 | 395 docs/sec |
-| 2 | 200 | 961 docs/sec |
-| 4 | 400 | 2016 docs/sec |
-| 8 | 800 | 3747 docs/sec |
-| 16 | 1600 | 5608 docs/sec |
-
-### Stress test
-
-Source: `src/test/java/com/demcha/compose/GraphComposeStressTest.java`
-
-| Parameter | Value |
-| --- | --- |
-| Thread pool size | 50 |
-| Tasks submitted | 5,000 |
-| Successful | 5,000 |
-| Errors | 0 |
-| Total time | 4,029 ms |
-
-### Endurance run
-
-Source: `src/test/java/com/demcha/compose/EnduranceTest.java`
-
-| Parameter | Value |
-| --- | --- |
-| Documents generated | 100,000 |
-| Total time | 41,635 ms |
-| Heap behavior | Repeated GC drops observed — no growth trend |
-| Result | Completed successfully |
-
-> Note: the endurance run was executed without an explicit `-Xmx` flag. To verify behavior under a constrained heap, rerun with a specific limit such as `-Xmx64m`.
+When quoting benchmark numbers in public docs or release notes, prefer rerunning the relevant suite on the current checkout instead of reusing historical tables.
 
 ---
 

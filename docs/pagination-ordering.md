@@ -55,7 +55,7 @@ This rule guarantees that parent containers see all child-induced page shifts be
 ## Current implementation shape
 
 The current engine implementation does not enforce this rule with a pairwise ancestor comparator.
-Instead it builds one deterministic traversal context for the whole pass:
+Instead it builds one deterministic traversal context for the whole pass through `LayoutTraversalContext`:
 
 - `ParentComponent` provides the authoritative parent relation
 - `Entity.children` provides canonical sibling order

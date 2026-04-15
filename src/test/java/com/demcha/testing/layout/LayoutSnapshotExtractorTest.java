@@ -1,4 +1,4 @@
-package com.demcha.compose.testing.layout;
+package com.demcha.testing.layout;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.layout_core.components.components_builders.ComponentBuilder;
@@ -19,6 +19,7 @@ import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.compose.layout_core.debug.LayoutSnapshotExtractor;
 import com.demcha.compose.layout_core.debug.LayoutNodeSnapshot;
 import com.demcha.compose.layout_core.debug.LayoutSnapshot;
+import com.demcha.compose.testing.layout.LayoutSnapshotJson;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfCanvas;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;

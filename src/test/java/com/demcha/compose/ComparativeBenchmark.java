@@ -6,10 +6,10 @@ import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.core.PdfComposer;
-import com.demcha.compose.v2.DocumentSession;
-import com.demcha.compose.v2.nodes.ContainerNode;
-import com.demcha.compose.v2.nodes.ParagraphNode;
-import com.demcha.compose.v2.nodes.TextAlign;
+import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.model.node.ContainerNode;
+import com.demcha.compose.document.model.node.ParagraphNode;
+import com.demcha.compose.document.model.node.TextAlign;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfPTable;
@@ -253,3 +253,4 @@ public class ComparativeBenchmark {
                                      List<ComparativeRow> libraries) {
     }
 }
+

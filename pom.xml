@@ -64,6 +64,7 @@
 
         <!-- Build plugins -->
         <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
+        <maven.javadoc.plugin.version>3.8.0</maven.javadoc.plugin.version>
         <maven.surefire.plugin.version>3.2.5</maven.surefire.plugin.version>
     </properties>
 
@@ -306,6 +307,20 @@
                 <version>${maven.surefire.plugin.version}</version>
                 <configuration>
                     <argLine>-javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar</argLine>
+                </configuration>
+            </plugin>
+
+            <!-- Canonical API Javadoc validation -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>${maven.javadoc.plugin.version}</version>
+                <configuration>
+                    <doclint>all</doclint>
+                    <failOnError>true</failOnError>
+                    <show>public</show>
+                    <quiet>true</quiet>
+                    <subpackages>com.demcha.compose.document</subpackages>
                 </configuration>
             </plugin>
         </plugins>

@@ -1,8 +1,10 @@
 package com.demcha.templates.builtins;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.layout_core.core.DocumentComposer;
 import com.demcha.compose.layout_core.core.PdfComposer;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.slf4j.Logger;
@@ -24,6 +26,11 @@ abstract class PdfTemplateAdapterSupport {
     @FunctionalInterface
     protected interface PdfComposerFactory {
         PdfComposer create(Path path, boolean guideLines);
+    }
+
+    @FunctionalInterface
+    protected interface SessionAction {
+        void compose(DocumentSession session) throws Exception;
     }
 
     protected final PDDocument renderToDocument(boolean guideLines,
@@ -58,6 +65,41 @@ abstract class PdfTemplateAdapterSupport {
         }
     }
 
+    protected final PDDocument renderToDocumentSession(boolean guideLines,
+                                                       String failureMessage,
+                                                       PDRectangle pageSize,
+                                                       float top,
+                                                       float right,
+                                                       float bottom,
+                                                       float left,
+                                                       SessionAction action) {
+        try (DocumentSession session = createDocumentSession(null, pageSize, top, right, bottom, left)) {
+            action.compose(session);
+            return Loader.loadPDF(session.toPdfBytes());
+        } catch (Exception e) {
+            throw new RuntimeException(failureMessage, e);
+        }
+    }
+
+    protected final void renderToFileSession(Path path,
+                                             boolean guideLines,
+                                             String failureMessage,
+                                             String successMessage,
+                                             PDRectangle pageSize,
+                                             float top,
+                                             float right,
+                                             float bottom,
+                                             float left,
+                                             SessionAction action) {
+        try (DocumentSession session = createDocumentSession(path, pageSize, top, right, bottom, left)) {
+            action.compose(session);
+            session.buildPdf(path);
+            logger().info(successMessage, path.toAbsolutePath());
+        } catch (Exception e) {
+            throw new RuntimeException(failureMessage, e);
+        }
+    }
+
     protected final PdfComposer createPdfComposer(Path path,
                                                   boolean guideLines,
                                                   PDRectangle pageSize,
@@ -77,6 +119,18 @@ abstract class PdfTemplateAdapterSupport {
                 .margin(top, right, bottom, left)
                 .markdown(true)
                 .guideLines(guideLines)
+                .create();
+    }
+
+    protected final DocumentSession createDocumentSession(Path path,
+                                                          PDRectangle pageSize,
+                                                          float top,
+                                                          float right,
+                                                          float bottom,
+                                                          float left) {
+        GraphCompose.DocumentBuilder builder = path != null ? GraphCompose.document(path) : GraphCompose.document();
+        return builder.pageSize(pageSize)
+                .margin(top, right, bottom, left)
                 .create();
     }
 

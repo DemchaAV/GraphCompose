@@ -1,7 +1,10 @@
 package com.demcha.templates.builtins;
 
+import com.demcha.compose.document.templates.support.CvTemplateComposer;
+import com.demcha.compose.document.templates.support.LegacyComposerTemplateComposeTarget;
+import com.demcha.compose.document.templates.support.LegacyTemplateMappers;
+import com.demcha.compose.document.templates.support.SessionTemplateComposeTarget;
 import com.demcha.compose.layout_core.core.DocumentComposer;
-import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.templates.CvTheme;
 import com.demcha.templates.api.CvTemplate;
 import com.demcha.templates.api.MainPageCvDTO;
@@ -12,8 +15,12 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import java.nio.file.Path;
 import java.util.Objects;
 
+/**
+ * Deprecated bridge to the canonical {@code document.templates} CV template.
+ */
+@Deprecated(forRemoval = false)
 public class CvTemplateV1 extends PdfTemplateAdapterSupport implements CvTemplate {
-    private final CvSceneBuilder sceneBuilder;
+    private final CvTemplateComposer composer;
 
     public CvTemplateV1() {
         this(CvTheme.defaultTheme());
@@ -21,65 +28,63 @@ public class CvTemplateV1 extends PdfTemplateAdapterSupport implements CvTemplat
 
     public CvTemplateV1(CvTheme theme) {
         CvTheme resolvedTheme = Objects.requireNonNullElseGet(theme, CvTheme::defaultTheme);
-        this.sceneBuilder = new CvSceneBuilder(resolvedTheme);
+        this.composer = new CvTemplateComposer(LegacyTemplateMappers.toCanonical(resolvedTheme));
     }
 
-    /**
-     * Preferred backend-neutral template contract.
-     */
     @Override
     public void compose(DocumentComposer composer, MainPageCV originalCv, MainPageCvDTO rewrittenCv) {
-        sceneBuilder.compose(composer, originalCv, rewrittenCv);
+        this.composer.compose(
+                new LegacyComposerTemplateComposeTarget(composer),
+                LegacyTemplateMappers.toCanonical(originalCv),
+                LegacyTemplateMappers.toCanonical(rewrittenCv));
     }
 
-    /**
-     * Deprecated compatibility adapter for direct PDFBox document output.
-     */
     @Deprecated(forRemoval = false)
     @Override
     public PDDocument render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, boolean guideLines) {
-        return renderToDocument(
+        return renderToDocumentSession(
                 guideLines,
                 "Failed to generate CV",
-                this::createPdfComposer,
-                composer -> compose(composer, originalCv, rewrittenCv));
+                PDRectangle.A4,
+                15,
+                10,
+                15,
+                15,
+                session -> composer.compose(
+                        new SessionTemplateComposeTarget(session),
+                        LegacyTemplateMappers.toCanonical(originalCv),
+                        LegacyTemplateMappers.toCanonical(rewrittenCv)));
     }
 
-    /**
-     * Deprecated compatibility adapter for direct PDFBox document output.
-     */
     @Deprecated(forRemoval = false)
     @Override
     public PDDocument render(MainPageCV originalCv, MainPageCvDTO rewrittenCv) {
         return render(originalCv, rewrittenCv, false);
     }
 
-    /**
-     * Deprecated compatibility adapter for direct PDF file writing.
-     */
     @Deprecated(forRemoval = false)
     @Override
     public void render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, Path path, boolean guideLines) {
-        renderToFile(
+        renderToFileSession(
                 path,
                 guideLines,
                 "Failed to generate CV",
                 "File has been saved to {}",
-                this::createPdfComposer,
-                composer -> compose(composer, originalCv, rewrittenCv));
+                PDRectangle.A4,
+                15,
+                10,
+                15,
+                15,
+                session -> composer.compose(
+                        new SessionTemplateComposeTarget(session),
+                        LegacyTemplateMappers.toCanonical(originalCv),
+                        LegacyTemplateMappers.toCanonical(rewrittenCv)));
     }
 
-    /**
-     * Deprecated compatibility adapter for direct PDF file writing.
-     */
     @Deprecated(forRemoval = false)
     @Override
     public void render(MainPageCV originalCv, MainPageCvDTO rewrittenCv, Path path) {
         render(originalCv, rewrittenCv, path, false);
-    }
-
-    private PdfComposer createPdfComposer(Path path, boolean guideLines) {
-        return createPdfComposer(path, guideLines, PDRectangle.A4, 15, 10, 15, 15);
     }
 
     @Override

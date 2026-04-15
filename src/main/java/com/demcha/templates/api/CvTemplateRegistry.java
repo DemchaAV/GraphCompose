@@ -9,7 +9,11 @@ import java.util.Optional;
 /**
  * Registry for available CV templates.
  * Templates are provided explicitly by the caller and looked up by template ID.
+ *
+ * @deprecated Use {@link com.demcha.compose.document.templates.api.CvTemplateRegistry}
+ *             instead.
  */
+@Deprecated(forRemoval = false)
 public class CvTemplateRegistry {
 
     private final Map<String, CvTemplate> templates = new HashMap<>();

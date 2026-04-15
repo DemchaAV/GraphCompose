@@ -1,7 +1,10 @@
 package com.demcha.templates.builtins;
 
+import com.demcha.compose.document.templates.support.LegacyComposerTemplateComposeTarget;
+import com.demcha.compose.document.templates.support.LegacyTemplateMappers;
+import com.demcha.compose.document.templates.support.SessionTemplateComposeTarget;
+import com.demcha.compose.document.templates.support.WeeklyScheduleTemplateComposer;
 import com.demcha.compose.layout_core.core.DocumentComposer;
-import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.templates.WeeklyScheduleTheme;
 import com.demcha.templates.api.WeeklyScheduleTemplate;
 import com.demcha.templates.data.WeeklyScheduleData;
@@ -11,18 +14,22 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import java.nio.file.Path;
 import java.util.Objects;
 
+/**
+ * Deprecated bridge to the canonical weekly schedule template.
+ */
+@Deprecated(forRemoval = false)
 public class WeeklyScheduleTemplateV1 extends PdfTemplateAdapterSupport implements WeeklyScheduleTemplate {
-    private static final float PAGE_MARGIN = 18f;
-
-    private final WeeklyScheduleSceneBuilder sceneBuilder;
+    private final WeeklyScheduleTemplateComposer composer;
 
     public WeeklyScheduleTemplateV1() {
         this(null);
     }
 
     public WeeklyScheduleTemplateV1(WeeklyScheduleTheme theme) {
-        WeeklyScheduleTheme resolvedTheme = Objects.requireNonNullElseGet(theme, WeeklyScheduleTheme::defaultTheme);
-        this.sceneBuilder = new WeeklyScheduleSceneBuilder(resolvedTheme);
+        this.composer = new WeeklyScheduleTemplateComposer(
+                Objects.requireNonNullElseGet(
+                        LegacyTemplateMappers.toCanonical(theme),
+                        com.demcha.compose.document.templates.theme.WeeklyScheduleTheme::defaultTheme));
     }
 
     @Override
@@ -40,47 +47,57 @@ public class WeeklyScheduleTemplateV1 extends PdfTemplateAdapterSupport implemen
         return "A reusable landscape weekly roster with aligned day bands, metric rows, and a schedule matrix.";
     }
 
-    @Override
     @Deprecated(forRemoval = false)
+    @Override
     public PDDocument render(WeeklyScheduleData data) {
         return render(data, false);
     }
 
-    @Override
     @Deprecated(forRemoval = false)
+    @Override
     public PDDocument render(WeeklyScheduleData data, boolean guideLines) {
-        return renderToDocument(
+        return renderToDocumentSession(
                 guideLines,
                 "Failed to generate weekly schedule",
-                this::createComposer,
-                composer -> compose(composer, data));
+                landscapeA4(),
+                18,
+                18,
+                18,
+                18,
+                session -> composer.compose(
+                        new SessionTemplateComposeTarget(session),
+                        LegacyTemplateMappers.toCanonical(data)));
     }
 
-    @Override
     @Deprecated(forRemoval = false)
+    @Override
     public void render(WeeklyScheduleData data, Path path) {
         render(data, path, false);
     }
 
-    @Override
     @Deprecated(forRemoval = false)
+    @Override
     public void render(WeeklyScheduleData data, Path path, boolean guideLines) {
-        renderToFile(
+        renderToFileSession(
                 path,
                 guideLines,
                 "Failed to generate weekly schedule",
                 "Weekly schedule saved to {}",
-                this::createComposer,
-                composer -> compose(composer, data));
-    }
-
-    private PdfComposer createComposer(Path path, boolean guideLines) {
-        return createPdfComposer(path, guideLines, landscapeA4(), PAGE_MARGIN);
+                landscapeA4(),
+                18,
+                18,
+                18,
+                18,
+                session -> composer.compose(
+                        new SessionTemplateComposeTarget(session),
+                        LegacyTemplateMappers.toCanonical(data)));
     }
 
     @Override
     public void compose(DocumentComposer composer, WeeklyScheduleData data) {
-        sceneBuilder.compose(composer, data);
+        this.composer.compose(
+                new LegacyComposerTemplateComposeTarget(composer),
+                LegacyTemplateMappers.toCanonical(data));
     }
 
     private PDRectangle landscapeA4() {

@@ -1,5 +1,9 @@
 package com.demcha.templates.builtins;
 
+import com.demcha.compose.document.templates.support.CoverLetterTemplateComposer;
+import com.demcha.compose.document.templates.support.LegacyComposerTemplateComposeTarget;
+import com.demcha.compose.document.templates.support.LegacyTemplateMappers;
+import com.demcha.compose.document.templates.support.SessionTemplateComposeTarget;
 import com.demcha.compose.layout_core.core.DocumentComposer;
 import com.demcha.templates.CvTheme;
 import com.demcha.templates.JobDetails;
@@ -10,67 +14,74 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
 
+/**
+ * Deprecated bridge to the canonical {@code document.templates} cover-letter template.
+ */
+@Deprecated(forRemoval = false)
 public class CoverLetterTemplateV1 extends PdfTemplateAdapterSupport implements CoverLetterTemplate {
-    private final CoverLetterSceneBuilder sceneBuilder;
+    private final CoverLetterTemplateComposer composer;
 
     public CoverLetterTemplateV1() {
-        this.sceneBuilder = new CoverLetterSceneBuilder(CvTheme.defaultTheme(), CvTheme.courier());
+        this.composer = new CoverLetterTemplateComposer(
+                LegacyTemplateMappers.toCanonical(CvTheme.defaultTheme()),
+                LegacyTemplateMappers.toCanonical(CvTheme.courier()));
     }
 
-    /**
-     * Preferred backend-neutral template contract.
-     */
     @Override
     public void compose(DocumentComposer composer, Header header, String wroteLetter, JobDetails jobDetails) {
-        sceneBuilder.compose(composer, header, wroteLetter, jobDetails);
+        this.composer.compose(
+                new LegacyComposerTemplateComposeTarget(composer),
+                LegacyTemplateMappers.toCanonical(header),
+                wroteLetter,
+                LegacyTemplateMappers.toCanonical(jobDetails));
     }
 
-    /**
-     * Deprecated compatibility adapter for direct PDFBox document output.
-     */
     @Deprecated(forRemoval = false)
     public PDDocument render(Header header, String wroteLetter, JobDetails jobDetails, boolean guideLines) {
-        return renderToDocument(
+        return renderToDocumentSession(
                 guideLines,
                 "Failed to generate cover letter",
-                this::createPdfComposer,
-                composer -> compose(composer, header, wroteLetter, jobDetails));
+                PDRectangle.A4,
+                15,
+                10,
+                15,
+                15,
+                session -> composer.compose(
+                        new SessionTemplateComposeTarget(session),
+                        LegacyTemplateMappers.toCanonical(header),
+                        wroteLetter,
+                        LegacyTemplateMappers.toCanonical(jobDetails)));
     }
 
-    /**
-     * Deprecated compatibility adapter for direct PDFBox document output.
-     */
     @Deprecated(forRemoval = false)
     @Override
     public PDDocument render(Header header, String wroteLetter, JobDetails jobDetails) {
         return render(header, wroteLetter, jobDetails, false);
     }
 
-    /**
-     * Deprecated compatibility adapter for direct PDF file writing.
-     */
     @Deprecated(forRemoval = false)
     public void render(Header header, String wroteLetter, JobDetails jobDetails, Path path, boolean guideLines) {
-        renderToFile(
+        renderToFileSession(
                 path,
                 guideLines,
                 "Failed to generate cover letter",
                 "Cover letter saved to {}",
-                this::createPdfComposer,
-                composer -> compose(composer, header, wroteLetter, jobDetails));
+                PDRectangle.A4,
+                15,
+                10,
+                15,
+                15,
+                session -> composer.compose(
+                        new SessionTemplateComposeTarget(session),
+                        LegacyTemplateMappers.toCanonical(header),
+                        wroteLetter,
+                        LegacyTemplateMappers.toCanonical(jobDetails)));
     }
 
-    /**
-     * Deprecated compatibility adapter for direct PDF file writing.
-     */
     @Deprecated(forRemoval = false)
     @Override
     public void render(Header header, String wroteLetter, JobDetails jobDetails, Path path) {
         render(header, wroteLetter, jobDetails, path, false);
-    }
-
-    private com.demcha.compose.layout_core.core.PdfComposer createPdfComposer(Path path, boolean guideLines) {
-        return createPdfComposer(path, guideLines, PDRectangle.A4, 15, 10, 15, 15);
     }
 
     @Override

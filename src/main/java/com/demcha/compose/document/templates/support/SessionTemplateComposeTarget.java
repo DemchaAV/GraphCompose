@@ -1,0 +1,99 @@
+package com.demcha.compose.document.templates.support;
+
+import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.dsl.DocumentDsl;
+import com.demcha.compose.layout_core.components.components_builders.TableColumnSpec;
+
+import java.util.Objects;
+
+/**
+ * {@link TemplateComposeTarget} backed by the canonical {@link DocumentSession}
+ * DSL.
+ */
+public final class SessionTemplateComposeTarget implements TemplateComposeTarget {
+    private final DocumentSession session;
+    private DocumentDsl.PageFlowBuilder root;
+
+    /**
+     * Creates a target backed by one live document session.
+     *
+     * @param session session receiving composed template nodes
+     */
+    public SessionTemplateComposeTarget(DocumentSession session) {
+        this.session = Objects.requireNonNull(session, "session");
+    }
+
+    @Override
+    public double pageWidth() {
+        return session.canvas().innerWidth();
+    }
+
+    @Override
+    public void startDocument(String rootName, double spacing) {
+        if (root != null) {
+            throw new IllegalStateException("Template document flow has already been started.");
+        }
+        root = session.dsl()
+                .pageFlow()
+                .name(rootName)
+                .spacing(spacing);
+    }
+
+    @Override
+    public void addParagraph(TemplateParagraphSpec paragraph) {
+        requireRoot().addParagraph(builder -> builder
+                .name(paragraph.name())
+                .text(paragraph.text())
+                .textStyle(paragraph.style())
+                .align(paragraph.align())
+                .lineSpacing(paragraph.lineSpacing())
+                .padding(paragraph.padding())
+                .margin(paragraph.margin()));
+    }
+
+    @Override
+    public void addDivider(TemplateDividerSpec divider) {
+        requireRoot().addDivider(builder -> builder
+                .name(divider.name())
+                .width(divider.width())
+                .thickness(divider.thickness())
+                .color(divider.color())
+                .margin(divider.margin()));
+    }
+
+    @Override
+    public void addTable(TemplateTableSpec table) {
+        DocumentDsl.TableBuilder builder = session.dsl()
+                .table()
+                .name(table.name())
+                .columns(table.columns().toArray(TableColumnSpec[]::new))
+                .defaultCellStyle(table.defaultCellStyle())
+                .width(table.width())
+                .padding(table.padding())
+                .margin(table.margin());
+
+        table.columnStyles().forEach(builder::columnStyle);
+        table.rowStyles().forEach(builder::rowStyle);
+        table.rows().forEach(builder::row);
+
+        requireRoot().add(builder.build());
+    }
+
+    @Override
+    public void addPageBreak(String name) {
+        requireRoot().addPageBreak(builder -> builder.name(name));
+    }
+
+    @Override
+    public void finishDocument() {
+        requireRoot().build();
+        root = null;
+    }
+
+    private DocumentDsl.PageFlowBuilder requireRoot() {
+        if (root == null) {
+            throw new IllegalStateException("Template document flow has not been started.");
+        }
+        return root;
+    }
+}

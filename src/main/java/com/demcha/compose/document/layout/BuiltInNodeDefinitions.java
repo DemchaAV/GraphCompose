@@ -737,12 +737,12 @@ public final class BuiltInNodeDefinitions {
                 rowHeights.stream().mapToDouble(Double::doubleValue).sum());
     }
 
-    private static PreparedNode<TableNode> sliceTablePreparedNode(TableNode source,
-                                                                  ResolvedTableLayout layout,
-                                                                  int fromInclusive,
-                                                                  int toExclusive,
-                                                                  boolean keepTopInsets,
-                                                                  boolean keepBottomInsets) {
+        private static PreparedNode<TableNode> sliceTablePreparedNode(TableNode source,
+                                                                      ResolvedTableLayout layout,
+                                                                      int fromInclusive,
+                                                                      int toExclusive,
+                                                                      boolean keepTopInsets,
+                                                                      boolean keepBottomInsets) {
         List<List<TableResolvedCell>> rows = List.copyOf(layout.rows().subList(fromInclusive, toExclusive));
         List<Double> rowHeights = List.copyOf(layout.rowHeights().subList(fromInclusive, toExclusive));
         double totalHeight = rowHeights.stream().mapToDouble(Double::doubleValue).sum();
@@ -750,15 +750,17 @@ public final class BuiltInNodeDefinitions {
                 .map(TableColumnSpec::fixed)
                 .toList();
 
-        TableNode fragmentNode = new TableNode(
-                source.name(),
-                fixedColumns,
-                source.rows().subList(fromInclusive, toExclusive),
-                source.defaultCellStyle(),
-                layout.finalWidth(),
-                new Padding(
-                        keepTopInsets ? source.padding().top() : 0.0,
-                        source.padding().right(),
+            TableNode fragmentNode = new TableNode(
+                    source.name(),
+                    fixedColumns,
+                    source.rows().subList(fromInclusive, toExclusive),
+                    source.defaultCellStyle(),
+                    source.rowStyles(),
+                    source.columnStyles(),
+                    layout.finalWidth(),
+                    new Padding(
+                            keepTopInsets ? source.padding().top() : 0.0,
+                            source.padding().right(),
                         keepBottomInsets ? source.padding().bottom() : 0.0,
                         source.padding().left()),
                 new Margin(
@@ -785,10 +787,14 @@ public final class BuiltInNodeDefinitions {
         TableCellStyle tableDefault = TableCellStyle.merge(TableCellStyle.DEFAULT, node.defaultCellStyle());
         List<List<TableCellStyle>> result = new ArrayList<>(node.rows().size());
 
-        for (List<TableCellSpec> row : node.rows()) {
+        for (int rowIndex = 0; rowIndex < node.rows().size(); rowIndex++) {
+            List<TableCellSpec> row = node.rows().get(rowIndex);
             List<TableCellStyle> rowResult = new ArrayList<>(columnCount);
+            TableCellStyle rowOverride = node.rowStyles().get(rowIndex);
             for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-                TableCellStyle resolved = TableCellStyle.merge(tableDefault, row.get(columnIndex).styleOverride());
+                TableCellStyle resolved = TableCellStyle.merge(tableDefault, node.columnStyles().get(columnIndex));
+                resolved = TableCellStyle.merge(resolved, rowOverride);
+                resolved = TableCellStyle.merge(resolved, row.get(columnIndex).styleOverride());
                 rowResult.add(resolved);
             }
             result.add(List.copyOf(rowResult));

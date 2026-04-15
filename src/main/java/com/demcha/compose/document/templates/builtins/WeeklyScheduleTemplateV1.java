@@ -1,0 +1,46 @@
+package com.demcha.compose.document.templates.builtins;
+
+import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.templates.api.WeeklyScheduleTemplate;
+import com.demcha.compose.document.templates.data.WeeklyScheduleData;
+import com.demcha.compose.document.templates.support.SessionTemplateComposeTarget;
+import com.demcha.compose.document.templates.support.WeeklyScheduleTemplateComposer;
+import com.demcha.compose.document.templates.theme.WeeklyScheduleTheme;
+
+import java.util.Objects;
+
+/**
+ * Canonical V2 implementation of the weekly schedule template.
+ */
+public final class WeeklyScheduleTemplateV1 implements WeeklyScheduleTemplate {
+    private final WeeklyScheduleTemplateComposer composer;
+
+    public WeeklyScheduleTemplateV1() {
+        this(null);
+    }
+
+    public WeeklyScheduleTemplateV1(WeeklyScheduleTheme theme) {
+        this.composer = new WeeklyScheduleTemplateComposer(
+                Objects.requireNonNullElseGet(theme, WeeklyScheduleTheme::defaultTheme));
+    }
+
+    @Override
+    public String getTemplateId() {
+        return "weekly-schedule-v1";
+    }
+
+    @Override
+    public String getTemplateName() {
+        return "Weekly Schedule V1";
+    }
+
+    @Override
+    public String getDescription() {
+        return "A reusable landscape weekly roster with aligned day bands, metric rows, and a schedule matrix.";
+    }
+
+    @Override
+    public void compose(DocumentSession document, WeeklyScheduleData data) {
+        composer.compose(new SessionTemplateComposeTarget(document), data);
+    }
+}

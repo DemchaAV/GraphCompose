@@ -8,7 +8,11 @@ import java.awt.Color;
 
 /**
  * Shared visual tokens for weekly schedule templates.
+ *
+ * @deprecated Use {@link com.demcha.compose.document.templates.theme.WeeklyScheduleTheme}
+ *             instead.
  */
+@Deprecated(forRemoval = false)
 public record WeeklyScheduleTheme(
         Color titleColor,
         Color accentColor,

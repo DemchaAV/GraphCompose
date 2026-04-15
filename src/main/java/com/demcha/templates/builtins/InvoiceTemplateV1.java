@@ -1,7 +1,11 @@
 package com.demcha.templates.builtins;
 
+import com.demcha.compose.document.templates.support.BusinessDocumentSceneStyles;
+import com.demcha.compose.document.templates.support.InvoiceTemplateComposer;
+import com.demcha.compose.document.templates.support.LegacyComposerTemplateComposeTarget;
+import com.demcha.compose.document.templates.support.LegacyTemplateMappers;
+import com.demcha.compose.document.templates.support.SessionTemplateComposeTarget;
 import com.demcha.compose.layout_core.core.DocumentComposer;
-import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.templates.api.InvoiceTemplate;
 import com.demcha.templates.data.InvoiceData;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -9,21 +13,18 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
 
+/**
+ * Deprecated bridge to the canonical invoice template.
+ */
+@Deprecated(forRemoval = false)
 public class InvoiceTemplateV1 extends PdfTemplateAdapterSupport implements InvoiceTemplate {
-    private static final float PAGE_MARGIN = 22f;
+    private final InvoiceTemplateComposer composer = new InvoiceTemplateComposer(new BusinessDocumentSceneStyles());
 
-    private final InvoiceSceneBuilder sceneBuilder;
-
-    public InvoiceTemplateV1() {
-        this.sceneBuilder = new InvoiceSceneBuilder(new BusinessDocumentSceneStyles());
-    }
-
-    /**
-     * Preferred backend-neutral template contract.
-     */
     @Override
     public void compose(DocumentComposer composer, InvoiceData data) {
-        sceneBuilder.compose(composer, data);
+        this.composer.compose(
+                new LegacyComposerTemplateComposeTarget(composer),
+                LegacyTemplateMappers.toCanonical(data));
     }
 
     @Override
@@ -41,53 +42,49 @@ public class InvoiceTemplateV1 extends PdfTemplateAdapterSupport implements Invo
         return "A light business invoice template with metadata, billing parties, line items, and totals.";
     }
 
-    /**
-     * Deprecated compatibility adapter for direct PDFBox document output.
-     */
     @Deprecated(forRemoval = false)
     @Override
     public PDDocument render(InvoiceData data) {
         return render(data, false);
     }
 
-    /**
-     * Deprecated compatibility adapter for direct PDFBox document output.
-     */
     @Deprecated(forRemoval = false)
     @Override
     public PDDocument render(InvoiceData data, boolean guideLines) {
-        return renderToDocument(
+        return renderToDocumentSession(
                 guideLines,
                 "Failed to generate invoice",
-                this::createComposer,
-                composer -> compose(composer, data));
+                PDRectangle.A4,
+                22,
+                22,
+                22,
+                22,
+                session -> composer.compose(
+                        new SessionTemplateComposeTarget(session),
+                        LegacyTemplateMappers.toCanonical(data)));
     }
 
-    /**
-     * Deprecated compatibility adapter for direct PDF file writing.
-     */
     @Deprecated(forRemoval = false)
     @Override
     public void render(InvoiceData data, Path path) {
         render(data, path, false);
     }
 
-    /**
-     * Deprecated compatibility adapter for direct PDF file writing.
-     */
     @Deprecated(forRemoval = false)
     @Override
     public void render(InvoiceData data, Path path, boolean guideLines) {
-        renderToFile(
+        renderToFileSession(
                 path,
                 guideLines,
                 "Failed to generate invoice",
                 "Invoice saved to {}",
-                this::createComposer,
-                composer -> compose(composer, data));
-    }
-
-    private PdfComposer createComposer(Path path, boolean guideLines) {
-        return createPdfComposer(path, guideLines, PDRectangle.A4, PAGE_MARGIN);
+                PDRectangle.A4,
+                22,
+                22,
+                22,
+                22,
+                session -> composer.compose(
+                        new SessionTemplateComposeTarget(session),
+                        LegacyTemplateMappers.toCanonical(data)));
     }
 }

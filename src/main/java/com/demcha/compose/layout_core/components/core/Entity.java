@@ -1,13 +1,10 @@
 package com.demcha.compose.layout_core.components.core;
 
-import com.demcha.compose.layout_core.components.geometry.ContentSize;
-import com.demcha.compose.layout_core.components.layout.ParentComponent;
-import com.demcha.compose.layout_core.components.layout.coordinator.ComputedPosition;
-import com.demcha.compose.layout_core.components.layout.coordinator.Placement;
-import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.layout_core.components.geometry.EntityBounds;
 import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.system.interfaces.Render;
 import com.demcha.compose.layout_core.system.utils.page_breaker.Offset;
+import com.demcha.compose.layout_core.system.utils.page_breaker.ParentContainerUpdater;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -21,13 +18,16 @@ import java.util.*;
  * Core runtime node in the GraphCompose entity-component model.
  * <p>
  * An {@code Entity} is a lightweight container for components such as text,
- * style, size, layout metadata, and render markers. Builders create entities and
+ * style, size, layout metadata, and render markers. Builders create entities
+ * and
  * attach those components; systems later read and enrich the same entity as the
  * document moves through layout, pagination, and rendering.
  * </p>
  *
- * <p>In other words, builders describe intent on the entity, while systems turn
- * that intent into resolved geometry and final output.</p>
+ * <p>
+ * In other words, builders describe intent on the entity, while systems turn
+ * that intent into resolved geometry and final output.
+ * </p>
  */
 @Slf4j
 @EqualsAndHashCode
@@ -70,19 +70,27 @@ public final class Entity {
         Class<? extends Component> key = c.getClass().asSubclass(Component.class);
         Component prev = comps.putIfAbsent(key, c);
         if (prev != null) {
-            log.debug("addComponentIfAbsent: component {} already exists on {}", key.getName(), this);
+            if (log.isDebugEnabled()) {
+                log.debug("addComponentIfAbsent: component {} already exists on {}", key.getName(), this);
+            }
             return this;
         }
-        if (c instanceof EntityName en) this.name = en;
-        log.debug("Added absent component {} to {}", key.getSimpleName(), this);
+        if (c instanceof EntityName en)
+            this.name = en;
+        if (log.isDebugEnabled()) {
+            log.debug("Added absent component {} to {}", key.getSimpleName(), this);
+        }
         return this;
     }
 
     public <T extends Component> Entity addComponent(@NonNull T c) {
         Class<? extends Component> key = c.getClass().asSubclass(Component.class);
-        log.debug("Adding component {} to {}", c, this);
+        if (log.isDebugEnabled()) {
+            log.debug("Adding component {} to {}", c, this);
+        }
         Component prev = comps.put(key, c);
-        if (c instanceof EntityName en) this.name = en;
+        if (c instanceof EntityName en)
+            this.name = en;
         if (c instanceof Render) {
             if (render == null) {
                 this.render = (Render) c;
@@ -97,17 +105,20 @@ public final class Entity {
     }
 
     private <T extends Component> void debugPutMethod(@NotNull T c, Component prev, String methodName) {
-        if (prev == null) {
-            log.debug("Added component {} to {} through method {}", c, this, methodName);
-        } else {
-            log.debug("Replaced component {} on {} through method {}", c, this, methodName);
+        if (log.isDebugEnabled()) {
+            if (prev == null) {
+                log.debug("Added component {} to {} through method {}", c, this, methodName);
+            } else {
+                log.debug("Replaced component {} on {} through method {}", c, this, methodName);
+            }
         }
     }
 
     public <T extends Component> Entity forceAddComponent(@NonNull T c) {
         Class<? extends Component> key = c.getClass().asSubclass(Component.class);
         Component prev = comps.put(key, c);
-        if (c instanceof EntityName en) this.name = en;
+        if (c instanceof EntityName en)
+            this.name = en;
         if (c instanceof Render) {
             if (render == null) {
                 this.render = (Render) c;
@@ -122,17 +133,23 @@ public final class Entity {
     }
 
     public <T extends Component> Optional<T> getComponent(Class<T> type) {
-        log.debug("Getting component {} from  {}", type, this);
+        if (log.isDebugEnabled()) {
+            log.debug("Getting component {} from  {}", type, this);
+        }
         T value = type.cast(comps.get(type));
         if (value == null) {
-            log.debug("Component {} from {} not found!", type, this);
+            if (log.isDebugEnabled()) {
+                log.debug("Component {} from {} not found!", type, this);
+            }
             return Optional.empty();
         }
         return Optional.of(value);
     }
 
     public <T extends Component> T require(Class<T> type) {
-        log.debug("Require component {} {}", type, this);
+        if (log.isDebugEnabled()) {
+            log.debug("Require component {} {}", type, this);
+        }
         return getComponent(type).orElseThrow(() -> {
             log.error("No component found for type {} for entity [{}]", type.getName(), uuid);
             return new NoSuchElementException("Missing " + type.getName() + " for " + uuid);
@@ -144,9 +161,10 @@ public final class Entity {
                 .anyMatch(c -> baseClass.isAssignableFrom(c));
     }
 
-
     public boolean has(Class<? extends Component> type) {
-        log.debug("Checking component {} {}", type, this);
+        if (log.isDebugEnabled()) {
+            log.debug("Checking component {} {}", type, this);
+        }
         return comps.containsKey(type);
     }
 
@@ -156,70 +174,43 @@ public final class Entity {
     }
 
     public boolean hasRender() {
-        return comps.values().stream()
-                .anyMatch(comp -> comp instanceof Render);
+        return render != null;
     }
 
-
+    @Deprecated
     public double boundingTopLine() {
-        var placement = getComponent(Placement.class).orElseThrow(() -> {
-            // Лямбда здесь позволяет выполнить логирование *только* в случае ошибки
-            log.error("No component Placement.class found for entity [{}] boundingTopLine() aborted", this);
-            return new NoSuchElementException("Missing component Placement.class");
-        });
-        var margin = getComponent(Margin.class).orElse(Margin.zero());
-        var size = getComponent(ContentSize.class).orElseThrow(() -> new NoSuchElementException("Missing component ContentSize.class"));
-
-        return placement.y() + size.height() + margin.top();
+        return EntityBounds.topLine(this);
     }
 
+    @Deprecated
     public double boundingBottomLine() {
-        var placement = getComponent(Placement.class).orElseThrow(() -> {
-            // Лямбда здесь позволяет выполнить логирование *только* в случае ошибки
-            log.error("No component Placement.class found for entity [{}] boundingBottomLine() aborted", this);
-            return new NoSuchElementException("Missing component Placement.class");
-        });
-        var margin = getComponent(Margin.class).orElse(Margin.zero());
-
-        return placement.y() - margin.bottom();
+        return EntityBounds.bottomLine(this);
     }
 
+    @Deprecated
     public double boundingRightLine() {
-        var placement = getComponent(Placement.class).orElseThrow(() -> {
-            // Лямбда здесь позволяет выполнить логирование *только* в случае ошибки
-            log.error("No component Placement.class found for entity [{}] boundingRightLine() aborted", this);
-            return new NoSuchElementException("Missing component Placement.class");
-        });
-        var margin = getComponent(Margin.class).orElse(Margin.zero());
-        var size = getComponent(ContentSize.class).orElseThrow(() -> new NoSuchElementException("Missing component ContentSize.class"));
-
-        return placement.x() + size.width() + margin.right();
+        return EntityBounds.rightLine(this);
     }
 
+    @Deprecated
     public double boundingLeftLine() {
-        var placement = getComponent(Placement.class).orElseThrow(() -> {
-            // Лямбда здесь позволяет выполнить логирование *только* в случае ошибки
-            log.error("No component Placement.class found for entity [{}] boundingLeftLine() aborted", this);
-            return new NoSuchElementException("Missing component Placement.class");
-        });
-        var margin = getComponent(Margin.class).orElse(Margin.zero());
-
-        return placement.x() - margin.left();
+        return EntityBounds.leftLine(this);
     }
-
 
     public <T extends Component> Entity populate(Set<? extends Component> components) {
-        log.info("Creating and populating entity");
-
-        log.info("Populating entity UUID [{}] with\nComponents: {}", this, components);
+        if (log.isDebugEnabled()) {
+            log.debug("Creating and populating entity");
+            log.debug("Populating entity UUID [{}] with\nComponents: {}", this, components);
+        }
         for (Component component : components) {
             addComponent(component);
         }
-        log.info("Created and populated entity {}", this);
+        if (log.isDebugEnabled()) {
+            log.debug("Created and populated entity {}", this);
+        }
         return this;
 
     }
-
 
     /**
      * Returns a read-only view of all components currently attached to the entity.
@@ -227,17 +218,24 @@ public final class Entity {
      * @return an unmodifiable component map keyed by concrete component class
      */
     public Map<Class<? extends Component>, Component> view() {
-        log.debug("Viewing component {} {}", uuid, this);
+        if (log.isDebugEnabled()) {
+            log.debug("Viewing component {} {}", uuid, this);
+        }
         return Collections.unmodifiableMap(comps);
     }
 
     public boolean remove(Class<? extends Component> type) {
-        if (has(type)) {
-            comps.remove(type);
-            return true;
-        } else {
+        Component removed = comps.remove(type);
+        if (removed == null) {
             return false;
         }
+        if (removed == render) {
+            render = null;
+        }
+        if (removed == name) {
+            name = null;
+        }
+        return true;
     }
 
     private String printChildren(EntityManager manager) {
@@ -249,156 +247,35 @@ public final class Entity {
 
     }
 
+    @Deprecated
     public boolean updateParentContainer(EntityManager manager, Offset offset) {
-        if (offset == null) {
-            log.error("Offset cannot be null");
-            return false;
-        }
-        return updateParentContainer(manager, offset.y());
+        return ParentContainerUpdater.updateParentContainer(this, manager, offset);
     }
 
-
+    @Deprecated
     public boolean updateParentContainer(EntityManager manager, double offsetY) {
-
-        // 1. Guard Clause: No offset, no work needed.
-        if (offsetY == 0) {
-            log.info("Update aborted: Offset is zero");
-            return false;
-        }
-
-        // 2. Get Parent Component Info
-        // Note: 'var' infers the type automatically (Java 10+)
-        var parentComponent = this.getComponent(ParentComponent.class).orElse(null);
-
-        if (parentComponent == null) {
-            // Warning is often better than Error if it's a root element (has no parent)
-            log.warn("Parent component missing for entity [{}]. updateParent() stopped.", this);
-            return false;
-        }
-
-        // 3. Fetch Parent Entity
-        var parent = manager.getEntity(parentComponent.uuid()).orElse(null);
-        if (parent == null) {
-            log.error("Parent Entity not found in Manager for UUID: {}", parentComponent.uuid());
-            return false;
-        }
-        return updateEntitySizeAndPosition(manager, offsetY, parent);
+        return ParentContainerUpdater.updateParentContainer(this, manager, offsetY);
     }
 
+    @Deprecated
     public boolean updateParentContainerSize(EntityManager manager, double offsetY) {
-
-        // 1. Guard Clause: No offset, no work needed.
-        if (offsetY == 0) {
-            log.info("Update aborted: Offset is zero");
-            return false;
-        }
-
-        // 2. Get Parent Component Info
-        // Note: 'var' infers the type automatically (Java 10+)
-        var parentComponent = this.getComponent(ParentComponent.class).orElse(null);
-
-        if (parentComponent == null) {
-            // Warning is often better than Error if it's a root element (has no parent)
-            log.warn("Parent component missing for entity [{}]. updateParent() stopped.", this);
-            return false;
-        }
-
-        // 3. Fetch Parent Entity
-        var parent = manager.getEntity(parentComponent.uuid()).orElse(null);
-        if (parent == null) {
-            log.error("Parent Entity not found in Manager for UUID: {}", parentComponent.uuid());
-            return false;
-        }
-        return updateEntitySize(manager, offsetY, parent);
+        return ParentContainerUpdater.updateParentContainerSize(this, manager, offsetY);
     }
 
+    @Deprecated
     public boolean updateEntitySizeAndPosition(EntityManager manager, double offsetY, @NonNull Entity entity) {
-
-
-        // 4. Fetch Parent State (Throw if state is corrupt/missing)
-        // Using orElseThrow checks data integrity.
-        var computedPos = entity.getComponent(ComputedPosition.class)
-                .orElseThrow(() -> new IllegalStateException("Parent missing Position"));
-        var size = entity.getComponent(ContentSize.class)
-                .orElseThrow(() -> new IllegalStateException("Parent missing Size"));
-
-        // 5. Calculate New Dimensions
-        // We treat records/components as immutable, creating new instances.
-        if (offsetY < 0) {
-            // EXPAND UPWARDS: Move Y up, Increase Height
-            double newY = computedPos.y() + offsetY;
-            double newHeight = size.height() + Math.abs(offsetY);
-
-            entity.addComponent(new ComputedPosition(computedPos.x(), newY));
-            entity.addComponent(new ContentSize(size.width(), newHeight));
-        } else {
-            // EXPAND DOWNWARDS: Y stays same, Increase Height
-            double newHeight = size.height() + offsetY;
-
-            entity.addComponent(new ContentSize(size.width(), newHeight));
-        }
-
-        // 6. Recursion: Bubble the change up the tree
-        return entity.updateParentContainer(manager, offsetY);
+        return ParentContainerUpdater.updateEntitySizeAndPosition(manager, offsetY, entity);
     }
 
+    @Deprecated
     public boolean updateEntitySize(EntityManager manager, double offsetY, @NonNull Entity entity) {
-
-
-        // 4. Fetch Parent State (Throw if state is corrupt/missing)
-        // Using orElseThrow checks data integrity.
-        var computedPos = entity.getComponent(ComputedPosition.class)
-                .orElseThrow(() -> new IllegalStateException("Parent missing Position"));
-        var size = entity.getComponent(ContentSize.class)
-                .orElseThrow(() -> new IllegalStateException("Parent missing Size"));
-
-        // 5. Calculate New Dimensions
-        // We treat records/components as immutable, creating new instances.
-        if (offsetY < 0) {
-            // EXPAND UPWARDS: Move Y up, Increase Height
-            double newHeight = size.height() + Math.abs(offsetY);
-
-            entity.addComponent(new ContentSize(size.width(), newHeight));
-        } else {
-            // EXPAND DOWNWARDS: Y stays same, Increase Height
-            double newHeight = size.height() + offsetY;
-
-            entity.addComponent(new ContentSize(size.width(), newHeight));
-        }
-
-        // 6. Recursion: Bubble the change up the tree
-        return entity.updateParentContainerSize(manager, offsetY);
+        return ParentContainerUpdater.updateEntitySize(manager, offsetY, entity);
     }
 
+    @Deprecated
     public boolean updateEntitySize(EntityManager manager, double offsetY) {
-
-
-        // 4. Fetch Parent State (Throw if state is corrupt/missing)
-        // Using orElseThrow checks data integrity.
-        var computedPos = this.getComponent(ComputedPosition.class)
-                .orElseThrow(() -> new IllegalStateException("Parent missing Position"));
-        var size = this.getComponent(ContentSize.class)
-                .orElseThrow(() -> new IllegalStateException("Parent missing Size"));
-
-        // 5. Calculate New Dimensions
-        // We treat records/components as immutable, creating new instances.
-        if (offsetY < 0) {
-            // EXPAND UPWARDS: Move Y up, Increase Height
-            double newHeight = size.height() + Math.abs(offsetY);
-
-            this.addComponent(new ContentSize(size.width(), newHeight));
-        } else {
-            // EXPAND DOWNWARDS: Y stays same, Increase Height
-            double newHeight = size.height() + offsetY;
-
-            this.addComponent(new ContentSize(size.width(), newHeight));
-        }
-
-        // 6. Recursion: Bubble the change up the tree
-        return this.updateParentContainerSize(manager, offsetY);
+        return ParentContainerUpdater.updateCurrentEntitySize(this, manager, offsetY);
     }
-
-
 
     public String printInfo() {
         StringBuilder info = new StringBuilder(this + "\n");
@@ -416,11 +293,9 @@ public final class Entity {
     @Override
     public String toString() {
         return "Entity[" + name +
-               " id: " + uuid +
-               " renderType: " + (render != null ? render.getClass().getSimpleName() : "null") +
-               ']';
+                " id: " + uuid +
+                " renderType: " + (render != null ? render.getClass().getSimpleName() : "null") +
+                ']';
     }
 
-
 }
-

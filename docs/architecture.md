@@ -41,6 +41,24 @@ That keeps layout, pagination, snapshot extraction, and render backends aligned 
 
 See [pagination-ordering.md](./pagination-ordering.md) for the detailed explanation of why this rule exists and how ordering bugs can look like render bugs.
 
+## Entity responsibilities and helper boundaries
+
+`Entity` is intentionally being pushed back toward a thinner ECS-style role.
+
+Today `Entity` owns:
+
+- stable identity
+- the component map
+- canonical child order through `Entity.children`
+- a cached render marker reference for fast `hasRender()` checks
+
+Layout-specific math and pagination mutation now live in dedicated helpers:
+
+- `EntityBounds` owns bounding-line and outer-edge calculations derived from `Placement`, `ContentSize`, and optional `Margin`
+- `ParentContainerUpdater` owns parent-container size and page-shift propagation rules used during pagination-sensitive updates
+
+Deprecated helper methods still exist on `Entity` as compatibility delegates, but new code should treat those methods as migration shims rather than extension points.
+
 ## Engine layer: `com.demcha.compose.*`
 
 - `layout_core` contains the document model, geometry, layout resolution, pagination, and rendering systems.
@@ -80,6 +98,7 @@ This keeps table pagination consistent with the rest of the engine while avoidin
 - `RenderPassSession` is the shared seam for page lifetime and page-surface reuse; it must stay free of PDFBox and backend package imports.
 - The PDF entity path dispatches through registered render handlers only; backend-specific render interfaces are not part of the preferred engine extension seam.
 - Renderer-specific draw ordering should be backend-neutral at the policy level and backend-owned at the integration level. In practice the engine exposes resolved layout coordinates, while each backend chooses how to consume the shared deterministic render order for its output format.
+- `EntityRenderOrder` is the shared render-order helper for resolved entities. It now precomputes lightweight sort entries per layer before sorting so render ordering stays deterministic without repeated component lookups inside the comparator hot path.
 
 ### Migration rule for new renderables
 

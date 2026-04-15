@@ -380,7 +380,7 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
         if (entity.has(BlockTextData.class)) {
             return Optional.of(alignBlockText(entity, entityManager));
         } else {
-            log.info("Entity  is not a BlockTextData");
+            log.debug("Entity is not a BlockTextData");
             return Optional.empty();
         }
     }

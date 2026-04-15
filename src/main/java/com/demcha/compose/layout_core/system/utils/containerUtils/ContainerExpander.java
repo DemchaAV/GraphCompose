@@ -123,7 +123,7 @@ public final class ContainerExpander {
         ContentSize updated = new ContentSize(newWidth, newHeight);
         parent.addComponent(updated); // ensure addComponent replaces old instance
 
-        log.info("Expanded ContentSize for {}: {}x{} -> {}x{}",
+        log.debug("Expanded ContentSize for {}: {}x{} -> {}x{}",
                 parent, current.width(), current.height(), newWidth, newHeight);
         return true;
     }
@@ -150,7 +150,7 @@ public final class ContainerExpander {
         }
 
         parent.addComponent(new ContentSize(current.width(), newHeight));
-        log.info("Expanded module height for {}: {} -> {}", parent, current.height(), newHeight);
+        log.debug("Expanded module height for {}: {} -> {}", parent, current.height(), newHeight);
         return true;
     }
 
@@ -162,7 +162,7 @@ public final class ContainerExpander {
      * @param childrenByParents map already sorted by parent
      */
     public static void process(Map<UUID, ? extends Collection<UUID>> childrenByParents, EntityManager entityManager) {
-        log.info("Box size normalizer");
+        log.debug("Box size normalizer");
 
 
         for (Map.Entry<UUID, ? extends Collection<UUID>> parentUuid : childrenByParents.entrySet()) {
@@ -197,7 +197,7 @@ public final class ContainerExpander {
         if (entity.hasAssignable(Expendable.class)) {
             return true;
         }
-        log.info("Entity {} has no Expendable", entity);
+        log.debug("Entity {} has no Expendable", entity);
         return false;
     }
 }

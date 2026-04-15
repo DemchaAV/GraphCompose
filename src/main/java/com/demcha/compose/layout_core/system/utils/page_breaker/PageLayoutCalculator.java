@@ -256,7 +256,7 @@ public class PageLayoutCalculator {
             endPage = startPage;
         }
         if (entity != null) {
-            entity.updateParentContainerSize(entityManager, shift);
+            ParentContainerUpdater.updateParentContainerSize(entity, entityManager, shift);
         }
         yOffset.incrementY(shift);
         YPositionOnPage result = new YPositionOnPage(yInPage, startPage, endPage);

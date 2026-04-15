@@ -9,6 +9,7 @@ Read these files first:
 - [README.md](./README.md)
 - [docs/architecture.md](./docs/architecture.md)
 - [docs/implementation-guide.md](./docs/implementation-guide.md)
+- [docs/benchmarks.md](./docs/benchmarks.md) when you touch benchmark tooling, render hot paths, layout hot paths, or performance-facing docs
 
 They explain the current public surface, the engine/template split, and the recommended extension points.
 
@@ -18,6 +19,7 @@ They explain the current public surface, the engine/template split, and the reco
 - Run the full test suite with `mvn test`.
 - Run the guard-focused suite with `mvn -Dtest=EnginePdfBoundaryTest,TemplateScenePdfBoundaryTest,LegacyPdfRenderAllowlistTest,PdfRenderingSystemECSDispatchTest,DocumentationExamplesTest,TemplateComposeApiTest test`.
 - Run a focused documentation sanity check with `mvn -Dtest=DocumentationExamplesTest test`.
+- Run the local benchmark wrapper with `powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1` when you change performance-sensitive code or benchmark tooling.
 
 ## Repository map
 
@@ -70,6 +72,14 @@ The current guard rails for these rules live in:
 - [LegacyPdfRenderAllowlistTest.java](./src/test/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/LegacyPdfRenderAllowlistTest.java)
 - [PdfRenderingSystemECSDispatchTest.java](./src/test/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderingSystemECSDispatchTest.java)
 - [DocumentationExamplesTest.java](./src/test/java/com/demcha/documentation/DocumentationExamplesTest.java)
+
+Keep the entity core thin as project policy as well:
+
+- `Entity` should stay an identity-plus-components object with compatibility delegates, not a home for new layout math or pagination mutation rules
+- geometry reads belong in `EntityBounds`
+- parent container size and page-shift propagation belong in `ParentContainerUpdater`
+- existing `Entity.bounding*` and `Entity.updateParentContainer*` methods remain deprecated compatibility wrappers and should not be copied into new code
+- render-order optimizations belong in rendering helpers such as `EntityRenderOrder`, not in `Entity`
 
 ## Adding or changing engine objects
 
@@ -161,6 +171,7 @@ If a change affects resolved geometry, pagination, or ordering, prefer adding or
 - Keep benchmark values clearly dated when they are refreshed.
 - Keep `assets/readme/*` screenshots consistent with the current render outputs.
 - If you add a new extension point or contribution pattern, update [README.md](./README.md), [docs/architecture.md](./docs/architecture.md), and [docs/implementation-guide.md](./docs/implementation-guide.md) as part of the same change.
+- If you change benchmark flow, benchmark artifact layout, or diff selection rules, update [README.md](./README.md) and [docs/benchmarks.md](./docs/benchmarks.md) in the same change.
 - Visual PDF artifacts are grouped under `target/visual-tests/clean/*` and `target/visual-tests/guides/*` so guide-line renders are easy to find separately from clean outputs.
 
 ## Package naming

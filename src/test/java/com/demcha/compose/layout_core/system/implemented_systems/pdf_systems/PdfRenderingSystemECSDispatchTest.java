@@ -3,6 +3,7 @@ package com.demcha.compose.layout_core.system.implemented_systems.pdf_systems;
 import com.demcha.compose.layout_core.components.core.Entity;
 import com.demcha.compose.layout_core.components.layout.coordinator.ComputedPosition;
 import com.demcha.compose.layout_core.components.layout.coordinator.Placement;
+import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.system.rendering.RenderHandler;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -81,14 +82,21 @@ class PdfRenderingSystemECSDispatchTest {
             lowerEntity.addComponent(new Placement(10, 10, 20, 20, 0, 0));
             lowerEntity.addComponent(new ComputedPosition(10, 10));
 
+            Entity shiftedRightEntity = new Entity();
+            shiftedRightEntity.addComponent(new StubRender());
+            shiftedRightEntity.addComponent(new Placement(10, 10, 20, 20, 0, 0));
+            shiftedRightEntity.addComponent(new ComputedPosition(10, 10));
+            shiftedRightEntity.addComponent(Margin.left(5));
+
             Entity upperEntity = new Entity();
             upperEntity.addComponent(new StubRender());
             upperEntity.addComponent(new Placement(10, 50, 20, 20, 0, 0));
             upperEntity.addComponent(new ComputedPosition(10, 50));
 
             manager.putEntity(lowerEntity);
+            manager.putEntity(shiftedRightEntity);
             manager.putEntity(upperEntity);
-            manager.setLayers(Map.of(0, List.of(lowerEntity.getUuid(), upperEntity.getUuid())));
+            manager.setLayers(Map.of(0, List.of(shiftedRightEntity.getUuid(), lowerEntity.getUuid(), upperEntity.getUuid())));
 
             List<java.util.UUID> callOrder = new ArrayList<>();
             List<Integer> surfaceIds = new ArrayList<>();
@@ -112,9 +120,10 @@ class PdfRenderingSystemECSDispatchTest {
 
             renderingSystem.process(manager);
 
-            assertThat(callOrder).containsExactly(upperEntity.getUuid(), lowerEntity.getUuid());
-            assertThat(surfaceIds).hasSize(2);
+            assertThat(callOrder).containsExactly(upperEntity.getUuid(), lowerEntity.getUuid(), shiftedRightEntity.getUuid());
+            assertThat(surfaceIds).hasSize(3);
             assertThat(surfaceIds.get(0)).isEqualTo(surfaceIds.get(1));
+            assertThat(surfaceIds.get(1)).isEqualTo(surfaceIds.get(2));
             assertThat(document.getNumberOfPages()).isEqualTo(1);
         }
     }

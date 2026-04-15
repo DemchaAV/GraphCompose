@@ -1,4 +1,21 @@
 [CmdletBinding()]
+<#
+.SYNOPSIS
+Runs the local GraphCompose benchmark pipeline and stores timestamped logs and reports.
+
+.DESCRIPTION
+The wrapper performs a staged local run:
+01 build classpath, 02 current-speed, 03 comparative, 04 core engine,
+05 full CV, 06 scalability, 07 stress, optional 08 endurance, then
+09/10 diff steps.
+
+Current-speed diffs are profile-aware. The wrapper only compares reports
+from the same current-speed profile (`smoke` or `full`) and skips the
+diff gracefully when no compatible historical pair exists yet.
+
+Use `-Repeat` to generate repeated current-speed/comparative runs and
+median aggregates for more stable local comparisons.
+#>
 param(
     [switch]$IncludeEndurance,
     [switch]$OpenResults,
@@ -62,7 +79,7 @@ function Invoke-LoggedCommand {
         $exitCode = $LASTEXITCODE
     } catch {
         $_ | Out-File -FilePath $logPath -Append
-        Get-Content $logPath
+        Get-Content $logPath | Out-Host
         Add-SummaryLine(("- ``{0}``: FAILED" -f $Name))
         Add-SummaryLine(("  - Log: ``{0}``" -f $logPath))
         throw
@@ -70,7 +87,7 @@ function Invoke-LoggedCommand {
         $ErrorActionPreference = $previousErrorActionPreference
     }
 
-    Get-Content $logPath
+    Get-Content $logPath | Out-Host
 
     if ($exitCode -ne 0) {
         Add-SummaryLine(("- ``{0}``: FAILED" -f $Name))
@@ -140,6 +157,45 @@ function Get-RunPair {
     }
 
     return @($runFiles[$runFiles.Count - 2], $runFiles[$runFiles.Count - 1])
+}
+
+function Get-CurrentSpeedRunProfile {
+    param([string]$RunPath)
+
+    if (-not (Test-Path $RunPath)) {
+        return "full"
+    }
+
+    try {
+        $report = Get-Content -Path $RunPath -Raw | ConvertFrom-Json
+        $profile = [string]$report.profile
+        if (-not [string]::IsNullOrWhiteSpace($profile)) {
+            return $profile
+        }
+    } catch {
+    }
+
+    return "full"
+}
+
+function Get-CurrentSpeedCompatibleRunPair {
+    $runFiles = @(Get-RunFiles -SuiteName "current-speed")
+    if ($runFiles.Count -lt 2) {
+        return $null
+    }
+
+    $latestRun = $runFiles[$runFiles.Count - 1]
+    $latestProfile = Get-CurrentSpeedRunProfile -RunPath $latestRun
+    $matchingRuns = @(
+        $runFiles |
+            Where-Object { (Get-CurrentSpeedRunProfile -RunPath $_) -eq $latestProfile }
+    )
+
+    if ($matchingRuns.Count -lt 2) {
+        return $null
+    }
+
+    return @($matchingRuns[$matchingRuns.Count - 2], $matchingRuns[$matchingRuns.Count - 1])
 }
 
 function Invoke-RepeatedBenchmark {
@@ -310,7 +366,9 @@ try {
         if ($Repeat -gt 1) {
             $currentSpeedDiffPair = Get-RunPair -SuiteName $currentSpeedAggregateSuite
         } else {
-            $currentSpeedDiffPair = Get-RunPair -SuiteName "current-speed"
+            # Current-speed diffs are only valid within the same profile.
+            # Use the newest previous run that matches the latest run's profile.
+            $currentSpeedDiffPair = Get-CurrentSpeedCompatibleRunPair
         }
 
         if ($null -ne $currentSpeedDiffPair) {
@@ -321,7 +379,7 @@ try {
             if ($Repeat -gt 1) {
                 Add-SummaryLine("  - Reason: need at least two current-speed median aggregates")
             } else {
-                Add-SummaryLine("  - Reason: need at least two current-speed runs")
+                Add-SummaryLine("  - Reason: need at least two current-speed runs with the same profile as the latest run")
             }
         }
 

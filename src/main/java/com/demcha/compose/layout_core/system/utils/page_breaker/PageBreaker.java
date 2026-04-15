@@ -64,8 +64,8 @@ public class PageBreaker {
     // === Paging math =========================================================
 
     private static Placement setYInPlacement(Entity entity, double yPosition, int startPage, int endPage) {
-        ComputedPosition computedPosition = entity.getComponent(ComputedPosition.class).orElseThrow();
-        var size = entity.getComponent(ContentSize.class).orElseThrow();
+        ComputedPosition computedPosition = entity.require(ComputedPosition.class);
+        var size = entity.require(ContentSize.class);
         return new Placement(computedPosition.x(), yPosition, size.width(), size.height(), startPage, endPage);
     }
 
@@ -97,7 +97,6 @@ public class PageBreaker {
 
         orderedEntities.forEach(e -> {
             Entity entity = e.getValue();
-            log.info("Work with Element {} ", entity);
 
             if (Breakable.class.isAssignableFrom(entity.getRender().getClass())) {
                 if (entity.hasAssignable(BlockText.class)) {
@@ -107,7 +106,6 @@ public class PageBreaker {
                 }
 
             } else {
-                log.info("{} -> {}", entity, Breakable.class);
                 definePlacement(canvas, entity, yOffset, false);
             }
         });
@@ -175,9 +173,7 @@ public class PageBreaker {
      * the layout result, before the final rendering pass writes output streams.
      */
     private double positionY(Entity entity) {
-        return entity.getComponent(ComputedPosition.class)
-                .orElseThrow(() -> new IllegalStateException("Entity " + entity + " has no ComputedPosition"))
-                .y();
+        return entity.require(ComputedPosition.class).y();
     }
 
     /**
@@ -249,9 +245,8 @@ public class PageBreaker {
      * @param isBreakable A flag indicating whether the element can be broken across pages.
      */
     private void definePlacement(Canvas canvas, Entity entity, Offset yOffset, boolean isBreakable) {
-        var computedPosition = entity.getComponent(ComputedPosition.class).orElseThrow();
-        ContentSize contentSize = entity.getComponent(ContentSize.class)
-                .orElseThrow(() -> new IllegalStateException("Entity " + entity + " has no ContentSize"));
+        var computedPosition = entity.require(ComputedPosition.class);
+        entity.require(ContentSize.class);
         log.debug("Defining position for {}", entity);
         YPositionOnPage position;
         try {
@@ -286,9 +281,9 @@ public class PageBreaker {
      *
      */
     public void process() {
-        log.info("Breaking pages");
+        log.debug("Breaking pages");
         RenderingSystemECS renderingSystemECS = null;
-        log.info("Definition a RenderingSystemECS");
+        log.debug("Definition a RenderingSystemECS");
         for (SystemECS system : entityManager.getSystems().getStream().toList()) {
             if (RenderingSystemECS.class.isAssignableFrom(system.getClass())) {
                 renderingSystemECS = (RenderingSystemECS) system;

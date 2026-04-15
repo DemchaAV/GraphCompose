@@ -21,6 +21,22 @@ That means a new object usually needs the right answer in four areas:
 - whether it participates in parent/child layout
 - how it gets rendered
 
+## Keep `Entity` thin
+
+`Entity` is the ECS core object, not the preferred home for new layout helpers.
+
+Use these ownership rules when adding or refactoring engine code:
+
+- put geometry reads in `EntityBounds`
+- put parent container size propagation and page-shift updates in `ParentContainerUpdater`
+- keep render-order policy in rendering helpers such as `EntityRenderOrder`
+- treat `Entity.bounding*` and `Entity.updateParentContainer*` as deprecated compatibility wrappers
+
+Rule of thumb:
+
+- if the logic needs `Placement`, `ContentSize`, `Margin`, or parent traversal semantics, it probably belongs in a helper or system utility
+- if the logic only needs identity, component access, or canonical child order, it may belong on `Entity`
+
 ## Choose the right base class
 
 ### Extend `EmptyBox<T>` when
@@ -355,6 +371,8 @@ Important files:
 - [LayoutSystem.java](./../src/main/java/com/demcha/compose/layout_core/system/LayoutSystem.java)
 - [ComputedPosition.java](./../src/main/java/com/demcha/compose/layout_core/components/layout/coordinator/ComputedPosition.java)
 - [PageBreaker.java](./../src/main/java/com/demcha/compose/layout_core/system/utils/page_breaker/PageBreaker.java)
+- [EntityBounds.java](./../src/main/java/com/demcha/compose/layout_core/components/geometry/EntityBounds.java)
+- [ParentContainerUpdater.java](./../src/main/java/com/demcha/compose/layout_core/system/utils/page_breaker/ParentContainerUpdater.java)
 
 In practice:
 
@@ -364,6 +382,11 @@ In practice:
 - `ParentComponent` is the authoritative parent relation, while `Entity.children` is the canonical sibling order
 - if those two sources disagree, traversal code should warn loudly and use a deterministic fallback rather than silently hiding the inconsistency
 - during pagination, descendants should be resolved before parent containers so parent size updates caused by child page shifts are reflected before parent placement is finalized
+
+Use the helpers directly when that intent is what you need:
+
+- read bounds and edges through `EntityBounds` instead of adding more bound helpers to `Entity`
+- update parent container size or shifted positions through `ParentContainerUpdater` instead of growing the `Entity` API further
 
 See [pagination-ordering.md](./pagination-ordering.md) for a focused explanation of this rule, including why a `Circle` case can fail while an `Image` case appears to work.
 

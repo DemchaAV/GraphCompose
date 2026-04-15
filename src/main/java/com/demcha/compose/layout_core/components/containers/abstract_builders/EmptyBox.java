@@ -36,7 +36,7 @@ public abstract class EmptyBox<T> extends EntityBuilderBase<T> implements BuildE
         this.entity = new Entity();
         autoName();
         initialize();
-        log.info("Created entity {}", self());
+        log.debug("Created entity {}", self());
     }
 
     T addParrent(ParentComponent parent) {
@@ -48,14 +48,14 @@ public abstract class EmptyBox<T> extends EntityBuilderBase<T> implements BuildE
     }
 
     T addParrent(Entity parent) {
-        log.info("Add parent {}", parent);
+        log.debug("Add parent {}", parent);
         this.entity.addComponent(new ParentComponent(parent.getUuid()));
         parent.getChildren().add(this.entity.getUuid());
         return self();
     }
 
     public T addChild(Entity child) {
-        log.info("Add child {} to parent {}", child, this.entity);
+        log.debug("Add child {} to parent {}", child, this.entity);
         child.addComponent(new ParentComponent(this.entity));
         this.entity.getChildren().add(child.getUuid());
         return self();

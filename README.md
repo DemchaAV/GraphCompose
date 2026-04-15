@@ -28,6 +28,8 @@
   ·
   <a href="./docs/implementation-guide.md">Implementation Guide</a>
   ·
+  <a href="./docs/benchmarks.md">Benchmarks</a>
+  ·
   <a href="./docs/layout-snapshot-testing.md">Layout Snapshot Testing</a>
   ·
   <a href="./CHANGELOG.md">Changelog</a>
@@ -542,6 +544,8 @@ If you are contributing new engine objects, read [CONTRIBUTING.md](./CONTRIBUTIN
 
 The repository ships a benchmark harness for both feature work and regression checking. All benchmark runs use a dedicated quiet logging config (`logback-benchmark.xml`) so the numbers reflect document generation work, not debug I/O.
 
+For the full benchmark pipeline, artifact layout, profile rules, and troubleshooting notes, see [docs/benchmarks.md](./docs/benchmarks.md).
+
 Treat local numbers as relative signals, not absolute promises. For meaningful comparisons:
 
 - compare runs from the same benchmark profile only
@@ -581,7 +585,10 @@ That single command:
 - writes per-benchmark logs under `target/benchmark-runs/<timestamp>/logs/`
 - writes a run summary to `target/benchmark-runs/<timestamp>/SUMMARY.md`
 - refreshes JSON/CSV artifacts in `target/benchmarks/`
+- mirrors each step log back to the console after the step finishes
 - runs benchmark diffs automatically when at least two compatible prior reports exist
+
+For `current-speed`, compatibility means matching the profile of the latest run. A `smoke` run is never diffed against a `full` run.
 
 Useful options:
 

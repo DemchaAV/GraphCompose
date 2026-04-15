@@ -182,6 +182,18 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
 
 
     @Override
+    /**
+     * Runs the full layout pass for the current entity graph.
+     *
+     * <p>
+     * The pass resets traversal metadata, materializes one canonical hierarchy
+     * snapshot, resolves module/container sizing helpers, computes per-entity
+     * positions and depth/layer metadata, and finally delegates to pagination so
+     * entities receive final {@code Placement} components.
+     * </p>
+     *
+     * @param entityManager entity registry for the current document
+     */
     public void process(EntityManager entityManager) {
         log.info("LayoutSystem: processing...");
         textBlockProcessor = new TextBlockProcessor(entityManager);
@@ -331,6 +343,20 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
         visit.put(id, Visit.DONE);
     }
 
+    /**
+     * Applies horizontal alignment offsets to block-text line fragments inside the
+     * entity's own content box.
+     *
+     * <p>
+     * This is a post-measurement adjustment step. It does not remeasure the full
+     * block unless a line payload has no cached width information.
+     * </p>
+     *
+     * @param blockTextBox block-text entity to realign
+     * @param entityManager entity registry used to resolve the text measurement
+     *                      system on demand
+     * @return the same entity instance after line coordinates are updated
+     */
     private Entity alignBlockText(Entity blockTextBox, EntityManager entityManager) {
         Align align = blockTextBox
                 .getComponent(Align.class).orElse(Align.defaultAlign(2));
@@ -375,6 +401,15 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
         return blockTextBox;
     }
 
+    /**
+     * Aligns block-text payloads when the entity actually carries block-text line
+     * data.
+     *
+     * @param entity entity to inspect
+     * @param entityManager entity registry used to resolve layout helpers
+     * @return the aligned entity wrapped in {@link Optional}, or empty when the
+     *         entity is not a block-text payload holder
+     */
     public Optional<Entity> alignRearrangeBlockText(Entity entity, EntityManager entityManager) {
 
         if (entity.has(BlockTextData.class)) {
@@ -416,6 +451,9 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
         return "LayoutSystem";
     }
 
+    /**
+     * DFS visit states used during one layout traversal.
+     */
     public enum Visit {UNSEEN, ACTIVE, DONE;}
 }
 

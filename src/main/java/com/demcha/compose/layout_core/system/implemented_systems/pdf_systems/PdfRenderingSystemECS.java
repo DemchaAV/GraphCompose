@@ -55,6 +55,13 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
     private final PDDocument doc;
     private final PdfImageCache imageCache;
 
+    /**
+     * Creates the PDF renderer, its render stream/session factory, and the
+     * built-in PDF render-handler registry.
+     *
+     * @param doc target PDF document
+     * @param canvas logical page canvas used by the layout/render pipeline
+     */
     public PdfRenderingSystemECS(PDDocument doc, Canvas canvas) {
         super(
                 canvas,
@@ -81,6 +88,19 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
 
 
     @Override
+    /**
+     * Runs one PDF render pass for all entities currently registered in the entity
+     * manager.
+     *
+     * <p>
+     * The renderer opens one {@link PdfRenderSession} for the whole pass, walks
+     * layout layers in depth order, sorts each layer through
+     * {@link EntityRenderOrder}, and dispatches every renderable entity to its
+     * registered PDF handler.
+     * </p>
+     *
+     * @param entityManager entity registry containing laid-out entities
+     */
     public void process(EntityManager entityManager) {
         log.info("Processing PdfRenderingSystemECS");
 
@@ -126,7 +146,9 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
     }
 
     /**
-     * @param guidesRenderer
+     * Installs the backend-specific guides renderer used by the PDF pipeline.
+     *
+     * @param guidesRenderer PDF guides renderer implementation
      */
     @Override
     protected void guidesRendererInitializer(GuidesRenderer<PDPageContentStream> guidesRenderer) {
@@ -134,6 +156,12 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
     }
 
 
+    /**
+     * Returns the PDF media box for a concrete page as a {@link Canvas}.
+     *
+     * @param pageIndex zero-based PDF page index
+     * @return canvas representing the page media box
+     */
     public Canvas pageSize(int pageIndex) {
         float width = doc.getPage(pageIndex).getMediaBox().getWidth();
         float height = doc.getPage(pageIndex).getMediaBox().getHeight();
@@ -147,14 +175,37 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
         return canvas;
     }
 
+    /**
+     * Resolves or creates the cached original-sized PDF image object for the given
+     * image payload.
+     *
+     * @param imageData source image payload
+     * @return cached or newly created PDF image object
+     * @throws IOException when PDFBox image creation fails
+     */
     public PDImageXObject getOrCreateImageXObject(ImageData imageData) throws IOException {
         return imageCache.getOrCreateOriginal(imageData);
     }
 
+    /**
+     * Resolves or creates a cached best-fit PDF image object for the requested
+     * target dimensions.
+     *
+     * @param imageData source image payload
+     * @param targetWidth requested render width
+     * @param targetHeight requested render height
+     * @return cached or newly created PDF image object variant
+     * @throws IOException when PDFBox image creation fails
+     */
     public PDImageXObject getOrCreateImageXObject(ImageData imageData, double targetWidth, double targetHeight) throws IOException {
         return imageCache.getOrCreateBestFit(imageData, targetWidth, targetHeight);
     }
 
+    /**
+     * Returns current image-cache counters for diagnostics and benchmarks.
+     *
+     * @return snapshot of original/scaled image cache counts
+     */
     public ImageCacheStats imageCacheStats() {
         return imageCache.stats();
     }
@@ -172,6 +223,10 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
 
     /**
      * Convenience helper for handlers that render on exactly one resolved page.
+     *
+     * @param entity entity whose placement defines the target page
+     * @return session-owned page surface for that page
+     * @throws IOException when page surface acquisition fails
      */
     public PDPageContentStream pageSurface(Entity entity) throws IOException {
         return renderSession().pageSurface(entity);
@@ -196,6 +251,21 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
         }
     }
 
+    /**
+     * Draws a stroked rectangle on the supplied PDF content stream.
+     *
+     * @param stroke optional stroke settings
+     * @param cs target content stream
+     * @param x rectangle X coordinate
+     * @param y rectangle Y coordinate
+     * @param w rectangle width
+     * @param h rectangle height
+     * @param color stroke color
+     * @param lineDash whether to apply a dashed line pattern
+     * @return {@code true} when a rectangle was drawn, {@code false} for
+     *         non-positive dimensions
+     * @throws IOException when PDF drawing fails
+     */
     public boolean renderRectangle(Stroke stroke,
                                    PDPageContentStream cs,
                                    double x, double y,
@@ -226,6 +296,16 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
     }
 
     @Override
+    /**
+     * Draws a filled circle using Bezier approximation.
+     *
+     * @param cs target content stream
+     * @param cx circle center X
+     * @param cy circle center Y
+     * @param r circle radius
+     * @param fill fill color
+     * @throws IOException when PDF drawing fails
+     */
     public void fillCircle(PDPageContentStream cs, float cx, float cy, float r, Color fill) throws IOException {
         if (r <= 0) return;
 
@@ -253,18 +333,55 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
 
 
     @Override
+    /**
+     * Convenience overload that renders borders from a resolved render coordinate
+     * context.
+     *
+     * @param stream target content stream
+     * @param context resolved drawing context
+     * @param lineDash whether to apply a dashed line pattern
+     * @param sides selected rectangle sides to stroke
+     * @return {@code true} when at least one side was drawn
+     * @throws IOException when PDF drawing fails
+     */
     public boolean renderBorder(PDPageContentStream stream, RenderCoordinateContext context, boolean lineDash, Set<Side> sides) throws IOException {
         return renderBorder(stream, context.x(), context.y(), context.width(), context.height(), context.stroke(), context.color(), lineDash, sides);
     }
 
     @Override
+    /**
+     * Convenience overload that renders a stroked rectangle from a resolved render
+     * coordinate context.
+     *
+     * @param stream target content stream
+     * @param context resolved drawing context
+     * @param lineDash whether to apply a dashed line pattern
+     * @return {@code true} when a rectangle was drawn
+     * @throws IOException when PDF drawing fails
+     */
     public boolean renderRectangle(PDPageContentStream stream, RenderCoordinateContext context, boolean lineDash) throws IOException {
         return renderRectangle(context.stroke(), stream, context.x(), context.y(), context.width(), context.height(), context.color(), lineDash);
     }
 
+    /**
+     * Draws only the selected border sides of a rectangle.
+     *
+     * @param stream target content stream
+     * @param x rectangle X coordinate
+     * @param y rectangle Y coordinate
+     * @param w rectangle width
+     * @param h rectangle height
+     * @param stroke optional stroke settings
+     * @param color stroke color
+     * @param lineDash whether to apply a dashed line pattern
+     * @param sides selected sides to stroke
+     * @return {@code true} when at least one side was drawn, {@code false} for
+     *         invalid geometry or empty side sets
+     * @throws IOException when PDF drawing fails
+     */
     public boolean renderBorder(PDPageContentStream stream, double x, double y, double w, double h, Stroke stroke,
-                                Color color, boolean lineDash,
-                                Set<Side> sides) throws IOException { // Changed argument
+                                 Color color, boolean lineDash,
+                                 Set<Side> sides) throws IOException { // Changed argument
 
         // 1. Validation
         if (w <= 0 || h <= 0 || sides == null || sides.isEmpty()) return false;
@@ -326,6 +443,9 @@ public class PdfRenderingSystemECS extends RenderingSystemBase<PDPageContentStre
     }
 
 
+    /**
+     * Lightweight cache statistics returned for diagnostics and benchmark output.
+     */
     public record ImageCacheStats(int originalCount, int scaledVariantCount) {
     }
 }

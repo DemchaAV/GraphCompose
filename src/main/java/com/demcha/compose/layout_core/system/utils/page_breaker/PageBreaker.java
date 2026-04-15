@@ -54,6 +54,12 @@ public class PageBreaker {
     private PageLayoutCalculator pageLayoutCalculator;
     private TextBlockProcessor textBlockProcessor;
 
+    /**
+     * Creates a page breaker bound to one entity manager and its pagination
+     * helpers.
+     *
+     * @param entityManager entity registry for the current document
+     */
     public PageBreaker(EntityManager entityManager) {
         this.entityManager = entityManager;
         this.pageLayoutCalculator = new PageLayoutCalculator(entityManager);
@@ -63,12 +69,30 @@ public class PageBreaker {
 
     // === Paging math =========================================================
 
+    /**
+     * Builds a {@link Placement} for the entity using a replacement Y coordinate
+     * and explicit page span.
+     *
+     * @param entity entity being placed
+     * @param yPosition resolved Y coordinate inside the target page flow
+     * @param startPage first page touched by the entity
+     * @param endPage last page touched by the entity
+     * @return placement preserving the entity's resolved X position and size
+     */
     private static Placement setYInPlacement(Entity entity, double yPosition, int startPage, int endPage) {
         ComputedPosition computedPosition = entity.require(ComputedPosition.class);
         var size = entity.require(ContentSize.class);
         return new Placement(computedPosition.x(), yPosition, size.width(), size.height(), startPage, endPage);
     }
 
+    /**
+     * Convenience overload that converts a precomputed page-position result into a
+     * {@link Placement}.
+     *
+     * @param entity entity being placed
+     * @param position resolved position/page-span tuple
+     * @return placement preserving the entity's resolved X position and size
+     */
     private static Placement setYInPlacement(Entity entity, YPositionOnPage position) {
         return setYInPlacement(entity, position.yPosition(), position.startPage(), position.endPage());
     }
@@ -84,6 +108,19 @@ public class PageBreaker {
         process(entities, canvas, traversalContext, entityManager.getDepthById());
     }
 
+    /**
+     * Runs page-breaking with a caller-supplied traversal snapshot and depth map.
+     *
+     * <p>
+     * This overload is used when layout has already materialized the canonical tree
+     * snapshot for the pass and pagination should reuse that exact hierarchy view.
+     * </p>
+     *
+     * @param entities entity map for the current document
+     * @param canvas page canvas configuration
+     * @param traversalContext canonical parent/child snapshot for this pass
+     * @param depthById depth map from layout traversal
+     */
     public void process(@NonNull Map<UUID, Entity> entities,
                         Canvas canvas,
                         @NonNull LayoutTraversalContext traversalContext,
@@ -260,6 +297,14 @@ public class PageBreaker {
         entity.addComponent(placement);
     }
 
+    /**
+     * Handles pagination for block-text entities, including line-level splitting
+     * before the container-level {@link Placement} is written.
+     *
+     * @param canvas page canvas configuration
+     * @param entity block-text entity
+     * @param yOffset running pagination offset
+     */
     private void definePlacementForBlockText(Canvas canvas, Entity entity, Offset yOffset) {
         try {
             //definition a blockText

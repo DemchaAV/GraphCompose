@@ -9,6 +9,7 @@ import com.demcha.compose.document.model.node.DocumentNode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -19,6 +20,8 @@ public record TableNode(
         List<TableColumnSpec> columns,
         List<List<TableCellSpec>> rows,
         TableCellStyle defaultCellStyle,
+        Map<Integer, TableCellStyle> rowStyles,
+        Map<Integer, TableCellStyle> columnStyles,
         Double width,
         Padding padding,
         Margin margin
@@ -30,6 +33,8 @@ public record TableNode(
         columns = List.copyOf(columns);
         rows = normalizeRows(rows);
         defaultCellStyle = defaultCellStyle == null ? TableCellStyle.DEFAULT : defaultCellStyle;
+        rowStyles = normalizeStyleMap(rowStyles, "row");
+        columnStyles = normalizeStyleMap(columnStyles, "column");
         padding = padding == null ? Padding.zero() : padding;
         margin = margin == null ? Margin.zero() : margin;
         if (width != null && (width <= 0 || Double.isNaN(width) || Double.isInfinite(width))) {
@@ -44,6 +49,21 @@ public record TableNode(
             normalized.add(List.copyOf(row));
         }
         return List.copyOf(normalized);
+    }
+
+    private static Map<Integer, TableCellStyle> normalizeStyleMap(Map<Integer, TableCellStyle> styles, String label) {
+        if (styles == null || styles.isEmpty()) {
+            return Map.of();
+        }
+
+        for (Map.Entry<Integer, TableCellStyle> entry : styles.entrySet()) {
+            Objects.requireNonNull(entry.getKey(), label + " index");
+            if (entry.getKey() < 0) {
+                throw new IllegalArgumentException(label + " style index cannot be negative: " + entry.getKey());
+            }
+            Objects.requireNonNull(entry.getValue(), label + " style");
+        }
+        return Map.copyOf(styles);
     }
 }
 

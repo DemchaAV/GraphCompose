@@ -24,6 +24,8 @@ import java.awt.Color;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -574,6 +576,8 @@ public final class DocumentDsl {
         private String name = "";
         private final List<TableColumnSpec> columns = new ArrayList<>();
         private final List<List<TableCellSpec>> rows = new ArrayList<>();
+        private final Map<Integer, TableCellStyle> rowStyles = new LinkedHashMap<>();
+        private final Map<Integer, TableCellStyle> columnStyles = new LinkedHashMap<>();
         private TableCellStyle defaultCellStyle = TableCellStyle.DEFAULT;
         private Double width;
         private Padding padding = Padding.zero();
@@ -625,6 +629,22 @@ public final class DocumentDsl {
             return this;
         }
 
+        public TableBuilder rowStyle(int rowIndex, TableCellStyle style) {
+            if (rowIndex < 0) {
+                throw new IllegalArgumentException("rowIndex cannot be negative: " + rowIndex);
+            }
+            rowStyles.put(rowIndex, Objects.requireNonNull(style, "style"));
+            return this;
+        }
+
+        public TableBuilder columnStyle(int columnIndex, TableCellStyle style) {
+            if (columnIndex < 0) {
+                throw new IllegalArgumentException("columnIndex cannot be negative: " + columnIndex);
+            }
+            columnStyles.put(columnIndex, Objects.requireNonNull(style, "style"));
+            return this;
+        }
+
         public TableBuilder width(double width) {
             this.width = width;
             return this;
@@ -641,7 +661,16 @@ public final class DocumentDsl {
         }
 
         public TableNode build() {
-            return new TableNode(name, List.copyOf(columns), List.copyOf(rows), defaultCellStyle, width, padding, margin);
+            return new TableNode(
+                    name,
+                    List.copyOf(columns),
+                    List.copyOf(rows),
+                    defaultCellStyle,
+                    Map.copyOf(rowStyles),
+                    Map.copyOf(columnStyles),
+                    width,
+                    padding,
+                    margin);
         }
     }
 

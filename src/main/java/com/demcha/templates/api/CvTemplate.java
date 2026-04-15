@@ -13,7 +13,12 @@ import java.nio.file.Path;
  * {@link DocumentComposer}. The deprecated {@code render(...)} overloads remain
  * as convenience adapters for callers that still want PDFBox output directly.
  * </p>
+ *
+ * @deprecated Use {@link com.demcha.compose.document.templates.api.CvTemplate}
+ *             with {@link com.demcha.compose.document.api.DocumentSession}
+ *             instead.
  */
+@Deprecated(forRemoval = false)
 public interface CvTemplate {
 
     /**

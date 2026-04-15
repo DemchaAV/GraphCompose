@@ -16,7 +16,11 @@ import java.awt.Color;
  * decisions separate from layout structure so templates can stay readable and
  * easy to swap between themes.
  * </p>
+ *
+ * @deprecated Use {@link com.demcha.compose.document.templates.theme.CvTheme}
+ *             instead.
  */
+@Deprecated(forRemoval = false)
 public record CvTheme(
         Color primaryColor,      // e.g. name colour
         Color secondaryColor,    // e.g. module titles

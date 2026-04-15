@@ -13,7 +13,11 @@ import java.nio.file.Path;
  * {@link DocumentComposer}. The deprecated {@code render(...)} overloads remain
  * as PDF convenience adapters.
  * </p>
+ *
+ * @deprecated Use {@link com.demcha.compose.document.templates.api.WeeklyScheduleTemplate}
+ *             instead.
  */
+@Deprecated(forRemoval = false)
 public interface WeeklyScheduleTemplate {
 
     String getTemplateId();

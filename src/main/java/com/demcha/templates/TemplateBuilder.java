@@ -37,8 +37,12 @@ import java.util.Objects;
  *
  * <p>The template layer still produces normal engine entities. Layout and
  * rendering are therefore handled by the same pipeline as manually built content.</p>
+ *
+ * @deprecated Prefer the canonical {@code GraphCompose.document(...)} DSL and
+ *             the types under {@code com.demcha.compose.document.templates.*}.
  */
 @Accessors(fluent = true)
+@Deprecated(forRemoval = false)
 public class TemplateBuilder {
     private static final double DEFAULT_BLOCK_TEXT_WIDTH = 500;
     private static final double INFO_PANEL_SEPARATOR_WIDTH = 1;

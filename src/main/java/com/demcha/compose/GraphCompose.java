@@ -7,6 +7,7 @@ import com.demcha.compose.font_library.DefaultFonts;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.core.DocumentComposer;
 import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.v2.DocumentSession;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
@@ -122,6 +123,21 @@ public final class GraphCompose {
      */
     public static PdfBuilder pdf() {
         return new PdfBuilder(null);
+    }
+
+    /**
+     * Starts a semantic-first v2 composition flow.
+     */
+    public static DocumentBuilder document() {
+        return new DocumentBuilder(null);
+    }
+
+    /**
+     * Starts a semantic-first v2 composition flow with a default output target
+     * used by {@link DocumentSession#buildPdf()}.
+     */
+    public static DocumentBuilder document(Path outputFile) {
+        return new DocumentBuilder(outputFile);
     }
 
     /**
@@ -324,6 +340,75 @@ public final class GraphCompose {
          */
         public PdfComposer create() {
             return new PdfComposer(outputFile, markdown, guideLines, pageSize, margin, List.copyOf(customFontFamilies));
+        }
+    }
+
+    /**
+     * Fluent configuration builder for the v2 semantic document session.
+     */
+    public static final class DocumentBuilder {
+        private final Path outputFile;
+        private PDRectangle pageSize = PDRectangle.A4;
+        private Margin margin = Margin.zero();
+        private final List<FontFamilyDefinition> customFontFamilies = new ArrayList<>();
+
+        private DocumentBuilder(Path outputFile) {
+            this.outputFile = outputFile;
+        }
+
+        public DocumentBuilder pageSize(PDRectangle pageSize) {
+            this.pageSize = Objects.requireNonNull(pageSize, "pageSize");
+            return this;
+        }
+
+        public DocumentBuilder margin(Margin margin) {
+            this.margin = margin == null ? Margin.zero() : margin;
+            return this;
+        }
+
+        public DocumentBuilder margin(float top, float right, float bottom, float left) {
+            this.margin = new Margin(top, right, bottom, left);
+            return this;
+        }
+
+        public DocumentBuilder registerFontFamily(FontFamilyDefinition definition) {
+            this.customFontFamilies.add(Objects.requireNonNull(definition, "definition"));
+            return this;
+        }
+
+        public DocumentBuilder registerFontFamily(FontName familyName, Path regular) {
+            return registerFontFamily(FontFamilyDefinition.files(familyName, regular).build());
+        }
+
+        public DocumentBuilder registerFontFamily(String familyName, Path regular) {
+            return registerFontFamily(FontName.of(familyName), regular);
+        }
+
+        public DocumentBuilder registerFontFamily(FontName familyName, Path regular, Path bold, Path italic) {
+            return registerFontFamily(FontFamilyDefinition.files(familyName, regular)
+                    .boldPath(bold)
+                    .italicPath(italic)
+                    .build());
+        }
+
+        public DocumentBuilder registerFontFamily(String familyName, Path regular, Path bold, Path italic) {
+            return registerFontFamily(FontName.of(familyName), regular, bold, italic);
+        }
+
+        public DocumentBuilder registerFontFamily(FontName familyName, Path regular, Path bold, Path italic, Path boldItalic) {
+            return registerFontFamily(FontFamilyDefinition.files(familyName, regular)
+                    .boldPath(bold)
+                    .italicPath(italic)
+                    .boldItalicPath(boldItalic)
+                    .build());
+        }
+
+        public DocumentBuilder registerFontFamily(String familyName, Path regular, Path bold, Path italic, Path boldItalic) {
+            return registerFontFamily(FontName.of(familyName), regular, bold, italic, boldItalic);
+        }
+
+        public DocumentSession create() {
+            return new DocumentSession(outputFile, pageSize, margin, List.copyOf(customFontFamilies));
         }
     }
 }

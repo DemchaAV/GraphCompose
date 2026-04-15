@@ -57,6 +57,7 @@ public class EntityManager {
     private final FontLibrary fonts;
     private Map<Integer, List<UUID>> layers;
     private Map<UUID, Integer> depthById;
+    private long mutationVersion;
     private boolean guideLines;
     private boolean markdown = false;
 
@@ -118,9 +119,15 @@ public class EntityManager {
 
     public void setGuideLines(boolean guideLines) {
         this.guideLines = guideLines;
+        touchMutation();
         entities.forEach((id, entity) -> {
             entity.setGuideLines(guideLines);
         });
+    }
+
+    public void setMarkdown(boolean markdown) {
+        this.markdown = markdown;
+        touchMutation();
     }
 
     public Entity putEntity(Entity entity) {
@@ -135,10 +142,12 @@ public class EntityManager {
                 return existing.orElse(null);
             } else {
                 log.warn("Entity conflict detected for id {}. Replacing old entity.", uuid);
+                touchMutation();
                 return entities.put(uuid, entity);
             }
         }
         entity.setGuideLines(guideLines);
+        touchMutation();
         return entities.put(uuid, entity);
     }
 
@@ -197,11 +206,19 @@ public class EntityManager {
     }
 
     public boolean remove(UUID entityId) {
-        return entities.remove(entityId) != null;
+        boolean removed = entities.remove(entityId) != null;
+        if (removed) {
+            touchMutation();
+        }
+        return removed;
     }
 
     public boolean remove(Entity entity) {
-        return entities.remove(entity.getUuid()) != null;
+        boolean removed = entities.remove(entity.getUuid()) != null;
+        if (removed) {
+            touchMutation();
+        }
+        return removed;
     }
 
     public Set<UUID> getEntitiesWithRender(Class<? extends Render> componentType) {
@@ -271,6 +288,10 @@ public class EntityManager {
             java.lang.System.out.println(entity.toString());
             entity.view().forEach((k, v) -> java.lang.System.out.printf("UUID[%s] : %s \n", uuid, entity.printInfo()));
         });
+    }
+
+    private void touchMutation() {
+        mutationVersion++;
     }
 
 }

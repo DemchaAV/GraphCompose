@@ -100,6 +100,11 @@ public final class PdfComposer extends AbstractDocumentComposer {
     private boolean postProcessed = false;
     private boolean layoutResolved = false;
     private boolean rendered = false;
+    private long layoutConfigVersion = 0;
+    private long postProcessConfigVersion = 0;
+    private long resolvedLayoutVersion = -1;
+    private long renderedVersion = -1;
+    private long postProcessedVersion = -1;
 
     /**
      * Internal constructor used by {@link GraphCompose.PdfBuilder}.
@@ -159,6 +164,7 @@ public final class PdfComposer extends AbstractDocumentComposer {
      */
     public void margin(Margin margin) {
         canvas().addMargin(margin);
+        markLayoutDirty();
     }
 
     public List<com.demcha.compose.font_library.FontName> availableFonts() {
@@ -188,6 +194,7 @@ public final class PdfComposer extends AbstractDocumentComposer {
                 .separatorColor(config.getSeparatorColor())
                 .separatorThickness(config.getSeparatorThickness())
                 .build());
+        markPostProcessDirty();
         return this;
     }
 
@@ -202,6 +209,7 @@ public final class PdfComposer extends AbstractDocumentComposer {
                 .rightText(rightText)
                 .showSeparator(true)
                 .build());
+        markPostProcessDirty();
         return this;
     }
 
@@ -226,6 +234,7 @@ public final class PdfComposer extends AbstractDocumentComposer {
                 .separatorColor(config.getSeparatorColor())
                 .separatorThickness(config.getSeparatorThickness())
                 .build());
+        markPostProcessDirty();
         return this;
     }
 
@@ -240,6 +249,7 @@ public final class PdfComposer extends AbstractDocumentComposer {
                 .rightText(rightText)
                 .showSeparator(true)
                 .build());
+        markPostProcessDirty();
         return this;
     }
 
@@ -251,6 +261,7 @@ public final class PdfComposer extends AbstractDocumentComposer {
      */
     public PdfComposer watermark(WatermarkConfig config) {
         this.watermarkConfig = config;
+        markPostProcessDirty();
         return this;
     }
 
@@ -259,6 +270,7 @@ public final class PdfComposer extends AbstractDocumentComposer {
      */
     public PdfComposer watermark(String text) {
         this.watermarkConfig = WatermarkConfig.builder().text(text).build();
+        markPostProcessDirty();
         return this;
     }
 
@@ -270,6 +282,7 @@ public final class PdfComposer extends AbstractDocumentComposer {
      */
     public PdfComposer metadata(DocumentMetadata metadata) {
         this.documentMetadata = metadata;
+        markPostProcessDirty();
         return this;
     }
 
@@ -281,6 +294,7 @@ public final class PdfComposer extends AbstractDocumentComposer {
      */
     public PdfComposer protect(PdfProtectionConfig config) {
         this.protectionConfig = config;
+        markPostProcessDirty();
         return this;
     }
 
@@ -351,22 +365,35 @@ public final class PdfComposer extends AbstractDocumentComposer {
     }
 
     private void ensureLayoutResolved() throws Exception {
-        if (layoutResolved) {
+        long currentVersion = currentLayoutInputsVersion();
+        if (layoutResolved && currentVersion == resolvedLayoutVersion) {
             return;
         }
+        if (rendered) {
+            throw new IllegalStateException("PdfComposer was mutated after rendering. Create a new composer for a second render pass.");
+        }
+        layoutResolved = false;
+        rendered = false;
+        postProcessed = false;
         layoutSystem.process(entityManager());
         layoutResolved = true;
+        resolvedLayoutVersion = currentLayoutInputsVersion();
     }
 
     private void ensureRendered() throws Exception {
         ensureLayoutResolved();
-        if (rendered) {
+        long currentVersion = currentRenderInputsVersion();
+        if (rendered && currentVersion == renderedVersion) {
             return;
+        }
+        if (postProcessed) {
+            throw new IllegalStateException("PdfComposer was mutated after post-processing. Create a new composer for a second export.");
         }
         if (renderingSystem != null) {
             renderingSystem.process(entityManager());
         }
         rendered = true;
+        renderedVersion = currentRenderInputsVersion();
     }
 
     /**
@@ -375,8 +402,13 @@ public final class PdfComposer extends AbstractDocumentComposer {
      * metadata, and protection.
      */
     private void applyPostProcessing() throws IOException {
-        if (postProcessed) return;
+        long currentVersion = currentPostProcessInputsVersion();
+        if (postProcessed && currentVersion == postProcessedVersion) return;
+        if (postProcessed) {
+            throw new IllegalStateException("PdfComposer post-processing has already been applied for a previous state. Create a new composer to render again.");
+        }
         postProcessed = true;
+        postProcessedVersion = currentVersion;
         // 1. Watermark (behind content is applied via prepend at rendering time)
         if (watermarkConfig != null) {
             PdfWatermarkRenderer.apply(doc, watermarkConfig);
@@ -426,6 +458,30 @@ public final class PdfComposer extends AbstractDocumentComposer {
                 ap);
         policy.setEncryptionKeyLength(protectionConfig.getKeyLength());
         doc.protect(policy);
+    }
+
+    private long currentLayoutInputsVersion() {
+        return entityManager().getMutationVersion() * 31L + layoutConfigVersion;
+    }
+
+    private long currentRenderInputsVersion() {
+        return currentLayoutInputsVersion();
+    }
+
+    private long currentPostProcessInputsVersion() {
+        return currentRenderInputsVersion() * 31L + postProcessConfigVersion;
+    }
+
+    private void markLayoutDirty() {
+        layoutConfigVersion++;
+        layoutResolved = false;
+        rendered = false;
+        postProcessed = false;
+    }
+
+    private void markPostProcessDirty() {
+        postProcessConfigVersion++;
+        postProcessed = false;
     }
 
     @Override

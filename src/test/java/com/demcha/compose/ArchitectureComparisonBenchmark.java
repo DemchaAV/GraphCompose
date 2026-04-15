@@ -16,12 +16,12 @@ import com.demcha.compose.layout_core.core.AbstractDocumentComposer;
 import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.compose.layout_core.debug.LayoutSnapshot;
-import com.demcha.compose.v2.DocumentSession;
-import com.demcha.compose.v2.nodes.ContainerNode;
-import com.demcha.compose.v2.nodes.ParagraphNode;
-import com.demcha.compose.v2.nodes.ShapeNode;
-import com.demcha.compose.v2.nodes.TableNode;
-import com.demcha.compose.v2.nodes.TextAlign;
+import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.model.node.ContainerNode;
+import com.demcha.compose.document.model.node.ParagraphNode;
+import com.demcha.compose.document.model.node.ShapeNode;
+import com.demcha.compose.document.model.node.TableNode;
+import com.demcha.compose.document.model.node.TextAlign;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.awt.Color;
@@ -1188,3 +1188,4 @@ public final class ArchitectureComparisonBenchmark {
         return sortedDurationsNs[index] / 1_000_000.0;
     }
 }
+

@@ -26,15 +26,10 @@ import com.demcha.compose.layout_core.core.EntityManager;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.compose.layout_core.debug.LayoutNodeSnapshot;
 import com.demcha.compose.layout_core.debug.LayoutSnapshot;
-import com.demcha.compose.v2.BuiltInNodeDefinitions;
-import com.demcha.compose.v2.DocumentSession;
-import com.demcha.compose.v2.LayoutGraph;
-import com.demcha.compose.v2.PlacedFragment;
-import com.demcha.compose.v2.nodes.ContainerNode;
-import com.demcha.compose.v2.nodes.ParagraphNode;
-import com.demcha.compose.v2.nodes.ShapeNode;
-import com.demcha.compose.v2.nodes.TableNode;
-import com.demcha.compose.v2.nodes.TextAlign;
+import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
+import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.layout.LayoutGraph;
+import com.demcha.compose.document.layout.PlacedFragment;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -60,9 +55,11 @@ class ArchitectureComparisonParityTest {
     private static final PDRectangle SIMPLE_PAGE_SIZE = new PDRectangle(320, 260);
     private static final PDRectangle FLOW_PAGE_SIZE = new PDRectangle(220, 180);
     private static final PDRectangle TABLE_PAGE_SIZE = new PDRectangle(240, 220);
+    private static final PDRectangle PAGE_BREAK_PAGE_SIZE = new PDRectangle(220, 180);
     private static final Margin SIMPLE_MARGIN = Margin.of(18);
     private static final Margin FLOW_MARGIN = Margin.of(12);
     private static final Margin TABLE_MARGIN = Margin.of(12);
+    private static final Margin PAGE_BREAK_MARGIN = Margin.of(12);
     private static final double GEOMETRY_TOLERANCE = 0.05;
     private static final String LONG_PARAGRAPH = ("GraphCompose keeps pagination in the engine so element extensions only " +
             "need to explain measurement, legal split points, and rendering. ").repeat(55);
@@ -152,6 +149,17 @@ class ArchitectureComparisonParityTest {
         }
     }
 
+    @Test
+    void explicitPageBreakShouldForceNewPageInV2() throws Exception {
+        SnapshotRender v2 = renderV2PageBreak();
+
+        assertPageCountsMatch(v2.snapshot(), v2.pdfBytes());
+        assertThat(v2.snapshot().totalPages()).isEqualTo(2);
+        assertThat(normalizedPdfText(v2.pdfBytes())).contains("Before the break", "After the break");
+        assertThat(nodeByName(v2.snapshot(), "BeforeBreak").startPage()).isZero();
+        assertThat(nodeByName(v2.snapshot(), "AfterBreak").startPage()).isEqualTo(1);
+    }
+
     private SnapshotRender renderLegacySimple() throws Exception {
         try (PdfComposer composer = GraphCompose.pdf()
                 .pageSize(SIMPLE_PAGE_SIZE)
@@ -231,6 +239,18 @@ class ArchitectureComparisonParityTest {
         }
     }
 
+    private SnapshotRender renderV2PageBreak() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(PAGE_BREAK_PAGE_SIZE)
+                .margin(PAGE_BREAK_MARGIN)
+                .create()) {
+            composeV2PageBreakDocument(session);
+            LayoutSnapshot snapshot = session.layoutSnapshot();
+            byte[] pdfBytes = session.toPdfBytes();
+            return new SnapshotRender(snapshot, pdfBytes);
+        }
+    }
+
     private void composeLegacySimpleDocument(PdfComposer composer) {
         ComponentBuilder cb = composer.componentBuilder();
         double width = composer.canvas().innerWidth();
@@ -267,38 +287,26 @@ class ArchitectureComparisonParityTest {
 
     private void composeV2SimpleDocument(DocumentSession session) {
         double width = session.canvas().innerWidth();
-        session.add(new ContainerNode(
-                "SimpleRoot",
-                List.of(
-                        new ParagraphNode(
-                                "SimpleTitle",
-                                "GraphCompose Speed Check",
-                                TITLE_STYLE,
-                                TextAlign.LEFT,
-                                0.0,
-                                Padding.zero(),
-                                Margin.zero()),
-                        new ParagraphNode(
-                                "SimpleBody",
-                                "This scenario compares the smallest realistic document flow: heading text, a wrapped paragraph, and a divider.",
-                                BODY_STYLE,
-                                TextAlign.LEFT,
-                                2.0,
-                                Padding.of(4),
-                                Margin.zero()),
-                        new ShapeNode(
-                                "SimpleDivider",
-                                width,
-                                1,
-                                ComponentColor.LIGHT_GRAY,
-                                null,
-                                Padding.zero(),
-                                Margin.zero())),
-                8,
-                Padding.zero(),
-                Margin.zero(),
-                null,
-                null));
+        session.dsl()
+                .pageFlow()
+                .name("SimpleRoot")
+                .spacing(8)
+                .addParagraph(paragraph -> paragraph
+                        .name("SimpleTitle")
+                        .text("GraphCompose Speed Check")
+                        .textStyle(TITLE_STYLE))
+                .addParagraph(paragraph -> paragraph
+                        .name("SimpleBody")
+                        .text("This scenario compares the smallest realistic document flow: heading text, a wrapped paragraph, and a divider.")
+                        .textStyle(BODY_STYLE)
+                        .lineSpacing(2)
+                        .padding(Padding.of(4)))
+                .addDivider(divider -> divider
+                        .name("SimpleDivider")
+                        .width(width)
+                        .thickness(1)
+                        .color(ComponentColor.LIGHT_GRAY))
+                .build();
     }
 
     private void composeLegacyParagraphDocument(PdfComposer composer) {
@@ -315,14 +323,16 @@ class ArchitectureComparisonParityTest {
     }
 
     private void composeV2ParagraphDocument(DocumentSession session) {
-        session.add(new ParagraphNode(
-                "LongParagraph",
-                LONG_PARAGRAPH,
-                BODY_STYLE,
-                TextAlign.LEFT,
-                2.0,
-                Padding.of(4),
-                Margin.zero()));
+        session.dsl()
+                .pageFlow()
+                .name("LongParagraphRoot")
+                .addParagraph(paragraph -> paragraph
+                        .name("LongParagraph")
+                        .text(LONG_PARAGRAPH)
+                        .textStyle(BODY_STYLE)
+                        .lineSpacing(2)
+                        .padding(Padding.of(4)))
+                .build();
     }
 
     private void composeLegacyTableDocument(PdfComposer composer) {
@@ -347,14 +357,37 @@ class ArchitectureComparisonParityTest {
     }
 
     private void composeV2TableDocument(DocumentSession session) {
-        session.add(new TableNode(
-                "BenchmarkTable",
-                List.of(TableColumnSpec.fixed(52), TableColumnSpec.auto()),
-                tableRows(),
-                TABLE_STYLE,
-                session.canvas().innerWidth(),
-                Padding.zero(),
-                Margin.zero()));
+        var table = session.dsl().table()
+                .name("BenchmarkTable")
+                .columns(TableColumnSpec.fixed(52), TableColumnSpec.auto())
+                .width(session.canvas().innerWidth())
+                .defaultCellStyle(TABLE_STYLE);
+        for (List<TableCellSpec> row : tableRows()) {
+            table.row(row);
+        }
+
+        session.dsl()
+                .pageFlow()
+                .name("BenchmarkTableRoot")
+                .add(table.build())
+                .build();
+    }
+
+    private void composeV2PageBreakDocument(DocumentSession session) {
+        session.dsl()
+                .pageFlow()
+                .name("PageBreakRoot")
+                .spacing(8)
+                .addParagraph(paragraph -> paragraph
+                        .name("BeforeBreak")
+                        .text("Before the break")
+                        .textStyle(TITLE_STYLE))
+                .addPageBreak(pageBreak -> pageBreak.name("ManualBreak"))
+                .addParagraph(paragraph -> paragraph
+                        .name("AfterBreak")
+                        .text("After the break")
+                        .textStyle(TITLE_STYLE))
+                .build();
     }
 
     private List<ParagraphWrappedLine> legacyParagraphLines(PdfComposer composer, String entityName) throws Exception {
@@ -566,3 +599,4 @@ class ArchitectureComparisonParityTest {
         }
     }
 }
+

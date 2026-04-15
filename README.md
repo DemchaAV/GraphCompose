@@ -178,37 +178,32 @@ JitPack consumers can keep using older tagged releases by pinning the tag they w
 
 ```java
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.layout_core.components.components_builders.ComponentBuilder;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
-import com.demcha.compose.layout_core.components.layout.Align;
-import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.document.api.DocumentSession;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
 
 public class QuickStart {
     public static void main(String[] args) throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf(Path.of("output.pdf"))
+        try (DocumentSession document = GraphCompose.document(Path.of("output.pdf"))
                 .pageSize(PDRectangle.A4)
                 .margin(24, 24, 24, 24)
-                .markdown(true)
                 .create()) {
 
-            ComponentBuilder cb = composer.componentBuilder();
-
-            cb.vContainer(Align.middle(8))
-                    .anchor(Anchor.topLeft())
+            document.dsl()
+                    .pageFlow()
+                    .name("QuickStart")
+                    .spacing(8)
                     .margin(Margin.of(8))
-                    .addChild(cb.text()
-                            .textWithAutoSize("Hello GraphCompose")
-                            .textStyle(TextStyle.DEFAULT_STYLE)
-                            .anchor(Anchor.topLeft())
-                            .build())
+                    .addParagraph(paragraph -> paragraph
+                            .name("Greeting")
+                            .text("Hello GraphCompose")
+                            .textStyle(TextStyle.DEFAULT_STYLE))
                     .build();
 
-            composer.build();
+            document.buildPdf();
         }
     }
 }
@@ -217,24 +212,23 @@ public class QuickStart {
 ### In-memory output (for HTTP responses, S3 uploads, etc.)
 
 ```java
-try (PdfComposer composer = GraphCompose.pdf()
+try (DocumentSession document = GraphCompose.document()
         .pageSize(PDRectangle.A4)
         .margin(24, 24, 24, 24)
         .create()) {
 
-    ComponentBuilder cb = composer.componentBuilder();
-
-    cb.vContainer(Align.middle(8))
-            .anchor(Anchor.topLeft())
+    document.dsl()
+            .pageFlow()
+            .name("QuickStartBytes")
+            .spacing(8)
             .margin(Margin.of(8))
-            .addChild(cb.text()
-                    .textWithAutoSize("In-memory PDF")
-                    .textStyle(TextStyle.DEFAULT_STYLE)
-                    .anchor(Anchor.topLeft())
-                    .build())
+            .addParagraph(paragraph -> paragraph
+                    .name("InMemoryGreeting")
+                    .text("In-memory PDF")
+                    .textStyle(TextStyle.DEFAULT_STYLE))
             .build();
 
-    byte[] pdfBytes = composer.toBytes();
+    byte[] pdfBytes = document.toPdfBytes();
 }
 ```
 

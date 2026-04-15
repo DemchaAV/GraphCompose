@@ -1,6 +1,7 @@
 package com.demcha.documentation;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.font_library.FontName;
 import com.demcha.compose.layout_core.components.components_builders.ComponentBuilder;
 import com.demcha.compose.layout_core.components.content.shape.Stroke;
@@ -14,8 +15,6 @@ import com.demcha.compose.layout_core.core.DocumentComposer;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.mock.InvoiceDataFixtures;
 import com.demcha.testing.VisualTestOutputs;
-import com.demcha.templates.CvTheme;
-import com.demcha.templates.TemplateBuilder;
 import com.demcha.templates.api.InvoiceTemplate;
 import com.demcha.templates.builtins.InvoiceTemplateV1;
 import org.apache.pdfbox.Loader;
@@ -39,25 +38,22 @@ class DocumentationExamplesTest {
     void shouldRenderQuickStartExampleToFile() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("quick-start", "clean", "documentation");
 
-        try (DocumentComposer composer = GraphCompose.pdf(outputFile)
+        try (DocumentSession document = GraphCompose.document(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(24, 24, 24, 24)
-                .markdown(true)
                 .create()) {
-
-            ComponentBuilder cb = composer.componentBuilder();
-
-            cb.vContainer(Align.middle(8))
-                    .anchor(Anchor.topLeft())
-                    .margin(Margin.of(8))
-                    .addChild(cb.text()
-                            .textWithAutoSize("Hello GraphCompose")
+            document.dsl()
+                    .pageFlow()
+                    .name("QuickStart")
+                    .spacing(8)
+                    .addParagraph(paragraph -> paragraph
+                            .name("Greeting")
+                            .text("Hello GraphCompose")
                             .textStyle(TextStyle.DEFAULT_STYLE)
-                            .anchor(Anchor.topLeft())
-                            .build())
+                            .margin(Margin.of(8)))
                     .build();
 
-            composer.build();
+            document.buildPdf();
         }
 
         assertPdfFileLooksValid(outputFile);
@@ -68,24 +64,22 @@ class DocumentationExamplesTest {
         byte[] pdfBytes;
         Path outputFile = VisualTestOutputs.preparePdf("quick-start-bytes", "clean", "documentation");
 
-        try (DocumentComposer composer = GraphCompose.pdf()
+        try (DocumentSession document = GraphCompose.document()
                 .pageSize(PDRectangle.A4)
                 .margin(24, 24, 24, 24)
                 .create()) {
-
-            ComponentBuilder cb = composer.componentBuilder();
-
-            cb.vContainer(Align.middle(8))
-                    .anchor(Anchor.topLeft())
-                    .margin(Margin.of(8))
-                    .addChild(cb.text()
-                            .textWithAutoSize("In-memory PDF")
+            document.dsl()
+                    .pageFlow()
+                    .name("QuickStartBytes")
+                    .spacing(8)
+                    .addParagraph(paragraph -> paragraph
+                            .name("InMemoryGreeting")
+                            .text("In-memory PDF")
                             .textStyle(TextStyle.DEFAULT_STYLE)
-                            .anchor(Anchor.topLeft())
-                            .build())
+                            .margin(Margin.of(8)))
                     .build();
 
-            pdfBytes = composer.toBytes();
+            pdfBytes = document.toPdfBytes();
         }
 
         assertPdfBytesLookValid(pdfBytes, outputFile);
@@ -96,26 +90,28 @@ class DocumentationExamplesTest {
         byte[] pdfBytes;
         Path outputFile = VisualTestOutputs.preparePdf("template-builder-bytes", "clean", "documentation");
 
-        try (DocumentComposer composer = GraphCompose.pdf()
+        try (DocumentSession document = GraphCompose.document()
                 .pageSize(PDRectangle.A4)
                 .margin(24, 24, 24, 24)
                 .create()) {
-
-            TemplateBuilder template = TemplateBuilder.from(
-                    composer.componentBuilder(),
-                    CvTheme.defaultTheme());
-
-            var profile = template.moduleBuilder("Profile", composer.canvas())
-                    .addChild(template.blockText(
-                            "Analytical engineer focused on reliable platform design.",
-                            composer.canvas().innerWidth()))
+            document.dsl()
+                    .pageFlow()
+                    .name("TemplateStyleFlow")
+                    .spacing(12)
+                    .addSection(section -> section
+                            .name("Profile")
+                            .spacing(6)
+                            .addParagraph(paragraph -> paragraph
+                                    .name("ProfileHeading")
+                                    .text("Profile")
+                                    .textStyle(TextStyle.DEFAULT_STYLE))
+                            .addParagraph(paragraph -> paragraph
+                                    .name("ProfileBody")
+                                    .text("Analytical engineer focused on reliable platform design.")
+                                    .padding(Padding.of(4))))
                     .build();
 
-            template.pageFlow(composer.canvas())
-                    .addChild(profile)
-                    .build();
-
-            pdfBytes = composer.toBytes();
+            pdfBytes = document.toPdfBytes();
         }
 
         assertPdfBytesLookValid(pdfBytes, outputFile);

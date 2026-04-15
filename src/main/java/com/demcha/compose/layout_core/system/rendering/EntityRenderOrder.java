@@ -105,6 +105,19 @@ public class EntityRenderOrder {
                 .thenComparing(entry -> entry.id().toString());
     }
 
+    /**
+     * Resolves the lightweight sort payload for one entity.
+     *
+     * <p>
+     * This precomputation keeps component lookups and margin fallback handling out
+     * of the comparator hot path.
+     * </p>
+     *
+     * @param entityId entity identifier
+     * @param entity resolved entity instance
+     * @param originalIndex original order inside the incoming layer
+     * @return immutable render-order entry
+     */
     private static RenderEntry resolveRenderEntry(UUID entityId, Entity entity, int originalIndex) {
         ComputedPosition computedPosition = entity.getComponent(ComputedPosition.class)
                 .orElseThrow(() -> new IllegalStateException("Entity " + entity + " has no RenderingPosition"));
@@ -114,6 +127,9 @@ public class EntityRenderOrder {
         return new RenderEntry(entityId, entity, x, y, originalIndex);
     }
 
+    /**
+     * Immutable sort payload used during one render-order computation.
+     */
     private record RenderEntry(UUID id, Entity entity, double x, double y, int originalIndex) {
     }
 }

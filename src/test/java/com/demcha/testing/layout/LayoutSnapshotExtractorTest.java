@@ -9,6 +9,7 @@ import com.demcha.compose.layout_core.components.geometry.ContentSize;
 import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.layout.Layer;
+import com.demcha.compose.layout_core.components.layout.ParentComponent;
 import com.demcha.compose.layout_core.components.layout.coordinator.ComputedPosition;
 import com.demcha.compose.layout_core.components.layout.coordinator.Placement;
 import com.demcha.compose.layout_core.components.style.Margin;
@@ -25,6 +26,7 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -162,6 +164,78 @@ class LayoutSnapshotExtractorTest {
         assertThat(snapshot.nodes()).hasSize(1);
         assertThat(snapshot.nodes().getFirst().startPage()).isEqualTo(2);
         assertThat(snapshot.nodes().getFirst().endPage()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldUseCanonicalTraversalWhenParentComponentExistsButChildrenListIsMissingEntry() {
+        EntityManager entityManager = new EntityManager(false);
+
+        Entity parent = new Entity();
+        parent.addComponent(new EntityName("Root"));
+        parent.addComponent(new ContentSize(120, 80));
+        parent.addComponent(new ComputedPosition(0, 0));
+        parent.addComponent(new Placement(0, 0, 120, 80, 0, 0));
+        parent.addComponent(new Layer(1));
+        entityManager.putEntity(parent);
+
+        Entity child = new Entity();
+        child.addComponent(new EntityName("RecoveredChild"));
+        child.addComponent(new ParentComponent(parent.getUuid()));
+        child.addComponent(new ContentSize(40, 20));
+        child.addComponent(new ComputedPosition(5, 5));
+        child.addComponent(new Placement(5, 5, 40, 20, 0, 0));
+        child.addComponent(new Layer(2));
+        entityManager.putEntity(child);
+
+        Canvas canvas = new PdfCanvas(PDRectangle.A4, 0, 0);
+        LayoutSnapshot snapshot = LayoutSnapshotExtractor.extract(entityManager, canvas);
+
+        assertThat(snapshot.nodes())
+                .extracting(LayoutNodeSnapshot::path)
+                .containsExactly("Root[0]", "Root[0]/RecoveredChild[0]");
+    }
+
+    @Test
+    void shouldIgnoreStaleChildrenListEntriesAndFollowCanonicalParentComponentTraversal() {
+        EntityManager entityManager = new EntityManager(false);
+
+        Entity staleParent = new Entity();
+        staleParent.addComponent(new EntityName("StaleParent"));
+        staleParent.addComponent(new ContentSize(120, 80));
+        staleParent.addComponent(new ComputedPosition(0, 0));
+        staleParent.addComponent(new Placement(0, 0, 120, 80, 0, 0));
+        staleParent.addComponent(new Layer(1));
+        entityManager.putEntity(staleParent);
+
+        Entity canonicalParent = new Entity();
+        canonicalParent.addComponent(new EntityName("CanonicalParent"));
+        canonicalParent.addComponent(new ContentSize(120, 80));
+        canonicalParent.addComponent(new ComputedPosition(140, 0));
+        canonicalParent.addComponent(new Placement(140, 0, 120, 80, 0, 0));
+        canonicalParent.addComponent(new Layer(1));
+        entityManager.putEntity(canonicalParent);
+
+        Entity child = new Entity();
+        child.addComponent(new EntityName("Child"));
+        child.addComponent(new ParentComponent(canonicalParent.getUuid()));
+        child.addComponent(new ContentSize(40, 20));
+        child.addComponent(new ComputedPosition(145, 5));
+        child.addComponent(new Placement(145, 5, 40, 20, 0, 0));
+        child.addComponent(new Layer(2));
+        entityManager.putEntity(child);
+
+        staleParent.getChildren().add(child.getUuid());
+        staleParent.getChildren().add(UUID.randomUUID());
+
+        Canvas canvas = new PdfCanvas(PDRectangle.A4, 0, 0);
+        LayoutSnapshot snapshot = LayoutSnapshotExtractor.extract(entityManager, canvas);
+
+        assertThat(snapshot.nodes())
+                .extracting(LayoutNodeSnapshot::path)
+                .containsExactly(
+                        "StaleParent[0]",
+                        "CanonicalParent[1]",
+                        "CanonicalParent[1]/Child[0]");
     }
 
     private String renderSnapshotJsonForStableDocument() throws Exception {

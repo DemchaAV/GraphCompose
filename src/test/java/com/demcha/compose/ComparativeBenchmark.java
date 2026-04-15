@@ -6,6 +6,10 @@ import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.v2.DocumentSession;
+import com.demcha.compose.v2.nodes.ContainerNode;
+import com.demcha.compose.v2.nodes.ParagraphNode;
+import com.demcha.compose.v2.nodes.TextAlign;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfPTable;
@@ -23,8 +27,9 @@ import java.util.List;
 
 /**
  * Fair Comparative Benchmark (CPU & RAM)
- * Correctly compares GraphCompose with iText and JasperReports
- * by isolating the compilation phase and enforcing layout calculations.
+ * Compares GraphCompose legacy PDF composition, GraphCompose v2 semantic
+ * composition, iText, and JasperReports by isolating the compilation phase
+ * and enforcing layout calculations.
  */
 public class ComparativeBenchmark {
 
@@ -47,7 +52,8 @@ public class ComparativeBenchmark {
         // Прогрев JVM (JIT компилятор)
         System.out.println("Warming up JVM...");
         for (int i = 0; i < WARMUP_ITERATIONS; i++) {
-            benchmarkGraphCompose();
+            benchmarkGraphComposeLegacy();
+            benchmarkGraphComposeV2();
             benchmarkIText();
             benchmarkJasper();
         }
@@ -58,7 +64,8 @@ public class ComparativeBenchmark {
         System.out.println("------------------------------------------------------------");
 
         List<ComparativeRow> rows = List.of(
-                runBenchmark("GraphCompose", ComparativeBenchmark::benchmarkGraphCompose),
+                runBenchmark("GraphCompose Legacy", ComparativeBenchmark::benchmarkGraphComposeLegacy),
+                runBenchmark("GraphCompose V2", ComparativeBenchmark::benchmarkGraphComposeV2),
                 runBenchmark("iText 5 (Old)", ComparativeBenchmark::benchmarkIText),
                 runBenchmark("JasperReports", ComparativeBenchmark::benchmarkJasper)
         );
@@ -124,9 +131,9 @@ public class ComparativeBenchmark {
     }
 
     /**
-     * GraphCompose: Тестируем чистый ECS-движок (верстка через VContainer)
+     * GraphCompose legacy: тестируем текущий ECS/PdfComposer path.
      */
-    private static byte[] benchmarkGraphCompose() throws Exception {
+    private static byte[] benchmarkGraphComposeLegacy() throws Exception {
         try (PdfComposer composer = GraphCompose.pdf().pageSize(PDRectangle.A4).create()) {
 
             Entity title = composer.componentBuilder().text().textWithAutoSize("INVOICE #12345")
@@ -150,6 +157,27 @@ public class ComparativeBenchmark {
 
              // Запускаем Measure & Layout Pass
             return composer.toBytes();
+        }
+    }
+
+    /**
+     * GraphCompose v2: тестируем semantic-first DocumentSession на эквивалентном сценарии.
+     */
+    private static byte[] benchmarkGraphComposeV2() throws Exception {
+        try (DocumentSession session = GraphCompose.document().pageSize(PDRectangle.A4).create()) {
+            session.add(new ContainerNode(
+                    "Invoice",
+                    List.of(
+                            new ParagraphNode("Title", "INVOICE #12345", TextStyle.DEFAULT_STYLE, TextAlign.LEFT, 0, null, null),
+                            new ParagraphNode("Customer", "Customer: John Doe", TextStyle.DEFAULT_STYLE, TextAlign.LEFT, 0, null, null),
+                            new ParagraphNode("Amount", "Amount: $1,000.00", TextStyle.DEFAULT_STYLE, TextAlign.LEFT, 0, null, null)
+                    ),
+                    5,
+                    null,
+                    Margin.of(20),
+                    null,
+                    null));
+            return session.toPdfBytes();
         }
     }
 

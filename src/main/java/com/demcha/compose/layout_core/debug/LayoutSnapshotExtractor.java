@@ -5,13 +5,13 @@ import com.demcha.compose.layout_core.components.core.Entity;
 import com.demcha.compose.layout_core.components.core.EntityName;
 import com.demcha.compose.layout_core.components.geometry.ContentSize;
 import com.demcha.compose.layout_core.components.layout.Layer;
-import com.demcha.compose.layout_core.components.layout.ParentComponent;
 import com.demcha.compose.layout_core.components.layout.coordinator.ComputedPosition;
 import com.demcha.compose.layout_core.components.layout.coordinator.Placement;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.Canvas;
 import com.demcha.compose.layout_core.core.EntityManager;
+import com.demcha.compose.layout_core.core.LayoutTraversalContext;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -71,13 +71,17 @@ public final class LayoutSnapshotExtractor {
                     List.of());
         }
 
-        List<Entity> roots = resolveRoots(entities);
+        // Resolved-order features must always traverse through LayoutTraversalContext
+        // so snapshots, pagination, and renderer ordering agree on the same tree.
+        LayoutTraversalContext traversalContext = LayoutTraversalContext.from(entityManager);
+        List<Entity> roots = resolveRoots(entities, traversalContext);
         List<LayoutNodeSnapshot> nodes = new ArrayList<>(entities.size());
 
         for (int rootIndex = 0; rootIndex < roots.size(); rootIndex++) {
             visitNode(
                     entityManager,
                     entities,
+                    traversalContext,
                     roots.get(rootIndex),
                     null,
                     rootIndex,
@@ -108,6 +112,7 @@ public final class LayoutSnapshotExtractor {
 
     private static void visitNode(EntityManager entityManager,
                                   Map<UUID, Entity> entities,
+                                  LayoutTraversalContext traversalContext,
                                   Entity entity,
                                   String parentPath,
                                   int childIndex,
@@ -122,14 +127,14 @@ public final class LayoutSnapshotExtractor {
 
         snapshots.add(toNodeSnapshot(entityManager, entity, parentPath, path, childIndex));
 
-        List<UUID> childIds = entity.getChildren();
+        List<UUID> childIds = traversalContext.childrenByParent().getOrDefault(entity.getUuid(), List.of());
         for (int index = 0; index < childIds.size(); index++) {
             UUID childId = childIds.get(index);
             Entity child = entities.get(childId);
             if (child == null) {
                 throw new IllegalStateException("Missing child entity " + childId + " referenced from " + describeEntity(entity));
             }
-            visitNode(entityManager, entities, child, path, index, snapshots, activePath);
+            visitNode(entityManager, entities, traversalContext, child, path, index, snapshots, activePath);
         }
 
         activePath.remove(entity.getUuid());
@@ -179,23 +184,18 @@ public final class LayoutSnapshotExtractor {
                 LayoutInsetsSnapshot.from(canvas.margin()));
     }
 
-    private static List<Entity> resolveRoots(Map<UUID, Entity> entities) {
+    private static List<Entity> resolveRoots(Map<UUID, Entity> entities, LayoutTraversalContext traversalContext) {
         Comparator<Entity> rootComparator = Comparator
                 .comparingInt(LayoutSnapshotExtractor::startPage)
                 .thenComparing(LayoutSnapshotExtractor::topToBottomY)
                 .thenComparing(LayoutSnapshotExtractor::leftToRightX)
                 .thenComparing(LayoutSnapshotExtractor::entitySortKey);
 
-        return entities.values().stream()
-                .filter(entity -> isRoot(entity, entities))
+        return traversalContext.roots().stream()
+                .map(entities::get)
+                .filter(Objects::nonNull)
                 .sorted(rootComparator)
                 .collect(Collectors.toList());
-    }
-
-    private static boolean isRoot(Entity entity, Map<UUID, Entity> entities) {
-        return entity.getComponent(ParentComponent.class)
-                .map(parent -> !entities.containsKey(parent.uuid()))
-                .orElse(true);
     }
 
     private static int startPage(Entity entity) {

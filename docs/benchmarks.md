@@ -5,7 +5,7 @@ This document explains the local and CI benchmark flow used in GraphCompose.
 The short version is:
 
 - `scripts/run-benchmarks.ps1` is the normal local entry point
-- `ArchitectureComparisonBenchmark` is an optional legacy-vs-v2 A/B suite
+- `ArchitectureComparisonBenchmark` is an optional legacy-vs-canonical A/B suite
 - `CurrentSpeedBenchmark` has two profiles: `smoke` and `full`
 - current-speed diffs are only valid between reports from the same profile
 - repeated local runs should be compared via median aggregation, not by eyeballing one lucky run
@@ -39,9 +39,9 @@ The script prints numbered sections so you can map console output to the pipelin
 2. `02-current-speed`
    Runs `CurrentSpeedBenchmark` in the selected profile.
 3. `03-comparative`
-   Runs the low-level GraphCompose legacy vs GraphCompose v2 vs iText 5 vs JasperReports comparison.
+   Runs the low-level GraphCompose legacy vs GraphCompose canonical vs iText 5 vs JasperReports comparison.
 4. `03b-architecture-comparison`
-   Optional. Runs only when `-IncludeArchitectureComparison` is provided and prints legacy `GraphCompose.pdf(...)` vs v2 `GraphCompose.document(...)` numbers to the console.
+   Optional. Runs only when `-IncludeArchitectureComparison` is provided and prints legacy `GraphCompose.pdf(...)` vs canonical `GraphCompose.document(...)` numbers to the console.
 5. `04-core-engine`
    Runs `GraphComposeBenchmark`.
 6. `05-full-cv`
@@ -125,15 +125,15 @@ powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -CurrentSp
 powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -CurrentSpeedProfile full
 ```
 
-### Show legacy vs v2 A/B numbers in the same wrapper run
+### Show legacy vs canonical A/B numbers in the same wrapper run
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -CurrentSpeedProfile full -IncludeArchitectureComparison
 ```
 
-That adds the `03b-architecture-comparison` stage and prints the `simple-flow`, `paragraph-flow`, and `table-flow` legacy-vs-v2 numbers directly into the console/log output.
+That adds the `03b-architecture-comparison` stage and prints the `simple-flow`, `paragraph-flow`, and `table-flow` legacy-vs-canonical numbers directly into the console/log output.
 
-### Run only the legacy vs v2 A/B suite
+### Run only the legacy vs canonical A/B suite
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -CurrentSpeedProfile full -OnlyArchitectureComparison
@@ -144,7 +144,7 @@ This fast path keeps only:
 1. `01-build-classpath`
 2. `02-architecture-comparison-only`
 
-Use it when you only want the `legacy vs v2` numbers and do not want to wait for `current-speed`, `comparative`, `core-engine`, `full-cv`, `scalability`, `stress`, or diff stages.
+Use it when you only want the `legacy vs canonical` numbers and do not want to wait for `current-speed`, `comparative`, `core-engine`, `full-cv`, `scalability`, `stress`, or diff stages.
 
 `-Repeat N` also works in this fast path now, so you can build median A/B reports without running the rest of the suite.
 

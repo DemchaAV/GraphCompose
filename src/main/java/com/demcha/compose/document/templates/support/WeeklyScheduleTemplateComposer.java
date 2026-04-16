@@ -29,6 +29,7 @@ import java.util.Objects;
  * Shared scene composer for the weekly schedule template.
  */
 public final class WeeklyScheduleTemplateComposer {
+    private static final double HEADER_GAP = 18;
     private final WeeklyScheduleTheme theme;
 
     public WeeklyScheduleTemplateComposer(WeeklyScheduleTheme theme) {
@@ -45,24 +46,7 @@ public final class WeeklyScheduleTemplateComposer {
         Map<String, ScheduleCategory> categories = categoriesById(safe.categories());
 
         target.startDocument("WeeklyScheduleRoot", theme.rootSpacing());
-        target.addParagraph(TemplateSceneSupport.paragraph(
-                "WeeklyScheduleTitle",
-                safe.title(),
-                theme.titleStyle(),
-                TextAlign.LEFT,
-                1.0,
-                Padding.zero(),
-                Margin.zero()));
-        if (!safe.weekLabel().isBlank()) {
-            target.addParagraph(TemplateSceneSupport.paragraph(
-                    "WeeklyScheduleWeekLabel",
-                    safe.weekLabel(),
-                    theme.weekLabelStyle(),
-                    TextAlign.RIGHT,
-                    1.0,
-                    Padding.zero(),
-                    Margin.zero()));
-        }
+        target.addTable(headerTable(target.pageWidth(), safe));
         target.addDivider(TemplateSceneSupport.divider(
                 "WeeklyScheduleRule",
                 target.pageWidth(),
@@ -102,16 +86,53 @@ public final class WeeklyScheduleTemplateComposer {
                     1.0,
                     Padding.zero(),
                     Margin.top(2)));
-            target.addParagraph(TemplateSceneSupport.paragraph(
+            target.addParagraph(TemplateSceneSupport.blockParagraph(
                     "WeeklyScheduleFooter",
-                    TemplateSceneSupport.bulletText(safe.footerNotes()),
+                    String.join("\n", TemplateSceneSupport.sanitizeLines(safe.footerNotes())),
                     theme.footerStyle(),
                     TextAlign.LEFT,
                     2.0,
+                    "\u2022",
+                    com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy.FROM_SECOND_LINE,
                     Padding.zero(),
                     Margin.top(4)));
         }
         target.finishDocument();
+    }
+
+    private TemplateTableSpec headerTable(double width, WeeklyScheduleData data) {
+        double leftWidth = Math.max(260, width - 220);
+        double rightWidth = width - leftWidth - HEADER_GAP;
+        TableCellStyle headerBaseStyle = TableCellStyle.builder()
+                .padding(Padding.zero())
+                .fillColor(Color.WHITE)
+                .stroke(new Stroke(Color.WHITE, 0.0))
+                .textAnchor(Anchor.topLeft())
+                .build();
+
+        return new TemplateTableSpec(
+                "WeeklyScheduleHeader",
+                List.of(
+                        TableColumnSpec.fixed(leftWidth),
+                        TableColumnSpec.fixed(HEADER_GAP),
+                        TableColumnSpec.fixed(rightWidth)),
+                List.of(List.of(
+                        TableCellSpec.text(data.title()).withStyle(TableCellStyle.builder()
+                                .textStyle(theme.titleStyle())
+                                .textAnchor(Anchor.topLeft())
+                                .build()),
+                        TableCellSpec.text(""),
+                        TableCellSpec.text(data.weekLabel()).withStyle(TableCellStyle.builder()
+                                .textStyle(theme.weekLabelStyle())
+                                .textAnchor(Anchor.topRight())
+                                .padding(new Padding(8, 0, 0, 0))
+                                .build()))),
+                headerBaseStyle,
+                Map.of(),
+                Map.of(),
+                width,
+                Padding.zero(),
+                Margin.zero());
     }
 
     private TemplateTableSpec dayLabelsBand(GridSpec grid, List<ScheduleDay> days) {

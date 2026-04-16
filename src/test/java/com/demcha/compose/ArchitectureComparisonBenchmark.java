@@ -35,7 +35,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Manual benchmark that compares the legacy PDF composer path with the v2
+ * Manual benchmark that compares the legacy PDF composer path with the canonical
  * semantic-first document session on equivalent document scenarios.
  */
 public final class ArchitectureComparisonBenchmark {
@@ -127,8 +127,8 @@ public final class ArchitectureComparisonBenchmark {
         );
 
         System.out.println("Scene build benchmark");
-        System.out.printf("%-16s | %12s | %12s | %9s | %8s%n",
-                "Scenario", "Legacy ms", "V2 ms", "Delta %", "Winner");
+        System.out.printf("%-16s | %12s | %12s | %9s | %10s%n",
+                "Scenario", "Legacy ms", "Canonical ms", "Delta %", "Winner");
         System.out.println("-".repeat(69));
 
         long buildGuard = 0;
@@ -159,7 +159,7 @@ public final class ArchitectureComparisonBenchmark {
                     round(legacy.avgGcMillis()),
                     round(v2.avgGcMillis())));
 
-            System.out.printf("%-16s | %12.2f | %12.2f | %8.2f%% | %8s%n",
+            System.out.printf("%-16s | %12.2f | %12.2f | %8.2f%% | %10s%n",
                     scenario.name(),
                     legacy.avgMillis(),
                     v2.avgMillis(),
@@ -169,8 +169,8 @@ public final class ArchitectureComparisonBenchmark {
 
         System.out.println();
         System.out.println("Layout snapshot benchmark");
-        System.out.printf("%-16s | %12s | %12s | %9s | %8s%n",
-                "Scenario", "Legacy ms", "V2 ms", "Delta %", "Winner");
+        System.out.printf("%-16s | %12s | %12s | %9s | %10s%n",
+                "Scenario", "Legacy ms", "Canonical ms", "Delta %", "Winner");
         System.out.println("-".repeat(69));
 
         long layoutGuard = 0;
@@ -219,7 +219,7 @@ public final class ArchitectureComparisonBenchmark {
                     round(legacy.avgGcMillis()),
                     round(v2.avgGcMillis())));
 
-            System.out.printf("%-16s | %12.2f | %12.2f | %8.2f%% | %8s%n",
+            System.out.printf("%-16s | %12.2f | %12.2f | %8.2f%% | %10s%n",
                     scenario.name(),
                     legacy.avgMillis(),
                     v2.avgMillis(),
@@ -229,9 +229,9 @@ public final class ArchitectureComparisonBenchmark {
 
         System.out.println();
         System.out.println("PDF export benchmark");
-        System.out.printf("%-16s | %12s | %12s | %9s | %10s | %10s | %8s%n",
-                "Scenario", "Legacy ms", "V2 ms", "Delta %", "Legacy KB", "V2 KB", "Winner");
-        System.out.println("-".repeat(97));
+        System.out.printf("%-16s | %12s | %12s | %9s | %12s | %12s | %10s%n",
+                "Scenario", "Legacy ms", "Canonical ms", "Delta %", "Legacy KB", "Canonical KB", "Winner");
+        System.out.println("-".repeat(109));
 
         long totalPdfBytes = 0;
         List<PdfRow> pdfRows = new ArrayList<>();
@@ -280,7 +280,7 @@ public final class ArchitectureComparisonBenchmark {
                     round(legacy.avgGcMillis()),
                     round(v2.avgGcMillis())));
 
-            System.out.printf("%-16s | %12.2f | %12.2f | %8.2f%% | %10.2f | %10.2f | %8s%n",
+            System.out.printf("%-16s | %12.2f | %12.2f | %8.2f%% | %12.2f | %12.2f | %10s%n",
                     scenario.name(),
                     legacy.avgMillis(),
                     v2.avgMillis(),
@@ -292,8 +292,8 @@ public final class ArchitectureComparisonBenchmark {
 
         System.out.println();
         System.out.println("Render + bytes after layout benchmark");
-        System.out.printf("%-16s | %12s | %12s | %9s | %8s%n",
-                "Scenario", "Legacy ms", "V2 ms", "Delta %", "Winner");
+        System.out.printf("%-16s | %12s | %12s | %9s | %10s%n",
+                "Scenario", "Legacy ms", "Canonical ms", "Delta %", "Winner");
         System.out.println("-".repeat(69));
 
         for (Scenario scenario : scenarios) {
@@ -321,7 +321,7 @@ public final class ArchitectureComparisonBenchmark {
                     round(legacy.avgGcMillis()),
                     round(v2.avgGcMillis())));
 
-            System.out.printf("%-16s | %12.2f | %12.2f | %8.2f%% | %8s%n",
+            System.out.printf("%-16s | %12.2f | %12.2f | %8.2f%% | %10s%n",
                     scenario.name(),
                     legacy.avgMillis(),
                     v2.avgMillis(),
@@ -331,9 +331,9 @@ public final class ArchitectureComparisonBenchmark {
 
         System.out.println();
         System.out.println("Allocation + GC benchmark");
-        System.out.printf("%-24s | %10s | %10s | %10s | %10s | %10s | %10s%n",
-                "Operation", "Legacy MB", "V2 MB", "Delta %", "Legacy GC", "V2 GC", "Winner");
-        System.out.println("-".repeat(98));
+        System.out.printf("%-24s | %10s | %12s | %10s | %10s | %12s | %10s%n",
+                "Operation", "Legacy MB", "Canonical MB", "Delta %", "Legacy GC", "Canonical GC", "Winner");
+        System.out.println("-".repeat(108));
         for (LayoutRow row : layoutRows) {
             double deltaPercent = deltaPercent(row.legacyAvgAllocatedMb(), row.v2AvgAllocatedMb());
             System.out.printf("%-24s | %10.2f | %10.2f | %9.2f%% | %10.2f | %10.2f | %10s%n",
@@ -376,11 +376,11 @@ public final class ArchitectureComparisonBenchmark {
         var jsonPath = artifacts.writeJson(report);
         var layoutCsvPath = artifacts.writeCsv(
                 "layout",
-                List.of("scenario", "description", "legacy_avg_ms", "v2_avg_ms", "delta_percent", "winner",
-                        "legacy_p50_ms", "v2_p50_ms", "legacy_p95_ms", "v2_p95_ms",
-                        "legacy_avg_allocated_mb", "v2_avg_allocated_mb",
-                        "legacy_avg_gc_collections", "v2_avg_gc_collections",
-                        "legacy_avg_gc_ms", "v2_avg_gc_ms"),
+                List.of("scenario", "description", "legacy_avg_ms", "canonical_avg_ms", "delta_percent", "winner",
+                        "legacy_p50_ms", "canonical_p50_ms", "legacy_p95_ms", "canonical_p95_ms",
+                        "legacy_avg_allocated_mb", "canonical_avg_allocated_mb",
+                        "legacy_avg_gc_collections", "canonical_avg_gc_collections",
+                        "legacy_avg_gc_ms", "canonical_avg_gc_ms"),
                 layoutRows.stream()
                         .map(row -> List.of(
                                 row.scenario(),
@@ -402,11 +402,11 @@ public final class ArchitectureComparisonBenchmark {
                         .toList());
         var pdfCsvPath = artifacts.writeCsv(
                 "pdf",
-                List.of("scenario", "description", "legacy_avg_ms", "v2_avg_ms", "delta_percent", "legacy_avg_kb",
-                        "v2_avg_kb", "winner", "legacy_p50_ms", "v2_p50_ms", "legacy_p95_ms", "v2_p95_ms",
-                        "legacy_avg_allocated_mb", "v2_avg_allocated_mb",
-                        "legacy_avg_gc_collections", "v2_avg_gc_collections",
-                        "legacy_avg_gc_ms", "v2_avg_gc_ms"),
+                List.of("scenario", "description", "legacy_avg_ms", "canonical_avg_ms", "delta_percent", "legacy_avg_kb",
+                        "canonical_avg_kb", "winner", "legacy_p50_ms", "canonical_p50_ms", "legacy_p95_ms", "canonical_p95_ms",
+                        "legacy_avg_allocated_mb", "canonical_avg_allocated_mb",
+                        "legacy_avg_gc_collections", "canonical_avg_gc_collections",
+                        "legacy_avg_gc_ms", "canonical_avg_gc_ms"),
                 pdfRows.stream()
                         .map(row -> List.of(
                                 row.scenario(),
@@ -430,11 +430,11 @@ public final class ArchitectureComparisonBenchmark {
                         .toList());
         var stagesCsvPath = artifacts.writeCsv(
                 "stages",
-                List.of("scenario", "stage", "description", "legacy_avg_ms", "v2_avg_ms", "delta_percent", "winner",
-                        "legacy_p50_ms", "v2_p50_ms", "legacy_p95_ms", "v2_p95_ms",
-                        "legacy_avg_allocated_mb", "v2_avg_allocated_mb",
-                        "legacy_avg_gc_collections", "v2_avg_gc_collections",
-                        "legacy_avg_gc_ms", "v2_avg_gc_ms"),
+                List.of("scenario", "stage", "description", "legacy_avg_ms", "canonical_avg_ms", "delta_percent", "winner",
+                        "legacy_p50_ms", "canonical_p50_ms", "legacy_p95_ms", "canonical_p95_ms",
+                        "legacy_avg_allocated_mb", "canonical_avg_allocated_mb",
+                        "legacy_avg_gc_collections", "canonical_avg_gc_collections",
+                        "legacy_avg_gc_ms", "canonical_avg_gc_ms"),
                 stageRows.stream()
                         .map(row -> List.of(
                                 row.scenario(),
@@ -959,7 +959,7 @@ public final class ArchitectureComparisonBenchmark {
         if (delta < 0.01) {
             return "tie";
         }
-        return v2Millis < legacyMillis ? "v2" : "legacy";
+        return v2Millis < legacyMillis ? "canonical" : "legacy";
     }
 
     private double round(double value) {

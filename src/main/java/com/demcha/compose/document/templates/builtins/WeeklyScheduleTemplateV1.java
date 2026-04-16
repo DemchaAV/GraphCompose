@@ -3,8 +3,8 @@ package com.demcha.compose.document.templates.builtins;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.WeeklyScheduleTemplate;
 import com.demcha.compose.document.templates.data.WeeklyScheduleData;
-import com.demcha.compose.document.templates.support.LegacyTemplateMappers;
-import com.demcha.compose.document.templates.support.LegacyTemplateSessionRenderer;
+import com.demcha.compose.document.templates.support.SessionTemplateComposeTarget;
+import com.demcha.compose.document.templates.support.WeeklyScheduleTemplateComposer;
 import com.demcha.compose.document.templates.theme.WeeklyScheduleTheme;
 
 import java.util.Objects;
@@ -13,15 +13,15 @@ import java.util.Objects;
  * Canonical V2 implementation of the weekly schedule template.
  */
 public final class WeeklyScheduleTemplateV1 implements WeeklyScheduleTemplate {
-    private final com.demcha.templates.builtins.WeeklyScheduleTemplateV1 legacyBridge;
+    private final WeeklyScheduleTemplateComposer composer;
 
     public WeeklyScheduleTemplateV1() {
         this(null);
     }
 
     public WeeklyScheduleTemplateV1(WeeklyScheduleTheme theme) {
-        this.legacyBridge = new com.demcha.templates.builtins.WeeklyScheduleTemplateV1(
-                LegacyTemplateMappers.toLegacy(Objects.requireNonNullElseGet(theme, WeeklyScheduleTheme::defaultTheme)));
+        this.composer = new WeeklyScheduleTemplateComposer(
+                Objects.requireNonNullElseGet(theme, WeeklyScheduleTheme::defaultTheme));
     }
 
     @Override
@@ -41,8 +41,6 @@ public final class WeeklyScheduleTemplateV1 implements WeeklyScheduleTemplate {
 
     @Override
     public void compose(DocumentSession document, WeeklyScheduleData data) {
-        LegacyTemplateSessionRenderer.renderInto(document, composer -> legacyBridge.compose(
-                composer,
-                LegacyTemplateMappers.toLegacy(data)));
+        composer.compose(new SessionTemplateComposeTarget(document), data);
     }
 }

@@ -1,29 +1,21 @@
 package com.demcha.compose;
 
-import com.demcha.compose.layout_core.components.components_builders.ComponentBuilder;
-import com.demcha.compose.layout_core.components.content.header_footer.HeaderFooterConfig;
-import com.demcha.compose.layout_core.components.content.metadata.DocumentMetadata;
+import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkLayer;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkPosition;
+import com.demcha.compose.document.templates.builtins.CvTemplateV1;
+import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
+import com.demcha.compose.document.templates.builtins.ProposalTemplateV1;
+import com.demcha.compose.document.templates.data.InvoiceData;
+import com.demcha.compose.document.templates.data.MainPageCV;
+import com.demcha.compose.document.templates.data.MainPageCvDTO;
+import com.demcha.compose.document.templates.data.ProposalData;
 import com.demcha.compose.layout_core.components.content.text.TextDecoration;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
-import com.demcha.compose.layout_core.components.content.watermark.WatermarkConfig;
-import com.demcha.compose.layout_core.components.content.watermark.WatermarkLayer;
-import com.demcha.compose.layout_core.components.content.watermark.WatermarkPosition;
-import com.demcha.compose.layout_core.components.layout.Align;
-import com.demcha.compose.layout_core.components.layout.Anchor;
-import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.components.style.Padding;
-import com.demcha.compose.layout_core.core.PdfComposer;
-import com.demcha.mock.InvoiceDataFixtures;
-import com.demcha.mock.MainPageCVMock;
-import com.demcha.mock.ProposalDataFixtures;
-import com.demcha.templates.api.MainPageCvDTO;
-import com.demcha.templates.builtins.CvTemplateV1;
-import com.demcha.templates.builtins.InvoiceTemplateV1;
-import com.demcha.templates.builtins.ProposalTemplateV1;
-import com.demcha.templates.data.InvoiceData;
-import com.demcha.templates.data.MainPageCV;
-import com.demcha.templates.data.ProposalData;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.awt.Color;
@@ -81,10 +73,10 @@ public final class CurrentSpeedBenchmark {
     private final InvoiceTemplateV1 invoiceTemplate = new InvoiceTemplateV1();
     private final CvTemplateV1 cvTemplate = new CvTemplateV1();
     private final ProposalTemplateV1 proposalTemplate = new ProposalTemplateV1();
-    private final InvoiceData invoiceData = InvoiceDataFixtures.standardInvoice();
-    private final ProposalData proposalData = ProposalDataFixtures.longProposal();
-    private final MainPageCV originalCv = new MainPageCVMock().getMainPageCV();
-    private final MainPageCvDTO rewrittenCv = MainPageCvDTO.from(originalCv);
+    private final InvoiceData invoiceData = CanonicalBenchmarkSupport.canonicalInvoiceData();
+    private final ProposalData proposalData = CanonicalBenchmarkSupport.canonicalProposalData();
+    private final MainPageCV originalCv = CanonicalBenchmarkSupport.canonicalCv();
+    private final MainPageCvDTO rewrittenCv = CanonicalBenchmarkSupport.rewrite(originalCv);
 
     public static void main(String[] args) throws Exception {
         BenchmarkSupport.configureQuietLogging();
@@ -356,175 +348,123 @@ public final class CurrentSpeedBenchmark {
     }
 
     private byte[] renderEngineSimpleDocument() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf()
-                .pageSize(PDRectangle.A4)
-                .margin(24, 24, 24, 24)
-                .markdown(true)
-                .create()) {
-
-            ComponentBuilder cb = composer.componentBuilder();
-            double width = composer.canvas().innerWidth();
-
-            cb.vContainer(Align.middle(10))
-                    .entityName("BenchmarkSimpleRoot")
-                    .size(width, 0)
-                    .anchor(Anchor.topLeft())
-                    .margin(Margin.of(4))
-                    .addChild(cb.text()
-                            .entityName("BenchmarkSimpleTitle")
-                            .textWithAutoSize("GraphCompose Speed Check")
-                            .textStyle(TITLE_STYLE)
-                            .anchor(Anchor.topLeft())
-                            .build())
-                    .addChild(cb.blockText(Align.left(4), BODY_STYLE)
-                            .entityName("BenchmarkSimpleBody")
-                            .size(width, 2)
-                            .anchor(Anchor.topLeft())
-                            .padding(Padding.of(4))
-                            .text(List.of(
-                                    "This is a compact benchmark scenario that exercises the ordinary engine path: a root flow container, heading text, paragraph layout, and final PDF serialization."),
-                                    BODY_STYLE,
-                                    Padding.zero(),
-                                    Margin.zero())
-                            .build())
-                    .addChild(cb.divider()
-                            .entityName("BenchmarkSimpleDivider")
-                            .width(width)
-                            .thickness(1)
-                            .color(ComponentColor.LIGHT_GRAY)
-                            .build())
-                    .build();
-
-            return composer.toBytes();
-        }
+        return CanonicalBenchmarkSupport.renderSimpleBenchmarkDocument(
+                PDRectangle.A4,
+                Margin.of(24),
+                "BenchmarkSimpleRoot",
+                "GraphCompose Speed Check",
+                "This is a compact benchmark scenario that exercises the ordinary engine path: "
+                        + "a root flow container, heading text, paragraph layout, and final PDF serialization.");
     }
 
     private byte[] renderInvoiceTemplateDocument() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf()
+        try (DocumentSession document = GraphCompose.document()
                 .pageSize(PDRectangle.A4)
                 .margin(22, 22, 22, 22)
-                .markdown(true)
                 .create()) {
-            invoiceTemplate.compose(composer, invoiceData);
-            return composer.toBytes();
+            invoiceTemplate.compose(document, invoiceData);
+            return document.toPdfBytes();
         }
     }
 
     private byte[] renderCvTemplateDocument() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf()
+        try (DocumentSession document = GraphCompose.document()
                 .pageSize(PDRectangle.A4)
                 .margin(15, 10, 15, 15)
-                .markdown(true)
                 .create()) {
-            cvTemplate.compose(composer, originalCv, rewrittenCv);
-            return composer.toBytes();
+            cvTemplate.compose(document, originalCv, rewrittenCv);
+            return document.toPdfBytes();
         }
     }
 
     private byte[] renderProposalTemplateDocument() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf()
+        try (DocumentSession document = GraphCompose.document()
                 .pageSize(PDRectangle.A4)
                 .margin(22, 22, 22, 22)
-                .markdown(true)
                 .create()) {
-            proposalTemplate.compose(composer, proposalData);
-            return composer.toBytes();
+            proposalTemplate.compose(document, proposalData);
+            return document.toPdfBytes();
         }
     }
 
     private byte[] renderFeatureRichDocument() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf()
+        try (DocumentSession document = GraphCompose.document()
                 .pageSize(PDRectangle.A4)
                 .margin(28, 28, 42, 28)
-                .markdown(true)
+                .metadata(PdfMetadataOptions.builder()
+                        .title("GraphCompose Feature Benchmark")
+                        .author("CurrentSpeedBenchmark")
+                        .subject("Performance benchmark for feature-rich output")
+                        .keywords("benchmark, barcode, qr, watermark")
+                        .build())
+                .watermark(PdfWatermarkOptions.builder()
+                        .text("BENCHMARK")
+                        .fontSize(78)
+                        .rotation(40)
+                        .opacity(0.07f)
+                        .color(new Color(54, 92, 131))
+                        .layer(PdfWatermarkLayer.BEHIND_CONTENT)
+                        .position(PdfWatermarkPosition.CENTER)
+                        .build())
+                .header(PdfHeaderFooterOptions.builder()
+                        .leftText("GraphCompose")
+                        .centerText("Feature Benchmark")
+                        .rightText("{date}")
+                        .build())
+                .footer(PdfHeaderFooterOptions.builder()
+                        .leftText("benchmark")
+                        .centerText("Page {page} of {pages}")
+                        .rightText("feature-rich")
+                        .showSeparator(true)
+                        .build())
                 .create()) {
 
-            composer.metadata(DocumentMetadata.builder()
-                    .title("GraphCompose Feature Benchmark")
-                    .author("CurrentSpeedBenchmark")
-                    .subject("Performance benchmark for feature-rich output")
-                    .keywords("benchmark, barcode, qr, watermark")
-                    .build());
-            composer.watermark(WatermarkConfig.builder()
-                    .text("BENCHMARK")
-                    .fontSize(78)
-                    .rotation(40)
-                    .opacity(0.07f)
-                    .color(new Color(54, 92, 131))
-                    .layer(WatermarkLayer.BEHIND_CONTENT)
-                    .position(WatermarkPosition.CENTER)
-                    .build());
-            composer.header("GraphCompose", "Feature Benchmark", "{date}");
-            composer.footer(HeaderFooterConfig.builder()
-                    .leftText("benchmark")
-                    .centerText("Page {page} of {pages}")
-                    .rightText("feature-rich")
-                    .showSeparator(true)
-                    .build());
+            var root = document.dsl()
+                    .pageFlow()
+                    .name("BenchmarkFeatureRoot")
+                    .spacing(12);
 
-            ComponentBuilder cb = composer.componentBuilder();
-            double width = composer.canvas().innerWidth();
-            var root = cb.vContainer(Align.middle(12))
-                    .entityName("BenchmarkFeatureRoot")
-                    .size(width, 0)
-                    .anchor(Anchor.topLeft());
+            root.addParagraph(paragraph -> paragraph
+                    .name("BenchmarkFeatureTitle")
+                    .text("Feature-Rich Benchmark")
+                    .textStyle(TITLE_STYLE));
 
-            root.addChild(cb.text()
-                    .entityName("BenchmarkFeatureTitle")
-                    .textWithAutoSize("Feature-Rich Benchmark")
-                    .textStyle(TITLE_STYLE)
-                    .anchor(Anchor.topLeft())
-                    .build());
+            root.addParagraph(paragraph -> paragraph
+                    .name("BenchmarkFeatureLead")
+                    .text("This scenario intentionally mixes barcode output, document metadata, repeating chrome, "
+                            + "and a forced page break so the benchmark reflects more than raw text rendering.")
+                    .textStyle(BODY_STYLE)
+                    .lineSpacing(4)
+                    .padding(4, 4, 4, 4));
 
-            root.addChild(cb.blockText(Align.left(4), BODY_STYLE)
-                    .entityName("BenchmarkFeatureLead")
-                    .size(width, 2)
-                    .anchor(Anchor.topLeft())
-                    .padding(Padding.of(4))
-                    .text(List.of(
-                                    "This scenario intentionally mixes barcode output, document metadata, repeating chrome, and a forced page break so the benchmark reflects more than raw text rendering."),
-                            BODY_STYLE,
-                            Padding.zero(),
-                            Margin.zero())
-                    .build());
-
-            root.addChild(cb.barcode()
-                    .entityName("BenchmarkFeatureQr")
+            root.addBarcode(barcode -> barcode
+                    .name("BenchmarkFeatureQr")
                     .data(REPOSITORY_URL)
                     .qrCode()
                     .size(108, 108)
-                    .foreground(new Color(18, 40, 74))
-                    .anchor(Anchor.topCenter())
-                    .build());
+                    .foreground(new Color(18, 40, 74)));
 
-            root.addChild(cb.barcode()
-                    .entityName("BenchmarkFeatureCode128")
+            root.addBarcode(barcode -> barcode
+                    .name("BenchmarkFeatureCode128")
                     .data("GC-BENCH-2026-04-13")
                     .code128()
                     .size(280, 68)
-                    .quietZone(4)
-                    .anchor(Anchor.topCenter())
-                    .build());
+                    .quietZone(4));
 
-            root.addChild(cb.pageBreak()
-                    .entityName("BenchmarkFeatureBreak")
-                    .build());
+            root.addPageBreak(pageBreak -> pageBreak.name("BenchmarkFeatureBreak"));
 
             for (int i = 1; i <= 6; i++) {
-                root.addChild(cb.blockText(Align.left(4), BODY_STYLE)
-                        .entityName("BenchmarkFeatureParagraph" + i)
-                        .size(width, 2)
-                        .anchor(Anchor.topLeft())
-                        .padding(Padding.of(4))
-                        .text(List.of(repeatedParagraph(i)),
-                                BODY_STYLE,
-                                Padding.zero(),
-                                Margin.zero())
-                        .build());
+                final int paragraphIndex = i;
+                root.addParagraph(paragraph -> paragraph
+                        .name("BenchmarkFeatureParagraph" + paragraphIndex)
+                        .text(repeatedParagraph(paragraphIndex))
+                        .textStyle(BODY_STYLE)
+                        .lineSpacing(4)
+                        .padding(4, 4, 4, 4));
             }
 
             root.build();
-            return composer.toBytes();
+            return document.toPdfBytes();
         }
     }
 

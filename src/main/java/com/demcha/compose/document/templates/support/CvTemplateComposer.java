@@ -18,6 +18,8 @@ import java.util.Objects;
  * Shared scene composer for the standard CV template.
  */
 public final class CvTemplateComposer {
+    private static final Padding LEGACY_BLOCK_PADDING = new Padding(0, 5, 0, 20);
+
     private final CvTheme theme;
 
     public CvTemplateComposer(CvTheme theme) {
@@ -26,7 +28,7 @@ public final class CvTemplateComposer {
 
     public void compose(TemplateComposeTarget target, MainPageCV originalCv, MainPageCvDTO rewrittenCv) {
         MainPageCV data = rewrittenCv == null ? originalCv : rewrittenCv.merge(originalCv);
-        target.startDocument("MainVBoxContainer", theme.spacing());
+        target.startDocument("MainVBoxContainer", theme.spacingModuleName());
         addHeader(target, data.getHeader());
         addSummary(target, data.getModuleSummary());
         addModule(target, "TechnicalSkills", data.getTechnicalSkills());
@@ -51,7 +53,7 @@ public final class CvTemplateComposer {
                 Padding.zero(),
                 Margin.bottom((float) Math.max(0.0, theme.spacing() - 3))));
 
-        String info = TemplateSceneSupport.joinNonBlank(" | ",
+        String info = TemplateSceneSupport.joinNonBlank(" ",
                 header.getAddress(),
                 header.getPhoneNumber());
         if (!info.isBlank()) {
@@ -65,7 +67,7 @@ public final class CvTemplateComposer {
                     Margin.zero()));
         }
 
-        String links = TemplateSceneSupport.joinNonBlank(" | ",
+        String links = TemplateSceneSupport.joinNonBlank(" ",
                 header.getEmail() == null ? "" : header.getEmail().getDisplayText(),
                 header.getLinkedIn() == null ? "" : header.getLinkedIn().getDisplayText(),
                 header.getGitHub() == null ? "" : header.getGitHub().getDisplayText());
@@ -85,57 +87,60 @@ public final class CvTemplateComposer {
         if (summary == null) {
             return;
         }
-        TemplateSceneSupport.addSectionHeader(
-                target,
-                "Summary",
-                summary.getModuleName(),
-                theme.sectionHeaderTextStyle(),
-                Math.min(target.pageWidth(), 140),
-                theme.accentColor(),
-                1.0,
-                theme.moduleMargin());
+        addModuleTitle(target, "SummaryHeading", summary.getModuleName());
         target.addParagraph(TemplateSceneSupport.blockParagraph(
                 "SummaryBody",
                 TemplateSceneSupport.stripBasicMarkdown(Objects.requireNonNullElse(summary.getBlockSummary(), "")),
                 theme.bodyTextStyle(),
                 TextAlign.LEFT,
-                2.0,
+                theme.spacing(),
                 "    ",
                 BlockIndentStrategy.FIRST_LINE,
-                Padding.zero(),
-                Margin.top(3)));
+                LEGACY_BLOCK_PADDING,
+                Margin.zero()));
     }
 
     private void addModule(TemplateComposeTarget target, String prefix, ModuleYml module) {
         if (module == null || module.getModulePoints() == null || module.getModulePoints().isEmpty()) {
             return;
         }
-        TemplateSceneSupport.addSectionHeader(
-                target,
-                prefix,
-                module.getName(),
-                theme.sectionHeaderTextStyle(),
-                Math.min(target.pageWidth(), 140),
-                theme.accentColor(),
-                1.0,
-                theme.moduleMargin());
+        addModuleTitle(target, prefix + "Heading", module.getName());
         List<String> points = TemplateSceneSupport.sanitizeLines(module.getModulePoints());
-        for (int index = 0; index < points.size(); index++) {
-            String point = points.get(index);
-            String bulletOffset = "TechnicalSkills".equals(prefix) ? "• " : "  ";
-            BlockIndentStrategy indentStrategy = "TechnicalSkills".equals(prefix)
-                    ? BlockIndentStrategy.ALL_LINES
-                    : BlockIndentStrategy.FROM_SECOND_LINE;
-            target.addParagraph(TemplateSceneSupport.blockParagraph(
-                    prefix + "Body_" + index,
-                    point,
-                    theme.bodyTextStyle(),
-                    TextAlign.LEFT,
-                    2.0,
-                    bulletOffset,
-                    indentStrategy,
-                    Padding.zero(),
-                    Margin.top(index == 0 ? 3 : 1)));
+        if ("TechnicalSkills".equals(prefix)) {
+            for (int index = 0; index < points.size(); index++) {
+                target.addParagraph(TemplateSceneSupport.blockParagraph(
+                        prefix + "Body_" + index,
+                        points.get(index),
+                        theme.bodyTextStyle(),
+                        TextAlign.LEFT,
+                        theme.spacing(),
+                        "\u2022 ",
+                        BlockIndentStrategy.ALL_LINES,
+                        LEGACY_BLOCK_PADDING,
+                        Margin.zero()));
+            }
+            return;
         }
+        target.addParagraph(TemplateSceneSupport.blockParagraph(
+                prefix + "Body",
+                String.join("\n", points),
+                theme.bodyTextStyle(),
+                TextAlign.LEFT,
+                theme.spacing(),
+                "  ",
+                BlockIndentStrategy.FROM_SECOND_LINE,
+                LEGACY_BLOCK_PADDING,
+                Margin.zero()));
+    }
+
+    private void addModuleTitle(TemplateComposeTarget target, String name, String title) {
+        target.addParagraph(TemplateSceneSupport.paragraph(
+                name,
+                Objects.requireNonNullElse(title, ""),
+                theme.sectionHeaderTextStyle(),
+                TextAlign.LEFT,
+                1.0,
+                Padding.zero(),
+                Margin.of(5)));
     }
 }

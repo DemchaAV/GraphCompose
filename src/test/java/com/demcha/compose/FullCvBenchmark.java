@@ -1,36 +1,31 @@
 package com.demcha.compose;
 
-import com.demcha.templates.data.MainPageCV;
-import com.demcha.templates.api.MainPageCvDTO;
-import com.demcha.templates.builtins.CvTemplateV1;
-import com.demcha.mock.MainPageCVMock;
-import org.apache.pdfbox.pdmodel.PDDocument;
+import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.templates.builtins.CvTemplateV1;
+import com.demcha.compose.document.templates.data.MainPageCV;
+import com.demcha.compose.document.templates.data.MainPageCvDTO;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
-import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 
 public class FullCvBenchmark {
 
-    // Количество холостых запусков для оптимизации кода JIT-компилятором
-    private static final int WARMUP_ITERATIONS = 100;
-    // Количество реальных замеров
-    private static final int MEASUREMENT_ITERATIONS = 500;
+    private static final int WARMUP_ITERATIONS = Integer.getInteger("graphcompose.benchmark.fullCv.warmup", 100);
+    private static final int MEASUREMENT_ITERATIONS = Integer.getInteger("graphcompose.benchmark.fullCv.iterations", 500);
 
     public static void main(String[] args) {
         BenchmarkSupport.configureQuietLogging();
         System.out.println("Starting FullCvBenchmark...");
 
-        MainPageCV original = new MainPageCVMock().getMainPageCV();
-        MainPageCvDTO rewritten = MainPageCvDTO.from(original);
+        MainPageCV original = CanonicalBenchmarkSupport.canonicalCv();
+        MainPageCvDTO rewritten = CanonicalBenchmarkSupport.rewrite(original);
         CvTemplateV1 template = new CvTemplateV1();
 
-        // 1. Фаза прогрева (Warmup)
         System.out.println("Warming up JVM (JIT compilation, font cache warmup)...");
         for (int i = 0; i < WARMUP_ITERATIONS; i++) {
             generateCvInMemory(template, original, rewritten);
         }
 
-        // 2. Фаза измерения (Measurement)
         System.out.println("Measuring performance (" + MEASUREMENT_ITERATIONS + " iterations)...");
         long[] durationsNs = new long[MEASUREMENT_ITERATIONS];
 
@@ -41,32 +36,29 @@ public class FullCvBenchmark {
             durationsNs[i] = end - start;
         }
 
-        // 3. Расчет и вывод статистики
         printStatistics(durationsNs);
     }
 
     private static void generateCvInMemory(CvTemplateV1 template, MainPageCV original, MainPageCvDTO rewritten) {
-        try (PDDocument document = template.render(original, rewritten)) {
-            // Рендерим в байты, так как I/O диска испортит метрики процессора
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            document.save(out);
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(PDRectangle.A4)
+                .margin(15, 10, 15, 15)
+                .create()) {
+            template.compose(document, original, rewritten);
+            document.toPdfBytes();
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate PDF", e);
         }
     }
 
     private static void printStatistics(long[] durationsNs) {
-        // Сортируем массив для вычисления перцентилей
         Arrays.sort(durationsNs);
 
-        // Переводим наносекунды в миллисекунды (ms)
         double[] durationsMs = Arrays.stream(durationsNs).mapToDouble(ns -> ns / 1_000_000.0).toArray();
 
         double min = durationsMs[0];
         double max = durationsMs[durationsMs.length - 1];
         double avg = Arrays.stream(durationsMs).average().orElse(0.0);
-
-        // Перцентили показывают реальную картину лучше, чем среднее значение
         double median = durationsMs[(int) (durationsMs.length * 0.5)];
         double p95 = durationsMs[(int) (durationsMs.length * 0.95)];
         double p99 = durationsMs[(int) (durationsMs.length * 0.99)];

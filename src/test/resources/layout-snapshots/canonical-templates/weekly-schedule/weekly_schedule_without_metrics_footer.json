@@ -1,0 +1,227 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 841.89,
+    "pageHeight" : 595.276,
+    "innerWidth" : 805.89,
+    "innerHeight" : 559.276,
+    "margin" : {
+      "top" : 18.0,
+      "right" : 18.0,
+      "bottom" : 18.0,
+      "left" : 18.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "WeeklyScheduleRoot[0]",
+    "entityName" : "WeeklyScheduleRoot",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 18.0,
+    "computedY" : 45.186,
+    "placementX" : 18.0,
+    "placementY" : 45.186,
+    "placementWidth" : 805.89,
+    "placementHeight" : 532.09,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 532.09,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleHeader[0]",
+    "entityName" : "WeeklyScheduleHeader",
+    "entityKind" : "TableNode",
+    "parentPath" : "WeeklyScheduleRoot[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 540.876,
+    "placementX" : 18.0,
+    "placementY" : 540.876,
+    "placementWidth" : 805.89,
+    "placementHeight" : 36.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 36.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleRule[1]",
+    "entityName" : "WeeklyScheduleRule",
+    "entityKind" : "ShapeNode",
+    "parentPath" : "WeeklyScheduleRoot[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 516.576,
+    "placementX" : 18.0,
+    "placementY" : 516.576,
+    "placementWidth" : 805.89,
+    "placementHeight" : 17.3,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 17.3,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 8.0,
+      "right" : 0.0,
+      "bottom" : 8.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleDayLabels[2]",
+    "entityName" : "WeeklyScheduleDayLabels",
+    "entityKind" : "TableNode",
+    "parentPath" : "WeeklyScheduleRoot[0]",
+    "childIndex" : 2,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 466.216,
+    "placementX" : 18.0,
+    "placementY" : 466.216,
+    "placementWidth" : 805.89,
+    "placementHeight" : 43.36,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 43.36,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleDayNotes[3]",
+    "entityName" : "WeeklyScheduleDayNotes",
+    "entityKind" : "TableNode",
+    "parentPath" : "WeeklyScheduleRoot[0]",
+    "childIndex" : 3,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 414.656,
+    "placementX" : 18.0,
+    "placementY" : 414.656,
+    "placementWidth" : 805.89,
+    "placementHeight" : 44.56,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 44.56,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleDayCategories[4]",
+    "entityName" : "WeeklyScheduleDayCategories",
+    "entityKind" : "TableNode",
+    "parentPath" : "WeeklyScheduleRoot[0]",
+    "childIndex" : 4,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 382.496,
+    "placementX" : 18.0,
+    "placementY" : 382.496,
+    "placementWidth" : 805.89,
+    "placementHeight" : 25.16,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 25.16,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WeeklyScheduleRoot[0]/WeeklyScheduleRoster[5]",
+    "entityName" : "WeeklyScheduleRoster",
+    "entityKind" : "TableNode",
+    "parentPath" : "WeeklyScheduleRoot[0]",
+    "childIndex" : 5,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 45.186,
+    "placementX" : 18.0,
+    "placementY" : 45.186,
+    "placementWidth" : 805.89,
+    "placementHeight" : 326.31,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 805.89,
+    "contentHeight" : 326.31,
+    "margin" : {
+      "top" : 4.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

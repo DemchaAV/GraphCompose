@@ -1,8 +1,6 @@
 package com.demcha.compose;
 
-import com.demcha.templates.CvTheme;
-import com.demcha.templates.TemplateBuilder;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.layout_core.components.style.Margin;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 /**
@@ -54,13 +52,11 @@ public class EnduranceTest {
     }
 
     private static void generateOne(int id) throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().pageSize(PDRectangle.A4).create()) {
-            TemplateBuilder template = TemplateBuilder.from(composer.componentBuilder(), CvTheme.defaultTheme());
-            template.moduleBuilder("Endurance", composer.canvas())
-                    .addChild(template.blockText("Document ID: " + id + ". This is a soak test message to check for memory leaks.", 
-                            composer.canvas().innerWidth()))
-                    .build();
-            composer.toBytes();
-        }
+        CanonicalBenchmarkSupport.renderSimpleBenchmarkDocument(
+                PDRectangle.A4,
+                Margin.of(24),
+                "EnduranceRoot",
+                "Endurance",
+                "Document ID: " + id + ". This is a soak test message to check for memory leaks.");
     }
 }

@@ -1,7 +1,6 @@
 package com.demcha.templates.builtins;
 
 import com.demcha.compose.document.templates.support.CvTemplateComposer;
-import com.demcha.compose.document.templates.support.LegacyComposerTemplateComposeTarget;
 import com.demcha.compose.document.templates.support.LegacyTemplateMappers;
 import com.demcha.compose.document.templates.support.SessionTemplateComposeTarget;
 import com.demcha.compose.layout_core.core.DocumentComposer;
@@ -21,6 +20,7 @@ import java.util.Objects;
 @Deprecated(forRemoval = false)
 public class CvTemplateV1 extends PdfTemplateAdapterSupport implements CvTemplate {
     private final CvTemplateComposer composer;
+    private final CvSceneBuilder legacySceneBuilder;
 
     public CvTemplateV1() {
         this(CvTheme.defaultTheme());
@@ -29,14 +29,12 @@ public class CvTemplateV1 extends PdfTemplateAdapterSupport implements CvTemplat
     public CvTemplateV1(CvTheme theme) {
         CvTheme resolvedTheme = Objects.requireNonNullElseGet(theme, CvTheme::defaultTheme);
         this.composer = new CvTemplateComposer(LegacyTemplateMappers.toCanonical(resolvedTheme));
+        this.legacySceneBuilder = new CvSceneBuilder(resolvedTheme);
     }
 
     @Override
     public void compose(DocumentComposer composer, MainPageCV originalCv, MainPageCvDTO rewrittenCv) {
-        this.composer.compose(
-                new LegacyComposerTemplateComposeTarget(composer),
-                LegacyTemplateMappers.toCanonical(originalCv),
-                LegacyTemplateMappers.toCanonical(rewrittenCv));
+        legacySceneBuilder.compose(composer, originalCv, rewrittenCv);
     }
 
     @Deprecated(forRemoval = false)

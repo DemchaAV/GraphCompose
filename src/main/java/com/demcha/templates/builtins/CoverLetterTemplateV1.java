@@ -1,7 +1,6 @@
 package com.demcha.templates.builtins;
 
 import com.demcha.compose.document.templates.support.CoverLetterTemplateComposer;
-import com.demcha.compose.document.templates.support.LegacyComposerTemplateComposeTarget;
 import com.demcha.compose.document.templates.support.LegacyTemplateMappers;
 import com.demcha.compose.document.templates.support.SessionTemplateComposeTarget;
 import com.demcha.compose.layout_core.core.DocumentComposer;
@@ -20,20 +19,20 @@ import java.nio.file.Path;
 @Deprecated(forRemoval = false)
 public class CoverLetterTemplateV1 extends PdfTemplateAdapterSupport implements CoverLetterTemplate {
     private final CoverLetterTemplateComposer composer;
+    private final CoverLetterSceneBuilder legacySceneBuilder;
 
     public CoverLetterTemplateV1() {
+        CvTheme bodyTheme = CvTheme.defaultTheme();
+        CvTheme signatureTheme = CvTheme.courier();
         this.composer = new CoverLetterTemplateComposer(
-                LegacyTemplateMappers.toCanonical(CvTheme.defaultTheme()),
-                LegacyTemplateMappers.toCanonical(CvTheme.courier()));
+                LegacyTemplateMappers.toCanonical(bodyTheme),
+                LegacyTemplateMappers.toCanonical(signatureTheme));
+        this.legacySceneBuilder = new CoverLetterSceneBuilder(bodyTheme, signatureTheme);
     }
 
     @Override
     public void compose(DocumentComposer composer, Header header, String wroteLetter, JobDetails jobDetails) {
-        this.composer.compose(
-                new LegacyComposerTemplateComposeTarget(composer),
-                LegacyTemplateMappers.toCanonical(header),
-                wroteLetter,
-                LegacyTemplateMappers.toCanonical(jobDetails));
+        legacySceneBuilder.compose(composer, header, wroteLetter, jobDetails);
     }
 
     @Deprecated(forRemoval = false)

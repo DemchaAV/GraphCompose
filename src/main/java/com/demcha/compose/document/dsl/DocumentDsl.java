@@ -1,6 +1,11 @@
 package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfBarcodeOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfBarcodeType;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
+import com.demcha.compose.document.model.node.BarcodeNode;
 import com.demcha.compose.document.model.node.ContainerNode;
 import com.demcha.compose.document.model.node.DocumentNode;
 import com.demcha.compose.document.model.node.ImageNode;
@@ -10,6 +15,7 @@ import com.demcha.compose.document.model.node.SectionNode;
 import com.demcha.compose.document.model.node.ShapeNode;
 import com.demcha.compose.document.model.node.TableNode;
 import com.demcha.compose.document.model.node.TextAlign;
+import com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy;
 import com.demcha.compose.layout_core.components.components_builders.TableCellSpec;
 import com.demcha.compose.layout_core.components.components_builders.TableCellStyle;
 import com.demcha.compose.layout_core.components.components_builders.TableColumnSpec;
@@ -120,6 +126,15 @@ public final class DocumentDsl {
      */
     public ShapeBuilder shape() {
         return new ShapeBuilder();
+    }
+
+    /**
+     * Starts a semantic barcode or QR-code builder.
+     *
+     * @return a detached barcode builder
+     */
+    public BarcodeBuilder barcode() {
+        return new BarcodeBuilder();
     }
 
     /**
@@ -236,6 +251,10 @@ public final class DocumentDsl {
             return add(configure(new ShapeBuilder(), spec).build());
         }
 
+        public T addBarcode(Consumer<BarcodeBuilder> spec) {
+            return add(configure(new BarcodeBuilder(), spec).build());
+        }
+
         public T addDivider(Consumer<DividerBuilder> spec) {
             return add(configure(new DividerBuilder(), spec).build());
         }
@@ -346,6 +365,10 @@ public final class DocumentDsl {
         private TextStyle textStyle = TextStyle.DEFAULT_STYLE;
         private TextAlign align = TextAlign.LEFT;
         private double lineSpacing = 0.0;
+        private String bulletOffset = "";
+        private BlockIndentStrategy indentStrategy = BlockIndentStrategy.NONE;
+        private PdfLinkOptions linkOptions;
+        private PdfBookmarkOptions bookmarkOptions;
         private Padding padding = Padding.zero();
         private Margin margin = Margin.zero();
 
@@ -374,6 +397,26 @@ public final class DocumentDsl {
             return this;
         }
 
+        public ParagraphBuilder bulletOffset(String bulletOffset) {
+            this.bulletOffset = bulletOffset == null ? "" : bulletOffset;
+            return this;
+        }
+
+        public ParagraphBuilder indentStrategy(BlockIndentStrategy indentStrategy) {
+            this.indentStrategy = indentStrategy == null ? BlockIndentStrategy.NONE : indentStrategy;
+            return this;
+        }
+
+        public ParagraphBuilder link(PdfLinkOptions linkOptions) {
+            this.linkOptions = linkOptions;
+            return this;
+        }
+
+        public ParagraphBuilder bookmark(PdfBookmarkOptions bookmarkOptions) {
+            this.bookmarkOptions = bookmarkOptions;
+            return this;
+        }
+
         public ParagraphBuilder padding(Padding padding) {
             this.padding = padding == null ? Padding.zero() : padding;
             return this;
@@ -393,7 +436,18 @@ public final class DocumentDsl {
         }
 
         public ParagraphNode build() {
-            return new ParagraphNode(name, text, textStyle, align, lineSpacing, padding, margin);
+            return new ParagraphNode(
+                    name,
+                    text,
+                    textStyle,
+                    align,
+                    lineSpacing,
+                    bulletOffset,
+                    indentStrategy,
+                    linkOptions,
+                    bookmarkOptions,
+                    padding,
+                    margin);
         }
     }
 
@@ -405,6 +459,8 @@ public final class DocumentDsl {
         private ImageData imageData;
         private Double width;
         private Double height;
+        private PdfLinkOptions linkOptions;
+        private PdfBookmarkOptions bookmarkOptions;
         private Padding padding = Padding.zero();
         private Margin margin = Margin.zero();
 
@@ -442,6 +498,16 @@ public final class DocumentDsl {
             return this;
         }
 
+        public ImageBuilder link(PdfLinkOptions linkOptions) {
+            this.linkOptions = linkOptions;
+            return this;
+        }
+
+        public ImageBuilder bookmark(PdfBookmarkOptions bookmarkOptions) {
+            this.bookmarkOptions = bookmarkOptions;
+            return this;
+        }
+
         public ImageBuilder padding(Padding padding) {
             this.padding = padding == null ? Padding.zero() : padding;
             return this;
@@ -453,7 +519,15 @@ public final class DocumentDsl {
         }
 
         public ImageNode build() {
-            return new ImageNode(name, Objects.requireNonNull(imageData, "imageData"), width, height, padding, margin);
+            return new ImageNode(
+                    name,
+                    Objects.requireNonNull(imageData, "imageData"),
+                    width,
+                    height,
+                    linkOptions,
+                    bookmarkOptions,
+                    padding,
+                    margin);
         }
     }
 
@@ -466,6 +540,8 @@ public final class DocumentDsl {
         protected double height;
         protected Color fillColor;
         protected Stroke stroke;
+        protected PdfLinkOptions linkOptions;
+        protected PdfBookmarkOptions bookmarkOptions;
         protected Padding padding = Padding.zero();
         protected Margin margin = Margin.zero();
 
@@ -504,6 +580,16 @@ public final class DocumentDsl {
             return this;
         }
 
+        public ShapeBuilder link(PdfLinkOptions linkOptions) {
+            this.linkOptions = linkOptions;
+            return this;
+        }
+
+        public ShapeBuilder bookmark(PdfBookmarkOptions bookmarkOptions) {
+            this.bookmarkOptions = bookmarkOptions;
+            return this;
+        }
+
         public ShapeBuilder padding(Padding padding) {
             this.padding = padding == null ? Padding.zero() : padding;
             return this;
@@ -515,7 +601,140 @@ public final class DocumentDsl {
         }
 
         public ShapeNode build() {
-            return new ShapeNode(name, width, height, fillColor, stroke, padding, margin);
+            return new ShapeNode(name, width, height, fillColor, stroke, linkOptions, bookmarkOptions, padding, margin);
+        }
+    }
+
+    /**
+     * Builder for semantic barcode and QR-code nodes.
+     */
+    public static final class BarcodeBuilder {
+        private String name = "";
+        private String content = "";
+        private PdfBarcodeType type = PdfBarcodeType.QR_CODE;
+        private Color foreground = Color.BLACK;
+        private Color background = Color.WHITE;
+        private int quietZoneMargin = 0;
+        private double width;
+        private double height;
+        private PdfLinkOptions linkOptions;
+        private PdfBookmarkOptions bookmarkOptions;
+        private Padding padding = Padding.zero();
+        private Margin margin = Margin.zero();
+
+        public BarcodeBuilder name(String name) {
+            this.name = name == null ? "" : name;
+            return this;
+        }
+
+        public BarcodeBuilder options(PdfBarcodeOptions options) {
+            PdfBarcodeOptions safe = Objects.requireNonNull(options, "options");
+            this.content = safe.getContent();
+            this.type = safe.getType();
+            this.foreground = safe.getForeground();
+            this.background = safe.getBackground();
+            this.quietZoneMargin = safe.getQuietZoneMargin();
+            return this;
+        }
+
+        public BarcodeBuilder data(String content) {
+            this.content = content == null ? "" : content;
+            return this;
+        }
+
+        public BarcodeBuilder type(PdfBarcodeType type) {
+            this.type = type == null ? PdfBarcodeType.QR_CODE : type;
+            return this;
+        }
+
+        public BarcodeBuilder qrCode() {
+            return type(PdfBarcodeType.QR_CODE);
+        }
+
+        public BarcodeBuilder code128() {
+            return type(PdfBarcodeType.CODE_128);
+        }
+
+        public BarcodeBuilder code39() {
+            return type(PdfBarcodeType.CODE_39);
+        }
+
+        public BarcodeBuilder ean13() {
+            return type(PdfBarcodeType.EAN_13);
+        }
+
+        public BarcodeBuilder ean8() {
+            return type(PdfBarcodeType.EAN_8);
+        }
+
+        public BarcodeBuilder foreground(Color foreground) {
+            this.foreground = foreground == null ? Color.BLACK : foreground;
+            return this;
+        }
+
+        public BarcodeBuilder foreground(ComponentColor foreground) {
+            return foreground(foreground == null ? null : foreground.color());
+        }
+
+        public BarcodeBuilder background(Color background) {
+            this.background = background == null ? Color.WHITE : background;
+            return this;
+        }
+
+        public BarcodeBuilder background(ComponentColor background) {
+            return background(background == null ? null : background.color());
+        }
+
+        public BarcodeBuilder quietZone(int quietZoneMargin) {
+            this.quietZoneMargin = Math.max(0, quietZoneMargin);
+            return this;
+        }
+
+        public BarcodeBuilder width(double width) {
+            this.width = width;
+            return this;
+        }
+
+        public BarcodeBuilder height(double height) {
+            this.height = height;
+            return this;
+        }
+
+        public BarcodeBuilder size(double width, double height) {
+            this.width = width;
+            this.height = height;
+            return this;
+        }
+
+        public BarcodeBuilder link(PdfLinkOptions linkOptions) {
+            this.linkOptions = linkOptions;
+            return this;
+        }
+
+        public BarcodeBuilder bookmark(PdfBookmarkOptions bookmarkOptions) {
+            this.bookmarkOptions = bookmarkOptions;
+            return this;
+        }
+
+        public BarcodeBuilder padding(Padding padding) {
+            this.padding = padding == null ? Padding.zero() : padding;
+            return this;
+        }
+
+        public BarcodeBuilder margin(Margin margin) {
+            this.margin = margin == null ? Margin.zero() : margin;
+            return this;
+        }
+
+        public BarcodeNode build() {
+            PdfBarcodeOptions options = PdfBarcodeOptions.builder()
+                    .content(content)
+                    .type(type)
+                    .foreground(foreground)
+                    .background(background)
+                    .quietZoneMargin(quietZoneMargin)
+                    .build();
+            return new BarcodeNode(name, options, width, height, linkOptions, bookmarkOptions, padding, margin);
         }
     }
 
@@ -580,6 +799,8 @@ public final class DocumentDsl {
         private final Map<Integer, TableCellStyle> columnStyles = new LinkedHashMap<>();
         private TableCellStyle defaultCellStyle = TableCellStyle.DEFAULT;
         private Double width;
+        private PdfLinkOptions linkOptions;
+        private PdfBookmarkOptions bookmarkOptions;
         private Padding padding = Padding.zero();
         private Margin margin = Margin.zero();
 
@@ -650,6 +871,16 @@ public final class DocumentDsl {
             return this;
         }
 
+        public TableBuilder link(PdfLinkOptions linkOptions) {
+            this.linkOptions = linkOptions;
+            return this;
+        }
+
+        public TableBuilder bookmark(PdfBookmarkOptions bookmarkOptions) {
+            this.bookmarkOptions = bookmarkOptions;
+            return this;
+        }
+
         public TableBuilder padding(Padding padding) {
             this.padding = padding == null ? Padding.zero() : padding;
             return this;
@@ -669,6 +900,8 @@ public final class DocumentDsl {
                     Map.copyOf(rowStyles),
                     Map.copyOf(columnStyles),
                     width,
+                    linkOptions,
+                    bookmarkOptions,
                     padding,
                     margin);
         }

@@ -1,8 +1,6 @@
 package com.demcha.templates.builtins;
 
-import com.demcha.compose.document.templates.support.BusinessDocumentSceneStyles;
 import com.demcha.compose.document.templates.support.InvoiceTemplateComposer;
-import com.demcha.compose.document.templates.support.LegacyComposerTemplateComposeTarget;
 import com.demcha.compose.document.templates.support.LegacyTemplateMappers;
 import com.demcha.compose.document.templates.support.SessionTemplateComposeTarget;
 import com.demcha.compose.layout_core.core.DocumentComposer;
@@ -18,13 +16,13 @@ import java.nio.file.Path;
  */
 @Deprecated(forRemoval = false)
 public class InvoiceTemplateV1 extends PdfTemplateAdapterSupport implements InvoiceTemplate {
-    private final InvoiceTemplateComposer composer = new InvoiceTemplateComposer(new BusinessDocumentSceneStyles());
+    private final InvoiceTemplateComposer composer = new InvoiceTemplateComposer(
+            new com.demcha.compose.document.templates.support.BusinessDocumentSceneStyles());
+    private final InvoiceSceneBuilder legacySceneBuilder = new InvoiceSceneBuilder(new BusinessDocumentSceneStyles());
 
     @Override
     public void compose(DocumentComposer composer, InvoiceData data) {
-        this.composer.compose(
-                new LegacyComposerTemplateComposeTarget(composer),
-                LegacyTemplateMappers.toCanonical(data));
+        legacySceneBuilder.compose(composer, data);
     }
 
     @Override

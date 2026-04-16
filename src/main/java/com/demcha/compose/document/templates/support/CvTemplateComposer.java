@@ -7,6 +7,7 @@ import com.demcha.compose.document.templates.data.MainPageCvDTO;
 import com.demcha.compose.document.templates.data.ModuleSummary;
 import com.demcha.compose.document.templates.data.ModuleYml;
 import com.demcha.compose.document.templates.theme.CvTheme;
+import com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 
@@ -93,12 +94,14 @@ public final class CvTemplateComposer {
                 theme.accentColor(),
                 1.0,
                 theme.moduleMargin());
-        target.addParagraph(TemplateSceneSupport.paragraph(
+        target.addParagraph(TemplateSceneSupport.blockParagraph(
                 "SummaryBody",
-                Objects.requireNonNullElse(summary.getBlockSummary(), ""),
+                TemplateSceneSupport.stripBasicMarkdown(Objects.requireNonNullElse(summary.getBlockSummary(), "")),
                 theme.bodyTextStyle(),
                 TextAlign.LEFT,
                 2.0,
+                "    ",
+                BlockIndentStrategy.FIRST_LINE,
                 Padding.zero(),
                 Margin.top(3)));
     }
@@ -116,13 +119,23 @@ public final class CvTemplateComposer {
                 theme.accentColor(),
                 1.0,
                 theme.moduleMargin());
-        target.addParagraph(TemplateSceneSupport.paragraph(
-                prefix + "Body",
-                TemplateSceneSupport.bulletText(module.getModulePoints()),
-                theme.bodyTextStyle(),
-                TextAlign.LEFT,
-                2.0,
-                Padding.zero(),
-                Margin.top(3)));
+        List<String> points = TemplateSceneSupport.sanitizeLines(module.getModulePoints());
+        for (int index = 0; index < points.size(); index++) {
+            String point = points.get(index);
+            String bulletOffset = "TechnicalSkills".equals(prefix) ? "• " : "  ";
+            BlockIndentStrategy indentStrategy = "TechnicalSkills".equals(prefix)
+                    ? BlockIndentStrategy.ALL_LINES
+                    : BlockIndentStrategy.FROM_SECOND_LINE;
+            target.addParagraph(TemplateSceneSupport.blockParagraph(
+                    prefix + "Body_" + index,
+                    point,
+                    theme.bodyTextStyle(),
+                    TextAlign.LEFT,
+                    2.0,
+                    bulletOffset,
+                    indentStrategy,
+                    Padding.zero(),
+                    Margin.top(index == 0 ? 3 : 1)));
+        }
     }
 }

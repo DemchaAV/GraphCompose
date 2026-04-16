@@ -18,7 +18,7 @@ In short, the runtime pipeline is:
 
 That separation is the core project concept. Builders describe intent, components hold the data, layout resolves geometry, and renderers only draw already-resolved output.
 
-The same separation also enables layout snapshot regression tests. Test code can inspect the resolved document after layout and pagination, before rendering, through `PdfComposer.layoutSnapshot()`.
+The same separation also enables layout snapshot regression tests. Test code can inspect the resolved document after layout and pagination, before rendering, through `DocumentSession.layoutSnapshot()`. The older `PdfComposer.layoutSnapshot()` remains available only as a legacy compatibility path.
 
 The rendering layer now also has an explicit render-pass seam:
 
@@ -114,21 +114,25 @@ Fixed leaf primitives such as `Rectangle`, `Circle`, `Image`, and `Line` follow 
 - they rely on normal `ContentSize`, `Padding`, `Margin`, and `Placement`
 - they do not introduce a separate layout subsystem or pagination model
 
-## Template layer: `com.demcha.templates.*`
+## Template layer: `com.demcha.compose.document.templates.*`
 
-- `templates` contains higher-level CV and cover-letter builders, DTOs, themes, and template registries.
-- These classes sit on top of the engine and package common document structures into reusable templates.
-- `templates.api` contains template-facing contracts and registry/helper types.
-- `templates.builtins` contains concrete template implementations.
-- template contracts are now compose-first: `compose(DocumentComposer, ...)` is the primary seam, while PDF-returning `render(...)` overloads remain deprecated compatibility adapters.
-- built-in templates should be split into a thin backend adapter plus a backend-neutral scene/composition builder.
-- `TemplateBuilder.pageFlow(...)` is the canonical template root that stacks semantic modules in document order.
+- `com.demcha.compose.document.templates.*` contains the canonical higher-level template contracts, built-ins, DTOs, themes, registries, and scene helpers.
+- These classes sit on top of the semantic `document.*` API and package common document structures into reusable templates.
+- `...templates.api` contains template-facing contracts and registries.
+- `...templates.builtins` contains concrete canonical template implementations.
+- `...templates.support` contains backend-neutral scene composers, mappers, and transition adapters.
+- canonical template contracts are compose-first: `compose(DocumentSession, ...)` is the primary seam.
+- deprecated compatibility adapters remain under `com.demcha.templates.*`, where legacy `compose(DocumentComposer, ...)` and `render(...)` overloads survive for one transition release.
+- canonical built-ins should start one semantic page-flow root through `DocumentSession.dsl().pageFlow()` or the internal `TemplateComposeTarget` seam that feeds that same path.
 
 ## Current package roots
 
-- `com.demcha.compose.layout_core.*` contains the engine internals and public builder-facing layout layer.
+- `com.demcha.compose.document.*` contains the canonical semantic document API, layout graph, backends, exceptions, and snapshot/debug helpers.
+- `com.demcha.compose.document.templates.*` contains the canonical higher-level template layer.
+- `com.demcha.compose.layout_core.*` contains the engine internals and the legacy builder-facing layout layer that still powers compatibility adapters.
 - `com.demcha.compose.layout_core.system.implemented_systems.word_systems.*` contains the experimental Word-specific rendering path.
-- `com.demcha.templates.*` contains the higher-level template layer.
+- `com.demcha.templates.*` remains as a deprecated template compatibility bridge.
+- `com.demcha.compose.v2.*` remains as a deprecated package bridge from the original V2 experiment to the canonical `document.*` surface.
 
 ## Experimental areas
 

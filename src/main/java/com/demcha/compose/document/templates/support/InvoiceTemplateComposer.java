@@ -134,8 +134,8 @@ public final class InvoiceTemplateComposer {
                 "InvoiceParties",
                 List.of(TableColumnSpec.fixed(columnWidth), TableColumnSpec.fixed(columnWidth)),
                 List.of(List.of(
-                        TableCellSpec.lines(partyLines("FROM", data.fromParty())),
-                        TableCellSpec.lines(partyLines("BILL TO", data.billToParty())))),
+                        TableCellSpec.of(partyLines("FROM", data.fromParty())),
+                        TableCellSpec.of(partyLines("BILL TO", data.billToParty())))),
                 style,
                 Map.of(),
                 Map.of(),

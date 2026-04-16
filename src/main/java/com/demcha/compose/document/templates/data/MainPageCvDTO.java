@@ -3,12 +3,18 @@ package com.demcha.compose.document.templates.data;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Mutable CV rewrite DTO used to override subsets of a source CV before
- * template composition.
- */
 @Data
 @NoArgsConstructor
+/**
+ * Mutable override payload for patching a source CV before canonical composition.
+ *
+ * <p><b>Pipeline role:</b> lets callers override only selected CV sections,
+ * then merges those overrides into a resolved {@link MainPageCV} instance for
+ * downstream template scene building.</p>
+ *
+ * <p><b>Mutability:</b> mutable Lombok-backed bean. <b>Thread-safety:</b>
+ * not thread-safe.</p>
+ */
 public class MainPageCvDTO {
     private Header header;
     private ModuleSummary moduleSummary;

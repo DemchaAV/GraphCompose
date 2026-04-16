@@ -30,7 +30,9 @@ Use them when you want to know that:
 
 ## Pipeline position
 
-`PdfComposer.layoutSnapshot()` captures the document after layout and pagination, but before PDF rendering.
+`DocumentSession.layoutSnapshot()` captures the document after layout and pagination, but before PDF rendering.
+
+The deprecated `PdfComposer.layoutSnapshot()` path remains available for legacy compatibility tests, but it is no longer the documented default.
 
 That means the coordinates in the snapshot are:
 
@@ -48,11 +50,11 @@ It does not render the PDF by itself.
 
 If you later call:
 
-- `build()`
-- `toBytes()`
-- `toPDDocument()`
+- `buildPdf()`
+- `toPdfBytes()`
+- `render(...)`
 
-on the same `PdfComposer`, GraphCompose reuses the already resolved layout so the
+on the same `DocumentSession`, GraphCompose reuses the already resolved layout so the
 debug snapshot and final PDF stay in sync.
 
 This matters for two reasons:
@@ -67,21 +69,21 @@ If application code never calls `layoutSnapshot()`, this feature does not change
 ### Capture a raw layout snapshot
 
 ```java
-try (PdfComposer composer = GraphCompose.pdf()
+try (DocumentSession document = GraphCompose.document()
         .pageSize(PDRectangle.A4)
         .margin(24, 24, 24, 24)
         .create()) {
 
-    ComponentBuilder cb = composer.componentBuilder();
-
-    cb.text()
-            .entityName("Title")
-            .textWithAutoSize("Hello GraphCompose")
-            .textStyle(TextStyle.DEFAULT_STYLE)
-            .anchor(Anchor.topLeft())
+    document.dsl()
+            .pageFlow()
+            .name("SnapshotExample")
+            .addParagraph(p -> p
+                    .name("Title")
+                    .text("Hello GraphCompose")
+                    .textStyle(TextStyle.DEFAULT_STYLE))
             .build();
 
-    LayoutSnapshot snapshot = composer.layoutSnapshot();
+    LayoutSnapshot snapshot = document.layoutSnapshot();
 }
 ```
 
@@ -96,15 +98,14 @@ import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 void shouldMatchInvoiceLayoutSnapshotAndRenderPdf() throws Exception {
     Path outputFile = VisualTestOutputs.preparePdf("invoice_render_file", "clean", "templates", "invoice");
 
-    try (PdfComposer composer = GraphCompose.pdf(outputFile)
+    try (DocumentSession document = GraphCompose.document(outputFile)
             .pageSize(PDRectangle.A4)
             .margin(22, 22, 22, 22)
-            .markdown(true)
             .create()) {
 
-        template.compose(composer, data);
-        LayoutSnapshotAssertions.assertMatches(composer, "templates/invoice/invoice_standard_layout");
-        composer.build();
+        template.compose(document, data);
+        LayoutSnapshotAssertions.assertMatches(document, "templates/invoice/invoice_standard_layout");
+        document.buildPdf();
     }
 }
 ```
@@ -118,16 +119,16 @@ This gives one test two kinds of feedback:
 
 If you are adding a new feature, template, or pagination case, the fastest way to add snapshot coverage is:
 
-1. create a JUnit test that instantiates a `PdfComposer`
-2. compose the document into that composer
+1. create a JUnit test that instantiates a canonical `DocumentSession`
+2. compose the document into that session
 3. call `LayoutSnapshotAssertions.assertMatches(...)`
-4. optionally call `build()` if you also want a PDF artifact for visual inspection
+4. optionally call `buildPdf()` if you also want a PDF artifact for visual inspection
 
 Minimal pattern:
 
 ```java
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
@@ -136,16 +137,15 @@ class MyFeatureLayoutSnapshotTest {
 
     @Test
     void shouldKeepMyFeatureLayoutStable() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf()
+        try (DocumentSession document = GraphCompose.document()
                 .pageSize(PDRectangle.A4)
                 .margin(22, 22, 22, 22)
-                .markdown(true)
                 .create()) {
 
-            feature.compose(composer, fixtureData());
+            feature.compose(document, fixtureData());
 
             LayoutSnapshotAssertions.assertMatches(
-                    composer,
+                    document,
                     "features/my_feature_layout");
         }
     }
@@ -173,7 +173,7 @@ If the test fails, compare:
 - expected baseline in `src/test/resources/layout-snapshots/...`
 - generated actual file in `target/visual-tests/layout-snapshots/.../*.actual.json`
 
-Use snapshot tests when the thing you care about is layout stability. If you need visual confirmation too, keep `composer.build()` in the same test or pair the snapshot test with a render test.
+Use snapshot tests when the thing you care about is layout stability. If you need visual confirmation too, keep `document.buildPdf()` in the same test or pair the snapshot test with a render test.
 
 ## Using snapshots in downstream projects
 
@@ -181,8 +181,7 @@ Library consumers can use the same public helpers that GraphCompose uses in its 
 
 ```java
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.layout_core.core.DocumentComposer;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
@@ -194,26 +193,25 @@ class InvoiceTemplateSnapshotTest {
         InvoiceTemplateV1 template = new InvoiceTemplateV1();
         InvoiceData data = invoiceFixture();
 
-        try (PdfComposer composer = GraphCompose.pdf()
+        try (DocumentSession document = GraphCompose.document()
                 .pageSize(PDRectangle.A4)
                 .margin(22, 22, 22, 22)
-                .markdown(true)
                 .create()) {
 
-            template.compose(composer, data);
-            LayoutSnapshotAssertions.assertMatches(composer, "templates/invoice/invoice_standard_layout");
+            template.compose(document, data);
+            LayoutSnapshotAssertions.assertMatches(document, "templates/invoice/invoice_standard_layout");
         }
     }
 }
 ```
 
-Your template contracts can still stay written against `DocumentComposer`. The important distinction is that snapshot tests should instantiate `PdfComposer`, because the debug-only `layoutSnapshot()` API lives on that PDF-backed composer.
+Legacy template contracts can still stay written against `DocumentComposer`, and `LayoutSnapshotAssertions` still supports `PdfComposer`. The documented default for new tests, though, is the canonical `DocumentSession` path because `layoutSnapshot()` now lives there directly.
 
 If you want different baseline folders in your own project, use the public overloads with custom roots:
 
 ```java
 LayoutSnapshotAssertions.assertMatches(
-        composer,
+        document,
         Path.of("src", "test", "resources", "layout-snapshots"),
         Path.of("target", "visual-tests", "layout-snapshots"),
         "consumer/invoice_layout");
@@ -221,7 +219,7 @@ LayoutSnapshotAssertions.assertMatches(
 
 ## Snapshot contents
 
-`PdfComposer.layoutSnapshot()` extracts a deterministic JSON snapshot of the resolved entity tree.
+`DocumentSession.layoutSnapshot()` extracts a deterministic JSON snapshot of the resolved entity tree.
 
 The snapshot intentionally contains stable layout data only:
 
@@ -327,8 +325,8 @@ This keeps baseline updates explicit and prevents accidental golden-file drift i
 
 When adding snapshot coverage to an existing visual test:
 
-1. if the test already creates a `PdfComposer`, add `LayoutSnapshotAssertions.assertMatches(...)` before `build()`
-2. if a template hides the composer inside `render(...)`, add a package-private `compose(...)` method and let `render(...)` delegate to it
+1. if the test already creates a `DocumentSession`, add `LayoutSnapshotAssertions.assertMatches(...)` before `buildPdf()`
+2. if a legacy template hides composition inside `render(...)`, add or reuse a compose path and let `render(...)` delegate to it
 3. keep the existing PDF render assertion and artifact generation
 4. generate the baseline once with `-Dgraphcompose.updateSnapshots=true`
 

@@ -57,7 +57,8 @@ public final class LegacyComposerTemplateComposeTarget implements TemplateCompos
         BlockTextBuilder builder = componentBuilder.blockText(alignment(paragraph.align(), paragraph.lineSpacing()), paragraph.style())
                 .entityName(paragraph.name())
                 .size(pageWidth(), 2)
-                .strategy(BlockIndentStrategy.FIRST_LINE)
+                .strategy(paragraph.indentStrategy())
+                .bulletOffset(paragraph.bulletOffset())
                 .anchor(anchor(paragraph.align()))
                 .padding(paragraph.padding())
                 .margin(paragraph.margin());

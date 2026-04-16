@@ -1,6 +1,11 @@
 package com.demcha.compose.document.api;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterZone;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.font_library.DefaultFonts;
 import com.demcha.compose.font_library.FontFamilyDefinition;
 import com.demcha.compose.font_library.FontLibrary;
@@ -11,6 +16,7 @@ import com.demcha.compose.layout_core.system.measurement.FontLibraryTextMeasurem
 import com.demcha.compose.layout_core.system.interfaces.TextMeasurementSystem;
 import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
+import com.demcha.compose.document.backend.fixed.pdf.PdfDocumentPostProcessor;
 import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
 import com.demcha.compose.document.backend.semantic.SemanticBackend;
 import com.demcha.compose.document.backend.semantic.SemanticExportContext;
@@ -21,6 +27,7 @@ import com.demcha.compose.document.model.node.DocumentNode;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -52,34 +59,52 @@ public final class DocumentSession implements AutoCloseable {
     private final LayoutCompiler compiler;
     private final List<DocumentNode> roots = new ArrayList<>();
     private final List<FontFamilyDefinition> customFontFamilies = new ArrayList<>();
+    private final List<PdfHeaderFooterOptions> headerFooterOptions = new ArrayList<>();
 
     private PDRectangle pageSize;
     private Margin margin;
     private LayoutCanvas canvas;
+    private boolean guideLines;
+    private PdfMetadataOptions metadataOptions;
+    private PdfWatermarkOptions watermarkOptions;
+    private PdfProtectionOptions protectionOptions;
 
     private PDDocument measurementDocument;
     private FontLibrary fontLibrary;
     private TextMeasurementSystem textMeasurementSystem;
 
     private long revision;
+    private long pdfConfigVersion;
     private LayoutGraph cachedLayout;
     private long cachedLayoutRevision = -1;
     private LayoutSnapshot cachedSnapshot;
     private long cachedSnapshotRevision = -1;
     private byte[] cachedPdfBytes;
     private long cachedPdfRevision = -1;
+    private LayoutSnapshot compatibilitySnapshot;
+    private byte[] compatibilityPdfBytes;
 
     public DocumentSession(Path defaultOutputFile,
                            PDRectangle pageSize,
                            Margin margin,
-                           Collection<FontFamilyDefinition> customFontFamilies) {
+                           Collection<FontFamilyDefinition> customFontFamilies,
+                           boolean guideLines,
+                           PdfMetadataOptions metadataOptions,
+                           PdfWatermarkOptions watermarkOptions,
+                           PdfProtectionOptions protectionOptions,
+                           Collection<PdfHeaderFooterOptions> headerFooterOptions) {
         this.defaultOutputFile = defaultOutputFile;
         this.pageSize = Objects.requireNonNull(pageSize, "pageSize");
         this.margin = margin == null ? Margin.zero() : margin;
         this.canvas = LayoutCanvas.from(pageSize, this.margin);
+        this.guideLines = guideLines;
+        this.metadataOptions = metadataOptions;
+        this.watermarkOptions = watermarkOptions;
+        this.protectionOptions = protectionOptions;
         this.registry = BuiltInNodeDefinitions.registerDefaults(new NodeRegistry());
         this.compiler = new LayoutCompiler(registry);
         this.customFontFamilies.addAll(List.copyOf(customFontFamilies));
+        this.headerFooterOptions.addAll(List.copyOf(headerFooterOptions));
         refreshMeasurementServices();
     }
 
@@ -160,6 +185,81 @@ public final class DocumentSession implements AutoCloseable {
         this.margin = margin == null ? Margin.zero() : margin;
         this.canvas = LayoutCanvas.from(pageSize, this.margin);
         invalidate();
+        return this;
+    }
+
+    /**
+     * Enables or disables PDF guide-line overlays for debugging rendered
+     * semantic fragment geometry.
+     *
+     * @param enabled {@code true} to draw guide lines in rendered PDFs
+     * @return this session
+     */
+    public DocumentSession guideLines(boolean enabled) {
+        this.guideLines = enabled;
+        invalidatePdfArtifacts();
+        return this;
+    }
+
+    /**
+     * Configures document metadata for PDFs rendered from this session.
+     *
+     * @param options canonical metadata options, or {@code null} to clear
+     * @return this session
+     */
+    public DocumentSession metadata(PdfMetadataOptions options) {
+        this.metadataOptions = options;
+        invalidatePdfArtifacts();
+        return this;
+    }
+
+    /**
+     * Configures a document-wide watermark for PDFs rendered from this session.
+     *
+     * @param options canonical watermark options, or {@code null} to clear
+     * @return this session
+     */
+    public DocumentSession watermark(PdfWatermarkOptions options) {
+        this.watermarkOptions = options;
+        invalidatePdfArtifacts();
+        return this;
+    }
+
+    /**
+     * Configures PDF protection and permissions for this session.
+     *
+     * @param options canonical protection options, or {@code null} to clear
+     * @return this session
+     */
+    public DocumentSession protect(PdfProtectionOptions options) {
+        this.protectionOptions = options;
+        invalidatePdfArtifacts();
+        return this;
+    }
+
+    /**
+     * Registers a repeating page header.
+     *
+     * @param options canonical header options
+     * @return this session
+     */
+    public DocumentSession header(PdfHeaderFooterOptions options) {
+        this.headerFooterOptions.add(Objects.requireNonNull(options, "options")
+                .withZone(PdfHeaderFooterZone.HEADER));
+        invalidatePdfArtifacts();
+        return this;
+    }
+
+    /**
+     * Registers a repeating page footer.
+     *
+     * @param options canonical footer options
+     * @return this session
+     */
+    public DocumentSession footer(PdfHeaderFooterOptions options) {
+        this.headerFooterOptions.add(Objects.requireNonNull(options, "options")
+                .withZone(PdfHeaderFooterZone.FOOTER));
+        invalidatePdfArtifacts();
         return this;
     }
 
@@ -246,6 +346,9 @@ public final class DocumentSession implements AutoCloseable {
      * @return layout snapshot derived from the current layout graph
      */
     public LayoutSnapshot layoutSnapshot() {
+        if (compatibilitySnapshot != null) {
+            return compatibilitySnapshot;
+        }
         if (cachedSnapshot != null && cachedSnapshotRevision == revision) {
             return cachedSnapshot;
         }
@@ -277,7 +380,15 @@ public final class DocumentSession implements AutoCloseable {
      */
     public <R> R render(FixedLayoutBackend<R> backend, Path outputFile) throws Exception {
         Objects.requireNonNull(backend, "backend");
-        return backend.render(layoutGraph(), new FixedLayoutRenderContext(canvas, customFontFamilies, outputFile));
+        return backend.render(layoutGraph(), new FixedLayoutRenderContext(
+                canvas,
+                customFontFamilies,
+                outputFile,
+                guideLines,
+                metadataOptions,
+                watermarkOptions,
+                protectionOptions,
+                headerFooterOptions));
     }
 
     /**
@@ -313,11 +424,16 @@ public final class DocumentSession implements AutoCloseable {
      * @throws Exception if PDF rendering fails
      */
     public byte[] toPdfBytes() throws Exception {
-        if (cachedPdfBytes != null && cachedPdfRevision == revision) {
+        long currentPdfVersion = currentPdfInputsVersion();
+        if (cachedPdfBytes != null && cachedPdfRevision == currentPdfVersion) {
             return cachedPdfBytes.clone();
         }
-        cachedPdfBytes = render(new PdfFixedLayoutBackend(), null);
-        cachedPdfRevision = revision;
+        if (compatibilityPdfBytes != null) {
+            cachedPdfBytes = postProcessCompatibilityPdfBytes(compatibilityPdfBytes);
+        } else {
+            cachedPdfBytes = render(new PdfFixedLayoutBackend(), null);
+        }
+        cachedPdfRevision = currentPdfVersion;
         return cachedPdfBytes.clone();
     }
 
@@ -340,7 +456,7 @@ public final class DocumentSession implements AutoCloseable {
      * @throws Exception if PDF rendering fails
      */
     public void buildPdf(Path outputFile) throws Exception {
-        render(new PdfFixedLayoutBackend(), Objects.requireNonNull(outputFile, "outputFile"));
+        Files.write(Objects.requireNonNull(outputFile, "outputFile"), toPdfBytes());
     }
 
     /**
@@ -371,9 +487,53 @@ public final class DocumentSession implements AutoCloseable {
 
     private void invalidate() {
         revision++;
+        pdfConfigVersion++;
         cachedLayout = null;
         cachedSnapshot = null;
         cachedPdfBytes = null;
+        cachedPdfRevision = -1;
+        compatibilitySnapshot = null;
+        compatibilityPdfBytes = null;
+    }
+
+    private void invalidatePdfArtifacts() {
+        pdfConfigVersion++;
+        cachedPdfBytes = null;
+        cachedPdfRevision = -1;
+    }
+
+    void installCompatibilityArtifacts(LayoutSnapshot snapshot, byte[] pdfBytes) {
+        compatibilitySnapshot = Objects.requireNonNull(snapshot, "snapshot");
+        compatibilityPdfBytes = Objects.requireNonNull(pdfBytes, "pdfBytes").clone();
+        cachedSnapshot = null;
+        cachedPdfBytes = null;
+        cachedLayout = null;
+        cachedSnapshotRevision = -1;
+        cachedPdfRevision = -1;
+        cachedLayoutRevision = -1;
+    }
+
+    private long currentPdfInputsVersion() {
+        return revision * 31L + pdfConfigVersion;
+    }
+
+    private byte[] postProcessCompatibilityPdfBytes(byte[] pdfBytes) throws Exception {
+        if (!PdfDocumentPostProcessor.hasPostProcessing(
+                metadataOptions,
+                watermarkOptions,
+                protectionOptions,
+                headerFooterOptions)) {
+            return Objects.requireNonNull(pdfBytes, "pdfBytes").clone();
+        }
+        // Compatibility-installed PDFs already contain their main render output.
+        // Canonical document-level chrome can still be layered on top safely.
+        return PdfDocumentPostProcessor.apply(
+                pdfBytes,
+                canvas,
+                metadataOptions,
+                watermarkOptions,
+                protectionOptions,
+                headerFooterOptions);
     }
 
     private final class V2Context implements PrepareContext, FragmentContext {

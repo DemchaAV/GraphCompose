@@ -1,6 +1,5 @@
 package com.demcha.templates.builtins;
 
-import com.demcha.compose.document.templates.support.LegacyComposerTemplateComposeTarget;
 import com.demcha.compose.document.templates.support.LegacyTemplateMappers;
 import com.demcha.compose.document.templates.support.SessionTemplateComposeTarget;
 import com.demcha.compose.document.templates.support.WeeklyScheduleTemplateComposer;
@@ -20,16 +19,19 @@ import java.util.Objects;
 @Deprecated(forRemoval = false)
 public class WeeklyScheduleTemplateV1 extends PdfTemplateAdapterSupport implements WeeklyScheduleTemplate {
     private final WeeklyScheduleTemplateComposer composer;
+    private final WeeklyScheduleSceneBuilder legacySceneBuilder;
 
     public WeeklyScheduleTemplateV1() {
         this(null);
     }
 
     public WeeklyScheduleTemplateV1(WeeklyScheduleTheme theme) {
+        WeeklyScheduleTheme resolvedTheme = Objects.requireNonNullElseGet(theme, WeeklyScheduleTheme::defaultTheme);
         this.composer = new WeeklyScheduleTemplateComposer(
                 Objects.requireNonNullElseGet(
-                        LegacyTemplateMappers.toCanonical(theme),
+                        LegacyTemplateMappers.toCanonical(resolvedTheme),
                         com.demcha.compose.document.templates.theme.WeeklyScheduleTheme::defaultTheme));
+        this.legacySceneBuilder = new WeeklyScheduleSceneBuilder(resolvedTheme);
     }
 
     @Override
@@ -95,9 +97,7 @@ public class WeeklyScheduleTemplateV1 extends PdfTemplateAdapterSupport implemen
 
     @Override
     public void compose(DocumentComposer composer, WeeklyScheduleData data) {
-        this.composer.compose(
-                new LegacyComposerTemplateComposeTarget(composer),
-                LegacyTemplateMappers.toCanonical(data));
+        legacySceneBuilder.compose(composer, data);
     }
 
     private PDRectangle landscapeA4() {

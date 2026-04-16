@@ -5,13 +5,40 @@ import com.demcha.compose.document.templates.data.WeeklyScheduleData;
 
 /**
  * Canonical compose contract for reusable weekly schedule templates.
+ *
+ * <p><b>Responsibility:</b> define one reusable planning/schedule scene that
+ * composes against a live {@link DocumentSession}.</p>
+ *
+ * <pre>{@code
+ * WeeklyScheduleTemplate template = new WeeklyScheduleTemplateV1();
+ *
+ * try (DocumentSession document = GraphCompose.document(Path.of("schedule.pdf")).create()) {
+ *     template.compose(document, scheduleData);
+ *     document.buildPdf();
+ * }
+ * }</pre>
  */
 public interface WeeklyScheduleTemplate {
 
+    /**
+     * Stable public template identifier.
+     *
+     * @return unique template id used by registries and integrations
+     */
     String getTemplateId();
 
+    /**
+     * Human-readable display name.
+     *
+     * @return template display name
+     */
     String getTemplateName();
 
+    /**
+     * Optional human-readable description.
+     *
+     * @return template description, or an empty string when omitted
+     */
     default String getDescription() {
         return "";
     }
@@ -21,6 +48,7 @@ public interface WeeklyScheduleTemplate {
      *
      * @param document active mutable document session receiving template nodes
      * @param data weekly schedule data
+     * @throws NullPointerException if an implementation requires non-null inputs
      */
     void compose(DocumentSession document, WeeklyScheduleData data);
 }

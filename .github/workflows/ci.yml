@@ -34,7 +34,7 @@ jobs:
           cache: maven
 
       - name: Run guards
-        run: mvn -B -ntp "-Dtest=EnginePdfBoundaryTest,TemplateScenePdfBoundaryTest,LegacyPdfRenderAllowlistTest,PdfRenderingSystemECSDispatchTest,DocumentationExamplesTest,TemplateComposeApiTest" test
+        run: mvn -B -ntp "-Dtest=EnginePdfBoundaryTest,TemplateScenePdfBoundaryTest,LegacyPdfRenderAllowlistTest,PdfRenderingSystemECSDispatchTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest,TemplateComposeApiTest,CanonicalTemplateParityTest" test
 
   build-and-test:
     name: Build and run tests
@@ -57,6 +57,9 @@ jobs:
 
       - name: Build and run tests
         run: mvn -B -ntp verify
+
+      - name: Generate Javadoc
+        run: mvn -B -ntp javadoc:javadoc
 
   perf-smoke:
     name: Performance Smoke Check

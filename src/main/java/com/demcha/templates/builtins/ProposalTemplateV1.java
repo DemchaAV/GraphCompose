@@ -1,7 +1,5 @@
 package com.demcha.templates.builtins;
 
-import com.demcha.compose.document.templates.support.BusinessDocumentSceneStyles;
-import com.demcha.compose.document.templates.support.LegacyComposerTemplateComposeTarget;
 import com.demcha.compose.document.templates.support.LegacyTemplateMappers;
 import com.demcha.compose.document.templates.support.ProposalTemplateComposer;
 import com.demcha.compose.document.templates.support.SessionTemplateComposeTarget;
@@ -18,13 +16,13 @@ import java.nio.file.Path;
  */
 @Deprecated(forRemoval = false)
 public class ProposalTemplateV1 extends PdfTemplateAdapterSupport implements ProposalTemplate {
-    private final ProposalTemplateComposer composer = new ProposalTemplateComposer(new BusinessDocumentSceneStyles());
+    private final ProposalTemplateComposer composer = new ProposalTemplateComposer(
+            new com.demcha.compose.document.templates.support.BusinessDocumentSceneStyles());
+    private final ProposalSceneBuilder legacySceneBuilder = new ProposalSceneBuilder(new BusinessDocumentSceneStyles());
 
     @Override
     public void compose(DocumentComposer composer, ProposalData data) {
-        this.composer.compose(
-                new LegacyComposerTemplateComposeTarget(composer),
-                LegacyTemplateMappers.toCanonical(data));
+        legacySceneBuilder.compose(composer, data);
     }
 
     @Override

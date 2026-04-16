@@ -5,6 +5,11 @@ import com.demcha.compose.font_library.FontName;
 import com.demcha.compose.font_library.FontShowcase;
 import com.demcha.compose.font_library.DefaultFonts;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterZone;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.core.DocumentComposer;
 import com.demcha.compose.layout_core.core.PdfComposer;
@@ -361,6 +366,11 @@ public final class GraphCompose {
         private final Path outputFile;
         private PDRectangle pageSize = PDRectangle.A4;
         private Margin margin = Margin.zero();
+        private boolean guideLines = false;
+        private PdfMetadataOptions metadataOptions;
+        private PdfWatermarkOptions watermarkOptions;
+        private PdfProtectionOptions protectionOptions;
+        private final List<PdfHeaderFooterOptions> headerFooterOptions = new ArrayList<>();
         private final List<FontFamilyDefinition> customFontFamilies = new ArrayList<>();
 
         private DocumentBuilder(Path outputFile) {
@@ -400,6 +410,78 @@ public final class GraphCompose {
          */
         public DocumentBuilder margin(float top, float right, float bottom, float left) {
             this.margin = new Margin(top, right, bottom, left);
+            return this;
+        }
+
+        /**
+         * Enables or disables PDF guide-line overlays for debugging rendered
+         * semantic fragment geometry.
+         *
+         * @param enabled {@code true} to draw guide lines in rendered PDFs
+         * @return this builder
+         */
+        public DocumentBuilder guideLines(boolean enabled) {
+            this.guideLines = enabled;
+            return this;
+        }
+
+        /**
+         * Configures document metadata for PDFs rendered from the created
+         * semantic session.
+         *
+         * @param options canonical metadata options, or {@code null} to clear
+         * @return this builder
+         */
+        public DocumentBuilder metadata(PdfMetadataOptions options) {
+            this.metadataOptions = options;
+            return this;
+        }
+
+        /**
+         * Configures a document-wide watermark for PDFs rendered from the
+         * created semantic session.
+         *
+         * @param options canonical watermark options, or {@code null} to clear
+         * @return this builder
+         */
+        public DocumentBuilder watermark(PdfWatermarkOptions options) {
+            this.watermarkOptions = options;
+            return this;
+        }
+
+        /**
+         * Configures PDF protection and permissions for the created semantic
+         * session.
+         *
+         * @param options canonical protection options, or {@code null} to clear
+         * @return this builder
+         */
+        public DocumentBuilder protect(PdfProtectionOptions options) {
+            this.protectionOptions = options;
+            return this;
+        }
+
+        /**
+         * Registers a repeating page header.
+         *
+         * @param options canonical header options
+         * @return this builder
+         */
+        public DocumentBuilder header(PdfHeaderFooterOptions options) {
+            this.headerFooterOptions.add(Objects.requireNonNull(options, "options")
+                    .withZone(PdfHeaderFooterZone.HEADER));
+            return this;
+        }
+
+        /**
+         * Registers a repeating page footer.
+         *
+         * @param options canonical footer options
+         * @return this builder
+         */
+        public DocumentBuilder footer(PdfHeaderFooterOptions options) {
+            this.headerFooterOptions.add(Objects.requireNonNull(options, "options")
+                    .withZone(PdfHeaderFooterZone.FOOTER));
             return this;
         }
 
@@ -519,7 +601,16 @@ public final class GraphCompose {
          * @return a new semantic document session
          */
         public DocumentSession create() {
-            return new DocumentSession(outputFile, pageSize, margin, List.copyOf(customFontFamilies));
+            return new DocumentSession(
+                    outputFile,
+                    pageSize,
+                    margin,
+                    List.copyOf(customFontFamilies),
+                    guideLines,
+                    metadataOptions,
+                    watermarkOptions,
+                    protectionOptions,
+                    List.copyOf(headerFooterOptions));
         }
     }
 }

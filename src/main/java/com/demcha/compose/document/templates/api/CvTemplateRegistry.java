@@ -11,6 +11,19 @@ import java.util.Optional;
  * <p>The registry is intentionally caller-owned: integrations provide the
  * template instances they want to expose, and the registry offers stable lookup
  * by template id.</p>
+ *
+ * <p><b>Mutability/thread-safety:</b> instances are populated at construction
+ * time and then behave as immutable read-mostly registries. Concurrent reads
+ * are safe as long as registered template implementations are themselves safe
+ * to reuse.</p>
+ *
+ * <pre>{@code
+ * CvTemplateRegistry registry = new CvTemplateRegistry(List.of(
+ *         new CvTemplateV1(),
+ *         new EditorialBlueCvTemplate()));
+ *
+ * CvTemplate template = registry.getTemplateOrDefault(requestedId, registry.getDefaultTemplateId());
+ * }</pre>
  */
 public final class CvTemplateRegistry {
     private final Map<String, CvTemplate> templates = new HashMap<>();
@@ -19,6 +32,7 @@ public final class CvTemplateRegistry {
      * Registers the supplied template instances.
      *
      * @param templateList templates to register
+     * @throws NullPointerException if {@code templateList} or one of its elements is {@code null}
      */
     public CvTemplateRegistry(List<CvTemplate> templateList) {
         for (CvTemplate template : templateList) {
@@ -31,6 +45,7 @@ public final class CvTemplateRegistry {
      *
      * @param templateId public template identifier
      * @return registered template instance
+     * @throws IllegalArgumentException when the id is not registered
      */
     public CvTemplate getTemplate(String templateId) {
         return Optional.ofNullable(templates.get(templateId))
@@ -43,7 +58,7 @@ public final class CvTemplateRegistry {
      *
      * @param templateId requested template id
      * @param defaultTemplateId fallback template id
-     * @return requested template or fallback template
+     * @return requested template or fallback template, or {@code null} when neither id is registered
      */
     public CvTemplate getTemplateOrDefault(String templateId, String defaultTemplateId) {
         CvTemplate template = templates.get(templateId);

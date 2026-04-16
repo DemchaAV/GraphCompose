@@ -6,8 +6,8 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.CvTemplate;
 import com.demcha.compose.document.templates.data.MainPageCV;
 import com.demcha.compose.document.templates.data.MainPageCvDTO;
-import com.demcha.compose.document.templates.support.EditorialBlueCvTemplateComposer;
-import com.demcha.compose.document.templates.support.SessionTemplateComposeTarget;
+import com.demcha.compose.document.templates.support.LegacyTemplateMappers;
+import com.demcha.compose.document.templates.support.LegacyTemplateSessionRenderer;
 import com.demcha.compose.document.templates.theme.CvTheme;
 
 import java.awt.Color;
@@ -17,15 +17,15 @@ import java.util.Objects;
  * Canonical V2 implementation of the editorial blue CV template.
  */
 public final class EditorialBlueCvTemplate implements CvTemplate {
-    private final EditorialBlueCvTemplateComposer composer;
+    private final com.demcha.templates.builtins.EditorialBlueCvTemplate legacyBridge;
 
     public EditorialBlueCvTemplate() {
         this(null);
     }
 
     public EditorialBlueCvTemplate(CvTheme theme) {
-        this.composer = new EditorialBlueCvTemplateComposer(
-                Objects.requireNonNullElseGet(theme, EditorialBlueCvTemplate::defaultTheme));
+        this.legacyBridge = new com.demcha.templates.builtins.EditorialBlueCvTemplate(
+                LegacyTemplateMappers.toLegacy(Objects.requireNonNullElseGet(theme, EditorialBlueCvTemplate::defaultTheme)));
     }
 
     @Override
@@ -45,7 +45,10 @@ public final class EditorialBlueCvTemplate implements CvTemplate {
 
     @Override
     public void compose(DocumentSession document, MainPageCV originalCv, MainPageCvDTO rewrittenCv) {
-        composer.compose(new SessionTemplateComposeTarget(document), originalCv, rewrittenCv);
+        LegacyTemplateSessionRenderer.renderInto(document, composer -> legacyBridge.compose(
+                composer,
+                LegacyTemplateMappers.toLegacy(originalCv),
+                LegacyTemplateMappers.toLegacy(rewrittenCv)));
     }
 
     private static CvTheme defaultTheme() {

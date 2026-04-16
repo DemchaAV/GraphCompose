@@ -66,6 +66,7 @@ public final class CoverLetterTemplateComposer {
         String company = jobDetails == null ? "" : Objects.requireNonNullElse(jobDetails.company(), "");
         String resolved = Objects.requireNonNullElse(wroteLetter, "").replace("${companyName}", company);
         List<String> paragraphs = Arrays.stream(resolved.replace("\r\n", "\n").split("\\n\\s*\\n"))
+                .map(TemplateSceneSupport::stripBasicMarkdown)
                 .map(String::trim)
                 .filter(value -> !value.isBlank())
                 .toList();

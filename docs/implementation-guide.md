@@ -92,7 +92,7 @@ Special note for modules:
 
 - `ModuleBuilder` is the semantic section primitive
 - it resolves to the full available width of its parent minus its own horizontal margin
-- it should usually live under a normal root `vContainer(...)` or `TemplateBuilder.pageFlow(...)`
+- it should usually live under a normal root `vContainer(...)` or a canonical semantic page flow such as `DocumentSession.dsl().pageFlow()`
 - nested horizontal/vertical composition should happen inside the module through regular containers
 
 ## Minimum components a new object usually needs
@@ -263,37 +263,42 @@ If the object is not directly rendered and mostly groups behavior, it may not ne
 
 - a builder/helper method
 - a composition pattern over existing entities
-- or a template-layer helper in `templates`
+- or a template-layer helper in `com.demcha.compose.document.templates.*`
 
 ### Case 4: add or refactor a built-in template
 
-Built-in templates now use an additive compose-first contract.
+Built-in templates now use a canonical compose-first contract on top of
+`DocumentSession`.
 
 Use this split:
 
-1. a public template interface in `com.demcha.templates.api` exposes `compose(DocumentComposer, ...)`
-2. a built-in template class acts as a thin backend adapter
-3. a dedicated scene builder under `com.demcha.templates.builtins` owns document composition
+1. a public template interface in `com.demcha.compose.document.templates.api` exposes `compose(DocumentSession, ...)`
+2. a canonical built-in class under `com.demcha.compose.document.templates.builtins` exposes stable ids, names, and theme defaults
+3. a dedicated scene composer under `com.demcha.compose.document.templates.support` owns document composition through `TemplateComposeTarget`
+4. a deprecated bridge under `com.demcha.templates.*` keeps legacy `compose(DocumentComposer, ...)` and `render(...)` overloads operational by delegating into the canonical path
 
 Practical rules:
 
 - keep current `render(...): PDDocument` and `render(..., Path)` overloads only as deprecated compatibility adapters
-- put `GraphCompose.pdf(...)`, page size selection, margins, `composer.toPDDocument()`, and `composer.build()` in the adapter class
-- put the actual document structure, sections, tables, and block text assembly in the scene builder
-- keep scene builders backend-neutral: no `PDDocument`, `PDPage`, `PDRectangle`, or `PdfComposer` imports
-- keep public examples and integration docs compose-first: show `compose(DocumentComposer, ...)` before any deprecated `render(...)` convenience path
-- pass theme or style collaborators into the scene builder constructor instead of hard-wiring backend assumptions into composition code
+- keep `GraphCompose.document(...)`, page size selection, margins, `document.buildPdf()`, and `document.toPdfBytes()` in canonical examples and integrations
+- let deprecated bridge adapters call into the canonical `DocumentSession` PDF path rather than owning production layout/render logic
+- put the actual document structure, sections, tables, and paragraph assembly in the scene composer
+- keep scene composers backend-neutral: no `PDDocument`, `PDPage`, `PDRectangle`, or `PdfComposer` imports
+- keep public examples and integration docs compose-first: show `compose(DocumentSession, ...)` before any deprecated convenience path
+- pass theme or style collaborators into the scene composer constructor instead of hard-wiring backend assumptions into composition code
 - when a built-in template already has a good scene split, extend that pattern instead of reintroducing backend-specific logic into the composition layer
 
 Current guard rails:
 
-- `TemplateScenePdfBoundaryTest` keeps `*SceneBuilder` classes free of `PDDocument`, `PDPage`, `PDRectangle`, and `PdfComposer`
-- `TemplateComposeApiTest` keeps the compose-first public contract and deprecated compatibility adapters aligned
+- `TemplateScenePdfBoundaryTest` keeps scene-composition classes free of `PDDocument`, `PDPage`, `PDRectangle`, and `PdfComposer`
+- canonical template API tests keep `compose(DocumentSession, ...)` aligned with the built-ins
+- legacy bridge tests keep deprecated `compose(DocumentComposer, ...)` and `render(...)` adapters aligned with the canonical output path
 
 Rule of thumb:
 
-- `*TemplateV1` should feel like a bridge to a backend
-- `*SceneBuilder` should feel like the reusable document composition core
+- canonical `*TemplateV1` built-ins should feel like reusable public templates
+- `*TemplateComposer` plus `TemplateComposeTarget` should feel like the reusable document composition core
+- `com.demcha.templates.*` should feel like a temporary compatibility shell, not the place where new behavior is implemented
 
 ## Where rendering hooks in
 

@@ -1,13 +1,17 @@
 package com.demcha.compose.document.backend.fixed.pdf;
 
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions;
 import com.demcha.compose.font_library.FontLibrary;
+import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.layout_core.components.content.ImageData;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,6 +29,7 @@ public final class PdfRenderEnvironment {
     private final FontLibrary fonts;
     private final PdfRenderSession session;
     private final Map<String, PDImageXObject> imageCache = new HashMap<>();
+    private final List<BookmarkRecord> bookmarkRecords = new ArrayList<>();
 
     PdfRenderEnvironment(PDDocument document, FontLibrary fonts, PdfRenderSession session) {
         this.document = document;
@@ -79,5 +84,20 @@ public final class PdfRenderEnvironment {
         } catch (IOException e) {
             throw new IllegalStateException("Failed to decode image '" + imageData.getSourceKey() + "'", e);
         }
+    }
+
+    void registerBookmark(PlacedFragment fragment, PdfBookmarkOptions bookmarkOptions) {
+        bookmarkRecords.add(new BookmarkRecord(
+                bookmarkOptions.title(),
+                bookmarkOptions.level(),
+                fragment.pageIndex(),
+                fragment.y() + fragment.height()));
+    }
+
+    List<BookmarkRecord> bookmarkRecords() {
+        return List.copyOf(bookmarkRecords);
+    }
+
+    record BookmarkRecord(String title, int level, int pageIndex, double y) {
     }
 }

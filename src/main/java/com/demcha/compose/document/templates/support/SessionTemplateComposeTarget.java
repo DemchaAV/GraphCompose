@@ -3,6 +3,7 @@ package com.demcha.compose.document.templates.support;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.DocumentDsl;
 import com.demcha.compose.layout_core.components.components_builders.TableColumnSpec;
+import com.demcha.compose.layout_core.components.style.Padding;
 
 import java.util.Objects;
 
@@ -47,6 +48,8 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
                 .textStyle(paragraph.style())
                 .align(paragraph.align())
                 .lineSpacing(paragraph.lineSpacing())
+                .bulletOffset(paragraph.bulletOffset())
+                .indentStrategy(paragraph.indentStrategy())
                 .padding(paragraph.padding())
                 .margin(paragraph.margin()));
     }
@@ -58,6 +61,7 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
                 .width(divider.width())
                 .thickness(divider.thickness())
                 .color(divider.color())
+                .padding(new Padding(8, 0, 8, 0))
                 .margin(divider.margin()));
     }
 

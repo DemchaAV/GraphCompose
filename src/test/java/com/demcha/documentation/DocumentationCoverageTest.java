@@ -116,6 +116,22 @@ class DocumentationCoverageTest {
         assertThat(quickStartSection).doesNotContain("try (PdfComposer composer = GraphCompose.pdf(");
     }
 
+    @Test
+    void readmeLinePrimitiveSectionShouldUseCanonicalDsl() throws IOException {
+        String readme = Files.readString(PROJECT_ROOT.resolve("README.md"));
+        int linePrimitive = readme.indexOf("## Line primitive");
+        int architecture = readme.indexOf("## Architecture at a glance");
+        assertThat(linePrimitive).isGreaterThanOrEqualTo(0);
+        assertThat(architecture).isGreaterThan(linePrimitive);
+
+        String linePrimitiveSection = readme.substring(linePrimitive, architecture);
+        assertThat(linePrimitiveSection).contains("document.dsl()");
+        assertThat(linePrimitiveSection).contains(".addDivider(");
+        assertThat(linePrimitiveSection).contains(".addShape(");
+        assertThat(linePrimitiveSection).doesNotContain("composer.componentBuilder()");
+        assertThat(linePrimitiveSection).doesNotContain("GraphCompose.pdf(");
+    }
+
     private void assertHasJavadocBefore(Path file, String signature) throws IOException {
         String source = Files.readString(file);
         int signatureIndex = source.indexOf(signature);

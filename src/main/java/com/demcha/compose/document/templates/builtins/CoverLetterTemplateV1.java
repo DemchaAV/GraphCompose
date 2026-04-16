@@ -4,18 +4,17 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.CoverLetterTemplate;
 import com.demcha.compose.document.templates.data.Header;
 import com.demcha.compose.document.templates.data.JobDetails;
-import com.demcha.compose.document.templates.support.CoverLetterTemplateComposer;
-import com.demcha.compose.document.templates.support.SessionTemplateComposeTarget;
-import com.demcha.compose.document.templates.theme.CvTheme;
+import com.demcha.compose.document.templates.support.LegacyTemplateMappers;
+import com.demcha.compose.document.templates.support.LegacyTemplateSessionRenderer;
 
 /**
  * Canonical V2 implementation of the standard cover-letter template.
  */
 public final class CoverLetterTemplateV1 implements CoverLetterTemplate {
-    private final CoverLetterTemplateComposer composer;
+    private final com.demcha.templates.builtins.CoverLetterTemplateV1 legacyBridge;
 
     public CoverLetterTemplateV1() {
-        this.composer = new CoverLetterTemplateComposer(CvTheme.defaultTheme(), CvTheme.courier());
+        this.legacyBridge = new com.demcha.templates.builtins.CoverLetterTemplateV1();
     }
 
     @Override
@@ -35,6 +34,10 @@ public final class CoverLetterTemplateV1 implements CoverLetterTemplate {
 
     @Override
     public void compose(DocumentSession document, Header header, String wroteLetter, JobDetails jobDetails) {
-        composer.compose(new SessionTemplateComposeTarget(document), header, wroteLetter, jobDetails);
+        LegacyTemplateSessionRenderer.renderInto(document, composer -> legacyBridge.compose(
+                composer,
+                LegacyTemplateMappers.toLegacy(header),
+                wroteLetter,
+                LegacyTemplateMappers.toLegacy(jobDetails)));
     }
 }

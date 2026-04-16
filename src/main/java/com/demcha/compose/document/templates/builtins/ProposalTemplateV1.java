@@ -3,15 +3,14 @@ package com.demcha.compose.document.templates.builtins;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.ProposalTemplate;
 import com.demcha.compose.document.templates.data.ProposalData;
-import com.demcha.compose.document.templates.support.BusinessDocumentSceneStyles;
-import com.demcha.compose.document.templates.support.ProposalTemplateComposer;
-import com.demcha.compose.document.templates.support.SessionTemplateComposeTarget;
+import com.demcha.compose.document.templates.support.LegacyTemplateMappers;
+import com.demcha.compose.document.templates.support.LegacyTemplateSessionRenderer;
 
 /**
  * Canonical V2 implementation of the proposal template.
  */
 public final class ProposalTemplateV1 implements ProposalTemplate {
-    private final ProposalTemplateComposer composer = new ProposalTemplateComposer(new BusinessDocumentSceneStyles());
+    private final com.demcha.templates.builtins.ProposalTemplateV1 legacyBridge = new com.demcha.templates.builtins.ProposalTemplateV1();
 
     @Override
     public String getTemplateId() {
@@ -30,6 +29,8 @@ public final class ProposalTemplateV1 implements ProposalTemplate {
 
     @Override
     public void compose(DocumentSession document, ProposalData data) {
-        composer.compose(new SessionTemplateComposeTarget(document), data);
+        LegacyTemplateSessionRenderer.renderInto(document, composer -> legacyBridge.compose(
+                composer,
+                LegacyTemplateMappers.toLegacy(data)));
     }
 }

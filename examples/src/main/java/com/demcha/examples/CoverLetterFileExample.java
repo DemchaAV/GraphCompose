@@ -1,10 +1,10 @@
 package com.demcha.examples;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.layout_core.core.DocumentComposer;
+import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.templates.builtins.CoverLetterTemplateV1;
 import com.demcha.examples.support.ExampleDataFactory;
 import com.demcha.examples.support.ExampleOutputPaths;
-import com.demcha.templates.builtins.CoverLetterTemplateV1;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
@@ -18,17 +18,16 @@ public final class CoverLetterFileExample {
         Path outputFile = ExampleOutputPaths.prepare("cover-letter.pdf");
         CoverLetterTemplateV1 template = new CoverLetterTemplateV1();
 
-        try (DocumentComposer composer = GraphCompose.pdf(outputFile)
+        try (DocumentSession document = GraphCompose.document(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(15, 10, 15, 15)
-                .markdown(true)
                 .create()) {
             template.compose(
-                    composer,
+                    document,
                     ExampleDataFactory.sampleHeader(),
                     ExampleDataFactory.sampleCoverLetter(),
                     ExampleDataFactory.sampleJobDetails());
-            composer.build();
+            document.buildPdf();
         }
 
         return outputFile;

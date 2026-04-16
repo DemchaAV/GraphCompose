@@ -37,7 +37,7 @@
   <a href="./CONTRIBUTING.md">Contributing</a>
 </p>
 
-Layout regression tests are supported through the public `com.demcha.compose.testing.layout` helpers. See [Layout Snapshot Testing](./docs/layout-snapshot-testing.md) for the consumer workflow and when snapshot tests should use `PdfComposer` instead of the broader `DocumentComposer` abstraction.
+Layout regression tests are supported through the public `DocumentSession.layoutSnapshot()` and `com.demcha.compose.testing.layout` helpers. See [Layout Snapshot Testing](./docs/layout-snapshot-testing.md) for the consumer workflow and legacy compatibility notes for `PdfComposer`.
 
 ---
 
@@ -236,10 +236,10 @@ try (DocumentSession document = GraphCompose.document()
 
 ```java
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.layout_core.core.DocumentComposer;
-import com.demcha.templates.api.InvoiceTemplate;
-import com.demcha.templates.builtins.InvoiceTemplateV1;
-import com.demcha.templates.data.InvoiceData;
+import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.templates.api.InvoiceTemplate;
+import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
+import com.demcha.compose.document.templates.data.InvoiceData;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
@@ -247,56 +247,23 @@ import java.nio.file.Path;
 InvoiceData invoiceData = ...;
 InvoiceTemplate template = new InvoiceTemplateV1();
 
-try (DocumentComposer composer = GraphCompose.pdf(Path.of("invoice.pdf"))
+try (DocumentSession document = GraphCompose.document(Path.of("invoice.pdf"))
         .pageSize(PDRectangle.A4)
         .margin(22, 22, 22, 22)
-        .markdown(true)
         .create()) {
 
-    template.compose(composer, invoiceData);
-    composer.build();
+    template.compose(document, invoiceData);
+    document.buildPdf();
 }
 ```
 
-The deprecated `render(...)` overloads remain available as convenience adapters for older integrations, but new examples should call `compose(...)` against an explicit `DocumentComposer`.
-
-### Lower-level template builder
-
-```java
-import com.demcha.compose.GraphCompose;
-import com.demcha.compose.layout_core.core.DocumentComposer;
-import com.demcha.templates.CvTheme;
-import com.demcha.templates.TemplateBuilder;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
-
-try (DocumentComposer composer = GraphCompose.pdf()
-        .pageSize(PDRectangle.A4)
-        .margin(24, 24, 24, 24)
-        .create()) {
-
-    TemplateBuilder template = TemplateBuilder.from(
-            composer.componentBuilder(),
-            CvTheme.defaultTheme());
-
-    var profile = template.moduleBuilder("Profile", composer.canvas())
-            .addChild(template.blockText(
-                    "Analytical engineer focused on reliable platform design.",
-                    composer.canvas().innerWidth()))
-            .build();
-
-    template.pageFlow(composer.canvas())
-            .addChild(profile)
-            .build();
-
-    byte[] pdfBytes = composer.toBytes();
-}
-```
+The deprecated `render(...)`, `GraphCompose.pdf(...)`, and `com.demcha.templates.*` adapters remain available for one transition release, but canonical docs and examples now compose directly into `DocumentSession`.
 
 ---
 
 ## Testing layout regressions
 
-GraphCompose now supports deterministic post-layout JSON snapshots through the debug-only `PdfComposer.layoutSnapshot()` API.
+GraphCompose now supports deterministic post-layout JSON snapshots through the canonical `DocumentSession.layoutSnapshot()` API.
 
 Use them to catch geometry regressions before a developer has to inspect the rendered PDF by eye:
 
@@ -306,7 +273,7 @@ Use them to catch geometry regressions before a developer has to inspect the ren
 - inspect mismatches under `target/visual-tests/layout-snapshots`
 - update expected baselines locally with `-Dgraphcompose.updateSnapshots=true`
 
-Normal production calls to `build()`, `toBytes()`, and `toPDDocument()` do not depend on snapshot generation. If application code never calls `layoutSnapshot()`, this feature does not affect the standard PDF pipeline.
+Normal production calls to `buildPdf()` and `toPdfBytes()` do not depend on snapshot generation. If application code never calls `layoutSnapshot()`, this feature does not affect the standard PDF pipeline.
 
 The recommended developer flow is:
 
@@ -341,7 +308,7 @@ The repository includes a standalone [`examples/`](./examples) module with compo
 - proposal
 - weekly schedule
 
-Each example creates an explicit `DocumentComposer`, calls `template.compose(...)`, then finalizes with `composer.build()`.
+Each example creates a `DocumentSession`, calls `template.compose(document, ...)`, then finalizes with `document.buildPdf()`.
 
 Typical workflow:
 
@@ -400,7 +367,7 @@ Use `vContainer(...)` and `hContainer(...)` for structural layout, then compose 
 
 ### 5. The template layer is optional
 
-`TemplateBuilder`, `CvTheme`, and the classes under `com.demcha.templates.builtins` are a convenience layer for reusable document layouts. You can use the raw engine directly for one-off documents and opt into templates when you need repeatability.
+`com.demcha.compose.document.templates.*` provides the canonical built-in templates, themes, DTOs, and support helpers for reusable document layouts. The older `com.demcha.templates.*` namespace remains available only as a deprecated compatibility bridge during the transition release.
 
 ---
 
@@ -445,16 +412,23 @@ Entity table = composer.componentBuilder()
 ## Line primitive
 
 ```java
-Entity line = composer.componentBuilder()
-        .line()
-        .horizontal()
-        .size(220, 16)
-        .padding(Padding.of(6))
-        .stroke(new Stroke(ComponentColor.ROYAL_BLUE, 3))
+document.dsl()
+        .pageFlow()
+        .name("LinePrimitives")
+        .spacing(12)
+        .addDivider(divider -> divider
+                .name("HorizontalRule")
+                .width(220)
+                .thickness(3)
+                .color(ComponentColor.ROYAL_BLUE))
+        .addShape(shape -> shape
+                .name("VerticalAccent")
+                .size(3, 90)
+                .fillColor(ComponentColor.ORANGE))
         .build();
 ```
 
-Available path helpers: `horizontal()`, `vertical()`, `diagonalAscending()`, `diagonalDescending()`, and `path(x0, y0, x1, y1)` for custom normalized coordinates.
+Use `divider()` for common horizontal rules and `shape()` for accent bars or custom line-like blocks in the canonical DSL.
 
 ---
 
@@ -487,7 +461,8 @@ Main packages:
 | `com.demcha.compose.layout_core.*` | Core engine: entities, builders, geometry, layout, pagination, render systems |
 | `com.demcha.compose.font_library.*` | Font registration and PDF font helpers |
 | `com.demcha.compose.markdown.*` | Markdown parsing helpers used by text/block text builders |
-| `com.demcha.templates.*` | Higher-level templates, themes, DTOs, and template contracts |
+| `com.demcha.compose.document.*` | Canonical semantic document API, DSL, model, layout, and backend packages |
+| `com.demcha.compose.document.templates.*` | Canonical built-in templates, themes, DTOs, registries, and template support helpers |
 
 For the full package map, see [docs/architecture.md](./docs/architecture.md).
 
@@ -523,12 +498,11 @@ When you add or refactor engine features, follow these project rules:
 
 Built-in templates now follow a compose-first split:
 
-- the public contract lives on `templates.api.*Template` through `compose(DocumentComposer, ...)`
-- each built-in template class in `com.demcha.templates.builtins` is a thin PDF adapter responsible for page setup, `GraphCompose.pdf(...)`, and deprecated compatibility `render(...)` methods
-- the actual document composition belongs in a dedicated backend-neutral scene builder such as `CvSceneBuilder`, `InvoiceSceneBuilder`, or `WeeklyScheduleSceneBuilder`
-- scene builders should stay free of `PDDocument`, `PDPage`, `PDRectangle`, and `PdfComposer` imports
-- `TemplateScenePdfBoundaryTest` enforces that `*SceneBuilder` stays free of PDFBox and `PdfComposer` dependencies
-- the deprecated `render(...)` overloads remain supported for compatibility, but new integrations and new built-in templates should extend the compose-first seam
+- the canonical public contract lives on `com.demcha.compose.document.templates.api.*Template` through `compose(DocumentSession, ...)`
+- each class in `com.demcha.compose.document.templates.builtins` composes through the semantic DSL and the canonical PDF backend
+- the actual document composition belongs in a dedicated backend-neutral scene composer under `com.demcha.compose.document.templates.support`
+- scene composers should stay free of `PDDocument`, `PDPage`, `PDRectangle`, and `PdfComposer` imports
+- deprecated classes under `com.demcha.templates.*` remain as thin compatibility wrappers over the canonical built-ins and document session pipeline
 
 If you are contributing new engine objects, read [CONTRIBUTING.md](./CONTRIBUTING.md), [docs/architecture.md](./docs/architecture.md), and [docs/implementation-guide.md](./docs/implementation-guide.md) together before coding.
 

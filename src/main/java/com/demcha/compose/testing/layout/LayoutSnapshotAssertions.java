@@ -1,5 +1,6 @@
 package com.demcha.compose.testing.layout;
 
+import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.compose.layout_core.debug.LayoutSnapshot;
 
@@ -14,9 +15,10 @@ import java.util.Objects;
  *
  * <p>The intended workflow is:</p>
  * <ol>
- *   <li>compose the document into a {@link PdfComposer}</li>
+ *   <li>compose the document into the canonical {@link DocumentSession} or the
+ *       deprecated {@link PdfComposer} compatibility adapter</li>
  *   <li>call one of the {@code assertMatches(...)} overloads</li>
- *   <li>optionally render the same composer to PDF for human inspection</li>
+ *   <li>optionally render the same session to PDF for human inspection</li>
  * </ol>
  *
  * <p>By default, expected baselines are resolved under
@@ -35,6 +37,83 @@ public final class LayoutSnapshotAssertions {
     private static final Path ACTUAL_ROOT = Path.of("target", "visual-tests", "layout-snapshots");
 
     private LayoutSnapshotAssertions() {
+    }
+
+    /**
+     * Resolves and compares a snapshot using a slash-delimited logical path.
+     *
+     * <p>For example, passing {@code templates/invoice/invoice_standard_layout}
+     * compares against
+     * {@code src/test/resources/layout-snapshots/templates/invoice/invoice_standard_layout.json}.</p>
+     *
+     * @param document composed document whose layout should be snapshotted
+     * @param snapshotPath logical snapshot path relative to the default snapshot root
+     * @throws Exception if snapshot extraction or comparison fails
+     */
+    public static void assertMatches(DocumentSession document, String snapshotPath) throws Exception {
+        SnapshotTarget target = parseSnapshotPath(snapshotPath);
+        assertMatches(document, target.snapshotName(), target.folders());
+    }
+
+    /**
+     * Resolves and compares a snapshot using an explicit file name plus folders.
+     *
+     * @param document composed document whose layout should be snapshotted
+     * @param snapshotName file name without the {@code .json} suffix
+     * @param folders optional folder segments under the default snapshot root
+     * @throws Exception if snapshot extraction or comparison fails
+     */
+    public static void assertMatches(DocumentSession document, String snapshotName, String... folders) throws Exception {
+        assertMatches(
+                document.layoutSnapshot(),
+                EXPECTED_ROOT,
+                ACTUAL_ROOT,
+                Boolean.getBoolean(UPDATE_PROPERTY),
+                snapshotName,
+                folders);
+    }
+
+    /**
+     * Resolves and compares a snapshot using a slash-delimited logical path and
+     * caller-provided baseline roots.
+     *
+     * @param document composed document whose layout should be snapshotted
+     * @param expectedRoot root folder that stores committed JSON baselines
+     * @param actualRoot root folder for mismatch artifacts
+     * @param snapshotPath logical snapshot path relative to {@code expectedRoot}
+     * @throws Exception if snapshot extraction or comparison fails
+     */
+    public static void assertMatches(DocumentSession document,
+                                     Path expectedRoot,
+                                     Path actualRoot,
+                                     String snapshotPath) throws Exception {
+        SnapshotTarget target = parseSnapshotPath(snapshotPath);
+        assertMatches(document, expectedRoot, actualRoot, target.snapshotName(), target.folders());
+    }
+
+    /**
+     * Resolves and compares a snapshot using an explicit file name plus folders
+     * and caller-provided baseline roots.
+     *
+     * @param document composed document whose layout should be snapshotted
+     * @param expectedRoot root folder that stores committed JSON baselines
+     * @param actualRoot root folder for mismatch artifacts
+     * @param snapshotName file name without the {@code .json} suffix
+     * @param folders optional folder segments under {@code expectedRoot}
+     * @throws Exception if snapshot extraction or comparison fails
+     */
+    public static void assertMatches(DocumentSession document,
+                                     Path expectedRoot,
+                                     Path actualRoot,
+                                     String snapshotName,
+                                     String... folders) throws Exception {
+        assertMatches(
+                document.layoutSnapshot(),
+                expectedRoot,
+                actualRoot,
+                Boolean.getBoolean(UPDATE_PROPERTY),
+                snapshotName,
+                folders);
     }
 
     /**

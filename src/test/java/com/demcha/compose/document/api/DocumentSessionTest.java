@@ -1,6 +1,9 @@
 package com.demcha.compose.document.api;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.font_library.DefaultFonts;
 import com.demcha.compose.font_library.FontLibrary;
 import com.demcha.compose.layout_core.components.components_builders.TableCellSpec;
@@ -47,9 +50,11 @@ import com.demcha.compose.document.model.node.TableNode;
 import com.demcha.compose.document.model.node.TextAlign;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayOutputStream;
 import java.awt.Color;
 import java.util.List;
 
@@ -316,6 +321,65 @@ class DocumentSessionTest {
             SemanticExportManifest pptx = session.export(new PptxSemanticBackend());
             assertThat(pptx.backendName()).isEqualTo("pptx-semantic");
             assertThat(pptx.nodeKinds()).contains("ContainerNode", "ShapeNode");
+        }
+    }
+
+    @Test
+    void documentLevelPdfOptionsShouldReuseCompiledLayout() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(new PDRectangle(220, 180))
+                .margin(Margin.of(12))
+                .create()) {
+
+            session.add(new ParagraphNode(
+                    "Paragraph",
+                    "Layout should stay cached while only PDF chrome changes.",
+                    TextStyle.DEFAULT_STYLE,
+                    TextAlign.LEFT,
+                    2.0,
+                    Padding.of(4),
+                    Margin.zero()));
+
+            LayoutGraph graph = session.layoutGraph();
+
+            session.metadata(PdfMetadataOptions.builder().title("Chrome test").build())
+                    .watermark(PdfWatermarkOptions.builder().text("DRAFT").build())
+                    .header(PdfHeaderFooterOptions.builder().centerText("Header").build())
+                    .guideLines(true);
+
+            assertThat(session.layoutGraph()).isSameAs(graph);
+        }
+    }
+
+    @Test
+    void compatibilityArtifactsShouldStillAcceptCanonicalMetadataPostProcessing() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(PDRectangle.A4)
+                .margin(Margin.of(12))
+                .create();
+             PDDocument compatibilityDocument = new PDDocument()) {
+
+            session.add(new ShapeNode("Box", 80, 40, Color.GRAY, new Stroke(Color.BLACK, 1), Padding.zero(), Margin.zero()));
+            var snapshot = session.layoutSnapshot();
+
+            compatibilityDocument.addPage(new PDPage(PDRectangle.A4));
+            byte[] compatibilityBytes;
+            try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+                compatibilityDocument.save(output);
+                compatibilityBytes = output.toByteArray();
+            }
+
+            session.installCompatibilityArtifacts(snapshot, compatibilityBytes);
+            session.metadata(PdfMetadataOptions.builder()
+                    .title("Compatibility Title")
+                    .author("GraphCompose")
+                    .build());
+
+            byte[] processed = session.toPdfBytes();
+            try (PDDocument loaded = Loader.loadPDF(processed)) {
+                assertThat(loaded.getDocumentInformation().getTitle()).isEqualTo("Compatibility Title");
+                assertThat(loaded.getDocumentInformation().getAuthor()).isEqualTo("GraphCompose");
+            }
         }
     }
 

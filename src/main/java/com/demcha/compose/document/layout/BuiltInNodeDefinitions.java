@@ -1,10 +1,14 @@
 package com.demcha.compose.document.layout;
 
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfBarcodeOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
 import com.demcha.compose.document.model.node.DocumentNode;
-
+import com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy;
 import com.demcha.compose.layout_core.components.components_builders.TableCellSpec;
 import com.demcha.compose.layout_core.components.components_builders.TableCellStyle;
 import com.demcha.compose.layout_core.components.components_builders.TableColumnSpec;
+import com.demcha.compose.layout_core.components.content.barcode.BarcodeData;
 import com.demcha.compose.layout_core.components.content.ImageData;
 import com.demcha.compose.layout_core.components.content.shape.Side;
 import com.demcha.compose.layout_core.components.content.shape.Stroke;
@@ -14,6 +18,7 @@ import com.demcha.compose.layout_core.components.renderable.BlockText;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.system.interfaces.TextMeasurementSystem;
+import com.demcha.compose.document.model.node.BarcodeNode;
 import com.demcha.compose.document.model.node.ContainerNode;
 import com.demcha.compose.document.model.node.ImageNode;
 import com.demcha.compose.document.model.node.PageBreakNode;
@@ -22,8 +27,6 @@ import com.demcha.compose.document.model.node.SectionNode;
 import com.demcha.compose.document.model.node.ShapeNode;
 import com.demcha.compose.document.model.node.TableNode;
 import com.demcha.compose.document.model.node.TextAlign;
-import com.demcha.compose.document.model.node.DocumentNode;
-
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -46,6 +49,7 @@ public final class BuiltInNodeDefinitions {
                 .register(new ParagraphDefinition())
                 .register(new ShapeDefinition())
                 .register(new ImageDefinition())
+                .register(new BarcodeDefinition())
                 .register(new PageBreakDefinition())
                 .register(new ContainerDefinition())
                 .register(new SectionDefinition())
@@ -55,6 +59,28 @@ public final class BuiltInNodeDefinitions {
     public record ParagraphLine(String text, double width) {
     }
 
+    /**
+     * Marker interface for fragment payloads that carry canonical PDF link or
+     * bookmark metadata through the resolved semantic graph.
+     */
+    public interface PdfSemanticFragmentPayload {
+        /**
+         * Returns link metadata for the resolved fragment, or {@code null} when
+         * no PDF annotation should be emitted.
+         *
+         * @return fragment-level link options, or {@code null}
+         */
+        PdfLinkOptions linkOptions();
+
+        /**
+         * Returns bookmark metadata for the resolved fragment, or {@code null}
+         * when no PDF outline entry should be emitted.
+         *
+         * @return fragment-level bookmark options, or {@code null}
+         */
+        PdfBookmarkOptions bookmarkOptions();
+    }
+
     public record ParagraphFragmentPayload(
             TextStyle textStyle,
             TextAlign align,
@@ -62,20 +88,43 @@ public final class BuiltInNodeDefinitions {
             double lineHeight,
             double lineGap,
             double baselineOffset,
-            List<ParagraphLine> lines
-    ) {
+            List<ParagraphLine> lines,
+            PdfLinkOptions linkOptions,
+            PdfBookmarkOptions bookmarkOptions
+    ) implements PdfSemanticFragmentPayload {
         public ParagraphFragmentPayload {
             lines = List.copyOf(lines);
         }
     }
 
-    public record ShapeFragmentPayload(Color fillColor, Stroke stroke) {
+    public record ShapeFragmentPayload(
+            Color fillColor,
+            Stroke stroke,
+            PdfLinkOptions linkOptions,
+            PdfBookmarkOptions bookmarkOptions
+    ) implements PdfSemanticFragmentPayload {
     }
 
-    public record ImageFragmentPayload(ImageData imageData) {
+    public record ImageFragmentPayload(
+            ImageData imageData,
+            PdfLinkOptions linkOptions,
+            PdfBookmarkOptions bookmarkOptions
+    ) implements PdfSemanticFragmentPayload {
     }
 
-    public record TableRowFragmentPayload(List<TableResolvedCell> cells, boolean startsPageFragment) {
+    public record BarcodeFragmentPayload(
+            BarcodeData barcodeData,
+            PdfLinkOptions linkOptions,
+            PdfBookmarkOptions bookmarkOptions
+    ) implements PdfSemanticFragmentPayload {
+    }
+
+    public record TableRowFragmentPayload(
+            List<TableResolvedCell> cells,
+            boolean startsPageFragment,
+            PdfLinkOptions linkOptions,
+            PdfBookmarkOptions bookmarkOptions
+    ) implements PdfSemanticFragmentPayload {
         public TableRowFragmentPayload {
             cells = List.copyOf(cells);
         }
@@ -138,7 +187,9 @@ public final class BuiltInNodeDefinitions {
                     layout.lineHeight(),
                     layout.lineGap(),
                     layout.baselineOffset(),
-                    layout.visualLines());
+                    layout.visualLines(),
+                    node.linkOptions(),
+                    layout.emitBookmark() ? node.bookmarkOptions() : null);
 
             return List.of(new LayoutFragment(
                     placement.path(),
@@ -184,7 +235,7 @@ public final class BuiltInNodeDefinitions {
                     node.padding().bottom(),
                     width,
                     height,
-                    new ShapeFragmentPayload(node.fillColor(), node.stroke())));
+                    new ShapeFragmentPayload(node.fillColor(), node.stroke(), node.linkOptions(), node.bookmarkOptions())));
         }
     }
 
@@ -222,7 +273,44 @@ public final class BuiltInNodeDefinitions {
                     node.padding().bottom(),
                     width,
                     height,
-                    new ImageFragmentPayload(node.imageData())));
+                    new ImageFragmentPayload(node.imageData(), node.linkOptions(), node.bookmarkOptions())));
+        }
+    }
+
+    private static final class BarcodeDefinition implements NodeDefinition<BarcodeNode> {
+        @Override
+        public Class<BarcodeNode> nodeType() {
+            return BarcodeNode.class;
+        }
+
+        @Override
+        public PreparedNode<BarcodeNode> prepare(BarcodeNode node, PrepareContext ctx, BoxConstraints constraints) {
+            return PreparedNode.leaf(node, new MeasureResult(
+                    node.width() + node.padding().horizontal(),
+                    node.height() + node.padding().vertical()));
+        }
+
+        @Override
+        public PaginationPolicy paginationPolicy(BarcodeNode node) {
+            return PaginationPolicy.ATOMIC;
+        }
+
+        @Override
+        public List<LayoutFragment> emitFragments(PreparedNode<BarcodeNode> prepared, FragmentContext ctx, FragmentPlacement placement) {
+            BarcodeNode node = prepared.node();
+            double width = Math.max(0.0, placement.width() - node.padding().horizontal());
+            double height = Math.max(0.0, placement.height() - node.padding().vertical());
+            if (width <= EPS || height <= EPS) {
+                return List.of();
+            }
+            return List.of(new LayoutFragment(
+                    placement.path(),
+                    0,
+                    node.padding().left(),
+                    node.padding().bottom(),
+                    width,
+                    height,
+                    new BarcodeFragmentPayload(toBarcodeData(node.barcodeOptions()), node.linkOptions(), node.bookmarkOptions())));
         }
     }
 
@@ -322,7 +410,7 @@ public final class BuiltInNodeDefinitions {
             MeasureResult measure = new MeasureResult(
                     layout.finalWidth() + node.padding().horizontal(),
                     layout.totalHeight() + node.padding().vertical());
-            return PreparedNode.leaf(node, measure, new PreparedTableLayout(layout));
+            return PreparedNode.leaf(node, measure, new PreparedTableLayout(layout, node.bookmarkOptions() != null));
         }
 
         @Override
@@ -361,7 +449,8 @@ public final class BuiltInNodeDefinitions {
         @Override
         public List<LayoutFragment> emitFragments(PreparedNode<TableNode> prepared, FragmentContext ctx, FragmentPlacement placement) {
             TableNode node = prepared.node();
-            ResolvedTableLayout layout = prepared.requirePreparedLayout(PreparedTableLayout.class).resolvedLayout();
+            PreparedTableLayout preparedLayout = prepared.requirePreparedLayout(PreparedTableLayout.class);
+            ResolvedTableLayout layout = preparedLayout.resolvedLayout();
 
             List<LayoutFragment> fragments = new ArrayList<>(layout.rows().size());
             double innerHeight = layout.totalHeight();
@@ -377,7 +466,13 @@ public final class BuiltInNodeDefinitions {
                         localY,
                         layout.finalWidth(),
                         rowHeight,
-                        new TableRowFragmentPayload(layout.rows().get(rowIndex), rowIndex == 0)));
+                        new TableRowFragmentPayload(
+                                layout.rows().get(rowIndex),
+                                rowIndex == 0,
+                                node.linkOptions(),
+                                rowIndex == 0 && preparedLayout.emitBookmark()
+                                        ? node.bookmarkOptions()
+                                        : null)));
                 rowTopOffset += rowHeight;
             }
 
@@ -386,6 +481,24 @@ public final class BuiltInNodeDefinitions {
     }
 
     // HELPERS
+
+    private static BarcodeData toBarcodeData(PdfBarcodeOptions options) {
+        return BarcodeData.of(
+                options.getContent(),
+                switch (options.getType()) {
+                    case CODE_128 -> com.demcha.compose.layout_core.components.content.barcode.BarcodeType.CODE_128;
+                    case CODE_39 -> com.demcha.compose.layout_core.components.content.barcode.BarcodeType.CODE_39;
+                    case EAN_13 -> com.demcha.compose.layout_core.components.content.barcode.BarcodeType.EAN_13;
+                    case EAN_8 -> com.demcha.compose.layout_core.components.content.barcode.BarcodeType.EAN_8;
+                    case UPC_A -> com.demcha.compose.layout_core.components.content.barcode.BarcodeType.UPC_A;
+                    case PDF_417 -> com.demcha.compose.layout_core.components.content.barcode.BarcodeType.PDF_417;
+                    case DATA_MATRIX -> com.demcha.compose.layout_core.components.content.barcode.BarcodeType.DATA_MATRIX;
+                    case QR_CODE -> com.demcha.compose.layout_core.components.content.barcode.BarcodeType.QR_CODE;
+                },
+                options.getForeground(),
+                options.getBackground(),
+                options.getQuietZoneMargin());
+    }
 
     private static ImageDimensions resolveImageDimensions(ImageNode node, double availableWidth) {
         int intrinsicWidth = Math.max(1, node.imageData().getMetadata().width());
@@ -426,7 +539,13 @@ public final class BuiltInNodeDefinitions {
                                                                  double innerWidth,
                                                                  TextMeasurementSystem measurement) {
         List<String> logicalLines = sanitizeLogicalLines(node.text());
-        List<String> wrapped = wrapParagraph(logicalLines, node.textStyle(), Math.max(0.0, innerWidth), measurement);
+        List<String> wrapped = wrapParagraph(
+                logicalLines,
+                node.textStyle(),
+                Math.max(0.0, innerWidth),
+                node.bulletOffset(),
+                node.indentStrategy(),
+                measurement);
         if (wrapped.isEmpty()) {
             wrapped = List.of("");
         }
@@ -451,7 +570,8 @@ public final class BuiltInNodeDefinitions {
                 lineHeight,
                 gap,
                 maxLineWidth,
-                totalHeight);
+                totalHeight,
+                node.bookmarkOptions() != null);
     }
 
     private static PreparedNode<ParagraphNode> sliceParagraphPreparedNode(ParagraphNode source,
@@ -476,6 +596,10 @@ public final class BuiltInNodeDefinitions {
                 source.textStyle(),
                 source.align(),
                 source.lineSpacing(),
+                "",
+                BlockIndentStrategy.NONE,
+                source.linkOptions(),
+                keepTopInsets && layout.emitBookmark() ? source.bookmarkOptions() : null,
                 new Padding(
                         keepTopInsets ? source.padding().top() : 0.0,
                         source.padding().right(),
@@ -495,7 +619,8 @@ public final class BuiltInNodeDefinitions {
                 layout.lineHeight(),
                 layout.lineGap(),
                 maxLineWidth,
-                totalHeight);
+                totalHeight,
+                keepTopInsets && layout.emitBookmark());
 
         MeasureResult measure = new MeasureResult(
                 maxLineWidth + fragmentNode.padding().horizontal(),
@@ -516,10 +641,14 @@ public final class BuiltInNodeDefinitions {
     private static List<String> wrapParagraph(List<String> logicalLines,
                                               TextStyle style,
                                               double maxWidth,
+                                              String bulletOffset,
+                                              BlockIndentStrategy indentStrategy,
                                               TextMeasurementSystem measurement) {
         List<String> result = new ArrayList<>();
+        ParagraphIndentSpec indentSpec = ParagraphIndentSpec.from(bulletOffset, style, measurement);
 
-        for (String logicalLine : logicalLines) {
+        for (int logicalLineIndex = 0; logicalLineIndex < logicalLines.size(); logicalLineIndex++) {
+            String logicalLine = logicalLines.get(logicalLineIndex);
             if (logicalLine.isEmpty()) {
                 result.add("");
                 continue;
@@ -529,42 +658,97 @@ public final class BuiltInNodeDefinitions {
                 continue;
             }
 
+            String initialPrefix = "";
+            if (logicalLineIndex == 0) {
+                if (indentStrategy.indentFirstLine()) {
+                    initialPrefix = indentSpec.firstLinePrefix();
+                }
+            } else if (indentStrategy.indentWrappedLines()) {
+                initialPrefix = indentSpec.continuationPrefix();
+            }
+
+            String continuationPrefix = indentStrategy.indentWrappedLines()
+                    ? indentSpec.continuationPrefix()
+                    : "";
+
             List<String> tokens = tokenize(logicalLine);
-            String currentLine = "";
+            String currentPrefix = initialPrefix;
+            String currentLine = initialPrefix;
+            boolean hasContent = false;
+
             for (String token : tokens) {
-                String candidate = currentLine + token;
-                if (currentLine.isEmpty() || measurement.textWidth(style, candidate) <= maxWidth + EPS) {
-                    currentLine = candidate;
+                String nextToken = hasContent ? token : token.stripLeading();
+                if (nextToken.isEmpty()) {
                     continue;
                 }
 
-                String committed = trimTrailingSpaces(currentLine);
-                if (committed.isEmpty()) {
-                    List<String> chunks = splitLongToken(token.stripLeading(), style, maxWidth, measurement);
-                    if (chunks.isEmpty()) {
-                        result.add("");
-                    } else {
-                        result.addAll(chunks.subList(0, chunks.size() - 1));
-                        currentLine = chunks.getLast();
-                    }
-                } else {
-                    result.add(committed);
-                    currentLine = token.stripLeading();
-                    if (!currentLine.isEmpty() && measurement.textWidth(style, currentLine) > maxWidth + EPS) {
-                        List<String> chunks = splitLongToken(currentLine, style, maxWidth, measurement);
-                        if (chunks.isEmpty()) {
-                            currentLine = "";
-                        } else {
-                            result.addAll(chunks.subList(0, chunks.size() - 1));
-                            currentLine = chunks.getLast();
-                        }
-                    }
+                String candidate = currentLine + nextToken;
+                if (!hasContent || measurement.textWidth(style, candidate) <= maxWidth + EPS) {
+                    currentLine = candidate;
+                    hasContent = true;
+                    continue;
                 }
+
+                result.add(trimTrailingSpaces(currentLine));
+                currentPrefix = continuationPrefix;
+                currentLine = continuationPrefix;
+                hasContent = false;
+
+                double availableWidth = availableWidthForPrefix(maxWidth, currentPrefix, style, measurement);
+                String strippedToken = nextToken.stripLeading();
+                if (measurement.textWidth(style, currentPrefix + strippedToken) <= maxWidth + EPS) {
+                    currentLine = currentPrefix + strippedToken;
+                    hasContent = true;
+                    continue;
+                }
+
+                List<String> chunks = splitLongToken(strippedToken, style, availableWidth, measurement);
+                if (chunks.isEmpty()) {
+                    continue;
+                }
+
+                for (int index = 0; index < chunks.size() - 1; index++) {
+                    result.add(currentPrefix + chunks.get(index));
+                    currentPrefix = continuationPrefix;
+                }
+                currentLine = currentPrefix + chunks.getLast();
+                hasContent = true;
             }
+
             result.add(trimTrailingSpaces(currentLine));
         }
 
         return List.copyOf(result);
+    }
+
+    private static double availableWidthForPrefix(double maxWidth,
+                                                  String prefix,
+                                                  TextStyle style,
+                                                  TextMeasurementSystem measurement) {
+        return Math.max(1.0, maxWidth - measurement.textWidth(style, prefix == null ? "" : prefix));
+    }
+
+    private static String normalizeBulletPrefix(String bulletOffset) {
+        if (bulletOffset == null || bulletOffset.isEmpty()) {
+            return "";
+        }
+        char last = bulletOffset.charAt(bulletOffset.length() - 1);
+        return Character.isWhitespace(last) ? bulletOffset : bulletOffset + " ";
+    }
+
+    private static String computeIndentFromPrefix(TextMeasurementSystem measurement,
+                                                  TextStyle style,
+                                                  String prefix) {
+        if (prefix == null || prefix.isEmpty()) {
+            return "";
+        }
+        double targetWidth = measurement.textWidth(style, prefix);
+        double spaceWidth = measurement.textWidth(style, " ");
+        if (spaceWidth <= EPS) {
+            return "";
+        }
+        int spaces = (int) Math.ceil(targetWidth / spaceWidth);
+        return " ".repeat(Math.max(0, spaces));
     }
 
     private static List<String> tokenize(String text) {
@@ -758,6 +942,8 @@ public final class BuiltInNodeDefinitions {
                     source.rowStyles(),
                     source.columnStyles(),
                     layout.finalWidth(),
+                    source.linkOptions(),
+                    keepTopInsets ? source.bookmarkOptions() : null,
                     new Padding(
                             keepTopInsets ? source.padding().top() : 0.0,
                             source.padding().right(),
@@ -780,7 +966,7 @@ public final class BuiltInNodeDefinitions {
         MeasureResult measure = new MeasureResult(
                 layout.finalWidth() + fragmentNode.padding().horizontal(),
                 totalHeight + fragmentNode.padding().vertical());
-        return PreparedNode.leaf(fragmentNode, measure, new PreparedTableLayout(fragmentLayout));
+        return PreparedNode.leaf(fragmentNode, measure, new PreparedTableLayout(fragmentLayout, keepTopInsets));
     }
 
     private static List<List<TableCellStyle>> resolveCellStyles(TableNode node, int columnCount) {
@@ -1004,11 +1190,31 @@ public final class BuiltInNodeDefinitions {
             double lineHeight,
             double lineGap,
             double maxLineWidth,
-            double totalHeight
+            double totalHeight,
+            boolean emitBookmark
     ) implements PreparedNodeLayout {
     }
 
-    private record PreparedTableLayout(ResolvedTableLayout resolvedLayout) implements PreparedNodeLayout {
+    private record PreparedTableLayout(
+            ResolvedTableLayout resolvedLayout,
+            boolean emitBookmark
+    ) implements PreparedNodeLayout {
+    }
+
+    private record ParagraphIndentSpec(String firstLinePrefix, String continuationPrefix) {
+        private static ParagraphIndentSpec from(String bulletOffset,
+                                               TextStyle style,
+                                               TextMeasurementSystem measurement) {
+            String raw = bulletOffset == null ? "" : bulletOffset;
+            boolean hasVisibleChars = raw.chars().anyMatch(ch -> !Character.isWhitespace(ch));
+            if (hasVisibleChars) {
+                String normalizedPrefix = normalizeBulletPrefix(raw);
+                return new ParagraphIndentSpec(
+                        normalizedPrefix,
+                        computeIndentFromPrefix(measurement, style, normalizedPrefix));
+            }
+            return new ParagraphIndentSpec(raw, raw);
+        }
     }
 
     private record ResolvedTableLayout(

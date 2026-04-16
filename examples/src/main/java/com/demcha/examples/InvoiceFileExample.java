@@ -1,10 +1,10 @@
 package com.demcha.examples;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.layout_core.core.DocumentComposer;
+import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
 import com.demcha.examples.support.ExampleDataFactory;
 import com.demcha.examples.support.ExampleOutputPaths;
-import com.demcha.templates.builtins.InvoiceTemplateV1;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
@@ -18,13 +18,12 @@ public final class InvoiceFileExample {
         Path outputFile = ExampleOutputPaths.prepare("invoice.pdf");
         InvoiceTemplateV1 template = new InvoiceTemplateV1();
 
-        try (DocumentComposer composer = GraphCompose.pdf(outputFile)
+        try (DocumentSession document = GraphCompose.document(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(22, 22, 22, 22)
-                .markdown(true)
                 .create()) {
-            template.compose(composer, ExampleDataFactory.sampleInvoice());
-            composer.build();
+            template.compose(document, ExampleDataFactory.sampleInvoice());
+            document.buildPdf();
         }
 
         return outputFile;

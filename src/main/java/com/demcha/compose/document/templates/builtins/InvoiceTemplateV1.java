@@ -3,15 +3,14 @@ package com.demcha.compose.document.templates.builtins;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.InvoiceTemplate;
 import com.demcha.compose.document.templates.data.InvoiceData;
-import com.demcha.compose.document.templates.support.BusinessDocumentSceneStyles;
-import com.demcha.compose.document.templates.support.InvoiceTemplateComposer;
-import com.demcha.compose.document.templates.support.SessionTemplateComposeTarget;
+import com.demcha.compose.document.templates.support.LegacyTemplateMappers;
+import com.demcha.compose.document.templates.support.LegacyTemplateSessionRenderer;
 
 /**
  * Canonical V2 implementation of the invoice template.
  */
 public final class InvoiceTemplateV1 implements InvoiceTemplate {
-    private final InvoiceTemplateComposer composer = new InvoiceTemplateComposer(new BusinessDocumentSceneStyles());
+    private final com.demcha.templates.builtins.InvoiceTemplateV1 legacyBridge = new com.demcha.templates.builtins.InvoiceTemplateV1();
 
     @Override
     public String getTemplateId() {
@@ -30,6 +29,8 @@ public final class InvoiceTemplateV1 implements InvoiceTemplate {
 
     @Override
     public void compose(DocumentSession document, InvoiceData data) {
-        composer.compose(new SessionTemplateComposeTarget(document), data);
+        LegacyTemplateSessionRenderer.renderInto(document, composer -> legacyBridge.compose(
+                composer,
+                LegacyTemplateMappers.toLegacy(data)));
     }
 }

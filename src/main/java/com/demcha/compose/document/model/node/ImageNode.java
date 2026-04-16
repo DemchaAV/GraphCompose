@@ -1,5 +1,7 @@
 package com.demcha.compose.document.model.node;
 
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
 import com.demcha.compose.layout_core.components.content.ImageData;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
@@ -15,6 +17,8 @@ public record ImageNode(
         ImageData imageData,
         Double width,
         Double height,
+        PdfLinkOptions linkOptions,
+        PdfBookmarkOptions bookmarkOptions,
         Padding padding,
         Margin margin
 ) implements DocumentNode {
@@ -29,6 +33,25 @@ public record ImageNode(
         if (height != null && (height <= 0 || Double.isNaN(height) || Double.isInfinite(height))) {
             throw new IllegalArgumentException("height must be finite and positive when set: " + height);
         }
+    }
+
+    /**
+     * Backward-compatible convenience constructor without link/bookmark metadata.
+     *
+     * @param name node name used in snapshots and layout graph paths
+     * @param imageData semantic image payload
+     * @param width optional target width
+     * @param height optional target height
+     * @param padding inner padding
+     * @param margin outer margin
+     */
+    public ImageNode(String name,
+                     ImageData imageData,
+                     Double width,
+                     Double height,
+                     Padding padding,
+                     Margin margin) {
+        this(name, imageData, width, height, null, null, padding, margin);
     }
 }
 

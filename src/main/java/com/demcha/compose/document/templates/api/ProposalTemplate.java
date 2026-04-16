@@ -5,13 +5,41 @@ import com.demcha.compose.document.templates.data.ProposalData;
 
 /**
  * Canonical compose contract for reusable proposal templates.
+ *
+ * <p><b>Responsibility:</b> define one reusable proposal scene that emits
+ * semantic proposal structure into a caller-owned
+ * {@link DocumentSession}.</p>
+ *
+ * <pre>{@code
+ * ProposalTemplate template = new ProposalTemplateV1();
+ *
+ * try (DocumentSession document = GraphCompose.document(Path.of("proposal.pdf")).create()) {
+ *     template.compose(document, proposalData);
+ *     document.buildPdf();
+ * }
+ * }</pre>
  */
 public interface ProposalTemplate {
 
+    /**
+     * Stable public template identifier.
+     *
+     * @return unique template id used by registries and integrations
+     */
     String getTemplateId();
 
+    /**
+     * Human-readable display name.
+     *
+     * @return template display name
+     */
     String getTemplateName();
 
+    /**
+     * Optional human-readable description.
+     *
+     * @return template description, or an empty string when omitted
+     */
     default String getDescription() {
         return "";
     }
@@ -21,6 +49,7 @@ public interface ProposalTemplate {
      *
      * @param document active mutable document session receiving template nodes
      * @param data proposal document data
+     * @throws NullPointerException if an implementation requires non-null inputs
      */
     void compose(DocumentSession document, ProposalData data);
 }

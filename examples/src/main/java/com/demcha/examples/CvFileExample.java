@@ -1,12 +1,12 @@
 package com.demcha.examples;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.layout_core.core.DocumentComposer;
+import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.templates.builtins.EditorialBlueCvTemplate;
+import com.demcha.compose.document.templates.data.MainPageCV;
+import com.demcha.compose.document.templates.data.MainPageCvDTO;
 import com.demcha.examples.support.ExampleDataFactory;
 import com.demcha.examples.support.ExampleOutputPaths;
-import com.demcha.templates.api.MainPageCvDTO;
-import com.demcha.templates.builtins.EditorialBlueCvTemplate;
-import com.demcha.templates.data.MainPageCV;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
@@ -23,13 +23,12 @@ public final class CvFileExample {
 
         EditorialBlueCvTemplate template = new EditorialBlueCvTemplate();
 
-        try (DocumentComposer composer = GraphCompose.pdf(outputFile)
+        try (DocumentSession document = GraphCompose.document(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(18, 18, 18, 18)
-                .markdown(true)
                 .create()) {
-            template.compose(composer, original, rewritten);
-            composer.build();
+            template.compose(document, original, rewritten);
+            document.buildPdf();
         }
 
         return outputFile;

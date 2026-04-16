@@ -1,6 +1,7 @@
 package com.demcha.compose.document.templates.support;
 
 import com.demcha.compose.document.model.node.TextAlign;
+import com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
@@ -27,7 +28,22 @@ public final class TemplateSceneSupport {
                                                   double lineSpacing,
                                                   Padding padding,
                                                   Margin margin) {
-        return new TemplateParagraphSpec(name, text, style, align, lineSpacing, padding, margin);
+        return new TemplateParagraphSpec(name, text, style, align, lineSpacing, "", BlockIndentStrategy.NONE, padding, margin);
+    }
+
+    /**
+     * Creates a normalized paragraph instruction with legacy block-indent semantics.
+     */
+    public static TemplateParagraphSpec blockParagraph(String name,
+                                                       String text,
+                                                       TextStyle style,
+                                                       TextAlign align,
+                                                       double lineSpacing,
+                                                       String bulletOffset,
+                                                       BlockIndentStrategy indentStrategy,
+                                                       Padding padding,
+                                                       Margin margin) {
+        return new TemplateParagraphSpec(name, text, style, align, lineSpacing, bulletOffset, indentStrategy, padding, margin);
     }
 
     /**
@@ -70,12 +86,25 @@ public final class TemplateSceneSupport {
     public static List<String> sanitizeLines(List<String> values) {
         List<String> sanitized = new ArrayList<>();
         for (String value : values) {
-            String normalized = Objects.requireNonNullElse(value, "").trim();
+            String normalized = stripBasicMarkdown(Objects.requireNonNullElse(value, "")).trim();
             if (!normalized.isBlank()) {
                 sanitized.add(normalized);
             }
         }
         return List.copyOf(sanitized);
+    }
+
+    /**
+     * Removes the small markdown subset used across built-in template fixtures.
+     */
+    public static String stripBasicMarkdown(String value) {
+        return Objects.requireNonNullElse(value, "")
+                .replace("**", "")
+                .replace("__", "")
+                .replace("##", "")
+                .replace("`", "")
+                .replace("_", "")
+                .replace("*", "");
     }
 
     /**

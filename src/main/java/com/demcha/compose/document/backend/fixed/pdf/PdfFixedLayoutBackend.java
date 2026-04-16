@@ -2,6 +2,7 @@ package com.demcha.compose.document.backend.fixed.pdf;
 
 import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
+import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfBarcodeFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfImageFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfParagraphFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfShapeFragmentRenderHandler;
@@ -45,6 +46,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
      */
     public PdfFixedLayoutBackend() {
         this(List.of(
+                new PdfBarcodeFragmentRenderHandler(),
                 new PdfParagraphFragmentRenderHandler(),
                 new PdfShapeFragmentRenderHandler(),
                 new PdfImageFragmentRenderHandler(),
@@ -88,9 +90,18 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
             try (PdfRenderSession session = new PdfRenderSession(document, pages)) {
                 PdfRenderEnvironment environment = new PdfRenderEnvironment(document, fonts, session);
                 for (PlacedFragment fragment : graph.fragments()) {
-                    renderFragment(fragment, environment);
+                    renderFragment(fragment, environment, context.guideLines());
                 }
+                PdfBookmarkOutlineWriter.apply(document, environment.bookmarkRecords());
             }
+
+            PdfDocumentPostProcessor.apply(
+                    document,
+                    context.canvas(),
+                    context.metadataOptions(),
+                    context.watermarkOptions(),
+                    context.protectionOptions(),
+                    context.headerFooterOptions());
 
             if (context.outputFile() != null) {
                 document.save(context.outputFile().toFile());
@@ -114,10 +125,24 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         return List.copyOf(pages);
     }
 
-    private void renderFragment(PlacedFragment fragment, PdfRenderEnvironment environment) throws Exception {
+    private void renderFragment(PlacedFragment fragment, PdfRenderEnvironment environment, boolean guideLines) throws Exception {
         Object payload = fragment.payload();
         PdfFragmentRenderHandler<Object> handler = handlerFor(payload);
         handler.render(fragment, payload, environment);
+        if (payload instanceof BuiltInNodeDefinitions.PdfSemanticFragmentPayload semanticPayload) {
+            if (semanticPayload.linkOptions() != null) {
+                PdfLinkAnnotationWriter.addUriLink(
+                        environment.document().getPage(fragment.pageIndex()),
+                        new PdfLinkAnnotationWriter.PlacedPdfRect(fragment.x(), fragment.y(), fragment.width(), fragment.height()),
+                        semanticPayload.linkOptions());
+            }
+            if (semanticPayload.bookmarkOptions() != null) {
+                environment.registerBookmark(fragment, semanticPayload.bookmarkOptions());
+            }
+        }
+        if (guideLines) {
+            PdfGuideLinesRenderer.draw(fragment, payload, environment);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -139,6 +164,9 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         }
         if (payload instanceof BuiltInNodeDefinitions.ImageFragmentPayload) {
             return (PdfFragmentRenderHandler<Object>) handlers.get(BuiltInNodeDefinitions.ImageFragmentPayload.class);
+        }
+        if (payload instanceof BuiltInNodeDefinitions.BarcodeFragmentPayload) {
+            return (PdfFragmentRenderHandler<Object>) handlers.get(BuiltInNodeDefinitions.BarcodeFragmentPayload.class);
         }
         if (payload instanceof BuiltInNodeDefinitions.TableRowFragmentPayload) {
             return (PdfFragmentRenderHandler<Object>) handlers.get(BuiltInNodeDefinitions.TableRowFragmentPayload.class);

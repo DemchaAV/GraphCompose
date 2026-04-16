@@ -132,7 +132,6 @@ Fixed leaf primitives such as `Rectangle`, `Circle`, `Image`, and `Line` follow 
 - `com.demcha.compose.layout_core.*` contains the engine internals and the legacy builder-facing layout layer that still powers compatibility adapters.
 - `com.demcha.compose.layout_core.system.implemented_systems.word_systems.*` contains the experimental Word-specific rendering path.
 - `com.demcha.templates.*` remains as a deprecated template compatibility bridge.
-- `com.demcha.compose.v2.*` remains as a deprecated package bridge from the original V2 experiment to the canonical `document.*` surface.
 
 ## Experimental areas
 

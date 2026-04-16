@@ -10,7 +10,7 @@ The wrapper performs a staged local run:
 07 stress, optional 08 endurance, then 09/10 diff steps.
 
 Use `-OnlyArchitectureComparison` for a fast path that runs only
-classpath build plus the legacy-vs-v2 architecture A/B suite.
+classpath build plus the legacy-vs-canonical architecture A/B suite.
 
 Current-speed diffs are profile-aware. The wrapper only compares reports
 from the same current-speed profile (`smoke` or `full`) and skips the
@@ -406,7 +406,7 @@ try {
             }
         } else {
             Add-SummaryLine("- ``03b-architecture-comparison``: skipped")
-            Add-SummaryLine("  - Reason: use ``-IncludeArchitectureComparison`` to enable legacy vs v2 A/B output")
+            Add-SummaryLine("  - Reason: use ``-IncludeArchitectureComparison`` to enable legacy vs canonical A/B output")
         }
 
         Invoke-JavaMain -Name "04-core-engine" -Classpath $javaClasspath -MainClass "com.demcha.compose.GraphComposeBenchmark"

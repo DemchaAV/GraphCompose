@@ -9,6 +9,7 @@ import com.demcha.compose.document.templates.theme.CvTheme;
 import com.demcha.compose.layout_core.components.components_builders.TableCellSpec;
 import com.demcha.compose.layout_core.components.components_builders.TableCellStyle;
 import com.demcha.compose.layout_core.components.components_builders.TableColumnSpec;
+import com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy;
 import com.demcha.compose.layout_core.components.content.shape.Stroke;
 import com.demcha.compose.layout_core.components.content.text.TextDecoration;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
@@ -48,7 +49,7 @@ public final class EditorialBlueCvTemplateComposer {
 
     public void compose(TemplateComposeTarget target, MainPageCV originalCv, MainPageCvDTO rewrittenCv) {
         MainPageCV data = rewrittenCv == null ? originalCv : rewrittenCv.merge(originalCv);
-        target.startDocument("EditorialBlueRoot", 7);
+        target.startDocument("EditorialBlueRoot", 0);
         addHeader(target, data);
         addProfile(target, data.getModuleSummary());
         addExperience(target, data.getProfessionalExperience());
@@ -112,14 +113,16 @@ public final class EditorialBlueCvTemplateComposer {
             return;
         }
         sectionHeader(target, "EditorialBlueProfile", "PROFESSIONAL PROFILE", Margin.top(3));
-        target.addParagraph(TemplateSceneSupport.paragraph(
+        target.addParagraph(TemplateSceneSupport.blockParagraph(
                 "EditorialBlueProfileBody",
                 stripMarkdown(summary.getBlockSummary()),
                 bodyStyle(),
                 TextAlign.LEFT,
-                2.0,
+                1.8,
+                "",
+                BlockIndentStrategy.FIRST_LINE,
                 Padding.zero(),
-                Margin.top(3)));
+                Margin.top(2)));
     }
 
     private void addExperience(TemplateComposeTarget target, ModuleYml experience) {
@@ -131,19 +134,31 @@ public final class EditorialBlueCvTemplateComposer {
         for (ExperienceEntry entry : parseExperienceEntries(experience.getModulePoints())) {
             target.addParagraph(TemplateSceneSupport.paragraph(
                     "EditorialBlueExperienceTitle_" + index,
-                    TemplateSceneSupport.joinNonBlank(" | ", entry.role(), entry.company(), entry.dateRange()),
+                    TemplateSceneSupport.joinNonBlank(" ", entry.role(), entry.dateRange()),
                     roleStyle(),
                     TextAlign.LEFT,
                     1.0,
                     Padding.zero(),
                     Margin.top(index == 0 ? 3 : 4)));
-            if (!entry.details().isEmpty()) {
+            if (!entry.company().isBlank()) {
                 target.addParagraph(TemplateSceneSupport.paragraph(
+                        "EditorialBlueExperienceCompany_" + index,
+                        entry.company(),
+                        companyStyle(),
+                        TextAlign.LEFT,
+                        1.0,
+                        Padding.zero(),
+                        Margin.zero()));
+            }
+            if (!entry.details().isEmpty()) {
+                target.addParagraph(TemplateSceneSupport.blockParagraph(
                         "EditorialBlueExperienceBody_" + index,
-                        TemplateSceneSupport.bulletText(entry.details()),
+                        String.join("\n", entry.details()),
                         bodyStyle(),
                         TextAlign.LEFT,
-                        2.0,
+                        1.8,
+                        "\u2022",
+                        BlockIndentStrategy.FROM_SECOND_LINE,
                         Padding.zero(),
                         Margin.top(2)));
             }
@@ -160,20 +175,32 @@ public final class EditorialBlueCvTemplateComposer {
         for (ProjectEntry entry : parseProjectEntries(projects.getModulePoints()).stream().limit(2).toList()) {
             target.addParagraph(TemplateSceneSupport.paragraph(
                     "EditorialBlueProjectTitle_" + index,
-                    TemplateSceneSupport.joinNonBlank(" | ", entry.title(), entry.stack()),
+                    entry.title(),
                     educationTitleStyle(),
                     TextAlign.LEFT,
                     1.0,
                     Padding.zero(),
                     Margin.top(index == 0 ? 3 : 4)));
-            target.addParagraph(TemplateSceneSupport.paragraph(
+            if (!entry.stack().isBlank()) {
+                target.addParagraph(TemplateSceneSupport.paragraph(
+                        "EditorialBlueProjectStack_" + index,
+                        entry.stack(),
+                        companyStyle(),
+                        TextAlign.LEFT,
+                        1.0,
+                        Padding.zero(),
+                        Margin.zero()));
+            }
+            target.addParagraph(TemplateSceneSupport.blockParagraph(
                     "EditorialBlueProjectBody_" + index,
                     entry.description(),
                     bodyStyle(),
                     TextAlign.LEFT,
-                    2.0,
+                    1.8,
+                    "",
+                    BlockIndentStrategy.FIRST_LINE,
                     Padding.zero(),
-                    Margin.top(1)));
+                    Margin.zero()));
             index++;
         }
     }
@@ -187,12 +214,22 @@ public final class EditorialBlueCvTemplateComposer {
         for (EducationEntry entry : parseEducationEntries(education.getModulePoints())) {
             target.addParagraph(TemplateSceneSupport.paragraph(
                     "EditorialBlueEducationTitle_" + index,
-                    TemplateSceneSupport.joinNonBlank(" | ", entry.title(), entry.organization(), entry.dateRange(), entry.note()),
+                    TemplateSceneSupport.joinNonBlank(" ", entry.title(), entry.dateRange()),
                     educationTitleStyle(),
                     TextAlign.LEFT,
                     1.0,
                     Padding.zero(),
                     Margin.top(index == 0 ? 3 : 3)));
+            if (!entry.organization().isBlank()) {
+                target.addParagraph(TemplateSceneSupport.paragraph(
+                        "EditorialBlueEducationOrg_" + index,
+                        entry.organization(),
+                        companyStyle(),
+                        TextAlign.LEFT,
+                        1.0,
+                        Padding.zero(),
+                        Margin.zero()));
+            }
             index++;
         }
     }
@@ -356,6 +393,13 @@ public final class EditorialBlueCvTemplateComposer {
         token = token.replace("REST design", "REST API Design");
         token = token.replace("Multithreading/Concurrency", "Concurrency");
         token = token.replace("Git/GitHub", "Git & GitHub");
+        token = token.replace("Spring Data JPA", "Spring Data JPA");
+        token = token.replace("Docker Compose", "Docker");
+        if (token.length() > 24) {
+            token = token.replace("stateless authentication", "Authentication");
+            token = token.replace("role-based authorization", "Authorization");
+            token = token.replace("request validation", "Validation");
+        }
         return token.length() > 28 ? "" : token;
     }
 
@@ -377,6 +421,10 @@ public final class EditorialBlueCvTemplateComposer {
         int stackIndex = normalized.indexOf("Stack:");
         if (stackIndex >= 0) {
             normalized = normalized.substring(0, stackIndex).trim();
+        }
+        int lastSentenceEnd = normalized.indexOf(". ", Math.min(40, normalized.length()));
+        if (lastSentenceEnd > 0) {
+            normalized = normalized.substring(0, lastSentenceEnd + 1).trim();
         }
         return normalized;
     }
@@ -462,6 +510,15 @@ public final class EditorialBlueCvTemplateComposer {
                 .size(10.4)
                 .decoration(TextDecoration.BOLD)
                 .color(primaryTextColor())
+                .build();
+    }
+
+    private TextStyle companyStyle() {
+        return TextStyle.builder()
+                .fontName(theme.bodyFont())
+                .size(9.6)
+                .decoration(TextDecoration.ITALIC)
+                .color(bodyTextColor())
                 .build();
     }
 

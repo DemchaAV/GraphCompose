@@ -10,8 +10,7 @@
  * <ul>
  *   <li>template interfaces expose identity plus one {@code compose(...)} seam</li>
  *   <li>registries provide stable lookup and default selection helpers</li>
- *   <li>PDF-returning legacy conveniences stay in deprecated bridge packages
- *       under {@code com.demcha.templates.*}</li>
+ *   <li>PDF-returning compatibility conveniences stay in deprecated bridge packages</li>
  * </ul>
  */
 package com.demcha.compose.document.templates.api;

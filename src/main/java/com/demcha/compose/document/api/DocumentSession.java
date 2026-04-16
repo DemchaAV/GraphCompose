@@ -16,7 +16,6 @@ import com.demcha.compose.layout_core.system.measurement.FontLibraryTextMeasurem
 import com.demcha.compose.layout_core.system.interfaces.TextMeasurementSystem;
 import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
-import com.demcha.compose.document.backend.fixed.pdf.PdfDocumentPostProcessor;
 import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
 import com.demcha.compose.document.backend.semantic.SemanticBackend;
 import com.demcha.compose.document.backend.semantic.SemanticExportContext;
@@ -81,8 +80,6 @@ public final class DocumentSession implements AutoCloseable {
     private long cachedSnapshotRevision = -1;
     private byte[] cachedPdfBytes;
     private long cachedPdfRevision = -1;
-    private LayoutSnapshot compatibilitySnapshot;
-    private byte[] compatibilityPdfBytes;
 
     public DocumentSession(Path defaultOutputFile,
                            PDRectangle pageSize,
@@ -346,9 +343,6 @@ public final class DocumentSession implements AutoCloseable {
      * @return layout snapshot derived from the current layout graph
      */
     public LayoutSnapshot layoutSnapshot() {
-        if (compatibilitySnapshot != null) {
-            return compatibilitySnapshot;
-        }
         if (cachedSnapshot != null && cachedSnapshotRevision == revision) {
             return cachedSnapshot;
         }
@@ -428,11 +422,7 @@ public final class DocumentSession implements AutoCloseable {
         if (cachedPdfBytes != null && cachedPdfRevision == currentPdfVersion) {
             return cachedPdfBytes.clone();
         }
-        if (compatibilityPdfBytes != null) {
-            cachedPdfBytes = postProcessCompatibilityPdfBytes(compatibilityPdfBytes);
-        } else {
-            cachedPdfBytes = render(new PdfFixedLayoutBackend(), null);
-        }
+        cachedPdfBytes = render(new PdfFixedLayoutBackend(), null);
         cachedPdfRevision = currentPdfVersion;
         return cachedPdfBytes.clone();
     }
@@ -492,8 +482,6 @@ public final class DocumentSession implements AutoCloseable {
         cachedSnapshot = null;
         cachedPdfBytes = null;
         cachedPdfRevision = -1;
-        compatibilitySnapshot = null;
-        compatibilityPdfBytes = null;
     }
 
     private void invalidatePdfArtifacts() {
@@ -502,38 +490,8 @@ public final class DocumentSession implements AutoCloseable {
         cachedPdfRevision = -1;
     }
 
-    void installCompatibilityArtifacts(LayoutSnapshot snapshot, byte[] pdfBytes) {
-        compatibilitySnapshot = Objects.requireNonNull(snapshot, "snapshot");
-        compatibilityPdfBytes = Objects.requireNonNull(pdfBytes, "pdfBytes").clone();
-        cachedSnapshot = null;
-        cachedPdfBytes = null;
-        cachedLayout = null;
-        cachedSnapshotRevision = -1;
-        cachedPdfRevision = -1;
-        cachedLayoutRevision = -1;
-    }
-
     private long currentPdfInputsVersion() {
         return revision * 31L + pdfConfigVersion;
-    }
-
-    private byte[] postProcessCompatibilityPdfBytes(byte[] pdfBytes) throws Exception {
-        if (!PdfDocumentPostProcessor.hasPostProcessing(
-                metadataOptions,
-                watermarkOptions,
-                protectionOptions,
-                headerFooterOptions)) {
-            return Objects.requireNonNull(pdfBytes, "pdfBytes").clone();
-        }
-        // Compatibility-installed PDFs already contain their main render output.
-        // Canonical document-level chrome can still be layered on top safely.
-        return PdfDocumentPostProcessor.apply(
-                pdfBytes,
-                canvas,
-                metadataOptions,
-                watermarkOptions,
-                protectionOptions,
-                headerFooterOptions);
     }
 
     private final class V2Context implements PrepareContext, FragmentContext {

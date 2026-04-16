@@ -28,6 +28,8 @@ public final class InvoiceTemplateComposer {
     private static final double BODY_SIZE = 10.1;
     private static final double LABEL_SIZE = 8.5;
     private static final double TITLE_SIZE = 26;
+    private static final double COLUMN_GAP = 18;
+    private static final double SUMMARY_WIDTH = 206;
 
     private final BusinessDocumentSceneStyles styles;
 
@@ -40,27 +42,7 @@ public final class InvoiceTemplateComposer {
         double width = target.pageWidth();
 
         target.startDocument("InvoiceRoot", ROOT_SPACING);
-        target.addParagraph(TemplateSceneSupport.paragraph(
-                "InvoiceTitle",
-                safe.title(),
-                styles.titleStyle(TITLE_SIZE),
-                TextAlign.LEFT,
-                1.0,
-                Padding.zero(),
-                Margin.zero()));
-        target.addParagraph(TemplateSceneSupport.paragraph(
-                "InvoiceMeta",
-                TemplateSceneSupport.joinNonBlank(" | ",
-                        "Invoice #" + valueOrFallback(safe.invoiceNumber(), "Draft"),
-                        "Issued: " + valueOrFallback(safe.issueDate(), "TBD"),
-                        "Due: " + valueOrFallback(safe.dueDate(), "TBD"),
-                        safe.status().isBlank() ? "" : "Status: " + safe.status(),
-                        safe.reference().isBlank() ? "" : "Reference: " + safe.reference()),
-                styles.bodyBoldStyle(9.8),
-                TextAlign.LEFT,
-                1.0,
-                Padding.zero(),
-                Margin.zero()));
+        target.addTable(headerTable(target, safe));
         target.addDivider(TemplateSceneSupport.divider(
                 "InvoiceRule",
                 width,
@@ -72,39 +54,12 @@ public final class InvoiceTemplateComposer {
         TemplateSceneSupport.addSectionHeader(target, "InvoiceItems", "LINE ITEMS",
                 styles.labelStyle(LABEL_SIZE), Math.min(width, 128), styles.accentColor(), 1.2, Margin.top(4));
         target.addTable(itemsTable(target, safe));
-
-        if (!safe.notes().isEmpty()) {
-            TemplateSceneSupport.addSectionHeader(target, "InvoiceNotes", "NOTES",
-                    styles.labelStyle(LABEL_SIZE), Math.min(width, 120), styles.accentColor(), 1.1, Margin.top(5));
-            target.addParagraph(TemplateSceneSupport.paragraph(
-                    "InvoiceNotesBody",
-                    String.join("\n", TemplateSceneSupport.sanitizeLines(safe.notes())),
-                    styles.bodyStyle(BODY_SIZE),
-                    TextAlign.LEFT,
-                    2.0,
-                    Padding.zero(),
-                    Margin.top(3)));
-        }
-
-        if (!safe.paymentTerms().isEmpty()) {
-            TemplateSceneSupport.addSectionHeader(target, "InvoiceTerms", "PAYMENT TERMS",
-                    styles.labelStyle(LABEL_SIZE), Math.min(width, 152), styles.accentColor(), 1.1, Margin.top(5));
-            target.addParagraph(TemplateSceneSupport.paragraph(
-                    "InvoicePaymentTerms",
-                    TemplateSceneSupport.bulletText(safe.paymentTerms()),
-                    styles.bodyStyle(BODY_SIZE),
-                    TextAlign.LEFT,
-                    2.0,
-                    Padding.zero(),
-                    Margin.top(3)));
-        }
-
-        target.addTable(summaryTable(target, safe));
+        target.addTable(notesAndSummaryTable(target, safe));
 
         if (!safe.footerNote().isBlank()) {
             target.addDivider(TemplateSceneSupport.divider(
-                    "InvoiceFooterRule",
-                    width,
+                "InvoiceFooterRule",
+                width,
                     1.0,
                     styles.accentColor(),
                     Margin.top(5)));
@@ -118,6 +73,42 @@ public final class InvoiceTemplateComposer {
                     Margin.top(3)));
         }
         target.finishDocument();
+    }
+
+    private TemplateTableSpec headerTable(TemplateComposeTarget target, InvoiceData data) {
+        double width = target.pageWidth();
+        double leftWidth = Math.max(220, width - 188);
+        double rightWidth = width - leftWidth - COLUMN_GAP;
+        TableCellStyle baseStyle = TableCellStyle.builder()
+                .padding(Padding.zero())
+                .fillColor(Color.WHITE)
+                .stroke(new Stroke(Color.WHITE, 0.0))
+                .textStyle(styles.bodyStyle(BODY_SIZE))
+                .textAnchor(Anchor.topLeft())
+                .build();
+
+        return new TemplateTableSpec(
+                "InvoiceHeader",
+                List.of(
+                        TableColumnSpec.fixed(leftWidth),
+                        TableColumnSpec.fixed(COLUMN_GAP),
+                        TableColumnSpec.fixed(rightWidth)),
+                List.of(List.of(
+                        TableCellSpec.of(headerLeftLines(data)).withStyle(TableCellStyle.builder()
+                                .textStyle(styles.bodyStyle(BODY_SIZE))
+                                .textAnchor(Anchor.topLeft())
+                                .build()),
+                        TableCellSpec.text(""),
+                        TableCellSpec.of(headerRightLines(data)).withStyle(TableCellStyle.builder()
+                                .textStyle(styles.bodyBoldStyle(9.3))
+                                .textAnchor(Anchor.topRight())
+                                .build()))),
+                baseStyle,
+                Map.of(),
+                Map.of(),
+                width,
+                Padding.zero(),
+                Margin.zero());
     }
 
     private TemplateTableSpec partiesTable(TemplateComposeTarget target, InvoiceData data) {
@@ -197,44 +188,72 @@ public final class InvoiceTemplateComposer {
                 Margin.top(2));
     }
 
-    private TemplateTableSpec summaryTable(TemplateComposeTarget target, InvoiceData data) {
-        double width = Math.min(220, target.pageWidth());
+    private TemplateTableSpec notesAndSummaryTable(TemplateComposeTarget target, InvoiceData data) {
+        double width = target.pageWidth();
+        double leftWidth = Math.max(220, width - SUMMARY_WIDTH - COLUMN_GAP);
+        double rightWidth = width - leftWidth - COLUMN_GAP;
+        List<String> noteLines = notesAndTermsLines(data);
         TableCellStyle defaultStyle = TableCellStyle.builder()
-                .padding(new Padding(6, 8, 6, 8))
-                .fillColor(styles.softFill())
-                .stroke(new Stroke(styles.borderColor(), 1.3))
+                .padding(Padding.zero())
+                .fillColor(Color.WHITE)
+                .stroke(new Stroke(Color.WHITE, 0.0))
                 .textStyle(styles.bodyStyle(9.4))
                 .textAnchor(Anchor.centerLeft())
                 .build();
-        Map<Integer, TableCellStyle> columnStyles = Map.of(
-                1, TableCellStyle.builder().textAnchor(Anchor.centerRight()).build());
-
-        List<InvoiceSummaryRow> rows = data.summaryRows().isEmpty()
-                ? List.of(new InvoiceSummaryRow("Total", "-", true))
-                : data.summaryRows();
-        Map<Integer, TableCellStyle> rowStyles = new LinkedHashMap<>();
-        List<List<TableCellSpec>> cells = new ArrayList<>();
-        for (int index = 0; index < rows.size(); index++) {
-            InvoiceSummaryRow row = rows.get(index);
-            cells.add(List.of(TableCellSpec.text(row.label()), TableCellSpec.text(row.value())));
-            if (row.emphasized()) {
-                rowStyles.put(index, TableCellStyle.builder()
-                        .fillColor(styles.strongFill())
-                        .textStyle(styles.bodyBoldStyle(9.6))
-                        .build());
-            }
-        }
-
         return new TemplateTableSpec(
-                "InvoiceSummaryTable",
-                List.of(TableColumnSpec.fixed(width - 74), TableColumnSpec.fixed(74)),
-                cells,
+                "InvoiceNotesSummary",
+                List.of(
+                        TableColumnSpec.fixed(leftWidth),
+                        TableColumnSpec.fixed(COLUMN_GAP),
+                        TableColumnSpec.fixed(rightWidth)),
+                List.of(List.of(
+                        TableCellSpec.of(noteLines).withStyle(TableCellStyle.builder()
+                                .padding(new Padding(0, 0, 0, 0))
+                                .fillColor(Color.WHITE)
+                                .stroke(new Stroke(Color.WHITE, 0.0))
+                                .textStyle(styles.bodyStyle(BODY_SIZE))
+                                .textAnchor(Anchor.topLeft())
+                                .build()),
+                        TableCellSpec.text(""),
+                        TableCellSpec.of(summaryLines(data)).withStyle(TableCellStyle.builder()
+                                .padding(new Padding(6, 8, 6, 8))
+                                .fillColor(styles.softFill())
+                                .stroke(new Stroke(styles.borderColor(), 1.3))
+                                .textStyle(styles.bodyBoldStyle(9.6))
+                                .textAnchor(Anchor.topLeft())
+                                .build()))),
                 defaultStyle,
-                rowStyles,
-                columnStyles,
+                Map.of(),
+                Map.of(),
                 width,
                 Padding.zero(),
                 Margin.top(6));
+    }
+
+    private List<String> headerLeftLines(InvoiceData data) {
+        List<String> lines = new ArrayList<>();
+        lines.add(valueOrFallback(data.title(), "Invoice"));
+        lines.add("Invoice #" + valueOrFallback(data.invoiceNumber(), "Draft"));
+        if (!data.status().isBlank()) {
+            lines.add("Status: " + data.status());
+        }
+        if (!data.reference().isBlank()) {
+            lines.add("Reference: " + data.reference());
+        }
+        return lines;
+    }
+
+    private List<String> headerRightLines(InvoiceData data) {
+        List<String> lines = new ArrayList<>();
+        lines.add("Issued" + valueOrFallback(data.issueDate(), "TBD"));
+        lines.add("Due" + valueOrFallback(data.dueDate(), "TBD"));
+        if (!data.reference().isBlank()) {
+            lines.add("Reference" + data.reference());
+        }
+        if (!data.status().isBlank()) {
+            lines.add("Status" + data.status());
+        }
+        return lines;
     }
 
     private List<String> partyLines(String title, InvoiceParty party) {
@@ -255,6 +274,33 @@ public final class InvoiceTemplateComposer {
         return lines;
     }
 
+    private List<String> notesAndTermsLines(InvoiceData data) {
+        List<String> lines = new ArrayList<>();
+        if (!data.notes().isEmpty()) {
+            lines.add("NOTES");
+            lines.addAll(wrapLines(TemplateSceneSupport.sanitizeLines(data.notes()), 46));
+        }
+        if (!data.paymentTerms().isEmpty()) {
+            lines.add("PAYMENT TERMS");
+            lines.addAll(wrapLines(TemplateSceneSupport.sanitizeLines(data.paymentTerms()), 46));
+        }
+        if (lines.isEmpty()) {
+            return List.of("");
+        }
+        return List.copyOf(lines);
+    }
+
+    private List<String> summaryLines(InvoiceData data) {
+        List<InvoiceSummaryRow> rows = data.summaryRows().isEmpty()
+                ? List.of(new InvoiceSummaryRow("Total", "-", true))
+                : data.summaryRows();
+        List<String> lines = new ArrayList<>(rows.size());
+        for (InvoiceSummaryRow row : rows) {
+            lines.add(row.label() + " " + row.value());
+        }
+        return List.copyOf(lines);
+    }
+
     private static String valueOrFallback(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value;
     }
@@ -264,7 +310,37 @@ public final class InvoiceTemplateComposer {
         if (item.details().isBlank()) {
             return description;
         }
-        return shorten(description + " - " + item.details(), 60);
+        return shorten(description + " - " + item.details(), 44);
+    }
+
+    private static List<String> wrapLines(List<String> values, int maxLength) {
+        List<String> wrapped = new ArrayList<>();
+        for (String value : values) {
+            wrapped.addAll(wrapLine(value, maxLength));
+        }
+        return List.copyOf(wrapped);
+    }
+
+    private static List<String> wrapLine(String value, int maxLength) {
+        String normalized = valueOrFallback(value, "").trim();
+        if (normalized.isBlank() || normalized.length() <= maxLength) {
+            return List.of(normalized);
+        }
+
+        List<String> parts = new ArrayList<>();
+        String remaining = normalized;
+        while (remaining.length() > maxLength) {
+            int splitAt = remaining.lastIndexOf(' ', maxLength);
+            if (splitAt <= 0) {
+                splitAt = maxLength;
+            }
+            parts.add(remaining.substring(0, splitAt).trim());
+            remaining = remaining.substring(splitAt).trim();
+        }
+        if (!remaining.isBlank()) {
+            parts.add(remaining);
+        }
+        return List.copyOf(parts);
     }
 
     private static String shorten(String value, int maxLength) {

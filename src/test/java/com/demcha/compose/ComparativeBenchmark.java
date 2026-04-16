@@ -27,7 +27,7 @@ import java.util.List;
 
 /**
  * Fair Comparative Benchmark (CPU & RAM)
- * Compares GraphCompose legacy PDF composition, GraphCompose v2 semantic
+ * Compares GraphCompose legacy PDF composition, GraphCompose canonical semantic
  * composition, iText, and JasperReports by isolating the compilation phase
  * and enforcing layout calculations.
  */
@@ -53,7 +53,7 @@ public class ComparativeBenchmark {
         System.out.println("Warming up JVM...");
         for (int i = 0; i < WARMUP_ITERATIONS; i++) {
             benchmarkGraphComposeLegacy();
-            benchmarkGraphComposeV2();
+            benchmarkGraphComposeCanonical();
             benchmarkIText();
             benchmarkJasper();
         }
@@ -65,7 +65,7 @@ public class ComparativeBenchmark {
 
         List<ComparativeRow> rows = List.of(
                 runBenchmark("GraphCompose Legacy", ComparativeBenchmark::benchmarkGraphComposeLegacy),
-                runBenchmark("GraphCompose V2", ComparativeBenchmark::benchmarkGraphComposeV2),
+                runBenchmark("GraphCompose Canonical", ComparativeBenchmark::benchmarkGraphComposeCanonical),
                 runBenchmark("iText 5 (Old)", ComparativeBenchmark::benchmarkIText),
                 runBenchmark("JasperReports", ComparativeBenchmark::benchmarkJasper)
         );
@@ -161,9 +161,9 @@ public class ComparativeBenchmark {
     }
 
     /**
-     * GraphCompose v2: тестируем semantic-first DocumentSession на эквивалентном сценарии.
+     * GraphCompose canonical: тестируем semantic-first DocumentSession на эквивалентном сценарии.
      */
-    private static byte[] benchmarkGraphComposeV2() throws Exception {
+    private static byte[] benchmarkGraphComposeCanonical() throws Exception {
         try (DocumentSession session = GraphCompose.document().pageSize(PDRectangle.A4).create()) {
             session.add(new ContainerNode(
                     "Invoice",

@@ -29,6 +29,7 @@ public final class ProposalTemplateComposer {
     private static final double BODY_SIZE = 10.0;
     private static final double LABEL_SIZE = 8.5;
     private static final double TITLE_SIZE = 24;
+    private static final double COLUMN_GAP = 18;
 
     private final BusinessDocumentSceneStyles styles;
 
@@ -41,53 +42,7 @@ public final class ProposalTemplateComposer {
         double width = target.pageWidth();
 
         target.startDocument("ProposalRoot", ROOT_SPACING);
-        target.addParagraph(TemplateSceneSupport.paragraph(
-                "ProposalTitle",
-                safe.title(),
-                styles.titleStyle(TITLE_SIZE),
-                TextAlign.LEFT,
-                1.0,
-                Padding.zero(),
-                Margin.zero()));
-        target.addParagraph(TemplateSceneSupport.paragraph(
-                "ProposalProjectTitle",
-                valueOrFallback(safe.projectTitle(), "Project proposal"),
-                styles.headingStyle(13),
-                TextAlign.LEFT,
-                1.0,
-                Padding.zero(),
-                Margin.zero()));
-        target.addParagraph(TemplateSceneSupport.paragraph(
-                "ProposalMeta",
-                TemplateSceneSupport.joinNonBlank(" | ",
-                        "Proposal: " + valueOrFallback(safe.proposalNumber(), "Draft"),
-                        "Prepared: " + valueOrFallback(safe.preparedDate(), "TBD"),
-                        "Valid Until: " + valueOrFallback(safe.validUntil(), "TBD")),
-                styles.metaStyle(9.2),
-                TextAlign.LEFT,
-                1.0,
-                Padding.zero(),
-                Margin.top(2)));
-        if (safe.recipient() != null) {
-            target.addParagraph(TemplateSceneSupport.paragraph(
-                    "ProposalRecipient",
-                    String.join("\n", partyLines("Prepared For", safe.recipient())),
-                    styles.bodyStyle(BODY_SIZE),
-                    TextAlign.LEFT,
-                    2.0,
-                    Padding.zero(),
-                    Margin.top(3)));
-        }
-        if (safe.sender() != null) {
-            target.addParagraph(TemplateSceneSupport.paragraph(
-                    "ProposalSender",
-                    String.join("\n", partyLines("Prepared By", safe.sender())),
-                    styles.bodyStyle(BODY_SIZE),
-                    TextAlign.LEFT,
-                    2.0,
-                    Padding.zero(),
-                    Margin.top(2)));
-        }
+        target.addTable(headerTable(target, safe));
         target.addDivider(TemplateSceneSupport.divider(
                 "ProposalRule",
                 width,
@@ -98,14 +53,16 @@ public final class ProposalTemplateComposer {
         if (!safe.executiveSummary().isBlank()) {
             TemplateSceneSupport.addSectionHeader(target, "ProposalSummary", "EXECUTIVE SUMMARY",
                     styles.labelStyle(LABEL_SIZE), Math.min(width, 170), styles.accentColor(), 1.1, Margin.top(4));
-            target.addParagraph(TemplateSceneSupport.paragraph(
+            target.addParagraph(TemplateSceneSupport.blockParagraph(
                     "ProposalExecutiveSummary",
                     safe.executiveSummary(),
                     styles.bodyStyle(BODY_SIZE),
                     TextAlign.LEFT,
                     2.0,
+                    "",
+                    com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy.FIRST_LINE,
                     Padding.zero(),
-                    Margin.top(3)));
+                    Margin.zero()));
         }
 
         for (int index = 0; index < safe.sections().size(); index++) {
@@ -116,17 +73,19 @@ public final class ProposalTemplateComposer {
                     Math.min(width, 132),
                     styles.accentColor(),
                     1.0,
-                    Margin.top(index == 0 ? 4 : 5));
-            for (int paragraphIndex = 0; paragraphIndex < section.paragraphs().size(); paragraphIndex++) {
-                target.addParagraph(TemplateSceneSupport.paragraph(
-                        "ProposalSection_" + index + "_" + paragraphIndex,
-                        section.paragraphs().get(paragraphIndex),
-                        styles.bodyStyle(BODY_SIZE),
-                        TextAlign.LEFT,
-                        2.0,
-                        Padding.zero(),
-                        Margin.top(paragraphIndex == 0 ? 3 : 2)));
-            }
+                    Margin.top(index == 0 ? 2 : 4));
+            target.addParagraph(TemplateSceneSupport.blockParagraph(
+                    "ProposalSection_" + index,
+                    String.join("\n", section.paragraphs().isEmpty()
+                            ? List.of("Content is intentionally left blank.")
+                            : section.paragraphs()),
+                    styles.bodyStyle(BODY_SIZE),
+                    TextAlign.LEFT,
+                    2.0,
+                    "",
+                    com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy.FIRST_LINE,
+                    Padding.zero(),
+                    Margin.zero()));
         }
 
         if (!safe.timeline().isEmpty()) {
@@ -144,12 +103,14 @@ public final class ProposalTemplateComposer {
         if (!safe.acceptanceTerms().isEmpty()) {
             TemplateSceneSupport.addSectionHeader(target, "ProposalAcceptance", "ACCEPTANCE",
                     styles.labelStyle(LABEL_SIZE), Math.min(width, 132), styles.accentColor(), 1.0, Margin.top(5));
-            target.addParagraph(TemplateSceneSupport.paragraph(
+            target.addParagraph(TemplateSceneSupport.blockParagraph(
                     "ProposalAcceptanceTerms",
-                    TemplateSceneSupport.bulletText(safe.acceptanceTerms()),
+                    String.join("\n", TemplateSceneSupport.sanitizeLines(safe.acceptanceTerms())),
                     styles.bodyStyle(BODY_SIZE),
                     TextAlign.LEFT,
                     2.0,
+                    "\u2022",
+                    com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy.FROM_SECOND_LINE,
                     Padding.zero(),
                     Margin.top(3)));
         }
@@ -172,6 +133,42 @@ public final class ProposalTemplateComposer {
         }
 
         target.finishDocument();
+    }
+
+    private TemplateTableSpec headerTable(TemplateComposeTarget target, ProposalData data) {
+        double width = target.pageWidth();
+        double leftWidth = Math.max(200, width - 212);
+        double rightWidth = width - leftWidth - COLUMN_GAP;
+        TableCellStyle baseStyle = TableCellStyle.builder()
+                .padding(Padding.zero())
+                .fillColor(Color.WHITE)
+                .stroke(new Stroke(Color.WHITE, 0.0))
+                .textStyle(styles.bodyStyle(BODY_SIZE))
+                .textAnchor(Anchor.topLeft())
+                .build();
+
+        return new TemplateTableSpec(
+                "ProposalHeader",
+                List.of(
+                        TableColumnSpec.fixed(leftWidth),
+                        TableColumnSpec.fixed(COLUMN_GAP),
+                        TableColumnSpec.fixed(rightWidth)),
+                List.of(List.of(
+                        TableCellSpec.of(headerLeftLines(data)).withStyle(TableCellStyle.builder()
+                                .textStyle(styles.bodyStyle(BODY_SIZE))
+                                .textAnchor(Anchor.topLeft())
+                                .build()),
+                        TableCellSpec.text(""),
+                        TableCellSpec.of(partyLines("PREPARED FOR", data.recipient())).withStyle(TableCellStyle.builder()
+                                .textStyle(styles.bodyStyle(BODY_SIZE))
+                                .textAnchor(Anchor.topLeft())
+                                .build()))),
+                baseStyle,
+                Map.of(),
+                Map.of(),
+                width,
+                Padding.zero(),
+                Margin.zero());
     }
 
     private TemplateTableSpec timelineTable(TemplateComposeTarget target, List<ProposalTimelineItem> items) {
@@ -197,7 +194,7 @@ public final class ProposalTemplateComposer {
             rows.add(List.of(
                     TableCellSpec.text(valueOrFallback(item.phase(), "Phase")),
                     TableCellSpec.text(valueOrFallback(item.duration(), "-")),
-                    TableCellSpec.text(shorten(valueOrFallback(item.details(), "-"), 64))));
+                    TableCellSpec.text(shorten(valueOrFallback(item.details(), "-"), 56))));
         }
         return new TemplateTableSpec(
                 "ProposalTimelineTable",
@@ -237,7 +234,7 @@ public final class ProposalTemplateComposer {
             ProposalPricingRow row = rowsData.get(index);
             rows.add(List.of(
                     TableCellSpec.text(valueOrFallback(row.label(), "Item")),
-                    TableCellSpec.text(shorten(valueOrFallback(row.description(), "-"), 64)),
+                    TableCellSpec.text(shorten(valueOrFallback(row.description(), "-"), 60)),
                     TableCellSpec.text(valueOrFallback(row.amount(), "-"))));
             if (row.emphasized()) {
                 rowStyles.put(index + 1, TableCellStyle.builder()
@@ -263,20 +260,34 @@ public final class ProposalTemplateComposer {
     }
 
     private List<String> partyLines(String label, ProposalParty party) {
+        ProposalParty safeParty = party == null ? new ProposalParty("", List.of(), "", "", "") : party;
         List<String> lines = new ArrayList<>();
         lines.add(label);
-        if (!party.name().isBlank()) {
-            lines.add(party.name());
+        if (!safeParty.name().isBlank()) {
+            lines.add(safeParty.name());
         }
-        lines.addAll(party.addressLines());
-        if (!party.email().isBlank()) {
-            lines.add("Email: " + party.email());
+        lines.addAll(safeParty.addressLines());
+        if (!safeParty.email().isBlank()) {
+            lines.add("Email: " + safeParty.email());
         }
-        if (!party.phone().isBlank()) {
-            lines.add("Phone: " + party.phone());
+        if (!safeParty.phone().isBlank()) {
+            lines.add("Phone: " + safeParty.phone());
         }
-        if (!party.website().isBlank()) {
-            lines.add("Web: " + party.website());
+        if (!safeParty.website().isBlank()) {
+            lines.add("Web: " + safeParty.website());
+        }
+        return lines;
+    }
+
+    private List<String> headerLeftLines(ProposalData data) {
+        List<String> lines = new ArrayList<>();
+        lines.add(valueOrFallback(data.title(), "Proposal"));
+        lines.add(valueOrFallback(data.projectTitle(), "Project proposal"));
+        lines.add("Proposal" + valueOrFallback(data.proposalNumber(), "Draft"));
+        lines.add("Prepared" + valueOrFallback(data.preparedDate(), "TBD"));
+        lines.add("Valid Until" + valueOrFallback(data.validUntil(), "TBD"));
+        if (data.sender() != null) {
+            lines.addAll(partyLines("PREPARED BY", data.sender()));
         }
         return lines;
     }

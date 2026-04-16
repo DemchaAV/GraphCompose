@@ -1,8 +1,6 @@
 package com.demcha.compose;
 
-import com.demcha.templates.CvTheme;
-import com.demcha.templates.TemplateBuilder;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.layout_core.components.style.Margin;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.util.concurrent.ExecutorService;
@@ -82,24 +80,11 @@ public class GraphComposeStressTest {
     }
 
     private static void generateCvInMemory() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf()
-                .pageSize(PDRectangle.A4)
-                .margin(24, 24, 24, 24)
-                .create()) {
-
-            TemplateBuilder template = TemplateBuilder.from(
-                    composer.componentBuilder(),
-                    CvTheme.defaultTheme()
-            );
-
-            template.moduleBuilder("Profile", composer.canvas())
-                    .addChild(template.blockText(
-                            "Analytical engineer focused on reliable platform design.",
-                            composer.canvas().innerWidth()
-                    ))
-                    .build();
-
-            composer.toBytes();
-        }
+        CanonicalBenchmarkSupport.renderSimpleBenchmarkDocument(
+                PDRectangle.A4,
+                Margin.of(24),
+                "StressRoot",
+                "Profile",
+                "Analytical engineer focused on reliable platform design.");
     }
 }

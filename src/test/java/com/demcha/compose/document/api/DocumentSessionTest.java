@@ -351,38 +351,6 @@ class DocumentSessionTest {
         }
     }
 
-    @Test
-    void compatibilityArtifactsShouldStillAcceptCanonicalMetadataPostProcessing() throws Exception {
-        try (DocumentSession session = GraphCompose.document()
-                .pageSize(PDRectangle.A4)
-                .margin(Margin.of(12))
-                .create();
-             PDDocument compatibilityDocument = new PDDocument()) {
-
-            session.add(new ShapeNode("Box", 80, 40, Color.GRAY, new Stroke(Color.BLACK, 1), Padding.zero(), Margin.zero()));
-            var snapshot = session.layoutSnapshot();
-
-            compatibilityDocument.addPage(new PDPage(PDRectangle.A4));
-            byte[] compatibilityBytes;
-            try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-                compatibilityDocument.save(output);
-                compatibilityBytes = output.toByteArray();
-            }
-
-            session.installCompatibilityArtifacts(snapshot, compatibilityBytes);
-            session.metadata(PdfMetadataOptions.builder()
-                    .title("Compatibility Title")
-                    .author("GraphCompose")
-                    .build());
-
-            byte[] processed = session.toPdfBytes();
-            try (PDDocument loaded = Loader.loadPDF(processed)) {
-                assertThat(loaded.getDocumentInformation().getTitle()).isEqualTo("Compatibility Title");
-                assertThat(loaded.getDocumentInformation().getAuthor()).isEqualTo("GraphCompose");
-            }
-        }
-    }
-
     private record BadgeNode(String name, String label, Margin margin, Padding padding) implements DocumentNode {
     }
 

@@ -1,15 +1,12 @@
 package com.demcha.compose.layout_core.components;
 
-import com.demcha.templates.TemplateBuilder;
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.font_library.FontName;
 import com.demcha.compose.layout_core.components.components_builders.CircleBuilder;
 import com.demcha.compose.layout_core.components.components_builders.LineBuilder;
 import com.demcha.compose.layout_core.components.content.shape.LinePath;
 import com.demcha.compose.layout_core.components.renderable.Circle;
 import com.demcha.compose.layout_core.components.renderable.Line;
 import com.demcha.compose.layout_core.components.renderable.Module;
-import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.geometry.ContentSize;
 import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.Anchor;
@@ -23,17 +20,6 @@ import java.util.Arrays;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ComponentBuilderTest {
-
-    @Test
-    void templateWithoutExplicitThemeShouldUseDefaultTemplateBuilderTheme() throws Exception {
-        try (DocumentComposer composer = GraphCompose.pdf().create()) {
-            var entity = TemplateBuilder.from(composer.componentBuilder())
-                    .name("Jane Doe");
-
-            assertThat(entity.getComponent(TextStyle.class))
-                    .hasValueSatisfying(style -> assertThat(style.fontName()).isEqualTo(FontName.COURIER));
-        }
-    }
 
     @Test
     void shouldCreateCircleFromComponentBuilderFactory() throws Exception {

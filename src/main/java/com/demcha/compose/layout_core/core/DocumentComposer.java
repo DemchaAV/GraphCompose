@@ -35,17 +35,18 @@ import java.io.Closeable;
  * <h3>Template flow</h3>
  * <pre>
  * try (var composer = GraphCompose.pdf().create()) {
- *     var template = TemplateBuilder.from(
- *             composer.componentBuilder(),
- *             CvTheme.defaultTheme());
- *
- *     var profile = template.moduleBuilder("Profile", composer.canvas())
- *             .addChild(template.blockText(
- *                     "Analytical engineer focused on reliable platform design.",
- *                     composer.canvas().innerWidth()))
+ *     var cb = composer.componentBuilder();
+ *     var profile = cb.blockText(Align.left(4), TextStyle.DEFAULT_STYLE)
+ *             .size(composer.canvas().innerWidth(), 2)
+ *             .text(cb.text()
+ *                     .textWithAutoSize("Analytical engineer focused on reliable platform design.")
+ *                     .textStyle(TextStyle.DEFAULT_STYLE))
+ *             .anchor(Anchor.topLeft())
  *             .build();
  *
- *     template.pageFlow(composer.canvas())
+ *     cb.vContainer(Align.middle(8))
+ *             .size(composer.canvas().innerWidth(), 0)
+ *             .anchor(Anchor.topLeft())
  *             .addChild(profile)
  *             .build();
  *

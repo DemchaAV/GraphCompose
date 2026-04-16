@@ -122,7 +122,6 @@ Fixed leaf primitives such as `Rectangle`, `Circle`, `Image`, and `Line` follow 
 - `...templates.builtins` contains concrete canonical template implementations.
 - `...templates.support` contains backend-neutral scene composers, mappers, and transition adapters.
 - canonical template contracts are compose-first: `compose(DocumentSession, ...)` is the primary seam.
-- deprecated compatibility adapters remain under `com.demcha.templates.*`, where legacy `compose(DocumentComposer, ...)` and `render(...)` overloads survive for one transition release.
 - canonical built-ins should start one semantic page-flow root through `DocumentSession.dsl().pageFlow()` or the internal `TemplateComposeTarget` seam that feeds that same path.
 
 ## Current package roots
@@ -131,7 +130,6 @@ Fixed leaf primitives such as `Rectangle`, `Circle`, `Image`, and `Line` follow 
 - `com.demcha.compose.document.templates.*` contains the canonical higher-level template layer.
 - `com.demcha.compose.layout_core.*` contains the engine internals and the legacy builder-facing layout layer that still powers compatibility adapters.
 - `com.demcha.compose.layout_core.system.implemented_systems.word_systems.*` contains the experimental Word-specific rendering path.
-- `com.demcha.templates.*` remains as a deprecated template compatibility bridge.
 
 ## Experimental areas
 

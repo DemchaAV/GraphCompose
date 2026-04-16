@@ -3,8 +3,11 @@ package com.demcha.preview;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.devtool.DevToolPreviewFileProvider;
 import com.demcha.compose.devtool.DevToolPreviewProvider;
+import com.demcha.compose.document.templates.theme.CvTheme;
+import com.demcha.compose.layout_core.components.components_builders.ComponentBuilder;
 import com.demcha.compose.layout_core.components.content.shape.Stroke;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
+import com.demcha.compose.layout_core.components.core.Entity;
 import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
@@ -12,8 +15,6 @@ import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.DocumentComposer;
 import com.demcha.compose.layout_core.core.PdfComposer;
-import com.demcha.templates.CvTheme;
-import com.demcha.templates.TemplateBuilder;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
@@ -64,7 +65,7 @@ public final class LivePreviewProvider implements DevToolPreviewProvider, DevToo
     private void composeDocument(DocumentComposer composer) {
         var cb = composer.componentBuilder();
         var theme = CvTheme.defaultTheme();
-        var template = TemplateBuilder.from(cb, theme);
+        double width = composer.canvas().innerWidth();
 
         var headline = cb.text()
                 .textWithAutoSize("GraphCompose Live Preview")
@@ -93,7 +94,7 @@ public final class LivePreviewProvider implements DevToolPreviewProvider, DevToo
                 .addChild(headline)
                 .addChild(subtitle)
                 .addChild(divider)
-                .addChild(template.blockText("""
+                .addChild(buildBodyBlock(cb, theme, """
                         This preview is compiled on save and rendered directly from an in-memory `PDDocument`.
 
                         Try changing:
@@ -102,12 +103,24 @@ public final class LivePreviewProvider implements DevToolPreviewProvider, DevToo
                         - text content
                         - line styles
                         - your own GraphCompose modules
-                        """, composer.canvas().innerWidth()))
-                .addChild(template.blockText("""
+                        """, width))
+                .addChild(buildBodyBlock(cb, theme, """
                         Replace this provider with your real layout code once the tool is running.
                         The first page will refresh after each successful save.
                         Use the dev tool buttons to save or open the current PDF.
-                        """, composer.canvas().innerWidth()))
+                        """, width))
+                .build();
+    }
+
+    private Entity buildBodyBlock(ComponentBuilder cb, CvTheme theme, String text, double width) {
+        TextStyle bodyStyle = theme.bodyTextStyle();
+        return cb.blockText(Align.left(theme.spacing()), bodyStyle)
+                .size(width, 2)
+                .padding(0, 5, 0, 25)
+                .text(cb.text()
+                        .textWithAutoSize(text)
+                        .textStyle(bodyStyle))
+                .anchor(Anchor.left())
                 .build();
     }
 }

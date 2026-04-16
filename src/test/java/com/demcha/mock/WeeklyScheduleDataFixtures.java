@@ -1,12 +1,12 @@
 package com.demcha.mock;
 
-import com.demcha.templates.data.ScheduleAssignment;
-import com.demcha.templates.data.ScheduleCategory;
-import com.demcha.templates.data.ScheduleDay;
-import com.demcha.templates.data.ScheduleMetricRow;
-import com.demcha.templates.data.SchedulePerson;
-import com.demcha.templates.data.ScheduleSlot;
-import com.demcha.templates.data.WeeklyScheduleData;
+import com.demcha.compose.document.templates.data.ScheduleAssignment;
+import com.demcha.compose.document.templates.data.ScheduleCategory;
+import com.demcha.compose.document.templates.data.ScheduleDay;
+import com.demcha.compose.document.templates.data.ScheduleMetricRow;
+import com.demcha.compose.document.templates.data.SchedulePerson;
+import com.demcha.compose.document.templates.data.ScheduleSlot;
+import com.demcha.compose.document.templates.data.WeeklyScheduleData;
 
 import java.awt.Color;
 import java.util.ArrayList;

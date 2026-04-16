@@ -1,9 +1,11 @@
 package com.demcha.integration;
 
-import com.demcha.templates.TemplateBuilder;
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.templates.theme.CvTheme;
 import com.demcha.compose.layout_core.components.layout.Align;
+import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
+import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 import com.demcha.testing.VisualTestOutputs;
@@ -40,12 +42,32 @@ public class SmartPaginationTest {
                 .margin(50, 50, 50, 50)
                 .create()) {
 
-            TemplateBuilder template = TemplateBuilder.from(composer.componentBuilder());
-            var massiveTextModule = template.moduleBuilder("MassiveText", composer.canvas())
-                    .addChild(template.blockText(massiveText, composer.canvas().innerWidth()))
+            var cb = composer.componentBuilder();
+            var theme = CvTheme.courier();
+            var title = cb.text()
+                    .textWithAutoSize("MassiveText")
+                    .entityName("Title_MassiveText")
+                    .anchor(Anchor.topLeft())
+                    .margin(Margin.of(5))
+                    .textStyle(theme.sectionHeaderTextStyle())
+                    .build();
+            var massiveTextBlock = cb.blockText(Align.left(theme.spacing()), theme.bodyTextStyle())
+                    .size(composer.canvas().innerWidth(), 2)
+                    .padding(0, 5, 0, 25)
+                    .text(cb.text()
+                            .textWithAutoSize(massiveText)
+                            .textStyle(theme.bodyTextStyle()))
+                    .anchor(Anchor.center())
+                    .build();
+            var massiveTextModule = cb.moduleBuilder(Align.middle(theme.spacingModuleName()), composer.canvas())
+                    .anchor(Anchor.topLeft())
+                    .addChild(title)
+                    .addChild(massiveTextBlock)
                     .build();
 
-            template.pageFlow(composer.canvas())
+            cb.vContainer(Align.middle(theme.spacingModuleName()))
+                    .size(composer.canvas().innerWidth(), 0)
+                    .anchor(Anchor.topLeft())
                     .addChild(massiveTextModule)
                     .build();
 

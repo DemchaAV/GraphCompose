@@ -74,21 +74,22 @@ import java.util.Objects;
  * }
  * </pre>
  *
- * <h3>Legacy compatibility layer</h3>
+ * <h3>Low-level PDF composer</h3>
  * <pre>
  * try (DocumentComposer composer = GraphCompose.pdf().create()) {
- *     var template = TemplateBuilder.from(
- *             composer.componentBuilder(),
- *             CvTheme.defaultTheme());
- *
- *     var profile = template.moduleBuilder("Profile", composer.canvas())
- *             .addChild(template.blockText(
- *                     "Analytical engineer focused on reliable platform design.",
- *                     composer.canvas().innerWidth()))
+ *     var cb = composer.componentBuilder();
+ *     var summary = cb.blockText(Align.left(4), TextStyle.DEFAULT_STYLE)
+ *             .size(composer.canvas().innerWidth(), 2)
+ *             .text(cb.text()
+ *                     .textWithAutoSize("Analytical engineer focused on reliable platform design.")
+ *                     .textStyle(TextStyle.DEFAULT_STYLE))
+ *             .anchor(Anchor.topLeft())
  *             .build();
  *
- *     template.pageFlow(composer.canvas())
- *             .addChild(profile)
+ *     cb.vContainer(Align.middle(8))
+ *             .size(composer.canvas().innerWidth(), 0)
+ *             .anchor(Anchor.topLeft())
+ *             .addChild(summary)
  *             .build();
  *
  *     byte[] pdfBytes = composer.toBytes();
@@ -358,7 +359,7 @@ public final class GraphCompose {
      * Fluent configuration builder for the canonical semantic document session.
      *
      * <p>Unlike the legacy {@link PdfBuilder}, this builder produces a
-     * {@link DocumentSession} that exposes the V2 semantic DSL through
+     * {@link DocumentSession} that exposes the semantic DSL through
      * {@link DocumentSession#dsl()} and keeps authoring separate from the PDF
      * backend.</p>
      */

@@ -9,7 +9,6 @@ import com.demcha.compose.document.templates.data.MainPageCV;
 import com.demcha.compose.document.templates.data.MainPageCvDTO;
 import com.demcha.compose.document.templates.data.ProposalData;
 import com.demcha.compose.document.templates.data.WeeklyScheduleData;
-import com.demcha.compose.document.templates.support.LegacyTemplateMappers;
 import com.demcha.compose.document.templates.theme.CvTheme;
 import com.demcha.compose.font_library.FontName;
 import com.demcha.mock.CoverLetterMock;
@@ -43,12 +42,11 @@ public final class TemplateTestSupport {
     }
 
     public static MainPageCV canonicalCv() {
-        return LegacyTemplateMappers.toCanonical(new MainPageCVMock().getMainPageCV());
+        return new MainPageCVMock().getMainPageCV();
     }
 
     public static MainPageCV expandedCanonicalCv() {
-        return LegacyTemplateMappers.toCanonical(
-                CvTestFixtures.createExpandedCvForOneAndHalfPages(new MainPageCVMock().getMainPageCV()));
+        return CvTestFixtures.createExpandedCvForOneAndHalfPages(new MainPageCVMock().getMainPageCV());
     }
 
     public static MainPageCvDTO rewrite(MainPageCV original) {
@@ -75,27 +73,27 @@ public final class TemplateTestSupport {
     }
 
     public static InvoiceData canonicalInvoiceData() {
-        return LegacyTemplateMappers.toCanonical(InvoiceDataFixtures.standardInvoice());
+        return InvoiceDataFixtures.standardInvoice();
     }
 
     public static ProposalData canonicalProposalData() {
-        return LegacyTemplateMappers.toCanonical(ProposalDataFixtures.longProposal());
+        return ProposalDataFixtures.longProposal();
     }
 
     public static WeeklyScheduleData canonicalWeeklyScheduleData() {
-        return LegacyTemplateMappers.toCanonical(WeeklyScheduleDataFixtures.standardSchedule());
+        return WeeklyScheduleDataFixtures.standardSchedule();
     }
 
     public static WeeklyScheduleData canonicalWeeklyScheduleWithoutMetricsOrFooter() {
-        return LegacyTemplateMappers.toCanonical(WeeklyScheduleDataFixtures.withoutMetricsOrFooter());
+        return WeeklyScheduleDataFixtures.withoutMetricsOrFooter();
     }
 
     public static WeeklyScheduleData canonicalWeeklyScheduleWithAdditionalPerson() {
-        return LegacyTemplateMappers.toCanonical(WeeklyScheduleDataFixtures.withAdditionalPerson());
+        return WeeklyScheduleDataFixtures.withAdditionalPerson();
     }
 
     public static WeeklyScheduleData canonicalWeeklyScheduleWithChangedCategoryCatalog() {
-        return LegacyTemplateMappers.toCanonical(WeeklyScheduleDataFixtures.withAddedAndRemovedCategory());
+        return WeeklyScheduleDataFixtures.withAddedAndRemovedCategory();
     }
 
     public static CvTheme cvThemeWith(FontName fontName) {

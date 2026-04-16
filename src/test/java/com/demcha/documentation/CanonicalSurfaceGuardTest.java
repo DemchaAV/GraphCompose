@@ -22,15 +22,13 @@ class CanonicalSurfaceGuardTest {
             "GraphCompose.pdf(",
             "PdfComposer");
 
-    private static final Set<String> MAIN_CANONICAL_SOURCE_ALLOWLIST = Set.of(
-            "src/main/java/com/demcha/compose/document/templates/support/LegacyTemplateMappers.java");
+    private static final Set<String> MAIN_CANONICAL_SOURCE_ALLOWLIST = Set.of();
 
     private static final Set<String> DOCUMENTATION_ALLOWLIST = Set.of(
             "src/test/java/com/demcha/documentation/CanonicalSurfaceGuardTest.java",
             "src/test/java/com/demcha/documentation/DocumentationCoverageTest.java");
 
     private static final Set<String> CANONICAL_DOCUMENT_TEST_ALLOWLIST = Set.of(
-            "src/test/java/com/demcha/compose/document/templates/CanonicalTemplateParityTest.java",
             "src/test/java/com/demcha/compose/document/templates/architecture/CanonicalTemplateComposerPdfBoundaryTest.java");
 
     private static final Set<String> CANONICAL_BENCHMARK_ALLOWLIST = Set.of(

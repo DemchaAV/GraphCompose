@@ -275,7 +275,7 @@ Use this split:
 1. a public template interface in `com.demcha.compose.document.templates.api` exposes `compose(DocumentSession, ...)`
 2. a canonical built-in class under `com.demcha.compose.document.templates.builtins` exposes stable ids, names, and theme defaults
 3. a dedicated scene composer under `com.demcha.compose.document.templates.support` owns document composition through `TemplateComposeTarget`
-4. a deprecated bridge under `com.demcha.templates.*` keeps legacy `compose(DocumentComposer, ...)` and `render(...)` overloads operational by delegating into the canonical path
+4. focused canonical tests and examples keep `compose(DocumentSession, ...)` stable while the scene composer owns the reusable document structure
 
 Practical rules:
 
@@ -290,15 +290,13 @@ Practical rules:
 
 Current guard rails:
 
-- `TemplateScenePdfBoundaryTest` keeps scene-composition classes free of `PDDocument`, `PDPage`, `PDRectangle`, and `PdfComposer`
+- `CanonicalTemplateComposerPdfBoundaryTest` keeps scene-composition classes free of `PDDocument`, `PDPage`, `PDRectangle`, and `PdfComposer`
 - canonical template API tests keep `compose(DocumentSession, ...)` aligned with the built-ins
-- legacy bridge tests keep deprecated `compose(DocumentComposer, ...)` and `render(...)` adapters aligned with the canonical output path
 
 Rule of thumb:
 
 - canonical `*TemplateV1` built-ins should feel like reusable public templates
 - `*TemplateComposer` plus `TemplateComposeTarget` should feel like the reusable document composition core
-- `com.demcha.templates.*` should feel like a temporary compatibility shell, not the place where new behavior is implemented
 
 ## Where rendering hooks in
 
@@ -431,7 +429,7 @@ Do not add a method there if the new object is only an internal helper for templ
 - container:
   [ModuleBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/ModuleBuilder.java)
 - template-level composition helper:
-  [TemplateBuilder.java](./../src/main/java/com/demcha/templates/TemplateBuilder.java)
+  [CvTemplateComposer.java](./../src/main/java/com/demcha/compose/document/templates/support/CvTemplateComposer.java)
 
 ## Current caveats
 

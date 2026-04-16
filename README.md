@@ -257,7 +257,7 @@ try (DocumentSession document = GraphCompose.document(Path.of("invoice.pdf"))
 }
 ```
 
-The deprecated `render(...)`, `GraphCompose.pdf(...)`, and `com.demcha.templates.*` adapters remain available for one transition release, but canonical docs and examples now compose directly into `DocumentSession`.
+Canonical docs and examples now compose directly into `DocumentSession`. Lower-level engine authoring through `GraphCompose.pdf(...)` remains available, while built-in template APIs live under `com.demcha.compose.document.templates.*`.
 
 ---
 
@@ -367,7 +367,7 @@ Use `vContainer(...)` and `hContainer(...)` for structural layout, then compose 
 
 ### 5. The template layer is optional
 
-`com.demcha.compose.document.templates.*` provides the canonical built-in templates, themes, DTOs, and support helpers for reusable document layouts. The older `com.demcha.templates.*` namespace remains available only as a deprecated compatibility bridge during the transition release.
+`com.demcha.compose.document.templates.*` provides the canonical built-in templates, themes, DTOs, and support helpers for reusable document layouts.
 
 ---
 
@@ -502,7 +502,7 @@ Built-in templates now follow a compose-first split:
 - each class in `com.demcha.compose.document.templates.builtins` composes through the semantic DSL and the canonical PDF backend
 - the actual document composition belongs in a dedicated backend-neutral scene composer under `com.demcha.compose.document.templates.support`
 - scene composers should stay free of `PDDocument`, `PDPage`, `PDRectangle`, and `PdfComposer` imports
-- deprecated classes under `com.demcha.templates.*` remain as thin compatibility wrappers over the canonical built-ins and document session pipeline
+- built-in template logic lives under `com.demcha.compose.document.templates.*`, with scene composition isolated from PDF-only setup
 
 If you are contributing new engine objects, read [CONTRIBUTING.md](./CONTRIBUTING.md), [docs/architecture.md](./docs/architecture.md), and [docs/implementation-guide.md](./docs/implementation-guide.md) together before coding.
 

@@ -17,7 +17,7 @@ They explain the current public surface, the engine/template split, and the reco
 
 - Build the library with `mvn package`.
 - Run the full test suite with `mvn test`.
-- Run the guard-focused suite with `mvn -Dtest=EnginePdfBoundaryTest,TemplateScenePdfBoundaryTest,LegacyPdfRenderAllowlistTest,PdfRenderingSystemECSDispatchTest,DocumentationExamplesTest,TemplateComposeApiTest test`.
+- Run the guard-focused suite with `mvn -Dtest=EnginePdfBoundaryTest,CanonicalTemplateComposerPdfBoundaryTest,LegacyPdfRenderAllowlistTest,PdfRenderingSystemECSDispatchTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest,TemplateComposeApiTest test`.
 - Run a focused documentation sanity check with `mvn -Dtest=DocumentationExamplesTest test`.
 - Run the local benchmark wrapper with `powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1` when you change performance-sensitive code or benchmark tooling.
 
@@ -25,14 +25,14 @@ They explain the current public surface, the engine/template split, and the reco
 
 - `src/main/java/com/demcha/compose/*`
   Core engine: entities, builders, layout, pagination, render systems
-- `src/main/java/com/demcha/templates/*`
-  Higher-level template layer for CV and cover-letter composition
+- `src/main/java/com/demcha/compose/document/templates/*`
+  Canonical template layer for built-ins, DTOs, themes, registries, and scene composition helpers
 - `src/test/java/com/demcha/documentation/*`
   Examples used to keep README/documentation snippets honest
 - `src/test/java/com/demcha/integration/*`
   End-to-end behavior checks for layout, pagination, rendering, and containers
-- `src/test/java/com/demcha/templates/*`
-  Template rendering tests
+- `src/test/java/com/demcha/compose/document/templates/*`
+  Canonical template API, render, layout, and boundary tests
 - `assets/readme/*`
   Screenshots used by the README
 
@@ -57,18 +57,17 @@ These rules reflect the current engine design and should be treated as project p
 
 For built-in templates, use the template-layer split as project policy as well:
 
-- public template contracts are compose-first: prefer `compose(DocumentComposer, ...)` over direct PDF-returning APIs
-- built-in template classes in `src/main/java/com/demcha/templates/builtins/` should stay thin backend adapters
-- document structure and scene assembly belong in dedicated backend-neutral scene builder classes
-- keep PDF-only setup in the adapter class: page size, margins, `GraphCompose.pdf(...)`, `composer.toPDDocument()`, and `composer.build()`
-- do not import `PDDocument`, `PDPage`, `PDRectangle`, or `PdfComposer` into scene builder classes
-- keep deprecated `render(...)` methods working for compatibility, but do not add new template features only through the PDF-centric path
-- new README snippets, runnable examples, and integration docs should show `compose(DocumentComposer, ...)` first and mention `render(...)` only as a compatibility shortcut
+- public template contracts are compose-first: prefer `compose(DocumentSession, ...)`
+- built-in template classes in `src/main/java/com/demcha/compose/document/templates/builtins/` should stay thin public facades over reusable scene composers
+- document structure and scene assembly belong in dedicated backend-neutral scene composer classes under `...document.templates.support`
+- keep PDF-only setup in the document session/backend layer rather than inside template composers
+- do not import `PDDocument`, `PDPage`, `PDRectangle`, or `PdfComposer` into scene composer classes
+- new README snippets, runnable examples, and integration docs should show `compose(DocumentSession, ...)`
 
 The current guard rails for these rules live in:
 
 - [EnginePdfBoundaryTest.java](./src/test/java/com/demcha/compose/layout_core/architecture/EnginePdfBoundaryTest.java)
-- [TemplateScenePdfBoundaryTest.java](./src/test/java/com/demcha/templates/architecture/TemplateScenePdfBoundaryTest.java)
+- [CanonicalTemplateComposerPdfBoundaryTest.java](./src/test/java/com/demcha/compose/document/templates/architecture/CanonicalTemplateComposerPdfBoundaryTest.java)
 - [LegacyPdfRenderAllowlistTest.java](./src/test/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/LegacyPdfRenderAllowlistTest.java)
 - [PdfRenderingSystemECSDispatchTest.java](./src/test/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderingSystemECSDispatchTest.java)
 - [DocumentationExamplesTest.java](./src/test/java/com/demcha/documentation/DocumentationExamplesTest.java)
@@ -129,7 +128,7 @@ If the object should be available from `composer.componentBuilder()`, add a fact
 - Container builder:
   [ModuleBuilder.java](./src/main/java/com/demcha/compose/layout_core/components/components_builders/ModuleBuilder.java)
 - Template-level composition helper:
-  [TemplateBuilder.java](./src/main/java/com/demcha/templates/TemplateBuilder.java)
+  [CvTemplateComposer.java](./src/main/java/com/demcha/compose/document/templates/support/CvTemplateComposer.java)
 
 ## Testing expectations
 
@@ -149,8 +148,8 @@ Choose the smallest tests that match the change:
 - For pagination and multi-page behavior:
   [PageBreakerIntegrationTest.java](./src/test/java/com/demcha/integration/PageBreakerIntegrationTest.java)
 - For concrete templates:
-  [TemplateCV1RenderTest.java](./src/test/java/com/demcha/templates/cv_templates/TemplateCV1RenderTest.java)
-  [CoverLetterTemplateV1Test.java](./src/test/java/com/demcha/templates/cover_letter/CoverLetterTemplateV1Test.java)
+  [BuiltInTemplateRenderTest.java](./src/test/java/com/demcha/compose/document/templates/builtins/BuiltInTemplateRenderTest.java)
+  [CvTemplateV1LayoutSnapshotTest.java](./src/test/java/com/demcha/compose/document/templates/builtins/CvTemplateV1LayoutSnapshotTest.java)
 
 If a change affects public docs, examples, or screenshots, update those assets in the same PR so the repository stays internally consistent.
 
@@ -176,6 +175,6 @@ If a change affects resolved geometry, pagination, or ordering, prefer adding or
 
 ## Package naming
 
-The repository now uses the normalized package roots `layout_core`, `word_systems`, and `com.demcha.templates`.
+The repository now uses the normalized package roots `layout_core`, `word_systems`, and `com.demcha.compose.document.templates`.
 
 Please treat these names as the current source of truth in code, tests, examples, and docs. Do not introduce aliases or partial fallback imports.

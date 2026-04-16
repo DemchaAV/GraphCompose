@@ -34,7 +34,7 @@ jobs:
           cache: maven
 
       - name: Run guards
-        run: mvn -B -ntp "-Dtest=EnginePdfBoundaryTest,TemplateScenePdfBoundaryTest,LegacyPdfRenderAllowlistTest,PdfRenderingSystemECSDispatchTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest,TemplateComposeApiTest,CanonicalTemplateParityTest" test
+        run: mvn -B -ntp "-Dtest=EnginePdfBoundaryTest,CanonicalTemplateComposerPdfBoundaryTest,LegacyPdfRenderAllowlistTest,PdfRenderingSystemECSDispatchTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest,TemplateComposeApiTest" test
 
   build-and-test:
     name: Build and run tests

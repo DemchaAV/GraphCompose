@@ -15,7 +15,6 @@ import com.demcha.compose.document.templates.data.MainPageCV;
 import com.demcha.compose.document.templates.data.MainPageCvDTO;
 import com.demcha.compose.document.templates.data.ProposalData;
 import com.demcha.compose.document.templates.data.WeeklyScheduleData;
-import com.demcha.compose.document.templates.support.LegacyTemplateMappers;
 import com.demcha.mock.CoverLetterMock;
 import com.demcha.mock.InvoiceDataFixtures;
 import com.demcha.mock.MainPageCVMock;
@@ -74,7 +73,7 @@ class TemplateComposeApiTest {
 
     @Test
     void cvBuiltInsShouldComposeThroughDocumentSession() throws Exception {
-        MainPageCV original = LegacyTemplateMappers.toCanonical(new MainPageCVMock().getMainPageCV());
+        MainPageCV original = new MainPageCVMock().getMainPageCV();
         MainPageCvDTO rewritten = MainPageCvDTO.from(original);
 
         assertComposesToPdf(PDRectangle.A4, 24, document -> new CvTemplateV1().compose(document, original, rewritten));
@@ -83,7 +82,7 @@ class TemplateComposeApiTest {
 
     @Test
     void coverLetterBuiltInShouldComposeThroughDocumentSession() throws Exception {
-        MainPageCV original = LegacyTemplateMappers.toCanonical(new MainPageCVMock().getMainPageCV());
+        MainPageCV original = new MainPageCVMock().getMainPageCV();
         String letter = CoverLetterMock.letter.replace("${companyName}", "Compose Path Ltd");
         JobDetails jobDetails = testJobDetails();
 
@@ -93,19 +92,19 @@ class TemplateComposeApiTest {
 
     @Test
     void invoiceBuiltInShouldComposeThroughDocumentSession() throws Exception {
-        InvoiceData data = LegacyTemplateMappers.toCanonical(InvoiceDataFixtures.standardInvoice());
+        InvoiceData data = InvoiceDataFixtures.standardInvoice();
         assertComposesToPdf(PDRectangle.A4, 22, document -> new InvoiceTemplateV1().compose(document, data));
     }
 
     @Test
     void proposalBuiltInShouldComposeThroughDocumentSession() throws Exception {
-        ProposalData data = LegacyTemplateMappers.toCanonical(ProposalDataFixtures.longProposal());
+        ProposalData data = ProposalDataFixtures.longProposal();
         assertComposesToPdf(PDRectangle.A4, 22, document -> new ProposalTemplateV1().compose(document, data));
     }
 
     @Test
     void weeklyScheduleBuiltInShouldComposeThroughDocumentSession() throws Exception {
-        WeeklyScheduleData data = LegacyTemplateMappers.toCanonical(WeeklyScheduleDataFixtures.standardSchedule());
+        WeeklyScheduleData data = WeeklyScheduleDataFixtures.standardSchedule();
         PDRectangle landscapeA4 = new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth());
 
         assertComposesToPdf(landscapeA4, 18, document -> new WeeklyScheduleTemplateV1().compose(document, data));

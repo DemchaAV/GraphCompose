@@ -5,7 +5,6 @@ import com.demcha.compose.document.templates.data.InvoiceData;
 import com.demcha.compose.document.templates.data.MainPageCV;
 import com.demcha.compose.document.templates.data.MainPageCvDTO;
 import com.demcha.compose.document.templates.data.ProposalData;
-import com.demcha.compose.document.templates.support.LegacyTemplateMappers;
 import com.demcha.compose.layout_core.components.content.text.TextDecoration;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
@@ -33,7 +32,7 @@ final class CanonicalBenchmarkSupport {
     }
 
     static MainPageCV canonicalCv() {
-        return LegacyTemplateMappers.toCanonical(new MainPageCVMock().getMainPageCV());
+        return new MainPageCVMock().getMainPageCV();
     }
 
     static MainPageCvDTO rewrite(MainPageCV original) {
@@ -41,11 +40,11 @@ final class CanonicalBenchmarkSupport {
     }
 
     static InvoiceData canonicalInvoiceData() {
-        return LegacyTemplateMappers.toCanonical(InvoiceDataFixtures.standardInvoice());
+        return InvoiceDataFixtures.standardInvoice();
     }
 
     static ProposalData canonicalProposalData() {
-        return LegacyTemplateMappers.toCanonical(ProposalDataFixtures.longProposal());
+        return ProposalDataFixtures.longProposal();
     }
 
     static byte[] renderSimpleBenchmarkDocument(PDRectangle pageSize,

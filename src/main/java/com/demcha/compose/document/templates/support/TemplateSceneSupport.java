@@ -84,9 +84,12 @@ public final class TemplateSceneSupport {
      * Removes blanks and trims each line.
      */
     public static List<String> sanitizeLines(List<String> values) {
+        if (values == null || values.isEmpty()) {
+            return List.of();
+        }
         List<String> sanitized = new ArrayList<>();
         for (String value : values) {
-            String normalized = stripBasicMarkdown(Objects.requireNonNullElse(value, "")).trim();
+            String normalized = Objects.requireNonNullElse(value, "").trim();
             if (!normalized.isBlank()) {
                 sanitized.add(normalized);
             }

@@ -1,5 +1,8 @@
 package com.demcha.compose.document.layout;
 
+import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.layout_core.components.style.Padding;
+
 /**
  * Concrete fragment resolved to a page and absolute page coordinates.
  */
@@ -11,6 +14,8 @@ public record PlacedFragment(
         double y,
         double width,
         double height,
+        Margin margin,
+        Padding padding,
         Object payload
 ) {
     public static PlacedFragment from(LayoutFragment fragment, FragmentPlacement placement) {
@@ -22,6 +27,8 @@ public record PlacedFragment(
                 placement.y() + fragment.localY(),
                 fragment.width(),
                 fragment.height(),
+                placement.margin(),
+                placement.padding(),
                 fragment.payload());
     }
 }

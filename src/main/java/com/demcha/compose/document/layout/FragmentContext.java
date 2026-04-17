@@ -12,6 +12,10 @@ public interface FragmentContext {
     TextMeasurementSystem textMeasurement();
 
     LayoutCanvas canvas();
+
+    default boolean markdownEnabled() {
+        return false;
+    }
 }
 
 

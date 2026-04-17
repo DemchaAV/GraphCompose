@@ -26,7 +26,6 @@ public final class PdfParagraphFragmentRenderHandler
                        BuiltInNodeDefinitions.ParagraphFragmentPayload payload,
                        PdfRenderEnvironment environment) throws IOException {
         FontLibrary fonts = environment.fonts();
-        PdfFont font = fonts.getFont(payload.textStyle().fontName(), PdfFont.class).orElseThrow();
         double innerX = fragment.x() + payload.padding().left();
         double innerWidth = Math.max(0.0, fragment.width() - payload.padding().horizontal());
         double contentTop = fragment.y() + fragment.height() - payload.padding().top();
@@ -34,13 +33,9 @@ public final class PdfParagraphFragmentRenderHandler
 
         stream.saveGraphicsState();
         try {
-            stream.setFont(font.fontType(payload.textStyle().decoration()), (float) payload.textStyle().size());
-            stream.setNonStrokingColor(payload.textStyle().color());
-
             for (int lineIndex = 0; lineIndex < payload.lines().size(); lineIndex++) {
                 BuiltInNodeDefinitions.ParagraphLine line = payload.lines().get(lineIndex);
-                String text = sanitize(line.text());
-                if (text.isEmpty()) {
+                if (sanitize(line.text()).isEmpty()) {
                     continue;
                 }
 
@@ -54,7 +49,16 @@ public final class PdfParagraphFragmentRenderHandler
 
                 stream.beginText();
                 stream.newLineAtOffset((float) lineX, (float) baselineY);
-                stream.showText(text);
+                for (BuiltInNodeDefinitions.ParagraphSpan span : line.spans()) {
+                    String text = sanitize(span.text());
+                    if (text.isEmpty()) {
+                        continue;
+                    }
+                    PdfFont font = fonts.getFont(span.textStyle().fontName(), PdfFont.class).orElseThrow();
+                    stream.setFont(font.fontType(span.textStyle().decoration()), (float) span.textStyle().size());
+                    stream.setNonStrokingColor(span.textStyle().color());
+                    stream.showText(text);
+                }
                 stream.endText();
             }
         } finally {

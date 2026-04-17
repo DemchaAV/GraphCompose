@@ -53,15 +53,20 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
+import org.apache.pdfbox.rendering.PDFRenderer;
+import org.apache.pdfbox.text.PDFTextStripper;
 
 import java.io.ByteArrayOutputStream;
 import java.awt.Color;
+import java.awt.image.BufferedImage;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DocumentSessionTest {
+    private static final float RENDER_DPI = 144.0f;
+    private static final double RENDER_SCALE = RENDER_DPI / 72.0;
 
     @Test
     void atomicNodeShouldMoveWholeToNextPage() {
@@ -351,6 +356,111 @@ class DocumentSessionTest {
         }
     }
 
+    @Test
+    void paragraphShouldRenderMarkdownStylesByDefault() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(new PDRectangle(240, 180))
+                .margin(Margin.of(12))
+                .create()) {
+
+            session.add(new ParagraphNode(
+                    "Markdown",
+                    "Plain **bold** and *italic* text",
+                    TextStyle.DEFAULT_STYLE,
+                    TextAlign.LEFT,
+                    2.0,
+                    Padding.of(4),
+                    Margin.zero()));
+
+            byte[] pdfBytes = session.toPdfBytes();
+            try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+                String extracted = normalizeWhitespace(new PDFTextStripper().getText(document));
+                assertThat(extracted).contains("Plain bold and italic text");
+                assertThat(extracted).doesNotContain("**bold**");
+                assertThat(extracted).doesNotContain("*italic*");
+                assertThat(pdfUsesFont(document, "Helvetica-Bold")).isTrue();
+                assertThat(pdfUsesFont(document, "Helvetica-Oblique")).isTrue();
+            }
+        }
+    }
+
+    @Test
+    void paragraphShouldKeepMarkdownMarkersWhenDisabled() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(new PDRectangle(240, 180))
+                .margin(Margin.of(12))
+                .markdown(false)
+                .create()) {
+
+            session.add(new ParagraphNode(
+                    "MarkdownDisabled",
+                    "Plain **bold** and *italic* text",
+                    TextStyle.DEFAULT_STYLE,
+                    TextAlign.LEFT,
+                    2.0,
+                    Padding.of(4),
+                    Margin.zero()));
+
+            byte[] pdfBytes = session.toPdfBytes();
+            try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+                String extracted = normalizeWhitespace(new PDFTextStripper().getText(document));
+                assertThat(extracted).contains("Plain **bold** and *italic* text");
+                assertThat(pdfUsesFont(document, "Helvetica-Bold")).isFalse();
+                assertThat(pdfUsesFont(document, "Helvetica-Oblique")).isFalse();
+            }
+        }
+    }
+
+    @Test
+    void guideLinesShouldRenderLegacyMarginPaddingAndBoxColors() throws Exception {
+        Color marginColor = new Color(0, 110, 255);
+        Color paddingColor = new Color(255, 140, 0);
+        Color boxColor = new Color(150, 150, 150);
+
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(new PDRectangle(260, 200))
+                .margin(Margin.of(12))
+                .guideLines(true)
+                .create()) {
+
+            session.add(new ParagraphNode(
+                    "GuidedParagraph",
+                    "Guide colors should expose margin and padding overlays.",
+                    TextStyle.DEFAULT_STYLE,
+                    TextAlign.LEFT,
+                    2.0,
+                    Padding.of(10),
+                    Margin.of(14)));
+
+            LayoutGraph graph = session.layoutGraph();
+            byte[] pdfBytes = session.toPdfBytes();
+
+            try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+                BufferedImage image = new PDFRenderer(document).renderImageWithDPI(0, RENDER_DPI);
+                PlacedFragment fragment = graph.fragments().getFirst();
+
+                assertThat(hasColorNear(
+                        image,
+                        fragment.x() - fragment.margin().left(),
+                        fragment.y() - fragment.margin().bottom(),
+                        marginColor,
+                        10)).isTrue();
+                assertThat(hasColorNear(
+                        image,
+                        fragment.x() + fragment.padding().left(),
+                        fragment.y() + fragment.padding().bottom(),
+                        paddingColor,
+                        10)).isTrue();
+                assertThat(hasColorNear(
+                        image,
+                        fragment.x(),
+                        fragment.y(),
+                        boxColor,
+                        6)).isTrue();
+            }
+        }
+    }
+
     private record BadgeNode(String name, String label, Margin margin, Padding padding) implements DocumentNode {
     }
 
@@ -442,6 +552,11 @@ class DocumentSessionTest {
         }
 
         @Override
+        public boolean markdownEnabled() {
+            return true;
+        }
+
+        @Override
         public void close() throws Exception {
             measurementDocument.close();
         }
@@ -480,6 +595,46 @@ class DocumentSessionTest {
         int lineMetricsCalls() {
             return lineMetricsCalls;
         }
+    }
+
+    private boolean pdfUsesFont(PDDocument document, String expectedNameFragment) throws Exception {
+        for (PDPage page : document.getPages()) {
+            for (var resourceFontName : page.getResources().getFontNames()) {
+                var font = page.getResources().getFont(resourceFontName);
+                if (font != null && normalizeWhitespace(font.getName()).contains(normalizeWhitespace(expectedNameFragment))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private String normalizeWhitespace(String value) {
+        return value == null ? "" : value.replaceAll("\\s+", " ").trim();
+    }
+
+    private boolean hasColorNear(BufferedImage image,
+                                 double pdfX,
+                                 double pdfY,
+                                 Color expected,
+                                 int radius) {
+        int centerX = (int) Math.round(pdfX * RENDER_SCALE);
+        int centerY = image.getHeight() - 1 - (int) Math.round(pdfY * RENDER_SCALE);
+
+        for (int y = Math.max(0, centerY - radius); y <= Math.min(image.getHeight() - 1, centerY + radius); y++) {
+            for (int x = Math.max(0, centerX - radius); x <= Math.min(image.getWidth() - 1, centerX + radius); x++) {
+                if (isCloseColor(new Color(image.getRGB(x, y), true), expected, 35)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isCloseColor(Color actual, Color expected, int tolerancePerChannel) {
+        return Math.abs(actual.getRed() - expected.getRed()) <= tolerancePerChannel
+                && Math.abs(actual.getGreen() - expected.getGreen()) <= tolerancePerChannel
+                && Math.abs(actual.getBlue() - expected.getBlue()) <= tolerancePerChannel;
     }
 }
 

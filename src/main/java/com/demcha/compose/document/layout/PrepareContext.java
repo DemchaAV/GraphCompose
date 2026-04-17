@@ -16,6 +16,10 @@ public interface PrepareContext {
     TextMeasurementSystem textMeasurement();
 
     LayoutCanvas canvas();
+
+    default boolean markdownEnabled() {
+        return false;
+    }
 }
 
 

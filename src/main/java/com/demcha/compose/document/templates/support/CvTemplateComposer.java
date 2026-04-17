@@ -19,6 +19,7 @@ import java.util.Objects;
  */
 public final class CvTemplateComposer {
     private static final Padding LEGACY_BLOCK_PADDING = new Padding(0, 5, 0, 20);
+    private static final Margin LEGACY_HEADER_RIGHT_MARGIN = new Margin(0, 10, 0, 0);
 
     private final CvTheme theme;
 
@@ -48,12 +49,12 @@ public final class CvTemplateComposer {
                 "ModuleHeaderName",
                 Objects.requireNonNullElse(header.getName(), ""),
                 theme.nameTextStyle(),
-                TextAlign.CENTER,
+                TextAlign.RIGHT,
                 1.0,
                 Padding.zero(),
-                Margin.bottom((float) Math.max(0.0, theme.spacing() - 3))));
+                new Margin(0, 10, Math.max(0.0, theme.spacing() - 3), 0)));
 
-        String info = TemplateSceneSupport.joinNonBlank(" ",
+        String info = TemplateSceneSupport.joinNonBlank(" | ",
                 header.getAddress(),
                 header.getPhoneNumber());
         if (!info.isBlank()) {
@@ -61,13 +62,13 @@ public final class CvTemplateComposer {
                     "ModuleHeaderInfo",
                     info,
                     theme.smallBodyTextStyle(),
-                    TextAlign.CENTER,
+                    TextAlign.RIGHT,
                     1.0,
                     Padding.zero(),
-                    Margin.zero()));
+                    LEGACY_HEADER_RIGHT_MARGIN));
         }
 
-        String links = TemplateSceneSupport.joinNonBlank(" ",
+        String links = TemplateSceneSupport.joinNonBlank(" | ",
                 header.getEmail() == null ? "" : header.getEmail().getDisplayText(),
                 header.getLinkedIn() == null ? "" : header.getLinkedIn().getDisplayText(),
                 header.getGitHub() == null ? "" : header.getGitHub().getDisplayText());
@@ -76,10 +77,10 @@ public final class CvTemplateComposer {
                     "ModuleHeaderLinks",
                     links,
                     theme.linkTextStyle(),
-                    TextAlign.CENTER,
+                    TextAlign.RIGHT,
                     1.0,
                     Padding.zero(),
-                    Margin.zero()));
+                    LEGACY_HEADER_RIGHT_MARGIN));
         }
     }
 
@@ -90,7 +91,7 @@ public final class CvTemplateComposer {
         addModuleTitle(target, "SummaryHeading", summary.getModuleName());
         target.addParagraph(TemplateSceneSupport.blockParagraph(
                 "SummaryBody",
-                TemplateSceneSupport.stripBasicMarkdown(Objects.requireNonNullElse(summary.getBlockSummary(), "")),
+                Objects.requireNonNullElse(summary.getBlockSummary(), ""),
                 theme.bodyTextStyle(),
                 TextAlign.LEFT,
                 theme.spacing(),

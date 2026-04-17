@@ -367,6 +367,7 @@ public final class GraphCompose {
         private final Path outputFile;
         private PDRectangle pageSize = PDRectangle.A4;
         private Margin margin = Margin.zero();
+        private boolean markdown = true;
         private boolean guideLines = false;
         private PdfMetadataOptions metadataOptions;
         private PdfWatermarkOptions watermarkOptions;
@@ -411,6 +412,21 @@ public final class GraphCompose {
          */
         public DocumentBuilder margin(float top, float right, float bottom, float left) {
             this.margin = new Margin(top, right, bottom, left);
+            return this;
+        }
+
+        /**
+         * Enables or disables markdown parsing for semantic paragraph blocks.
+         *
+         * <p>When enabled, canonical paragraph rendering understands the same
+         * practical inline markdown subset relied on by the legacy template
+         * flow, such as bold and italic spans.</p>
+         *
+         * @param enabled {@code true} to enable markdown-aware paragraph rendering
+         * @return this builder
+         */
+        public DocumentBuilder markdown(boolean enabled) {
+            this.markdown = enabled;
             return this;
         }
 
@@ -607,6 +623,7 @@ public final class GraphCompose {
                     pageSize,
                     margin,
                     List.copyOf(customFontFamilies),
+                    markdown,
                     guideLines,
                     metadataOptions,
                     watermarkOptions,

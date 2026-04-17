@@ -15,6 +15,7 @@ import java.util.Objects;
 public final class CoverLetterTemplateComposer {
     private static final String KIND_REGARDS = "Kind regards,";
     private static final Padding LEGACY_BLOCK_PADDING = new Padding(0, 5, 0, 20);
+    private static final Margin LEGACY_HEADER_RIGHT_MARGIN = new Margin(0, 10, 0, 0);
 
     private final CvTheme theme;
     private final CvTheme signatureTheme;
@@ -40,12 +41,12 @@ public final class CoverLetterTemplateComposer {
                 "CoverLetterHeaderName",
                 Objects.requireNonNullElse(header.getName(), ""),
                 theme.nameTextStyle(),
-                TextAlign.CENTER,
+                TextAlign.RIGHT,
                 1.0,
                 Padding.zero(),
-                Margin.bottom(5)));
+                new Margin(0, 10, 5, 0)));
 
-        String info = TemplateSceneSupport.joinNonBlank(" ",
+        String info = TemplateSceneSupport.joinNonBlank(" | ",
                 header.getAddress(),
                 header.getPhoneNumber());
         if (!info.isBlank()) {
@@ -53,13 +54,13 @@ public final class CoverLetterTemplateComposer {
                     "CoverLetterHeaderInfo",
                     info,
                     theme.smallBodyTextStyle(),
-                    TextAlign.CENTER,
+                    TextAlign.RIGHT,
                     1.0,
                     Padding.zero(),
-                    Margin.zero()));
+                    LEGACY_HEADER_RIGHT_MARGIN));
         }
 
-        String links = TemplateSceneSupport.joinNonBlank(" ",
+        String links = TemplateSceneSupport.joinNonBlank(" | ",
                 header.getEmail() == null ? "" : header.getEmail().getDisplayText(),
                 header.getLinkedIn() == null ? "" : header.getLinkedIn().getDisplayText(),
                 header.getGitHub() == null ? "" : header.getGitHub().getDisplayText());
@@ -68,17 +69,16 @@ public final class CoverLetterTemplateComposer {
                     "CoverLetterHeaderLinks",
                     links,
                     theme.linkTextStyle(),
-                    TextAlign.CENTER,
+                    TextAlign.RIGHT,
                     1.0,
                     Padding.zero(),
-                    Margin.zero()));
+                    LEGACY_HEADER_RIGHT_MARGIN));
         }
     }
 
     private void addBody(TemplateComposeTarget target, String wroteLetter, JobDetails jobDetails) {
         String company = jobDetails == null ? "" : Objects.requireNonNullElse(jobDetails.company(), "");
-        String resolved = TemplateSceneSupport.stripBasicMarkdown(
-                Objects.requireNonNullElse(wroteLetter, "").replace("${companyName}", company));
+        String resolved = Objects.requireNonNullElse(wroteLetter, "").replace("${companyName}", company);
         target.addParagraph(TemplateSceneSupport.blockParagraph(
                 "CoverLetterBody",
                 resolved,

@@ -63,6 +63,22 @@ class CvTemplateRenderTest {
     }
 
     @Test
+    void shouldRenderTemplateCvWithMarkdownFonts() throws Exception {
+        Path outputFile = VisualTestOutputs.preparePdf("template_cv_1_render_markdown_fonts", "clean", "templates", "cv");
+        var original = TemplateTestSupport.canonicalCv();
+        var rewritten = TemplateTestSupport.rewrite(original);
+
+        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15, false)) {
+            new CvTemplateV1().compose(document, original, rewritten);
+            document.buildPdf();
+        }
+
+        TemplateTestSupport.assertPdfFileLooksValid(outputFile, 1);
+        TemplateTestSupport.assertPdfUsesFont(outputFile, "Helvetica-Bold");
+        TemplateTestSupport.assertPdfUsesFont(outputFile, "Helvetica-Oblique");
+    }
+
+    @Test
     void shouldRenderTemplateCvWithMoreInformationAcrossAboutOneAndHalfPages() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("template_cv_1_render_file_rich_one_and_half_pages", "clean", "templates", "cv");
         var original = TemplateTestSupport.expandedCanonicalCv();

@@ -63,6 +63,7 @@ public final class DocumentSession implements AutoCloseable {
     private PDRectangle pageSize;
     private Margin margin;
     private LayoutCanvas canvas;
+    private boolean markdown;
     private boolean guideLines;
     private PdfMetadataOptions metadataOptions;
     private PdfWatermarkOptions watermarkOptions;
@@ -85,6 +86,7 @@ public final class DocumentSession implements AutoCloseable {
                            PDRectangle pageSize,
                            Margin margin,
                            Collection<FontFamilyDefinition> customFontFamilies,
+                           boolean markdown,
                            boolean guideLines,
                            PdfMetadataOptions metadataOptions,
                            PdfWatermarkOptions watermarkOptions,
@@ -94,6 +96,7 @@ public final class DocumentSession implements AutoCloseable {
         this.pageSize = Objects.requireNonNull(pageSize, "pageSize");
         this.margin = margin == null ? Margin.zero() : margin;
         this.canvas = LayoutCanvas.from(pageSize, this.margin);
+        this.markdown = markdown;
         this.guideLines = guideLines;
         this.metadataOptions = metadataOptions;
         this.watermarkOptions = watermarkOptions;
@@ -181,6 +184,18 @@ public final class DocumentSession implements AutoCloseable {
     public DocumentSession margin(Margin margin) {
         this.margin = margin == null ? Margin.zero() : margin;
         this.canvas = LayoutCanvas.from(pageSize, this.margin);
+        invalidate();
+        return this;
+    }
+
+    /**
+     * Enables or disables markdown parsing for semantic paragraph blocks.
+     *
+     * @param enabled {@code true} to render paragraph content with markdown-aware spans
+     * @return this session
+     */
+    public DocumentSession markdown(boolean enabled) {
+        this.markdown = enabled;
         invalidate();
         return this;
     }
@@ -529,6 +544,11 @@ public final class DocumentSession implements AutoCloseable {
         @Override
         public LayoutCanvas canvas() {
             return canvas;
+        }
+
+        @Override
+        public boolean markdownEnabled() {
+            return markdown;
         }
     }
 

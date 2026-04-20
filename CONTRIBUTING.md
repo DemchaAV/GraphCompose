@@ -15,10 +15,9 @@ They explain the current public surface, the engine/template split, and the reco
 
 ## Build and test
 
-- Build the library with `mvn package`.
-- Run the full test suite with `mvn test`.
-- Run the guard-focused suite with `mvn -Dtest=EnginePdfBoundaryTest,CanonicalTemplateComposerPdfBoundaryTest,LegacyPdfRenderAllowlistTest,PdfRenderingSystemECSDispatchTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest,TemplateComposeApiTest test`.
-- Run a focused documentation sanity check with `mvn -Dtest=DocumentationExamplesTest test`.
+- The blocking validation gate for repository work is `./mvnw -B -ntp clean verify`.
+- Run the guard-focused suite with `./mvnw -B -ntp "-Dtest=EnginePdfBoundaryTest,CanonicalTemplateComposerPdfBoundaryTest,LegacyPdfRenderAllowlistTest,PdfRenderingSystemECSDispatchTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest,TemplateComposeApiTest" test`.
+- Run a focused documentation sanity check with `./mvnw -B -ntp "-Dtest=DocumentationExamplesTest" test`.
 - Run the local benchmark wrapper with `powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1` when you change performance-sensitive code or benchmark tooling.
 
 ## Repository map
@@ -41,7 +40,7 @@ They explain the current public surface, the engine/template split, and the reco
 1. Start with the smallest change that solves one problem.
 2. Keep structural cleanup separate from behavior changes whenever possible.
 3. If you touch public examples or screenshots, update the related docs in the same change.
-4. Run the smallest relevant tests while iterating, then run `mvn test` before opening a pull request.
+4. Run the smallest relevant tests while iterating, then run `./mvnw -B -ntp clean verify` before opening a pull request.
 5. For quick visual iteration on a template, you can use the experimental live preview tool in test scope by running [GraphComposeDevTool.java](./src/test/java/com/demcha/compose/devtool/GraphComposeDevTool.java) and editing [LivePreviewProvider.java](./src/test/java/com/demcha/preview/LivePreviewProvider.java).
 
 ## Contributor architecture rules
@@ -61,8 +60,9 @@ For built-in templates, use the template-layer split as project policy as well:
 - built-in template classes in `src/main/java/com/demcha/compose/document/templates/builtins/` should stay thin public facades over reusable scene composers
 - document structure and scene assembly belong in dedicated backend-neutral scene composer classes under `...document.templates.support`
 - keep PDF-only setup in the document session/backend layer rather than inside template composers
-- do not import `PDDocument`, `PDPage`, `PDRectangle`, or `PdfComposer` into scene composer classes
+- do not import `PDDocument`, `PDPage`, `PDRectangle`, or low-level PDF composer types into scene composer classes
 - new README snippets, runnable examples, and integration docs should show `compose(DocumentSession, ...)`
+- do not reintroduce the deprecated low-level PDF entry point, low-level PDF composer types, or the removed legacy template namespace into public-facing usage docs or runnable examples
 
 The current guard rails for these rules live in:
 

@@ -13,6 +13,8 @@ import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
+import com.demcha.compose.layout_core.components.components_builders.TableCellStyle;
+import com.demcha.compose.layout_core.components.components_builders.TableColumnSpec;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -189,6 +191,39 @@ class DocumentationExamplesTest {
                             .size(3, 90)
                             .fillColor(ComponentColor.ORANGE)
                             .padding(Padding.of(6)))
+                    .build();
+
+            document.buildPdf();
+        }
+
+        assertPdfFileLooksValid(outputFile);
+    }
+
+    @Test
+    void shouldRenderCanonicalTableExampleToFile() throws Exception {
+        Path outputFile = VisualTestOutputs.preparePdf("table-component", "clean", "documentation");
+
+        try (DocumentSession document = GraphCompose.document(outputFile)
+                .pageSize(PDRectangle.A4)
+                .margin(24, 24, 24, 24)
+                .create()) {
+            document.dsl()
+                    .pageFlow()
+                    .name("StatusSection")
+                    .spacing(12)
+                    .addTable(table -> table
+                            .name("StatusTable")
+                            .columns(
+                                    TableColumnSpec.fixed(90),
+                                    TableColumnSpec.auto(),
+                                    TableColumnSpec.auto())
+                            .width(520)
+                            .defaultCellStyle(TableCellStyle.builder()
+                                    .padding(Padding.of(6))
+                                    .build())
+                            .row("Role", "Owner", "Status")
+                            .row("Engine", "GraphCompose", "Stable")
+                            .row("Feature", "Table Builder", "Canonical"))
                     .build();
 
             document.buildPdf();

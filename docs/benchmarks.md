@@ -41,7 +41,7 @@ The script prints numbered sections so you can map console output to the pipelin
 3. `03-comparative`
    Runs the low-level GraphCompose legacy vs GraphCompose canonical vs iText 5 vs JasperReports comparison.
 4. `03b-architecture-comparison`
-   Optional. Runs only when `-IncludeArchitectureComparison` is provided and prints legacy `GraphCompose.pdf(...)` vs canonical `GraphCompose.document(...)` numbers to the console.
+   Optional. Runs only when `-IncludeArchitectureComparison` is provided and prints low-level legacy-vs-canonical authoring numbers to the console.
 5. `04-core-engine`
    Runs `GraphComposeBenchmark`.
 6. `05-full-cv`

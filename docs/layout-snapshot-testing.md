@@ -32,8 +32,6 @@ Use them when you want to know that:
 
 `DocumentSession.layoutSnapshot()` captures the document after layout and pagination, but before PDF rendering.
 
-The deprecated `PdfComposer.layoutSnapshot()` path remains available for legacy compatibility tests, but it is no longer the documented default.
-
 That means the coordinates in the snapshot are:
 
 - after `LayoutSystem`
@@ -104,7 +102,7 @@ void shouldMatchInvoiceLayoutSnapshotAndRenderPdf() throws Exception {
             .create()) {
 
         template.compose(document, data);
-        LayoutSnapshotAssertions.assertMatches(document, "templates/invoice/invoice_standard_layout");
+        LayoutSnapshotAssertions.assertMatches(document, "canonical-templates/invoice/invoice_standard_layout");
         document.buildPdf();
     }
 }
@@ -199,13 +197,13 @@ class InvoiceTemplateSnapshotTest {
                 .create()) {
 
             template.compose(document, data);
-            LayoutSnapshotAssertions.assertMatches(document, "templates/invoice/invoice_standard_layout");
+            LayoutSnapshotAssertions.assertMatches(document, "canonical-templates/invoice/invoice_standard_layout");
         }
     }
 }
 ```
 
-Legacy template contracts can still stay written against `DocumentComposer`, and `LayoutSnapshotAssertions` still supports `PdfComposer`. The documented default for new tests, though, is the canonical `DocumentSession` path because `layoutSnapshot()` now lives there directly.
+Repository snapshot coverage should be authored against the canonical `DocumentSession` path because `layoutSnapshot()` now lives there directly.
 
 If you want different baseline folders in your own project, use the public overloads with custom roots:
 
@@ -269,8 +267,8 @@ Mismatch artifacts generated during normal test runs:
 
 Prefer semantic names that describe the document state:
 
-- `templates/invoice/invoice_standard_layout`
-- `templates/proposal/proposal_long_layout`
+- `canonical-templates/invoice/invoice_standard_layout`
+- `canonical-templates/proposal/proposal_long_layout`
 - `integration/table_pagination_test`
 - `templates/cv/font-themes/template_cv_1_poppins`
 
@@ -326,7 +324,7 @@ This keeps baseline updates explicit and prevents accidental golden-file drift i
 When adding snapshot coverage to an existing visual test:
 
 1. if the test already creates a `DocumentSession`, add `LayoutSnapshotAssertions.assertMatches(...)` before `buildPdf()`
-2. if a legacy template hides composition inside `render(...)`, add or reuse a compose path and let `render(...)` delegate to it
+2. keep the composition path explicit so the same canonical document can be snapshotted and rendered in one test
 3. keep the existing PDF render assertion and artifact generation
 4. generate the baseline once with `-Dgraphcompose.updateSnapshots=true`
 
@@ -353,11 +351,8 @@ Prioritize documents that are most sensitive to layout regressions:
 - `TablePaginationIntegrationTest`
 - `FontShowcaseLayoutSnapshotTest`
 - `CvTemplateV1LayoutSnapshotTest`
-- `EditorialBlueCvTemplateLayoutSnapshotTest`
-- `InvoiceTemplateV1LayoutSnapshotTest`
-- `ProposalTemplateV1LayoutSnapshotTest`
-- `WeeklyScheduleTemplateV1LayoutSnapshotTest`
-- `CoverLetterTemplateV1LayoutSnapshotTest`
+- `BuiltInTemplateLayoutSnapshotTest`
+- `LayoutSnapshotPublicApiDogfoodTest`
 
 ## Interpreting a mismatch
 

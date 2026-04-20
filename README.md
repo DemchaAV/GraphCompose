@@ -37,7 +37,7 @@
   <a href="./CONTRIBUTING.md">Contributing</a>
 </p>
 
-Layout regression tests are supported through the public `DocumentSession.layoutSnapshot()` and `com.demcha.compose.testing.layout` helpers. See [Layout Snapshot Testing](./docs/layout-snapshot-testing.md) for the consumer workflow and legacy compatibility notes for `PdfComposer`.
+Layout regression tests are supported through the public `DocumentSession.layoutSnapshot()` and `com.demcha.compose.testing.layout` helpers. See [Layout Snapshot Testing](./docs/layout-snapshot-testing.md) for the canonical consumer workflow.
 
 ---
 
@@ -257,7 +257,7 @@ try (DocumentSession document = GraphCompose.document(Path.of("invoice.pdf"))
 }
 ```
 
-Canonical docs and examples now compose directly into `DocumentSession`. Lower-level engine authoring through `GraphCompose.pdf(...)` remains available, while built-in template APIs live under `com.demcha.compose.document.templates.*`.
+Canonical docs and examples now compose directly into `DocumentSession`, and built-in template APIs live under `com.demcha.compose.document.templates.*`. The supported authoring workflow is `GraphCompose.document(...)`; lower-level PDF composer internals remain in the repository only for internal tooling, diagnostics, and migration scaffolding.
 
 ---
 
@@ -363,7 +363,7 @@ This keeps layout snapshots, page breaking, and future backends aligned on the s
 
 ### 4. Containers express structure
 
-Use `vContainer(...)` and `hContainer(...)` for structural layout, then compose page sections with `moduleBuilder(...)` inside a page flow. Absolute coordinates are an implementation detail of the engine, not something you write.
+Use `document.dsl().pageFlow()` for the root flow and nested `section()` blocks for semantic grouping. Absolute coordinates are an implementation detail of the engine, not something you write in the supported public workflow.
 
 ### 5. The template layer is optional
 
@@ -389,21 +389,24 @@ Current v1 limits:
 - no cell-level style override beyond row/column/default scopes
 
 ```java
-Entity table = composer.componentBuilder()
-        .table()
-        .entityName("StatusTable")
-        .columns(
-                TableColumnSpec.fixed(90),
-                TableColumnSpec.auto(),
-                TableColumnSpec.auto()
-        )
-        .width(520)
-        .defaultCellStyle(TableCellStyle.builder()
-                .padding(Padding.of(6))
-                .build())
-        .row("Role", "Owner", "Status")
-        .row("Engine", "GraphCompose", "Stable")
-        .row("Feature", "Table Builder", "In progress")
+document.dsl()
+        .pageFlow()
+        .name("StatusSection")
+        .spacing(12)
+        .addTable(table -> table
+                .name("StatusTable")
+                .columns(
+                        TableColumnSpec.fixed(90),
+                        TableColumnSpec.auto(),
+                        TableColumnSpec.auto()
+                )
+                .width(520)
+                .defaultCellStyle(TableCellStyle.builder()
+                        .padding(Padding.of(6))
+                        .build())
+                .row("Role", "Owner", "Status")
+                .row("Engine", "GraphCompose", "Stable")
+                .row("Feature", "Table Builder", "Canonical"))
         .build();
 ```
 
@@ -501,7 +504,7 @@ Built-in templates now follow a compose-first split:
 - the canonical public contract lives on `com.demcha.compose.document.templates.api.*Template` through `compose(DocumentSession, ...)`
 - each class in `com.demcha.compose.document.templates.builtins` composes through the semantic DSL and the canonical PDF backend
 - the actual document composition belongs in a dedicated backend-neutral scene composer under `com.demcha.compose.document.templates.support`
-- scene composers should stay free of `PDDocument`, `PDPage`, `PDRectangle`, and `PdfComposer` imports
+- scene composers should stay free of `PDDocument`, `PDPage`, `PDRectangle`, and low-level PDF composer imports
 - built-in template logic lives under `com.demcha.compose.document.templates.*`, with scene composition isolated from PDF-only setup
 
 If you are contributing new engine objects, read [CONTRIBUTING.md](./CONTRIBUTING.md), [docs/architecture.md](./docs/architecture.md), and [docs/implementation-guide.md](./docs/implementation-guide.md) together before coding.

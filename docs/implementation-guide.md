@@ -283,14 +283,14 @@ Practical rules:
 - keep `GraphCompose.document(...)`, page size selection, margins, `document.buildPdf()`, and `document.toPdfBytes()` in canonical examples and integrations
 - let deprecated bridge adapters call into the canonical `DocumentSession` PDF path rather than owning production layout/render logic
 - put the actual document structure, sections, tables, and paragraph assembly in the scene composer
-- keep scene composers backend-neutral: no `PDDocument`, `PDPage`, `PDRectangle`, or `PdfComposer` imports
+- keep scene composers backend-neutral: no `PDDocument`, `PDPage`, `PDRectangle`, or low-level PDF composer imports
 - keep public examples and integration docs compose-first: show `compose(DocumentSession, ...)` before any deprecated convenience path
 - pass theme or style collaborators into the scene composer constructor instead of hard-wiring backend assumptions into composition code
 - when a built-in template already has a good scene split, extend that pattern instead of reintroducing backend-specific logic into the composition layer
 
 Current guard rails:
 
-- `CanonicalTemplateComposerPdfBoundaryTest` keeps scene-composition classes free of `PDDocument`, `PDPage`, `PDRectangle`, and `PdfComposer`
+- `CanonicalTemplateComposerPdfBoundaryTest` keeps scene-composition classes free of `PDDocument`, `PDPage`, `PDRectangle`, and low-level PDF composer imports
 - canonical template API tests keep `compose(DocumentSession, ...)` aligned with the built-ins
 
 Rule of thumb:

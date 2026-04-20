@@ -8,6 +8,7 @@ import com.demcha.compose.document.templates.builtins.EditorialBlueCvTemplate;
 import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
 import com.demcha.compose.document.templates.builtins.ProposalTemplateV1;
 import com.demcha.compose.document.templates.builtins.WeeklyScheduleTemplateV1;
+import com.demcha.compose.document.templates.data.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.Header;
 import com.demcha.compose.document.templates.data.InvoiceData;
 import com.demcha.compose.document.templates.data.JobDetails;
@@ -75,9 +76,16 @@ class TemplateComposeApiTest {
     void cvBuiltInsShouldComposeThroughDocumentSession() throws Exception {
         MainPageCV original = new MainPageCVMock().getMainPageCV();
         MainPageCvDTO rewritten = MainPageCvDTO.from(original);
+        CvDocumentSpec composeFirst = CvDocumentSpec.from(original, rewritten);
 
         assertComposesToPdf(PDRectangle.A4, 24, document -> new CvTemplateV1().compose(document, original, rewritten));
+        assertComposesToPdf(PDRectangle.A4, 24, document -> new CvTemplateV1().compose(document, composeFirst));
         assertComposesToPdf(PDRectangle.A4, 18, document -> new EditorialBlueCvTemplate().compose(document, original, rewritten));
+    }
+
+    @Test
+    void cvTemplateV1ShouldExposeComposeFirstCvDocumentSpecOverload() throws Exception {
+        assertMethodPresent(CvTemplateV1.class, "compose", DocumentSession.class, CvDocumentSpec.class);
     }
 
     @Test

@@ -2,10 +2,16 @@ package com.demcha.compose.document.templates.builtins;
 
 import com.demcha.compose.document.templates.TemplateTestSupport;
 import com.demcha.testing.VisualTestOutputs;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.interactive.action.PDActionURI;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -69,6 +75,29 @@ class BuiltInTemplateRenderTest {
         }
 
         TemplateTestSupport.assertPdfFileLooksValid(outputFile, 1);
+    }
+
+    @Test
+    void shouldMakeCoverLetterHeaderContactLinksClickable() throws Exception {
+        var header = TemplateTestSupport.canonicalHeader();
+        byte[] pdfBytes;
+
+        try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 15, 10, 15, 15)) {
+            new CoverLetterTemplateV1().compose(
+                    document,
+                    header,
+                    TemplateTestSupport.coverLetter("Visual Test Company"),
+                    TemplateTestSupport.jobDetails("Visual Test Company"));
+            pdfBytes = document.toPdfBytes();
+        }
+
+        try (PDDocument pdf = Loader.loadPDF(pdfBytes)) {
+            List<String> uris = linkAnnotationUris(pdf);
+
+            assertThat(uris).anySatisfy(uri -> assertThat(uri).startsWith("mailto:" + header.getEmail().getTo()));
+            assertThat(uris).contains(header.getLinkedIn().getLinkUrl().getUrl());
+            assertThat(uris).contains(header.getGitHub().getLinkUrl().getUrl());
+        }
     }
 
     @Test
@@ -221,5 +250,18 @@ class BuiltInTemplateRenderTest {
             new WeeklyScheduleTemplateV1().compose(document, data);
             document.buildPdf();
         }
+    }
+
+    private List<String> linkAnnotationUris(PDDocument document) throws Exception {
+        List<String> uris = new ArrayList<>();
+        for (var page : document.getPages()) {
+            for (var annotation : page.getAnnotations()) {
+                if (annotation instanceof PDAnnotationLink link
+                        && link.getAction() instanceof PDActionURI action) {
+                    uris.add(action.getURI());
+                }
+            }
+        }
+        return List.copyOf(uris);
     }
 }

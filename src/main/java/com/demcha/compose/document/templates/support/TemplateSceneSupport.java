@@ -1,5 +1,6 @@
 package com.demcha.compose.document.templates.support;
 
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
 import com.demcha.compose.document.model.node.ListMarker;
 import com.demcha.compose.document.model.node.TextAlign;
 import com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy;
@@ -31,7 +32,21 @@ public final class TemplateSceneSupport {
                                                   double lineSpacing,
                                                   Padding padding,
                                                   Margin margin) {
-        return new TemplateParagraphSpec(name, text, style, align, lineSpacing, "", BlockIndentStrategy.NONE, padding, margin);
+        return paragraph(name, text, style, align, lineSpacing, null, padding, margin);
+    }
+
+    /**
+     * Creates a normalized paragraph instruction with optional hyperlink metadata.
+     */
+    public static TemplateParagraphSpec paragraph(String name,
+                                                  String text,
+                                                  TextStyle style,
+                                                  TextAlign align,
+                                                  double lineSpacing,
+                                                  PdfLinkOptions linkOptions,
+                                                  Padding padding,
+                                                  Margin margin) {
+        return new TemplateParagraphSpec(name, text, style, align, lineSpacing, "", BlockIndentStrategy.NONE, linkOptions, padding, margin);
     }
 
     /**
@@ -46,7 +61,24 @@ public final class TemplateSceneSupport {
                                                        BlockIndentStrategy indentStrategy,
                                                        Padding padding,
                                                        Margin margin) {
-        return new TemplateParagraphSpec(name, text, style, align, lineSpacing, bulletOffset, indentStrategy, padding, margin);
+        return blockParagraph(name, text, style, align, lineSpacing, bulletOffset, indentStrategy, null, padding, margin);
+    }
+
+    /**
+     * Creates a normalized paragraph instruction with legacy block-indent semantics
+     * and optional hyperlink metadata.
+     */
+    public static TemplateParagraphSpec blockParagraph(String name,
+                                                       String text,
+                                                       TextStyle style,
+                                                       TextAlign align,
+                                                       double lineSpacing,
+                                                       String bulletOffset,
+                                                       BlockIndentStrategy indentStrategy,
+                                                       PdfLinkOptions linkOptions,
+                                                       Padding padding,
+                                                       Margin margin) {
+        return new TemplateParagraphSpec(name, text, style, align, lineSpacing, bulletOffset, indentStrategy, linkOptions, padding, margin);
     }
 
     /**

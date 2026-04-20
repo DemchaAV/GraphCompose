@@ -1,5 +1,6 @@
 package com.demcha.compose.document.templates.support;
 
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
 import com.demcha.compose.document.model.node.TextAlign;
 import com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
@@ -17,6 +18,7 @@ public record TemplateParagraphSpec(
         double lineSpacing,
         String bulletOffset,
         BlockIndentStrategy indentStrategy,
+        PdfLinkOptions linkOptions,
         Padding padding,
         Margin margin
 ) {

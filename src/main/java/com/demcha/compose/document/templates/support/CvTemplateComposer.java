@@ -2,16 +2,17 @@ package com.demcha.compose.document.templates.support;
 
 import com.demcha.compose.document.model.node.ListMarker;
 import com.demcha.compose.document.model.node.TextAlign;
+import com.demcha.compose.document.templates.data.CvDocumentSpec;
+import com.demcha.compose.document.templates.data.CvModule;
 import com.demcha.compose.document.templates.data.Header;
 import com.demcha.compose.document.templates.data.MainPageCV;
 import com.demcha.compose.document.templates.data.MainPageCvDTO;
-import com.demcha.compose.document.templates.data.ModuleSummary;
-import com.demcha.compose.document.templates.data.ModuleYml;
 import com.demcha.compose.document.templates.theme.CvTheme;
 import com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -32,15 +33,16 @@ public final class CvTemplateComposer {
     }
 
     public void compose(TemplateComposeTarget target, MainPageCV originalCv, MainPageCvDTO rewrittenCv) {
-        MainPageCV data = rewrittenCv == null ? originalCv : rewrittenCv.merge(originalCv);
+        compose(target, CvDocumentSpec.from(originalCv, rewrittenCv));
+    }
+
+    public void compose(TemplateComposeTarget target, CvDocumentSpec documentSpec) {
+        CvDocumentSpec spec = Objects.requireNonNull(documentSpec, "documentSpec");
         target.startDocument("MainVBoxContainer", theme.spacingModuleName());
-        addHeader(target, data.getHeader());
-        addSummary(target, data.getModuleSummary());
-        addModule(target, "TechnicalSkills", data.getTechnicalSkills());
-        addModule(target, "Education", data.getEducationCertifications());
-        addModule(target, "Projects", data.getProjects());
-        addModule(target, "Experience", data.getProfessionalExperience());
-        addModule(target, "Additional", data.getAdditional());
+        addHeader(target, spec.header());
+        for (CvModule module : spec.modules()) {
+            addModule(target, module);
+        }
         target.finishDocument();
     }
 
@@ -72,108 +74,102 @@ public final class CvTemplateComposer {
                     LEGACY_HEADER_RIGHT_MARGIN));
         }
 
-        String links = TemplateSceneSupport.joinNonBlank(" | ",
-                header.getEmail() == null ? "" : header.getEmail().getDisplayText(),
-                header.getLinkedIn() == null ? "" : header.getLinkedIn().getDisplayText(),
-                header.getGitHub() == null ? "" : header.getGitHub().getDisplayText());
-        if (!links.isBlank()) {
-            target.addParagraph(TemplateSceneSupport.paragraph(
-                    "ModuleHeaderLinks",
-                    links,
-                    theme.linkTextStyle(),
-                    TextAlign.RIGHT,
-                    1.0,
-                    Padding.zero(),
-                    LEGACY_HEADER_RIGHT_MARGIN));
+        for (TemplateParagraphSpec linkParagraph : TemplateHeaderContactSupport.linkParagraphs(
+                "ModuleHeaderLinks",
+                header,
+                theme,
+                LEGACY_HEADER_RIGHT_MARGIN)) {
+            target.addParagraph(linkParagraph);
         }
     }
 
-    private void addSummary(TemplateComposeTarget target, ModuleSummary summary) {
-        if (summary == null) {
+    private void addModule(TemplateComposeTarget target, CvModule module) {
+        if (module == null) {
             return;
         }
-        addModuleTitle(target, "SummaryHeading", summary.getModuleName());
-        target.addParagraph(TemplateSceneSupport.blockParagraph(
-                "SummaryBody",
-                Objects.requireNonNullElse(summary.getBlockSummary(), ""),
-                theme.bodyTextStyle(),
-                TextAlign.LEFT,
-                theme.spacing(),
-                "    ",
-                BlockIndentStrategy.FIRST_LINE,
-                LEGACY_BLOCK_PADDING,
-                Margin.zero()));
+        TemplateModuleSpec spec = toTemplateModule(module);
+        if (spec == null || spec.blocks().isEmpty()) {
+            return;
+        }
+        target.addModule(spec);
     }
 
-    private void addModule(TemplateComposeTarget target, String prefix, ModuleYml module) {
-        if (module == null || module.getModulePoints() == null || module.getModulePoints().isEmpty()) {
-            return;
-        }
-        List<String> points = TemplateSceneSupport.sanitizeLines(module.getModulePoints());
-        if (points.isEmpty()) {
-            return;
-        }
-        if ("TechnicalSkills".equals(prefix)) {
-            List<String> normalizedPoints = normalizeTechnicalSkillPoints(points);
-            if (normalizedPoints.isEmpty()) {
-                return;
+    private TemplateModuleSpec toTemplateModule(CvModule module) {
+        String moduleName = module.name();
+        List<TemplateModuleBlock> blocks = new ArrayList<>();
+        for (int index = 0; index < module.bodyBlocks().size(); index++) {
+            TemplateModuleBlock block = toTemplateBlock(module, module.bodyBlocks().get(index), index);
+            if (block != null) {
+                blocks.add(block);
             }
-            addModuleTitle(target, prefix + "Heading", module.getName());
-            target.addList(TemplateSceneSupport.list(
-                    prefix + "Body",
-                    normalizedPoints,
-                    ListMarker.bullet(),
+        }
+        if (blocks.isEmpty()) {
+            return null;
+        }
+        return new TemplateModuleSpec(
+                moduleName,
+                moduleTitle(moduleName, module.title()),
+                blocks);
+    }
+
+    private TemplateModuleBlock toTemplateBlock(CvModule module, CvModule.BodyBlock block, int index) {
+        return switch (block.kind()) {
+            case PARAGRAPH -> TemplateModuleBlock.paragraph(TemplateSceneSupport.blockParagraph(
+                    blockName(module, block, index),
+                    block.text(),
                     theme.bodyTextStyle(),
                     TextAlign.LEFT,
                     theme.spacing(),
-                    theme.spacing(),
+                    block.firstLineIndent(),
+                    block.firstLineIndent().isEmpty() ? BlockIndentStrategy.NONE : BlockIndentStrategy.FIRST_LINE,
                     LEGACY_BLOCK_PADDING,
                     Margin.zero()));
-            return;
+            case LIST -> listBlock(module, block, index);
+            case TABLE -> TemplateModuleBlock.table(Objects.requireNonNull(block.table(), "table"));
+            case DIVIDER -> TemplateModuleBlock.divider(Objects.requireNonNull(block.divider(), "divider"));
+            case PAGE_BREAK -> TemplateModuleBlock.pageBreak(
+                    block.pageBreakName().isBlank() ? blockName(module, block, index) : block.pageBreakName());
+            case CUSTOM -> TemplateModuleBlock.custom(Objects.requireNonNull(block.customRenderer(), "customRenderer"));
+        };
+    }
+
+    private TemplateModuleBlock listBlock(CvModule module, CvModule.BodyBlock block, int index) {
+        List<String> items = TemplateSceneSupport.sanitizeLines(block.items());
+        if (items.isEmpty()) {
+            return null;
         }
-        addModuleTitle(target, prefix + "Heading", module.getName());
-        target.addList(TemplateSceneSupport.list(
-                prefix + "Body",
-                points,
-                ListMarker.none(),
+        String continuationIndent = block.marker().isVisible()
+                ? ""
+                : (block.continuationIndent().isEmpty() ? LEGACY_CONTINUATION_INDENT : block.continuationIndent());
+        return TemplateModuleBlock.list(new TemplateListSpec(
+                blockName(module, block, index),
+                items,
+                Objects.requireNonNullElse(block.marker(), ListMarker.bullet()),
                 theme.bodyTextStyle(),
                 TextAlign.LEFT,
                 theme.spacing(),
                 theme.spacing(),
-                LEGACY_CONTINUATION_INDENT,
+                continuationIndent,
+                block.normalizeMarkers(),
                 LEGACY_BLOCK_PADDING,
                 Margin.zero()));
     }
 
-    private static List<String> normalizeTechnicalSkillPoints(List<String> points) {
-        return points.stream()
-                .map(CvTemplateComposer::stripLeadingListMarker)
-                .filter(point -> !point.isBlank())
-                .toList();
-    }
-
-    private static String stripLeadingListMarker(String value) {
-        String normalized = Objects.requireNonNullElse(value, "").trim();
-        if (normalized.startsWith("\u2022")) {
-            return normalized.substring(1).trim();
-        }
-        if (normalized.startsWith("- ")) {
-            return normalized.substring(2).trim();
-        }
-        if (normalized.startsWith("* ") && !normalized.startsWith("**")) {
-            return normalized.substring(2).trim();
-        }
-        return normalized;
-    }
-
-    private void addModuleTitle(TemplateComposeTarget target, String name, String title) {
-        target.addParagraph(TemplateSceneSupport.paragraph(
-                name,
+    private TemplateParagraphSpec moduleTitle(String moduleName, String title) {
+        return TemplateSceneSupport.paragraph(
+                moduleName + "Heading",
                 Objects.requireNonNullElse(title, ""),
                 theme.sectionHeaderTextStyle(),
                 TextAlign.LEFT,
                 1.0,
                 Padding.zero(),
-                Margin.of(5)));
+                Margin.of(5));
+    }
+
+    private String blockName(CvModule module, CvModule.BodyBlock block, int index) {
+        if (block.name() != null && !block.name().isBlank()) {
+            return block.name();
+        }
+        return index == 0 ? module.name() + "Body" : module.name() + "Body_" + index;
     }
 }

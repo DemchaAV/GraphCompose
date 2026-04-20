@@ -101,6 +101,18 @@ class DocumentationCoverageTest {
                 PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/DocumentDsl.java"),
                 "public ContainerNode pageFlow(Consumer<PageFlowBuilder> spec)");
         assertHasJavadocBefore(
+                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/DocumentDsl.java"),
+                "public T addSection(String name, Consumer<SectionBuilder> spec)");
+        assertHasJavadocBefore(
+                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/DocumentDsl.java"),
+                "public TableBuilder header(String... values)");
+        assertHasJavadocBefore(
+                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/DocumentDsl.java"),
+                "public TableBuilder rows(String[]... rows)");
+        assertHasJavadocBefore(
+                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/DocumentDsl.java"),
+                "public TableBuilder headerStyle(TableCellStyle style)");
+        assertHasJavadocBefore(
                 PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
                 "public byte[] toPdfBytes()");
         assertHasJavadocBefore(
@@ -158,6 +170,9 @@ class DocumentationCoverageTest {
         String tableSection = readme.substring(tableComponent, linePrimitive);
         assertThat(tableSection).contains("document.pageFlow()");
         assertThat(tableSection).contains(".addTable(");
+        assertThat(tableSection).contains(".header(");
+        assertThat(tableSection).contains(".rows(");
+        assertThat(tableSection).doesNotContain(".row(\"Role\", \"Owner\", \"Status\")");
         assertThat(tableSection).doesNotContain("document.dsl()");
         assertThat(tableSection).doesNotContain("composer.componentBuilder()");
         assertThat(tableSection).doesNotContain("GraphCompose.pdf(");

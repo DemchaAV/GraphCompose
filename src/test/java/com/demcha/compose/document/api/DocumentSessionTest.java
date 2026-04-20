@@ -45,6 +45,7 @@ import com.demcha.compose.document.layout.SplitRequest;
 import com.demcha.compose.document.model.node.ContainerNode;
 import com.demcha.compose.document.model.node.DocumentNode;
 import com.demcha.compose.document.model.node.ParagraphNode;
+import com.demcha.compose.document.model.node.SectionNode;
 import com.demcha.compose.document.model.node.ShapeNode;
 import com.demcha.compose.document.model.node.TableNode;
 import com.demcha.compose.document.model.node.TextAlign;
@@ -133,6 +134,75 @@ class DocumentSessionTest {
             assertThat(root.children()).hasSize(1);
             assertThat(root.children().getFirst()).isInstanceOf(ParagraphNode.class);
             assertThat(((ParagraphNode) root.children().getFirst()).text()).isEqualTo("Composed paragraph");
+            assertThat(session.layoutGraph().totalPages()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void namedSectionShortcutShouldAvoidRepeatingSectionNameInsideNestedBuilder() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(new PDRectangle(240, 180))
+                .margin(Margin.of(12))
+                .create()) {
+
+            ContainerNode root = session.pageFlow()
+                    .name("SectionShortcut")
+                    .spacing(8)
+                    .addSection("Profile", section -> section
+                            .spacing(6)
+                            .addText("Senior platform engineer"))
+                    .build();
+
+            assertThat(root.children()).hasSize(1);
+            assertThat(root.children().getFirst()).isInstanceOf(SectionNode.class);
+
+            SectionNode section = (SectionNode) root.children().getFirst();
+            assertThat(section.name()).isEqualTo("Profile");
+            assertThat(section.children()).hasSize(1);
+            assertThat(section.children().getFirst()).isInstanceOf(ParagraphNode.class);
+            assertThat(((ParagraphNode) section.children().getFirst()).text()).isEqualTo("Senior platform engineer");
+            assertThat(session.layoutGraph().totalPages()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void tableConvenienceMethodsShouldBuildHeaderAndBulkRows() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(new PDRectangle(320, 220))
+                .margin(Margin.of(12))
+                .create()) {
+
+            TableCellStyle headerStyle = TableCellStyle.builder()
+                    .padding(Padding.of(6))
+                    .build();
+
+            ContainerNode root = session.pageFlow()
+                    .name("TableShortcut")
+                    .addTable(table -> table
+                            .name("StatusTable")
+                            .autoColumns(3)
+                            .defaultCellStyle(TableCellStyle.builder()
+                                    .padding(Padding.of(4))
+                                    .build())
+                            .headerStyle(headerStyle)
+                            .header("Role", "Owner", "Status")
+                            .rows(
+                                    new String[]{"Engine", "GraphCompose", "Stable"},
+                                    new String[]{"Feature", "Table Builder", "Canonical"}))
+                    .build();
+
+            assertThat(root.children()).hasSize(1);
+            assertThat(root.children().getFirst()).isInstanceOf(TableNode.class);
+
+            TableNode table = (TableNode) root.children().getFirst();
+            assertThat(table.rows()).hasSize(3);
+            assertThat(table.rows().getFirst())
+                    .extracting(TableCellSpec::lines)
+                    .containsExactly(List.of("Role"), List.of("Owner"), List.of("Status"));
+            assertThat(table.rows().get(1))
+                    .extracting(TableCellSpec::lines)
+                    .containsExactly(List.of("Engine"), List.of("GraphCompose"), List.of("Stable"));
+            assertThat(table.rowStyles().get(0)).isSameAs(headerStyle);
             assertThat(session.layoutGraph().totalPages()).isEqualTo(1);
         }
     }

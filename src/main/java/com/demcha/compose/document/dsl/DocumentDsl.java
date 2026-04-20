@@ -320,6 +320,17 @@ public final class DocumentDsl {
             return add(configure(new SectionBuilder(), spec).build());
         }
 
+        /**
+         * Adds a named section without repeating the name inside the nested builder.
+         *
+         * @param name section name used in snapshots and layout graph paths
+         * @param spec callback that configures the section body
+         * @return this builder
+         */
+        public T addSection(String name, Consumer<SectionBuilder> spec) {
+            return add(configure(new SectionBuilder().name(name), spec).build());
+        }
+
         public T addPageBreak(Consumer<PageBreakBuilder> spec) {
             return add(configure(new PageBreakBuilder(), spec).build());
         }
@@ -898,9 +909,72 @@ public final class DocumentDsl {
             return this;
         }
 
+        /**
+         * Adds a semantic header row as the first logical table row.
+         *
+         * <p>This is a naming convenience over {@link #row(String...)} for the
+         * common "header then data rows" authoring pattern.</p>
+         *
+         * @param values header cell text values
+         * @return this builder
+         */
+        public TableBuilder header(String... values) {
+            return row(values);
+        }
+
+        /**
+         * Adds a semantic header row with explicit cell specifications.
+         *
+         * @param row header cell specifications
+         * @return this builder
+         */
+        public TableBuilder header(List<TableCellSpec> row) {
+            return row(row);
+        }
+
+        /**
+         * Adds multiple plain-text rows in source order.
+         *
+         * @param rows row values, one string array per row
+         * @return this builder
+         */
+        public TableBuilder rows(String[]... rows) {
+            if (rows != null) {
+                for (String[] row : rows) {
+                    row(row);
+                }
+            }
+            return this;
+        }
+
+        /**
+         * Adds multiple explicit rows in source order.
+         *
+         * @param rows row specifications, one list per row
+         * @return this builder
+         */
+        public TableBuilder rows(List<List<TableCellSpec>> rows) {
+            if (rows != null) {
+                for (List<TableCellSpec> row : rows) {
+                    row(row);
+                }
+            }
+            return this;
+        }
+
         public TableBuilder defaultCellStyle(TableCellStyle defaultCellStyle) {
             this.defaultCellStyle = defaultCellStyle == null ? TableCellStyle.DEFAULT : defaultCellStyle;
             return this;
+        }
+
+        /**
+         * Applies a style override to the first row, which is commonly used as a header row.
+         *
+         * @param style header row style override
+         * @return this builder
+         */
+        public TableBuilder headerStyle(TableCellStyle style) {
+            return rowStyle(0, style);
         }
 
         public TableBuilder rowStyle(int rowIndex, TableCellStyle style) {

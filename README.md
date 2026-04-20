@@ -395,9 +395,14 @@ document.pageFlow()
                 .defaultCellStyle(TableCellStyle.builder()
                         .padding(Padding.of(6))
                         .build())
-                .row("Role", "Owner", "Status")
-                .row("Engine", "GraphCompose", "Stable")
-                .row("Feature", "Table Builder", "Canonical"))
+                .headerStyle(TableCellStyle.builder()
+                        .fillColor(ComponentColor.LIGHT_GRAY)
+                        .padding(Padding.of(6))
+                        .build())
+                .header("Role", "Owner", "Status")
+                .rows(
+                        new String[]{"Engine", "GraphCompose", "Stable"},
+                        new String[]{"Feature", "Table Builder", "Canonical"}))
         .build();
 ```
 

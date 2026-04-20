@@ -408,6 +408,30 @@ document.pageFlow()
 
 ---
 
+## List component
+
+Use `addList(...)` for bullet, dash, markerless, or custom-marker lists without manually composing one paragraph per item.
+
+```java
+document.pageFlow()
+        .name("Skills")
+        .spacing(6)
+        .addList("Java", "SQL", "Kotlin")
+        .addList(list -> list
+                .name("BackendSkills")
+                .dash()
+                .items("Spring Boot", "Spring Security", "Hibernate"))
+        .addList(list -> list
+                .name("PlainRows")
+                .noMarker()
+                .items("Aligned row without a visible marker"))
+        .build();
+```
+
+List items wrap with a hanging indent automatically. Existing leading `•`, `-`, `+`, or `*` markers are normalized by default so imported CV data does not render double bullets.
+
+---
+
 ## Line primitive
 
 ```java

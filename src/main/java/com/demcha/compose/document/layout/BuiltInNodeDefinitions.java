@@ -23,6 +23,7 @@ import com.demcha.compose.markdown.MarkDownParser;
 import com.demcha.compose.document.model.node.BarcodeNode;
 import com.demcha.compose.document.model.node.ContainerNode;
 import com.demcha.compose.document.model.node.ImageNode;
+import com.demcha.compose.document.model.node.ListNode;
 import com.demcha.compose.document.model.node.PageBreakNode;
 import com.demcha.compose.document.model.node.ParagraphNode;
 import com.demcha.compose.document.model.node.SectionNode;
@@ -49,6 +50,7 @@ public final class BuiltInNodeDefinitions {
         Objects.requireNonNull(registry, "registry");
         return registry
                 .register(new ParagraphDefinition())
+                .register(new ListDefinition())
                 .register(new ShapeDefinition())
                 .register(new ImageDefinition())
                 .register(new BarcodeDefinition())
@@ -216,6 +218,126 @@ public final class BuiltInNodeDefinitions {
                     placement.width(),
                     placement.height(),
                     payload));
+        }
+    }
+
+    private static final class ListDefinition implements NodeDefinition<ListNode> {
+        @Override
+        public Class<ListNode> nodeType() {
+            return ListNode.class;
+        }
+
+        @Override
+        public PreparedNode<ListNode> prepare(ListNode node, PrepareContext ctx, BoxConstraints constraints) {
+            double innerWidth = Math.max(0.0, constraints.availableWidth() - node.padding().horizontal());
+            PreparedListLayout layout = prepareListLayout(node, innerWidth, constraints.availableWidth(), ctx.textMeasurement(), ctx.markdownEnabled());
+            return PreparedNode.leaf(
+                    node,
+                    new MeasureResult(layout.resolvedWidth(), layout.totalHeight() + node.padding().vertical()),
+                    layout);
+        }
+
+        @Override
+        public PaginationPolicy paginationPolicy(ListNode node) {
+            return PaginationPolicy.SPLITTABLE;
+        }
+
+        @Override
+        public PreparedSplitResult<ListNode> split(PreparedNode<ListNode> prepared, SplitRequest request) {
+            ListNode node = prepared.node();
+            PreparedListLayout layout = prepared.requirePreparedLayout(PreparedListLayout.class);
+            if (layout.items().isEmpty()) {
+                return PreparedSplitResult.whole(prepared);
+            }
+
+            double innerAvailableHeight = Math.max(0.0, request.remainingHeight() - node.padding().top());
+            int wholeItemsThatFit = wholeListItemsThatFit(layout.items(), node.itemSpacing(), innerAvailableHeight);
+            if (wholeItemsThatFit >= layout.items().size()) {
+                return PreparedSplitResult.whole(prepared);
+            }
+            if (wholeItemsThatFit > 0) {
+                PreparedNode<ListNode> head = sliceListPreparedNode(
+                        node,
+                        layout,
+                        layout.items().subList(0, wholeItemsThatFit),
+                        true,
+                        false);
+                PreparedNode<ListNode> tail = sliceListPreparedNode(
+                        node,
+                        layout,
+                        layout.items().subList(wholeItemsThatFit, layout.items().size()),
+                        false,
+                        true);
+                return new PreparedSplitResult<>(head, tail);
+            }
+
+            PreparedListItemLayout firstItem = layout.items().getFirst();
+            PreparedParagraphLayout itemLayout = firstItem.paragraphLayout();
+            int maxLines = maxLinesThatFit(
+                    itemLayout.visualLines().size(),
+                    itemLayout.lineHeight(),
+                    itemLayout.lineGap(),
+                    innerAvailableHeight);
+            if (maxLines <= 0) {
+                return new PreparedSplitResult<>(null, prepared);
+            }
+            if (maxLines >= itemLayout.visualLines().size()) {
+                return PreparedSplitResult.whole(prepared);
+            }
+
+            PreparedListItemLayout headItem = sliceListItem(firstItem, 0, maxLines);
+            PreparedListItemLayout tailItem = sliceListItem(firstItem, maxLines, itemLayout.visualLines().size());
+            List<PreparedListItemLayout> tailItems = new ArrayList<>();
+            if (tailItem != null) {
+                tailItems.add(tailItem);
+            }
+            tailItems.addAll(layout.items().subList(1, layout.items().size()));
+
+            PreparedNode<ListNode> head = sliceListPreparedNode(node, layout, List.of(headItem), true, false);
+            PreparedNode<ListNode> tail = tailItems.isEmpty()
+                    ? null
+                    : sliceListPreparedNode(node, layout, tailItems, false, true);
+            return new PreparedSplitResult<>(head, tail);
+        }
+
+        @Override
+        public List<LayoutFragment> emitFragments(PreparedNode<ListNode> prepared, FragmentContext ctx, FragmentPlacement placement) {
+            ListNode node = prepared.node();
+            PreparedListLayout layout = prepared.requirePreparedLayout(PreparedListLayout.class);
+            if (layout.items().isEmpty()) {
+                return List.of();
+            }
+
+            List<LayoutFragment> fragments = new ArrayList<>(layout.items().size());
+            double innerHeight = layout.totalHeight();
+            double itemTopOffset = 0.0;
+            double itemWidth = Math.max(0.0, placement.width() - node.padding().horizontal());
+
+            for (int itemIndex = 0; itemIndex < layout.items().size(); itemIndex++) {
+                PreparedParagraphLayout itemLayout = layout.items().get(itemIndex).paragraphLayout();
+                double itemHeight = itemLayout.totalHeight();
+                double localY = node.padding().bottom() + (innerHeight - itemTopOffset - itemHeight);
+                fragments.add(new LayoutFragment(
+                        placement.path(),
+                        itemIndex,
+                        node.padding().left(),
+                        localY,
+                        itemWidth,
+                        itemHeight,
+                        new ParagraphFragmentPayload(
+                                node.textStyle(),
+                                node.align(),
+                                Padding.zero(),
+                                itemLayout.lineHeight(),
+                                itemLayout.lineGap(),
+                                itemLayout.baselineOffset(),
+                                itemLayout.visualLines(),
+                                null,
+                                null)));
+                itemTopOffset += itemHeight + node.itemSpacing();
+            }
+
+            return List.copyOf(fragments);
         }
     }
 
@@ -550,6 +672,176 @@ public final class BuiltInNodeDefinitions {
         }
 
         return new ImageDimensions(width, height);
+    }
+
+    private static PreparedListLayout prepareListLayout(ListNode node,
+                                                        double innerWidth,
+                                                        double availableWidth,
+                                                        TextMeasurementSystem measurement,
+                                                        boolean markdownEnabled) {
+        List<PreparedListItemLayout> items = new ArrayList<>();
+        for (String item : node.items()) {
+            String normalizedItem = normalizeListItem(item, node.normalizeMarkers());
+            if (normalizedItem.isBlank()) {
+                continue;
+            }
+            ParagraphNode paragraph = new ParagraphNode(
+                    "",
+                    normalizedItem,
+                    node.textStyle(),
+                    node.align(),
+                    node.lineSpacing(),
+                    node.marker().prefix(),
+                    node.marker().isVisible() ? BlockIndentStrategy.ALL_LINES : BlockIndentStrategy.NONE,
+                    Padding.zero(),
+                    Margin.zero());
+            items.add(new PreparedListItemLayout(
+                    normalizedItem,
+                    prepareParagraphLayout(paragraph, innerWidth, measurement, markdownEnabled)));
+        }
+
+        double maxLineWidth = maxListLineWidth(items);
+        double totalHeight = listItemsHeight(items, node.itemSpacing());
+        double measuredWidth = Math.min(availableWidth, maxLineWidth + node.padding().horizontal());
+        double resolvedWidth = node.align() == TextAlign.LEFT
+                ? measuredWidth
+                : availableWidth;
+        return new PreparedListLayout(List.copyOf(items), maxLineWidth, totalHeight, resolvedWidth);
+    }
+
+    private static PreparedNode<ListNode> sliceListPreparedNode(ListNode source,
+                                                                PreparedListLayout sourceLayout,
+                                                                List<PreparedListItemLayout> items,
+                                                                boolean keepTopInsets,
+                                                                boolean keepBottomInsets) {
+        List<PreparedListItemLayout> safeItems = List.copyOf(items);
+        double maxLineWidth = maxListLineWidth(safeItems);
+        double totalHeight = listItemsHeight(safeItems, source.itemSpacing());
+        Padding padding = new Padding(
+                keepTopInsets ? source.padding().top() : 0.0,
+                source.padding().right(),
+                keepBottomInsets ? source.padding().bottom() : 0.0,
+                source.padding().left());
+        Margin margin = new Margin(
+                keepTopInsets ? source.margin().top() : 0.0,
+                source.margin().right(),
+                keepBottomInsets ? source.margin().bottom() : 0.0,
+                source.margin().left());
+        double resolvedWidth = source.align() == TextAlign.LEFT
+                ? maxLineWidth + padding.horizontal()
+                : sourceLayout.resolvedWidth();
+
+        ListNode fragmentNode = new ListNode(
+                source.name(),
+                safeItems.stream().map(PreparedListItemLayout::text).toList(),
+                source.marker(),
+                source.textStyle(),
+                source.align(),
+                source.lineSpacing(),
+                source.itemSpacing(),
+                false,
+                padding,
+                margin);
+        PreparedListLayout fragmentLayout = new PreparedListLayout(
+                safeItems,
+                maxLineWidth,
+                totalHeight,
+                resolvedWidth);
+        return PreparedNode.leaf(
+                fragmentNode,
+                new MeasureResult(resolvedWidth, totalHeight + padding.vertical()),
+                fragmentLayout);
+    }
+
+    private static int wholeListItemsThatFit(List<PreparedListItemLayout> items,
+                                             double itemSpacing,
+                                             double availableHeight) {
+        int count = 0;
+        double used = 0.0;
+        for (PreparedListItemLayout item : items) {
+            double addition = item.paragraphLayout().totalHeight();
+            if (count > 0) {
+                addition += itemSpacing;
+            }
+            if (used + addition > availableHeight + EPS) {
+                break;
+            }
+            used += addition;
+            count++;
+        }
+        return count;
+    }
+
+    private static PreparedListItemLayout sliceListItem(PreparedListItemLayout item,
+                                                        int fromInclusive,
+                                                        int toExclusive) {
+        PreparedParagraphLayout source = item.paragraphLayout();
+        if (fromInclusive >= toExclusive) {
+            return null;
+        }
+        List<ParagraphLine> lines = List.copyOf(source.visualLines().subList(fromInclusive, toExclusive));
+        List<String> logicalLines = lines.stream()
+                .map(ParagraphLine::text)
+                .toList();
+        double maxLineWidth = lines.stream()
+                .mapToDouble(ParagraphLine::width)
+                .max()
+                .orElse(0.0);
+        double totalHeight = source.lineHeight() * lines.size()
+                + Math.max(0, lines.size() - 1) * source.lineGap();
+        PreparedParagraphLayout layout = new PreparedParagraphLayout(
+                logicalLines,
+                lines,
+                source.lineMetrics(),
+                source.baselineOffset(),
+                source.lineHeight(),
+                source.lineGap(),
+                maxLineWidth,
+                totalHeight,
+                false);
+        return new PreparedListItemLayout(String.join("\n", logicalLines), layout);
+    }
+
+    private static double maxListLineWidth(List<PreparedListItemLayout> items) {
+        return items.stream()
+                .map(PreparedListItemLayout::paragraphLayout)
+                .mapToDouble(PreparedParagraphLayout::maxLineWidth)
+                .max()
+                .orElse(0.0);
+    }
+
+    private static double listItemsHeight(List<PreparedListItemLayout> items, double itemSpacing) {
+        if (items.isEmpty()) {
+            return 0.0;
+        }
+        double total = 0.0;
+        for (int index = 0; index < items.size(); index++) {
+            total += items.get(index).paragraphLayout().totalHeight();
+            if (index < items.size() - 1) {
+                total += itemSpacing;
+            }
+        }
+        return total;
+    }
+
+    private static String normalizeListItem(String value, boolean normalizeMarkers) {
+        String normalized = value == null ? "" : value.trim();
+        if (!normalizeMarkers || normalized.isEmpty()) {
+            return normalized;
+        }
+        if (normalized.startsWith("\u2022")) {
+            return normalized.substring(1).trim();
+        }
+        if (normalized.startsWith("- ")) {
+            return normalized.substring(2).trim();
+        }
+        if (normalized.startsWith("+ ")) {
+            return normalized.substring(2).trim();
+        }
+        if (normalized.startsWith("* ") && !normalized.startsWith("**")) {
+            return normalized.substring(2).trim();
+        }
+        return normalized;
     }
 
     private static PreparedParagraphLayout prepareParagraphLayout(ParagraphNode node,
@@ -1452,6 +1744,27 @@ public final class BuiltInNodeDefinitions {
             double totalHeight,
             boolean emitBookmark
     ) implements PreparedNodeLayout {
+    }
+
+    private record PreparedListItemLayout(
+            String text,
+            PreparedParagraphLayout paragraphLayout
+    ) {
+        private PreparedListItemLayout {
+            text = text == null ? "" : text;
+            paragraphLayout = Objects.requireNonNull(paragraphLayout, "paragraphLayout");
+        }
+    }
+
+    private record PreparedListLayout(
+            List<PreparedListItemLayout> items,
+            double maxLineWidth,
+            double totalHeight,
+            double resolvedWidth
+    ) implements PreparedNodeLayout {
+        private PreparedListLayout {
+            items = List.copyOf(items);
+        }
     }
 
     private record PreparedTableLayout(

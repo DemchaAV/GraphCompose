@@ -1,0 +1,167 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 320.0,
+    "pageHeight" : 260.0,
+    "innerWidth" : 296.0,
+    "innerHeight" : 236.0,
+    "margin" : {
+      "top" : 12.0,
+      "right" : 12.0,
+      "bottom" : 12.0,
+      "left" : 12.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "ListSnapshotRoot[0]",
+    "entityName" : "ListSnapshotRoot",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 12.0,
+    "computedY" : 148.3,
+    "placementX" : 12.0,
+    "placementY" : 148.3,
+    "placementWidth" : 108.122,
+    "placementHeight" : 99.7,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 108.122,
+    "contentHeight" : 99.7,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ListSnapshotRoot[0]/BulletList[0]",
+    "entityName" : "BulletList",
+    "entityKind" : "ListNode",
+    "parentPath" : "ListSnapshotRoot[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 12.0,
+    "computedY" : 218.1,
+    "placementX" : 12.0,
+    "placementY" : 218.1,
+    "placementWidth" : 42.36,
+    "placementHeight" : 29.9,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 42.36,
+    "contentHeight" : 29.9,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 2.0,
+      "right" : 2.0,
+      "bottom" : 2.0,
+      "left" : 2.0
+    }
+  }, {
+    "path" : "ListSnapshotRoot[0]/DashList[1]",
+    "entityName" : "DashList",
+    "entityKind" : "ListNode",
+    "parentPath" : "ListSnapshotRoot[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 12.0,
+    "computedY" : 186.2,
+    "placementX" : 12.0,
+    "placementY" : 186.2,
+    "placementWidth" : 69.244,
+    "placementHeight" : 25.9,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 69.244,
+    "contentHeight" : 25.9,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ListSnapshotRoot[0]/PlainList[2]",
+    "entityName" : "PlainList",
+    "entityKind" : "ListNode",
+    "parentPath" : "ListSnapshotRoot[0]",
+    "childIndex" : 2,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 12.0,
+    "computedY" : 167.25,
+    "placementX" : 12.0,
+    "placementY" : 167.25,
+    "placementWidth" : 108.122,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 108.122,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ListSnapshotRoot[0]/CustomList[3]",
+    "entityName" : "CustomList",
+    "entityKind" : "ListNode",
+    "parentPath" : "ListSnapshotRoot[0]",
+    "childIndex" : 3,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 12.0,
+    "computedY" : 148.3,
+    "placementX" : 12.0,
+    "placementY" : 148.3,
+    "placementWidth" : 107.744,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 107.744,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

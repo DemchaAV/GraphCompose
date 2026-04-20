@@ -1,5 +1,6 @@
 package com.demcha.compose.document.templates.support;
 
+import com.demcha.compose.document.model.node.ListMarker;
 import com.demcha.compose.document.model.node.TextAlign;
 import com.demcha.compose.document.templates.data.Header;
 import com.demcha.compose.document.templates.data.MainPageCV;
@@ -117,14 +118,14 @@ public final class CvTemplateComposer {
                 return;
             }
             addModuleTitle(target, prefix + "Heading", module.getName());
-            target.addParagraph(TemplateSceneSupport.blockParagraph(
+            target.addList(TemplateSceneSupport.list(
                     prefix + "Body",
-                    String.join("\n", normalizedPoints),
+                    normalizedPoints,
+                    ListMarker.bullet(),
                     theme.bodyTextStyle(),
                     TextAlign.LEFT,
                     theme.spacing(),
-                    "\u2022 ",
-                    BlockIndentStrategy.ALL_LINES,
+                    0.0,
                     LEGACY_BLOCK_PADDING,
                     Margin.zero()));
             return;

@@ -20,6 +20,8 @@ import java.util.Objects;
 /**
  * {@link TemplateComposeTarget} backed by the legacy {@link DocumentComposer}
  * and engine-level builders.
+ *
+ * @author Artem Demchyshyn
  */
 public final class LegacyComposerTemplateComposeTarget implements TemplateComposeTarget {
     private final DocumentComposer composer;
@@ -63,6 +65,20 @@ public final class LegacyComposerTemplateComposeTarget implements TemplateCompos
                 .padding(paragraph.padding())
                 .margin(paragraph.margin());
         builder.text(splitText(paragraph.text()), paragraph.style(), Padding.zero(), Margin.zero());
+        requireRoot().addChild(builder.build());
+    }
+
+    @Override
+    public void addList(TemplateListSpec list) {
+        BlockTextBuilder builder = componentBuilder.blockText(alignment(list.align(), list.lineSpacing()), list.style())
+                .entityName(list.name())
+                .size(pageWidth(), 2)
+                .strategy(list.marker().isVisible() ? BlockIndentStrategy.ALL_LINES : BlockIndentStrategy.NONE)
+                .bulletOffset(list.marker().prefix())
+                .anchor(anchor(list.align()))
+                .padding(list.padding())
+                .margin(list.margin());
+        builder.text(list.items(), list.style(), Padding.zero(), Margin.zero());
         requireRoot().addChild(builder.build());
     }
 

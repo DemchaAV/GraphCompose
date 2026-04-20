@@ -10,6 +10,8 @@ import java.util.Objects;
 /**
  * {@link TemplateComposeTarget} backed by the canonical {@link DocumentSession}
  * DSL.
+ *
+ * @author Artem Demchyshyn
  */
 public final class SessionTemplateComposeTarget implements TemplateComposeTarget {
     private final DocumentSession session;
@@ -52,6 +54,21 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
                 .indentStrategy(paragraph.indentStrategy())
                 .padding(paragraph.padding())
                 .margin(paragraph.margin()));
+    }
+
+    @Override
+    public void addList(TemplateListSpec list) {
+        requireRoot().addList(builder -> builder
+                .name(list.name())
+                .items(list.items())
+                .marker(list.marker())
+                .textStyle(list.style())
+                .align(list.align())
+                .lineSpacing(list.lineSpacing())
+                .itemSpacing(list.itemSpacing())
+                .normalizeMarkers(list.normalizeMarkers())
+                .padding(list.padding())
+                .margin(list.margin()));
     }
 
     @Override

@@ -1,5 +1,9 @@
 package com.demcha.compose.document.templates.support;
 
+import com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy;
+import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.layout_core.components.style.Padding;
+
 /**
  * Shared target abstraction used by canonical template scene composers.
  *
@@ -11,6 +15,8 @@ package com.demcha.compose.document.templates.support;
  *
  * <p>This interface is public for advanced extensions, but it is not the
  * recommended starting point for normal template consumers.</p>
+ *
+ * @author Artem Demchyshyn
  */
 public interface TemplateComposeTarget {
 
@@ -35,6 +41,40 @@ public interface TemplateComposeTarget {
      * @param paragraph paragraph instruction
      */
     void addParagraph(TemplateParagraphSpec paragraph);
+
+    /**
+     * Appends one list block.
+     *
+     * <p>The default implementation keeps the interface source-compatible for
+     * custom targets. Canonical targets should override this method and emit a
+     * native list node.</p>
+     *
+     * @param list list instruction
+     */
+    default void addList(TemplateListSpec list) {
+        for (int index = 0; index < list.items().size(); index++) {
+            Padding padding = new Padding(
+                    index == 0 ? list.padding().top() : 0.0,
+                    list.padding().right(),
+                    index == list.items().size() - 1 ? list.padding().bottom() : 0.0,
+                    list.padding().left());
+            Margin margin = new Margin(
+                    index == 0 ? list.margin().top() : 0.0,
+                    list.margin().right(),
+                    index == list.items().size() - 1 ? list.margin().bottom() : list.itemSpacing(),
+                    list.margin().left());
+            addParagraph(new TemplateParagraphSpec(
+                    list.name() + "_" + index,
+                    list.items().get(index),
+                    list.style(),
+                    list.align(),
+                    list.lineSpacing(),
+                    list.marker().prefix(),
+                    list.marker().isVisible() ? BlockIndentStrategy.ALL_LINES : BlockIndentStrategy.NONE,
+                    padding,
+                    margin));
+        }
+    }
 
     /**
      * Appends one divider block.

@@ -9,6 +9,8 @@ import com.demcha.compose.document.model.node.BarcodeNode;
 import com.demcha.compose.document.model.node.ContainerNode;
 import com.demcha.compose.document.model.node.DocumentNode;
 import com.demcha.compose.document.model.node.ImageNode;
+import com.demcha.compose.document.model.node.ListMarker;
+import com.demcha.compose.document.model.node.ListNode;
 import com.demcha.compose.document.model.node.PageBreakNode;
 import com.demcha.compose.document.model.node.ParagraphNode;
 import com.demcha.compose.document.model.node.SectionNode;
@@ -116,6 +118,15 @@ public final class DocumentDsl {
      */
     public ParagraphBuilder text() {
         return paragraph();
+    }
+
+    /**
+     * Starts a semantic list builder.
+     *
+     * @return a detached list builder
+     */
+    public ListBuilder list() {
+        return new ListBuilder();
     }
 
     /**
@@ -294,6 +305,30 @@ public final class DocumentDsl {
          */
         public T addText(String text, TextStyle textStyle) {
             return addParagraph(text, textStyle);
+        }
+
+        public T addList(Consumer<ListBuilder> spec) {
+            return add(configure(new ListBuilder(), spec).build());
+        }
+
+        /**
+         * Adds a bullet list without requiring a nested builder.
+         *
+         * @param items list item texts
+         * @return this builder
+         */
+        public T addList(String... items) {
+            return add(new ListBuilder().items(items).build());
+        }
+
+        /**
+         * Adds a bullet list from an existing item collection.
+         *
+         * @param items list item texts
+         * @return this builder
+         */
+        public T addList(List<String> items) {
+            return add(new ListBuilder().items(items).build());
         }
 
         public T addImage(Consumer<ImageBuilder> spec) {
@@ -510,6 +545,126 @@ public final class DocumentDsl {
                     indentStrategy,
                     linkOptions,
                     bookmarkOptions,
+                    padding,
+                    margin);
+        }
+    }
+
+    /**
+     * Builder for simple semantic lists.
+     */
+    public static final class ListBuilder {
+        private String name = "";
+        private final List<String> items = new ArrayList<>();
+        private ListMarker marker = ListMarker.bullet();
+        private TextStyle textStyle = TextStyle.DEFAULT_STYLE;
+        private TextAlign align = TextAlign.LEFT;
+        private double lineSpacing = 0.0;
+        private double itemSpacing = 0.0;
+        private boolean normalizeMarkers = true;
+        private Padding padding = Padding.zero();
+        private Margin margin = Margin.zero();
+
+        public ListBuilder name(String name) {
+            this.name = name == null ? "" : name;
+            return this;
+        }
+
+        public ListBuilder items(String... items) {
+            this.items.clear();
+            if (items != null) {
+                this.items.addAll(List.of(items));
+            }
+            return this;
+        }
+
+        public ListBuilder items(List<String> items) {
+            this.items.clear();
+            if (items != null) {
+                this.items.addAll(items);
+            }
+            return this;
+        }
+
+        public ListBuilder addItem(String item) {
+            this.items.add(item);
+            return this;
+        }
+
+        public ListBuilder marker(ListMarker marker) {
+            this.marker = marker == null ? ListMarker.bullet() : marker;
+            return this;
+        }
+
+        public ListBuilder marker(String marker) {
+            return marker(ListMarker.custom(marker));
+        }
+
+        public ListBuilder bullet() {
+            return marker(ListMarker.bullet());
+        }
+
+        public ListBuilder dash() {
+            return marker(ListMarker.dash());
+        }
+
+        public ListBuilder noMarker() {
+            return marker(ListMarker.none());
+        }
+
+        public ListBuilder textStyle(TextStyle textStyle) {
+            this.textStyle = textStyle == null ? TextStyle.DEFAULT_STYLE : textStyle;
+            return this;
+        }
+
+        public ListBuilder align(TextAlign align) {
+            this.align = align == null ? TextAlign.LEFT : align;
+            return this;
+        }
+
+        public ListBuilder lineSpacing(double lineSpacing) {
+            this.lineSpacing = lineSpacing;
+            return this;
+        }
+
+        public ListBuilder itemSpacing(double itemSpacing) {
+            this.itemSpacing = itemSpacing;
+            return this;
+        }
+
+        public ListBuilder normalizeMarkers(boolean normalizeMarkers) {
+            this.normalizeMarkers = normalizeMarkers;
+            return this;
+        }
+
+        public ListBuilder padding(Padding padding) {
+            this.padding = padding == null ? Padding.zero() : padding;
+            return this;
+        }
+
+        public ListBuilder padding(float top, float right, float bottom, float left) {
+            return padding(new Padding(top, right, bottom, left));
+        }
+
+        public ListBuilder margin(Margin margin) {
+            this.margin = margin == null ? Margin.zero() : margin;
+            return this;
+        }
+
+        public ListBuilder margin(float top, float right, float bottom, float left) {
+            return margin(new Margin(top, right, bottom, left));
+        }
+
+        public ListNode build() {
+            return new ListNode(
+                    name,
+                    List.copyOf(items),
+                    marker,
+                    textStyle,
+                    align,
+                    lineSpacing,
+                    itemSpacing,
+                    normalizeMarkers,
                     padding,
                     margin);
         }

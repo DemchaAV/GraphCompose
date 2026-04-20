@@ -16,6 +16,8 @@ import java.util.Objects;
 
 /**
  * Shared scene composer for the standard CV template.
+ *
+ * @author Artem Demchyshyn
  */
 public final class CvTemplateComposer {
     private static final Padding LEGACY_BLOCK_PADDING = new Padding(0, 5, 0, 20);
@@ -105,23 +107,29 @@ public final class CvTemplateComposer {
         if (module == null || module.getModulePoints() == null || module.getModulePoints().isEmpty()) {
             return;
         }
-        addModuleTitle(target, prefix + "Heading", module.getName());
         List<String> points = TemplateSceneSupport.sanitizeLines(module.getModulePoints());
-        if ("TechnicalSkills".equals(prefix)) {
-            for (int index = 0; index < points.size(); index++) {
-                target.addParagraph(TemplateSceneSupport.blockParagraph(
-                        prefix + "Body_" + index,
-                        points.get(index),
-                        theme.bodyTextStyle(),
-                        TextAlign.LEFT,
-                        theme.spacing(),
-                        "\u2022 ",
-                        BlockIndentStrategy.ALL_LINES,
-                        LEGACY_BLOCK_PADDING,
-                        Margin.zero()));
-            }
+        if (points.isEmpty()) {
             return;
         }
+        if ("TechnicalSkills".equals(prefix)) {
+            List<String> normalizedPoints = normalizeTechnicalSkillPoints(points);
+            if (normalizedPoints.isEmpty()) {
+                return;
+            }
+            addModuleTitle(target, prefix + "Heading", module.getName());
+            target.addParagraph(TemplateSceneSupport.blockParagraph(
+                    prefix + "Body",
+                    String.join("\n", normalizedPoints),
+                    theme.bodyTextStyle(),
+                    TextAlign.LEFT,
+                    theme.spacing(),
+                    "\u2022 ",
+                    BlockIndentStrategy.ALL_LINES,
+                    LEGACY_BLOCK_PADDING,
+                    Margin.zero()));
+            return;
+        }
+        addModuleTitle(target, prefix + "Heading", module.getName());
         target.addParagraph(TemplateSceneSupport.blockParagraph(
                 prefix + "Body",
                 String.join("\n", points),
@@ -132,6 +140,27 @@ public final class CvTemplateComposer {
                 BlockIndentStrategy.FROM_SECOND_LINE,
                 LEGACY_BLOCK_PADDING,
                 Margin.zero()));
+    }
+
+    private static List<String> normalizeTechnicalSkillPoints(List<String> points) {
+        return points.stream()
+                .map(CvTemplateComposer::stripLeadingListMarker)
+                .filter(point -> !point.isBlank())
+                .toList();
+    }
+
+    private static String stripLeadingListMarker(String value) {
+        String normalized = Objects.requireNonNullElse(value, "").trim();
+        if (normalized.startsWith("\u2022")) {
+            return normalized.substring(1).trim();
+        }
+        if (normalized.startsWith("- ")) {
+            return normalized.substring(2).trim();
+        }
+        if (normalized.startsWith("* ") && !normalized.startsWith("**")) {
+            return normalized.substring(2).trim();
+        }
+        return normalized;
     }
 
     private void addModuleTitle(TemplateComposeTarget target, String name, String title) {

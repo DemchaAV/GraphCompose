@@ -12,7 +12,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class CvTemplateV1LayoutSnapshotTest {
 
@@ -43,6 +46,26 @@ class CvTemplateV1LayoutSnapshotTest {
 
         TemplateTestSupport.assertPdfFileLooksValid(outputFile, 2);
         TemplateTestSupport.assertPdfPageCount(outputFile, 2);
+    }
+
+    @Test
+    void shouldNormalizeTechnicalSkillsWithVisibleBulletsIntoSingleCanonicalBlock() throws Exception {
+        MainPageCV original = TemplateTestSupport.canonicalCv();
+        original.getTechnicalSkills().setModulePoints(List.of(
+                "• **Languages:** Java, SQL, Kotlin",
+                "• **Backend:** Spring Boot, Spring Security, MapStruct",
+                "• **Tools:** IntelliJ IDEA, Git, Maven"));
+
+        try (DocumentSession document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 15, 10, 15, 15)) {
+            template.compose(document, original, null);
+
+            List<String> technicalSkillBodies = document.layoutSnapshot().nodes().stream()
+                    .map(node -> node.entityName())
+                    .filter(name -> name != null && name.startsWith("TechnicalSkillsBody"))
+                    .toList();
+
+            assertThat(technicalSkillBodies).containsExactly("TechnicalSkillsBody");
+        }
     }
 
     @ParameterizedTest(name = "font theme {0}")

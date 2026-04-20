@@ -4,6 +4,7 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.PlacedNode;
 import com.demcha.compose.document.model.node.ContainerNode;
 import com.demcha.compose.document.model.node.ListNode;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 class DocumentListNodeTest {
 
@@ -116,6 +118,37 @@ class DocumentListNodeTest {
     }
 
     @Test
+    void markerlessListShouldIndentWrappedContinuationWithoutIndentingEveryItem() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(new PDRectangle(150, 220))
+                .margin(Margin.of(12))
+                .create()) {
+
+            session.pageFlow()
+                    .name("MarkerlessRoot")
+                    .addList(list -> list
+                            .name("MarkerlessRows")
+                            .noMarker()
+                            .continuationIndent("  ")
+                            .items(
+                                    "Alpha row should wrap onto a continuation line while keeping the first line aligned.",
+                                    "Beta row starts aligned with alpha."))
+                    .build();
+
+            List<BuiltInNodeDefinitions.ParagraphFragmentPayload> payloads = paragraphPayloads(session.layoutGraph());
+            List<String> firstItemLines = payloads.getFirst().lines().stream()
+                    .map(BuiltInNodeDefinitions.ParagraphLine::text)
+                    .toList();
+
+            assertThat(payloads).hasSize(2);
+            assertThat(firstItemLines).hasSizeGreaterThan(1);
+            assertThat(firstItemLines.getFirst()).startsWith("Alpha");
+            assertThat(firstItemLines.get(1)).startsWith("  ");
+            assertThat(payloads.get(1).lines().getFirst().text()).startsWith("Beta");
+        }
+    }
+
+    @Test
     void listShouldSplitAcrossPages() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(180, 120))
@@ -174,12 +207,64 @@ class DocumentListNodeTest {
         }
     }
 
+    @Test
+    void listFragmentsShouldCarryPaddingThroughParagraphPayload() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(new PDRectangle(320, 220))
+                .margin(Margin.of(12))
+                .create()) {
+
+            session.pageFlow()
+                    .name("PaddingRoot")
+                    .addList(list -> list
+                            .name("PaddedList")
+                            .items("Alpha", "Beta", "Gamma")
+                            .padding(new Padding(3, 5, 7, 11)))
+                    .build();
+
+            LayoutGraph graph = session.layoutGraph();
+            PlacedNode listNode = graph.nodes().stream()
+                    .filter(node -> node.semanticName().equals("PaddedList"))
+                    .findFirst()
+                    .orElseThrow();
+            List<PlacedFragment> fragments = graph.fragments().stream()
+                    .filter(fragment -> fragment.path().equals(listNode.path()))
+                    .toList();
+
+            assertThat(fragments).hasSize(3);
+            assertThat(fragments).allSatisfy(fragment -> {
+                assertThat(fragment.x()).isCloseTo(listNode.placementX(), within(0.01));
+                assertThat(fragment.width()).isCloseTo(listNode.placementWidth(), within(0.01));
+            });
+
+            BuiltInNodeDefinitions.ParagraphFragmentPayload first = paragraphPayload(fragments.getFirst());
+            BuiltInNodeDefinitions.ParagraphFragmentPayload middle = paragraphPayload(fragments.get(1));
+            BuiltInNodeDefinitions.ParagraphFragmentPayload last = paragraphPayload(fragments.getLast());
+
+            assertPadding(first.padding(), 3, 5, 0, 11);
+            assertPadding(middle.padding(), 0, 5, 0, 11);
+            assertPadding(last.padding(), 0, 5, 7, 11);
+        }
+    }
+
     private static List<BuiltInNodeDefinitions.ParagraphFragmentPayload> paragraphPayloads(LayoutGraph graph) {
         return graph.fragments().stream()
                 .map(PlacedFragment::payload)
                 .filter(BuiltInNodeDefinitions.ParagraphFragmentPayload.class::isInstance)
                 .map(BuiltInNodeDefinitions.ParagraphFragmentPayload.class::cast)
                 .toList();
+    }
+
+    private static BuiltInNodeDefinitions.ParagraphFragmentPayload paragraphPayload(PlacedFragment fragment) {
+        assertThat(fragment.payload()).isInstanceOf(BuiltInNodeDefinitions.ParagraphFragmentPayload.class);
+        return (BuiltInNodeDefinitions.ParagraphFragmentPayload) fragment.payload();
+    }
+
+    private static void assertPadding(Padding padding, double top, double right, double bottom, double left) {
+        assertThat(padding.top()).isCloseTo(top, within(0.01));
+        assertThat(padding.right()).isCloseTo(right, within(0.01));
+        assertThat(padding.bottom()).isCloseTo(bottom, within(0.01));
+        assertThat(padding.left()).isCloseTo(left, within(0.01));
     }
 
     private static List<String> firstLineTexts(List<BuiltInNodeDefinitions.ParagraphFragmentPayload> payloads) {

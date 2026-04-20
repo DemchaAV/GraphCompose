@@ -23,6 +23,7 @@ import java.util.Objects;
 public final class CvTemplateComposer {
     private static final Padding LEGACY_BLOCK_PADDING = new Padding(0, 5, 0, 20);
     private static final Margin LEGACY_HEADER_RIGHT_MARGIN = new Margin(0, 10, 0, 0);
+    private static final String LEGACY_CONTINUATION_INDENT = "  ";
 
     private final CvTheme theme;
 
@@ -125,20 +126,21 @@ public final class CvTemplateComposer {
                     theme.bodyTextStyle(),
                     TextAlign.LEFT,
                     theme.spacing(),
-                    0.0,
+                    theme.spacing(),
                     LEGACY_BLOCK_PADDING,
                     Margin.zero()));
             return;
         }
         addModuleTitle(target, prefix + "Heading", module.getName());
-        target.addParagraph(TemplateSceneSupport.blockParagraph(
+        target.addList(TemplateSceneSupport.list(
                 prefix + "Body",
-                String.join("\n", points),
+                points,
+                ListMarker.none(),
                 theme.bodyTextStyle(),
                 TextAlign.LEFT,
                 theme.spacing(),
-                "  ",
-                BlockIndentStrategy.FROM_SECOND_LINE,
+                theme.spacing(),
+                LEGACY_CONTINUATION_INDENT,
                 LEGACY_BLOCK_PADDING,
                 Margin.zero()));
     }

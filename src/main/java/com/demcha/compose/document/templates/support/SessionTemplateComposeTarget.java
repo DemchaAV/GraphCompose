@@ -66,6 +66,7 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
                 .align(list.align())
                 .lineSpacing(list.lineSpacing())
                 .itemSpacing(list.itemSpacing())
+                .continuationIndent(list.continuationIndent())
                 .normalizeMarkers(list.normalizeMarkers())
                 .padding(list.padding())
                 .margin(list.margin()));

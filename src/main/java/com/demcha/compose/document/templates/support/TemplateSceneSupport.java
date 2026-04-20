@@ -61,7 +61,34 @@ public final class TemplateSceneSupport {
                                         double itemSpacing,
                                         Padding padding,
                                         Margin margin) {
-        return new TemplateListSpec(name, items, marker, style, align, lineSpacing, itemSpacing, true, padding, margin);
+        return list(name, items, marker, style, align, lineSpacing, itemSpacing, "", padding, margin);
+    }
+
+    /**
+     * Creates a normalized list instruction with markerless continuation indentation.
+     */
+    public static TemplateListSpec list(String name,
+                                        List<String> items,
+                                        ListMarker marker,
+                                        TextStyle style,
+                                        TextAlign align,
+                                        double lineSpacing,
+                                        double itemSpacing,
+                                        String continuationIndent,
+                                        Padding padding,
+                                        Margin margin) {
+        return new TemplateListSpec(
+                name,
+                items,
+                marker,
+                style,
+                align,
+                lineSpacing,
+                itemSpacing,
+                continuationIndent,
+                true,
+                padding,
+                margin);
     }
 
     /**

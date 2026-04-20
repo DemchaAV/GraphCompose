@@ -21,6 +21,7 @@ import java.util.List;
  * @param align horizontal alignment for item text
  * @param lineSpacing extra space between wrapped lines within one item
  * @param itemSpacing extra space between list items
+ * @param continuationIndent prefix used only for wrapped continuation lines when the marker is hidden
  * @param normalizeMarkers whether leading user-supplied bullets or dashes are stripped
  * @param padding inner list padding
  * @param margin outer list margin
@@ -34,6 +35,7 @@ public record ListNode(
         TextAlign align,
         double lineSpacing,
         double itemSpacing,
+        String continuationIndent,
         boolean normalizeMarkers,
         Padding padding,
         Margin margin
@@ -47,6 +49,7 @@ public record ListNode(
         marker = marker == null ? ListMarker.bullet() : marker;
         textStyle = textStyle == null ? TextStyle.DEFAULT_STYLE : textStyle;
         align = align == null ? TextAlign.LEFT : align;
+        continuationIndent = continuationIndent == null ? "" : continuationIndent;
         padding = padding == null ? Padding.zero() : padding;
         margin = margin == null ? Margin.zero() : margin;
         if (lineSpacing < 0 || Double.isNaN(lineSpacing) || Double.isInfinite(lineSpacing)) {

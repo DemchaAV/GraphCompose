@@ -309,32 +309,33 @@ public final class BuiltInNodeDefinitions {
             }
 
             List<LayoutFragment> fragments = new ArrayList<>(layout.items().size());
-            double innerHeight = layout.totalHeight();
+            double boxHeight = layout.totalHeight() + node.padding().vertical();
             double itemTopOffset = 0.0;
-            double itemWidth = Math.max(0.0, placement.width() - node.padding().horizontal());
 
             for (int itemIndex = 0; itemIndex < layout.items().size(); itemIndex++) {
                 PreparedParagraphLayout itemLayout = layout.items().get(itemIndex).paragraphLayout();
                 double itemHeight = itemLayout.totalHeight();
-                double localY = node.padding().bottom() + (innerHeight - itemTopOffset - itemHeight);
+                Padding itemPadding = itemPadding(node, itemIndex, layout.items().size());
+                double fragmentHeight = itemHeight + itemPadding.vertical();
+                double localY = boxHeight - itemTopOffset - fragmentHeight;
                 fragments.add(new LayoutFragment(
                         placement.path(),
                         itemIndex,
-                        node.padding().left(),
+                        0.0,
                         localY,
-                        itemWidth,
-                        itemHeight,
+                        placement.width(),
+                        fragmentHeight,
                         new ParagraphFragmentPayload(
                                 node.textStyle(),
                                 node.align(),
-                                Padding.zero(),
+                                itemPadding,
                                 itemLayout.lineHeight(),
                                 itemLayout.lineGap(),
                                 itemLayout.baselineOffset(),
                                 itemLayout.visualLines(),
                                 null,
                                 null)));
-                itemTopOffset += itemHeight + node.itemSpacing();
+                itemTopOffset += fragmentHeight + node.itemSpacing();
             }
 
             return List.copyOf(fragments);
@@ -691,8 +692,8 @@ public final class BuiltInNodeDefinitions {
                     node.textStyle(),
                     node.align(),
                     node.lineSpacing(),
-                    node.marker().prefix(),
-                    node.marker().isVisible() ? BlockIndentStrategy.ALL_LINES : BlockIndentStrategy.NONE,
+                    listParagraphPrefix(node),
+                    listParagraphIndentStrategy(node),
                     Padding.zero(),
                     Margin.zero());
             items.add(new PreparedListItemLayout(
@@ -739,6 +740,7 @@ public final class BuiltInNodeDefinitions {
                 source.align(),
                 source.lineSpacing(),
                 source.itemSpacing(),
+                source.continuationIndent(),
                 false,
                 padding,
                 margin);
@@ -751,6 +753,29 @@ public final class BuiltInNodeDefinitions {
                 fragmentNode,
                 new MeasureResult(resolvedWidth, totalHeight + padding.vertical()),
                 fragmentLayout);
+    }
+
+    private static Padding itemPadding(ListNode node, int itemIndex, int itemCount) {
+        return new Padding(
+                itemIndex == 0 ? node.padding().top() : 0.0,
+                node.padding().right(),
+                itemIndex == itemCount - 1 ? node.padding().bottom() : 0.0,
+                node.padding().left());
+    }
+
+    private static String listParagraphPrefix(ListNode node) {
+        return node.marker().isVisible()
+                ? node.marker().prefix()
+                : node.continuationIndent();
+    }
+
+    private static BlockIndentStrategy listParagraphIndentStrategy(ListNode node) {
+        if (node.marker().isVisible()) {
+            return BlockIndentStrategy.ALL_LINES;
+        }
+        return node.continuationIndent().isEmpty()
+                ? BlockIndentStrategy.NONE
+                : BlockIndentStrategy.FROM_SECOND_LINE;
     }
 
     private static int wholeListItemsThatFit(List<PreparedListItemLayout> items,

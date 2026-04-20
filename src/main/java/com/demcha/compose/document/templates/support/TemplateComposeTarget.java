@@ -69,11 +69,26 @@ public interface TemplateComposeTarget {
                     list.style(),
                     list.align(),
                     list.lineSpacing(),
-                    list.marker().prefix(),
-                    list.marker().isVisible() ? BlockIndentStrategy.ALL_LINES : BlockIndentStrategy.NONE,
+                    listPrefix(list),
+                    listIndentStrategy(list),
                     padding,
                     margin));
         }
+    }
+
+    private static String listPrefix(TemplateListSpec list) {
+        return list.marker().isVisible()
+                ? list.marker().prefix()
+                : list.continuationIndent();
+    }
+
+    private static BlockIndentStrategy listIndentStrategy(TemplateListSpec list) {
+        if (list.marker().isVisible()) {
+            return BlockIndentStrategy.ALL_LINES;
+        }
+        return list.continuationIndent().isEmpty()
+                ? BlockIndentStrategy.NONE
+                : BlockIndentStrategy.FROM_SECOND_LINE;
     }
 
     /**

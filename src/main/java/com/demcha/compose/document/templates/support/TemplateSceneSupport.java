@@ -1,5 +1,6 @@
 package com.demcha.compose.document.templates.support;
 
+import com.demcha.compose.document.model.node.ListMarker;
 import com.demcha.compose.document.model.node.TextAlign;
 import com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
@@ -13,6 +14,8 @@ import java.util.Objects;
 
 /**
  * Shared helper methods used by canonical scene composers.
+ *
+ * @author Artem Demchyshyn
  */
 public final class TemplateSceneSupport {
     private TemplateSceneSupport() {
@@ -44,6 +47,21 @@ public final class TemplateSceneSupport {
                                                        Padding padding,
                                                        Margin margin) {
         return new TemplateParagraphSpec(name, text, style, align, lineSpacing, bulletOffset, indentStrategy, padding, margin);
+    }
+
+    /**
+     * Creates a normalized list instruction.
+     */
+    public static TemplateListSpec list(String name,
+                                        List<String> items,
+                                        ListMarker marker,
+                                        TextStyle style,
+                                        TextAlign align,
+                                        double lineSpacing,
+                                        double itemSpacing,
+                                        Padding padding,
+                                        Margin margin) {
+        return new TemplateListSpec(name, items, marker, style, align, lineSpacing, itemSpacing, true, padding, margin);
     }
 
     /**

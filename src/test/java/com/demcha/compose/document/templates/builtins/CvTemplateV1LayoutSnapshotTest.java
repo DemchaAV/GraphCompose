@@ -49,7 +49,7 @@ class CvTemplateV1LayoutSnapshotTest {
     }
 
     @Test
-    void shouldNormalizeTechnicalSkillsWithVisibleBulletsIntoSingleCanonicalBlock() throws Exception {
+    void shouldNormalizeTechnicalSkillsWithVisibleBulletsIntoPerItemCanonicalBlocks() throws Exception {
         MainPageCV original = TemplateTestSupport.canonicalCv();
         original.getTechnicalSkills().setModulePoints(List.of(
                 "• **Languages:** Java, SQL, Kotlin",
@@ -60,8 +60,9 @@ class CvTemplateV1LayoutSnapshotTest {
             template.compose(document, original, null);
 
             List<String> technicalSkillBodies = document.layoutSnapshot().nodes().stream()
+                    .filter(node -> "ListNode".equals(node.entityKind()))
                     .map(node -> node.entityName())
-                    .filter(name -> name != null && name.startsWith("TechnicalSkillsBody"))
+                    .filter("TechnicalSkillsBody"::equals)
                     .toList();
 
             assertThat(technicalSkillBodies).containsExactly("TechnicalSkillsBody");

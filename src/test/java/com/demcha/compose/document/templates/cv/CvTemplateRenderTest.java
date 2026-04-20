@@ -5,7 +5,10 @@ import com.demcha.compose.document.templates.builtins.CvTemplateV1;
 import com.demcha.compose.document.templates.builtins.EditorialBlueCvTemplate;
 import com.demcha.compose.font_library.FontName;
 import com.demcha.testing.VisualTestOutputs;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -14,6 +17,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class CvTemplateRenderTest {
 
@@ -60,6 +65,28 @@ class CvTemplateRenderTest {
         }
 
         TemplateTestSupport.assertPdfFileLooksValid(outputFile, 1);
+    }
+
+    @Test
+    void shouldRenderEachTechnicalSkillAsItsOwnBullet() throws Exception {
+        var original = TemplateTestSupport.canonicalCv();
+        var rewritten = TemplateTestSupport.rewrite(original);
+        byte[] pdfBytes;
+
+        try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 15, 10, 15, 15)) {
+            new CvTemplateV1().compose(document, original, rewritten);
+            pdfBytes = document.toPdfBytes();
+        }
+
+        try (PDDocument pdf = Loader.loadPDF(pdfBytes)) {
+            String text = new PDFTextStripper().getText(pdf);
+            String technicalSkills = section(text, "Technical Skills", "Education & Certifications");
+
+            assertThat(countOccurrences(technicalSkills, "\u2022")).isEqualTo(7);
+            assertThat(technicalSkills).contains("\u2022 Languages:");
+            assertThat(technicalSkills).contains("\u2022 Backend (Spring):");
+            assertThat(technicalSkills).contains("\u2022 Tools & Delivery:");
+        }
     }
 
     @Test
@@ -174,5 +201,24 @@ class CvTemplateRenderTest {
                 Arguments.of(FontName.KANIT, "Kanit"),
                 Arguments.of(FontName.VOLKHOV, "Volkhov"),
                 Arguments.of(FontName.ANDIKA, "Andika"));
+    }
+
+    private static String section(String text, String start, String end) {
+        int startIndex = text.indexOf(start);
+        int endIndex = text.indexOf(end, Math.max(0, startIndex));
+        if (startIndex < 0 || endIndex < 0) {
+            return text;
+        }
+        return text.substring(startIndex, endIndex);
+    }
+
+    private static int countOccurrences(String text, String value) {
+        int count = 0;
+        int index = 0;
+        while ((index = text.indexOf(value, index)) >= 0) {
+            count++;
+            index += value.length();
+        }
+        return count;
     }
 }

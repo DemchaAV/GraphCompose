@@ -192,15 +192,11 @@ public class QuickStart {
                 .margin(24, 24, 24, 24)
                 .create()) {
 
-            document.dsl()
-                    .pageFlow()
+            document.pageFlow()
                     .name("QuickStart")
                     .spacing(8)
                     .margin(Margin.of(8))
-                    .addParagraph(paragraph -> paragraph
-                            .name("Greeting")
-                            .text("Hello GraphCompose")
-                            .textStyle(TextStyle.DEFAULT_STYLE))
+                    .addParagraph("Hello GraphCompose", TextStyle.DEFAULT_STYLE)
                     .build();
 
             document.buildPdf();
@@ -217,15 +213,11 @@ try (DocumentSession document = GraphCompose.document()
         .margin(24, 24, 24, 24)
         .create()) {
 
-    document.dsl()
-            .pageFlow()
+    document.pageFlow()
             .name("QuickStartBytes")
             .spacing(8)
             .margin(Margin.of(8))
-            .addParagraph(paragraph -> paragraph
-                    .name("InMemoryGreeting")
-                    .text("In-memory PDF")
-                    .textStyle(TextStyle.DEFAULT_STYLE))
+            .addText("In-memory PDF", TextStyle.DEFAULT_STYLE)
             .build();
 
     byte[] pdfBytes = document.toPdfBytes();
@@ -363,7 +355,7 @@ This keeps layout snapshots, page breaking, and future backends aligned on the s
 
 ### 4. Containers express structure
 
-Use `document.dsl().pageFlow()` for the root flow and nested `section()` blocks for semantic grouping. Absolute coordinates are an implementation detail of the engine, not something you write in the supported public workflow.
+Use `document.pageFlow()` for the root flow and nested `section()` blocks for semantic grouping. Absolute coordinates are an implementation detail of the engine, not something you write in the supported public workflow.
 
 ### 5. The template layer is optional
 
@@ -389,8 +381,7 @@ Current v1 limits:
 - no cell-level style override beyond row/column/default scopes
 
 ```java
-document.dsl()
-        .pageFlow()
+document.pageFlow()
         .name("StatusSection")
         .spacing(12)
         .addTable(table -> table
@@ -415,8 +406,7 @@ document.dsl()
 ## Line primitive
 
 ```java
-document.dsl()
-        .pageFlow()
+document.pageFlow()
         .name("LinePrimitives")
         .spacing(12)
         .addDivider(divider -> divider

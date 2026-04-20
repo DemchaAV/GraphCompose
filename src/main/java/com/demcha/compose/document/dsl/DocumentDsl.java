@@ -43,14 +43,10 @@ import java.util.function.Consumer;
  *
  * <pre>{@code
  * try (var document = GraphCompose.document(Path.of("output.pdf")).create()) {
- *     document.dsl()
- *             .pageFlow()
+ *     document.pageFlow()
  *             .name("QuickStart")
  *             .spacing(8)
- *             .addParagraph(p -> p
- *                     .name("Greeting")
- *                     .text("Hello GraphCompose")
- *                     .textStyle(TextStyle.DEFAULT_STYLE))
+ *             .addParagraph("Hello GraphCompose", TextStyle.DEFAULT_STYLE)
  *             .addDivider(d -> d
  *                     .name("Rule")
  *                     .width(document.canvas().innerWidth())
@@ -60,6 +56,8 @@ import java.util.function.Consumer;
  *     document.buildPdf();
  * }
  * }</pre>
+ *
+ * @author Artem Demchyshyn
  */
 public final class DocumentDsl {
     private final DocumentSession session;
@@ -81,6 +79,16 @@ public final class DocumentDsl {
      */
     public PageFlowBuilder pageFlow() {
         return new PageFlowBuilder(session);
+    }
+
+    /**
+     * Configures, builds, and attaches one root page flow in a single call.
+     *
+     * @param spec callback that configures the root flow
+     * @return the built root container node
+     */
+    public ContainerNode pageFlow(Consumer<PageFlowBuilder> spec) {
+        return configure(pageFlow(), spec).build();
     }
 
     /**
@@ -239,8 +247,53 @@ public final class DocumentDsl {
             return add(configure(new ParagraphBuilder(), spec).build());
         }
 
+        /**
+         * Adds a plain paragraph with the default text style.
+         *
+         * @param text paragraph text
+         * @return this builder
+         */
+        public T addParagraph(String text) {
+            return add(new ParagraphBuilder().text(text).build());
+        }
+
+        /**
+         * Adds a plain paragraph without requiring an explicit nested builder.
+         *
+         * @param text paragraph text
+         * @param textStyle paragraph text style, or the default style when {@code null}
+         * @return this builder
+         */
+        public T addParagraph(String text, TextStyle textStyle) {
+            return add(new ParagraphBuilder()
+                    .text(text)
+                    .textStyle(textStyle)
+                    .build());
+        }
+
         public T addText(Consumer<ParagraphBuilder> spec) {
             return addParagraph(spec);
+        }
+
+        /**
+         * Alias for {@link #addParagraph(String)}.
+         *
+         * @param text paragraph text
+         * @return this builder
+         */
+        public T addText(String text) {
+            return addParagraph(text);
+        }
+
+        /**
+         * Alias for {@link #addParagraph(String, TextStyle)}.
+         *
+         * @param text paragraph text
+         * @param textStyle paragraph text style
+         * @return this builder
+         */
+        public T addText(String text, TextStyle textStyle) {
+            return addParagraph(text, textStyle);
         }
 
         public T addImage(Consumer<ImageBuilder> spec) {

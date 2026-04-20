@@ -23,6 +23,7 @@ import com.demcha.compose.document.debug.snapshot.LayoutGraphSnapshotExtractor;
 import com.demcha.compose.document.dsl.DocumentDsl;
 import com.demcha.compose.document.layout.*;
 import com.demcha.compose.document.model.node.DocumentNode;
+import com.demcha.compose.document.model.node.ContainerNode;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
@@ -34,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * Mutable semantic document session used by the canonical GraphCompose V2 API.
@@ -45,12 +47,15 @@ import java.util.Objects;
  * <p>The typical lifecycle is:</p>
  * <ol>
  *   <li>configure the session through {@link GraphCompose#document()} and this type's mutators</li>
- *   <li>author content with {@link #dsl()} or by adding low-level {@link DocumentNode}s directly</li>
+ *   <li>author content with {@link #pageFlow()}, {@link #compose(Consumer)}, {@link #dsl()},
+ *       or by adding low-level {@link DocumentNode}s directly</li>
  *   <li>inspect {@link #layoutGraph()} / {@link #layoutSnapshot()} as needed</li>
  *   <li>render with {@link #toPdfBytes()}, {@link #buildPdf()}, or a custom backend</li>
  * </ol>
  *
  * <p><b>Thread-safety:</b> this type is mutable and not thread-safe.</p>
+ *
+ * @author Artem Demchyshyn
  */
 public final class DocumentSession implements AutoCloseable {
     private final Path defaultOutputFile;
@@ -125,6 +130,42 @@ public final class DocumentSession implements AutoCloseable {
      */
     public DocumentDsl builder() {
         return dsl();
+    }
+
+    /**
+     * Applies a batch of canonical DSL authoring calls to this session.
+     *
+     * <p>This is useful when the calling code wants one high-level authoring
+     * block without manually keeping a {@link DocumentDsl} reference.</p>
+     *
+     * @param spec callback that receives a live DSL facade
+     * @return this session
+     */
+    public DocumentSession compose(Consumer<DocumentDsl> spec) {
+        Objects.requireNonNull(spec, "spec").accept(dsl());
+        return this;
+    }
+
+    /**
+     * Starts a root page-flow builder bound to this session.
+     *
+     * <p>This is the recommended high-level entrypoint for the common
+     * compose-first authoring path.</p>
+     *
+     * @return a root flow builder that attaches to this session when built
+     */
+    public DocumentDsl.PageFlowBuilder pageFlow() {
+        return dsl().pageFlow();
+    }
+
+    /**
+     * Configures, builds, and attaches one root page flow in a single call.
+     *
+     * @param spec callback that configures the root flow
+     * @return the built root container node
+     */
+    public ContainerNode pageFlow(Consumer<DocumentDsl.PageFlowBuilder> spec) {
+        return dsl().pageFlow(spec);
     }
 
     /**
@@ -575,7 +616,5 @@ public final class DocumentSession implements AutoCloseable {
         }
     }
 }
-
-
 
 

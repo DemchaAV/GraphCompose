@@ -87,7 +87,19 @@ class DocumentationCoverageTest {
                 "public DocumentDsl dsl()");
         assertHasJavadocBefore(
                 PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
+                "public DocumentSession compose(Consumer<DocumentDsl> spec)");
+        assertHasJavadocBefore(
+                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
+                "public DocumentDsl.PageFlowBuilder pageFlow()");
+        assertHasJavadocBefore(
+                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
+                "public ContainerNode pageFlow(Consumer<DocumentDsl.PageFlowBuilder> spec)");
+        assertHasJavadocBefore(
+                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
                 "public LayoutGraph layoutGraph()");
+        assertHasJavadocBefore(
+                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/DocumentDsl.java"),
+                "public ContainerNode pageFlow(Consumer<PageFlowBuilder> spec)");
         assertHasJavadocBefore(
                 PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
                 "public byte[] toPdfBytes()");
@@ -112,7 +124,9 @@ class DocumentationCoverageTest {
 
         String quickStartSection = readme.substring(quickStart, builtIns);
         assertThat(quickStartSection).contains("GraphCompose.document(Path.of(\"output.pdf\"))");
-        assertThat(quickStartSection).contains("document.dsl()");
+        assertThat(quickStartSection).contains("document.pageFlow()");
+        assertThat(quickStartSection).contains(".addParagraph(\"Hello GraphCompose\", TextStyle.DEFAULT_STYLE)");
+        assertThat(quickStartSection).doesNotContain("document.dsl()");
         assertThat(quickStartSection).doesNotContain("try (PdfComposer composer = GraphCompose.pdf(");
     }
 
@@ -125,9 +139,10 @@ class DocumentationCoverageTest {
         assertThat(architecture).isGreaterThan(linePrimitive);
 
         String linePrimitiveSection = readme.substring(linePrimitive, architecture);
-        assertThat(linePrimitiveSection).contains("document.dsl()");
+        assertThat(linePrimitiveSection).contains("document.pageFlow()");
         assertThat(linePrimitiveSection).contains(".addDivider(");
         assertThat(linePrimitiveSection).contains(".addShape(");
+        assertThat(linePrimitiveSection).doesNotContain("document.dsl()");
         assertThat(linePrimitiveSection).doesNotContain("composer.componentBuilder()");
         assertThat(linePrimitiveSection).doesNotContain("GraphCompose.pdf(");
     }
@@ -141,8 +156,9 @@ class DocumentationCoverageTest {
         assertThat(linePrimitive).isGreaterThan(tableComponent);
 
         String tableSection = readme.substring(tableComponent, linePrimitive);
-        assertThat(tableSection).contains("document.dsl()");
+        assertThat(tableSection).contains("document.pageFlow()");
         assertThat(tableSection).contains(".addTable(");
+        assertThat(tableSection).doesNotContain("document.dsl()");
         assertThat(tableSection).doesNotContain("composer.componentBuilder()");
         assertThat(tableSection).doesNotContain("GraphCompose.pdf(");
     }
@@ -156,7 +172,7 @@ class DocumentationCoverageTest {
         assertThat(templateLayer).isGreaterThan(containers);
 
         String containersSection = readme.substring(containers, templateLayer);
-        assertThat(containersSection).contains("document.dsl().pageFlow()");
+        assertThat(containersSection).contains("document.pageFlow()");
         assertThat(containersSection).contains("section()");
         assertThat(containersSection).doesNotContain("vContainer(");
         assertThat(containersSection).doesNotContain("hContainer(");

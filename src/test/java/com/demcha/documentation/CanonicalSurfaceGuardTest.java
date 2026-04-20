@@ -35,6 +35,9 @@ class CanonicalSurfaceGuardTest {
             "src/test/java/com/demcha/compose/ArchitectureComparisonBenchmark.java",
             "src/test/java/com/demcha/compose/ComparativeBenchmark.java");
 
+    private static final Set<String> PUBLIC_MARKDOWN_ALLOWLIST = Set.of(
+            "docs/legacy-visual-parity-audit.md");
+
     @Test
     void canonicalMainSourcesShouldAvoidLegacySurfaceOutsideTransitionMappers() throws IOException {
         assertNoForbiddenReferences(
@@ -76,6 +79,17 @@ class CanonicalSurfaceGuardTest {
                 CANONICAL_BENCHMARK_ALLOWLIST);
     }
 
+    @Test
+    void publicMarkdownDocsShouldAvoidLegacySurfaceOutsideHistoricalAuditNotes() throws IOException {
+        assertNoForbiddenMarkdownReferences(
+                List.of(
+                        PROJECT_ROOT.resolve("README.md"),
+                        PROJECT_ROOT.resolve("CONTRIBUTING.md"),
+                        PROJECT_ROOT.resolve("examples/README.md"),
+                        PROJECT_ROOT.resolve("docs")),
+                PUBLIC_MARKDOWN_ALLOWLIST);
+    }
+
     private void assertNoForbiddenReferences(Path root, Set<String> allowlist) throws IOException {
         assertNoForbiddenReferences(root, path -> true, allowlist);
     }
@@ -99,6 +113,32 @@ class CanonicalSurfaceGuardTest {
                     .describedAs("Files under %s must stay on the canonical document surface", relative(root))
                     .isEmpty();
         }
+    }
+
+    private void assertNoForbiddenMarkdownReferences(List<Path> roots, Set<String> allowlist) throws IOException {
+        Set<String> violations = new TreeSet<>();
+
+        for (Path root : roots) {
+            if (Files.isRegularFile(root)) {
+                if (!allowlist.contains(relative(root)) && containsForbiddenToken(root)) {
+                    violations.add(relative(root));
+                }
+                continue;
+            }
+
+            try (var paths = Files.walk(root)) {
+                paths.filter(Files::isRegularFile)
+                        .filter(path -> path.toString().endsWith(".md"))
+                        .filter(path -> !allowlist.contains(relative(path)))
+                        .filter(this::containsForbiddenToken)
+                        .map(this::relative)
+                        .forEach(violations::add);
+            }
+        }
+
+        assertThat(violations)
+                .describedAs("Public markdown docs must stay on the canonical document surface")
+                .isEmpty();
     }
 
     private boolean containsForbiddenToken(Path path) {

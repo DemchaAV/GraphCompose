@@ -11,7 +11,6 @@ import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.core.DocumentComposer;
 import com.demcha.compose.layout_core.core.PdfComposer;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
@@ -23,10 +22,14 @@ import java.util.Objects;
 /**
  * Main entry point for GraphCompose document authoring.
  * <p>
- * Application code starts here, chooses either the canonical semantic document
- * session through {@link #document()} or the deprecated legacy PDF composer
- * through {@link #pdf()}, and then lets GraphCompose turn author intent into a
- * paginated document.
+ * Application code starts here and should use the canonical semantic document
+ * session through {@link #document()} to turn author intent into a paginated
+ * document.
+ *
+ * <p>The deprecated low-level PDF composer entry point remains in the codebase
+ * only as a temporary bridge for internal tests, benchmarks, developer tools,
+ * and migration scaffolding. It is not the supported public authoring
+ * workflow.</p>
  * </p>
  *
  * <p>The typical runtime flow is:</p>
@@ -73,28 +76,6 @@ import java.util.Objects;
  *     byte[] pdfBytes = document.toPdfBytes();
  * }
  * </pre>
- *
- * <h3>Low-level PDF composer</h3>
- * <pre>
- * try (DocumentComposer composer = GraphCompose.pdf().create()) {
- *     var cb = composer.componentBuilder();
- *     var summary = cb.blockText(Align.left(4), TextStyle.DEFAULT_STYLE)
- *             .size(composer.canvas().innerWidth(), 2)
- *             .text(cb.text()
- *                     .textWithAutoSize("Analytical engineer focused on reliable platform design.")
- *                     .textStyle(TextStyle.DEFAULT_STYLE))
- *             .anchor(Anchor.topLeft())
- *             .build();
- *
- *     cb.vContainer(Align.middle(8))
- *             .size(composer.canvas().innerWidth(), 0)
- *             .anchor(Anchor.topLeft())
- *             .addChild(summary)
- *             .build();
- *
- *     byte[] pdfBytes = composer.toBytes();
- * }
- * </pre>
  */
 public final class GraphCompose {
 
@@ -105,12 +86,13 @@ public final class GraphCompose {
     // ===== PDF Factory =====
 
     /**
-     * Starts a legacy PDF composition flow that writes the rendered document to a file.
-     *
-     * <p>The returned builder only captures configuration. No layout or rendering
-     * work happens until {@link PdfBuilder#create()} creates the composer and the
-     * caller later invokes {@code build()} or {@code toBytes()}.</p>
-     *
+     * Starts the deprecated low-level PDF composition flow that writes the rendered
+     * document to a file.
+ *
+     * <p>This bridge is retained for internal tests, benchmarks, developer tools,
+     * and migration scaffolding. New application code should use
+     * {@link #document(Path)} instead.</p>
+ *
      * @param outputFile the target file path for the generated PDF
      * @return a fluent builder for configuring the {@link PdfComposer}
      */
@@ -120,11 +102,12 @@ public final class GraphCompose {
     }
 
     /**
-     * Starts a legacy PDF composition flow for in-memory generation.
-     *
-     * <p>Use this overload when the document should be consumed as bytes or as a
-     * {@code PDDocument} instead of being written directly to disk.</p>
-     *
+     * Starts the deprecated low-level PDF composition flow for in-memory generation.
+ *
+     * <p>This bridge is retained for internal tests, benchmarks, developer tools,
+     * and migration scaffolding. New application code should use
+     * {@link #document()} instead.</p>
+ *
      * @return a fluent builder for configuring the {@link PdfComposer}
      */
     @Deprecated(forRemoval = false)
@@ -191,12 +174,15 @@ public final class GraphCompose {
     // ===== PDF Builder =====
 
     /**
-     * Fluent configuration builder for {@link PdfComposer}.
-     *
+     * Deprecated low-level configuration builder for {@link PdfComposer}.
+ *
      * <p>This builder captures document-wide settings such as page size, canvas
      * margin, markdown handling, guideline rendering, and per-document custom
      * font registrations. It does not create any entities by itself; entity
      * creation starts after {@link #create()} returns a composer.</p>
+     *
+     * <p>New application code should use {@link DocumentBuilder} and the
+     * canonical {@link DocumentSession} workflow instead.</p>
      */
     public static final class PdfBuilder {
         private final Path outputFile;

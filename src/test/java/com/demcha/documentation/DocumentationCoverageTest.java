@@ -132,6 +132,44 @@ class DocumentationCoverageTest {
         assertThat(linePrimitiveSection).doesNotContain("GraphCompose.pdf(");
     }
 
+    @Test
+    void readmeTableSectionShouldUseCanonicalDsl() throws IOException {
+        String readme = Files.readString(PROJECT_ROOT.resolve("README.md"));
+        int tableComponent = readme.indexOf("## Table component");
+        int linePrimitive = readme.indexOf("## Line primitive");
+        assertThat(tableComponent).isGreaterThanOrEqualTo(0);
+        assertThat(linePrimitive).isGreaterThan(tableComponent);
+
+        String tableSection = readme.substring(tableComponent, linePrimitive);
+        assertThat(tableSection).contains("document.dsl()");
+        assertThat(tableSection).contains(".addTable(");
+        assertThat(tableSection).doesNotContain("composer.componentBuilder()");
+        assertThat(tableSection).doesNotContain("GraphCompose.pdf(");
+    }
+
+    @Test
+    void readmeContainerGuidanceShouldPreferCanonicalDsl() throws IOException {
+        String readme = Files.readString(PROJECT_ROOT.resolve("README.md"));
+        int containers = readme.indexOf("### 4. Containers express structure");
+        int templateLayer = readme.indexOf("### 5. The template layer is optional");
+        assertThat(containers).isGreaterThanOrEqualTo(0);
+        assertThat(templateLayer).isGreaterThan(containers);
+
+        String containersSection = readme.substring(containers, templateLayer);
+        assertThat(containersSection).contains("document.dsl().pageFlow()");
+        assertThat(containersSection).contains("section()");
+        assertThat(containersSection).doesNotContain("vContainer(");
+        assertThat(containersSection).doesNotContain("hContainer(");
+        assertThat(containersSection).doesNotContain("moduleBuilder(");
+    }
+
+    @Test
+    void contributingGuideShouldRequireCleanVerifyGate() throws IOException {
+        String contributing = Files.readString(PROJECT_ROOT.resolve("CONTRIBUTING.md"));
+        assertThat(contributing).contains("./mvnw -B -ntp clean verify");
+        assertThat(contributing).doesNotContain("Run the full test suite with `mvn test`.");
+    }
+
     private void assertHasJavadocBefore(Path file, String signature) throws IOException {
         String source = Files.readString(file);
         int signatureIndex = source.indexOf(signature);

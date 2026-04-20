@@ -82,6 +82,7 @@ public final class DocumentSession implements AutoCloseable {
     private byte[] cachedPdfBytes;
     private long cachedPdfRevision = -1;
 
+
     public DocumentSession(Path defaultOutputFile,
                            PDRectangle pageSize,
                            Margin margin,

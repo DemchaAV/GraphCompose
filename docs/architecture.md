@@ -18,7 +18,7 @@ In short, the runtime pipeline is:
 
 That separation is the core project concept. Builders describe intent, components hold the data, layout resolves geometry, and renderers only draw already-resolved output.
 
-The same separation also enables layout snapshot regression tests. Test code can inspect the resolved document after layout and pagination, before rendering, through `DocumentSession.layoutSnapshot()`. The older `PdfComposer.layoutSnapshot()` remains available only as a legacy compatibility path.
+The same separation also enables layout snapshot regression tests. Test code can inspect the resolved document after layout and pagination, before rendering, through `DocumentSession.layoutSnapshot()`. Older low-level snapshot adapters remain internal compatibility paths and are not part of the supported public workflow.
 
 The rendering layer now also has an explicit render-pass seam:
 

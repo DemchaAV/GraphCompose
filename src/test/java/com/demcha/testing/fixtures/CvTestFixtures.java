@@ -56,7 +56,7 @@ public final class CvTestFixtures {
                 List.of(
                         "**Senior Backend Engineer** | Led a multi-quarter modernization effort for internal services, introduced clearer service boundaries, and documented rollout plans for critical migrations.",
                         "**Platform Engineer** | Worked closely with product and operations to stabilize releases, improve observability, and simplify deployment pipelines for cross-team tools.",
-                        "**Technical Lead **| Mentored engineers through design reviews, introduced stronger testing expectations, and maintained delivery momentum during periods of changing requirements.",
+                        "**Technical Lead**| Mentored engineers through design reviews, introduced stronger testing expectations, and maintained delivery momentum during periods of changing requirements.",
                         "**Consulting Engineer** | Delivered bespoke automation and reporting features, often combining backend APIs, file generation, and presentation-friendly exports for client teams.")));
 
         expanded.setAdditional(copyModuleWithExtraPoints(

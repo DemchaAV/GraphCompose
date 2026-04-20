@@ -4,6 +4,8 @@ import com.demcha.compose.layout_core.components.components_builders.BlockIndent
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 
+import java.util.Objects;
+
 /**
  * Shared target abstraction used by canonical template scene composers.
  *
@@ -43,6 +45,25 @@ public interface TemplateComposeTarget {
     void addParagraph(TemplateParagraphSpec paragraph);
 
     /**
+     * Appends one titled semantic module.
+     *
+     * <p>The default implementation keeps the target surface small: module
+     * composition is still lowered into existing paragraph, list, table,
+     * divider, and page-break operations.</p>
+     *
+     * @param module module instruction
+     */
+    default void addModule(TemplateModuleSpec module) {
+        TemplateModuleSpec safeModule = Objects.requireNonNull(module, "module");
+        if (safeModule.title() != null) {
+            addParagraph(safeModule.title());
+        }
+        for (TemplateModuleBlock block : safeModule.blocks()) {
+            block.render(this);
+        }
+    }
+
+    /**
      * Appends one list block.
      *
      * <p>The default implementation keeps the interface source-compatible for
@@ -71,6 +92,7 @@ public interface TemplateComposeTarget {
                     list.lineSpacing(),
                     listPrefix(list),
                     listIndentStrategy(list),
+                    null,
                     padding,
                     margin));
         }

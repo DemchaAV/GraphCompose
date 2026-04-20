@@ -330,6 +330,59 @@ class TableBuilderTest {
     }
 
     @Test
+    void shouldLetCellOwnLeftBoundaryWhenInvisibleSpacerPrecedesIt() throws Exception {
+        try (PdfComposer composer = GraphCompose.pdf().create()) {
+            Entity table = composer.componentBuilder()
+                    .table()
+                    .entityName("InvisibleSpacerBoundary")
+                    .defaultCellStyle(TableCellStyle.builder()
+                            .stroke(new Stroke(ComponentColor.BLACK, 2.0))
+                            .build())
+                    .columnStyle(1, TableCellStyle.builder()
+                            .stroke(new Stroke(ComponentColor.WHITE, 0.0))
+                            .build())
+                    .row("Notes", "", "Total")
+                    .build();
+
+            TableResolvedCell summaryCell = child(table, 0)
+                    .getComponent(TableRowData.class)
+                    .orElseThrow()
+                    .cells()
+                    .get(2);
+
+            assertThat(summaryCell.borderSides()).containsExactlyInAnyOrder(Side.TOP, Side.LEFT, Side.RIGHT, Side.BOTTOM);
+            assertThat(summaryCell.fillInsets().left()).isEqualTo(1.0);
+        }
+    }
+
+    @Test
+    void shouldLetCellOwnTopBoundaryWhenPreviousRowStrokeIsInvisible() throws Exception {
+        try (PdfComposer composer = GraphCompose.pdf().create()) {
+            Entity table = composer.componentBuilder()
+                    .table()
+                    .entityName("InvisiblePreviousRowBoundary")
+                    .defaultCellStyle(TableCellStyle.builder()
+                            .stroke(new Stroke(ComponentColor.BLACK, 2.0))
+                            .build())
+                    .rowStyle(0, TableCellStyle.builder()
+                            .stroke(new Stroke(ComponentColor.WHITE, 0.0))
+                            .build())
+                    .row("Notes", "Total")
+                    .row("Terms", "Paid")
+                    .build();
+
+            TableResolvedCell secondRowCell = child(table, 1)
+                    .getComponent(TableRowData.class)
+                    .orElseThrow()
+                    .cells()
+                    .getFirst();
+
+            assertThat(secondRowCell.borderSides()).containsExactlyInAnyOrder(Side.TOP, Side.LEFT, Side.RIGHT, Side.BOTTOM);
+            assertThat(secondRowCell.fillInsets().top()).isEqualTo(1.0);
+        }
+    }
+
+    @Test
     void shouldInsetFillUsingOwningNeighborStrokeWidths() throws Exception {
         try (PdfComposer composer = GraphCompose.pdf().create()) {
             Entity table = composer.componentBuilder()

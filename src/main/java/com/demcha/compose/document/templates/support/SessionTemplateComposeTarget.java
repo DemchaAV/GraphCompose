@@ -52,6 +52,7 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
                 .lineSpacing(paragraph.lineSpacing())
                 .bulletOffset(paragraph.bulletOffset())
                 .indentStrategy(paragraph.indentStrategy())
+                .link(paragraph.linkOptions())
                 .padding(paragraph.padding())
                 .margin(paragraph.margin()));
     }

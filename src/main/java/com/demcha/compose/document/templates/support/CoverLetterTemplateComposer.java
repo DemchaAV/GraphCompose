@@ -60,19 +60,12 @@ public final class CoverLetterTemplateComposer {
                     LEGACY_HEADER_RIGHT_MARGIN));
         }
 
-        String links = TemplateSceneSupport.joinNonBlank(" | ",
-                header.getEmail() == null ? "" : header.getEmail().getDisplayText(),
-                header.getLinkedIn() == null ? "" : header.getLinkedIn().getDisplayText(),
-                header.getGitHub() == null ? "" : header.getGitHub().getDisplayText());
-        if (!links.isBlank()) {
-            target.addParagraph(TemplateSceneSupport.paragraph(
-                    "CoverLetterHeaderLinks",
-                    links,
-                    theme.linkTextStyle(),
-                    TextAlign.RIGHT,
-                    1.0,
-                    Padding.zero(),
-                    LEGACY_HEADER_RIGHT_MARGIN));
+        for (TemplateParagraphSpec linkParagraph : TemplateHeaderContactSupport.linkParagraphs(
+                "CoverLetterHeaderLinks",
+                header,
+                theme,
+                LEGACY_HEADER_RIGHT_MARGIN)) {
+            target.addParagraph(linkParagraph);
         }
     }
 

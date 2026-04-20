@@ -5,11 +5,14 @@ import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.templates.TemplateTestSupport;
 import com.demcha.compose.document.templates.builtins.CvTemplateV1;
 import com.demcha.compose.document.templates.builtins.EditorialBlueCvTemplate;
+import com.demcha.compose.document.templates.data.CvDocumentSpec;
 import com.demcha.compose.font_library.FontName;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.interactive.action.PDActionURI;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -17,6 +20,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
@@ -69,6 +73,27 @@ class CvTemplateRenderTest {
         }
 
         TemplateTestSupport.assertPdfFileLooksValid(outputFile, 1);
+    }
+
+    @Test
+    void shouldMakeHeaderContactLinksClickable() throws Exception {
+        var original = TemplateTestSupport.canonicalCv();
+        var rewritten = TemplateTestSupport.rewrite(original);
+        var header = original.getHeader();
+        byte[] pdfBytes;
+
+        try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 15, 10, 15, 15)) {
+            new CvTemplateV1().compose(document, original, rewritten);
+            pdfBytes = document.toPdfBytes();
+        }
+
+        try (PDDocument pdf = Loader.loadPDF(pdfBytes)) {
+            List<String> uris = linkAnnotationUris(pdf);
+
+            assertThat(uris).anySatisfy(uri -> assertThat(uri).startsWith("mailto:" + header.getEmail().getTo()));
+            assertThat(uris).contains(header.getLinkedIn().getLinkUrl().getUrl());
+            assertThat(uris).contains(header.getGitHub().getLinkUrl().getUrl());
+        }
     }
 
     @Test
@@ -133,6 +158,25 @@ class CvTemplateRenderTest {
                     .allSatisfy(fragment -> assertThat(firstLine(fragment)).doesNotStartWith(" "));
             assertThat(additionalFragments)
                     .allSatisfy(fragment -> assertThat(firstLine(fragment)).doesNotStartWith(" "));
+            assertThat(projectFragments)
+                    .anySatisfy(fragment -> assertThat(continuationLines(fragment)).anySatisfy(line ->
+                            assertThat(line).startsWith("  ")));
+        }
+    }
+
+    @Test
+    void shouldRenderComposeFirstCvDocumentSpecWithSameListSemantics() throws Exception {
+        var original = TemplateTestSupport.canonicalCv();
+        CvDocumentSpec spec = CvDocumentSpec.from(original, TemplateTestSupport.rewrite(original));
+
+        try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 15, 10, 15, 15)) {
+            new CvTemplateV1().compose(document, spec);
+
+            List<PlacedFragment> technicalSkillFragments = paragraphFragments(document.layoutGraph().fragments(), "TechnicalSkillsBody");
+            List<PlacedFragment> projectFragments = paragraphFragments(document.layoutGraph().fragments(), "ProjectsBody");
+
+            assertThat(technicalSkillFragments).hasSize(7);
+            assertThat(projectFragments).hasSize(original.getProjects().getModulePoints().size());
             assertThat(projectFragments)
                     .anySatisfy(fragment -> assertThat(continuationLines(fragment)).anySatisfy(line ->
                             assertThat(line).startsWith("  ")));
@@ -292,5 +336,18 @@ class CvTemplateRenderTest {
                 .skip(1)
                 .map(BuiltInNodeDefinitions.ParagraphLine::text)
                 .toList();
+    }
+
+    private static List<String> linkAnnotationUris(PDDocument document) throws Exception {
+        List<String> uris = new ArrayList<>();
+        for (var page : document.getPages()) {
+            for (var annotation : page.getAnnotations()) {
+                if (annotation instanceof PDAnnotationLink link
+                        && link.getAction() instanceof PDActionURI action) {
+                    uris.add(action.getURI());
+                }
+            }
+        }
+        return List.copyOf(uris);
     }
 }

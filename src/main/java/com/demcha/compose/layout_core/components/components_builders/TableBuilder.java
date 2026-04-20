@@ -181,7 +181,7 @@ public class TableBuilder extends ContainerBuilder<TableBuilder> {
                     sanitizeCellLines(rowValues.get(columnIndex)),
                     resolvedStyles.get(columnIndex),
                     fillInsets(stylesByRow, rowIndex, columnIndex),
-                    borderSides(rowIndex, columnIndex)
+                    borderSides(stylesByRow, rowIndex, columnIndex)
             ));
             x += columnWidths[columnIndex];
         }
@@ -326,12 +326,12 @@ public class TableBuilder extends ContainerBuilder<TableBuilder> {
                 .orElseThrow(() -> new IllegalStateException("TextMeasurementSystem is required to measure table text."));
     }
 
-    private EnumSet<Side> borderSides(int rowIndex, int columnIndex) {
+    private EnumSet<Side> borderSides(List<List<TableCellStyle>> stylesByRow, int rowIndex, int columnIndex) {
         EnumSet<Side> sides = EnumSet.of(Side.BOTTOM, Side.RIGHT);
-        if (rowIndex == 0) {
+        if (ownsTopBoundary(stylesByRow, rowIndex, columnIndex)) {
             sides.add(Side.TOP);
         }
-        if (columnIndex == 0) {
+        if (ownsLeftBoundary(stylesByRow, rowIndex, columnIndex)) {
             sides.add(Side.LEFT);
         }
         return sides;
@@ -346,17 +346,25 @@ public class TableBuilder extends ContainerBuilder<TableBuilder> {
     }
 
     private double topBoundaryStrokeWidth(List<List<TableCellStyle>> stylesByRow, int rowIndex, int columnIndex) {
-        if (rowIndex == 0) {
+        if (ownsTopBoundary(stylesByRow, rowIndex, columnIndex)) {
             return strokeWidth(stylesByRow.get(rowIndex).get(columnIndex));
         }
         return strokeWidth(stylesByRow.get(rowIndex - 1).get(columnIndex));
     }
 
     private double leftBoundaryStrokeWidth(List<List<TableCellStyle>> stylesByRow, int rowIndex, int columnIndex) {
-        if (columnIndex == 0) {
+        if (ownsLeftBoundary(stylesByRow, rowIndex, columnIndex)) {
             return strokeWidth(stylesByRow.get(rowIndex).get(columnIndex));
         }
         return strokeWidth(stylesByRow.get(rowIndex).get(columnIndex - 1));
+    }
+
+    private boolean ownsTopBoundary(List<List<TableCellStyle>> stylesByRow, int rowIndex, int columnIndex) {
+        return rowIndex == 0 || !hasVisibleStroke(stylesByRow.get(rowIndex - 1).get(columnIndex));
+    }
+
+    private boolean ownsLeftBoundary(List<List<TableCellStyle>> stylesByRow, int rowIndex, int columnIndex) {
+        return columnIndex == 0 || !hasVisibleStroke(stylesByRow.get(rowIndex).get(columnIndex - 1));
     }
 
     private double strokeWidth(TableCellStyle style) {
@@ -364,6 +372,10 @@ public class TableBuilder extends ContainerBuilder<TableBuilder> {
             return 0.0;
         }
         return style.stroke().width();
+    }
+
+    private boolean hasVisibleStroke(TableCellStyle style) {
+        return strokeWidth(style) > EPS;
     }
 
     private List<Double> toList(double[] widths) {

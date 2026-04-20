@@ -1,6 +1,8 @@
 package com.demcha.compose.document.backend.fixed.pdf;
 
+import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.layout_core.components.style.Padding;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.awt.Color;
@@ -27,7 +29,7 @@ final class PdfGuideLinesRenderer {
         try {
             drawBox(stream, fragment);
             drawMargin(stream, fragment);
-            drawPadding(stream, fragment);
+            drawPadding(stream, fragment, guidePadding(fragment, payload));
         } finally {
             stream.restoreGraphicsState();
         }
@@ -63,16 +65,18 @@ final class PdfGuideLinesRenderer {
         drawCornerMarkers(stream, x, y, width, height, MARGIN_COLOR);
     }
 
-    private static void drawPadding(PDPageContentStream stream, PlacedFragment fragment) throws IOException {
-        if (fragment.padding() == null
-                || (fragment.padding().horizontal() <= 0.0 && fragment.padding().vertical() <= 0.0)) {
+    private static void drawPadding(PDPageContentStream stream,
+                                    PlacedFragment fragment,
+                                    Padding padding) throws IOException {
+        if (padding == null
+                || (padding.horizontal() <= 0.0 && padding.vertical() <= 0.0)) {
             return;
         }
 
-        double x = fragment.x() + fragment.padding().left();
-        double y = fragment.y() + fragment.padding().bottom();
-        double width = fragment.width() - fragment.padding().horizontal();
-        double height = fragment.height() - fragment.padding().vertical();
+        double x = fragment.x() + padding.left();
+        double y = fragment.y() + padding.bottom();
+        double width = fragment.width() - padding.horizontal();
+        double height = fragment.height() - padding.vertical();
         if (width <= 0.0 || height <= 0.0) {
             return;
         }
@@ -83,6 +87,13 @@ final class PdfGuideLinesRenderer {
         stream.addRect((float) x, (float) y, (float) width, (float) height);
         stream.stroke();
         drawCornerMarkers(stream, x, y, width, height, PADDING_COLOR);
+    }
+
+    private static Padding guidePadding(PlacedFragment fragment, Object payload) {
+        if (payload instanceof BuiltInNodeDefinitions.ParagraphFragmentPayload paragraphPayload) {
+            return paragraphPayload.padding();
+        }
+        return fragment.padding();
     }
 
     private static void drawCornerMarkers(PDPageContentStream stream,

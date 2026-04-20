@@ -73,8 +73,8 @@ public final class LegacyComposerTemplateComposeTarget implements TemplateCompos
         BlockTextBuilder builder = componentBuilder.blockText(alignment(list.align(), list.lineSpacing()), list.style())
                 .entityName(list.name())
                 .size(pageWidth(), 2)
-                .strategy(list.marker().isVisible() ? BlockIndentStrategy.ALL_LINES : BlockIndentStrategy.NONE)
-                .bulletOffset(list.marker().prefix())
+                .strategy(listIndentStrategy(list))
+                .bulletOffset(listPrefix(list))
                 .anchor(anchor(list.align()))
                 .padding(list.padding())
                 .margin(list.margin());
@@ -149,5 +149,20 @@ public final class LegacyComposerTemplateComposeTarget implements TemplateCompos
     private List<String> splitText(String text) {
         String normalized = text == null ? "" : text.replace("\r\n", "\n");
         return List.of(normalized.split("\n"));
+    }
+
+    private String listPrefix(TemplateListSpec list) {
+        return list.marker().isVisible()
+                ? list.marker().prefix()
+                : list.continuationIndent();
+    }
+
+    private BlockIndentStrategy listIndentStrategy(TemplateListSpec list) {
+        if (list.marker().isVisible()) {
+            return BlockIndentStrategy.ALL_LINES;
+        }
+        return list.continuationIndent().isEmpty()
+                ? BlockIndentStrategy.NONE
+                : BlockIndentStrategy.FROM_SECOND_LINE;
     }
 }

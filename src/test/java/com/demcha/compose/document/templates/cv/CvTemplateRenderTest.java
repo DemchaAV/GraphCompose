@@ -1,5 +1,7 @@
 package com.demcha.compose.document.templates.cv;
 
+import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
+import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.templates.TemplateTestSupport;
 import com.demcha.compose.document.templates.builtins.CvTemplateV1;
 import com.demcha.compose.document.templates.builtins.EditorialBlueCvTemplate;
@@ -15,10 +17,12 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 class CvTemplateRenderTest {
 
@@ -86,6 +90,52 @@ class CvTemplateRenderTest {
             assertThat(technicalSkills).contains("\u2022 Languages:");
             assertThat(technicalSkills).contains("\u2022 Backend (Spring):");
             assertThat(technicalSkills).contains("\u2022 Tools & Delivery:");
+        }
+    }
+
+    @Test
+    void shouldKeepTechnicalSkillBulletSpacingConsistentWithWrappedLines() throws Exception {
+        var original = TemplateTestSupport.canonicalCv();
+        var rewritten = TemplateTestSupport.rewrite(original);
+
+        try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 15, 10, 15, 15)) {
+            new CvTemplateV1().compose(document, original, rewritten);
+
+            List<PlacedFragment> skillFragments = paragraphFragments(document.layoutGraph().fragments(), "TechnicalSkillsBody");
+
+            assertThat(skillFragments).hasSize(7);
+            for (int index = 0; index < skillFragments.size() - 1; index++) {
+                PlacedFragment current = skillFragments.get(index);
+                PlacedFragment next = skillFragments.get(index + 1);
+                BuiltInNodeDefinitions.ParagraphFragmentPayload payload =
+                        (BuiltInNodeDefinitions.ParagraphFragmentPayload) current.payload();
+                double gapBetweenItems = current.y() - (next.y() + next.height());
+
+                assertThat(gapBetweenItems).isCloseTo(payload.lineGap(), within(0.01));
+            }
+        }
+    }
+
+    @Test
+    void shouldKeepMarkerlessCvRowsAlignedWithIndentedContinuations() throws Exception {
+        var original = TemplateTestSupport.canonicalCv();
+        var rewritten = TemplateTestSupport.rewrite(original);
+
+        try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 15, 10, 15, 15)) {
+            new CvTemplateV1().compose(document, original, rewritten);
+
+            List<PlacedFragment> projectFragments = paragraphFragments(document.layoutGraph().fragments(), "ProjectsBody");
+            List<PlacedFragment> additionalFragments = paragraphFragments(document.layoutGraph().fragments(), "AdditionalBody");
+
+            assertThat(projectFragments).hasSize(original.getProjects().getModulePoints().size());
+            assertThat(additionalFragments).hasSize(original.getAdditional().getModulePoints().size());
+            assertThat(projectFragments)
+                    .allSatisfy(fragment -> assertThat(firstLine(fragment)).doesNotStartWith(" "));
+            assertThat(additionalFragments)
+                    .allSatisfy(fragment -> assertThat(firstLine(fragment)).doesNotStartWith(" "));
+            assertThat(projectFragments)
+                    .anySatisfy(fragment -> assertThat(continuationLines(fragment)).anySatisfy(line ->
+                            assertThat(line).startsWith("  ")));
         }
     }
 
@@ -220,5 +270,27 @@ class CvTemplateRenderTest {
             index += value.length();
         }
         return count;
+    }
+
+    private static List<PlacedFragment> paragraphFragments(List<PlacedFragment> fragments, String pathPart) {
+        return fragments.stream()
+                .filter(fragment -> fragment.path().contains(pathPart))
+                .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ParagraphFragmentPayload)
+                .toList();
+    }
+
+    private static String firstLine(PlacedFragment fragment) {
+        BuiltInNodeDefinitions.ParagraphFragmentPayload payload =
+                (BuiltInNodeDefinitions.ParagraphFragmentPayload) fragment.payload();
+        return payload.lines().getFirst().text();
+    }
+
+    private static List<String> continuationLines(PlacedFragment fragment) {
+        BuiltInNodeDefinitions.ParagraphFragmentPayload payload =
+                (BuiltInNodeDefinitions.ParagraphFragmentPayload) fragment.payload();
+        return payload.lines().stream()
+                .skip(1)
+                .map(BuiltInNodeDefinitions.ParagraphLine::text)
+                .toList();
     }
 }

@@ -561,6 +561,7 @@ public final class DocumentDsl {
         private TextAlign align = TextAlign.LEFT;
         private double lineSpacing = 0.0;
         private double itemSpacing = 0.0;
+        private String continuationIndent = "";
         private boolean normalizeMarkers = true;
         private Padding padding = Padding.zero();
         private Margin margin = Margin.zero();
@@ -632,6 +633,18 @@ public final class DocumentDsl {
             return this;
         }
 
+        /**
+         * Sets the prefix used only for wrapped continuation lines when the list
+         * has no visible marker.
+         *
+         * @param continuationIndent continuation-line prefix, often a few spaces
+         * @return this builder
+         */
+        public ListBuilder continuationIndent(String continuationIndent) {
+            this.continuationIndent = continuationIndent == null ? "" : continuationIndent;
+            return this;
+        }
+
         public ListBuilder normalizeMarkers(boolean normalizeMarkers) {
             this.normalizeMarkers = normalizeMarkers;
             return this;
@@ -664,6 +677,7 @@ public final class DocumentDsl {
                     align,
                     lineSpacing,
                     itemSpacing,
+                    continuationIndent,
                     normalizeMarkers,
                     padding,
                     margin);

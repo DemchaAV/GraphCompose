@@ -47,15 +47,11 @@ class DocumentationExamplesTest {
                 .pageSize(PDRectangle.A4)
                 .margin(24, 24, 24, 24)
                 .create()) {
-            document.dsl()
-                    .pageFlow()
+            document.pageFlow()
                     .name("QuickStart")
                     .spacing(8)
-                    .addParagraph(paragraph -> paragraph
-                            .name("Greeting")
-                            .text("Hello GraphCompose")
-                            .textStyle(TextStyle.DEFAULT_STYLE)
-                            .margin(Margin.of(8)))
+                    .margin(Margin.of(8))
+                    .addParagraph("Hello GraphCompose", TextStyle.DEFAULT_STYLE)
                     .build();
 
             document.buildPdf();
@@ -73,15 +69,11 @@ class DocumentationExamplesTest {
                 .pageSize(PDRectangle.A4)
                 .margin(24, 24, 24, 24)
                 .create()) {
-            document.dsl()
-                    .pageFlow()
+            document.pageFlow()
                     .name("QuickStartBytes")
                     .spacing(8)
-                    .addParagraph(paragraph -> paragraph
-                            .name("InMemoryGreeting")
-                            .text("In-memory PDF")
-                            .textStyle(TextStyle.DEFAULT_STYLE)
-                            .margin(Margin.of(8)))
+                    .margin(Margin.of(8))
+                    .addText("In-memory PDF", TextStyle.DEFAULT_STYLE)
                     .build();
 
             pdfBytes = document.toPdfBytes();
@@ -99,22 +91,16 @@ class DocumentationExamplesTest {
                 .pageSize(PDRectangle.A4)
                 .margin(24, 24, 24, 24)
                 .create()) {
-            document.dsl()
-                    .pageFlow()
+            document.compose(dsl -> dsl.pageFlow(flow -> flow
                     .name("TemplateStyleFlow")
                     .spacing(12)
                     .addSection(section -> section
                             .name("Profile")
                             .spacing(6)
+                            .addParagraph("Profile", TextStyle.DEFAULT_STYLE)
                             .addParagraph(paragraph -> paragraph
-                                    .name("ProfileHeading")
-                                    .text("Profile")
-                                    .textStyle(TextStyle.DEFAULT_STYLE))
-                            .addParagraph(paragraph -> paragraph
-                                    .name("ProfileBody")
                                     .text("Analytical engineer focused on reliable platform design.")
-                                    .padding(Padding.of(4))))
-                    .build();
+                                    .padding(Padding.of(4))))));
 
             pdfBytes = document.toPdfBytes();
         }
@@ -175,8 +161,7 @@ class DocumentationExamplesTest {
                 .pageSize(PDRectangle.A4)
                 .margin(24, 24, 24, 24)
                 .create()) {
-            document.dsl()
-                    .pageFlow()
+            document.pageFlow()
                     .name("LinePrimitives")
                     .spacing(12)
                     .margin(Margin.of(8))
@@ -207,8 +192,7 @@ class DocumentationExamplesTest {
                 .pageSize(PDRectangle.A4)
                 .margin(24, 24, 24, 24)
                 .create()) {
-            document.dsl()
-                    .pageFlow()
+            document.pageFlow()
                     .name("StatusSection")
                     .spacing(12)
                     .addTable(table -> table

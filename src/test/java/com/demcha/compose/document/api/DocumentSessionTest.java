@@ -93,6 +93,51 @@ class DocumentSessionTest {
     }
 
     @Test
+    void pageFlowShortcutShouldAttachRootWithoutDslFacade() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(new PDRectangle(240, 180))
+                .margin(Margin.of(12))
+                .create()) {
+
+            ContainerNode root = session.pageFlow()
+                    .name("ShortcutRoot")
+                    .spacing(8)
+                    .addParagraph("Shortcut paragraph", TextStyle.DEFAULT_STYLE)
+                    .build();
+
+            assertThat(session.roots()).containsExactly(root);
+            assertThat(root.children()).hasSize(1);
+            assertThat(root.children().getFirst()).isInstanceOf(ParagraphNode.class);
+            assertThat(((ParagraphNode) root.children().getFirst()).text()).isEqualTo("Shortcut paragraph");
+            assertThat(session.layoutGraph().totalPages()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void composeShortcutShouldBatchDslCallsWithoutManualBuilderLifecycle() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(new PDRectangle(240, 180))
+                .margin(Margin.of(12))
+                .create()) {
+
+            session.compose(dsl -> dsl.pageFlow(flow -> flow
+                    .name("ComposeShortcut")
+                    .spacing(6)
+                    .addText("Composed paragraph")));
+
+            assertThat(session.roots()).hasSize(1);
+            assertThat(session.roots().getFirst()).isInstanceOf(ContainerNode.class);
+
+            ContainerNode root = (ContainerNode) session.roots().getFirst();
+            assertThat(root.name()).isEqualTo("ComposeShortcut");
+            assertThat(root.children()).hasSize(1);
+            assertThat(root.children().getFirst()).isInstanceOf(ParagraphNode.class);
+            assertThat(((ParagraphNode) root.children().getFirst()).text()).isEqualTo("Composed paragraph");
+            assertThat(session.layoutGraph().totalPages()).isEqualTo(1);
+        }
+    }
+
+    @Test
     void atomicNodeTooLargeShouldFailDeterministically() {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(200, 200))

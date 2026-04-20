@@ -35,7 +35,8 @@ import java.util.Objects;
  * <p>The typical runtime flow is:</p>
  * <ol>
  *   <li>create a semantic session with {@link #document(Path)} or {@link #document()}</li>
- *   <li>author content with {@link DocumentSession#dsl()}</li>
+ *   <li>author content with {@link DocumentSession#pageFlow()}, {@link DocumentSession#compose(java.util.function.Consumer)},
+ *       or {@link DocumentSession#dsl()}</li>
  *   <li>inspect {@link DocumentSession#layoutGraph()} or {@link DocumentSession#layoutSnapshot()} if needed</li>
  *   <li>call {@link DocumentSession#buildPdf()} or {@link DocumentSession#toPdfBytes()}</li>
  * </ol>
@@ -49,13 +50,9 @@ import java.util.Objects;
  *         .margin(new Margin(24, 24, 24, 24))
  *         .create()) {
  *
- *     document.dsl()
- *             .pageFlow()
+ *     document.pageFlow()
  *             .spacing(8)
- *             .addParagraph(p -&gt; p
- *                     .name("Greeting")
- *                     .text("Hello GraphCompose")
- *                     .textStyle(TextStyle.DEFAULT_STYLE))
+ *             .addParagraph("Hello GraphCompose", TextStyle.DEFAULT_STYLE)
  *             .build();
  *
  *     document.buildPdf();
@@ -68,9 +65,8 @@ import java.util.Objects;
  *         .pageSize(PDRectangle.A4)
  *         .create()) {
  *
- *     document.dsl()
- *             .pageFlow()
- *             .addParagraph(p -&gt; p.text("In-memory PDF"))
+ *     document.pageFlow()
+ *             .addText("In-memory PDF")
  *             .build();
  *
  *     byte[] pdfBytes = document.toPdfBytes();
@@ -591,10 +587,9 @@ public final class GraphCompose {
          *         .pageSize(PDRectangle.A4)
          *         .margin(24, 24, 24, 24)
          *         .create()) {
-         *     document.dsl()
-         *             .pageFlow()
+         *     document.pageFlow()
          *             .spacing(8)
-         *             .addParagraph(p -> p.text("Hello GraphCompose"))
+         *             .addText("Hello GraphCompose")
          *             .build();
          *
          *     document.buildPdf();

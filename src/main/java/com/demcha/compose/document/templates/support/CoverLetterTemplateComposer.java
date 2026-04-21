@@ -60,12 +60,14 @@ public final class CoverLetterTemplateComposer {
                     LEGACY_HEADER_RIGHT_MARGIN));
         }
 
-        for (TemplateParagraphSpec linkParagraph : TemplateHeaderContactSupport.linkParagraphs(
+        TemplateParagraphSpec linkRow = TemplateHeaderContactSupport.linkRow(
                 "CoverLetterHeaderLinks",
                 header,
                 theme,
-                LEGACY_HEADER_RIGHT_MARGIN)) {
-            target.addParagraph(linkParagraph);
+                TextAlign.RIGHT,
+                LEGACY_HEADER_RIGHT_MARGIN);
+        if (linkRow != null) {
+            target.addParagraph(linkRow);
         }
     }
 

@@ -6,16 +6,19 @@ import com.demcha.compose.layout_core.components.components_builders.BlockIndent
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
-import com.demcha.compose.document.model.node.DocumentNode;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
  * Semantic paragraph block that may split across pages.
+ *
+ * @author Artem Demchyshyn
  */
 public record ParagraphNode(
         String name,
         String text,
+        List<InlineTextRun> inlineTextRuns,
         TextStyle textStyle,
         TextAlign align,
         double lineSpacing,
@@ -28,7 +31,13 @@ public record ParagraphNode(
 ) implements DocumentNode {
     public ParagraphNode {
         name = name == null ? "" : name;
+        inlineTextRuns = normalizeInlineRuns(inlineTextRuns);
         text = Objects.requireNonNullElse(text, "");
+        if (text.isBlank() && !inlineTextRuns.isEmpty()) {
+            text = inlineTextRuns.stream()
+                    .map(InlineTextRun::text)
+                    .reduce("", String::concat);
+        }
         textStyle = textStyle == null ? TextStyle.DEFAULT_STYLE : textStyle;
         align = align == null ? TextAlign.LEFT : align;
         bulletOffset = Objects.requireNonNullElse(bulletOffset, "");
@@ -38,6 +47,20 @@ public record ParagraphNode(
         if (lineSpacing < 0 || Double.isNaN(lineSpacing) || Double.isInfinite(lineSpacing)) {
             throw new IllegalArgumentException("lineSpacing must be finite and non-negative: " + lineSpacing);
         }
+    }
+
+    public ParagraphNode(String name,
+                         String text,
+                         TextStyle textStyle,
+                         TextAlign align,
+                         double lineSpacing,
+                         String bulletOffset,
+                         BlockIndentStrategy indentStrategy,
+                         PdfLinkOptions linkOptions,
+                         PdfBookmarkOptions bookmarkOptions,
+                         Padding padding,
+                         Margin margin) {
+        this(name, text, List.of(), textStyle, align, lineSpacing, bulletOffset, indentStrategy, linkOptions, bookmarkOptions, padding, margin);
     }
 
     public ParagraphNode(String name,
@@ -60,6 +83,16 @@ public record ParagraphNode(
                          Padding padding,
                          Margin margin) {
         this(name, text, textStyle, align, lineSpacing, "", BlockIndentStrategy.NONE, null, null, padding, margin);
+    }
+
+    private static List<InlineTextRun> normalizeInlineRuns(List<InlineTextRun> runs) {
+        if (runs == null || runs.isEmpty()) {
+            return List.of();
+        }
+        return runs.stream()
+                .filter(Objects::nonNull)
+                .filter(run -> !run.text().isEmpty())
+                .toList();
     }
 }
 

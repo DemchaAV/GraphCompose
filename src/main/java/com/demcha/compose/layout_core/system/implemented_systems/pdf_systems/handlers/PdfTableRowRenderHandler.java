@@ -143,6 +143,8 @@ public final class PdfTableRowRenderHandler implements RenderHandler<TableRow, P
         TableCellStyle style = cell.style();
         List<String> safeLines = sanitizeLines(cell.lines());
         double lineHeight = font.getLineHeight(style.textStyle());
+        double lineSpacing = style.lineSpacing() == null ? 0.0 : style.lineSpacing();
+        double linePitch = lineHeight + lineSpacing;
         Padding padding = style.padding() == null ? Padding.zero() : style.padding();
         Anchor anchor = style.textAnchor() == null ? Anchor.centerLeft() : style.textAnchor();
 
@@ -150,7 +152,8 @@ public final class PdfTableRowRenderHandler implements RenderHandler<TableRow, P
         double innerY = cellY + padding.bottom();
         double innerWidth = Math.max(0, cell.width() - padding.horizontal());
         double innerHeight = Math.max(0, cell.height() - padding.vertical());
-        double blockHeight = lineHeight * Math.max(1, safeLines.size());
+        int lineCount = Math.max(1, safeLines.size());
+        double blockHeight = (lineHeight * lineCount) + (lineSpacing * (lineCount - 1));
 
         double blockY = switch (anchor.v()) {
             case TOP -> innerY + innerHeight - blockHeight;
@@ -170,7 +173,7 @@ public final class PdfTableRowRenderHandler implements RenderHandler<TableRow, P
                 case LEFT, DEFAULT -> innerX;
             };
 
-            double lineBoxY = blockY + lineHeight * (safeLines.size() - lineIndex - 1);
+            double lineBoxY = blockY + linePitch * (safeLines.size() - lineIndex - 1);
             double baselineY = lineBoxY + metrics.baselineOffsetFromBottom();
             resolved.add(new ResolvedTextLine(line, lineX, baselineY));
         }

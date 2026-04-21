@@ -9,36 +9,61 @@ import com.demcha.compose.document.templates.data.MainPageCV;
 import com.demcha.compose.document.templates.data.MainPageCvDTO;
 import com.demcha.compose.document.templates.theme.CvTheme;
 import com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy;
+import com.demcha.compose.layout_core.components.content.text.TextDecoration;
+import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 
-import java.util.ArrayList;
+import java.awt.Color;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 /**
- * Shared scene composer for the standard CV template.
+ * Shared scene composer for the executive slate CV template.
+ *
+ * <p>The design keeps the same compose-first module model as the standard CV
+ * template, but applies a quieter business rhythm: one compact header link
+ * row, consistent module gaps, and aligned body blocks.</p>
  *
  * @author Artem Demchyshyn
  */
-public final class CvTemplateComposer {
-    private static final Margin LEGACY_HEADER_RIGHT_MARGIN = new Margin(0, 10, 0, 0);
+public final class ExecutiveSlateCvTemplateComposer {
+    private static final Margin HEADER_LINK_MARGIN = Margin.top(1);
 
     private final CvTheme theme;
     private final TemplateLayoutPolicy layout;
 
-    public CvTemplateComposer(CvTheme theme) {
+    /**
+     * Creates a composer with the supplied visual theme.
+     *
+     * @param theme visual theme
+     */
+    public ExecutiveSlateCvTemplateComposer(CvTheme theme) {
         this.theme = Objects.requireNonNull(theme, "theme");
-        this.layout = TemplateLayoutPolicy.standardCv(this.theme);
+        this.layout = TemplateLayoutPolicy.executiveCv();
     }
 
+    /**
+     * Composes a legacy CV payload through the canonical module adapter.
+     *
+     * @param target active template target
+     * @param originalCv original CV input
+     * @param rewrittenCv optional rewrite payload
+     */
     public void compose(TemplateComposeTarget target, MainPageCV originalCv, MainPageCvDTO rewrittenCv) {
         compose(target, CvDocumentSpec.from(originalCv, rewrittenCv));
     }
 
+    /**
+     * Composes a CV from the public compose-first document spec.
+     *
+     * @param target active template target
+     * @param documentSpec header plus ordered modules
+     */
     public void compose(TemplateComposeTarget target, CvDocumentSpec documentSpec) {
         CvDocumentSpec spec = Objects.requireNonNull(documentSpec, "documentSpec");
-        target.startDocument("MainVBoxContainer", layout.rootSpacing());
+        target.startDocument("ExecutiveSlateRoot", layout.rootSpacing());
         addHeader(target, spec.header());
         for (CvModule module : spec.modules()) {
             addModule(target, module);
@@ -52,66 +77,57 @@ public final class CvTemplateComposer {
         }
 
         target.addParagraph(TemplateSceneSupport.paragraph(
-                "ModuleHeaderName",
-                Objects.requireNonNullElse(header.getName(), ""),
-                theme.nameTextStyle(),
-                TextAlign.RIGHT,
+                "ExecutiveSlateName",
+                Objects.requireNonNullElse(header.getName(), "").toUpperCase(Locale.ROOT),
+                nameStyle(),
+                TextAlign.LEFT,
                 1.0,
                 Padding.zero(),
-                new Margin(0, 10, Math.max(0.0, theme.spacing() - 3), 0)));
+                Margin.zero()));
 
         String info = TemplateSceneSupport.joinNonBlank(" | ",
                 header.getAddress(),
                 header.getPhoneNumber());
         if (!info.isBlank()) {
             target.addParagraph(TemplateSceneSupport.paragraph(
-                    "ModuleHeaderInfo",
+                    "ExecutiveSlateInfo",
                     info,
-                    theme.smallBodyTextStyle(),
-                    TextAlign.RIGHT,
+                    metaStyle(),
+                    TextAlign.LEFT,
                     1.0,
                     Padding.zero(),
-                    LEGACY_HEADER_RIGHT_MARGIN));
+                    Margin.top(2)));
         }
 
         TemplateParagraphSpec linkRow = TemplateHeaderContactSupport.linkRow(
-                "ModuleHeaderLinks",
+                "ExecutiveSlateLinks",
                 header,
                 theme,
-                TextAlign.RIGHT,
-                LEGACY_HEADER_RIGHT_MARGIN);
+                TextAlign.LEFT,
+                HEADER_LINK_MARGIN);
         if (linkRow != null) {
             target.addParagraph(linkRow);
         }
+
+        target.addDivider(TemplateSceneSupport.divider(
+                "ExecutiveSlateHeaderRule",
+                target.pageWidth(),
+                1.1,
+                mutedRuleColor(),
+                Margin.top(5)));
     }
 
     private void addModule(TemplateComposeTarget target, CvModule module) {
-        if (module == null) {
+        if (module == null || module.bodyBlocks().isEmpty()) {
             return;
         }
-        TemplateModuleSpec spec = toTemplateModule(module);
-        if (spec == null || spec.blocks().isEmpty()) {
-            return;
-        }
-        target.addModule(spec);
-    }
-
-    private TemplateModuleSpec toTemplateModule(CvModule module) {
-        String moduleName = module.name();
-        List<TemplateModuleBlock> blocks = new ArrayList<>();
+        target.addParagraph(moduleTitle(module.name(), module.title()));
         for (int index = 0; index < module.bodyBlocks().size(); index++) {
             TemplateModuleBlock block = toTemplateBlock(module, module.bodyBlocks().get(index), index);
             if (block != null) {
-                blocks.add(block);
+                block.render(target);
             }
         }
-        if (blocks.isEmpty()) {
-            return null;
-        }
-        return new TemplateModuleSpec(
-                moduleName,
-                moduleTitle(moduleName, module.title()),
-                blocks);
     }
 
     private TemplateModuleBlock toTemplateBlock(CvModule module, CvModule.BodyBlock block, int index) {
@@ -119,13 +135,13 @@ public final class CvTemplateComposer {
             case PARAGRAPH -> TemplateModuleBlock.paragraph(TemplateSceneSupport.blockParagraph(
                     blockName(module, block, index),
                     block.text(),
-                    theme.bodyTextStyle(),
+                    bodyStyle(),
                     TextAlign.LEFT,
                     layout.bodyLineSpacing(),
                     block.firstLineIndent(),
                     block.firstLineIndent().isEmpty() ? BlockIndentStrategy.NONE : BlockIndentStrategy.FIRST_LINE,
                     layout.bodyPadding(),
-                    Margin.zero()));
+                    layout.blockMargin()));
             case LIST -> listBlock(module, block, index);
             case TABLE -> TemplateModuleBlock.table(Objects.requireNonNull(block.table(), "table"));
             case DIVIDER -> TemplateModuleBlock.divider(Objects.requireNonNull(block.divider(), "divider"));
@@ -140,28 +156,29 @@ public final class CvTemplateComposer {
         if (items.isEmpty()) {
             return null;
         }
-        String continuationIndent = block.marker().isVisible()
+        ListMarker marker = Objects.requireNonNullElse(block.marker(), ListMarker.bullet());
+        String continuationIndent = marker.isVisible()
                 ? ""
                 : (block.continuationIndent().isEmpty() ? layout.markerlessContinuationIndent() : block.continuationIndent());
         return TemplateModuleBlock.list(new TemplateListSpec(
                 blockName(module, block, index),
                 items,
-                Objects.requireNonNullElse(block.marker(), ListMarker.bullet()),
-                theme.bodyTextStyle(),
+                marker,
+                bodyStyle(),
                 TextAlign.LEFT,
                 layout.bodyLineSpacing(),
                 layout.bodyItemSpacing(),
                 continuationIndent,
                 block.normalizeMarkers(),
                 layout.bodyPadding(),
-                Margin.zero()));
+                layout.blockMargin()));
     }
 
     private TemplateParagraphSpec moduleTitle(String moduleName, String title) {
         return TemplateSceneSupport.paragraph(
                 moduleName + "Heading",
-                Objects.requireNonNullElse(title, ""),
-                theme.sectionHeaderTextStyle(),
+                Objects.requireNonNullElse(title, "").toUpperCase(Locale.ROOT),
+                sectionTitleStyle(),
                 TextAlign.LEFT,
                 1.0,
                 Padding.zero(),
@@ -173,5 +190,57 @@ public final class CvTemplateComposer {
             return block.name();
         }
         return index == 0 ? module.name() + "Body" : module.name() + "Body_" + index;
+    }
+
+    private TextStyle nameStyle() {
+        return TextStyle.builder()
+                .fontName(theme.headerFont())
+                .size(theme.nameFontSize())
+                .decoration(TextDecoration.BOLD)
+                .color(primaryTextColor())
+                .build();
+    }
+
+    private TextStyle sectionTitleStyle() {
+        return TextStyle.builder()
+                .fontName(theme.headerFont())
+                .size(theme.headerFontSize())
+                .decoration(TextDecoration.BOLD)
+                .color(accentColor())
+                .build();
+    }
+
+    private TextStyle bodyStyle() {
+        return TextStyle.builder()
+                .fontName(theme.bodyFont())
+                .size(theme.bodyFontSize())
+                .decoration(TextDecoration.DEFAULT)
+                .color(bodyTextColor())
+                .build();
+    }
+
+    private TextStyle metaStyle() {
+        return TextStyle.builder()
+                .fontName(theme.bodyFont())
+                .size(theme.bodyFontSize() - 0.4)
+                .decoration(TextDecoration.DEFAULT)
+                .color(bodyTextColor())
+                .build();
+    }
+
+    private Color primaryTextColor() {
+        return theme.primaryColor();
+    }
+
+    private Color bodyTextColor() {
+        return theme.bodyColor();
+    }
+
+    private Color accentColor() {
+        return theme.accentColor();
+    }
+
+    private Color mutedRuleColor() {
+        return new Color(193, 201, 211);
     }
 }

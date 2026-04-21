@@ -5,6 +5,7 @@ import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.templates.TemplateTestSupport;
 import com.demcha.compose.document.templates.builtins.CvTemplateV1;
 import com.demcha.compose.document.templates.builtins.EditorialBlueCvTemplate;
+import com.demcha.compose.document.templates.builtins.ExecutiveSlateCvTemplate;
 import com.demcha.compose.document.templates.data.CvDocumentSpec;
 import com.demcha.compose.font_library.FontName;
 import com.demcha.testing.VisualTestOutputs;
@@ -89,10 +90,17 @@ class CvTemplateRenderTest {
 
         try (PDDocument pdf = Loader.loadPDF(pdfBytes)) {
             List<String> uris = linkAnnotationUris(pdf);
+            String extractedText = new PDFTextStripper().getText(pdf);
 
             assertThat(uris).anySatisfy(uri -> assertThat(uri).startsWith("mailto:" + header.getEmail().getTo()));
             assertThat(uris).contains(header.getLinkedIn().getLinkUrl().getUrl());
             assertThat(uris).contains(header.getGitHub().getLinkUrl().getUrl());
+            assertThat(extractedText).contains(
+                    header.getEmail().getDisplayText()
+                            + " | "
+                            + header.getLinkedIn().getDisplayText()
+                            + " | "
+                            + header.getGitHub().getDisplayText());
         }
     }
 
@@ -281,6 +289,44 @@ class CvTemplateRenderTest {
 
         TemplateTestSupport.assertPdfFileLooksValid(outputFile, 1);
         TemplateTestSupport.assertPdfPageCount(outputFile, 1);
+    }
+
+    @Test
+    void shouldRenderExecutiveSlateTemplateToFile() throws Exception {
+        Path outputFile = VisualTestOutputs.preparePdf("executive_slate_cv_render_file", "clean", "templates", "cv");
+        var original = TemplateTestSupport.canonicalCv();
+        var rewritten = TemplateTestSupport.rewrite(original);
+
+        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 20, 20, 20, 20, false)) {
+            new ExecutiveSlateCvTemplate().compose(document, original, rewritten);
+            document.buildPdf();
+        }
+
+        TemplateTestSupport.assertPdfFileLooksValid(outputFile, 1);
+        TemplateTestSupport.assertPdfPageCount(outputFile, 1);
+    }
+
+    @Test
+    void shouldRenderExecutiveSlateTemplateWithClickableHeaderLinks() throws Exception {
+        var original = TemplateTestSupport.canonicalCv();
+        var rewritten = TemplateTestSupport.rewrite(original);
+        var header = original.getHeader();
+        byte[] pdfBytes;
+
+        try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 20, 20, 20, 20)) {
+            new ExecutiveSlateCvTemplate().compose(document, original, rewritten);
+            pdfBytes = document.toPdfBytes();
+        }
+
+        try (PDDocument pdf = Loader.loadPDF(pdfBytes)) {
+            List<String> uris = linkAnnotationUris(pdf);
+            String extractedText = new PDFTextStripper().getText(pdf);
+
+            assertThat(uris).anySatisfy(uri -> assertThat(uri).startsWith("mailto:" + header.getEmail().getTo()));
+            assertThat(uris).contains(header.getLinkedIn().getLinkUrl().getUrl());
+            assertThat(uris).contains(header.getGitHub().getLinkUrl().getUrl());
+            assertThat(extractedText).contains("alex.carter@example.dev | LinkedIn | GitHub");
+        }
     }
 
     private static Stream<Arguments> fontThemes() {

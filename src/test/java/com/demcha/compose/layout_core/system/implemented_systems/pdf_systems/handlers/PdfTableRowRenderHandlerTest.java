@@ -142,4 +142,30 @@ class PdfTableRowRenderHandlerTest {
         assertThat(topLines.getFirst().baselineY() - topLines.get(1).baselineY()).isEqualTo(lineHeight);
         assertThat(middleLines.getFirst().baselineY() - middleLines.get(1).baselineY()).isEqualTo(lineHeight);
     }
+
+    @Test
+    void shouldApplyCellLineSpacingWhenResolvingMultilineContent() {
+        var font = DefaultFonts.standardLibrary().getPdfFont(TextStyle.DEFAULT_STYLE.fontName());
+        double lineSpacing = 2.5;
+
+        TableResolvedCell cell = new TableResolvedCell(
+                "spaced",
+                0,
+                120,
+                80,
+                List.of("First", "Second"),
+                TableCellStyle.merge(TableCellStyle.DEFAULT, TableCellStyle.builder()
+                        .textAnchor(Anchor.topLeft())
+                        .lineSpacing(lineSpacing)
+                        .build()),
+                Padding.zero(),
+                Set.of(Side.TOP, Side.LEFT, Side.RIGHT, Side.BOTTOM)
+        );
+
+        var lines = handler.resolveTextLines(font, cell, 0, 0);
+        double lineHeight = font.getLineHeight(cell.style().textStyle());
+
+        assertThat(lines).hasSize(2);
+        assertThat(lines.getFirst().baselineY() - lines.get(1).baselineY()).isEqualTo(lineHeight + lineSpacing);
+    }
 }

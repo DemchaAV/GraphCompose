@@ -25,43 +25,44 @@ import java.util.Objects;
  * Shared scene composer for the proposal template.
  */
 public final class ProposalTemplateComposer {
-    private static final double ROOT_SPACING = 10;
     private static final double BODY_SIZE = 10.0;
     private static final double LABEL_SIZE = 8.5;
     private static final double TITLE_SIZE = 24;
     private static final double COLUMN_GAP = 18;
 
     private final BusinessDocumentSceneStyles styles;
+    private final TemplateLayoutPolicy layout;
 
     public ProposalTemplateComposer(BusinessDocumentSceneStyles styles) {
         this.styles = Objects.requireNonNull(styles, "styles");
+        this.layout = TemplateLayoutPolicy.businessDocument();
     }
 
     public void compose(TemplateComposeTarget target, ProposalData data) {
         ProposalData safe = Objects.requireNonNull(data, "data");
         double width = target.pageWidth();
 
-        target.startDocument("ProposalRoot", ROOT_SPACING);
+        target.startDocument("ProposalRoot", layout.rootSpacing());
         target.addTable(headerTable(target, safe));
         target.addDivider(TemplateSceneSupport.divider(
                 "ProposalRule",
                 width,
                 1.2,
                 styles.accentColor(),
-                Margin.top(2)));
+                layout.subsectionMargin()));
 
         if (!safe.executiveSummary().isBlank()) {
             TemplateSceneSupport.addSectionHeader(target, "ProposalSummary", "EXECUTIVE SUMMARY",
-                    styles.labelStyle(LABEL_SIZE), Math.min(width, 170), styles.accentColor(), 1.1, Margin.top(4));
+                    styles.labelStyle(LABEL_SIZE), Math.min(width, 170), styles.accentColor(), 1.1, layout.subsectionMargin());
             target.addParagraph(TemplateSceneSupport.blockParagraph(
                     "ProposalExecutiveSummary",
                     safe.executiveSummary(),
                     styles.bodyStyle(BODY_SIZE),
                     TextAlign.LEFT,
-                    2.0,
+                    layout.bodyLineSpacing(),
                     "",
                     com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy.FIRST_LINE,
-                    Padding.zero(),
+                    layout.bodyPadding(),
                     Margin.zero()));
         }
 
@@ -73,7 +74,7 @@ public final class ProposalTemplateComposer {
                     Math.min(width, 132),
                     styles.accentColor(),
                     1.0,
-                    Margin.top(index == 0 ? 2 : 4));
+                    layout.subsectionMargin());
             target.addParagraph(TemplateSceneSupport.blockParagraph(
                     "ProposalSection_" + index,
                     String.join("\n", section.paragraphs().isEmpty()
@@ -81,38 +82,38 @@ public final class ProposalTemplateComposer {
                             : section.paragraphs()),
                     styles.bodyStyle(BODY_SIZE),
                     TextAlign.LEFT,
-                    2.0,
+                    layout.bodyLineSpacing(),
                     "",
                     com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy.FIRST_LINE,
-                    Padding.zero(),
+                    layout.bodyPadding(),
                     Margin.zero()));
         }
 
         if (!safe.timeline().isEmpty()) {
             TemplateSceneSupport.addSectionHeader(target, "ProposalTimeline", "TIMELINE",
-                    styles.labelStyle(LABEL_SIZE), Math.min(width, 132), styles.accentColor(), 1.0, Margin.top(5));
+                    styles.labelStyle(LABEL_SIZE), Math.min(width, 132), styles.accentColor(), 1.0, layout.sectionMargin());
             target.addTable(timelineTable(target, safe.timeline()));
         }
 
         if (!safe.pricingRows().isEmpty()) {
             TemplateSceneSupport.addSectionHeader(target, "ProposalPricing", "PRICING",
-                    styles.labelStyle(LABEL_SIZE), Math.min(width, 132), styles.accentColor(), 1.0, Margin.top(5));
+                    styles.labelStyle(LABEL_SIZE), Math.min(width, 132), styles.accentColor(), 1.0, layout.sectionMargin());
             target.addTable(pricingTable(target, safe.pricingRows()));
         }
 
         if (!safe.acceptanceTerms().isEmpty()) {
             TemplateSceneSupport.addSectionHeader(target, "ProposalAcceptance", "ACCEPTANCE",
-                    styles.labelStyle(LABEL_SIZE), Math.min(width, 132), styles.accentColor(), 1.0, Margin.top(5));
+                    styles.labelStyle(LABEL_SIZE), Math.min(width, 132), styles.accentColor(), 1.0, layout.sectionMargin());
             target.addParagraph(TemplateSceneSupport.blockParagraph(
                     "ProposalAcceptanceTerms",
                     String.join("\n", TemplateSceneSupport.sanitizeLines(safe.acceptanceTerms())),
                     styles.bodyStyle(BODY_SIZE),
                     TextAlign.LEFT,
-                    2.0,
+                    layout.bodyLineSpacing(),
                     "\u2022",
                     com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy.FROM_SECOND_LINE,
-                    Padding.zero(),
-                    Margin.top(3)));
+                    layout.bodyPadding(),
+                    layout.blockMargin()));
         }
 
         if (!safe.footerNote().isBlank()) {
@@ -121,7 +122,7 @@ public final class ProposalTemplateComposer {
                     width,
                     1.0,
                     styles.accentColor(),
-                    Margin.top(5)));
+                    layout.sectionMargin()));
             target.addParagraph(TemplateSceneSupport.paragraph(
                     "ProposalFooter",
                     safe.footerNote(),
@@ -129,7 +130,7 @@ public final class ProposalTemplateComposer {
                     TextAlign.LEFT,
                     1.0,
                     Padding.zero(),
-                    Margin.top(3)));
+                    layout.blockMargin()));
         }
 
         target.finishDocument();
@@ -140,11 +141,12 @@ public final class ProposalTemplateComposer {
         double leftWidth = Math.max(200, width - 212);
         double rightWidth = width - leftWidth - COLUMN_GAP;
         TableCellStyle baseStyle = TableCellStyle.builder()
-                .padding(Padding.zero())
+                .padding(layout.compactCellPadding())
                 .fillColor(Color.WHITE)
                 .stroke(new Stroke(Color.WHITE, 0.0))
                 .textStyle(styles.bodyStyle(BODY_SIZE))
                 .textAnchor(Anchor.topLeft())
+                .lineSpacing(layout.tableLineSpacing())
                 .build();
 
         return new TemplateTableSpec(
@@ -174,11 +176,12 @@ public final class ProposalTemplateComposer {
     private TemplateTableSpec timelineTable(TemplateComposeTarget target, List<ProposalTimelineItem> items) {
         double width = target.pageWidth();
         TableCellStyle defaultStyle = TableCellStyle.builder()
-                .padding(new Padding(7, 8, 7, 8))
+                .padding(layout.contentCellPadding())
                 .fillColor(Color.WHITE)
                 .stroke(new Stroke(styles.borderColor(), 1.3))
                 .textStyle(styles.bodyStyle(9.4))
                 .textAnchor(Anchor.centerLeft())
+                .lineSpacing(layout.tableLineSpacing())
                 .build();
         Map<Integer, TableCellStyle> rowStyles = Map.of(
                 0, TableCellStyle.builder()
@@ -208,17 +211,18 @@ public final class ProposalTemplateComposer {
                 columnStyles,
                 width,
                 Padding.zero(),
-                Margin.top(3));
+                layout.blockMargin());
     }
 
     private TemplateTableSpec pricingTable(TemplateComposeTarget target, List<ProposalPricingRow> rowsData) {
         double width = target.pageWidth();
         TableCellStyle defaultStyle = TableCellStyle.builder()
-                .padding(new Padding(7, 8, 7, 8))
+                .padding(layout.contentCellPadding())
                 .fillColor(styles.softFill())
                 .stroke(new Stroke(styles.borderColor(), 1.3))
                 .textStyle(styles.bodyStyle(9.4))
                 .textAnchor(Anchor.centerLeft())
+                .lineSpacing(layout.tableLineSpacing())
                 .build();
         Map<Integer, TableCellStyle> rowStyles = new LinkedHashMap<>();
         rowStyles.put(0, TableCellStyle.builder()
@@ -256,7 +260,7 @@ public final class ProposalTemplateComposer {
                 columnStyles,
                 width,
                 Padding.zero(),
-                Margin.top(3));
+                layout.blockMargin());
     }
 
     private List<String> partyLines(String label, ProposalParty party) {

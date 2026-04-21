@@ -1,6 +1,7 @@
 package com.demcha.compose.document.templates.support;
 
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
+import com.demcha.compose.document.model.node.InlineTextRun;
 import com.demcha.compose.document.model.node.TextAlign;
 import com.demcha.compose.document.templates.data.EmailYaml;
 import com.demcha.compose.document.templates.data.Header;
@@ -21,37 +22,39 @@ final class TemplateHeaderContactSupport {
     private TemplateHeaderContactSupport() {
     }
 
-    static List<TemplateParagraphSpec> linkParagraphs(String namePrefix,
-                                                      Header header,
-                                                      CvTheme theme,
-                                                      Margin margin) {
-        List<TemplateParagraphSpec> links = new ArrayList<>(3);
-        addHeaderLink(links, namePrefix, 0, displayText(header == null ? null : header.getEmail()), emailLinkOptions(header == null ? null : header.getEmail()), theme, margin);
-        addHeaderLink(links, namePrefix, 1, displayText(header == null ? null : header.getLinkedIn()), externalLinkOptions(header == null ? null : header.getLinkedIn()), theme, margin);
-        addHeaderLink(links, namePrefix, 2, displayText(header == null ? null : header.getGitHub()), externalLinkOptions(header == null ? null : header.getGitHub()), theme, margin);
-        return List.copyOf(links);
+    static TemplateParagraphSpec linkRow(String name,
+                                         Header header,
+                                         CvTheme theme,
+                                         TextAlign align,
+                                         Margin margin) {
+        List<InlineTextRun> runs = new ArrayList<>(5);
+        addHeaderLink(runs, displayText(header == null ? null : header.getEmail()), emailLinkOptions(header == null ? null : header.getEmail()), theme);
+        addHeaderLink(runs, displayText(header == null ? null : header.getLinkedIn()), externalLinkOptions(header == null ? null : header.getLinkedIn()), theme);
+        addHeaderLink(runs, displayText(header == null ? null : header.getGitHub()), externalLinkOptions(header == null ? null : header.getGitHub()), theme);
+        if (runs.isEmpty()) {
+            return null;
+        }
+        return TemplateSceneSupport.inlineParagraph(
+                name,
+                runs,
+                theme.linkTextStyle(),
+                align,
+                1.0,
+                Padding.zero(),
+                margin);
     }
 
-    private static void addHeaderLink(List<TemplateParagraphSpec> links,
-                                      String namePrefix,
-                                      int index,
+    private static void addHeaderLink(List<InlineTextRun> runs,
                                       String text,
                                       PdfLinkOptions linkOptions,
-                                      CvTheme theme,
-                                      Margin margin) {
+                                      CvTheme theme) {
         if (text.isBlank() || linkOptions == null) {
             return;
         }
-        String name = links.isEmpty() ? namePrefix : namePrefix + "_" + index;
-        links.add(TemplateSceneSupport.paragraph(
-                name,
-                text,
-                theme.linkTextStyle(),
-                TextAlign.RIGHT,
-                1.0,
-                linkOptions,
-                Padding.zero(),
-                margin));
+        if (!runs.isEmpty()) {
+            runs.add(new InlineTextRun(" | ", theme.smallBodyTextStyle(), null));
+        }
+        runs.add(new InlineTextRun(text, theme.linkTextStyle(), linkOptions));
     }
 
     private static PdfLinkOptions emailLinkOptions(EmailYaml email) {

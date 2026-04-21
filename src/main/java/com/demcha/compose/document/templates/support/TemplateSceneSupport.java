@@ -1,6 +1,7 @@
 package com.demcha.compose.document.templates.support;
 
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
+import com.demcha.compose.document.model.node.InlineTextRun;
 import com.demcha.compose.document.model.node.ListMarker;
 import com.demcha.compose.document.model.node.TextAlign;
 import com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy;
@@ -46,7 +47,20 @@ public final class TemplateSceneSupport {
                                                   PdfLinkOptions linkOptions,
                                                   Padding padding,
                                                   Margin margin) {
-        return new TemplateParagraphSpec(name, text, style, align, lineSpacing, "", BlockIndentStrategy.NONE, linkOptions, padding, margin);
+        return new TemplateParagraphSpec(name, text, List.of(), style, align, lineSpacing, "", BlockIndentStrategy.NONE, linkOptions, padding, margin);
+    }
+
+    /**
+     * Creates a normalized paragraph instruction from inline text runs.
+     */
+    public static TemplateParagraphSpec inlineParagraph(String name,
+                                                        List<InlineTextRun> inlineRuns,
+                                                        TextStyle style,
+                                                        TextAlign align,
+                                                        double lineSpacing,
+                                                        Padding padding,
+                                                        Margin margin) {
+        return new TemplateParagraphSpec(name, "", inlineRuns, style, align, lineSpacing, "", BlockIndentStrategy.NONE, null, padding, margin);
     }
 
     /**
@@ -78,7 +92,7 @@ public final class TemplateSceneSupport {
                                                        PdfLinkOptions linkOptions,
                                                        Padding padding,
                                                        Margin margin) {
-        return new TemplateParagraphSpec(name, text, style, align, lineSpacing, bulletOffset, indentStrategy, linkOptions, padding, margin);
+        return new TemplateParagraphSpec(name, text, List.of(), style, align, lineSpacing, bulletOffset, indentStrategy, linkOptions, padding, margin);
     }
 
     /**

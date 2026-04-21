@@ -86,7 +86,6 @@ public final class EditorialBlueCvTemplateComposer {
         if (data.getHeader() != null) {
             String meta = TemplateSceneSupport.joinNonBlank(" - ",
                     data.getHeader().getPhoneNumber(),
-                    data.getHeader().getEmail() == null ? "" : data.getHeader().getEmail().getDisplayText(),
                     data.getHeader().getAddress());
             if (!meta.isBlank()) {
                 target.addParagraph(TemplateSceneSupport.paragraph(
@@ -97,6 +96,15 @@ public final class EditorialBlueCvTemplateComposer {
                         1.0,
                         Padding.zero(),
                         Margin.top(1)));
+            }
+            TemplateParagraphSpec linkRow = TemplateHeaderContactSupport.linkRow(
+                    "EditorialBlueLinks",
+                    data.getHeader(),
+                    theme,
+                    TextAlign.CENTER,
+                    Margin.top(1));
+            if (linkRow != null) {
+                target.addParagraph(linkRow);
             }
         }
 

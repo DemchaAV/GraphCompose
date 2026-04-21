@@ -54,7 +54,8 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
                 .indentStrategy(paragraph.indentStrategy())
                 .link(paragraph.linkOptions())
                 .padding(paragraph.padding())
-                .margin(paragraph.margin()));
+                .margin(paragraph.margin())
+                .inlineRuns(paragraph.inlineTextRuns()));
     }
 
     @Override

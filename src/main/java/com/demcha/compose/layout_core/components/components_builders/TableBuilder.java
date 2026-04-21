@@ -309,11 +309,17 @@ public class TableBuilder extends ContainerBuilder<TableBuilder> {
     private double cellNaturalHeight(TableCellSpec cell, TableCellStyle style) {
         Padding padding = style.padding() == null ? Padding.zero() : style.padding();
         int lineCount = Math.max(1, sanitizeCellLines(cell).size());
-        return (lineCount * measureLineHeight(style)) + padding.vertical();
+        return (lineCount * measureLineHeight(style))
+                + ((lineCount - 1) * lineSpacing(style))
+                + padding.vertical();
     }
 
     private double measureLineHeight(TableCellStyle style) {
         return textMeasurementSystem().lineHeight(style.textStyle());
+    }
+
+    private double lineSpacing(TableCellStyle style) {
+        return style.lineSpacing() == null ? 0.0 : style.lineSpacing();
     }
 
     private ContentSize measureText(String text, TableCellStyle style) {

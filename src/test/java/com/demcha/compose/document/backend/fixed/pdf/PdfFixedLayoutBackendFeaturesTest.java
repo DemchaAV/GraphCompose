@@ -22,6 +22,8 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -115,5 +117,48 @@ class PdfFixedLayoutBackendFeaturesTest {
             assertThat(extractedText).contains("Page 1 of 1");
             assertThat(extractedText.replaceAll("\\s+", "")).contains("CONFIDENTIAL");
         }
+    }
+
+    @Test
+    void shouldRenderInlineParagraphLinksAsSeparateAnnotations() throws Exception {
+        byte[] pdfBytes;
+
+        try (DocumentSession document = GraphCompose.document()
+                .margin(36, 36, 36, 36)
+                .create()) {
+            document.dsl()
+                    .pageFlow()
+                    .name("InlineLinkFlow")
+                    .addParagraph(paragraph -> paragraph
+                            .name("ContactLinks")
+                            .textStyle(TextStyle.DEFAULT_STYLE)
+                            .inlineLink("Email", new PdfLinkOptions("mailto:alex@example.dev"))
+                            .inlineText(" | ")
+                            .inlineLink("Docs", new PdfLinkOptions("https://example.com/docs")))
+                    .build();
+
+            pdfBytes = document.toPdfBytes();
+        }
+
+        try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+            assertThat(linkAnnotationUris(document))
+                    .containsExactly("mailto:alex@example.dev", "https://example.com/docs");
+
+            String extractedText = new PDFTextStripper().getText(document);
+            assertThat(extractedText).contains("Email | Docs");
+        }
+    }
+
+    private static List<String> linkAnnotationUris(PDDocument document) throws Exception {
+        List<String> uris = new ArrayList<>();
+        for (var page : document.getPages()) {
+            for (var annotation : page.getAnnotations()) {
+                if (annotation instanceof PDAnnotationLink link
+                        && link.getAction() instanceof PDActionURI action) {
+                    uris.add(action.getURI());
+                }
+            }
+        }
+        return List.copyOf(uris);
     }
 }

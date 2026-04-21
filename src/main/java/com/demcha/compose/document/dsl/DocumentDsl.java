@@ -9,6 +9,7 @@ import com.demcha.compose.document.model.node.BarcodeNode;
 import com.demcha.compose.document.model.node.ContainerNode;
 import com.demcha.compose.document.model.node.DocumentNode;
 import com.demcha.compose.document.model.node.ImageNode;
+import com.demcha.compose.document.model.node.InlineTextRun;
 import com.demcha.compose.document.model.node.ListMarker;
 import com.demcha.compose.document.model.node.ListNode;
 import com.demcha.compose.document.model.node.PageBreakNode;
@@ -461,6 +462,7 @@ public final class DocumentDsl {
     public static final class ParagraphBuilder {
         private String name = "";
         private String text = "";
+        private final List<InlineTextRun> inlineTextRuns = new ArrayList<>();
         private TextStyle textStyle = TextStyle.DEFAULT_STYLE;
         private TextAlign align = TextAlign.LEFT;
         private double lineSpacing = 0.0;
@@ -478,6 +480,7 @@ public final class DocumentDsl {
 
         public ParagraphBuilder text(String text) {
             this.text = text == null ? "" : text;
+            this.inlineTextRuns.clear();
             return this;
         }
 
@@ -511,6 +514,37 @@ public final class DocumentDsl {
             return this;
         }
 
+        public ParagraphBuilder inlineText(String text) {
+            return inlineText(text, null, null);
+        }
+
+        public ParagraphBuilder inlineText(String text, TextStyle textStyle) {
+            return inlineText(text, textStyle, null);
+        }
+
+        public ParagraphBuilder inlineLink(String text, PdfLinkOptions linkOptions) {
+            return inlineText(text, null, linkOptions);
+        }
+
+        public ParagraphBuilder inlineText(String text, TextStyle textStyle, PdfLinkOptions linkOptions) {
+            this.inlineTextRuns.add(new InlineTextRun(text, textStyle, linkOptions));
+            this.text = "";
+            return this;
+        }
+
+        public ParagraphBuilder inlineRuns(List<InlineTextRun> inlineTextRuns) {
+            this.inlineTextRuns.clear();
+            if (inlineTextRuns != null) {
+                inlineTextRuns.stream()
+                        .filter(Objects::nonNull)
+                        .forEach(this.inlineTextRuns::add);
+            }
+            if (!this.inlineTextRuns.isEmpty()) {
+                this.text = "";
+            }
+            return this;
+        }
+
         public ParagraphBuilder bookmark(PdfBookmarkOptions bookmarkOptions) {
             this.bookmarkOptions = bookmarkOptions;
             return this;
@@ -538,6 +572,7 @@ public final class DocumentDsl {
             return new ParagraphNode(
                     name,
                     text,
+                    List.copyOf(inlineTextRuns),
                     textStyle,
                     align,
                     lineSpacing,

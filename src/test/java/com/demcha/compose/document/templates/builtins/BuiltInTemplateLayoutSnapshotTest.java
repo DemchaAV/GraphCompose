@@ -34,6 +34,17 @@ class BuiltInTemplateLayoutSnapshotTest {
     }
 
     @Test
+    void shouldMatchExecutiveSlateLayoutSnapshot() throws Exception {
+        var original = TemplateTestSupport.canonicalCv();
+        var rewritten = TemplateTestSupport.rewrite(original);
+
+        try (DocumentSession document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 20, 20, 20, 20)) {
+            new ExecutiveSlateCvTemplate().compose(document, original, rewritten);
+            TemplateTestSupport.assertCanonicalSnapshot(document, "executive_slate_standard", "cv");
+        }
+    }
+
+    @Test
     void shouldMatchInvoiceLayoutSnapshotAndRenderPdf() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("invoice_layout_snapshot", "clean", "templates", "invoice");
 

@@ -23,6 +23,7 @@ import com.demcha.compose.markdown.MarkDownParser;
 import com.demcha.compose.document.model.node.BarcodeNode;
 import com.demcha.compose.document.model.node.ContainerNode;
 import com.demcha.compose.document.model.node.ImageNode;
+import com.demcha.compose.document.model.node.InlineTextRun;
 import com.demcha.compose.document.model.node.ListNode;
 import com.demcha.compose.document.model.node.PageBreakNode;
 import com.demcha.compose.document.model.node.ParagraphNode;
@@ -38,6 +39,8 @@ import java.util.Objects;
 
 /**
  * Registers the first semantic built-ins for the v2 document graph.
+ *
+ * @author Artem Demchyshyn
  */
 public final class BuiltInNodeDefinitions {
     private static final double EPS = 1e-6;
@@ -60,10 +63,14 @@ public final class BuiltInNodeDefinitions {
                 .register(new TableDefinition());
     }
 
-    public record ParagraphSpan(String text, TextStyle textStyle, double width) {
+    public record ParagraphSpan(String text, TextStyle textStyle, double width, PdfLinkOptions linkOptions) {
         public ParagraphSpan {
             text = text == null ? "" : text;
             textStyle = textStyle == null ? TextStyle.DEFAULT_STYLE : textStyle;
+        }
+
+        public ParagraphSpan(String text, TextStyle textStyle, double width) {
+            this(text, textStyle, width, null);
         }
     }
 
@@ -875,7 +882,15 @@ public final class BuiltInNodeDefinitions {
                                                                  boolean markdownEnabled) {
         List<String> logicalLines = sanitizeLogicalLines(node.text());
         boolean useMarkdownLayout = markdownEnabled && logicalLines.stream().anyMatch(BuiltInNodeDefinitions::containsMarkdownSyntax);
-        List<ParagraphLine> visualLines = useMarkdownLayout
+        List<ParagraphLine> visualLines = !node.inlineTextRuns().isEmpty()
+                ? wrapInlineParagraph(
+                        node.inlineTextRuns(),
+                        node.textStyle(),
+                        Math.max(0.0, innerWidth),
+                        node.bulletOffset(),
+                        node.indentStrategy(),
+                        measurement)
+                : useMarkdownLayout
                 ? wrapMarkdownParagraph(
                         logicalLines,
                         node.textStyle(),
@@ -937,6 +952,7 @@ public final class BuiltInNodeDefinitions {
         ParagraphNode fragmentNode = new ParagraphNode(
                 source.name(),
                 String.join("\n", sliceLogicalLines),
+                source.inlineTextRuns(),
                 source.textStyle(),
                 source.align(),
                 source.lineSpacing(),
@@ -1077,6 +1093,109 @@ public final class BuiltInNodeDefinitions {
                     width,
                     List.of(new ParagraphSpan(safeLine, style, width))));
         }
+        return List.copyOf(result);
+    }
+
+    private static List<ParagraphLine> wrapInlineParagraph(List<InlineTextRun> runs,
+                                                           TextStyle defaultStyle,
+                                                           double maxWidth,
+                                                           String bulletOffset,
+                                                           BlockIndentStrategy indentStrategy,
+                                                           TextMeasurementSystem measurement) {
+        List<ParagraphLine> result = new ArrayList<>();
+        ParagraphIndentSpec indentSpec = ParagraphIndentSpec.from(bulletOffset, defaultStyle, measurement);
+        List<List<InlineLayoutToken>> logicalLines = tokenizeInlineRuns(runs, defaultStyle);
+
+        for (int logicalLineIndex = 0; logicalLineIndex < logicalLines.size(); logicalLineIndex++) {
+            List<InlineLayoutToken> logicalLine = logicalLines.get(logicalLineIndex);
+            if (logicalLine.isEmpty() || maxWidth <= EPS) {
+                result.add(new ParagraphLine("", 0.0, List.of()));
+                continue;
+            }
+
+            String initialPrefix = "";
+            if (logicalLineIndex == 0) {
+                if (indentStrategy.indentFirstLine()) {
+                    initialPrefix = indentSpec.firstLinePrefix();
+                }
+            } else if (indentStrategy.indentWrappedLines()) {
+                initialPrefix = indentSpec.continuationPrefix();
+            }
+
+            String continuationPrefix = indentStrategy.indentWrappedLines()
+                    ? indentSpec.continuationPrefix()
+                    : "";
+
+            List<InlineLayoutToken> currentLine = new ArrayList<>();
+            if (!initialPrefix.isEmpty()) {
+                currentLine.add(new InlineLayoutToken(initialPrefix, defaultStyle, null));
+            }
+            double currentWidth = inlineLineWidth(currentLine, measurement);
+
+            for (InlineLayoutToken token : logicalLine) {
+                InlineLayoutToken sanitizedToken = trimLeadingIfInlineLineStart(token, currentLine);
+                if (sanitizedToken == null || sanitizedToken.text().isEmpty()) {
+                    continue;
+                }
+
+                double tokenWidth = measurement.textWidth(sanitizedToken.textStyle(), sanitizedToken.text());
+                if (currentLine.isEmpty() || currentWidth + tokenWidth <= maxWidth + EPS) {
+                    currentLine.add(sanitizedToken);
+                    currentWidth += tokenWidth;
+                    continue;
+                }
+
+                if (!currentLine.isEmpty()) {
+                    result.add(toInlineParagraphLine(currentLine, measurement));
+                }
+                currentLine = new ArrayList<>();
+                if (!continuationPrefix.isEmpty()) {
+                    currentLine.add(new InlineLayoutToken(continuationPrefix, defaultStyle, null));
+                }
+                currentWidth = inlineLineWidth(currentLine, measurement);
+
+                sanitizedToken = trimLeadingIfInlineLineStart(token, currentLine);
+                if (sanitizedToken == null || sanitizedToken.text().isEmpty()) {
+                    continue;
+                }
+                tokenWidth = measurement.textWidth(sanitizedToken.textStyle(), sanitizedToken.text());
+                if (currentWidth + tokenWidth <= maxWidth + EPS) {
+                    currentLine.add(sanitizedToken);
+                    currentWidth += tokenWidth;
+                    continue;
+                }
+
+                List<String> chunks = splitLongToken(
+                        sanitizedToken.text(),
+                        sanitizedToken.textStyle(),
+                        Math.max(1.0, maxWidth - currentWidth),
+                        measurement);
+                for (int chunkIndex = 0; chunkIndex < chunks.size(); chunkIndex++) {
+                    String chunk = chunks.get(chunkIndex);
+                    if (chunk.isEmpty()) {
+                        continue;
+                    }
+                    InlineLayoutToken chunkToken = new InlineLayoutToken(
+                            chunk,
+                            sanitizedToken.textStyle(),
+                            sanitizedToken.linkOptions());
+                    currentLine.add(chunkToken);
+                    currentWidth += measurement.textWidth(chunkToken.textStyle(), chunkToken.text());
+
+                    if (chunkIndex < chunks.size() - 1) {
+                        result.add(toInlineParagraphLine(currentLine, measurement));
+                        currentLine = new ArrayList<>();
+                        if (!continuationPrefix.isEmpty()) {
+                            currentLine.add(new InlineLayoutToken(continuationPrefix, defaultStyle, null));
+                        }
+                        currentWidth = inlineLineWidth(currentLine, measurement);
+                    }
+                }
+            }
+
+            result.add(toInlineParagraphLine(currentLine, measurement));
+        }
+
         return List.copyOf(result);
     }
 
@@ -1298,6 +1417,101 @@ public final class BuiltInNodeDefinitions {
         return new ParagraphLine(text.toString(), width, spans);
     }
 
+    private static List<List<InlineLayoutToken>> tokenizeInlineRuns(List<InlineTextRun> runs, TextStyle defaultStyle) {
+        List<List<InlineLayoutToken>> lines = new ArrayList<>();
+        List<InlineLayoutToken> currentLine = new ArrayList<>();
+
+        for (InlineTextRun run : runs) {
+            if (run == null || run.text().isEmpty()) {
+                continue;
+            }
+            TextStyle style = run.textStyle() == null ? defaultStyle : run.textStyle();
+            String normalized = BlockText.sanitizeText(run.text().replace("\r\n", "\n").replace('\r', '\n'));
+            String[] parts = normalized.split("\n", -1);
+            for (int partIndex = 0; partIndex < parts.length; partIndex++) {
+                if (partIndex > 0) {
+                    lines.add(List.copyOf(currentLine));
+                    currentLine = new ArrayList<>();
+                }
+                if (parts[partIndex].isEmpty()) {
+                    continue;
+                }
+                for (String token : tokenize(parts[partIndex])) {
+                    currentLine.add(new InlineLayoutToken(token, style, run.linkOptions()));
+                }
+            }
+        }
+
+        lines.add(List.copyOf(currentLine));
+        return List.copyOf(lines);
+    }
+
+    private static ParagraphLine toInlineParagraphLine(List<InlineLayoutToken> tokens,
+                                                       TextMeasurementSystem measurement) {
+        List<InlineLayoutToken> trimmedTokens = trimTrailingWhitespaceTokens(tokens);
+        if (trimmedTokens.isEmpty()) {
+            return new ParagraphLine("", 0.0, List.of());
+        }
+
+        List<ParagraphSpan> spans = new ArrayList<>(trimmedTokens.size());
+        StringBuilder text = new StringBuilder();
+        double width = 0.0;
+        for (InlineLayoutToken token : trimmedTokens) {
+            double tokenWidth = measurement.textWidth(token.textStyle(), token.text());
+            spans.add(new ParagraphSpan(token.text(), token.textStyle(), tokenWidth, token.linkOptions()));
+            text.append(token.text());
+            width += tokenWidth;
+        }
+
+        return new ParagraphLine(text.toString(), width, spans);
+    }
+
+    private static double inlineLineWidth(List<InlineLayoutToken> tokens,
+                                          TextMeasurementSystem measurement) {
+        double width = 0.0;
+        for (InlineLayoutToken token : tokens) {
+            width += measurement.textWidth(token.textStyle(), token.text());
+        }
+        return width;
+    }
+
+    private static List<InlineLayoutToken> trimTrailingWhitespaceTokens(List<InlineLayoutToken> tokens) {
+        int end = tokens.size();
+        while (end > 0) {
+            InlineLayoutToken candidate = tokens.get(end - 1);
+            if (candidate == null || candidate.text() == null || candidate.text().isBlank()) {
+                end--;
+                continue;
+            }
+            break;
+        }
+        return end <= 0 ? List.of() : List.copyOf(tokens.subList(0, end));
+    }
+
+    private static InlineLayoutToken trimLeadingIfInlineLineStart(InlineLayoutToken token,
+                                                                  List<InlineLayoutToken> currentLine) {
+        if (token == null) {
+            return null;
+        }
+        if (!inlineLineHasVisibleContent(currentLine)) {
+            String trimmed = token.text() == null ? "" : token.text().stripLeading();
+            if (trimmed.isEmpty()) {
+                return null;
+            }
+            return new InlineLayoutToken(trimmed, token.textStyle(), token.linkOptions());
+        }
+        return token;
+    }
+
+    private static boolean inlineLineHasVisibleContent(List<InlineLayoutToken> tokens) {
+        for (InlineLayoutToken token : tokens) {
+            if (token != null && token.text() != null && !token.text().isBlank()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static List<TextDataBody> trimTrailingWhitespaceBodies(List<TextDataBody> bodies) {
         int end = bodies.size();
         while (end > 0) {
@@ -1482,7 +1696,7 @@ public final class BuiltInNodeDefinitions {
                         sanitizeCellLines(rowValues.get(columnIndex)),
                         resolvedStyles.get(columnIndex),
                         fillInsets(stylesByRow, rowIndex, columnIndex),
-                        borderSides(rowIndex, columnIndex)));
+                        borderSides(stylesByRow, rowIndex, columnIndex)));
                 x += finalWidths[columnIndex];
             }
             rows.add(List.copyOf(cells));
@@ -1648,7 +1862,13 @@ public final class BuiltInNodeDefinitions {
                                             TextMeasurementSystem measurement) {
         Padding padding = style.padding() == null ? Padding.zero() : style.padding();
         int lineCount = Math.max(1, sanitizeCellLines(cell).size());
-        return lineCount * measurement.lineHeight(style.textStyle()) + padding.vertical();
+        return (lineCount * measurement.lineHeight(style.textStyle()))
+                + ((lineCount - 1) * tableCellLineSpacing(style))
+                + padding.vertical();
+    }
+
+    private static double tableCellLineSpacing(TableCellStyle style) {
+        return style.lineSpacing() == null ? 0.0 : style.lineSpacing();
     }
 
     private static List<TableColumnSpec> normalizeSpecs(TableNode node, int columnCount) {
@@ -1680,12 +1900,12 @@ public final class BuiltInNodeDefinitions {
         }
     }
 
-    private static EnumSet<Side> borderSides(int rowIndex, int columnIndex) {
+    private static EnumSet<Side> borderSides(List<List<TableCellStyle>> stylesByRow, int rowIndex, int columnIndex) {
         EnumSet<Side> sides = EnumSet.of(Side.BOTTOM, Side.RIGHT);
-        if (rowIndex == 0) {
+        if (ownsTopBoundary(stylesByRow, rowIndex, columnIndex)) {
             sides.add(Side.TOP);
         }
-        if (columnIndex == 0) {
+        if (ownsLeftBoundary(stylesByRow, rowIndex, columnIndex)) {
             sides.add(Side.LEFT);
         }
         return sides;
@@ -1700,17 +1920,25 @@ public final class BuiltInNodeDefinitions {
     }
 
     private static double topBoundaryStrokeWidth(List<List<TableCellStyle>> stylesByRow, int rowIndex, int columnIndex) {
-        if (rowIndex == 0) {
+        if (ownsTopBoundary(stylesByRow, rowIndex, columnIndex)) {
             return strokeWidth(stylesByRow.get(rowIndex).get(columnIndex));
         }
         return strokeWidth(stylesByRow.get(rowIndex - 1).get(columnIndex));
     }
 
     private static double leftBoundaryStrokeWidth(List<List<TableCellStyle>> stylesByRow, int rowIndex, int columnIndex) {
-        if (columnIndex == 0) {
+        if (ownsLeftBoundary(stylesByRow, rowIndex, columnIndex)) {
             return strokeWidth(stylesByRow.get(rowIndex).get(columnIndex));
         }
         return strokeWidth(stylesByRow.get(rowIndex).get(columnIndex - 1));
+    }
+
+    private static boolean ownsTopBoundary(List<List<TableCellStyle>> stylesByRow, int rowIndex, int columnIndex) {
+        return rowIndex == 0 || !hasVisibleStroke(stylesByRow.get(rowIndex - 1).get(columnIndex));
+    }
+
+    private static boolean ownsLeftBoundary(List<List<TableCellStyle>> stylesByRow, int rowIndex, int columnIndex) {
+        return columnIndex == 0 || !hasVisibleStroke(stylesByRow.get(rowIndex).get(columnIndex - 1));
     }
 
     private static double strokeWidth(TableCellStyle style) {
@@ -1718,6 +1946,10 @@ public final class BuiltInNodeDefinitions {
             return 0.0;
         }
         return style.stroke().width();
+    }
+
+    private static boolean hasVisibleStroke(TableCellStyle style) {
+        return strokeWidth(style) > EPS;
     }
 
     private static List<String> sanitizeCellLines(TableCellSpec cell) {
@@ -1822,6 +2054,17 @@ public final class BuiltInNodeDefinitions {
             double finalWidth,
             double totalHeight
     ) {
+    }
+
+    private record InlineLayoutToken(
+            String text,
+            TextStyle textStyle,
+            PdfLinkOptions linkOptions
+    ) {
+        private InlineLayoutToken {
+            text = text == null ? "" : text;
+            textStyle = textStyle == null ? TextStyle.DEFAULT_STYLE : textStyle;
+        }
     }
 }
 

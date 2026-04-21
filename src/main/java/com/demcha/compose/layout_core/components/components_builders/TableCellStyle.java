@@ -9,19 +9,23 @@ import lombok.Builder;
 
 import java.awt.*;
 
+@Builder(toBuilder = true)
 /**
  * Shared cell styling model for {@link TableBuilder}.
  *
- * <p>All fields are optional in override styles. The builder applies property-wise merge in the order:
- * built-in defaults -> table default -> column override -> row override.</p>
+ * <p>All fields are optional in override styles. The builder applies
+ * property-wise merge in the order: built-in defaults, table default, column
+ * override, row override, then cell override.</p>
+ *
+ * @author Artem Demchyshyn
  */
-@Builder(toBuilder = true)
 public record TableCellStyle(
         Padding padding,
         Color fillColor,
         Stroke stroke,
         TextStyle textStyle,
-        Anchor textAnchor
+        Anchor textAnchor,
+        Double lineSpacing
 ) {
     public static final TableCellStyle DEFAULT = TableCellStyle.builder()
             .padding(Padding.of(4))
@@ -34,12 +38,26 @@ public record TableCellStyle(
                     .color(TextStyle.DEFAULT_STYLE.color())
                     .build())
             .textAnchor(Anchor.centerLeft())
+            .lineSpacing(0.0)
             .build();
 
     public TableCellStyle {
         validatePadding(padding);
         validateStroke(stroke);
         validateTextStyle(textStyle);
+        validateLineSpacing(lineSpacing);
+    }
+
+    /**
+     * Backward-compatible constructor for callers that do not need custom
+     * spacing between multiple text lines inside a cell.
+     */
+    public TableCellStyle(Padding padding,
+                          Color fillColor,
+                          Stroke stroke,
+                          TextStyle textStyle,
+                          Anchor textAnchor) {
+        this(padding, fillColor, stroke, textStyle, textAnchor, null);
     }
 
     public static TableCellStyle empty() {
@@ -58,7 +76,8 @@ public record TableCellStyle(
                 override.fillColor != null ? override.fillColor : base.fillColor,
                 override.stroke != null ? override.stroke : base.stroke,
                 override.textStyle != null ? override.textStyle : base.textStyle,
-                override.textAnchor != null ? override.textAnchor : base.textAnchor
+                override.textAnchor != null ? override.textAnchor : base.textAnchor,
+                override.lineSpacing != null ? override.lineSpacing : base.lineSpacing
         );
     }
 
@@ -86,6 +105,15 @@ public record TableCellStyle(
         }
         if (textStyle.size() <= 0) {
             throw new IllegalArgumentException("Cell text size must be greater than 0.");
+        }
+    }
+
+    private static void validateLineSpacing(Double lineSpacing) {
+        if (lineSpacing == null) {
+            return;
+        }
+        if (lineSpacing < 0 || Double.isNaN(lineSpacing) || Double.isInfinite(lineSpacing)) {
+            throw new IllegalArgumentException("Cell line spacing must be finite and non-negative.");
         }
     }
 }

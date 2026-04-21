@@ -64,7 +64,7 @@ public final class LegacyComposerTemplateComposeTarget implements TemplateCompos
                 .anchor(anchor(paragraph.align()))
                 .padding(paragraph.padding())
                 .margin(paragraph.margin());
-        builder.text(splitText(paragraph.text()), paragraph.style(), Padding.zero(), Margin.zero());
+        builder.text(splitText(plainText(paragraph)), paragraph.style(), Padding.zero(), Margin.zero());
         requireRoot().addChild(builder.build());
     }
 
@@ -149,6 +149,15 @@ public final class LegacyComposerTemplateComposeTarget implements TemplateCompos
     private List<String> splitText(String text) {
         String normalized = text == null ? "" : text.replace("\r\n", "\n");
         return List.of(normalized.split("\n"));
+    }
+
+    private String plainText(TemplateParagraphSpec paragraph) {
+        if (!paragraph.inlineTextRuns().isEmpty()) {
+            return paragraph.inlineTextRuns().stream()
+                    .map(run -> run.text() == null ? "" : run.text())
+                    .reduce("", String::concat);
+        }
+        return paragraph.text();
     }
 
     private String listPrefix(TemplateListSpec list) {

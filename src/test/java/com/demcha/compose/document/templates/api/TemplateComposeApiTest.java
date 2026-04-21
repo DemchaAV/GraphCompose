@@ -5,6 +5,7 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.builtins.CoverLetterTemplateV1;
 import com.demcha.compose.document.templates.builtins.CvTemplateV1;
 import com.demcha.compose.document.templates.builtins.EditorialBlueCvTemplate;
+import com.demcha.compose.document.templates.builtins.ExecutiveSlateCvTemplate;
 import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
 import com.demcha.compose.document.templates.builtins.ProposalTemplateV1;
 import com.demcha.compose.document.templates.builtins.WeeklyScheduleTemplateV1;
@@ -62,14 +63,17 @@ class TemplateComposeApiTest {
     void cvTemplateRegistryShouldResolveCanonicalBuiltIns() {
         CvTemplate standard = new CvTemplateV1();
         CvTemplate editorial = new EditorialBlueCvTemplate();
-        CvTemplateRegistry registry = new CvTemplateRegistry(List.of(standard, editorial));
+        CvTemplate executive = new ExecutiveSlateCvTemplate();
+        CvTemplateRegistry registry = new CvTemplateRegistry(List.of(standard, editorial, executive));
 
         assertThat(registry.getDefaultTemplateId()).isEqualTo("modern-professional");
         assertThat(registry.hasTemplate("modern-professional")).isTrue();
         assertThat(registry.hasTemplate("editorial-blue")).isTrue();
+        assertThat(registry.hasTemplate("executive-slate")).isTrue();
         assertThat(registry.getTemplate("modern-professional")).isSameAs(standard);
         assertThat(registry.getTemplateOrDefault("missing", "editorial-blue")).isSameAs(editorial);
-        assertThat(registry.getAllTemplates()).containsExactlyInAnyOrder(standard, editorial);
+        assertThat(registry.getTemplate("executive-slate")).isSameAs(executive);
+        assertThat(registry.getAllTemplates()).containsExactlyInAnyOrder(standard, editorial, executive);
     }
 
     @Test
@@ -81,11 +85,14 @@ class TemplateComposeApiTest {
         assertComposesToPdf(PDRectangle.A4, 24, document -> new CvTemplateV1().compose(document, original, rewritten));
         assertComposesToPdf(PDRectangle.A4, 24, document -> new CvTemplateV1().compose(document, composeFirst));
         assertComposesToPdf(PDRectangle.A4, 18, document -> new EditorialBlueCvTemplate().compose(document, original, rewritten));
+        assertComposesToPdf(PDRectangle.A4, 20, document -> new ExecutiveSlateCvTemplate().compose(document, original, rewritten));
+        assertComposesToPdf(PDRectangle.A4, 20, document -> new ExecutiveSlateCvTemplate().compose(document, composeFirst));
     }
 
     @Test
     void cvTemplateV1ShouldExposeComposeFirstCvDocumentSpecOverload() throws Exception {
         assertMethodPresent(CvTemplateV1.class, "compose", DocumentSession.class, CvDocumentSpec.class);
+        assertMethodPresent(ExecutiveSlateCvTemplate.class, "compose", DocumentSession.class, CvDocumentSpec.class);
     }
 
     @Test

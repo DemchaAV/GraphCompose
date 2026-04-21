@@ -37,6 +37,8 @@ import java.util.Objects;
  * <p><b>Thread-safety:</b> instances are immutable after construction and can be
  * reused, but each {@link #render(LayoutGraph, FixedLayoutRenderContext)} call
  * creates a new page-scoped render session.</p>
+ *
+ * @author Artem Demchyshyn
  */
 public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
     private final Map<Class<?>, PdfFragmentRenderHandler<?>> handlers;
@@ -129,6 +131,9 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         Object payload = fragment.payload();
         PdfFragmentRenderHandler<Object> handler = handlerFor(payload);
         handler.render(fragment, payload, environment);
+        if (payload instanceof BuiltInNodeDefinitions.ParagraphFragmentPayload paragraphPayload) {
+            addParagraphSpanLinks(fragment, paragraphPayload, environment);
+        }
         if (payload instanceof BuiltInNodeDefinitions.PdfSemanticFragmentPayload semanticPayload) {
             if (semanticPayload.linkOptions() != null) {
                 PdfLinkAnnotationWriter.addUriLink(
@@ -142,6 +147,38 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         }
         if (guideLines) {
             PdfGuideLinesRenderer.draw(fragment, payload, environment);
+        }
+    }
+
+    private void addParagraphSpanLinks(PlacedFragment fragment,
+                                       BuiltInNodeDefinitions.ParagraphFragmentPayload payload,
+                                       PdfRenderEnvironment environment) throws Exception {
+        double innerX = fragment.x() + payload.padding().left();
+        double innerWidth = Math.max(0.0, fragment.width() - payload.padding().horizontal());
+        double contentTop = fragment.y() + fragment.height() - payload.padding().top();
+
+        for (int lineIndex = 0; lineIndex < payload.lines().size(); lineIndex++) {
+            BuiltInNodeDefinitions.ParagraphLine line = payload.lines().get(lineIndex);
+            double lineTop = contentTop - lineIndex * (payload.lineHeight() + payload.lineGap());
+            double lineX = switch (payload.align()) {
+                case RIGHT -> innerX + innerWidth - line.width();
+                case CENTER -> innerX + (innerWidth - line.width()) / 2.0;
+                case LEFT -> innerX;
+            };
+            double spanX = lineX;
+            for (BuiltInNodeDefinitions.ParagraphSpan span : line.spans()) {
+                if (span.linkOptions() != null && span.width() > 0.0) {
+                    PdfLinkAnnotationWriter.addUriLink(
+                            environment.document().getPage(fragment.pageIndex()),
+                            new PdfLinkAnnotationWriter.PlacedPdfRect(
+                                    spanX,
+                                    lineTop - payload.lineHeight(),
+                                    span.width(),
+                                    payload.lineHeight()),
+                            span.linkOptions());
+                }
+                spanX += span.width();
+            }
         }
     }
 

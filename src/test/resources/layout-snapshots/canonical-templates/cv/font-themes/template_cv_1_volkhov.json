@@ -22,15 +22,15 @@
     "depth" : 1,
     "layer" : 1,
     "computedX" : 15.0,
-    "computedY" : -142.216,
+    "computedY" : -116.416,
     "placementX" : 15.0,
-    "placementY" : -142.216,
+    "placementY" : -116.416,
     "placementWidth" : 570.276,
-    "placementHeight" : 969.106,
+    "placementHeight" : 943.306,
     "startPage" : 0,
     "endPage" : 1,
     "contentWidth" : 570.276,
-    "contentHeight" : 969.106,
+    "contentHeight" : 943.306,
     "margin" : {
       "top" : 0.0,
       "right" : 0.0,
@@ -134,77 +134,17 @@
       "left" : 0.0
     }
   }, {
-    "path" : "MainVBoxContainer[0]/ModuleHeaderLinks_1[3]",
-    "entityName" : "ModuleHeaderLinks_1",
+    "path" : "MainVBoxContainer[0]/SummaryHeading[3]",
+    "entityName" : "SummaryHeading",
     "entityKind" : "ParagraphNode",
     "parentPath" : "MainVBoxContainer[0]",
     "childIndex" : 3,
     "depth" : 2,
     "layer" : 2,
-    "computedX" : 15.0,
-    "computedY" : 751.36,
-    "placementX" : 15.0,
-    "placementY" : 751.36,
-    "placementWidth" : 560.276,
-    "placementHeight" : 12.9,
-    "startPage" : 0,
-    "endPage" : 0,
-    "contentWidth" : 560.276,
-    "contentHeight" : 12.9,
-    "margin" : {
-      "top" : 0.0,
-      "right" : 10.0,
-      "bottom" : 0.0,
-      "left" : 0.0
-    },
-    "padding" : {
-      "top" : 0.0,
-      "right" : 0.0,
-      "bottom" : 0.0,
-      "left" : 0.0
-    }
-  }, {
-    "path" : "MainVBoxContainer[0]/ModuleHeaderLinks_2[4]",
-    "entityName" : "ModuleHeaderLinks_2",
-    "entityKind" : "ParagraphNode",
-    "parentPath" : "MainVBoxContainer[0]",
-    "childIndex" : 4,
-    "depth" : 2,
-    "layer" : 2,
-    "computedX" : 15.0,
-    "computedY" : 738.46,
-    "placementX" : 15.0,
-    "placementY" : 738.46,
-    "placementWidth" : 560.276,
-    "placementHeight" : 12.9,
-    "startPage" : 0,
-    "endPage" : 0,
-    "contentWidth" : 560.276,
-    "contentHeight" : 12.9,
-    "margin" : {
-      "top" : 0.0,
-      "right" : 10.0,
-      "bottom" : 0.0,
-      "left" : 0.0
-    },
-    "padding" : {
-      "top" : 0.0,
-      "right" : 0.0,
-      "bottom" : 0.0,
-      "left" : 0.0
-    }
-  }, {
-    "path" : "MainVBoxContainer[0]/SummaryHeading[5]",
-    "entityName" : "SummaryHeading",
-    "entityKind" : "ParagraphNode",
-    "parentPath" : "MainVBoxContainer[0]",
-    "childIndex" : 5,
-    "depth" : 2,
-    "layer" : 2,
     "computedX" : 20.0,
-    "computedY" : 711.014,
+    "computedY" : 736.814,
     "placementX" : 20.0,
-    "placementY" : 711.014,
+    "placementY" : 736.814,
     "placementWidth" : 197.855,
     "placementHeight" : 22.446,
     "startPage" : 0,
@@ -224,17 +164,17 @@
       "left" : 0.0
     }
   }, {
-    "path" : "MainVBoxContainer[0]/SummaryBody[6]",
+    "path" : "MainVBoxContainer[0]/SummaryBody[4]",
     "entityName" : "SummaryBody",
     "entityKind" : "ParagraphNode",
     "parentPath" : "MainVBoxContainer[0]",
-    "childIndex" : 6,
+    "childIndex" : 4,
     "depth" : 2,
     "layer" : 2,
     "computedX" : 15.0,
-    "computedY" : 621.514,
+    "computedY" : 647.314,
     "placementX" : 15.0,
-    "placementY" : 621.514,
+    "placementY" : 647.314,
     "placementWidth" : 553.98,
     "placementHeight" : 84.5,
     "startPage" : 0,
@@ -254,17 +194,17 @@
       "left" : 20.0
     }
   }, {
-    "path" : "MainVBoxContainer[0]/TechnicalSkillsHeading[7]",
+    "path" : "MainVBoxContainer[0]/TechnicalSkillsHeading[5]",
     "entityName" : "TechnicalSkillsHeading",
     "entityKind" : "ParagraphNode",
     "parentPath" : "MainVBoxContainer[0]",
-    "childIndex" : 7,
+    "childIndex" : 5,
     "depth" : 2,
     "layer" : 2,
     "computedX" : 20.0,
-    "computedY" : 594.068,
+    "computedY" : 619.868,
     "placementX" : 20.0,
-    "placementY" : 594.068,
+    "placementY" : 619.868,
     "placementWidth" : 136.764,
     "placementHeight" : 22.446,
     "startPage" : 0,
@@ -284,17 +224,17 @@
       "left" : 0.0
     }
   }, {
-    "path" : "MainVBoxContainer[0]/TechnicalSkillsBody[8]",
+    "path" : "MainVBoxContainer[0]/TechnicalSkillsBody[6]",
     "entityName" : "TechnicalSkillsBody",
     "entityKind" : "ListNode",
     "parentPath" : "MainVBoxContainer[0]",
-    "childIndex" : 8,
+    "childIndex" : 6,
     "depth" : 2,
     "layer" : 2,
     "computedX" : 15.0,
-    "computedY" : 415.068,
+    "computedY" : 440.868,
     "placementX" : 15.0,
-    "placementY" : 415.068,
+    "placementY" : 440.868,
     "placementWidth" : 562.53,
     "placementHeight" : 174.0,
     "startPage" : 0,
@@ -314,17 +254,17 @@
       "left" : 20.0
     }
   }, {
-    "path" : "MainVBoxContainer[0]/EducationHeading[9]",
+    "path" : "MainVBoxContainer[0]/EducationHeading[7]",
     "entityName" : "EducationHeading",
     "entityKind" : "ParagraphNode",
     "parentPath" : "MainVBoxContainer[0]",
-    "childIndex" : 9,
+    "childIndex" : 7,
     "depth" : 2,
     "layer" : 2,
     "computedX" : 20.0,
-    "computedY" : 387.622,
+    "computedY" : 413.422,
     "placementX" : 20.0,
-    "placementY" : 387.622,
+    "placementY" : 413.422,
     "placementWidth" : 226.774,
     "placementHeight" : 22.446,
     "startPage" : 0,
@@ -344,17 +284,17 @@
       "left" : 0.0
     }
   }, {
-    "path" : "MainVBoxContainer[0]/EducationBody[10]",
+    "path" : "MainVBoxContainer[0]/EducationBody[8]",
     "entityName" : "EducationBody",
     "entityKind" : "ListNode",
     "parentPath" : "MainVBoxContainer[0]",
-    "childIndex" : 10,
+    "childIndex" : 8,
     "depth" : 2,
     "layer" : 2,
     "computedX" : 15.0,
-    "computedY" : 262.322,
+    "computedY" : 288.122,
     "placementX" : 15.0,
-    "placementY" : 262.322,
+    "placementY" : 288.122,
     "placementWidth" : 562.86,
     "placementHeight" : 120.3,
     "startPage" : 0,
@@ -374,17 +314,17 @@
       "left" : 20.0
     }
   }, {
-    "path" : "MainVBoxContainer[0]/ProjectsHeading[11]",
+    "path" : "MainVBoxContainer[0]/ProjectsHeading[9]",
     "entityName" : "ProjectsHeading",
     "entityKind" : "ParagraphNode",
     "parentPath" : "MainVBoxContainer[0]",
-    "childIndex" : 11,
+    "childIndex" : 9,
     "depth" : 2,
     "layer" : 2,
     "computedX" : 20.0,
-    "computedY" : 234.876,
+    "computedY" : 260.676,
     "placementX" : 20.0,
-    "placementY" : 234.876,
+    "placementY" : 260.676,
     "placementWidth" : 68.486,
     "placementHeight" : 22.446,
     "startPage" : 0,
@@ -404,17 +344,17 @@
       "left" : 0.0
     }
   }, {
-    "path" : "MainVBoxContainer[0]/ProjectsBody[12]",
+    "path" : "MainVBoxContainer[0]/ProjectsBody[10]",
     "entityName" : "ProjectsBody",
     "entityKind" : "ListNode",
     "parentPath" : "MainVBoxContainer[0]",
-    "childIndex" : 12,
+    "childIndex" : 10,
     "depth" : 2,
     "layer" : 2,
     "computedX" : 15.0,
-    "computedY" : 20.076,
+    "computedY" : 45.876,
     "placementX" : 15.0,
-    "placementY" : 20.076,
+    "placementY" : 45.876,
     "placementWidth" : 570.18,
     "placementHeight" : 209.8,
     "startPage" : 0,
@@ -434,11 +374,11 @@
       "left" : 20.0
     }
   }, {
-    "path" : "MainVBoxContainer[0]/ExperienceHeading[13]",
+    "path" : "MainVBoxContainer[0]/ExperienceHeading[11]",
     "entityName" : "ExperienceHeading",
     "entityKind" : "ParagraphNode",
     "parentPath" : "MainVBoxContainer[0]",
-    "childIndex" : 13,
+    "childIndex" : 11,
     "depth" : 2,
     "layer" : 2,
     "computedX" : 20.0,
@@ -464,11 +404,11 @@
       "left" : 0.0
     }
   }, {
-    "path" : "MainVBoxContainer[0]/ExperienceBody[14]",
+    "path" : "MainVBoxContainer[0]/ExperienceBody[12]",
     "entityName" : "ExperienceBody",
     "entityKind" : "ListNode",
     "parentPath" : "MainVBoxContainer[0]",
-    "childIndex" : 14,
+    "childIndex" : 12,
     "depth" : 2,
     "layer" : 2,
     "computedX" : 15.0,
@@ -494,11 +434,11 @@
       "left" : 20.0
     }
   }, {
-    "path" : "MainVBoxContainer[0]/AdditionalHeading[15]",
+    "path" : "MainVBoxContainer[0]/AdditionalHeading[13]",
     "entityName" : "AdditionalHeading",
     "entityKind" : "ParagraphNode",
     "parentPath" : "MainVBoxContainer[0]",
-    "childIndex" : 15,
+    "childIndex" : 13,
     "depth" : 2,
     "layer" : 2,
     "computedX" : 20.0,
@@ -524,11 +464,11 @@
       "left" : 0.0
     }
   }, {
-    "path" : "MainVBoxContainer[0]/AdditionalBody[16]",
+    "path" : "MainVBoxContainer[0]/AdditionalBody[14]",
     "entityName" : "AdditionalBody",
     "entityKind" : "ListNode",
     "parentPath" : "MainVBoxContainer[0]",
-    "childIndex" : 16,
+    "childIndex" : 14,
     "depth" : 2,
     "layer" : 2,
     "computedX" : 15.0,

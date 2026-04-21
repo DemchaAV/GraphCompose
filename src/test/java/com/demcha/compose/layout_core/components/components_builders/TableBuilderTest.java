@@ -83,10 +83,12 @@ class TableBuilderTest {
             TableCellStyle tableDefault = TableCellStyle.builder()
                     .fillColor(ComponentColor.LIGHT_GRAY)
                     .padding(Padding.of(2))
+                    .lineSpacing(1.0)
                     .build();
 
             TableCellStyle columnOverride = TableCellStyle.builder()
                     .fillColor(ComponentColor.BLUE)
+                    .lineSpacing(2.0)
                     .textStyle(TextStyle.builder()
                             .fontName(TextStyle.DEFAULT_STYLE.fontName())
                             .size(18)
@@ -125,10 +127,12 @@ class TableBuilderTest {
             assertThat(firstRowFirstCell.style().fillColor()).isEqualTo(ComponentColor.RED);
             assertThat(firstRowFirstCell.style().padding()).isEqualTo(Padding.of(8));
             assertThat(firstRowFirstCell.style().textStyle().size()).isEqualTo(18);
+            assertThat(firstRowFirstCell.style().lineSpacing()).isEqualTo(2.0);
 
             assertThat(secondRowFirstCell.style().fillColor()).isEqualTo(ComponentColor.BLUE);
             assertThat(secondRowFirstCell.style().padding()).isEqualTo(Padding.of(2));
             assertThat(secondRowFirstCell.style().textStyle().size()).isEqualTo(18);
+            assertThat(secondRowFirstCell.style().lineSpacing()).isEqualTo(2.0);
         }
     }
 
@@ -235,6 +239,43 @@ class TableBuilderTest {
             assertThat(multilineCell.width()).isEqualTo(singleLineCell.width());
             assertThat(multilineCell.height()).isEqualTo(expectedMultilineHeight);
             assertThat(multilineCell.lines()).containsExactly("Short", "Longest visible metric label");
+        }
+    }
+
+    @Test
+    void shouldIncludeCellLineSpacingInMultilineCellHeight() throws Exception {
+        try (PdfComposer composer = GraphCompose.pdf().create()) {
+            TableCellStyle style = TableCellStyle.builder()
+                    .padding(Padding.zero())
+                    .lineSpacing(2.5)
+                    .build();
+
+            Entity multilineTable = composer.componentBuilder()
+                    .table()
+                    .entityName("MultilineLineSpacingTable")
+                    .defaultCellStyle(style)
+                    .row(TableCellSpec.lines("Short", "Longer line"))
+                    .build();
+
+            Entity singleLineTable = composer.componentBuilder()
+                    .table()
+                    .entityName("SingleLineSpacingTable")
+                    .defaultCellStyle(style)
+                    .row("Short")
+                    .build();
+
+            TableResolvedCell multilineCell = child(multilineTable, 0)
+                    .getComponent(TableRowData.class)
+                    .orElseThrow()
+                    .cells()
+                    .getFirst();
+            TableResolvedCell singleLineCell = child(singleLineTable, 0)
+                    .getComponent(TableRowData.class)
+                    .orElseThrow()
+                    .cells()
+                    .getFirst();
+
+            assertThat(multilineCell.height()).isEqualTo((2 * singleLineCell.height()) + 2.5);
         }
     }
 

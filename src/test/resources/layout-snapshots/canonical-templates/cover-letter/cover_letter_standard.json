@@ -134,13 +134,43 @@
       "left" : 0.0
     }
   }, {
-    "path" : "MainVBoxContainer[0]/CoverLetterBody[3]",
-    "entityName" : "CoverLetterBody",
-    "entityKind" : "ParagraphNode",
+    "path" : "MainVBoxContainer[0]/CoverLetterBodyModule[3]",
+    "entityName" : "CoverLetterBodyModule",
+    "entityKind" : "SectionNode",
     "parentPath" : "MainVBoxContainer[0]",
     "childIndex" : 3,
     "depth" : 2,
     "layer" : 2,
+    "computedX" : 15.0,
+    "computedY" : 313.165,
+    "placementX" : 15.0,
+    "placementY" : 313.165,
+    "placementWidth" : 569.14,
+    "placementHeight" : 465.25,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 569.14,
+    "contentHeight" : 465.25,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "MainVBoxContainer[0]/CoverLetterBodyModule[3]/CoverLetterBody[0]",
+    "entityName" : "CoverLetterBody",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "MainVBoxContainer[0]/CoverLetterBodyModule[3]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
     "computedX" : 15.0,
     "computedY" : 313.165,
     "placementX" : 15.0,
@@ -164,13 +194,43 @@
       "left" : 20.0
     }
   }, {
-    "path" : "MainVBoxContainer[0]/CoverLetterClosing[4]",
-    "entityName" : "CoverLetterClosing",
-    "entityKind" : "ParagraphNode",
+    "path" : "MainVBoxContainer[0]/CoverLetterClosingModule[4]",
+    "entityName" : "CoverLetterClosingModule",
+    "entityKind" : "SectionNode",
     "parentPath" : "MainVBoxContainer[0]",
     "childIndex" : 4,
     "depth" : 2,
     "layer" : 2,
+    "computedX" : 15.0,
+    "computedY" : 272.445,
+    "placementX" : 15.0,
+    "placementY" : 272.445,
+    "placementWidth" : 570.276,
+    "placementHeight" : 40.72,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 570.276,
+    "contentHeight" : 40.72,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "MainVBoxContainer[0]/CoverLetterClosingModule[4]/CoverLetterClosing[0]",
+    "entityName" : "CoverLetterClosing",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "MainVBoxContainer[0]/CoverLetterClosingModule[4]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
     "computedX" : 15.0,
     "computedY" : 272.445,
     "placementX" : 15.0,

@@ -9,7 +9,7 @@ import com.demcha.compose.layout_core.components.layout.coordinator.Placement;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testsupport.EngineComposerHarness;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -32,7 +32,7 @@ class ImageIntegrationTest {
     void shouldRenderSingleImageWithGuides() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("image_single_guides", "guides", "integration");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(20, 20, 20, 20)
                 .guideLines(true)
@@ -57,7 +57,7 @@ class ImageIntegrationTest {
     void shouldRenderSingleImageWithoutGuides() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("image_single_clean", "clean", "integration");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(20, 20, 20, 20)
                 .guideLines(false)
@@ -83,7 +83,7 @@ class ImageIntegrationTest {
         Path outputFile = VisualTestOutputs.preparePdf("image_vcontainer_pagination", "guides", "integration");
         Placement imagePlacement;
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(20, 20, 20, 20)
                 .guideLines(true)
@@ -130,7 +130,7 @@ class ImageIntegrationTest {
         Entity[] images = new Entity[15];
         Placement[] placements = new Placement[15];
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(20, 20, 20, 20)
                 .guideLines(true)
@@ -177,7 +177,7 @@ class ImageIntegrationTest {
 
     @Test
     void shouldReuseOriginalAndCreateOnlyNeededVariantsInComposer() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf()
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf()
                 .pageSize(PDRectangle.A4)
                 .margin(20, 20, 20, 20)
                 .create()) {

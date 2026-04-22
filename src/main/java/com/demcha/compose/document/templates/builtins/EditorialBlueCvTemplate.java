@@ -4,10 +4,10 @@ import com.demcha.compose.font_library.FontName;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.CvTemplate;
-import com.demcha.compose.document.templates.data.MainPageCV;
-import com.demcha.compose.document.templates.data.MainPageCvDTO;
-import com.demcha.compose.document.templates.support.EditorialBlueCvTemplateComposer;
-import com.demcha.compose.document.templates.support.SessionTemplateComposeTarget;
+import com.demcha.compose.document.templates.data.cv.MainPageCV;
+import com.demcha.compose.document.templates.data.cv.MainPageCvDTO;
+import com.demcha.compose.document.templates.support.cv.EditorialBlueCvTemplateComposer;
+import com.demcha.compose.document.templates.support.common.SessionTemplateComposeTarget;
 import com.demcha.compose.document.templates.theme.CvTheme;
 
 import java.awt.Color;

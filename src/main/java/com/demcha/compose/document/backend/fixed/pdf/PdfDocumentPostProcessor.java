@@ -23,7 +23,7 @@ import java.util.List;
  * Applies canonical document-level PDF chrome after the semantic backend has
  * finished fragment rendering.
  *
- * <p>The processor reuses the production-grade legacy PDF helpers internally
+ * <p>The processor reuses the production-grade PDF backend helpers internally
  * while exposing only canonical {@code document.*} DTOs to callers.</p>
  */
 public final class PdfDocumentPostProcessor {
@@ -49,7 +49,7 @@ public final class PdfDocumentPostProcessor {
                              PdfProtectionOptions protectionOptions,
                              Collection<PdfHeaderFooterOptions> headerFooterOptions) throws IOException {
         if (watermarkOptions != null) {
-            PdfWatermarkRenderer.apply(document, PdfOptionsAdapter.toLegacy(watermarkOptions));
+            PdfWatermarkRenderer.apply(document, PdfOptionsAdapter.toEngine(watermarkOptions));
         }
 
         if (headerFooterOptions != null && !headerFooterOptions.isEmpty()) {
@@ -58,7 +58,7 @@ public final class PdfDocumentPostProcessor {
             float marginRight = canvasMargin != null ? (float) canvasMargin.right() : 24f;
             List<com.demcha.compose.layout_core.components.content.header_footer.HeaderFooterConfig> configs =
                     headerFooterOptions.stream()
-                            .map(PdfOptionsAdapter::toLegacy)
+                            .map(PdfOptionsAdapter::toEngine)
                             .toList();
             PdfHeaderFooterRenderer.apply(document, configs, marginLeft, marginRight);
         }

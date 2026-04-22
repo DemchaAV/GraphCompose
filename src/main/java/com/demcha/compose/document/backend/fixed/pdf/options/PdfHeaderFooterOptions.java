@@ -10,7 +10,7 @@ import java.awt.Color;
 /**
  * Canonical repeating header/footer configuration for the semantic PDF API.
  *
- * <p>Text supports the same placeholder tokens as the legacy engine:
+ * <p>Text supports the standard PDF chrome placeholder tokens:
  * {@code {page}}, {@code {pages}}, and {@code {date}}.</p>
  */
 public final class PdfHeaderFooterOptions {

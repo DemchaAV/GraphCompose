@@ -7,7 +7,7 @@ import com.demcha.compose.layout_core.components.core.Entity;
 import com.demcha.compose.layout_core.components.geometry.ContentSize;
 import com.demcha.compose.layout_core.components.renderable.BarcodeComponent;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testsupport.EngineComposerHarness;
 import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.layout.Align;
 import org.apache.pdfbox.Loader;
@@ -33,7 +33,7 @@ class BarcodeBuilderTest {
 
     @Test
     void shouldCreateBarcodeEntityWithQrCodeTypeByDefault() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             Entity entity = composer.componentBuilder()
                     .barcode()
                     .data("https://example.com")
@@ -59,7 +59,7 @@ class BarcodeBuilderTest {
 
     @Test
     void shouldSetBarcodeTypeViaConvenienceMethods() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             Entity entity = composer.componentBuilder()
                     .barcode()
                     .data("12345678")
@@ -76,7 +76,7 @@ class BarcodeBuilderTest {
 
     @Test
     void shouldSetCustomColorsAndQuietZone() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             Entity entity = composer.componentBuilder()
                     .barcode()
                     .data("TEST")
@@ -99,7 +99,7 @@ class BarcodeBuilderTest {
 
     @Test
     void shouldFailWithoutData() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             BarcodeBuilder builder = composer.componentBuilder()
                     .barcode()
                     .size(100, 100)
@@ -117,7 +117,7 @@ class BarcodeBuilderTest {
     void shouldRenderQrCodeToPdf() throws Exception {
         Path outputFile = tempDir.resolve("barcode-qr.pdf");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .margin(40, 40, 40, 40)
                 .create()) {
             var cb = composer.componentBuilder();
@@ -142,7 +142,7 @@ class BarcodeBuilderTest {
     void shouldRenderCode128ToPdf() throws Exception {
         Path outputFile = tempDir.resolve("barcode-code128.pdf");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .margin(40, 40, 40, 40)
                 .create()) {
             var cb = composer.componentBuilder();
@@ -167,7 +167,7 @@ class BarcodeBuilderTest {
     void shouldRenderEan13ToPdf() throws Exception {
         Path outputFile = tempDir.resolve("barcode-ean13.pdf");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .margin(40, 40, 40, 40)
                 .create()) {
             var cb = composer.componentBuilder();
@@ -190,7 +190,7 @@ class BarcodeBuilderTest {
     void shouldRenderMultipleBarcodesInModule() throws Exception {
         Path outputFile = tempDir.resolve("barcode-multi.pdf");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .margin(40, 40, 40, 40)
                 .create()) {
             var cb = composer.componentBuilder();

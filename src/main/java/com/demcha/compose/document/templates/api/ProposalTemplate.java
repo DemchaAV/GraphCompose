@@ -1,7 +1,7 @@
 package com.demcha.compose.document.templates.api;
 
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.data.ProposalData;
+import com.demcha.compose.document.templates.data.proposal.ProposalData;
 
 /**
  * Canonical compose contract for reusable proposal templates.

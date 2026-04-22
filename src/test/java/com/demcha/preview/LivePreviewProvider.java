@@ -13,8 +13,8 @@ import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
-import com.demcha.compose.layout_core.core.DocumentComposer;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testsupport.EngineComposerHarness;
+import com.demcha.compose.testsupport.EngineComposerHarness;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
@@ -53,8 +53,8 @@ public final class LivePreviewProvider implements DevToolPreviewProvider, DevToo
         return outputPath;
     }
 
-    private PdfComposer createComposer(Path outputPath) {
-        return GraphCompose.pdf(outputPath)
+    private EngineComposerHarness createComposer(Path outputPath) {
+        return com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputPath)
                 .pageSize(PDRectangle.A4)
 //                .margin(32, 32, 32, 32)
                 .guideLines(true)
@@ -62,7 +62,7 @@ public final class LivePreviewProvider implements DevToolPreviewProvider, DevToo
                 .create();
     }
 
-    private void composeDocument(DocumentComposer composer) {
+    private void composeDocument(EngineComposerHarness composer) {
         var cb = composer.componentBuilder();
         var theme = CvTheme.defaultTheme();
         double width = composer.canvas().innerWidth();

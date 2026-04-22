@@ -2,11 +2,11 @@ package com.demcha.compose.document.templates.builtins;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.CvTemplate;
-import com.demcha.compose.document.templates.data.CvDocumentSpec;
-import com.demcha.compose.document.templates.data.MainPageCV;
-import com.demcha.compose.document.templates.data.MainPageCvDTO;
-import com.demcha.compose.document.templates.support.CvTemplateComposer;
-import com.demcha.compose.document.templates.support.SessionTemplateComposeTarget;
+import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
+import com.demcha.compose.document.templates.data.cv.MainPageCV;
+import com.demcha.compose.document.templates.data.cv.MainPageCvDTO;
+import com.demcha.compose.document.templates.support.cv.CvTemplateComposer;
+import com.demcha.compose.document.templates.support.common.SessionTemplateComposeTarget;
 import com.demcha.compose.document.templates.theme.CvTheme;
 
 import java.util.Objects;

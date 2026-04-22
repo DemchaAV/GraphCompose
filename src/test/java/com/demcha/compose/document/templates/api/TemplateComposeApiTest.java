@@ -9,14 +9,14 @@ import com.demcha.compose.document.templates.builtins.ExecutiveSlateCvTemplate;
 import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
 import com.demcha.compose.document.templates.builtins.ProposalTemplateV1;
 import com.demcha.compose.document.templates.builtins.WeeklyScheduleTemplateV1;
-import com.demcha.compose.document.templates.data.CvDocumentSpec;
-import com.demcha.compose.document.templates.data.Header;
-import com.demcha.compose.document.templates.data.InvoiceData;
-import com.demcha.compose.document.templates.data.JobDetails;
-import com.demcha.compose.document.templates.data.MainPageCV;
-import com.demcha.compose.document.templates.data.MainPageCvDTO;
-import com.demcha.compose.document.templates.data.ProposalData;
-import com.demcha.compose.document.templates.data.WeeklyScheduleData;
+import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
+import com.demcha.compose.document.templates.data.common.Header;
+import com.demcha.compose.document.templates.data.invoice.InvoiceData;
+import com.demcha.compose.document.templates.data.coverletter.JobDetails;
+import com.demcha.compose.document.templates.data.cv.MainPageCV;
+import com.demcha.compose.document.templates.data.cv.MainPageCvDTO;
+import com.demcha.compose.document.templates.data.proposal.ProposalData;
+import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
 import com.demcha.mock.CoverLetterMock;
 import com.demcha.mock.InvoiceDataFixtures;
 import com.demcha.mock.MainPageCVMock;
@@ -33,6 +33,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TemplateComposeApiTest {
+
+    @Test
+    void graphComposeShouldExposeCanonicalDocumentEntrypointOnly() {
+        List<String> methodNames = List.of(GraphCompose.class.getDeclaredMethods()).stream()
+                .map(Method::getName)
+                .toList();
+
+        assertThat(methodNames).contains("document");
+        assertThat(methodNames).doesNotContain("pdf");
+    }
 
     @Test
     void cvTemplateInterfaceShouldExposeDocumentSessionComposeContract() throws Exception {

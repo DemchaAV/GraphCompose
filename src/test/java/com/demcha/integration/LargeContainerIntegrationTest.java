@@ -6,7 +6,7 @@ import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testsupport.EngineComposerHarness;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -26,7 +26,7 @@ class LargeContainerIntegrationTest {
     void shouldRenderLargeContainerAcrossMultiplePages() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("large_container_test", "guides", "integration");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(10, 10, 10, 10)
                 .guideLines(true)
@@ -59,7 +59,7 @@ class LargeContainerIntegrationTest {
     void shouldRenderSmallContainerOnSinglePage() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("small_container_test", "guides", "integration");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(20, 20, 20, 20)
                 .guideLines(true)

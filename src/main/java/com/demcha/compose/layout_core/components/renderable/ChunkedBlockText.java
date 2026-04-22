@@ -6,8 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Legacy chunked block-text marker kept for compatibility until the engine
- * fully converges on the main block-text path.
+ * Chunked block-text marker kept until the engine fully converges on the
+ * main block-text path.
  */
 @Slf4j
 @Builder

@@ -1,8 +1,8 @@
 package com.demcha.compose.document.templates.api;
 
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.data.MainPageCV;
-import com.demcha.compose.document.templates.data.MainPageCvDTO;
+import com.demcha.compose.document.templates.data.cv.MainPageCV;
+import com.demcha.compose.document.templates.data.cv.MainPageCvDTO;
 
 /**
  * Canonical compose contract for reusable CV templates.

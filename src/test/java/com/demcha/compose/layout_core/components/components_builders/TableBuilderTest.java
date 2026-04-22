@@ -13,7 +13,7 @@ import com.demcha.compose.layout_core.components.content.shape.Side;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.EntityManager;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testsupport.EngineComposerHarness;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFont;
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +24,7 @@ class TableBuilderTest {
 
     @Test
     void shouldComputeFixedAndAutoColumnWidths() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             Entity table = composer.componentBuilder()
                     .table()
                     .entityName("MetricsTable")
@@ -47,7 +47,7 @@ class TableBuilderTest {
 
     @Test
     void shouldUseNaturalWidthWhenExplicitWidthIsNotProvided() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             Entity table = composer.componentBuilder()
                     .table()
                     .entityName("NaturalWidthTable")
@@ -65,7 +65,7 @@ class TableBuilderTest {
 
     @Test
     void shouldFailWhenRequestedWidthIsSmallerThanNaturalWidth() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             assertThatThrownBy(() -> composer.componentBuilder()
                     .table()
                     .columns(TableColumnSpec.auto(), TableColumnSpec.auto())
@@ -79,7 +79,7 @@ class TableBuilderTest {
 
     @Test
     void shouldApplyStylePrecedenceDefaultThenColumnThenRow() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             TableCellStyle tableDefault = TableCellStyle.builder()
                     .fillColor(ComponentColor.LIGHT_GRAY)
                     .padding(Padding.of(2))
@@ -138,7 +138,7 @@ class TableBuilderTest {
 
     @Test
     void shouldApplyCellOverrideAfterDefaultColumnAndRowStyles() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             TableCellStyle tableDefault = TableCellStyle.builder()
                     .fillColor(ComponentColor.LIGHT_GRAY)
                     .padding(Padding.of(2))
@@ -189,7 +189,7 @@ class TableBuilderTest {
 
     @Test
     void shouldPreserveStringRowApiAsSingleLineCellSpec() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             Entity table = composer.componentBuilder()
                     .table()
                     .entityName("StringApiTable")
@@ -208,7 +208,7 @@ class TableBuilderTest {
 
     @Test
     void shouldMeasureMultilineCellsUsingLongestLineAndLineCount() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             Entity multilineTable = composer.componentBuilder()
                     .table()
                     .entityName("MultilineTable")
@@ -244,7 +244,7 @@ class TableBuilderTest {
 
     @Test
     void shouldIncludeCellLineSpacingInMultilineCellHeight() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             TableCellStyle style = TableCellStyle.builder()
                     .padding(Padding.zero())
                     .lineSpacing(2.5)
@@ -296,7 +296,7 @@ class TableBuilderTest {
 
     @Test
     void shouldRejectEmptyTable() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             assertThatThrownBy(() -> composer.componentBuilder()
                     .table()
                     .entityName("EmptyTable")
@@ -308,7 +308,7 @@ class TableBuilderTest {
 
     @Test
     void shouldRejectRowsThatDoNotMatchResolvedColumnCount() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             assertThatThrownBy(() -> composer.componentBuilder()
                     .table()
                     .columns(TableColumnSpec.fixed(120), TableColumnSpec.auto())
@@ -321,7 +321,7 @@ class TableBuilderTest {
 
     @Test
     void shouldCreateStableRowAndCellNamesFromTableName() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             Entity table = composer.componentBuilder()
                     .table()
                     .entityName("Orders")
@@ -338,7 +338,7 @@ class TableBuilderTest {
 
     @Test
     void shouldAssignBordersToCurrentCellsSoTrailingPageLinesStayVisible() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             Entity table = composer.componentBuilder()
                     .table()
                     .entityName("BorderOwnership")
@@ -372,7 +372,7 @@ class TableBuilderTest {
 
     @Test
     void shouldLetCellOwnLeftBoundaryWhenInvisibleSpacerPrecedesIt() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             Entity table = composer.componentBuilder()
                     .table()
                     .entityName("InvisibleSpacerBoundary")
@@ -398,7 +398,7 @@ class TableBuilderTest {
 
     @Test
     void shouldLetCellOwnTopBoundaryWhenPreviousRowStrokeIsInvisible() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             Entity table = composer.componentBuilder()
                     .table()
                     .entityName("InvisiblePreviousRowBoundary")
@@ -425,7 +425,7 @@ class TableBuilderTest {
 
     @Test
     void shouldInsetFillUsingOwningNeighborStrokeWidths() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             Entity table = composer.componentBuilder()
                     .table()
                     .entityName("FillInsets")

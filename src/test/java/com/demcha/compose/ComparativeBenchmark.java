@@ -1,11 +1,7 @@
 package com.demcha.compose;
 
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
-import com.demcha.compose.layout_core.components.core.Entity;
-import com.demcha.compose.layout_core.components.layout.Align;
-import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.model.node.ContainerNode;
 import com.demcha.compose.document.model.node.ParagraphNode;
@@ -27,8 +23,7 @@ import java.util.List;
 
 /**
  * Fair Comparative Benchmark (CPU & RAM)
- * Compares GraphCompose legacy PDF composition, GraphCompose canonical semantic
- * composition, iText, and JasperReports by isolating the compilation phase
+ * Compares GraphCompose canonical semantic composition, iText, and JasperReports by isolating the compilation phase
  * and enforcing layout calculations.
  */
 public class ComparativeBenchmark {
@@ -52,7 +47,6 @@ public class ComparativeBenchmark {
         // Прогрев JVM (JIT компилятор)
         System.out.println("Warming up JVM...");
         for (int i = 0; i < WARMUP_ITERATIONS; i++) {
-            benchmarkGraphComposeLegacy();
             benchmarkGraphComposeCanonical();
             benchmarkIText();
             benchmarkJasper();
@@ -64,7 +58,6 @@ public class ComparativeBenchmark {
         System.out.println("------------------------------------------------------------");
 
         List<ComparativeRow> rows = List.of(
-                runBenchmark("GraphCompose Legacy", ComparativeBenchmark::benchmarkGraphComposeLegacy),
                 runBenchmark("GraphCompose Canonical", ComparativeBenchmark::benchmarkGraphComposeCanonical),
                 runBenchmark("iText 5 (Old)", ComparativeBenchmark::benchmarkIText),
                 runBenchmark("JasperReports", ComparativeBenchmark::benchmarkJasper)
@@ -128,36 +121,6 @@ public class ComparativeBenchmark {
                 round(avgTimeMs),
                 round(avgMemMb)
         );
-    }
-
-    /**
-     * GraphCompose legacy: тестируем текущий ECS/PdfComposer path.
-     */
-    private static byte[] benchmarkGraphComposeLegacy() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().pageSize(PDRectangle.A4).create()) {
-
-            Entity title = composer.componentBuilder().text().textWithAutoSize("INVOICE #12345")
-                    .textStyle(TextStyle.DEFAULT_STYLE)
-                    .build();
-            Entity customer = composer.componentBuilder().text().textWithAutoSize("Customer: John Doe")
-                    .textStyle(TextStyle.DEFAULT_STYLE)
-                    .build();
-            Entity amount = composer.componentBuilder().text().textWithAutoSize("Amount: $1,000.00")
-                    .textStyle(TextStyle.DEFAULT_STYLE)
-                    .build();
-
-            composer.componentBuilder()
-                    .vContainer(Align.defaultAlign(5)) // Вертикальный контейнер с отступом 5px
-                    .margin(Margin.of(20))
-                    .anchor(Anchor.topLeft())
-                    .addChild(title)
-                    .addChild(customer)
-                    .addChild(amount)
-                    .build();
-
-             // Запускаем Measure & Layout Pass
-            return composer.toBytes();
-        }
     }
 
     /**

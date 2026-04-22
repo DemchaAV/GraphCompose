@@ -21,13 +21,13 @@ import com.demcha.compose.layout_core.components.content.watermark.WatermarkPosi
 
 /**
  * Internal adapters from canonical {@code document.*} PDF options to the
- * existing production helper types in the legacy PDF engine.
+ * existing production helper types in the internal PDF backend.
  */
 final class PdfOptionsAdapter {
     private PdfOptionsAdapter() {
     }
 
-    static DocumentMetadata toLegacy(PdfMetadataOptions options) {
+    static DocumentMetadata toEngine(PdfMetadataOptions options) {
         if (options == null) {
             return null;
         }
@@ -41,7 +41,7 @@ final class PdfOptionsAdapter {
                 .build();
     }
 
-    static WatermarkConfig toLegacy(PdfWatermarkOptions options) {
+    static WatermarkConfig toEngine(PdfWatermarkOptions options) {
         if (options == null) {
             return null;
         }
@@ -58,7 +58,7 @@ final class PdfOptionsAdapter {
                 .build();
     }
 
-    static PdfProtectionConfig toLegacy(PdfProtectionOptions options) {
+    static PdfProtectionConfig toEngine(PdfProtectionOptions options) {
         if (options == null) {
             return null;
         }
@@ -76,7 +76,7 @@ final class PdfOptionsAdapter {
                 .build();
     }
 
-    static HeaderFooterConfig toLegacy(PdfHeaderFooterOptions options) {
+    static HeaderFooterConfig toEngine(PdfHeaderFooterOptions options) {
         if (options == null) {
             return null;
         }
@@ -94,7 +94,7 @@ final class PdfOptionsAdapter {
                 .build();
     }
 
-    static BarcodeData toLegacy(PdfBarcodeOptions options) {
+    static BarcodeData toEngine(PdfBarcodeOptions options) {
         if (options == null) {
             return null;
         }

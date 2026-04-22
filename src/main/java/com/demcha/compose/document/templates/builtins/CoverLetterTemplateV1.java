@@ -2,10 +2,10 @@ package com.demcha.compose.document.templates.builtins;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.CoverLetterTemplate;
-import com.demcha.compose.document.templates.data.Header;
-import com.demcha.compose.document.templates.data.JobDetails;
-import com.demcha.compose.document.templates.support.CoverLetterTemplateComposer;
-import com.demcha.compose.document.templates.support.SessionTemplateComposeTarget;
+import com.demcha.compose.document.templates.data.common.Header;
+import com.demcha.compose.document.templates.data.coverletter.JobDetails;
+import com.demcha.compose.document.templates.support.business.CoverLetterTemplateComposer;
+import com.demcha.compose.document.templates.support.common.SessionTemplateComposeTarget;
 import com.demcha.compose.document.templates.theme.CvTheme;
 
 /**

@@ -5,7 +5,6 @@ This document explains the local and CI benchmark flow used in GraphCompose.
 The short version is:
 
 - `scripts/run-benchmarks.ps1` is the normal local entry point
-- `ArchitectureComparisonBenchmark` is an optional legacy-vs-canonical A/B suite
 - `CurrentSpeedBenchmark` has two profiles: `smoke` and `full`
 - current-speed diffs are only valid between reports from the same profile
 - repeated local runs should be compared via median aggregation, not by eyeballing one lucky run
@@ -39,22 +38,20 @@ The script prints numbered sections so you can map console output to the pipelin
 2. `02-current-speed`
    Runs `CurrentSpeedBenchmark` in the selected profile.
 3. `03-comparative`
-   Runs the low-level GraphCompose legacy vs GraphCompose canonical vs iText 5 vs JasperReports comparison.
-4. `03b-architecture-comparison`
-   Optional. Runs only when `-IncludeArchitectureComparison` is provided and prints low-level legacy-vs-canonical authoring numbers to the console.
-5. `04-core-engine`
+   Runs the GraphCompose canonical vs iText 5 vs JasperReports comparison.
+4. `04-core-engine`
    Runs `GraphComposeBenchmark`.
-6. `05-full-cv`
+5. `05-full-cv`
    Runs `FullCvBenchmark`.
-7. `06-scalability`
+6. `06-scalability`
    Runs the thread-scaling throughput benchmark.
-8. `07-stress`
+7. `07-stress`
    Runs the concurrent stability stress test.
-9. `08-endurance`
+8. `08-endurance`
    Optional. Runs only when `-IncludeEndurance` is provided.
-10. `09-diff-current-speed`
+9. `09-diff-current-speed`
    Diffs the newest compatible current-speed reports.
-11. `10-diff-comparative`
+10. `10-diff-comparative`
    Diffs the two newest comparative reports.
 
 Each step writes a dedicated log file under `target/benchmark-runs/<timestamp>/logs/`, and the wrapper mirrors that log back to the console after the step finishes.
@@ -101,7 +98,6 @@ When you pass `-Repeat N`, the wrapper reruns:
 
 - `current-speed`
 - `comparative`
-- `architecture-comparison` when `-IncludeArchitectureComparison` or `-OnlyArchitectureComparison` is active
 
 After that, it writes median aggregate reports and diffs median-vs-median on later runs. This is the preferred mode for local decision-making because it reduces noise from GC, background processes, JIT warmup differences, and filesystem activity.
 
@@ -124,29 +120,6 @@ powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -CurrentSp
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -CurrentSpeedProfile full
 ```
-
-### Show legacy vs canonical A/B numbers in the same wrapper run
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -CurrentSpeedProfile full -IncludeArchitectureComparison
-```
-
-That adds the `03b-architecture-comparison` stage and prints the `simple-flow`, `paragraph-flow`, and `table-flow` legacy-vs-canonical numbers directly into the console/log output.
-
-### Run only the legacy vs canonical A/B suite
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -CurrentSpeedProfile full -OnlyArchitectureComparison
-```
-
-This fast path keeps only:
-
-1. `01-build-classpath`
-2. `02-architecture-comparison-only`
-
-Use it when you only want the `legacy vs canonical` numbers and do not want to wait for `current-speed`, `comparative`, `core-engine`, `full-cv`, `scalability`, `stress`, or diff stages.
-
-`-Repeat N` also works in this fast path now, so you can build median A/B reports without running the rest of the suite.
 
 ### Safer local comparison after a performance-sensitive change
 
@@ -190,14 +163,6 @@ Typical contents:
 - suite-specific CSV exports
 - `latest.json` convenience copies
 - median aggregate reports under `aggregates/...`
-
-The optional A/B suite writes to:
-
-- `target/benchmarks/architecture-comparison/`
-- `latest.json`
-- `latest-layout.csv`
-- `latest-pdf.csv`
-- `latest-stages.csv`
 
 ## Running the Java entry points directly
 

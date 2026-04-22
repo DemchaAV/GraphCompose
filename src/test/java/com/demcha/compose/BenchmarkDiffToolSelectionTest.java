@@ -39,31 +39,6 @@ class BenchmarkDiffToolSelectionTest {
                 .hasMessageContaining("profile 'full'");
     }
 
-    @Test
-    void shouldCompareTwoNewestArchitectureComparisonRunsFromSameLatestProfile() throws Exception {
-        Path suiteDir = Files.createDirectories(tempDir.resolve("architecture-comparison"));
-        writeArchitectureComparisonRun(suiteDir.resolve("run-20260414-213121.json"), "smoke");
-        writeArchitectureComparisonRun(suiteDir.resolve("run-20260414-213539.json"), "full");
-        writeArchitectureComparisonRun(suiteDir.resolve("run-20260414-214100.json"), "smoke");
-        writeArchitectureComparisonRun(suiteDir.resolve("run-20260414-214500.json"), "full");
-
-        BenchmarkDiffTool.ResolvedRunPair pair = BenchmarkDiffTool.resolveLatestRunPaths(tempDir, "architecture-comparison");
-
-        assertThat(pair.baselinePath().getFileName().toString()).isEqualTo("run-20260414-213539.json");
-        assertThat(pair.candidatePath().getFileName().toString()).isEqualTo("run-20260414-214500.json");
-    }
-
-    @Test
-    void shouldRejectArchitectureComparisonSelectionWhenLatestProfileHasOnlyOneRun() throws Exception {
-        Path suiteDir = Files.createDirectories(tempDir.resolve("architecture-comparison"));
-        writeArchitectureComparisonRun(suiteDir.resolve("run-20260414-213121.json"), "smoke");
-        writeArchitectureComparisonRun(suiteDir.resolve("run-20260414-213539.json"), "full");
-
-        assertThatThrownBy(() -> BenchmarkDiffTool.resolveLatestRunPaths(tempDir, "architecture-comparison"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("profile 'full'");
-    }
-
     private void writeCurrentSpeedRun(Path path, String profile) throws Exception {
         Files.writeString(path, """
                 {
@@ -75,15 +50,4 @@ class BenchmarkDiffToolSelectionTest {
                 """.formatted(profile));
     }
 
-    private void writeArchitectureComparisonRun(Path path, String profile) throws Exception {
-        Files.writeString(path, """
-                {
-                  "timestamp": "2026-04-14 21:31:21",
-                  "profile": "%s",
-                  "layout": [],
-                  "pdf": [],
-                  "stages": []
-                }
-                """.formatted(profile));
-    }
 }

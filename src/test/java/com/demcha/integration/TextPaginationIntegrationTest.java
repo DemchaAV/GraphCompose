@@ -6,7 +6,7 @@ import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testsupport.EngineComposerHarness;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -25,7 +25,7 @@ class TextPaginationIntegrationTest {
     void shouldFillThreePagesWithText() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("text_pagination_three_pages", "clean", "integration");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(20, 20, 20, 20)
                 .guideLines(false)

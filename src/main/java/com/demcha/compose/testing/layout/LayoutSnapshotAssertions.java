@@ -1,7 +1,6 @@
 package com.demcha.compose.testing.layout;
 
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.layout_core.core.PdfComposer;
 import com.demcha.compose.layout_core.debug.LayoutSnapshot;
 
 import java.io.IOException;
@@ -15,8 +14,7 @@ import java.util.Objects;
  *
  * <p>The intended workflow is:</p>
  * <ol>
- *   <li>compose the document into the canonical {@link DocumentSession} or the
- *       deprecated {@link PdfComposer} compatibility adapter</li>
+ *   <li>compose the document into the canonical {@link DocumentSession}</li>
  *   <li>call one of the {@code assertMatches(...)} overloads</li>
  *   <li>optionally render the same session to PDF for human inspection</li>
  * </ol>
@@ -26,6 +24,8 @@ import java.util.Objects;
  * {@code .actual.json} artifact is written under
  * {@code target/visual-tests/layout-snapshots}. Local baseline updates are
  * opt-in via {@value #UPDATE_PROPERTY}.</p>
+ *
+ * @author Artem Demchyshyn
  */
 public final class LayoutSnapshotAssertions {
     /**
@@ -117,77 +117,32 @@ public final class LayoutSnapshotAssertions {
     }
 
     /**
-     * Resolves and compares a snapshot using a slash-delimited logical path.
+     * Resolves and compares a precomputed snapshot using a slash-delimited
+     * logical path.
      *
-     * <p>For example, passing {@code templates/invoice/invoice_standard_layout}
-     * compares against
-     * {@code src/test/resources/layout-snapshots/templates/invoice/invoice_standard_layout.json}.</p>
-     *
-     * @param composer composed document whose layout should be snapshotted
+     * @param snapshot resolved snapshot to compare
      * @param snapshotPath logical snapshot path relative to the default snapshot root
-     * @throws Exception if snapshot extraction or comparison fails
+     * @throws IOException if reading or writing snapshot files fails
      */
-    public static void assertMatches(PdfComposer composer, String snapshotPath) throws Exception {
+    public static void assertMatches(LayoutSnapshot snapshot, String snapshotPath) throws IOException {
         SnapshotTarget target = parseSnapshotPath(snapshotPath);
-        assertMatches(composer, target.snapshotName(), target.folders());
+        assertMatches(snapshot, target.snapshotName(), target.folders());
     }
 
     /**
-     * Resolves and compares a snapshot using an explicit file name plus folders.
+     * Resolves and compares a precomputed snapshot using an explicit file name
+     * plus folders.
      *
-     * @param composer composed document whose layout should be snapshotted
+     * @param snapshot resolved snapshot to compare
      * @param snapshotName file name without the {@code .json} suffix
      * @param folders optional folder segments under the default snapshot root
-     * @throws Exception if snapshot extraction or comparison fails
+     * @throws IOException if reading or writing snapshot files fails
      */
-    public static void assertMatches(PdfComposer composer, String snapshotName, String... folders) throws Exception {
+    public static void assertMatches(LayoutSnapshot snapshot, String snapshotName, String... folders) throws IOException {
         assertMatches(
-                composer.layoutSnapshot(),
+                snapshot,
                 EXPECTED_ROOT,
                 ACTUAL_ROOT,
-                Boolean.getBoolean(UPDATE_PROPERTY),
-                snapshotName,
-                folders);
-    }
-
-    /**
-     * Resolves and compares a snapshot using a slash-delimited logical path and
-     * caller-provided baseline roots.
-     *
-     * @param composer composed document whose layout should be snapshotted
-     * @param expectedRoot root folder that stores committed JSON baselines
-     * @param actualRoot root folder for mismatch artifacts
-     * @param snapshotPath logical snapshot path relative to {@code expectedRoot}
-     * @throws Exception if snapshot extraction or comparison fails
-     */
-    public static void assertMatches(PdfComposer composer,
-                                     Path expectedRoot,
-                                     Path actualRoot,
-                                     String snapshotPath) throws Exception {
-        SnapshotTarget target = parseSnapshotPath(snapshotPath);
-        assertMatches(composer, expectedRoot, actualRoot, target.snapshotName(), target.folders());
-    }
-
-    /**
-     * Resolves and compares a snapshot using an explicit file name plus folders
-     * and caller-provided baseline roots.
-     *
-     * @param composer composed document whose layout should be snapshotted
-     * @param expectedRoot root folder that stores committed JSON baselines
-     * @param actualRoot root folder for mismatch artifacts
-     * @param snapshotName file name without the {@code .json} suffix
-     * @param folders optional folder segments under {@code expectedRoot}
-     * @throws Exception if snapshot extraction or comparison fails
-     */
-    public static void assertMatches(PdfComposer composer,
-                                     Path expectedRoot,
-                                     Path actualRoot,
-                                     String snapshotName,
-                                     String... folders) throws Exception {
-        assertMatches(
-                composer.layoutSnapshot(),
-                expectedRoot,
-                actualRoot,
                 Boolean.getBoolean(UPDATE_PROPERTY),
                 snapshotName,
                 folders);

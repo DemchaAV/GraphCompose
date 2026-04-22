@@ -1,7 +1,7 @@
 package com.demcha.compose.font_library;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testsupport.EngineComposerHarness;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFont;
 import com.demcha.compose.layout_core.system.implemented_systems.word_systems.WordFont;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -15,8 +15,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FontLibraryIntegrationTest {
 
     @Test
-    void shouldExposeBundledGoogleFontsInPdfComposer() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+    void shouldExposeBundledGoogleFontsInEngineComposerHarness() throws Exception {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             assertThat(composer.availableFonts())
                     .contains(FontName.HELVETICA, FontName.LATO, FontName.IBM_PLEX_SERIF, FontName.ZILLA_SLAB,
                             FontName.KANIT, FontName.VOLKHOV, FontName.ANDIKA);
@@ -36,7 +36,7 @@ class FontLibraryIntegrationTest {
         FontName customFamily = FontName.of("Brand Sans");
         Path fontsRoot = Path.of("src", "main", "resources", "fonts", "google", "lato");
 
-        try (PdfComposer composer = GraphCompose.pdf()
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf()
                 .registerFontFamily(
                         customFamily,
                         fontsRoot.resolve("Lato-Regular.ttf"),

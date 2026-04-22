@@ -1,5 +1,7 @@
 package com.demcha.compose.layout_core.core;
 
+import com.demcha.compose.testsupport.EngineComposerHarness;
+
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.layout_core.components.content.barcode.BarcodeType;
 import com.demcha.compose.layout_core.components.content.header_footer.HeaderFooterConfig;
@@ -42,7 +44,7 @@ class NewFeaturesIntegrationTest {
     void shouldRenderTextWatermarkOnEveryPage() throws Exception {
         Path outputFile = tempDir.resolve("watermark-text.pdf");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .margin(40, 40, 40, 40)
                 .create()) {
 
@@ -68,7 +70,7 @@ class NewFeaturesIntegrationTest {
     void shouldRenderCustomWatermarkWithFullConfig() throws Exception {
         Path outputFile = tempDir.resolve("watermark-custom.pdf");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .margin(40, 40, 40, 40)
                 .create()) {
 
@@ -101,7 +103,7 @@ class NewFeaturesIntegrationTest {
     void shouldRenderHeaderAndFooterWithPageNumbers() throws Exception {
         Path outputFile = tempDir.resolve("header-footer.pdf");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .margin(40, 40, 60, 40)
                 .create()) {
 
@@ -128,7 +130,7 @@ class NewFeaturesIntegrationTest {
     void shouldRenderFooterWithSeparatorLine() throws Exception {
         Path outputFile = tempDir.resolve("footer-separator.pdf");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .margin(40, 40, 50, 40)
                 .create()) {
 
@@ -162,7 +164,7 @@ class NewFeaturesIntegrationTest {
     void shouldCreateBookmarkOutlineInPdf() throws Exception {
         byte[] pdfBytes;
 
-        try (PdfComposer composer = GraphCompose.pdf()
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf()
                 .margin(40, 40, 40, 40)
                 .create()) {
             var cb = composer.componentBuilder();
@@ -207,7 +209,7 @@ class NewFeaturesIntegrationTest {
     void shouldCreateNestedBookmarks() throws Exception {
         byte[] pdfBytes;
 
-        try (PdfComposer composer = GraphCompose.pdf()
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf()
                 .margin(40, 40, 40, 40)
                 .create()) {
             var cb = composer.componentBuilder();
@@ -246,7 +248,7 @@ class NewFeaturesIntegrationTest {
     void shouldSetDocumentMetadata() throws Exception {
         byte[] pdfBytes;
 
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             composer.metadata(DocumentMetadata.builder()
                     .title("Test Invoice")
                     .author("GraphCompose Test")
@@ -279,7 +281,7 @@ class NewFeaturesIntegrationTest {
     void shouldEncryptPdfWithProtection() throws Exception {
         Path outputFile = tempDir.resolve("protected.pdf");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .margin(40, 40, 40, 40)
                 .create()) {
 
@@ -313,7 +315,7 @@ class NewFeaturesIntegrationTest {
 
     @Test
     void pageBreakShouldCreateEntitySuccessfully() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf()
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf()
                 .margin(40, 40, 40, 40)
                 .create()) {
             var cb = composer.componentBuilder();
@@ -338,7 +340,7 @@ class NewFeaturesIntegrationTest {
     void dividerShouldCreateLineEntity() throws Exception {
         Path outputFile = tempDir.resolve("divider.pdf");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .margin(40, 40, 40, 40)
                 .create()) {
             var cb = composer.componentBuilder();
@@ -379,7 +381,7 @@ class NewFeaturesIntegrationTest {
     void shouldRenderFullShowcaseWithAllNewFeatures() throws Exception {
         Path outputFile = tempDir.resolve("full-showcase.pdf");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .margin(40, 40, 60, 40)
                 .create()) {
 

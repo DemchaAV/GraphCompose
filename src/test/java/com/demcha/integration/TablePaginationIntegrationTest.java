@@ -9,7 +9,7 @@ import com.demcha.compose.layout_core.components.core.Entity;
 import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.layout.coordinator.Placement;
 import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testsupport.EngineComposerHarness;
 import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
@@ -28,7 +28,7 @@ class TablePaginationIntegrationTest {
         Path outputFile = VisualTestOutputs.preparePdf("table_pagination_test", "clean", "integration");
 
         Entity table;
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(20, 20, 20, 20)
                 .guideLines(false)
@@ -54,7 +54,7 @@ class TablePaginationIntegrationTest {
             }
 
             table = builder.build();
-            LayoutSnapshotAssertions.assertMatches(composer, "table_pagination_test", "integration");
+            LayoutSnapshotAssertions.assertMatches(composer.layoutSnapshot(), "table_pagination_test", "integration");
             composer.build();
 
             for (Entity row : table.getComponent(TableLayoutData.class).orElseThrow().rowEntities()) {

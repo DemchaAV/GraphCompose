@@ -1,7 +1,7 @@
 package com.demcha.compose.document.templates.api;
 
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.data.WeeklyScheduleData;
+import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
 
 /**
  * Canonical compose contract for reusable weekly schedule templates.

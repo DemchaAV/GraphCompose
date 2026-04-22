@@ -1,8 +1,8 @@
 package com.demcha.compose.document.templates.api;
 
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.data.Header;
-import com.demcha.compose.document.templates.data.JobDetails;
+import com.demcha.compose.document.templates.data.common.Header;
+import com.demcha.compose.document.templates.data.coverletter.JobDetails;
 
 /**
  * Canonical compose contract for reusable cover-letter templates.

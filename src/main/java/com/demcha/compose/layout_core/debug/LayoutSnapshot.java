@@ -6,7 +6,7 @@ import java.util.List;
  * Deterministic, renderer-agnostic snapshot of a fully resolved document.
  *
  * <p>Instances of this record are produced by
- * {@link com.demcha.compose.layout_core.core.PdfComposer#layoutSnapshot()}
+ * {@link com.demcha.compose.document.api.DocumentSession#layoutSnapshot()}
  * after layout and pagination have completed, but before the PDF renderer
  * draws anything. The record is intended for debugging, layout-regression
  * tests, and tooling that needs geometry rather than rendered pixels.</p>

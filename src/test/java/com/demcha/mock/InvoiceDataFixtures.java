@@ -1,9 +1,9 @@
 package com.demcha.mock;
 
-import com.demcha.compose.document.templates.data.InvoiceData;
-import com.demcha.compose.document.templates.data.InvoiceLineItem;
-import com.demcha.compose.document.templates.data.InvoiceParty;
-import com.demcha.compose.document.templates.data.InvoiceSummaryRow;
+import com.demcha.compose.document.templates.data.invoice.InvoiceData;
+import com.demcha.compose.document.templates.data.invoice.InvoiceLineItem;
+import com.demcha.compose.document.templates.data.invoice.InvoiceParty;
+import com.demcha.compose.document.templates.data.invoice.InvoiceSummaryRow;
 
 import java.util.List;
 

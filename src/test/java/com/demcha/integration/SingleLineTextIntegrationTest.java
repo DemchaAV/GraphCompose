@@ -8,7 +8,7 @@ import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.layout.coordinator.Placement;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testsupport.EngineComposerHarness;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFont;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -30,7 +30,7 @@ class SingleLineTextIntegrationTest {
         Margin margin = Margin.of(5);
         Entity textEntity;
 
-        try (PdfComposer composer = GraphCompose.pdf()
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf()
                 .pageSize(PDRectangle.A4)
                 .create()) {
 

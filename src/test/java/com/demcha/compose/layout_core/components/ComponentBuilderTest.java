@@ -11,8 +11,8 @@ import com.demcha.compose.layout_core.components.geometry.ContentSize;
 import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.core.DocumentComposer;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testsupport.EngineComposerHarness;
+import com.demcha.compose.testsupport.EngineComposerHarness;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -23,7 +23,7 @@ class ComponentBuilderTest {
 
     @Test
     void shouldCreateCircleFromComponentBuilderFactory() throws Exception {
-        try (DocumentComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             var entity = composer.componentBuilder()
                     .circle()
                     .size(40, 30)
@@ -40,7 +40,7 @@ class ComponentBuilderTest {
 
     @Test
     void shouldCreateLineFromComponentBuilderFactory() throws Exception {
-        try (DocumentComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             var entity = composer.componentBuilder()
                     .line()
                     .size(120, 8)
@@ -58,7 +58,7 @@ class ComponentBuilderTest {
 
     @Test
     void shouldCreateModuleUsingCanvasOverload() throws Exception {
-        try (DocumentComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             var entity = composer.componentBuilder()
                     .moduleBuilder(Align.middle(4), composer.canvas())
                     .build();
@@ -70,7 +70,7 @@ class ComponentBuilderTest {
 
     @Test
     void shouldCreateModuleUsingContentSizeOverload() throws Exception {
-        try (DocumentComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             var entity = composer.componentBuilder()
                     .moduleBuilder(Align.middle(4), new ContentSize(240, 120))
                     .build();
@@ -82,7 +82,7 @@ class ComponentBuilderTest {
 
     @Test
     void rootModuleShouldUseCanvasWidthMinusOwnHorizontalMargin() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf()
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf()
                 .margin(24, 24, 24, 24)
                 .create()) {
             var cb = composer.componentBuilder();
@@ -104,7 +104,7 @@ class ComponentBuilderTest {
 
     @Test
     void nestedModuleShouldUseParentInnerWidthInsteadOfWidestChild() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             var cb = composer.componentBuilder();
             var module = cb.moduleBuilder(Align.left(4))
                     .anchor(Anchor.topLeft())
@@ -130,7 +130,7 @@ class ComponentBuilderTest {
 
     @Test
     void moduleShouldGrowVerticallyWithoutGrowingHorizontally() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             var cb = composer.componentBuilder();
             var module = cb.moduleBuilder(Align.middle(4), new ContentSize(240, 10))
                     .anchor(Anchor.topLeft())
@@ -150,7 +150,7 @@ class ComponentBuilderTest {
 
     @Test
     void oversizedChildShouldNotForceModuleToExpandHorizontally() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             var cb = composer.componentBuilder();
             var module = cb.moduleBuilder(Align.middle(4), new ContentSize(180, 0))
                     .anchor(Anchor.topLeft())

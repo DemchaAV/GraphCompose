@@ -15,7 +15,7 @@ import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testsupport.EngineComposerHarness;
 import com.demcha.testing.VisualTestOutputs;
 import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 import org.apache.pdfbox.Loader;
@@ -98,7 +98,7 @@ class FeatureShowcaseRenderTest {
     }
 
     private void renderBarcodeGallery(Path outputFile, boolean guideLines) throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(24, 24, 24, 24)
                 .guideLines(guideLines)
@@ -162,14 +162,14 @@ class FeatureShowcaseRenderTest {
                     .build();
 
             if (!guideLines) {
-                LayoutSnapshotAssertions.assertMatches(composer, "integration/features/barcode_showcase_render");
+                LayoutSnapshotAssertions.assertMatches(composer.layoutSnapshot(), "integration/features/barcode_showcase_render");
             }
             composer.build();
         }
     }
 
     private void renderPaginatedDocumentFeatures(Path outputFile, boolean guideLines) throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(28, 28, 42, 28)
                 .markdown(true)
@@ -287,13 +287,13 @@ class FeatureShowcaseRenderTest {
             root.build();
 
             if (!guideLines) {
-                LayoutSnapshotAssertions.assertMatches(composer, "integration/features/document_features_paginated");
+                LayoutSnapshotAssertions.assertMatches(composer.layoutSnapshot(), "integration/features/document_features_paginated");
             }
             composer.build();
         }
     }
 
-    private Entity barcodeModule(PdfComposer composer,
+    private Entity barcodeModule(EngineComposerHarness composer,
                                  ComponentBuilder cb,
                                  String heading,
                                  Entity barcode,

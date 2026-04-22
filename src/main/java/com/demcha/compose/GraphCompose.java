@@ -11,7 +11,6 @@ import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.core.PdfComposer;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
@@ -25,11 +24,6 @@ import java.util.Objects;
  * Application code starts here and should use the canonical semantic document
  * session through {@link #document()} to turn author intent into a paginated
  * document.
- *
- * <p>The deprecated low-level PDF composer entry point remains in the codebase
- * only as a temporary bridge for internal tests, benchmarks, developer tools,
- * and migration scaffolding. It is not the supported public authoring
- * workflow.</p>
  * </p>
  *
  * <p>The typical runtime flow is:</p>
@@ -77,38 +71,6 @@ public final class GraphCompose {
 
     private GraphCompose() {
         // Factory class, no instantiation
-    }
-
-    // ===== PDF Factory =====
-
-    /**
-     * Starts the deprecated low-level PDF composition flow that writes the rendered
-     * document to a file.
- *
-     * <p>This bridge is retained for internal tests, benchmarks, developer tools,
-     * and migration scaffolding. New application code should use
-     * {@link #document(Path)} instead.</p>
- *
-     * @param outputFile the target file path for the generated PDF
-     * @return a fluent builder for configuring the {@link PdfComposer}
-     */
-    @Deprecated(forRemoval = false)
-    public static PdfBuilder pdf(Path outputFile) {
-        return new PdfBuilder(outputFile);
-    }
-
-    /**
-     * Starts the deprecated low-level PDF composition flow for in-memory generation.
- *
-     * <p>This bridge is retained for internal tests, benchmarks, developer tools,
-     * and migration scaffolding. New application code should use
-     * {@link #document()} instead.</p>
- *
-     * @return a fluent builder for configuring the {@link PdfComposer}
-     */
-    @Deprecated(forRemoval = false)
-    public static PdfBuilder pdf() {
-        return new PdfBuilder(null);
     }
 
     /**
@@ -167,181 +129,10 @@ public final class GraphCompose {
     // return new WordBuilder(outputFile);
     // }
 
-    // ===== PDF Builder =====
-
-    /**
-     * Deprecated low-level configuration builder for {@link PdfComposer}.
- *
-     * <p>This builder captures document-wide settings such as page size, canvas
-     * margin, markdown handling, guideline rendering, and per-document custom
-     * font registrations. It does not create any entities by itself; entity
-     * creation starts after {@link #create()} returns a composer.</p>
-     *
-     * <p>New application code should use {@link DocumentBuilder} and the
-     * canonical {@link DocumentSession} workflow instead.</p>
-     */
-    public static final class PdfBuilder {
-        private final Path outputFile;
-        private PDRectangle pageSize = PDRectangle.A4;
-        private Margin margin = null;
-        private boolean markdown = true;
-        private boolean guideLines = false;
-        private final List<FontFamilyDefinition> customFontFamilies = new ArrayList<>();
-
-        private PdfBuilder(Path outputFile) {
-            this.outputFile = outputFile;
-        }
-
-        /**
-         * Sets the physical page size used by the PDF canvas.
-         *
-         * <p>This defines the outer drawing area before canvas margins are applied.</p>
-         *
-         * @param pageSize the target page size, for example {@link PDRectangle#A4}
-         *                 or {@link PDRectangle#LETTER}
-         * @return this builder
-         */
-        public PdfBuilder pageSize(PDRectangle pageSize) {
-            this.pageSize = Objects.requireNonNull(pageSize, "pageSize");
-            return this;
-        }
-
-        /**
-         * Sets the canvas margin used as the initial inner drawing area.
-         *
-         * <p>Root entities are positioned relative to the page after this margin
-         * is subtracted from the page rectangle.</p>
-         *
-         * @param margin the document-wide canvas margin
-         * @return this builder
-         */
-        public PdfBuilder margin(Margin margin) {
-            this.margin = margin;
-            return this;
-        }
-
-        /**
-         * Convenience overload for setting the canvas margin in points.
-         *
-         * @param top top margin
-         * @param right right margin
-         * @param bottom bottom margin
-         * @param left left margin
-         * @return this builder
-         */
-        public PdfBuilder margin(float top, float right, float bottom, float left) {
-            this.margin = new Margin(top, right, bottom, left);
-            return this;
-        }
-
-        /**
-         * Enables or disables markdown parsing for text-related builders in the
-         * created composer.
-         *
-         * <p>When enabled, builders such as {@code BlockTextBuilder} may tokenize
-         * and style supported markdown content instead of treating input as plain text.</p>
-         *
-         * @param enabled {@code true} to enable markdown parsing
-         * @return this builder
-         */
-        public PdfBuilder markdown(boolean enabled) {
-            this.markdown = enabled;
-            return this;
-        }
-
-        /**
-         * Enables or disables visual guide-line rendering for layout debugging.
-         *
-         * <p>Guide lines help inspect resolved placement and box geometry without
-         * changing the actual layout calculations.</p>
-         *
-         * @param enabled {@code true} to render guide lines
-         * @return this builder
-         */
-        public PdfBuilder guideLines(boolean enabled) {
-            this.guideLines = enabled;
-            return this;
-        }
-
-        /**
-         * Registers a custom font family for the composer created by this builder.
-         *
-         * <p>The registration becomes part of the document-specific font catalog and
-         * can then be referenced through {@code FontName} values in styles and themes.</p>
-         */
-        public PdfBuilder registerFontFamily(FontFamilyDefinition definition) {
-            this.customFontFamilies.add(Objects.requireNonNull(definition, "definition"));
-            return this;
-        }
-
-        /**
-         * Registers a custom family backed by a single regular font file.
-         */
-        public PdfBuilder registerFontFamily(FontName familyName, Path regular) {
-            return registerFontFamily(FontFamilyDefinition.files(familyName, regular).build());
-        }
-
-        /**
-         * Registers a custom family backed by a single regular font file.
-         */
-        public PdfBuilder registerFontFamily(String familyName, Path regular) {
-            return registerFontFamily(FontName.of(familyName), regular);
-        }
-
-        /**
-         * Registers a custom family backed by regular, bold, and italic files.
-         */
-        public PdfBuilder registerFontFamily(FontName familyName, Path regular, Path bold, Path italic) {
-            return registerFontFamily(FontFamilyDefinition.files(familyName, regular)
-                    .boldPath(bold)
-                    .italicPath(italic)
-                    .build());
-        }
-
-        /**
-         * Registers a custom family backed by regular, bold, and italic files.
-         */
-        public PdfBuilder registerFontFamily(String familyName, Path regular, Path bold, Path italic) {
-            return registerFontFamily(FontName.of(familyName), regular, bold, italic);
-        }
-
-        /**
-         * Registers a custom family backed by regular, bold, italic, and bold-italic files.
-         */
-        public PdfBuilder registerFontFamily(FontName familyName, Path regular, Path bold, Path italic, Path boldItalic) {
-            return registerFontFamily(FontFamilyDefinition.files(familyName, regular)
-                    .boldPath(bold)
-                    .italicPath(italic)
-                    .boldItalicPath(boldItalic)
-                    .build());
-        }
-
-        /**
-         * Registers a custom family backed by regular, bold, italic, and bold-italic files.
-         */
-        public PdfBuilder registerFontFamily(String familyName, Path regular, Path bold, Path italic, Path boldItalic) {
-            return registerFontFamily(FontName.of(familyName), regular, bold, italic, boldItalic);
-        }
-
-        /**
-         * Creates a fully configured {@link PdfComposer}.
-         *
-         * <p>After this point, application code can start building entities. The
-         * composer remains empty until builders register entities into its
-         * {@code EntityManager}.</p>
-         *
-         * @return a new {@link PdfComposer} ready for document composition
-         */
-        public PdfComposer create() {
-            return new PdfComposer(outputFile, markdown, guideLines, pageSize, margin, List.copyOf(customFontFamilies));
-        }
-    }
-
     /**
      * Fluent configuration builder for the canonical semantic document session.
      *
-     * <p>Unlike the legacy {@link PdfBuilder}, this builder produces a
-     * {@link DocumentSession} that exposes the semantic DSL through
+     * <p>This builder produces a {@link DocumentSession} that exposes the semantic DSL through
      * {@link DocumentSession#dsl()} and keeps authoring separate from the PDF
      * backend.</p>
      */
@@ -401,7 +192,7 @@ public final class GraphCompose {
          * Enables or disables markdown parsing for semantic paragraph blocks.
          *
          * <p>When enabled, canonical paragraph rendering understands the same
-         * practical inline markdown subset relied on by the legacy template
+         * practical inline markdown subset used by the built-in template
          * flow, such as bold and italic spans.</p>
          *
          * @param enabled {@code true} to enable markdown-aware paragraph rendering

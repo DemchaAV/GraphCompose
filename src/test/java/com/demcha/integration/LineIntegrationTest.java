@@ -11,7 +11,7 @@ import com.demcha.compose.layout_core.components.layout.coordinator.Placement;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testsupport.EngineComposerHarness;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -40,7 +40,7 @@ class LineIntegrationTest {
         Entity vertical;
         Entity diagonal;
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .guideLines(false)
                 .create()) {
 
@@ -97,7 +97,7 @@ class LineIntegrationTest {
     void shouldRenderSingleLineWithGuideLines() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("line_single_guides", "guides", "integration");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .guideLines(true)
                 .create()) {
 
@@ -122,7 +122,7 @@ class LineIntegrationTest {
         Path outputFile = VisualTestOutputs.preparePdf("line_variants_guides", "guides", "integration");
         List<Entity> lines = new ArrayList<>();
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .guideLines(true)
                 .create()) {
 
@@ -181,7 +181,7 @@ class LineIntegrationTest {
         Path outputFile = VisualTestOutputs.preparePdf("line_pagination", "guides", "integration");
         List<Entity> lines = new ArrayList<>();
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .guideLines(true)
                 .create()) {
 

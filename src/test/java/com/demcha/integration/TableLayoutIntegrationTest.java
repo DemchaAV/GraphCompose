@@ -6,7 +6,7 @@ import com.demcha.compose.layout_core.components.components_builders.TableColumn
 import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testsupport.EngineComposerHarness;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
@@ -21,7 +21,7 @@ class TableLayoutIntegrationTest {
     void shouldRenderTableWithNegotiatedColumns() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("table_layout_test", "clean", "integration");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(20, 20, 20, 20)
                 .guideLines(false)

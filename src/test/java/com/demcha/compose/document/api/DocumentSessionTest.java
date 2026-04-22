@@ -44,6 +44,7 @@ import com.demcha.compose.document.layout.PreparedSplitResult;
 import com.demcha.compose.document.layout.SplitRequest;
 import com.demcha.compose.document.model.node.ContainerNode;
 import com.demcha.compose.document.model.node.DocumentNode;
+import com.demcha.compose.document.model.node.ListNode;
 import com.demcha.compose.document.model.node.ParagraphNode;
 import com.demcha.compose.document.model.node.SectionNode;
 import com.demcha.compose.document.model.node.ShapeNode;
@@ -162,6 +163,77 @@ class DocumentSessionTest {
             assertThat(section.children().getFirst()).isInstanceOf(ParagraphNode.class);
             assertThat(((ParagraphNode) section.children().getFirst()).text()).isEqualTo("Senior platform engineer");
             assertThat(session.layoutGraph().totalPages()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void moduleShortcutShouldBuildTitledSemanticBlocks() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(new PDRectangle(320, 240))
+                .margin(Margin.of(12))
+                .create()) {
+
+            ContainerNode root = session.pageFlow()
+                    .name("ModuleShortcut")
+                    .spacing(8)
+                    .module("Technical Skills", module -> module
+                            .titleMargin(Margin.bottom(4))
+                            .spacing(2)
+                            .paragraph("Practical backend engineering with clean document APIs.")
+                            .bullets(List.of("Java", "SQL"))
+                            .dashList("Spring Boot", "Docker")
+                            .rows("Portfolio API - production backend", "GraphCompose - canonical engine"))
+                    .build();
+
+            assertThat(root.children()).hasSize(1);
+            assertThat(root.children().getFirst()).isInstanceOf(SectionNode.class);
+
+            SectionNode module = (SectionNode) root.children().getFirst();
+            assertThat(module.name()).isEqualTo("TechnicalSkills");
+            assertThat(module.children()).hasSize(5);
+            assertThat(module.children().getFirst()).isInstanceOf(ParagraphNode.class);
+            assertThat(((ParagraphNode) module.children().getFirst()).text()).isEqualTo("Technical Skills");
+            assertThat(module.children().get(1)).isInstanceOf(ParagraphNode.class);
+            assertThat(module.children().get(2)).isInstanceOf(ListNode.class);
+            assertThat(module.children().get(3)).isInstanceOf(ListNode.class);
+            assertThat(module.children().get(4)).isInstanceOf(ListNode.class);
+
+            ListNode bullets = (ListNode) module.children().get(2);
+            assertThat(bullets.items()).containsExactly("Java", "SQL");
+            assertThat(bullets.marker().prefix()).isEqualTo("• ");
+
+            ListNode rows = (ListNode) module.children().get(4);
+            assertThat(rows.marker().isVisible()).isFalse();
+            assertThat(rows.continuationIndent()).isEqualTo("  ");
+            assertThat(session.layoutGraph().totalPages()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void moduleShortcutShouldPaginateLongBodyThroughCanonicalCompositePath() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(new PDRectangle(220, 180))
+                .margin(Margin.of(12))
+                .create()) {
+
+            session.pageFlow(flow -> flow
+                    .name("PagedModuleRoot")
+                    .module("Long Module", module -> {
+                        module.spacing(3);
+                        for (int index = 0; index < 28; index++) {
+                            module.paragraph("Module paragraph " + index + " keeps flowing through the canonical layout compiler.");
+                        }
+                    }));
+
+            LayoutGraph graph = session.layoutGraph();
+            PlacedNode moduleNode = graph.nodes().stream()
+                    .filter(node -> "LongModule".equals(node.semanticName()))
+                    .findFirst()
+                    .orElseThrow();
+
+            assertThat(graph.totalPages()).isGreaterThan(1);
+            assertThat(moduleNode.startPage()).isEqualTo(0);
+            assertThat(moduleNode.endPage()).isGreaterThan(0);
         }
     }
 

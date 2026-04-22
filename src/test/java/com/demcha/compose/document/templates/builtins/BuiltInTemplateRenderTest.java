@@ -243,7 +243,7 @@ class BuiltInTemplateRenderTest {
     }
 
     private void renderWeeklySchedule(Path outputFile,
-                                      com.demcha.compose.document.templates.data.WeeklyScheduleData data) throws Exception {
+                                      com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData data) throws Exception {
         PDRectangle landscapeA4 = new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth());
 
         try (var document = TemplateTestSupport.openFileDocument(outputFile, landscapeA4, 18, 18, 18, 18, false)) {

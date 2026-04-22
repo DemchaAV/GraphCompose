@@ -2,9 +2,9 @@ package com.demcha.compose.document.templates.builtins;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.WeeklyScheduleTemplate;
-import com.demcha.compose.document.templates.data.WeeklyScheduleData;
-import com.demcha.compose.document.templates.support.SessionTemplateComposeTarget;
-import com.demcha.compose.document.templates.support.WeeklyScheduleTemplateComposer;
+import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
+import com.demcha.compose.document.templates.support.common.SessionTemplateComposeTarget;
+import com.demcha.compose.document.templates.support.schedule.WeeklyScheduleTemplateComposer;
 import com.demcha.compose.document.templates.theme.WeeklyScheduleTheme;
 
 import java.util.Objects;

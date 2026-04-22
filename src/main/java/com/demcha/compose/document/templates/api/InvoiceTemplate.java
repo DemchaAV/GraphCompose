@@ -1,7 +1,7 @@
 package com.demcha.compose.document.templates.api;
 
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.data.InvoiceData;
+import com.demcha.compose.document.templates.data.invoice.InvoiceData;
 
 /**
  * Canonical compose contract for reusable invoice templates.

@@ -10,7 +10,7 @@ import com.demcha.compose.layout_core.components.layout.coordinator.Placement;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testsupport.EngineComposerHarness;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -32,7 +32,7 @@ class CircleIntegrationTest {
     void shouldRenderSingleCircleWithoutGuides() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("circle_single_clean", "clean", "integration");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(20, 20, 20, 20)
                 .guideLines(false)
@@ -57,7 +57,7 @@ class CircleIntegrationTest {
     void shouldRenderSingleCircleWithGuides() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("circle_single_guides", "guides", "integration");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(20, 20, 20, 20)
                 .guideLines(true)
@@ -84,7 +84,7 @@ class CircleIntegrationTest {
         Path outputFile = VisualTestOutputs.preparePdf("circle_pagination_test", "guides", "integration");
         List<Entity> circles;
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
 //                .margin(20, 20, 20, 20)
                 .guideLines(true)

@@ -1,10 +1,10 @@
 package com.demcha.mock;
 
-import com.demcha.compose.document.templates.data.ProposalData;
-import com.demcha.compose.document.templates.data.ProposalParty;
-import com.demcha.compose.document.templates.data.ProposalPricingRow;
-import com.demcha.compose.document.templates.data.ProposalSection;
-import com.demcha.compose.document.templates.data.ProposalTimelineItem;
+import com.demcha.compose.document.templates.data.proposal.ProposalData;
+import com.demcha.compose.document.templates.data.proposal.ProposalParty;
+import com.demcha.compose.document.templates.data.proposal.ProposalPricingRow;
+import com.demcha.compose.document.templates.data.proposal.ProposalSection;
+import com.demcha.compose.document.templates.data.proposal.ProposalTimelineItem;
 
 import java.util.List;
 

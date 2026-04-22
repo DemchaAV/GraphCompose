@@ -16,7 +16,7 @@ import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
 import com.demcha.compose.layout_core.core.Canvas;
 import com.demcha.compose.layout_core.core.EntityManager;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testsupport.EngineComposerHarness;
 import com.demcha.compose.layout_core.debug.LayoutSnapshotExtractor;
 import com.demcha.compose.layout_core.debug.LayoutNodeSnapshot;
 import com.demcha.compose.layout_core.debug.LayoutSnapshot;
@@ -34,7 +34,7 @@ class LayoutSnapshotExtractorTest {
 
     @Test
     void shouldUseStablePathsAndFallbackNamesForUnnamedSiblings() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf()
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf()
                 .pageSize(PDRectangle.A4)
                 .margin(11.1114f, 9.9999f, 8.8888f, 7.7777f)
                 .create()) {
@@ -72,7 +72,7 @@ class LayoutSnapshotExtractorTest {
 
     @Test
     void shouldPreserveDeterministicDepthLayerAndTraversalOrder() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             ComponentBuilder cb = composer.componentBuilder();
 
             Entity first = cb.rectangle().size(24, 12).build();
@@ -123,7 +123,7 @@ class LayoutSnapshotExtractorTest {
 
         assertThat(secondJson).isEqualTo(firstJson);
 
-        try (PdfComposer composer = GraphCompose.pdf()
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf()
                 .pageSize(PDRectangle.A4)
                 .margin(18, 18, 18, 18)
                 .create()) {
@@ -239,7 +239,7 @@ class LayoutSnapshotExtractorTest {
     }
 
     private String renderSnapshotJsonForStableDocument() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf()
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf()
                 .pageSize(PDRectangle.A4)
                 .margin(18, 18, 18, 18)
                 .create()) {
@@ -267,7 +267,7 @@ class LayoutSnapshotExtractorTest {
     }
 
     private String renderSnapshotJsonForEqualCoordinateRoots() throws Exception {
-        try (PdfComposer composer = GraphCompose.pdf()
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf()
                 .pageSize(PDRectangle.A4)
                 .margin(18, 18, 18, 18)
                 .create()) {

@@ -1,10 +1,10 @@
 package com.demcha.compose;
 
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.data.InvoiceData;
-import com.demcha.compose.document.templates.data.MainPageCV;
-import com.demcha.compose.document.templates.data.MainPageCvDTO;
-import com.demcha.compose.document.templates.data.ProposalData;
+import com.demcha.compose.document.templates.data.invoice.InvoiceData;
+import com.demcha.compose.document.templates.data.cv.MainPageCV;
+import com.demcha.compose.document.templates.data.cv.MainPageCvDTO;
+import com.demcha.compose.document.templates.data.proposal.ProposalData;
 import com.demcha.compose.layout_core.components.content.text.TextDecoration;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.style.ComponentColor;

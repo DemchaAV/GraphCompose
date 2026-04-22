@@ -54,7 +54,6 @@ public final class BenchmarkMedianTool {
         switch (suiteType) {
             case CURRENT_SPEED -> aggregateCurrentSpeed(reportFiles);
             case COMPARATIVE -> aggregateComparative(reportFiles);
-            case ARCHITECTURE_COMPARISON -> aggregateArchitectureComparison(reportFiles);
         }
     }
 
@@ -246,262 +245,6 @@ public final class BenchmarkMedianTool {
         System.out.println("Saved CSV median report to " + csvPath);
     }
 
-    private void aggregateArchitectureComparison(List<ReportFile> reportFiles) throws Exception {
-        JsonNode firstReport = reportFiles.getFirst().report();
-        String profile = firstReport.path("profile").asText("full");
-        for (ReportFile reportFile : reportFiles) {
-            String currentProfile = reportFile.report().path("profile").asText("full");
-            if (!profile.equals(currentProfile)) {
-                throw new IllegalArgumentException(
-                        "Architecture-comparison profiles do not match across repeated runs: expected '"
-                                + profile + "' but found '" + currentProfile + "' in " + reportFile.path());
-            }
-        }
-
-        int warmupIterations = requireIntConsistency(reportFiles, "warmupIterations");
-        int measurementIterations = requireIntConsistency(reportFiles, "measurementIterations");
-
-        List<ArchitectureLayoutMedianRow> layoutRows = aggregateArchitectureLayout(reportFiles);
-        List<ArchitecturePdfMedianRow> pdfRows = aggregateArchitecturePdf(reportFiles);
-        List<ArchitectureStageMedianRow> stageRows = aggregateArchitectureStages(reportFiles);
-        long buildGuard = Math.round(median(reportFiles.stream()
-                .mapToDouble(reportFile -> reportFile.report().path("buildGuard").asLong())
-                .toArray()));
-        long layoutGuard = Math.round(median(reportFiles.stream()
-                .mapToDouble(reportFile -> reportFile.report().path("layoutGuard").asLong())
-                .toArray()));
-        long totalPdfBytes = Math.round(median(reportFiles.stream()
-                .mapToDouble(reportFile -> reportFile.report().path("totalPdfBytes").asLong())
-                .toArray()));
-
-        ArchitectureComparisonMedianReport report = new ArchitectureComparisonMedianReport(
-                LocalDateTime.now().format(TIMESTAMP_FORMAT),
-                profile,
-                warmupIterations,
-                measurementIterations,
-                layoutRows,
-                pdfRows,
-                stageRows,
-                buildGuard,
-                layoutGuard,
-                totalPdfBytes,
-                "median",
-                reportFiles.size(),
-                reportFiles.stream().map(reportFile -> reportFile.path().toString()).toList());
-
-        BenchmarkReportWriter.BenchmarkArtifacts artifacts =
-                BenchmarkReportWriter.prepare("aggregates/architecture-comparison/" + profile);
-        Path jsonPath = artifacts.writeJson(report);
-        Path layoutCsv = artifacts.writeCsv(
-                "layout",
-                List.of("scenario", "description", "legacy_avg_ms", "v2_avg_ms", "delta_percent", "winner",
-                        "legacy_p50_ms", "v2_p50_ms", "legacy_p95_ms", "v2_p95_ms",
-                        "legacy_avg_allocated_mb", "v2_avg_allocated_mb",
-                        "legacy_avg_gc_collections", "v2_avg_gc_collections",
-                        "legacy_avg_gc_ms", "v2_avg_gc_ms"),
-                layoutRows.stream()
-                        .map(row -> List.of(
-                                row.scenario(),
-                                row.description(),
-                                format(row.legacyAvgMillis()),
-                                format(row.v2AvgMillis()),
-                                format(row.deltaPercent()),
-                                row.winner(),
-                                format(row.legacyP50Millis()),
-                                format(row.v2P50Millis()),
-                                format(row.legacyP95Millis()),
-                                format(row.v2P95Millis()),
-                                format(row.legacyAvgAllocatedMb()),
-                                format(row.v2AvgAllocatedMb()),
-                                format(row.legacyAvgGcCollections()),
-                                format(row.v2AvgGcCollections()),
-                                format(row.legacyAvgGcMillis()),
-                                format(row.v2AvgGcMillis())))
-                        .toList());
-        Path pdfCsv = artifacts.writeCsv(
-                "pdf",
-                List.of("scenario", "description", "legacy_avg_ms", "v2_avg_ms", "delta_percent", "legacy_avg_kb",
-                        "v2_avg_kb", "winner", "legacy_p50_ms", "v2_p50_ms", "legacy_p95_ms", "v2_p95_ms",
-                        "legacy_avg_allocated_mb", "v2_avg_allocated_mb",
-                        "legacy_avg_gc_collections", "v2_avg_gc_collections",
-                        "legacy_avg_gc_ms", "v2_avg_gc_ms"),
-                pdfRows.stream()
-                        .map(row -> List.of(
-                                row.scenario(),
-                                row.description(),
-                                format(row.legacyAvgMillis()),
-                                format(row.v2AvgMillis()),
-                                format(row.deltaPercent()),
-                                format(row.legacyAvgKilobytes()),
-                                format(row.v2AvgKilobytes()),
-                                row.winner(),
-                                format(row.legacyP50Millis()),
-                                format(row.v2P50Millis()),
-                                format(row.legacyP95Millis()),
-                                format(row.v2P95Millis()),
-                                format(row.legacyAvgAllocatedMb()),
-                                format(row.v2AvgAllocatedMb()),
-                                format(row.legacyAvgGcCollections()),
-                                format(row.v2AvgGcCollections()),
-                                format(row.legacyAvgGcMillis()),
-                                format(row.v2AvgGcMillis())))
-                        .toList());
-        Path stagesCsv = artifacts.writeCsv(
-                "stages",
-                List.of("scenario", "stage", "description", "legacy_avg_ms", "v2_avg_ms", "delta_percent", "winner",
-                        "legacy_p50_ms", "v2_p50_ms", "legacy_p95_ms", "v2_p95_ms",
-                        "legacy_avg_allocated_mb", "v2_avg_allocated_mb",
-                        "legacy_avg_gc_collections", "v2_avg_gc_collections",
-                        "legacy_avg_gc_ms", "v2_avg_gc_ms"),
-                stageRows.stream()
-                        .map(row -> List.of(
-                                row.scenario(),
-                                row.stage(),
-                                row.description(),
-                                format(row.legacyAvgMillis()),
-                                format(row.v2AvgMillis()),
-                                format(row.deltaPercent()),
-                                row.winner(),
-                                format(row.legacyP50Millis()),
-                                format(row.v2P50Millis()),
-                                format(row.legacyP95Millis()),
-                                format(row.v2P95Millis()),
-                                format(row.legacyAvgAllocatedMb()),
-                                format(row.v2AvgAllocatedMb()),
-                                format(row.legacyAvgGcCollections()),
-                                format(row.v2AvgGcCollections()),
-                                format(row.legacyAvgGcMillis()),
-                                format(row.v2AvgGcMillis())))
-                        .toList());
-
-        System.out.println("Median benchmark report");
-        System.out.println("Suite: architecture-comparison");
-        System.out.println("Profile: " + profile);
-        System.out.println("Source runs: " + reportFiles.size());
-        System.out.println("Saved JSON median report to " + jsonPath);
-        System.out.println("Saved CSV median reports to " + layoutCsv + ", " + pdfCsv + " and " + stagesCsv);
-    }
-
-    private List<ArchitectureLayoutMedianRow> aggregateArchitectureLayout(List<ReportFile> reportFiles) {
-        List<JsonNode> firstRows = iterable(reportFiles.getFirst().report().path("layout"));
-        Map<String, JsonNode> firstByScenario = indexBy(firstRows, "scenario");
-        for (ReportFile reportFile : reportFiles) {
-            Map<String, JsonNode> currentByScenario = indexBy(iterable(reportFile.report().path("layout")), "scenario");
-            if (!firstByScenario.keySet().equals(currentByScenario.keySet())) {
-                throw new IllegalArgumentException("Architecture-comparison layout scenarios do not match across repeated runs");
-            }
-        }
-
-        return firstByScenario.keySet().stream()
-                .map(scenario -> {
-                    List<JsonNode> rows = reportFiles.stream()
-                            .map(reportFile -> indexBy(iterable(reportFile.report().path("layout")), "scenario").get(scenario))
-                            .toList();
-                    JsonNode exemplar = rows.getFirst();
-                    double legacyAvgMillis = median(rows, "legacyAvgMillis");
-                    double v2AvgMillis = median(rows, "v2AvgMillis");
-                    return new ArchitectureLayoutMedianRow(
-                            scenario,
-                            exemplar.path("description").asText(""),
-                            legacyAvgMillis,
-                            v2AvgMillis,
-                            percentDelta(legacyAvgMillis, v2AvgMillis),
-                            winner(legacyAvgMillis, v2AvgMillis),
-                            median(rows, "legacyP50Millis"),
-                            median(rows, "v2P50Millis"),
-                            median(rows, "legacyP95Millis"),
-                            median(rows, "v2P95Millis"),
-                            median(rows, "legacyAvgAllocatedMb"),
-                            median(rows, "v2AvgAllocatedMb"),
-                            median(rows, "legacyAvgGcCollections"),
-                            median(rows, "v2AvgGcCollections"),
-                            median(rows, "legacyAvgGcMillis"),
-                            median(rows, "v2AvgGcMillis"));
-                })
-                .toList();
-    }
-
-    private List<ArchitecturePdfMedianRow> aggregateArchitecturePdf(List<ReportFile> reportFiles) {
-        List<JsonNode> firstRows = iterable(reportFiles.getFirst().report().path("pdf"));
-        Map<String, JsonNode> firstByScenario = indexBy(firstRows, "scenario");
-        for (ReportFile reportFile : reportFiles) {
-            Map<String, JsonNode> currentByScenario = indexBy(iterable(reportFile.report().path("pdf")), "scenario");
-            if (!firstByScenario.keySet().equals(currentByScenario.keySet())) {
-                throw new IllegalArgumentException("Architecture-comparison pdf scenarios do not match across repeated runs");
-            }
-        }
-
-        return firstByScenario.keySet().stream()
-                .map(scenario -> {
-                    List<JsonNode> rows = reportFiles.stream()
-                            .map(reportFile -> indexBy(iterable(reportFile.report().path("pdf")), "scenario").get(scenario))
-                            .toList();
-                    JsonNode exemplar = rows.getFirst();
-                    double legacyAvgMillis = median(rows, "legacyAvgMillis");
-                    double v2AvgMillis = median(rows, "v2AvgMillis");
-                    return new ArchitecturePdfMedianRow(
-                            scenario,
-                            exemplar.path("description").asText(""),
-                            legacyAvgMillis,
-                            v2AvgMillis,
-                            percentDelta(legacyAvgMillis, v2AvgMillis),
-                            median(rows, "legacyAvgKilobytes"),
-                            median(rows, "v2AvgKilobytes"),
-                            winner(legacyAvgMillis, v2AvgMillis),
-                            median(rows, "legacyP50Millis"),
-                            median(rows, "v2P50Millis"),
-                            median(rows, "legacyP95Millis"),
-                            median(rows, "v2P95Millis"),
-                            median(rows, "legacyAvgAllocatedMb"),
-                            median(rows, "v2AvgAllocatedMb"),
-                            median(rows, "legacyAvgGcCollections"),
-                            median(rows, "v2AvgGcCollections"),
-                            median(rows, "legacyAvgGcMillis"),
-                            median(rows, "v2AvgGcMillis"));
-                })
-                .toList();
-    }
-
-    private List<ArchitectureStageMedianRow> aggregateArchitectureStages(List<ReportFile> reportFiles) {
-        List<JsonNode> firstRows = iterable(reportFiles.getFirst().report().path("stages"));
-        Map<String, JsonNode> firstByStage = indexArchitectureStages(firstRows);
-        for (ReportFile reportFile : reportFiles) {
-            Map<String, JsonNode> currentByStage = indexArchitectureStages(iterable(reportFile.report().path("stages")));
-            if (!firstByStage.keySet().equals(currentByStage.keySet())) {
-                throw new IllegalArgumentException("Architecture-comparison stages do not match across repeated runs");
-            }
-        }
-
-        return firstByStage.keySet().stream()
-                .map(key -> {
-                    List<JsonNode> rows = reportFiles.stream()
-                            .map(reportFile -> indexArchitectureStages(iterable(reportFile.report().path("stages"))).get(key))
-                            .toList();
-                    JsonNode exemplar = rows.getFirst();
-                    double legacyAvgMillis = median(rows, "legacyAvgMillis");
-                    double v2AvgMillis = median(rows, "v2AvgMillis");
-                    return new ArchitectureStageMedianRow(
-                            exemplar.path("scenario").asText(),
-                            exemplar.path("stage").asText(),
-                            exemplar.path("description").asText(""),
-                            legacyAvgMillis,
-                            v2AvgMillis,
-                            percentDelta(legacyAvgMillis, v2AvgMillis),
-                            winner(legacyAvgMillis, v2AvgMillis),
-                            median(rows, "legacyP50Millis"),
-                            median(rows, "v2P50Millis"),
-                            median(rows, "legacyP95Millis"),
-                            median(rows, "v2P95Millis"),
-                            median(rows, "legacyAvgAllocatedMb"),
-                            median(rows, "v2AvgAllocatedMb"),
-                            median(rows, "legacyAvgGcCollections"),
-                            median(rows, "v2AvgGcCollections"),
-                            median(rows, "legacyAvgGcMillis"),
-                            median(rows, "v2AvgGcMillis"));
-                })
-                .toList();
-    }
-
     private static int requireIntConsistency(List<ReportFile> reportFiles, String fieldName) {
         int expected = reportFiles.getFirst().report().path(fieldName).asInt();
         for (ReportFile reportFile : reportFiles) {
@@ -564,15 +307,6 @@ public final class BenchmarkMedianTool {
                         TreeMap::new));
     }
 
-    private static Map<String, JsonNode> indexArchitectureStages(List<JsonNode> rows) {
-        return rows.stream()
-                .collect(Collectors.toMap(
-                        row -> row.path("scenario").asText() + "#" + row.path("stage").asText(),
-                        row -> row,
-                        (left, right) -> left,
-                        TreeMap::new));
-    }
-
     private static List<JsonNode> iterable(JsonNode array) {
         List<JsonNode> rows = new ArrayList<>();
         array.forEach(rows::add);
@@ -585,7 +319,6 @@ public final class BenchmarkMedianTool {
                     Usage:
                       java ... com.demcha.compose.BenchmarkMedianTool current-speed <run1.json> <run2.json> [...]
                       java ... com.demcha.compose.BenchmarkMedianTool comparative <run1.json> <run2.json> [...]
-                      java ... com.demcha.compose.BenchmarkMedianTool architecture-comparison <run1.json> <run2.json> [...]
                     """);
         }
 
@@ -605,25 +338,7 @@ public final class BenchmarkMedianTool {
         if (node.has("libraries")) {
             return SuiteType.COMPARATIVE;
         }
-        if (node.has("layout") && node.has("pdf")) {
-            return SuiteType.ARCHITECTURE_COMPARISON;
-        }
         throw new IllegalArgumentException("Unknown benchmark report schema.");
-    }
-
-    private static double percentDelta(double baseline, double candidate) {
-        if (Double.compare(baseline, 0.0) == 0) {
-            return candidate == 0.0 ? 0.0 : 100.0;
-        }
-        return ((candidate - baseline) / baseline) * 100.0;
-    }
-
-    private static String winner(double legacyValue, double v2Value) {
-        double delta = Math.abs(legacyValue - v2Value);
-        if (delta < 0.01) {
-            return "tie";
-        }
-        return v2Value < legacyValue ? "v2" : "legacy";
     }
 
     private static String format(double value) {
@@ -638,8 +353,7 @@ public final class BenchmarkMedianTool {
 
     private enum SuiteType {
         CURRENT_SPEED("current-speed"),
-        COMPARATIVE("comparative"),
-        ARCHITECTURE_COMPARISON("architecture-comparison");
+        COMPARATIVE("comparative");
 
         private final String id;
 
@@ -705,75 +419,4 @@ public final class BenchmarkMedianTool {
                                            List<String> sourceRuns) {
     }
 
-    private record ArchitectureLayoutMedianRow(String scenario,
-                                               String description,
-                                               double legacyAvgMillis,
-                                               double v2AvgMillis,
-                                               double deltaPercent,
-                                               String winner,
-                                               double legacyP50Millis,
-                                               double v2P50Millis,
-                                               double legacyP95Millis,
-                                               double v2P95Millis,
-                                               double legacyAvgAllocatedMb,
-                                               double v2AvgAllocatedMb,
-                                               double legacyAvgGcCollections,
-                                               double v2AvgGcCollections,
-                                               double legacyAvgGcMillis,
-                                               double v2AvgGcMillis) {
-    }
-
-    private record ArchitecturePdfMedianRow(String scenario,
-                                            String description,
-                                            double legacyAvgMillis,
-                                            double v2AvgMillis,
-                                            double deltaPercent,
-                                            double legacyAvgKilobytes,
-                                            double v2AvgKilobytes,
-                                            String winner,
-                                            double legacyP50Millis,
-                                            double v2P50Millis,
-                                            double legacyP95Millis,
-                                            double v2P95Millis,
-                                            double legacyAvgAllocatedMb,
-                                            double v2AvgAllocatedMb,
-                                            double legacyAvgGcCollections,
-                                            double v2AvgGcCollections,
-                                            double legacyAvgGcMillis,
-                                            double v2AvgGcMillis) {
-    }
-
-    private record ArchitectureStageMedianRow(String scenario,
-                                              String stage,
-                                              String description,
-                                              double legacyAvgMillis,
-                                              double v2AvgMillis,
-                                              double deltaPercent,
-                                              String winner,
-                                              double legacyP50Millis,
-                                              double v2P50Millis,
-                                              double legacyP95Millis,
-                                              double v2P95Millis,
-                                              double legacyAvgAllocatedMb,
-                                              double v2AvgAllocatedMb,
-                                              double legacyAvgGcCollections,
-                                              double v2AvgGcCollections,
-                                              double legacyAvgGcMillis,
-                                              double v2AvgGcMillis) {
-    }
-
-    private record ArchitectureComparisonMedianReport(String timestamp,
-                                                      String profile,
-                                                      int warmupIterations,
-                                                      int measurementIterations,
-                                                      List<ArchitectureLayoutMedianRow> layout,
-                                                      List<ArchitecturePdfMedianRow> pdf,
-                                                      List<ArchitectureStageMedianRow> stages,
-                                                      long buildGuard,
-                                                      long layoutGuard,
-                                                      long totalPdfBytes,
-                                                      String aggregation,
-                                                      int sourceCount,
-                                                      List<String> sourceRuns) {
-    }
 }

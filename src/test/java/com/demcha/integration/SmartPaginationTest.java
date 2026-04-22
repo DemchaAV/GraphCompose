@@ -6,7 +6,7 @@ import com.demcha.compose.layout_core.components.layout.Align;
 import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testsupport.EngineComposerHarness;
 import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
@@ -37,7 +37,7 @@ public class SmartPaginationTest {
         }
         String massiveText = sb.toString();
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(50, 50, 50, 50)
                 .create()) {
@@ -71,7 +71,7 @@ public class SmartPaginationTest {
                     .addChild(massiveTextModule)
                     .build();
 
-            LayoutSnapshotAssertions.assertMatches(composer, "massive_text", "integration");
+            LayoutSnapshotAssertions.assertMatches(composer.layoutSnapshot(), "massive_text", "integration");
             composer.build();
         }
 
@@ -86,7 +86,7 @@ public class SmartPaginationTest {
     void testContainerSplitWithGuides() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("container_split", "guides", "integration");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(50, 50, 50, 50)
                 .guideLines(true) // Use guides to verify "borders" (box boundaries)
@@ -102,7 +102,7 @@ public class SmartPaginationTest {
                 .addChild(cb.rectangle().size(500, 300).fillColor(ComponentColor.BLUE).build())
                 .build();
 
-            LayoutSnapshotAssertions.assertMatches(composer, "container_split", "integration");
+            LayoutSnapshotAssertions.assertMatches(composer.layoutSnapshot(), "container_split", "integration");
             composer.build();
         }
 

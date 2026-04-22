@@ -31,12 +31,9 @@ class CanonicalSurfaceGuardTest {
     private static final Set<String> CANONICAL_DOCUMENT_TEST_ALLOWLIST = Set.of(
             "src/test/java/com/demcha/compose/document/templates/architecture/CanonicalTemplateComposerPdfBoundaryTest.java");
 
-    private static final Set<String> CANONICAL_BENCHMARK_ALLOWLIST = Set.of(
-            "src/test/java/com/demcha/compose/ArchitectureComparisonBenchmark.java",
-            "src/test/java/com/demcha/compose/ComparativeBenchmark.java");
+    private static final Set<String> CANONICAL_BENCHMARK_ALLOWLIST = Set.of();
 
-    private static final Set<String> PUBLIC_MARKDOWN_ALLOWLIST = Set.of(
-            "docs/legacy-visual-parity-audit.md");
+    private static final Set<String> PUBLIC_MARKDOWN_ALLOWLIST = Set.of();
 
     @Test
     void canonicalMainSourcesShouldAvoidLegacySurfaceOutsideTransitionMappers() throws IOException {
@@ -67,7 +64,7 @@ class CanonicalSurfaceGuardTest {
     }
 
     @Test
-    void canonicalBenchmarkEntryPointsShouldAvoidLegacySurfaceOutsideExplicitMigrationHarnesses() throws IOException {
+    void canonicalBenchmarkEntryPointsShouldAvoidLegacySurface() throws IOException {
         assertNoForbiddenReferences(
                 PROJECT_ROOT.resolve("src/test/java/com/demcha/compose"),
                 path -> {

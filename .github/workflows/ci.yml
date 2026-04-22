@@ -36,7 +36,7 @@ jobs:
       - name: Run guards
         run: |
           ./mvnw -B -ntp clean \
-            "-Dtest=EnginePdfBoundaryTest,CanonicalTemplateComposerPdfBoundaryTest,LegacyPdfRenderAllowlistTest,PdfRenderingSystemECSDispatchTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest,TemplateComposeApiTest" \
+            "-Dtest=EnginePdfBoundaryTest,CanonicalTemplateComposerPdfBoundaryTest,PdfRenderInterfaceGuardTest,PdfRenderingSystemECSDispatchTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest,TemplateComposeApiTest" \
             test
 
   build-and-test:

@@ -15,7 +15,7 @@ import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testsupport.EngineComposerHarness;
 import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
@@ -60,7 +60,7 @@ class RepositoryShowcaseRenderTest {
     private void renderRepositoryShowcase(Path outputFile, boolean guideLines) throws Exception {
         assertThat(COVER_ASSET).exists();
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(16, 16, 16, 16)
                 .markdown(true)
@@ -160,7 +160,7 @@ class RepositoryShowcaseRenderTest {
                     .build();
 
             if (!guideLines) {
-                LayoutSnapshotAssertions.assertMatches(composer, "repository_showcase_render", "integration");
+                LayoutSnapshotAssertions.assertMatches(composer.layoutSnapshot(), "repository_showcase_render", "integration");
             }
             composer.build();
         }

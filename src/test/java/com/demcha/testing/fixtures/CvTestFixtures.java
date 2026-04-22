@@ -1,11 +1,11 @@
 package com.demcha.testing.fixtures;
 
-import com.demcha.compose.document.templates.data.EmailYaml;
-import com.demcha.compose.document.templates.data.Header;
-import com.demcha.compose.document.templates.data.LinkYml;
-import com.demcha.compose.document.templates.data.MainPageCV;
-import com.demcha.compose.document.templates.data.ModuleSummary;
-import com.demcha.compose.document.templates.data.ModuleYml;
+import com.demcha.compose.document.templates.data.common.EmailYaml;
+import com.demcha.compose.document.templates.data.common.Header;
+import com.demcha.compose.document.templates.data.common.LinkYml;
+import com.demcha.compose.document.templates.data.cv.MainPageCV;
+import com.demcha.compose.document.templates.data.cv.ModuleSummary;
+import com.demcha.compose.document.templates.data.cv.ModuleYml;
 
 import java.util.ArrayList;
 import java.util.List;

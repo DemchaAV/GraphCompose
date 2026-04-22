@@ -106,7 +106,7 @@ This keeps table pagination consistent with the rest of the engine while avoidin
 - New PDF drawing code must live in renderer-owned handlers under `...pdf_systems.handlers`.
 - PDF-only helper objects that are not entity render markers should live under renderer-owned helper packages such as `...pdf_systems.helpers`.
 - Engine-side text sizing and line metrics must come from `TextMeasurementSystem`, not from `LayoutSystem -> RenderingSystem`.
-- The PDF entity path no longer supports a legacy backend-specific render fallback.
+- The PDF entity path does not support backend-specific render fallback paths.
 
 Fixed leaf primitives such as `Rectangle`, `Circle`, `Image`, and `Line` follow the same general engine contract:
 
@@ -120,7 +120,7 @@ Fixed leaf primitives such as `Rectangle`, `Circle`, `Image`, and `Line` follow 
 - These classes sit on top of the semantic `document.*` API and package common document structures into reusable templates.
 - `...templates.api` contains template-facing contracts and registries.
 - `...templates.builtins` contains concrete canonical template implementations.
-- `...templates.support` contains backend-neutral scene composers, mappers, and transition adapters.
+- `...templates.support.common` contains backend-neutral composition primitives, while domain packages such as `...templates.support.cv`, `...templates.support.business`, and `...templates.support.schedule` contain concrete scene composers.
 - canonical template contracts are compose-first: `compose(DocumentSession, ...)` is the primary seam.
 - canonical built-ins should start one semantic page-flow root through `DocumentSession.dsl().pageFlow()` or the internal `TemplateComposeTarget` seam that feeds that same path.
 
@@ -128,7 +128,7 @@ Fixed leaf primitives such as `Rectangle`, `Circle`, `Image`, and `Line` follow 
 
 - `com.demcha.compose.document.*` contains the canonical semantic document API, layout graph, backends, exceptions, and snapshot/debug helpers.
 - `com.demcha.compose.document.templates.*` contains the canonical higher-level template layer.
-- `com.demcha.compose.layout_core.*` contains the engine internals and the legacy builder-facing layout layer that still powers compatibility adapters.
+- `com.demcha.compose.layout_core.*` contains the engine internals, measurement, layout, pagination, and PDF backend foundation.
 - `com.demcha.compose.layout_core.system.implemented_systems.word_systems.*` contains the experimental Word-specific rendering path.
 
 ## Experimental areas

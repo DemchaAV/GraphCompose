@@ -13,7 +13,7 @@ import com.demcha.compose.layout_core.components.layout.Anchor;
 import com.demcha.compose.layout_core.components.layout.coordinator.Placement;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testsupport.EngineComposerHarness;
 import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFont;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -35,7 +35,7 @@ class BlockTextIntegrationTest {
     void shouldRenderBlockTextWithBulletOffset() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("block_text_bullet_test", "guides", "integration");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(15, 10, 15, 15)
                 .markdown(true)
@@ -70,7 +70,7 @@ class BlockTextIntegrationTest {
     void shouldRenderBlockTextWithWhitespaceIndent() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("block_text_whitespace_test", "guides", "integration");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(15, 10, 15, 15)
                 .markdown(true)
@@ -104,7 +104,7 @@ class BlockTextIntegrationTest {
     void shouldRenderBlockTextWithMarkdownFormatting() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("block_text_markdown_test", "clean", "integration");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(20, 20, 20, 20)
                 .markdown(true)
@@ -138,7 +138,7 @@ class BlockTextIntegrationTest {
         TextStyle style = TextStyle.DEFAULT_STYLE;
         Entity entity;
 
-        try (PdfComposer composer = GraphCompose.pdf()
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf()
                 .pageSize(PDRectangle.A4)
                 .margin(20, 20, 20, 20)
                 .markdown(true)
@@ -183,7 +183,7 @@ class BlockTextIntegrationTest {
         Padding padding = Padding.of(8);
         Entity entity;
 
-        try (PdfComposer composer = GraphCompose.pdf()
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf()
                 .pageSize(PDRectangle.A4)
                 .margin(20, 20, 20, 20)
                 .markdown(true)

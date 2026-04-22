@@ -81,7 +81,7 @@ GraphCompose is a good fit for:
 ## New in v1.1.0
 
 - compose-first template usage is now the documented default for built-in templates
-- backend-neutral `DocumentComposer` and handler-driven rendering make the engine less PDF-centric internally
+- canonical `DocumentSession` and handler-driven rendering make the engine less PDF-centric internally
 - the PDF render path now uses page-scoped render sessions, reusing one `PDPageContentStream` per page during a render pass instead of reopening a stream per entity
 - layout snapshot testing is now part of the practical regression workflow for pagination and geometry changes
 - runnable examples now cover CV, cover letter, invoice, proposal, and weekly schedule generation
@@ -231,7 +231,7 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.InvoiceTemplate;
 import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
-import com.demcha.compose.document.templates.data.InvoiceData;
+import com.demcha.compose.document.templates.data.invoice.InvoiceData;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
@@ -249,7 +249,7 @@ try (DocumentSession document = GraphCompose.document(Path.of("invoice.pdf"))
 }
 ```
 
-Canonical docs and examples now compose directly into `DocumentSession`, and built-in template APIs live under `com.demcha.compose.document.templates.*`. The supported authoring workflow is `GraphCompose.document(...)`; lower-level PDF composer internals remain in the repository only for internal tooling, diagnostics, and migration scaffolding.
+Canonical docs and examples now compose directly into `DocumentSession`, and built-in template APIs live under `com.demcha.compose.document.templates.*`. The supported authoring workflow is `GraphCompose.document(...)`; lower-level engine internals are not part of the public authoring surface.
 
 ---
 
@@ -522,7 +522,7 @@ Built-in templates now follow a compose-first split:
 
 - the canonical public contract lives on `com.demcha.compose.document.templates.api.*Template` through `compose(DocumentSession, ...)`
 - each class in `com.demcha.compose.document.templates.builtins` composes through the semantic DSL and the canonical PDF backend
-- the actual document composition belongs in a dedicated backend-neutral scene composer under `com.demcha.compose.document.templates.support`
+- the actual document composition belongs in a dedicated backend-neutral scene composer under domain support packages such as `com.demcha.compose.document.templates.support.cv`, `support.business`, or `support.schedule`
 - scene composers should stay free of `PDDocument`, `PDPage`, `PDRectangle`, and low-level PDF composer imports
 - built-in template logic lives under `com.demcha.compose.document.templates.*`, with scene composition isolated from PDF-only setup
 
@@ -654,7 +654,7 @@ The repository keeps several benchmark entry points because a single number is n
 - `CurrentSpeedBenchmark`: scenario-oriented latency checks across representative templates and engine-heavy examples
 - `GraphComposeBenchmark`: core engine latency guard for a compact document composition path
 - `ScalabilityBenchmark`: throughput scaling across thread counts
-- `ComparativeBenchmark`: low-level comparison against iText 5 and JasperReports
+- `ComparativeBenchmark`: canonical GraphCompose comparison against iText 5 and JasperReports
 - `FullCvBenchmark`: a larger compose-first document path
 - `GraphComposeStressTest`: concurrent stability and failure-rate guard
 - `EnduranceTest`: long-running allocation and heap-behavior guard

@@ -17,7 +17,7 @@ public enum BarcodeType {
     /** High-density linear barcode — common in logistics and inventory. */
     CODE_128,
 
-    /** Alphanumeric linear barcode — legacy systems and US DoD. */
+    /** Alphanumeric linear barcode — established systems and US DoD. */
     CODE_39,
 
     /** European Article Number — retail product identification (13 digits). */

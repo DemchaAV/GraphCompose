@@ -6,7 +6,7 @@ import com.demcha.compose.document.templates.TemplateTestSupport;
 import com.demcha.compose.document.templates.builtins.CvTemplateV1;
 import com.demcha.compose.document.templates.builtins.EditorialBlueCvTemplate;
 import com.demcha.compose.document.templates.builtins.ExecutiveSlateCvTemplate;
-import com.demcha.compose.document.templates.data.CvDocumentSpec;
+import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.font_library.FontName;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;

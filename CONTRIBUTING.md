@@ -16,7 +16,7 @@ They explain the current public surface, the engine/template split, and the reco
 ## Build and test
 
 - The blocking validation gate for repository work is `./mvnw -B -ntp clean verify`.
-- Run the guard-focused suite with `./mvnw -B -ntp "-Dtest=EnginePdfBoundaryTest,CanonicalTemplateComposerPdfBoundaryTest,LegacyPdfRenderAllowlistTest,PdfRenderingSystemECSDispatchTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest,TemplateComposeApiTest" test`.
+- Run the guard-focused suite with `./mvnw -B -ntp "-Dtest=EnginePdfBoundaryTest,CanonicalTemplateComposerPdfBoundaryTest,PdfRenderInterfaceGuardTest,PdfRenderingSystemECSDispatchTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest,TemplateComposeApiTest" test`.
 - Run a focused documentation sanity check with `./mvnw -B -ntp "-Dtest=DocumentationExamplesTest" test`.
 - Run the local benchmark wrapper with `powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1` when you change performance-sensitive code or benchmark tooling.
 
@@ -62,13 +62,13 @@ For built-in templates, use the template-layer split as project policy as well:
 - keep PDF-only setup in the document session/backend layer rather than inside template composers
 - do not import `PDDocument`, `PDPage`, `PDRectangle`, or low-level PDF composer types into scene composer classes
 - new README snippets, runnable examples, and integration docs should show `compose(DocumentSession, ...)`
-- do not reintroduce the deprecated low-level PDF entry point, low-level PDF composer types, or the removed legacy template namespace into public-facing usage docs or runnable examples
+- do not reintroduce the removed low-level PDF entry point, low-level PDF composer types, or the removed template namespace into public-facing usage docs or runnable examples
 
 The current guard rails for these rules live in:
 
 - [EnginePdfBoundaryTest.java](./src/test/java/com/demcha/compose/layout_core/architecture/EnginePdfBoundaryTest.java)
 - [CanonicalTemplateComposerPdfBoundaryTest.java](./src/test/java/com/demcha/compose/document/templates/architecture/CanonicalTemplateComposerPdfBoundaryTest.java)
-- [LegacyPdfRenderAllowlistTest.java](./src/test/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/LegacyPdfRenderAllowlistTest.java)
+- [PdfRenderInterfaceGuardTest.java](./src/test/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderInterfaceGuardTest.java)
 - [PdfRenderingSystemECSDispatchTest.java](./src/test/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderingSystemECSDispatchTest.java)
 - [DocumentationExamplesTest.java](./src/test/java/com/demcha/documentation/DocumentationExamplesTest.java)
 
@@ -138,7 +138,7 @@ Choose the smallest tests that match the change:
   [DocumentationExamplesTest.java](./src/test/java/com/demcha/documentation/DocumentationExamplesTest.java)
 - For engine/backend boundary changes:
   [EnginePdfBoundaryTest.java](./src/test/java/com/demcha/compose/layout_core/architecture/EnginePdfBoundaryTest.java)
-  [LegacyPdfRenderAllowlistTest.java](./src/test/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/LegacyPdfRenderAllowlistTest.java)
+  [PdfRenderInterfaceGuardTest.java](./src/test/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderInterfaceGuardTest.java)
 - For public builder registration or factory changes:
   [ComponentBuilderTest.java](./src/test/java/com/demcha/compose/layout_core/components/ComponentBuilderTest.java)
 - For render-marker dispatch changes:

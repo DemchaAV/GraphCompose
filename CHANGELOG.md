@@ -4,7 +4,7 @@
 
 ### Highlights
 
-- shifted the public built-in template narrative to `compose(DocumentComposer, ...)`
+- shifted the public built-in template narrative to `compose(DocumentSession, ...)`
 - added document-level PDF features for richer real-world output
 - moved the engine further away from PDF-centric internals through backend-neutral composition and render-handler seams
 - strengthened architecture guard rails for template scene builders
@@ -12,7 +12,7 @@
 
 ### Added
 
-- backend-neutral `DocumentComposer` contract as the primary composition seam
+- canonical `DocumentSession` contract as the primary composition seam
 - layout snapshot extraction and JSON-based regression coverage for resolved document geometry
 - runnable `examples/` module for CV, cover letter, invoice, proposal, and weekly schedule generation
 - new built-in business templates and data models for invoice, proposal, and weekly schedule documents
@@ -40,7 +40,7 @@
 ### Architecture and CI
 
 - engine-side text measurement and rendering dispatch are now more explicitly decoupled from PDFBox-specific implementation details
-- added template boundary guard coverage so `*SceneBuilder` classes stay free of `PDDocument`, `PDPage`, `PDRectangle`, and `PdfComposer`
+- added template boundary guard coverage so `*SceneBuilder` classes stay free of backend-specific PDFBox types
 - split architecture/documentation guards into a dedicated CI job that can be required independently in branch protection
 
 ### Compatibility notes

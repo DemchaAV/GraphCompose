@@ -2,10 +2,10 @@ package com.demcha.compose.document.templates.builtins;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.ProposalTemplate;
-import com.demcha.compose.document.templates.data.ProposalData;
-import com.demcha.compose.document.templates.support.BusinessDocumentSceneStyles;
-import com.demcha.compose.document.templates.support.ProposalTemplateComposer;
-import com.demcha.compose.document.templates.support.SessionTemplateComposeTarget;
+import com.demcha.compose.document.templates.data.proposal.ProposalData;
+import com.demcha.compose.document.templates.support.business.BusinessDocumentSceneStyles;
+import com.demcha.compose.document.templates.support.business.ProposalTemplateComposer;
+import com.demcha.compose.document.templates.support.common.SessionTemplateComposeTarget;
 
 /**
  * Canonical V2 implementation of the proposal template.

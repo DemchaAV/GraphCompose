@@ -3,7 +3,7 @@ package com.demcha.compose.layout_core.components.content;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.layout_core.components.components_builders.ImageBuilder;
 import com.demcha.compose.layout_core.components.geometry.ContentSize;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testsupport.EngineComposerHarness;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,7 +62,7 @@ class ImageDataCacheTest {
         assertThat(ImageSourceCache.metadataCacheSize()).isEqualTo(1);
         assertThat(ImageSourceCache.metadataDecodeCount()).isEqualTo(1);
 
-        try (PdfComposer composer = GraphCompose.pdf().create()) {
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             ImageBuilder builder = composer.componentBuilder()
                     .image()
                     .image(first)

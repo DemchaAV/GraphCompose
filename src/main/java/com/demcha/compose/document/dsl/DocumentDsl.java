@@ -104,6 +104,15 @@ public final class DocumentDsl {
     }
 
     /**
+     * Starts a semantic module builder.
+     *
+     * @return a detached module builder
+     */
+    public ModuleBuilder module() {
+        return new ModuleBuilder();
+    }
+
+    /**
      * Starts a paragraph builder.
      *
      * @return a detached paragraph builder
@@ -187,6 +196,31 @@ public final class DocumentDsl {
     private static <B> B configure(B builder, Consumer<B> spec) {
         Objects.requireNonNull(spec, "spec").accept(builder);
         return builder;
+    }
+
+    private static String normalizeSemanticName(String raw) {
+        String safe = raw == null ? "" : raw.strip();
+        if (safe.isEmpty()) {
+            return "Module";
+        }
+        StringBuilder normalized = new StringBuilder();
+        boolean capitalize = true;
+        for (int index = 0; index < safe.length(); index++) {
+            char current = safe.charAt(index);
+            if (!Character.isLetterOrDigit(current)) {
+                capitalize = true;
+                continue;
+            }
+            normalized.append(capitalize ? Character.toUpperCase(current) : current);
+            capitalize = false;
+        }
+        if (normalized.isEmpty()) {
+            return "Module";
+        }
+        if (!Character.isLetter(normalized.charAt(0))) {
+            normalized.insert(0, "Module");
+        }
+        return normalized.toString();
     }
 
     /**
@@ -367,6 +401,48 @@ public final class DocumentDsl {
             return add(configure(new SectionBuilder().name(name), spec).build());
         }
 
+        /**
+         * Adds a titled semantic module.
+         *
+         * @param title visible module title
+         * @param spec callback that configures module body blocks
+         * @return this builder
+         */
+        public T module(String title, Consumer<ModuleBuilder> spec) {
+            return add(configure(new ModuleBuilder().title(title), spec).build());
+        }
+
+        /**
+         * Adds a semantic module.
+         *
+         * @param spec callback that configures module title and body blocks
+         * @return this builder
+         */
+        public T module(Consumer<ModuleBuilder> spec) {
+            return add(configure(new ModuleBuilder(), spec).build());
+        }
+
+        /**
+         * Alias for {@link #module(String, Consumer)}.
+         *
+         * @param title visible module title
+         * @param spec callback that configures module body blocks
+         * @return this builder
+         */
+        public T addModule(String title, Consumer<ModuleBuilder> spec) {
+            return module(title, spec);
+        }
+
+        /**
+         * Alias for {@link #module(Consumer)}.
+         *
+         * @param spec callback that configures module title and body blocks
+         * @return this builder
+         */
+        public T addModule(Consumer<ModuleBuilder> spec) {
+            return module(spec);
+        }
+
         public T addPageBreak(Consumer<PageBreakBuilder> spec) {
             return add(configure(new PageBreakBuilder(), spec).build());
         }
@@ -450,6 +526,290 @@ public final class DocumentDsl {
          * Builds the detached section node.
          *
          * @return the built section node
+         */
+        public SectionNode build() {
+            return buildNode();
+        }
+    }
+
+    /**
+     * Developer-friendly semantic module builder.
+     *
+     * <p>A module is a titled full-width section that lowers to canonical
+     * paragraph, list, table, image, divider, and page-break nodes. It keeps the
+     * authoring API close to document language without introducing a separate
+     * low-level builder layer.</p>
+     */
+    public static final class ModuleBuilder extends AbstractFlowBuilder<ModuleBuilder, SectionNode> {
+        private String title = "";
+        private TextStyle titleStyle = TextStyle.DEFAULT_STYLE;
+        private TextAlign titleAlign = TextAlign.LEFT;
+        private double titleLineSpacing = 0.0;
+        private Padding titlePadding = Padding.zero();
+        private Margin titleMargin = Margin.zero();
+
+        @Override
+        protected ModuleBuilder self() {
+            return this;
+        }
+
+        /**
+         * Sets the visible module title and default semantic name.
+         *
+         * @param title visible title
+         * @return this builder
+         */
+        public ModuleBuilder title(String title) {
+            this.title = title == null ? "" : title;
+            if (name().isBlank() || "Module".equals(name())) {
+                name(normalizeSemanticName(this.title));
+            }
+            return this;
+        }
+
+        /**
+         * Sets the title text style.
+         *
+         * @param titleStyle title text style
+         * @return this builder
+         */
+        public ModuleBuilder titleStyle(TextStyle titleStyle) {
+            this.titleStyle = titleStyle == null ? TextStyle.DEFAULT_STYLE : titleStyle;
+            return this;
+        }
+
+        /**
+         * Sets the title alignment.
+         *
+         * @param titleAlign title alignment
+         * @return this builder
+         */
+        public ModuleBuilder titleAlign(TextAlign titleAlign) {
+            this.titleAlign = titleAlign == null ? TextAlign.LEFT : titleAlign;
+            return this;
+        }
+
+        /**
+         * Sets extra spacing between wrapped title lines.
+         *
+         * @param titleLineSpacing title line spacing
+         * @return this builder
+         */
+        public ModuleBuilder titleLineSpacing(double titleLineSpacing) {
+            this.titleLineSpacing = titleLineSpacing;
+            return this;
+        }
+
+        /**
+         * Sets title padding.
+         *
+         * @param titlePadding title padding
+         * @return this builder
+         */
+        public ModuleBuilder titlePadding(Padding titlePadding) {
+            this.titlePadding = titlePadding == null ? Padding.zero() : titlePadding;
+            return this;
+        }
+
+        /**
+         * Sets title margin.
+         *
+         * @param titleMargin title margin
+         * @return this builder
+         */
+        public ModuleBuilder titleMargin(Margin titleMargin) {
+            this.titleMargin = titleMargin == null ? Margin.zero() : titleMargin;
+            return this;
+        }
+
+        /**
+         * Appends a paragraph body block.
+         *
+         * @param text paragraph text
+         * @return this builder
+         */
+        public ModuleBuilder paragraph(String text) {
+            return addParagraph(text);
+        }
+
+        /**
+         * Appends a paragraph body block.
+         *
+         * @param spec paragraph configuration
+         * @return this builder
+         */
+        public ModuleBuilder paragraph(Consumer<ParagraphBuilder> spec) {
+            return addParagraph(spec);
+        }
+
+        /**
+         * Appends a bullet list.
+         *
+         * @param items list item texts
+         * @return this builder
+         */
+        public ModuleBuilder bullets(List<String> items) {
+            return addList(items);
+        }
+
+        /**
+         * Appends a bullet list.
+         *
+         * @param items list item texts
+         * @return this builder
+         */
+        public ModuleBuilder bullets(String... items) {
+            return addList(items);
+        }
+
+        /**
+         * Appends a dash-marker list.
+         *
+         * @param items list item texts
+         * @return this builder
+         */
+        public ModuleBuilder dashList(List<String> items) {
+            return list(items, ListBuilder::dash);
+        }
+
+        /**
+         * Appends a dash-marker list.
+         *
+         * @param items list item texts
+         * @return this builder
+         */
+        public ModuleBuilder dashList(String... items) {
+            return list(items == null ? List.of() : List.of(items), ListBuilder::dash);
+        }
+
+        /**
+         * Appends markerless aligned rows.
+         *
+         * @param rows row texts
+         * @return this builder
+         */
+        public ModuleBuilder rows(List<String> rows) {
+            return list(rows, list -> list.noMarker().continuationIndent("  "));
+        }
+
+        /**
+         * Appends markerless aligned rows.
+         *
+         * @param rows row texts
+         * @return this builder
+         */
+        public ModuleBuilder rows(String... rows) {
+            return rows(rows == null ? List.of() : List.of(rows));
+        }
+
+        /**
+         * Appends a configurable list.
+         *
+         * @param items list item texts
+         * @param spec list configuration
+         * @return this builder
+         */
+        public ModuleBuilder list(List<String> items, Consumer<ListBuilder> spec) {
+            return addList(list -> {
+                list.items(items);
+                if (spec != null) {
+                    spec.accept(list);
+                }
+            });
+        }
+
+        /**
+         * Appends a prebuilt table node.
+         *
+         * @param table table node
+         * @return this builder
+         */
+        public ModuleBuilder table(TableNode table) {
+            return add(table);
+        }
+
+        /**
+         * Appends a configurable table.
+         *
+         * @param spec table configuration
+         * @return this builder
+         */
+        public ModuleBuilder table(Consumer<TableBuilder> spec) {
+            return addTable(spec);
+        }
+
+        /**
+         * Appends a prebuilt image node.
+         *
+         * @param image image node
+         * @return this builder
+         */
+        public ModuleBuilder image(ImageNode image) {
+            return add(image);
+        }
+
+        /**
+         * Appends a configurable image.
+         *
+         * @param spec image configuration
+         * @return this builder
+         */
+        public ModuleBuilder image(Consumer<ImageBuilder> spec) {
+            return addImage(spec);
+        }
+
+        /**
+         * Appends a divider.
+         *
+         * @param spec divider configuration
+         * @return this builder
+         */
+        public ModuleBuilder divider(Consumer<DividerBuilder> spec) {
+            return addDivider(spec);
+        }
+
+        /**
+         * Appends an explicit page break.
+         *
+         * @param name semantic page-break name
+         * @return this builder
+         */
+        public ModuleBuilder pageBreak(String name) {
+            return addPageBreak(pageBreak -> pageBreak.name(name));
+        }
+
+        /**
+         * Appends a custom canonical node.
+         *
+         * @param node node to append
+         * @return this builder
+         */
+        public ModuleBuilder custom(DocumentNode node) {
+            return add(node);
+        }
+
+        @Override
+        protected SectionNode buildNode() {
+            List<DocumentNode> moduleChildren = new ArrayList<>();
+            if (!title.isBlank()) {
+                moduleChildren.add(new ParagraphBuilder()
+                        .name(name() + "Title")
+                        .text(title)
+                        .textStyle(titleStyle)
+                        .align(titleAlign)
+                        .lineSpacing(titleLineSpacing)
+                        .padding(titlePadding)
+                        .margin(titleMargin)
+                        .build());
+            }
+            moduleChildren.addAll(children());
+            return new SectionNode(name(), moduleChildren, spacing(), padding(), margin(), fillColor(), stroke());
+        }
+
+        /**
+         * Builds the detached module node.
+         *
+         * @return the built module node
          */
         public SectionNode build() {
             return buildNode();

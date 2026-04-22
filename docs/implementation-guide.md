@@ -274,7 +274,7 @@ Use this split:
 
 1. a public template interface in `com.demcha.compose.document.templates.api` exposes `compose(DocumentSession, ...)`
 2. a canonical built-in class under `com.demcha.compose.document.templates.builtins` exposes stable ids, names, and theme defaults
-3. a dedicated scene composer under `com.demcha.compose.document.templates.support` owns document composition through `TemplateComposeTarget`
+3. a dedicated scene composer under a domain support package such as `com.demcha.compose.document.templates.support.cv` or `support.business` owns document composition through `TemplateComposeTarget`
 4. focused canonical tests and examples keep `compose(DocumentSession, ...)` stable while the scene composer owns the reusable document structure
 
 Practical rules:
@@ -429,7 +429,7 @@ Do not add a method there if the new object is only an internal helper for templ
 - container:
   [ModuleBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/ModuleBuilder.java)
 - template-level composition helper:
-  [CvTemplateComposer.java](./../src/main/java/com/demcha/compose/document/templates/support/CvTemplateComposer.java)
+  [CvTemplateComposer.java](./../src/main/java/com/demcha/compose/document/templates/support/cv/CvTemplateComposer.java)
 
 ## Current caveats
 

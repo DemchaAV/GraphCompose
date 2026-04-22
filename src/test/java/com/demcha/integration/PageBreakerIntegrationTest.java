@@ -13,7 +13,7 @@ import com.demcha.compose.layout_core.components.layout.coordinator.Placement;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Margin;
 import com.demcha.compose.layout_core.components.style.Padding;
-import com.demcha.compose.layout_core.core.PdfComposer;
+import com.demcha.compose.testsupport.EngineComposerHarness;
 import com.demcha.compose.font_library.FontName;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
@@ -39,7 +39,7 @@ class PageBreakerIntegrationTest {
     void shouldBreakTextAcrossPages() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("page_breaker_text_test", "guides", "integration");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(20, 20, 20, 20)
                 .guideLines(true)
@@ -77,7 +77,7 @@ class PageBreakerIntegrationTest {
         List<Double> widthsBeforeLayout;
         List<Double> baselinesBeforeLayout;
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(20, 20, 20, 20)
                 .markdown(true)
@@ -137,7 +137,7 @@ class PageBreakerIntegrationTest {
     void shouldBreakColoredRectanglesAcrossPages() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("page_breaker_rectangles_test", "guides", "integration");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(20, 20, 20, 20)
                 .guideLines(true)
@@ -174,7 +174,7 @@ class PageBreakerIntegrationTest {
                 "guides",
                 "integration");
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(18, 18, 18, 18)
                 .markdown(true)
@@ -255,7 +255,7 @@ class PageBreakerIntegrationTest {
         Placement parentPlacement;
         Placement leafPlacement;
 
-        try (PdfComposer composer = GraphCompose.pdf(outputFile)
+        try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(20, 20, 20, 20)
                 .guideLines(true)

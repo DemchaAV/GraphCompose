@@ -12,7 +12,7 @@ import java.nio.file.Path;
  * Canonical watermark configuration applied to every rendered PDF page.
  *
  * <p>A watermark may be text-based or image-based. The canonical document API
- * uses this type instead of exposing legacy watermark config classes in public
+ * uses this type instead of exposing backend watermark config classes in public
  * signatures.</p>
  */
 public final class PdfWatermarkOptions {

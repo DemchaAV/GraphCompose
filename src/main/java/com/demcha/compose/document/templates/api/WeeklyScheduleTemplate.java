@@ -11,9 +11,17 @@ import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
  *
  * <pre>{@code
  * WeeklyScheduleTemplate template = new WeeklyScheduleTemplateV1();
+ * WeeklyScheduleData schedule = WeeklyScheduleData.builder()
+ *         .title("Engineering Roster")
+ *         .weekLabel("Week Of 20 Apr - 26 Apr 2026")
+ *         .day("mon", "Monday", "Release prep", "delivery")
+ *         .category("delivery", "DELIVERY", new Color(0, 173, 76), new Color(0, 110, 49))
+ *         .person("artem", "ARTEM", 10)
+ *         .assignment("artem", "mon", "delivery", ScheduleSlot.of("09:00", "17:00"))
+ *         .build();
  *
  * try (DocumentSession document = GraphCompose.document(Path.of("schedule.pdf")).create()) {
- *     template.compose(document, scheduleData);
+ *     template.compose(document, schedule);
  *     document.buildPdf();
  * }
  * }</pre>

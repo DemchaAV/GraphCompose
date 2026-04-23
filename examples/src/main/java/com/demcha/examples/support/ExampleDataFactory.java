@@ -9,11 +9,6 @@ import com.demcha.compose.document.templates.data.cv.MainPageCvDTO;
 import com.demcha.compose.document.templates.data.cv.ModuleSummary;
 import com.demcha.compose.document.templates.data.cv.ModuleYml;
 import com.demcha.compose.document.templates.data.proposal.ProposalData;
-import com.demcha.compose.document.templates.data.schedule.ScheduleAssignment;
-import com.demcha.compose.document.templates.data.schedule.ScheduleCategory;
-import com.demcha.compose.document.templates.data.schedule.ScheduleDay;
-import com.demcha.compose.document.templates.data.schedule.ScheduleMetricRow;
-import com.demcha.compose.document.templates.data.schedule.SchedulePerson;
 import com.demcha.compose.document.templates.data.schedule.ScheduleSlot;
 import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
 
@@ -168,89 +163,83 @@ public final class ExampleDataFactory {
     }
 
     public static WeeklyScheduleData sampleWeeklySchedule() {
-        return new WeeklyScheduleData(
-                "Scott's Weekly Floor Schedule",
-                "Week Of 30 Mar - 05 Apr 2026",
-                List.of(
-                        new ScheduleDay("mon", "Monday\n30th", "Clean crushed ice\nMachine & area", "request"),
-                        new ScheduleDay("tue", "Tuesday\n31st", "Pianist 18:30\nClean ice machine", "off"),
-                        new ScheduleDay("wed", "Wednesday\n1st", "Motown GF\nPianist FF", "hol"),
-                        new ScheduleDay("thu", "Thursday\n2nd", "Ex hire terrace\ndinner\nMGM meeting\n3:30pm", "stock"),
-                        new ScheduleDay("fri", "Friday\n3rd", "Good Friday\nPianist 19:00", "standby"),
-                        new ScheduleDay("sat", "Saturday\n4th", "Masterclass 2x2PAX\nPianist 19:00", "training"),
-                        new ScheduleDay("sun", "Sunday\n5th", "Easter Sunday\nFull stock take", "bar-back")),
-                List.of(
-                        new ScheduleCategory("request", "REQUEST", new Color(166, 166, 166), Color.BLACK, new Color(80, 80, 80)),
-                        new ScheduleCategory("off", "OFF", new Color(205, 0, 0), Color.BLACK, new Color(110, 0, 0)),
-                        new ScheduleCategory("hol", "HOL", new Color(243, 196, 54), Color.BLACK, new Color(176, 126, 6)),
-                        new ScheduleCategory("stock", "STOCK", new Color(0, 173, 76), Color.BLACK, new Color(0, 110, 49)),
-                        new ScheduleCategory("standby", "STANDBY", new Color(177, 132, 226), Color.BLACK, new Color(102, 71, 150)),
-                        new ScheduleCategory("training", "TRAINING", new Color(245, 131, 24), Color.BLACK, new Color(183, 82, 0)),
-                        new ScheduleCategory("bar-back", "BAR BACK", new Color(176, 132, 76), Color.BLACK, new Color(120, 88, 44))),
-                List.of(
-                        new ScheduleMetricRow("COVERS", List.of("27 / 37", "41 / 36", "30 / 29", "57 / 63", "46 / 71", "73 / 97", "155 / 26")),
-                        new ScheduleMetricRow("TEAM FOCUS", List.of("Alex floor", "Glass count", "Vee lab", "Sergii lab", "Pianist", "Alex floor", "Sergii floor"))),
-                List.of(
-                        new SchedulePerson("sergii", "SERGII", 10),
-                        new SchedulePerson("mark", "MARK", 20),
-                        new SchedulePerson("alex", "ALEX", 30),
-                        new SchedulePerson("bianca", "BIANCA", 40),
-                        new SchedulePerson("sam", "SAM", 50),
-                        new SchedulePerson("kira", "KIRA", 60),
-                        new SchedulePerson("daria", "DARIA", 70),
-                        new SchedulePerson("violetta", "VIOLETTA", 80),
-                        new SchedulePerson("peter", "PETER", 90),
-                        new SchedulePerson("den", "DEN", 100),
-                        new SchedulePerson("daniel", "DANIEL", 110)),
-                List.of(
-                        new ScheduleAssignment("sergii", "mon", "stock", List.of(slot("09:00", "18:00")), ""),
-                        new ScheduleAssignment("sergii", "thu", "request", List.of(slot("09:00", "18:00")), ""),
-                        new ScheduleAssignment("sergii", "fri", "training", List.of(slot("08:00", "16:00"), slot("16:00", "22:00")), ""),
-                        new ScheduleAssignment("sergii", "sun", "standby", List.of(slot("12:00", "16:00"), slot("16:00", "22:00")), ""),
-                        new ScheduleAssignment("mark", "mon", "request", List.of(slot("16:00", "00:00")), ""),
-                        new ScheduleAssignment("mark", "tue", "off", List.of(slot("12:00", "18:00")), ""),
-                        new ScheduleAssignment("mark", "wed", "request", List.of(slot("16:00", "00:00")), ""),
-                        new ScheduleAssignment("mark", "fri", "standby", List.of(slot("16:00", "01:00")), ""),
-                        new ScheduleAssignment("mark", "sun", "bar-back", List.of(slot("17:00", "03:00")), ""),
-                        new ScheduleAssignment("alex", "tue", "off", List.of(slot("16:00", "00:00")), ""),
-                        new ScheduleAssignment("alex", "wed", "request", List.of(slot("16:00", "00:00")), ""),
-                        new ScheduleAssignment("alex", "thu", "request", List.of(slot("16:00", "00:00")), ""),
-                        new ScheduleAssignment("alex", "fri", "standby", List.of(slot("16:00", "22:00")), ""),
-                        new ScheduleAssignment("alex", "sat", "training", List.of(slot("12:00", "16:00"), slot("17:00", "01:00")), ""),
-                        new ScheduleAssignment("bianca", "thu", "standby", List.of(slot("16:00", "00:00")), ""),
-                        new ScheduleAssignment("bianca", "fri", "standby", List.of(slot("17:00", "01:00")), ""),
-                        new ScheduleAssignment("bianca", "sat", "training", List.of(slot("12:00", "16:00"), slot("17:00", "01:00")), ""),
-                        new ScheduleAssignment("bianca", "sun", "request", List.of(slot("12:00", "16:00"), slot("17:00", "00:00")), ""),
-                        new ScheduleAssignment("artem", "tue", "off", List.of(slot("17:00", "00:00")), ""),
-                        new ScheduleAssignment("artem", "wed", "request", List.of(slot("17:00", "00:00")), ""),
-                        new ScheduleAssignment("artem", "thu", "request", List.of(slot("17:00", "00:00")), ""),
-                        new ScheduleAssignment("artem", "fri", "standby", List.of(slot("16:00", "01:00")), ""),
-                        new ScheduleAssignment("artem", "sat", "training", List.of(slot("12:00", "16:00"), slot("17:00", "01:00")), ""),
-                        new ScheduleAssignment("kharren", "wed", "request", List.of(slot("09:00", "17:00")), ""),
-                        new ScheduleAssignment("kharren", "thu", "request", List.of(slot("09:00", "17:00")), ""),
-                        new ScheduleAssignment("kharren", "fri", "standby", List.of(slot("09:00", "17:00")), ""),
-                        new ScheduleAssignment("kharren", "sat", "training", List.of(slot("16:00", "22:00")), ""),
-                        new ScheduleAssignment("kharren", "sun", "request", List.of(slot("09:00", "16:00"), slot("17:00", "22:00")), ""),
-                        new ScheduleAssignment("daria", "sat", "training", List.of(slot("16:00", "01:00")), ""),
-                        new ScheduleAssignment("daria", "sun", "request", List.of(slot("12:00", "16:00"), slot("17:00", "00:00")), ""),
-                        new ScheduleAssignment("violetta", "tue", "request", List.of(slot("09:00", "17:00")), ""),
-                        new ScheduleAssignment("violetta", "wed", "request", List.of(slot("09:00", "18:00")), ""),
-                        new ScheduleAssignment("violetta", "fri", "standby", List.of(slot("16:00", "22:00")), ""),
-                        new ScheduleAssignment("violetta", "sat", "request", List.of(slot("09:00", "17:00")), ""),
-                        new ScheduleAssignment("peter", "fri", "standby", List.of(slot("16:00", "01:00")), ""),
-                        new ScheduleAssignment("peter", "sat", "training", List.of(slot("12:00", "16:00"), slot("17:00", "01:00")), ""),
-                        new ScheduleAssignment("dmytro", "mon", "request", List.of(slot("17:00", "00:00")), ""),
-                        new ScheduleAssignment("dmytro", "sat", "training", List.of(slot("12:00", "16:00"), slot("17:00", "01:00")), ""),
-                        new ScheduleAssignment("dmytro", "sun", "request", List.of(slot("12:00", "16:00"), slot("17:00", "00:00")), ""),
-                        new ScheduleAssignment("daniel", "tue", "request", List.of(slot("17:00", "00:00")), ""),
-                        new ScheduleAssignment("daniel", "wed", "request", List.of(slot("17:00", "00:00")), ""),
-                        new ScheduleAssignment("daniel", "thu", "standby", List.of(slot("17:00", "00:00")), ""),
-                        new ScheduleAssignment("daniel", "fri", "standby", List.of(slot("17:00", "01:00")), ""),
-                        new ScheduleAssignment("daniel", "sun", "request", List.of(slot("12:00", "16:00"), slot("17:00", "00:00")), "")),
-                List.of(
-                        "Add or remove people by editing only the people and assignments lists.",
-                        "Category colours and labels are driven entirely from the shared category catalog.")
-        );
+        return WeeklyScheduleData.builder()
+                .title("Scott's Weekly Floor Schedule")
+                .weekLabel("Week Of 30 Mar - 05 Apr 2026")
+                .day("mon", "Monday\n30th", "Clean crushed ice\nMachine & area", "request")
+                .day("tue", "Tuesday\n31st", "Pianist 18:30\nClean ice machine", "off")
+                .day("wed", "Wednesday\n1st", "Motown GF\nPianist FF", "hol")
+                .day("thu", "Thursday\n2nd", "Ex hire terrace\ndinner\nMGM meeting\n3:30pm", "stock")
+                .day("fri", "Friday\n3rd", "Good Friday\nPianist 19:00", "standby")
+                .day("sat", "Saturday\n4th", "Masterclass 2x2PAX\nPianist 19:00", "training")
+                .day("sun", "Sunday\n5th", "Easter Sunday\nFull stock take", "bar-back")
+                .category("request", "REQUEST", new Color(166, 166, 166), new Color(80, 80, 80))
+                .category("off", "OFF", new Color(205, 0, 0), new Color(110, 0, 0))
+                .category("hol", "HOL", new Color(243, 196, 54), new Color(176, 126, 6))
+                .category("stock", "STOCK", new Color(0, 173, 76), new Color(0, 110, 49))
+                .category("standby", "STANDBY", new Color(177, 132, 226), new Color(102, 71, 150))
+                .category("training", "TRAINING", new Color(245, 131, 24), new Color(183, 82, 0))
+                .category("bar-back", "BAR BACK", new Color(176, 132, 76), new Color(120, 88, 44))
+                .headerMetric("COVERS", "27 / 37", "41 / 36", "30 / 29", "57 / 63", "46 / 71", "73 / 97", "155 / 26")
+                .headerMetric("TEAM FOCUS", "Alex floor", "Glass count", "Vee lab", "Sergii lab", "Pianist", "Alex floor", "Sergii floor")
+                .person("sergii", "SERGII", 10)
+                .person("mark", "MARK", 20)
+                .person("alex", "ALEX", 30)
+                .person("bianca", "BIANCA", 40)
+                .person("sam", "SAM", 50)
+                .person("kira", "KIRA", 60)
+                .person("daria", "DARIA", 70)
+                .person("violetta", "VIOLETTA", 80)
+                .person("peter", "PETER", 90)
+                .person("den", "DEN", 100)
+                .person("daniel", "DANIEL", 110)
+                .assignment("sergii", "mon", "stock", slot("09:00", "18:00"))
+                .assignment("sergii", "thu", "request", slot("09:00", "18:00"))
+                .assignment("sergii", "fri", "training", slot("08:00", "16:00"), slot("16:00", "22:00"))
+                .assignment("sergii", "sun", "standby", slot("12:00", "16:00"), slot("16:00", "22:00"))
+                .assignment("mark", "mon", "request", slot("16:00", "00:00"))
+                .assignment("mark", "tue", "off", slot("12:00", "18:00"))
+                .assignment("mark", "wed", "request", slot("16:00", "00:00"))
+                .assignment("mark", "fri", "standby", slot("16:00", "01:00"))
+                .assignment("mark", "sun", "bar-back", slot("17:00", "03:00"))
+                .assignment("alex", "tue", "off", slot("16:00", "00:00"))
+                .assignment("alex", "wed", "request", slot("16:00", "00:00"))
+                .assignment("alex", "thu", "request", slot("16:00", "00:00"))
+                .assignment("alex", "fri", "standby", slot("16:00", "22:00"))
+                .assignment("alex", "sat", "training", slot("12:00", "16:00"), slot("17:00", "01:00"))
+                .assignment("bianca", "thu", "standby", slot("16:00", "00:00"))
+                .assignment("bianca", "fri", "standby", slot("17:00", "01:00"))
+                .assignment("bianca", "sat", "training", slot("12:00", "16:00"), slot("17:00", "01:00"))
+                .assignment("bianca", "sun", "request", slot("12:00", "16:00"), slot("17:00", "00:00"))
+                .assignment("artem", "tue", "off", slot("17:00", "00:00"))
+                .assignment("artem", "wed", "request", slot("17:00", "00:00"))
+                .assignment("artem", "thu", "request", slot("17:00", "00:00"))
+                .assignment("artem", "fri", "standby", slot("16:00", "01:00"))
+                .assignment("artem", "sat", "training", slot("12:00", "16:00"), slot("17:00", "01:00"))
+                .assignment("kharren", "wed", "request", slot("09:00", "17:00"))
+                .assignment("kharren", "thu", "request", slot("09:00", "17:00"))
+                .assignment("kharren", "fri", "standby", slot("09:00", "17:00"))
+                .assignment("kharren", "sat", "training", slot("16:00", "22:00"))
+                .assignment("kharren", "sun", "request", slot("09:00", "16:00"), slot("17:00", "22:00"))
+                .assignment("daria", "sat", "training", slot("16:00", "01:00"))
+                .assignment("daria", "sun", "request", slot("12:00", "16:00"), slot("17:00", "00:00"))
+                .assignment("violetta", "tue", "request", slot("09:00", "17:00"))
+                .assignment("violetta", "wed", "request", slot("09:00", "18:00"))
+                .assignment("violetta", "fri", "standby", slot("16:00", "22:00"))
+                .assignment("violetta", "sat", "request", slot("09:00", "17:00"))
+                .assignment("peter", "fri", "standby", slot("16:00", "01:00"))
+                .assignment("peter", "sat", "training", slot("12:00", "16:00"), slot("17:00", "01:00"))
+                .assignment("dmytro", "mon", "request", slot("17:00", "00:00"))
+                .assignment("dmytro", "sat", "training", slot("12:00", "16:00"), slot("17:00", "01:00"))
+                .assignment("dmytro", "sun", "request", slot("12:00", "16:00"), slot("17:00", "00:00"))
+                .assignment("daniel", "tue", "request", slot("17:00", "00:00"))
+                .assignment("daniel", "wed", "request", slot("17:00", "00:00"))
+                .assignment("daniel", "thu", "standby", slot("17:00", "00:00"))
+                .assignment("daniel", "fri", "standby", slot("17:00", "01:00"))
+                .assignment("daniel", "sun", "request", slot("12:00", "16:00"), slot("17:00", "00:00"))
+                .footerNote("Add or remove people by editing only the people and assignments lists.")
+                .footerNote("Category colours and labels are driven entirely from the shared category catalog.")
+                .build();
     }
 
     private static ModuleSummary summary(String moduleName, String blockSummary) {
@@ -268,6 +257,6 @@ public final class ExampleDataFactory {
     }
 
     private static ScheduleSlot slot(String start, String end) {
-        return new ScheduleSlot(start, end);
+        return ScheduleSlot.of(start, end);
     }
 }

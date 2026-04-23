@@ -14,6 +14,14 @@ public record ScheduleSlot(
         end = Objects.requireNonNullElse(end, "");
     }
 
+    public static ScheduleSlot of(String start, String end) {
+        return new ScheduleSlot(start, end);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
     /**
      * Returns the compact display text used inside rendered cells.
      *
@@ -30,5 +38,27 @@ public record ScheduleSlot(
             return start;
         }
         return start + " " + end;
+    }
+
+    public static final class Builder {
+        private String start;
+        private String end;
+
+        private Builder() {
+        }
+
+        public Builder start(String start) {
+            this.start = start;
+            return this;
+        }
+
+        public Builder end(String end) {
+            this.end = end;
+            return this;
+        }
+
+        public ScheduleSlot build() {
+            return new ScheduleSlot(start, end);
+        }
     }
 }

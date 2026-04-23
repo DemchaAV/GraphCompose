@@ -3,10 +3,9 @@ package com.demcha.compose.document.templates.support.cv;
 import com.demcha.compose.document.templates.support.common.*;
 
 import com.demcha.compose.document.model.node.TextAlign;
-import com.demcha.compose.document.templates.data.cv.MainPageCV;
-import com.demcha.compose.document.templates.data.cv.MainPageCvDTO;
-import com.demcha.compose.document.templates.data.cv.ModuleSummary;
-import com.demcha.compose.document.templates.data.cv.ModuleYml;
+import com.demcha.compose.document.templates.data.common.Header;
+import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
+import com.demcha.compose.document.templates.data.cv.CvModule;
 import com.demcha.compose.document.templates.theme.CvTheme;
 import com.demcha.compose.layout_core.components.components_builders.TableCellSpec;
 import com.demcha.compose.layout_core.components.components_builders.TableCellStyle;
@@ -49,21 +48,23 @@ public final class EditorialBlueCvTemplateComposer {
         this.theme = Objects.requireNonNull(theme, "theme");
     }
 
-    public void compose(TemplateComposeTarget target, MainPageCV originalCv, MainPageCvDTO rewrittenCv) {
-        MainPageCV data = rewrittenCv == null ? originalCv : rewrittenCv.merge(originalCv);
+    public void compose(TemplateComposeTarget target, CvDocumentSpec documentSpec) {
+        CvDocumentSpec data = Objects.requireNonNull(documentSpec, "documentSpec");
+        CvModule summary = findModule(data, "summary", "professional summary", "profile");
+
         target.startDocument("EditorialBlueRoot", 0);
-        addHeader(target, data);
-        addProfile(target, data.getModuleSummary());
-        addExperience(target, data.getProfessionalExperience());
-        addProjects(target, data.getProjects());
-        addEducation(target, data.getEducationCertifications());
-        addSkills(target, data.getTechnicalSkills());
+        addHeader(target, data.header(), moduleText(summary));
+        addProfile(target, summary);
+        addExperience(target, findModule(data, "experience", "professional experience", "employment history"));
+        addProjects(target, findModule(data, "projects"));
+        addEducation(target, findModule(data, "education", "education certifications"));
+        addSkills(target, findModule(data, "technical skills", "skills", "key skills"));
         addFooter(target);
         target.finishDocument();
     }
 
-    private void addHeader(TemplateComposeTarget target, MainPageCV data) {
-        String name = data.getHeader() == null ? "" : Objects.requireNonNullElse(data.getHeader().getName(), "");
+    private void addHeader(TemplateComposeTarget target, Header header, String summaryText) {
+        String name = header == null ? "" : Objects.requireNonNullElse(header.getName(), "");
         target.addParagraph(TemplateSceneSupport.paragraph(
                 "EditorialBlueName",
                 name.toUpperCase(Locale.ROOT),
@@ -73,7 +74,7 @@ public final class EditorialBlueCvTemplateComposer {
                 Padding.zero(),
                 Margin.zero()));
 
-        String headline = extractHeadline(data.getModuleSummary());
+        String headline = extractHeadline(summaryText);
         if (!headline.isBlank()) {
             target.addParagraph(TemplateSceneSupport.paragraph(
                     "EditorialBlueHeadline",
@@ -85,10 +86,10 @@ public final class EditorialBlueCvTemplateComposer {
                     Margin.zero()));
         }
 
-        if (data.getHeader() != null) {
+        if (header != null) {
             String meta = TemplateSceneSupport.joinNonBlank(" - ",
-                    data.getHeader().getPhoneNumber(),
-                    data.getHeader().getAddress());
+                    header.getPhoneNumber(),
+                    header.getAddress());
             if (!meta.isBlank()) {
                 target.addParagraph(TemplateSceneSupport.paragraph(
                         "EditorialBlueMeta",
@@ -101,7 +102,7 @@ public final class EditorialBlueCvTemplateComposer {
             }
             TemplateParagraphSpec linkRow = TemplateHeaderContactSupport.linkRow(
                     "EditorialBlueLinks",
-                    data.getHeader(),
+                    header,
                     theme,
                     TextAlign.CENTER,
                     Margin.top(1));
@@ -118,14 +119,15 @@ public final class EditorialBlueCvTemplateComposer {
                 Margin.top(6)));
     }
 
-    private void addProfile(TemplateComposeTarget target, ModuleSummary summary) {
-        if (summary == null) {
+    private void addProfile(TemplateComposeTarget target, CvModule summary) {
+        String text = moduleText(summary);
+        if (text.isBlank()) {
             return;
         }
         sectionHeader(target, "EditorialBlueProfile", "PROFESSIONAL PROFILE", Margin.top(3));
         target.addParagraph(TemplateSceneSupport.blockParagraph(
                 "EditorialBlueProfileBody",
-                stripMarkdown(summary.getBlockSummary()),
+                stripMarkdown(text),
                 bodyStyle(),
                 TextAlign.LEFT,
                 1.8,
@@ -135,13 +137,14 @@ public final class EditorialBlueCvTemplateComposer {
                 Margin.top(2)));
     }
 
-    private void addExperience(TemplateComposeTarget target, ModuleYml experience) {
-        if (experience == null || experience.getModulePoints().isEmpty()) {
+    private void addExperience(TemplateComposeTarget target, CvModule experience) {
+        List<String> lines = moduleLines(experience);
+        if (lines.isEmpty()) {
             return;
         }
         sectionHeader(target, "EditorialBlueExperience", "EMPLOYMENT HISTORY", Margin.top(4));
         int index = 0;
-        for (ExperienceEntry entry : parseExperienceEntries(experience.getModulePoints())) {
+        for (ExperienceEntry entry : parseExperienceEntries(lines)) {
             target.addParagraph(TemplateSceneSupport.paragraph(
                     "EditorialBlueExperienceTitle_" + index,
                     TemplateSceneSupport.joinNonBlank(" ", entry.role(), entry.dateRange()),
@@ -176,13 +179,14 @@ public final class EditorialBlueCvTemplateComposer {
         }
     }
 
-    private void addProjects(TemplateComposeTarget target, ModuleYml projects) {
-        if (projects == null || projects.getModulePoints().isEmpty()) {
+    private void addProjects(TemplateComposeTarget target, CvModule projects) {
+        List<String> lines = moduleLines(projects);
+        if (lines.isEmpty()) {
             return;
         }
         sectionHeader(target, "EditorialBlueProjects", "PROJECTS", Margin.top(4));
         int index = 0;
-        for (ProjectEntry entry : parseProjectEntries(projects.getModulePoints()).stream().limit(2).toList()) {
+        for (ProjectEntry entry : parseProjectEntries(lines).stream().limit(2).toList()) {
             target.addParagraph(TemplateSceneSupport.paragraph(
                     "EditorialBlueProjectTitle_" + index,
                     entry.title(),
@@ -215,13 +219,14 @@ public final class EditorialBlueCvTemplateComposer {
         }
     }
 
-    private void addEducation(TemplateComposeTarget target, ModuleYml education) {
-        if (education == null || education.getModulePoints().isEmpty()) {
+    private void addEducation(TemplateComposeTarget target, CvModule education) {
+        List<String> lines = moduleLines(education);
+        if (lines.isEmpty()) {
             return;
         }
         sectionHeader(target, "EditorialBlueEducation", "EDUCATION", Margin.top(4));
         int index = 0;
-        for (EducationEntry entry : parseEducationEntries(education.getModulePoints())) {
+        for (EducationEntry entry : parseEducationEntries(lines)) {
             target.addParagraph(TemplateSceneSupport.paragraph(
                     "EditorialBlueEducationTitle_" + index,
                     TemplateSceneSupport.joinNonBlank(" ", entry.title(), entry.dateRange()),
@@ -244,7 +249,7 @@ public final class EditorialBlueCvTemplateComposer {
         }
     }
 
-    private void addSkills(TemplateComposeTarget target, ModuleYml skillsModule) {
+    private void addSkills(TemplateComposeTarget target, CvModule skillsModule) {
         List<String> skills = extractSkillTokens(skillsModule);
         if (skills.isEmpty()) {
             return;
@@ -319,6 +324,61 @@ public final class EditorialBlueCvTemplateComposer {
                 Margin.top(3));
     }
 
+    private CvModule findModule(CvDocumentSpec spec, String... keys) {
+        for (CvModule module : spec.modules()) {
+            String normalized = normalizedKey(module.name() + " " + module.title());
+            for (String key : keys) {
+                if (normalized.contains(normalizedKey(key))) {
+                    return module;
+                }
+            }
+        }
+        return null;
+    }
+
+    private String moduleText(CvModule module) {
+        return String.join("\n", moduleLines(module));
+    }
+
+    private List<String> moduleLines(CvModule module) {
+        if (module == null) {
+            return List.of();
+        }
+        List<String> lines = new ArrayList<>();
+        for (CvModule.BodyBlock block : module.bodyBlocks()) {
+            switch (block.kind()) {
+                case PARAGRAPH -> lines.addAll(splitNonBlankLines(block.text()));
+                case LIST -> lines.addAll(splitNonBlankLines(String.join("\n", block.items())));
+                default -> {
+                    // Editorial Blue intentionally ignores rich/table blocks for its bespoke layout.
+                }
+            }
+        }
+        return List.copyOf(lines);
+    }
+
+    private List<String> splitNonBlankLines(String value) {
+        List<String> lines = new ArrayList<>();
+        for (String line : safe(value).split("\\R")) {
+            if (!line.isBlank()) {
+                lines.add(line.trim());
+            }
+        }
+        return lines;
+    }
+
+    private String normalizedKey(String value) {
+        String safeValue = safe(value).toLowerCase(Locale.ROOT);
+        StringBuilder builder = new StringBuilder();
+        for (int index = 0; index < safeValue.length(); index++) {
+            char current = safeValue.charAt(index);
+            if (Character.isLetterOrDigit(current)) {
+                builder.append(current);
+            }
+        }
+        return builder.toString();
+    }
+
     private List<ExperienceEntry> parseExperienceEntries(List<String> items) {
         List<ExperienceEntry> result = new ArrayList<>();
         for (String item : items) {
@@ -369,12 +429,12 @@ public final class EditorialBlueCvTemplateComposer {
         return result;
     }
 
-    private List<String> extractSkillTokens(ModuleYml technicalSkills) {
+    private List<String> extractSkillTokens(CvModule technicalSkills) {
         if (technicalSkills == null) {
             return List.of();
         }
         LinkedHashSet<String> tokens = new LinkedHashSet<>();
-        for (String line : technicalSkills.getModulePoints()) {
+        for (String line : moduleLines(technicalSkills)) {
             if (line == null || line.isBlank()) {
                 continue;
             }
@@ -413,15 +473,12 @@ public final class EditorialBlueCvTemplateComposer {
         return token.length() > 28 ? "" : token;
     }
 
-    private String extractHeadline(ModuleSummary summary) {
-        if (summary == null) {
-            return "";
-        }
-        Matcher matcher = BOLD_PATTERN.matcher(safe(summary.getBlockSummary()));
+    private String extractHeadline(String summaryText) {
+        Matcher matcher = BOLD_PATTERN.matcher(safe(summaryText));
         if (matcher.find()) {
             return stripMarkdown(matcher.group(1));
         }
-        String plain = stripMarkdown(summary.getBlockSummary());
+        String plain = stripMarkdown(summaryText);
         int period = plain.indexOf('.');
         return period > 0 ? plain.substring(0, period) : plain;
     }

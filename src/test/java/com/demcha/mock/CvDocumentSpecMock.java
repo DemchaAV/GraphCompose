@@ -3,9 +3,8 @@ package com.demcha.mock;
 import com.demcha.compose.document.templates.data.common.EmailYaml;
 import com.demcha.compose.document.templates.data.common.Header;
 import com.demcha.compose.document.templates.data.common.LinkYml;
-import com.demcha.compose.document.templates.data.cv.MainPageCV;
-import com.demcha.compose.document.templates.data.cv.ModuleSummary;
-import com.demcha.compose.document.templates.data.cv.ModuleYml;
+import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
+import com.demcha.compose.document.templates.data.cv.CvModule;
 import com.demcha.compose.layout_core.components.content.link.LinkUrl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,18 +16,18 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainPageCVMock {
-    private static final Logger log = LoggerFactory.getLogger(MainPageCVMock.class);
+public class CvDocumentSpecMock {
+    private static final Logger log = LoggerFactory.getLogger(CvDocumentSpecMock.class);
     private static final Path RAW_CV_PATH = Path.of("src", "test", "resources", "data", "raw_cv_test.json");
 
-    private final MainPageCV mainPageCV;
+    private final CvDocumentSpec cv;
 
-    public MainPageCVMock() {
-        this.mainPageCV = init();
+    public CvDocumentSpecMock() {
+        this.cv = init();
     }
 
-    public MainPageCV getMainPageCV() {
-        return mainPageCV;
+    public CvDocumentSpec getCv() {
+        return cv;
     }
 
     public static Header createHeader() {
@@ -57,7 +56,7 @@ public class MainPageCVMock {
         return header;
     }
 
-    private MainPageCV init() {
+    private CvDocumentSpec init() {
         try {
             JsonNode root = new ObjectMapper().readTree(RAW_CV_PATH.toFile());
             return mapRawJson(root);
@@ -67,24 +66,44 @@ public class MainPageCVMock {
         }
     }
 
-    private MainPageCV mapRawJson(JsonNode root) {
-        MainPageCV cv = new MainPageCV();
-        cv.setHeader(mapHeader(root.path("header")));
-
+    private CvDocumentSpec mapRawJson(JsonNode root) {
         JsonNode modules = root.path("modules");
+        CvDocumentSpec.Builder builder = CvDocumentSpec.builder()
+                .header(mapHeader(root.path("header")));
 
-        ModuleSummary summary = new ModuleSummary();
-        JsonNode summaryNode = findModule(modules, "summary");
-        summary.setModuleName(text(summaryNode, "name"));
-        summary.setBlockSummary(text(summaryNode, "content"));
-        cv.setModuleSummary(summary);
+        JsonNode summary = findModule(modules, "summary");
+        builder.addModule(CvModule.builder(text(summary, "name"))
+                .name("Summary")
+                .paragraph(text(summary, "content"))
+                .build());
+        addRows(builder, findModule(modules, "Technical Skills"), true);
+        addRows(builder, findModule(modules, "Education & Certifications"), false);
+        addRows(builder, findModule(modules, "Projects"), false);
+        addRows(builder, findModule(modules, "Professional Experience"), false);
+        addRows(builder, findModule(modules, "Additional Information"), false);
+        return builder.build();
+    }
 
-        cv.setTechnicalSkills(mapListModule(findModule(modules, "Technical Skills")));
-        cv.setEducationCertifications(mapListModule(findModule(modules, "Education & Certifications")));
-        cv.setProjects(mapListModule(findModule(modules, "Projects")));
-        cv.setProfessionalExperience(mapListModule(findModule(modules, "Professional Experience")));
-        cv.setAdditional(mapListModule(findModule(modules, "Additional Information")));
-        return cv;
+    private void addRows(CvDocumentSpec.Builder builder, JsonNode moduleNode, boolean bullets) {
+        String title = text(moduleNode, "name");
+        List<String> items = readItems(moduleNode.path("items"));
+        CvModule.Builder module = CvModule.builder(title).name(stableName(title));
+        if (bullets) {
+            module.list(items, list -> list.bullet());
+        } else {
+            module.rows(items);
+        }
+        builder.addModule(module.build());
+    }
+
+    private String stableName(String title) {
+        return switch (title) {
+            case "Technical Skills" -> "TechnicalSkills";
+            case "Education & Certifications" -> "Education";
+            case "Professional Experience" -> "Experience";
+            case "Additional Information" -> "Additional";
+            default -> title;
+        };
     }
 
     private Header mapHeader(JsonNode headerNode) {
@@ -114,18 +133,14 @@ public class MainPageCVMock {
         return link;
     }
 
-    private ModuleYml mapListModule(JsonNode moduleNode) {
-        ModuleYml module = new ModuleYml();
-        module.setName(text(moduleNode, "name"));
-        module.setModulePoints(readItems(moduleNode.path("items")));
-        return module;
-    }
-
     private List<String> readItems(JsonNode itemsNode) {
         List<String> items = new ArrayList<>();
         if (itemsNode.isArray()) {
             for (JsonNode item : itemsNode) {
-                items.add(item.asText(""));
+                String value = item.asText("").trim();
+                if (!value.isBlank()) {
+                    items.add(value);
+                }
             }
         }
         return items;

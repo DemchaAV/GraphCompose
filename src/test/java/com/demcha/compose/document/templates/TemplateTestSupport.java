@@ -5,15 +5,14 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.data.common.Header;
 import com.demcha.compose.document.templates.data.invoice.InvoiceData;
 import com.demcha.compose.document.templates.data.coverletter.JobDetails;
-import com.demcha.compose.document.templates.data.cv.MainPageCV;
-import com.demcha.compose.document.templates.data.cv.MainPageCvDTO;
+import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.proposal.ProposalData;
 import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
 import com.demcha.compose.document.templates.theme.CvTheme;
 import com.demcha.compose.font_library.FontName;
 import com.demcha.mock.CoverLetterMock;
+import com.demcha.mock.CvDocumentSpecMock;
 import com.demcha.mock.InvoiceDataFixtures;
-import com.demcha.mock.MainPageCVMock;
 import com.demcha.mock.ProposalDataFixtures;
 import com.demcha.mock.WeeklyScheduleDataFixtures;
 import com.demcha.testing.fixtures.CvTestFixtures;
@@ -41,20 +40,16 @@ public final class TemplateTestSupport {
     private TemplateTestSupport() {
     }
 
-    public static MainPageCV canonicalCv() {
-        return new MainPageCVMock().getMainPageCV();
+    public static CvDocumentSpec canonicalCv() {
+        return new CvDocumentSpecMock().getCv();
     }
 
-    public static MainPageCV expandedCanonicalCv() {
-        return CvTestFixtures.createExpandedCvForOneAndHalfPages(new MainPageCVMock().getMainPageCV());
-    }
-
-    public static MainPageCvDTO rewrite(MainPageCV original) {
-        return MainPageCvDTO.from(original);
+    public static CvDocumentSpec expandedCanonicalCv() {
+        return CvTestFixtures.createExpandedCvForOneAndHalfPages(new CvDocumentSpecMock().getCv());
     }
 
     public static Header canonicalHeader() {
-        return canonicalCv().getHeader();
+        return canonicalCv().header();
     }
 
     public static String coverLetter(String companyName) {

@@ -132,6 +132,38 @@ public record TemplateLayoutPolicy(
         return Margin.top(value);
     }
 
+    /**
+     * Creates a full margin after validating each spacing value.
+     *
+     * @param top top margin
+     * @param right right margin
+     * @param bottom bottom margin
+     * @param left left margin
+     * @return validated margin
+     */
+    public Margin margin(double top, double right, double bottom, double left) {
+        validateSpacing(top, "top");
+        validateSpacing(right, "right");
+        validateSpacing(bottom, "bottom");
+        validateSpacing(left, "left");
+        return new Margin(top, right, bottom, left);
+    }
+
+    /**
+     * Applies the root rhythm before a nested module body block.
+     *
+     * @param margin block-specific margin to preserve
+     * @return margin whose top value includes the root spacing token
+     */
+    public Margin withRootSpacingTop(Margin margin) {
+        Margin safeMargin = margin == null ? Margin.zero() : margin;
+        return margin(
+                rootSpacing + safeMargin.top(),
+                safeMargin.right(),
+                safeMargin.bottom(),
+                safeMargin.left());
+    }
+
     private static void validateSpacing(double value, String label) {
         if (value < 0 || Double.isNaN(value) || Double.isInfinite(value)) {
             throw new IllegalArgumentException(label + " must be finite and non-negative: " + value);

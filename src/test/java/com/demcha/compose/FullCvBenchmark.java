@@ -2,8 +2,7 @@ package com.demcha.compose;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.builtins.CvTemplateV1;
-import com.demcha.compose.document.templates.data.cv.MainPageCV;
-import com.demcha.compose.document.templates.data.cv.MainPageCvDTO;
+import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.util.Arrays;
@@ -17,13 +16,12 @@ public class FullCvBenchmark {
         BenchmarkSupport.configureQuietLogging();
         System.out.println("Starting FullCvBenchmark...");
 
-        MainPageCV original = CanonicalBenchmarkSupport.canonicalCv();
-        MainPageCvDTO rewritten = CanonicalBenchmarkSupport.rewrite(original);
+        CvDocumentSpec cv = CanonicalBenchmarkSupport.canonicalCv();
         CvTemplateV1 template = new CvTemplateV1();
 
         System.out.println("Warming up JVM (JIT compilation, font cache warmup)...");
         for (int i = 0; i < WARMUP_ITERATIONS; i++) {
-            generateCvInMemory(template, original, rewritten);
+            generateCvInMemory(template, cv);
         }
 
         System.out.println("Measuring performance (" + MEASUREMENT_ITERATIONS + " iterations)...");
@@ -31,7 +29,7 @@ public class FullCvBenchmark {
 
         for (int i = 0; i < MEASUREMENT_ITERATIONS; i++) {
             long start = System.nanoTime();
-            generateCvInMemory(template, original, rewritten);
+            generateCvInMemory(template, cv);
             long end = System.nanoTime();
             durationsNs[i] = end - start;
         }
@@ -39,12 +37,12 @@ public class FullCvBenchmark {
         printStatistics(durationsNs);
     }
 
-    private static void generateCvInMemory(CvTemplateV1 template, MainPageCV original, MainPageCvDTO rewritten) {
+    private static void generateCvInMemory(CvTemplateV1 template, CvDocumentSpec cv) {
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(PDRectangle.A4)
                 .margin(15, 10, 15, 15)
                 .create()) {
-            template.compose(document, original, rewritten);
+            template.compose(document, cv);
             document.toPdfBytes();
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate PDF", e);

@@ -1,8 +1,7 @@
 package com.demcha.compose.document.templates.api;
 
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.data.cv.MainPageCV;
-import com.demcha.compose.document.templates.data.cv.MainPageCvDTO;
+import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 
 /**
  * Canonical compose contract for reusable CV templates.
@@ -18,9 +17,15 @@ import com.demcha.compose.document.templates.data.cv.MainPageCvDTO;
  *
  * <pre>{@code
  * CvTemplate template = new CvTemplateV1();
+ * CvDocumentSpec cv = CvDocumentSpec.builder()
+ *         .header(header)
+ *         .summary("Backend engineer building reliable document systems.")
+ *         .technicalSkills("Java 21", "Spring Boot", "GraphCompose")
+ *         .rows("Projects", "GraphCompose - Canonical document engine.")
+ *         .build();
  *
  * try (DocumentSession document = GraphCompose.document(Path.of("cv.pdf")).create()) {
- *     template.compose(document, originalCv, rewrittenCv);
+ *     template.compose(document, cv);
  *     document.buildPdf();
  * }
  * }</pre>
@@ -54,9 +59,9 @@ public interface CvTemplate {
      * Composes the template into an existing semantic document session.
      *
      * @param document active mutable document session receiving template nodes
-     * @param originalCv source CV data with original profile information
-     * @param rewrittenCv optional rewrite/override data merged before composition
+     * @param documentSpec header plus ordered content modules
      * @throws NullPointerException if an implementation requires non-null inputs
      */
-    void compose(DocumentSession document, MainPageCV originalCv, MainPageCvDTO rewrittenCv);
+    void compose(DocumentSession document, CvDocumentSpec documentSpec);
+
 }

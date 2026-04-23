@@ -28,16 +28,15 @@ import java.util.Objects;
 public final class InvoiceTemplateComposer {
     private static final double BODY_SIZE = 10.1;
     private static final double LABEL_SIZE = 8.5;
-    private static final double TITLE_SIZE = 26;
-    private static final double COLUMN_GAP = 18;
-    private static final double SUMMARY_WIDTH = 206;
 
     private final BusinessDocumentSceneStyles styles;
+    private final BusinessDocumentLayoutPolicy sceneLayout;
     private final TemplateLayoutPolicy layout;
 
     public InvoiceTemplateComposer(BusinessDocumentSceneStyles styles) {
         this.styles = Objects.requireNonNull(styles, "styles");
-        this.layout = TemplateLayoutPolicy.businessDocument();
+        this.sceneLayout = BusinessDocumentLayoutPolicy.standard();
+        this.layout = sceneLayout.rhythm();
     }
 
     public void compose(TemplateComposeTarget target, InvoiceData data) {
@@ -49,7 +48,7 @@ public final class InvoiceTemplateComposer {
         target.addDivider(TemplateSceneSupport.divider(
                 "InvoiceRule",
                 width,
-                1.2,
+                sceneLayout.mainDividerThickness(),
                 styles.accentColor(),
                 layout.subsectionMargin()));
 
@@ -67,8 +66,8 @@ public final class InvoiceTemplateComposer {
                 List.of(
                         TemplateModuleBlock.divider(TemplateSceneSupport.divider(
                                 "InvoiceItemsRule",
-                                Math.min(width, 128),
-                                1.2,
+                                sceneLayout.boundedRuleWidth(width, sceneLayout.invoiceItemsRuleWidth()),
+                                sceneLayout.mainDividerThickness(),
                                 styles.accentColor(),
                                 layout.top(layout.rootSpacing()))),
                         TemplateModuleBlock.table(itemsTable(target, safe)),
@@ -78,7 +77,7 @@ public final class InvoiceTemplateComposer {
             TemplateDividerSpec footerRule = TemplateSceneSupport.divider(
                     "InvoiceFooterRule",
                     width,
-                    1.0,
+                    sceneLayout.subtleDividerThickness(),
                     styles.accentColor(),
                     layout.sectionMargin());
             TemplateParagraphSpec footerNote = TemplateSceneSupport.paragraph(
@@ -88,7 +87,7 @@ public final class InvoiceTemplateComposer {
                     TextAlign.LEFT,
                     1.0,
                     Padding.zero(),
-                    withModuleBodyGap(layout.subsectionMargin()));
+                    sceneLayout.moduleBodyGap(layout.subsectionMargin()));
 
             target.addModule(new TemplateModuleSpec(
                     "InvoiceFooter",
@@ -102,8 +101,11 @@ public final class InvoiceTemplateComposer {
 
     private TemplateTableSpec headerTable(TemplateComposeTarget target, InvoiceData data) {
         double width = target.pageWidth();
-        double leftWidth = Math.max(220, width - 188);
-        double rightWidth = width - leftWidth - COLUMN_GAP;
+        double leftWidth = sceneLayout.leftWidthForReservedRight(
+                width,
+                220,
+                sceneLayout.invoiceHeaderReservedWidth());
+        double rightWidth = sceneLayout.rightWidth(width, leftWidth);
         TableCellStyle baseStyle = TableCellStyle.builder()
                 .padding(layout.compactCellPadding())
                 .fillColor(Color.WHITE)
@@ -117,7 +119,7 @@ public final class InvoiceTemplateComposer {
                 "InvoiceHeader",
                 List.of(
                         TableColumnSpec.fixed(leftWidth),
-                        TableColumnSpec.fixed(COLUMN_GAP),
+                        TableColumnSpec.fixed(sceneLayout.columnGap()),
                         TableColumnSpec.fixed(rightWidth)),
                 List.of(List.of(
                         TableCellSpec.of(headerLeftLines(data)).withStyle(TableCellStyle.builder()
@@ -139,7 +141,7 @@ public final class InvoiceTemplateComposer {
 
     private TemplateTableSpec partiesTable(TemplateComposeTarget target, InvoiceData data) {
         double width = target.pageWidth();
-        double columnWidth = (width - 18) / 2.0;
+        double columnWidth = sceneLayout.twoColumnWidth(width);
         TableCellStyle style = TableCellStyle.builder()
                 .padding(layout.contentCellPadding())
                 .fillColor(Color.WHITE)
@@ -167,7 +169,7 @@ public final class InvoiceTemplateComposer {
         TableCellStyle defaultStyle = TableCellStyle.builder()
                 .padding(layout.contentCellPadding())
                 .fillColor(Color.WHITE)
-                .stroke(new Stroke(styles.borderColor(), 1.3))
+                .stroke(new Stroke(styles.borderColor(), sceneLayout.tableBorderThickness()))
                 .textStyle(styles.bodyStyle(9.3))
                 .textAnchor(Anchor.centerLeft())
                 .lineSpacing(layout.tableLineSpacing())
@@ -213,13 +215,13 @@ public final class InvoiceTemplateComposer {
                 columnStyles,
                 width,
                 Padding.zero(),
-                withModuleBodyGap(layout.subsectionMargin()));
+                sceneLayout.moduleBodyGap(layout.subsectionMargin()));
     }
 
     private TemplateTableSpec notesAndSummaryTable(TemplateComposeTarget target, InvoiceData data) {
         double width = target.pageWidth();
-        double leftWidth = Math.max(220, width - SUMMARY_WIDTH - COLUMN_GAP);
-        double rightWidth = width - leftWidth - COLUMN_GAP;
+        double leftWidth = Math.max(220, width - sceneLayout.invoiceSummaryWidth() - sceneLayout.columnGap());
+        double rightWidth = sceneLayout.rightWidth(width, leftWidth);
         List<String> noteLines = notesAndTermsLines(data);
         TableCellStyle defaultStyle = TableCellStyle.builder()
                 .padding(Padding.zero())
@@ -233,7 +235,7 @@ public final class InvoiceTemplateComposer {
                 "InvoiceNotesSummary",
                 List.of(
                         TableColumnSpec.fixed(leftWidth),
-                        TableColumnSpec.fixed(COLUMN_GAP),
+                        TableColumnSpec.fixed(sceneLayout.columnGap()),
                         TableColumnSpec.fixed(rightWidth)),
                 List.of(List.of(
                         TableCellSpec.of(noteLines).withStyle(TableCellStyle.builder()
@@ -247,7 +249,7 @@ public final class InvoiceTemplateComposer {
                         TableCellSpec.of(summaryLines(data)).withStyle(TableCellStyle.builder()
                                 .padding(layout.contentCellPadding())
                                 .fillColor(styles.softFill())
-                                .stroke(new Stroke(styles.borderColor(), 1.3))
+                                .stroke(new Stroke(styles.borderColor(), sceneLayout.tableBorderThickness()))
                                 .textStyle(styles.bodyBoldStyle(9.6))
                                 .textAnchor(Anchor.topLeft())
                                 .build()))),
@@ -256,7 +258,7 @@ public final class InvoiceTemplateComposer {
                 Map.of(),
                 width,
                 Padding.zero(),
-                withModuleBodyGap(layout.top(8)));
+                sceneLayout.moduleBodyGap(sceneLayout.notesSummaryMargin()));
     }
 
     private List<String> headerLeftLines(InvoiceData data) {
@@ -346,15 +348,6 @@ public final class InvoiceTemplateComposer {
             return description;
         }
         return shorten(description + " - " + item.details(), 44);
-    }
-
-    private Margin withModuleBodyGap(Margin margin) {
-        Margin safeMargin = margin == null ? Margin.zero() : margin;
-        return new Margin(
-                layout.rootSpacing() + safeMargin.top(),
-                safeMargin.right(),
-                safeMargin.bottom(),
-                safeMargin.left());
     }
 
     private static List<String> wrapLines(List<String> values, int maxLength) {

@@ -2,15 +2,14 @@ package com.demcha.compose;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.data.invoice.InvoiceData;
-import com.demcha.compose.document.templates.data.cv.MainPageCV;
-import com.demcha.compose.document.templates.data.cv.MainPageCvDTO;
+import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.proposal.ProposalData;
 import com.demcha.compose.layout_core.components.content.text.TextDecoration;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
 import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.mock.CvDocumentSpecMock;
 import com.demcha.mock.InvoiceDataFixtures;
-import com.demcha.mock.MainPageCVMock;
 import com.demcha.mock.ProposalDataFixtures;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
@@ -31,12 +30,8 @@ final class CanonicalBenchmarkSupport {
     private CanonicalBenchmarkSupport() {
     }
 
-    static MainPageCV canonicalCv() {
-        return new MainPageCVMock().getMainPageCV();
-    }
-
-    static MainPageCvDTO rewrite(MainPageCV original) {
-        return MainPageCvDTO.from(original);
+    static CvDocumentSpec canonicalCv() {
+        return new CvDocumentSpecMock().getCv();
     }
 
     static InvoiceData canonicalInvoiceData() {

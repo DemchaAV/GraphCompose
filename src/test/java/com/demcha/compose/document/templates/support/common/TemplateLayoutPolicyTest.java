@@ -83,4 +83,16 @@ class TemplateLayoutPolicyTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("value");
     }
+
+    @Test
+    void shouldCreateValidatedMarginsAndApplyRootSpacingToNestedBodyGaps() {
+        TemplateLayoutPolicy policy = TemplateLayoutPolicy.businessDocument();
+
+        assertThat(policy.margin(1, 2, 3, 4)).isEqualTo(new Margin(1, 2, 3, 4));
+        assertThat(policy.withRootSpacingTop(Margin.top(4))).isEqualTo(new Margin(14, 0, 0, 0));
+
+        assertThatThrownBy(() -> policy.margin(0, -1, 0, 0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("right");
+    }
 }

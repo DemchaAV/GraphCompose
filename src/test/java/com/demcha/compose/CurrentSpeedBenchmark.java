@@ -10,8 +10,7 @@ import com.demcha.compose.document.templates.builtins.CvTemplateV1;
 import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
 import com.demcha.compose.document.templates.builtins.ProposalTemplateV1;
 import com.demcha.compose.document.templates.data.invoice.InvoiceData;
-import com.demcha.compose.document.templates.data.cv.MainPageCV;
-import com.demcha.compose.document.templates.data.cv.MainPageCvDTO;
+import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.proposal.ProposalData;
 import com.demcha.compose.layout_core.components.content.text.TextDecoration;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
@@ -75,8 +74,7 @@ public final class CurrentSpeedBenchmark {
     private final ProposalTemplateV1 proposalTemplate = new ProposalTemplateV1();
     private final InvoiceData invoiceData = CanonicalBenchmarkSupport.canonicalInvoiceData();
     private final ProposalData proposalData = CanonicalBenchmarkSupport.canonicalProposalData();
-    private final MainPageCV originalCv = CanonicalBenchmarkSupport.canonicalCv();
-    private final MainPageCvDTO rewrittenCv = CanonicalBenchmarkSupport.rewrite(originalCv);
+    private final CvDocumentSpec cv = CanonicalBenchmarkSupport.canonicalCv();
 
     public static void main(String[] args) throws Exception {
         BenchmarkSupport.configureQuietLogging();
@@ -372,7 +370,7 @@ public final class CurrentSpeedBenchmark {
                 .pageSize(PDRectangle.A4)
                 .margin(15, 10, 15, 15)
                 .create()) {
-            cvTemplate.compose(document, originalCv, rewrittenCv);
+            cvTemplate.compose(document, cv);
             return document.toPdfBytes();
         }
     }

@@ -3,8 +3,6 @@ package com.demcha.compose.document.templates.builtins;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.CvTemplate;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
-import com.demcha.compose.document.templates.data.cv.MainPageCV;
-import com.demcha.compose.document.templates.data.cv.MainPageCvDTO;
 import com.demcha.compose.document.templates.support.cv.ExecutiveSlateCvTemplateComposer;
 import com.demcha.compose.document.templates.support.common.SessionTemplateComposeTarget;
 import com.demcha.compose.document.templates.theme.CvTheme;
@@ -58,17 +56,13 @@ public final class ExecutiveSlateCvTemplate implements CvTemplate {
         return "A polished business CV with a compact contact row, slate typography, and warm executive accents.";
     }
 
-    @Override
-    public void compose(DocumentSession document, MainPageCV originalCv, MainPageCvDTO rewrittenCv) {
-        composer.compose(new SessionTemplateComposeTarget(document), originalCv, rewrittenCv);
-    }
-
     /**
      * Composes the executive slate CV from the compose-first module model.
      *
      * @param document active semantic document session
      * @param documentSpec header plus ordered content modules
      */
+    @Override
     public void compose(DocumentSession document, CvDocumentSpec documentSpec) {
         composer.compose(new SessionTemplateComposeTarget(document), documentSpec);
     }

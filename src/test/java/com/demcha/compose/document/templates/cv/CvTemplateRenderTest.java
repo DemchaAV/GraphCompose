@@ -9,6 +9,7 @@ import com.demcha.compose.document.templates.builtins.ExecutiveSlateCvTemplate;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.font_library.FontName;
 import com.demcha.testing.VisualTestOutputs;
+import com.demcha.testing.fixtures.CvTestFixtures;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -34,12 +35,11 @@ class CvTemplateRenderTest {
     @Test
     void shouldRenderTemplateCvAsDocument() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("template_cv_1_render_document", "clean", "templates", "cv");
-        var original = TemplateTestSupport.canonicalCv();
-        var rewritten = TemplateTestSupport.rewrite(original);
+        var cv = TemplateTestSupport.canonicalCv();
         byte[] pdfBytes;
 
         try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 15, 10, 15, 15)) {
-            new CvTemplateV1().compose(document, original, rewritten);
+            new CvTemplateV1().compose(document, cv);
             pdfBytes = document.toPdfBytes();
         }
 
@@ -51,11 +51,10 @@ class CvTemplateRenderTest {
     @Test
     void shouldRenderTemplateCvDirectlyToFile() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("template_cv_1_render_file", "clean", "templates", "cv");
-        var original = TemplateTestSupport.canonicalCv();
-        var rewritten = TemplateTestSupport.rewrite(original);
+        var cv = TemplateTestSupport.canonicalCv();
 
         try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15, false)) {
-            new CvTemplateV1().compose(document, original, rewritten);
+            new CvTemplateV1().compose(document, cv);
             document.buildPdf();
         }
 
@@ -65,11 +64,10 @@ class CvTemplateRenderTest {
     @Test
     void shouldRenderTemplateCvDirectlyToFileWithGuideLines() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("template_cv_1_render_file_with_guide_lines", "guides", "templates", "cv");
-        var original = TemplateTestSupport.canonicalCv();
-        var rewritten = TemplateTestSupport.rewrite(original);
+        var cv = TemplateTestSupport.canonicalCv();
 
         try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15, true)) {
-            new CvTemplateV1().compose(document, original, rewritten);
+            new CvTemplateV1().compose(document, cv);
             document.buildPdf();
         }
 
@@ -78,13 +76,12 @@ class CvTemplateRenderTest {
 
     @Test
     void shouldMakeHeaderContactLinksClickable() throws Exception {
-        var original = TemplateTestSupport.canonicalCv();
-        var rewritten = TemplateTestSupport.rewrite(original);
-        var header = original.getHeader();
+        var cv = TemplateTestSupport.canonicalCv();
+        var header = cv.header();
         byte[] pdfBytes;
 
         try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 15, 10, 15, 15)) {
-            new CvTemplateV1().compose(document, original, rewritten);
+            new CvTemplateV1().compose(document, cv);
             pdfBytes = document.toPdfBytes();
         }
 
@@ -106,12 +103,11 @@ class CvTemplateRenderTest {
 
     @Test
     void shouldRenderEachTechnicalSkillAsItsOwnBullet() throws Exception {
-        var original = TemplateTestSupport.canonicalCv();
-        var rewritten = TemplateTestSupport.rewrite(original);
+        var cv = TemplateTestSupport.canonicalCv();
         byte[] pdfBytes;
 
         try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 15, 10, 15, 15)) {
-            new CvTemplateV1().compose(document, original, rewritten);
+            new CvTemplateV1().compose(document, cv);
             pdfBytes = document.toPdfBytes();
         }
 
@@ -128,11 +124,10 @@ class CvTemplateRenderTest {
 
     @Test
     void shouldKeepTechnicalSkillBulletSpacingConsistentWithWrappedLines() throws Exception {
-        var original = TemplateTestSupport.canonicalCv();
-        var rewritten = TemplateTestSupport.rewrite(original);
+        var cv = TemplateTestSupport.canonicalCv();
 
         try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 15, 10, 15, 15)) {
-            new CvTemplateV1().compose(document, original, rewritten);
+            new CvTemplateV1().compose(document, cv);
 
             List<PlacedFragment> skillFragments = paragraphFragments(document.layoutGraph().fragments(), "TechnicalSkillsBody");
 
@@ -151,17 +146,16 @@ class CvTemplateRenderTest {
 
     @Test
     void shouldKeepMarkerlessCvRowsAlignedWithIndentedContinuations() throws Exception {
-        var original = TemplateTestSupport.canonicalCv();
-        var rewritten = TemplateTestSupport.rewrite(original);
+        var cv = TemplateTestSupport.canonicalCv();
 
         try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 15, 10, 15, 15)) {
-            new CvTemplateV1().compose(document, original, rewritten);
+            new CvTemplateV1().compose(document, cv);
 
             List<PlacedFragment> projectFragments = paragraphFragments(document.layoutGraph().fragments(), "ProjectsBody");
             List<PlacedFragment> additionalFragments = paragraphFragments(document.layoutGraph().fragments(), "AdditionalBody");
 
-            assertThat(projectFragments).hasSize(original.getProjects().getModulePoints().size());
-            assertThat(additionalFragments).hasSize(original.getAdditional().getModulePoints().size());
+            assertThat(projectFragments).hasSize(CvTestFixtures.lines(cv, "Projects").size());
+            assertThat(additionalFragments).hasSize(CvTestFixtures.lines(cv, "Additional Information").size());
             assertThat(projectFragments)
                     .allSatisfy(fragment -> assertThat(firstLine(fragment)).doesNotStartWith(" "));
             assertThat(additionalFragments)
@@ -174,8 +168,7 @@ class CvTemplateRenderTest {
 
     @Test
     void shouldRenderComposeFirstCvDocumentSpecWithSameListSemantics() throws Exception {
-        var original = TemplateTestSupport.canonicalCv();
-        CvDocumentSpec spec = CvDocumentSpec.from(original, TemplateTestSupport.rewrite(original));
+        CvDocumentSpec spec = TemplateTestSupport.canonicalCv();
 
         try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 15, 10, 15, 15)) {
             new CvTemplateV1().compose(document, spec);
@@ -184,7 +177,7 @@ class CvTemplateRenderTest {
             List<PlacedFragment> projectFragments = paragraphFragments(document.layoutGraph().fragments(), "ProjectsBody");
 
             assertThat(technicalSkillFragments).hasSize(7);
-            assertThat(projectFragments).hasSize(original.getProjects().getModulePoints().size());
+            assertThat(projectFragments).hasSize(CvTestFixtures.lines(spec, "Projects").size());
             assertThat(projectFragments)
                     .anySatisfy(fragment -> assertThat(continuationLines(fragment)).anySatisfy(line ->
                             assertThat(line).startsWith("  ")));
@@ -194,11 +187,10 @@ class CvTemplateRenderTest {
     @Test
     void shouldRenderTemplateCvWithMarkdownFonts() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("template_cv_1_render_markdown_fonts", "clean", "templates", "cv");
-        var original = TemplateTestSupport.canonicalCv();
-        var rewritten = TemplateTestSupport.rewrite(original);
+        var cv = TemplateTestSupport.canonicalCv();
 
         try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15, false)) {
-            new CvTemplateV1().compose(document, original, rewritten);
+            new CvTemplateV1().compose(document, cv);
             document.buildPdf();
         }
 
@@ -210,11 +202,10 @@ class CvTemplateRenderTest {
     @Test
     void shouldRenderTemplateCvWithMoreInformationAcrossAboutOneAndHalfPages() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("template_cv_1_render_file_rich_one_and_half_pages", "clean", "templates", "cv");
-        var original = TemplateTestSupport.expandedCanonicalCv();
-        var rewritten = TemplateTestSupport.rewrite(original);
+        var cv = TemplateTestSupport.expandedCanonicalCv();
 
         try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15, false)) {
-            new CvTemplateV1().compose(document, original, rewritten);
+            new CvTemplateV1().compose(document, cv);
             document.buildPdf();
         }
 
@@ -229,11 +220,10 @@ class CvTemplateRenderTest {
                 "guides",
                 "templates",
                 "cv");
-        var original = TemplateTestSupport.expandedCanonicalCv();
-        var rewritten = TemplateTestSupport.rewrite(original);
+        var cv = TemplateTestSupport.expandedCanonicalCv();
 
         try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15, true)) {
-            new CvTemplateV1().compose(document, original, rewritten);
+            new CvTemplateV1().compose(document, cv);
             document.buildPdf();
         }
 
@@ -249,11 +239,10 @@ class CvTemplateRenderTest {
                 .replace(' ', '_')
                 .replace('-', '_');
         Path outputFile = VisualTestOutputs.preparePdf("template_cv_1_render_" + slug, "clean", "templates", "cv", "font-themes");
-        var original = TemplateTestSupport.canonicalCv();
-        var rewritten = TemplateTestSupport.rewrite(original);
+        var cv = TemplateTestSupport.canonicalCv();
 
         try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15, false)) {
-            new CvTemplateV1(TemplateTestSupport.cvThemeWith(fontName)).compose(document, original, rewritten);
+            new CvTemplateV1(TemplateTestSupport.cvThemeWith(fontName)).compose(document, cv);
             document.buildPdf();
         }
 
@@ -264,11 +253,10 @@ class CvTemplateRenderTest {
     @Test
     void shouldRenderEditorialBlueTemplateToFile() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("editorial_blue_cv_render_file", "clean", "templates", "cv");
-        var original = TemplateTestSupport.canonicalCv();
-        var rewritten = TemplateTestSupport.rewrite(original);
+        var cv = TemplateTestSupport.canonicalCv();
 
         try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 18, 18, 18, 18, false)) {
-            new EditorialBlueCvTemplate().compose(document, original, rewritten);
+            new EditorialBlueCvTemplate().compose(document, cv);
             document.buildPdf();
         }
 
@@ -279,11 +267,10 @@ class CvTemplateRenderTest {
     @Test
     void shouldRenderEditorialBlueTemplateToFileWithGuideLines() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("editorial_blue_cv_render_file_with_guide_lines", "guides", "templates", "cv");
-        var original = TemplateTestSupport.canonicalCv();
-        var rewritten = TemplateTestSupport.rewrite(original);
+        var cv = TemplateTestSupport.canonicalCv();
 
         try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 18, 18, 18, 18, true)) {
-            new EditorialBlueCvTemplate().compose(document, original, rewritten);
+            new EditorialBlueCvTemplate().compose(document, cv);
             document.buildPdf();
         }
 
@@ -294,11 +281,10 @@ class CvTemplateRenderTest {
     @Test
     void shouldRenderExecutiveSlateTemplateToFile() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("executive_slate_cv_render_file", "clean", "templates", "cv");
-        var original = TemplateTestSupport.canonicalCv();
-        var rewritten = TemplateTestSupport.rewrite(original);
+        var cv = TemplateTestSupport.canonicalCv();
 
         try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 20, 20, 20, 20, false)) {
-            new ExecutiveSlateCvTemplate().compose(document, original, rewritten);
+            new ExecutiveSlateCvTemplate().compose(document, cv);
             document.buildPdf();
         }
 
@@ -308,13 +294,12 @@ class CvTemplateRenderTest {
 
     @Test
     void shouldRenderExecutiveSlateTemplateWithClickableHeaderLinks() throws Exception {
-        var original = TemplateTestSupport.canonicalCv();
-        var rewritten = TemplateTestSupport.rewrite(original);
-        var header = original.getHeader();
+        var cv = TemplateTestSupport.canonicalCv();
+        var header = cv.header();
         byte[] pdfBytes;
 
         try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 20, 20, 20, 20)) {
-            new ExecutiveSlateCvTemplate().compose(document, original, rewritten);
+            new ExecutiveSlateCvTemplate().compose(document, cv);
             pdfBytes = document.toPdfBytes();
         }
 

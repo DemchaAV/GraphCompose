@@ -6,6 +6,7 @@ public final class GenerateAllExamples {
     }
 
     public static void main(String[] args) throws Exception {
+        System.out.println("Generated: " + ModuleFirstFileExample.generate());
         System.out.println("Generated: " + CvFileExample.generate());
         System.out.println("Generated: " + CoverLetterFileExample.generate());
         System.out.println("Generated: " + InvoiceFileExample.generate());

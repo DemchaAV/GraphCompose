@@ -84,7 +84,7 @@ GraphCompose is a good fit for:
 - canonical `DocumentSession` and handler-driven rendering make the engine less PDF-centric internally
 - the PDF render path now uses page-scoped render sessions, reusing one `PDPageContentStream` per page during a render pass instead of reopening a stream per entity
 - layout snapshot testing is now part of the practical regression workflow for pagination and geometry changes
-- runnable examples now cover CV, cover letter, invoice, proposal, and weekly schedule generation
+- runnable examples now cover module-first custom documents plus CV, cover letter, invoice, proposal, and weekly schedule generation
 - new PDF document features include QR/barcodes, watermarks, headers/footers, bookmarks, metadata, protection, explicit page breaks, and dividers
 - architecture guard rails now cover template scene builders in CI, not just the engine layer
 - visual showcase tests now make pagination, document chrome, and barcode output easier to inspect
@@ -236,7 +236,26 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
 
-InvoiceData invoiceData = ...;
+InvoiceData invoiceData = InvoiceData.builder()
+        .invoiceNumber("GC-2026-041")
+        .issueDate("02 Apr 2026")
+        .dueDate("16 Apr 2026")
+        .reference("Platform Refresh Sprint")
+        .status("Pending")
+        .fromParty(party -> party
+                .name("GraphCompose Studio")
+                .addressLines("18 Layout Street", "London, UK")
+                .email("billing@graphcompose.dev")
+                .phone("+44 20 5555 1000"))
+        .billToParty(party -> party
+                .name("Northwind Systems")
+                .addressLines("Attn: Finance Team", "410 Market Avenue", "Manchester, UK")
+                .email("ap@northwind.example"))
+        .lineItem("Template architecture", "Reusable invoice and proposal flows", "2", "GBP 980", "GBP 1,960")
+        .summaryRow("Subtotal", "GBP 1,960")
+        .totalRow("Total", "GBP 1,960")
+        .paymentTerm("Payment due within 14 calendar days.")
+        .build();
 InvoiceTemplate template = new InvoiceTemplateV1();
 
 try (DocumentSession document = GraphCompose.document(Path.of("invoice.pdf"))
@@ -250,6 +269,37 @@ try (DocumentSession document = GraphCompose.document(Path.of("invoice.pdf"))
 ```
 
 Canonical docs and examples now compose directly into `DocumentSession`, and built-in template APIs live under `com.demcha.compose.document.templates.*`. The supported authoring workflow is `GraphCompose.document(...)`; lower-level engine internals are not part of the public authoring surface.
+
+### Module-first authoring
+
+When you are building your own document instead of using a built-in template, the ergonomic path is `pageFlow + module(...)`.
+
+```java
+try (DocumentSession document = GraphCompose.document(Path.of("profile.pdf"))
+        .pageSize(PDRectangle.A4)
+        .margin(24, 24, 24, 24)
+        .create()) {
+
+    document.pageFlow()
+            .name("CandidateProfile")
+            .spacing(12)
+            .module("Professional Summary", module -> module.paragraph(
+                    "Platform engineer focused on clean document APIs and stable render output."))
+            .module("Technical Skills", module -> module.bullets(
+                    "Java 21",
+                    "Spring Boot",
+                    "PDFBox",
+                    "Testing and visual regression"))
+            .module("Projects", module -> module.rows(
+                    "GraphCompose - Canonical document engine migration and template architecture.",
+                    "Template Studio - Internal tooling for invoice, CV, and proposal design."))
+            .build();
+
+    document.buildPdf();
+}
+```
+
+`ModuleBuilder` keeps authoring close to document language: `paragraph`, `bullets`, `dashList`, `rows`, `table`, `image`, `divider`, and `pageBreak`.
 
 ---
 
@@ -294,13 +344,14 @@ Generated PDFs are written under `target/visual-tests/`, including:
 
 The repository includes a standalone [`examples/`](./examples) module with compose-first file demos for:
 
+- module-first custom document authoring through `pageFlow().module(...)`
 - CV
 - cover letter
 - invoice
 - proposal
 - weekly schedule
 
-Each example creates a `DocumentSession`, calls `template.compose(document, ...)`, then finalizes with `document.buildPdf()`.
+Each example creates a `DocumentSession`. Template examples call `template.compose(document, ...)`; the module-first example writes directly with `pageFlow().module(...)`. All of them finalize with `document.buildPdf()`.
 
 Typical workflow:
 
@@ -355,7 +406,7 @@ This keeps layout snapshots, page breaking, and future backends aligned on the s
 
 ### 4. Containers express structure
 
-Use `document.pageFlow()` for the root flow and nested `section()` blocks for semantic grouping. Absolute coordinates are an implementation detail of the engine, not something you write in the supported public workflow.
+Use `document.pageFlow()` for the root flow, `module()` for titled full-width document blocks, and nested `section()` blocks when you need extra semantic grouping. Absolute coordinates are an implementation detail of the engine, not something you write in the supported public workflow.
 
 ### 5. The template layer is optional
 

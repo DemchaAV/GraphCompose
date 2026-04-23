@@ -7,8 +7,6 @@ import com.demcha.compose.document.model.node.TextAlign;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.cv.CvModule;
 import com.demcha.compose.document.templates.data.common.Header;
-import com.demcha.compose.document.templates.data.cv.MainPageCV;
-import com.demcha.compose.document.templates.data.cv.MainPageCvDTO;
 import com.demcha.compose.document.templates.theme.CvTheme;
 import com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy;
 import com.demcha.compose.layout_core.components.content.text.TextDecoration;
@@ -44,17 +42,6 @@ public final class ExecutiveSlateCvTemplateComposer {
     public ExecutiveSlateCvTemplateComposer(CvTheme theme) {
         this.theme = Objects.requireNonNull(theme, "theme");
         this.layout = TemplateLayoutPolicy.executiveCv();
-    }
-
-    /**
-     * Composes a legacy CV payload through the canonical module adapter.
-     *
-     * @param target active template target
-     * @param originalCv original CV input
-     * @param rewrittenCv optional rewrite payload
-     */
-    public void compose(TemplateComposeTarget target, MainPageCV originalCv, MainPageCvDTO rewrittenCv) {
-        compose(target, CvDocumentSpec.from(originalCv, rewrittenCv));
     }
 
     /**

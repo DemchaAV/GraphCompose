@@ -30,15 +30,15 @@ import java.util.Objects;
 public final class ProposalTemplateComposer {
     private static final double BODY_SIZE = 10.0;
     private static final double LABEL_SIZE = 8.5;
-    private static final double TITLE_SIZE = 24;
-    private static final double COLUMN_GAP = 18;
 
     private final BusinessDocumentSceneStyles styles;
+    private final BusinessDocumentLayoutPolicy sceneLayout;
     private final TemplateLayoutPolicy layout;
 
     public ProposalTemplateComposer(BusinessDocumentSceneStyles styles) {
         this.styles = Objects.requireNonNull(styles, "styles");
-        this.layout = TemplateLayoutPolicy.businessDocument();
+        this.sceneLayout = BusinessDocumentLayoutPolicy.standard();
+        this.layout = sceneLayout.rhythm();
     }
 
     public void compose(TemplateComposeTarget target, ProposalData data) {
@@ -50,7 +50,7 @@ public final class ProposalTemplateComposer {
         target.addDivider(TemplateSceneSupport.divider(
                 "ProposalRule",
                 width,
-                1.2,
+                sceneLayout.mainDividerThickness(),
                 styles.accentColor(),
                 layout.subsectionMargin()));
 
@@ -59,8 +59,8 @@ public final class ProposalTemplateComposer {
                     width,
                     "ProposalSummary",
                     "EXECUTIVE SUMMARY",
-                    Math.min(width, 170),
-                    1.1,
+                    sceneLayout.proposalSummaryRuleWidth(),
+                    sceneLayout.proposalSummaryDividerThickness(),
                     layout.subsectionMargin(),
                     TemplateModuleBlock.paragraph(TemplateSceneSupport.blockParagraph(
                             "ProposalExecutiveSummary",
@@ -71,7 +71,7 @@ public final class ProposalTemplateComposer {
                             "",
                             com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy.FIRST_LINE,
                             layout.bodyPadding(),
-                            withModuleBodyGap(Margin.zero())))));
+                            sceneLayout.moduleBodyGap(Margin.zero())))));
         }
 
         for (int index = 0; index < safe.sections().size(); index++) {
@@ -80,8 +80,8 @@ public final class ProposalTemplateComposer {
                     width,
                     "ProposalSection" + index,
                     valueOrFallback(section.title(), "SECTION"),
-                    Math.min(width, 132),
-                    1.0,
+                    sceneLayout.proposalSectionRuleWidth(),
+                    sceneLayout.sectionDividerThickness(),
                     layout.subsectionMargin(),
                     TemplateModuleBlock.paragraph(TemplateSceneSupport.blockParagraph(
                             "ProposalSection_" + index,
@@ -94,7 +94,7 @@ public final class ProposalTemplateComposer {
                             "",
                             com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy.FIRST_LINE,
                             layout.bodyPadding(),
-                            withModuleBodyGap(Margin.zero())))));
+                            sceneLayout.moduleBodyGap(Margin.zero())))));
         }
 
         if (!safe.timeline().isEmpty()) {
@@ -102,8 +102,8 @@ public final class ProposalTemplateComposer {
                     width,
                     "ProposalTimeline",
                     "TIMELINE",
-                    Math.min(width, 132),
-                    1.0,
+                    sceneLayout.proposalSectionRuleWidth(),
+                    sceneLayout.sectionDividerThickness(),
                     layout.sectionMargin(),
                     TemplateModuleBlock.table(timelineTable(target, safe.timeline()))));
         }
@@ -113,8 +113,8 @@ public final class ProposalTemplateComposer {
                     width,
                     "ProposalPricing",
                     "PRICING",
-                    Math.min(width, 132),
-                    1.0,
+                    sceneLayout.proposalSectionRuleWidth(),
+                    sceneLayout.sectionDividerThickness(),
                     layout.sectionMargin(),
                     TemplateModuleBlock.table(pricingTable(target, safe.pricingRows()))));
         }
@@ -124,8 +124,8 @@ public final class ProposalTemplateComposer {
                     width,
                     "ProposalAcceptance",
                     "ACCEPTANCE",
-                    Math.min(width, 132),
-                    1.0,
+                    sceneLayout.proposalSectionRuleWidth(),
+                    sceneLayout.sectionDividerThickness(),
                     layout.sectionMargin(),
                     TemplateModuleBlock.list(TemplateSceneSupport.list(
                             "ProposalAcceptanceTerms",
@@ -136,14 +136,14 @@ public final class ProposalTemplateComposer {
                             layout.bodyLineSpacing(),
                             layout.bodyItemSpacing(),
                             layout.bodyPadding(),
-                            withModuleBodyGap(layout.blockMargin())))));
+                            sceneLayout.moduleBodyGap(layout.blockMargin())))));
         }
 
         if (!safe.footerNote().isBlank()) {
             TemplateDividerSpec footerRule = TemplateSceneSupport.divider(
                     "ProposalFooterRule",
                     width,
-                    1.0,
+                    sceneLayout.subtleDividerThickness(),
                     styles.accentColor(),
                     layout.sectionMargin());
             TemplateParagraphSpec footerNote = TemplateSceneSupport.paragraph(
@@ -153,7 +153,7 @@ public final class ProposalTemplateComposer {
                     TextAlign.LEFT,
                     1.0,
                     Padding.zero(),
-                    withModuleBodyGap(layout.blockMargin()));
+                    sceneLayout.moduleBodyGap(layout.blockMargin()));
 
             target.addModule(new TemplateModuleSpec(
                     "ProposalFooter",
@@ -168,8 +168,11 @@ public final class ProposalTemplateComposer {
 
     private TemplateTableSpec headerTable(TemplateComposeTarget target, ProposalData data) {
         double width = target.pageWidth();
-        double leftWidth = Math.max(200, width - 212);
-        double rightWidth = width - leftWidth - COLUMN_GAP;
+        double leftWidth = sceneLayout.leftWidthForReservedRight(
+                width,
+                200,
+                sceneLayout.proposalHeaderReservedWidth());
+        double rightWidth = sceneLayout.rightWidth(width, leftWidth);
         TableCellStyle baseStyle = TableCellStyle.builder()
                 .padding(layout.compactCellPadding())
                 .fillColor(Color.WHITE)
@@ -183,7 +186,7 @@ public final class ProposalTemplateComposer {
                 "ProposalHeader",
                 List.of(
                         TableColumnSpec.fixed(leftWidth),
-                        TableColumnSpec.fixed(COLUMN_GAP),
+                        TableColumnSpec.fixed(sceneLayout.columnGap()),
                         TableColumnSpec.fixed(rightWidth)),
                 List.of(List.of(
                         TableCellSpec.of(headerLeftLines(data)).withStyle(TableCellStyle.builder()
@@ -208,7 +211,7 @@ public final class ProposalTemplateComposer {
         TableCellStyle defaultStyle = TableCellStyle.builder()
                 .padding(layout.contentCellPadding())
                 .fillColor(Color.WHITE)
-                .stroke(new Stroke(styles.borderColor(), 1.3))
+                .stroke(new Stroke(styles.borderColor(), sceneLayout.tableBorderThickness()))
                 .textStyle(styles.bodyStyle(9.4))
                 .textAnchor(Anchor.centerLeft())
                 .lineSpacing(layout.tableLineSpacing())
@@ -241,7 +244,7 @@ public final class ProposalTemplateComposer {
                 columnStyles,
                 width,
                 Padding.zero(),
-                withModuleBodyGap(layout.blockMargin()));
+                sceneLayout.moduleBodyGap(layout.blockMargin()));
     }
 
     private TemplateTableSpec pricingTable(TemplateComposeTarget target, List<ProposalPricingRow> rowsData) {
@@ -249,7 +252,7 @@ public final class ProposalTemplateComposer {
         TableCellStyle defaultStyle = TableCellStyle.builder()
                 .padding(layout.contentCellPadding())
                 .fillColor(styles.softFill())
-                .stroke(new Stroke(styles.borderColor(), 1.3))
+                .stroke(new Stroke(styles.borderColor(), sceneLayout.tableBorderThickness()))
                 .textStyle(styles.bodyStyle(9.4))
                 .textAnchor(Anchor.centerLeft())
                 .lineSpacing(layout.tableLineSpacing())
@@ -290,7 +293,7 @@ public final class ProposalTemplateComposer {
                 columnStyles,
                 width,
                 Padding.zero(),
-                withModuleBodyGap(layout.blockMargin()));
+                sceneLayout.moduleBodyGap(layout.blockMargin()));
     }
 
     private List<String> partyLines(String label, ProposalParty party) {
@@ -340,7 +343,7 @@ public final class ProposalTemplateComposer {
         List<TemplateModuleBlock> blocks = new ArrayList<>();
         blocks.add(TemplateModuleBlock.divider(TemplateSceneSupport.divider(
                 moduleName + "Rule",
-                ruleWidth,
+                sceneLayout.boundedRuleWidth(width, ruleWidth),
                 ruleThickness,
                 styles.accentColor(),
                 layout.top(layout.rootSpacing()))));
@@ -356,15 +359,6 @@ public final class ProposalTemplateComposer {
                         Padding.zero(),
                         titleMargin),
                 blocks);
-    }
-
-    private Margin withModuleBodyGap(Margin margin) {
-        Margin safeMargin = margin == null ? Margin.zero() : margin;
-        return new Margin(
-                layout.rootSpacing() + safeMargin.top(),
-                safeMargin.right(),
-                safeMargin.bottom(),
-                safeMargin.left());
     }
 
     private static String shorten(String value, int maxLength) {

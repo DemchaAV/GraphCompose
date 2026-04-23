@@ -3,8 +3,6 @@ package com.demcha.compose.document.templates.builtins;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.CvTemplate;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
-import com.demcha.compose.document.templates.data.cv.MainPageCV;
-import com.demcha.compose.document.templates.data.cv.MainPageCvDTO;
 import com.demcha.compose.document.templates.support.cv.CvTemplateComposer;
 import com.demcha.compose.document.templates.support.common.SessionTemplateComposeTarget;
 import com.demcha.compose.document.templates.theme.CvTheme;
@@ -40,11 +38,6 @@ public final class CvTemplateV1 implements CvTemplate {
         return "A clean, professional template with centered header and well-organized sections.";
     }
 
-    @Override
-    public void compose(DocumentSession document, MainPageCV originalCv, MainPageCvDTO rewrittenCv) {
-        composer.compose(new SessionTemplateComposeTarget(document), originalCv, rewrittenCv);
-    }
-
     /**
      * Composes the standard CV template from the ordered compose-first module
      * model.
@@ -52,6 +45,7 @@ public final class CvTemplateV1 implements CvTemplate {
      * @param document active semantic document session
      * @param documentSpec header plus ordered content modules
      */
+    @Override
     public void compose(DocumentSession document, CvDocumentSpec documentSpec) {
         composer.compose(new SessionTemplateComposeTarget(document), documentSpec);
     }

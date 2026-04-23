@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * Public compose-first CV input made of one header plus ordered semantic
@@ -13,9 +14,7 @@ import java.util.Objects;
  *
  * <p><b>Authoring role:</b> gives applications a stable, intuitive model for
  * building CV documents without depending on template-specific field names
- * such as {@code technicalSkills} or {@code professionalExperience}. Legacy
- * {@link MainPageCV} inputs still map into this model through
- * {@link #from(MainPageCV, MainPageCvDTO)}.</p>
+ * such as {@code technicalSkills} or {@code professionalExperience}.</p>
  *
  * @param header optional header block rendered at the top of the document
  * @param modules ordered content modules rendered after the header
@@ -50,93 +49,6 @@ public record CvDocumentSpec(
      */
     public static Builder builder() {
         return new Builder();
-    }
-
-    /**
-     * Maps the legacy standard-CV input into the new ordered module model.
-     *
-     * @param originalCv source CV input
-     * @param rewrittenCv optional rewrite payload merged over the original CV
-     * @return compose-first document spec
-     */
-    public static CvDocumentSpec from(MainPageCV originalCv, MainPageCvDTO rewrittenCv) {
-        Objects.requireNonNull(originalCv, "originalCv");
-
-        MainPageCV data = rewrittenCv == null ? originalCv : rewrittenCv.merge(originalCv);
-        Builder builder = builder().header(data.getHeader());
-
-        if (data.getModuleSummary() != null) {
-            builder.addModule(CvModule.builder(data.getModuleSummary().getModuleName())
-                    .name("Summary")
-                    .paragraph(data.getModuleSummary().getBlockSummary())
-                    .build());
-        }
-
-        addListModule(builder, "TechnicalSkills", data.getTechnicalSkills(), true);
-        addListModule(builder, "Education", data.getEducationCertifications(), false);
-        addListModule(builder, "Projects", data.getProjects(), false);
-        addListModule(builder, "Experience", data.getProfessionalExperience(), false);
-        addListModule(builder, "Additional", data.getAdditional(), false);
-
-        return builder.build();
-    }
-
-    private static void addListModule(Builder builder, String moduleName, ModuleYml module, boolean bulletList) {
-        if (module == null || module.getModulePoints() == null || module.getModulePoints().isEmpty()) {
-            return;
-        }
-
-        List<String> points = sanitizeLines(module.getModulePoints());
-        if (bulletList) {
-            points = normalizeTechnicalSkillPoints(points);
-        }
-        if (points.isEmpty()) {
-            return;
-        }
-
-        CvModule.Builder moduleBuilder = CvModule.builder(module.getName()).name(moduleName);
-        if (bulletList) {
-            moduleBuilder.list(points, list -> list.bullet());
-        } else {
-            moduleBuilder.rows(points);
-        }
-        builder.addModule(moduleBuilder.build());
-    }
-
-    private static List<String> sanitizeLines(List<String> values) {
-        if (values == null || values.isEmpty()) {
-            return List.of();
-        }
-
-        List<String> sanitized = new ArrayList<>();
-        for (String value : values) {
-            String normalized = Objects.requireNonNullElse(value, "").trim();
-            if (!normalized.isBlank()) {
-                sanitized.add(normalized);
-            }
-        }
-        return List.copyOf(sanitized);
-    }
-
-    private static List<String> normalizeTechnicalSkillPoints(List<String> points) {
-        return points.stream()
-                .map(CvDocumentSpec::stripLeadingListMarker)
-                .filter(point -> !point.isBlank())
-                .toList();
-    }
-
-    private static String stripLeadingListMarker(String value) {
-        String normalized = Objects.requireNonNullElse(value, "").trim();
-        if (normalized.startsWith("\u2022")) {
-            return normalized.substring(1).trim();
-        }
-        if (normalized.startsWith("- ")) {
-            return normalized.substring(2).trim();
-        }
-        if (normalized.startsWith("* ") && !normalized.startsWith("**")) {
-            return normalized.substring(2).trim();
-        }
-        return normalized;
     }
 
     /**
@@ -179,6 +91,186 @@ public record CvDocumentSpec(
                 this.modules.addAll(Arrays.asList(modules));
             }
             return this;
+        }
+
+        /**
+         * Appends a configurable semantic module.
+         *
+         * @param title visible module title
+         * @param spec module configuration
+         * @return this builder
+         */
+        public Builder module(String title, Consumer<CvModule.Builder> spec) {
+            CvModule.Builder builder = CvModule.builder(title);
+            if (spec != null) {
+                spec.accept(builder);
+            }
+            return addModule(builder.build());
+        }
+
+        /**
+         * Appends a paragraph module.
+         *
+         * @param title visible module title
+         * @param text paragraph body
+         * @return this builder
+         */
+        public Builder paragraph(String title, String text) {
+            return addModule(CvModule.paragraph(title, text));
+        }
+
+        /**
+         * Appends a default bullet-list module.
+         *
+         * @param title visible module title
+         * @param items ordered item texts
+         * @return this builder
+         */
+        public Builder bullets(String title, List<String> items) {
+            return module(title, module -> module.list(items, list -> list.bullet()));
+        }
+
+        /**
+         * Appends a default bullet-list module.
+         *
+         * @param title visible module title
+         * @param items ordered item texts
+         * @return this builder
+         */
+        public Builder bullets(String title, String... items) {
+            return bullets(title, items == null ? List.of() : Arrays.asList(items));
+        }
+
+        /**
+         * Appends a dash-list module.
+         *
+         * @param title visible module title
+         * @param items ordered item texts
+         * @return this builder
+         */
+        public Builder dashList(String title, List<String> items) {
+            return module(title, module -> module.list(items, list -> list.dash()));
+        }
+
+        /**
+         * Appends a dash-list module.
+         *
+         * @param title visible module title
+         * @param items ordered item texts
+         * @return this builder
+         */
+        public Builder dashList(String title, String... items) {
+            return dashList(title, items == null ? List.of() : Arrays.asList(items));
+        }
+
+        /**
+         * Appends a markerless row module with aligned wrapped continuations.
+         *
+         * @param title visible module title
+         * @param rows ordered row texts
+         * @return this builder
+         */
+        public Builder rows(String title, List<String> rows) {
+            return addModule(CvModule.rows(title, rows));
+        }
+
+        /**
+         * Appends a markerless row module with aligned wrapped continuations.
+         *
+         * @param title visible module title
+         * @param rows ordered row texts
+         * @return this builder
+         */
+        public Builder rows(String title, String... rows) {
+            return rows(title, rows == null ? List.of() : Arrays.asList(rows));
+        }
+
+        /**
+         * Appends the common professional-summary module.
+         *
+         * @param text summary body
+         * @return this builder
+         */
+        public Builder summary(String text) {
+            return addModule(CvModule.builder("Professional Summary")
+                    .name("Summary")
+                    .paragraph(text)
+                    .build());
+        }
+
+        /**
+         * Appends the common technical-skills bullet module.
+         *
+         * @param items ordered skill rows
+         * @return this builder
+         */
+        public Builder technicalSkills(List<String> items) {
+            return addModule(CvModule.builder("Technical Skills")
+                    .name("TechnicalSkills")
+                    .list(items, list -> list.bullet())
+                    .build());
+        }
+
+        /**
+         * Appends the common technical-skills bullet module.
+         *
+         * @param items ordered skill rows
+         * @return this builder
+         */
+        public Builder technicalSkills(String... items) {
+            return technicalSkills(items == null ? List.of() : Arrays.asList(items));
+        }
+
+        /**
+         * Appends the common projects markerless row module.
+         *
+         * @param rows ordered project rows
+         * @return this builder
+         */
+        public Builder projects(String... rows) {
+            return addModule(CvModule.builder("Projects")
+                    .name("Projects")
+                    .rows(rows)
+                    .build());
+        }
+
+        /**
+         * Appends the common professional-experience markerless row module.
+         *
+         * @param rows ordered experience rows
+         * @return this builder
+         */
+        public Builder experience(String... rows) {
+            return addModule(CvModule.builder("Professional Experience")
+                    .name("Experience")
+                    .rows(rows)
+                    .build());
+        }
+
+        /**
+         * Appends the common education/certifications markerless row module.
+         *
+         * @param rows ordered education rows
+         * @return this builder
+         */
+        public Builder education(String... rows) {
+            return addModule(CvModule.builder("Education & Certifications")
+                    .name("Education")
+                    .rows(rows)
+                    .build());
+        }
+
+        /**
+         * Appends the common additional-information markerless row module.
+         *
+         * @param rows ordered rows
+         * @return this builder
+         */
+        public Builder additional(String... rows) {
+            return addModule(CvModule.builder("Additional Information")
+                    .name("Additional")
+                    .rows(rows)
+                    .build());
         }
 
         /**

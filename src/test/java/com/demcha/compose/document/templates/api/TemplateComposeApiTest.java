@@ -2,6 +2,7 @@ package com.demcha.compose.document.templates.api;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.templates.TemplateTestSupport;
 import com.demcha.compose.document.templates.builtins.CoverLetterTemplateV1;
 import com.demcha.compose.document.templates.builtins.CvTemplateV1;
 import com.demcha.compose.document.templates.builtins.EditorialBlueCvTemplate;
@@ -13,13 +14,10 @@ import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.common.Header;
 import com.demcha.compose.document.templates.data.invoice.InvoiceData;
 import com.demcha.compose.document.templates.data.coverletter.JobDetails;
-import com.demcha.compose.document.templates.data.cv.MainPageCV;
-import com.demcha.compose.document.templates.data.cv.MainPageCvDTO;
 import com.demcha.compose.document.templates.data.proposal.ProposalData;
 import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
 import com.demcha.mock.CoverLetterMock;
 import com.demcha.mock.InvoiceDataFixtures;
-import com.demcha.mock.MainPageCVMock;
 import com.demcha.mock.ProposalDataFixtures;
 import com.demcha.mock.WeeklyScheduleDataFixtures;
 import org.apache.pdfbox.Loader;
@@ -46,7 +44,7 @@ class TemplateComposeApiTest {
 
     @Test
     void cvTemplateInterfaceShouldExposeDocumentSessionComposeContract() throws Exception {
-        assertMethodPresent(CvTemplate.class, "compose", DocumentSession.class, MainPageCV.class, MainPageCvDTO.class);
+        assertMethodPresent(CvTemplate.class, "compose", DocumentSession.class, CvDocumentSpec.class);
     }
 
     @Test
@@ -88,31 +86,27 @@ class TemplateComposeApiTest {
 
     @Test
     void cvBuiltInsShouldComposeThroughDocumentSession() throws Exception {
-        MainPageCV original = new MainPageCVMock().getMainPageCV();
-        MainPageCvDTO rewritten = MainPageCvDTO.from(original);
-        CvDocumentSpec composeFirst = CvDocumentSpec.from(original, rewritten);
+        CvDocumentSpec composeFirst = TemplateTestSupport.canonicalCv();
 
-        assertComposesToPdf(PDRectangle.A4, 24, document -> new CvTemplateV1().compose(document, original, rewritten));
         assertComposesToPdf(PDRectangle.A4, 24, document -> new CvTemplateV1().compose(document, composeFirst));
-        assertComposesToPdf(PDRectangle.A4, 18, document -> new EditorialBlueCvTemplate().compose(document, original, rewritten));
-        assertComposesToPdf(PDRectangle.A4, 20, document -> new ExecutiveSlateCvTemplate().compose(document, original, rewritten));
+        assertComposesToPdf(PDRectangle.A4, 18, document -> new EditorialBlueCvTemplate().compose(document, composeFirst));
         assertComposesToPdf(PDRectangle.A4, 20, document -> new ExecutiveSlateCvTemplate().compose(document, composeFirst));
     }
 
     @Test
-    void cvTemplateV1ShouldExposeComposeFirstCvDocumentSpecOverload() throws Exception {
+    void cvBuiltInsShouldExposeComposeFirstCvDocumentSpecContract() throws Exception {
         assertMethodPresent(CvTemplateV1.class, "compose", DocumentSession.class, CvDocumentSpec.class);
+        assertMethodPresent(EditorialBlueCvTemplate.class, "compose", DocumentSession.class, CvDocumentSpec.class);
         assertMethodPresent(ExecutiveSlateCvTemplate.class, "compose", DocumentSession.class, CvDocumentSpec.class);
     }
 
     @Test
     void coverLetterBuiltInShouldComposeThroughDocumentSession() throws Exception {
-        MainPageCV original = new MainPageCVMock().getMainPageCV();
         String letter = CoverLetterMock.letter.replace("${companyName}", "Compose Path Ltd");
         JobDetails jobDetails = testJobDetails();
 
         assertComposesToPdf(PDRectangle.A4, 15, 10, 15, 15,
-                document -> new CoverLetterTemplateV1().compose(document, original.getHeader(), letter, jobDetails));
+                document -> new CoverLetterTemplateV1().compose(document, TemplateTestSupport.canonicalHeader(), letter, jobDetails));
     }
 
     @Test

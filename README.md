@@ -268,6 +268,27 @@ try (DocumentSession document = GraphCompose.document(Path.of("invoice.pdf"))
 }
 ```
 
+CV templates use the same compose-first style. Describe the header and ordered modules, then pass one `CvDocumentSpec` into the template:
+
+```java
+CvDocumentSpec cv = CvDocumentSpec.builder()
+        .header(header)
+        .summary("Backend engineer building secure Spring Boot systems and reliable document workflows.")
+        .technicalSkills(
+                "Languages: Java 21, SQL, Kotlin",
+                "Backend: Spring Boot, Spring Data JPA, Spring Security",
+                "Delivery: Maven, Docker, Flyway, GitHub Actions")
+        .projects(
+                "GraphCompose - Declarative PDF/document layout engine for Java.",
+                "CVRewriter - Profile-aware CV tailoring platform with JWT auth and PDF generation.")
+        .build();
+
+try (DocumentSession document = GraphCompose.document(Path.of("cv.pdf")).create()) {
+    new CvTemplateV1().compose(document, cv);
+    document.buildPdf();
+}
+```
+
 Canonical docs and examples now compose directly into `DocumentSession`, and built-in template APIs live under `com.demcha.compose.document.templates.*`. The supported authoring workflow is `GraphCompose.document(...)`; lower-level engine internals are not part of the public authoring surface.
 
 ### Module-first authoring

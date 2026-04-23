@@ -18,7 +18,7 @@ class DocumentationCoverageTest {
     private static final Pattern PUBLIC_TOP_LEVEL_TYPE = Pattern.compile(
             "\\bpublic\\s+(?:final\\s+)?(?:class|interface|record|enum)\\b");
     private static final Pattern PUBLIC_TYPE_WITH_JAVADOC = Pattern.compile(
-            "(?s)/\\*\\*.*?\\*/\\s*public\\s+(?:final\\s+)?(?:class|interface|record|enum)\\b");
+            "(?s)/\\*\\*.*?\\*/\\s*(?:@[^\\r\\n]+\\s*)*public\\s+(?:final\\s+)?(?:class|interface|record|enum)\\b");
 
     @Test
     void canonicalDocumentPackagesShouldDeclarePackageInfo() throws IOException {

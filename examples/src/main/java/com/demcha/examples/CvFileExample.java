@@ -2,9 +2,8 @@ package com.demcha.examples;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.builtins.EditorialBlueCvTemplate;
-import com.demcha.compose.document.templates.data.cv.MainPageCV;
-import com.demcha.compose.document.templates.data.cv.MainPageCvDTO;
+import com.demcha.compose.document.templates.builtins.CvTemplateV1;
+import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.examples.support.ExampleDataFactory;
 import com.demcha.examples.support.ExampleOutputPaths;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -17,17 +16,16 @@ public final class CvFileExample {
     }
 
     public static Path generate() throws Exception {
-        Path outputFile = ExampleOutputPaths.prepare("cv-editorial-blue.pdf");
-        MainPageCV original = ExampleDataFactory.sampleCv();
-        MainPageCvDTO rewritten = ExampleDataFactory.sampleCvRewrite();
+        Path outputFile = ExampleOutputPaths.prepare("cv-modern-professional.pdf");
+        CvDocumentSpec cv = ExampleDataFactory.sampleCv();
 
-        EditorialBlueCvTemplate template = new EditorialBlueCvTemplate();
+        CvTemplateV1 template = new CvTemplateV1();
 
         try (DocumentSession document = GraphCompose.document(outputFile)
                 .pageSize(PDRectangle.A4)
                 .margin(18, 18, 18, 18)
                 .create()) {
-            template.compose(document, original, rewritten);
+            template.compose(document, cv);
             document.buildPdf();
         }
 

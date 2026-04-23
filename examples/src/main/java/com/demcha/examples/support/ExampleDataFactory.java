@@ -4,10 +4,7 @@ import com.demcha.compose.document.templates.data.common.EmailYaml;
 import com.demcha.compose.document.templates.data.common.Header;
 import com.demcha.compose.document.templates.data.invoice.InvoiceData;
 import com.demcha.compose.document.templates.data.coverletter.JobDetails;
-import com.demcha.compose.document.templates.data.cv.MainPageCV;
-import com.demcha.compose.document.templates.data.cv.MainPageCvDTO;
-import com.demcha.compose.document.templates.data.cv.ModuleSummary;
-import com.demcha.compose.document.templates.data.cv.ModuleYml;
+import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.proposal.ProposalData;
 import com.demcha.compose.document.templates.data.schedule.ScheduleSlot;
 import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
@@ -20,33 +17,27 @@ public final class ExampleDataFactory {
     private ExampleDataFactory() {
     }
 
-    public static MainPageCV sampleCv() {
-        MainPageCV cv = new MainPageCV();
-        cv.setHeader(sampleHeader());
-        cv.setModuleSummary(summary(
-                "Professional Summary",
-                "Platform engineer building resilient PDF and document-generation workflows for reliable business output."));
-        cv.setTechnicalSkills(module("Technical Skills", List.of(
-                "Java 21, PDFBox, Maven, REST APIs",
-                "Template design systems, pagination, semantic layout composition",
-                "Testing strategy, CI pipelines, developer enablement")));
-        cv.setEducationCertifications(module("Education & Certifications", List.of(
-                "**MSc Computer Science** - University of Manchester | 2021",
-                "**Oracle Java Certification** - Professional track | 2023")));
-        cv.setProjects(module("Projects", List.of(
-                "**GraphCompose** - Declarative PDF layout engine for reusable document generation",
-                "**Template Studio** - Internal tool for evaluating CV, proposal, and invoice output")));
-        cv.setProfessionalExperience(module("Professional Experience", List.of(
-                "**Senior Platform Engineer**, Northwind Systems | *2024-Present* - Led reusable document flows for reporting, billing, and hiring operations.",
-                "**Software Engineer**, BrightLeaf Labs | *2021-2024* - Built backend services and production document rendering pipelines.")));
-        cv.setAdditional(module("Additional Information", List.of(
-                "Based in London and available for hybrid or remote collaboration.",
-                "Interested in platform architecture, DX, and document-quality automation.")));
-        return cv;
-    }
-
-    public static MainPageCvDTO sampleCvRewrite() {
-        return MainPageCvDTO.from(sampleCv());
+    public static CvDocumentSpec sampleCv() {
+        return CvDocumentSpec.builder()
+                .header(sampleHeader())
+                .summary("Platform engineer building resilient PDF and document-generation workflows for reliable business output.")
+                .technicalSkills(
+                        "Java 21, PDFBox, Maven, REST APIs",
+                        "Template design systems, pagination, semantic layout composition",
+                        "Testing strategy, CI pipelines, developer enablement")
+                .education(
+                        "**MSc Computer Science** - University of Manchester | 2021",
+                        "**Oracle Java Certification** - Professional track | 2023")
+                .projects(
+                        "**GraphCompose** - Declarative PDF layout engine for reusable document generation",
+                        "**Template Studio** - Internal tool for evaluating CV, proposal, and invoice output")
+                .experience(
+                        "**Senior Platform Engineer**, Northwind Systems | *2024-Present* - Led reusable document flows for reporting, billing, and hiring operations.",
+                        "**Software Engineer**, BrightLeaf Labs | *2021-2024* - Built backend services and production document rendering pipelines.")
+                .additional(
+                        "Based in London and available for hybrid or remote collaboration.",
+                        "Interested in platform architecture, DX, and document-quality automation.")
+                .build();
     }
 
     public static Header sampleHeader() {
@@ -240,20 +231,6 @@ public final class ExampleDataFactory {
                 .footerNote("Add or remove people by editing only the people and assignments lists.")
                 .footerNote("Category colours and labels are driven entirely from the shared category catalog.")
                 .build();
-    }
-
-    private static ModuleSummary summary(String moduleName, String blockSummary) {
-        ModuleSummary summary = new ModuleSummary();
-        summary.setModuleName(moduleName);
-        summary.setBlockSummary(blockSummary);
-        return summary;
-    }
-
-    private static ModuleYml module(String name, List<String> points) {
-        ModuleYml module = new ModuleYml();
-        module.setName(name);
-        module.setModulePoints(points);
-        return module;
     }
 
     private static ScheduleSlot slot(String start, String end) {

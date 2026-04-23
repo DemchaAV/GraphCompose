@@ -2,8 +2,7 @@ package com.demcha.compose.document.templates.builtins;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.TemplateTestSupport;
-import com.demcha.compose.document.templates.data.cv.MainPageCV;
-import com.demcha.compose.document.templates.data.cv.MainPageCvDTO;
+import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.font_library.FontName;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -23,11 +22,10 @@ class CvTemplateV1LayoutSnapshotTest {
 
     @Test
     void shouldMatchStandardCvLayoutSnapshot() throws Exception {
-        MainPageCV original = TemplateTestSupport.canonicalCv();
-        MainPageCvDTO rewritten = TemplateTestSupport.rewrite(original);
+        CvDocumentSpec cv = TemplateTestSupport.canonicalCv();
 
         try (DocumentSession document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 15, 10, 15, 15)) {
-            template.compose(document, original, rewritten);
+            template.compose(document, cv);
             TemplateTestSupport.assertCanonicalSnapshot(document, "template_cv_1_standard", "cv");
         }
     }
@@ -35,11 +33,10 @@ class CvTemplateV1LayoutSnapshotTest {
     @Test
     void shouldMatchRichCvLayoutSnapshotAndRenderPdf() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("template_cv_1_layout_snapshot_rich", "clean", "templates", "cv");
-        MainPageCV expanded = TemplateTestSupport.expandedCanonicalCv();
-        MainPageCvDTO rewritten = TemplateTestSupport.rewrite(expanded);
+        CvDocumentSpec expanded = TemplateTestSupport.expandedCanonicalCv();
 
         try (DocumentSession document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15, false)) {
-            template.compose(document, expanded, rewritten);
+            template.compose(document, expanded);
             TemplateTestSupport.assertCanonicalSnapshot(document, "template_cv_1_rich_one_and_half_pages", "cv");
             document.buildPdf();
         }
@@ -50,14 +47,16 @@ class CvTemplateV1LayoutSnapshotTest {
 
     @Test
     void shouldNormalizeTechnicalSkillsWithVisibleBulletsIntoPerItemCanonicalBlocks() throws Exception {
-        MainPageCV original = TemplateTestSupport.canonicalCv();
-        original.getTechnicalSkills().setModulePoints(List.of(
-                "• **Languages:** Java, SQL, Kotlin",
-                "• **Backend:** Spring Boot, Spring Security, MapStruct",
-                "• **Tools:** IntelliJ IDEA, Git, Maven"));
+        CvDocumentSpec cv = CvDocumentSpec.builder()
+                .header(TemplateTestSupport.canonicalHeader())
+                .technicalSkills(
+                        "• **Languages:** Java, SQL, Kotlin",
+                        "• **Backend:** Spring Boot, Spring Security, MapStruct",
+                        "• **Tools:** IntelliJ IDEA, Git, Maven")
+                .build();
 
         try (DocumentSession document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 15, 10, 15, 15)) {
-            template.compose(document, original, null);
+            template.compose(document, cv);
 
             List<String> technicalSkillBodies = document.layoutSnapshot().nodes().stream()
                     .filter(node -> "ListNode".equals(node.entityKind()))
@@ -72,11 +71,10 @@ class CvTemplateV1LayoutSnapshotTest {
     @ParameterizedTest(name = "font theme {0}")
     @MethodSource("nonDefaultFontThemes")
     void shouldMatchFontThemeLayoutSnapshot(FontName fontName) throws Exception {
-        MainPageCV original = TemplateTestSupport.canonicalCv();
-        MainPageCvDTO rewritten = TemplateTestSupport.rewrite(original);
+        CvDocumentSpec cv = TemplateTestSupport.canonicalCv();
 
         try (DocumentSession document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 15, 10, 15, 15)) {
-            new CvTemplateV1(TemplateTestSupport.cvThemeWith(fontName)).compose(document, original, rewritten);
+            new CvTemplateV1(TemplateTestSupport.cvThemeWith(fontName)).compose(document, cv);
             TemplateTestSupport.assertCanonicalSnapshot(
                     document,
                     "template_cv_1_" + TemplateTestSupport.snapshotSlug(fontName),

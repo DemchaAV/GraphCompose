@@ -35,6 +35,9 @@ class DocumentationExamplesTest {
     private static final String LEGACY_TEMPLATE_BUILDER = "Template" + "Builder";
     private static final String LEGACY_TEMPLATE_NAMESPACE = "com.demcha." + "templates";
     private static final String LEGACY_V2_NAMESPACE = "com.demcha.compose." + "v2";
+    private static final String FIELD_BASED_CV = "MainPage" + "CV";
+    private static final String FIELD_BASED_CV_REWRITE = "MainPage" + "CvDTO";
+    private static final String FIELD_BASED_CV_MODULE = "Module" + "Yml";
 
     @Test
     void shouldRenderQuickStartExampleToFile() throws Exception {
@@ -273,7 +276,10 @@ class DocumentationExamplesTest {
                     || source.contains(LEGACY_PDF_COMPOSER)
                     || source.contains(LEGACY_TEMPLATE_BUILDER)
                     || source.contains(LEGACY_TEMPLATE_NAMESPACE)
-                    || source.contains(LEGACY_V2_NAMESPACE);
+                    || source.contains(LEGACY_V2_NAMESPACE)
+                    || source.contains(FIELD_BASED_CV)
+                    || source.contains(FIELD_BASED_CV_REWRITE)
+                    || source.contains(FIELD_BASED_CV_MODULE);
         } catch (IOException e) {
             throw new RuntimeException("Failed to inspect " + path, e);
         }

@@ -20,7 +20,11 @@ class CanonicalSurfaceGuardTest {
             "com.demcha.compose.v2",
             "TemplateBuilder",
             "GraphCompose.pdf(",
-            "PdfComposer");
+            "PdfComposer",
+            "MainPageCV",
+            "MainPageCvDTO",
+            "ModuleYml",
+            "ModuleSummary");
 
     private static final Set<String> MAIN_CANONICAL_SOURCE_ALLOWLIST = Set.of();
 

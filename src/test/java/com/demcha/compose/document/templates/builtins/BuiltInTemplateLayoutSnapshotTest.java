@@ -24,22 +24,20 @@ class BuiltInTemplateLayoutSnapshotTest {
 
     @Test
     void shouldMatchEditorialBlueLayoutSnapshot() throws Exception {
-        var original = TemplateTestSupport.canonicalCv();
-        var rewritten = TemplateTestSupport.rewrite(original);
+        var cv = TemplateTestSupport.canonicalCv();
 
         try (DocumentSession document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 18, 18, 18, 18)) {
-            new EditorialBlueCvTemplate().compose(document, original, rewritten);
+            new EditorialBlueCvTemplate().compose(document, cv);
             TemplateTestSupport.assertCanonicalSnapshot(document, "editorial_blue_standard", "cv");
         }
     }
 
     @Test
     void shouldMatchExecutiveSlateLayoutSnapshot() throws Exception {
-        var original = TemplateTestSupport.canonicalCv();
-        var rewritten = TemplateTestSupport.rewrite(original);
+        var cv = TemplateTestSupport.canonicalCv();
 
         try (DocumentSession document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 20, 20, 20, 20)) {
-            new ExecutiveSlateCvTemplate().compose(document, original, rewritten);
+            new ExecutiveSlateCvTemplate().compose(document, cv);
             TemplateTestSupport.assertCanonicalSnapshot(document, "executive_slate_standard", "cv");
         }
     }

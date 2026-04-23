@@ -17,16 +17,17 @@ import java.util.Objects;
  */
 public final class CoverLetterTemplateComposer {
     private static final String KIND_REGARDS = "Kind regards,";
-    private static final Margin HEADER_TRAILING_MARGIN = new Margin(0, 10, 0, 0);
 
     private final CvTheme theme;
     private final CvTheme signatureTheme;
+    private final CoverLetterLayoutPolicy coverLetterLayout;
     private final TemplateLayoutPolicy layout;
 
     public CoverLetterTemplateComposer(CvTheme theme, CvTheme signatureTheme) {
         this.theme = Objects.requireNonNull(theme, "theme");
         this.signatureTheme = Objects.requireNonNull(signatureTheme, "signatureTheme");
-        this.layout = TemplateLayoutPolicy.standardCv(this.theme);
+        this.coverLetterLayout = CoverLetterLayoutPolicy.standard(this.theme);
+        this.layout = coverLetterLayout.rhythm();
     }
 
     public void compose(TemplateComposeTarget target, Header header, String wroteLetter, JobDetails jobDetails) {
@@ -48,7 +49,7 @@ public final class CoverLetterTemplateComposer {
                 TextAlign.RIGHT,
                 1.0,
                 Padding.zero(),
-                new Margin(0, 10, 5, 0)));
+                coverLetterLayout.headerNameMargin()));
 
         String info = TemplateSceneSupport.joinNonBlank(" | ",
                 header.getAddress(),
@@ -61,7 +62,7 @@ public final class CoverLetterTemplateComposer {
                     TextAlign.RIGHT,
                     1.0,
                     Padding.zero(),
-                    HEADER_TRAILING_MARGIN));
+                    coverLetterLayout.headerTrailingMargin()));
         }
 
         TemplateParagraphSpec linkRow = TemplateHeaderContactSupport.linkRow(
@@ -69,7 +70,7 @@ public final class CoverLetterTemplateComposer {
                 header,
                 theme,
                 TextAlign.RIGHT,
-                HEADER_TRAILING_MARGIN);
+                coverLetterLayout.headerTrailingMargin());
         if (linkRow != null) {
             target.addParagraph(linkRow);
         }
@@ -87,7 +88,7 @@ public final class CoverLetterTemplateComposer {
                         theme.bodyTextStyle(),
                         TextAlign.LEFT,
                         layout.bodyLineSpacing(),
-                        "  ",
+                        coverLetterLayout.bodyFirstLineIndent(),
                         com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy.FIRST_LINE,
                         layout.bodyPadding(),
                         Margin.zero())))));
@@ -104,6 +105,6 @@ public final class CoverLetterTemplateComposer {
                         TextAlign.RIGHT,
                         layout.bodyLineSpacing(),
                         Padding.zero(),
-                        new Margin(20, 20, 0, 0))))));
+                        coverLetterLayout.closingMargin())))));
     }
 }

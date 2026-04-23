@@ -2,7 +2,7 @@ package com.demcha.compose.document.templates.builtins;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.InvoiceTemplate;
-import com.demcha.compose.document.templates.data.invoice.InvoiceData;
+import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.document.templates.support.business.BusinessDocumentSceneStyles;
 import com.demcha.compose.document.templates.support.business.InvoiceTemplateComposer;
 import com.demcha.compose.document.templates.support.common.SessionTemplateComposeTarget;
@@ -29,7 +29,7 @@ public final class InvoiceTemplateV1 implements InvoiceTemplate {
     }
 
     @Override
-    public void compose(DocumentSession document, InvoiceData data) {
-        composer.compose(new SessionTemplateComposeTarget(document), data);
+    public void compose(DocumentSession document, InvoiceDocumentSpec spec) {
+        composer.compose(new SessionTemplateComposeTarget(document), spec);
     }
 }

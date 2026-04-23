@@ -2,7 +2,7 @@ package com.demcha.compose.document.templates.builtins;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.ProposalTemplate;
-import com.demcha.compose.document.templates.data.proposal.ProposalData;
+import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
 import com.demcha.compose.document.templates.support.business.BusinessDocumentSceneStyles;
 import com.demcha.compose.document.templates.support.business.ProposalTemplateComposer;
 import com.demcha.compose.document.templates.support.common.SessionTemplateComposeTarget;
@@ -29,7 +29,7 @@ public final class ProposalTemplateV1 implements ProposalTemplate {
     }
 
     @Override
-    public void compose(DocumentSession document, ProposalData data) {
-        composer.compose(new SessionTemplateComposeTarget(document), data);
+    public void compose(DocumentSession document, ProposalDocumentSpec spec) {
+        composer.compose(new SessionTemplateComposeTarget(document), spec);
     }
 }

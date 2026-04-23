@@ -1,7 +1,7 @@
 package com.demcha.compose.document.templates.api;
 
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.data.proposal.ProposalData;
+import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
 
 /**
  * Canonical compose contract for reusable proposal templates.
@@ -12,7 +12,7 @@ import com.demcha.compose.document.templates.data.proposal.ProposalData;
  *
  * <pre>{@code
  * ProposalTemplate template = new ProposalTemplateV1();
- * ProposalData proposal = ProposalData.builder()
+ * ProposalDocumentSpec proposal = ProposalDocumentSpec.builder()
  *         .projectTitle("GraphCompose rollout")
  *         .section("Scope", "Introduce reusable invoice and proposal templates.")
  *         .timelineItem("Week 1", "5 days", "Foundation and review loop")
@@ -55,8 +55,8 @@ public interface ProposalTemplate {
      * Composes a proposal into a live document session.
      *
      * @param document active mutable document session receiving template nodes
-     * @param data proposal document data
+     * @param spec proposal document spec
      * @throws NullPointerException if an implementation requires non-null inputs
      */
-    void compose(DocumentSession document, ProposalData data);
+    void compose(DocumentSession document, ProposalDocumentSpec spec);
 }

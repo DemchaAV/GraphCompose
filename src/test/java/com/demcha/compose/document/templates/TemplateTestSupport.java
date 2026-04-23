@@ -3,11 +3,15 @@ package com.demcha.compose.document.templates;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.data.common.Header;
+import com.demcha.compose.document.templates.data.coverletter.CoverLetterDocumentSpec;
 import com.demcha.compose.document.templates.data.invoice.InvoiceData;
+import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.document.templates.data.coverletter.JobDetails;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.proposal.ProposalData;
+import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
 import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
+import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleDocumentSpec;
 import com.demcha.compose.document.templates.theme.CvTheme;
 import com.demcha.compose.font_library.FontName;
 import com.demcha.mock.CoverLetterMock;
@@ -67,28 +71,44 @@ public final class TemplateTestSupport {
                 "Full-time");
     }
 
+    public static CoverLetterDocumentSpec canonicalCoverLetter(String companyName) {
+        return CoverLetterDocumentSpec.of(canonicalHeader(), coverLetter(companyName), jobDetails(companyName));
+    }
+
     public static InvoiceData canonicalInvoiceData() {
         return InvoiceDataFixtures.standardInvoice();
+    }
+
+    public static InvoiceDocumentSpec canonicalInvoice() {
+        return InvoiceDocumentSpec.from(canonicalInvoiceData());
     }
 
     public static ProposalData canonicalProposalData() {
         return ProposalDataFixtures.longProposal();
     }
 
+    public static ProposalDocumentSpec canonicalProposal() {
+        return ProposalDocumentSpec.from(canonicalProposalData());
+    }
+
     public static WeeklyScheduleData canonicalWeeklyScheduleData() {
         return WeeklyScheduleDataFixtures.standardSchedule();
     }
 
-    public static WeeklyScheduleData canonicalWeeklyScheduleWithoutMetricsOrFooter() {
-        return WeeklyScheduleDataFixtures.withoutMetricsOrFooter();
+    public static WeeklyScheduleDocumentSpec canonicalWeeklySchedule() {
+        return WeeklyScheduleDocumentSpec.from(canonicalWeeklyScheduleData());
     }
 
-    public static WeeklyScheduleData canonicalWeeklyScheduleWithAdditionalPerson() {
-        return WeeklyScheduleDataFixtures.withAdditionalPerson();
+    public static WeeklyScheduleDocumentSpec canonicalWeeklyScheduleWithoutMetricsOrFooter() {
+        return WeeklyScheduleDocumentSpec.from(WeeklyScheduleDataFixtures.withoutMetricsOrFooter());
     }
 
-    public static WeeklyScheduleData canonicalWeeklyScheduleWithChangedCategoryCatalog() {
-        return WeeklyScheduleDataFixtures.withAddedAndRemovedCategory();
+    public static WeeklyScheduleDocumentSpec canonicalWeeklyScheduleWithAdditionalPerson() {
+        return WeeklyScheduleDocumentSpec.from(WeeklyScheduleDataFixtures.withAdditionalPerson());
+    }
+
+    public static WeeklyScheduleDocumentSpec canonicalWeeklyScheduleWithChangedCategoryCatalog() {
+        return WeeklyScheduleDocumentSpec.from(WeeklyScheduleDataFixtures.withAddedAndRemovedCategory());
     }
 
     public static CvTheme cvThemeWith(FontName fontName) {

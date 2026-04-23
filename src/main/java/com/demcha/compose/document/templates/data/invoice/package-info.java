@@ -1,4 +1,4 @@
 /**
- * Invoice data records for canonical document templates.
+ * Invoice document specs and supporting data records for canonical templates.
  */
 package com.demcha.compose.document.templates.data.invoice;

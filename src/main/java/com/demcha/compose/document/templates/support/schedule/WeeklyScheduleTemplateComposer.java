@@ -10,6 +10,7 @@ import com.demcha.compose.document.templates.data.schedule.ScheduleMetricRow;
 import com.demcha.compose.document.templates.data.schedule.SchedulePerson;
 import com.demcha.compose.document.templates.data.schedule.ScheduleSlot;
 import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
+import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleDocumentSpec;
 import com.demcha.compose.document.templates.theme.WeeklyScheduleTheme;
 import com.demcha.compose.layout_core.components.components_builders.TableCellSpec;
 import com.demcha.compose.layout_core.components.components_builders.TableCellStyle;
@@ -38,8 +39,8 @@ public final class WeeklyScheduleTemplateComposer {
         this.theme = Objects.requireNonNull(theme, "theme");
     }
 
-    public void compose(TemplateComposeTarget target, WeeklyScheduleData data) {
-        WeeklyScheduleData safe = Objects.requireNonNull(data, "data");
+    public void compose(TemplateComposeTarget target, WeeklyScheduleDocumentSpec spec) {
+        WeeklyScheduleData safe = Objects.requireNonNull(spec, "spec").schedule();
         if (safe.days().isEmpty()) {
             throw new IllegalArgumentException("Weekly schedule requires at least one day.");
         }

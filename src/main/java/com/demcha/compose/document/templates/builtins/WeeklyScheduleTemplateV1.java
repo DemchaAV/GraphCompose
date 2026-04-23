@@ -2,7 +2,7 @@ package com.demcha.compose.document.templates.builtins;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.WeeklyScheduleTemplate;
-import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
+import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleDocumentSpec;
 import com.demcha.compose.document.templates.support.common.SessionTemplateComposeTarget;
 import com.demcha.compose.document.templates.support.schedule.WeeklyScheduleTemplateComposer;
 import com.demcha.compose.document.templates.theme.WeeklyScheduleTheme;
@@ -40,7 +40,7 @@ public final class WeeklyScheduleTemplateV1 implements WeeklyScheduleTemplate {
     }
 
     @Override
-    public void compose(DocumentSession document, WeeklyScheduleData data) {
-        composer.compose(new SessionTemplateComposeTarget(document), data);
+    public void compose(DocumentSession document, WeeklyScheduleDocumentSpec spec) {
+        composer.compose(new SessionTemplateComposeTarget(document), spec);
     }
 }

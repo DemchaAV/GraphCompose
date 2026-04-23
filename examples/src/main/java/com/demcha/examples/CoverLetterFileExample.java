@@ -24,9 +24,7 @@ public final class CoverLetterFileExample {
                 .create()) {
             template.compose(
                     document,
-                    ExampleDataFactory.sampleHeader(),
-                    ExampleDataFactory.sampleCoverLetter(),
-                    ExampleDataFactory.sampleJobDetails());
+                    ExampleDataFactory.sampleCoverLetterDocument());
             document.buildPdf();
         }
 

@@ -9,9 +9,9 @@ import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkPositio
 import com.demcha.compose.document.templates.builtins.CvTemplateV1;
 import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
 import com.demcha.compose.document.templates.builtins.ProposalTemplateV1;
-import com.demcha.compose.document.templates.data.invoice.InvoiceData;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
-import com.demcha.compose.document.templates.data.proposal.ProposalData;
+import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
+import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
 import com.demcha.compose.layout_core.components.content.text.TextDecoration;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.style.Margin;
@@ -72,8 +72,8 @@ public final class CurrentSpeedBenchmark {
     private final InvoiceTemplateV1 invoiceTemplate = new InvoiceTemplateV1();
     private final CvTemplateV1 cvTemplate = new CvTemplateV1();
     private final ProposalTemplateV1 proposalTemplate = new ProposalTemplateV1();
-    private final InvoiceData invoiceData = CanonicalBenchmarkSupport.canonicalInvoiceData();
-    private final ProposalData proposalData = CanonicalBenchmarkSupport.canonicalProposalData();
+    private final InvoiceDocumentSpec invoice = CanonicalBenchmarkSupport.canonicalInvoice();
+    private final ProposalDocumentSpec proposal = CanonicalBenchmarkSupport.canonicalProposal();
     private final CvDocumentSpec cv = CanonicalBenchmarkSupport.canonicalCv();
 
     public static void main(String[] args) throws Exception {
@@ -360,7 +360,7 @@ public final class CurrentSpeedBenchmark {
                 .pageSize(PDRectangle.A4)
                 .margin(22, 22, 22, 22)
                 .create()) {
-            invoiceTemplate.compose(document, invoiceData);
+            invoiceTemplate.compose(document, invoice);
             return document.toPdfBytes();
         }
     }
@@ -380,7 +380,7 @@ public final class CurrentSpeedBenchmark {
                 .pageSize(PDRectangle.A4)
                 .margin(22, 22, 22, 22)
                 .create()) {
-            proposalTemplate.compose(document, proposalData);
+            proposalTemplate.compose(document, proposal);
             return document.toPdfBytes();
         }
     }

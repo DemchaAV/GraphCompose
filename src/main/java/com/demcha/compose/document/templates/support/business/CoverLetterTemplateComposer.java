@@ -4,6 +4,7 @@ import com.demcha.compose.document.templates.support.common.*;
 
 import com.demcha.compose.document.model.node.TextAlign;
 import com.demcha.compose.document.templates.data.common.Header;
+import com.demcha.compose.document.templates.data.coverletter.CoverLetterDocumentSpec;
 import com.demcha.compose.document.templates.data.coverletter.JobDetails;
 import com.demcha.compose.document.templates.theme.CvTheme;
 import com.demcha.compose.layout_core.components.style.Margin;
@@ -30,11 +31,12 @@ public final class CoverLetterTemplateComposer {
         this.layout = coverLetterLayout.rhythm();
     }
 
-    public void compose(TemplateComposeTarget target, Header header, String wroteLetter, JobDetails jobDetails) {
+    public void compose(TemplateComposeTarget target, CoverLetterDocumentSpec spec) {
+        CoverLetterDocumentSpec safe = Objects.requireNonNull(spec, "spec");
         target.startDocument("MainVBoxContainer", layout.rootSpacing());
-        addHeader(target, header);
-        addBody(target, wroteLetter, jobDetails);
-        addClosing(target, header);
+        addHeader(target, safe.header());
+        addBody(target, safe.body(), safe.jobDetails());
+        addClosing(target, safe.header());
         target.finishDocument();
     }
 

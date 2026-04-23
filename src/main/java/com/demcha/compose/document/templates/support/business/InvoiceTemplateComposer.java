@@ -4,6 +4,7 @@ import com.demcha.compose.document.templates.support.common.*;
 
 import com.demcha.compose.document.model.node.TextAlign;
 import com.demcha.compose.document.templates.data.invoice.InvoiceData;
+import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.document.templates.data.invoice.InvoiceLineItem;
 import com.demcha.compose.document.templates.data.invoice.InvoiceParty;
 import com.demcha.compose.document.templates.data.invoice.InvoiceSummaryRow;
@@ -39,8 +40,8 @@ public final class InvoiceTemplateComposer {
         this.layout = sceneLayout.rhythm();
     }
 
-    public void compose(TemplateComposeTarget target, InvoiceData data) {
-        InvoiceData safe = Objects.requireNonNull(data, "data");
+    public void compose(TemplateComposeTarget target, InvoiceDocumentSpec spec) {
+        InvoiceData safe = Objects.requireNonNull(spec, "spec").invoice();
         double width = target.pageWidth();
 
         target.startDocument("InvoiceRoot", layout.rootSpacing());

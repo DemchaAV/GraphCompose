@@ -4,6 +4,7 @@ import com.demcha.compose.document.templates.support.common.*;
 
 import com.demcha.compose.document.model.node.TextAlign;
 import com.demcha.compose.document.templates.data.proposal.ProposalData;
+import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
 import com.demcha.compose.document.templates.data.proposal.ProposalParty;
 import com.demcha.compose.document.templates.data.proposal.ProposalPricingRow;
 import com.demcha.compose.document.templates.data.proposal.ProposalSection;
@@ -41,8 +42,8 @@ public final class ProposalTemplateComposer {
         this.layout = sceneLayout.rhythm();
     }
 
-    public void compose(TemplateComposeTarget target, ProposalData data) {
-        ProposalData safe = Objects.requireNonNull(data, "data");
+    public void compose(TemplateComposeTarget target, ProposalDocumentSpec spec) {
+        ProposalData safe = Objects.requireNonNull(spec, "spec").proposal();
         double width = target.pageWidth();
 
         target.startDocument("ProposalRoot", layout.rootSpacing());

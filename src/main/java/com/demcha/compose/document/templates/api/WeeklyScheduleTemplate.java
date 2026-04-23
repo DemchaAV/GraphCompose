@@ -1,7 +1,7 @@
 package com.demcha.compose.document.templates.api;
 
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
+import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleDocumentSpec;
 
 /**
  * Canonical compose contract for reusable weekly schedule templates.
@@ -11,7 +11,7 @@ import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
  *
  * <pre>{@code
  * WeeklyScheduleTemplate template = new WeeklyScheduleTemplateV1();
- * WeeklyScheduleData schedule = WeeklyScheduleData.builder()
+ * WeeklyScheduleDocumentSpec schedule = WeeklyScheduleDocumentSpec.builder()
  *         .title("Engineering Roster")
  *         .weekLabel("Week Of 20 Apr - 26 Apr 2026")
  *         .day("mon", "Monday", "Release prep", "delivery")
@@ -55,8 +55,8 @@ public interface WeeklyScheduleTemplate {
      * Composes a weekly schedule into a live document session.
      *
      * @param document active mutable document session receiving template nodes
-     * @param data weekly schedule data
+     * @param spec weekly schedule document spec
      * @throws NullPointerException if an implementation requires non-null inputs
      */
-    void compose(DocumentSession document, WeeklyScheduleData data);
+    void compose(DocumentSession document, WeeklyScheduleDocumentSpec spec);
 }

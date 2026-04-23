@@ -1,8 +1,7 @@
 package com.demcha.compose.document.templates.api;
 
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.data.common.Header;
-import com.demcha.compose.document.templates.data.coverletter.JobDetails;
+import com.demcha.compose.document.templates.data.coverletter.CoverLetterDocumentSpec;
 
 /**
  * Canonical compose contract for reusable cover-letter templates.
@@ -13,18 +12,19 @@ import com.demcha.compose.document.templates.data.coverletter.JobDetails;
  *
  * <pre>{@code
  * CoverLetterTemplate template = new CoverLetterTemplateV1();
- * Header header = Header.builder()
- *         .name("Artem Demchyshyn")
- *         .email("artem@demo.dev", "artem@demo.dev")
- *         .linkedIn("https://linkedin.com/in/graphcompose", "LinkedIn")
- *         .build();
- * JobDetails job = JobDetails.builder()
- *         .company("Northwind Systems")
- *         .title("Platform Engineer")
+ * CoverLetterDocumentSpec coverLetter = CoverLetterDocumentSpec.builder()
+ *         .header(header -> header
+ *                 .name("Artem Demchyshyn")
+ *                 .email("artem@demo.dev", "artem@demo.dev")
+ *                 .linkedIn("https://linkedin.com/in/graphcompose", "LinkedIn"))
+ *         .letter(letterBody)
+ *         .job(job -> job
+ *                 .company("Northwind Systems")
+ *                 .title("Platform Engineer"))
  *         .build();
  *
  * try (DocumentSession document = GraphCompose.document(Path.of("cover-letter.pdf")).create()) {
- *     template.compose(document, header, letterBody, job);
+ *     template.compose(document, coverLetter);
  *     document.buildPdf();
  * }
  * }</pre>
@@ -58,10 +58,8 @@ public interface CoverLetterTemplate {
      * Composes a cover letter into a live document session.
      *
      * @param document active mutable document session receiving template nodes
-     * @param header contact and profile header data
-     * @param wroteLetter cover-letter body text or template text
-     * @param jobDetails job metadata used for personalization
+     * @param spec cover-letter document spec
      * @throws NullPointerException if an implementation requires non-null inputs
      */
-    void compose(DocumentSession document, Header header, String wroteLetter, JobDetails jobDetails);
+    void compose(DocumentSession document, CoverLetterDocumentSpec spec);
 }

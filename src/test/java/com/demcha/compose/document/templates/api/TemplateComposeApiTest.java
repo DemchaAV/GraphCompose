@@ -10,16 +10,11 @@ import com.demcha.compose.document.templates.builtins.ExecutiveSlateCvTemplate;
 import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
 import com.demcha.compose.document.templates.builtins.ProposalTemplateV1;
 import com.demcha.compose.document.templates.builtins.WeeklyScheduleTemplateV1;
+import com.demcha.compose.document.templates.data.coverletter.CoverLetterDocumentSpec;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
-import com.demcha.compose.document.templates.data.common.Header;
-import com.demcha.compose.document.templates.data.invoice.InvoiceData;
-import com.demcha.compose.document.templates.data.coverletter.JobDetails;
-import com.demcha.compose.document.templates.data.proposal.ProposalData;
-import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
-import com.demcha.mock.CoverLetterMock;
-import com.demcha.mock.InvoiceDataFixtures;
-import com.demcha.mock.ProposalDataFixtures;
-import com.demcha.mock.WeeklyScheduleDataFixtures;
+import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
+import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
+import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleDocumentSpec;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -49,22 +44,22 @@ class TemplateComposeApiTest {
 
     @Test
     void coverLetterTemplateInterfaceShouldExposeDocumentSessionComposeContract() throws Exception {
-        assertMethodPresent(CoverLetterTemplate.class, "compose", DocumentSession.class, Header.class, String.class, JobDetails.class);
+        assertMethodPresent(CoverLetterTemplate.class, "compose", DocumentSession.class, CoverLetterDocumentSpec.class);
     }
 
     @Test
     void invoiceTemplateInterfaceShouldExposeDocumentSessionComposeContract() throws Exception {
-        assertMethodPresent(InvoiceTemplate.class, "compose", DocumentSession.class, InvoiceData.class);
+        assertMethodPresent(InvoiceTemplate.class, "compose", DocumentSession.class, InvoiceDocumentSpec.class);
     }
 
     @Test
     void proposalTemplateInterfaceShouldExposeDocumentSessionComposeContract() throws Exception {
-        assertMethodPresent(ProposalTemplate.class, "compose", DocumentSession.class, ProposalData.class);
+        assertMethodPresent(ProposalTemplate.class, "compose", DocumentSession.class, ProposalDocumentSpec.class);
     }
 
     @Test
     void weeklyScheduleTemplateInterfaceShouldExposeDocumentSessionComposeContract() throws Exception {
-        assertMethodPresent(WeeklyScheduleTemplate.class, "compose", DocumentSession.class, WeeklyScheduleData.class);
+        assertMethodPresent(WeeklyScheduleTemplate.class, "compose", DocumentSession.class, WeeklyScheduleDocumentSpec.class);
     }
 
     @Test
@@ -102,31 +97,30 @@ class TemplateComposeApiTest {
 
     @Test
     void coverLetterBuiltInShouldComposeThroughDocumentSession() throws Exception {
-        String letter = CoverLetterMock.letter.replace("${companyName}", "Compose Path Ltd");
-        JobDetails jobDetails = testJobDetails();
-
         assertComposesToPdf(PDRectangle.A4, 15, 10, 15, 15,
-                document -> new CoverLetterTemplateV1().compose(document, TemplateTestSupport.canonicalHeader(), letter, jobDetails));
+                document -> new CoverLetterTemplateV1().compose(
+                        document,
+                        TemplateTestSupport.canonicalCoverLetter("Compose Path Ltd")));
     }
 
     @Test
     void invoiceBuiltInShouldComposeThroughDocumentSession() throws Exception {
-        InvoiceData data = InvoiceDataFixtures.standardInvoice();
-        assertComposesToPdf(PDRectangle.A4, 22, document -> new InvoiceTemplateV1().compose(document, data));
+        assertComposesToPdf(PDRectangle.A4, 22,
+                document -> new InvoiceTemplateV1().compose(document, TemplateTestSupport.canonicalInvoice()));
     }
 
     @Test
     void proposalBuiltInShouldComposeThroughDocumentSession() throws Exception {
-        ProposalData data = ProposalDataFixtures.longProposal();
-        assertComposesToPdf(PDRectangle.A4, 22, document -> new ProposalTemplateV1().compose(document, data));
+        assertComposesToPdf(PDRectangle.A4, 22,
+                document -> new ProposalTemplateV1().compose(document, TemplateTestSupport.canonicalProposal()));
     }
 
     @Test
     void weeklyScheduleBuiltInShouldComposeThroughDocumentSession() throws Exception {
-        WeeklyScheduleData data = WeeklyScheduleDataFixtures.standardSchedule();
         PDRectangle landscapeA4 = new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth());
 
-        assertComposesToPdf(landscapeA4, 18, document -> new WeeklyScheduleTemplateV1().compose(document, data));
+        assertComposesToPdf(landscapeA4, 18,
+                document -> new WeeklyScheduleTemplateV1().compose(document, TemplateTestSupport.canonicalWeeklySchedule()));
     }
 
     private void assertComposesToPdf(PDRectangle pageSize, float margin, SessionAction action) throws Exception {
@@ -161,17 +155,6 @@ class TemplateComposeApiTest {
         try (PDDocument document = Loader.loadPDF(pdfBytes)) {
             assertThat(document.getNumberOfPages()).isGreaterThan(0);
         }
-    }
-
-    private JobDetails testJobDetails() {
-        return new JobDetails(
-                "https://linkedin.com/jobs/view/compose-path",
-                "Software Engineer",
-                "Compose Path Ltd",
-                "Remote",
-                "Compose-first compatibility test",
-                "Mid",
-                "Full-time");
     }
 
     @FunctionalInterface

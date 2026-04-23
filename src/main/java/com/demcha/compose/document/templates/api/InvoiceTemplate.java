@@ -1,7 +1,7 @@
 package com.demcha.compose.document.templates.api;
 
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.data.invoice.InvoiceData;
+import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 
 /**
  * Canonical compose contract for reusable invoice templates.
@@ -12,7 +12,7 @@ import com.demcha.compose.document.templates.data.invoice.InvoiceData;
  *
  * <pre>{@code
  * InvoiceTemplate template = new InvoiceTemplateV1();
- * InvoiceData invoice = InvoiceData.builder()
+ * InvoiceDocumentSpec invoice = InvoiceDocumentSpec.builder()
  *         .invoiceNumber("GC-2026-041")
  *         .fromParty(party -> party.name("GraphCompose Studio"))
  *         .billToParty(party -> party.name("Northwind Systems"))
@@ -55,8 +55,8 @@ public interface InvoiceTemplate {
      * Composes an invoice into a live document session.
      *
      * @param document active mutable document session receiving template nodes
-     * @param data invoice document data
+     * @param spec invoice document spec
      * @throws NullPointerException if an implementation requires non-null inputs
      */
-    void compose(DocumentSession document, InvoiceData data);
+    void compose(DocumentSession document, InvoiceDocumentSpec spec);
 }

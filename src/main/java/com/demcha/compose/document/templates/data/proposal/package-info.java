@@ -1,4 +1,4 @@
 /**
- * Proposal data records for canonical document templates.
+ * Proposal document specs and supporting data records for canonical templates.
  */
 package com.demcha.compose.document.templates.data.proposal;

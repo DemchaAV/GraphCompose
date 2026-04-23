@@ -2,8 +2,7 @@ package com.demcha.compose.document.templates.builtins;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.CoverLetterTemplate;
-import com.demcha.compose.document.templates.data.common.Header;
-import com.demcha.compose.document.templates.data.coverletter.JobDetails;
+import com.demcha.compose.document.templates.data.coverletter.CoverLetterDocumentSpec;
 import com.demcha.compose.document.templates.support.business.CoverLetterTemplateComposer;
 import com.demcha.compose.document.templates.support.common.SessionTemplateComposeTarget;
 import com.demcha.compose.document.templates.theme.CvTheme;
@@ -34,7 +33,7 @@ public final class CoverLetterTemplateV1 implements CoverLetterTemplate {
     }
 
     @Override
-    public void compose(DocumentSession document, Header header, String wroteLetter, JobDetails jobDetails) {
-        composer.compose(new SessionTemplateComposeTarget(document), header, wroteLetter, jobDetails);
+    public void compose(DocumentSession document, CoverLetterDocumentSpec spec) {
+        composer.compose(new SessionTemplateComposeTarget(document), spec);
     }
 }

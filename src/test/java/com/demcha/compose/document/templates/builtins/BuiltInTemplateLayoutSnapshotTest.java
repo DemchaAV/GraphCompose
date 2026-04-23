@@ -15,9 +15,7 @@ class BuiltInTemplateLayoutSnapshotTest {
         try (DocumentSession document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 15, 10, 15, 15)) {
             new CoverLetterTemplateV1().compose(
                     document,
-                    TemplateTestSupport.canonicalHeader(),
-                    TemplateTestSupport.coverLetter("Visual Test Company"),
-                    TemplateTestSupport.jobDetails("Visual Test Company"));
+                    TemplateTestSupport.canonicalCoverLetter("Visual Test Company"));
             TemplateTestSupport.assertCanonicalSnapshot(document, "cover-letter/cover_letter_standard");
         }
     }
@@ -47,7 +45,7 @@ class BuiltInTemplateLayoutSnapshotTest {
         Path outputFile = VisualTestOutputs.preparePdf("invoice_layout_snapshot", "clean", "templates", "invoice");
 
         try (DocumentSession document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 22, 22, 22, 22, false)) {
-            new InvoiceTemplateV1().compose(document, TemplateTestSupport.canonicalInvoiceData());
+            new InvoiceTemplateV1().compose(document, TemplateTestSupport.canonicalInvoice());
             TemplateTestSupport.assertCanonicalSnapshot(document, "invoice/invoice_standard_layout");
             document.buildPdf();
         }
@@ -58,14 +56,14 @@ class BuiltInTemplateLayoutSnapshotTest {
     @Test
     void shouldMatchLongProposalLayoutSnapshot() throws Exception {
         try (DocumentSession document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 22, 22, 22, 22)) {
-            new ProposalTemplateV1().compose(document, TemplateTestSupport.canonicalProposalData());
+            new ProposalTemplateV1().compose(document, TemplateTestSupport.canonicalProposal());
             TemplateTestSupport.assertCanonicalSnapshot(document, "proposal/proposal_long_layout");
         }
     }
 
     @Test
     void shouldMatchStandardWeeklyScheduleLayoutSnapshot() throws Exception {
-        assertWeeklyScheduleMatches("weekly_schedule_standard", TemplateTestSupport.canonicalWeeklyScheduleData());
+        assertWeeklyScheduleMatches("weekly_schedule_standard", TemplateTestSupport.canonicalWeeklySchedule());
     }
 
     @Test
@@ -90,11 +88,11 @@ class BuiltInTemplateLayoutSnapshotTest {
     }
 
     private void assertWeeklyScheduleMatches(String snapshotName,
-                                             com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData data) throws Exception {
+                                             com.demcha.compose.document.templates.data.schedule.WeeklyScheduleDocumentSpec spec) throws Exception {
         PDRectangle landscapeA4 = new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth());
 
         try (DocumentSession document = TemplateTestSupport.openInMemoryDocument(landscapeA4, 18, 18, 18, 18)) {
-            new WeeklyScheduleTemplateV1().compose(document, data);
+            new WeeklyScheduleTemplateV1().compose(document, spec);
             TemplateTestSupport.assertCanonicalSnapshot(document, snapshotName, "weekly-schedule");
         }
     }

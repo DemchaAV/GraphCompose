@@ -2,12 +2,12 @@ package com.demcha.examples.support;
 
 import com.demcha.compose.document.templates.data.common.EmailYaml;
 import com.demcha.compose.document.templates.data.common.Header;
-import com.demcha.compose.document.templates.data.invoice.InvoiceData;
-import com.demcha.compose.document.templates.data.coverletter.JobDetails;
+import com.demcha.compose.document.templates.data.coverletter.CoverLetterDocumentSpec;
+import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
-import com.demcha.compose.document.templates.data.proposal.ProposalData;
+import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
 import com.demcha.compose.document.templates.data.schedule.ScheduleSlot;
-import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
+import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleDocumentSpec;
 
 import java.awt.Color;
 import java.util.List;
@@ -68,20 +68,23 @@ public final class ExampleDataFactory {
                 """;
     }
 
-    public static JobDetails sampleJobDetails() {
-        return JobDetails.builder()
-                .url("https://northwind.example/jobs/platform")
-                .title("Senior Platform Engineer")
-                .company("Northwind Systems")
-                .location("London / Remote")
-                .description("Lead reusable internal platform capabilities.")
-                .seniorityLevel("Senior")
-                .employmentType("Full-time")
+    public static CoverLetterDocumentSpec sampleCoverLetterDocument() {
+        return CoverLetterDocumentSpec.builder()
+                .header(sampleHeader())
+                .letter(sampleCoverLetter())
+                .job(job -> job
+                        .url("https://northwind.example/jobs/platform")
+                        .title("Senior Platform Engineer")
+                        .company("Northwind Systems")
+                        .location("London / Remote")
+                        .description("Lead reusable internal platform capabilities.")
+                        .seniorityLevel("Senior")
+                        .employmentType("Full-time"))
                 .build();
     }
 
-    public static InvoiceData sampleInvoice() {
-        return InvoiceData.builder()
+    public static InvoiceDocumentSpec sampleInvoice() {
+        return InvoiceDocumentSpec.builder()
                 .title("Invoice")
                 .invoiceNumber("GC-2026-041")
                 .issueDate("02 Apr 2026")
@@ -115,8 +118,8 @@ public final class ExampleDataFactory {
                 .build();
     }
 
-    public static ProposalData sampleProposal() {
-        return ProposalData.builder()
+    public static ProposalDocumentSpec sampleProposal() {
+        return ProposalDocumentSpec.builder()
                 .title("Proposal")
                 .proposalNumber("PROP-2026-014")
                 .preparedDate("02 Apr 2026")
@@ -153,8 +156,8 @@ public final class ExampleDataFactory {
                 .build();
     }
 
-    public static WeeklyScheduleData sampleWeeklySchedule() {
-        return WeeklyScheduleData.builder()
+    public static WeeklyScheduleDocumentSpec sampleWeeklySchedule() {
+        return WeeklyScheduleDocumentSpec.builder()
                 .title("Scott's Weekly Floor Schedule")
                 .weekLabel("Week Of 30 Mar - 05 Apr 2026")
                 .day("mon", "Monday\n30th", "Clean crushed ice\nMachine & area", "request")

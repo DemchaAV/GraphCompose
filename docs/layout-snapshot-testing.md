@@ -97,7 +97,7 @@ void shouldMatchInvoiceLayoutSnapshotAndRenderPdf() throws Exception {
             .margin(22, 22, 22, 22)
             .create()) {
 
-        template.compose(document, data);
+        template.compose(document, spec);
         LayoutSnapshotAssertions.assertMatches(document, "canonical-templates/invoice/invoice_standard_layout");
         document.buildPdf();
     }
@@ -123,6 +123,8 @@ Minimal pattern:
 ```java
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
+import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
@@ -185,14 +187,14 @@ class InvoiceTemplateSnapshotTest {
     @Test
     void shouldKeepInvoiceLayoutStable() throws Exception {
         InvoiceTemplateV1 template = new InvoiceTemplateV1();
-        InvoiceData data = invoiceFixture();
+        InvoiceDocumentSpec spec = invoiceFixture();
 
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(PDRectangle.A4)
                 .margin(22, 22, 22, 22)
                 .create()) {
 
-            template.compose(document, data);
+            template.compose(document, spec);
             LayoutSnapshotAssertions.assertMatches(document, "canonical-templates/invoice/invoice_standard_layout");
         }
     }

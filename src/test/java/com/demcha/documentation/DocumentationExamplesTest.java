@@ -4,7 +4,7 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.InvoiceTemplate;
 import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
-import com.demcha.compose.document.templates.data.invoice.InvoiceData;
+import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.font_library.FontName;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
@@ -285,8 +285,8 @@ class DocumentationExamplesTest {
         }
     }
 
-    private InvoiceData sampleInvoice() {
-        return InvoiceData.builder()
+    private InvoiceDocumentSpec sampleInvoice() {
+        return InvoiceDocumentSpec.builder()
                 .title("Invoice")
                 .invoiceNumber("GC-2026-041")
                 .issueDate("02 Apr 2026")

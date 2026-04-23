@@ -1,9 +1,9 @@
 package com.demcha.compose;
 
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.data.invoice.InvoiceData;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
-import com.demcha.compose.document.templates.data.proposal.ProposalData;
+import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
+import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
 import com.demcha.compose.layout_core.components.content.text.TextDecoration;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
@@ -34,12 +34,12 @@ final class CanonicalBenchmarkSupport {
         return new CvDocumentSpecMock().getCv();
     }
 
-    static InvoiceData canonicalInvoiceData() {
-        return InvoiceDataFixtures.standardInvoice();
+    static InvoiceDocumentSpec canonicalInvoice() {
+        return InvoiceDocumentSpec.from(InvoiceDataFixtures.standardInvoice());
     }
 
-    static ProposalData canonicalProposalData() {
-        return ProposalDataFixtures.longProposal();
+    static ProposalDocumentSpec canonicalProposal() {
+        return ProposalDocumentSpec.from(ProposalDataFixtures.longProposal());
     }
 
     static byte[] renderSimpleBenchmarkDocument(PDRectangle pageSize,

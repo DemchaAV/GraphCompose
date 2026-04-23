@@ -34,9 +34,7 @@ class BuiltInTemplateRenderTest {
         try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 15, 10, 15, 15)) {
             new CoverLetterTemplateV1().compose(
                     document,
-                    TemplateTestSupport.canonicalHeader(),
-                    TemplateTestSupport.coverLetter("Visual Test Company"),
-                    TemplateTestSupport.jobDetails("Visual Test Company"));
+                    TemplateTestSupport.canonicalCoverLetter("Visual Test Company"));
             pdfBytes = document.toPdfBytes();
         }
 
@@ -52,9 +50,7 @@ class BuiltInTemplateRenderTest {
         try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15, false)) {
             new CoverLetterTemplateV1().compose(
                     document,
-                    TemplateTestSupport.canonicalHeader(),
-                    TemplateTestSupport.coverLetter("Visual Test Company"),
-                    TemplateTestSupport.jobDetails("Visual Test Company"));
+                    TemplateTestSupport.canonicalCoverLetter("Visual Test Company"));
             document.buildPdf();
         }
 
@@ -68,9 +64,7 @@ class BuiltInTemplateRenderTest {
         try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15, true)) {
             new CoverLetterTemplateV1().compose(
                     document,
-                    TemplateTestSupport.canonicalHeader(),
-                    TemplateTestSupport.coverLetter("Visual Test Company"),
-                    TemplateTestSupport.jobDetails("Visual Test Company"));
+                    TemplateTestSupport.canonicalCoverLetter("Visual Test Company"));
             document.buildPdf();
         }
 
@@ -85,9 +79,10 @@ class BuiltInTemplateRenderTest {
         try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 15, 10, 15, 15)) {
             new CoverLetterTemplateV1().compose(
                     document,
-                    header,
-                    TemplateTestSupport.coverLetter("Visual Test Company"),
-                    TemplateTestSupport.jobDetails("Visual Test Company"));
+                    com.demcha.compose.document.templates.data.coverletter.CoverLetterDocumentSpec.of(
+                            header,
+                            TemplateTestSupport.coverLetter("Visual Test Company"),
+                            TemplateTestSupport.jobDetails("Visual Test Company")));
             pdfBytes = document.toPdfBytes();
         }
 
@@ -115,7 +110,7 @@ class BuiltInTemplateRenderTest {
         byte[] pdfBytes;
 
         try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 22, 22, 22, 22)) {
-            new InvoiceTemplateV1().compose(document, TemplateTestSupport.canonicalInvoiceData());
+            new InvoiceTemplateV1().compose(document, TemplateTestSupport.canonicalInvoice());
             pdfBytes = document.toPdfBytes();
         }
 
@@ -129,7 +124,7 @@ class BuiltInTemplateRenderTest {
         Path outputFile = VisualTestOutputs.preparePdf("invoice_render_file", "clean", "templates", "invoice");
 
         try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 22, 22, 22, 22, false)) {
-            new InvoiceTemplateV1().compose(document, TemplateTestSupport.canonicalInvoiceData());
+            new InvoiceTemplateV1().compose(document, TemplateTestSupport.canonicalInvoice());
             document.buildPdf();
         }
 
@@ -141,7 +136,7 @@ class BuiltInTemplateRenderTest {
         Path outputFile = VisualTestOutputs.preparePdf("invoice_render_file_with_guide_lines", "guides", "templates", "invoice");
 
         try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 22, 22, 22, 22, true)) {
-            new InvoiceTemplateV1().compose(document, TemplateTestSupport.canonicalInvoiceData());
+            new InvoiceTemplateV1().compose(document, TemplateTestSupport.canonicalInvoice());
             document.buildPdf();
         }
 
@@ -163,7 +158,7 @@ class BuiltInTemplateRenderTest {
         byte[] pdfBytes;
 
         try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 22, 22, 22, 22)) {
-            new ProposalTemplateV1().compose(document, TemplateTestSupport.canonicalProposalData());
+            new ProposalTemplateV1().compose(document, TemplateTestSupport.canonicalProposal());
             pdfBytes = document.toPdfBytes();
         }
 
@@ -177,7 +172,7 @@ class BuiltInTemplateRenderTest {
         Path outputFile = VisualTestOutputs.preparePdf("proposal_render_file", "clean", "templates", "proposal");
 
         try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 22, 22, 22, 22, false)) {
-            new ProposalTemplateV1().compose(document, TemplateTestSupport.canonicalProposalData());
+            new ProposalTemplateV1().compose(document, TemplateTestSupport.canonicalProposal());
             document.buildPdf();
         }
 
@@ -189,7 +184,7 @@ class BuiltInTemplateRenderTest {
         Path outputFile = VisualTestOutputs.preparePdf("proposal_render_file_with_guide_lines", "guides", "templates", "proposal");
 
         try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 22, 22, 22, 22, true)) {
-            new ProposalTemplateV1().compose(document, TemplateTestSupport.canonicalProposalData());
+            new ProposalTemplateV1().compose(document, TemplateTestSupport.canonicalProposal());
             document.buildPdf();
         }
 
@@ -212,7 +207,7 @@ class BuiltInTemplateRenderTest {
         PDRectangle landscapeA4 = new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth());
 
         try (var document = TemplateTestSupport.openInMemoryDocument(landscapeA4, 18, 18, 18, 18)) {
-            new WeeklyScheduleTemplateV1().compose(document, TemplateTestSupport.canonicalWeeklyScheduleData());
+            new WeeklyScheduleTemplateV1().compose(document, TemplateTestSupport.canonicalWeeklySchedule());
             pdfBytes = document.toPdfBytes();
         }
 
@@ -243,11 +238,11 @@ class BuiltInTemplateRenderTest {
     }
 
     private void renderWeeklySchedule(Path outputFile,
-                                      com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData data) throws Exception {
+                                      com.demcha.compose.document.templates.data.schedule.WeeklyScheduleDocumentSpec spec) throws Exception {
         PDRectangle landscapeA4 = new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth());
 
         try (var document = TemplateTestSupport.openFileDocument(outputFile, landscapeA4, 18, 18, 18, 18, false)) {
-            new WeeklyScheduleTemplateV1().compose(document, data);
+            new WeeklyScheduleTemplateV1().compose(document, spec);
             document.buildPdf();
         }
     }

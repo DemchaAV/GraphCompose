@@ -231,12 +231,12 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.InvoiceTemplate;
 import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
-import com.demcha.compose.document.templates.data.invoice.InvoiceData;
+import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
 
-InvoiceData invoiceData = InvoiceData.builder()
+InvoiceDocumentSpec invoice = InvoiceDocumentSpec.builder()
         .invoiceNumber("GC-2026-041")
         .issueDate("02 Apr 2026")
         .dueDate("16 Apr 2026")
@@ -263,7 +263,7 @@ try (DocumentSession document = GraphCompose.document(Path.of("invoice.pdf"))
         .margin(22, 22, 22, 22)
         .create()) {
 
-    template.compose(document, invoiceData);
+    template.compose(document, invoice);
     document.buildPdf();
 }
 ```

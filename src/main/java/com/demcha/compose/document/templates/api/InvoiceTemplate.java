@@ -12,9 +12,16 @@ import com.demcha.compose.document.templates.data.invoice.InvoiceData;
  *
  * <pre>{@code
  * InvoiceTemplate template = new InvoiceTemplateV1();
+ * InvoiceData invoice = InvoiceData.builder()
+ *         .invoiceNumber("GC-2026-041")
+ *         .fromParty(party -> party.name("GraphCompose Studio"))
+ *         .billToParty(party -> party.name("Northwind Systems"))
+ *         .lineItem("Template architecture", "Reusable business document flow", "1", "GBP 980", "GBP 980")
+ *         .totalRow("Total", "GBP 980")
+ *         .build();
  *
  * try (DocumentSession document = GraphCompose.document(Path.of("invoice.pdf")).create()) {
- *     template.compose(document, invoiceData);
+ *     template.compose(document, invoice);
  *     document.buildPdf();
  * }
  * }</pre>

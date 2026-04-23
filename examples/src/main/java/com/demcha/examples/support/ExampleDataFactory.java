@@ -1,23 +1,14 @@
 package com.demcha.examples.support;
 
-import com.demcha.compose.layout_core.components.content.link.LinkUrl;
 import com.demcha.compose.document.templates.data.common.EmailYaml;
 import com.demcha.compose.document.templates.data.common.Header;
 import com.demcha.compose.document.templates.data.invoice.InvoiceData;
-import com.demcha.compose.document.templates.data.invoice.InvoiceLineItem;
-import com.demcha.compose.document.templates.data.invoice.InvoiceParty;
-import com.demcha.compose.document.templates.data.invoice.InvoiceSummaryRow;
 import com.demcha.compose.document.templates.data.coverletter.JobDetails;
-import com.demcha.compose.document.templates.data.common.LinkYml;
 import com.demcha.compose.document.templates.data.cv.MainPageCV;
 import com.demcha.compose.document.templates.data.cv.MainPageCvDTO;
 import com.demcha.compose.document.templates.data.cv.ModuleSummary;
 import com.demcha.compose.document.templates.data.cv.ModuleYml;
 import com.demcha.compose.document.templates.data.proposal.ProposalData;
-import com.demcha.compose.document.templates.data.proposal.ProposalParty;
-import com.demcha.compose.document.templates.data.proposal.ProposalPricingRow;
-import com.demcha.compose.document.templates.data.proposal.ProposalSection;
-import com.demcha.compose.document.templates.data.proposal.ProposalTimelineItem;
 import com.demcha.compose.document.templates.data.schedule.ScheduleAssignment;
 import com.demcha.compose.document.templates.data.schedule.ScheduleCategory;
 import com.demcha.compose.document.templates.data.schedule.ScheduleDay;
@@ -64,14 +55,19 @@ public final class ExampleDataFactory {
     }
 
     public static Header sampleHeader() {
-        Header header = new Header();
-        header.setName("Artem Demchyshyn");
-        header.setAddress("London, UK");
-        header.setPhoneNumber("+44 20 5555 1000");
-        header.setEmail(email("artem@demo.dev", "Job Application", "Hello", "artem@demo.dev"));
-        header.setLinkedIn(link("https://linkedin.com/in/graphcompose", "LinkedIn"));
-        header.setGitHub(link("https://github.com/DemchaAV", "GitHub"));
-        return header;
+        return Header.builder()
+                .name("Artem Demchyshyn")
+                .address("London, UK")
+                .phoneNumber("+44 20 5555 1000")
+                .email(EmailYaml.builder()
+                        .to("artem@demo.dev")
+                        .subject("Job Application")
+                        .body("Hello")
+                        .displayText("artem@demo.dev")
+                        .build())
+                .linkedIn("https://linkedin.com/in/graphcompose", "LinkedIn")
+                .gitHub("https://github.com/DemchaAV", "GitHub")
+                .build();
     }
 
     public static String sampleCoverLetter() {
@@ -87,95 +83,88 @@ public final class ExampleDataFactory {
     }
 
     public static JobDetails sampleJobDetails() {
-        return new JobDetails(
-                "https://northwind.example/jobs/platform",
-                "Senior Platform Engineer",
-                "Northwind Systems",
-                "London / Remote",
-                "Lead reusable internal platform capabilities.",
-                "Senior",
-                "Full-time");
+        return JobDetails.builder()
+                .url("https://northwind.example/jobs/platform")
+                .title("Senior Platform Engineer")
+                .company("Northwind Systems")
+                .location("London / Remote")
+                .description("Lead reusable internal platform capabilities.")
+                .seniorityLevel("Senior")
+                .employmentType("Full-time")
+                .build();
     }
 
     public static InvoiceData sampleInvoice() {
-        return new InvoiceData(
-                "Invoice",
-                "GC-2026-041",
-                "02 Apr 2026",
-                "16 Apr 2026",
-                "Examples Module Delivery",
-                "Pending",
-                new InvoiceParty(
-                        "GraphCompose Studio",
-                        List.of("18 Layout Street", "London, UK", "EC1A 4GC"),
-                        "billing@graphcompose.dev",
-                        "+44 20 5555 1000",
-                        "GB-99887766"),
-                new InvoiceParty(
-                        "Northwind Systems",
-                        List.of("Accounts Payable", "410 Market Avenue", "Manchester, UK"),
-                        "ap@northwind.example",
-                        "+44 161 555 2200",
-                        "NW-2026-01"),
-                List.of(
-                        new InvoiceLineItem("Invoice template delivery", "Built-in template, styling, and metadata layout", "1", "GBP 1,950", "GBP 1,950"),
-                        new InvoiceLineItem("Proposal template delivery", "Long-form content flow and pricing table", "1", "GBP 2,150", "GBP 2,150"),
-                        new InvoiceLineItem("Examples module", "Runnable file-render examples and usage notes", "1", "GBP 1,200", "GBP 1,200")),
-                List.of(
-                        new InvoiceSummaryRow("Subtotal", "GBP 5,300", false),
-                        new InvoiceSummaryRow("VAT (20%)", "GBP 1,060", false),
-                        new InvoiceSummaryRow("Total", "GBP 6,360", true)),
-                List.of(
-                        "This invoice covers the first delivery package for GraphCompose business templates.",
-                        "Please reference the invoice number in any remittance message."),
-                List.of(
-                        "Payment due within 14 calendar days.",
-                        "Bank transfer preferred.",
-                        "Contact billing@graphcompose.dev for remittance instructions."),
-                "Generated by the standalone GraphCompose examples module."
-        );
+        return InvoiceData.builder()
+                .title("Invoice")
+                .invoiceNumber("GC-2026-041")
+                .issueDate("02 Apr 2026")
+                .dueDate("16 Apr 2026")
+                .reference("Examples Module Delivery")
+                .status("Pending")
+                .fromParty(party -> party
+                        .name("GraphCompose Studio")
+                        .addressLines("18 Layout Street", "London, UK", "EC1A 4GC")
+                        .email("billing@graphcompose.dev")
+                        .phone("+44 20 5555 1000")
+                        .taxId("GB-99887766"))
+                .billToParty(party -> party
+                        .name("Northwind Systems")
+                        .addressLines("Accounts Payable", "410 Market Avenue", "Manchester, UK")
+                        .email("ap@northwind.example")
+                        .phone("+44 161 555 2200")
+                        .taxId("NW-2026-01"))
+                .lineItem("Invoice template delivery", "Built-in template, styling, and metadata layout", "1", "GBP 1,950", "GBP 1,950")
+                .lineItem("Proposal template delivery", "Long-form content flow and pricing table", "1", "GBP 2,150", "GBP 2,150")
+                .lineItem("Examples module", "Runnable file-render examples and usage notes", "1", "GBP 1,200", "GBP 1,200")
+                .summaryRow("Subtotal", "GBP 5,300")
+                .summaryRow("VAT (20%)", "GBP 1,060")
+                .totalRow("Total", "GBP 6,360")
+                .note("This invoice covers the first delivery package for GraphCompose business templates.")
+                .note("Please reference the invoice number in any remittance message.")
+                .paymentTerm("Payment due within 14 calendar days.")
+                .paymentTerm("Bank transfer preferred.")
+                .paymentTerm("Contact billing@graphcompose.dev for remittance instructions.")
+                .footerNote("Generated by the standalone GraphCompose examples module.")
+                .build();
     }
 
     public static ProposalData sampleProposal() {
-        return new ProposalData(
-                "Proposal",
-                "PROP-2026-014",
-                "02 Apr 2026",
-                "16 Apr 2026",
-                "GraphCompose rollout for internal document operations",
-                "This proposal describes a practical adoption path for reusable GraphCompose templates, render tests, and runnable examples across billing, hiring, and client-facing delivery workflows.",
-                new ProposalParty(
-                        "GraphCompose Studio",
-                        List.of("18 Layout Street", "London, UK", "EC1A 4GC"),
-                        "hello@graphcompose.dev",
-                        "+44 20 5555 1000",
-                        "graphcompose.dev"),
-                new ProposalParty(
-                        "Northwind Systems",
-                        List.of("Product Engineering", "410 Market Avenue", "Manchester, UK"),
-                        "platform@northwind.example",
-                        "+44 161 555 2200",
-                        "northwind.example"),
-                List.of(
-                        new ProposalSection("Scope", List.of(
-                                "Introduce built-in invoice and proposal templates with a consistent business presentation layer.",
-                                "Keep the production artifact clean by moving development-only preview code out of the published runtime scope.")),
-                        new ProposalSection("Deliverables", List.of(
-                                "Public DTOs and template interfaces for invoice and proposal rendering.",
-                                "Render tests and a standalone examples module that generates PDF files on demand."))),
-                List.of(
-                        new ProposalTimelineItem("Week 1", "5 days", "Invoice API and first template delivery."),
-                        new ProposalTimelineItem("Week 2", "5 days", "Proposal layout, review loop, and render tests."),
-                        new ProposalTimelineItem("Week 3", "3 days", "Examples module and README handoff.")),
-                List.of(
-                        new ProposalPricingRow("Foundation", "Template APIs and DTO modeling", "GBP 3,200", false),
-                        new ProposalPricingRow("Document delivery", "Invoice and proposal templates with tests", "GBP 4,450", false),
-                        new ProposalPricingRow("Total investment", "Fixed-price project delivery", "GBP 9,500", true)),
-                List.of(
-                        "Proposal pricing is valid until the stated expiration date.",
-                        "Additional template families can be scoped in a separate phase."),
-                "Prepared to demonstrate the business-document side of GraphCompose."
-        );
+        return ProposalData.builder()
+                .title("Proposal")
+                .proposalNumber("PROP-2026-014")
+                .preparedDate("02 Apr 2026")
+                .validUntil("16 Apr 2026")
+                .projectTitle("GraphCompose rollout for internal document operations")
+                .executiveSummary("This proposal describes a practical adoption path for reusable GraphCompose templates, render tests, and runnable examples across billing, hiring, and client-facing delivery workflows.")
+                .sender(party -> party
+                        .name("GraphCompose Studio")
+                        .addressLines("18 Layout Street", "London, UK", "EC1A 4GC")
+                        .email("hello@graphcompose.dev")
+                        .phone("+44 20 5555 1000")
+                        .website("graphcompose.dev"))
+                .recipient(party -> party
+                        .name("Northwind Systems")
+                        .addressLines("Product Engineering", "410 Market Avenue", "Manchester, UK")
+                        .email("platform@northwind.example")
+                        .phone("+44 161 555 2200")
+                        .website("northwind.example"))
+                .section("Scope",
+                        "Introduce built-in invoice and proposal templates with a consistent business presentation layer.",
+                        "Keep the production artifact clean by moving development-only preview code out of the published runtime scope.")
+                .section("Deliverables",
+                        "Public DTOs and template interfaces for invoice and proposal rendering.",
+                        "Render tests and a standalone examples module that generates PDF files on demand.")
+                .timelineItem("Week 1", "5 days", "Invoice API and first template delivery.")
+                .timelineItem("Week 2", "5 days", "Proposal layout, review loop, and render tests.")
+                .timelineItem("Week 3", "3 days", "Examples module and README handoff.")
+                .pricingRow("Foundation", "Template APIs and DTO modeling", "GBP 3,200")
+                .pricingRow("Document delivery", "Invoice and proposal templates with tests", "GBP 4,450")
+                .emphasizedPricingRow("Total investment", "Fixed-price project delivery", "GBP 9,500")
+                .acceptanceTerm("Proposal pricing is valid until the stated expiration date.")
+                .acceptanceTerm("Additional template families can be scoped in a separate phase.")
+                .footerNote("Prepared to demonstrate the business-document side of GraphCompose.")
+                .build();
     }
 
     public static WeeklyScheduleData sampleWeeklySchedule() {
@@ -276,22 +265,6 @@ public final class ExampleDataFactory {
         module.setName(name);
         module.setModulePoints(points);
         return module;
-    }
-
-    private static EmailYaml email(String to, String subject, String body, String displayText) {
-        EmailYaml email = new EmailYaml();
-        email.setTo(to);
-        email.setSubject(subject);
-        email.setBody(body);
-        email.setDisplayText(displayText);
-        return email;
-    }
-
-    private static LinkYml link(String url, String displayText) {
-        LinkYml link = new LinkYml();
-        link.setLinkUrl(new LinkUrl(url));
-        link.setDisplayText(displayText);
-        return link;
     }
 
     private static ScheduleSlot slot(String start, String end) {

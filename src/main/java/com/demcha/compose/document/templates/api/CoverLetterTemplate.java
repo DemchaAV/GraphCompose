@@ -13,9 +13,18 @@ import com.demcha.compose.document.templates.data.coverletter.JobDetails;
  *
  * <pre>{@code
  * CoverLetterTemplate template = new CoverLetterTemplateV1();
+ * Header header = Header.builder()
+ *         .name("Artem Demchyshyn")
+ *         .email("artem@demo.dev", "artem@demo.dev")
+ *         .linkedIn("https://linkedin.com/in/graphcompose", "LinkedIn")
+ *         .build();
+ * JobDetails job = JobDetails.builder()
+ *         .company("Northwind Systems")
+ *         .title("Platform Engineer")
+ *         .build();
  *
  * try (DocumentSession document = GraphCompose.document(Path.of("cover-letter.pdf")).create()) {
- *     template.compose(document, header, letterBody, jobDetails);
+ *     template.compose(document, header, letterBody, job);
  *     document.buildPdf();
  * }
  * }</pre>

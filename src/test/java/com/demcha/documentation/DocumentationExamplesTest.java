@@ -5,9 +5,6 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.InvoiceTemplate;
 import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
 import com.demcha.compose.document.templates.data.invoice.InvoiceData;
-import com.demcha.compose.document.templates.data.invoice.InvoiceLineItem;
-import com.demcha.compose.document.templates.data.invoice.InvoiceParty;
-import com.demcha.compose.document.templates.data.invoice.InvoiceSummaryRow;
 import com.demcha.compose.font_library.FontName;
 import com.demcha.compose.layout_core.components.content.text.TextStyle;
 import com.demcha.compose.layout_core.components.style.ComponentColor;
@@ -105,6 +102,35 @@ class DocumentationExamplesTest {
         }
 
         assertPdfBytesLookValid(pdfBytes, outputFile);
+    }
+
+    @Test
+    void shouldRenderModuleFirstDslExampleToFile() throws Exception {
+        Path outputFile = VisualTestOutputs.preparePdf("module-first-dsl", "clean", "documentation");
+
+        try (DocumentSession document = GraphCompose.document(outputFile)
+                .pageSize(PDRectangle.A4)
+                .margin(24, 24, 24, 24)
+                .create()) {
+            document.pageFlow()
+                    .name("CandidateProfile")
+                    .spacing(12)
+                    .module("Professional Summary", module -> module.paragraph(
+                            "Platform engineer focused on clean document APIs and stable render output."))
+                    .module("Technical Skills", module -> module.bullets(
+                            "Java 21",
+                            "Spring Boot",
+                            "PDFBox",
+                            "Testing and visual regression"))
+                    .module("Projects", module -> module.rows(
+                            "GraphCompose - Canonical document engine migration and template architecture.",
+                            "Template Studio - Internal tooling for invoice, CV, and proposal design."))
+                    .build();
+
+            document.buildPdf();
+        }
+
+        assertPdfFileLooksValid(outputFile);
     }
 
     @Test
@@ -254,42 +280,39 @@ class DocumentationExamplesTest {
     }
 
     private InvoiceData sampleInvoice() {
-        return new InvoiceData(
-                "Invoice",
-                "GC-2026-041",
-                "02 Apr 2026",
-                "16 Apr 2026",
-                "Platform Refresh Sprint",
-                "Pending",
-                new InvoiceParty(
-                        "GraphCompose Studio",
-                        List.of("18 Layout Street", "London, UK", "EC1A 4GC"),
-                        "billing@graphcompose.dev",
-                        "+44 20 5555 1000",
-                        "GB-99887766"),
-                new InvoiceParty(
-                        "Northwind Systems",
-                        List.of("Attn: Finance Team", "410 Market Avenue", "Manchester, UK"),
-                        "ap@northwind.example",
-                        "+44 161 555 2200",
-                        "NW-2026-01"),
-                List.of(
-                        new InvoiceLineItem("Discovery workshop", "Stakeholder interviews and current-state review", "1", "GBP 1,450", "GBP 1,450"),
-                        new InvoiceLineItem("Template architecture", "Reusable document flows for invoice and proposal output", "2", "GBP 980", "GBP 1,960"),
-                        new InvoiceLineItem("Render QA", "Visual validation and guideline passes", "3", "GBP 320", "GBP 960"),
-                        new InvoiceLineItem("Developer enablement", "Examples module and onboarding notes", "1", "GBP 780", "GBP 780")),
-                List.of(
-                        new InvoiceSummaryRow("Subtotal", "GBP 5,150", false),
-                        new InvoiceSummaryRow("VAT (20%)", "GBP 1,030", false),
-                        new InvoiceSummaryRow("Total", "GBP 6,180", true)),
-                List.of(
-                        "Please include the invoice number on your remittance advice.",
-                        "All work was delivered as agreed during the April implementation window."),
-                List.of(
-                        "Payment due within 14 calendar days.",
-                        "Bank transfer preferred; contact billing@graphcompose.dev for remittance details.",
-                        "Late payments may delay additional template customization work."),
-                "Thank you for choosing GraphCompose for production document rendering.");
+        return InvoiceData.builder()
+                .title("Invoice")
+                .invoiceNumber("GC-2026-041")
+                .issueDate("02 Apr 2026")
+                .dueDate("16 Apr 2026")
+                .reference("Platform Refresh Sprint")
+                .status("Pending")
+                .fromParty(party -> party
+                        .name("GraphCompose Studio")
+                        .addressLines("18 Layout Street", "London, UK", "EC1A 4GC")
+                        .email("billing@graphcompose.dev")
+                        .phone("+44 20 5555 1000")
+                        .taxId("GB-99887766"))
+                .billToParty(party -> party
+                        .name("Northwind Systems")
+                        .addressLines("Attn: Finance Team", "410 Market Avenue", "Manchester, UK")
+                        .email("ap@northwind.example")
+                        .phone("+44 161 555 2200")
+                        .taxId("NW-2026-01"))
+                .lineItem("Discovery workshop", "Stakeholder interviews and current-state review", "1", "GBP 1,450", "GBP 1,450")
+                .lineItem("Template architecture", "Reusable document flows for invoice and proposal output", "2", "GBP 980", "GBP 1,960")
+                .lineItem("Render QA", "Visual validation and guideline passes", "3", "GBP 320", "GBP 960")
+                .lineItem("Developer enablement", "Examples module and onboarding notes", "1", "GBP 780", "GBP 780")
+                .summaryRow("Subtotal", "GBP 5,150")
+                .summaryRow("VAT (20%)", "GBP 1,030")
+                .totalRow("Total", "GBP 6,180")
+                .note("Please include the invoice number on your remittance advice.")
+                .note("All work was delivered as agreed during the April implementation window.")
+                .paymentTerm("Payment due within 14 calendar days.")
+                .paymentTerm("Bank transfer preferred; contact billing@graphcompose.dev for remittance details.")
+                .paymentTerm("Late payments may delay additional template customization work.")
+                .footerNote("Thank you for choosing GraphCompose for production document rendering.")
+                .build();
     }
 }
 

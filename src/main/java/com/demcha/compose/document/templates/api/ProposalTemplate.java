@@ -12,9 +12,16 @@ import com.demcha.compose.document.templates.data.proposal.ProposalData;
  *
  * <pre>{@code
  * ProposalTemplate template = new ProposalTemplateV1();
+ * ProposalData proposal = ProposalData.builder()
+ *         .projectTitle("GraphCompose rollout")
+ *         .section("Scope", "Introduce reusable invoice and proposal templates.")
+ *         .timelineItem("Week 1", "5 days", "Foundation and review loop")
+ *         .pricingRow("Delivery", "Template implementation", "GBP 4,450")
+ *         .emphasizedPricingRow("Total", "Fixed-price delivery", "GBP 4,450")
+ *         .build();
  *
  * try (DocumentSession document = GraphCompose.document(Path.of("proposal.pdf")).create()) {
- *     template.compose(document, proposalData);
+ *     template.compose(document, proposal);
  *     document.buildPdf();
  * }
  * }</pre>

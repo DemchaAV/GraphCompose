@@ -20,4 +20,67 @@ public record JobDetails(
         String description,
         String seniorityLevel,
         String employmentType) {
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder {
+        private String url;
+        private String title;
+        private String company;
+        private String location;
+        private String description;
+        private String seniorityLevel;
+        private String employmentType;
+
+        private Builder() {
+        }
+
+        public Builder url(String url) {
+            this.url = url;
+            return this;
+        }
+
+        public Builder title(String title) {
+            this.title = title;
+            return this;
+        }
+
+        public Builder company(String company) {
+            this.company = company;
+            return this;
+        }
+
+        public Builder location(String location) {
+            this.location = location;
+            return this;
+        }
+
+        public Builder description(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public Builder seniorityLevel(String seniorityLevel) {
+            this.seniorityLevel = seniorityLevel;
+            return this;
+        }
+
+        public Builder employmentType(String employmentType) {
+            this.employmentType = employmentType;
+            return this;
+        }
+
+        public JobDetails build() {
+            return new JobDetails(
+                    url,
+                    title,
+                    company,
+                    location,
+                    description,
+                    seniorityLevel,
+                    employmentType);
+        }
+    }
 }

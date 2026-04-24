@@ -63,6 +63,7 @@ Deprecated helper methods still exist on `Entity` as compatibility delegates, bu
 
 - `com.demcha.compose.engine.*` contains the ECS engine internals, geometry, layout resolution, pagination, measurement, and rendering systems.
 - `com.demcha.compose.font.*` contains public font registration, lookup, and PDF font helpers.
+- `com.demcha.compose.engine.text.*` contains internal text utilities used by layout/render hot paths.
 - `com.demcha.compose.engine.text.markdown.*` contains markdown-to-text-token parsing helpers used by semantic text preparation.
 
 This layer is the reusable document engine foundation. It is responsible for turning canonical layout state, ECS components, and styles into positioned render output. It is not a supported application authoring API.

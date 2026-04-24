@@ -60,6 +60,16 @@ public class PdfFont extends FontBase<PDFont> {
         return metrics;
     }
 
+    /**
+     * Returns a stable font identity for text measurement caches.
+     *
+     * @param style style selecting the concrete font variant
+     * @return backend font name used for width and metric calculations
+     */
+    public String measurementCacheKey(TextStyle style) {
+        return fontType(style.decoration()).getName();
+    }
+
     public double getTextHeight(TextStyle style) {
         double size = style.size();
         try {
@@ -137,15 +147,30 @@ public class PdfFont extends FontBase<PDFont> {
     }
 
     private @NotNull String textSanitizer(String text) {
-        String sanitized = text.replace("\r", " ").replace("\n", " ");
+        StringBuilder sanitized = new StringBuilder(text.length());
+        boolean previousSpace = false;
+        for (int offset = 0; offset < text.length(); ) {
+            int codePoint = text.codePointAt(offset);
+            offset += Character.charCount(codePoint);
 
-        sanitized = CONTROL_CHARS_PATTERN.matcher(sanitized).replaceAll(" ");
+            int resolved = switch (codePoint) {
+                case '\r', '\n', '\u00A0' -> ' ';
+                default -> Character.isISOControl(codePoint) && codePoint != '\t' ? ' ' : codePoint;
+            };
 
-        sanitized = sanitized.replace('\u00A0', ' ');
+            if (resolved == ' ') {
+                if (!previousSpace) {
+                    sanitized.append(' ');
+                    previousSpace = true;
+                }
+                continue;
+            }
 
-        sanitized = MULTIPLE_SPACES_PATTERN.matcher(sanitized).replaceAll(" ");
+            sanitized.appendCodePoint(resolved);
+            previousSpace = false;
+        }
 
-        return sanitized;
+        return sanitized.toString();
     }
 
     /**

@@ -6,6 +6,7 @@ import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.engine.render.pdf.PdfFont;
+import com.demcha.compose.engine.text.TextControlSanitizer;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.io.IOException;
@@ -67,6 +68,6 @@ public final class PdfParagraphFragmentRenderHandler
     }
 
     private String sanitize(String text) {
-        return text == null ? "" : text.replaceAll("\\p{C}", "");
+        return TextControlSanitizer.remove(text);
     }
 }

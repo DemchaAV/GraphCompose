@@ -1852,7 +1852,7 @@ public final class BuiltInNodeDefinitions {
         Padding padding = style.padding() == null ? Padding.zero() : style.padding();
         double maxWidth = 0.0;
         for (String line : sanitizeCellLines(cell)) {
-            maxWidth = Math.max(maxWidth, measurement.measure(style.textStyle(), line).width());
+            maxWidth = Math.max(maxWidth, measurement.textWidth(style.textStyle(), line));
         }
         return maxWidth + padding.horizontal();
     }

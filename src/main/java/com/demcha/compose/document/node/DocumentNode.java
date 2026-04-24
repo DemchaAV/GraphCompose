@@ -1,7 +1,6 @@
 package com.demcha.compose.document.node;
 
-import com.demcha.compose.engine.components.style.Margin;
-import com.demcha.compose.engine.components.style.Padding;
+import com.demcha.compose.document.style.DocumentInsets;
 
 import java.util.List;
 
@@ -27,8 +26,8 @@ public interface DocumentNode {
      *
      * @return outer margin contribution
      */
-    default Margin margin() {
-        return Margin.zero();
+    default DocumentInsets margin() {
+        return DocumentInsets.zero();
     }
 
     /**
@@ -36,8 +35,8 @@ public interface DocumentNode {
      *
      * @return inner padding contribution
      */
-    default Padding padding() {
-        return Padding.zero();
+    default DocumentInsets padding() {
+        return DocumentInsets.zero();
     }
 
     /**

@@ -1,6 +1,6 @@
 package com.demcha.compose.document.node;
 
-import com.demcha.compose.engine.components.style.Margin;
+import com.demcha.compose.document.style.DocumentInsets;
 
 /**
  * Explicit page-break control node for the semantic document graph.
@@ -12,7 +12,7 @@ import com.demcha.compose.engine.components.style.Margin;
  * @param name semantic name used in snapshots and diagnostics
  * @param margin optional surrounding spacing; {@code null} resolves to zero
  */
-public record PageBreakNode(String name, Margin margin) implements DocumentNode {
+public record PageBreakNode(String name, DocumentInsets margin) implements DocumentNode {
 
     /**
      * Creates a page-break node.
@@ -22,6 +22,6 @@ public record PageBreakNode(String name, Margin margin) implements DocumentNode 
      */
     public PageBreakNode {
         name = name == null ? "" : name;
-        margin = margin == null ? Margin.zero() : margin;
+        margin = margin == null ? DocumentInsets.zero() : margin;
     }
 }

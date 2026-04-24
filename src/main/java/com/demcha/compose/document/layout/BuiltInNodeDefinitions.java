@@ -3,6 +3,8 @@ package com.demcha.compose.document.layout;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfBarcodeOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
+import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
 import com.demcha.compose.engine.components.content.table.TableCellContent;
@@ -35,7 +37,20 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+
+import static com.demcha.compose.document.layout.DocumentNodeAdapters.toImageData;
+import static com.demcha.compose.document.layout.DocumentNodeAdapters.toIndentStrategy;
+import static com.demcha.compose.document.layout.DocumentNodeAdapters.toMargin;
+import static com.demcha.compose.document.layout.DocumentNodeAdapters.toPadding;
+import static com.demcha.compose.document.layout.DocumentNodeAdapters.toStroke;
+import static com.demcha.compose.document.layout.DocumentNodeAdapters.toTableCell;
+import static com.demcha.compose.document.layout.DocumentNodeAdapters.toTableColumns;
+import static com.demcha.compose.document.layout.DocumentNodeAdapters.toTableRows;
+import static com.demcha.compose.document.layout.DocumentNodeAdapters.toTableStyle;
+import static com.demcha.compose.document.layout.DocumentNodeAdapters.toTableStyles;
+import static com.demcha.compose.document.layout.DocumentNodeAdapters.toTextStyle;
 
 /**
  * Registers the first semantic built-ins for the v2 document graph.
@@ -290,9 +305,9 @@ public final class BuiltInNodeDefinitions {
             ParagraphNode node = prepared.node();
             PreparedParagraphLayout layout = prepared.requirePreparedLayout(PreparedParagraphLayout.class);
             ParagraphFragmentPayload payload = new ParagraphFragmentPayload(
-                    node.textStyle(),
+                    toTextStyle(node.textStyle()),
                     node.align(),
-                    node.padding(),
+                    toPadding(node.padding()),
                     layout.lineHeight(),
                     layout.lineGap(),
                     layout.baselineOffset(),
@@ -416,7 +431,7 @@ public final class BuiltInNodeDefinitions {
                         placement.width(),
                         fragmentHeight,
                         new ParagraphFragmentPayload(
-                                node.textStyle(),
+                                toTextStyle(node.textStyle()),
                                 node.align(),
                                 itemPadding,
                                 itemLayout.lineHeight(),
@@ -465,7 +480,11 @@ public final class BuiltInNodeDefinitions {
                     node.padding().bottom(),
                     width,
                     height,
-                    new ShapeFragmentPayload(node.fillColor(), node.stroke(), node.linkOptions(), node.bookmarkOptions())));
+                    new ShapeFragmentPayload(
+                            node.fillColor() == null ? null : node.fillColor().color(),
+                            toStroke(node.stroke()),
+                            node.linkOptions(),
+                            node.bookmarkOptions())));
         }
     }
 
@@ -503,7 +522,7 @@ public final class BuiltInNodeDefinitions {
                     node.padding().bottom(),
                     width,
                     height,
-                    new ImageFragmentPayload(node.imageData(), node.linkOptions(), node.bookmarkOptions())));
+                    new ImageFragmentPayload(toImageData(node.imageData()), node.linkOptions(), node.bookmarkOptions())));
         }
     }
 
@@ -578,7 +597,7 @@ public final class BuiltInNodeDefinitions {
         public PreparedNode<ContainerNode> prepare(ContainerNode node, PrepareContext ctx, BoxConstraints constraints) {
             return PreparedNode.composite(
                     node,
-                    measureComposite(node.children(), node.spacing(), node.padding(), ctx, constraints),
+                    measureComposite(node.children(), node.spacing(), toPadding(node.padding()), ctx, constraints),
                     new CompositeLayoutSpec(node.spacing()));
         }
 
@@ -608,7 +627,7 @@ public final class BuiltInNodeDefinitions {
         public PreparedNode<SectionNode> prepare(SectionNode node, PrepareContext ctx, BoxConstraints constraints) {
             return PreparedNode.composite(
                     node,
-                    measureComposite(node.children(), node.spacing(), node.padding(), ctx, constraints),
+                    measureComposite(node.children(), node.spacing(), toPadding(node.padding()), ctx, constraints),
                     new CompositeLayoutSpec(node.spacing()));
         }
 
@@ -731,8 +750,9 @@ public final class BuiltInNodeDefinitions {
     }
 
     private static ImageDimensions resolveImageDimensions(ImageNode node, double availableWidth) {
-        int intrinsicWidth = Math.max(1, node.imageData().getMetadata().width());
-        int intrinsicHeight = Math.max(1, node.imageData().getMetadata().height());
+        ImageData imageData = toImageData(node.imageData());
+        int intrinsicWidth = Math.max(1, imageData.getMetadata().width());
+        int intrinsicHeight = Math.max(1, imageData.getMetadata().height());
         double ratio = intrinsicWidth / (double) intrinsicHeight;
 
         double requestedWidth = node.width() == null ? Double.NaN : node.width();
@@ -784,8 +804,8 @@ public final class BuiltInNodeDefinitions {
                     node.lineSpacing(),
                     listParagraphPrefix(node),
                     listParagraphIndentStrategy(node),
-                    Padding.zero(),
-                    Margin.zero());
+                    DocumentInsets.zero(),
+                    DocumentInsets.zero());
             items.add(new PreparedListItemLayout(
                     normalizedItem,
                     prepareParagraphLayout(paragraph, innerWidth, measurement, markdownEnabled)));
@@ -808,12 +828,12 @@ public final class BuiltInNodeDefinitions {
         List<PreparedListItemLayout> safeItems = List.copyOf(items);
         double maxLineWidth = maxListLineWidth(safeItems);
         double totalHeight = listItemsHeight(safeItems, source.itemSpacing());
-        Padding padding = new Padding(
+        DocumentInsets padding = new DocumentInsets(
                 keepTopInsets ? source.padding().top() : 0.0,
                 source.padding().right(),
                 keepBottomInsets ? source.padding().bottom() : 0.0,
                 source.padding().left());
-        Margin margin = new Margin(
+        DocumentInsets margin = new DocumentInsets(
                 keepTopInsets ? source.margin().top() : 0.0,
                 source.margin().right(),
                 keepBottomInsets ? source.margin().bottom() : 0.0,
@@ -859,13 +879,13 @@ public final class BuiltInNodeDefinitions {
                 : node.continuationIndent();
     }
 
-    private static TextIndentStrategy listParagraphIndentStrategy(ListNode node) {
+    private static DocumentTextIndent listParagraphIndentStrategy(ListNode node) {
         if (node.marker().isVisible()) {
-            return TextIndentStrategy.ALL_LINES;
+            return DocumentTextIndent.ALL_LINES;
         }
         return node.continuationIndent().isEmpty()
-                ? TextIndentStrategy.NONE
-                : TextIndentStrategy.FROM_SECOND_LINE;
+                ? DocumentTextIndent.NONE
+                : DocumentTextIndent.FROM_SECOND_LINE;
     }
 
     private static int wholeListItemsThatFit(List<PreparedListItemLayout> items,
@@ -965,37 +985,39 @@ public final class BuiltInNodeDefinitions {
                                                                  boolean markdownEnabled) {
         List<String> logicalLines = sanitizeLogicalLines(node.text());
         boolean useMarkdownLayout = markdownEnabled && logicalLines.stream().anyMatch(BuiltInNodeDefinitions::containsMarkdownSyntax);
+        TextStyle textStyle = toTextStyle(node.textStyle());
+        TextIndentStrategy indentStrategy = toIndentStrategy(node.indentStrategy());
         List<ParagraphLine> visualLines = !node.inlineTextRuns().isEmpty()
                 ? wrapInlineParagraph(
                         node.inlineTextRuns(),
-                        node.textStyle(),
+                        textStyle,
                         Math.max(0.0, innerWidth),
                         node.bulletOffset(),
-                        node.indentStrategy(),
+                        indentStrategy,
                         measurement)
                 : useMarkdownLayout
                 ? wrapMarkdownParagraph(
                         logicalLines,
-                        node.textStyle(),
+                        textStyle,
                         Math.max(0.0, innerWidth),
                         node.bulletOffset(),
-                        node.indentStrategy(),
+                        indentStrategy,
                         measurement)
                 : toParagraphLines(
                         wrapParagraph(
                                 logicalLines,
-                                node.textStyle(),
+                                textStyle,
                                 Math.max(0.0, innerWidth),
                                 node.bulletOffset(),
-                                node.indentStrategy(),
+                                indentStrategy,
                                 measurement),
-                        node.textStyle(),
+                        textStyle,
                         measurement);
         if (visualLines.isEmpty()) {
             visualLines = List.of(new ParagraphLine("", 0.0, List.of()));
         }
 
-        TextMeasurementSystem.LineMetrics lineMetrics = measurement.lineMetrics(node.textStyle());
+        TextMeasurementSystem.LineMetrics lineMetrics = measurement.lineMetrics(textStyle);
         double lineHeight = lineMetrics.lineHeight();
         double gap = node.lineSpacing();
         double totalHeight = lineHeight * visualLines.size() + Math.max(0, visualLines.size() - 1) * gap;
@@ -1040,15 +1062,15 @@ public final class BuiltInNodeDefinitions {
                 source.align(),
                 source.lineSpacing(),
                 "",
-                TextIndentStrategy.NONE,
+                DocumentTextIndent.NONE,
                 source.linkOptions(),
                 keepTopInsets && layout.emitBookmark() ? source.bookmarkOptions() : null,
-                new Padding(
+                new DocumentInsets(
                         keepTopInsets ? source.padding().top() : 0.0,
                         source.padding().right(),
                         keepBottomInsets ? source.padding().bottom() : 0.0,
                         source.padding().left()),
-                new Margin(
+                new DocumentInsets(
                         keepTopInsets ? source.margin().top() : 0.0,
                         source.margin().right(),
                         keepBottomInsets ? source.margin().bottom() : 0.0,
@@ -1508,7 +1530,7 @@ public final class BuiltInNodeDefinitions {
             if (run == null || run.text().isEmpty()) {
                 continue;
             }
-            TextStyle style = run.textStyle() == null ? defaultStyle : run.textStyle();
+            TextStyle style = run.textStyle() == null ? defaultStyle : toTextStyle(run.textStyle());
             String normalized = BlockText.sanitizeText(run.text().replace("\r\n", "\n").replace('\r', '\n'));
             String[] parts = normalized.split("\n", -1);
             for (int partIndex = 0; partIndex < parts.length; partIndex++) {
@@ -1745,6 +1767,7 @@ public final class BuiltInNodeDefinitions {
 
         List<TableColumnLayout> normalizedSpecs = normalizeSpecs(node, columnCount);
         List<List<TableCellLayoutStyle>> stylesByRow = resolveCellStyles(node, columnCount);
+        List<List<TableCellContent>> tableRows = toTableRows(node.rows());
         double[] naturalWidths = resolveNaturalColumnWidths(node, normalizedSpecs, stylesByRow, columnCount, measurement);
         double naturalWidth = sum(naturalWidths);
         double[] finalWidths = resolveFinalColumnWidths(node, normalizedSpecs, naturalWidths, naturalWidth);
@@ -1760,7 +1783,7 @@ public final class BuiltInNodeDefinitions {
         List<Double> rowHeights = new ArrayList<>(node.rows().size());
 
         for (int rowIndex = 0; rowIndex < node.rows().size(); rowIndex++) {
-            List<TableCellContent> rowValues = node.rows().get(rowIndex);
+            List<TableCellContent> rowValues = tableRows.get(rowIndex);
             List<TableCellLayoutStyle> resolvedStyles = stylesByRow.get(rowIndex);
             double rowHeight = 0.0;
             for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
@@ -1803,8 +1826,8 @@ public final class BuiltInNodeDefinitions {
         List<List<TableResolvedCell>> rows = List.copyOf(layout.rows().subList(fromInclusive, toExclusive));
         List<Double> rowHeights = List.copyOf(layout.rowHeights().subList(fromInclusive, toExclusive));
         double totalHeight = rowHeights.stream().mapToDouble(Double::doubleValue).sum();
-        List<TableColumnLayout> fixedColumns = layout.columnWidths().stream()
-                .map(TableColumnLayout::fixed)
+        var fixedColumns = layout.columnWidths().stream()
+                .map(com.demcha.compose.document.table.DocumentTableColumn::fixed)
                 .toList();
 
             TableNode fragmentNode = new TableNode(
@@ -1817,12 +1840,12 @@ public final class BuiltInNodeDefinitions {
                     layout.finalWidth(),
                     source.linkOptions(),
                     keepTopInsets ? source.bookmarkOptions() : null,
-                    new Padding(
+                    new DocumentInsets(
                             keepTopInsets ? source.padding().top() : 0.0,
                             source.padding().right(),
                         keepBottomInsets ? source.padding().bottom() : 0.0,
                         source.padding().left()),
-                new Margin(
+                new DocumentInsets(
                         keepTopInsets ? source.margin().top() : 0.0,
                         source.margin().right(),
                         keepBottomInsets ? source.margin().bottom() : 0.0,
@@ -1843,17 +1866,18 @@ public final class BuiltInNodeDefinitions {
     }
 
     private static List<List<TableCellLayoutStyle>> resolveCellStyles(TableNode node, int columnCount) {
-        TableCellLayoutStyle tableDefault = TableCellLayoutStyle.merge(TableCellLayoutStyle.DEFAULT, node.defaultCellStyle());
+        TableCellLayoutStyle tableDefault = TableCellLayoutStyle.merge(TableCellLayoutStyle.DEFAULT, toTableStyle(node.defaultCellStyle()));
+        Map<Integer, TableCellLayoutStyle> rowStyleOverrides = toTableStyles(node.rowStyles());
+        Map<Integer, TableCellLayoutStyle> columnStyleOverrides = toTableStyles(node.columnStyles());
         List<List<TableCellLayoutStyle>> result = new ArrayList<>(node.rows().size());
 
         for (int rowIndex = 0; rowIndex < node.rows().size(); rowIndex++) {
-            List<TableCellContent> row = node.rows().get(rowIndex);
             List<TableCellLayoutStyle> rowResult = new ArrayList<>(columnCount);
-            TableCellLayoutStyle rowOverride = node.rowStyles().get(rowIndex);
+            TableCellLayoutStyle rowOverride = rowStyleOverrides.get(rowIndex);
             for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-                TableCellLayoutStyle resolved = TableCellLayoutStyle.merge(tableDefault, node.columnStyles().get(columnIndex));
+                TableCellLayoutStyle resolved = TableCellLayoutStyle.merge(tableDefault, columnStyleOverrides.get(columnIndex));
                 resolved = TableCellLayoutStyle.merge(resolved, rowOverride);
-                resolved = TableCellLayoutStyle.merge(resolved, row.get(columnIndex).styleOverride());
+                resolved = TableCellLayoutStyle.merge(resolved, toTableStyle(node.rows().get(rowIndex).get(columnIndex).style()));
                 rowResult.add(resolved);
             }
             result.add(List.copyOf(rowResult));
@@ -1874,7 +1898,7 @@ public final class BuiltInNodeDefinitions {
             for (int rowIndex = 0; rowIndex < node.rows().size(); rowIndex++) {
                 requiredNaturalWidth = Math.max(
                         requiredNaturalWidth,
-                        cellNaturalWidth(node.rows().get(rowIndex).get(columnIndex), stylesByRow.get(rowIndex).get(columnIndex), measurement));
+                        cellNaturalWidth(toTableCell(node.rows().get(rowIndex).get(columnIndex)), stylesByRow.get(rowIndex).get(columnIndex), measurement));
             }
 
             TableColumnLayout spec = normalizedSpecs.get(columnIndex);
@@ -1956,8 +1980,9 @@ public final class BuiltInNodeDefinitions {
 
     private static List<TableColumnLayout> normalizeSpecs(TableNode node, int columnCount) {
         List<TableColumnLayout> normalized = new ArrayList<>(columnCount);
+        List<TableColumnLayout> columns = toTableColumns(node.columns());
         for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-            normalized.add(columnIndex < node.columns().size() ? node.columns().get(columnIndex) : TableColumnLayout.auto());
+            normalized.add(columnIndex < columns.size() ? columns.get(columnIndex) : TableColumnLayout.auto());
         }
         return List.copyOf(normalized);
     }

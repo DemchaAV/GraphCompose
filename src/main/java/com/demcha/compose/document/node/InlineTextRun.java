@@ -1,7 +1,7 @@
 package com.demcha.compose.document.node;
 
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
-import com.demcha.compose.engine.components.content.text.TextStyle;
+import com.demcha.compose.document.style.DocumentTextStyle;
 
 /**
  * One styled inline text run inside a semantic paragraph.
@@ -13,7 +13,7 @@ import com.demcha.compose.engine.components.content.text.TextStyle;
  */
 public record InlineTextRun(
         String text,
-        TextStyle textStyle,
+        DocumentTextStyle textStyle,
         PdfLinkOptions linkOptions
 ) {
     /**
@@ -29,7 +29,7 @@ public record InlineTextRun(
      * @param text visible text
      * @param textStyle style for this run
      */
-    public InlineTextRun(String text, TextStyle textStyle) {
+    public InlineTextRun(String text, DocumentTextStyle textStyle) {
         this(text, textStyle, null);
     }
 

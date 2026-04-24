@@ -1,11 +1,9 @@
 package com.demcha.compose.document.node;
 
-import com.demcha.compose.engine.components.content.shape.Stroke;
-import com.demcha.compose.engine.components.style.Margin;
-import com.demcha.compose.engine.components.style.Padding;
-import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentStroke;
 
-import java.awt.Color;
 import java.util.List;
 import java.util.Objects;
 
@@ -24,10 +22,10 @@ public record ContainerNode(
         String name,
         List<DocumentNode> children,
         double spacing,
-        Padding padding,
-        Margin margin,
-        Color fillColor,
-        Stroke stroke
+        DocumentInsets padding,
+        DocumentInsets margin,
+        DocumentColor fillColor,
+        DocumentStroke stroke
 ) implements DocumentNode {
     /**
      * Creates a normalized vertical flow container.
@@ -36,8 +34,8 @@ public record ContainerNode(
         name = name == null ? "" : name;
         Objects.requireNonNull(children, "children");
         children = List.copyOf(children);
-        padding = padding == null ? Padding.zero() : padding;
-        margin = margin == null ? Margin.zero() : margin;
+        padding = padding == null ? DocumentInsets.zero() : padding;
+        margin = margin == null ? DocumentInsets.zero() : margin;
         if (spacing < 0 || Double.isNaN(spacing) || Double.isInfinite(spacing)) {
             throw new IllegalArgumentException("spacing must be finite and non-negative: " + spacing);
         }

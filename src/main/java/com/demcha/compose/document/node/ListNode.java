@@ -1,8 +1,7 @@
 package com.demcha.compose.document.node;
 
-import com.demcha.compose.engine.components.content.text.TextStyle;
-import com.demcha.compose.engine.components.style.Margin;
-import com.demcha.compose.engine.components.style.Padding;
+import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTextStyle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,14 +30,14 @@ public record ListNode(
         String name,
         List<String> items,
         ListMarker marker,
-        TextStyle textStyle,
+        DocumentTextStyle textStyle,
         TextAlign align,
         double lineSpacing,
         double itemSpacing,
         String continuationIndent,
         boolean normalizeMarkers,
-        Padding padding,
-        Margin margin
+        DocumentInsets padding,
+        DocumentInsets margin
 ) implements DocumentNode {
     /**
      * Creates a normalized list node.
@@ -47,11 +46,11 @@ public record ListNode(
         name = name == null ? "" : name;
         items = normalizeItems(items);
         marker = marker == null ? ListMarker.bullet() : marker;
-        textStyle = textStyle == null ? TextStyle.DEFAULT_STYLE : textStyle;
+        textStyle = textStyle == null ? DocumentTextStyle.DEFAULT : textStyle;
         align = align == null ? TextAlign.LEFT : align;
         continuationIndent = continuationIndent == null ? "" : continuationIndent;
-        padding = padding == null ? Padding.zero() : padding;
-        margin = margin == null ? Margin.zero() : margin;
+        padding = padding == null ? DocumentInsets.zero() : padding;
+        margin = margin == null ? DocumentInsets.zero() : margin;
         if (lineSpacing < 0 || Double.isNaN(lineSpacing) || Double.isInfinite(lineSpacing)) {
             throw new IllegalArgumentException("lineSpacing must be finite and non-negative: " + lineSpacing);
         }

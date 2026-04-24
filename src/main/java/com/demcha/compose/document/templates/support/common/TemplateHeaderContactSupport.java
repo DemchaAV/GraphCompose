@@ -3,10 +3,15 @@ package com.demcha.compose.document.templates.support.common;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentTextDecoration;
+import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.data.common.EmailYaml;
 import com.demcha.compose.document.templates.data.common.Header;
 import com.demcha.compose.document.templates.data.common.LinkYml;
 import com.demcha.compose.document.templates.theme.CvTheme;
+import com.demcha.compose.engine.components.content.text.TextDecoration;
+import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
 
@@ -64,9 +69,34 @@ public final class TemplateHeaderContactSupport {
             return;
         }
         if (!runs.isEmpty()) {
-            runs.add(new InlineTextRun(" | ", theme.smallBodyTextStyle(), null));
+            runs.add(new InlineTextRun(" | ", toDocumentTextStyle(theme.smallBodyTextStyle()), null));
         }
-        runs.add(new InlineTextRun(text, theme.linkTextStyle(), linkOptions));
+        runs.add(new InlineTextRun(text, toDocumentTextStyle(theme.linkTextStyle()), linkOptions));
+    }
+
+    private static DocumentTextStyle toDocumentTextStyle(TextStyle textStyle) {
+        if (textStyle == null) {
+            return DocumentTextStyle.DEFAULT;
+        }
+        return new DocumentTextStyle(
+                textStyle.fontName(),
+                textStyle.size(),
+                toDocumentDecoration(textStyle.decoration()),
+                DocumentColor.of(textStyle.color()));
+    }
+
+    private static DocumentTextDecoration toDocumentDecoration(TextDecoration decoration) {
+        if (decoration == null) {
+            return DocumentTextDecoration.DEFAULT;
+        }
+        return switch (decoration) {
+            case BOLD -> DocumentTextDecoration.BOLD;
+            case ITALIC -> DocumentTextDecoration.ITALIC;
+            case BOLD_ITALIC -> DocumentTextDecoration.BOLD_ITALIC;
+            case UNDERLINE -> DocumentTextDecoration.UNDERLINE;
+            case STRIKETHROUGH -> DocumentTextDecoration.STRIKETHROUGH;
+            case DEFAULT -> DocumentTextDecoration.DEFAULT;
+        };
     }
 
     private static PdfLinkOptions emailLinkOptions(EmailYaml email) {

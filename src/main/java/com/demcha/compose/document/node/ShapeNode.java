@@ -2,10 +2,9 @@ package com.demcha.compose.document.node;
 
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
-import com.demcha.compose.engine.components.content.shape.Stroke;
-import com.demcha.compose.engine.components.style.Margin;
-import com.demcha.compose.engine.components.style.Padding;
-import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentStroke;
 
 import java.awt.Color;
 
@@ -26,20 +25,20 @@ public record ShapeNode(
         String name,
         double width,
         double height,
-        Color fillColor,
-        Stroke stroke,
+        DocumentColor fillColor,
+        DocumentStroke stroke,
         PdfLinkOptions linkOptions,
         PdfBookmarkOptions bookmarkOptions,
-        Padding padding,
-        Margin margin
+        DocumentInsets padding,
+        DocumentInsets margin
 ) implements DocumentNode {
     /**
      * Normalizes spacing defaults and validates explicit shape dimensions.
      */
     public ShapeNode {
         name = name == null ? "" : name;
-        padding = padding == null ? Padding.zero() : padding;
-        margin = margin == null ? Margin.zero() : margin;
+        padding = padding == null ? DocumentInsets.zero() : padding;
+        margin = margin == null ? DocumentInsets.zero() : margin;
         if (width <= 0 || Double.isNaN(width) || Double.isInfinite(width)) {
             throw new IllegalArgumentException("width must be finite and positive: " + width);
         }
@@ -63,10 +62,10 @@ public record ShapeNode(
                      double width,
                      double height,
                      Color fillColor,
-                     Stroke stroke,
-                     Padding padding,
-                     Margin margin) {
-        this(name, width, height, fillColor, stroke, null, null, padding, margin);
+                     DocumentStroke stroke,
+                     DocumentInsets padding,
+                     DocumentInsets margin) {
+        this(name, width, height, fillColor == null ? null : DocumentColor.of(fillColor), stroke, null, null, padding, margin);
     }
 }
 

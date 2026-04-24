@@ -3,8 +3,7 @@ package com.demcha.compose.document.node;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfBarcodeOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
-import com.demcha.compose.engine.components.style.Margin;
-import com.demcha.compose.engine.components.style.Padding;
+import com.demcha.compose.document.style.DocumentInsets;
 
 import java.util.Objects;
 
@@ -30,8 +29,8 @@ public record BarcodeNode(
         double height,
         PdfLinkOptions linkOptions,
         PdfBookmarkOptions bookmarkOptions,
-        Padding padding,
-        Margin margin
+        DocumentInsets padding,
+        DocumentInsets margin
 ) implements DocumentNode {
     /**
      * Creates a validated barcode or QR-code node.
@@ -39,8 +38,8 @@ public record BarcodeNode(
     public BarcodeNode {
         name = name == null ? "" : name;
         barcodeOptions = Objects.requireNonNull(barcodeOptions, "barcodeOptions");
-        padding = padding == null ? Padding.zero() : padding;
-        margin = margin == null ? Margin.zero() : margin;
+        padding = padding == null ? DocumentInsets.zero() : padding;
+        margin = margin == null ? DocumentInsets.zero() : margin;
         if (barcodeOptions.getContent() == null || barcodeOptions.getContent().isBlank()) {
             throw new IllegalArgumentException("barcodeOptions.content must not be blank.");
         }
@@ -66,8 +65,8 @@ public record BarcodeNode(
                        PdfBarcodeOptions barcodeOptions,
                        double width,
                        double height,
-                       Padding padding,
-                       Margin margin) {
+                       DocumentInsets padding,
+                       DocumentInsets margin) {
         this(name, barcodeOptions, width, height, null, null, padding, margin);
     }
 }

@@ -7,7 +7,7 @@ import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.PlacedNode;
 import com.demcha.compose.document.node.ContainerNode;
 import com.demcha.compose.document.node.ListNode;
-import com.demcha.compose.engine.components.content.text.TextStyle;
+import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
 import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
@@ -188,7 +188,7 @@ class DocumentListNodeTest {
                     .addList(list -> list
                             .name("BulletList")
                             .items("Java", "SQL")
-                            .padding(Padding.of(2)))
+                            .padding(DocumentInsets.of(2)))
                     .addList(list -> list
                             .name("DashList")
                             .dash()
@@ -219,7 +219,7 @@ class DocumentListNodeTest {
                     .addList(list -> list
                             .name("PaddedList")
                             .items("Alpha", "Beta", "Gamma")
-                            .padding(new Padding(3, 5, 7, 11)))
+                            .padding(new DocumentInsets(3, 5, 7, 11)))
                     .build();
 
             LayoutGraph graph = session.layoutGraph();

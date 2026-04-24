@@ -3,9 +3,10 @@ package com.demcha.compose.font;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.DocumentDsl;
-import com.demcha.compose.engine.components.content.text.TextDecoration;
-import com.demcha.compose.engine.components.content.text.TextStyle;
-import com.demcha.compose.engine.components.style.Margin;
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTextDecoration;
+import com.demcha.compose.document.style.DocumentTextStyle;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.awt.Color;
@@ -69,13 +70,13 @@ public final class FontShowcase {
                     .addParagraph(paragraph -> paragraph
                             .name("AvailableFontsPreviewTitle")
                             .text("Available Fonts Preview")
-                            .textStyle(style(FontName.HELVETICA, 22, TextDecoration.BOLD, new Color(34, 34, 34)))
-                            .margin(Margin.bottom(6)))
+                            .textStyle(style(FontName.HELVETICA, 22, DocumentTextDecoration.BOLD, new Color(34, 34, 34)))
+                            .margin(DocumentInsets.bottom(6)))
                     .addParagraph(paragraph -> paragraph
                             .name("AvailableFontsPreviewSubtitle")
                             .text("Each section shows the family name and sample lines in regular, bold, italic and bold-italic styles.")
-                            .textStyle(style(FontName.HELVETICA, 10, TextDecoration.DEFAULT, new Color(90, 90, 90)))
-                            .margin(Margin.bottom(12)));
+                            .textStyle(style(FontName.HELVETICA, 10, DocumentTextDecoration.DEFAULT, new Color(90, 90, 90)))
+                            .margin(DocumentInsets.bottom(12)));
 
             Collection<FontName> safeFonts = fonts == null ? DefaultFonts.bundledFontNames() : fonts;
             for (FontName fontName : safeFonts) {
@@ -88,28 +89,28 @@ public final class FontShowcase {
         flow.module(fontName.name(), module -> {
             module.name("FontSection_" + fontName.name())
                     .spacing(2)
-                    .margin(Margin.bottom(8))
-                    .titleStyle(style(FontName.HELVETICA, 12, TextDecoration.BOLD, new Color(25, 25, 25)))
-                    .titleMargin(Margin.bottom(2));
-            sampleLine(module, "Regular: ", fontName, TextDecoration.DEFAULT, Margin.bottom(1));
-            sampleLine(module, "Bold: ", fontName, TextDecoration.BOLD, Margin.bottom(1));
-            sampleLine(module, "Italic: ", fontName, TextDecoration.ITALIC, Margin.bottom(1));
-            sampleLine(module, "Bold Italic: ", fontName, TextDecoration.BOLD_ITALIC, Margin.bottom(4));
+                    .margin(DocumentInsets.bottom(8))
+                    .titleStyle(style(FontName.HELVETICA, 12, DocumentTextDecoration.BOLD, new Color(25, 25, 25)))
+                    .titleMargin(DocumentInsets.bottom(2));
+            sampleLine(module, "Regular: ", fontName, DocumentTextDecoration.DEFAULT, DocumentInsets.bottom(1));
+            sampleLine(module, "Bold: ", fontName, DocumentTextDecoration.BOLD, DocumentInsets.bottom(1));
+            sampleLine(module, "Italic: ", fontName, DocumentTextDecoration.ITALIC, DocumentInsets.bottom(1));
+            sampleLine(module, "Bold Italic: ", fontName, DocumentTextDecoration.BOLD_ITALIC, DocumentInsets.bottom(4));
         });
     }
 
     private static void sampleLine(DocumentDsl.ModuleBuilder module,
                                    String label,
                                    FontName fontName,
-                                   TextDecoration decoration,
-                                   Margin margin) {
+                                   DocumentTextDecoration decoration,
+                                   DocumentInsets margin) {
         module.paragraph(paragraph -> paragraph
                 .text(label + SAMPLE_TEXT)
                 .textStyle(style(fontName, 11, decoration, Color.BLACK))
                 .margin(margin));
     }
 
-    private static TextStyle style(FontName fontName, double size, TextDecoration decoration, Color color) {
-        return new TextStyle(fontName, size, decoration, color);
+    private static DocumentTextStyle style(FontName fontName, double size, DocumentTextDecoration decoration, Color color) {
+        return new DocumentTextStyle(fontName, size, decoration, DocumentColor.of(color));
     }
 }

@@ -8,8 +8,7 @@ import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
-import com.demcha.compose.engine.components.content.text.TextStyle;
-import com.demcha.compose.engine.components.style.Margin;
+import com.demcha.compose.document.style.DocumentTextStyle;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.interactive.action.PDActionURI;
@@ -72,7 +71,7 @@ class PdfFixedLayoutBackendFeaturesTest {
                     .addParagraph(paragraph -> paragraph
                             .name("Overview")
                             .text("Visit the canonical GraphCompose docs.")
-                            .textStyle(TextStyle.DEFAULT_STYLE)
+                            .textStyle(DocumentTextStyle.DEFAULT)
                             .bookmark(new PdfBookmarkOptions("Overview"))
                             .link(new PdfLinkOptions("https://example.com/docs")))
                     .addBarcode(barcode -> barcode
@@ -83,7 +82,7 @@ class PdfFixedLayoutBackendFeaturesTest {
                     .addParagraph(paragraph -> paragraph
                             .name("Details")
                             .text("Document-level metadata, watermark, footer, and link annotations should all survive the canonical pipeline.")
-                            .textStyle(TextStyle.DEFAULT_STYLE))
+                            .textStyle(DocumentTextStyle.DEFAULT))
                     .build();
 
             pdfBytes = document.toPdfBytes();
@@ -131,7 +130,7 @@ class PdfFixedLayoutBackendFeaturesTest {
                     .name("InlineLinkFlow")
                     .addParagraph(paragraph -> paragraph
                             .name("ContactLinks")
-                            .textStyle(TextStyle.DEFAULT_STYLE)
+                            .textStyle(DocumentTextStyle.DEFAULT)
                             .inlineLink("Email", new PdfLinkOptions("mailto:alex@example.dev"))
                             .inlineText(" | ")
                             .inlineLink("Docs", new PdfLinkOptions("https://example.com/docs")))

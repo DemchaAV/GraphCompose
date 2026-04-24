@@ -112,7 +112,7 @@ class DocumentSessionTest {
             ContainerNode root = session.pageFlow()
                     .name("ShortcutRoot")
                     .spacing(8)
-                    .addParagraph("Shortcut paragraph", TextStyle.DEFAULT_STYLE)
+                    .addParagraph("Shortcut paragraph", DocumentTextStyle.DEFAULT)
                     .build();
 
             assertThat(session.roots()).containsExactly(root);
@@ -185,7 +185,7 @@ class DocumentSessionTest {
                     .name("ModuleShortcut")
                     .spacing(8)
                     .module("Technical Skills", module -> module
-                            .titleMargin(Margin.bottom(4))
+                            .titleMargin(DocumentInsets.bottom(4))
                             .spacing(2)
                             .paragraph("Practical backend engineering with clean document APIs.")
                             .bullets(List.of("Java", "SQL"))

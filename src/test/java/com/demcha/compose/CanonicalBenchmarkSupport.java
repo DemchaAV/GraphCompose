@@ -1,12 +1,12 @@
 package com.demcha.compose;
 
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentTextDecoration;
+import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
-import com.demcha.compose.engine.components.content.text.TextDecoration;
-import com.demcha.compose.engine.components.content.text.TextStyle;
-import com.demcha.compose.engine.components.style.ComponentColor;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.mock.CvDocumentSpecMock;
 import com.demcha.mock.InvoiceDataFixtures;
@@ -16,15 +16,15 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import java.awt.Color;
 
 final class CanonicalBenchmarkSupport {
-    static final TextStyle TITLE_STYLE = TextStyle.builder()
+    static final DocumentTextStyle TITLE_STYLE = DocumentTextStyle.builder()
             .size(20)
-            .decoration(TextDecoration.BOLD)
-            .color(new Color(18, 40, 74))
+            .decoration(DocumentTextDecoration.BOLD)
+            .color(DocumentColor.of(new Color(18, 40, 74)))
             .build();
-    static final TextStyle BODY_STYLE = TextStyle.builder()
+    static final DocumentTextStyle BODY_STYLE = DocumentTextStyle.builder()
             .size(9.5)
-            .decoration(TextDecoration.DEFAULT)
-            .color(new Color(58, 69, 84))
+            .decoration(DocumentTextDecoration.DEFAULT)
+            .color(DocumentColor.of(new Color(58, 69, 84)))
             .build();
 
     private CanonicalBenchmarkSupport() {
@@ -79,7 +79,7 @@ final class CanonicalBenchmarkSupport {
                         .name(rootName + "Divider")
                         .width(width)
                         .thickness(1)
-                        .color(ComponentColor.LIGHT_GRAY))
+                        .color(DocumentColor.LIGHT_GRAY))
                 .build();
     }
 }

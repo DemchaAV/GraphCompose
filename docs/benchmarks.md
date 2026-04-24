@@ -127,6 +127,14 @@ powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -CurrentSp
 powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -CurrentSpeedProfile full -Repeat 5
 ```
 
+When comparing two branches, run a clean compile on both worktrees before the
+benchmark wrapper. This prevents stale `target/classes` from making one branch
+look faster or slower than the code that is actually checked out.
+
+```powershell
+.\mvnw.cmd -B -ntp clean test-compile
+```
+
 ### Run benchmarks but skip diffs
 
 ```powershell

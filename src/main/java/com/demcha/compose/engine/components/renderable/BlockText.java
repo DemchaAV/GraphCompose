@@ -6,6 +6,7 @@ import com.demcha.compose.engine.components.core.Entity;
 import com.demcha.compose.engine.components.layout.coordinator.Placement;
 import com.demcha.compose.engine.render.Render;
 import com.demcha.compose.engine.pagination.Breakable;
+import com.demcha.compose.engine.text.TextControlSanitizer;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -55,10 +56,7 @@ public class BlockText implements Render, Breakable {
     }
 
     public static String sanitizeText(String rawText) {
-        if (rawText == null) {
-            return "";
-        }
-        return rawText.replaceAll("\\p{C}", "");
+        return TextControlSanitizer.remove(rawText);
     }
 
     public record ValidatedTextData(TextStyle style, BlockTextData textValue) {

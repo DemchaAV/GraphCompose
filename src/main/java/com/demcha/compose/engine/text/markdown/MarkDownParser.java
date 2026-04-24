@@ -11,15 +11,14 @@ import com.vladsch.flexmark.util.ast.VisitHandler;
 import com.vladsch.flexmark.util.data.MutableDataSet;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class MarkDownParser {
+    private static final ThreadLocal<Parser> PARSER = ThreadLocal.withInitial(
+            () -> Parser.builder(new MutableDataSet()).build());
 
     public List<TextDataBody> getBody(String markdown, TextStyle style) {
-        MutableDataSet options = new MutableDataSet();
-        Parser parser = Parser.builder(options).build();
-        Node document = parser.parse(markdown);
+        Node document = PARSER.get().parse(markdown == null ? "" : markdown);
 
         List<TextDataBody> resultList = new ArrayList<>();
 
@@ -106,9 +105,7 @@ public class MarkDownParser {
                     TextStyle newTextStyle = new TextStyle(style.fontName(), style.size(), decoration, style.color());
 
                     String rawText = textNode.getChars().toString();
-                    String[] chunks = rawText.split("((?<=\\s)|(?=\\s))");
-
-                    Arrays.stream(chunks)
+                    splitKeepingWhitespace(rawText).stream()
                             .filter(s -> !s.isEmpty())
                             .forEach(chunk -> resultList.add(new TextDataBody(chunk, newTextStyle)));
                 }));
@@ -137,6 +134,30 @@ public class MarkDownParser {
         if (isItalic)
             return TextDecoration.ITALIC;
         return TextDecoration.DEFAULT;
+    }
+
+    private List<String> splitKeepingWhitespace(String value) {
+        if (value == null || value.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> chunks = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        boolean currentWhitespace = Character.isWhitespace(value.charAt(0));
+        for (int index = 0; index < value.length(); index++) {
+            char ch = value.charAt(index);
+            boolean whitespace = Character.isWhitespace(ch);
+            if (whitespace != currentWhitespace && !current.isEmpty()) {
+                chunks.add(current.toString());
+                current.setLength(0);
+                currentWhitespace = whitespace;
+            }
+            current.append(ch);
+        }
+        if (!current.isEmpty()) {
+            chunks.add(current.toString());
+        }
+        return List.copyOf(chunks);
     }
 
 }

@@ -20,6 +20,7 @@ import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableCell;
@@ -250,6 +251,10 @@ public final class DocumentDsl {
                 textStyle.color().color());
     }
 
+    private static Stroke toStroke(DocumentStroke stroke) {
+        return stroke == null ? null : new Stroke(stroke.color().color(), stroke.width());
+    }
+
     private static TextDecoration toDecoration(DocumentTextDecoration decoration) {
         if (decoration == null) {
             return TextDecoration.DEFAULT;
@@ -378,6 +383,16 @@ public final class DocumentDsl {
         public T stroke(Stroke stroke) {
             this.stroke = stroke;
             return self();
+        }
+
+        /**
+         * Sets the flow border using the public canonical stroke value.
+         *
+         * @param stroke border stroke, or {@code null} for no border
+         * @return this builder
+         */
+        public T stroke(DocumentStroke stroke) {
+            return stroke(toStroke(stroke));
         }
 
         public T add(DocumentNode node) {
@@ -1483,6 +1498,17 @@ public final class DocumentDsl {
 
         public ShapeBuilder stroke(Stroke stroke) {
             this.stroke = stroke;
+            return this;
+        }
+
+        /**
+         * Sets shape stroke with the public canonical stroke value.
+         *
+         * @param stroke shape stroke, or {@code null} for no stroke
+         * @return this builder
+         */
+        public ShapeBuilder stroke(DocumentStroke stroke) {
+            this.stroke = toStroke(stroke);
             return this;
         }
 

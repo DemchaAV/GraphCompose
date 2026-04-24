@@ -38,6 +38,7 @@ This document is the source of truth for production package ownership in the can
 | `com.demcha.compose.engine.render` | Backend-neutral render contracts, handler registry, render ordering, and render-pass session lifetime. | Add backend-neutral contracts here, backend-specific drawing elsewhere. |
 | `com.demcha.compose.engine.render.pdf` | Low-level PDF backend internals for ECS rendering. | PDFBox state stays here and in child handler/helper packages. |
 | `com.demcha.compose.engine.render.word` | Experimental Word backend internals. | Treat as research until a supported public surface is designed. |
+| `com.demcha.compose.engine.text` | Internal text hot-path utilities shared by layout and render stages. | Keep helpers backend-neutral and avoid public authoring concepts here. |
 | `com.demcha.compose.engine.text.markdown` | Markdown token parsing used by text preparation. | Keep output backend-neutral. |
 
 ## Template Layer

@@ -12,8 +12,6 @@ public abstract class FontBase<T> implements Font<T> {
     private final T boldItalic;
     private final T underline;
     private final T strikethrough;
-    protected static final java.util.regex.Pattern CONTROL_CHARS_PATTERN = java.util.regex.Pattern.compile("[\\p{Cntrl}&&[^\\t]]");
-    protected static final java.util.regex.Pattern MULTIPLE_SPACES_PATTERN = java.util.regex.Pattern.compile(" +");
 
     protected FontBase(T defaultFont, T bold, T italic, T boldItalic, T underline, T strikethrough) {
         this.defaultFont = defaultFont;

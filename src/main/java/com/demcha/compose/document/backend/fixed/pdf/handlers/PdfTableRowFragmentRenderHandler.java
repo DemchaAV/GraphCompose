@@ -10,6 +10,7 @@ import com.demcha.compose.engine.components.content.table.TableResolvedCell;
 import com.demcha.compose.engine.components.layout.Anchor;
 import com.demcha.compose.engine.components.style.Padding;
 import com.demcha.compose.engine.render.pdf.PdfFont;
+import com.demcha.compose.engine.text.TextControlSanitizer;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.io.IOException;
@@ -194,7 +195,7 @@ public final class PdfTableRowFragmentRenderHandler
 
         List<String> result = new ArrayList<>(lines.size());
         for (String line : lines) {
-            result.add(line == null ? "" : line.replaceAll("\\p{C}", " ").trim());
+            result.add(TextControlSanitizer.replace(line, " ").trim());
         }
         return List.copyOf(result);
     }

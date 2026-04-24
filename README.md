@@ -36,6 +36,8 @@
   ·
   <a href="./docs/lifecycle.md">Lifecycle</a>
   ·
+  <a href="./docs/production-rendering.md">Production Rendering</a>
+  ·
   <a href="./docs/benchmarks.md">Benchmarks</a>
   ·
   <a href="./docs/layout-snapshot-testing.md">Layout Snapshot Testing</a>
@@ -207,18 +209,25 @@ public class QuickStart {
 }
 ```
 
-### In-memory output (for HTTP responses, S3 uploads, etc.)
+### Streaming and in-memory output (for HTTP responses, S3 uploads, etc.)
 
 ```java
-try (DocumentSession document = GraphCompose.document()
-        .pageSize(PDRectangle.A4)
-        .margin(24, 24, 24, 24)
-        .create()) {
+void writeResponse(OutputStream responseOutputStream) throws Exception {
+    try (DocumentSession document = GraphCompose.document()
+            .pageSize(PDRectangle.A4)
+            .margin(24, 24, 24, 24)
+            .create()) {
 
-    document.pageFlow(page -> page
-            .module("Summary", module -> module.paragraph("In-memory PDF")));
+        document.pageFlow(page -> page
+                .module("Summary", module -> module.paragraph("In-memory PDF")));
 
-    byte[] pdfBytes = document.toPdfBytes();
+        // Recommended for web APIs and storage uploads: stream without keeping
+        // an extra session-level PDF byte cache.
+        document.writePdf(responseOutputStream);
+
+        // Convenience path when the caller really needs a byte array.
+        byte[] pdfBytes = document.toPdfBytes();
+    }
 }
 ```
 

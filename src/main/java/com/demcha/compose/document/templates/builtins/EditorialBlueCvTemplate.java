@@ -19,10 +19,18 @@ import java.util.Objects;
 public final class EditorialBlueCvTemplate implements CvTemplate {
     private final EditorialBlueCvTemplateComposer composer;
 
+    /**
+     * Creates the default editorial blue CV template.
+     */
     public EditorialBlueCvTemplate() {
         this(null);
     }
 
+    /**
+     * Creates the editorial blue CV template with a custom theme.
+     *
+     * @param theme theme override, or {@code null} for the default
+     */
     public EditorialBlueCvTemplate(CvTheme theme) {
         this.composer = new EditorialBlueCvTemplateComposer(
                 Objects.requireNonNullElseGet(theme, EditorialBlueCvTemplate::defaultTheme));

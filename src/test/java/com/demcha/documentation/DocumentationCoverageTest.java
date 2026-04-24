@@ -117,6 +117,9 @@ class DocumentationCoverageTest {
                 "public byte[] toPdfBytes()");
         assertHasJavadocBefore(
                 PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
+                "public void writePdf(OutputStream output)");
+        assertHasJavadocBefore(
+                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
                 "public void buildPdf()");
         assertHasJavadocBefore(
                 PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/DocumentDsl.java"),

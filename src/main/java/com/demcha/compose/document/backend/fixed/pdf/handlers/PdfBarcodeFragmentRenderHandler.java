@@ -35,6 +35,12 @@ import java.util.Map;
 public final class PdfBarcodeFragmentRenderHandler
         implements PdfFragmentRenderHandler<BuiltInNodeDefinitions.BarcodeFragmentPayload> {
 
+    /**
+     * Creates the barcode fragment renderer.
+     */
+    public PdfBarcodeFragmentRenderHandler() {
+    }
+
     @Override
     public Class<BuiltInNodeDefinitions.BarcodeFragmentPayload> payloadType() {
         return BuiltInNodeDefinitions.BarcodeFragmentPayload.class;

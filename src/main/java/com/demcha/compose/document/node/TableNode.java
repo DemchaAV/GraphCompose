@@ -16,6 +16,18 @@ import java.util.Objects;
 
 /**
  * Semantic table node with row-atomic pagination.
+ *
+ * @param name table node name used in snapshots and layout graph paths
+ * @param columns negotiated table columns
+ * @param rows table rows in source order
+ * @param defaultCellStyle default style applied to cells without overrides
+ * @param rowStyles row-specific style overrides
+ * @param columnStyles column-specific style overrides
+ * @param width optional explicit table width
+ * @param linkOptions optional node-level link metadata
+ * @param bookmarkOptions optional node-level bookmark metadata
+ * @param padding outer table padding
+ * @param margin outer table margin
  */
 public record TableNode(
         String name,
@@ -79,6 +91,9 @@ public record TableNode(
         this(name, columns, rows, defaultCellStyle, rowStyles, columnStyles, width, null, null, padding, margin);
     }
 
+    /**
+     * Normalizes table rows, styles, spacing, and validates explicit width.
+     */
     public TableNode {
         name = name == null ? "" : name;
         Objects.requireNonNull(columns, "columns");

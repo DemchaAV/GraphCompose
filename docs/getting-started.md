@@ -1,6 +1,6 @@
 # Getting Started
 
-GraphCompose V2 is canonical-only. Application code starts with `GraphCompose.document(...)`, creates one `DocumentSession`, describes content with `DocumentDsl`, and finishes with `buildPdf()` or `toPdfBytes()`.
+GraphCompose V2 is canonical-only. Application code starts with `GraphCompose.document(...)`, creates one `DocumentSession`, describes content with `DocumentDsl`, and finishes with `writePdf(...)`, `buildPdf()`, or `toPdfBytes()`.
 
 ## Minimal File Output
 
@@ -18,6 +18,23 @@ try (DocumentSession document = GraphCompose.document(Path.of("output.pdf")).cre
 }
 ```
 
+## Streaming Output
+
+Use `writePdf(OutputStream)` for web APIs, cloud storage uploads, and other
+server paths where the caller already owns an output stream. GraphCompose writes
+the PDF but does not close the stream.
+
+```java
+void writeResponse(OutputStream responseOutputStream) throws Exception {
+    try (DocumentSession document = GraphCompose.document().create()) {
+        document.pageFlow(page -> page
+                .module("Summary", module -> module.paragraph("Generated for an HTTP response.")));
+
+        document.writePdf(responseOutputStream);
+    }
+}
+```
+
 ## In-Memory Output
 
 ```java
@@ -30,6 +47,9 @@ try (DocumentSession document = GraphCompose.document().create()) {
     pdfBytes = document.toPdfBytes();
 }
 ```
+
+`toPdfBytes()` is a convenience wrapper around the streaming path. Prefer
+`writePdf(...)` when the next step is already a stream.
 
 ## Module-First Authoring
 
@@ -61,4 +81,5 @@ try (DocumentSession document = GraphCompose.document(Path.of("invoice.pdf")).cr
 
 - Use [Recipes](./recipes.md) for copy-paste examples.
 - Use [Lifecycle](./lifecycle.md) to understand the session, layout, and render flow.
+- Use [Production Rendering](./production-rendering.md) for server-side lifecycle, privacy, and load guidance.
 - Use [Package Map](./package-map.md) before adding new public APIs or engine internals.

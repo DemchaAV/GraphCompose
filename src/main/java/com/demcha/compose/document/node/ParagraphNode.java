@@ -13,6 +13,18 @@ import java.util.Objects;
 /**
  * Semantic paragraph block that may split across pages.
  *
+ * @param name node name used in snapshots and layout graph paths
+ * @param text paragraph text when inline runs are not supplied
+ * @param inlineTextRuns optional styled inline runs in source order
+ * @param textStyle base paragraph text style
+ * @param align horizontal text alignment
+ * @param lineSpacing extra space between wrapped lines
+ * @param bulletOffset first-line prefix used by list-style paragraph paths
+ * @param indentStrategy hanging/first-line indent strategy
+ * @param linkOptions optional node-level link metadata
+ * @param bookmarkOptions optional node-level bookmark metadata
+ * @param padding inner padding
+ * @param margin outer margin
  * @author Artem Demchyshyn
  */
 public record ParagraphNode(
@@ -29,6 +41,10 @@ public record ParagraphNode(
         Padding padding,
         Margin margin
 ) implements DocumentNode {
+    /**
+     * Normalizes optional text, inline runs, style, alignment, spacing, and
+     * indentation defaults for a canonical paragraph.
+     */
     public ParagraphNode {
         name = name == null ? "" : name;
         inlineTextRuns = normalizeInlineRuns(inlineTextRuns);
@@ -49,6 +65,21 @@ public record ParagraphNode(
         }
     }
 
+    /**
+     * Creates a paragraph from plain text with optional link and bookmark metadata.
+     *
+     * @param name node name used in snapshots and layout graph paths
+     * @param text paragraph text
+     * @param textStyle paragraph style
+     * @param align horizontal alignment
+     * @param lineSpacing extra spacing between wrapped lines
+     * @param bulletOffset first-line marker or prefix
+     * @param indentStrategy text indent strategy
+     * @param linkOptions optional link metadata
+     * @param bookmarkOptions optional bookmark metadata
+     * @param padding inner padding
+     * @param margin outer margin
+     */
     public ParagraphNode(String name,
                          String text,
                          TextStyle textStyle,
@@ -63,6 +94,19 @@ public record ParagraphNode(
         this(name, text, List.of(), textStyle, align, lineSpacing, bulletOffset, indentStrategy, linkOptions, bookmarkOptions, padding, margin);
     }
 
+    /**
+     * Creates a paragraph from plain text without link or bookmark metadata.
+     *
+     * @param name node name used in snapshots and layout graph paths
+     * @param text paragraph text
+     * @param textStyle paragraph style
+     * @param align horizontal alignment
+     * @param lineSpacing extra spacing between wrapped lines
+     * @param bulletOffset first-line marker or prefix
+     * @param indentStrategy text indent strategy
+     * @param padding inner padding
+     * @param margin outer margin
+     */
     public ParagraphNode(String name,
                          String text,
                          TextStyle textStyle,
@@ -75,6 +119,17 @@ public record ParagraphNode(
         this(name, text, textStyle, align, lineSpacing, bulletOffset, indentStrategy, null, null, padding, margin);
     }
 
+    /**
+     * Creates a paragraph without marker indentation.
+     *
+     * @param name node name used in snapshots and layout graph paths
+     * @param text paragraph text
+     * @param textStyle paragraph style
+     * @param align horizontal alignment
+     * @param lineSpacing extra spacing between wrapped lines
+     * @param padding inner padding
+     * @param margin outer margin
+     */
     public ParagraphNode(String name,
                          String text,
                          TextStyle textStyle,

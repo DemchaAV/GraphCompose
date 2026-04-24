@@ -13,12 +13,33 @@ import java.util.Objects;
  * @author Artem Demchyshyn
  */
 public final class DocumentColor {
+    /**
+     * Black color token.
+     */
     public static final DocumentColor BLACK = rgb(0, 0, 0);
+    /**
+     * Dark gray color token.
+     */
     public static final DocumentColor DARK_GRAY = rgb(64, 64, 64);
+    /**
+     * Gray color token.
+     */
     public static final DocumentColor GRAY = rgb(128, 128, 128);
+    /**
+     * Light gray color token.
+     */
     public static final DocumentColor LIGHT_GRAY = rgb(192, 192, 192);
+    /**
+     * White color token.
+     */
     public static final DocumentColor WHITE = rgb(255, 255, 255);
+    /**
+     * Royal blue color token.
+     */
     public static final DocumentColor ROYAL_BLUE = rgb(65, 105, 225);
+    /**
+     * Orange color token.
+     */
     public static final DocumentColor ORANGE = rgb(255, 165, 0);
 
     private final Color color;

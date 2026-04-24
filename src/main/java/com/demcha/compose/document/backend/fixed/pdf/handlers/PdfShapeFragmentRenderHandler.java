@@ -14,6 +14,12 @@ import java.io.IOException;
 public final class PdfShapeFragmentRenderHandler
         implements PdfFragmentRenderHandler<BuiltInNodeDefinitions.ShapeFragmentPayload> {
 
+    /**
+     * Creates the shape fragment renderer.
+     */
+    public PdfShapeFragmentRenderHandler() {
+    }
+
     @Override
     public Class<BuiltInNodeDefinitions.ShapeFragmentPayload> payloadType() {
         return BuiltInNodeDefinitions.ShapeFragmentPayload.class;

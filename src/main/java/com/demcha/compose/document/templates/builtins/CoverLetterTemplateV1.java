@@ -14,6 +14,9 @@ import com.demcha.compose.document.templates.theme.CvTheme;
 public final class CoverLetterTemplateV1 implements CoverLetterTemplate {
     private final CoverLetterTemplateComposer composer;
 
+    /**
+     * Creates the default cover-letter template.
+     */
     public CoverLetterTemplateV1() {
         this.composer = new CoverLetterTemplateComposer(CvTheme.defaultTheme(), CvTheme.courier());
     }

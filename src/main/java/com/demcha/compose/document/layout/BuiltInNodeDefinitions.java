@@ -49,6 +49,12 @@ public final class BuiltInNodeDefinitions {
     private BuiltInNodeDefinitions() {
     }
 
+    /**
+     * Registers every built-in canonical node definition with the supplied registry.
+     *
+     * @param registry mutable registry to populate
+     * @return the same registry after registration
+     */
     public static NodeRegistry registerDefaults(NodeRegistry registry) {
         Objects.requireNonNull(registry, "registry");
         return registry
@@ -63,18 +69,46 @@ public final class BuiltInNodeDefinitions {
                 .register(new TableDefinition());
     }
 
+    /**
+     * One measured inline text span inside a paragraph line.
+     *
+     * @param text visible text for the span
+     * @param textStyle resolved text style
+     * @param width measured span width
+     * @param linkOptions optional link metadata for the span
+     */
     public record ParagraphSpan(String text, TextStyle textStyle, double width, PdfLinkOptions linkOptions) {
+        /**
+         * Creates a normalized measured paragraph span.
+         */
         public ParagraphSpan {
             text = text == null ? "" : text;
             textStyle = textStyle == null ? TextStyle.DEFAULT_STYLE : textStyle;
         }
 
+        /**
+         * Creates a span without link metadata.
+         *
+         * @param text visible span text
+         * @param textStyle resolved text style
+         * @param width measured span width
+         */
         public ParagraphSpan(String text, TextStyle textStyle, double width) {
             this(text, textStyle, width, null);
         }
     }
 
+    /**
+     * One measured paragraph line emitted to the PDF backend.
+     *
+     * @param text line text used for diagnostics and simple rendering paths
+     * @param width measured line width
+     * @param spans measured styled spans in source order
+     */
     public record ParagraphLine(String text, double width, List<ParagraphSpan> spans) {
+        /**
+         * Creates a normalized measured paragraph line.
+         */
         public ParagraphLine {
             text = text == null ? "" : text;
             spans = List.copyOf(spans);
@@ -103,6 +137,19 @@ public final class BuiltInNodeDefinitions {
         PdfBookmarkOptions bookmarkOptions();
     }
 
+    /**
+     * PDF payload for a resolved paragraph fragment.
+     *
+     * @param textStyle base text style for the fragment
+     * @param align horizontal text alignment
+     * @param padding fragment padding
+     * @param lineHeight resolved line height
+     * @param lineGap extra spacing between lines
+     * @param baselineOffset offset from line bottom to baseline
+     * @param lines measured lines contained by the fragment
+     * @param linkOptions optional fragment-level link metadata
+     * @param bookmarkOptions optional fragment-level bookmark metadata
+     */
     public record ParagraphFragmentPayload(
             TextStyle textStyle,
             TextAlign align,
@@ -114,11 +161,22 @@ public final class BuiltInNodeDefinitions {
             PdfLinkOptions linkOptions,
             PdfBookmarkOptions bookmarkOptions
     ) implements PdfSemanticFragmentPayload {
+        /**
+         * Creates an immutable paragraph fragment payload.
+         */
         public ParagraphFragmentPayload {
             lines = List.copyOf(lines);
         }
     }
 
+    /**
+     * PDF payload for a resolved shape fragment.
+     *
+     * @param fillColor optional shape fill color
+     * @param stroke optional shape stroke
+     * @param linkOptions optional fragment-level link metadata
+     * @param bookmarkOptions optional fragment-level bookmark metadata
+     */
     public record ShapeFragmentPayload(
             Color fillColor,
             Stroke stroke,
@@ -127,6 +185,13 @@ public final class BuiltInNodeDefinitions {
     ) implements PdfSemanticFragmentPayload {
     }
 
+    /**
+     * PDF payload for a resolved image fragment.
+     *
+     * @param imageData image source data
+     * @param linkOptions optional fragment-level link metadata
+     * @param bookmarkOptions optional fragment-level bookmark metadata
+     */
     public record ImageFragmentPayload(
             ImageData imageData,
             PdfLinkOptions linkOptions,
@@ -134,6 +199,13 @@ public final class BuiltInNodeDefinitions {
     ) implements PdfSemanticFragmentPayload {
     }
 
+    /**
+     * PDF payload for a resolved barcode or QR fragment.
+     *
+     * @param barcodeData barcode payload data
+     * @param linkOptions optional fragment-level link metadata
+     * @param bookmarkOptions optional fragment-level bookmark metadata
+     */
     public record BarcodeFragmentPayload(
             BarcodeData barcodeData,
             PdfLinkOptions linkOptions,
@@ -141,12 +213,23 @@ public final class BuiltInNodeDefinitions {
     ) implements PdfSemanticFragmentPayload {
     }
 
+    /**
+     * PDF payload for one resolved table row fragment.
+     *
+     * @param cells resolved cells in column order
+     * @param startsPageFragment whether this row starts a table page fragment
+     * @param linkOptions optional fragment-level link metadata
+     * @param bookmarkOptions optional fragment-level bookmark metadata
+     */
     public record TableRowFragmentPayload(
             List<TableResolvedCell> cells,
             boolean startsPageFragment,
             PdfLinkOptions linkOptions,
             PdfBookmarkOptions bookmarkOptions
     ) implements PdfSemanticFragmentPayload {
+        /**
+         * Creates an immutable table row fragment payload.
+         */
         public TableRowFragmentPayload {
             cells = List.copyOf(cells);
         }

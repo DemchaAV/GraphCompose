@@ -10,6 +10,10 @@ import java.util.List;
 
 /**
  * Shared immutable context passed to semantic export backends.
+ *
+ * @param canvas physical page canvas for semantic export
+ * @param customFontFamilies document-local font families available to the backend
+ * @param outputFile optional export output file
  */
 public record SemanticExportContext(
         LayoutCanvas canvas,

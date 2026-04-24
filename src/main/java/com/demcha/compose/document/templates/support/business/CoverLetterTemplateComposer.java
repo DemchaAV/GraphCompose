@@ -24,6 +24,12 @@ public final class CoverLetterTemplateComposer {
     private final CoverLetterLayoutPolicy coverLetterLayout;
     private final TemplateLayoutPolicy layout;
 
+    /**
+     * Creates a cover-letter scene composer.
+     *
+     * @param theme main letter theme
+     * @param signatureTheme theme used for the closing/signature block
+     */
     public CoverLetterTemplateComposer(CvTheme theme, CvTheme signatureTheme) {
         this.theme = Objects.requireNonNull(theme, "theme");
         this.signatureTheme = Objects.requireNonNull(signatureTheme, "signatureTheme");
@@ -31,6 +37,12 @@ public final class CoverLetterTemplateComposer {
         this.layout = coverLetterLayout.rhythm();
     }
 
+    /**
+     * Composes a cover-letter spec into the active canonical target.
+     *
+     * @param target active template compose target
+     * @param spec cover-letter document spec
+     */
     public void compose(TemplateComposeTarget target, CoverLetterDocumentSpec spec) {
         CoverLetterDocumentSpec safe = Objects.requireNonNull(spec, "spec");
         target.startDocument("MainVBoxContainer", layout.rootSpacing());

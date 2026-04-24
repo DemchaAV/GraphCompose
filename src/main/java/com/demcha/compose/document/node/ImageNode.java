@@ -11,6 +11,15 @@ import java.util.Objects;
 
 /**
  * Atomic semantic image node.
+ *
+ * @param name node name used in snapshots and layout graph paths
+ * @param imageData semantic image payload
+ * @param width optional target width
+ * @param height optional target height
+ * @param linkOptions optional node-level link metadata
+ * @param bookmarkOptions optional node-level bookmark metadata
+ * @param padding inner padding
+ * @param margin outer margin
  */
 public record ImageNode(
         String name,
@@ -22,6 +31,9 @@ public record ImageNode(
         Padding padding,
         Margin margin
 ) implements DocumentNode {
+    /**
+     * Normalizes spacing defaults and validates explicit image dimensions.
+     */
     public ImageNode {
         name = name == null ? "" : name;
         imageData = Objects.requireNonNull(imageData, "imageData");

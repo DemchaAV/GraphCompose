@@ -58,6 +58,9 @@ public record CvDocumentSpec(
         private Header header;
         private final List<CvModule> modules = new ArrayList<>();
 
+        private Builder() {
+        }
+
         /**
          * Sets the top-level header.
          *

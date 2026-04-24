@@ -2,8 +2,14 @@ package com.demcha.compose.document.layout;
 
 /**
  * Available layout space for one node measurement/layout step.
+ *
+ * @param availableWidth available content width
+ * @param availableHeight available content height
  */
 public record BoxConstraints(double availableWidth, double availableHeight) {
+    /**
+     * Creates validated non-negative layout constraints.
+     */
     public BoxConstraints {
         if (availableWidth < 0 || Double.isNaN(availableWidth) || Double.isInfinite(availableWidth)) {
             throw new IllegalArgumentException("availableWidth must be finite and non-negative: " + availableWidth);

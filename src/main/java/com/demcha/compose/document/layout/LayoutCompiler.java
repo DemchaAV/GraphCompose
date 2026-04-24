@@ -25,10 +25,24 @@ public final class LayoutCompiler {
 
     private final NodeRegistry registry;
 
+    /**
+     * Creates a compiler with the node definition registry used for measurement,
+     * splitting, and fragment emission.
+     *
+     * @param registry semantic node definition registry
+     */
     public LayoutCompiler(NodeRegistry registry) {
         this.registry = Objects.requireNonNull(registry, "registry");
     }
 
+    /**
+     * Compiles semantic roots into placed nodes and renderable fragments.
+     *
+     * @param graph semantic document graph
+     * @param prepareContext node preparation context
+     * @param fragmentContext fragment emission context
+     * @return fixed-layout graph ready for rendering or snapshot extraction
+     */
     public LayoutGraph compile(DocumentGraph graph, PrepareContext prepareContext, FragmentContext fragmentContext) {
         Objects.requireNonNull(graph, "graph");
         Objects.requireNonNull(prepareContext, "prepareContext");

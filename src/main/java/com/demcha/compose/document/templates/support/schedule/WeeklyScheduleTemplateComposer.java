@@ -35,10 +35,21 @@ public final class WeeklyScheduleTemplateComposer {
     private static final double HEADER_GAP = 18;
     private final WeeklyScheduleTheme theme;
 
+    /**
+     * Creates a weekly schedule scene composer.
+     *
+     * @param theme visual tokens for schedule rendering
+     */
     public WeeklyScheduleTemplateComposer(WeeklyScheduleTheme theme) {
         this.theme = Objects.requireNonNull(theme, "theme");
     }
 
+    /**
+     * Emits the weekly schedule header, day bands, roster matrix, and footer notes.
+     *
+     * @param target canonical template compose target
+     * @param spec weekly schedule document spec
+     */
     public void compose(TemplateComposeTarget target, WeeklyScheduleDocumentSpec spec) {
         WeeklyScheduleData safe = Objects.requireNonNull(spec, "spec").schedule();
         if (safe.days().isEmpty()) {

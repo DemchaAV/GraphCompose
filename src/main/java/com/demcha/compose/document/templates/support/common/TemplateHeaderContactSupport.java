@@ -24,6 +24,16 @@ public final class TemplateHeaderContactSupport {
     private TemplateHeaderContactSupport() {
     }
 
+    /**
+     * Builds a single inline contact row where each contact remains individually linkable.
+     *
+     * @param name semantic paragraph name
+     * @param header header contact data
+     * @param theme CV visual theme
+     * @param align horizontal alignment
+     * @param margin outer margin
+     * @return paragraph instruction, or {@code null} when no links are available
+     */
     public static TemplateParagraphSpec linkRow(String name,
                                                 Header header,
                                                 CvTheme theme,

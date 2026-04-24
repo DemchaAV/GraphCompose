@@ -61,11 +61,23 @@ public record CoverLetterDocumentSpec(
         private Builder() {
         }
 
+        /**
+         * Sets the contact/profile header.
+         *
+         * @param header header block
+         * @return this builder
+         */
         public Builder header(Header header) {
             this.header = header;
             return this;
         }
 
+        /**
+         * Configures the contact/profile header.
+         *
+         * @param spec header builder callback
+         * @return this builder
+         */
         public Builder header(Consumer<Header.Builder> spec) {
             Header.Builder builder = Header.builder();
             if (spec != null) {
@@ -74,20 +86,44 @@ public record CoverLetterDocumentSpec(
             return header(builder.build());
         }
 
+        /**
+         * Sets the cover-letter body.
+         *
+         * @param body body text
+         * @return this builder
+         */
         public Builder body(String body) {
             this.body = body;
             return this;
         }
 
+        /**
+         * Alias for {@link #body(String)}.
+         *
+         * @param body body text
+         * @return this builder
+         */
         public Builder letter(String body) {
             return body(body);
         }
 
+        /**
+         * Sets the job details.
+         *
+         * @param jobDetails job metadata
+         * @return this builder
+         */
         public Builder jobDetails(JobDetails jobDetails) {
             this.jobDetails = jobDetails;
             return this;
         }
 
+        /**
+         * Configures the job details.
+         *
+         * @param spec job details builder callback
+         * @return this builder
+         */
         public Builder job(Consumer<JobDetails.Builder> spec) {
             JobDetails.Builder builder = JobDetails.builder();
             if (spec != null) {
@@ -96,6 +132,11 @@ public record CoverLetterDocumentSpec(
             return jobDetails(builder.build());
         }
 
+        /**
+         * Builds the immutable cover-letter spec.
+         *
+         * @return cover-letter document spec
+         */
         public CoverLetterDocumentSpec build() {
             return new CoverLetterDocumentSpec(header, body, jobDetails);
         }

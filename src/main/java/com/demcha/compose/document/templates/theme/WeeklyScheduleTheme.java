@@ -8,6 +8,32 @@ import java.awt.Color;
 
 /**
  * Shared visual tokens for weekly schedule templates.
+ *
+ * @param titleColor title text color
+ * @param accentColor accent color
+ * @param bodyColor body text color
+ * @param mutedTextColor muted text color
+ * @param gridBorderColor grid border color
+ * @param bandFillColor header band fill color
+ * @param nameColumnFillColor name column fill color
+ * @param emptyCellFillColor empty cell fill color
+ * @param titleFont title font family
+ * @param bodyFont body font family
+ * @param titleFontSize title font size
+ * @param weekLabelFontSize week label font size
+ * @param dayLabelFontSize day label font size
+ * @param noteFontSize note font size
+ * @param metricFontSize metric font size
+ * @param personNameFontSize person name font size
+ * @param cellFontSize schedule cell font size
+ * @param footerFontSize footer font size
+ * @param rootSpacing spacing between root blocks
+ * @param sectionSpacing spacing between sections
+ * @param nameColumnWidth width of the fixed name column
+ * @param bandPaddingVertical vertical padding for header bands
+ * @param bandPaddingHorizontal horizontal padding for header bands
+ * @param bodyPaddingVertical vertical body padding
+ * @param bodyPaddingHorizontal horizontal body padding
  */
 public record WeeklyScheduleTheme(
         Color titleColor,
@@ -36,6 +62,11 @@ public record WeeklyScheduleTheme(
         double bodyPaddingVertical,
         double bodyPaddingHorizontal
 ) {
+    /**
+     * Builds the title text style.
+     *
+     * @return title text style
+     */
     public TextStyle titleStyle() {
         return TextStyle.builder()
                 .fontName(titleFont)
@@ -45,6 +76,11 @@ public record WeeklyScheduleTheme(
                 .build();
     }
 
+    /**
+     * Builds the week-label text style.
+     *
+     * @return week-label text style
+     */
     public TextStyle weekLabelStyle() {
         return TextStyle.builder()
                 .fontName(titleFont)
@@ -54,6 +90,11 @@ public record WeeklyScheduleTheme(
                 .build();
     }
 
+    /**
+     * Builds the day-label text style.
+     *
+     * @return day-label text style
+     */
     public TextStyle dayLabelStyle() {
         return TextStyle.builder()
                 .fontName(titleFont)
@@ -63,6 +104,11 @@ public record WeeklyScheduleTheme(
                 .build();
     }
 
+    /**
+     * Builds the day note text style.
+     *
+     * @return note text style
+     */
     public TextStyle noteStyle() {
         return TextStyle.builder()
                 .fontName(bodyFont)
@@ -72,6 +118,11 @@ public record WeeklyScheduleTheme(
                 .build();
     }
 
+    /**
+     * Builds the metric-row text style.
+     *
+     * @return metric text style
+     */
     public TextStyle metricStyle() {
         return TextStyle.builder()
                 .fontName(titleFont)
@@ -81,6 +132,11 @@ public record WeeklyScheduleTheme(
                 .build();
     }
 
+    /**
+     * Builds the person-name text style.
+     *
+     * @return person-name text style
+     */
     public TextStyle personNameStyle() {
         return TextStyle.builder()
                 .fontName(titleFont)
@@ -90,6 +146,12 @@ public record WeeklyScheduleTheme(
                 .build();
     }
 
+    /**
+     * Builds the schedule cell text style.
+     *
+     * @param textColor optional override text color
+     * @return cell text style
+     */
     public TextStyle cellTextStyle(Color textColor) {
         return TextStyle.builder()
                 .fontName(bodyFont)
@@ -99,6 +161,12 @@ public record WeeklyScheduleTheme(
                 .build();
     }
 
+    /**
+     * Builds the category label text style.
+     *
+     * @param textColor optional override text color
+     * @return category label text style
+     */
     public TextStyle categoryLabelStyle(Color textColor) {
         return TextStyle.builder()
                 .fontName(titleFont)
@@ -108,6 +176,11 @@ public record WeeklyScheduleTheme(
                 .build();
     }
 
+    /**
+     * Builds the footer text style.
+     *
+     * @return footer text style
+     */
     public TextStyle footerStyle() {
         return TextStyle.builder()
                 .fontName(bodyFont)
@@ -117,6 +190,11 @@ public record WeeklyScheduleTheme(
                 .build();
     }
 
+    /**
+     * Returns the default weekly schedule theme.
+     *
+     * @return default theme
+     */
     public static WeeklyScheduleTheme defaultTheme() {
         return new WeeklyScheduleTheme(
                 new Color(21, 46, 86),

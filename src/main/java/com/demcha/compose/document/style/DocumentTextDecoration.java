@@ -9,10 +9,28 @@ package com.demcha.compose.document.style;
  * @author Artem Demchyshyn
  */
 public enum DocumentTextDecoration {
+    /**
+     * Regular text without additional decoration.
+     */
     DEFAULT,
+    /**
+     * Bold text.
+     */
     BOLD,
+    /**
+     * Italic text.
+     */
     ITALIC,
+    /**
+     * Bold italic text.
+     */
     BOLD_ITALIC,
+    /**
+     * Underlined text.
+     */
     UNDERLINE,
+    /**
+     * Strikethrough text.
+     */
     STRIKETHROUGH
 }

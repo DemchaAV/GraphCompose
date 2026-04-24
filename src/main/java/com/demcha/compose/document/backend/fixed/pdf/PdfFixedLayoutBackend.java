@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -92,11 +93,75 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
 
         long startNanos = System.nanoTime();
         RENDER_LOG.debug(
-                "render.pdf.fixed.start pages={} fragments={} outputConfigured={} guideLines={}",
+                "render.pdf.fixed.start pages={} fragments={} outputConfigured={} streamConfigured={} guideLines={}",
+                graph.totalPages(),
+                graph.fragments().size(),
+                context.outputFile() != null,
+                context.outputStream() != null,
+                context.guideLines());
+        try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            int pageCount = renderToOutput(graph, context, output);
+            byte[] bytes = output.toByteArray();
+            RENDER_LOG.debug(
+                    "render.pdf.fixed.end pages={} fragments={} byteCount={} durationMs={}",
+                    pageCount,
+                    graph.fragments().size(),
+                    bytes.length,
+                    TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos));
+            return bytes;
+        } catch (Exception ex) {
+            RENDER_LOG.error(
+                    "render.pdf.fixed.failed pages={} fragments={} errorType={}",
+                    graph.totalPages(),
+                    graph.fragments().size(),
+                    ex.getClass().getSimpleName(),
+                    ex);
+            throw ex;
+        }
+    }
+
+    /**
+     * Streams the resolved layout graph into the caller-owned output stream.
+     *
+     * <p>The backend writes the complete PDF document to the supplied stream but
+     * never closes it. The caller remains responsible for HTTP/file/S3 stream
+     * lifecycle and backpressure.</p>
+     *
+     * @param graph resolved layout graph produced by the semantic compiler
+     * @param context fixed-layout render configuration with a non-null output stream
+     * @throws Exception if PDF creation, rendering, or saving fails
+     */
+    public void write(LayoutGraph graph, FixedLayoutRenderContext context) throws Exception {
+        Objects.requireNonNull(graph, "graph");
+        Objects.requireNonNull(context, "context");
+        OutputStream output = Objects.requireNonNull(context.outputStream(), "context.outputStream");
+
+        long startNanos = System.nanoTime();
+        RENDER_LOG.debug(
+                "render.pdf.fixed.stream.start pages={} fragments={} outputConfigured={} guideLines={}",
                 graph.totalPages(),
                 graph.fragments().size(),
                 context.outputFile() != null,
                 context.guideLines());
+        try {
+            int pageCount = renderToOutput(graph, context, output);
+            RENDER_LOG.debug(
+                    "render.pdf.fixed.stream.end pages={} fragments={} durationMs={}",
+                    pageCount,
+                    graph.fragments().size(),
+                    TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos));
+        } catch (Exception ex) {
+            RENDER_LOG.error(
+                    "render.pdf.fixed.stream.failed pages={} fragments={} errorType={}",
+                    graph.totalPages(),
+                    graph.fragments().size(),
+                    ex.getClass().getSimpleName(),
+                    ex);
+            throw ex;
+        }
+    }
+
+    private int renderToOutput(LayoutGraph graph, FixedLayoutRenderContext context, OutputStream output) throws Exception {
         try (PDDocument document = new PDDocument()) {
             FontLibrary fonts = DefaultFonts.library(document, context.customFontFamilies());
             List<PDPage> pages = createPages(document, graph);
@@ -120,25 +185,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
             if (context.outputFile() != null) {
                 document.save(context.outputFile().toFile());
             }
-            try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-                document.save(output);
-                byte[] bytes = output.toByteArray();
-                RENDER_LOG.debug(
-                        "render.pdf.fixed.end pages={} fragments={} byteCount={} durationMs={}",
-                        pages.size(),
-                        graph.fragments().size(),
-                        bytes.length,
-                        TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos));
-                return bytes;
-            }
-        } catch (Exception ex) {
-            RENDER_LOG.error(
-                    "render.pdf.fixed.failed pages={} fragments={} errorType={}",
-                    graph.totalPages(),
-                    graph.fragments().size(),
-                    ex.getClass().getSimpleName(),
-                    ex);
-            throw ex;
+            document.save(output);
+            return pages.size();
         }
     }
 

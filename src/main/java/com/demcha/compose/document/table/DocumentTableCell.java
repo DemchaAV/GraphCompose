@@ -17,6 +17,9 @@ import java.util.Objects;
  */
 public record DocumentTableCell(List<String> lines, DocumentTableStyle style) {
 
+    /**
+     * Creates a normalized table cell payload.
+     */
     public DocumentTableCell {
         lines = normalizeLines(lines);
     }

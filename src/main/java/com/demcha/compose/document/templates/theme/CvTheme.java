@@ -10,6 +10,19 @@ import java.awt.Color;
 
 /**
  * Reusable visual theme for CV and cover-letter style templates.
+ *
+ * @param primaryColor primary heading color
+ * @param secondaryColor section heading color
+ * @param bodyColor body text color
+ * @param accentColor accent/link color
+ * @param headerFont font used for display headings
+ * @param bodyFont font used for body text
+ * @param nameFontSize display name font size
+ * @param headerFontSize section heading font size
+ * @param bodyFontSize body font size
+ * @param spacing default wrapped-line/list spacing
+ * @param modulMargin historical module margin token
+ * @param spacingModuleName spacing around module titles
  */
 public record CvTheme(
         Color primaryColor,

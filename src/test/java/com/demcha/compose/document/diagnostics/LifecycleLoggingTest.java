@@ -52,8 +52,8 @@ class LifecycleLoggingTest {
                 assertThat(layoutLog.messages()).anyMatch(message -> message.contains("layout.compile.end"));
                 assertThat(paginationLog.messages()).anyMatch(message -> message.contains("pagination.compile.start"));
                 assertThat(paginationLog.messages()).anyMatch(message -> message.contains("pagination.compile.end"));
-                assertThat(renderLog.messages()).anyMatch(message -> message.contains("render.pdf.fixed.start"));
-                assertThat(renderLog.messages()).anyMatch(message -> message.contains("render.pdf.fixed.end"));
+                assertThat(renderLog.messages()).anyMatch(message -> message.contains("render.pdf.fixed.stream.start"));
+                assertThat(renderLog.messages()).anyMatch(message -> message.contains("render.pdf.fixed.stream.end"));
             } finally {
                 try {
                     document.close();

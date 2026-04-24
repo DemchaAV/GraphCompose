@@ -15,6 +15,12 @@ import java.io.IOException;
 public final class PdfImageFragmentRenderHandler
         implements PdfFragmentRenderHandler<BuiltInNodeDefinitions.ImageFragmentPayload> {
 
+    /**
+     * Creates the image fragment renderer.
+     */
+    public PdfImageFragmentRenderHandler() {
+    }
+
     @Override
     public Class<BuiltInNodeDefinitions.ImageFragmentPayload> payloadType() {
         return BuiltInNodeDefinitions.ImageFragmentPayload.class;

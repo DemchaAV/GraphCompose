@@ -5,6 +5,17 @@ import com.demcha.compose.engine.components.style.Padding;
 
 /**
  * Concrete fragment resolved to a page and absolute page coordinates.
+ *
+ * @param path stable semantic path for the fragment owner
+ * @param fragmentIndex index within the owner's emitted fragments
+ * @param pageIndex page that contains this fragment
+ * @param x absolute page x coordinate
+ * @param y absolute page y coordinate
+ * @param width fragment width
+ * @param height fragment height
+ * @param margin owner margin used for diagnostics
+ * @param padding owner padding used for diagnostics
+ * @param payload backend-specific fragment payload
  */
 public record PlacedFragment(
         String path,
@@ -18,6 +29,13 @@ public record PlacedFragment(
         Padding padding,
         Object payload
 ) {
+    /**
+     * Places a local fragment into absolute page coordinates.
+     *
+     * @param fragment fragment emitted by a node definition
+     * @param placement owner placement metadata
+     * @return placed fragment
+     */
     public static PlacedFragment from(LayoutFragment fragment, FragmentPlacement placement) {
         return new PlacedFragment(
                 fragment.path(),

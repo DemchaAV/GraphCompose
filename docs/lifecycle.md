@@ -9,7 +9,7 @@ GraphCompose.document(...)
   -> semantic nodes
   -> layout graph
   -> layout snapshot or fixed backend render
-  -> PDF bytes/file
+  -> PDF stream/bytes/file
 ```
 
 ```mermaid
@@ -20,7 +20,7 @@ flowchart TD
     Nodes --> Layout["Layout graph"]
     Layout --> Snapshot["layoutSnapshot()"]
     Layout --> Render["PDF fixed-layout render"]
-    Render --> Output["buildPdf() or toPdfBytes()"]
+    Render --> Output["writePdf(OutputStream), buildPdf(), or toPdfBytes()"]
     Session --> Close["close()"]
 ```
 
@@ -35,10 +35,10 @@ for layout, pagination, diagnostics, and rendering.
 - page size, margins, guide-line mode, markdown mode, and public PDF options
 - custom font family registrations
 - the semantic root nodes added by `DocumentDsl` or templates
-- cached layout snapshots and PDF bytes
+- cached layout snapshots
 - measurement resources used before rendering
 
-`DocumentSession` is mutable and not thread-safe. Create one session per document.
+`DocumentSession` is mutable and not thread-safe. Create one session per document/request.
 
 ## 2. Authoring
 
@@ -72,7 +72,9 @@ The lower-level ECS engine still has pagination helpers under `com.demcha.compos
 
 ## 5. Render
 
-`DocumentSession.toPdfBytes()` renders the resolved layout graph through `PdfFixedLayoutBackend` and returns bytes. `DocumentSession.buildPdf(...)` writes those bytes to a file.
+`DocumentSession.writePdf(OutputStream)` renders the resolved layout graph through `PdfFixedLayoutBackend` and writes the PDF to a caller-owned stream without closing it. This is the preferred server path because the session does not keep a PDF byte-array cache.
+
+`DocumentSession.toPdfBytes()` is a convenience wrapper for callers that truly need a byte array. `DocumentSession.buildPdf(...)` opens a file stream and uses the same streaming path.
 
 The canonical PDF backend:
 
@@ -84,4 +86,6 @@ The canonical PDF backend:
 
 ## 6. Close
 
-Always close the session, normally with try-with-resources. Closing releases measurement resources. It does not require consumers to manage PDFBox objects directly.
+Always close the session, normally with try-with-resources. Closing releases measurement resources and clears request-local text measurement caches. It does not require consumers to manage PDFBox objects directly.
+
+For production server guidance, see [Production Rendering](./production-rendering.md).

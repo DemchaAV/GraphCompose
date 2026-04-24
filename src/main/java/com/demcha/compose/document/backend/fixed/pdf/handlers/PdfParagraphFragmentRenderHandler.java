@@ -17,6 +17,12 @@ import java.io.IOException;
 public final class PdfParagraphFragmentRenderHandler
         implements PdfFragmentRenderHandler<BuiltInNodeDefinitions.ParagraphFragmentPayload> {
 
+    /**
+     * Creates the paragraph fragment renderer.
+     */
+    public PdfParagraphFragmentRenderHandler() {
+    }
+
     @Override
     public Class<BuiltInNodeDefinitions.ParagraphFragmentPayload> payloadType() {
         return BuiltInNodeDefinitions.ParagraphFragmentPayload.class;

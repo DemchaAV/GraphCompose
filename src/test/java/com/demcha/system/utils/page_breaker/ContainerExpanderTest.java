@@ -1,15 +1,15 @@
 package com.demcha.system.utils.page_breaker;
 
-import com.demcha.compose.layout_core.components.core.Component;
-import com.demcha.compose.layout_core.components.core.Entity;
-import com.demcha.compose.layout_core.components.geometry.ContentSize;
-import com.demcha.compose.layout_core.components.geometry.InnerBoxSize;
-import com.demcha.compose.layout_core.components.geometry.OuterBoxSize;
-import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.core.EntityManager;
-import com.demcha.compose.layout_core.exceptions.ContentSizeNotFoundException;
-import com.demcha.compose.layout_core.components.geometry.Expendable;
-import com.demcha.compose.layout_core.system.utils.containerUtils.ContainerExpander;
+import com.demcha.compose.engine.components.core.Component;
+import com.demcha.compose.engine.components.core.Entity;
+import com.demcha.compose.engine.components.geometry.ContentSize;
+import com.demcha.compose.engine.components.geometry.InnerBoxSize;
+import com.demcha.compose.engine.components.geometry.OuterBoxSize;
+import com.demcha.compose.engine.components.style.Margin;
+import com.demcha.compose.engine.core.EntityManager;
+import com.demcha.compose.engine.exceptions.ContentSizeNotFoundException;
+import com.demcha.compose.engine.components.geometry.Expendable;
+import com.demcha.compose.engine.layout.container.ContainerExpander;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

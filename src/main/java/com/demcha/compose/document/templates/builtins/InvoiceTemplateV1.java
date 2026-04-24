@@ -6,6 +6,7 @@ import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.document.templates.support.business.BusinessDocumentSceneStyles;
 import com.demcha.compose.document.templates.support.business.InvoiceTemplateComposer;
 import com.demcha.compose.document.templates.support.common.SessionTemplateComposeTarget;
+import com.demcha.compose.document.templates.support.common.TemplateLifecycleLog;
 
 /**
  * Canonical V2 implementation of the invoice template.
@@ -30,6 +31,13 @@ public final class InvoiceTemplateV1 implements InvoiceTemplate {
 
     @Override
     public void compose(DocumentSession document, InvoiceDocumentSpec spec) {
-        composer.compose(new SessionTemplateComposeTarget(document), spec);
+        long startNanos = TemplateLifecycleLog.start(getTemplateId(), spec);
+        try {
+            composer.compose(new SessionTemplateComposeTarget(document), spec);
+            TemplateLifecycleLog.success(getTemplateId(), spec, startNanos);
+        } catch (RuntimeException | Error ex) {
+            TemplateLifecycleLog.failure(getTemplateId(), spec, startNanos, ex);
+            throw ex;
+        }
     }
 }

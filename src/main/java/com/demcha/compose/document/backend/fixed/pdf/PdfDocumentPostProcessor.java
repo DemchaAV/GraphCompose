@@ -5,9 +5,9 @@ import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.document.layout.LayoutCanvas;
-import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.helpers.PdfHeaderFooterRenderer;
-import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.helpers.PdfWatermarkRenderer;
+import com.demcha.compose.engine.components.style.Margin;
+import com.demcha.compose.engine.render.pdf.helpers.PdfHeaderFooterRenderer;
+import com.demcha.compose.engine.render.pdf.helpers.PdfWatermarkRenderer;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
@@ -56,7 +56,7 @@ public final class PdfDocumentPostProcessor {
             Margin canvasMargin = canvas.margin();
             float marginLeft = canvasMargin != null ? (float) canvasMargin.left() : 24f;
             float marginRight = canvasMargin != null ? (float) canvasMargin.right() : 24f;
-            List<com.demcha.compose.layout_core.components.content.header_footer.HeaderFooterConfig> configs =
+            List<com.demcha.compose.engine.components.content.header_footer.HeaderFooterConfig> configs =
                     headerFooterOptions.stream()
                             .map(PdfOptionsAdapter::toEngine)
                             .toList();

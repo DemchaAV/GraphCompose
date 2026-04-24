@@ -1,8 +1,8 @@
 package com.demcha.compose.document.templates.theme;
 
-import com.demcha.compose.font_library.FontName;
-import com.demcha.compose.layout_core.components.content.text.TextDecoration;
-import com.demcha.compose.layout_core.components.content.text.TextStyle;
+import com.demcha.compose.font.FontName;
+import com.demcha.compose.engine.components.content.text.TextDecoration;
+import com.demcha.compose.engine.components.content.text.TextStyle;
 
 import java.awt.Color;
 

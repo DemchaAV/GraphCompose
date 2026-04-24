@@ -1,6 +1,6 @@
 package com.demcha.compose.document.templates.data.common;
 
-import com.demcha.compose.layout_core.components.content.link.LinkUrl;
+import com.demcha.compose.engine.components.content.link.LinkUrl;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

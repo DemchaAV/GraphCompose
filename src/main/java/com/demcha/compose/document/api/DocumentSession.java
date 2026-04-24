@@ -6,14 +6,14 @@ import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterZone
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
-import com.demcha.compose.font_library.DefaultFonts;
-import com.demcha.compose.font_library.FontFamilyDefinition;
-import com.demcha.compose.font_library.FontLibrary;
-import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.debug.LayoutSnapshot;
-import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFont;
-import com.demcha.compose.layout_core.system.measurement.FontLibraryTextMeasurementSystem;
-import com.demcha.compose.layout_core.system.interfaces.TextMeasurementSystem;
+import com.demcha.compose.font.DefaultFonts;
+import com.demcha.compose.font.FontFamilyDefinition;
+import com.demcha.compose.font.FontLibrary;
+import com.demcha.compose.engine.components.style.Margin;
+import com.demcha.compose.engine.debug.LayoutSnapshot;
+import com.demcha.compose.engine.render.pdf.PdfFont;
+import com.demcha.compose.engine.measurement.FontLibraryTextMeasurementSystem;
+import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
 import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
@@ -22,10 +22,12 @@ import com.demcha.compose.document.backend.semantic.SemanticExportContext;
 import com.demcha.compose.document.debug.snapshot.LayoutGraphSnapshotExtractor;
 import com.demcha.compose.document.dsl.DocumentDsl;
 import com.demcha.compose.document.layout.*;
-import com.demcha.compose.document.model.node.DocumentNode;
-import com.demcha.compose.document.model.node.ContainerNode;
+import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.ContainerNode;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -58,6 +61,9 @@ import java.util.function.Consumer;
  * @author Artem Demchyshyn
  */
 public final class DocumentSession implements AutoCloseable {
+    private static final Logger LIFECYCLE_LOG = LoggerFactory.getLogger("com.demcha.compose.document.lifecycle");
+
+    private final String sessionId = Integer.toHexString(System.identityHashCode(this));
     private final Path defaultOutputFile;
     private final NodeRegistry registry;
     private final LayoutCompiler compiler;
@@ -112,6 +118,15 @@ public final class DocumentSession implements AutoCloseable {
         this.customFontFamilies.addAll(List.copyOf(customFontFamilies));
         this.headerFooterOptions.addAll(List.copyOf(headerFooterOptions));
         refreshMeasurementServices();
+        LIFECYCLE_LOG.debug(
+                "document.session.created sessionId={} outputConfigured={} pageSize={}x{} customFontFamilies={} guideLines={} markdown={}",
+                sessionId,
+                defaultOutputFile != null,
+                Math.round(pageSize.getWidth()),
+                Math.round(pageSize.getHeight()),
+                this.customFontFamilies.size(),
+                guideLines,
+                markdown);
     }
 
     /**
@@ -142,8 +157,26 @@ public final class DocumentSession implements AutoCloseable {
      * @return this session
      */
     public DocumentSession compose(Consumer<DocumentDsl> spec) {
-        Objects.requireNonNull(spec, "spec").accept(dsl());
-        return this;
+        long startNanos = System.nanoTime();
+        LIFECYCLE_LOG.debug("document.compose.start sessionId={} revision={} roots={}", sessionId, revision, roots.size());
+        try {
+            Objects.requireNonNull(spec, "spec").accept(dsl());
+            LIFECYCLE_LOG.debug(
+                    "document.compose.end sessionId={} revision={} roots={} durationMs={}",
+                    sessionId,
+                    revision,
+                    roots.size(),
+                    elapsedMillis(startNanos));
+            return this;
+        } catch (RuntimeException | Error ex) {
+            LIFECYCLE_LOG.debug(
+                    "document.compose.failed sessionId={} revision={} roots={} errorType={}",
+                    sessionId,
+                    revision,
+                    roots.size(),
+                    ex.getClass().getSimpleName());
+            throw ex;
+        }
     }
 
     /**
@@ -386,12 +419,41 @@ public final class DocumentSession implements AutoCloseable {
      */
     public LayoutGraph layoutGraph() {
         if (cachedLayout != null && cachedLayoutRevision == revision) {
+            LIFECYCLE_LOG.debug(
+                    "document.layout.cache.hit sessionId={} revision={} roots={} pages={} nodes={} fragments={}",
+                    sessionId,
+                    revision,
+                    roots.size(),
+                    cachedLayout.totalPages(),
+                    cachedLayout.nodes().size(),
+                    cachedLayout.fragments().size());
             return cachedLayout;
         }
-        V2Context context = new V2Context();
-        cachedLayout = compiler.compile(documentGraph(), context, context);
-        cachedLayoutRevision = revision;
-        return cachedLayout;
+        long startNanos = System.nanoTime();
+        LIFECYCLE_LOG.debug("document.layout.start sessionId={} revision={} roots={}", sessionId, revision, roots.size());
+        try {
+            V2Context context = new V2Context();
+            cachedLayout = compiler.compile(documentGraph(), context, context);
+            cachedLayoutRevision = revision;
+            LIFECYCLE_LOG.debug(
+                    "document.layout.end sessionId={} revision={} roots={} pages={} nodes={} fragments={} durationMs={}",
+                    sessionId,
+                    revision,
+                    roots.size(),
+                    cachedLayout.totalPages(),
+                    cachedLayout.nodes().size(),
+                    cachedLayout.fragments().size(),
+                    elapsedMillis(startNanos));
+            return cachedLayout;
+        } catch (RuntimeException ex) {
+            LIFECYCLE_LOG.warn(
+                    "document.layout.failed sessionId={} revision={} roots={} errorType={}",
+                    sessionId,
+                    revision,
+                    roots.size(),
+                    ex.getClass().getSimpleName());
+            throw ex;
+        }
     }
 
     /**
@@ -401,10 +463,24 @@ public final class DocumentSession implements AutoCloseable {
      */
     public LayoutSnapshot layoutSnapshot() {
         if (cachedSnapshot != null && cachedSnapshotRevision == revision) {
+            LIFECYCLE_LOG.debug(
+                    "document.layoutSnapshot.cache.hit sessionId={} revision={} roots={}",
+                    sessionId,
+                    revision,
+                    roots.size());
             return cachedSnapshot;
         }
+        long startNanos = System.nanoTime();
+        LIFECYCLE_LOG.debug("document.layoutSnapshot.start sessionId={} revision={} roots={}", sessionId, revision, roots.size());
         cachedSnapshot = LayoutGraphSnapshotExtractor.extract(layoutGraph());
         cachedSnapshotRevision = revision;
+        LIFECYCLE_LOG.debug(
+                "document.layoutSnapshot.end sessionId={} revision={} roots={} pages={} durationMs={}",
+                sessionId,
+                revision,
+                roots.size(),
+                cachedSnapshot.totalPages(),
+                elapsedMillis(startNanos));
         return cachedSnapshot;
     }
 
@@ -431,15 +507,41 @@ public final class DocumentSession implements AutoCloseable {
      */
     public <R> R render(FixedLayoutBackend<R> backend, Path outputFile) throws Exception {
         Objects.requireNonNull(backend, "backend");
-        return backend.render(layoutGraph(), new FixedLayoutRenderContext(
-                canvas,
-                customFontFamilies,
-                outputFile,
-                guideLines,
-                metadataOptions,
-                watermarkOptions,
-                protectionOptions,
-                headerFooterOptions));
+        long startNanos = System.nanoTime();
+        LIFECYCLE_LOG.debug(
+                "document.render.start sessionId={} backend={} revision={} roots={} outputConfigured={}",
+                sessionId,
+                backend.name(),
+                revision,
+                roots.size(),
+                outputFile != null);
+        try {
+            R result = backend.render(layoutGraph(), new FixedLayoutRenderContext(
+                    canvas,
+                    customFontFamilies,
+                    outputFile,
+                    guideLines,
+                    metadataOptions,
+                    watermarkOptions,
+                    protectionOptions,
+                    headerFooterOptions));
+            LIFECYCLE_LOG.debug(
+                    "document.render.end sessionId={} backend={} revision={} durationMs={}",
+                    sessionId,
+                    backend.name(),
+                    revision,
+                    elapsedMillis(startNanos));
+            return result;
+        } catch (Exception ex) {
+            LIFECYCLE_LOG.error(
+                    "document.render.failed sessionId={} backend={} revision={} errorType={}",
+                    sessionId,
+                    backend.name(),
+                    revision,
+                    ex.getClass().getSimpleName(),
+                    ex);
+            throw ex;
+        }
     }
 
     /**
@@ -477,11 +579,34 @@ public final class DocumentSession implements AutoCloseable {
     public byte[] toPdfBytes() throws Exception {
         long currentPdfVersion = currentPdfInputsVersion();
         if (cachedPdfBytes != null && cachedPdfRevision == currentPdfVersion) {
+            LIFECYCLE_LOG.debug(
+                    "document.pdf.bytes.cache.hit sessionId={} revision={} byteCount={}",
+                    sessionId,
+                    revision,
+                    cachedPdfBytes.length);
             return cachedPdfBytes.clone();
         }
-        cachedPdfBytes = render(new PdfFixedLayoutBackend(), null);
-        cachedPdfRevision = currentPdfVersion;
-        return cachedPdfBytes.clone();
+        long startNanos = System.nanoTime();
+        LIFECYCLE_LOG.debug("document.pdf.bytes.start sessionId={} revision={} roots={}", sessionId, revision, roots.size());
+        try {
+            cachedPdfBytes = render(new PdfFixedLayoutBackend(), null);
+            cachedPdfRevision = currentPdfVersion;
+            LIFECYCLE_LOG.debug(
+                    "document.pdf.bytes.end sessionId={} revision={} byteCount={} durationMs={}",
+                    sessionId,
+                    revision,
+                    cachedPdfBytes.length,
+                    elapsedMillis(startNanos));
+            return cachedPdfBytes.clone();
+        } catch (Exception ex) {
+            LIFECYCLE_LOG.error(
+                    "document.pdf.bytes.failed sessionId={} revision={} errorType={}",
+                    sessionId,
+                    revision,
+                    ex.getClass().getSimpleName(),
+                    ex);
+            throw ex;
+        }
     }
 
     /**
@@ -503,7 +628,25 @@ public final class DocumentSession implements AutoCloseable {
      * @throws Exception if PDF rendering fails
      */
     public void buildPdf(Path outputFile) throws Exception {
-        Files.write(Objects.requireNonNull(outputFile, "outputFile"), toPdfBytes());
+        Path target = Objects.requireNonNull(outputFile, "outputFile");
+        long startNanos = System.nanoTime();
+        LIFECYCLE_LOG.debug("document.pdf.build.start sessionId={} revision={} roots={}", sessionId, revision, roots.size());
+        try {
+            Files.write(target, toPdfBytes());
+            LIFECYCLE_LOG.debug(
+                    "document.pdf.build.end sessionId={} revision={} durationMs={}",
+                    sessionId,
+                    revision,
+                    elapsedMillis(startNanos));
+        } catch (Exception ex) {
+            LIFECYCLE_LOG.error(
+                    "document.pdf.build.failed sessionId={} revision={} errorType={}",
+                    sessionId,
+                    revision,
+                    ex.getClass().getSimpleName(),
+                    ex);
+            throw ex;
+        }
     }
 
     /**
@@ -513,8 +656,19 @@ public final class DocumentSession implements AutoCloseable {
      */
     @Override
     public void close() throws Exception {
-        if (measurementDocument != null) {
-            measurementDocument.close();
+        LIFECYCLE_LOG.debug("document.session.close.start sessionId={} revision={} roots={}", sessionId, revision, roots.size());
+        try {
+            if (measurementDocument != null) {
+                measurementDocument.close();
+            }
+            LIFECYCLE_LOG.debug("document.session.close.end sessionId={} revision={} roots={}", sessionId, revision, roots.size());
+        } catch (Exception ex) {
+            LIFECYCLE_LOG.warn(
+                    "document.session.close.failed sessionId={} revision={} errorType={}",
+                    sessionId,
+                    revision,
+                    ex.getClass().getSimpleName());
+            throw ex;
         }
     }
 
@@ -549,6 +703,10 @@ public final class DocumentSession implements AutoCloseable {
 
     private long currentPdfInputsVersion() {
         return revision * 31L + pdfConfigVersion;
+    }
+
+    private long elapsedMillis(long startNanos) {
+        return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
     }
 
     private final class V2Context implements PrepareContext, FragmentContext {
@@ -616,5 +774,3 @@ public final class DocumentSession implements AutoCloseable {
         }
     }
 }
-
-

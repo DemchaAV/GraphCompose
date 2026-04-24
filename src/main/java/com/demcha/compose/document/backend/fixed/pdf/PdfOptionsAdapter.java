@@ -9,15 +9,15 @@ import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOption
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkLayer;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkPosition;
-import com.demcha.compose.layout_core.components.content.barcode.BarcodeData;
-import com.demcha.compose.layout_core.components.content.barcode.BarcodeType;
-import com.demcha.compose.layout_core.components.content.header_footer.HeaderFooterConfig;
-import com.demcha.compose.layout_core.components.content.header_footer.HeaderFooterZone;
-import com.demcha.compose.layout_core.components.content.metadata.DocumentMetadata;
-import com.demcha.compose.layout_core.components.content.protection.PdfProtectionConfig;
-import com.demcha.compose.layout_core.components.content.watermark.WatermarkConfig;
-import com.demcha.compose.layout_core.components.content.watermark.WatermarkLayer;
-import com.demcha.compose.layout_core.components.content.watermark.WatermarkPosition;
+import com.demcha.compose.engine.components.content.barcode.BarcodeData;
+import com.demcha.compose.engine.components.content.barcode.BarcodeType;
+import com.demcha.compose.engine.components.content.header_footer.HeaderFooterConfig;
+import com.demcha.compose.engine.components.content.header_footer.HeaderFooterZone;
+import com.demcha.compose.engine.components.content.metadata.DocumentMetadata;
+import com.demcha.compose.engine.components.content.protection.PdfProtectionConfig;
+import com.demcha.compose.engine.components.content.watermark.WatermarkConfig;
+import com.demcha.compose.engine.components.content.watermark.WatermarkLayer;
+import com.demcha.compose.engine.components.content.watermark.WatermarkPosition;
 
 /**
  * Internal adapters from canonical {@code document.*} PDF options to the

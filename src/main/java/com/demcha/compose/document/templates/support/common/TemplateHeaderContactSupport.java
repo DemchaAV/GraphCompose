@@ -1,14 +1,14 @@
 package com.demcha.compose.document.templates.support.common;
 
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
-import com.demcha.compose.document.model.node.InlineTextRun;
-import com.demcha.compose.document.model.node.TextAlign;
+import com.demcha.compose.document.node.InlineTextRun;
+import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.templates.data.common.EmailYaml;
 import com.demcha.compose.document.templates.data.common.Header;
 import com.demcha.compose.document.templates.data.common.LinkYml;
 import com.demcha.compose.document.templates.theme.CvTheme;
-import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.components.style.Padding;
+import com.demcha.compose.engine.components.style.Margin;
+import com.demcha.compose.engine.components.style.Padding;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;

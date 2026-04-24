@@ -1,11 +1,11 @@
 package com.demcha.integration;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.layout_core.components.components_builders.ComponentBuilder;
-import com.demcha.compose.layout_core.components.content.text.TextStyle;
-import com.demcha.compose.layout_core.components.layout.Align;
-import com.demcha.compose.layout_core.components.layout.Anchor;
-import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.engine.components.components_builders.ComponentBuilder;
+import com.demcha.compose.engine.components.content.text.TextStyle;
+import com.demcha.compose.engine.components.layout.Align;
+import com.demcha.compose.engine.components.layout.Anchor;
+import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.testsupport.EngineComposerHarness;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;

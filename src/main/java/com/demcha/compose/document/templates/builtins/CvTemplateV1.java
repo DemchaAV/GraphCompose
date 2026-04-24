@@ -5,6 +5,7 @@ import com.demcha.compose.document.templates.api.CvTemplate;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.support.cv.CvTemplateComposer;
 import com.demcha.compose.document.templates.support.common.SessionTemplateComposeTarget;
+import com.demcha.compose.document.templates.support.common.TemplateLifecycleLog;
 import com.demcha.compose.document.templates.theme.CvTheme;
 
 import java.util.Objects;
@@ -47,6 +48,13 @@ public final class CvTemplateV1 implements CvTemplate {
      */
     @Override
     public void compose(DocumentSession document, CvDocumentSpec documentSpec) {
-        composer.compose(new SessionTemplateComposeTarget(document), documentSpec);
+        long startNanos = TemplateLifecycleLog.start(getTemplateId(), documentSpec);
+        try {
+            composer.compose(new SessionTemplateComposeTarget(document), documentSpec);
+            TemplateLifecycleLog.success(getTemplateId(), documentSpec, startNanos);
+        } catch (RuntimeException | Error ex) {
+            TemplateLifecycleLog.failure(getTemplateId(), documentSpec, startNanos, ex);
+            throw ex;
+        }
     }
 }

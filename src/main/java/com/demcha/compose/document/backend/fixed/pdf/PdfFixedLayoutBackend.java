@@ -11,11 +11,13 @@ import com.demcha.compose.document.exceptions.UnsupportedNodeCapabilityException
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
-import com.demcha.compose.font_library.DefaultFonts;
-import com.demcha.compose.font_library.FontLibrary;
+import com.demcha.compose.font.DefaultFonts;
+import com.demcha.compose.font.FontLibrary;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
@@ -24,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Handler-based fixed-layout PDF backend for the canonical semantic document API.
@@ -41,6 +44,8 @@ import java.util.Objects;
  * @author Artem Demchyshyn
  */
 public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
+    private static final Logger RENDER_LOG = LoggerFactory.getLogger("com.demcha.compose.engine.render");
+
     private final Map<Class<?>, PdfFragmentRenderHandler<?>> handlers;
 
     /**
@@ -85,6 +90,13 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         Objects.requireNonNull(graph, "graph");
         Objects.requireNonNull(context, "context");
 
+        long startNanos = System.nanoTime();
+        RENDER_LOG.debug(
+                "render.pdf.fixed.start pages={} fragments={} outputConfigured={} guideLines={}",
+                graph.totalPages(),
+                graph.fragments().size(),
+                context.outputFile() != null,
+                context.guideLines());
         try (PDDocument document = new PDDocument()) {
             FontLibrary fonts = DefaultFonts.library(document, context.customFontFamilies());
             List<PDPage> pages = createPages(document, graph);
@@ -110,8 +122,23 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
             }
             try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
                 document.save(output);
-                return output.toByteArray();
+                byte[] bytes = output.toByteArray();
+                RENDER_LOG.debug(
+                        "render.pdf.fixed.end pages={} fragments={} byteCount={} durationMs={}",
+                        pages.size(),
+                        graph.fragments().size(),
+                        bytes.length,
+                        TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos));
+                return bytes;
             }
+        } catch (Exception ex) {
+            RENDER_LOG.error(
+                    "render.pdf.fixed.failed pages={} fragments={} errorType={}",
+                    graph.totalPages(),
+                    graph.fragments().size(),
+                    ex.getClass().getSimpleName(),
+                    ex);
+            throw ex;
         }
     }
 

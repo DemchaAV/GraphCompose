@@ -2,7 +2,7 @@ package com.demcha.compose.document.templates.support.business;
 
 import com.demcha.compose.document.templates.support.common.*;
 
-import com.demcha.compose.layout_core.components.content.text.TextStyle;
+import com.demcha.compose.engine.components.content.text.TextStyle;
 
 import java.awt.Color;
 

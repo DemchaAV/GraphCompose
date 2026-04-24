@@ -6,6 +6,7 @@ import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
 import com.demcha.compose.document.templates.support.business.BusinessDocumentSceneStyles;
 import com.demcha.compose.document.templates.support.business.ProposalTemplateComposer;
 import com.demcha.compose.document.templates.support.common.SessionTemplateComposeTarget;
+import com.demcha.compose.document.templates.support.common.TemplateLifecycleLog;
 
 /**
  * Canonical V2 implementation of the proposal template.
@@ -30,6 +31,13 @@ public final class ProposalTemplateV1 implements ProposalTemplate {
 
     @Override
     public void compose(DocumentSession document, ProposalDocumentSpec spec) {
-        composer.compose(new SessionTemplateComposeTarget(document), spec);
+        long startNanos = TemplateLifecycleLog.start(getTemplateId(), spec);
+        try {
+            composer.compose(new SessionTemplateComposeTarget(document), spec);
+            TemplateLifecycleLog.success(getTemplateId(), spec, startNanos);
+        } catch (RuntimeException | Error ex) {
+            TemplateLifecycleLog.failure(getTemplateId(), spec, startNanos, ex);
+            throw ex;
+        }
     }
 }

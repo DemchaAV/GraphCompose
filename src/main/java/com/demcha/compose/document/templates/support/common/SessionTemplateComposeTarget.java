@@ -2,8 +2,8 @@ package com.demcha.compose.document.templates.support.common;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.DocumentDsl;
-import com.demcha.compose.layout_core.components.components_builders.TableColumnSpec;
-import com.demcha.compose.layout_core.components.style.Padding;
+import com.demcha.compose.engine.components.components_builders.TableColumnSpec;
+import com.demcha.compose.engine.components.style.Padding;
 
 import java.util.Objects;
 

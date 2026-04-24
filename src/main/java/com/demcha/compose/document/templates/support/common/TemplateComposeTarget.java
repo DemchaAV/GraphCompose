@@ -1,8 +1,8 @@
 package com.demcha.compose.document.templates.support.common;
 
-import com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy;
-import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.components.style.Padding;
+import com.demcha.compose.engine.components.components_builders.BlockIndentStrategy;
+import com.demcha.compose.engine.components.style.Margin;
+import com.demcha.compose.engine.components.style.Padding;
 
 import java.util.Objects;
 

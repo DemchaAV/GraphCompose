@@ -1,7 +1,7 @@
 package com.demcha.compose.document.templates.support.business;
 
 import com.demcha.compose.document.templates.support.common.TemplateLayoutPolicy;
-import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.engine.components.style.Margin;
 
 import java.util.Objects;
 

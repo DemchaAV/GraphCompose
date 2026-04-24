@@ -1,15 +1,15 @@
 package com.demcha.mock;
 
-import com.demcha.compose.layout_core.core.Canvas;
-import com.demcha.compose.layout_core.components.core.Component;
-import com.demcha.compose.layout_core.components.core.Entity;
-import com.demcha.compose.layout_core.components.geometry.ContentSize;
-import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.engine.core.Canvas;
+import com.demcha.compose.engine.components.core.Component;
+import com.demcha.compose.engine.components.core.Entity;
+import com.demcha.compose.engine.components.geometry.ContentSize;
+import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.mock.data.CanvasData;
 import com.demcha.mock.data.MarginData;
 import com.demcha.mock.data.OffsetData;
 import com.demcha.mock.data.SizeData;
-import com.demcha.compose.layout_core.system.utils.page_breaker.Offset;
+import com.demcha.compose.engine.pagination.Offset;
 
 import java.util.Optional;
 

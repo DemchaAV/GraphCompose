@@ -2,19 +2,19 @@ package com.demcha.compose.document.templates.support.business;
 
 import com.demcha.compose.document.templates.support.common.*;
 
-import com.demcha.compose.document.model.node.TextAlign;
+import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.templates.data.invoice.InvoiceData;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.document.templates.data.invoice.InvoiceLineItem;
 import com.demcha.compose.document.templates.data.invoice.InvoiceParty;
 import com.demcha.compose.document.templates.data.invoice.InvoiceSummaryRow;
-import com.demcha.compose.layout_core.components.components_builders.TableCellSpec;
-import com.demcha.compose.layout_core.components.components_builders.TableCellStyle;
-import com.demcha.compose.layout_core.components.components_builders.TableColumnSpec;
-import com.demcha.compose.layout_core.components.content.shape.Stroke;
-import com.demcha.compose.layout_core.components.layout.Anchor;
-import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.components.style.Padding;
+import com.demcha.compose.engine.components.components_builders.TableCellSpec;
+import com.demcha.compose.engine.components.components_builders.TableCellStyle;
+import com.demcha.compose.engine.components.components_builders.TableColumnSpec;
+import com.demcha.compose.engine.components.content.shape.Stroke;
+import com.demcha.compose.engine.components.layout.Anchor;
+import com.demcha.compose.engine.components.style.Margin;
+import com.demcha.compose.engine.components.style.Padding;
 
 import java.awt.Color;
 import java.util.ArrayList;

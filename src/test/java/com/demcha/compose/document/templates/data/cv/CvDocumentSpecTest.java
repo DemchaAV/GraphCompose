@@ -2,7 +2,7 @@ package com.demcha.compose.document.templates.data.cv;
 
 import com.demcha.compose.document.templates.data.common.Header;
 
-import com.demcha.compose.document.model.node.ListMarker;
+import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.templates.TemplateTestSupport;
 import org.junit.jupiter.api.Test;
 

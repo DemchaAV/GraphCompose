@@ -1,6 +1,6 @@
 package com.demcha.components.layout.coordinator;
 
-import com.demcha.compose.layout_core.components.layout.coordinator.Placement;
+import com.demcha.compose.engine.components.layout.coordinator.Placement;
 
 import static org.mockito.Mockito.*;
 

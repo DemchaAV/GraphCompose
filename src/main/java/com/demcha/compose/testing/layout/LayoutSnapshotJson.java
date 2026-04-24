@@ -1,6 +1,6 @@
 package com.demcha.compose.testing.layout;
 
-import com.demcha.compose.layout_core.debug.LayoutSnapshot;
+import com.demcha.compose.engine.debug.LayoutSnapshot;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;

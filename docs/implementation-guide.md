@@ -41,16 +41,16 @@ Rule of thumb:
 
 ### Extend `EmptyBox<T>` when
 
-Use [EmptyBox.java](./../src/main/java/com/demcha/compose/layout_core/components/containers/abstract_builders/EmptyBox.java) when the new object is a leaf entity or a small custom object that does not manage children itself.
+Use [EmptyBox.java](./../src/main/java/com/demcha/compose/engine/components/containers/abstract_builders/EmptyBox.java) when the new object is a leaf entity or a small custom object that does not manage children itself.
 
 Examples in the codebase:
 
-- [TextBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/TextBuilder.java)
-- [ImageBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/ImageBuilder.java)
-- [CircleBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/CircleBuilder.java)
-- [LineBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/LineBuilder.java)
-- [LinkBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/LinkBuilder.java)
-- [ElementBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/ElementBuilder.java)
+- [TextBuilder.java](./../src/main/java/com/demcha/compose/engine/components/components_builders/TextBuilder.java)
+- [ImageBuilder.java](./../src/main/java/com/demcha/compose/engine/components/components_builders/ImageBuilder.java)
+- [CircleBuilder.java](./../src/main/java/com/demcha/compose/engine/components/components_builders/CircleBuilder.java)
+- [LineBuilder.java](./../src/main/java/com/demcha/compose/engine/components/components_builders/LineBuilder.java)
+- [LinkBuilder.java](./../src/main/java/com/demcha/compose/engine/components/components_builders/LinkBuilder.java)
+- [ElementBuilder.java](./../src/main/java/com/demcha/compose/engine/components/components_builders/ElementBuilder.java)
 
 This is the right choice for the exact case you asked about: an object that does not expand into a child-owning container and just needs base entity functionality plus layout/render participation.
 
@@ -65,7 +65,7 @@ What `EmptyBox<T>` gives you:
 
 ### Extend `ShapeBuilderBase<T>` when
 
-Use [ShapeBuilderBase.java](./../src/main/java/com/demcha/compose/layout_core/components/containers/abstract_builders/ShapeBuilderBase.java) when the object is still a leaf, but you want common shape helpers such as:
+Use [ShapeBuilderBase.java](./../src/main/java/com/demcha/compose/engine/components/containers/abstract_builders/ShapeBuilderBase.java) when the object is still a leaf, but you want common shape helpers such as:
 
 - fill color
 - stroke
@@ -73,18 +73,18 @@ Use [ShapeBuilderBase.java](./../src/main/java/com/demcha/compose/layout_core/co
 
 Examples:
 
-- [RectangleBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/RectangleBuilder.java)
-- [ButtonBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/ButtonBuilder.java)
+- [RectangleBuilder.java](./../src/main/java/com/demcha/compose/engine/components/components_builders/RectangleBuilder.java)
+- [ButtonBuilder.java](./../src/main/java/com/demcha/compose/engine/components/components_builders/ButtonBuilder.java)
 
 ### Extend `ContainerBuilder<T>` when
 
-Use [ContainerBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/containers/abstract_builders/ContainerBuilder.java) when the new object owns child entities and participates in parent/child layout.
+Use [ContainerBuilder.java](./../src/main/java/com/demcha/compose/engine/components/containers/abstract_builders/ContainerBuilder.java) when the new object owns child entities and participates in parent/child layout.
 
 Examples:
 
-- [HContainerBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/HContainerBuilder.java)
-- [VContainerBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/VContainerBuilder.java)
-- [ModuleBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/ModuleBuilder.java)
+- [HContainerBuilder.java](./../src/main/java/com/demcha/compose/engine/components/components_builders/HContainerBuilder.java)
+- [VContainerBuilder.java](./../src/main/java/com/demcha/compose/engine/components/components_builders/VContainerBuilder.java)
+- [ModuleBuilder.java](./../src/main/java/com/demcha/compose/engine/components/components_builders/ModuleBuilder.java)
 
 Use this path when the object should call `addChild(...)` and arrange nested entities.
 
@@ -103,9 +103,9 @@ If the object should render something visible, the entity needs a renderable mar
 
 Examples:
 
-- [TextComponent.java](./../src/main/java/com/demcha/compose/layout_core/components/renderable/TextComponent.java)
-- [Rectangle.java](./../src/main/java/com/demcha/compose/layout_core/components/renderable/Rectangle.java)
-- [ImageComponent.java](./../src/main/java/com/demcha/compose/layout_core/components/renderable/ImageComponent.java)
+- [TextComponent.java](./../src/main/java/com/demcha/compose/engine/components/renderable/TextComponent.java)
+- [Rectangle.java](./../src/main/java/com/demcha/compose/engine/components/renderable/Rectangle.java)
+- [ImageComponent.java](./../src/main/java/com/demcha/compose/engine/components/renderable/ImageComponent.java)
 
 Those renderable components are render markers. Prefer keeping them backend-neutral and let renderer-owned handlers perform format-specific drawing.
 
@@ -161,7 +161,7 @@ If the engine needs to place the object, it usually needs a size signal.
 
 The most common component is:
 
-- [ContentSize.java](./../src/main/java/com/demcha/compose/layout_core/components/geometry/ContentSize.java)
+- [ContentSize.java](./../src/main/java/com/demcha/compose/engine/components/geometry/ContentSize.java)
 
 For simple fixed-size objects, set `ContentSize` directly in the builder.
 
@@ -169,7 +169,7 @@ For measured objects, compute size in `build()` before the entity is registered.
 
 Example:
 
-- [TextBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/TextBuilder.java) calls `TextComponent.autoMeasureText(...)` when auto-size is enabled.
+- [TextBuilder.java](./../src/main/java/com/demcha/compose/engine/components/components_builders/TextBuilder.java) calls `TextComponent.autoMeasureText(...)` when auto-size is enabled.
 
 ### Layout components
 
@@ -196,7 +196,7 @@ Steps:
 3. add fluent builder methods that attach the data/style components
 4. set or calculate `ContentSize`
 5. register the entity through `build()`
-6. add a factory method to [ComponentBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/ComponentBuilder.java) if you want `composer.componentBuilder().yourObject()`
+6. add a factory method to [ComponentBuilder.java](./../src/main/java/com/demcha/compose/engine/components/components_builders/ComponentBuilder.java) if you want `composer.componentBuilder().yourObject()`
 
 Leaf rule of thumb:
 
@@ -246,10 +246,10 @@ Why the table uses this contract:
 
 Relevant files:
 
-- [TableBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/TableBuilder.java)
-- [TableRow.java](./../src/main/java/com/demcha/compose/layout_core/components/renderable/TableRow.java)
-- [TableCellBox.java](./../src/main/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/helpers/TableCellBox.java)
-- [TableResolvedCell.java](./../src/main/java/com/demcha/compose/layout_core/components/content/table/TableResolvedCell.java)
+- [TableBuilder.java](./../src/main/java/com/demcha/compose/engine/components/components_builders/TableBuilder.java)
+- [TableRow.java](./../src/main/java/com/demcha/compose/engine/components/renderable/TableRow.java)
+- [TableCellBox.java](./../src/main/java/com/demcha/compose/engine/render/pdf/helpers/TableCellBox.java)
+- [TableResolvedCell.java](./../src/main/java/com/demcha/compose/engine/components/content/table/TableResolvedCell.java)
 
 Rule of thumb:
 
@@ -312,19 +312,19 @@ Preferred extension pattern for new backends:
 
 Important files:
 
-- [Render.java](./../src/main/java/com/demcha/compose/layout_core/system/interfaces/Render.java)
-- [RenderPassSession.java](./../src/main/java/com/demcha/compose/layout_core/system/interfaces/RenderPassSession.java)
-- [RenderStream.java](./../src/main/java/com/demcha/compose/layout_core/system/interfaces/RenderStream.java)
-- [PdfRenderingSystemECS.java](./../src/main/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderingSystemECS.java)
-- [PdfRenderSession.java](./../src/main/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderSession.java)
-- [EntityRenderOrder.java](./../src/main/java/com/demcha/compose/layout_core/system/rendering/EntityRenderOrder.java)
+- [Render.java](./../src/main/java/com/demcha/compose/engine/render/Render.java)
+- [RenderPassSession.java](./../src/main/java/com/demcha/compose/engine/render/RenderPassSession.java)
+- [RenderStream.java](./../src/main/java/com/demcha/compose/engine/render/RenderStream.java)
+- [PdfRenderingSystemECS.java](./../src/main/java/com/demcha/compose/engine/render/pdf/PdfRenderingSystemECS.java)
+- [PdfRenderSession.java](./../src/main/java/com/demcha/compose/engine/render/pdf/PdfRenderSession.java)
+- [EntityRenderOrder.java](./../src/main/java/com/demcha/compose/engine/render/EntityRenderOrder.java)
 
 Migration rule for new engine components:
 
 - implement backend-neutral `Render`, not backend-specific render interfaces
-- move PDF drawing into `...pdf_systems.handlers`
+- move PDF drawing into `...render.pdf.handlers`
 - use `TextMeasurementSystem` for text width and line metrics instead of reaching through `LayoutSystem`
-- place PDF-only helper objects in `...pdf_systems.helpers`
+- place PDF-only helper objects in `...render.pdf.helpers`
 - keep page-surface lifetime in a backend-specific `RenderPassSession`, not in engine builders or render markers
 - keep resolved draw ordering in renderer-owned or renderer-neutral rendering helpers such as `EntityRenderOrder`
 - register a render handler for every engine render marker because the PDF entity path no longer supports a backend-specific render fallback
@@ -370,12 +370,12 @@ The layout side uses entity components, not builder classes directly.
 
 Important files:
 
-- [LayoutTraversalContext.java](./../src/main/java/com/demcha/compose/layout_core/core/LayoutTraversalContext.java)
-- [LayoutSystem.java](./../src/main/java/com/demcha/compose/layout_core/system/LayoutSystem.java)
-- [ComputedPosition.java](./../src/main/java/com/demcha/compose/layout_core/components/layout/coordinator/ComputedPosition.java)
-- [PageBreaker.java](./../src/main/java/com/demcha/compose/layout_core/system/utils/page_breaker/PageBreaker.java)
-- [EntityBounds.java](./../src/main/java/com/demcha/compose/layout_core/components/geometry/EntityBounds.java)
-- [ParentContainerUpdater.java](./../src/main/java/com/demcha/compose/layout_core/system/utils/page_breaker/ParentContainerUpdater.java)
+- [LayoutTraversalContext.java](./../src/main/java/com/demcha/compose/engine/core/LayoutTraversalContext.java)
+- [LayoutSystem.java](./../src/main/java/com/demcha/compose/engine/layout/LayoutSystem.java)
+- [ComputedPosition.java](./../src/main/java/com/demcha/compose/engine/components/layout/coordinator/ComputedPosition.java)
+- [PageBreaker.java](./../src/main/java/com/demcha/compose/engine/pagination/PageBreaker.java)
+- [EntityBounds.java](./../src/main/java/com/demcha/compose/engine/components/geometry/EntityBounds.java)
+- [ParentContainerUpdater.java](./../src/main/java/com/demcha/compose/engine/pagination/ParentContainerUpdater.java)
 
 In practice:
 
@@ -397,7 +397,7 @@ If those components are missing or inconsistent, the renderer cannot save you la
 
 ## When to add a method to `ComponentBuilder`
 
-Add a method to [ComponentBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/ComponentBuilder.java) when:
+Add a method to [ComponentBuilder.java](./../src/main/java/com/demcha/compose/engine/components/components_builders/ComponentBuilder.java) when:
 
 - the new object is part of the public builder API
 - it should be reachable from `composer.componentBuilder()`
@@ -421,13 +421,13 @@ Do not add a method there if the new object is only an internal helper for templ
 ## Good examples to copy
 
 - leaf text with measured size:
-  [TextBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/TextBuilder.java)
+  [TextBuilder.java](./../src/main/java/com/demcha/compose/engine/components/components_builders/TextBuilder.java)
 - shape-like object:
-  [RectangleBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/RectangleBuilder.java)
+  [RectangleBuilder.java](./../src/main/java/com/demcha/compose/engine/components/components_builders/RectangleBuilder.java)
 - fixed leaf line object:
-  [LineBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/LineBuilder.java)
+  [LineBuilder.java](./../src/main/java/com/demcha/compose/engine/components/components_builders/LineBuilder.java)
 - container:
-  [ModuleBuilder.java](./../src/main/java/com/demcha/compose/layout_core/components/components_builders/ModuleBuilder.java)
+  [ModuleBuilder.java](./../src/main/java/com/demcha/compose/engine/components/components_builders/ModuleBuilder.java)
 - template-level composition helper:
   [CvTemplateComposer.java](./../src/main/java/com/demcha/compose/document/templates/support/cv/CvTemplateComposer.java)
 

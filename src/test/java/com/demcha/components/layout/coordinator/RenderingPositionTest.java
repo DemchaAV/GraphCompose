@@ -1,10 +1,10 @@
 package com.demcha.components.layout.coordinator;
 
-import com.demcha.compose.layout_core.components.core.Component;
-import com.demcha.compose.layout_core.components.core.Entity;
-import com.demcha.compose.layout_core.components.layout.coordinator.ComputedPosition;
-import com.demcha.compose.layout_core.components.layout.coordinator.Position;
-import com.demcha.compose.layout_core.components.layout.coordinator.RenderingPosition;
+import com.demcha.compose.engine.components.core.Component;
+import com.demcha.compose.engine.components.core.Entity;
+import com.demcha.compose.engine.components.layout.coordinator.ComputedPosition;
+import com.demcha.compose.engine.components.layout.coordinator.Position;
+import com.demcha.compose.engine.components.layout.coordinator.RenderingPosition;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;

@@ -1,6 +1,6 @@
 package com.demcha.compose.document.templates.data.cv;
 
-import com.demcha.compose.document.model.node.ListMarker;
+import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.templates.support.common.TemplateComposeTarget;
 import com.demcha.compose.document.templates.support.common.TemplateDividerSpec;
 import com.demcha.compose.document.templates.support.common.TemplateTableSpec;

@@ -12,9 +12,9 @@ import com.demcha.compose.document.templates.builtins.ProposalTemplateV1;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
-import com.demcha.compose.layout_core.components.content.text.TextDecoration;
-import com.demcha.compose.layout_core.components.content.text.TextStyle;
-import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.engine.components.content.text.TextDecoration;
+import com.demcha.compose.engine.components.content.text.TextStyle;
+import com.demcha.compose.engine.components.style.Margin;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.awt.Color;

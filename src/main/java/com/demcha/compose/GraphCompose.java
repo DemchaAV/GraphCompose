@@ -1,16 +1,16 @@
 package com.demcha.compose;
 
-import com.demcha.compose.font_library.FontFamilyDefinition;
-import com.demcha.compose.font_library.FontName;
-import com.demcha.compose.font_library.FontShowcase;
-import com.demcha.compose.font_library.DefaultFonts;
+import com.demcha.compose.font.FontFamilyDefinition;
+import com.demcha.compose.font.FontName;
+import com.demcha.compose.font.FontShowcase;
+import com.demcha.compose.font.DefaultFonts;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterZone;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
-import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.engine.components.style.Margin;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;

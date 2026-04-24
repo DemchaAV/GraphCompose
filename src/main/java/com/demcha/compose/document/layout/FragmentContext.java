@@ -1,7 +1,7 @@
 package com.demcha.compose.document.layout;
 
-import com.demcha.compose.font_library.FontLibrary;
-import com.demcha.compose.layout_core.system.interfaces.TextMeasurementSystem;
+import com.demcha.compose.font.FontLibrary;
+import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 
 /**
  * Shared fragment emission context passed to node definitions.

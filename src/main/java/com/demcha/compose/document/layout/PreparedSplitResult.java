@@ -1,6 +1,6 @@
 package com.demcha.compose.document.layout;
 
-import com.demcha.compose.document.model.node.DocumentNode;
+import com.demcha.compose.document.node.DocumentNode;
 
 /**
  * Result of splitting a prepared semantic node into head/tail pieces.

@@ -1,10 +1,10 @@
 package com.demcha.components.geometry;
 
-import com.demcha.compose.layout_core.components.core.Entity;
-import com.demcha.compose.layout_core.components.geometry.ContentSize;
-import com.demcha.compose.layout_core.components.geometry.InnerBoxSize;
-import com.demcha.compose.layout_core.components.style.Padding;
-import com.demcha.compose.layout_core.exceptions.ContentSizeNotFoundException;
+import com.demcha.compose.engine.components.core.Entity;
+import com.demcha.compose.engine.components.geometry.ContentSize;
+import com.demcha.compose.engine.components.geometry.InnerBoxSize;
+import com.demcha.compose.engine.components.style.Padding;
+import com.demcha.compose.engine.exceptions.ContentSizeNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

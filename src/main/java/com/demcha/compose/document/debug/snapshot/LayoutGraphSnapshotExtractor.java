@@ -3,10 +3,10 @@ package com.demcha.compose.document.debug.snapshot;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedNode;
 
-import com.demcha.compose.layout_core.debug.LayoutCanvasSnapshot;
-import com.demcha.compose.layout_core.debug.LayoutInsetsSnapshot;
-import com.demcha.compose.layout_core.debug.LayoutNodeSnapshot;
-import com.demcha.compose.layout_core.debug.LayoutSnapshot;
+import com.demcha.compose.engine.debug.LayoutCanvasSnapshot;
+import com.demcha.compose.engine.debug.LayoutInsetsSnapshot;
+import com.demcha.compose.engine.debug.LayoutNodeSnapshot;
+import com.demcha.compose.engine.debug.LayoutSnapshot;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

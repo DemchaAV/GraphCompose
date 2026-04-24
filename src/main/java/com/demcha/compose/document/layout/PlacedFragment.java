@@ -1,7 +1,7 @@
 package com.demcha.compose.document.layout;
 
-import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.components.style.Padding;
+import com.demcha.compose.engine.components.style.Margin;
+import com.demcha.compose.engine.components.style.Padding;
 
 /**
  * Concrete fragment resolved to a page and absolute page coordinates.

@@ -1,6 +1,6 @@
 package com.demcha.compose.document.templates.theme;
 
-import com.demcha.compose.font_library.FontName;
+import com.demcha.compose.font.FontName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

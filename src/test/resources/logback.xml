@@ -100,23 +100,23 @@
     </root>
 
     <!-- Layout / pagination tracing during tests -->
-    <logger name="com.demcha.compose.layout_core.system.utils.page_breaker" level="DEBUG" additivity="false">
+    <logger name="com.demcha.compose.engine.pagination" level="DEBUG" additivity="false">
         <appender-ref ref="LAYOUT_TRACE_FILE"/>
     </logger>
 
-    <logger name="com.demcha.compose.layout_core.system.utils.containerUtils" level="DEBUG" additivity="false">
+    <logger name="com.demcha.compose.engine.layout.container" level="DEBUG" additivity="false">
         <appender-ref ref="LAYOUT_TRACE_FILE"/>
     </logger>
 
-    <logger name="com.demcha.compose.layout_core.components.core.Entity" level="DEBUG" additivity="false">
+    <logger name="com.demcha.compose.engine.components.core.Entity" level="DEBUG" additivity="false">
         <appender-ref ref="LAYOUT_TRACE_FILE"/>
     </logger>
 
-    <logger name="com.demcha.compose.layout_core.components.layout.coordinator" level="DEBUG" additivity="false">
+    <logger name="com.demcha.compose.engine.components.layout.coordinator" level="DEBUG" additivity="false">
         <appender-ref ref="LAYOUT_TRACE_FILE"/>
     </logger>
 
-    <logger name="com.demcha.compose.layout_core.system.interfaces.guides" level="DEBUG" additivity="false">
+    <logger name="com.demcha.compose.engine.render.guides" level="DEBUG" additivity="false">
         <appender-ref ref="LAYOUT_TRACE_FILE"/>
     </logger>
 

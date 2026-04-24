@@ -59,11 +59,11 @@ Layout-specific math and pagination mutation now live in dedicated helpers:
 
 Deprecated helper methods still exist on `Entity` as compatibility delegates, but new code should treat those methods as migration shims rather than extension points.
 
-## Engine layer: `com.demcha.compose.*`
+## Engine layer: `com.demcha.compose.engine.*`
 
-- `layout_core` contains the document model, geometry, layout resolution, pagination, and rendering systems.
-- `font_library` contains font registration, lookup, and PDF font helpers.
-- `markdown` contains markdown-to-text-token parsing helpers used by the engine.
+- `com.demcha.compose.engine.*` contains the ECS engine internals, geometry, layout resolution, pagination, measurement, and rendering systems.
+- `com.demcha.compose.font.*` contains public font registration, lookup, and PDF font helpers.
+- `com.demcha.compose.engine.text.markdown.*` contains markdown-to-text-token parsing helpers used by semantic text preparation.
 
 This layer is the reusable document engine. It is responsible for turning entities and styles into positioned render output.
 
@@ -93,7 +93,7 @@ This keeps table pagination consistent with the rest of the engine while avoidin
 
 - Engine builders and layout helpers should consume an engine-level `TextMeasurementSystem` instead of reaching through `LayoutSystem` into the active renderer.
 - Render marker components should primarily identify what needs to be rendered.
-- Backend-specific drawing logic should live in renderer-owned handler packages such as `...pdf_systems.handlers` and backend helper packages such as `...pdf_systems.helpers`.
+- Backend-specific drawing logic should live in renderer-owned handler packages such as `...render.pdf.handlers` and backend helper packages such as `...render.pdf.helpers`.
 - `RenderStream` should act as a session factory, not as a per-entity content-stream opener.
 - `RenderPassSession` is the shared seam for page lifetime and page-surface reuse; it must stay free of PDFBox and backend package imports.
 - The PDF entity path dispatches through registered render handlers only; backend-specific render interfaces are not part of the preferred engine extension seam.
@@ -103,8 +103,8 @@ This keeps table pagination consistent with the rest of the engine while avoidin
 ### Migration rule for new renderables
 
 - New engine entity renderables must implement backend-neutral `Render`, not backend-specific render interfaces.
-- New PDF drawing code must live in renderer-owned handlers under `...pdf_systems.handlers`.
-- PDF-only helper objects that are not entity render markers should live under renderer-owned helper packages such as `...pdf_systems.helpers`.
+- New PDF drawing code must live in renderer-owned handlers under `...render.pdf.handlers`.
+- PDF-only helper objects that are not entity render markers should live under renderer-owned helper packages such as `...render.pdf.helpers`.
 - Engine-side text sizing and line metrics must come from `TextMeasurementSystem`, not from `LayoutSystem -> RenderingSystem`.
 - The PDF entity path does not support backend-specific render fallback paths.
 
@@ -128,15 +128,15 @@ Fixed leaf primitives such as `Rectangle`, `Circle`, `Image`, and `Line` follow 
 
 - `com.demcha.compose.document.*` contains the canonical semantic document API, layout graph, backends, exceptions, and snapshot/debug helpers.
 - `com.demcha.compose.document.templates.*` contains the canonical higher-level template layer.
-- `com.demcha.compose.layout_core.*` contains the engine internals, measurement, layout, pagination, and PDF backend foundation.
-- `com.demcha.compose.layout_core.system.implemented_systems.word_systems.*` contains the experimental Word-specific rendering path.
+- `com.demcha.compose.engine.*` contains the engine internals, measurement, layout, pagination, and PDF backend foundation.
+- `com.demcha.compose.engine.render.word.*` contains the experimental Word-specific rendering path.
 
 ## Experimental areas
 
 - The PDF backend is the main supported rendering path.
-- The Word backend under `...implemented_systems.word_systems` is experimental and should be treated as less stable than the PDF path.
+- The Word backend under `com.demcha.compose.engine.render.word.*` is experimental and should be treated as less stable than the PDF path.
 - Future backends should add their own rendering system, render-pass session, text measurement system, and handler set without changing engine builders such as tables or template data models.
-- The shared abstraction intentionally stops at render-pass lifetime. PDF text mode, PDF annotations, and `PDPageContentStream` state management stay inside `...pdf_systems`.
+- The shared abstraction intentionally stops at render-pass lifetime. PDF text mode, PDF annotations, and `PDPageContentStream` state management stay inside `...engine.render.pdf`.
 
 ## Language status
 
@@ -158,3 +158,9 @@ GraphCompose now uses a practical three-layer regression strategy:
 3. PDF render tests for visual smoke coverage and artifact inspection
 
 See [layout-snapshot-testing.md](./layout-snapshot-testing.md) for the snapshot workflow and developer conventions.
+
+## Maintenance references
+
+- [package-map.md](./package-map.md) is the source of truth for package ownership and extension rules.
+- [lifecycle.md](./lifecycle.md) describes the document session, layout, pagination, and render lifecycle.
+- [logging.md](./logging.md) documents the quiet-by-default lifecycle logger categories.

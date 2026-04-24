@@ -4,12 +4,12 @@ import com.demcha.compose.document.backend.fixed.pdf.PdfFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
-import com.demcha.compose.font_library.FontLibrary;
-import com.demcha.compose.layout_core.components.content.shape.Side;
-import com.demcha.compose.layout_core.components.content.table.TableResolvedCell;
-import com.demcha.compose.layout_core.components.layout.Anchor;
-import com.demcha.compose.layout_core.components.style.Padding;
-import com.demcha.compose.layout_core.system.implemented_systems.pdf_systems.PdfFont;
+import com.demcha.compose.font.FontLibrary;
+import com.demcha.compose.engine.components.content.shape.Side;
+import com.demcha.compose.engine.components.content.table.TableResolvedCell;
+import com.demcha.compose.engine.components.layout.Anchor;
+import com.demcha.compose.engine.components.style.Padding;
+import com.demcha.compose.engine.render.pdf.PdfFont;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.io.IOException;

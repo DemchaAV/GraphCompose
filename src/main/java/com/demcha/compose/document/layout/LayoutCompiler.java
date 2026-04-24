@@ -1,20 +1,25 @@
 package com.demcha.compose.document.layout;
 
-import com.demcha.compose.document.model.node.DocumentNode;
-import com.demcha.compose.document.model.node.PageBreakNode;
+import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.PageBreakNode;
 
-import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.components.style.Padding;
+import com.demcha.compose.engine.components.style.Margin;
+import com.demcha.compose.engine.components.style.Padding;
 import com.demcha.compose.document.exceptions.AtomicNodeTooLargeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Compiles a semantic document graph into a canonical fixed-layout graph.
  */
 public final class LayoutCompiler {
+    private static final Logger LAYOUT_LOG = LoggerFactory.getLogger("com.demcha.compose.engine.layout");
+    private static final Logger PAGINATION_LOG = LoggerFactory.getLogger("com.demcha.compose.engine.pagination");
     private static final double EPS = 1e-6;
     private static final double NATURAL_HEIGHT = 1_000_000.0;
 
@@ -29,7 +34,10 @@ public final class LayoutCompiler {
         Objects.requireNonNull(prepareContext, "prepareContext");
         Objects.requireNonNull(fragmentContext, "fragmentContext");
 
+        long startNanos = System.nanoTime();
         LayoutCanvas canvas = prepareContext.canvas();
+        LAYOUT_LOG.debug("layout.compile.start roots={} canvas={}x{}", graph.roots().size(), Math.round(canvas.width()), Math.round(canvas.height()));
+        PAGINATION_LOG.debug("pagination.compile.start roots={} innerHeight={}", graph.roots().size(), Math.round(canvas.innerHeight()));
         CompilerState state = new CompilerState(canvas);
         List<PlacedNode> nodes = new ArrayList<>();
         List<PlacedFragment> fragments = new ArrayList<>();
@@ -53,7 +61,22 @@ public final class LayoutCompiler {
         int totalPages = nodes.isEmpty() && fragments.isEmpty()
                 ? 0
                 : state.maxTouchedPage + 1;
-        return new LayoutGraph(canvas, totalPages, nodes, fragments);
+        LayoutGraph layoutGraph = new LayoutGraph(canvas, totalPages, nodes, fragments);
+        PAGINATION_LOG.debug(
+                "pagination.compile.end roots={} pages={} nodes={} fragments={} durationMs={}",
+                graph.roots().size(),
+                totalPages,
+                nodes.size(),
+                fragments.size(),
+                TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos));
+        LAYOUT_LOG.debug(
+                "layout.compile.end roots={} pages={} nodes={} fragments={} durationMs={}",
+                graph.roots().size(),
+                totalPages,
+                nodes.size(),
+                fragments.size(),
+                TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos));
+        return layoutGraph;
     }
 
     private void compileNode(PreparedNode<DocumentNode> prepared,

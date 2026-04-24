@@ -2,16 +2,16 @@ package com.demcha.compose.document.templates.support.common;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.model.node.ContainerNode;
-import com.demcha.compose.document.model.node.DocumentNode;
-import com.demcha.compose.document.model.node.ListMarker;
-import com.demcha.compose.document.model.node.ListNode;
-import com.demcha.compose.document.model.node.ParagraphNode;
-import com.demcha.compose.document.model.node.SectionNode;
-import com.demcha.compose.document.model.node.TextAlign;
-import com.demcha.compose.layout_core.components.content.text.TextStyle;
-import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.components.style.Padding;
+import com.demcha.compose.document.node.ContainerNode;
+import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.ListMarker;
+import com.demcha.compose.document.node.ListNode;
+import com.demcha.compose.document.node.ParagraphNode;
+import com.demcha.compose.document.node.SectionNode;
+import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.engine.components.content.text.TextStyle;
+import com.demcha.compose.engine.components.style.Margin;
+import com.demcha.compose.engine.components.style.Padding;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
 

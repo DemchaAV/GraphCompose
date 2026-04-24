@@ -1,9 +1,9 @@
 package com.demcha.compose.testing.layout;
 
-import com.demcha.compose.layout_core.debug.LayoutCanvasSnapshot;
-import com.demcha.compose.layout_core.debug.LayoutInsetsSnapshot;
-import com.demcha.compose.layout_core.debug.LayoutNodeSnapshot;
-import com.demcha.compose.layout_core.debug.LayoutSnapshot;
+import com.demcha.compose.engine.debug.LayoutCanvasSnapshot;
+import com.demcha.compose.engine.debug.LayoutInsetsSnapshot;
+import com.demcha.compose.engine.debug.LayoutNodeSnapshot;
+import com.demcha.compose.engine.debug.LayoutSnapshot;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 

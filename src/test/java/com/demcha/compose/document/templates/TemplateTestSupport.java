@@ -13,7 +13,7 @@ import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
 import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
 import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleDocumentSpec;
 import com.demcha.compose.document.templates.theme.CvTheme;
-import com.demcha.compose.font_library.FontName;
+import com.demcha.compose.font.FontName;
 import com.demcha.mock.CoverLetterMock;
 import com.demcha.mock.CvDocumentSpecMock;
 import com.demcha.mock.InvoiceDataFixtures;

@@ -2,7 +2,7 @@ package com.demcha.compose.document.templates.support.schedule;
 
 import com.demcha.compose.document.templates.support.common.*;
 
-import com.demcha.compose.document.model.node.TextAlign;
+import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.templates.data.schedule.ScheduleAssignment;
 import com.demcha.compose.document.templates.data.schedule.ScheduleCategory;
 import com.demcha.compose.document.templates.data.schedule.ScheduleDay;
@@ -12,13 +12,13 @@ import com.demcha.compose.document.templates.data.schedule.ScheduleSlot;
 import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
 import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleDocumentSpec;
 import com.demcha.compose.document.templates.theme.WeeklyScheduleTheme;
-import com.demcha.compose.layout_core.components.components_builders.TableCellSpec;
-import com.demcha.compose.layout_core.components.components_builders.TableCellStyle;
-import com.demcha.compose.layout_core.components.components_builders.TableColumnSpec;
-import com.demcha.compose.layout_core.components.content.shape.Stroke;
-import com.demcha.compose.layout_core.components.layout.Anchor;
-import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.components.style.Padding;
+import com.demcha.compose.engine.components.components_builders.TableCellSpec;
+import com.demcha.compose.engine.components.components_builders.TableCellStyle;
+import com.demcha.compose.engine.components.components_builders.TableColumnSpec;
+import com.demcha.compose.engine.components.content.shape.Stroke;
+import com.demcha.compose.engine.components.layout.Anchor;
+import com.demcha.compose.engine.components.style.Margin;
+import com.demcha.compose.engine.components.style.Padding;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -96,7 +96,7 @@ public final class WeeklyScheduleTemplateComposer {
                     TextAlign.LEFT,
                     2.0,
                     "\u2022",
-                    com.demcha.compose.layout_core.components.components_builders.BlockIndentStrategy.FROM_SECOND_LINE,
+                    com.demcha.compose.engine.components.components_builders.BlockIndentStrategy.FROM_SECOND_LINE,
                     Padding.zero(),
                     Margin.top(4)));
         }

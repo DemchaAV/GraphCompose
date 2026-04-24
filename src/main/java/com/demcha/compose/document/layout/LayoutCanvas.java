@@ -1,6 +1,6 @@
 package com.demcha.compose.document.layout;
 
-import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.engine.components.style.Margin;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 /**

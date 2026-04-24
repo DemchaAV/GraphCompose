@@ -1,7 +1,7 @@
 package com.demcha.compose.testing.layout;
 
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.layout_core.debug.LayoutSnapshot;
+import com.demcha.compose.engine.debug.LayoutSnapshot;
 
 import java.io.IOException;
 import java.nio.file.Files;

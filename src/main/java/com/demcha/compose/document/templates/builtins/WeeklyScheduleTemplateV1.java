@@ -4,6 +4,7 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.WeeklyScheduleTemplate;
 import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleDocumentSpec;
 import com.demcha.compose.document.templates.support.common.SessionTemplateComposeTarget;
+import com.demcha.compose.document.templates.support.common.TemplateLifecycleLog;
 import com.demcha.compose.document.templates.support.schedule.WeeklyScheduleTemplateComposer;
 import com.demcha.compose.document.templates.theme.WeeklyScheduleTheme;
 
@@ -41,6 +42,13 @@ public final class WeeklyScheduleTemplateV1 implements WeeklyScheduleTemplate {
 
     @Override
     public void compose(DocumentSession document, WeeklyScheduleDocumentSpec spec) {
-        composer.compose(new SessionTemplateComposeTarget(document), spec);
+        long startNanos = TemplateLifecycleLog.start(getTemplateId(), spec);
+        try {
+            composer.compose(new SessionTemplateComposeTarget(document), spec);
+            TemplateLifecycleLog.success(getTemplateId(), spec, startNanos);
+        } catch (RuntimeException | Error ex) {
+            TemplateLifecycleLog.failure(getTemplateId(), spec, startNanos, ex);
+            throw ex;
+        }
     }
 }

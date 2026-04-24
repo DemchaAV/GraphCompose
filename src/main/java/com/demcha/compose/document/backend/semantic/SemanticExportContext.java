@@ -2,7 +2,7 @@ package com.demcha.compose.document.backend.semantic;
 
 import com.demcha.compose.document.layout.LayoutCanvas;
 
-import com.demcha.compose.font_library.FontFamilyDefinition;
+import com.demcha.compose.font.FontFamilyDefinition;
 
 import java.nio.file.Path;
 import java.util.Collection;

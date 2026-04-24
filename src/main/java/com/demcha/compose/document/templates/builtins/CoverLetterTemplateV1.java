@@ -5,6 +5,7 @@ import com.demcha.compose.document.templates.api.CoverLetterTemplate;
 import com.demcha.compose.document.templates.data.coverletter.CoverLetterDocumentSpec;
 import com.demcha.compose.document.templates.support.business.CoverLetterTemplateComposer;
 import com.demcha.compose.document.templates.support.common.SessionTemplateComposeTarget;
+import com.demcha.compose.document.templates.support.common.TemplateLifecycleLog;
 import com.demcha.compose.document.templates.theme.CvTheme;
 
 /**
@@ -34,6 +35,13 @@ public final class CoverLetterTemplateV1 implements CoverLetterTemplate {
 
     @Override
     public void compose(DocumentSession document, CoverLetterDocumentSpec spec) {
-        composer.compose(new SessionTemplateComposeTarget(document), spec);
+        long startNanos = TemplateLifecycleLog.start(getTemplateId(), spec);
+        try {
+            composer.compose(new SessionTemplateComposeTarget(document), spec);
+            TemplateLifecycleLog.success(getTemplateId(), spec, startNanos);
+        } catch (RuntimeException | Error ex) {
+            TemplateLifecycleLog.failure(getTemplateId(), spec, startNanos, ex);
+            throw ex;
+        }
     }
 }

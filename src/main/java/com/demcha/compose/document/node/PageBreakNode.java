@@ -1,0 +1,24 @@
+package com.demcha.compose.document.node;
+
+import com.demcha.compose.engine.components.style.Margin;
+
+/**
+ * Explicit page-break control node for the semantic document graph.
+ *
+ * <p>This node does not emit visible fragments. Instead, the layout compiler
+ * uses it as a control signal that forces subsequent content onto the next
+ * page.</p>
+ */
+public record PageBreakNode(String name, Margin margin) implements DocumentNode {
+
+    /**
+     * Creates a page-break node.
+     *
+     * @param name semantic name used in snapshots and diagnostics
+     * @param margin optional surrounding spacing; {@code null} resolves to zero
+     */
+    public PageBreakNode {
+        name = name == null ? "" : name;
+        margin = margin == null ? Margin.zero() : margin;
+    }
+}

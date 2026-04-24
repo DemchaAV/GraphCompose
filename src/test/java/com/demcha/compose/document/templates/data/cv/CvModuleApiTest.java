@@ -1,13 +1,13 @@
 package com.demcha.compose.document.templates.data.cv;
 
-import com.demcha.compose.document.model.node.ListMarker;
+import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.templates.support.common.TemplateDividerSpec;
 import com.demcha.compose.document.templates.support.common.TemplateTableSpec;
-import com.demcha.compose.layout_core.components.components_builders.TableCellSpec;
-import com.demcha.compose.layout_core.components.components_builders.TableCellStyle;
-import com.demcha.compose.layout_core.components.components_builders.TableColumnSpec;
-import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.components.style.Padding;
+import com.demcha.compose.engine.components.components_builders.TableCellSpec;
+import com.demcha.compose.engine.components.components_builders.TableCellStyle;
+import com.demcha.compose.engine.components.components_builders.TableColumnSpec;
+import com.demcha.compose.engine.components.style.Margin;
+import com.demcha.compose.engine.components.style.Padding;
 import org.junit.jupiter.api.Test;
 
 import java.awt.Color;

@@ -1,8 +1,8 @@
 package com.demcha.compose.document.templates.support.common;
 
 import com.demcha.compose.document.templates.theme.CvTheme;
-import com.demcha.compose.layout_core.components.style.Margin;
-import com.demcha.compose.layout_core.components.style.Padding;
+import com.demcha.compose.engine.components.style.Margin;
+import com.demcha.compose.engine.components.style.Padding;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

@@ -1,14 +1,14 @@
 package com.demcha.components.layout;
 
-import com.demcha.compose.layout_core.components.core.Entity;
-import com.demcha.compose.layout_core.components.geometry.ContentSize;
-import com.demcha.compose.layout_core.components.geometry.InnerBoxSize;
-import com.demcha.compose.layout_core.components.layout.Anchor;
-import com.demcha.compose.layout_core.components.layout.coordinator.ComputedPosition;
-import com.demcha.compose.layout_core.components.layout.coordinator.PaddingCoordinate;
-import com.demcha.compose.layout_core.components.layout.coordinator.Position;
-import com.demcha.compose.layout_core.core.Canvas;
-import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.engine.components.core.Entity;
+import com.demcha.compose.engine.components.geometry.ContentSize;
+import com.demcha.compose.engine.components.geometry.InnerBoxSize;
+import com.demcha.compose.engine.components.layout.Anchor;
+import com.demcha.compose.engine.components.layout.coordinator.ComputedPosition;
+import com.demcha.compose.engine.components.layout.coordinator.PaddingCoordinate;
+import com.demcha.compose.engine.components.layout.coordinator.Position;
+import com.demcha.compose.engine.core.Canvas;
+import com.demcha.compose.engine.components.style.Margin;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

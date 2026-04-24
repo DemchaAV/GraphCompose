@@ -47,11 +47,11 @@ They explain the current public surface, the engine/template split, and the reco
 
 These rules reflect the current engine design and should be treated as project policy, not just suggestions.
 
-- Engine render markers must implement backend-neutral `Render`. Do not add backend-specific render interfaces back into `layout_core/components`.
-- Rendering logic for PDF belongs in `src/main/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/handlers/`.
-- Backend-only helper objects belong in renderer-owned helper packages such as `...pdf_systems/helpers/`, not in `components/renderable`.
+- Engine render markers must implement backend-neutral `Render`. Do not add backend-specific render interfaces back into `engine/components`.
+- Rendering logic for PDF belongs in `src/main/java/com/demcha/compose/engine/render/pdf/handlers/`.
+- Backend-only helper objects belong in renderer-owned helper packages such as `com.demcha.compose.engine.render.pdf.helpers`, not in `components/renderable`.
 - Builders and layout code must get text width and line metrics from `TextMeasurementSystem`, not from `LayoutSystem -> RenderingSystem`, `PdfFont`, or PDFBox objects.
-- Keep `src/main/java/com/demcha/compose/layout_core/components/*` free of `org.apache.pdfbox` and `...implemented_systems.pdf_systems` imports.
+- Keep `src/main/java/com/demcha/compose/engine/components/*` free of `org.apache.pdfbox` and `com.demcha.compose.engine.render.pdf` imports.
 - When you add a new render marker, register its handler in `PdfRenderingSystemECS` and add/update dispatch coverage.
 
 For built-in templates, use the template-layer split as project policy as well:
@@ -66,10 +66,10 @@ For built-in templates, use the template-layer split as project policy as well:
 
 The current guard rails for these rules live in:
 
-- [EnginePdfBoundaryTest.java](./src/test/java/com/demcha/compose/layout_core/architecture/EnginePdfBoundaryTest.java)
+- [EnginePdfBoundaryTest.java](./src/test/java/com/demcha/compose/engine/architecture/EnginePdfBoundaryTest.java)
 - [CanonicalTemplateComposerPdfBoundaryTest.java](./src/test/java/com/demcha/compose/document/templates/architecture/CanonicalTemplateComposerPdfBoundaryTest.java)
-- [PdfRenderInterfaceGuardTest.java](./src/test/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderInterfaceGuardTest.java)
-- [PdfRenderingSystemECSDispatchTest.java](./src/test/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderingSystemECSDispatchTest.java)
+- [PdfRenderInterfaceGuardTest.java](./src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderInterfaceGuardTest.java)
+- [PdfRenderingSystemECSDispatchTest.java](./src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderingSystemECSDispatchTest.java)
 - [DocumentationExamplesTest.java](./src/test/java/com/demcha/documentation/DocumentationExamplesTest.java)
 
 Keep the entity core thin as project policy as well:
@@ -86,9 +86,9 @@ If you add a new engine object, decide first what kind of object it is.
 
 ### Use the right builder base class
 
-- Extend [EmptyBox.java](./src/main/java/com/demcha/compose/layout_core/components/containers/abstract_builders/EmptyBox.java) for a leaf object that does not manage children.
-- Extend [ShapeBuilderBase.java](./src/main/java/com/demcha/compose/layout_core/components/containers/abstract_builders/ShapeBuilderBase.java) for a leaf object that needs common shape behavior such as fill, stroke, or corner radius.
-- Extend [ContainerBuilder.java](./src/main/java/com/demcha/compose/layout_core/components/containers/abstract_builders/ContainerBuilder.java) for a parent object that owns child entities and participates in container layout.
+- Extend [EmptyBox.java](./src/main/java/com/demcha/compose/engine/components/containers/abstract_builders/EmptyBox.java) for a leaf object that does not manage children.
+- Extend [ShapeBuilderBase.java](./src/main/java/com/demcha/compose/engine/components/containers/abstract_builders/ShapeBuilderBase.java) for a leaf object that needs common shape behavior such as fill, stroke, or corner radius.
+- Extend [ContainerBuilder.java](./src/main/java/com/demcha/compose/engine/components/containers/abstract_builders/ContainerBuilder.java) for a parent object that owns child entities and participates in container layout.
 
 ### Make the object participate in the engine
 
@@ -108,27 +108,27 @@ Marker rule of thumb:
 
 The layout pass is driven by components and entity relationships, not by builder classes directly. See:
 
-- [LayoutSystem.java](./src/main/java/com/demcha/compose/layout_core/system/LayoutSystem.java)
-- [PdfRenderingSystemECS.java](./src/main/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderingSystemECS.java)
+- [LayoutSystem.java](./src/main/java/com/demcha/compose/engine/layout/LayoutSystem.java)
+- [PdfRenderingSystemECS.java](./src/main/java/com/demcha/compose/engine/render/pdf/PdfRenderingSystemECS.java)
 
 For text-heavy objects, also read:
 
-- [TextMeasurementSystem.java](./src/main/java/com/demcha/compose/layout_core/system/interfaces/TextMeasurementSystem.java)
+- [TextMeasurementSystem.java](./src/main/java/com/demcha/compose/engine/measurement/TextMeasurementSystem.java)
 - [docs/architecture.md](./docs/architecture.md)
 - [docs/implementation-guide.md](./docs/implementation-guide.md)
 
-If the object should be available from `composer.componentBuilder()`, add a factory method to [ComponentBuilder.java](./src/main/java/com/demcha/compose/layout_core/components/components_builders/ComponentBuilder.java).
+If the object should be available from `composer.componentBuilder()`, add a factory method to [ComponentBuilder.java](./src/main/java/com/demcha/compose/engine/components/components_builders/ComponentBuilder.java).
 
 ### Useful examples to copy
 
 - Leaf builder with measured content:
-  [TextBuilder.java](./src/main/java/com/demcha/compose/layout_core/components/components_builders/TextBuilder.java)
+  [TextBuilder.java](./src/main/java/com/demcha/compose/engine/components/components_builders/TextBuilder.java)
 - Shape-style builder:
-  [RectangleBuilder.java](./src/main/java/com/demcha/compose/layout_core/components/components_builders/RectangleBuilder.java)
+  [RectangleBuilder.java](./src/main/java/com/demcha/compose/engine/components/components_builders/RectangleBuilder.java)
 - Container builder:
-  [ModuleBuilder.java](./src/main/java/com/demcha/compose/layout_core/components/components_builders/ModuleBuilder.java)
+  [ModuleBuilder.java](./src/main/java/com/demcha/compose/engine/components/components_builders/ModuleBuilder.java)
 - Template-level composition helper:
-  [CvTemplateComposer.java](./src/main/java/com/demcha/compose/document/templates/support/CvTemplateComposer.java)
+  [CvTemplateComposer.java](./src/main/java/com/demcha/compose/document/templates/support/cv/CvTemplateComposer.java)
 
 ## Testing expectations
 
@@ -137,12 +137,12 @@ Choose the smallest tests that match the change:
 - For README or docs examples:
   [DocumentationExamplesTest.java](./src/test/java/com/demcha/documentation/DocumentationExamplesTest.java)
 - For engine/backend boundary changes:
-  [EnginePdfBoundaryTest.java](./src/test/java/com/demcha/compose/layout_core/architecture/EnginePdfBoundaryTest.java)
-  [PdfRenderInterfaceGuardTest.java](./src/test/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderInterfaceGuardTest.java)
+  [EnginePdfBoundaryTest.java](./src/test/java/com/demcha/compose/engine/architecture/EnginePdfBoundaryTest.java)
+  [PdfRenderInterfaceGuardTest.java](./src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderInterfaceGuardTest.java)
 - For public builder registration or factory changes:
-  [ComponentBuilderTest.java](./src/test/java/com/demcha/compose/layout_core/components/ComponentBuilderTest.java)
+  [ComponentBuilderTest.java](./src/test/java/com/demcha/compose/engine/components/ComponentBuilderTest.java)
 - For render-marker dispatch changes:
-  [PdfRenderingSystemECSDispatchTest.java](./src/test/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/PdfRenderingSystemECSDispatchTest.java)
+  [PdfRenderingSystemECSDispatchTest.java](./src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderingSystemECSDispatchTest.java)
 - For layout/positioning behavior:
   [ComputedPositionTest.java](./src/test/java/com/demcha/components/layout/ComputedPositionTest.java)
 - For pagination and multi-page behavior:
@@ -175,6 +175,6 @@ If a change affects resolved geometry, pagination, or ordering, prefer adding or
 
 ## Package naming
 
-The repository now uses the normalized package roots `layout_core`, `word_systems`, and `com.demcha.compose.document.templates`.
+The repository now uses the normalized package roots `com.demcha.compose.document`, `com.demcha.compose.engine`, `com.demcha.compose.font`, and `com.demcha.compose.document.templates`.
 
 Please treat these names as the current source of truth in code, tests, examples, and docs. Do not introduce aliases or partial fallback imports.

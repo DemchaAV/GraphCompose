@@ -1,6 +1,6 @@
 package com.demcha.compose.document.layout;
 
-import com.demcha.compose.document.model.node.DocumentNode;
+import com.demcha.compose.document.node.DocumentNode;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

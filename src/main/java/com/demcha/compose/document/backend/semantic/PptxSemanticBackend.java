@@ -2,13 +2,13 @@ package com.demcha.compose.document.backend.semantic;
 
 import com.demcha.compose.document.layout.DocumentGraph;
 import com.demcha.compose.document.exceptions.UnsupportedNodeCapabilityException;
-import com.demcha.compose.document.model.node.ContainerNode;
-import com.demcha.compose.document.model.node.DocumentNode;
-import com.demcha.compose.document.model.node.ImageNode;
-import com.demcha.compose.document.model.node.ParagraphNode;
-import com.demcha.compose.document.model.node.SectionNode;
-import com.demcha.compose.document.model.node.ShapeNode;
-import com.demcha.compose.document.model.node.TableNode;
+import com.demcha.compose.document.node.ContainerNode;
+import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.ImageNode;
+import com.demcha.compose.document.node.ParagraphNode;
+import com.demcha.compose.document.node.SectionNode;
+import com.demcha.compose.document.node.ShapeNode;
+import com.demcha.compose.document.node.TableNode;
 
 import java.util.ArrayList;
 import java.util.List;

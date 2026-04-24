@@ -2,7 +2,7 @@ package com.demcha.compose.document.backend.fixed.pdf;
 
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
-import com.demcha.compose.layout_core.components.style.Padding;
+import com.demcha.compose.engine.components.style.Padding;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.awt.Color;

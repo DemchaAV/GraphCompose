@@ -5,9 +5,10 @@ import com.demcha.compose.document.templates.api.CvTemplate;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.support.cv.ExecutiveSlateCvTemplateComposer;
 import com.demcha.compose.document.templates.support.common.SessionTemplateComposeTarget;
+import com.demcha.compose.document.templates.support.common.TemplateLifecycleLog;
 import com.demcha.compose.document.templates.theme.CvTheme;
-import com.demcha.compose.font_library.FontName;
-import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.font.FontName;
+import com.demcha.compose.engine.components.style.Margin;
 
 import java.awt.Color;
 import java.util.Objects;
@@ -64,7 +65,14 @@ public final class ExecutiveSlateCvTemplate implements CvTemplate {
      */
     @Override
     public void compose(DocumentSession document, CvDocumentSpec documentSpec) {
-        composer.compose(new SessionTemplateComposeTarget(document), documentSpec);
+        long startNanos = TemplateLifecycleLog.start(getTemplateId(), documentSpec);
+        try {
+            composer.compose(new SessionTemplateComposeTarget(document), documentSpec);
+            TemplateLifecycleLog.success(getTemplateId(), documentSpec, startNanos);
+        } catch (RuntimeException | Error ex) {
+            TemplateLifecycleLog.failure(getTemplateId(), documentSpec, startNanos, ex);
+            throw ex;
+        }
     }
 
     private static CvTheme defaultTheme() {

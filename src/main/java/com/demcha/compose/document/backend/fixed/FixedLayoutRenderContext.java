@@ -5,7 +5,7 @@ import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.document.layout.LayoutCanvas;
-import com.demcha.compose.font_library.FontFamilyDefinition;
+import com.demcha.compose.font.FontFamilyDefinition;
 
 import java.nio.file.Path;
 import java.util.Collection;

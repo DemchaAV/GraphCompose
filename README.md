@@ -28,6 +28,10 @@
   ·
   <a href="./docs/implementation-guide.md">Implementation Guide</a>
   ·
+  <a href="./docs/package-map.md">Package Map</a>
+  ·
+  <a href="./docs/lifecycle.md">Lifecycle</a>
+  ·
   <a href="./docs/benchmarks.md">Benchmarks</a>
   ·
   <a href="./docs/layout-snapshot-testing.md">Layout Snapshot Testing</a>
@@ -178,8 +182,8 @@ JitPack consumers can keep using older tagged releases by pinning the tag they w
 
 ```java
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.layout_core.components.content.text.TextStyle;
-import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.engine.components.content.text.TextStyle;
+import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.document.api.DocumentSession;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
@@ -552,13 +556,13 @@ Main packages:
 
 | Package | Contents |
 | --- | --- |
-| `com.demcha.compose.layout_core.*` | Core engine: entities, builders, geometry, layout, pagination, render systems |
-| `com.demcha.compose.font_library.*` | Font registration and PDF font helpers |
-| `com.demcha.compose.markdown.*` | Markdown parsing helpers used by text/block text builders |
+| `com.demcha.compose.engine.*` | Core engine: entities, builders, geometry, layout, pagination, render systems |
+| `com.demcha.compose.font.*` | Font registration and PDF font helpers |
+| `com.demcha.compose.engine.text.markdown.*` | Markdown parsing helpers used by text/block text builders |
 | `com.demcha.compose.document.*` | Canonical semantic document API, DSL, model, layout, and backend packages |
 | `com.demcha.compose.document.templates.*` | Canonical built-in templates, themes, DTOs, registries, and template support helpers |
 
-For the full package map, see [docs/architecture.md](./docs/architecture.md).
+For the full package map, see [docs/package-map.md](./docs/package-map.md). For runtime diagnostics, see [docs/logging.md](./docs/logging.md).
 
 ---
 
@@ -579,13 +583,13 @@ Start with [docs/implementation-guide.md](./docs/implementation-guide.md). The s
 When you add or refactor engine features, follow these project rules:
 
 - engine renderables are backend-neutral markers; they implement `Render` and describe intent, but do not draw directly
-- PDF drawing belongs in `src/main/java/com/demcha/compose/layout_core/system/implemented_systems/pdf_systems/handlers/*`
-- PDF-only helper objects that are not entity render markers belong in `...pdf_systems/helpers/*`
+- PDF drawing belongs in `src/main/java/com/demcha/compose/engine/render/pdf/handlers/*`
+- PDF-only helper objects that are not entity render markers belong in `com.demcha.compose.engine.render.pdf.helpers`
 - builders and layout helpers must use `TextMeasurementSystem` for text width and line metrics instead of reaching into renderer internals
 - traversal metadata should be materialized once per layout pass through a shared helper such as `LayoutTraversalContext`, not rebuilt ad hoc in unrelated systems
 - `ParentComponent` is the authoritative parent relation, while `Entity.children` is the canonical sibling order
 - renderer draw ordering belongs in the rendering layer, not inside pagination utilities
-- `layout_core/components/*` should stay free of PDFBox and `...pdf_systems` imports
+- `engine/components/*` should stay free of PDFBox and `...engine.render.pdf` imports
 - new render markers should be wired into `PdfRenderingSystemECS` and covered by at least one dispatch-oriented test
 
 ### Contributor rules for built-in templates

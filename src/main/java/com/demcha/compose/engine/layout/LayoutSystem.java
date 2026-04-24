@@ -1,0 +1,474 @@
+package com.demcha.compose.engine.layout;
+
+import com.demcha.compose.engine.components.content.text.LineTextData;
+import com.demcha.compose.engine.core.Canvas;
+import com.demcha.compose.engine.components.content.text.BlockTextData;
+import com.demcha.compose.engine.components.content.text.TextStyle;
+import com.demcha.compose.engine.components.core.Entity;
+import com.demcha.compose.engine.components.core.EntityName;
+import com.demcha.compose.engine.components.geometry.ContentSize;
+import com.demcha.compose.engine.components.geometry.InnerBoxSize;
+import com.demcha.compose.engine.components.geometry.OuterBoxSize;
+import com.demcha.compose.engine.components.layout.Align;
+import com.demcha.compose.engine.components.layout.Anchor;
+import com.demcha.compose.engine.components.layout.Layer;
+import com.demcha.compose.engine.components.layout.ParentComponent;
+import com.demcha.compose.engine.components.layout.coordinator.ComputedPosition;
+import com.demcha.compose.engine.components.layout.coordinator.PaddingCoordinate;
+import com.demcha.compose.engine.components.layout.coordinator.Position;
+import com.demcha.compose.engine.components.renderable.BlockText;
+import com.demcha.compose.engine.components.renderable.TextComponent;
+import com.demcha.compose.engine.components.style.Padding;
+import com.demcha.compose.engine.core.EntityManager;
+import com.demcha.compose.engine.core.LayoutTraversalContext;
+import com.demcha.compose.engine.exceptions.BigSizeElementException;
+import com.demcha.compose.engine.render.RenderingSystemECS;
+import com.demcha.compose.engine.core.SystemECS;
+import com.demcha.compose.engine.measurement.TextMeasurementSystem;
+import com.demcha.compose.engine.layout.container.ContainerExpander;
+import com.demcha.compose.engine.layout.container.ContainerLayoutManager;
+import com.demcha.compose.engine.layout.container.ModuleWidthResolver;
+import com.demcha.compose.engine.pagination.PageBreaker;
+import com.demcha.compose.engine.pagination.PaginationLayoutSystem;
+import com.demcha.compose.engine.pagination.TextBlockProcessor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * Main layout pass for GraphCompose entities.
+ * <p>
+ * This system turns builder-produced entities into resolved geometry. It walks
+ * the entity hierarchy, computes container relationships, expands parent boxes
+ * when needed, resolves per-entity positions, and finally delegates to the
+ * pagination stage so entities receive final {@code Placement} metadata.
+ * </p>
+ *
+ * <p>Conceptually this is the "builder intent to geometry" phase of the engine.</p>
+ *
+ * <p>Box model summary:</p>
+ * <ul>
+ *   <li>{@code ContentSize}: declared content dimensions</li>
+ *   <li>{@code InnerBoxSize}: available child area after padding</li>
+ *   <li>{@code OuterBoxSize}: content plus padding and margin</li>
+ *   <li>{@code Placement}: final bounding box and page span</li>
+ * </ul>
+ */
+@Slf4j
+@RequiredArgsConstructor
+public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS {
+    private static final Logger LIFECYCLE_LOG = LoggerFactory.getLogger("com.demcha.compose.engine.layout");
+
+    private final Canvas canvas;
+    @Getter
+    private final T renderingSystem;
+    private TextBlockProcessor textBlockProcessor;
+
+    /**
+     * Resolves an entity position from its parent context, walking the ancestor
+     * chain when intermediate computed positions are still missing.
+     *
+     * @param childEntity the entity to position
+     * @param parentEntity the parent entity, or {@code null} for a root entity
+     * @param entityManager entity registry providing parent lookups
+     * @return the resolved position when computation succeeds
+     */
+
+    private Optional<ComputedPosition> calculatePositionFromParent(Entity childEntity,
+                                                                   Entity parentEntity,
+                                                                   EntityManager entityManager) {
+        log.debug("Starting calculation of computed position for {} from parentEntity {}", childEntity, parentEntity);
+
+        // 0) Handle page-level (no parent)
+        if (parentEntity == null) {
+            InnerBoxSize pageArea = new InnerBoxSize(this.canvas.width(), this.canvas.height());
+
+            PaddingCoordinate paddingPercentCoordinate = new PaddingCoordinate(this.canvas.x(), this.canvas.y());
+            ComputedPosition local = positionWithAnchor(childEntity, pageArea, paddingPercentCoordinate);
+            log.debug("Final computed absolute position (page-level): {}", local);
+            return Optional.of(local);
+        }
+
+        // 1) Build ancestor chain: [root ... parent]
+        List<Entity> chain = new ArrayList<>();
+        Set<UUID> seen = new HashSet<>();
+        Entity cur = parentEntity;
+
+        while (cur != null) {
+            if (!seen.add(cur.getUuid())) {
+                log.error("Cycle detected in ParentComponent chain at entity {}", cur);
+                throw new IllegalStateException("Cycle detected in parent chain");
+            }
+            chain.add(cur);
+
+            var parentCompOpt = cur.getComponent(ParentComponent.class);
+            if (parentCompOpt.isEmpty()) {
+                break; // cur is root
+            }
+            UUID gpId = parentCompOpt.get().uuid();
+            cur = entityManager.getEntity(gpId).orElse(null);
+        }
+
+        int depth = chain.size(); // глубина
+
+        // 2) Ensure each ancestor has InnerBoxSize and ComputedPosition
+        for (int i = 0; i < depth; i++) {
+            Entity e = chain.get(i); // root -> ... -> parent
+
+            var inner = InnerBoxSize.from(e).orElseThrow();
+
+            if (e.getComponent(ComputedPosition.class).isEmpty()) {
+                var parentComp = e.getComponent(ParentComponent.class);
+                if (parentComp.isPresent()) {
+                    Entity p = entityManager.getEntity(parentComp.get().uuid())
+                            .orElseThrow(() -> new IllegalStateException("Parent not found for " + e));
+
+                    var parentInner = InnerBoxSize.from(p).orElseThrow();
+                    var pagingCoordinate = PaddingCoordinate.from(parentEntity);
+                    ComputedPosition local = positionWithAnchor(e, parentInner, pagingCoordinate);
+
+                    ComputedPosition parentAbs = p.getComponent(ComputedPosition.class)
+                            .orElse(new ComputedPosition(0, 0));
+
+                    e.addComponent(new ComputedPosition(local.x() + parentAbs.x(),
+                            local.y() + parentAbs.y()));
+                } else {
+                    InnerBoxSize refArea = new InnerBoxSize(this.canvas.width(), this.canvas.height());
+                    var pagingCoordinate = PaddingCoordinate.from(parentEntity);
+                    ComputedPosition local = positionWithAnchor(e, refArea, pagingCoordinate);
+                    e.addComponent(local);
+                }
+            }
+        }
+
+        // 3) Compute child's final position
+        InnerBoxSize parentInner = InnerBoxSize.from(parentEntity).orElseThrow();
+        var pagingCoordinate = PaddingCoordinate.from(parentEntity);
+
+        ComputedPosition childLocal = positionWithAnchor(childEntity, parentInner, pagingCoordinate);
+        ComputedPosition parentAbs = parentEntity.getComponent(ComputedPosition.class)
+                .orElse(new ComputedPosition(0, 0));
+
+        ComputedPosition childAbs = new ComputedPosition(
+                childLocal.x() + parentAbs.x(),
+                childLocal.y() + parentAbs.y()
+        );
+
+        //  Final summary log
+        log.debug("Position calculation summary: nodesTraversed={}, depth={}, finalPosition={}",
+                chain.size(), depth, childAbs);
+
+        return Optional.of(childAbs);
+    }
+
+    /**
+     * Computes a child's anchored position inside the supplied parent area and
+     * stores the result back on the entity.
+     *
+     * @param child entity being positioned
+     * @param parentInnerBoxSize available parent area
+     * @param paddingCoordinate parent padding origin
+     * @return the computed position, also attached to the entity
+     */
+
+    private ComputedPosition positionWithAnchor(Entity child, InnerBoxSize parentInnerBoxSize, PaddingCoordinate paddingCoordinate) {
+
+        var computed = ComputedPosition.from(child, parentInnerBoxSize, paddingCoordinate);
+        child.addComponent(computed);
+        log.debug("Computed position with Anchor has been created: {}", computed);
+        log.debug("{} has been created in: {}", computed, child);
+        return computed;
+    }
+
+
+    @Override
+    /**
+     * Runs the full layout pass for the current entity graph.
+     *
+     * <p>
+     * The pass resets traversal metadata, materializes one canonical hierarchy
+     * snapshot, resolves module/container sizing helpers, computes per-entity
+     * positions and depth/layer metadata, and finally delegates to pagination so
+     * entities receive final {@code Placement} components.
+     * </p>
+     *
+     * @param entityManager entity registry for the current document
+     */
+    public void process(EntityManager entityManager) {
+        long startNanos = System.nanoTime();
+        LIFECYCLE_LOG.debug("layout.system.start entities={}", entityManager.getEntities().size());
+        log.info("LayoutSystem: processing...");
+        textBlockProcessor = new TextBlockProcessor(entityManager);
+        LayoutTraversalContext.resetTraversalState(entityManager);
+
+        final var entities = entityManager.getEntities();
+        if (entities == null || entities.isEmpty()) {
+            log.info("LayoutSystem: no entities to lay out");
+            LIFECYCLE_LOG.debug("layout.system.end entities=0 durationMs={}", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos));
+            return;
+        }
+
+        // Build one canonical hierarchy snapshot for the whole pass so layout,
+        // pagination, and future backends all reason over the same sibling order.
+        final LayoutTraversalContext traversalContext = LayoutTraversalContext.from(entityManager);
+        final Map<UUID, UUID> parentById = traversalContext.parentById();
+        final Map<UUID, List<UUID>> childrenByParent = traversalContext.childrenByParent();
+//TODO currently en testing stage
+        ModuleWidthResolver.process(entityManager, canvas);
+        ContainerLayoutManager.process(childrenByParent, entityManager);
+
+        // 3) Expand parent boxes if needed (any child larger than parent)
+        ContainerExpander.process(childrenByParent, entityManager);
+
+        // 4) Compute roots
+        final Set<UUID> roots = traversalContext.roots();
+
+        // 5) DFS with cycle detection
+        final Map<UUID, Visit> visit = new HashMap<>(entities.size());
+        entities.keySet().forEach(id -> visit.put(id, Visit.UNSEEN));
+
+        final var layers = entityManager.getLayers();     // layer → ordered ids (assumed provided)
+        final var depthById = entityManager.getDepthById();
+
+        for (UUID root : roots) {
+            dfsLayout(
+                    root,
+                    null,
+                    entities,
+                    childrenByParent,
+                    visit,
+                    layers,
+                    depthById,
+                    1
+                    , entityManager
+            );
+        }
+
+        log.info("LayoutSystem: layout complete (nodes: {})", entities.size());
+
+//         Pagination
+
+        boolean withPagination = true;
+
+        if (withPagination) {
+            var pageBreaker = new PageBreaker(entityManager);
+            pageBreaker.process(entities, renderingSystem.canvas(), traversalContext, depthById);
+        } else {
+            PaginationLayoutSystem paginationLayoutSystem = new PaginationLayoutSystem();
+            paginationLayoutSystem.process(entityManager);
+        }
+
+        LIFECYCLE_LOG.debug(
+                "layout.system.end entities={} roots={} layers={} durationMs={}",
+                entities.size(),
+                roots.size(),
+                layers.size(),
+                TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos));
+    }
+
+    /**
+     * Performs the recursive layout traversal for one hierarchy branch.
+     *
+     * <p>Parents are processed before children so child layout can depend on
+     * parent inner size, padding coordinates, and container ordering metadata.</p>
+     */
+
+    private void dfsLayout(
+            UUID id,
+            UUID parentId,
+            Map<UUID, Entity> entities,
+            Map<UUID, List<UUID>> childrenByParent,
+            Map<UUID, Visit> visit,
+            Map<Integer, List<UUID>> layers,     // NEW: layer → ordered ids
+            Map<UUID, Integer> depthById,         // NEW: id → depth
+            int depth,                              // NEW: current depth
+            EntityManager entityManager
+
+    ) {
+        Visit st = visit.getOrDefault(id, Visit.UNSEEN);
+        if (st == Visit.DONE) return;
+        if (st == Visit.ACTIVE) throw new IllegalStateException("LayoutSystem: cycle detected at entity " + id);
+        visit.put(id, Visit.ACTIVE);
+
+        Entity childEntity = entities.get(id);
+        if (childEntity == null) {
+            log.warn("LayoutSystem: entity {} not found — skipping", id);
+            visit.put(id, Visit.DONE);
+            return;
+        }
+
+        // --- LAYERS COLLECTION ---
+        layers.computeIfAbsent(depth, k -> new ArrayList<>()).add(id);
+        depthById.put(id, depth);
+
+        // --- POSITION CALC ---
+        ComputedPosition computedPosition;
+        if (parentId != null) {
+            Entity parent = entities.get(parentId);
+            if (parent != null) {
+                computedPosition = ComputedPosition.from(childEntity, parent);
+            } else {
+                log.warn("LayoutSystem: parent {} of {} not found — using root positioning (Position + Margin)", parentId, id);
+                computedPosition = ComputedPosition.from(childEntity, this.canvas);
+            }
+        } else {
+            computedPosition = ComputedPosition.from(childEntity, canvas);
+        }
+
+        // IMPORTANT: store the computed position, not (0,0)
+        childEntity.addComponent(computedPosition);
+        childEntity.addComponent(new Layer(depth));
+
+        if (childEntity.has(Align.class)) {
+            alignRearrangeBlockText(childEntity, entityManager);
+        }
+
+        if (log.isDebugEnabled()) {
+            String name = childEntity.getComponent(EntityName.class)
+                    .map(EntityName::value)
+                    .orElse(id.toString());
+            log.debug("LayoutSystem: {} [depth={}] positioned at ({}, {})",
+                    name, depth, computedPosition.x(), computedPosition.y());
+        }
+        if (BlockText.class.isAssignableFrom(childEntity.getRender().getClass())) {
+            try {
+                textBlockProcessor.processLayoutSystemTextLines(childEntity);
+            } catch (IOException e) {
+                log.error("Error during processing block text entity {}", childEntity);
+                throw new RuntimeException(String.format("Error during processing block text entity %s", childEntity), e);
+            } catch (BigSizeElementException e) {
+                log.error(String.format("To big size line in block text, Error during processing block text entity %s", childEntity), e);
+
+                throw new RuntimeException(e);
+            }
+        }
+
+        // DFS to children with depth+1
+        for (UUID childId : childrenByParent.getOrDefault(id, Collections.emptyList())) {
+            dfsLayout(childId, id, entities, childrenByParent, visit, layers, depthById, depth + 1, entityManager);
+        }
+
+        visit.put(id, Visit.DONE);
+    }
+
+    /**
+     * Applies horizontal alignment offsets to block-text line fragments inside the
+     * entity's own content box.
+     *
+     * <p>
+     * This is a post-measurement adjustment step. It does not remeasure the full
+     * block unless a line payload has no cached width information.
+     * </p>
+     *
+     * @param blockTextBox block-text entity to realign
+     * @param entityManager entity registry used to resolve the text measurement
+     *                      system on demand
+     * @return the same entity instance after line coordinates are updated
+     */
+    private Entity alignBlockText(Entity blockTextBox, EntityManager entityManager) {
+        Align align = blockTextBox
+                .getComponent(Align.class).orElse(Align.defaultAlign(2));
+        var component = blockTextBox.getComponent(BlockTextData.class).orElseThrow();
+        var size = blockTextBox.getComponent(ContentSize.class).orElseThrow();
+        var padding = blockTextBox.getComponent(Padding.class).orElse(Padding.zero());
+        TextStyle style = blockTextBox.getComponent(TextStyle.class).orElseThrow();
+        TextMeasurementSystem measurementSystem = null;
+
+        var lines = component.lines();
+        for (LineTextData line : lines) {
+            // Ordinary block-text lines already carry builder-time width caches.
+            // The fallback is only for manually assembled/un-cached payloads.
+            double lineWidth = line.lineWidth();
+            if (Double.isNaN(lineWidth)) {
+                if (measurementSystem == null) {
+                    measurementSystem = entityManager.getSystems()
+                            .getSystem(TextMeasurementSystem.class)
+                            .orElseThrow(() -> new IllegalStateException("TextMeasurementSystem is required to align block text."));
+                }
+                lineWidth = line.width(measurementSystem, style);
+            }
+            switch (align.h()) {
+                case LEFT -> {
+                    double x = line.x() + padding.left();
+                    line.x(x);
+                }
+                case RIGHT -> {
+                    double x = size.width() - lineWidth - padding.right();
+                    line.x(x);
+                }
+                case CENTER -> {
+                    double x = (size.width() - lineWidth + padding.left()) / 2;
+                    line.x(x);
+                }
+
+            }
+
+        }
+
+
+        return blockTextBox;
+    }
+
+    /**
+     * Aligns block-text payloads when the entity actually carries block-text line
+     * data.
+     *
+     * @param entity entity to inspect
+     * @param entityManager entity registry used to resolve layout helpers
+     * @return the aligned entity wrapped in {@link Optional}, or empty when the
+     *         entity is not a block-text payload holder
+     */
+    public Optional<Entity> alignRearrangeBlockText(Entity entity, EntityManager entityManager) {
+
+        if (entity.has(BlockTextData.class)) {
+            return Optional.of(alignBlockText(entity, entityManager));
+        } else {
+            log.debug("Entity is not a BlockTextData");
+            return Optional.empty();
+        }
+    }
+
+
+    /**
+     * Returns whether the given entity must NOT be expanded.
+     *
+     * <p>Rules:
+     * <ul>
+     *   <li>Has {@code TextComponent}  → return {@code true}  (do not expand)</li>
+     *   <li>Has {@code Box}   → return {@code false} (allow expansion)</li>
+     *   <li>Otherwise         → return {@code true}  (do not expand)</li>
+     * </ul>
+     *
+     * @param entity the entity to check
+     * @return {@code true} to skip expansion; {@code false} to allow it
+     */
+
+    @Deprecated
+    private boolean isExpandable(Entity entity) {
+        if (entity.has(TextComponent.class)) {
+            // Forbidden expend text Entitie
+            return false;
+        }
+
+        return true;
+    }
+
+
+    @Override
+    public String toString() {
+        return "LayoutSystem";
+    }
+
+    /**
+     * DFS visit states used during one layout traversal.
+     */
+    public enum Visit {UNSEEN, ACTIVE, DONE;}
+}
+
+

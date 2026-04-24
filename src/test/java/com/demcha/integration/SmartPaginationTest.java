@@ -2,10 +2,10 @@ package com.demcha.integration;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.templates.theme.CvTheme;
-import com.demcha.compose.layout_core.components.layout.Align;
-import com.demcha.compose.layout_core.components.layout.Anchor;
-import com.demcha.compose.layout_core.components.style.ComponentColor;
-import com.demcha.compose.layout_core.components.style.Margin;
+import com.demcha.compose.engine.components.layout.Align;
+import com.demcha.compose.engine.components.layout.Anchor;
+import com.demcha.compose.engine.components.style.ComponentColor;
+import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.testsupport.EngineComposerHarness;
 import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 import com.demcha.testing.VisualTestOutputs;

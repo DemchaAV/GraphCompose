@@ -1,9 +1,9 @@
 package com.demcha.compose.document.backend.fixed.pdf;
 
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions;
-import com.demcha.compose.font_library.FontLibrary;
+import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.document.layout.PlacedFragment;
-import com.demcha.compose.layout_core.components.content.ImageData;
+import com.demcha.compose.engine.components.content.ImageData;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;

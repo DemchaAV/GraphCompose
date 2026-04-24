@@ -1,11 +1,11 @@
 package com.demcha.compose;
 
-import com.demcha.compose.engine.components.content.text.TextStyle;
-import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.node.ContainerNode;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTextStyle;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfPTable;
@@ -131,13 +131,13 @@ public class ComparativeBenchmark {
             session.add(new ContainerNode(
                     "Invoice",
                     List.of(
-                            new ParagraphNode("Title", "INVOICE #12345", TextStyle.DEFAULT_STYLE, TextAlign.LEFT, 0, null, null),
-                            new ParagraphNode("Customer", "Customer: John Doe", TextStyle.DEFAULT_STYLE, TextAlign.LEFT, 0, null, null),
-                            new ParagraphNode("Amount", "Amount: $1,000.00", TextStyle.DEFAULT_STYLE, TextAlign.LEFT, 0, null, null)
+                            new ParagraphNode("Title", "INVOICE #12345", DocumentTextStyle.DEFAULT, TextAlign.LEFT, 0, null, null),
+                            new ParagraphNode("Customer", "Customer: John Doe", DocumentTextStyle.DEFAULT, TextAlign.LEFT, 0, null, null),
+                            new ParagraphNode("Amount", "Amount: $1,000.00", DocumentTextStyle.DEFAULT, TextAlign.LEFT, 0, null, null)
                     ),
                     5,
                     null,
-                    Margin.of(20),
+                    DocumentInsets.of(20),
                     null,
                     null));
             return session.toPdfBytes();

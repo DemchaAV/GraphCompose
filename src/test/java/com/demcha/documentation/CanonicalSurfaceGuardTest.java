@@ -105,6 +105,16 @@ class CanonicalSurfaceGuardTest {
                         PROJECT_ROOT.resolve("src/test/java/com/demcha/documentation/DocumentationExamplesTest.java")));
     }
 
+    @Test
+    void semanticAuthoringValuePackagesShouldNotImportEngineInternals() throws IOException {
+        assertNoForbiddenAuthoringImports(
+                List.of(
+                        PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/node"),
+                        PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/style"),
+                        PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/table"),
+                        PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/image")));
+    }
+
     private void assertNoForbiddenReferences(Path root, Set<String> allowlist) throws IOException {
         assertNoForbiddenReferences(root, path -> true, allowlist);
     }

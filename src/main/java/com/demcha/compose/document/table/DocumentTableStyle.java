@@ -2,6 +2,7 @@ package com.demcha.compose.document.table;
 
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
 
 /**
@@ -15,13 +16,17 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 public final class DocumentTableStyle {
     private final DocumentInsets padding;
     private final DocumentColor fillColor;
+    private final DocumentStroke stroke;
     private final DocumentTextStyle textStyle;
+    private final DocumentTableTextAnchor textAnchor;
     private final Double lineSpacing;
 
     private DocumentTableStyle(Builder builder) {
         this.padding = builder.padding;
         this.fillColor = builder.fillColor;
+        this.stroke = builder.stroke;
         this.textStyle = builder.textStyle;
+        this.textAnchor = builder.textAnchor;
         this.lineSpacing = builder.lineSpacing;
     }
 
@@ -62,12 +67,30 @@ public final class DocumentTableStyle {
     }
 
     /**
+     * Returns optional cell border stroke.
+     *
+     * @return stroke override, or {@code null}
+     */
+    public DocumentStroke stroke() {
+        return stroke;
+    }
+
+    /**
      * Returns optional cell text style.
      *
      * @return text style override, or {@code null}
      */
     public DocumentTextStyle textStyle() {
         return textStyle;
+    }
+
+    /**
+     * Returns optional text placement anchor.
+     *
+     * @return anchor override, or {@code null}
+     */
+    public DocumentTableTextAnchor textAnchor() {
+        return textAnchor;
     }
 
     /**
@@ -85,7 +108,9 @@ public final class DocumentTableStyle {
     public static final class Builder {
         private DocumentInsets padding;
         private DocumentColor fillColor;
+        private DocumentStroke stroke;
         private DocumentTextStyle textStyle;
+        private DocumentTableTextAnchor textAnchor;
         private Double lineSpacing;
 
         private Builder() {
@@ -124,6 +149,17 @@ public final class DocumentTableStyle {
         }
 
         /**
+         * Sets the cell border stroke override.
+         *
+         * @param stroke border stroke
+         * @return this builder
+         */
+        public Builder stroke(DocumentStroke stroke) {
+            this.stroke = stroke;
+            return this;
+        }
+
+        /**
          * Sets the cell text style override.
          *
          * @param textStyle text style
@@ -131,6 +167,17 @@ public final class DocumentTableStyle {
          */
         public Builder textStyle(DocumentTextStyle textStyle) {
             this.textStyle = textStyle;
+            return this;
+        }
+
+        /**
+         * Sets the cell text placement anchor.
+         *
+         * @param textAnchor text anchor
+         * @return this builder
+         */
+        public Builder textAnchor(DocumentTableTextAnchor textAnchor) {
+            this.textAnchor = textAnchor;
             return this;
         }
 

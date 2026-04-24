@@ -2,10 +2,8 @@ package com.demcha.compose.document.node;
 
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
-import com.demcha.compose.engine.components.content.ImageData;
-import com.demcha.compose.engine.components.style.Margin;
-import com.demcha.compose.engine.components.style.Padding;
-import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.image.DocumentImageData;
+import com.demcha.compose.document.style.DocumentInsets;
 
 import java.util.Objects;
 
@@ -23,13 +21,13 @@ import java.util.Objects;
  */
 public record ImageNode(
         String name,
-        ImageData imageData,
+        DocumentImageData imageData,
         Double width,
         Double height,
         PdfLinkOptions linkOptions,
         PdfBookmarkOptions bookmarkOptions,
-        Padding padding,
-        Margin margin
+        DocumentInsets padding,
+        DocumentInsets margin
 ) implements DocumentNode {
     /**
      * Normalizes spacing defaults and validates explicit image dimensions.
@@ -37,8 +35,8 @@ public record ImageNode(
     public ImageNode {
         name = name == null ? "" : name;
         imageData = Objects.requireNonNull(imageData, "imageData");
-        padding = padding == null ? Padding.zero() : padding;
-        margin = margin == null ? Margin.zero() : margin;
+        padding = padding == null ? DocumentInsets.zero() : padding;
+        margin = margin == null ? DocumentInsets.zero() : margin;
         if (width != null && (width <= 0 || Double.isNaN(width) || Double.isInfinite(width))) {
             throw new IllegalArgumentException("width must be finite and positive when set: " + width);
         }
@@ -58,11 +56,11 @@ public record ImageNode(
      * @param margin outer margin
      */
     public ImageNode(String name,
-                     ImageData imageData,
+                     DocumentImageData imageData,
                      Double width,
                      Double height,
-                     Padding padding,
-                     Margin margin) {
+                     DocumentInsets padding,
+                     DocumentInsets margin) {
         this(name, imageData, width, height, null, null, padding, margin);
     }
 }

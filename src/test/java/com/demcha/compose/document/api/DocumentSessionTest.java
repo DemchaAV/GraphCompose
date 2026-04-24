@@ -50,6 +50,13 @@ import com.demcha.compose.document.node.SectionNode;
 import com.demcha.compose.document.node.ShapeNode;
 import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.table.DocumentTableCell;
+import com.demcha.compose.document.table.DocumentTableColumn;
+import com.demcha.compose.document.table.DocumentTableStyle;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -78,8 +85,8 @@ class DocumentSessionTest {
                 .margin(Margin.of(10))
                 .create()) {
 
-            session.add(new ShapeNode("First", 80, 130, Color.LIGHT_GRAY, new Stroke(Color.BLACK, 1), Padding.zero(), Margin.zero()));
-            session.add(new ShapeNode("Second", 80, 60, Color.GRAY, new Stroke(Color.BLACK, 1), Padding.zero(), Margin.zero()));
+            session.add(new ShapeNode("First", 80, 130, Color.LIGHT_GRAY, DocumentStroke.of(DocumentColor.BLACK, 1), DocumentInsets.zero(), DocumentInsets.zero()));
+            session.add(new ShapeNode("Second", 80, 60, Color.GRAY, DocumentStroke.of(DocumentColor.BLACK, 1), DocumentInsets.zero(), DocumentInsets.zero()));
 
             LayoutGraph graph = session.layoutGraph();
 
@@ -245,8 +252,8 @@ class DocumentSessionTest {
                 .margin(Margin.of(12))
                 .create()) {
 
-            TableCellLayoutStyle headerStyle = TableCellLayoutStyle.builder()
-                    .padding(Padding.of(6))
+            DocumentTableStyle headerStyle = DocumentTableStyle.builder()
+                    .padding(DocumentInsets.of(6))
                     .build();
 
             ContainerNode root = session.pageFlow()
@@ -254,8 +261,8 @@ class DocumentSessionTest {
                     .addTable(table -> table
                             .name("StatusTable")
                             .autoColumns(3)
-                            .defaultCellStyle(TableCellLayoutStyle.builder()
-                                    .padding(Padding.of(4))
+                            .defaultCellStyle(DocumentTableStyle.builder()
+                                    .padding(DocumentInsets.of(4))
                                     .build())
                             .headerStyle(headerStyle)
                             .header("Role", "Owner", "Status")
@@ -270,10 +277,10 @@ class DocumentSessionTest {
             TableNode table = (TableNode) root.children().getFirst();
             assertThat(table.rows()).hasSize(3);
             assertThat(table.rows().getFirst())
-                    .extracting(TableCellContent::lines)
+                    .extracting(DocumentTableCell::lines)
                     .containsExactly(List.of("Role"), List.of("Owner"), List.of("Status"));
             assertThat(table.rows().get(1))
-                    .extracting(TableCellContent::lines)
+                    .extracting(DocumentTableCell::lines)
                     .containsExactly(List.of("Engine"), List.of("GraphCompose"), List.of("Stable"));
             assertThat(table.rowStyles().get(0)).isSameAs(headerStyle);
             assertThat(session.layoutGraph().totalPages()).isEqualTo(1);
@@ -287,7 +294,7 @@ class DocumentSessionTest {
                 .margin(Margin.of(10))
                 .create()) {
 
-            session.add(new ShapeNode("TooBig", 80, 181, Color.RED, new Stroke(Color.BLACK, 1), Padding.zero(), Margin.zero()));
+            session.add(new ShapeNode("TooBig", 80, 181, Color.RED, DocumentStroke.of(DocumentColor.BLACK, 1), DocumentInsets.zero(), DocumentInsets.zero()));
 
             assertThatThrownBy(session::layoutGraph)
                     .isInstanceOf(AtomicNodeTooLargeException.class)
@@ -307,11 +314,11 @@ class DocumentSessionTest {
             session.add(new ParagraphNode(
                     "LongParagraph",
                     "GraphCompose keeps pagination in the engine. ".repeat(60),
-                    TextStyle.DEFAULT_STYLE,
+                    DocumentTextStyle.DEFAULT,
                     TextAlign.LEFT,
                     2.0,
-                    Padding.of(4),
-                    Margin.zero()));
+                    DocumentInsets.of(4),
+                    DocumentInsets.zero()));
 
             LayoutGraph graph = session.layoutGraph();
             assertThat(graph.totalPages()).isGreaterThan(1);
@@ -397,11 +404,11 @@ class DocumentSessionTest {
             session.add(new ParagraphNode(
                     "Paragraph",
                     "First line\n\nSecond line",
-                    TextStyle.DEFAULT_STYLE,
+                    DocumentTextStyle.DEFAULT,
                     TextAlign.LEFT,
                     2.0,
-                    Padding.of(4),
-                    Margin.zero()));
+                    DocumentInsets.of(4),
+                    DocumentInsets.zero()));
 
             LayoutGraph graph = session.layoutGraph();
             assertThat(graph.fragments()).hasSize(1);
@@ -420,11 +427,11 @@ class DocumentSessionTest {
         ParagraphNode paragraph = new ParagraphNode(
                 "LongParagraph",
                 "Prepared paragraph layout should be reused across split and emit. ".repeat(35),
-                TextStyle.DEFAULT_STYLE,
+                DocumentTextStyle.DEFAULT,
                 TextAlign.LEFT,
                 2.0,
-                Padding.of(4),
-                Margin.zero());
+                DocumentInsets.of(4),
+                DocumentInsets.zero());
 
         @SuppressWarnings("unchecked")
         NodeDefinition<ParagraphNode> definition = (NodeDefinition<ParagraphNode>) registry.definitionFor(paragraph);
@@ -461,20 +468,20 @@ class DocumentSessionTest {
 
             TableNode table = new TableNode(
                     "Table",
-                    List.of(TableColumnLayout.auto()),
+                    List.of(DocumentTableColumn.auto()),
                     List.of(
-                            List.of(TableCellContent.text("row 1")),
-                            List.of(TableCellContent.text("row 2")),
-                            List.of(TableCellContent.text("row 3")),
-                            List.of(TableCellContent.text("row 4")),
-                            List.of(TableCellContent.text("row 5")),
-                            List.of(TableCellContent.text("row 6")),
-                            List.of(TableCellContent.text("row 7")),
-                            List.of(TableCellContent.text("row 8"))),
-                    TableCellLayoutStyle.DEFAULT,
+                            List.of(DocumentTableCell.text("row 1")),
+                            List.of(DocumentTableCell.text("row 2")),
+                            List.of(DocumentTableCell.text("row 3")),
+                            List.of(DocumentTableCell.text("row 4")),
+                            List.of(DocumentTableCell.text("row 5")),
+                            List.of(DocumentTableCell.text("row 6")),
+                            List.of(DocumentTableCell.text("row 7")),
+                            List.of(DocumentTableCell.text("row 8"))),
+                    DocumentTableStyle.empty(),
                     160.0,
-                    Padding.zero(),
-                    Margin.zero());
+                    DocumentInsets.zero(),
+                    DocumentInsets.zero());
 
             session.add(table);
             LayoutGraph graph = session.layoutGraph();
@@ -508,7 +515,7 @@ class DocumentSessionTest {
                 .create()) {
 
             session.registerNodeDefinition(new BadgeNodeDefinition());
-            session.add(new BadgeNode("Badge", "alpha", Margin.zero(), Padding.zero()));
+            session.add(new BadgeNode("Badge", "alpha", DocumentInsets.zero(), DocumentInsets.zero()));
 
             FixedLayoutBackend<List<String>> backend = new FixedLayoutBackend<>() {
                 @Override
@@ -538,10 +545,10 @@ class DocumentSessionTest {
 
             session.add(new ContainerNode(
                     "DocxRoot",
-                    List.of(new ParagraphNode("P", "Hello world", TextStyle.DEFAULT_STYLE, TextAlign.LEFT, 0, Padding.zero(), Margin.zero())),
+                    List.of(new ParagraphNode("P", "Hello world", DocumentTextStyle.DEFAULT, TextAlign.LEFT, 0, DocumentInsets.zero(), DocumentInsets.zero())),
                     8,
-                    Padding.zero(),
-                    Margin.zero(),
+                    DocumentInsets.zero(),
+                    DocumentInsets.zero(),
                     null,
                     null));
 
@@ -553,10 +560,10 @@ class DocumentSessionTest {
             session.clear();
             session.add(new ContainerNode(
                     "PptxRoot",
-                    List.of(new ShapeNode("Box", 40, 20, Color.BLUE, new Stroke(Color.BLACK, 1), Padding.zero(), Margin.zero())),
+                    List.of(new ShapeNode("Box", 40, 20, Color.BLUE, DocumentStroke.of(DocumentColor.BLACK, 1), DocumentInsets.zero(), DocumentInsets.zero())),
                     8,
-                    Padding.zero(),
-                    Margin.zero(),
+                    DocumentInsets.zero(),
+                    DocumentInsets.zero(),
                     null,
                     null));
 
@@ -576,11 +583,11 @@ class DocumentSessionTest {
             session.add(new ParagraphNode(
                     "Paragraph",
                     "Layout should stay cached while only PDF chrome changes.",
-                    TextStyle.DEFAULT_STYLE,
+                    DocumentTextStyle.DEFAULT,
                     TextAlign.LEFT,
                     2.0,
-                    Padding.of(4),
-                    Margin.zero()));
+                    DocumentInsets.of(4),
+                    DocumentInsets.zero()));
 
             LayoutGraph graph = session.layoutGraph();
 
@@ -603,11 +610,11 @@ class DocumentSessionTest {
             session.add(new ParagraphNode(
                     "Markdown",
                     "Plain **bold** and *italic* text",
-                    TextStyle.DEFAULT_STYLE,
+                    DocumentTextStyle.DEFAULT,
                     TextAlign.LEFT,
                     2.0,
-                    Padding.of(4),
-                    Margin.zero()));
+                    DocumentInsets.of(4),
+                    DocumentInsets.zero()));
 
             byte[] pdfBytes = session.toPdfBytes();
             try (PDDocument document = Loader.loadPDF(pdfBytes)) {
@@ -632,11 +639,11 @@ class DocumentSessionTest {
             session.add(new ParagraphNode(
                     "MarkdownDisabled",
                     "Plain **bold** and *italic* text",
-                    TextStyle.DEFAULT_STYLE,
+                    DocumentTextStyle.DEFAULT,
                     TextAlign.LEFT,
                     2.0,
-                    Padding.of(4),
-                    Margin.zero()));
+                    DocumentInsets.of(4),
+                    DocumentInsets.zero()));
 
             byte[] pdfBytes = session.toPdfBytes();
             try (PDDocument document = Loader.loadPDF(pdfBytes)) {
@@ -663,11 +670,11 @@ class DocumentSessionTest {
             session.add(new ParagraphNode(
                     "GuidedParagraph",
                     "Guide colors should expose margin and padding overlays.",
-                    TextStyle.DEFAULT_STYLE,
+                    DocumentTextStyle.DEFAULT,
                     TextAlign.LEFT,
                     2.0,
-                    Padding.of(10),
-                    Margin.of(14)));
+                    DocumentInsets.of(10),
+                    DocumentInsets.of(14)));
 
             LayoutGraph graph = session.layoutGraph();
             byte[] pdfBytes = session.toPdfBytes();
@@ -707,7 +714,7 @@ class DocumentSessionTest {
         }
     }
 
-    private record BadgeNode(String name, String label, Margin margin, Padding padding) implements DocumentNode {
+    private record BadgeNode(String name, String label, DocumentInsets margin, DocumentInsets padding) implements DocumentNode {
     }
 
     private static final class BadgeNodeDefinition implements NodeDefinition<BadgeNode> {
@@ -755,8 +762,16 @@ class DocumentSessionTest {
                 prepared.measureResult().height(),
                 pageIndex,
                 pageIndex,
-                prepared.node().margin(),
-                prepared.node().padding()));
+                toMargin(prepared.node().margin()),
+                toPadding(prepared.node().padding())));
+    }
+
+    private static Margin toMargin(DocumentInsets insets) {
+        return new Margin(insets.top(), insets.right(), insets.bottom(), insets.left());
+    }
+
+    private static Padding toPadding(DocumentInsets insets) {
+        return new Padding(insets.top(), insets.right(), insets.bottom(), insets.left());
     }
 
     private static final class CountingPrepareContext implements PrepareContext, FragmentContext, AutoCloseable {

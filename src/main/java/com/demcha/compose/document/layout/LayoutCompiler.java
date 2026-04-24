@@ -14,6 +14,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import static com.demcha.compose.document.layout.DocumentNodeAdapters.toMargin;
+import static com.demcha.compose.document.layout.DocumentNodeAdapters.toPadding;
+
 /**
  * Compiles a semantic document graph into a canonical fixed-layout graph.
  */
@@ -109,8 +112,8 @@ public final class LayoutCompiler {
         NodeDefinition<DocumentNode> definition = (NodeDefinition<DocumentNode>) registry.definitionFor(node);
         String path = pathFor(node, parentPath, childIndex);
         String semanticName = semanticName(node);
-        Margin margin = node.margin() == null ? Margin.zero() : node.margin();
-        Padding padding = node.padding() == null ? Padding.zero() : node.padding();
+        Margin margin = toMargin(node.margin());
+        Padding padding = toPadding(node.padding());
         double availableWidth = childAvailableWidth(regionWidth, node);
 
         if (node instanceof PageBreakNode) {
@@ -197,8 +200,8 @@ public final class LayoutCompiler {
                                   List<PlacedNode> nodes,
                                   List<PlacedFragment> fragments) {
         DocumentNode node = prepared.node();
-        Margin margin = node.margin() == null ? Margin.zero() : node.margin();
-        Padding padding = node.padding() == null ? Padding.zero() : node.padding();
+        Margin margin = toMargin(node.margin());
+        Padding padding = toPadding(node.padding());
         double availableWidth = childAvailableWidth(regionWidth, node);
         CompositeLayoutSpec layoutSpec = prepared.requireCompositeLayout();
         MeasureResult naturalMeasure = prepared.measureResult();
@@ -277,8 +280,8 @@ public final class LayoutCompiler {
                                    List<PlacedNode> nodes,
                                    List<PlacedFragment> fragments) {
         DocumentNode node = prepared.node();
-        Margin margin = node.margin() == null ? Margin.zero() : node.margin();
-        Padding padding = node.padding() == null ? Padding.zero() : node.padding();
+        Margin margin = toMargin(node.margin());
+        Padding padding = toPadding(node.padding());
         MeasureResult naturalMeasure = prepared.measureResult();
         double outerHeight = naturalMeasure.height() + margin.vertical();
         double fullPageHeight = state.canvas.innerHeight();
@@ -348,8 +351,8 @@ public final class LayoutCompiler {
                                        FragmentContext fragmentContext,
                                        List<PlacedNode> nodes,
                                        List<PlacedFragment> fragments) {
-        Margin originalMargin = prepared.node().margin() == null ? Margin.zero() : prepared.node().margin();
-        Padding originalPadding = prepared.node().padding() == null ? Padding.zero() : prepared.node().padding();
+        Margin originalMargin = toMargin(prepared.node().margin());
+        Padding originalPadding = toPadding(prepared.node().padding());
 
         PreparedNode<DocumentNode> current = prepared;
         double firstPlacementX = Double.NaN;
@@ -359,8 +362,8 @@ public final class LayoutCompiler {
 
         while (current != null) {
             DocumentNode currentNode = current.node();
-            Margin currentMargin = currentNode.margin() == null ? Margin.zero() : currentNode.margin();
-            Padding currentPadding = currentNode.padding() == null ? Padding.zero() : currentNode.padding();
+            Margin currentMargin = toMargin(currentNode.margin());
+            Padding currentPadding = toPadding(currentNode.padding());
             MeasureResult pieceMeasure = current.measureResult();
             double pieceOuterHeight = pieceMeasure.height() + currentMargin.vertical();
             double fullPageOuterHeight = state.canvas.innerHeight();
@@ -425,8 +428,8 @@ public final class LayoutCompiler {
             }
 
             DocumentNode headNode = head.node();
-            Margin headMargin = headNode.margin() == null ? Margin.zero() : headNode.margin();
-            Padding headPadding = headNode.padding() == null ? Padding.zero() : headNode.padding();
+            Margin headMargin = toMargin(headNode.margin());
+            Padding headPadding = toPadding(headNode.padding());
             MeasureResult headMeasure = head.measureResult();
             double headOuterHeight = headMeasure.height() + headMargin.vertical();
 
@@ -504,7 +507,7 @@ public final class LayoutCompiler {
     }
 
     private double childAvailableWidth(double regionWidth, DocumentNode node) {
-        Margin margin = node.margin() == null ? Margin.zero() : node.margin();
+        Margin margin = toMargin(node.margin());
         return Math.max(0.0, regionWidth - margin.horizontal());
     }
 

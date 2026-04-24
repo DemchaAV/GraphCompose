@@ -95,14 +95,21 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
 
     private void addModule(DocumentDsl.AbstractFlowBuilder<?, ?> flow, TemplateModuleSpec module) {
         TemplateModuleSpec safeModule = Objects.requireNonNull(module, "module");
-        flow.addModule(builder -> {
-            builder.name(safeModule.name());
-            applyTitle(builder, safeModule.title());
-            FlowTemplateComposeTarget nestedTarget = new FlowTemplateComposeTarget(builder);
-            for (TemplateModuleBlock block : safeModule.blocks()) {
-                block.render(nestedTarget);
-            }
-        });
+        long startNanos = TemplateLifecycleLog.moduleStart(safeModule);
+        try {
+            flow.addModule(builder -> {
+                builder.name(safeModule.name());
+                applyTitle(builder, safeModule.title());
+                FlowTemplateComposeTarget nestedTarget = new FlowTemplateComposeTarget(builder);
+                for (TemplateModuleBlock block : safeModule.blocks()) {
+                    block.render(nestedTarget);
+                }
+            });
+            TemplateLifecycleLog.moduleSuccess(safeModule, startNanos);
+        } catch (RuntimeException | Error failure) {
+            TemplateLifecycleLog.moduleFailure(safeModule, startNanos, failure);
+            throw failure;
+        }
     }
 
     private static void applyTitle(DocumentDsl.ModuleBuilder builder, TemplateParagraphSpec title) {

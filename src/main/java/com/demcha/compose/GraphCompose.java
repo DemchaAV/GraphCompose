@@ -10,6 +10,7 @@ import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterZone
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
+import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.engine.components.style.Margin;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
@@ -41,13 +42,11 @@ import java.util.Objects;
  * <pre>
  * try (DocumentSession document = GraphCompose.document(outputFile)
  *         .pageSize(PDRectangle.A4)
- *         .margin(new Margin(24, 24, 24, 24))
+ *         .margin(24, 24, 24, 24)
  *         .create()) {
  *
- *     document.pageFlow()
- *             .spacing(8)
- *             .addParagraph("Hello GraphCompose", TextStyle.DEFAULT_STYLE)
- *             .build();
+ *     document.pageFlow(page -> page
+ *             .module("Summary", module -> module.paragraph("Hello GraphCompose")));
  *
  *     document.buildPdf();
  * }
@@ -59,9 +58,8 @@ import java.util.Objects;
  *         .pageSize(PDRectangle.A4)
  *         .create()) {
  *
- *     document.pageFlow()
- *             .addText("In-memory PDF")
- *             .build();
+ *     document.pageFlow(page -> page
+ *             .module("Summary", module -> module.paragraph("In-memory PDF")));
  *
  *     byte[] pdfBytes = document.toPdfBytes();
  * }
@@ -96,7 +94,7 @@ public final class GraphCompose {
     /**
      * Returns the logical font families bundled with GraphCompose out of the box.
      *
-     * <p>The returned names are the identifiers used by {@code TextStyle},
+     * <p>The returned names are the identifiers used by {@code DocumentTextStyle},
      * {@code CvTheme}, and the font library. They describe what can be referenced
      * immediately without registering custom font families.</p>
      */
@@ -171,6 +169,17 @@ public final class GraphCompose {
          */
         public DocumentBuilder margin(Margin margin) {
             this.margin = margin == null ? Margin.zero() : margin;
+            return this;
+        }
+
+        /**
+         * Sets the semantic document margin with the public canonical spacing value.
+         *
+         * @param margin outer page margin
+         * @return this builder
+         */
+        public DocumentBuilder margin(DocumentInsets margin) {
+            this.margin = margin == null ? Margin.zero() : new Margin(margin.top(), margin.right(), margin.bottom(), margin.left());
             return this;
         }
 
@@ -378,10 +387,8 @@ public final class GraphCompose {
          *         .pageSize(PDRectangle.A4)
          *         .margin(24, 24, 24, 24)
          *         .create()) {
-         *     document.pageFlow()
-         *             .spacing(8)
-         *             .addText("Hello GraphCompose")
-         *             .build();
+         *     document.pageFlow(page -> page
+         *             .module("Summary", module -> module.paragraph("Hello GraphCompose")));
          *
          *     document.buildPdf();
          * }

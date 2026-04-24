@@ -30,6 +30,10 @@
   ·
   <a href="./docs/package-map.md">Package Map</a>
   ·
+  <a href="./docs/getting-started.md">Getting Started</a>
+  ·
+  <a href="./docs/recipes.md">Recipes</a>
+  ·
   <a href="./docs/lifecycle.md">Lifecycle</a>
   ·
   <a href="./docs/benchmarks.md">Benchmarks</a>
@@ -64,9 +68,9 @@ Most Java PDF libraries are **low-level drawing APIs**. You get a canvas and a c
 
 GraphCompose is a document generation engine built around an ECS-style (Entity-Component-System) model:
 
-- builders create `Entity` trees
-- layout systems calculate size and placement
-- rendering systems turn resolved geometry into output bytes
+- application code describes documents through `GraphCompose.document(...)`, `DocumentSession`, and `DocumentDsl`
+- canonical semantic nodes represent paragraphs, lists, tables, images, dividers, and modules
+- the internal engine calculates size, placement, pagination, and rendering
 
 The current production renderer is PDF via Apache PDFBox. The layout and entity model is renderer-agnostic by design — DOCX and PPTX output are on the roadmap.
 The shared rendering seam now stops at render-pass lifetime through a backend-neutral `RenderPassSession`: the engine stays free of PDFBox lifecycle code, while the PDF backend is free to reuse page-local resources efficiently.
@@ -182,8 +186,6 @@ JitPack consumers can keep using older tagged releases by pinning the tag they w
 
 ```java
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.engine.components.content.text.TextStyle;
-import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.document.api.DocumentSession;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
@@ -196,12 +198,8 @@ public class QuickStart {
                 .margin(24, 24, 24, 24)
                 .create()) {
 
-            document.pageFlow()
-                    .name("QuickStart")
-                    .spacing(8)
-                    .margin(Margin.of(8))
-                    .addParagraph("Hello GraphCompose", TextStyle.DEFAULT_STYLE)
-                    .build();
+            document.pageFlow(page -> page
+                    .module("Summary", module -> module.paragraph("Hello GraphCompose")));
 
             document.buildPdf();
         }
@@ -217,12 +215,8 @@ try (DocumentSession document = GraphCompose.document()
         .margin(24, 24, 24, 24)
         .create()) {
 
-    document.pageFlow()
-            .name("QuickStartBytes")
-            .spacing(8)
-            .margin(Margin.of(8))
-            .addText("In-memory PDF", TextStyle.DEFAULT_STYLE)
-            .build();
+    document.pageFlow(page -> page
+            .module("Summary", module -> module.paragraph("In-memory PDF")));
 
     byte[] pdfBytes = document.toPdfBytes();
 }
@@ -325,6 +319,8 @@ try (DocumentSession document = GraphCompose.document(Path.of("profile.pdf"))
 ```
 
 `ModuleBuilder` keeps authoring close to document language: `paragraph`, `bullets`, `dashList`, `rows`, `table`, `image`, `divider`, and `pageBreak`.
+
+For a guided walkthrough, see [Getting Started](./docs/getting-started.md). For copy-paste patterns, see [Recipes](./docs/recipes.md).
 
 ---
 
@@ -457,23 +453,28 @@ Current v1 limits:
 - no cell-level style override beyond row/column/default scopes
 
 ```java
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.table.DocumentTableColumn;
+import com.demcha.compose.document.table.DocumentTableStyle;
+
 document.pageFlow()
         .name("StatusSection")
         .spacing(12)
         .addTable(table -> table
                 .name("StatusTable")
                 .columns(
-                        TableColumnSpec.fixed(90),
-                        TableColumnSpec.auto(),
-                        TableColumnSpec.auto()
+                        DocumentTableColumn.fixed(90),
+                        DocumentTableColumn.auto(),
+                        DocumentTableColumn.auto()
                 )
                 .width(520)
-                .defaultCellStyle(TableCellStyle.builder()
-                        .padding(Padding.of(6))
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .padding(DocumentInsets.of(6))
                         .build())
-                .headerStyle(TableCellStyle.builder()
-                        .fillColor(ComponentColor.LIGHT_GRAY)
-                        .padding(Padding.of(6))
+                .headerStyle(DocumentTableStyle.builder()
+                        .fillColor(DocumentColor.LIGHT_GRAY)
+                        .padding(DocumentInsets.of(6))
                         .build())
                 .header("Role", "Owner", "Status")
                 .rows(
@@ -511,6 +512,8 @@ List items wrap with a hanging indent automatically. Existing leading `•`, `-`
 ## Line primitive
 
 ```java
+import com.demcha.compose.document.style.DocumentColor;
+
 document.pageFlow()
         .name("LinePrimitives")
         .spacing(12)
@@ -518,11 +521,11 @@ document.pageFlow()
                 .name("HorizontalRule")
                 .width(220)
                 .thickness(3)
-                .color(ComponentColor.ROYAL_BLUE))
+                .color(DocumentColor.ROYAL_BLUE))
         .addShape(shape -> shape
                 .name("VerticalAccent")
                 .size(3, 90)
-                .fillColor(ComponentColor.ORANGE))
+                .fillColor(DocumentColor.ORANGE))
         .build();
 ```
 
@@ -534,7 +537,8 @@ Use `divider()` for common horizontal rules and `shape()` for accent bars or cus
 
 ```mermaid
 graph TD
-    UserCode["Application code<br/>builders and entity tree"]
+    UserCode["Application code<br/>GraphCompose.document + DocumentDsl"]
+    Semantic["Semantic document nodes<br/>modules, paragraphs, lists, tables"]
 
     subgraph Core["GraphCompose pipeline"]
         LayoutSystem["Layout system"]
@@ -545,7 +549,8 @@ graph TD
     PDF["PDF output"]
     Future["Future renderers"]
 
-    UserCode --> LayoutSystem
+    UserCode --> Semantic
+    Semantic --> LayoutSystem
     LayoutSystem --> Geometry
     Geometry --> Renderer
     Renderer --> PDF
@@ -556,11 +561,10 @@ Main packages:
 
 | Package | Contents |
 | --- | --- |
-| `com.demcha.compose.engine.*` | Core engine: entities, builders, geometry, layout, pagination, render systems |
-| `com.demcha.compose.font.*` | Font registration and PDF font helpers |
-| `com.demcha.compose.engine.text.markdown.*` | Markdown parsing helpers used by text/block text builders |
-| `com.demcha.compose.document.*` | Canonical semantic document API, DSL, model, layout, and backend packages |
+| `com.demcha.compose.document.*` | Supported canonical authoring API, DSL, nodes, layout, and backend contracts |
 | `com.demcha.compose.document.templates.*` | Canonical built-in templates, themes, DTOs, registries, and template support helpers |
+| `com.demcha.compose.font.*` | Public font registration and font names |
+| `com.demcha.compose.engine.*` | Internal engine foundation for geometry, pagination, measurement, and render backends |
 
 For the full package map, see [docs/package-map.md](./docs/package-map.md). For runtime diagnostics, see [docs/logging.md](./docs/logging.md).
 
@@ -568,7 +572,9 @@ For the full package map, see [docs/package-map.md](./docs/package-map.md). For 
 
 ## Extending GraphCompose
 
-Start with [docs/implementation-guide.md](./docs/implementation-guide.md). The short version:
+Application code should start with [Getting Started](./docs/getting-started.md) and [Recipes](./docs/recipes.md). If you are changing the internal engine, start with [docs/implementation-guide.md](./docs/implementation-guide.md).
+
+The internal engine contributor short version:
 
 - extend `EmptyBox<T>` for a leaf entity with no children
 - extend `ShapeBuilderBase<T>` for shape-like leaves that need fill/stroke helpers

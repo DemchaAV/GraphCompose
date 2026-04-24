@@ -38,6 +38,8 @@ class CanonicalSurfaceGuardTest {
     private static final Set<String> CANONICAL_BENCHMARK_ALLOWLIST = Set.of();
 
     private static final Set<String> PUBLIC_MARKDOWN_ALLOWLIST = Set.of();
+    private static final List<String> FORBIDDEN_PUBLIC_AUTHORING_IMPORTS = List.of(
+            "import com.demcha.compose.engine.");
 
     @Test
     void canonicalMainSourcesShouldAvoidLegacySurfaceOutsideTransitionMappers() throws IOException {
@@ -89,6 +91,18 @@ class CanonicalSurfaceGuardTest {
                         PROJECT_ROOT.resolve("examples/README.md"),
                         PROJECT_ROOT.resolve("docs")),
                 PUBLIC_MARKDOWN_ALLOWLIST);
+    }
+
+    @Test
+    void publicAuthoringDocsAndExamplesShouldNotImportEngineInternals() throws IOException {
+        assertNoForbiddenAuthoringImports(
+                List.of(
+                        PROJECT_ROOT.resolve("README.md"),
+                        PROJECT_ROOT.resolve("docs/getting-started.md"),
+                        PROJECT_ROOT.resolve("docs/recipes.md"),
+                        PROJECT_ROOT.resolve("docs/layout-snapshot-testing.md"),
+                        PROJECT_ROOT.resolve("examples/src/main/java/com/demcha/examples"),
+                        PROJECT_ROOT.resolve("src/test/java/com/demcha/documentation/DocumentationExamplesTest.java")));
     }
 
     private void assertNoForbiddenReferences(Path root, Set<String> allowlist) throws IOException {
@@ -146,6 +160,41 @@ class CanonicalSurfaceGuardTest {
         try {
             String source = Files.readString(path);
             return FORBIDDEN_TOKENS.stream().anyMatch(source::contains);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to inspect " + path, e);
+        }
+    }
+
+    private void assertNoForbiddenAuthoringImports(List<Path> roots) throws IOException {
+        Set<String> violations = new TreeSet<>();
+        for (Path root : roots) {
+            if (Files.notExists(root)) {
+                continue;
+            }
+            if (Files.isRegularFile(root)) {
+                if (containsForbiddenAuthoringImport(root)) {
+                    violations.add(relative(root));
+                }
+                continue;
+            }
+            try (var paths = Files.walk(root)) {
+                paths.filter(Files::isRegularFile)
+                        .filter(path -> path.toString().endsWith(".java") || path.toString().endsWith(".md"))
+                        .filter(this::containsForbiddenAuthoringImport)
+                        .map(this::relative)
+                        .forEach(violations::add);
+            }
+        }
+
+        assertThat(violations)
+                .describedAs("Public authoring docs and runnable examples should not import engine internals")
+                .isEmpty();
+    }
+
+    private boolean containsForbiddenAuthoringImport(Path path) {
+        try {
+            String source = Files.readString(path);
+            return FORBIDDEN_PUBLIC_AUTHORING_IMPORTS.stream().anyMatch(source::contains);
         } catch (IOException e) {
             throw new RuntimeException("Failed to inspect " + path, e);
         }

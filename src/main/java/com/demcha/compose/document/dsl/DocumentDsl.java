@@ -22,26 +22,11 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
-import com.demcha.compose.document.table.DocumentTableTextAnchor;
-import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
-import com.demcha.compose.engine.components.content.table.TableCellContent;
-import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
-import com.demcha.compose.engine.components.content.table.TableColumnLayout;
-import com.demcha.compose.engine.components.content.ImageData;
-import com.demcha.compose.engine.components.content.shape.Stroke;
-import com.demcha.compose.engine.components.content.text.TextDecoration;
-import com.demcha.compose.engine.components.content.text.TextStyle;
-import com.demcha.compose.engine.components.layout.Anchor;
-import com.demcha.compose.engine.components.layout.VAnchor;
-import com.demcha.compose.engine.components.style.ComponentColor;
-import com.demcha.compose.engine.components.style.Margin;
-import com.demcha.compose.engine.components.style.Padding;
 
 import java.awt.Color;
 import java.nio.file.Path;
@@ -56,7 +41,7 @@ import java.util.function.Consumer;
  * Fluent semantic authoring facade for {@link DocumentSession}.
  *
  * <p>The DSL keeps the V2 authoring model node-based internally while exposing
- * a more V1-like builder experience for the common document-building path.</p>
+ * a compact builder experience for the common document-building path.</p>
  *
  * <pre>{@code
  * try (var document = GraphCompose.document(Path.of("output.pdf")).create()) {
@@ -231,192 +216,6 @@ public final class DocumentDsl {
         return normalized.toString();
     }
 
-    private static Padding toPadding(DocumentInsets insets) {
-        if (insets == null) {
-            return Padding.zero();
-        }
-        return new Padding(insets.top(), insets.right(), insets.bottom(), insets.left());
-    }
-
-    private static Margin toMargin(DocumentInsets insets) {
-        if (insets == null) {
-            return Margin.zero();
-        }
-        return new Margin(insets.top(), insets.right(), insets.bottom(), insets.left());
-    }
-
-    private static TextStyle toTextStyle(DocumentTextStyle textStyle) {
-        if (textStyle == null) {
-            return TextStyle.DEFAULT_STYLE;
-        }
-        return new TextStyle(
-                textStyle.fontName(),
-                textStyle.size(),
-                toDecoration(textStyle.decoration()),
-                textStyle.color().color());
-    }
-
-    private static Stroke toStroke(DocumentStroke stroke) {
-        return stroke == null ? null : new Stroke(stroke.color().color(), stroke.width());
-    }
-
-    private static TextDecoration toDecoration(DocumentTextDecoration decoration) {
-        if (decoration == null) {
-            return TextDecoration.DEFAULT;
-        }
-        return switch (decoration) {
-            case BOLD -> TextDecoration.BOLD;
-            case ITALIC -> TextDecoration.ITALIC;
-            case BOLD_ITALIC -> TextDecoration.BOLD_ITALIC;
-            case UNDERLINE -> TextDecoration.UNDERLINE;
-            case STRIKETHROUGH -> TextDecoration.STRIKETHROUGH;
-            case DEFAULT -> TextDecoration.DEFAULT;
-        };
-    }
-
-    private static TableColumnLayout toTableColumn(DocumentTableColumn column) {
-        Objects.requireNonNull(column, "column");
-        return column.type() == DocumentTableColumn.Type.FIXED
-                ? TableColumnLayout.fixed(column.fixedWidth())
-                : TableColumnLayout.auto();
-    }
-
-    private static TableCellLayoutStyle toTableStyle(DocumentTableStyle style) {
-        if (style == null) {
-            return TableCellLayoutStyle.empty();
-        }
-        return TableCellLayoutStyle.builder()
-                .padding(style.padding() == null ? null : toPadding(style.padding()))
-                .fillColor(style.fillColor() == null ? null : style.fillColor().color())
-                .textStyle(style.textStyle() == null ? null : toTextStyle(style.textStyle()))
-                .lineSpacing(style.lineSpacing())
-                .build();
-    }
-
-    private static TableCellContent toTableCell(DocumentTableCell cell) {
-        Objects.requireNonNull(cell, "cell");
-        TableCellContent spec = TableCellContent.of(cell.lines());
-        return cell.style() == null ? spec : spec.withStyle(toTableStyle(cell.style()));
-    }
-
-    private static DocumentInsets toDocumentInsets(Padding padding) {
-        if (padding == null) {
-            return DocumentInsets.zero();
-        }
-        return new DocumentInsets(padding.top(), padding.right(), padding.bottom(), padding.left());
-    }
-
-    private static DocumentInsets toDocumentInsets(Margin margin) {
-        if (margin == null) {
-            return DocumentInsets.zero();
-        }
-        return new DocumentInsets(margin.top(), margin.right(), margin.bottom(), margin.left());
-    }
-
-    private static DocumentTextStyle toDocumentTextStyle(TextStyle textStyle) {
-        if (textStyle == null) {
-            return DocumentTextStyle.DEFAULT;
-        }
-        return new DocumentTextStyle(
-                textStyle.fontName(),
-                textStyle.size(),
-                toDocumentDecoration(textStyle.decoration()),
-                DocumentColor.of(textStyle.color()));
-    }
-
-    private static DocumentTextDecoration toDocumentDecoration(TextDecoration decoration) {
-        if (decoration == null) {
-            return DocumentTextDecoration.DEFAULT;
-        }
-        return switch (decoration) {
-            case BOLD -> DocumentTextDecoration.BOLD;
-            case ITALIC -> DocumentTextDecoration.ITALIC;
-            case BOLD_ITALIC -> DocumentTextDecoration.BOLD_ITALIC;
-            case UNDERLINE -> DocumentTextDecoration.UNDERLINE;
-            case STRIKETHROUGH -> DocumentTextDecoration.STRIKETHROUGH;
-            case DEFAULT -> DocumentTextDecoration.DEFAULT;
-        };
-    }
-
-    private static DocumentTextIndent toDocumentIndent(TextIndentStrategy indentStrategy) {
-        if (indentStrategy == null) {
-            return DocumentTextIndent.NONE;
-        }
-        return switch (indentStrategy) {
-            case FIRST_LINE -> DocumentTextIndent.FIRST_LINE;
-            case FROM_SECOND_LINE -> DocumentTextIndent.FROM_SECOND_LINE;
-            case ALL_LINES -> DocumentTextIndent.ALL_LINES;
-            case NONE -> DocumentTextIndent.NONE;
-        };
-    }
-
-    private static DocumentStroke toDocumentStroke(Stroke stroke) {
-        return stroke == null ? null : new DocumentStroke(DocumentColor.of(stroke.strokeColor().color()), stroke.width());
-    }
-
-    private static DocumentTableColumn toDocumentTableColumn(TableColumnLayout column) {
-        Objects.requireNonNull(column, "column");
-        return column.type() == TableColumnLayout.Type.FIXED
-                ? DocumentTableColumn.fixed(column.fixedWidth())
-                : DocumentTableColumn.auto();
-    }
-
-    private static DocumentTableStyle toDocumentTableStyle(TableCellLayoutStyle style) {
-        if (style == null) {
-            return DocumentTableStyle.empty();
-        }
-        DocumentTableStyle.Builder builder = DocumentTableStyle.builder();
-        if (style.padding() != null) {
-            builder.padding(toDocumentInsets(style.padding()));
-        }
-        if (style.fillColor() != null) {
-            builder.fillColor(DocumentColor.of(style.fillColor()));
-        }
-        if (style.stroke() != null) {
-            builder.stroke(toDocumentStroke(style.stroke()));
-        }
-        if (style.textStyle() != null) {
-            builder.textStyle(toDocumentTextStyle(style.textStyle()));
-        }
-        if (style.textAnchor() != null) {
-            builder.textAnchor(toDocumentTableAnchor(style.textAnchor()));
-        }
-        if (style.lineSpacing() != null) {
-            builder.lineSpacing(style.lineSpacing());
-        }
-        return builder.build();
-    }
-
-    private static DocumentTableTextAnchor toDocumentTableAnchor(Anchor anchor) {
-        if (anchor == null) {
-            return null;
-        }
-        return switch (anchor.h()) {
-            case LEFT -> switch (anchor.v()) {
-                case TOP -> DocumentTableTextAnchor.TOP_LEFT;
-                case BOTTOM -> DocumentTableTextAnchor.BOTTOM_LEFT;
-                case MIDDLE -> DocumentTableTextAnchor.CENTER_LEFT;
-                case DEFAULT -> DocumentTableTextAnchor.DEFAULT;
-            };
-            case CENTER -> anchor.v() == VAnchor.MIDDLE
-                    ? DocumentTableTextAnchor.CENTER
-                    : DocumentTableTextAnchor.DEFAULT;
-            case RIGHT -> switch (anchor.v()) {
-                case TOP -> DocumentTableTextAnchor.TOP_RIGHT;
-                case BOTTOM -> DocumentTableTextAnchor.BOTTOM_RIGHT;
-                case MIDDLE -> DocumentTableTextAnchor.CENTER_RIGHT;
-                case DEFAULT -> DocumentTableTextAnchor.DEFAULT;
-            };
-            case DEFAULT -> DocumentTableTextAnchor.DEFAULT;
-        };
-    }
-
-    private static DocumentTableCell toDocumentTableCell(TableCellContent cell) {
-        Objects.requireNonNull(cell, "cell");
-        DocumentTableCell result = new DocumentTableCell(cell.lines(), null);
-        return cell.styleOverride() == null ? result : result.withStyle(toDocumentTableStyle(cell.styleOverride()));
-    }
-
     /**
      * Base class for vertical flow builders used by root flows and sections.
      *
@@ -465,17 +264,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Sets flow padding with the internal engine value.
-         *
-         * @param padding padding in points
-         * @return this builder
-         */
-        public T padding(Padding padding) {
-            this.padding = toDocumentInsets(padding);
-            return self();
-        }
-
-        /**
          * Sets flow padding with the public canonical spacing value.
          *
          * @param padding padding in points
@@ -497,17 +285,6 @@ public final class DocumentDsl {
          */
         public T padding(float top, float right, float bottom, float left) {
             return padding(new DocumentInsets(top, right, bottom, left));
-        }
-
-        /**
-         * Sets flow margin with the internal engine value.
-         *
-         * @param margin margin in points
-         * @return this builder
-         */
-        public T margin(Margin margin) {
-            this.margin = toDocumentInsets(margin);
-            return self();
         }
 
         /**
@@ -546,17 +323,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Sets the flow background fill with an engine color token.
-         *
-         * @param fillColor fill color token
-         * @return this builder
-         */
-        public T fillColor(ComponentColor fillColor) {
-            this.fillColor = fillColor == null ? null : DocumentColor.of(fillColor.color());
-            return self();
-        }
-
-        /**
          * Sets the flow background fill with a public canonical color.
          *
          * @param fillColor fill color
@@ -564,17 +330,6 @@ public final class DocumentDsl {
          */
         public T fillColor(DocumentColor fillColor) {
             this.fillColor = fillColor;
-            return self();
-        }
-
-        /**
-         * Sets the flow border stroke.
-         *
-         * @param stroke border stroke, or {@code null} for no border
-         * @return this builder
-         */
-        public T stroke(Stroke stroke) {
-            this.stroke = toDocumentStroke(stroke);
             return self();
         }
 
@@ -621,20 +376,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Adds a plain paragraph without requiring an explicit nested builder.
-         *
-         * @param text paragraph text
-         * @param textStyle paragraph text style, or the default style when {@code null}
-         * @return this builder
-         */
-        public T addParagraph(String text, TextStyle textStyle) {
-            return add(new ParagraphBuilder()
-                    .text(text)
-                    .textStyle(textStyle)
-                    .build());
-        }
-
-        /**
          * Adds a plain paragraph with a public canonical text style.
          *
          * @param text paragraph text
@@ -666,17 +407,6 @@ public final class DocumentDsl {
          */
         public T addText(String text) {
             return addParagraph(text);
-        }
-
-        /**
-         * Alias for {@link #addParagraph(String, TextStyle)}.
-         *
-         * @param text paragraph text
-         * @param textStyle paragraph text style
-         * @return this builder
-         */
-        public T addText(String text, TextStyle textStyle) {
-            return addParagraph(text, textStyle);
         }
 
         /**
@@ -976,17 +706,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Sets the title text style.
-         *
-         * @param titleStyle title text style
-         * @return this builder
-         */
-        public ModuleBuilder titleStyle(TextStyle titleStyle) {
-            this.titleStyle = toDocumentTextStyle(titleStyle);
-            return this;
-        }
-
-        /**
          * Sets the title text style with the public canonical style value.
          *
          * @param titleStyle title text style
@@ -1020,17 +739,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Sets title padding.
-         *
-         * @param titlePadding title padding
-         * @return this builder
-         */
-        public ModuleBuilder titlePadding(Padding titlePadding) {
-            this.titlePadding = toDocumentInsets(titlePadding);
-            return this;
-        }
-
-        /**
          * Sets title padding with the public canonical spacing value.
          *
          * @param titlePadding title padding
@@ -1038,17 +746,6 @@ public final class DocumentDsl {
          */
         public ModuleBuilder titlePadding(DocumentInsets titlePadding) {
             this.titlePadding = titlePadding == null ? DocumentInsets.zero() : titlePadding;
-            return this;
-        }
-
-        /**
-         * Sets title margin.
-         *
-         * @param titleMargin title margin
-         * @return this builder
-         */
-        public ModuleBuilder titleMargin(Margin titleMargin) {
-            this.titleMargin = toDocumentInsets(titleMargin);
             return this;
         }
 
@@ -1325,17 +1022,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Sets paragraph text style.
-         *
-         * @param textStyle paragraph text style
-         * @return this builder
-         */
-        public ParagraphBuilder textStyle(TextStyle textStyle) {
-            this.textStyle = toDocumentTextStyle(textStyle);
-            return this;
-        }
-
-        /**
          * Sets paragraph text style with the public canonical style value.
          *
          * @param textStyle paragraph text style
@@ -1380,17 +1066,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Sets paragraph indentation behavior.
-         *
-         * @param indentStrategy indent strategy
-         * @return this builder
-         */
-        public ParagraphBuilder indentStrategy(TextIndentStrategy indentStrategy) {
-            this.indentStrategy = toDocumentIndent(indentStrategy);
-            return this;
-        }
-
-        /**
          * Sets paragraph indentation behavior with the public canonical value.
          *
          * @param indentStrategy indent strategy
@@ -1420,17 +1095,6 @@ public final class DocumentDsl {
          */
         public ParagraphBuilder inlineText(String text) {
             return inlineText(text, (DocumentTextStyle) null, null);
-        }
-
-        /**
-         * Adds a styled inline text run.
-         *
-         * @param text inline text
-         * @param textStyle inline text style
-         * @return this builder
-         */
-        public ParagraphBuilder inlineText(String text, TextStyle textStyle) {
-            return inlineText(text, toDocumentTextStyle(textStyle), null);
         }
 
         /**
@@ -1470,18 +1134,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Adds a styled inline text run with optional link metadata.
-         *
-         * @param text inline text
-         * @param textStyle inline text style
-         * @param linkOptions optional link metadata
-         * @return this builder
-         */
-        public ParagraphBuilder inlineText(String text, TextStyle textStyle, PdfLinkOptions linkOptions) {
-            return inlineText(text, toDocumentTextStyle(textStyle), linkOptions);
-        }
-
-        /**
          * Replaces inline runs.
          *
          * @param inlineTextRuns inline text runs in source order
@@ -1512,17 +1164,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Sets paragraph padding.
-         *
-         * @param padding padding in points
-         * @return this builder
-         */
-        public ParagraphBuilder padding(Padding padding) {
-            this.padding = toDocumentInsets(padding);
-            return this;
-        }
-
-        /**
          * Sets paragraph padding with the public canonical spacing value.
          *
          * @param padding padding in points
@@ -1544,17 +1185,6 @@ public final class DocumentDsl {
          */
         public ParagraphBuilder padding(float top, float right, float bottom, float left) {
             return padding(new DocumentInsets(top, right, bottom, left));
-        }
-
-        /**
-         * Sets paragraph margin.
-         *
-         * @param margin margin in points
-         * @return this builder
-         */
-        public ParagraphBuilder margin(Margin margin) {
-            this.margin = toDocumentInsets(margin);
-            return this;
         }
 
         /**
@@ -1724,17 +1354,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Sets the shared list text style.
-         *
-         * @param textStyle list text style
-         * @return this builder
-         */
-        public ListBuilder textStyle(TextStyle textStyle) {
-            this.textStyle = toDocumentTextStyle(textStyle);
-            return this;
-        }
-
-        /**
          * Sets list text style with the public canonical style value.
          *
          * @param textStyle list text style
@@ -1802,17 +1421,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Sets list padding.
-         *
-         * @param padding padding in points
-         * @return this builder
-         */
-        public ListBuilder padding(Padding padding) {
-            this.padding = toDocumentInsets(padding);
-            return this;
-        }
-
-        /**
          * Sets list padding with the public canonical spacing value.
          *
          * @param padding padding in points
@@ -1834,17 +1442,6 @@ public final class DocumentDsl {
          */
         public ListBuilder padding(float top, float right, float bottom, float left) {
             return padding(new DocumentInsets(top, right, bottom, left));
-        }
-
-        /**
-         * Sets list margin.
-         *
-         * @param margin margin in points
-         * @return this builder
-         */
-        public ListBuilder margin(Margin margin) {
-            this.margin = toDocumentInsets(margin);
-            return this;
         }
 
         /**
@@ -1928,20 +1525,19 @@ public final class DocumentDsl {
          * @param imageData image data
          * @return this builder
          */
-        public ImageBuilder source(ImageData imageData) {
-            this.imageData = DocumentImageData.fromBytes(Objects.requireNonNull(imageData, "imageData").getBytes());
+        public ImageBuilder source(DocumentImageData imageData) {
+            this.imageData = Objects.requireNonNull(imageData, "imageData");
             return this;
         }
 
         /**
-         * Sets image source data.
+         * Sets image source from an in-memory byte array.
          *
-         * @param imageData image data
+         * @param bytes image bytes
          * @return this builder
          */
-        public ImageBuilder source(DocumentImageData imageData) {
-            this.imageData = Objects.requireNonNull(imageData, "imageData");
-            return this;
+        public ImageBuilder source(byte[] bytes) {
+            return source(DocumentImageData.fromBytes(bytes));
         }
 
         /**
@@ -2022,17 +1618,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Sets image padding.
-         *
-         * @param padding padding in points
-         * @return this builder
-         */
-        public ImageBuilder padding(Padding padding) {
-            this.padding = toDocumentInsets(padding);
-            return this;
-        }
-
-        /**
          * Sets image padding with the public canonical spacing value.
          *
          * @param padding padding in points
@@ -2040,17 +1625,6 @@ public final class DocumentDsl {
          */
         public ImageBuilder padding(DocumentInsets padding) {
             this.padding = padding == null ? DocumentInsets.zero() : padding;
-            return this;
-        }
-
-        /**
-         * Sets image margin.
-         *
-         * @param margin margin in points
-         * @return this builder
-         */
-        public ImageBuilder margin(Margin margin) {
-            this.margin = toDocumentInsets(margin);
             return this;
         }
 
@@ -2161,17 +1735,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Sets shape fill color from an engine token.
-         *
-         * @param fillColor fill color token
-         * @return this builder
-         */
-        public ShapeBuilder fillColor(ComponentColor fillColor) {
-            this.fillColor = fillColor == null ? null : DocumentColor.of(fillColor.color());
-            return this;
-        }
-
-        /**
          * Sets shape fill with a public canonical color.
          *
          * @param fillColor fill color
@@ -2179,17 +1742,6 @@ public final class DocumentDsl {
          */
         public ShapeBuilder fillColor(DocumentColor fillColor) {
             this.fillColor = fillColor;
-            return this;
-        }
-
-        /**
-         * Sets shape stroke.
-         *
-         * @param stroke shape stroke, or {@code null} for no stroke
-         * @return this builder
-         */
-        public ShapeBuilder stroke(Stroke stroke) {
-            this.stroke = toDocumentStroke(stroke);
             return this;
         }
 
@@ -2227,17 +1779,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Sets shape padding.
-         *
-         * @param padding padding in points
-         * @return this builder
-         */
-        public ShapeBuilder padding(Padding padding) {
-            this.padding = toDocumentInsets(padding);
-            return this;
-        }
-
-        /**
          * Sets shape padding with the public canonical spacing value.
          *
          * @param padding padding in points
@@ -2245,17 +1786,6 @@ public final class DocumentDsl {
          */
         public ShapeBuilder padding(DocumentInsets padding) {
             this.padding = padding == null ? DocumentInsets.zero() : padding;
-            return this;
-        }
-
-        /**
-         * Sets shape margin.
-         *
-         * @param margin margin in points
-         * @return this builder
-         */
-        public ShapeBuilder margin(Margin margin) {
-            this.margin = toDocumentInsets(margin);
             return this;
         }
 
@@ -2409,16 +1939,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Sets barcode foreground color from an engine token.
-         *
-         * @param foreground foreground color token
-         * @return this builder
-         */
-        public BarcodeBuilder foreground(ComponentColor foreground) {
-            return foreground(foreground == null ? null : foreground.color());
-        }
-
-        /**
          * Sets barcode foreground with a public canonical color.
          *
          * @param foreground foreground color
@@ -2437,16 +1957,6 @@ public final class DocumentDsl {
         public BarcodeBuilder background(Color background) {
             this.background = background == null ? Color.WHITE : background;
             return this;
-        }
-
-        /**
-         * Sets barcode background color from an engine token.
-         *
-         * @param background background color token
-         * @return this builder
-         */
-        public BarcodeBuilder background(ComponentColor background) {
-            return background(background == null ? null : background.color());
         }
 
         /**
@@ -2528,17 +2038,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Sets barcode padding.
-         *
-         * @param padding padding in points
-         * @return this builder
-         */
-        public BarcodeBuilder padding(Padding padding) {
-            this.padding = toDocumentInsets(padding);
-            return this;
-        }
-
-        /**
          * Sets barcode padding with the public canonical spacing value.
          *
          * @param padding padding in points
@@ -2546,17 +2045,6 @@ public final class DocumentDsl {
          */
         public BarcodeBuilder padding(DocumentInsets padding) {
             this.padding = padding == null ? DocumentInsets.zero() : padding;
-            return this;
-        }
-
-        /**
-         * Sets barcode margin.
-         *
-         * @param margin margin in points
-         * @return this builder
-         */
-        public BarcodeBuilder margin(Margin margin) {
-            this.margin = toDocumentInsets(margin);
             return this;
         }
 
@@ -2641,16 +2129,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Sets divider color from an engine token.
-         *
-         * @param color divider color token
-         * @return this builder
-         */
-        public DividerBuilder color(ComponentColor color) {
-            return color(color == null ? null : color.color());
-        }
-
-        /**
          * Sets divider color with a public canonical color.
          *
          * @param color divider color
@@ -2673,18 +2151,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Sets divider padding.
-         *
-         * @param padding padding in points
-         * @return this builder
-         */
-        @Override
-        public DividerBuilder padding(Padding padding) {
-            super.padding(padding);
-            return this;
-        }
-
-        /**
          * Sets divider padding with the public canonical spacing value.
          *
          * @param padding padding in points
@@ -2693,18 +2159,6 @@ public final class DocumentDsl {
         @Override
         public DividerBuilder padding(DocumentInsets padding) {
             super.padding(padding);
-            return this;
-        }
-
-        /**
-         * Sets divider margin.
-         *
-         * @param margin margin in points
-         * @return this builder
-         */
-        @Override
-        public DividerBuilder margin(Margin margin) {
-            super.margin(margin);
             return this;
         }
 
@@ -2765,22 +2219,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Replaces table columns with engine column specs.
-         *
-         * @param columns column specifications
-         * @return this builder
-         */
-        public TableBuilder columns(TableColumnLayout... columns) {
-            this.columns.clear();
-            if (columns != null) {
-                for (TableColumnLayout column : columns) {
-                    this.columns.add(toDocumentTableColumn(column));
-                }
-            }
-            return this;
-        }
-
-        /**
          * Sets columns with public canonical table column values.
          *
          * @param columns column specifications
@@ -2807,17 +2245,6 @@ public final class DocumentDsl {
             for (int index = 0; index < count; index++) {
                 this.columns.add(DocumentTableColumn.auto());
             }
-            return this;
-        }
-
-        /**
-         * Adds one engine column specification.
-         *
-         * @param column column specification
-         * @return this builder
-         */
-        public TableBuilder addColumn(TableColumnLayout column) {
-            this.columns.add(toDocumentTableColumn(column));
             return this;
         }
 
@@ -2849,21 +2276,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Adds a table row from engine cell content values.
-         *
-         * @param row cells in column order
-         * @return this builder
-         */
-        public TableBuilder row(List<TableCellContent> row) {
-            List<DocumentTableCell> cells = new ArrayList<>();
-            for (TableCellContent cell : Objects.requireNonNull(row, "row")) {
-                cells.add(toDocumentTableCell(cell));
-            }
-            this.rows.add(List.copyOf(cells));
-            return this;
-        }
-
-        /**
          * Adds a row made of public canonical table cells.
          *
          * @param row cells in column order
@@ -2882,7 +2294,7 @@ public final class DocumentDsl {
          */
         public TableBuilder rowCells(DocumentTableCell... row) {
             if (row == null) {
-                return row(List.of());
+                return rowCells(List.of());
             }
             List<DocumentTableCell> cells = new ArrayList<>(row.length);
             for (DocumentTableCell cell : row) {
@@ -2905,13 +2317,13 @@ public final class DocumentDsl {
         }
 
         /**
-         * Adds a semantic header row with explicit cell specifications.
+         * Adds a semantic header row from public canonical table cells.
          *
-         * @param row header cell specifications
+         * @param row header cells
          * @return this builder
          */
-        public TableBuilder header(List<TableCellContent> row) {
-            return row(row);
+        public TableBuilder headerCells(DocumentTableCell... row) {
+            return rowCells(row);
         }
 
         /**
@@ -2920,7 +2332,7 @@ public final class DocumentDsl {
          * @param row header cells
          * @return this builder
          */
-        public TableBuilder headerCells(DocumentTableCell... row) {
+        public TableBuilder headerCells(List<DocumentTableCell> row) {
             return rowCells(row);
         }
 
@@ -2940,32 +2352,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Adds multiple explicit rows in source order.
-         *
-         * @param rows row specifications, one list per row
-         * @return this builder
-         */
-        public TableBuilder rows(List<List<TableCellContent>> rows) {
-            if (rows != null) {
-                for (List<TableCellContent> row : rows) {
-                    row(row);
-                }
-            }
-            return this;
-        }
-
-        /**
-         * Sets the default cell style.
-         *
-         * @param defaultCellStyle default cell style
-         * @return this builder
-         */
-        public TableBuilder defaultCellStyle(TableCellLayoutStyle defaultCellStyle) {
-            this.defaultCellStyle = defaultCellStyle == null ? DocumentTableStyle.empty() : toDocumentTableStyle(defaultCellStyle);
-            return this;
-        }
-
-        /**
          * Sets the default cell style with a public canonical table style.
          *
          * @param defaultCellStyle default cell style
@@ -2977,16 +2363,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Applies a style override to the first row, which is commonly used as a header row.
-         *
-         * @param style header row style override
-         * @return this builder
-         */
-        public TableBuilder headerStyle(TableCellLayoutStyle style) {
-            return rowStyle(0, style);
-        }
-
-        /**
          * Applies a public canonical style override to the first row.
          *
          * @param style header row style override
@@ -2994,21 +2370,6 @@ public final class DocumentDsl {
          */
         public TableBuilder headerStyle(DocumentTableStyle style) {
             return rowStyle(0, style);
-        }
-
-        /**
-         * Applies a style override to a row.
-         *
-         * @param rowIndex zero-based row index
-         * @param style row style override
-         * @return this builder
-         */
-        public TableBuilder rowStyle(int rowIndex, TableCellLayoutStyle style) {
-            if (rowIndex < 0) {
-                throw new IllegalArgumentException("rowIndex cannot be negative: " + rowIndex);
-            }
-            rowStyles.put(rowIndex, toDocumentTableStyle(Objects.requireNonNull(style, "style")));
-            return this;
         }
 
         /**
@@ -3023,21 +2384,6 @@ public final class DocumentDsl {
                 throw new IllegalArgumentException("rowIndex cannot be negative: " + rowIndex);
             }
             rowStyles.put(rowIndex, Objects.requireNonNull(style, "style"));
-            return this;
-        }
-
-        /**
-         * Applies a style override to a column.
-         *
-         * @param columnIndex zero-based column index
-         * @param style column style override
-         * @return this builder
-         */
-        public TableBuilder columnStyle(int columnIndex, TableCellLayoutStyle style) {
-            if (columnIndex < 0) {
-                throw new IllegalArgumentException("columnIndex cannot be negative: " + columnIndex);
-            }
-            columnStyles.put(columnIndex, toDocumentTableStyle(Objects.requireNonNull(style, "style")));
             return this;
         }
 
@@ -3090,17 +2436,6 @@ public final class DocumentDsl {
         }
 
         /**
-         * Sets table padding.
-         *
-         * @param padding padding in points
-         * @return this builder
-         */
-        public TableBuilder padding(Padding padding) {
-            this.padding = toDocumentInsets(padding);
-            return this;
-        }
-
-        /**
          * Sets table padding with the public canonical spacing value.
          *
          * @param padding padding in points
@@ -3108,17 +2443,6 @@ public final class DocumentDsl {
          */
         public TableBuilder padding(DocumentInsets padding) {
             this.padding = padding == null ? DocumentInsets.zero() : padding;
-            return this;
-        }
-
-        /**
-         * Sets table margin.
-         *
-         * @param margin margin in points
-         * @return this builder
-         */
-        public TableBuilder margin(Margin margin) {
-            this.margin = toDocumentInsets(margin);
             return this;
         }
 
@@ -3175,17 +2499,6 @@ public final class DocumentDsl {
          */
         public PageBreakBuilder name(String name) {
             this.name = name == null ? "" : name;
-            return this;
-        }
-
-        /**
-         * Sets page-break margin.
-         *
-         * @param margin margin in points
-         * @return this builder
-         */
-        public PageBreakBuilder margin(Margin margin) {
-            this.margin = toDocumentInsets(margin);
             return this;
         }
 

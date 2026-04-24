@@ -110,6 +110,7 @@ class CanonicalSurfaceGuardTest {
         assertNoForbiddenAuthoringImports(
                 List.of(
                         PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/node"),
+                        PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl"),
                         PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/style"),
                         PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/table"),
                         PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/image")));

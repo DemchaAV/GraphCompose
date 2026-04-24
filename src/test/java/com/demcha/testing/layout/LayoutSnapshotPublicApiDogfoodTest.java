@@ -2,7 +2,7 @@ package com.demcha.testing.layout;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.engine.components.content.text.TextStyle;
+import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
@@ -61,7 +61,7 @@ class LayoutSnapshotPublicApiDogfoodTest {
                 .addParagraph(paragraph -> paragraph
                         .name("Title")
                         .text("Consumer snapshot baseline")
-                        .textStyle(TextStyle.DEFAULT_STYLE))
+                        .textStyle(DocumentTextStyle.DEFAULT))
                 .addShape(shape -> shape
                         .name("AccentBox")
                         .size(120, 32))

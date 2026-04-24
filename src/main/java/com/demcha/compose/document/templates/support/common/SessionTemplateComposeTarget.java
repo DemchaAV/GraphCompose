@@ -2,8 +2,8 @@ package com.demcha.compose.document.templates.support.common;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.DocumentDsl;
-import com.demcha.compose.engine.components.content.table.TableColumnLayout;
-import com.demcha.compose.engine.components.style.Padding;
+import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.table.DocumentTableColumn;
 
 import java.util.Objects;
 
@@ -82,14 +82,14 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
         flow.addParagraph(builder -> builder
                 .name(paragraph.name())
                 .text(paragraph.text())
-                .textStyle(paragraph.style())
+                .textStyle(TemplateDocumentAdapters.textStyle(paragraph.style()))
                 .align(paragraph.align())
                 .lineSpacing(paragraph.lineSpacing())
                 .bulletOffset(paragraph.bulletOffset())
-                .indentStrategy(paragraph.indentStrategy())
+                .indentStrategy(TemplateDocumentAdapters.indent(paragraph.indentStrategy()))
                 .link(paragraph.linkOptions())
-                .padding(paragraph.padding())
-                .margin(paragraph.margin())
+                .padding(TemplateDocumentAdapters.insets(paragraph.padding()))
+                .margin(TemplateDocumentAdapters.insets(paragraph.margin()))
                 .inlineRuns(paragraph.inlineTextRuns()));
     }
 
@@ -117,11 +117,11 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
             return;
         }
         builder.title(title.text())
-                .titleStyle(title.style())
+                .titleStyle(TemplateDocumentAdapters.textStyle(title.style()))
                 .titleAlign(title.align())
                 .titleLineSpacing(title.lineSpacing())
-                .titlePadding(title.padding())
-                .titleMargin(title.margin());
+                .titlePadding(TemplateDocumentAdapters.insets(title.padding()))
+                .titleMargin(TemplateDocumentAdapters.insets(title.margin()));
     }
 
     private void addList(DocumentDsl.AbstractFlowBuilder<?, ?> flow, TemplateListSpec list) {
@@ -129,14 +129,14 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
                 .name(list.name())
                 .items(list.items())
                 .marker(list.marker())
-                .textStyle(list.style())
+                .textStyle(TemplateDocumentAdapters.textStyle(list.style()))
                 .align(list.align())
                 .lineSpacing(list.lineSpacing())
                 .itemSpacing(list.itemSpacing())
                 .continuationIndent(list.continuationIndent())
                 .normalizeMarkers(list.normalizeMarkers())
-                .padding(list.padding())
-                .margin(list.margin()));
+                .padding(TemplateDocumentAdapters.insets(list.padding()))
+                .margin(TemplateDocumentAdapters.insets(list.margin())));
     }
 
     private void addDivider(DocumentDsl.AbstractFlowBuilder<?, ?> flow, TemplateDividerSpec divider) {
@@ -145,23 +145,27 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
                 .width(divider.width())
                 .thickness(divider.thickness())
                 .color(divider.color())
-                .padding(new Padding(8, 0, 8, 0))
-                .margin(divider.margin()));
+                .padding(new DocumentInsets(8, 0, 8, 0))
+                .margin(TemplateDocumentAdapters.insets(divider.margin())));
     }
 
     private void addTable(DocumentDsl.AbstractFlowBuilder<?, ?> flow, TemplateTableSpec table) {
         DocumentDsl.TableBuilder builder = session.dsl()
                 .table()
                 .name(table.name())
-                .columns(table.columns().toArray(TableColumnLayout[]::new))
-                .defaultCellStyle(table.defaultCellStyle())
+                .columns(table.columns().stream()
+                        .map(TemplateDocumentAdapters::tableColumn)
+                        .toArray(DocumentTableColumn[]::new))
+                .defaultCellStyle(TemplateDocumentAdapters.tableStyle(table.defaultCellStyle()))
                 .width(table.width())
-                .padding(table.padding())
-                .margin(table.margin());
+                .padding(TemplateDocumentAdapters.insets(table.padding()))
+                .margin(TemplateDocumentAdapters.insets(table.margin()));
 
-        table.columnStyles().forEach(builder::columnStyle);
-        table.rowStyles().forEach(builder::rowStyle);
-        table.rows().forEach(builder::row);
+        table.columnStyles().forEach((column, style) ->
+                builder.columnStyle(column, TemplateDocumentAdapters.tableStyle(style)));
+        table.rowStyles().forEach((row, style) ->
+                builder.rowStyle(row, TemplateDocumentAdapters.tableStyle(style)));
+        table.rows().forEach(row -> builder.rowCells(TemplateDocumentAdapters.tableRow(row)));
 
         flow.add(builder.build());
     }

@@ -6,14 +6,15 @@ import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkLayer;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkPosition;
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentTextDecoration;
+import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.builtins.CvTemplateV1;
 import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
 import com.demcha.compose.document.templates.builtins.ProposalTemplateV1;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
-import com.demcha.compose.engine.components.content.text.TextDecoration;
-import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.style.Margin;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
@@ -58,15 +59,15 @@ public final class CurrentSpeedBenchmark {
     private static final String DEFAULT_SMOKE_THREAD_COUNTS = "";
     private static final String REPOSITORY_URL = "https://github.com/DemchaAV/GraphCompose";
 
-    private static final TextStyle TITLE_STYLE = TextStyle.builder()
+    private static final DocumentTextStyle TITLE_STYLE = DocumentTextStyle.builder()
             .size(20)
-            .decoration(TextDecoration.BOLD)
-            .color(new Color(18, 40, 74))
+            .decoration(DocumentTextDecoration.BOLD)
+            .color(DocumentColor.of(new Color(18, 40, 74)))
             .build();
-    private static final TextStyle BODY_STYLE = TextStyle.builder()
+    private static final DocumentTextStyle BODY_STYLE = DocumentTextStyle.builder()
             .size(9.5)
-            .decoration(TextDecoration.DEFAULT)
-            .color(new Color(58, 69, 84))
+            .decoration(DocumentTextDecoration.DEFAULT)
+            .color(DocumentColor.of(new Color(58, 69, 84)))
             .build();
 
     private final InvoiceTemplateV1 invoiceTemplate = new InvoiceTemplateV1();

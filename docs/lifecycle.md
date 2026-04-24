@@ -12,6 +12,22 @@ GraphCompose.document(...)
   -> PDF bytes/file
 ```
 
+```mermaid
+flowchart TD
+    Entry["GraphCompose.document(...)"] --> Session["DocumentSession"]
+    Session --> Authoring["DocumentDsl or built-in template"]
+    Authoring --> Nodes["Semantic document nodes"]
+    Nodes --> Layout["Layout graph"]
+    Layout --> Snapshot["layoutSnapshot()"]
+    Layout --> Render["PDF fixed-layout render"]
+    Render --> Output["buildPdf() or toPdfBytes()"]
+    Session --> Close["close()"]
+```
+
+Application code normally stays in the first two boxes: create a session, then
+describe document modules. The engine boxes are internal lifecycle stages used
+for layout, pagination, diagnostics, and rendering.
+
 ## 1. Session Creation
 
 `GraphCompose.document(...)` creates a `DocumentSession`. The session owns:

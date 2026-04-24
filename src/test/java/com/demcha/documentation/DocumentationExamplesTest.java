@@ -5,13 +5,11 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.InvoiceTemplate;
 import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.table.DocumentTableColumn;
+import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.font.FontName;
-import com.demcha.compose.engine.components.content.text.TextStyle;
-import com.demcha.compose.engine.components.style.ComponentColor;
-import com.demcha.compose.engine.components.style.Margin;
-import com.demcha.compose.engine.components.style.Padding;
-import com.demcha.compose.engine.components.components_builders.TableCellStyle;
-import com.demcha.compose.engine.components.components_builders.TableColumnSpec;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -47,12 +45,8 @@ class DocumentationExamplesTest {
                 .pageSize(PDRectangle.A4)
                 .margin(24, 24, 24, 24)
                 .create()) {
-            document.pageFlow()
-                    .name("QuickStart")
-                    .spacing(8)
-                    .margin(Margin.of(8))
-                    .addParagraph("Hello GraphCompose", TextStyle.DEFAULT_STYLE)
-                    .build();
+            document.pageFlow(page -> page
+                    .module("Summary", module -> module.paragraph("Hello GraphCompose")));
 
             document.buildPdf();
         }
@@ -69,12 +63,8 @@ class DocumentationExamplesTest {
                 .pageSize(PDRectangle.A4)
                 .margin(24, 24, 24, 24)
                 .create()) {
-            document.pageFlow()
-                    .name("QuickStartBytes")
-                    .spacing(8)
-                    .margin(Margin.of(8))
-                    .addText("In-memory PDF", TextStyle.DEFAULT_STYLE)
-                    .build();
+            document.pageFlow(page -> page
+                    .module("Summary", module -> module.paragraph("In-memory PDF")));
 
             pdfBytes = document.toPdfBytes();
         }
@@ -96,10 +86,10 @@ class DocumentationExamplesTest {
                     .spacing(12)
                     .addSection("Profile", section -> section
                             .spacing(6)
-                            .addParagraph("Profile", TextStyle.DEFAULT_STYLE)
+                            .addParagraph("Profile")
                             .addParagraph(paragraph -> paragraph
                                     .text("Analytical engineer focused on reliable platform design.")
-                                    .padding(Padding.of(4))))));
+                                    .padding(DocumentInsets.of(4))))));
 
             pdfBytes = document.toPdfBytes();
         }
@@ -192,18 +182,18 @@ class DocumentationExamplesTest {
             document.pageFlow()
                     .name("LinePrimitives")
                     .spacing(12)
-                    .margin(Margin.of(8))
+                    .margin(DocumentInsets.of(8))
                     .addDivider(divider -> divider
                             .name("HorizontalRule")
                             .width(220)
                             .thickness(3)
-                            .color(ComponentColor.ROYAL_BLUE)
-                            .padding(Padding.of(6)))
+                            .color(DocumentColor.ROYAL_BLUE)
+                            .padding(DocumentInsets.of(6)))
                     .addShape(shape -> shape
                             .name("VerticalAccent")
                             .size(3, 90)
-                            .fillColor(ComponentColor.ORANGE)
-                            .padding(Padding.of(6)))
+                            .fillColor(DocumentColor.ORANGE)
+                            .padding(DocumentInsets.of(6)))
                     .build();
 
             document.buildPdf();
@@ -226,16 +216,16 @@ class DocumentationExamplesTest {
                     .addTable(table -> table
                             .name("StatusTable")
                             .columns(
-                                    TableColumnSpec.fixed(90),
-                                    TableColumnSpec.auto(),
-                                    TableColumnSpec.auto())
+                                    DocumentTableColumn.fixed(90),
+                                    DocumentTableColumn.auto(),
+                                    DocumentTableColumn.auto())
                             .width(520)
-                            .defaultCellStyle(TableCellStyle.builder()
-                                    .padding(Padding.of(6))
+                            .defaultCellStyle(DocumentTableStyle.builder()
+                                    .padding(DocumentInsets.of(6))
                                     .build())
-                            .headerStyle(TableCellStyle.builder()
-                                    .fillColor(ComponentColor.LIGHT_GRAY)
-                                    .padding(Padding.of(6))
+                            .headerStyle(DocumentTableStyle.builder()
+                                    .fillColor(DocumentColor.LIGHT_GRAY)
+                                    .padding(DocumentInsets.of(6))
                                     .build())
                             .header("Role", "Owner", "Status")
                             .rows(

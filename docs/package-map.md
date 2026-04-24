@@ -10,6 +10,8 @@ This document is the source of truth for production package ownership in the can
 | `com.demcha.compose.document.api` | `DocumentSession` lifecycle and public session operations. | Add only session-level behavior that belongs to every document. |
 | `com.demcha.compose.document.dsl` | Developer-friendly DSL: `pageFlow`, `module`, `paragraph`, `list`, `rows`, `table`, `image`, `divider`. | Prefer simple domain words over low-level geometry or renderer terms. |
 | `com.demcha.compose.document.node` | Canonical semantic nodes such as paragraphs, lists, tables, images, sections, and page breaks. | Nodes describe intent; layout/render mechanics belong in `document.layout` or `engine.*`. |
+| `com.demcha.compose.document.style` | Public style values such as document colors, spacing, and text styles. | Keep application-facing style values here; convert to engine values inside DSL/backends. |
+| `com.demcha.compose.document.table` | Public table authoring values such as columns, cells, and table style overrides. | Keep table authoring ergonomic; row layout and PDF drawing stay internal. |
 | `com.demcha.compose.document.backend.fixed.pdf.options` | Public PDF options: metadata, protection, watermark, headers, and footers. | Keep options as data carriers; PDFBox implementation stays behind backend internals. |
 | `com.demcha.compose.font` | Public font names, built-in families, registration, and showcase helpers. | Add explicit font definitions; do not add render handlers here. |
 

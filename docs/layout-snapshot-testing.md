@@ -72,10 +72,8 @@ try (DocumentSession document = GraphCompose.document()
         .margin(24, 24, 24, 24)
         .create()) {
 
-    document.pageFlow()
-            .name("SnapshotExample")
-            .addParagraph("Hello GraphCompose", TextStyle.DEFAULT_STYLE)
-            .build();
+    document.pageFlow(page -> page
+            .module("Snapshot Example", module -> module.paragraph("Hello GraphCompose")));
 
     LayoutSnapshot snapshot = document.layoutSnapshot();
 }

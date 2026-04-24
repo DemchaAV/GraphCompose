@@ -11,6 +11,8 @@ import com.demcha.mock.CvDocumentSpecMock;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,25 +25,43 @@ class LifecycleLoggingTest {
              CapturedLogger templateLog = CapturedLogger.debug("com.demcha.compose.templates.lifecycle");
              CapturedLogger layoutLog = CapturedLogger.debug("com.demcha.compose.engine.layout");
              CapturedLogger paginationLog = CapturedLogger.debug("com.demcha.compose.engine.pagination");
-             CapturedLogger renderLog = CapturedLogger.debug("com.demcha.compose.engine.render");
-             DocumentSession document = GraphCompose.document().create()) {
+             CapturedLogger renderLog = CapturedLogger.debug("com.demcha.compose.engine.render")) {
+            Path outputFile = Files.createTempFile("graphcompose-lifecycle", ".pdf");
+            DocumentSession document = GraphCompose.document(outputFile).create();
 
-            new CvTemplateV1().compose(document, new CvDocumentSpecMock().getCv());
-            document.layoutSnapshot();
-            byte[] bytes = document.toPdfBytes();
+            try {
+                new CvTemplateV1().compose(document, new CvDocumentSpecMock().getCv());
+                document.layoutSnapshot();
+                byte[] bytes = document.toPdfBytes();
+                document.buildPdf();
+                document.close();
 
-            assertThat(bytes).isNotEmpty();
-            assertThat(documentLog.messages()).anyMatch(message -> message.contains("document.session.created"));
-            assertThat(documentLog.messages()).anyMatch(message -> message.contains("document.layoutSnapshot.start"));
-            assertThat(documentLog.messages()).anyMatch(message -> message.contains("document.pdf.bytes.end"));
-            assertThat(templateLog.messages()).anyMatch(message -> message.contains("template.compose.start"));
-            assertThat(templateLog.messages()).anyMatch(message -> message.contains("template.compose.end"));
-            assertThat(layoutLog.messages()).anyMatch(message -> message.contains("layout.compile.start"));
-            assertThat(layoutLog.messages()).anyMatch(message -> message.contains("layout.compile.end"));
-            assertThat(paginationLog.messages()).anyMatch(message -> message.contains("pagination.compile.start"));
-            assertThat(paginationLog.messages()).anyMatch(message -> message.contains("pagination.compile.end"));
-            assertThat(renderLog.messages()).anyMatch(message -> message.contains("render.pdf.fixed.start"));
-            assertThat(renderLog.messages()).anyMatch(message -> message.contains("render.pdf.fixed.end"));
+                assertThat(bytes).isNotEmpty();
+                assertThat(outputFile).isNotEmptyFile();
+                assertThat(documentLog.messages()).anyMatch(message -> message.contains("document.session.created"));
+                assertThat(documentLog.messages()).anyMatch(message -> message.contains("document.layoutSnapshot.start"));
+                assertThat(documentLog.messages()).anyMatch(message -> message.contains("document.pdf.bytes.end"));
+                assertThat(documentLog.messages()).anyMatch(message -> message.contains("document.pdf.build.start"));
+                assertThat(documentLog.messages()).anyMatch(message -> message.contains("document.pdf.build.end"));
+                assertThat(documentLog.messages()).anyMatch(message -> message.contains("document.session.close.end"));
+                assertThat(templateLog.messages()).anyMatch(message -> message.contains("template.compose.start"));
+                assertThat(templateLog.messages()).anyMatch(message -> message.contains("template.compose.end"));
+                assertThat(templateLog.messages()).anyMatch(message -> message.contains("template.module.compose.start"));
+                assertThat(templateLog.messages()).anyMatch(message -> message.contains("template.module.compose.end"));
+                assertThat(layoutLog.messages()).anyMatch(message -> message.contains("layout.compile.start"));
+                assertThat(layoutLog.messages()).anyMatch(message -> message.contains("layout.compile.end"));
+                assertThat(paginationLog.messages()).anyMatch(message -> message.contains("pagination.compile.start"));
+                assertThat(paginationLog.messages()).anyMatch(message -> message.contains("pagination.compile.end"));
+                assertThat(renderLog.messages()).anyMatch(message -> message.contains("render.pdf.fixed.start"));
+                assertThat(renderLog.messages()).anyMatch(message -> message.contains("render.pdf.fixed.end"));
+            } finally {
+                try {
+                    document.close();
+                } catch (Exception ignored) {
+                    // Best-effort cleanup after assertion failures.
+                }
+                Files.deleteIfExists(outputFile);
+            }
         }
     }
 

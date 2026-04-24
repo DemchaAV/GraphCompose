@@ -7,7 +7,7 @@ GraphCompose ships SLF4J lifecycle logs but does not ship a production `logback.
 | Category | Emits |
 | --- | --- |
 | `com.demcha.compose.document.lifecycle` | `DocumentSession` create, compose, layout, snapshot, PDF bytes, build, render, and close events. |
-| `com.demcha.compose.templates.lifecycle` | Built-in template compose start/end/failure events. |
+| `com.demcha.compose.templates.lifecycle` | Built-in template compose and template-module compose start/end/failure events. |
 | `com.demcha.compose.engine.layout` | Semantic layout compiler and low-level layout-system start/end events. |
 | `com.demcha.compose.engine.pagination` | Semantic pagination and low-level page-breaker/fallback events. |
 | `com.demcha.compose.engine.render` | Canonical PDF backend and low-level render-pass events. |

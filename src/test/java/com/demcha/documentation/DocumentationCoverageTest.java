@@ -136,8 +136,9 @@ class DocumentationCoverageTest {
 
         String quickStartSection = readme.substring(quickStart, builtIns);
         assertThat(quickStartSection).contains("GraphCompose.document(Path.of(\"output.pdf\"))");
-        assertThat(quickStartSection).contains("document.pageFlow()");
-        assertThat(quickStartSection).contains(".addParagraph(\"Hello GraphCompose\", TextStyle.DEFAULT_STYLE)");
+        assertThat(quickStartSection).contains("document.pageFlow(page -> page");
+        assertThat(quickStartSection).contains(".module(\"Summary\", module -> module.paragraph(\"Hello GraphCompose\"))");
+        assertThat(quickStartSection).doesNotContain("import com.demcha.compose.engine");
         assertThat(quickStartSection).doesNotContain("document.dsl()");
         assertThat(quickStartSection).doesNotContain("try (PdfComposer composer = GraphCompose.pdf(");
     }
@@ -154,6 +155,8 @@ class DocumentationCoverageTest {
         assertThat(linePrimitiveSection).contains("document.pageFlow()");
         assertThat(linePrimitiveSection).contains(".addDivider(");
         assertThat(linePrimitiveSection).contains(".addShape(");
+        assertThat(linePrimitiveSection).contains("DocumentColor.ROYAL_BLUE");
+        assertThat(linePrimitiveSection).doesNotContain("ComponentColor.");
         assertThat(linePrimitiveSection).doesNotContain("document.dsl()");
         assertThat(linePrimitiveSection).doesNotContain("composer.componentBuilder()");
         assertThat(linePrimitiveSection).doesNotContain("GraphCompose.pdf(");
@@ -172,6 +175,9 @@ class DocumentationCoverageTest {
         assertThat(tableSection).contains(".addTable(");
         assertThat(tableSection).contains(".header(");
         assertThat(tableSection).contains(".rows(");
+        assertThat(tableSection).contains("DocumentTableColumn.fixed(90)");
+        assertThat(tableSection).doesNotContain("TableColumnSpec.");
+        assertThat(tableSection).doesNotContain("TableCellStyle.");
         assertThat(tableSection).doesNotContain(".row(\"Role\", \"Owner\", \"Status\")");
         assertThat(tableSection).doesNotContain("document.dsl()");
         assertThat(tableSection).doesNotContain("composer.componentBuilder()");

@@ -2,9 +2,9 @@ package com.demcha.compose.document.node;
 
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
-import com.demcha.compose.engine.components.components_builders.TableCellSpec;
-import com.demcha.compose.engine.components.components_builders.TableCellStyle;
-import com.demcha.compose.engine.components.components_builders.TableColumnSpec;
+import com.demcha.compose.engine.components.content.table.TableCellContent;
+import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
+import com.demcha.compose.engine.components.content.table.TableColumnLayout;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
 import com.demcha.compose.document.node.DocumentNode;
@@ -19,11 +19,11 @@ import java.util.Objects;
  */
 public record TableNode(
         String name,
-        List<TableColumnSpec> columns,
-        List<List<TableCellSpec>> rows,
-        TableCellStyle defaultCellStyle,
-        Map<Integer, TableCellStyle> rowStyles,
-        Map<Integer, TableCellStyle> columnStyles,
+        List<TableColumnLayout> columns,
+        List<List<TableCellContent>> rows,
+        TableCellLayoutStyle defaultCellStyle,
+        Map<Integer, TableCellLayoutStyle> rowStyles,
+        Map<Integer, TableCellLayoutStyle> columnStyles,
         Double width,
         PdfLinkOptions linkOptions,
         PdfBookmarkOptions bookmarkOptions,
@@ -44,9 +44,9 @@ public record TableNode(
      * @param margin outer table margin
      */
     public TableNode(String name,
-                     List<TableColumnSpec> columns,
-                     List<List<TableCellSpec>> rows,
-                     TableCellStyle defaultCellStyle,
+                     List<TableColumnLayout> columns,
+                     List<List<TableCellContent>> rows,
+                     TableCellLayoutStyle defaultCellStyle,
                      Double width,
                      Padding padding,
                      Margin margin) {
@@ -68,11 +68,11 @@ public record TableNode(
      * @param margin outer table margin
      */
     public TableNode(String name,
-                     List<TableColumnSpec> columns,
-                     List<List<TableCellSpec>> rows,
-                     TableCellStyle defaultCellStyle,
-                     Map<Integer, TableCellStyle> rowStyles,
-                     Map<Integer, TableCellStyle> columnStyles,
+                     List<TableColumnLayout> columns,
+                     List<List<TableCellContent>> rows,
+                     TableCellLayoutStyle defaultCellStyle,
+                     Map<Integer, TableCellLayoutStyle> rowStyles,
+                     Map<Integer, TableCellLayoutStyle> columnStyles,
                      Double width,
                      Padding padding,
                      Margin margin) {
@@ -85,7 +85,7 @@ public record TableNode(
         Objects.requireNonNull(rows, "rows");
         columns = List.copyOf(columns);
         rows = normalizeRows(rows);
-        defaultCellStyle = defaultCellStyle == null ? TableCellStyle.DEFAULT : defaultCellStyle;
+        defaultCellStyle = defaultCellStyle == null ? TableCellLayoutStyle.DEFAULT : defaultCellStyle;
         rowStyles = normalizeStyleMap(rowStyles, "row");
         columnStyles = normalizeStyleMap(columnStyles, "column");
         padding = padding == null ? Padding.zero() : padding;
@@ -95,21 +95,21 @@ public record TableNode(
         }
     }
 
-    private static List<List<TableCellSpec>> normalizeRows(List<List<TableCellSpec>> rows) {
-        List<List<TableCellSpec>> normalized = new ArrayList<>(rows.size());
-        for (List<TableCellSpec> row : rows) {
+    private static List<List<TableCellContent>> normalizeRows(List<List<TableCellContent>> rows) {
+        List<List<TableCellContent>> normalized = new ArrayList<>(rows.size());
+        for (List<TableCellContent> row : rows) {
             Objects.requireNonNull(row, "row");
             normalized.add(List.copyOf(row));
         }
         return List.copyOf(normalized);
     }
 
-    private static Map<Integer, TableCellStyle> normalizeStyleMap(Map<Integer, TableCellStyle> styles, String label) {
+    private static Map<Integer, TableCellLayoutStyle> normalizeStyleMap(Map<Integer, TableCellLayoutStyle> styles, String label) {
         if (styles == null || styles.isEmpty()) {
             return Map.of();
         }
 
-        for (Map.Entry<Integer, TableCellStyle> entry : styles.entrySet()) {
+        for (Map.Entry<Integer, TableCellLayoutStyle> entry : styles.entrySet()) {
             Objects.requireNonNull(entry.getKey(), label + " index");
             if (entry.getKey() < 0) {
                 throw new IllegalArgumentException(label + " style index cannot be negative: " + entry.getKey());

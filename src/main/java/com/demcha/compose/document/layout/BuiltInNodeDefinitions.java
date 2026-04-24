@@ -4,10 +4,10 @@ import com.demcha.compose.document.backend.fixed.pdf.options.PdfBarcodeOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
 import com.demcha.compose.document.node.DocumentNode;
-import com.demcha.compose.engine.components.components_builders.BlockIndentStrategy;
-import com.demcha.compose.engine.components.components_builders.TableCellSpec;
-import com.demcha.compose.engine.components.components_builders.TableCellStyle;
-import com.demcha.compose.engine.components.components_builders.TableColumnSpec;
+import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
+import com.demcha.compose.engine.components.content.table.TableCellContent;
+import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
+import com.demcha.compose.engine.components.content.table.TableColumnLayout;
 import com.demcha.compose.engine.components.content.barcode.BarcodeData;
 import com.demcha.compose.engine.components.content.ImageData;
 import com.demcha.compose.engine.components.content.shape.Side;
@@ -776,13 +776,13 @@ public final class BuiltInNodeDefinitions {
                 : node.continuationIndent();
     }
 
-    private static BlockIndentStrategy listParagraphIndentStrategy(ListNode node) {
+    private static TextIndentStrategy listParagraphIndentStrategy(ListNode node) {
         if (node.marker().isVisible()) {
-            return BlockIndentStrategy.ALL_LINES;
+            return TextIndentStrategy.ALL_LINES;
         }
         return node.continuationIndent().isEmpty()
-                ? BlockIndentStrategy.NONE
-                : BlockIndentStrategy.FROM_SECOND_LINE;
+                ? TextIndentStrategy.NONE
+                : TextIndentStrategy.FROM_SECOND_LINE;
     }
 
     private static int wholeListItemsThatFit(List<PreparedListItemLayout> items,
@@ -957,7 +957,7 @@ public final class BuiltInNodeDefinitions {
                 source.align(),
                 source.lineSpacing(),
                 "",
-                BlockIndentStrategy.NONE,
+                TextIndentStrategy.NONE,
                 source.linkOptions(),
                 keepTopInsets && layout.emitBookmark() ? source.bookmarkOptions() : null,
                 new Padding(
@@ -1002,7 +1002,7 @@ public final class BuiltInNodeDefinitions {
                                               TextStyle style,
                                               double maxWidth,
                                               String bulletOffset,
-                                              BlockIndentStrategy indentStrategy,
+                                              TextIndentStrategy indentStrategy,
                                               TextMeasurementSystem measurement) {
         List<String> result = new ArrayList<>();
         ParagraphIndentSpec indentSpec = ParagraphIndentSpec.from(bulletOffset, style, measurement);
@@ -1100,7 +1100,7 @@ public final class BuiltInNodeDefinitions {
                                                            TextStyle defaultStyle,
                                                            double maxWidth,
                                                            String bulletOffset,
-                                                           BlockIndentStrategy indentStrategy,
+                                                           TextIndentStrategy indentStrategy,
                                                            TextMeasurementSystem measurement) {
         List<ParagraphLine> result = new ArrayList<>();
         ParagraphIndentSpec indentSpec = ParagraphIndentSpec.from(bulletOffset, defaultStyle, measurement);
@@ -1212,7 +1212,7 @@ public final class BuiltInNodeDefinitions {
                                                              TextStyle style,
                                                              double maxWidth,
                                                              String bulletOffset,
-                                                             BlockIndentStrategy indentStrategy,
+                                                             TextIndentStrategy indentStrategy,
                                                              TextMeasurementSystem measurement) {
         List<ParagraphLine> result = new ArrayList<>();
         ParagraphIndentSpec indentSpec = ParagraphIndentSpec.from(bulletOffset, style, measurement);
@@ -1660,8 +1660,8 @@ public final class BuiltInNodeDefinitions {
         int columnCount = resolveColumnCount(node);
         validateRowLengths(node, columnCount);
 
-        List<TableColumnSpec> normalizedSpecs = normalizeSpecs(node, columnCount);
-        List<List<TableCellStyle>> stylesByRow = resolveCellStyles(node, columnCount);
+        List<TableColumnLayout> normalizedSpecs = normalizeSpecs(node, columnCount);
+        List<List<TableCellLayoutStyle>> stylesByRow = resolveCellStyles(node, columnCount);
         double[] naturalWidths = resolveNaturalColumnWidths(node, normalizedSpecs, stylesByRow, columnCount, measurement);
         double naturalWidth = sum(naturalWidths);
         double[] finalWidths = resolveFinalColumnWidths(node, normalizedSpecs, naturalWidths, naturalWidth);
@@ -1677,8 +1677,8 @@ public final class BuiltInNodeDefinitions {
         List<Double> rowHeights = new ArrayList<>(node.rows().size());
 
         for (int rowIndex = 0; rowIndex < node.rows().size(); rowIndex++) {
-            List<TableCellSpec> rowValues = node.rows().get(rowIndex);
-            List<TableCellStyle> resolvedStyles = stylesByRow.get(rowIndex);
+            List<TableCellContent> rowValues = node.rows().get(rowIndex);
+            List<TableCellLayoutStyle> resolvedStyles = stylesByRow.get(rowIndex);
             double rowHeight = 0.0;
             for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
                 rowHeight = Math.max(rowHeight, cellNaturalHeight(rowValues.get(columnIndex), resolvedStyles.get(columnIndex), measurement));
@@ -1720,8 +1720,8 @@ public final class BuiltInNodeDefinitions {
         List<List<TableResolvedCell>> rows = List.copyOf(layout.rows().subList(fromInclusive, toExclusive));
         List<Double> rowHeights = List.copyOf(layout.rowHeights().subList(fromInclusive, toExclusive));
         double totalHeight = rowHeights.stream().mapToDouble(Double::doubleValue).sum();
-        List<TableColumnSpec> fixedColumns = layout.columnWidths().stream()
-                .map(TableColumnSpec::fixed)
+        List<TableColumnLayout> fixedColumns = layout.columnWidths().stream()
+                .map(TableColumnLayout::fixed)
                 .toList();
 
             TableNode fragmentNode = new TableNode(
@@ -1759,18 +1759,18 @@ public final class BuiltInNodeDefinitions {
         return PreparedNode.leaf(fragmentNode, measure, new PreparedTableLayout(fragmentLayout, keepTopInsets));
     }
 
-    private static List<List<TableCellStyle>> resolveCellStyles(TableNode node, int columnCount) {
-        TableCellStyle tableDefault = TableCellStyle.merge(TableCellStyle.DEFAULT, node.defaultCellStyle());
-        List<List<TableCellStyle>> result = new ArrayList<>(node.rows().size());
+    private static List<List<TableCellLayoutStyle>> resolveCellStyles(TableNode node, int columnCount) {
+        TableCellLayoutStyle tableDefault = TableCellLayoutStyle.merge(TableCellLayoutStyle.DEFAULT, node.defaultCellStyle());
+        List<List<TableCellLayoutStyle>> result = new ArrayList<>(node.rows().size());
 
         for (int rowIndex = 0; rowIndex < node.rows().size(); rowIndex++) {
-            List<TableCellSpec> row = node.rows().get(rowIndex);
-            List<TableCellStyle> rowResult = new ArrayList<>(columnCount);
-            TableCellStyle rowOverride = node.rowStyles().get(rowIndex);
+            List<TableCellContent> row = node.rows().get(rowIndex);
+            List<TableCellLayoutStyle> rowResult = new ArrayList<>(columnCount);
+            TableCellLayoutStyle rowOverride = node.rowStyles().get(rowIndex);
             for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-                TableCellStyle resolved = TableCellStyle.merge(tableDefault, node.columnStyles().get(columnIndex));
-                resolved = TableCellStyle.merge(resolved, rowOverride);
-                resolved = TableCellStyle.merge(resolved, row.get(columnIndex).styleOverride());
+                TableCellLayoutStyle resolved = TableCellLayoutStyle.merge(tableDefault, node.columnStyles().get(columnIndex));
+                resolved = TableCellLayoutStyle.merge(resolved, rowOverride);
+                resolved = TableCellLayoutStyle.merge(resolved, row.get(columnIndex).styleOverride());
                 rowResult.add(resolved);
             }
             result.add(List.copyOf(rowResult));
@@ -1780,8 +1780,8 @@ public final class BuiltInNodeDefinitions {
     }
 
     private static double[] resolveNaturalColumnWidths(TableNode node,
-                                                       List<TableColumnSpec> normalizedSpecs,
-                                                       List<List<TableCellStyle>> stylesByRow,
+                                                       List<TableColumnLayout> normalizedSpecs,
+                                                       List<List<TableCellLayoutStyle>> stylesByRow,
                                                        int columnCount,
                                                        TextMeasurementSystem measurement) {
         double[] widths = new double[columnCount];
@@ -1794,7 +1794,7 @@ public final class BuiltInNodeDefinitions {
                         cellNaturalWidth(node.rows().get(rowIndex).get(columnIndex), stylesByRow.get(rowIndex).get(columnIndex), measurement));
             }
 
-            TableColumnSpec spec = normalizedSpecs.get(columnIndex);
+            TableColumnLayout spec = normalizedSpecs.get(columnIndex);
             if (spec.isFixed()) {
                 if (spec.requiredFixedWidth() + EPS < requiredNaturalWidth) {
                     throw new IllegalStateException("Fixed column " + columnIndex + " width " + spec.requiredFixedWidth()
@@ -1810,7 +1810,7 @@ public final class BuiltInNodeDefinitions {
     }
 
     private static double[] resolveFinalColumnWidths(TableNode node,
-                                                     List<TableColumnSpec> normalizedSpecs,
+                                                     List<TableColumnLayout> normalizedSpecs,
                                                      double[] naturalWidths,
                                                      double naturalWidth) {
         double[] finalWidths = naturalWidths.clone();
@@ -1846,8 +1846,8 @@ public final class BuiltInNodeDefinitions {
         return finalWidths;
     }
 
-    private static double cellNaturalWidth(TableCellSpec cell,
-                                           TableCellStyle style,
+    private static double cellNaturalWidth(TableCellContent cell,
+                                           TableCellLayoutStyle style,
                                            TextMeasurementSystem measurement) {
         Padding padding = style.padding() == null ? Padding.zero() : style.padding();
         double maxWidth = 0.0;
@@ -1857,8 +1857,8 @@ public final class BuiltInNodeDefinitions {
         return maxWidth + padding.horizontal();
     }
 
-    private static double cellNaturalHeight(TableCellSpec cell,
-                                            TableCellStyle style,
+    private static double cellNaturalHeight(TableCellContent cell,
+                                            TableCellLayoutStyle style,
                                             TextMeasurementSystem measurement) {
         Padding padding = style.padding() == null ? Padding.zero() : style.padding();
         int lineCount = Math.max(1, sanitizeCellLines(cell).size());
@@ -1867,14 +1867,14 @@ public final class BuiltInNodeDefinitions {
                 + padding.vertical();
     }
 
-    private static double tableCellLineSpacing(TableCellStyle style) {
+    private static double tableCellLineSpacing(TableCellLayoutStyle style) {
         return style.lineSpacing() == null ? 0.0 : style.lineSpacing();
     }
 
-    private static List<TableColumnSpec> normalizeSpecs(TableNode node, int columnCount) {
-        List<TableColumnSpec> normalized = new ArrayList<>(columnCount);
+    private static List<TableColumnLayout> normalizeSpecs(TableNode node, int columnCount) {
+        List<TableColumnLayout> normalized = new ArrayList<>(columnCount);
         for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-            normalized.add(columnIndex < node.columns().size() ? node.columns().get(columnIndex) : TableColumnSpec.auto());
+            normalized.add(columnIndex < node.columns().size() ? node.columns().get(columnIndex) : TableColumnLayout.auto());
         }
         return List.copyOf(normalized);
     }
@@ -1900,7 +1900,7 @@ public final class BuiltInNodeDefinitions {
         }
     }
 
-    private static EnumSet<Side> borderSides(List<List<TableCellStyle>> stylesByRow, int rowIndex, int columnIndex) {
+    private static EnumSet<Side> borderSides(List<List<TableCellLayoutStyle>> stylesByRow, int rowIndex, int columnIndex) {
         EnumSet<Side> sides = EnumSet.of(Side.BOTTOM, Side.RIGHT);
         if (ownsTopBoundary(stylesByRow, rowIndex, columnIndex)) {
             sides.add(Side.TOP);
@@ -1911,7 +1911,7 @@ public final class BuiltInNodeDefinitions {
         return sides;
     }
 
-    private static Padding fillInsets(List<List<TableCellStyle>> stylesByRow, int rowIndex, int columnIndex) {
+    private static Padding fillInsets(List<List<TableCellLayoutStyle>> stylesByRow, int rowIndex, int columnIndex) {
         double topInset = topBoundaryStrokeWidth(stylesByRow, rowIndex, columnIndex) / 2.0;
         double rightInset = strokeWidth(stylesByRow.get(rowIndex).get(columnIndex)) / 2.0;
         double bottomInset = strokeWidth(stylesByRow.get(rowIndex).get(columnIndex)) / 2.0;
@@ -1919,40 +1919,40 @@ public final class BuiltInNodeDefinitions {
         return new Padding(topInset, rightInset, bottomInset, leftInset);
     }
 
-    private static double topBoundaryStrokeWidth(List<List<TableCellStyle>> stylesByRow, int rowIndex, int columnIndex) {
+    private static double topBoundaryStrokeWidth(List<List<TableCellLayoutStyle>> stylesByRow, int rowIndex, int columnIndex) {
         if (ownsTopBoundary(stylesByRow, rowIndex, columnIndex)) {
             return strokeWidth(stylesByRow.get(rowIndex).get(columnIndex));
         }
         return strokeWidth(stylesByRow.get(rowIndex - 1).get(columnIndex));
     }
 
-    private static double leftBoundaryStrokeWidth(List<List<TableCellStyle>> stylesByRow, int rowIndex, int columnIndex) {
+    private static double leftBoundaryStrokeWidth(List<List<TableCellLayoutStyle>> stylesByRow, int rowIndex, int columnIndex) {
         if (ownsLeftBoundary(stylesByRow, rowIndex, columnIndex)) {
             return strokeWidth(stylesByRow.get(rowIndex).get(columnIndex));
         }
         return strokeWidth(stylesByRow.get(rowIndex).get(columnIndex - 1));
     }
 
-    private static boolean ownsTopBoundary(List<List<TableCellStyle>> stylesByRow, int rowIndex, int columnIndex) {
+    private static boolean ownsTopBoundary(List<List<TableCellLayoutStyle>> stylesByRow, int rowIndex, int columnIndex) {
         return rowIndex == 0 || !hasVisibleStroke(stylesByRow.get(rowIndex - 1).get(columnIndex));
     }
 
-    private static boolean ownsLeftBoundary(List<List<TableCellStyle>> stylesByRow, int rowIndex, int columnIndex) {
+    private static boolean ownsLeftBoundary(List<List<TableCellLayoutStyle>> stylesByRow, int rowIndex, int columnIndex) {
         return columnIndex == 0 || !hasVisibleStroke(stylesByRow.get(rowIndex).get(columnIndex - 1));
     }
 
-    private static double strokeWidth(TableCellStyle style) {
+    private static double strokeWidth(TableCellLayoutStyle style) {
         if (style == null || style.stroke() == null) {
             return 0.0;
         }
         return style.stroke().width();
     }
 
-    private static boolean hasVisibleStroke(TableCellStyle style) {
+    private static boolean hasVisibleStroke(TableCellLayoutStyle style) {
         return strokeWidth(style) > EPS;
     }
 
-    private static List<String> sanitizeCellLines(TableCellSpec cell) {
+    private static List<String> sanitizeCellLines(TableCellContent cell) {
         List<String> sanitized = new ArrayList<>(cell.lines().size());
         for (String line : cell.lines()) {
             sanitized.add(line == null ? "" : line.replace('\r', ' ').replace('\n', ' '));

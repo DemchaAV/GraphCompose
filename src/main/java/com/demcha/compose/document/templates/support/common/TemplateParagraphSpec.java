@@ -3,7 +3,7 @@ package com.demcha.compose.document.templates.support.common;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.engine.components.components_builders.BlockIndentStrategy;
+import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
@@ -23,7 +23,7 @@ public record TemplateParagraphSpec(
         TextAlign align,
         double lineSpacing,
         String bulletOffset,
-        BlockIndentStrategy indentStrategy,
+        TextIndentStrategy indentStrategy,
         PdfLinkOptions linkOptions,
         Padding padding,
         Margin margin
@@ -35,7 +35,7 @@ public record TemplateParagraphSpec(
         style = style == null ? TextStyle.DEFAULT_STYLE : style;
         align = align == null ? TextAlign.LEFT : align;
         bulletOffset = bulletOffset == null ? "" : bulletOffset;
-        indentStrategy = indentStrategy == null ? BlockIndentStrategy.NONE : indentStrategy;
+        indentStrategy = indentStrategy == null ? TextIndentStrategy.NONE : indentStrategy;
         padding = padding == null ? Padding.zero() : padding;
         margin = margin == null ? Margin.zero() : margin;
     }
@@ -46,7 +46,7 @@ public record TemplateParagraphSpec(
                                  TextAlign align,
                                  double lineSpacing,
                                  String bulletOffset,
-                                 BlockIndentStrategy indentStrategy,
+                                 TextIndentStrategy indentStrategy,
                                  PdfLinkOptions linkOptions,
                                  Padding padding,
                                  Margin margin) {

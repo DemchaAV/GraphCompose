@@ -1,7 +1,7 @@
 package com.demcha.compose.engine.components.content;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.engine.components.components_builders.ImageBuilder;
+import com.demcha.compose.testsupport.engine.assembly.ImageBuilder;
 import com.demcha.compose.engine.components.geometry.ContentSize;
 import com.demcha.compose.testsupport.EngineComposerHarness;
 import org.junit.jupiter.api.AfterEach;

@@ -1,7 +1,7 @@
 package com.demcha.compose.engine.integration;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.engine.components.components_builders.ComponentBuilder;
+import com.demcha.compose.testsupport.engine.assembly.ComponentBuilder;
 import com.demcha.compose.engine.components.layout.Align;
 import com.demcha.compose.engine.components.layout.Anchor;
 import com.demcha.compose.engine.components.style.Margin;

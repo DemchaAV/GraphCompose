@@ -1,6 +1,6 @@
 package com.demcha.compose.engine.components.content.table;
 
-import com.demcha.compose.engine.components.components_builders.TableCellStyle;
+import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
 import com.demcha.compose.engine.components.content.shape.Side;
 import com.demcha.compose.engine.components.style.Padding;
 
@@ -17,7 +17,7 @@ public record TableResolvedCell(
         double width,
         double height,
         List<String> lines,
-        TableCellStyle style,
+        TableCellLayoutStyle style,
         Padding fillInsets,
         Set<Side> borderSides
 ) {

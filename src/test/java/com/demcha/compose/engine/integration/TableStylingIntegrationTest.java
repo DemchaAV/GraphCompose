@@ -1,8 +1,8 @@
 package com.demcha.compose.engine.integration;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.engine.components.components_builders.TableCellStyle;
-import com.demcha.compose.engine.components.components_builders.TableColumnSpec;
+import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
+import com.demcha.compose.engine.components.content.table.TableColumnLayout;
 import com.demcha.compose.engine.components.layout.Anchor;
 import com.demcha.compose.engine.components.style.ComponentColor;
 import com.demcha.compose.engine.components.style.Margin;
@@ -33,15 +33,15 @@ class TableStylingIntegrationTest {
                     .entityName("StylingTable")
                     .anchor(Anchor.topCenter())
                     .margin(Margin.of(12))
-                    .columns(TableColumnSpec.fixed(110), TableColumnSpec.auto(), TableColumnSpec.auto())
-                    .defaultCellStyle(TableCellStyle.builder()
+                    .columns(TableColumnLayout.fixed(110), TableColumnLayout.auto(), TableColumnLayout.auto())
+                    .defaultCellStyle(TableCellLayoutStyle.builder()
                             .fillColor(ComponentColor.WHITE)
                             .padding(Padding.of(6))
                             .build())
-                    .columnStyle(0, TableCellStyle.builder()
+                    .columnStyle(0, TableCellLayoutStyle.builder()
                             .fillColor(ComponentColor.LIGHT_GRAY)
                             .build())
-                    .rowStyle(0, TableCellStyle.builder()
+                    .rowStyle(0, TableCellLayoutStyle.builder()
                             .fillColor(ComponentColor.LIGHT_BLUE)
                             .padding(Padding.of(10))
                             .build())

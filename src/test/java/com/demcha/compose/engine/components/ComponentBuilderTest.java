@@ -1,8 +1,8 @@
 package com.demcha.compose.engine.components;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.engine.components.components_builders.CircleBuilder;
-import com.demcha.compose.engine.components.components_builders.LineBuilder;
+import com.demcha.compose.testsupport.engine.assembly.CircleBuilder;
+import com.demcha.compose.testsupport.engine.assembly.LineBuilder;
 import com.demcha.compose.engine.components.content.shape.LinePath;
 import com.demcha.compose.engine.components.renderable.Circle;
 import com.demcha.compose.engine.components.renderable.Line;

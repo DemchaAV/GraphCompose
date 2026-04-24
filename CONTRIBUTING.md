@@ -23,12 +23,12 @@ They explain the current public surface, the engine/template split, and the reco
 ## Repository map
 
 - `src/main/java/com/demcha/compose/*`
-  Core engine: entities, builders, layout, pagination, render systems
+Core engine: entities, canonical assembly, layout, pagination, render systems
 - `src/main/java/com/demcha/compose/document/templates/*`
   Canonical template layer for built-ins, DTOs, themes, registries, and scene composition helpers
 - `src/test/java/com/demcha/documentation/*`
   Examples used to keep README/documentation snippets honest
-- `src/test/java/com/demcha/integration/*`
+- `src/test/java/com/demcha/compose/engine/integration/*`
   End-to-end behavior checks for layout, pagination, rendering, and containers
 - `src/test/java/com/demcha/compose/document/templates/*`
   Canonical template API, render, layout, and boundary tests
@@ -84,17 +84,17 @@ Keep the entity core thin as project policy as well:
 
 If you add a new engine object, decide first what kind of object it is.
 
-### Use the right builder base class
+### Use the right extension seam
 
-- Extend [EmptyBox.java](./src/main/java/com/demcha/compose/engine/components/containers/abstract_builders/EmptyBox.java) for a leaf object that does not manage children.
-- Extend [ShapeBuilderBase.java](./src/main/java/com/demcha/compose/engine/components/containers/abstract_builders/ShapeBuilderBase.java) for a leaf object that needs common shape behavior such as fill, stroke, or corner radius.
-- Extend [ContainerBuilder.java](./src/main/java/com/demcha/compose/engine/components/containers/abstract_builders/ContainerBuilder.java) for a parent object that owns child entities and participates in container layout.
+- Add a canonical node and node definition when the feature belongs to supported document authoring.
+- Add an engine content/style/layout component when the feature is an internal runtime primitive.
+- Use test-support builders only for low-level engine tests and dev harnesses.
 
 ### Make the object participate in the engine
 
 For a visible object, the implementation usually needs all of the following:
 
-- a builder that creates and configures the entity
+- canonical node or internal assembler that creates and configures the entity
 - the components that describe content and style
 - a size signal such as `ContentSize`
 - layout metadata such as `Anchor`, `Margin`, `Padding`, and parent/child links when needed
@@ -117,16 +117,16 @@ For text-heavy objects, also read:
 - [docs/architecture.md](./docs/architecture.md)
 - [docs/implementation-guide.md](./docs/implementation-guide.md)
 
-If the object should be available from `composer.componentBuilder()`, add a factory method to [ComponentBuilder.java](./src/main/java/com/demcha/compose/engine/components/components_builders/ComponentBuilder.java).
+If the object should be available to application developers, expose it through `DocumentDsl`, not the low-level test harness.
 
 ### Useful examples to copy
 
 - Leaf builder with measured content:
-  [TextBuilder.java](./src/main/java/com/demcha/compose/engine/components/components_builders/TextBuilder.java)
+  [TextBuilder.java](./src/test/java/com/demcha/compose/testsupport/engine/assembly/TextBuilder.java)
 - Shape-style builder:
-  [RectangleBuilder.java](./src/main/java/com/demcha/compose/engine/components/components_builders/RectangleBuilder.java)
+  [RectangleBuilder.java](./src/test/java/com/demcha/compose/testsupport/engine/assembly/RectangleBuilder.java)
 - Container builder:
-  [ModuleBuilder.java](./src/main/java/com/demcha/compose/engine/components/components_builders/ModuleBuilder.java)
+  [ModuleBuilder.java](./src/test/java/com/demcha/compose/testsupport/engine/assembly/ModuleBuilder.java)
 - Template-level composition helper:
   [CvTemplateComposer.java](./src/main/java/com/demcha/compose/document/templates/support/cv/CvTemplateComposer.java)
 
@@ -139,14 +139,14 @@ Choose the smallest tests that match the change:
 - For engine/backend boundary changes:
   [EnginePdfBoundaryTest.java](./src/test/java/com/demcha/compose/engine/architecture/EnginePdfBoundaryTest.java)
   [PdfRenderInterfaceGuardTest.java](./src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderInterfaceGuardTest.java)
-- For public builder registration or factory changes:
+- For low-level test harness changes:
   [ComponentBuilderTest.java](./src/test/java/com/demcha/compose/engine/components/ComponentBuilderTest.java)
 - For render-marker dispatch changes:
   [PdfRenderingSystemECSDispatchTest.java](./src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderingSystemECSDispatchTest.java)
 - For layout/positioning behavior:
-  [ComputedPositionTest.java](./src/test/java/com/demcha/components/layout/ComputedPositionTest.java)
+  [ComputedPositionTest.java](./src/test/java/com/demcha/compose/engine/components/layout/ComputedPositionTest.java)
 - For pagination and multi-page behavior:
-  [PageBreakerIntegrationTest.java](./src/test/java/com/demcha/integration/PageBreakerIntegrationTest.java)
+  [PageBreakerIntegrationTest.java](./src/test/java/com/demcha/compose/engine/integration/PageBreakerIntegrationTest.java)
 - For concrete templates:
   [BuiltInTemplateRenderTest.java](./src/test/java/com/demcha/compose/document/templates/builtins/BuiltInTemplateRenderTest.java)
   [CvTemplateV1LayoutSnapshotTest.java](./src/test/java/com/demcha/compose/document/templates/builtins/CvTemplateV1LayoutSnapshotTest.java)
@@ -161,7 +161,7 @@ If a change affects resolved geometry, pagination, or ordering, prefer adding or
 - Avoid mixing cleanup, refactors, and behavior changes in one PR.
 - When touching docs or examples, keep them aligned with the current public API and file layout.
 - If a change affects resources, tests, or generated outputs, update the related references in the same PR.
-- Prefer additive or backward-compatible changes when extending builder APIs or template contracts.
+- Prefer additive or backward-compatible changes when extending canonical DSL APIs or template contracts.
 - If a rename or move could break imports, resource paths, or examples, either update every affected reference in the same change or leave it as a documented follow-up.
 
 ## Documentation and screenshots

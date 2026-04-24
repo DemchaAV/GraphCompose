@@ -2,8 +2,8 @@ package com.demcha.compose.engine.integration;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.font.DefaultFonts;
-import com.demcha.compose.engine.components.components_builders.ComponentBuilder;
-import com.demcha.compose.engine.components.components_builders.BlockIndentStrategy;
+import com.demcha.compose.testsupport.engine.assembly.ComponentBuilder;
+import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
 import com.demcha.compose.engine.components.content.text.BlockTextData;
 import com.demcha.compose.engine.components.content.text.LineTextData;
 import com.demcha.compose.engine.components.content.text.TextStyle;
@@ -45,7 +45,7 @@ class BlockTextIntegrationTest {
             ComponentBuilder cb = composer.componentBuilder();
 
             cb.blockText(Align.left(5), TextStyle.DEFAULT_STYLE)
-                    .strategy(BlockIndentStrategy.ALL_LINES)
+                    .strategy(TextIndentStrategy.ALL_LINES)
                     .size(400, 2)
                     .anchor(Anchor.center())
                     .bulletOffset("• ")
@@ -79,7 +79,7 @@ class BlockTextIntegrationTest {
 
             ComponentBuilder cb = composer.componentBuilder();
             cb.blockText(Align.left(5), TextStyle.DEFAULT_STYLE)
-                    .strategy(BlockIndentStrategy.FIRST_LINE)
+                    .strategy(TextIndentStrategy.FIRST_LINE)
                     .size(400, 2)
                     .anchor(Anchor.center())
                     .bulletOffset("    ") // 4 spaces indent

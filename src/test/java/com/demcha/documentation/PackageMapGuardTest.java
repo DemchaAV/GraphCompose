@@ -22,7 +22,9 @@ class PackageMapGuardTest {
             "layout_" + "core",
             "font_" + "library",
             "pdf_" + "systems",
-            "implemented_" + "systems");
+            "implemented_" + "systems",
+            "components_" + "builders",
+            "abstract_" + "builders");
 
     @Test
     void productionPackagesShouldHavePackageInfo() throws IOException {

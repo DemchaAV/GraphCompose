@@ -29,7 +29,7 @@ This document is the source of truth for production package ownership in the can
 
 | Package | Responsibility | Extension rule |
 | --- | --- | --- |
-| `com.demcha.compose.engine.components.*` | Low-level ECS components, builders, content payloads, style values, geometry, layout, and render markers. | Use only for engine primitives; public document authoring should go through `DocumentDsl` and semantic nodes. |
+| `com.demcha.compose.engine.components.*` | Low-level ECS components, content payloads, style values, geometry, layout, and render markers. | Use only for engine primitives; public document authoring should go through `DocumentDsl` and semantic nodes. |
 | `com.demcha.compose.engine.core` | Entity manager, canvas, traversal context, and base ECS system contracts. | Keep core thin; put stage-specific logic in layout, pagination, measurement, or render packages. |
 | `com.demcha.compose.engine.layout` | Low-level entity layout systems. | Preserve deterministic traversal and container sizing semantics. |
 | `com.demcha.compose.engine.layout.container` | Container alignment, expansion, and module width helpers. | Helpers should operate on existing ECS state and avoid renderer dependencies. |
@@ -57,5 +57,6 @@ This document is the source of truth for production package ownership in the can
 
 - Public authoring starts at `GraphCompose.document(...)`, `DocumentSession`, and `DocumentDsl`.
 - `engine.*` is internal foundation; it can be used by tests and low-level tooling, but it is not the recommended app authoring API.
+- Fluent low-level entity builders are test-support harnesses only; production code should use semantic nodes and engine model/assembly types instead.
 - Do not introduce compatibility aliases for removed package roots.
 - Every production package must have `package-info.java` explaining responsibility, ownership, and extension rules.

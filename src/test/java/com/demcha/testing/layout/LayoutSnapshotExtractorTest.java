@@ -1,7 +1,7 @@
 package com.demcha.testing.layout;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.engine.components.components_builders.ComponentBuilder;
+import com.demcha.compose.testsupport.engine.assembly.ComponentBuilder;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.core.Entity;
 import com.demcha.compose.engine.components.core.EntityName;

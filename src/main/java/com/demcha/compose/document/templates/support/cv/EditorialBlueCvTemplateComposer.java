@@ -7,10 +7,10 @@ import com.demcha.compose.document.templates.data.common.Header;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.cv.CvModule;
 import com.demcha.compose.document.templates.theme.CvTheme;
-import com.demcha.compose.engine.components.components_builders.TableCellSpec;
-import com.demcha.compose.engine.components.components_builders.TableCellStyle;
-import com.demcha.compose.engine.components.components_builders.TableColumnSpec;
-import com.demcha.compose.engine.components.components_builders.BlockIndentStrategy;
+import com.demcha.compose.engine.components.content.table.TableCellContent;
+import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
+import com.demcha.compose.engine.components.content.table.TableColumnLayout;
+import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.content.text.TextDecoration;
 import com.demcha.compose.engine.components.content.text.TextStyle;
@@ -132,7 +132,7 @@ public final class EditorialBlueCvTemplateComposer {
                 TextAlign.LEFT,
                 1.8,
                 "",
-                BlockIndentStrategy.FIRST_LINE,
+                TextIndentStrategy.FIRST_LINE,
                 Padding.zero(),
                 Margin.top(2)));
     }
@@ -171,7 +171,7 @@ public final class EditorialBlueCvTemplateComposer {
                         TextAlign.LEFT,
                         1.8,
                         "\u2022",
-                        BlockIndentStrategy.FROM_SECOND_LINE,
+                        TextIndentStrategy.FROM_SECOND_LINE,
                         Padding.zero(),
                         Margin.top(2)));
             }
@@ -212,7 +212,7 @@ public final class EditorialBlueCvTemplateComposer {
                     TextAlign.LEFT,
                     1.8,
                     "",
-                    BlockIndentStrategy.FIRST_LINE,
+                    TextIndentStrategy.FIRST_LINE,
                     Padding.zero(),
                     Margin.zero()));
             index++;
@@ -293,15 +293,15 @@ public final class EditorialBlueCvTemplateComposer {
         while (padded.size() % SKILL_COLUMNS != 0) {
             padded.add("");
         }
-        List<List<TableCellSpec>> rows = new ArrayList<>();
+        List<List<TableCellContent>> rows = new ArrayList<>();
         for (int index = 0; index < padded.size(); index += SKILL_COLUMNS) {
             rows.add(List.of(
-                    TableCellSpec.text(decorateSkill(padded.get(index))),
-                    TableCellSpec.text(decorateSkill(padded.get(index + 1))),
-                    TableCellSpec.text(decorateSkill(padded.get(index + 2))),
-                    TableCellSpec.text(decorateSkill(padded.get(index + 3)))));
+                    TableCellContent.text(decorateSkill(padded.get(index))),
+                    TableCellContent.text(decorateSkill(padded.get(index + 1))),
+                    TableCellContent.text(decorateSkill(padded.get(index + 2))),
+                    TableCellContent.text(decorateSkill(padded.get(index + 3)))));
         }
-        TableCellStyle defaultStyle = TableCellStyle.builder()
+        TableCellLayoutStyle defaultStyle = TableCellLayoutStyle.builder()
                 .padding(new Padding(5, 8, 5, 8))
                 .fillColor(skillFillColor())
                 .stroke(new Stroke(mutedBorderColor(), 1.1))
@@ -311,10 +311,10 @@ public final class EditorialBlueCvTemplateComposer {
         return new TemplateTableSpec(
                 "EditorialBlueSkillsTable",
                 List.of(
-                        TableColumnSpec.fixed(columnWidth),
-                        TableColumnSpec.fixed(columnWidth),
-                        TableColumnSpec.fixed(columnWidth),
-                        TableColumnSpec.fixed(columnWidth)),
+                        TableColumnLayout.fixed(columnWidth),
+                        TableColumnLayout.fixed(columnWidth),
+                        TableColumnLayout.fixed(columnWidth),
+                        TableColumnLayout.fixed(columnWidth)),
                 rows,
                 defaultStyle,
                 java.util.Map.of(),

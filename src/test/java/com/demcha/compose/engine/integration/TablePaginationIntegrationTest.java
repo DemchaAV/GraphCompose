@@ -1,9 +1,9 @@
 package com.demcha.compose.engine.integration;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.engine.components.components_builders.TableBuilder;
-import com.demcha.compose.engine.components.components_builders.TableCellSpec;
-import com.demcha.compose.engine.components.components_builders.TableColumnSpec;
+import com.demcha.compose.testsupport.engine.assembly.TableBuilder;
+import com.demcha.compose.engine.components.content.table.TableCellContent;
+import com.demcha.compose.engine.components.content.table.TableColumnLayout;
 import com.demcha.compose.engine.components.content.table.TableLayoutData;
 import com.demcha.compose.engine.components.core.Entity;
 import com.demcha.compose.engine.components.layout.Anchor;
@@ -39,15 +39,15 @@ class TablePaginationIntegrationTest {
                     .entityName("PaginationTable")
                     .anchor(Anchor.topCenter())
                     .margin(Margin.of(10))
-                    .columns(TableColumnSpec.fixed(72), TableColumnSpec.auto(), TableColumnSpec.auto())
+                    .columns(TableColumnLayout.fixed(72), TableColumnLayout.auto(), TableColumnLayout.auto())
                     .width(540)
                     .row("ID", "Category", "Description");
 
             for (int i = 0; i < 95; i++) {
                 builder.row(
-                        TableCellSpec.text(String.valueOf(i + 1)),
-                        TableCellSpec.text("Category " + (i % 7)),
-                        TableCellSpec.lines(
+                        TableCellContent.text(String.valueOf(i + 1)),
+                        TableCellContent.text("Category " + (i % 7)),
+                        TableCellContent.lines(
                                 "Single line value " + i + " for negotiated table pagination",
                                 "Backup slot " + i + " 18:00-22:00")
                 );

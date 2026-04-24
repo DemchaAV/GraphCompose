@@ -60,7 +60,8 @@ public final class BlockTextLineMetrics {
      * maximum ascent, descent, and leading across all non-null body styles.
      *
      * <p>This method always measures from scratch and does not use any cache.
-     * It is called by {@link com.demcha.compose.engine.components.components_builders.BlockTextBuilder}
+     * It is called by paragraph preparation and other text materialization
+     * paths before pagination/rendering consume the resolved line payload.
      * at line-creation time to populate the per-line cache.</p>
      *
      * @param entityManager entity manager providing the measurement system

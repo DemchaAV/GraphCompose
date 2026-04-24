@@ -12,9 +12,9 @@ import com.demcha.compose.document.templates.data.schedule.ScheduleSlot;
 import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
 import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleDocumentSpec;
 import com.demcha.compose.document.templates.theme.WeeklyScheduleTheme;
-import com.demcha.compose.engine.components.components_builders.TableCellSpec;
-import com.demcha.compose.engine.components.components_builders.TableCellStyle;
-import com.demcha.compose.engine.components.components_builders.TableColumnSpec;
+import com.demcha.compose.engine.components.content.table.TableCellContent;
+import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
+import com.demcha.compose.engine.components.content.table.TableColumnLayout;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.layout.Anchor;
 import com.demcha.compose.engine.components.style.Margin;
@@ -96,7 +96,7 @@ public final class WeeklyScheduleTemplateComposer {
                     TextAlign.LEFT,
                     2.0,
                     "\u2022",
-                    com.demcha.compose.engine.components.components_builders.BlockIndentStrategy.FROM_SECOND_LINE,
+                    com.demcha.compose.engine.components.content.text.TextIndentStrategy.FROM_SECOND_LINE,
                     Padding.zero(),
                     Margin.top(4)));
         }
@@ -106,7 +106,7 @@ public final class WeeklyScheduleTemplateComposer {
     private TemplateTableSpec headerTable(double width, WeeklyScheduleData data) {
         double leftWidth = Math.max(260, width - 220);
         double rightWidth = width - leftWidth - HEADER_GAP;
-        TableCellStyle headerBaseStyle = TableCellStyle.builder()
+        TableCellLayoutStyle headerBaseStyle = TableCellLayoutStyle.builder()
                 .padding(Padding.zero())
                 .fillColor(Color.WHITE)
                 .stroke(new Stroke(Color.WHITE, 0.0))
@@ -116,16 +116,16 @@ public final class WeeklyScheduleTemplateComposer {
         return new TemplateTableSpec(
                 "WeeklyScheduleHeader",
                 List.of(
-                        TableColumnSpec.fixed(leftWidth),
-                        TableColumnSpec.fixed(HEADER_GAP),
-                        TableColumnSpec.fixed(rightWidth)),
+                        TableColumnLayout.fixed(leftWidth),
+                        TableColumnLayout.fixed(HEADER_GAP),
+                        TableColumnLayout.fixed(rightWidth)),
                 List.of(List.of(
-                        TableCellSpec.text(data.title()).withStyle(TableCellStyle.builder()
+                        TableCellContent.text(data.title()).withStyle(TableCellLayoutStyle.builder()
                                 .textStyle(theme.titleStyle())
                                 .textAnchor(Anchor.topLeft())
                                 .build()),
-                        TableCellSpec.text(""),
-                        TableCellSpec.text(data.weekLabel()).withStyle(TableCellStyle.builder()
+                        TableCellContent.text(""),
+                        TableCellContent.text(data.weekLabel()).withStyle(TableCellLayoutStyle.builder()
                                 .textStyle(theme.weekLabelStyle())
                                 .textAnchor(Anchor.topRight())
                                 .padding(new Padding(8, 0, 0, 0))
@@ -139,10 +139,10 @@ public final class WeeklyScheduleTemplateComposer {
     }
 
     private TemplateTableSpec dayLabelsBand(GridSpec grid, List<ScheduleDay> days) {
-        List<TableCellSpec> cells = new ArrayList<>();
+        List<TableCellContent> cells = new ArrayList<>();
         for (ScheduleDay day : days) {
             List<String> labelLines = splitMultiline(day.label());
-            cells.add(TableCellSpec.of(labelLines.isEmpty() ? List.of(day.label()) : labelLines));
+            cells.add(TableCellContent.of(labelLines.isEmpty() ? List.of(day.label()) : labelLines));
         }
         return bandTable("WeeklyScheduleDayLabels", grid, bandLeadingStyle(), dayLabelCellStyle(), "", cells);
     }
@@ -152,9 +152,9 @@ public final class WeeklyScheduleTemplateComposer {
         if (!hasNotes) {
             return null;
         }
-        List<TableCellSpec> cells = new ArrayList<>();
+        List<TableCellContent> cells = new ArrayList<>();
         for (ScheduleDay day : days) {
-            cells.add(TableCellSpec.of(splitMultiline(day.headerNote())));
+            cells.add(TableCellContent.of(splitMultiline(day.headerNote())));
         }
         return bandTable("WeeklyScheduleDayNotes", grid, bandLeadingStyle(), dayNoteCellStyle(), "", cells);
     }
@@ -166,23 +166,23 @@ public final class WeeklyScheduleTemplateComposer {
         if (!hasCategories) {
             return null;
         }
-        List<TableCellSpec> cells = new ArrayList<>();
+        List<TableCellContent> cells = new ArrayList<>();
         for (ScheduleDay day : days) {
             ScheduleCategory category = categories.get(day.headerCategoryId());
             if (category == null) {
-                cells.add(TableCellSpec.text(""));
+                cells.add(TableCellContent.text(""));
                 continue;
             }
-            cells.add(TableCellSpec.text(category.label()).withStyle(categoryBandCellStyle(category)));
+            cells.add(TableCellContent.text(category.label()).withStyle(categoryBandCellStyle(category)));
         }
         return bandTable("WeeklyScheduleDayCategories", grid, bandLeadingStyle(), dayCategoryDefaultStyle(), "", cells);
     }
 
     private TemplateTableSpec metricBand(GridSpec grid, ScheduleMetricRow metric) {
-        List<TableCellSpec> cells = new ArrayList<>();
+        List<TableCellContent> cells = new ArrayList<>();
         for (int index = 0; index < grid.dayCount(); index++) {
             String value = index < metric.dayValues().size() ? metric.dayValues().get(index) : "";
-            cells.add(TableCellSpec.text(value));
+            cells.add(TableCellContent.text(value));
         }
         return bandTable(
                 "WeeklyScheduleMetric" + sanitizeEntityPart(metric.label()),
@@ -197,14 +197,14 @@ public final class WeeklyScheduleTemplateComposer {
                                           WeeklyScheduleData data,
                                           Map<String, ScheduleCategory> categories) {
         Map<CellKey, ScheduleAssignment> assignments = mergeAssignments(data.assignments());
-        List<List<TableCellSpec>> rows = new ArrayList<>();
+        List<List<TableCellContent>> rows = new ArrayList<>();
 
         List<SchedulePerson> people = data.people().stream()
                 .sorted(Comparator.comparingInt(SchedulePerson::sortOrder)
                         .thenComparing(SchedulePerson::displayName, String.CASE_INSENSITIVE_ORDER))
                 .toList();
         for (SchedulePerson person : people) {
-            List<TableCellSpec> dayCells = new ArrayList<>();
+            List<TableCellContent> dayCells = new ArrayList<>();
             for (ScheduleDay day : data.days()) {
                 ScheduleAssignment assignment = assignments.get(new CellKey(person.id(), day.id()));
                 dayCells.add(assignmentCell(assignment, categories));
@@ -212,7 +212,7 @@ public final class WeeklyScheduleTemplateComposer {
             rows.add(buildGridRow(person.displayName(), dayCells, grid.dayCount()));
         }
 
-        Map<Integer, TableCellStyle> columnStyles = Map.of(0, nameColumnStyle());
+        Map<Integer, TableCellLayoutStyle> columnStyles = Map.of(0, nameColumnStyle());
         return new TemplateTableSpec(
                 "WeeklyScheduleRoster",
                 grid.columns(),
@@ -225,9 +225,9 @@ public final class WeeklyScheduleTemplateComposer {
                 Margin.top(4));
     }
 
-    private TableCellSpec assignmentCell(ScheduleAssignment assignment, Map<String, ScheduleCategory> categories) {
+    private TableCellContent assignmentCell(ScheduleAssignment assignment, Map<String, ScheduleCategory> categories) {
         if (assignment == null) {
-            return TableCellSpec.text("").withStyle(emptyRosterCellStyle());
+            return TableCellContent.text("").withStyle(emptyRosterCellStyle());
         }
 
         List<String> lines = new ArrayList<>();
@@ -245,16 +245,16 @@ public final class WeeklyScheduleTemplateComposer {
         if (lines.isEmpty() && category != null && !category.label().isBlank()) {
             lines.add(category.label());
         }
-        return TableCellSpec.of(lines.isEmpty() ? List.of("") : lines,
+        return TableCellContent.of(lines.isEmpty() ? List.of("") : lines,
                 category == null ? emptyRosterCellStyle() : categoryCellStyle(category));
     }
 
     private TemplateTableSpec bandTable(String name,
                                         GridSpec grid,
-                                        TableCellStyle leadingStyle,
-                                        TableCellStyle defaultStyle,
+                                        TableCellLayoutStyle leadingStyle,
+                                        TableCellLayoutStyle defaultStyle,
                                         String leadingLabel,
-                                        List<TableCellSpec> dayCells) {
+                                        List<TableCellContent> dayCells) {
         return new TemplateTableSpec(
                 name,
                 grid.columns(),
@@ -267,11 +267,11 @@ public final class WeeklyScheduleTemplateComposer {
                 Margin.zero());
     }
 
-    private List<TableCellSpec> buildGridRow(String leadingLabel, List<TableCellSpec> dayCells, int dayCount) {
-        List<TableCellSpec> row = new ArrayList<>(dayCount + 1);
-        row.add(TableCellSpec.text(leadingLabel));
+    private List<TableCellContent> buildGridRow(String leadingLabel, List<TableCellContent> dayCells, int dayCount) {
+        List<TableCellContent> row = new ArrayList<>(dayCount + 1);
+        row.add(TableCellContent.text(leadingLabel));
         for (int index = 0; index < dayCount; index++) {
-            row.add(index < dayCells.size() ? dayCells.get(index) : TableCellSpec.text(""));
+            row.add(index < dayCells.size() ? dayCells.get(index) : TableCellContent.text(""));
         }
         return row;
     }
@@ -279,10 +279,10 @@ public final class WeeklyScheduleTemplateComposer {
     private GridSpec gridSpec(double totalWidth, int dayCount) {
         double nameColumnWidth = Math.min(theme.nameColumnWidth(), Math.max(96, totalWidth * 0.2));
         double dayColumnWidth = (totalWidth - nameColumnWidth) / dayCount;
-        List<TableColumnSpec> columns = new ArrayList<>();
-        columns.add(TableColumnSpec.fixed(nameColumnWidth));
+        List<TableColumnLayout> columns = new ArrayList<>();
+        columns.add(TableColumnLayout.fixed(nameColumnWidth));
         for (int index = 0; index < dayCount; index++) {
-            columns.add(TableColumnSpec.fixed(dayColumnWidth));
+            columns.add(TableColumnLayout.fixed(dayColumnWidth));
         }
         return new GridSpec(totalWidth, dayCount, columns);
     }
@@ -334,8 +334,8 @@ public final class WeeklyScheduleTemplateComposer {
         return Objects.requireNonNullElse(value, "Metric").replaceAll("[^A-Za-z0-9]+", "");
     }
 
-    private TableCellStyle bandLeadingStyle() {
-        return TableCellStyle.builder()
+    private TableCellLayoutStyle bandLeadingStyle() {
+        return TableCellLayoutStyle.builder()
                 .padding(new Padding(theme.bandPaddingVertical(), theme.bandPaddingHorizontal(), theme.bandPaddingVertical(), theme.bandPaddingHorizontal()))
                 .fillColor(theme.nameColumnFillColor())
                 .stroke(new Stroke(theme.gridBorderColor(), 1.0))
@@ -344,8 +344,8 @@ public final class WeeklyScheduleTemplateComposer {
                 .build();
     }
 
-    private TableCellStyle metricLeadingStyle() {
-        return TableCellStyle.builder()
+    private TableCellLayoutStyle metricLeadingStyle() {
+        return TableCellLayoutStyle.builder()
                 .padding(new Padding(theme.bandPaddingVertical(), theme.bandPaddingHorizontal(), theme.bandPaddingVertical(), theme.bandPaddingHorizontal()))
                 .fillColor(theme.nameColumnFillColor())
                 .stroke(new Stroke(theme.gridBorderColor(), 1.0))
@@ -354,8 +354,8 @@ public final class WeeklyScheduleTemplateComposer {
                 .build();
     }
 
-    private TableCellStyle dayLabelCellStyle() {
-        return TableCellStyle.builder()
+    private TableCellLayoutStyle dayLabelCellStyle() {
+        return TableCellLayoutStyle.builder()
                 .padding(new Padding(theme.bandPaddingVertical(), theme.bandPaddingHorizontal(), theme.bandPaddingVertical(), theme.bandPaddingHorizontal()))
                 .fillColor(theme.bandFillColor())
                 .stroke(new Stroke(theme.gridBorderColor(), 1.0))
@@ -364,8 +364,8 @@ public final class WeeklyScheduleTemplateComposer {
                 .build();
     }
 
-    private TableCellStyle dayNoteCellStyle() {
-        return TableCellStyle.builder()
+    private TableCellLayoutStyle dayNoteCellStyle() {
+        return TableCellLayoutStyle.builder()
                 .padding(new Padding(theme.bandPaddingVertical(), theme.bandPaddingHorizontal(), theme.bandPaddingVertical(), theme.bandPaddingHorizontal()))
                 .fillColor(Color.WHITE)
                 .stroke(new Stroke(theme.gridBorderColor(), 1.0))
@@ -374,8 +374,8 @@ public final class WeeklyScheduleTemplateComposer {
                 .build();
     }
 
-    private TableCellStyle dayCategoryDefaultStyle() {
-        return TableCellStyle.builder()
+    private TableCellLayoutStyle dayCategoryDefaultStyle() {
+        return TableCellLayoutStyle.builder()
                 .padding(new Padding(theme.bandPaddingVertical(), theme.bandPaddingHorizontal(), theme.bandPaddingVertical(), theme.bandPaddingHorizontal()))
                 .fillColor(theme.bandFillColor())
                 .stroke(new Stroke(theme.gridBorderColor(), 1.0))
@@ -384,8 +384,8 @@ public final class WeeklyScheduleTemplateComposer {
                 .build();
     }
 
-    private TableCellStyle categoryBandCellStyle(ScheduleCategory category) {
-        return TableCellStyle.builder()
+    private TableCellLayoutStyle categoryBandCellStyle(ScheduleCategory category) {
+        return TableCellLayoutStyle.builder()
                 .fillColor(category.fillColor())
                 .stroke(new Stroke(category.borderColor(), 1.0))
                 .textStyle(theme.categoryLabelStyle(category.textColor()))
@@ -393,8 +393,8 @@ public final class WeeklyScheduleTemplateComposer {
                 .build();
     }
 
-    private TableCellStyle metricCellStyle() {
-        return TableCellStyle.builder()
+    private TableCellLayoutStyle metricCellStyle() {
+        return TableCellLayoutStyle.builder()
                 .padding(new Padding(theme.bandPaddingVertical(), theme.bandPaddingHorizontal(), theme.bandPaddingVertical(), theme.bandPaddingHorizontal()))
                 .fillColor(Color.WHITE)
                 .stroke(new Stroke(theme.gridBorderColor(), 1.0))
@@ -403,8 +403,8 @@ public final class WeeklyScheduleTemplateComposer {
                 .build();
     }
 
-    private TableCellStyle nameColumnStyle() {
-        return TableCellStyle.builder()
+    private TableCellLayoutStyle nameColumnStyle() {
+        return TableCellLayoutStyle.builder()
                 .padding(new Padding(theme.bodyPaddingVertical(), theme.bodyPaddingHorizontal(), theme.bodyPaddingVertical(), theme.bodyPaddingHorizontal()))
                 .fillColor(theme.nameColumnFillColor())
                 .stroke(new Stroke(theme.gridBorderColor(), 1.0))
@@ -413,8 +413,8 @@ public final class WeeklyScheduleTemplateComposer {
                 .build();
     }
 
-    private TableCellStyle rosterDefaultStyle() {
-        return TableCellStyle.builder()
+    private TableCellLayoutStyle rosterDefaultStyle() {
+        return TableCellLayoutStyle.builder()
                 .padding(new Padding(theme.bodyPaddingVertical(), theme.bodyPaddingHorizontal(), theme.bodyPaddingVertical(), theme.bodyPaddingHorizontal()))
                 .fillColor(theme.emptyCellFillColor())
                 .stroke(new Stroke(theme.gridBorderColor(), 1.0))
@@ -423,8 +423,8 @@ public final class WeeklyScheduleTemplateComposer {
                 .build();
     }
 
-    private TableCellStyle emptyRosterCellStyle() {
-        return TableCellStyle.builder()
+    private TableCellLayoutStyle emptyRosterCellStyle() {
+        return TableCellLayoutStyle.builder()
                 .fillColor(theme.emptyCellFillColor())
                 .stroke(new Stroke(theme.gridBorderColor(), 1.0))
                 .textStyle(theme.cellTextStyle(theme.bodyColor()))
@@ -432,8 +432,8 @@ public final class WeeklyScheduleTemplateComposer {
                 .build();
     }
 
-    private TableCellStyle categoryCellStyle(ScheduleCategory category) {
-        return TableCellStyle.builder()
+    private TableCellLayoutStyle categoryCellStyle(ScheduleCategory category) {
+        return TableCellLayoutStyle.builder()
                 .fillColor(category.fillColor())
                 .stroke(new Stroke(category.borderColor(), 1.0))
                 .textStyle(theme.cellTextStyle(category.textColor()))
@@ -441,7 +441,7 @@ public final class WeeklyScheduleTemplateComposer {
                 .build();
     }
 
-    private record GridSpec(double totalWidth, int dayCount, List<TableColumnSpec> columns) {
+    private record GridSpec(double totalWidth, int dayCount, List<TableColumnLayout> columns) {
     }
 
     private record CellKey(String personId, String dayId) {

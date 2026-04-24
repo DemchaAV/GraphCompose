@@ -91,7 +91,7 @@ public final class CoverLetterTemplateComposer {
                         TextAlign.LEFT,
                         layout.bodyLineSpacing(),
                         coverLetterLayout.bodyFirstLineIndent(),
-                        com.demcha.compose.engine.components.components_builders.BlockIndentStrategy.FIRST_LINE,
+                        com.demcha.compose.engine.components.content.text.TextIndentStrategy.FIRST_LINE,
                         layout.bodyPadding(),
                         Margin.zero())))));
     }

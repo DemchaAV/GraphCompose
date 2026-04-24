@@ -2,10 +2,10 @@ package com.demcha.compose.engine.integration;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.font.FontName;
-import com.demcha.compose.engine.components.components_builders.BlockIndentStrategy;
-import com.demcha.compose.engine.components.components_builders.ComponentBuilder;
-import com.demcha.compose.engine.components.components_builders.TableCellStyle;
-import com.demcha.compose.engine.components.components_builders.TableColumnSpec;
+import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
+import com.demcha.compose.testsupport.engine.assembly.ComponentBuilder;
+import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
+import com.demcha.compose.engine.components.content.table.TableColumnLayout;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.content.text.TextDecoration;
 import com.demcha.compose.engine.components.content.text.TextStyle;
@@ -106,7 +106,7 @@ class RepositoryShowcaseRenderTest {
                     contentWidth - 18,
                     9.7,
                     Anchor.topCenter(),
-                    BlockIndentStrategy.FIRST_LINE);
+                    TextIndentStrategy.FIRST_LINE);
 
             Entity separatorTop = separator(cb, contentWidth * 0.9);
             Entity sectionWhat = text(cb, "What GraphCompose is", sectionStyle(), Anchor.topLeft());
@@ -126,7 +126,7 @@ class RepositoryShowcaseRenderTest {
                     contentWidth - 10,
                     9.0,
                     Anchor.topLeft(),
-                    BlockIndentStrategy.FIRST_LINE);
+                    TextIndentStrategy.FIRST_LINE);
             Entity featuresTable = showcaseTable(cb, contentWidth);
             Entity sectionLines = text(cb, "Primitive Showcase", sectionStyle(), Anchor.topLeft());
             Entity lineGallery = lineGallery(cb);
@@ -138,7 +138,7 @@ class RepositoryShowcaseRenderTest {
                     contentWidth - 12,
                     8.9,
                     Anchor.topLeft(),
-                    BlockIndentStrategy.FIRST_LINE);
+                    TextIndentStrategy.FIRST_LINE);
 
             cb.vContainer(Align.middle(9))
                     .entityName("RepositoryShowcaseRoot")
@@ -185,29 +185,29 @@ class RepositoryShowcaseRenderTest {
                 .entityName("RepositoryCapabilitiesTable")
                 .anchor(Anchor.topCenter())
                 .columns(
-                        TableColumnSpec.fixed(144),
-                        TableColumnSpec.fixed(112),
-                        TableColumnSpec.fixed(112))
+                        TableColumnLayout.fixed(144),
+                        TableColumnLayout.fixed(112),
+                        TableColumnLayout.fixed(112))
                 .width(contentWidth - 6)
-                .defaultCellStyle(TableCellStyle.builder()
+                .defaultCellStyle(TableCellLayoutStyle.builder()
                         .padding(Padding.of(5))
                         .fillColor(ComponentColor.WHITE)
                         .stroke(new Stroke(TABLE_BORDER, 1.1))
                         .textStyle(bodyStyle)
                         .textAnchor(Anchor.centerLeft())
                         .build())
-                .rowStyle(0, TableCellStyle.builder()
+                .rowStyle(0, TableCellLayoutStyle.builder()
                         .fillColor(HEADER_FILL)
                         .textStyle(headerStyle)
                         .build())
-                .columnStyle(0, TableCellStyle.builder()
+                .columnStyle(0, TableCellLayoutStyle.builder()
                         .fillColor(FIRST_COLUMN_FILL)
                         .stroke(new Stroke(TABLE_BORDER_STRONG, 1.5))
                         .build())
-                .columnStyle(1, TableCellStyle.builder()
+                .columnStyle(1, TableCellLayoutStyle.builder()
                         .textAnchor(Anchor.center())
                         .build())
-                .columnStyle(2, TableCellStyle.builder()
+                .columnStyle(2, TableCellLayoutStyle.builder()
                         .textAnchor(Anchor.center())
                         .build())
                 .row("Library", "Avg Time (ms)", "Avg Heap (MB)")
@@ -263,7 +263,7 @@ class RepositoryShowcaseRenderTest {
         return cb.blockText(Align.left(5), style)
                 .size(width, 2)
                 .padding(0, 0, 0, 0)
-                .strategy(BlockIndentStrategy.ALL_LINES)
+                .strategy(TextIndentStrategy.ALL_LINES)
                 .bulletOffset("•")
                 .text(lines, style, null, null)
                 .anchor(Anchor.topLeft())
@@ -275,7 +275,7 @@ class RepositoryShowcaseRenderTest {
                              double width,
                              double fontSize,
                              Anchor anchor,
-                             BlockIndentStrategy strategy) {
+                             TextIndentStrategy strategy) {
         TextStyle style = TextStyle.builder()
                 .fontName(FontName.HELVETICA)
                 .size(fontSize)

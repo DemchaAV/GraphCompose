@@ -3,9 +3,9 @@ package com.demcha.compose.document.templates.data.cv;
 import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.templates.support.common.TemplateDividerSpec;
 import com.demcha.compose.document.templates.support.common.TemplateTableSpec;
-import com.demcha.compose.engine.components.components_builders.TableCellSpec;
-import com.demcha.compose.engine.components.components_builders.TableCellStyle;
-import com.demcha.compose.engine.components.components_builders.TableColumnSpec;
+import com.demcha.compose.engine.components.content.table.TableCellContent;
+import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
+import com.demcha.compose.engine.components.content.table.TableColumnLayout;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
 import org.junit.jupiter.api.Test;
@@ -70,9 +70,9 @@ class CvModuleApiTest {
         AtomicBoolean customInvoked = new AtomicBoolean(false);
         TemplateTableSpec table = new TemplateTableSpec(
                 "ProjectsTable",
-                List.of(TableColumnSpec.auto()),
-                List.of(List.of(TableCellSpec.text("GraphCompose"))),
-                TableCellStyle.DEFAULT,
+                List.of(TableColumnLayout.auto()),
+                List.of(List.of(TableCellContent.text("GraphCompose"))),
+                TableCellLayoutStyle.DEFAULT,
                 Map.of(),
                 Map.of(),
                 120.0,

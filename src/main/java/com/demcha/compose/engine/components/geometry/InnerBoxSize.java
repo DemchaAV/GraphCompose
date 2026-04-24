@@ -1,6 +1,5 @@
 package com.demcha.compose.engine.components.geometry;
 
-import com.demcha.compose.engine.components.components_builders.ElementBuilder;
 import com.demcha.compose.engine.components.core.Entity;
 import com.demcha.compose.engine.components.layout.coordinator.Placement;
 import com.demcha.compose.engine.components.style.Padding;
@@ -27,23 +26,6 @@ public record InnerBoxSize(double width, double height) {
                 );
 
         var innerBoxSizeOpt = from(size, padding);
-        return innerBoxSizeOpt;
-    }
-
-    public static Optional<InnerBoxSize> from(@NonNull ElementBuilder entity) {
-        log.debug("Starting calculation a OuterBoxSize for entity: {}", entity);
-        Optional<ContentSize> sizeOpt = entity.getComponent(ContentSize.class);
-        var padding = entity.getComponent(Padding.class).orElse(Padding.zero());
-        var size = sizeOpt
-                .orElseThrow(
-                        () -> {
-                            log.debug("{} has no outer BoxSize.", entity);
-                            return new ContentSizeNotFoundException();
-                        }
-                );
-        var innerBoxSizeOpt = from(size, padding);
-        var innerBoxSize = innerBoxSizeOpt.orElseThrow();
-        log.debug("Calculated Inner  {} for entity: {}", innerBoxSize, entity);
         return innerBoxSizeOpt;
     }
 

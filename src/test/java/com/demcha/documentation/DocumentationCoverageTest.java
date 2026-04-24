@@ -111,7 +111,7 @@ class DocumentationCoverageTest {
                 "public TableBuilder rows(String[]... rows)");
         assertHasJavadocBefore(
                 PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/DocumentDsl.java"),
-                "public TableBuilder headerStyle(TableCellStyle style)");
+                "public TableBuilder headerStyle(TableCellLayoutStyle style)");
         assertHasJavadocBefore(
                 PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
                 "public byte[] toPdfBytes()");
@@ -176,8 +176,8 @@ class DocumentationCoverageTest {
         assertThat(tableSection).contains(".header(");
         assertThat(tableSection).contains(".rows(");
         assertThat(tableSection).contains("DocumentTableColumn.fixed(90)");
-        assertThat(tableSection).doesNotContain("TableColumnSpec.");
-        assertThat(tableSection).doesNotContain("TableCellStyle.");
+        assertThat(tableSection).doesNotContain("TableColumnLayout.");
+        assertThat(tableSection).doesNotContain("TableCellLayoutStyle.");
         assertThat(tableSection).doesNotContain(".row(\"Role\", \"Owner\", \"Status\")");
         assertThat(tableSection).doesNotContain("document.dsl()");
         assertThat(tableSection).doesNotContain("composer.componentBuilder()");

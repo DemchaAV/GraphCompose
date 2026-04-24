@@ -1,8 +1,8 @@
 package com.demcha.compose.document.templates.support.common;
 
-import com.demcha.compose.engine.components.components_builders.TableCellSpec;
-import com.demcha.compose.engine.components.components_builders.TableCellStyle;
-import com.demcha.compose.engine.components.components_builders.TableColumnSpec;
+import com.demcha.compose.engine.components.content.table.TableCellContent;
+import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
+import com.demcha.compose.engine.components.content.table.TableColumnLayout;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
 
@@ -14,11 +14,11 @@ import java.util.Map;
  */
 public record TemplateTableSpec(
         String name,
-        List<TableColumnSpec> columns,
-        List<List<TableCellSpec>> rows,
-        TableCellStyle defaultCellStyle,
-        Map<Integer, TableCellStyle> rowStyles,
-        Map<Integer, TableCellStyle> columnStyles,
+        List<TableColumnLayout> columns,
+        List<List<TableCellContent>> rows,
+        TableCellLayoutStyle defaultCellStyle,
+        Map<Integer, TableCellLayoutStyle> rowStyles,
+        Map<Integer, TableCellLayoutStyle> columnStyles,
         double width,
         Padding padding,
         Margin margin
@@ -27,7 +27,7 @@ public record TemplateTableSpec(
         name = name == null ? "" : name;
         columns = List.copyOf(columns);
         rows = List.copyOf(rows);
-        defaultCellStyle = defaultCellStyle == null ? TableCellStyle.DEFAULT : defaultCellStyle;
+        defaultCellStyle = defaultCellStyle == null ? TableCellLayoutStyle.DEFAULT : defaultCellStyle;
         rowStyles = rowStyles == null ? Map.of() : Map.copyOf(rowStyles);
         columnStyles = columnStyles == null ? Map.of() : Map.copyOf(columnStyles);
         padding = padding == null ? Padding.zero() : padding;

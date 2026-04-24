@@ -2,7 +2,7 @@ package com.demcha.compose.document.templates.support.common;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.DocumentDsl;
-import com.demcha.compose.engine.components.components_builders.TableColumnSpec;
+import com.demcha.compose.engine.components.content.table.TableColumnLayout;
 import com.demcha.compose.engine.components.style.Padding;
 
 import java.util.Objects;
@@ -153,7 +153,7 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
         DocumentDsl.TableBuilder builder = session.dsl()
                 .table()
                 .name(table.name())
-                .columns(table.columns().toArray(TableColumnSpec[]::new))
+                .columns(table.columns().toArray(TableColumnLayout[]::new))
                 .defaultCellStyle(table.defaultCellStyle())
                 .width(table.width())
                 .padding(table.padding())

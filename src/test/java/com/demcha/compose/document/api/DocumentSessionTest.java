@@ -6,9 +6,9 @@ import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.font.DefaultFonts;
 import com.demcha.compose.font.FontLibrary;
-import com.demcha.compose.engine.components.components_builders.TableCellSpec;
-import com.demcha.compose.engine.components.components_builders.TableCellStyle;
-import com.demcha.compose.engine.components.components_builders.TableColumnSpec;
+import com.demcha.compose.engine.components.content.table.TableCellContent;
+import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
+import com.demcha.compose.engine.components.content.table.TableColumnLayout;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.geometry.ContentSize;
@@ -244,7 +244,7 @@ class DocumentSessionTest {
                 .margin(Margin.of(12))
                 .create()) {
 
-            TableCellStyle headerStyle = TableCellStyle.builder()
+            TableCellLayoutStyle headerStyle = TableCellLayoutStyle.builder()
                     .padding(Padding.of(6))
                     .build();
 
@@ -253,7 +253,7 @@ class DocumentSessionTest {
                     .addTable(table -> table
                             .name("StatusTable")
                             .autoColumns(3)
-                            .defaultCellStyle(TableCellStyle.builder()
+                            .defaultCellStyle(TableCellLayoutStyle.builder()
                                     .padding(Padding.of(4))
                                     .build())
                             .headerStyle(headerStyle)
@@ -269,10 +269,10 @@ class DocumentSessionTest {
             TableNode table = (TableNode) root.children().getFirst();
             assertThat(table.rows()).hasSize(3);
             assertThat(table.rows().getFirst())
-                    .extracting(TableCellSpec::lines)
+                    .extracting(TableCellContent::lines)
                     .containsExactly(List.of("Role"), List.of("Owner"), List.of("Status"));
             assertThat(table.rows().get(1))
-                    .extracting(TableCellSpec::lines)
+                    .extracting(TableCellContent::lines)
                     .containsExactly(List.of("Engine"), List.of("GraphCompose"), List.of("Stable"));
             assertThat(table.rowStyles().get(0)).isSameAs(headerStyle);
             assertThat(session.layoutGraph().totalPages()).isEqualTo(1);
@@ -411,17 +411,17 @@ class DocumentSessionTest {
 
             TableNode table = new TableNode(
                     "Table",
-                    List.of(TableColumnSpec.auto()),
+                    List.of(TableColumnLayout.auto()),
                     List.of(
-                            List.of(TableCellSpec.text("row 1")),
-                            List.of(TableCellSpec.text("row 2")),
-                            List.of(TableCellSpec.text("row 3")),
-                            List.of(TableCellSpec.text("row 4")),
-                            List.of(TableCellSpec.text("row 5")),
-                            List.of(TableCellSpec.text("row 6")),
-                            List.of(TableCellSpec.text("row 7")),
-                            List.of(TableCellSpec.text("row 8"))),
-                    TableCellStyle.DEFAULT,
+                            List.of(TableCellContent.text("row 1")),
+                            List.of(TableCellContent.text("row 2")),
+                            List.of(TableCellContent.text("row 3")),
+                            List.of(TableCellContent.text("row 4")),
+                            List.of(TableCellContent.text("row 5")),
+                            List.of(TableCellContent.text("row 6")),
+                            List.of(TableCellContent.text("row 7")),
+                            List.of(TableCellContent.text("row 8"))),
+                    TableCellLayoutStyle.DEFAULT,
                     160.0,
                     Padding.zero(),
                     Margin.zero());

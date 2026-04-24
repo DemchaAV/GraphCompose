@@ -25,10 +25,10 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
-import com.demcha.compose.engine.components.components_builders.BlockIndentStrategy;
-import com.demcha.compose.engine.components.components_builders.TableCellSpec;
-import com.demcha.compose.engine.components.components_builders.TableCellStyle;
-import com.demcha.compose.engine.components.components_builders.TableColumnSpec;
+import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
+import com.demcha.compose.engine.components.content.table.TableCellContent;
+import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
+import com.demcha.compose.engine.components.content.table.TableColumnLayout;
 import com.demcha.compose.engine.components.content.ImageData;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.content.text.TextDecoration;
@@ -264,18 +264,18 @@ public final class DocumentDsl {
         };
     }
 
-    private static TableColumnSpec toTableColumn(DocumentTableColumn column) {
+    private static TableColumnLayout toTableColumn(DocumentTableColumn column) {
         Objects.requireNonNull(column, "column");
         return column.type() == DocumentTableColumn.Type.FIXED
-                ? TableColumnSpec.fixed(column.fixedWidth())
-                : TableColumnSpec.auto();
+                ? TableColumnLayout.fixed(column.fixedWidth())
+                : TableColumnLayout.auto();
     }
 
-    private static TableCellStyle toTableStyle(DocumentTableStyle style) {
+    private static TableCellLayoutStyle toTableStyle(DocumentTableStyle style) {
         if (style == null) {
-            return TableCellStyle.empty();
+            return TableCellLayoutStyle.empty();
         }
-        return TableCellStyle.builder()
+        return TableCellLayoutStyle.builder()
                 .padding(style.padding() == null ? null : toPadding(style.padding()))
                 .fillColor(style.fillColor() == null ? null : style.fillColor().color())
                 .textStyle(style.textStyle() == null ? null : toTextStyle(style.textStyle()))
@@ -283,9 +283,9 @@ public final class DocumentDsl {
                 .build();
     }
 
-    private static TableCellSpec toTableCell(DocumentTableCell cell) {
+    private static TableCellContent toTableCell(DocumentTableCell cell) {
         Objects.requireNonNull(cell, "cell");
-        TableCellSpec spec = TableCellSpec.of(cell.lines());
+        TableCellContent spec = TableCellContent.of(cell.lines());
         return cell.style() == null ? spec : spec.withStyle(toTableStyle(cell.style()));
     }
 
@@ -1002,7 +1002,7 @@ public final class DocumentDsl {
         private TextAlign align = TextAlign.LEFT;
         private double lineSpacing = 0.0;
         private String bulletOffset = "";
-        private BlockIndentStrategy indentStrategy = BlockIndentStrategy.NONE;
+        private TextIndentStrategy indentStrategy = TextIndentStrategy.NONE;
         private PdfLinkOptions linkOptions;
         private PdfBookmarkOptions bookmarkOptions;
         private Padding padding = Padding.zero();
@@ -1050,8 +1050,8 @@ public final class DocumentDsl {
             return this;
         }
 
-        public ParagraphBuilder indentStrategy(BlockIndentStrategy indentStrategy) {
-            this.indentStrategy = indentStrategy == null ? BlockIndentStrategy.NONE : indentStrategy;
+        public ParagraphBuilder indentStrategy(TextIndentStrategy indentStrategy) {
+            this.indentStrategy = indentStrategy == null ? TextIndentStrategy.NONE : indentStrategy;
             return this;
         }
 
@@ -1787,11 +1787,11 @@ public final class DocumentDsl {
      */
     public static final class TableBuilder {
         private String name = "";
-        private final List<TableColumnSpec> columns = new ArrayList<>();
-        private final List<List<TableCellSpec>> rows = new ArrayList<>();
-        private final Map<Integer, TableCellStyle> rowStyles = new LinkedHashMap<>();
-        private final Map<Integer, TableCellStyle> columnStyles = new LinkedHashMap<>();
-        private TableCellStyle defaultCellStyle = TableCellStyle.DEFAULT;
+        private final List<TableColumnLayout> columns = new ArrayList<>();
+        private final List<List<TableCellContent>> rows = new ArrayList<>();
+        private final Map<Integer, TableCellLayoutStyle> rowStyles = new LinkedHashMap<>();
+        private final Map<Integer, TableCellLayoutStyle> columnStyles = new LinkedHashMap<>();
+        private TableCellLayoutStyle defaultCellStyle = TableCellLayoutStyle.DEFAULT;
         private Double width;
         private PdfLinkOptions linkOptions;
         private PdfBookmarkOptions bookmarkOptions;
@@ -1803,7 +1803,7 @@ public final class DocumentDsl {
             return this;
         }
 
-        public TableBuilder columns(TableColumnSpec... columns) {
+        public TableBuilder columns(TableColumnLayout... columns) {
             this.columns.clear();
             if (columns != null) {
                 this.columns.addAll(List.of(columns));
@@ -1830,12 +1830,12 @@ public final class DocumentDsl {
         public TableBuilder autoColumns(int count) {
             this.columns.clear();
             for (int index = 0; index < count; index++) {
-                this.columns.add(TableColumnSpec.auto());
+                this.columns.add(TableColumnLayout.auto());
             }
             return this;
         }
 
-        public TableBuilder addColumn(TableColumnSpec column) {
+        public TableBuilder addColumn(TableColumnLayout column) {
             this.columns.add(Objects.requireNonNull(column, "column"));
             return this;
         }
@@ -1852,16 +1852,16 @@ public final class DocumentDsl {
         }
 
         public TableBuilder row(String... values) {
-            List<TableCellSpec> row = new ArrayList<>();
+            List<TableCellContent> row = new ArrayList<>();
             if (values != null) {
                 for (String value : values) {
-                    row.add(TableCellSpec.text(value));
+                    row.add(TableCellContent.text(value));
                 }
             }
             return row(row);
         }
 
-        public TableBuilder row(List<TableCellSpec> row) {
+        public TableBuilder row(List<TableCellContent> row) {
             this.rows.add(List.copyOf(Objects.requireNonNull(row, "row")));
             return this;
         }
@@ -1876,7 +1876,7 @@ public final class DocumentDsl {
             if (row == null) {
                 return row(List.of());
             }
-            List<TableCellSpec> cells = new ArrayList<>(row.length);
+            List<TableCellContent> cells = new ArrayList<>(row.length);
             for (DocumentTableCell cell : row) {
                 cells.add(toTableCell(cell));
             }
@@ -1902,7 +1902,7 @@ public final class DocumentDsl {
          * @param row header cell specifications
          * @return this builder
          */
-        public TableBuilder header(List<TableCellSpec> row) {
+        public TableBuilder header(List<TableCellContent> row) {
             return row(row);
         }
 
@@ -1937,17 +1937,17 @@ public final class DocumentDsl {
          * @param rows row specifications, one list per row
          * @return this builder
          */
-        public TableBuilder rows(List<List<TableCellSpec>> rows) {
+        public TableBuilder rows(List<List<TableCellContent>> rows) {
             if (rows != null) {
-                for (List<TableCellSpec> row : rows) {
+                for (List<TableCellContent> row : rows) {
                     row(row);
                 }
             }
             return this;
         }
 
-        public TableBuilder defaultCellStyle(TableCellStyle defaultCellStyle) {
-            this.defaultCellStyle = defaultCellStyle == null ? TableCellStyle.DEFAULT : defaultCellStyle;
+        public TableBuilder defaultCellStyle(TableCellLayoutStyle defaultCellStyle) {
+            this.defaultCellStyle = defaultCellStyle == null ? TableCellLayoutStyle.DEFAULT : defaultCellStyle;
             return this;
         }
 
@@ -1958,7 +1958,7 @@ public final class DocumentDsl {
          * @return this builder
          */
         public TableBuilder defaultCellStyle(DocumentTableStyle defaultCellStyle) {
-            this.defaultCellStyle = defaultCellStyle == null ? TableCellStyle.DEFAULT : toTableStyle(defaultCellStyle);
+            this.defaultCellStyle = defaultCellStyle == null ? TableCellLayoutStyle.DEFAULT : toTableStyle(defaultCellStyle);
             return this;
         }
 
@@ -1968,7 +1968,7 @@ public final class DocumentDsl {
          * @param style header row style override
          * @return this builder
          */
-        public TableBuilder headerStyle(TableCellStyle style) {
+        public TableBuilder headerStyle(TableCellLayoutStyle style) {
             return rowStyle(0, style);
         }
 
@@ -1982,7 +1982,7 @@ public final class DocumentDsl {
             return rowStyle(0, toTableStyle(style));
         }
 
-        public TableBuilder rowStyle(int rowIndex, TableCellStyle style) {
+        public TableBuilder rowStyle(int rowIndex, TableCellLayoutStyle style) {
             if (rowIndex < 0) {
                 throw new IllegalArgumentException("rowIndex cannot be negative: " + rowIndex);
             }
@@ -2001,7 +2001,7 @@ public final class DocumentDsl {
             return rowStyle(rowIndex, toTableStyle(style));
         }
 
-        public TableBuilder columnStyle(int columnIndex, TableCellStyle style) {
+        public TableBuilder columnStyle(int columnIndex, TableCellLayoutStyle style) {
             if (columnIndex < 0) {
                 throw new IllegalArgumentException("columnIndex cannot be negative: " + columnIndex);
             }

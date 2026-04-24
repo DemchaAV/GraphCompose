@@ -14,6 +14,12 @@ import com.demcha.compose.document.templates.support.common.TemplateLifecycleLog
 public final class ProposalTemplateV1 implements ProposalTemplate {
     private final ProposalTemplateComposer composer = new ProposalTemplateComposer(new BusinessDocumentSceneStyles());
 
+    /**
+     * Creates the canonical proposal template.
+     */
+    public ProposalTemplateV1() {
+    }
+
     @Override
     public String getTemplateId() {
         return "proposal-v1";

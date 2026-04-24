@@ -34,12 +34,23 @@ public final class InvoiceTemplateComposer {
     private final BusinessDocumentLayoutPolicy sceneLayout;
     private final TemplateLayoutPolicy layout;
 
+    /**
+     * Creates an invoice scene composer with the supplied business document styles.
+     *
+     * @param styles shared invoice visual styles
+     */
     public InvoiceTemplateComposer(BusinessDocumentSceneStyles styles) {
         this.styles = Objects.requireNonNull(styles, "styles");
         this.sceneLayout = BusinessDocumentLayoutPolicy.standard();
         this.layout = sceneLayout.rhythm();
     }
 
+    /**
+     * Emits invoice header, parties, line items, notes, totals, and footer modules.
+     *
+     * @param target canonical template compose target
+     * @param spec invoice document spec
+     */
     public void compose(TemplateComposeTarget target, InvoiceDocumentSpec spec) {
         InvoiceData safe = Objects.requireNonNull(spec, "spec").invoice();
         double width = target.pageWidth();

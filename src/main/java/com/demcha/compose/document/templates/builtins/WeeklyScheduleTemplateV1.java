@@ -16,10 +16,18 @@ import java.util.Objects;
 public final class WeeklyScheduleTemplateV1 implements WeeklyScheduleTemplate {
     private final WeeklyScheduleTemplateComposer composer;
 
+    /**
+     * Creates the canonical weekly schedule template with the default theme.
+     */
     public WeeklyScheduleTemplateV1() {
         this(null);
     }
 
+    /**
+     * Creates the canonical weekly schedule template with a custom theme.
+     *
+     * @param theme custom theme, or null for the default theme
+     */
     public WeeklyScheduleTemplateV1(WeeklyScheduleTheme theme) {
         this.composer = new WeeklyScheduleTemplateComposer(
                 Objects.requireNonNullElseGet(theme, WeeklyScheduleTheme::defaultTheme));

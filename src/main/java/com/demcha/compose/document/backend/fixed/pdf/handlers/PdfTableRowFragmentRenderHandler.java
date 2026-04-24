@@ -25,6 +25,12 @@ import java.util.Set;
 public final class PdfTableRowFragmentRenderHandler
         implements PdfFragmentRenderHandler<BuiltInNodeDefinitions.TableRowFragmentPayload> {
 
+    /**
+     * Creates the table-row fragment renderer.
+     */
+    public PdfTableRowFragmentRenderHandler() {
+    }
+
     @Override
     public Class<BuiltInNodeDefinitions.TableRowFragmentPayload> payloadType() {
         return BuiltInNodeDefinitions.TableRowFragmentPayload.class;

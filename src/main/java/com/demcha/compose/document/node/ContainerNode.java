@@ -11,6 +11,14 @@ import java.util.Objects;
 
 /**
  * Vertical flow semantic container.
+ *
+ * @param name node name used in snapshots and layout graph paths
+ * @param children child semantic nodes in source order
+ * @param spacing vertical spacing between children
+ * @param padding inner padding
+ * @param margin outer margin
+ * @param fillColor optional background fill
+ * @param stroke optional border stroke
  */
 public record ContainerNode(
         String name,
@@ -21,6 +29,9 @@ public record ContainerNode(
         Color fillColor,
         Stroke stroke
 ) implements DocumentNode {
+    /**
+     * Creates a normalized vertical flow container.
+     */
     public ContainerNode {
         name = name == null ? "" : name;
         Objects.requireNonNull(children, "children");

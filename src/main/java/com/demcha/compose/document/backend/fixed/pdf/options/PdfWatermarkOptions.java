@@ -1,13 +1,13 @@
 package com.demcha.compose.document.backend.fixed.pdf.options;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.awt.Color;
 import java.nio.file.Path;
 
-@Getter
-@Builder(toBuilder = true)
 /**
  * Canonical watermark configuration applied to every rendered PDF page.
  *
@@ -15,6 +15,9 @@ import java.nio.file.Path;
  * uses this type instead of exposing backend watermark config classes in public
  * signatures.</p>
  */
+@Getter
+@Builder(toBuilder = true)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public final class PdfWatermarkOptions {
     private final String text;
 
@@ -38,6 +41,18 @@ public final class PdfWatermarkOptions {
 
     @Builder.Default
     private final PdfWatermarkPosition position = PdfWatermarkPosition.CENTER;
+
+    private PdfWatermarkOptions() {
+        this.text = null;
+        this.fontSize = 72f;
+        this.rotation = 45f;
+        this.color = Color.LIGHT_GRAY;
+        this.imagePath = null;
+        this.imageBytes = null;
+        this.opacity = 0.15f;
+        this.layer = PdfWatermarkLayer.BEHIND_CONTENT;
+        this.position = PdfWatermarkPosition.CENTER;
+    }
 
     /**
      * Returns {@code true} when the watermark is configured to render text.

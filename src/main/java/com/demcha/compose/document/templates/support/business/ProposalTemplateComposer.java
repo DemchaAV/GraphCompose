@@ -36,12 +36,23 @@ public final class ProposalTemplateComposer {
     private final BusinessDocumentLayoutPolicy sceneLayout;
     private final TemplateLayoutPolicy layout;
 
+    /**
+     * Creates a proposal scene composer with the supplied business document styles.
+     *
+     * @param styles shared proposal visual styles
+     */
     public ProposalTemplateComposer(BusinessDocumentSceneStyles styles) {
         this.styles = Objects.requireNonNull(styles, "styles");
         this.sceneLayout = BusinessDocumentLayoutPolicy.standard();
         this.layout = sceneLayout.rhythm();
     }
 
+    /**
+     * Emits proposal header, sections, timeline, pricing, acceptance, and footer modules.
+     *
+     * @param target canonical template compose target
+     * @param spec proposal document spec
+     */
     public void compose(TemplateComposeTarget target, ProposalDocumentSpec spec) {
         ProposalData safe = Objects.requireNonNull(spec, "spec").proposal();
         double width = target.pageWidth();

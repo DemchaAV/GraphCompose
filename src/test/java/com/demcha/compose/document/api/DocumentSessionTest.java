@@ -61,6 +61,7 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import java.io.ByteArrayOutputStream;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -333,6 +334,55 @@ class DocumentSessionTest {
             byte[] pdfBytes = session.toPdfBytes();
             try (PDDocument document = Loader.loadPDF(pdfBytes)) {
                 assertThat(document.getNumberOfPages()).isEqualTo(graph.totalPages());
+            }
+        }
+    }
+
+    @Test
+    void writePdfShouldStreamValidPdfWithoutClosingCallerStream() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(new PDRectangle(220, 180))
+                .margin(Margin.of(12))
+                .create()) {
+
+            session.pageFlow(page -> page
+                    .module("Summary", module -> module.paragraph("Streaming PDF output stays request-local.")));
+
+            TrackingOutputStream output = new TrackingOutputStream();
+
+            session.writePdf(output);
+
+            assertThat(output.closed).isFalse();
+            assertThat(output.size()).isGreaterThan(0);
+            try (PDDocument document = Loader.loadPDF(output.toByteArray())) {
+                assertThat(document.getNumberOfPages()).isEqualTo(1);
+                String extracted = normalizeWhitespace(new PDFTextStripper().getText(document));
+                assertThat(extracted).contains("Streaming PDF output stays request-local.");
+            }
+        }
+    }
+
+    @Test
+    void toPdfBytesShouldNotKeepSessionByteCache() throws Exception {
+        List<String> fieldNames = Arrays.stream(DocumentSession.class.getDeclaredFields())
+                .map(field -> field.getName())
+                .toList();
+
+        assertThat(fieldNames).doesNotContain("cachedPdfBytes", "cachedPdfRevision");
+
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(new PDRectangle(220, 180))
+                .margin(Margin.of(12))
+                .create()) {
+
+            session.pageFlow(page -> page
+                    .module("Summary", module -> module.paragraph("Byte output is convenience-only.")));
+
+            byte[] pdfBytes = session.toPdfBytes();
+
+            assertThat(pdfBytes).isNotEmpty();
+            try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+                assertThat(document.getNumberOfPages()).isEqualTo(1);
             }
         }
     }
@@ -645,6 +695,15 @@ class DocumentSessionTest {
                         boxColor,
                         6)).isTrue();
             }
+        }
+    }
+
+    private static final class TrackingOutputStream extends ByteArrayOutputStream {
+        private boolean closed;
+
+        @Override
+        public void close() {
+            closed = true;
         }
     }
 

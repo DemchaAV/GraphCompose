@@ -14,6 +14,12 @@ import com.demcha.compose.document.templates.support.common.TemplateLifecycleLog
 public final class InvoiceTemplateV1 implements InvoiceTemplate {
     private final InvoiceTemplateComposer composer = new InvoiceTemplateComposer(new BusinessDocumentSceneStyles());
 
+    /**
+     * Creates the canonical invoice template.
+     */
+    public InvoiceTemplateV1() {
+    }
+
     @Override
     public String getTemplateId() {
         return "invoice-v1";

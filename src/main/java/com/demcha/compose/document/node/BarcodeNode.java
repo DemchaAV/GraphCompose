@@ -13,6 +13,15 @@ import java.util.Objects;
  *
  * <p>The node carries backend-neutral barcode payload data that the canonical
  * PDF backend turns into a bitmap at render time.</p>
+ *
+ * @param name node name used in snapshots and layout graph paths
+ * @param barcodeOptions canonical barcode payload
+ * @param width target rendered width
+ * @param height target rendered height
+ * @param linkOptions optional node-level link metadata
+ * @param bookmarkOptions optional node-level bookmark metadata
+ * @param padding inner padding
+ * @param margin outer margin
  */
 public record BarcodeNode(
         String name,
@@ -24,6 +33,9 @@ public record BarcodeNode(
         Padding padding,
         Margin margin
 ) implements DocumentNode {
+    /**
+     * Creates a validated barcode or QR-code node.
+     */
     public BarcodeNode {
         name = name == null ? "" : name;
         barcodeOptions = Objects.requireNonNull(barcodeOptions, "barcodeOptions");

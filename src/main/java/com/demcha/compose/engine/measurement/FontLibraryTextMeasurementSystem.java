@@ -18,9 +18,8 @@ import java.util.concurrent.ConcurrentMap;
  * font implementation class supplied by the backend runtime.
  */
 public final class FontLibraryTextMeasurementSystem implements TextMeasurementSystem {
-    private static final int GLOBAL_CACHE_LIMIT = 50_000;
-    private static final ConcurrentMap<GlobalPdfStyleKey, ConcurrentMap<String, Double>> GLOBAL_PDF_TEXT_WIDTH_CACHE =
-            new ConcurrentHashMap<>();
+    private static final int GLOBAL_LINE_METRICS_CACHE_LIMIT = 50_000;
+    private static final int SESSION_TEXT_WIDTH_CACHE_LIMIT = 10_000;
     private static final ConcurrentMap<GlobalPdfStyleKey, LineMetrics> GLOBAL_PDF_LINE_METRICS_CACHE = new ConcurrentHashMap<>();
 
     private final FontLibrary fonts;
@@ -55,6 +54,9 @@ public final class FontLibraryTextMeasurementSystem implements TextMeasurementSy
         }
         Font<?> font = resolveFont(safeStyle);
         double width = resolveTextWidth(font, safeStyle, safeText);
+        if (widthsByText.size() >= SESSION_TEXT_WIDTH_CACHE_LIMIT) {
+            widthsByText.clear();
+        }
         widthsByText.put(safeText, width);
         return width;
     }
@@ -84,19 +86,6 @@ public final class FontLibraryTextMeasurementSystem implements TextMeasurementSy
     }
 
     private double resolveTextWidth(Font<?> font, TextStyle style, String text) {
-        if (font instanceof PdfFont pdfFont) {
-            GlobalPdfStyleKey styleKey = globalPdfStyleKey(pdfFont, style);
-            ConcurrentMap<String, Double> widthsByText = GLOBAL_PDF_TEXT_WIDTH_CACHE.get(styleKey);
-            if (widthsByText != null) {
-                Double cached = widthsByText.get(text);
-                if (cached != null) {
-                    return cached;
-                }
-            }
-            double width = pdfFont.getTextWidth(style, text);
-            cacheGlobalTextWidth(styleKey, text, width);
-            return width;
-        }
         return font.getTextWidth(style, text);
     }
 
@@ -110,21 +99,27 @@ public final class FontLibraryTextMeasurementSystem implements TextMeasurementSy
         return globalPdfStyleKeyCache.computeIfAbsent(style, key -> GlobalPdfStyleKey.from(font, key));
     }
 
-    private static void cacheGlobalTextWidth(GlobalPdfStyleKey key, String text, double width) {
-        ConcurrentMap<String, Double> widthsByText = GLOBAL_PDF_TEXT_WIDTH_CACHE.computeIfAbsent(
-                key,
-                ignored -> new ConcurrentHashMap<>());
-        if (widthsByText.size() > GLOBAL_CACHE_LIMIT) {
-            widthsByText.clear();
-        }
-        widthsByText.putIfAbsent(text, width);
-    }
-
     private static void cacheGlobalLineMetrics(GlobalPdfStyleKey key, LineMetrics metrics) {
-        if (GLOBAL_PDF_LINE_METRICS_CACHE.size() > GLOBAL_CACHE_LIMIT) {
+        if (GLOBAL_PDF_LINE_METRICS_CACHE.size() > GLOBAL_LINE_METRICS_CACHE_LIMIT) {
             GLOBAL_PDF_LINE_METRICS_CACHE.clear();
         }
         GLOBAL_PDF_LINE_METRICS_CACHE.putIfAbsent(key, metrics);
+    }
+
+    @Override
+    public void clearCaches() {
+        fontCache.clear();
+        lineMetricsCache.clear();
+        textWidthCache.clear();
+        globalPdfStyleKeyCache.clear();
+    }
+
+    int sessionTextWidthCacheSize() {
+        int total = 0;
+        for (Map<String, Double> widthsByText : textWidthCache.values()) {
+            total += widthsByText.size();
+        }
+        return total;
     }
 
     private record GlobalPdfStyleKey(String fontKey, double size, TextDecoration decoration) {

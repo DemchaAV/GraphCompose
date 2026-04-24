@@ -69,6 +69,16 @@ public interface TextMeasurementSystem extends SystemECS {
     LineMetrics lineMetrics(TextStyle style);
 
     /**
+     * Clears request/session-local measurement caches.
+     *
+     * <p>Implementations that keep shared immutable font metrics may keep those
+     * values. Implementations must not keep user document text after this call.</p>
+     */
+    default void clearCaches() {
+        // Stateless measurement systems do not need cleanup.
+    }
+
+    /**
      * Calculates the baseline-to-baseline line height for a specific text style.
      * <p>
      * This height is useful for vertical layout calculations, determining line spacing,

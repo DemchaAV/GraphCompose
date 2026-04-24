@@ -17,6 +17,12 @@ import java.util.List;
  * Skeleton semantic PPTX backend that validates slide-safe semantic nodes.
  */
 public final class PptxSemanticBackend implements SemanticBackend<SemanticExportManifest> {
+    /**
+     * Creates a semantic PPTX manifest backend.
+     */
+    public PptxSemanticBackend() {
+    }
+
     @Override
     public String name() {
         return "pptx-semantic";

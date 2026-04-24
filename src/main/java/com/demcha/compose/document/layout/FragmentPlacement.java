@@ -5,6 +5,20 @@ import com.demcha.compose.engine.components.style.Padding;
 
 /**
  * Resolved placement context for fragment emission.
+ *
+ * @param path stable semantic path for the placed node
+ * @param parentPath parent semantic path, or {@code null} for a root
+ * @param childIndex index within the parent child list
+ * @param depth depth in the semantic tree
+ * @param pageIndex page that receives this fragment
+ * @param x absolute page x coordinate
+ * @param y absolute page y coordinate
+ * @param width resolved fragment width
+ * @param height resolved fragment height
+ * @param startPage first page occupied by the owning node
+ * @param endPage last page occupied by the owning node
+ * @param margin resolved outer margin
+ * @param padding resolved inner padding
  */
 public record FragmentPlacement(
         String path,

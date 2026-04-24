@@ -16,10 +16,18 @@ import java.util.Objects;
 public final class CvTemplateV1 implements CvTemplate {
     private final CvTemplateComposer composer;
 
+    /**
+     * Creates the default standard CV template.
+     */
     public CvTemplateV1() {
         this(CvTheme.defaultTheme());
     }
 
+    /**
+     * Creates the standard CV template with a custom visual theme.
+     *
+     * @param theme theme override, or {@code null} for the default
+     */
     public CvTemplateV1(CvTheme theme) {
         this.composer = new CvTemplateComposer(Objects.requireNonNullElseGet(theme, CvTheme::defaultTheme));
     }

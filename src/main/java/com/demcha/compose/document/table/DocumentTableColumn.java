@@ -12,6 +12,9 @@ package com.demcha.compose.document.table;
  */
 public record DocumentTableColumn(Type type, Double fixedWidth) {
 
+    /**
+     * Creates a validated table column specification.
+     */
     public DocumentTableColumn {
         if (type == null) {
             throw new IllegalArgumentException("Column type cannot be null.");
@@ -44,7 +47,13 @@ public record DocumentTableColumn(Type type, Double fixedWidth) {
      * Table column sizing modes.
      */
     public enum Type {
+        /**
+         * Column width is negotiated from content and available table width.
+         */
         AUTO,
+        /**
+         * Column width is fixed to an explicit point value.
+         */
         FIXED
     }
 }

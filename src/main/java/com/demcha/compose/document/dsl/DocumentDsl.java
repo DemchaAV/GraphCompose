@@ -309,20 +309,44 @@ public final class DocumentDsl {
         private Color fillColor;
         private Stroke stroke;
 
+        /**
+         * Creates a base flow builder.
+         */
+        protected AbstractFlowBuilder() {
+        }
+
         protected abstract T self();
 
         protected abstract N buildNode();
 
+        /**
+         * Sets the semantic flow name.
+         *
+         * @param name name used in snapshots and layout graph paths
+         * @return this builder
+         */
         public T name(String name) {
             this.name = name == null ? "" : name;
             return self();
         }
 
+        /**
+         * Sets vertical spacing between child nodes.
+         *
+         * @param spacing spacing in points
+         * @return this builder
+         */
         public T spacing(double spacing) {
             this.spacing = spacing;
             return self();
         }
 
+        /**
+         * Sets flow padding with the internal engine value.
+         *
+         * @param padding padding in points
+         * @return this builder
+         */
         public T padding(Padding padding) {
             this.padding = padding == null ? Padding.zero() : padding;
             return self();
@@ -338,10 +362,25 @@ public final class DocumentDsl {
             return padding(toPadding(padding));
         }
 
+        /**
+         * Sets flow padding from explicit side values.
+         *
+         * @param top top padding
+         * @param right right padding
+         * @param bottom bottom padding
+         * @param left left padding
+         * @return this builder
+         */
         public T padding(float top, float right, float bottom, float left) {
             return padding(new Padding(top, right, bottom, left));
         }
 
+        /**
+         * Sets flow margin with the internal engine value.
+         *
+         * @param margin margin in points
+         * @return this builder
+         */
         public T margin(Margin margin) {
             this.margin = margin == null ? Margin.zero() : margin;
             return self();
@@ -357,15 +396,36 @@ public final class DocumentDsl {
             return margin(toMargin(margin));
         }
 
+        /**
+         * Sets flow margin from explicit side values.
+         *
+         * @param top top margin
+         * @param right right margin
+         * @param bottom bottom margin
+         * @param left left margin
+         * @return this builder
+         */
         public T margin(float top, float right, float bottom, float left) {
             return margin(new Margin(top, right, bottom, left));
         }
 
+        /**
+         * Sets the flow background fill.
+         *
+         * @param fillColor fill color
+         * @return this builder
+         */
         public T fillColor(Color fillColor) {
             this.fillColor = fillColor;
             return self();
         }
 
+        /**
+         * Sets the flow background fill with an engine color token.
+         *
+         * @param fillColor fill color token
+         * @return this builder
+         */
         public T fillColor(ComponentColor fillColor) {
             return fillColor(fillColor == null ? null : fillColor.color());
         }
@@ -380,6 +440,12 @@ public final class DocumentDsl {
             return fillColor(fillColor == null ? null : fillColor.color());
         }
 
+        /**
+         * Sets the flow border stroke.
+         *
+         * @param stroke border stroke, or {@code null} for no border
+         * @return this builder
+         */
         public T stroke(Stroke stroke) {
             this.stroke = stroke;
             return self();
@@ -395,11 +461,23 @@ public final class DocumentDsl {
             return stroke(toStroke(stroke));
         }
 
+        /**
+         * Adds an already-created child node.
+         *
+         * @param node child semantic node
+         * @return this builder
+         */
         public T add(DocumentNode node) {
             children.add(Objects.requireNonNull(node, "node"));
             return self();
         }
 
+        /**
+         * Adds a paragraph configured through a nested builder.
+         *
+         * @param spec paragraph builder callback
+         * @return this builder
+         */
         public T addParagraph(Consumer<ParagraphBuilder> spec) {
             return add(configure(new ParagraphBuilder(), spec).build());
         }
@@ -442,6 +520,12 @@ public final class DocumentDsl {
                     .build());
         }
 
+        /**
+         * Alias for {@link #addParagraph(Consumer)}.
+         *
+         * @param spec paragraph builder callback
+         * @return this builder
+         */
         public T addText(Consumer<ParagraphBuilder> spec) {
             return addParagraph(spec);
         }
@@ -478,6 +562,12 @@ public final class DocumentDsl {
             return addParagraph(text, textStyle);
         }
 
+        /**
+         * Adds a list configured through a nested builder.
+         *
+         * @param spec list builder callback
+         * @return this builder
+         */
         public T addList(Consumer<ListBuilder> spec) {
             return add(configure(new ListBuilder(), spec).build());
         }
@@ -502,26 +592,62 @@ public final class DocumentDsl {
             return add(new ListBuilder().items(items).build());
         }
 
+        /**
+         * Adds an image configured through a nested builder.
+         *
+         * @param spec image builder callback
+         * @return this builder
+         */
         public T addImage(Consumer<ImageBuilder> spec) {
             return add(configure(new ImageBuilder(), spec).build());
         }
 
+        /**
+         * Adds a shape configured through a nested builder.
+         *
+         * @param spec shape builder callback
+         * @return this builder
+         */
         public T addShape(Consumer<ShapeBuilder> spec) {
             return add(configure(new ShapeBuilder(), spec).build());
         }
 
+        /**
+         * Adds a barcode or QR code configured through a nested builder.
+         *
+         * @param spec barcode builder callback
+         * @return this builder
+         */
         public T addBarcode(Consumer<BarcodeBuilder> spec) {
             return add(configure(new BarcodeBuilder(), spec).build());
         }
 
+        /**
+         * Adds a divider configured through a nested builder.
+         *
+         * @param spec divider builder callback
+         * @return this builder
+         */
         public T addDivider(Consumer<DividerBuilder> spec) {
             return add(configure(new DividerBuilder(), spec).build());
         }
 
+        /**
+         * Adds a table configured through a nested builder.
+         *
+         * @param spec table builder callback
+         * @return this builder
+         */
         public T addTable(Consumer<TableBuilder> spec) {
             return add(configure(new TableBuilder(), spec).build());
         }
 
+        /**
+         * Adds a section configured through a nested builder.
+         *
+         * @param spec section builder callback
+         * @return this builder
+         */
         public T addSection(Consumer<SectionBuilder> spec) {
             return add(configure(new SectionBuilder(), spec).build());
         }
@@ -579,6 +705,12 @@ public final class DocumentDsl {
             return module(spec);
         }
 
+        /**
+         * Adds a page-break control node configured through a nested builder.
+         *
+         * @param spec page-break builder callback
+         * @return this builder
+         */
         public T addPageBreak(Consumer<PageBreakBuilder> spec) {
             return add(configure(new PageBreakBuilder(), spec).build());
         }
@@ -648,6 +780,12 @@ public final class DocumentDsl {
      * Semantic section builder for nested full-width sections.
      */
     public static final class SectionBuilder extends AbstractFlowBuilder<SectionBuilder, SectionNode> {
+        /**
+         * Creates a section builder.
+         */
+        public SectionBuilder() {
+        }
+
         @Override
         protected SectionBuilder self() {
             return this;
@@ -683,6 +821,12 @@ public final class DocumentDsl {
         private double titleLineSpacing = 0.0;
         private Padding titlePadding = Padding.zero();
         private Margin titleMargin = Margin.zero();
+
+        /**
+         * Creates a module builder.
+         */
+        public ModuleBuilder() {
+        }
 
         @Override
         protected ModuleBuilder self() {
@@ -1023,17 +1167,41 @@ public final class DocumentDsl {
         private Padding padding = Padding.zero();
         private Margin margin = Margin.zero();
 
+        /**
+         * Creates a paragraph builder.
+         */
+        public ParagraphBuilder() {
+        }
+
+        /**
+         * Sets the paragraph node name.
+         *
+         * @param name name used in snapshots and layout graph paths
+         * @return this builder
+         */
         public ParagraphBuilder name(String name) {
             this.name = name == null ? "" : name;
             return this;
         }
 
+        /**
+         * Sets plain paragraph text and clears inline runs.
+         *
+         * @param text paragraph text
+         * @return this builder
+         */
         public ParagraphBuilder text(String text) {
             this.text = text == null ? "" : text;
             this.inlineTextRuns.clear();
             return this;
         }
 
+        /**
+         * Sets paragraph text style.
+         *
+         * @param textStyle paragraph text style
+         * @return this builder
+         */
         public ParagraphBuilder textStyle(TextStyle textStyle) {
             this.textStyle = textStyle == null ? TextStyle.DEFAULT_STYLE : textStyle;
             return this;
@@ -1050,35 +1218,78 @@ public final class DocumentDsl {
             return this;
         }
 
+        /**
+         * Sets horizontal text alignment.
+         *
+         * @param align text alignment
+         * @return this builder
+         */
         public ParagraphBuilder align(TextAlign align) {
             this.align = align == null ? TextAlign.LEFT : align;
             return this;
         }
 
+        /**
+         * Sets spacing between wrapped lines.
+         *
+         * @param lineSpacing line spacing in points
+         * @return this builder
+         */
         public ParagraphBuilder lineSpacing(double lineSpacing) {
             this.lineSpacing = lineSpacing;
             return this;
         }
 
+        /**
+         * Sets the first-line prefix used by list-like paragraphs.
+         *
+         * @param bulletOffset first-line prefix
+         * @return this builder
+         */
         public ParagraphBuilder bulletOffset(String bulletOffset) {
             this.bulletOffset = bulletOffset == null ? "" : bulletOffset;
             return this;
         }
 
+        /**
+         * Sets paragraph indentation behavior.
+         *
+         * @param indentStrategy indent strategy
+         * @return this builder
+         */
         public ParagraphBuilder indentStrategy(TextIndentStrategy indentStrategy) {
             this.indentStrategy = indentStrategy == null ? TextIndentStrategy.NONE : indentStrategy;
             return this;
         }
 
+        /**
+         * Attaches paragraph-level link metadata.
+         *
+         * @param linkOptions link metadata
+         * @return this builder
+         */
         public ParagraphBuilder link(PdfLinkOptions linkOptions) {
             this.linkOptions = linkOptions;
             return this;
         }
 
+        /**
+         * Adds a plain inline text run.
+         *
+         * @param text inline text
+         * @return this builder
+         */
         public ParagraphBuilder inlineText(String text) {
             return inlineText(text, null, null);
         }
 
+        /**
+         * Adds a styled inline text run.
+         *
+         * @param text inline text
+         * @param textStyle inline text style
+         * @return this builder
+         */
         public ParagraphBuilder inlineText(String text, TextStyle textStyle) {
             return inlineText(text, textStyle, null);
         }
@@ -1094,16 +1305,37 @@ public final class DocumentDsl {
             return inlineText(text, toTextStyle(textStyle), null);
         }
 
+        /**
+         * Adds an inline link run.
+         *
+         * @param text visible link text
+         * @param linkOptions link metadata
+         * @return this builder
+         */
         public ParagraphBuilder inlineLink(String text, PdfLinkOptions linkOptions) {
             return inlineText(text, null, linkOptions);
         }
 
+        /**
+         * Adds a styled inline text run with optional link metadata.
+         *
+         * @param text inline text
+         * @param textStyle inline text style
+         * @param linkOptions optional link metadata
+         * @return this builder
+         */
         public ParagraphBuilder inlineText(String text, TextStyle textStyle, PdfLinkOptions linkOptions) {
             this.inlineTextRuns.add(new InlineTextRun(text, textStyle, linkOptions));
             this.text = "";
             return this;
         }
 
+        /**
+         * Replaces inline runs.
+         *
+         * @param inlineTextRuns inline text runs in source order
+         * @return this builder
+         */
         public ParagraphBuilder inlineRuns(List<InlineTextRun> inlineTextRuns) {
             this.inlineTextRuns.clear();
             if (inlineTextRuns != null) {
@@ -1117,11 +1349,23 @@ public final class DocumentDsl {
             return this;
         }
 
+        /**
+         * Attaches paragraph-level bookmark metadata.
+         *
+         * @param bookmarkOptions bookmark metadata
+         * @return this builder
+         */
         public ParagraphBuilder bookmark(PdfBookmarkOptions bookmarkOptions) {
             this.bookmarkOptions = bookmarkOptions;
             return this;
         }
 
+        /**
+         * Sets paragraph padding.
+         *
+         * @param padding padding in points
+         * @return this builder
+         */
         public ParagraphBuilder padding(Padding padding) {
             this.padding = padding == null ? Padding.zero() : padding;
             return this;
@@ -1137,10 +1381,25 @@ public final class DocumentDsl {
             return padding(toPadding(padding));
         }
 
+        /**
+         * Sets paragraph padding from explicit side values.
+         *
+         * @param top top padding
+         * @param right right padding
+         * @param bottom bottom padding
+         * @param left left padding
+         * @return this builder
+         */
         public ParagraphBuilder padding(float top, float right, float bottom, float left) {
             return padding(new Padding(top, right, bottom, left));
         }
 
+        /**
+         * Sets paragraph margin.
+         *
+         * @param margin margin in points
+         * @return this builder
+         */
         public ParagraphBuilder margin(Margin margin) {
             this.margin = margin == null ? Margin.zero() : margin;
             return this;
@@ -1156,10 +1415,24 @@ public final class DocumentDsl {
             return margin(toMargin(margin));
         }
 
+        /**
+         * Sets paragraph margin from explicit side values.
+         *
+         * @param top top margin
+         * @param right right margin
+         * @param bottom bottom margin
+         * @param left left margin
+         * @return this builder
+         */
         public ParagraphBuilder margin(float top, float right, float bottom, float left) {
             return margin(new Margin(top, right, bottom, left));
         }
 
+        /**
+         * Builds the semantic paragraph node.
+         *
+         * @return paragraph node
+         */
         public ParagraphNode build() {
             return new ParagraphNode(
                     name,
@@ -1193,11 +1466,29 @@ public final class DocumentDsl {
         private Padding padding = Padding.zero();
         private Margin margin = Margin.zero();
 
+        /**
+         * Creates a list builder.
+         */
+        public ListBuilder() {
+        }
+
+        /**
+         * Sets the list node name.
+         *
+         * @param name name used in snapshots and layout graph paths
+         * @return this builder
+         */
         public ListBuilder name(String name) {
             this.name = name == null ? "" : name;
             return this;
         }
 
+        /**
+         * Replaces list items from varargs.
+         *
+         * @param items item texts
+         * @return this builder
+         */
         public ListBuilder items(String... items) {
             this.items.clear();
             if (items != null) {
@@ -1206,6 +1497,12 @@ public final class DocumentDsl {
             return this;
         }
 
+        /**
+         * Replaces list items from a collection.
+         *
+         * @param items item texts
+         * @return this builder
+         */
         public ListBuilder items(List<String> items) {
             this.items.clear();
             if (items != null) {
@@ -1214,32 +1511,71 @@ public final class DocumentDsl {
             return this;
         }
 
+        /**
+         * Appends one list item.
+         *
+         * @param item item text
+         * @return this builder
+         */
         public ListBuilder addItem(String item) {
             this.items.add(item);
             return this;
         }
 
+        /**
+         * Sets the list marker.
+         *
+         * @param marker list marker
+         * @return this builder
+         */
         public ListBuilder marker(ListMarker marker) {
             this.marker = marker == null ? ListMarker.bullet() : marker;
             return this;
         }
 
+        /**
+         * Sets a custom list marker.
+         *
+         * @param marker marker text
+         * @return this builder
+         */
         public ListBuilder marker(String marker) {
             return marker(ListMarker.custom(marker));
         }
 
+        /**
+         * Uses bullet markers.
+         *
+         * @return this builder
+         */
         public ListBuilder bullet() {
             return marker(ListMarker.bullet());
         }
 
+        /**
+         * Uses dash markers.
+         *
+         * @return this builder
+         */
         public ListBuilder dash() {
             return marker(ListMarker.dash());
         }
 
+        /**
+         * Uses markerless rows.
+         *
+         * @return this builder
+         */
         public ListBuilder noMarker() {
             return marker(ListMarker.none());
         }
 
+        /**
+         * Sets the shared list text style.
+         *
+         * @param textStyle list text style
+         * @return this builder
+         */
         public ListBuilder textStyle(TextStyle textStyle) {
             this.textStyle = textStyle == null ? TextStyle.DEFAULT_STYLE : textStyle;
             return this;
@@ -1256,16 +1592,34 @@ public final class DocumentDsl {
             return this;
         }
 
+        /**
+         * Sets list item alignment.
+         *
+         * @param align item text alignment
+         * @return this builder
+         */
         public ListBuilder align(TextAlign align) {
             this.align = align == null ? TextAlign.LEFT : align;
             return this;
         }
 
+        /**
+         * Sets spacing between wrapped lines within one item.
+         *
+         * @param lineSpacing line spacing in points
+         * @return this builder
+         */
         public ListBuilder lineSpacing(double lineSpacing) {
             this.lineSpacing = lineSpacing;
             return this;
         }
 
+        /**
+         * Sets spacing between list items.
+         *
+         * @param itemSpacing item spacing in points
+         * @return this builder
+         */
         public ListBuilder itemSpacing(double itemSpacing) {
             this.itemSpacing = itemSpacing;
             return this;
@@ -1283,11 +1637,23 @@ public final class DocumentDsl {
             return this;
         }
 
+        /**
+         * Sets whether leading raw markers should be stripped from input items.
+         *
+         * @param normalizeMarkers whether input markers are normalized
+         * @return this builder
+         */
         public ListBuilder normalizeMarkers(boolean normalizeMarkers) {
             this.normalizeMarkers = normalizeMarkers;
             return this;
         }
 
+        /**
+         * Sets list padding.
+         *
+         * @param padding padding in points
+         * @return this builder
+         */
         public ListBuilder padding(Padding padding) {
             this.padding = padding == null ? Padding.zero() : padding;
             return this;
@@ -1303,10 +1669,25 @@ public final class DocumentDsl {
             return padding(toPadding(padding));
         }
 
+        /**
+         * Sets list padding from explicit side values.
+         *
+         * @param top top padding
+         * @param right right padding
+         * @param bottom bottom padding
+         * @param left left padding
+         * @return this builder
+         */
         public ListBuilder padding(float top, float right, float bottom, float left) {
             return padding(new Padding(top, right, bottom, left));
         }
 
+        /**
+         * Sets list margin.
+         *
+         * @param margin margin in points
+         * @return this builder
+         */
         public ListBuilder margin(Margin margin) {
             this.margin = margin == null ? Margin.zero() : margin;
             return this;
@@ -1322,10 +1703,24 @@ public final class DocumentDsl {
             return margin(toMargin(margin));
         }
 
+        /**
+         * Sets list margin from explicit side values.
+         *
+         * @param top top margin
+         * @param right right margin
+         * @param bottom bottom margin
+         * @param left left margin
+         * @return this builder
+         */
         public ListBuilder margin(float top, float right, float bottom, float left) {
             return margin(new Margin(top, right, bottom, left));
         }
 
+        /**
+         * Builds the semantic list node.
+         *
+         * @return list node
+         */
         public ListNode build() {
             return new ListNode(
                     name,
@@ -1355,50 +1750,117 @@ public final class DocumentDsl {
         private Padding padding = Padding.zero();
         private Margin margin = Margin.zero();
 
+        /**
+         * Creates an image builder.
+         */
+        public ImageBuilder() {
+        }
+
+        /**
+         * Sets the image node name.
+         *
+         * @param name name used in snapshots and layout graph paths
+         * @return this builder
+         */
         public ImageBuilder name(String name) {
             this.name = name == null ? "" : name;
             return this;
         }
 
+        /**
+         * Sets image source data.
+         *
+         * @param imageData image data
+         * @return this builder
+         */
         public ImageBuilder source(ImageData imageData) {
             this.imageData = Objects.requireNonNull(imageData, "imageData");
             return this;
         }
 
+        /**
+         * Sets image source from a filesystem path.
+         *
+         * @param path image path
+         * @return this builder
+         */
         public ImageBuilder source(Path path) {
             return source(ImageData.create(path));
         }
 
+        /**
+         * Sets image source from a filesystem path string.
+         *
+         * @param path image path
+         * @return this builder
+         */
         public ImageBuilder source(String path) {
             return source(ImageData.create(path));
         }
 
+        /**
+         * Sets image width.
+         *
+         * @param width width in points
+         * @return this builder
+         */
         public ImageBuilder width(double width) {
             this.width = width;
             return this;
         }
 
+        /**
+         * Sets image height.
+         *
+         * @param height height in points
+         * @return this builder
+         */
         public ImageBuilder height(double height) {
             this.height = height;
             return this;
         }
 
+        /**
+         * Sets image width and height.
+         *
+         * @param width width in points
+         * @param height height in points
+         * @return this builder
+         */
         public ImageBuilder size(double width, double height) {
             this.width = width;
             this.height = height;
             return this;
         }
 
+        /**
+         * Attaches image-level link metadata.
+         *
+         * @param linkOptions link metadata
+         * @return this builder
+         */
         public ImageBuilder link(PdfLinkOptions linkOptions) {
             this.linkOptions = linkOptions;
             return this;
         }
 
+        /**
+         * Attaches image-level bookmark metadata.
+         *
+         * @param bookmarkOptions bookmark metadata
+         * @return this builder
+         */
         public ImageBuilder bookmark(PdfBookmarkOptions bookmarkOptions) {
             this.bookmarkOptions = bookmarkOptions;
             return this;
         }
 
+        /**
+         * Sets image padding.
+         *
+         * @param padding padding in points
+         * @return this builder
+         */
         public ImageBuilder padding(Padding padding) {
             this.padding = padding == null ? Padding.zero() : padding;
             return this;
@@ -1414,6 +1876,12 @@ public final class DocumentDsl {
             return padding(toPadding(padding));
         }
 
+        /**
+         * Sets image margin.
+         *
+         * @param margin margin in points
+         * @return this builder
+         */
         public ImageBuilder margin(Margin margin) {
             this.margin = margin == null ? Margin.zero() : margin;
             return this;
@@ -1429,6 +1897,11 @@ public final class DocumentDsl {
             return margin(toMargin(margin));
         }
 
+        /**
+         * Builds the semantic image node.
+         *
+         * @return image node
+         */
         public ImageNode build() {
             return new ImageNode(
                     name,
@@ -1456,32 +1929,75 @@ public final class DocumentDsl {
         protected Padding padding = Padding.zero();
         protected Margin margin = Margin.zero();
 
+        /**
+         * Creates a shape builder.
+         */
+        public ShapeBuilder() {
+        }
+
+        /**
+         * Sets the shape node name.
+         *
+         * @param name name used in snapshots and layout graph paths
+         * @return this builder
+         */
         public ShapeBuilder name(String name) {
             this.name = name == null ? "" : name;
             return this;
         }
 
+        /**
+         * Sets the shape width.
+         *
+         * @param width width in points
+         * @return this builder
+         */
         public ShapeBuilder width(double width) {
             this.width = width;
             return this;
         }
 
+        /**
+         * Sets the shape height.
+         *
+         * @param height height in points
+         * @return this builder
+         */
         public ShapeBuilder height(double height) {
             this.height = height;
             return this;
         }
 
+        /**
+         * Sets shape width and height.
+         *
+         * @param width width in points
+         * @param height height in points
+         * @return this builder
+         */
         public ShapeBuilder size(double width, double height) {
             this.width = width;
             this.height = height;
             return this;
         }
 
+        /**
+         * Sets shape fill color.
+         *
+         * @param fillColor fill color
+         * @return this builder
+         */
         public ShapeBuilder fillColor(Color fillColor) {
             this.fillColor = fillColor;
             return this;
         }
 
+        /**
+         * Sets shape fill color from an engine token.
+         *
+         * @param fillColor fill color token
+         * @return this builder
+         */
         public ShapeBuilder fillColor(ComponentColor fillColor) {
             return fillColor(fillColor == null ? null : fillColor.color());
         }
@@ -1496,6 +2012,12 @@ public final class DocumentDsl {
             return fillColor(fillColor == null ? null : fillColor.color());
         }
 
+        /**
+         * Sets shape stroke.
+         *
+         * @param stroke shape stroke, or {@code null} for no stroke
+         * @return this builder
+         */
         public ShapeBuilder stroke(Stroke stroke) {
             this.stroke = stroke;
             return this;
@@ -1512,16 +2034,34 @@ public final class DocumentDsl {
             return this;
         }
 
+        /**
+         * Attaches link metadata to the shape.
+         *
+         * @param linkOptions link metadata
+         * @return this builder
+         */
         public ShapeBuilder link(PdfLinkOptions linkOptions) {
             this.linkOptions = linkOptions;
             return this;
         }
 
+        /**
+         * Attaches bookmark metadata to the shape.
+         *
+         * @param bookmarkOptions bookmark metadata
+         * @return this builder
+         */
         public ShapeBuilder bookmark(PdfBookmarkOptions bookmarkOptions) {
             this.bookmarkOptions = bookmarkOptions;
             return this;
         }
 
+        /**
+         * Sets shape padding.
+         *
+         * @param padding padding in points
+         * @return this builder
+         */
         public ShapeBuilder padding(Padding padding) {
             this.padding = padding == null ? Padding.zero() : padding;
             return this;
@@ -1537,6 +2077,12 @@ public final class DocumentDsl {
             return padding(toPadding(padding));
         }
 
+        /**
+         * Sets shape margin.
+         *
+         * @param margin margin in points
+         * @return this builder
+         */
         public ShapeBuilder margin(Margin margin) {
             this.margin = margin == null ? Margin.zero() : margin;
             return this;
@@ -1552,6 +2098,11 @@ public final class DocumentDsl {
             return margin(toMargin(margin));
         }
 
+        /**
+         * Builds the semantic shape node.
+         *
+         * @return shape node
+         */
         public ShapeNode build() {
             return new ShapeNode(name, width, height, fillColor, stroke, linkOptions, bookmarkOptions, padding, margin);
         }
@@ -1574,11 +2125,29 @@ public final class DocumentDsl {
         private Padding padding = Padding.zero();
         private Margin margin = Margin.zero();
 
+        /**
+         * Creates a barcode builder.
+         */
+        public BarcodeBuilder() {
+        }
+
+        /**
+         * Sets the barcode node name.
+         *
+         * @param name name used in snapshots and layout graph paths
+         * @return this builder
+         */
         public BarcodeBuilder name(String name) {
             this.name = name == null ? "" : name;
             return this;
         }
 
+        /**
+         * Replaces the full barcode options object.
+         *
+         * @param options canonical barcode options
+         * @return this builder
+         */
         public BarcodeBuilder options(PdfBarcodeOptions options) {
             PdfBarcodeOptions safe = Objects.requireNonNull(options, "options");
             this.content = safe.getContent();
@@ -1589,41 +2158,90 @@ public final class DocumentDsl {
             return this;
         }
 
+        /**
+         * Sets the barcode content.
+         *
+         * @param content encoded content
+         * @return this builder
+         */
         public BarcodeBuilder data(String content) {
             this.content = content == null ? "" : content;
             return this;
         }
 
+        /**
+         * Sets the barcode type.
+         *
+         * @param type barcode type
+         * @return this builder
+         */
         public BarcodeBuilder type(PdfBarcodeType type) {
             this.type = type == null ? PdfBarcodeType.QR_CODE : type;
             return this;
         }
 
+        /**
+         * Uses QR-code rendering.
+         *
+         * @return this builder
+         */
         public BarcodeBuilder qrCode() {
             return type(PdfBarcodeType.QR_CODE);
         }
 
+        /**
+         * Uses Code 128 barcode rendering.
+         *
+         * @return this builder
+         */
         public BarcodeBuilder code128() {
             return type(PdfBarcodeType.CODE_128);
         }
 
+        /**
+         * Uses Code 39 barcode rendering.
+         *
+         * @return this builder
+         */
         public BarcodeBuilder code39() {
             return type(PdfBarcodeType.CODE_39);
         }
 
+        /**
+         * Uses EAN-13 barcode rendering.
+         *
+         * @return this builder
+         */
         public BarcodeBuilder ean13() {
             return type(PdfBarcodeType.EAN_13);
         }
 
+        /**
+         * Uses EAN-8 barcode rendering.
+         *
+         * @return this builder
+         */
         public BarcodeBuilder ean8() {
             return type(PdfBarcodeType.EAN_8);
         }
 
+        /**
+         * Sets barcode foreground color.
+         *
+         * @param foreground foreground color
+         * @return this builder
+         */
         public BarcodeBuilder foreground(Color foreground) {
             this.foreground = foreground == null ? Color.BLACK : foreground;
             return this;
         }
 
+        /**
+         * Sets barcode foreground color from an engine token.
+         *
+         * @param foreground foreground color token
+         * @return this builder
+         */
         public BarcodeBuilder foreground(ComponentColor foreground) {
             return foreground(foreground == null ? null : foreground.color());
         }
@@ -1638,11 +2256,23 @@ public final class DocumentDsl {
             return foreground(foreground == null ? null : foreground.color());
         }
 
+        /**
+         * Sets barcode background color.
+         *
+         * @param background background color
+         * @return this builder
+         */
         public BarcodeBuilder background(Color background) {
             this.background = background == null ? Color.WHITE : background;
             return this;
         }
 
+        /**
+         * Sets barcode background color from an engine token.
+         *
+         * @param background background color token
+         * @return this builder
+         */
         public BarcodeBuilder background(ComponentColor background) {
             return background(background == null ? null : background.color());
         }
@@ -1657,37 +2287,80 @@ public final class DocumentDsl {
             return background(background == null ? null : background.color());
         }
 
+        /**
+         * Sets barcode quiet-zone margin.
+         *
+         * @param quietZoneMargin quiet-zone margin in barcode modules
+         * @return this builder
+         */
         public BarcodeBuilder quietZone(int quietZoneMargin) {
             this.quietZoneMargin = Math.max(0, quietZoneMargin);
             return this;
         }
 
+        /**
+         * Sets barcode width.
+         *
+         * @param width width in points
+         * @return this builder
+         */
         public BarcodeBuilder width(double width) {
             this.width = width;
             return this;
         }
 
+        /**
+         * Sets barcode height.
+         *
+         * @param height height in points
+         * @return this builder
+         */
         public BarcodeBuilder height(double height) {
             this.height = height;
             return this;
         }
 
+        /**
+         * Sets barcode width and height.
+         *
+         * @param width width in points
+         * @param height height in points
+         * @return this builder
+         */
         public BarcodeBuilder size(double width, double height) {
             this.width = width;
             this.height = height;
             return this;
         }
 
+        /**
+         * Attaches link metadata to the barcode.
+         *
+         * @param linkOptions link metadata
+         * @return this builder
+         */
         public BarcodeBuilder link(PdfLinkOptions linkOptions) {
             this.linkOptions = linkOptions;
             return this;
         }
 
+        /**
+         * Attaches bookmark metadata to the barcode.
+         *
+         * @param bookmarkOptions bookmark metadata
+         * @return this builder
+         */
         public BarcodeBuilder bookmark(PdfBookmarkOptions bookmarkOptions) {
             this.bookmarkOptions = bookmarkOptions;
             return this;
         }
 
+        /**
+         * Sets barcode padding.
+         *
+         * @param padding padding in points
+         * @return this builder
+         */
         public BarcodeBuilder padding(Padding padding) {
             this.padding = padding == null ? Padding.zero() : padding;
             return this;
@@ -1703,6 +2376,12 @@ public final class DocumentDsl {
             return padding(toPadding(padding));
         }
 
+        /**
+         * Sets barcode margin.
+         *
+         * @param margin margin in points
+         * @return this builder
+         */
         public BarcodeBuilder margin(Margin margin) {
             this.margin = margin == null ? Margin.zero() : margin;
             return this;
@@ -1718,6 +2397,11 @@ public final class DocumentDsl {
             return margin(toMargin(margin));
         }
 
+        /**
+         * Builds the semantic barcode node.
+         *
+         * @return barcode node
+         */
         public BarcodeNode build() {
             PdfBarcodeOptions options = PdfBarcodeOptions.builder()
                     .content(content)
@@ -1739,25 +2423,55 @@ public final class DocumentDsl {
             fillColor = ComponentColor.LIGHT_GRAY;
         }
 
+        /**
+         * Sets divider width.
+         *
+         * @param width width in points
+         * @return this builder
+         */
         public DividerBuilder width(double width) {
             super.width(width);
             return this;
         }
 
+        /**
+         * Sets divider height.
+         *
+         * @param height height in points
+         * @return this builder
+         */
         public DividerBuilder height(double height) {
             super.height(height);
             return this;
         }
 
+        /**
+         * Sets divider thickness.
+         *
+         * @param height thickness in points
+         * @return this builder
+         */
         public DividerBuilder thickness(double height) {
             return height(height);
         }
 
+        /**
+         * Sets divider color.
+         *
+         * @param color divider color
+         * @return this builder
+         */
         public DividerBuilder color(Color color) {
             super.fillColor(color);
             return this;
         }
 
+        /**
+         * Sets divider color from an engine token.
+         *
+         * @param color divider color token
+         * @return this builder
+         */
         public DividerBuilder color(ComponentColor color) {
             return color(color == null ? null : color.color());
         }
@@ -1772,36 +2486,71 @@ public final class DocumentDsl {
             return color(color == null ? null : color.color());
         }
 
+        /**
+         * Sets divider node name.
+         *
+         * @param name name used in snapshots and layout graph paths
+         * @return this builder
+         */
         @Override
         public DividerBuilder name(String name) {
             super.name(name);
             return this;
         }
 
+        /**
+         * Sets divider padding.
+         *
+         * @param padding padding in points
+         * @return this builder
+         */
         @Override
         public DividerBuilder padding(Padding padding) {
             super.padding(padding);
             return this;
         }
 
+        /**
+         * Sets divider padding with the public canonical spacing value.
+         *
+         * @param padding padding in points
+         * @return this builder
+         */
         @Override
         public DividerBuilder padding(DocumentInsets padding) {
             super.padding(padding);
             return this;
         }
 
+        /**
+         * Sets divider margin.
+         *
+         * @param margin margin in points
+         * @return this builder
+         */
         @Override
         public DividerBuilder margin(Margin margin) {
             super.margin(margin);
             return this;
         }
 
+        /**
+         * Sets divider margin with the public canonical spacing value.
+         *
+         * @param margin margin in points
+         * @return this builder
+         */
         @Override
         public DividerBuilder margin(DocumentInsets margin) {
             super.margin(margin);
             return this;
         }
 
+        /**
+         * Builds the divider as a thin shape node.
+         *
+         * @return divider shape node
+         */
         @Override
         public ShapeNode build() {
             return new ShapeNode(name, width, height, fillColor, stroke, padding, margin);
@@ -1824,11 +2573,29 @@ public final class DocumentDsl {
         private Padding padding = Padding.zero();
         private Margin margin = Margin.zero();
 
+        /**
+         * Creates a table builder.
+         */
+        public TableBuilder() {
+        }
+
+        /**
+         * Sets the table node name.
+         *
+         * @param name name used in snapshots and layout graph paths
+         * @return this builder
+         */
         public TableBuilder name(String name) {
             this.name = name == null ? "" : name;
             return this;
         }
 
+        /**
+         * Replaces table columns with engine column specs.
+         *
+         * @param columns column specifications
+         * @return this builder
+         */
         public TableBuilder columns(TableColumnLayout... columns) {
             this.columns.clear();
             if (columns != null) {
@@ -1853,6 +2620,12 @@ public final class DocumentDsl {
             return this;
         }
 
+        /**
+         * Replaces table columns with auto-width columns.
+         *
+         * @param count number of auto columns
+         * @return this builder
+         */
         public TableBuilder autoColumns(int count) {
             this.columns.clear();
             for (int index = 0; index < count; index++) {
@@ -1861,6 +2634,12 @@ public final class DocumentDsl {
             return this;
         }
 
+        /**
+         * Adds one engine column specification.
+         *
+         * @param column column specification
+         * @return this builder
+         */
         public TableBuilder addColumn(TableColumnLayout column) {
             this.columns.add(Objects.requireNonNull(column, "column"));
             return this;
@@ -1877,6 +2656,12 @@ public final class DocumentDsl {
             return this;
         }
 
+        /**
+         * Adds a plain-text table row.
+         *
+         * @param values cell text values
+         * @return this builder
+         */
         public TableBuilder row(String... values) {
             List<TableCellContent> row = new ArrayList<>();
             if (values != null) {
@@ -1887,6 +2672,12 @@ public final class DocumentDsl {
             return row(row);
         }
 
+        /**
+         * Adds a table row from engine cell content values.
+         *
+         * @param row cells in column order
+         * @return this builder
+         */
         public TableBuilder row(List<TableCellContent> row) {
             this.rows.add(List.copyOf(Objects.requireNonNull(row, "row")));
             return this;
@@ -1972,6 +2763,12 @@ public final class DocumentDsl {
             return this;
         }
 
+        /**
+         * Sets the default cell style.
+         *
+         * @param defaultCellStyle default cell style
+         * @return this builder
+         */
         public TableBuilder defaultCellStyle(TableCellLayoutStyle defaultCellStyle) {
             this.defaultCellStyle = defaultCellStyle == null ? TableCellLayoutStyle.DEFAULT : defaultCellStyle;
             return this;
@@ -2008,6 +2805,13 @@ public final class DocumentDsl {
             return rowStyle(0, toTableStyle(style));
         }
 
+        /**
+         * Applies a style override to a row.
+         *
+         * @param rowIndex zero-based row index
+         * @param style row style override
+         * @return this builder
+         */
         public TableBuilder rowStyle(int rowIndex, TableCellLayoutStyle style) {
             if (rowIndex < 0) {
                 throw new IllegalArgumentException("rowIndex cannot be negative: " + rowIndex);
@@ -2027,6 +2831,13 @@ public final class DocumentDsl {
             return rowStyle(rowIndex, toTableStyle(style));
         }
 
+        /**
+         * Applies a style override to a column.
+         *
+         * @param columnIndex zero-based column index
+         * @param style column style override
+         * @return this builder
+         */
         public TableBuilder columnStyle(int columnIndex, TableCellLayoutStyle style) {
             if (columnIndex < 0) {
                 throw new IllegalArgumentException("columnIndex cannot be negative: " + columnIndex);
@@ -2046,21 +2857,45 @@ public final class DocumentDsl {
             return columnStyle(columnIndex, toTableStyle(style));
         }
 
+        /**
+         * Sets explicit table width.
+         *
+         * @param width width in points
+         * @return this builder
+         */
         public TableBuilder width(double width) {
             this.width = width;
             return this;
         }
 
+        /**
+         * Attaches table-level link metadata.
+         *
+         * @param linkOptions link metadata
+         * @return this builder
+         */
         public TableBuilder link(PdfLinkOptions linkOptions) {
             this.linkOptions = linkOptions;
             return this;
         }
 
+        /**
+         * Attaches table-level bookmark metadata.
+         *
+         * @param bookmarkOptions bookmark metadata
+         * @return this builder
+         */
         public TableBuilder bookmark(PdfBookmarkOptions bookmarkOptions) {
             this.bookmarkOptions = bookmarkOptions;
             return this;
         }
 
+        /**
+         * Sets table padding.
+         *
+         * @param padding padding in points
+         * @return this builder
+         */
         public TableBuilder padding(Padding padding) {
             this.padding = padding == null ? Padding.zero() : padding;
             return this;
@@ -2076,6 +2911,12 @@ public final class DocumentDsl {
             return padding(toPadding(padding));
         }
 
+        /**
+         * Sets table margin.
+         *
+         * @param margin margin in points
+         * @return this builder
+         */
         public TableBuilder margin(Margin margin) {
             this.margin = margin == null ? Margin.zero() : margin;
             return this;
@@ -2091,6 +2932,11 @@ public final class DocumentDsl {
             return margin(toMargin(margin));
         }
 
+        /**
+         * Builds the semantic table node.
+         *
+         * @return table node
+         */
         public TableNode build() {
             return new TableNode(
                     name,
@@ -2114,11 +2960,29 @@ public final class DocumentDsl {
         private String name = "";
         private Margin margin = Margin.zero();
 
+        /**
+         * Creates a page-break builder.
+         */
+        public PageBreakBuilder() {
+        }
+
+        /**
+         * Sets the page-break node name.
+         *
+         * @param name name used in snapshots and layout graph paths
+         * @return this builder
+         */
         public PageBreakBuilder name(String name) {
             this.name = name == null ? "" : name;
             return this;
         }
 
+        /**
+         * Sets page-break margin.
+         *
+         * @param margin margin in points
+         * @return this builder
+         */
         public PageBreakBuilder margin(Margin margin) {
             this.margin = margin == null ? Margin.zero() : margin;
             return this;
@@ -2135,6 +2999,11 @@ public final class DocumentDsl {
             return this;
         }
 
+        /**
+         * Builds the semantic page-break node.
+         *
+         * @return page-break node
+         */
         public PageBreakNode build() {
             return new PageBreakNode(name, margin);
         }

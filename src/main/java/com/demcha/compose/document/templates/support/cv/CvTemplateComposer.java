@@ -27,11 +27,22 @@ public final class CvTemplateComposer {
     private final CvTheme theme;
     private final TemplateLayoutPolicy layout;
 
+    /**
+     * Creates a standard CV scene composer.
+     *
+     * @param theme visual theme used by the standard CV template
+     */
     public CvTemplateComposer(CvTheme theme) {
         this.theme = Objects.requireNonNull(theme, "theme");
         this.layout = TemplateLayoutPolicy.standardCv(this.theme);
     }
 
+    /**
+     * Composes a CV document spec into the active canonical target.
+     *
+     * @param target active template compose target
+     * @param documentSpec header plus ordered content modules
+     */
     public void compose(TemplateComposeTarget target, CvDocumentSpec documentSpec) {
         CvDocumentSpec spec = Objects.requireNonNull(documentSpec, "documentSpec");
         target.startDocument("MainVBoxContainer", layout.rootSpacing());

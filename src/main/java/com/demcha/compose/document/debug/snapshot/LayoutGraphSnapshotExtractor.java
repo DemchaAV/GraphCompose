@@ -17,11 +17,20 @@ import java.util.Objects;
  * Converts the canonical v2 layout graph into the existing snapshot format.
  */
 public final class LayoutGraphSnapshotExtractor {
+    /**
+     * Snapshot format version emitted by the canonical graph extractor.
+     */
     public static final String FORMAT_VERSION = "2.0";
 
     private LayoutGraphSnapshotExtractor() {
     }
 
+    /**
+     * Converts a canonical layout graph into a stable snapshot model.
+     *
+     * @param graph resolved layout graph
+     * @return layout snapshot
+     */
     public static LayoutSnapshot extract(LayoutGraph graph) {
         Objects.requireNonNull(graph, "graph");
         return new LayoutSnapshot(

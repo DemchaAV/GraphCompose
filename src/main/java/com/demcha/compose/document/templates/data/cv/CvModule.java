@@ -116,11 +116,29 @@ public record CvModule(
      * Semantic block kinds supported by the public CV module builder.
      */
     public enum BodyKind {
+        /**
+         * Paragraph body block.
+         */
         PARAGRAPH,
+        /**
+         * List body block.
+         */
         LIST,
+        /**
+         * Table body block.
+         */
         TABLE,
+        /**
+         * Divider body block.
+         */
         DIVIDER,
+        /**
+         * Explicit page-break body block.
+         */
         PAGE_BREAK,
+        /**
+         * Advanced custom-renderer body block.
+         */
         CUSTOM
     }
 
@@ -560,6 +578,12 @@ public record CvModule(
         private ListMarker marker = ListMarker.bullet();
         private String continuationIndent = "";
         private boolean normalizeMarkers = true;
+
+        /**
+         * Creates a list body-block builder.
+         */
+        public ListBlockBuilder() {
+        }
 
         /**
          * Overrides the semantic block name.

@@ -24,6 +24,9 @@ public record DocumentTextStyle(
 ) {
     public static final DocumentTextStyle DEFAULT = builder().build();
 
+    /**
+     * Creates a normalized canonical text style.
+     */
     public DocumentTextStyle {
         fontName = fontName == null ? FontName.HELVETICA : fontName;
         size = size <= 0 ? 14 : size;

@@ -29,6 +29,8 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -53,7 +55,8 @@ import java.util.function.Consumer;
  *   <li>author content with {@link #pageFlow()}, {@link #compose(Consumer)}, {@link #dsl()},
  *       or by adding low-level {@link DocumentNode}s directly</li>
  *   <li>inspect {@link #layoutGraph()} / {@link #layoutSnapshot()} as needed</li>
- *   <li>render with {@link #toPdfBytes()}, {@link #buildPdf()}, or a custom backend</li>
+ *   <li>render with {@link #writePdf(OutputStream)}, {@link #toPdfBytes()}, {@link #buildPdf()},
+ *       or a custom backend</li>
  * </ol>
  *
  * <p><b>Thread-safety:</b> this type is mutable and not thread-safe.</p>
@@ -85,15 +88,26 @@ public final class DocumentSession implements AutoCloseable {
     private TextMeasurementSystem textMeasurementSystem;
 
     private long revision;
-    private long pdfConfigVersion;
     private LayoutGraph cachedLayout;
     private long cachedLayoutRevision = -1;
     private LayoutSnapshot cachedSnapshot;
     private long cachedSnapshotRevision = -1;
-    private byte[] cachedPdfBytes;
-    private long cachedPdfRevision = -1;
 
 
+    /**
+     * Creates a canonical document session.
+     *
+     * @param defaultOutputFile optional default PDF output path
+     * @param pageSize physical page size
+     * @param margin page margin
+     * @param customFontFamilies document-local font families
+     * @param markdown whether markdown parsing is enabled
+     * @param guideLines whether PDF guide-line overlays are enabled
+     * @param metadataOptions optional PDF metadata options
+     * @param watermarkOptions optional PDF watermark options
+     * @param protectionOptions optional PDF protection options
+     * @param headerFooterOptions repeating page header/footer options
+     */
     public DocumentSession(Path defaultOutputFile,
                            PDRectangle pageSize,
                            Margin margin,
@@ -520,6 +534,7 @@ public final class DocumentSession implements AutoCloseable {
                     canvas,
                     customFontFamilies,
                     outputFile,
+                    null,
                     guideLines,
                     metadataOptions,
                     watermarkOptions,
@@ -573,34 +588,72 @@ public final class DocumentSession implements AutoCloseable {
     /**
      * Renders the current session through the canonical PDF backend and returns bytes.
      *
+     * <p>This is a convenience wrapper around {@link #writePdf(OutputStream)}.
+     * The returned byte array is not cached by the session, so server code that
+     * can write directly to a response or object-storage stream should prefer
+     * {@link #writePdf(OutputStream)}.</p>
+     *
      * @return rendered PDF bytes
      * @throws Exception if PDF rendering fails
      */
     public byte[] toPdfBytes() throws Exception {
-        long currentPdfVersion = currentPdfInputsVersion();
-        if (cachedPdfBytes != null && cachedPdfRevision == currentPdfVersion) {
-            LIFECYCLE_LOG.debug(
-                    "document.pdf.bytes.cache.hit sessionId={} revision={} byteCount={}",
-                    sessionId,
-                    revision,
-                    cachedPdfBytes.length);
-            return cachedPdfBytes.clone();
-        }
         long startNanos = System.nanoTime();
         LIFECYCLE_LOG.debug("document.pdf.bytes.start sessionId={} revision={} roots={}", sessionId, revision, roots.size());
         try {
-            cachedPdfBytes = render(new PdfFixedLayoutBackend(), null);
-            cachedPdfRevision = currentPdfVersion;
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            writePdf(output);
+            byte[] bytes = output.toByteArray();
             LIFECYCLE_LOG.debug(
                     "document.pdf.bytes.end sessionId={} revision={} byteCount={} durationMs={}",
                     sessionId,
                     revision,
-                    cachedPdfBytes.length,
+                    bytes.length,
                     elapsedMillis(startNanos));
-            return cachedPdfBytes.clone();
+            return bytes;
         } catch (Exception ex) {
             LIFECYCLE_LOG.error(
                     "document.pdf.bytes.failed sessionId={} revision={} errorType={}",
+                    sessionId,
+                    revision,
+                    ex.getClass().getSimpleName(),
+                    ex);
+            throw ex;
+        }
+    }
+
+    /**
+     * Streams the current session through the canonical PDF backend.
+     *
+     * <p>The caller owns the supplied stream. GraphCompose writes the PDF bytes
+     * but does not close the stream, which makes this method suitable for HTTP
+     * responses, cloud storage uploads, and other server-side streaming paths.</p>
+     *
+     * @param output destination stream that receives the rendered PDF bytes
+     * @throws Exception if PDF rendering fails
+     */
+    public void writePdf(OutputStream output) throws Exception {
+        OutputStream target = Objects.requireNonNull(output, "output");
+        long startNanos = System.nanoTime();
+        LIFECYCLE_LOG.debug("document.pdf.stream.start sessionId={} revision={} roots={}", sessionId, revision, roots.size());
+        try {
+            new PdfFixedLayoutBackend().write(layoutGraph(), new FixedLayoutRenderContext(
+                    canvas,
+                    customFontFamilies,
+                    null,
+                    target,
+                    guideLines,
+                    metadataOptions,
+                    watermarkOptions,
+                    protectionOptions,
+                    headerFooterOptions));
+            LIFECYCLE_LOG.debug(
+                    "document.pdf.stream.end sessionId={} revision={} durationMs={}",
+                    sessionId,
+                    revision,
+                    elapsedMillis(startNanos));
+        } catch (Exception ex) {
+            LIFECYCLE_LOG.error(
+                    "document.pdf.stream.failed sessionId={} revision={} errorType={}",
                     sessionId,
                     revision,
                     ex.getClass().getSimpleName(),
@@ -631,8 +684,8 @@ public final class DocumentSession implements AutoCloseable {
         Path target = Objects.requireNonNull(outputFile, "outputFile");
         long startNanos = System.nanoTime();
         LIFECYCLE_LOG.debug("document.pdf.build.start sessionId={} revision={} roots={}", sessionId, revision, roots.size());
-        try {
-            Files.write(target, toPdfBytes());
+        try (OutputStream output = Files.newOutputStream(target)) {
+            writePdf(output);
             LIFECYCLE_LOG.debug(
                     "document.pdf.build.end sessionId={} revision={} durationMs={}",
                     sessionId,
@@ -658,6 +711,9 @@ public final class DocumentSession implements AutoCloseable {
     public void close() throws Exception {
         LIFECYCLE_LOG.debug("document.session.close.start sessionId={} revision={} roots={}", sessionId, revision, roots.size());
         try {
+            if (textMeasurementSystem != null) {
+                textMeasurementSystem.clearCaches();
+            }
             if (measurementDocument != null) {
                 measurementDocument.close();
             }
@@ -674,6 +730,9 @@ public final class DocumentSession implements AutoCloseable {
 
     private void refreshMeasurementServices() {
         try {
+            if (textMeasurementSystem != null) {
+                textMeasurementSystem.clearCaches();
+            }
             if (measurementDocument != null) {
                 measurementDocument.close();
             }
@@ -688,21 +747,12 @@ public final class DocumentSession implements AutoCloseable {
 
     private void invalidate() {
         revision++;
-        pdfConfigVersion++;
         cachedLayout = null;
         cachedSnapshot = null;
-        cachedPdfBytes = null;
-        cachedPdfRevision = -1;
     }
 
     private void invalidatePdfArtifacts() {
-        pdfConfigVersion++;
-        cachedPdfBytes = null;
-        cachedPdfRevision = -1;
-    }
-
-    private long currentPdfInputsVersion() {
-        return revision * 31L + pdfConfigVersion;
+        // PDF bytes are streamed per render pass; no session-level PDF artifact cache is retained.
     }
 
     private long elapsedMillis(long startNanos) {

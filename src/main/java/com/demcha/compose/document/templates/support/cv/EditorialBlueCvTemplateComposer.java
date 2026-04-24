@@ -44,10 +44,21 @@ public final class EditorialBlueCvTemplateComposer {
 
     private final CvTheme theme;
 
+    /**
+     * Creates an editorial blue CV scene composer.
+     *
+     * @param theme visual theme used by the editorial template
+     */
     public EditorialBlueCvTemplateComposer(CvTheme theme) {
         this.theme = Objects.requireNonNull(theme, "theme");
     }
 
+    /**
+     * Composes an editorial CV document spec into the active canonical target.
+     *
+     * @param target active template compose target
+     * @param documentSpec header plus ordered content modules
+     */
     public void compose(TemplateComposeTarget target, CvDocumentSpec documentSpec) {
         CvDocumentSpec data = Objects.requireNonNull(documentSpec, "documentSpec");
         CvModule summary = findModule(data, "summary", "professional summary", "profile");

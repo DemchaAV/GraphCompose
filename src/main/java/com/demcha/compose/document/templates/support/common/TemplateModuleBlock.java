@@ -89,8 +89,13 @@ public sealed interface TemplateModuleBlock permits
 
     /**
      * Paragraph-backed module block.
+     *
+     * @param paragraph paragraph instruction
      */
     record Paragraph(TemplateParagraphSpec paragraph) implements TemplateModuleBlock {
+        /**
+         * Validates the paragraph instruction.
+         */
         public Paragraph {
             Objects.requireNonNull(paragraph, "paragraph");
         }
@@ -103,8 +108,13 @@ public sealed interface TemplateModuleBlock permits
 
     /**
      * List-backed module block.
+     *
+     * @param list list instruction
      */
     record ListBlock(TemplateListSpec list) implements TemplateModuleBlock {
+        /**
+         * Validates the list instruction.
+         */
         public ListBlock {
             Objects.requireNonNull(list, "list");
         }
@@ -117,8 +127,13 @@ public sealed interface TemplateModuleBlock permits
 
     /**
      * Table-backed module block.
+     *
+     * @param table table instruction
      */
     record Table(TemplateTableSpec table) implements TemplateModuleBlock {
+        /**
+         * Validates the table instruction.
+         */
         public Table {
             Objects.requireNonNull(table, "table");
         }
@@ -131,8 +146,13 @@ public sealed interface TemplateModuleBlock permits
 
     /**
      * Divider-backed module block.
+     *
+     * @param divider divider instruction
      */
     record Divider(TemplateDividerSpec divider) implements TemplateModuleBlock {
+        /**
+         * Validates the divider instruction.
+         */
         public Divider {
             Objects.requireNonNull(divider, "divider");
         }
@@ -145,8 +165,13 @@ public sealed interface TemplateModuleBlock permits
 
     /**
      * Page-break-backed module block.
+     *
+     * @param name semantic page-break name
      */
     record PageBreak(String name) implements TemplateModuleBlock {
+        /**
+         * Normalizes the semantic page-break name.
+         */
         public PageBreak {
             name = name == null ? "" : name;
         }
@@ -159,8 +184,13 @@ public sealed interface TemplateModuleBlock permits
 
     /**
      * Advanced callback-backed module block.
+     *
+     * @param renderer callback that emits into the active target
      */
     record Custom(Consumer<TemplateComposeTarget> renderer) implements TemplateModuleBlock {
+        /**
+         * Validates the custom render callback.
+         */
         public Custom {
             Objects.requireNonNull(renderer, "renderer");
         }

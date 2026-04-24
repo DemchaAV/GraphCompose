@@ -17,6 +17,12 @@ import java.util.List;
  * manifest for the future native writer layer.
  */
 public final class DocxSemanticBackend implements SemanticBackend<SemanticExportManifest> {
+    /**
+     * Creates a semantic DOCX manifest backend.
+     */
+    public DocxSemanticBackend() {
+    }
+
     @Override
     public String name() {
         return "docx-semantic";

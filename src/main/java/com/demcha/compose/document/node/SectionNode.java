@@ -11,6 +11,14 @@ import java.util.Objects;
 
 /**
  * Vertical semantic section node.
+ *
+ * @param name node name used in snapshots and layout graph paths
+ * @param children child semantic nodes in source order
+ * @param spacing vertical spacing between children
+ * @param padding inner padding
+ * @param margin outer margin
+ * @param fillColor optional background fill
+ * @param stroke optional border stroke
  */
 public record SectionNode(
         String name,
@@ -21,6 +29,9 @@ public record SectionNode(
         Color fillColor,
         Stroke stroke
 ) implements DocumentNode {
+    /**
+     * Normalizes optional section fields and validates child spacing.
+     */
     public SectionNode {
         name = name == null ? "" : name;
         Objects.requireNonNull(children, "children");

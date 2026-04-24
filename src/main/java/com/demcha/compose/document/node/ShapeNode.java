@@ -11,6 +11,16 @@ import java.awt.Color;
 
 /**
  * Atomic rectangle-like semantic shape.
+ *
+ * @param name node name used in snapshots and layout graph paths
+ * @param width resolved shape width
+ * @param height resolved shape height
+ * @param fillColor optional fill color
+ * @param stroke optional stroke descriptor
+ * @param linkOptions optional node-level link metadata
+ * @param bookmarkOptions optional node-level bookmark metadata
+ * @param padding inner padding
+ * @param margin outer margin
  */
 public record ShapeNode(
         String name,
@@ -23,6 +33,9 @@ public record ShapeNode(
         Padding padding,
         Margin margin
 ) implements DocumentNode {
+    /**
+     * Normalizes spacing defaults and validates explicit shape dimensions.
+     */
     public ShapeNode {
         name = name == null ? "" : name;
         padding = padding == null ? Padding.zero() : padding;

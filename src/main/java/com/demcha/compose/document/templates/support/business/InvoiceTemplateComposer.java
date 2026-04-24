@@ -8,9 +8,9 @@ import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.document.templates.data.invoice.InvoiceLineItem;
 import com.demcha.compose.document.templates.data.invoice.InvoiceParty;
 import com.demcha.compose.document.templates.data.invoice.InvoiceSummaryRow;
-import com.demcha.compose.engine.components.components_builders.TableCellSpec;
-import com.demcha.compose.engine.components.components_builders.TableCellStyle;
-import com.demcha.compose.engine.components.components_builders.TableColumnSpec;
+import com.demcha.compose.engine.components.content.table.TableCellContent;
+import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
+import com.demcha.compose.engine.components.content.table.TableColumnLayout;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.layout.Anchor;
 import com.demcha.compose.engine.components.style.Margin;
@@ -107,7 +107,7 @@ public final class InvoiceTemplateComposer {
                 220,
                 sceneLayout.invoiceHeaderReservedWidth());
         double rightWidth = sceneLayout.rightWidth(width, leftWidth);
-        TableCellStyle baseStyle = TableCellStyle.builder()
+        TableCellLayoutStyle baseStyle = TableCellLayoutStyle.builder()
                 .padding(layout.compactCellPadding())
                 .fillColor(Color.WHITE)
                 .stroke(new Stroke(Color.WHITE, 0.0))
@@ -119,16 +119,16 @@ public final class InvoiceTemplateComposer {
         return new TemplateTableSpec(
                 "InvoiceHeader",
                 List.of(
-                        TableColumnSpec.fixed(leftWidth),
-                        TableColumnSpec.fixed(sceneLayout.columnGap()),
-                        TableColumnSpec.fixed(rightWidth)),
+                        TableColumnLayout.fixed(leftWidth),
+                        TableColumnLayout.fixed(sceneLayout.columnGap()),
+                        TableColumnLayout.fixed(rightWidth)),
                 List.of(List.of(
-                        TableCellSpec.of(headerLeftLines(data)).withStyle(TableCellStyle.builder()
+                        TableCellContent.of(headerLeftLines(data)).withStyle(TableCellLayoutStyle.builder()
                                 .textStyle(styles.bodyStyle(BODY_SIZE))
                                 .textAnchor(Anchor.topLeft())
                                 .build()),
-                        TableCellSpec.text(""),
-                        TableCellSpec.of(headerRightLines(data)).withStyle(TableCellStyle.builder()
+                        TableCellContent.text(""),
+                        TableCellContent.of(headerRightLines(data)).withStyle(TableCellLayoutStyle.builder()
                                 .textStyle(styles.bodyBoldStyle(9.3))
                                 .textAnchor(Anchor.topRight())
                                 .build()))),
@@ -143,7 +143,7 @@ public final class InvoiceTemplateComposer {
     private TemplateTableSpec partiesTable(TemplateComposeTarget target, InvoiceData data) {
         double width = target.pageWidth();
         double columnWidth = sceneLayout.twoColumnWidth(width);
-        TableCellStyle style = TableCellStyle.builder()
+        TableCellLayoutStyle style = TableCellLayoutStyle.builder()
                 .padding(layout.contentCellPadding())
                 .fillColor(Color.WHITE)
                 .stroke(new Stroke(Color.WHITE, 0.0))
@@ -153,10 +153,10 @@ public final class InvoiceTemplateComposer {
                 .build();
         return new TemplateTableSpec(
                 "InvoiceParties",
-                List.of(TableColumnSpec.fixed(columnWidth), TableColumnSpec.fixed(columnWidth)),
+                List.of(TableColumnLayout.fixed(columnWidth), TableColumnLayout.fixed(columnWidth)),
                 List.of(List.of(
-                        TableCellSpec.of(partyLines("FROM", data.fromParty())),
-                        TableCellSpec.of(partyLines("BILL TO", data.billToParty())))),
+                        TableCellContent.of(partyLines("FROM", data.fromParty())),
+                        TableCellContent.of(partyLines("BILL TO", data.billToParty())))),
                 style,
                 Map.of(),
                 Map.of(),
@@ -167,7 +167,7 @@ public final class InvoiceTemplateComposer {
 
     private TemplateTableSpec itemsTable(TemplateComposeTarget target, InvoiceData data) {
         double width = target.pageWidth();
-        TableCellStyle defaultStyle = TableCellStyle.builder()
+        TableCellLayoutStyle defaultStyle = TableCellLayoutStyle.builder()
                 .padding(layout.contentCellPadding())
                 .fillColor(Color.WHITE)
                 .stroke(new Stroke(styles.borderColor(), sceneLayout.tableBorderThickness()))
@@ -175,41 +175,41 @@ public final class InvoiceTemplateComposer {
                 .textAnchor(Anchor.centerLeft())
                 .lineSpacing(layout.tableLineSpacing())
                 .build();
-        Map<Integer, TableCellStyle> rowStyles = new LinkedHashMap<>();
-        rowStyles.put(0, TableCellStyle.builder()
+        Map<Integer, TableCellLayoutStyle> rowStyles = new LinkedHashMap<>();
+        rowStyles.put(0, TableCellLayoutStyle.builder()
                 .fillColor(styles.strongFill())
                 .textStyle(styles.headingStyle(9.0))
                 .build());
 
-        Map<Integer, TableCellStyle> columnStyles = new LinkedHashMap<>();
-        columnStyles.put(1, TableCellStyle.builder().textAnchor(Anchor.center()).build());
-        columnStyles.put(2, TableCellStyle.builder().textAnchor(Anchor.centerRight()).build());
-        columnStyles.put(3, TableCellStyle.builder().textAnchor(Anchor.centerRight()).build());
+        Map<Integer, TableCellLayoutStyle> columnStyles = new LinkedHashMap<>();
+        columnStyles.put(1, TableCellLayoutStyle.builder().textAnchor(Anchor.center()).build());
+        columnStyles.put(2, TableCellLayoutStyle.builder().textAnchor(Anchor.centerRight()).build());
+        columnStyles.put(3, TableCellLayoutStyle.builder().textAnchor(Anchor.centerRight()).build());
 
-        List<List<TableCellSpec>> rows = new ArrayList<>();
+        List<List<TableCellContent>> rows = new ArrayList<>();
         rows.add(List.of(
-                TableCellSpec.text("Description"),
-                TableCellSpec.text("Qty"),
-                TableCellSpec.text("Unit Price"),
-                TableCellSpec.text("Amount")));
+                TableCellContent.text("Description"),
+                TableCellContent.text("Qty"),
+                TableCellContent.text("Unit Price"),
+                TableCellContent.text("Amount")));
         List<InvoiceLineItem> items = data.lineItems().isEmpty()
                 ? List.of(new InvoiceLineItem("No line items provided", "", "-", "-", "-"))
                 : data.lineItems();
         for (InvoiceLineItem item : items) {
             rows.add(List.of(
-                    TableCellSpec.text(composeItemDescription(item)),
-                    TableCellSpec.text(valueOrFallback(item.quantity(), "-")),
-                    TableCellSpec.text(valueOrFallback(item.unitPrice(), "-")),
-                    TableCellSpec.text(valueOrFallback(item.amount(), "-"))));
+                    TableCellContent.text(composeItemDescription(item)),
+                    TableCellContent.text(valueOrFallback(item.quantity(), "-")),
+                    TableCellContent.text(valueOrFallback(item.unitPrice(), "-")),
+                    TableCellContent.text(valueOrFallback(item.amount(), "-"))));
         }
 
         return new TemplateTableSpec(
                 "InvoiceItemsTable",
                 List.of(
-                        TableColumnSpec.fixed(Math.max(220, width - 250)),
-                        TableColumnSpec.fixed(68),
-                        TableColumnSpec.fixed(88),
-                        TableColumnSpec.fixed(94)),
+                        TableColumnLayout.fixed(Math.max(220, width - 250)),
+                        TableColumnLayout.fixed(68),
+                        TableColumnLayout.fixed(88),
+                        TableColumnLayout.fixed(94)),
                 rows,
                 defaultStyle,
                 rowStyles,
@@ -224,7 +224,7 @@ public final class InvoiceTemplateComposer {
         double leftWidth = Math.max(220, width - sceneLayout.invoiceSummaryWidth() - sceneLayout.columnGap());
         double rightWidth = sceneLayout.rightWidth(width, leftWidth);
         List<String> noteLines = notesAndTermsLines(data);
-        TableCellStyle defaultStyle = TableCellStyle.builder()
+        TableCellLayoutStyle defaultStyle = TableCellLayoutStyle.builder()
                 .padding(Padding.zero())
                 .fillColor(Color.WHITE)
                 .stroke(new Stroke(Color.WHITE, 0.0))
@@ -235,19 +235,19 @@ public final class InvoiceTemplateComposer {
         return new TemplateTableSpec(
                 "InvoiceNotesSummary",
                 List.of(
-                        TableColumnSpec.fixed(leftWidth),
-                        TableColumnSpec.fixed(sceneLayout.columnGap()),
-                        TableColumnSpec.fixed(rightWidth)),
+                        TableColumnLayout.fixed(leftWidth),
+                        TableColumnLayout.fixed(sceneLayout.columnGap()),
+                        TableColumnLayout.fixed(rightWidth)),
                 List.of(List.of(
-                        TableCellSpec.of(noteLines).withStyle(TableCellStyle.builder()
+                        TableCellContent.of(noteLines).withStyle(TableCellLayoutStyle.builder()
                                 .padding(layout.compactCellPadding())
                                 .fillColor(Color.WHITE)
                                 .stroke(new Stroke(Color.WHITE, 0.0))
                                 .textStyle(styles.bodyStyle(BODY_SIZE))
                                 .textAnchor(Anchor.topLeft())
                                 .build()),
-                        TableCellSpec.text(""),
-                        TableCellSpec.of(summaryLines(data)).withStyle(TableCellStyle.builder()
+                        TableCellContent.text(""),
+                        TableCellContent.of(summaryLines(data)).withStyle(TableCellLayoutStyle.builder()
                                 .padding(layout.contentCellPadding())
                                 .fillColor(styles.softFill())
                                 .stroke(new Stroke(styles.borderColor(), sceneLayout.tableBorderThickness()))

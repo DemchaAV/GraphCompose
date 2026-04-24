@@ -4,19 +4,19 @@ GraphCompose is split into two practical layers.
 
 ## Pipeline overview
 
-The engine flow is:
+The supported V2 flow is:
 
-1. application code uses builders to create entities
-2. builders attach components that describe content, style, size, and parent/child relationships
-3. `EntityManager` stores the entity graph
-4. `LayoutSystem` resolves geometry, placement, and pagination
-5. the active rendering system turns resolved entities into output bytes
+1. application code describes a document through `GraphCompose.document(...)`, `DocumentSession`, and `DocumentDsl`
+2. canonical nodes describe semantic intent: modules, paragraphs, lists, rows, tables, images, dividers, and page breaks
+3. `document.layout` prepares those nodes into deterministic layout fragments
+4. the shared engine foundation resolves measurement, pagination, placement, and render ordering
+5. the active backend turns resolved fragments/entities into output bytes
 
 In short, the runtime pipeline is:
 
-`builder -> entity/components -> layout -> render`
+`document -> semantic nodes -> layout fragments -> pagination -> render`
 
-That separation is the core project concept. Builders describe intent, components hold the data, layout resolves geometry, and renderers only draw already-resolved output.
+That separation is the core project concept. Public code describes document intent, layout resolves geometry, and renderers only draw already-resolved output.
 
 The same separation also enables layout snapshot regression tests. Test code can inspect the resolved document after layout and pagination, before rendering, through `DocumentSession.layoutSnapshot()`. Older low-level snapshot adapters remain internal compatibility paths and are not part of the supported public workflow.
 
@@ -65,25 +65,25 @@ Deprecated helper methods still exist on `Entity` as compatibility delegates, bu
 - `com.demcha.compose.font.*` contains public font registration, lookup, and PDF font helpers.
 - `com.demcha.compose.engine.text.markdown.*` contains markdown-to-text-token parsing helpers used by semantic text preparation.
 
-This layer is the reusable document engine. It is responsible for turning entities and styles into positioned render output.
+This layer is the reusable document engine foundation. It is responsible for turning canonical layout state, ECS components, and styles into positioned render output. It is not a supported application authoring API.
 
-### Semantic modules in the engine
+### Semantic modules
 
-`ModuleBuilder` now represents a semantic full-width section rather than a plain vertical container alias.
+Canonical modules represent full-width document sections rather than plain vertical container aliases.
 
 - modules resolve their width from the parent inner box
 - modules keep that width stable even if one child is wider
 - modules primarily grow in height as content is added
-- page roots should therefore be regular `vContainer(...)` flows that stack modules
+- page roots should therefore be canonical `pageFlow(...)` flows that stack modules
 
-### TableBuilder v1 in the engine
+### Table layout in the engine
 
-The current table implementation lives in the engine layer, not in templates.
+The current table implementation lives in the canonical layout plus shared engine layer, not in legacy templates.
 
 Its shape is intentionally hybrid:
 
-- `ComponentBuilder.table()` creates a public engine-level builder
-- the table root materializes as a breakable vertical container
+- `DocumentDsl.table(...)` and template table specs create semantic table nodes
+- the table layout materializes breakable rows and deterministic cell payloads internally
 - rows materialize as atomic leaf entities with precomputed cell payload
 - row rendering is page-aware, which lets the engine draw both fragment edges at page breaks without double-drawing separators inside a page
 

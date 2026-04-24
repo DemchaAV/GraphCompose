@@ -1,6 +1,6 @@
 package com.demcha.compose.engine.layout.container;
 
-import com.demcha.compose.engine.components.containers.abstract_builders.StackAxis;
+import com.demcha.compose.engine.components.layout.StackAxis;
 import com.demcha.compose.engine.components.core.Entity;
 import com.demcha.compose.engine.components.geometry.ContentSize;
 import com.demcha.compose.engine.components.geometry.InnerBoxSize;

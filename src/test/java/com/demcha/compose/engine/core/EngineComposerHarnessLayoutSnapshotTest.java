@@ -2,8 +2,8 @@ package com.demcha.compose.engine.core;
 
 import com.demcha.compose.testsupport.EngineComposerHarness;
 
-import com.demcha.compose.engine.components.components_builders.ComponentBuilder;
-import com.demcha.compose.engine.components.components_builders.BlockIndentStrategy;
+import com.demcha.compose.testsupport.engine.assembly.ComponentBuilder;
+import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
 import com.demcha.compose.engine.components.content.text.BlockTextData;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.core.Entity;
@@ -83,7 +83,7 @@ class EngineComposerHarnessLayoutSnapshotTest {
                         .size(composer.canvas().innerWidth() - 40, 2)
                         .padding(Padding.of(12))
                         .bulletOffset("• ")
-                        .strategy(BlockIndentStrategy.ALL_LINES)
+                        .strategy(TextIndentStrategy.ALL_LINES)
                         .text(
                                 java.util.List.of("Focused on platform engineering, document generation, backend integration, and resilient delivery."),
                                 TextStyle.DEFAULT_STYLE,

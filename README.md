@@ -405,9 +405,9 @@ This tool is still under active development, so treat it as a practical dev/test
 
 ## Core concepts
 
-### 1. Everything is an entity
+### 1. Documents are semantic first
 
-Builders do not draw directly. They create `Entity` instances and attach components the engine understands: renderable markers, content and style, size and placement, parent/child relationships.
+Application code describes modules, paragraphs, lists, rows, tables, images, and dividers through the canonical document DSL. The engine turns those semantic nodes into internal layout state; application code does not need to assemble ECS entities by hand.
 
 ### 2. Layout and rendering are separate passes
 
@@ -437,7 +437,7 @@ Use `document.pageFlow()` for the root flow, `module()` for titled full-width do
 
 ## Table component
 
-The `TableBuilder` ships as part of v1 and covers the common server-side document use case: structured tabular data with automatic column sizing and multi-page support.
+The canonical table DSL covers the common server-side document use case: structured tabular data with automatic column sizing and multi-page support.
 
 What it handles:
 - fixed-width and auto-width columns with negotiated sizing
@@ -479,7 +479,7 @@ document.pageFlow()
                 .header("Role", "Owner", "Status")
                 .rows(
                         new String[]{"Engine", "GraphCompose", "Stable"},
-                        new String[]{"Feature", "Table Builder", "Canonical"}))
+                        new String[]{"Feature", "Table DSL", "Canonical"}))
         .build();
 ```
 
@@ -576,13 +576,13 @@ Application code should start with [Getting Started](./docs/getting-started.md) 
 
 The internal engine contributor short version:
 
-- extend `EmptyBox<T>` for a leaf entity with no children
-- extend `ShapeBuilderBase<T>` for shape-like leaves that need fill/stroke helpers
-- extend `ContainerBuilder<T>` for entities that own child entities
+- add a canonical node/DSL method when the feature belongs to supported authoring
+- add an engine content/style/layout component when the feature is internal runtime state
+- use the low-level test-support builders only for focused engine tests and dev harnesses
 - keep fixed leaf renderables (`Image`, `Circle`, `Line`) on the same layout contract: fixed `ContentSize`, padding-aware draw area, non-breakable unless truly needed
 - add `Expendable` only when the entity should grow from child content
 - add `Breakable` only when the entity itself can continue across pages
-- register the new builder as a factory method on `ComponentBuilder`
+- expose developer-facing features through `DocumentDsl`, not through low-level engine builders
 
 ### Contributor rules for engine changes
 
@@ -591,7 +591,7 @@ When you add or refactor engine features, follow these project rules:
 - engine renderables are backend-neutral markers; they implement `Render` and describe intent, but do not draw directly
 - PDF drawing belongs in `src/main/java/com/demcha/compose/engine/render/pdf/handlers/*`
 - PDF-only helper objects that are not entity render markers belong in `com.demcha.compose.engine.render.pdf.helpers`
-- builders and layout helpers must use `TextMeasurementSystem` for text width and line metrics instead of reaching into renderer internals
+- layout helpers must use `TextMeasurementSystem` for text width and line metrics instead of reaching into renderer internals
 - traversal metadata should be materialized once per layout pass through a shared helper such as `LayoutTraversalContext`, not rebuilt ad hoc in unrelated systems
 - `ParentComponent` is the authoritative parent relation, while `Entity.children` is the canonical sibling order
 - renderer draw ordering belongs in the rendering layer, not inside pagination utilities

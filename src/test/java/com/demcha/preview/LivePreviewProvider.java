@@ -4,7 +4,7 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.devtool.DevToolPreviewFileProvider;
 import com.demcha.compose.devtool.DevToolPreviewProvider;
 import com.demcha.compose.document.templates.theme.CvTheme;
-import com.demcha.compose.engine.components.components_builders.ComponentBuilder;
+import com.demcha.compose.testsupport.engine.assembly.ComponentBuilder;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.core.Entity;

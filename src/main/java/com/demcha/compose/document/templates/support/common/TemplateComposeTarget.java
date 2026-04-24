@@ -1,6 +1,6 @@
 package com.demcha.compose.document.templates.support.common;
 
-import com.demcha.compose.engine.components.components_builders.BlockIndentStrategy;
+import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
 
@@ -103,13 +103,13 @@ public interface TemplateComposeTarget {
                 : list.continuationIndent();
     }
 
-    private static BlockIndentStrategy listIndentStrategy(TemplateListSpec list) {
+    private static TextIndentStrategy listIndentStrategy(TemplateListSpec list) {
         if (list.marker().isVisible()) {
-            return BlockIndentStrategy.ALL_LINES;
+            return TextIndentStrategy.ALL_LINES;
         }
         return list.continuationIndent().isEmpty()
-                ? BlockIndentStrategy.NONE
-                : BlockIndentStrategy.FROM_SECOND_LINE;
+                ? TextIndentStrategy.NONE
+                : TextIndentStrategy.FROM_SECOND_LINE;
     }
 
     /**

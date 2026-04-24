@@ -9,9 +9,9 @@ import com.demcha.compose.document.templates.data.proposal.ProposalParty;
 import com.demcha.compose.document.templates.data.proposal.ProposalPricingRow;
 import com.demcha.compose.document.templates.data.proposal.ProposalSection;
 import com.demcha.compose.document.templates.data.proposal.ProposalTimelineItem;
-import com.demcha.compose.engine.components.components_builders.TableCellSpec;
-import com.demcha.compose.engine.components.components_builders.TableCellStyle;
-import com.demcha.compose.engine.components.components_builders.TableColumnSpec;
+import com.demcha.compose.engine.components.content.table.TableCellContent;
+import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
+import com.demcha.compose.engine.components.content.table.TableColumnLayout;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.layout.Anchor;
 import com.demcha.compose.engine.components.style.Margin;
@@ -70,7 +70,7 @@ public final class ProposalTemplateComposer {
                             TextAlign.LEFT,
                             layout.bodyLineSpacing(),
                             "",
-                            com.demcha.compose.engine.components.components_builders.BlockIndentStrategy.FIRST_LINE,
+                            com.demcha.compose.engine.components.content.text.TextIndentStrategy.FIRST_LINE,
                             layout.bodyPadding(),
                             sceneLayout.moduleBodyGap(Margin.zero())))));
         }
@@ -93,7 +93,7 @@ public final class ProposalTemplateComposer {
                             TextAlign.LEFT,
                             layout.bodyLineSpacing(),
                             "",
-                            com.demcha.compose.engine.components.components_builders.BlockIndentStrategy.FIRST_LINE,
+                            com.demcha.compose.engine.components.content.text.TextIndentStrategy.FIRST_LINE,
                             layout.bodyPadding(),
                             sceneLayout.moduleBodyGap(Margin.zero())))));
         }
@@ -174,7 +174,7 @@ public final class ProposalTemplateComposer {
                 200,
                 sceneLayout.proposalHeaderReservedWidth());
         double rightWidth = sceneLayout.rightWidth(width, leftWidth);
-        TableCellStyle baseStyle = TableCellStyle.builder()
+        TableCellLayoutStyle baseStyle = TableCellLayoutStyle.builder()
                 .padding(layout.compactCellPadding())
                 .fillColor(Color.WHITE)
                 .stroke(new Stroke(Color.WHITE, 0.0))
@@ -186,16 +186,16 @@ public final class ProposalTemplateComposer {
         return new TemplateTableSpec(
                 "ProposalHeader",
                 List.of(
-                        TableColumnSpec.fixed(leftWidth),
-                        TableColumnSpec.fixed(sceneLayout.columnGap()),
-                        TableColumnSpec.fixed(rightWidth)),
+                        TableColumnLayout.fixed(leftWidth),
+                        TableColumnLayout.fixed(sceneLayout.columnGap()),
+                        TableColumnLayout.fixed(rightWidth)),
                 List.of(List.of(
-                        TableCellSpec.of(headerLeftLines(data)).withStyle(TableCellStyle.builder()
+                        TableCellContent.of(headerLeftLines(data)).withStyle(TableCellLayoutStyle.builder()
                                 .textStyle(styles.bodyStyle(BODY_SIZE))
                                 .textAnchor(Anchor.topLeft())
                                 .build()),
-                        TableCellSpec.text(""),
-                        TableCellSpec.of(partyLines("PREPARED FOR", data.recipient())).withStyle(TableCellStyle.builder()
+                        TableCellContent.text(""),
+                        TableCellContent.of(partyLines("PREPARED FOR", data.recipient())).withStyle(TableCellLayoutStyle.builder()
                                 .textStyle(styles.bodyStyle(BODY_SIZE))
                                 .textAnchor(Anchor.topLeft())
                                 .build()))),
@@ -209,7 +209,7 @@ public final class ProposalTemplateComposer {
 
     private TemplateTableSpec timelineTable(TemplateComposeTarget target, List<ProposalTimelineItem> items) {
         double width = target.pageWidth();
-        TableCellStyle defaultStyle = TableCellStyle.builder()
+        TableCellLayoutStyle defaultStyle = TableCellLayoutStyle.builder()
                 .padding(layout.contentCellPadding())
                 .fillColor(Color.WHITE)
                 .stroke(new Stroke(styles.borderColor(), sceneLayout.tableBorderThickness()))
@@ -217,28 +217,28 @@ public final class ProposalTemplateComposer {
                 .textAnchor(Anchor.centerLeft())
                 .lineSpacing(layout.tableLineSpacing())
                 .build();
-        Map<Integer, TableCellStyle> rowStyles = Map.of(
-                0, TableCellStyle.builder()
+        Map<Integer, TableCellLayoutStyle> rowStyles = Map.of(
+                0, TableCellLayoutStyle.builder()
                         .fillColor(styles.strongFill())
                         .textStyle(styles.headingStyle(9.0))
                         .build());
-        Map<Integer, TableCellStyle> columnStyles = Map.of(
-                1, TableCellStyle.builder().textAnchor(Anchor.center()).build());
+        Map<Integer, TableCellLayoutStyle> columnStyles = Map.of(
+                1, TableCellLayoutStyle.builder().textAnchor(Anchor.center()).build());
 
-        List<List<TableCellSpec>> rows = new ArrayList<>();
-        rows.add(List.of(TableCellSpec.text("Phase"), TableCellSpec.text("Duration"), TableCellSpec.text("Deliverable")));
+        List<List<TableCellContent>> rows = new ArrayList<>();
+        rows.add(List.of(TableCellContent.text("Phase"), TableCellContent.text("Duration"), TableCellContent.text("Deliverable")));
         for (ProposalTimelineItem item : items) {
             rows.add(List.of(
-                    TableCellSpec.text(valueOrFallback(item.phase(), "Phase")),
-                    TableCellSpec.text(valueOrFallback(item.duration(), "-")),
-                    TableCellSpec.text(shorten(valueOrFallback(item.details(), "-"), 56))));
+                    TableCellContent.text(valueOrFallback(item.phase(), "Phase")),
+                    TableCellContent.text(valueOrFallback(item.duration(), "-")),
+                    TableCellContent.text(shorten(valueOrFallback(item.details(), "-"), 56))));
         }
         return new TemplateTableSpec(
                 "ProposalTimelineTable",
                 List.of(
-                        TableColumnSpec.fixed(126),
-                        TableColumnSpec.fixed(86),
-                        TableColumnSpec.fixed(width - 212)),
+                        TableColumnLayout.fixed(126),
+                        TableColumnLayout.fixed(86),
+                        TableColumnLayout.fixed(width - 212)),
                 rows,
                 defaultStyle,
                 rowStyles,
@@ -250,7 +250,7 @@ public final class ProposalTemplateComposer {
 
     private TemplateTableSpec pricingTable(TemplateComposeTarget target, List<ProposalPricingRow> rowsData) {
         double width = target.pageWidth();
-        TableCellStyle defaultStyle = TableCellStyle.builder()
+        TableCellLayoutStyle defaultStyle = TableCellLayoutStyle.builder()
                 .padding(layout.contentCellPadding())
                 .fillColor(styles.softFill())
                 .stroke(new Stroke(styles.borderColor(), sceneLayout.tableBorderThickness()))
@@ -258,24 +258,24 @@ public final class ProposalTemplateComposer {
                 .textAnchor(Anchor.centerLeft())
                 .lineSpacing(layout.tableLineSpacing())
                 .build();
-        Map<Integer, TableCellStyle> rowStyles = new LinkedHashMap<>();
-        rowStyles.put(0, TableCellStyle.builder()
+        Map<Integer, TableCellLayoutStyle> rowStyles = new LinkedHashMap<>();
+        rowStyles.put(0, TableCellLayoutStyle.builder()
                 .fillColor(styles.strongFill())
                 .textStyle(styles.headingStyle(9.0))
                 .build());
-        Map<Integer, TableCellStyle> columnStyles = Map.of(
-                2, TableCellStyle.builder().textAnchor(Anchor.centerRight()).build());
+        Map<Integer, TableCellLayoutStyle> columnStyles = Map.of(
+                2, TableCellLayoutStyle.builder().textAnchor(Anchor.centerRight()).build());
 
-        List<List<TableCellSpec>> rows = new ArrayList<>();
-        rows.add(List.of(TableCellSpec.text("Item"), TableCellSpec.text("Description"), TableCellSpec.text("Amount")));
+        List<List<TableCellContent>> rows = new ArrayList<>();
+        rows.add(List.of(TableCellContent.text("Item"), TableCellContent.text("Description"), TableCellContent.text("Amount")));
         for (int index = 0; index < rowsData.size(); index++) {
             ProposalPricingRow row = rowsData.get(index);
             rows.add(List.of(
-                    TableCellSpec.text(valueOrFallback(row.label(), "Item")),
-                    TableCellSpec.text(shorten(valueOrFallback(row.description(), "-"), 60)),
-                    TableCellSpec.text(valueOrFallback(row.amount(), "-"))));
+                    TableCellContent.text(valueOrFallback(row.label(), "Item")),
+                    TableCellContent.text(shorten(valueOrFallback(row.description(), "-"), 60)),
+                    TableCellContent.text(valueOrFallback(row.amount(), "-"))));
             if (row.emphasized()) {
-                rowStyles.put(index + 1, TableCellStyle.builder()
+                rowStyles.put(index + 1, TableCellLayoutStyle.builder()
                         .fillColor(styles.strongFill())
                         .textStyle(styles.bodyBoldStyle(9.6))
                         .build());
@@ -285,9 +285,9 @@ public final class ProposalTemplateComposer {
         return new TemplateTableSpec(
                 "ProposalPricingTable",
                 List.of(
-                        TableColumnSpec.fixed(128),
-                        TableColumnSpec.fixed(width - 230),
-                        TableColumnSpec.fixed(102)),
+                        TableColumnLayout.fixed(128),
+                        TableColumnLayout.fixed(width - 230),
+                        TableColumnLayout.fixed(102)),
                 rows,
                 defaultStyle,
                 rowStyles,

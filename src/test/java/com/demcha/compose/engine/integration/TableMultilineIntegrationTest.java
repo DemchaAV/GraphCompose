@@ -1,9 +1,9 @@
 package com.demcha.compose.engine.integration;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.engine.components.components_builders.TableCellSpec;
-import com.demcha.compose.engine.components.components_builders.TableCellStyle;
-import com.demcha.compose.engine.components.components_builders.TableColumnSpec;
+import com.demcha.compose.engine.components.content.table.TableCellContent;
+import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
+import com.demcha.compose.engine.components.content.table.TableColumnLayout;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.layout.Anchor;
 import com.demcha.compose.engine.components.style.ComponentColor;
@@ -36,23 +36,23 @@ class TableMultilineIntegrationTest {
                     .anchor(Anchor.topCenter())
                     .margin(Margin.of(16))
                     .columns(
-                            TableColumnSpec.fixed(120),
-                            TableColumnSpec.fixed(180),
-                            TableColumnSpec.fixed(180)
+                            TableColumnLayout.fixed(120),
+                            TableColumnLayout.fixed(180),
+                            TableColumnLayout.fixed(180)
                     )
                     .width(480)
-                    .defaultCellStyle(TableCellStyle.builder()
+                    .defaultCellStyle(TableCellLayoutStyle.builder()
                             .padding(new Padding(6, 8, 6, 8))
                             .fillColor(ComponentColor.WHITE)
                             .stroke(new Stroke(ComponentColor.BLACK, 1.0))
                             .build())
                     .row(
-                            TableCellSpec.text("Mark"),
-                            TableCellSpec.lines("09:00 17:00", "Clean crushed ice").withStyle(TableCellStyle.builder()
+                            TableCellContent.text("Mark"),
+                            TableCellContent.lines("09:00 17:00", "Clean crushed ice").withStyle(TableCellLayoutStyle.builder()
                                     .fillColor(ComponentColor.LIGHT_GRAY)
                                     .textAnchor(Anchor.topLeft())
                                     .build()),
-                            TableCellSpec.lines("12:00 20:00", "Training").withStyle(TableCellStyle.builder()
+                            TableCellContent.lines("12:00 20:00", "Training").withStyle(TableCellLayoutStyle.builder()
                                     .fillColor(ComponentColor.LIGHT_BLUE)
                                     .textAnchor(Anchor.centerLeft())
                                     .build()))

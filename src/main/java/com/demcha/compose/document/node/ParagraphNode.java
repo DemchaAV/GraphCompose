@@ -2,7 +2,7 @@ package com.demcha.compose.document.node;
 
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
-import com.demcha.compose.engine.components.components_builders.BlockIndentStrategy;
+import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
@@ -23,7 +23,7 @@ public record ParagraphNode(
         TextAlign align,
         double lineSpacing,
         String bulletOffset,
-        BlockIndentStrategy indentStrategy,
+        TextIndentStrategy indentStrategy,
         PdfLinkOptions linkOptions,
         PdfBookmarkOptions bookmarkOptions,
         Padding padding,
@@ -41,7 +41,7 @@ public record ParagraphNode(
         textStyle = textStyle == null ? TextStyle.DEFAULT_STYLE : textStyle;
         align = align == null ? TextAlign.LEFT : align;
         bulletOffset = Objects.requireNonNullElse(bulletOffset, "");
-        indentStrategy = indentStrategy == null ? BlockIndentStrategy.NONE : indentStrategy;
+        indentStrategy = indentStrategy == null ? TextIndentStrategy.NONE : indentStrategy;
         padding = padding == null ? Padding.zero() : padding;
         margin = margin == null ? Margin.zero() : margin;
         if (lineSpacing < 0 || Double.isNaN(lineSpacing) || Double.isInfinite(lineSpacing)) {
@@ -55,7 +55,7 @@ public record ParagraphNode(
                          TextAlign align,
                          double lineSpacing,
                          String bulletOffset,
-                         BlockIndentStrategy indentStrategy,
+                         TextIndentStrategy indentStrategy,
                          PdfLinkOptions linkOptions,
                          PdfBookmarkOptions bookmarkOptions,
                          Padding padding,
@@ -69,7 +69,7 @@ public record ParagraphNode(
                          TextAlign align,
                          double lineSpacing,
                          String bulletOffset,
-                         BlockIndentStrategy indentStrategy,
+                         TextIndentStrategy indentStrategy,
                          Padding padding,
                          Margin margin) {
         this(name, text, textStyle, align, lineSpacing, bulletOffset, indentStrategy, null, null, padding, margin);
@@ -82,7 +82,7 @@ public record ParagraphNode(
                          double lineSpacing,
                          Padding padding,
                          Margin margin) {
-        this(name, text, textStyle, align, lineSpacing, "", BlockIndentStrategy.NONE, null, null, padding, margin);
+        this(name, text, textStyle, align, lineSpacing, "", TextIndentStrategy.NONE, null, null, padding, margin);
     }
 
     private static List<InlineTextRun> normalizeInlineRuns(List<InlineTextRun> runs) {

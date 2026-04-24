@@ -8,7 +8,7 @@ import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.cv.CvModule;
 import com.demcha.compose.document.templates.data.common.Header;
 import com.demcha.compose.document.templates.theme.CvTheme;
-import com.demcha.compose.engine.components.components_builders.BlockIndentStrategy;
+import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
 import com.demcha.compose.engine.components.content.text.TextDecoration;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.style.Margin;
@@ -128,7 +128,7 @@ public final class ExecutiveSlateCvTemplateComposer {
                     TextAlign.LEFT,
                     layout.bodyLineSpacing(),
                     block.firstLineIndent(),
-                    block.firstLineIndent().isEmpty() ? BlockIndentStrategy.NONE : BlockIndentStrategy.FIRST_LINE,
+                    block.firstLineIndent().isEmpty() ? TextIndentStrategy.NONE : TextIndentStrategy.FIRST_LINE,
                     layout.bodyPadding(),
                     layout.blockMargin()));
             case LIST -> listBlock(module, block, index);

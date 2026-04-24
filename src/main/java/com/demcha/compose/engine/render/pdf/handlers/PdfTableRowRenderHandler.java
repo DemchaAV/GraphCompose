@@ -1,6 +1,6 @@
 package com.demcha.compose.engine.render.pdf.handlers;
 
-import com.demcha.compose.engine.components.components_builders.TableCellStyle;
+import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
 import com.demcha.compose.engine.components.content.shape.FillColor;
 import com.demcha.compose.engine.components.content.shape.Side;
 import com.demcha.compose.engine.components.content.table.TableResolvedCell;
@@ -55,7 +55,7 @@ public final class PdfTableRowRenderHandler implements RenderHandler<TableRow, P
         for (TableResolvedCell cell : rowData.cells()) {
             double cellX = placement.x() + cell.x();
             double cellY = placement.y();
-            TableCellStyle style = cell.style();
+            TableCellLayoutStyle style = cell.style();
 
             cellRenderer.render(
                     stream,
@@ -140,7 +140,7 @@ public final class PdfTableRowRenderHandler implements RenderHandler<TableRow, P
                                             TableResolvedCell cell,
                                             double cellX,
                                             double cellY) {
-        TableCellStyle style = cell.style();
+        TableCellLayoutStyle style = cell.style();
         List<String> safeLines = sanitizeLines(cell.lines());
         double lineHeight = font.getLineHeight(style.textStyle());
         double lineSpacing = style.lineSpacing() == null ? 0.0 : style.lineSpacing();
@@ -186,7 +186,7 @@ public final class PdfTableRowRenderHandler implements RenderHandler<TableRow, P
                                 TableResolvedCell cell,
                                 double cellX,
                                 double cellY) throws IOException {
-        TableCellStyle style = cell.style();
+        TableCellLayoutStyle style = cell.style();
         PdfFont font = manager.getFonts()
                 .getFont(style.textStyle().fontName(), PdfFont.class)
                 .orElseThrow();

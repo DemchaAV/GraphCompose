@@ -1,8 +1,8 @@
 package com.demcha.compose.engine.integration;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.engine.components.components_builders.TableCellStyle;
-import com.demcha.compose.engine.components.components_builders.TableColumnSpec;
+import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
+import com.demcha.compose.engine.components.content.table.TableColumnLayout;
 import com.demcha.compose.engine.components.layout.Anchor;
 import com.demcha.compose.engine.components.style.ComponentColor;
 import com.demcha.compose.engine.components.style.Margin;
@@ -33,14 +33,14 @@ class TableLayoutIntegrationTest {
                     .anchor(Anchor.topCenter())
                     .margin(Margin.of(16))
                     .columns(
-                            TableColumnSpec.fixed(90),
-                            TableColumnSpec.auto(),
-                            TableColumnSpec.auto()
+                            TableColumnLayout.fixed(90),
+                            TableColumnLayout.auto(),
+                            TableColumnLayout.auto()
                     )
-                    .defaultCellStyle(TableCellStyle.builder()
+                    .defaultCellStyle(TableCellLayoutStyle.builder()
                             .fillColor(ComponentColor.WHITE)
                             .build())
-                    .columnStyle(0, TableCellStyle.builder()
+                    .columnStyle(0, TableCellLayoutStyle.builder()
                             .fillColor(ComponentColor.LIGHT_GRAY)
                             .build())
                     .row("Q1", "Foundations", "Layout engine baseline")

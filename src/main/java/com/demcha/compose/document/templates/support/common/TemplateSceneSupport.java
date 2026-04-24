@@ -4,7 +4,7 @@ import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.engine.components.components_builders.BlockIndentStrategy;
+import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
@@ -47,7 +47,7 @@ public final class TemplateSceneSupport {
                                                   PdfLinkOptions linkOptions,
                                                   Padding padding,
                                                   Margin margin) {
-        return new TemplateParagraphSpec(name, text, List.of(), style, align, lineSpacing, "", BlockIndentStrategy.NONE, linkOptions, padding, margin);
+        return new TemplateParagraphSpec(name, text, List.of(), style, align, lineSpacing, "", TextIndentStrategy.NONE, linkOptions, padding, margin);
     }
 
     /**
@@ -60,7 +60,7 @@ public final class TemplateSceneSupport {
                                                         double lineSpacing,
                                                         Padding padding,
                                                         Margin margin) {
-        return new TemplateParagraphSpec(name, "", inlineRuns, style, align, lineSpacing, "", BlockIndentStrategy.NONE, null, padding, margin);
+        return new TemplateParagraphSpec(name, "", inlineRuns, style, align, lineSpacing, "", TextIndentStrategy.NONE, null, padding, margin);
     }
 
     /**
@@ -72,7 +72,7 @@ public final class TemplateSceneSupport {
                                                        TextAlign align,
                                                        double lineSpacing,
                                                        String bulletOffset,
-                                                       BlockIndentStrategy indentStrategy,
+                                                       TextIndentStrategy indentStrategy,
                                                        Padding padding,
                                                        Margin margin) {
         return blockParagraph(name, text, style, align, lineSpacing, bulletOffset, indentStrategy, null, padding, margin);
@@ -88,7 +88,7 @@ public final class TemplateSceneSupport {
                                                        TextAlign align,
                                                        double lineSpacing,
                                                        String bulletOffset,
-                                                       BlockIndentStrategy indentStrategy,
+                                                       TextIndentStrategy indentStrategy,
                                                        PdfLinkOptions linkOptions,
                                                        Padding padding,
                                                        Margin margin) {

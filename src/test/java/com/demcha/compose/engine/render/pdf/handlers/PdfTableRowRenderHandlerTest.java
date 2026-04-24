@@ -1,7 +1,7 @@
 package com.demcha.compose.engine.render.pdf.handlers;
 
 import com.demcha.compose.font.DefaultFonts;
-import com.demcha.compose.engine.components.components_builders.TableCellStyle;
+import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
 import com.demcha.compose.engine.components.content.shape.Side;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.content.text.TextStyle;
@@ -50,7 +50,7 @@ class PdfTableRowRenderHandlerTest {
                 100,
                 20,
                 List.of("value"),
-                TableCellStyle.builder()
+                TableCellLayoutStyle.builder()
                         .stroke(new Stroke(ComponentColor.BLACK, 2.0))
                         .build(),
                 new Padding(3.0, 0.5, 0.5, 0.5),
@@ -89,7 +89,7 @@ class PdfTableRowRenderHandlerTest {
                 100,
                 20,
                 List.of("value"),
-                TableCellStyle.builder()
+                TableCellLayoutStyle.builder()
                         .stroke(new Stroke(ComponentColor.BLACK, 2.0))
                         .build(),
                 new Padding(3.0, 0.5, 0.5, 0.5),
@@ -112,7 +112,7 @@ class PdfTableRowRenderHandlerTest {
                 120,
                 60,
                 List.of("09:00 17:00", "Stock take"),
-                TableCellStyle.merge(TableCellStyle.DEFAULT, TableCellStyle.builder()
+                TableCellLayoutStyle.merge(TableCellLayoutStyle.DEFAULT, TableCellLayoutStyle.builder()
                         .textAnchor(Anchor.topLeft())
                         .build()),
                 Padding.zero(),
@@ -125,7 +125,7 @@ class PdfTableRowRenderHandlerTest {
                 120,
                 60,
                 List.of("09:00 17:00", "Stock take"),
-                TableCellStyle.merge(TableCellStyle.DEFAULT, TableCellStyle.builder()
+                TableCellLayoutStyle.merge(TableCellLayoutStyle.DEFAULT, TableCellLayoutStyle.builder()
                         .textAnchor(Anchor.centerLeft())
                         .build()),
                 Padding.zero(),
@@ -154,7 +154,7 @@ class PdfTableRowRenderHandlerTest {
                 120,
                 80,
                 List.of("First", "Second"),
-                TableCellStyle.merge(TableCellStyle.DEFAULT, TableCellStyle.builder()
+                TableCellLayoutStyle.merge(TableCellLayoutStyle.DEFAULT, TableCellLayoutStyle.builder()
                         .textAnchor(Anchor.topLeft())
                         .lineSpacing(lineSpacing)
                         .build()),

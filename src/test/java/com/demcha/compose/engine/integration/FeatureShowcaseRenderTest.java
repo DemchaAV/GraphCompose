@@ -1,7 +1,7 @@
 package com.demcha.compose.engine.integration;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.engine.components.components_builders.ComponentBuilder;
+import com.demcha.compose.testsupport.engine.assembly.ComponentBuilder;
 import com.demcha.compose.engine.components.content.header_footer.HeaderFooterConfig;
 import com.demcha.compose.engine.components.content.metadata.DocumentMetadata;
 import com.demcha.compose.engine.components.content.text.TextDecoration;

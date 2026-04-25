@@ -35,7 +35,7 @@ class CvTemplateV1LayoutSnapshotTest {
         Path outputFile = VisualTestOutputs.preparePdf("template_cv_1_layout_snapshot_rich", "clean", "templates", "cv");
         CvDocumentSpec expanded = TemplateTestSupport.expandedCanonicalCv();
 
-        try (DocumentSession document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15, false)) {
+        try (DocumentSession document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15)) {
             template.compose(document, expanded);
             TemplateTestSupport.assertCanonicalSnapshot(document, "template_cv_1_rich_one_and_half_pages", "cv");
             document.buildPdf();

@@ -47,7 +47,7 @@ class BuiltInTemplateRenderTest {
     void shouldRenderCoverLetterDirectlyToFile() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("cover_letter_render_file", "clean", "templates", "cover-letter");
 
-        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15, false)) {
+        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15)) {
             new CoverLetterTemplateV1().compose(
                     document,
                     TemplateTestSupport.canonicalCoverLetter("Visual Test Company"));
@@ -69,6 +69,7 @@ class BuiltInTemplateRenderTest {
         }
 
         TemplateTestSupport.assertPdfFileLooksValid(outputFile, 1);
+        TemplateTestSupport.assertPdfContainsGuideLines(outputFile);
     }
 
     @Test
@@ -123,7 +124,7 @@ class BuiltInTemplateRenderTest {
     void shouldRenderInvoiceDirectlyToFile() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("invoice_render_file", "clean", "templates", "invoice");
 
-        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 22, 22, 22, 22, false)) {
+        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 22, 22, 22, 22)) {
             new InvoiceTemplateV1().compose(document, TemplateTestSupport.canonicalInvoice());
             document.buildPdf();
         }
@@ -141,6 +142,7 @@ class BuiltInTemplateRenderTest {
         }
 
         TemplateTestSupport.assertPdfFileLooksValid(outputFile, 1);
+        TemplateTestSupport.assertPdfContainsGuideLines(outputFile);
     }
 
     @Test
@@ -171,7 +173,7 @@ class BuiltInTemplateRenderTest {
     void shouldRenderProposalDirectlyToFile() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("proposal_render_file", "clean", "templates", "proposal");
 
-        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 22, 22, 22, 22, false)) {
+        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 22, 22, 22, 22)) {
             new ProposalTemplateV1().compose(document, TemplateTestSupport.canonicalProposal());
             document.buildPdf();
         }
@@ -189,6 +191,7 @@ class BuiltInTemplateRenderTest {
         }
 
         TemplateTestSupport.assertPdfFileLooksValid(outputFile, 2);
+        TemplateTestSupport.assertPdfContainsGuideLines(outputFile);
     }
 
     @Test
@@ -241,7 +244,7 @@ class BuiltInTemplateRenderTest {
                                       com.demcha.compose.document.templates.data.schedule.WeeklyScheduleDocumentSpec spec) throws Exception {
         PDRectangle landscapeA4 = new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth());
 
-        try (var document = TemplateTestSupport.openFileDocument(outputFile, landscapeA4, 18, 18, 18, 18, false)) {
+        try (var document = TemplateTestSupport.openFileDocument(outputFile, landscapeA4, 18, 18, 18, 18)) {
             new WeeklyScheduleTemplateV1().compose(document, spec);
             document.buildPdf();
         }

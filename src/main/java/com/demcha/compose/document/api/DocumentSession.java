@@ -65,6 +65,7 @@ public final class DocumentSession implements AutoCloseable {
     private DocumentInsets margin;
     private LayoutCanvas canvas;
     private boolean markdown;
+    private boolean guideLines;
 
     private PdfMeasurementResources measurementResources;
 
@@ -84,29 +85,33 @@ public final class DocumentSession implements AutoCloseable {
      * @param margin page margin
      * @param customFontFamilies document-local font families
      * @param markdown whether markdown parsing is enabled
+     * @param guideLines whether PDF guide-line overlays are enabled
      */
     public DocumentSession(Path defaultOutputFile,
                            DocumentPageSize pageSize,
                            DocumentInsets margin,
                            Collection<FontFamilyDefinition> customFontFamilies,
-                           boolean markdown) {
+                           boolean markdown,
+                           boolean guideLines) {
         this.defaultOutputFile = defaultOutputFile;
         this.pageSize = Objects.requireNonNull(pageSize, "pageSize");
         this.margin = margin == null ? DocumentInsets.zero() : margin;
         this.canvas = LayoutCanvas.from(pageSize.width(), pageSize.height(), toEngineMargin(this.margin));
         this.markdown = markdown;
+        this.guideLines = guideLines;
         this.registry = BuiltInNodeDefinitions.registerDefaults(new NodeRegistry());
         this.compiler = new LayoutCompiler(registry);
         this.customFontFamilies.addAll(List.copyOf(customFontFamilies));
         refreshMeasurementServices();
         LIFECYCLE_LOG.debug(
-                "document.session.created sessionId={} outputConfigured={} pageSize={}x{} customFontFamilies={} markdown={}",
+                "document.session.created sessionId={} outputConfigured={} pageSize={}x{} customFontFamilies={} markdown={} guideLines={}",
                 sessionId,
                 defaultOutputFile != null,
                 Math.round(pageSize.width()),
                 Math.round(pageSize.height()),
                 this.customFontFamilies.size(),
-                markdown);
+                markdown,
+                guideLines);
     }
 
     /**
@@ -280,6 +285,22 @@ public final class DocumentSession implements AutoCloseable {
         ensureOpen();
         this.markdown = enabled;
         invalidate();
+        return this;
+    }
+
+    /**
+     * Enables or disables PDF guide-line overlays for convenience PDF output.
+     *
+     * <p>This option affects {@link #buildPdf()}, {@link #writePdf(OutputStream)},
+     * and {@link #toPdfBytes()}. It does not change the semantic layout graph,
+     * so existing layout cache entries remain valid.</p>
+     *
+     * @param enabled {@code true} to draw debug guide-line overlays
+     * @return this session
+     */
+    public DocumentSession guideLines(boolean enabled) {
+        ensureOpen();
+        this.guideLines = enabled;
         return this;
     }
 
@@ -564,7 +585,7 @@ public final class DocumentSession implements AutoCloseable {
         long startNanos = System.nanoTime();
         LIFECYCLE_LOG.debug("document.pdf.stream.start sessionId={} revision={} roots={}", sessionId, revision, roots.size());
         try {
-            new PdfFixedLayoutBackend().write(layoutGraph(), new FixedLayoutRenderContext(
+            conveniencePdfBackend().write(layoutGraph(), new FixedLayoutRenderContext(
                     canvas,
                     customFontFamilies,
                     null,
@@ -680,6 +701,15 @@ public final class DocumentSession implements AutoCloseable {
             throw new IllegalStateException(
                     "Cannot render an empty document. Add at least one root before calling writePdf/toPdfBytes/buildPdf.");
         }
+    }
+
+    private PdfFixedLayoutBackend conveniencePdfBackend() {
+        if (!guideLines) {
+            return new PdfFixedLayoutBackend();
+        }
+        return PdfFixedLayoutBackend.builder()
+                .guideLines(true)
+                .build();
     }
 
     private com.demcha.compose.engine.components.style.Margin toEngineMargin(DocumentInsets insets) {

@@ -709,6 +709,58 @@ class DocumentSessionTest {
         }
     }
 
+    @Test
+    void sessionGuideLinesShouldApplyToConveniencePdfOutputWithoutInvalidatingLayout() throws Exception {
+        Color marginColor = new Color(0, 110, 255);
+        Color paddingColor = new Color(255, 140, 0);
+        Color boxColor = new Color(150, 150, 150);
+
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(260, 200)
+                .margin(DocumentInsets.of(12))
+                .create()) {
+
+            session.add(new ParagraphNode(
+                    "GuidedParagraph",
+                    "Session guide lines should be applied by buildPdf/writePdf/toPdfBytes.",
+                    DocumentTextStyle.DEFAULT,
+                    TextAlign.LEFT,
+                    2.0,
+                    DocumentInsets.of(10),
+                    DocumentInsets.of(14)));
+
+            LayoutGraph graph = session.layoutGraph();
+            session.guideLines(true);
+            assertThat(session.layoutGraph()).isSameAs(graph);
+
+            byte[] pdfBytes = session.toPdfBytes();
+
+            try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+                BufferedImage image = new PDFRenderer(document).renderImageWithDPI(0, RENDER_DPI);
+                PlacedFragment fragment = graph.fragments().getFirst();
+
+                assertThat(hasColorNear(
+                        image,
+                        fragment.x() - fragment.margin().left(),
+                        fragment.y() - fragment.margin().bottom(),
+                        marginColor,
+                        10)).isTrue();
+                assertThat(hasColorNear(
+                        image,
+                        fragment.x() + fragment.padding().left(),
+                        fragment.y() + fragment.padding().bottom(),
+                        paddingColor,
+                        10)).isTrue();
+                assertThat(hasColorNear(
+                        image,
+                        fragment.x(),
+                        fragment.y(),
+                        boxColor,
+                        6)).isTrue();
+            }
+        }
+    }
+
     private static final class TrackingOutputStream extends ByteArrayOutputStream {
         private boolean closed;
 

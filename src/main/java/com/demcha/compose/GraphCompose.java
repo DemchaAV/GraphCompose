@@ -11,7 +11,6 @@ import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.engine.components.style.Margin;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
@@ -137,7 +136,7 @@ public final class GraphCompose {
     public static final class DocumentBuilder {
         private final Path outputFile;
         private PDRectangle pageSize = PDRectangle.A4;
-        private Margin margin = Margin.zero();
+        private DocumentInsets margin = DocumentInsets.zero();
         private boolean markdown = true;
         private boolean guideLines = false;
         private PdfMetadataOptions metadataOptions;
@@ -162,29 +161,13 @@ public final class GraphCompose {
         }
 
         /**
-         * Sets the semantic document margin using the engine spacing type.
-         *
-         * @param margin outer page margin
-         * @return this builder
-         * @deprecated since 2.0.0 — use {@link #margin(DocumentInsets)} or
-         *     {@link #margin(float, float, float, float)} so the public API
-         *     stops importing engine types. This overload is scheduled for
-         *     removal in the v2.x line.
-         */
-        @Deprecated(since = "2.0.0", forRemoval = true)
-        public DocumentBuilder margin(Margin margin) {
-            this.margin = margin == null ? Margin.zero() : margin;
-            return this;
-        }
-
-        /**
          * Sets the semantic document margin with the public canonical spacing value.
          *
          * @param margin outer page margin
          * @return this builder
          */
         public DocumentBuilder margin(DocumentInsets margin) {
-            this.margin = margin == null ? Margin.zero() : new Margin(margin.top(), margin.right(), margin.bottom(), margin.left());
+            this.margin = margin == null ? DocumentInsets.zero() : margin;
             return this;
         }
 
@@ -198,7 +181,7 @@ public final class GraphCompose {
          * @return this builder
          */
         public DocumentBuilder margin(float top, float right, float bottom, float left) {
-            this.margin = new Margin(top, right, bottom, left);
+            this.margin = new DocumentInsets(top, right, bottom, left);
             return this;
         }
 

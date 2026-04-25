@@ -91,7 +91,7 @@ class DocumentSessionLifecycleTest {
         assertThatThrownBy(() -> session.pageSize(PDRectangle.A4))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThatThrownBy(() -> session.margin(Margin.of(8)))
+        assertThatThrownBy(() -> session.margin(DocumentInsets.of(8)))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThatThrownBy(() -> session.markdown(false))
@@ -122,7 +122,7 @@ class DocumentSessionLifecycleTest {
         try {
             try (DocumentSession session = GraphCompose.document(outputPath)
                     .pageSize(new PDRectangle(220, 180))
-                    .margin(Margin.of(12))
+                    .margin(DocumentInsets.of(12))
                     .create()) {
 
                 assertThatThrownBy(session::buildPdf)
@@ -170,7 +170,7 @@ class DocumentSessionLifecycleTest {
     private DocumentSession newSession() {
         return GraphCompose.document()
                 .pageSize(new PDRectangle(220, 180))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create();
     }
 

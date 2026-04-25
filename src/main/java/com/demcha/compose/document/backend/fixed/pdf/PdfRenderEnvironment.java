@@ -1,6 +1,6 @@
 package com.demcha.compose.document.backend.fixed.pdf;
 
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions;
+import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.engine.components.content.ImageData;
@@ -86,7 +86,7 @@ public final class PdfRenderEnvironment {
         }
     }
 
-    void registerBookmark(PlacedFragment fragment, PdfBookmarkOptions bookmarkOptions) {
+    void registerBookmark(PlacedFragment fragment, DocumentBookmarkOptions bookmarkOptions) {
         bookmarkRecords.add(new BookmarkRecord(
                 bookmarkOptions.title(),
                 bookmarkOptions.level(),

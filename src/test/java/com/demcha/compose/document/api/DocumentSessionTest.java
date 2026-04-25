@@ -82,7 +82,7 @@ class DocumentSessionTest {
     void atomicNodeShouldMoveWholeToNextPage() {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(200, 200))
-                .margin(Margin.of(10))
+                .margin(DocumentInsets.of(10))
                 .create()) {
 
             session.add(new ShapeNode("First", 80, 130, Color.LIGHT_GRAY, DocumentStroke.of(DocumentColor.BLACK, 1), DocumentInsets.zero(), DocumentInsets.zero()));
@@ -106,7 +106,7 @@ class DocumentSessionTest {
     void pageFlowShortcutShouldAttachRootWithoutDslFacade() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(240, 180))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             ContainerNode root = session.pageFlow()
@@ -127,7 +127,7 @@ class DocumentSessionTest {
     void composeShortcutShouldBatchDslCallsWithoutManualBuilderLifecycle() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(240, 180))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             session.compose(dsl -> dsl.pageFlow(flow -> flow
@@ -151,7 +151,7 @@ class DocumentSessionTest {
     void namedSectionShortcutShouldAvoidRepeatingSectionNameInsideNestedBuilder() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(240, 180))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             ContainerNode root = session.pageFlow()
@@ -178,7 +178,7 @@ class DocumentSessionTest {
     void moduleShortcutShouldBuildTitledSemanticBlocks() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(320, 240))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             ContainerNode root = session.pageFlow()
@@ -221,7 +221,7 @@ class DocumentSessionTest {
     void moduleShortcutShouldPaginateLongBodyThroughCanonicalCompositePath() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(220, 180))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             session.pageFlow(flow -> flow
@@ -249,7 +249,7 @@ class DocumentSessionTest {
     void tableConvenienceMethodsShouldBuildHeaderAndBulkRows() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(320, 220))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             DocumentTableStyle headerStyle = DocumentTableStyle.builder()
@@ -291,7 +291,7 @@ class DocumentSessionTest {
     void atomicNodeTooLargeShouldFailDeterministically() {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(200, 200))
-                .margin(Margin.of(10))
+                .margin(DocumentInsets.of(10))
                 .create()) {
 
             session.add(new ShapeNode("TooBig", 80, 181, Color.RED, DocumentStroke.of(DocumentColor.BLACK, 1), DocumentInsets.zero(), DocumentInsets.zero()));
@@ -308,7 +308,7 @@ class DocumentSessionTest {
     void paragraphShouldSplitAcrossPagesAndPdfShouldMatchPageCount() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(220, 180))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             session.add(new ParagraphNode(
@@ -349,7 +349,7 @@ class DocumentSessionTest {
     void writePdfShouldStreamValidPdfWithoutClosingCallerStream() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(220, 180))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             session.pageFlow(page -> page
@@ -379,7 +379,7 @@ class DocumentSessionTest {
 
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(220, 180))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             session.pageFlow(page -> page
@@ -398,7 +398,7 @@ class DocumentSessionTest {
     void paragraphShouldPreserveExplicitNewlinesInPreparedFragments() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(240, 220))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             session.add(new ParagraphNode(
@@ -463,7 +463,7 @@ class DocumentSessionTest {
     void tableShouldSplitByAtomicRows() {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(220, 180))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             TableNode table = new TableNode(
@@ -511,7 +511,7 @@ class DocumentSessionTest {
     void customNodeShouldWorkViaRegisteredDefinitionAndBackend() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(200, 160))
-                .margin(Margin.of(10))
+                .margin(DocumentInsets.of(10))
                 .create()) {
 
             session.registerNodeDefinition(new BadgeNodeDefinition());
@@ -540,7 +540,7 @@ class DocumentSessionTest {
     void semanticBackendsShouldExportManifestsFromDocumentGraph() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(200, 200))
-                .margin(Margin.of(10))
+                .margin(DocumentInsets.of(10))
                 .create()) {
 
             session.add(new ContainerNode(
@@ -577,7 +577,7 @@ class DocumentSessionTest {
     void documentLevelPdfOptionsShouldReuseCompiledLayout() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(220, 180))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             session.add(new ParagraphNode(
@@ -604,7 +604,7 @@ class DocumentSessionTest {
     void paragraphShouldRenderMarkdownStylesByDefault() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(240, 180))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             session.add(new ParagraphNode(
@@ -632,7 +632,7 @@ class DocumentSessionTest {
     void paragraphShouldKeepMarkdownMarkersWhenDisabled() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(240, 180))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .markdown(false)
                 .create()) {
 
@@ -663,7 +663,7 @@ class DocumentSessionTest {
 
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(260, 200))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .guideLines(true)
                 .create()) {
 

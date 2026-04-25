@@ -21,11 +21,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <ol>
  *   <li><b>Strict:</b> semantic node types must never import {@code org.apache.pdfbox.*}
  *       directly. The PDF rendering layer is the only place allowed to depend on PDFBox.</li>
- *   <li><b>Baseline:</b> semantic nodes currently reference a small set of PDF-flavoured
- *       option records ({@link com.demcha.compose.document.backend.fixed.pdf.options}). Each
- *       leak is recorded in {@link #ALLOWED_BACKEND_OPTIONS} so new ones fail the test.
- *       Phase 3 of the roadmap migrates these to renderer-neutral
- *       {@code DocumentLinkOptions} / {@code DocumentBookmarkOptions} types.</li>
+ *   <li><b>Strict:</b> semantic nodes must not import PDF backend option records.
+ *       Link, bookmark, and barcode metadata use renderer-neutral
+ *       {@code Document*Options} types instead.</li>
  * </ol>
  */
 class SemanticLayerNoPdfBoxDependencyTest {
@@ -38,43 +36,7 @@ class SemanticLayerNoPdfBoxDependencyTest {
     private static final String BACKEND_OPTIONS_IMPORT_PREFIX =
             "import com.demcha.compose.document.backend.fixed.pdf.options.";
 
-    /**
-     * Currently tolerated PDF-flavoured option imports inside semantic node types.
-     * Phase 3 of the v2 roadmap moves these to renderer-neutral document option types
-     * and shrinks this allowlist to empty.
-     */
     private static final Map<String, Set<String>> ALLOWED_BACKEND_OPTIONS = new LinkedHashMap<>();
-    static {
-        ALLOWED_BACKEND_OPTIONS.put(
-                "src/main/java/com/demcha/compose/document/node/ImageNode.java",
-                Set.of(
-                        "com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions",
-                        "com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions"));
-        ALLOWED_BACKEND_OPTIONS.put(
-                "src/main/java/com/demcha/compose/document/node/BarcodeNode.java",
-                Set.of(
-                        "com.demcha.compose.document.backend.fixed.pdf.options.PdfBarcodeOptions",
-                        "com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions",
-                        "com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions"));
-        ALLOWED_BACKEND_OPTIONS.put(
-                "src/main/java/com/demcha/compose/document/node/ShapeNode.java",
-                Set.of(
-                        "com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions",
-                        "com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions"));
-        ALLOWED_BACKEND_OPTIONS.put(
-                "src/main/java/com/demcha/compose/document/node/ParagraphNode.java",
-                Set.of(
-                        "com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions",
-                        "com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions"));
-        ALLOWED_BACKEND_OPTIONS.put(
-                "src/main/java/com/demcha/compose/document/node/TableNode.java",
-                Set.of(
-                        "com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions",
-                        "com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions"));
-        ALLOWED_BACKEND_OPTIONS.put(
-                "src/main/java/com/demcha/compose/document/node/InlineTextRun.java",
-                Set.of("com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions"));
-    }
 
     @Test
     void semanticNodesMustNotImportPdfBoxDirectly() throws IOException {

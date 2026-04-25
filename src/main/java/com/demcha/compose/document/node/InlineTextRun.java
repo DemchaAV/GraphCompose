@@ -1,6 +1,6 @@
 package com.demcha.compose.document.node;
 
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
+import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.style.DocumentTextStyle;
 
 /**
@@ -14,7 +14,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 public record InlineTextRun(
         String text,
         DocumentTextStyle textStyle,
-        PdfLinkOptions linkOptions
+        DocumentLinkOptions linkOptions
 ) {
     /**
      * Normalizes null text to an empty run.

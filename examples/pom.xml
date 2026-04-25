@@ -19,7 +19,7 @@
     <dependencies>
         <dependency>
             <groupId>io.github.demchaav</groupId>
-            <artifactId>GraphCompose</artifactId>
+            <artifactId>graphcompose</artifactId>
             <version>${graphcompose.version}</version>
         </dependency>
         <dependency>

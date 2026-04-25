@@ -8,7 +8,7 @@ This document is the source of truth for production package ownership in the can
 | --- | --- | --- |
 | `com.demcha.compose` | Top-level entrypoint, currently `GraphCompose.document(...)`. | Keep this package tiny; new authoring concepts should live under `document.*`. |
 | `com.demcha.compose.document.api` | `DocumentSession` lifecycle and public session operations. | Add only session-level behavior that belongs to every document. |
-| `com.demcha.compose.document.dsl` | Developer-friendly DSL: `pageFlow`, `module`, `paragraph`, `list`, `rows`, `table`, `image`, `divider`. | Prefer simple domain words over low-level geometry or renderer terms. |
+| `com.demcha.compose.document.dsl` | Developer-friendly DSL facade and focused builders: `pageFlow`, `module`, `paragraph`, `list`, `rows`, `table`, `image`, `divider`. | Prefer simple domain words over low-level geometry or renderer terms. |
 | `com.demcha.compose.document.node` | Canonical semantic nodes such as paragraphs, lists, tables, images, sections, and page breaks. | Nodes describe intent; layout/render mechanics belong in `document.layout` or `engine.*`. |
 | `com.demcha.compose.document.style` | Public style values such as document colors, spacing, and text styles. | Keep application-facing style values here; convert to engine values inside DSL/backends. |
 | `com.demcha.compose.document.table` | Public table authoring values such as columns, cells, and table style overrides. | Keep table authoring ergonomic; row layout and PDF drawing stay internal. |
@@ -22,6 +22,7 @@ This document is the source of truth for production package ownership in the can
 | `com.demcha.compose.document.layout` | Semantic layout compiler, node definitions, fragments, split/measure contracts, and layout graph. | New node behavior must be deterministic and covered by layout or render tests. |
 | `com.demcha.compose.document.backend.fixed` | Backend-neutral fixed-layout rendering contract. | Keep it independent from PDFBox and semantic template data. |
 | `com.demcha.compose.document.backend.fixed.pdf` | Canonical fixed-layout PDF backend and fragment handlers. | Keep PDFBox lifecycle internal; callers should use `DocumentSession` and public PDF options. |
+| `com.demcha.compose.document.dsl.internal` | Internal helpers for public DSL builders such as semantic name normalization and builder callback application. | Do not expose these helpers in examples; move reusable authoring concepts to public builder classes instead. |
 | `com.demcha.compose.document.backend.semantic` | Experimental semantic export contracts for non-fixed outputs. | Keep exporters separate from PDF fixed-layout rendering. |
 | `com.demcha.compose.document.debug` | Snapshot/debug adapters for canonical layout graph inspection. | Debug output should be deterministic and safe for tests. |
 

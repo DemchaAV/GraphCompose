@@ -1,7 +1,7 @@
 package com.demcha.compose.document.node;
 
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
+import com.demcha.compose.document.node.DocumentBookmarkOptions;
+import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
@@ -35,8 +35,8 @@ public record ParagraphNode(
         double lineSpacing,
         String bulletOffset,
         DocumentTextIndent indentStrategy,
-        PdfLinkOptions linkOptions,
-        PdfBookmarkOptions bookmarkOptions,
+        DocumentLinkOptions linkOptions,
+        DocumentBookmarkOptions bookmarkOptions,
         DocumentInsets padding,
         DocumentInsets margin
 ) implements DocumentNode {
@@ -86,8 +86,8 @@ public record ParagraphNode(
                          double lineSpacing,
                          String bulletOffset,
                          DocumentTextIndent indentStrategy,
-                         PdfLinkOptions linkOptions,
-                         PdfBookmarkOptions bookmarkOptions,
+                         DocumentLinkOptions linkOptions,
+                         DocumentBookmarkOptions bookmarkOptions,
                          DocumentInsets padding,
                          DocumentInsets margin) {
         this(name, text, List.of(), textStyle, align, lineSpacing, bulletOffset, indentStrategy, linkOptions, bookmarkOptions, padding, margin);

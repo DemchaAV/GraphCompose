@@ -1,8 +1,9 @@
 package com.demcha.compose.document.layout;
 
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfBarcodeOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
+import com.demcha.compose.document.node.DocumentBarcodeOptions;
+import com.demcha.compose.document.node.DocumentBarcodeType;
+import com.demcha.compose.document.node.DocumentBookmarkOptions;
+import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.node.DocumentNode;
@@ -91,7 +92,7 @@ public final class BuiltInNodeDefinitions {
      * @param width measured span width
      * @param linkOptions optional link metadata for the span
      */
-    public record ParagraphSpan(String text, TextStyle textStyle, double width, PdfLinkOptions linkOptions) {
+    public record ParagraphSpan(String text, TextStyle textStyle, double width, DocumentLinkOptions linkOptions) {
         /**
          * Creates a normalized measured paragraph span.
          */
@@ -140,7 +141,7 @@ public final class BuiltInNodeDefinitions {
          *
          * @return fragment-level link options, or {@code null}
          */
-        PdfLinkOptions linkOptions();
+        DocumentLinkOptions linkOptions();
 
         /**
          * Returns bookmark metadata for the resolved fragment, or {@code null}
@@ -148,7 +149,7 @@ public final class BuiltInNodeDefinitions {
          *
          * @return fragment-level bookmark options, or {@code null}
          */
-        PdfBookmarkOptions bookmarkOptions();
+        DocumentBookmarkOptions bookmarkOptions();
     }
 
     /**
@@ -172,8 +173,8 @@ public final class BuiltInNodeDefinitions {
             double lineGap,
             double baselineOffset,
             List<ParagraphLine> lines,
-            PdfLinkOptions linkOptions,
-            PdfBookmarkOptions bookmarkOptions
+            DocumentLinkOptions linkOptions,
+            DocumentBookmarkOptions bookmarkOptions
     ) implements PdfSemanticFragmentPayload {
         /**
          * Creates an immutable paragraph fragment payload.
@@ -194,8 +195,8 @@ public final class BuiltInNodeDefinitions {
     public record ShapeFragmentPayload(
             Color fillColor,
             Stroke stroke,
-            PdfLinkOptions linkOptions,
-            PdfBookmarkOptions bookmarkOptions
+            DocumentLinkOptions linkOptions,
+            DocumentBookmarkOptions bookmarkOptions
     ) implements PdfSemanticFragmentPayload {
     }
 
@@ -208,8 +209,8 @@ public final class BuiltInNodeDefinitions {
      */
     public record ImageFragmentPayload(
             ImageData imageData,
-            PdfLinkOptions linkOptions,
-            PdfBookmarkOptions bookmarkOptions
+            DocumentLinkOptions linkOptions,
+            DocumentBookmarkOptions bookmarkOptions
     ) implements PdfSemanticFragmentPayload {
     }
 
@@ -222,8 +223,8 @@ public final class BuiltInNodeDefinitions {
      */
     public record BarcodeFragmentPayload(
             BarcodeData barcodeData,
-            PdfLinkOptions linkOptions,
-            PdfBookmarkOptions bookmarkOptions
+            DocumentLinkOptions linkOptions,
+            DocumentBookmarkOptions bookmarkOptions
     ) implements PdfSemanticFragmentPayload {
     }
 
@@ -238,8 +239,8 @@ public final class BuiltInNodeDefinitions {
     public record TableRowFragmentPayload(
             List<TableResolvedCell> cells,
             boolean startsPageFragment,
-            PdfLinkOptions linkOptions,
-            PdfBookmarkOptions bookmarkOptions
+            DocumentLinkOptions linkOptions,
+            DocumentBookmarkOptions bookmarkOptions
     ) implements PdfSemanticFragmentPayload {
         /**
          * Creates an immutable table row fragment payload.
@@ -730,10 +731,11 @@ public final class BuiltInNodeDefinitions {
 
     // HELPERS
 
-    private static BarcodeData toBarcodeData(PdfBarcodeOptions options) {
+    private static BarcodeData toBarcodeData(DocumentBarcodeOptions options) {
+        DocumentBarcodeType type = options.getType() == null ? DocumentBarcodeType.QR_CODE : options.getType();
         return BarcodeData.of(
                 options.getContent(),
-                switch (options.getType()) {
+                switch (type) {
                     case CODE_128 -> com.demcha.compose.engine.components.content.barcode.BarcodeType.CODE_128;
                     case CODE_39 -> com.demcha.compose.engine.components.content.barcode.BarcodeType.CODE_39;
                     case EAN_13 -> com.demcha.compose.engine.components.content.barcode.BarcodeType.EAN_13;
@@ -743,8 +745,8 @@ public final class BuiltInNodeDefinitions {
                     case DATA_MATRIX -> com.demcha.compose.engine.components.content.barcode.BarcodeType.DATA_MATRIX;
                     case QR_CODE -> com.demcha.compose.engine.components.content.barcode.BarcodeType.QR_CODE;
                 },
-                options.getForeground(),
-                options.getBackground(),
+                options.getForeground() == null ? Color.BLACK : options.getForeground().color(),
+                options.getBackground() == null ? Color.WHITE : options.getBackground().color(),
                 options.getQuietZoneMargin());
     }
 
@@ -2166,7 +2168,7 @@ public final class BuiltInNodeDefinitions {
     private record InlineLayoutToken(
             String text,
             TextStyle textStyle,
-            PdfLinkOptions linkOptions
+            DocumentLinkOptions linkOptions
     ) {
         private InlineLayoutToken {
             text = text == null ? "" : text;
@@ -2174,6 +2176,5 @@ public final class BuiltInNodeDefinitions {
         }
     }
 }
-
 
 

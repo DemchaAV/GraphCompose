@@ -6,7 +6,7 @@ This guide explains how to move from the v1.x template-first API to the v2.0 can
 
 | Concern | v1.x | v2.0 |
 | --- | --- | --- |
-| Maven coordinates | `com.demcha:GraphCompose:v1.1.0` | `io.github.demchaav:GraphCompose:2.0.0` |
+| Maven coordinates | `com.demcha:GraphCompose:v1.1.0` | `io.github.demchaav:graphcompose:2.0.0` |
 | JitPack coordinates | `com.github.DemchaAV:GraphCompose:v1.1.0` | `com.github.DemchaAV:GraphCompose:v2.0.0` |
 | Authoring entry point | static `compose(DocumentSession, ...)` template helpers | `GraphCompose.document(path).create()` returning a `DocumentSession` |
 | Lifecycle | session-per-render, ad-hoc close paths | `try-with-resources` `DocumentSession` with idempotent `close()` |

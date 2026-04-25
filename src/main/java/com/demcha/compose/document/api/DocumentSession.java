@@ -9,7 +9,6 @@ import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions
 import com.demcha.compose.font.DefaultFonts;
 import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.font.FontLibrary;
-import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.debug.LayoutSnapshot;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.engine.measurement.FontLibraryTextMeasurementSystem;
@@ -21,6 +20,7 @@ import com.demcha.compose.document.backend.semantic.SemanticBackend;
 import com.demcha.compose.document.backend.semantic.SemanticExportContext;
 import com.demcha.compose.document.debug.snapshot.LayoutGraphSnapshotExtractor;
 import com.demcha.compose.document.dsl.DocumentDsl;
+import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.layout.*;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ContainerNode;
@@ -76,7 +76,7 @@ public final class DocumentSession implements AutoCloseable {
     private final List<PdfHeaderFooterOptions> headerFooterOptions = new ArrayList<>();
 
     private PDRectangle pageSize;
-    private Margin margin;
+    private DocumentInsets margin;
     private LayoutCanvas canvas;
     private boolean markdown;
     private boolean guideLines;
@@ -112,7 +112,7 @@ public final class DocumentSession implements AutoCloseable {
      */
     public DocumentSession(Path defaultOutputFile,
                            PDRectangle pageSize,
-                           Margin margin,
+                           DocumentInsets margin,
                            Collection<FontFamilyDefinition> customFontFamilies,
                            boolean markdown,
                            boolean guideLines,
@@ -122,8 +122,8 @@ public final class DocumentSession implements AutoCloseable {
                            Collection<PdfHeaderFooterOptions> headerFooterOptions) {
         this.defaultOutputFile = defaultOutputFile;
         this.pageSize = Objects.requireNonNull(pageSize, "pageSize");
-        this.margin = margin == null ? Margin.zero() : margin;
-        this.canvas = LayoutCanvas.from(pageSize, this.margin);
+        this.margin = margin == null ? DocumentInsets.zero() : margin;
+        this.canvas = LayoutCanvas.from(pageSize, toEngineMargin(this.margin));
         this.markdown = markdown;
         this.guideLines = guideLines;
         this.metadataOptions = metadataOptions;
@@ -209,7 +209,7 @@ public final class DocumentSession implements AutoCloseable {
      * @return a root flow builder that attaches to this session when built
      * @throws IllegalStateException if this session has already been closed
      */
-    public DocumentDsl.PageFlowBuilder pageFlow() {
+    public PageFlowBuilder pageFlow() {
         return dsl().pageFlow();
     }
 
@@ -220,7 +220,7 @@ public final class DocumentSession implements AutoCloseable {
      * @return the built root container node
      * @throws IllegalStateException if this session has already been closed
      */
-    public ContainerNode pageFlow(Consumer<DocumentDsl.PageFlowBuilder> spec) {
+    public ContainerNode pageFlow(Consumer<PageFlowBuilder> spec) {
         return dsl().pageFlow(spec);
     }
 
@@ -275,27 +275,7 @@ public final class DocumentSession implements AutoCloseable {
     public DocumentSession pageSize(PDRectangle pageSize) {
         ensureOpen();
         this.pageSize = Objects.requireNonNull(pageSize, "pageSize");
-        this.canvas = LayoutCanvas.from(this.pageSize, margin);
-        invalidate();
-        return this;
-    }
-
-    /**
-     * Updates the outer document margin and recomputes the semantic canvas
-     * using the engine spacing type.
-     *
-     * @param margin new canvas margin, or {@code null} to reset to zero
-     * @return this session
-     * @throws IllegalStateException if this session has already been closed
-     * @deprecated since 2.0.0 — use {@link #margin(DocumentInsets)} so the
-     *     public API stops importing engine types. This overload is scheduled
-     *     for removal in the v2.x line.
-     */
-    @Deprecated(since = "2.0.0", forRemoval = true)
-    public DocumentSession margin(Margin margin) {
-        ensureOpen();
-        this.margin = margin == null ? Margin.zero() : margin;
-        this.canvas = LayoutCanvas.from(pageSize, this.margin);
+        this.canvas = LayoutCanvas.from(this.pageSize, toEngineMargin(margin));
         invalidate();
         return this;
     }
@@ -309,10 +289,8 @@ public final class DocumentSession implements AutoCloseable {
      */
     public DocumentSession margin(DocumentInsets margin) {
         ensureOpen();
-        this.margin = margin == null
-                ? Margin.zero()
-                : new Margin(margin.top(), margin.right(), margin.bottom(), margin.left());
-        this.canvas = LayoutCanvas.from(pageSize, this.margin);
+        this.margin = margin == null ? DocumentInsets.zero() : margin;
+        this.canvas = LayoutCanvas.from(pageSize, toEngineMargin(this.margin));
         invalidate();
         return this;
     }
@@ -816,6 +794,17 @@ public final class DocumentSession implements AutoCloseable {
             throw new IllegalStateException(
                     "Cannot render an empty document. Add at least one root before calling writePdf/toPdfBytes/buildPdf.");
         }
+    }
+
+    private com.demcha.compose.engine.components.style.Margin toEngineMargin(DocumentInsets insets) {
+        if (insets == null) {
+            return com.demcha.compose.engine.components.style.Margin.zero();
+        }
+        return new com.demcha.compose.engine.components.style.Margin(
+                insets.top(),
+                insets.right(),
+                insets.bottom(),
+                insets.left());
     }
 
     private void refreshMeasurementServices() {

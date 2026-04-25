@@ -1,7 +1,7 @@
 package com.demcha.compose.document.node;
 
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
+import com.demcha.compose.document.node.DocumentBookmarkOptions;
+import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
@@ -27,8 +27,8 @@ public record ShapeNode(
         double height,
         DocumentColor fillColor,
         DocumentStroke stroke,
-        PdfLinkOptions linkOptions,
-        PdfBookmarkOptions bookmarkOptions,
+        DocumentLinkOptions linkOptions,
+        DocumentBookmarkOptions bookmarkOptions,
         DocumentInsets padding,
         DocumentInsets margin
 ) implements DocumentNode {

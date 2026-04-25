@@ -90,10 +90,10 @@ class DocumentationCoverageTest {
                 "public DocumentSession compose(Consumer<DocumentDsl> spec)");
         assertHasJavadocBefore(
                 PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
-                "public DocumentDsl.PageFlowBuilder pageFlow()");
+                "public PageFlowBuilder pageFlow()");
         assertHasJavadocBefore(
                 PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
-                "public ContainerNode pageFlow(Consumer<DocumentDsl.PageFlowBuilder> spec)");
+                "public ContainerNode pageFlow(Consumer<PageFlowBuilder> spec)");
         assertHasJavadocBefore(
                 PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
                 "public LayoutGraph layoutGraph()");
@@ -101,16 +101,16 @@ class DocumentationCoverageTest {
                 PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/DocumentDsl.java"),
                 "public ContainerNode pageFlow(Consumer<PageFlowBuilder> spec)");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/DocumentDsl.java"),
+                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/AbstractFlowBuilder.java"),
                 "public T addSection(String name, Consumer<SectionBuilder> spec)");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/DocumentDsl.java"),
+                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/TableBuilder.java"),
                 "public TableBuilder header(String... values)");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/DocumentDsl.java"),
+                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/TableBuilder.java"),
                 "public TableBuilder rows(String[]... rows)");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/DocumentDsl.java"),
+                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/TableBuilder.java"),
                 "public TableBuilder headerStyle(DocumentTableStyle style)");
         assertHasJavadocBefore(
                 PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
@@ -125,7 +125,7 @@ class DocumentationCoverageTest {
                 PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/DocumentDsl.java"),
                 "public PageFlowBuilder pageFlow()");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/DocumentDsl.java"),
+                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/PageFlowBuilder.java"),
                 "public ContainerNode build()");
     }
 

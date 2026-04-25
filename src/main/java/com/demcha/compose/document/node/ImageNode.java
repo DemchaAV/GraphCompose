@@ -1,7 +1,7 @@
 package com.demcha.compose.document.node;
 
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
+import com.demcha.compose.document.node.DocumentBookmarkOptions;
+import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.style.DocumentInsets;
 
@@ -24,8 +24,8 @@ public record ImageNode(
         DocumentImageData imageData,
         Double width,
         Double height,
-        PdfLinkOptions linkOptions,
-        PdfBookmarkOptions bookmarkOptions,
+        DocumentLinkOptions linkOptions,
+        DocumentBookmarkOptions bookmarkOptions,
         DocumentInsets padding,
         DocumentInsets margin
 ) implements DocumentNode {

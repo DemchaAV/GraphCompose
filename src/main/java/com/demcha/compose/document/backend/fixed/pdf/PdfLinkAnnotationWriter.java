@@ -1,6 +1,6 @@
 package com.demcha.compose.document.backend.fixed.pdf;
 
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
+import com.demcha.compose.document.node.DocumentLinkOptions;
 import org.apache.pdfbox.cos.COSArray;
 import org.apache.pdfbox.cos.COSInteger;
 import org.apache.pdfbox.cos.COSName;
@@ -20,7 +20,7 @@ final class PdfLinkAnnotationWriter {
     private PdfLinkAnnotationWriter() {
     }
 
-    static void addUriLink(PDPage page, PlacedPdfRect rectangle, PdfLinkOptions options) throws IOException {
+    static void addUriLink(PDPage page, PlacedPdfRect rectangle, DocumentLinkOptions options) throws IOException {
         PDAnnotationLink link = new PDAnnotationLink();
         PDRectangle position = new PDRectangle();
         position.setLowerLeftX((float) rectangle.x());

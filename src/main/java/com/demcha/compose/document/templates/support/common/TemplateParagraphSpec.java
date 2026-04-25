@@ -1,6 +1,6 @@
 package com.demcha.compose.document.templates.support.common;
 
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
+import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
@@ -35,7 +35,7 @@ public record TemplateParagraphSpec(
         double lineSpacing,
         String bulletOffset,
         TextIndentStrategy indentStrategy,
-        PdfLinkOptions linkOptions,
+        DocumentLinkOptions linkOptions,
         Padding padding,
         Margin margin
 ) {
@@ -75,7 +75,7 @@ public record TemplateParagraphSpec(
                                  double lineSpacing,
                                  String bulletOffset,
                                  TextIndentStrategy indentStrategy,
-                                 PdfLinkOptions linkOptions,
+                                 DocumentLinkOptions linkOptions,
                                  Padding padding,
                                  Margin margin) {
         this(name, text, List.of(), style, align, lineSpacing, bulletOffset, indentStrategy, linkOptions, padding, margin);

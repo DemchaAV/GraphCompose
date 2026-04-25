@@ -4,7 +4,7 @@ GraphCompose is split into two practical layers.
 
 ## Pipeline overview
 
-The supported V2 flow is:
+The supported canonical flow is:
 
 1. application code describes a document through `GraphCompose.document(...)`, `DocumentSession`, and `DocumentDsl`
 2. canonical nodes describe semantic intent: modules, paragraphs, lists, rows, tables, images, dividers, and page breaks
@@ -66,7 +66,7 @@ Deprecated helper methods still exist on `Entity` as compatibility delegates, bu
 ## Engine layer: `com.demcha.compose.engine.*`
 
 - `com.demcha.compose.engine.*` contains the ECS engine internals, geometry, layout resolution, pagination, measurement, and rendering systems.
-- `com.demcha.compose.font.*` contains public font registration, lookup, and PDF font helpers.
+- `com.demcha.compose.font.*` contains public font names, backend-neutral family descriptors, registration, lookup, and showcase helpers.
 - `com.demcha.compose.engine.text.*` contains internal text utilities used by layout/render hot paths.
 - `com.demcha.compose.engine.text.markdown.*` contains markdown-to-text-token parsing helpers used by semantic text preparation.
 

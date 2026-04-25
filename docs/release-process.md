@@ -1,18 +1,18 @@
 # GraphCompose release process
 
-This checklist applies to v2.x releases of GraphCompose. The library is published via two channels:
+This checklist applies to current GraphCompose 1.x releases. The library is published through JitPack today; Maven Central is a future distribution channel.
 
-- Maven Central — `io.github.demchaav:graphcompose:<version>` (planned)
-- JitPack — `com.github.DemchaAV:GraphCompose:v<version>` (current)
+- JitPack - `com.github.DemchaAV:GraphCompose:v<version>` (current)
+- Maven Central - `io.github.demchaav:graphcompose:<version>` (planned)
 
 ## Pre-release
 
-- [ ] all CI tests green on `main` (`./mvnw test`) — the full architecture-guard suite included
+- [ ] all CI tests green on `main` (`.\mvnw.cmd -B -ntp clean verify`) - the full architecture-guard suite included
 - [ ] `CHANGELOG.md` has an entry for the upcoming version under `## v<version> - <date>` with the date set to release day
 - [ ] `pom.xml` and `examples/pom.xml` `<version>` fields match the target release version (no `-SNAPSHOT` suffix)
 - [ ] `README.md` installation snippets reference the new version
-- [ ] migration notes (`docs/migration-v1-to-v2.md` for v2.x, or a new file for later majors) are up to date
-- [ ] roadmap (`docs/v2-roadmap.md`) reflects what shipped vs. what remains for the next milestone
+- [ ] migration notes (`docs/migration-v1-1-to-v1-2.md` for v1.2) are up to date
+- [ ] roadmap (`docs/v1.2-roadmap.md`) reflects what shipped vs. what remains for the next milestone
 
 ## Release
 
@@ -29,9 +29,9 @@ This checklist applies to v2.x releases of GraphCompose. The library is publishe
 
 - [ ] run the runnable examples module against the new artifact:
 
-```bash
-./mvnw -pl examples -am package
-java -jar examples/target/examples-2.0.0.jar
+```powershell
+.\mvnw.cmd -f examples\pom.xml clean package
+.\mvnw.cmd -f examples\pom.xml exec:java "-Dexec.mainClass=com.demcha.examples.GenerateAllExamples"
 ```
 
 - [ ] confirm the public API surface is unchanged for patch releases — `PublicApiNoEngineLeakTest` and `SemanticLayerNoPdfBoxDependencyTest` should pass without allowlist edits

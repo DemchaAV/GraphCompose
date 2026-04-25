@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Architectural guard that pins the inventory of {@code com.demcha.compose.engine.*}
- * imports leaking into the public API surface (Phase 1.1 of the v2 roadmap).
+ * imports leaking into the public API surface.
  *
  * <p>The baseline below records every currently tolerated leak. New imports of engine
  * types into these packages will fail the test, while removing a leak (the desired
@@ -42,7 +42,8 @@ class PublicApiNoEngineLeakTest {
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/font"));
 
     /**
-     * Baseline of currently accepted engine leaks per public file. Each entry is
+     * Baseline of currently accepted engine leaks per public file. The map is
+     * intentionally empty when the public surface has no accepted leaks. Each entry is
      * keyed by the file path (relative to the project root, forward slashes) and
      * contains the exact set of fully-qualified engine imports that the file is
      * allowed to use.
@@ -52,26 +53,6 @@ class PublicApiNoEngineLeakTest {
      */
     private static final Map<String, Set<String>> ALLOWED_ENGINE_IMPORTS = new LinkedHashMap<>();
     static {
-        // DocumentSession still uses the shared text measurement seam internally.
-        ALLOWED_ENGINE_IMPORTS.put(
-                "src/main/java/com/demcha/compose/document/api/DocumentSession.java",
-                Set.of("com.demcha.compose.engine.measurement.TextMeasurementSystem"));
-
-        // Font integration package re-exposes engine font types by design.
-        ALLOWED_ENGINE_IMPORTS.put(
-                "src/main/java/com/demcha/compose/font/FontFamilyDefinition.java",
-                Set.of(
-                        "com.demcha.compose.engine.render.pdf.PdfFont",
-                        "com.demcha.compose.engine.render.word.WordFont"));
-        ALLOWED_ENGINE_IMPORTS.put(
-                "src/main/java/com/demcha/compose/font/FontLibrary.java",
-                Set.of(
-                        "com.demcha.compose.engine.render.pdf.PdfFont",
-                        "com.demcha.compose.engine.render.pdf.PdfFontGetter",
-                        "com.demcha.compose.engine.font.Font"));
-        ALLOWED_ENGINE_IMPORTS.put(
-                "src/main/java/com/demcha/compose/font/FontSet.java",
-                Set.of("com.demcha.compose.engine.font.Font"));
     }
 
     @Test

@@ -28,7 +28,7 @@ Most Java PDF libraries expose low-level drawing commands. GraphCompose gives Ja
 - automatic pagination and deterministic layout snapshots are built into the engine
 - PDF rendering is isolated behind a PDFBox backend
 
-The current release is **v2.0.0**, a breaking cleanup release focused on stable public API boundaries.
+The current release is **v1.2.0**, an early stabilization release focused on the canonical Java-first API, lifecycle safety, layout determinism, and cleaner release documentation.
 
 ## Visual Preview
 
@@ -55,7 +55,7 @@ GraphCompose is currently distributed through JitPack.
 <dependency>
     <groupId>com.github.DemchaAV</groupId>
     <artifactId>GraphCompose</artifactId>
-    <version>v2.0.0</version>
+    <version>v1.2.0</version>
 </dependency>
 ```
 
@@ -65,11 +65,11 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.DemchaAV:GraphCompose:v2.0.0")
+    implementation("com.github.DemchaAV:GraphCompose:v1.2.0")
 }
 ```
 
-The project POM coordinates are `io.github.demchaav:graphcompose:2.0.0`. JitPack keeps the GitHub repository coordinate and `v2.0.0` tag.
+The project POM coordinates are `io.github.demchaav:graphcompose:1.2.0`. JitPack keeps the GitHub repository coordinate and `v1.2.0` tag.
 
 ## Quick start
 
@@ -252,7 +252,8 @@ Public authoring lives in `com.demcha.compose`, `document.api`, `document.dsl`, 
 - [Production Rendering](./docs/production-rendering.md)
 - [Layout Snapshot Testing](./docs/layout-snapshot-testing.md)
 - [Benchmarks](./docs/benchmarks.md)
-- [Migration v1 to v2](./docs/migration-v1-to-v2.md)
+- [Migration v1.1 to v1.2](./docs/migration-v1-1-to-v1-2.md)
+- [v1.2 Roadmap](./docs/v1.2-roadmap.md)
 - [Release Process](./docs/release-process.md)
 - [Changelog](./CHANGELOG.md)
 

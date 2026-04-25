@@ -1,12 +1,12 @@
 # Changelog
 
-## v2.0.0 - 2026-04-25
+## v1.2.0 - 2026-04-25
 
 ### Release identity
 
-- the `graphcompose-v2-engine` rewrite is being shipped as **v2.0.0** because the public composition model has changed: `GraphCompose.document(...) → DocumentSession → DocumentDsl` is now the canonical authoring path
-- Maven coordinates moved to `io.github.demchaav:graphcompose:2.0.0` (the `v` prefix is now reserved for git tags only); JitPack consumers continue to use `com.github.DemchaAV:GraphCompose:v2.0.0`
-- consumers of `v1.x` should follow the [migration guide](./docs/migration-v1-to-v2.md) before upgrading
+- the current canonical API cleanup is being released as **v1.2.0** to match the project's early maturity while still making `GraphCompose.document(...) -> DocumentSession -> DocumentDsl` the preferred authoring path
+- Maven coordinates are `io.github.demchaav:graphcompose:1.2.0`; JitPack consumers continue to use `com.github.DemchaAV:GraphCompose:v1.2.0`
+- consumers on `v1.1.x` should follow the [migration guide](./docs/migration-v1-1-to-v1-2.md) before adopting the canonical API path
 
 ### Public API
 
@@ -16,7 +16,8 @@
 - `DocumentSession#margin(Margin)` and `GraphCompose.DocumentBuilder#margin(Margin)` were removed from the canonical API; use `DocumentInsets` or `margin(top, right, bottom, left)` to keep authoring renderer-neutral
 - PDF-specific metadata, protection, watermark, header/footer, and guide-line options moved behind `PdfFixedLayoutBackend.builder()` instead of the canonical `GraphCompose` / `DocumentSession` surface
 - `DocumentSession.layoutSnapshot()` now returns public renderer-neutral `com.demcha.compose.document.snapshot.*` DTOs instead of engine debug types
-- `BoxConstraints.unboundedHeight(width)` factory replaces the previous magic `1_000_000.0` height constant in internal layout call sites
+- `BoxConstraints.natural(width)` is now the canonical natural-measurement factory; `unboundedHeight(width)` remains as a compatibility alias
+- the public font registry no longer exposes the unadvertised `getPdfFont(...)` bridge; backend code resolves typed fonts through `getFont(..., PdfFont.class)`
 
 ### Architecture guards
 
@@ -30,9 +31,9 @@
 
 ### Documentation
 
-- new `docs/migration-v1-to-v2.md` outlines the move from the legacy template-first API to the canonical session-first API
-- new `docs/v2-roadmap.md` tracks the remaining stabilisation work scheduled for the v2 release window (DSL split, semantic-layer purity, layout edge cases, release packaging)
-- new `docs/release-process.md` defines the v2 release checklist (Maven coordinates, JitPack tag, GitHub release notes, post-release smoke checks)
+- new `docs/migration-v1-1-to-v1-2.md` outlines the move from older v1.1 usage patterns to the canonical session-first API
+- new `docs/v1.2-roadmap.md` tracks the remaining stabilization work for the v1.2 release polish window
+- `docs/release-process.md` now describes the current JitPack-first 1.x release flow and runnable examples verification
 
 ---
 

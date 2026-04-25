@@ -1746,7 +1746,7 @@ public final class BuiltInNodeDefinitions {
             DocumentNode child = children.get(index);
             PreparedNode<DocumentNode> childPrepared = ctx.prepare(
                     child,
-                    BoxConstraints.unboundedHeight(Math.max(0.0, innerWidth - child.margin().horizontal())));
+                    BoxConstraints.natural(Math.max(0.0, innerWidth - child.margin().horizontal())));
             totalHeight += child.margin().vertical() + childPrepared.measureResult().height();
             maxWidth = Math.max(maxWidth, child.margin().horizontal() + childPrepared.measureResult().width());
             if (index < children.size() - 1) {
@@ -2176,5 +2176,4 @@ public final class BuiltInNodeDefinitions {
         }
     }
 }
-
 

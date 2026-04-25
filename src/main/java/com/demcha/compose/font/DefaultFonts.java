@@ -1,33 +1,36 @@
 package com.demcha.compose.font;
 
+import com.demcha.compose.document.backend.fixed.pdf.PdfFontLibraryFactory;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Catalog of built-in GraphCompose font families.
+ */
 public class DefaultFonts {
 
     private static final List<FontFamilyDefinition> STANDARD_FONT_FAMILIES = List.of(
             FontFamilyDefinition.standard14(
                     FontName.HELVETICA,
-                    Standard14Fonts.FontName.HELVETICA,
-                    Standard14Fonts.FontName.HELVETICA_BOLD,
-                    Standard14Fonts.FontName.HELVETICA_OBLIQUE,
-                    Standard14Fonts.FontName.HELVETICA_BOLD_OBLIQUE),
+                    "HELVETICA",
+                    "HELVETICA_BOLD",
+                    "HELVETICA_OBLIQUE",
+                    "HELVETICA_BOLD_OBLIQUE"),
             FontFamilyDefinition.standard14(
                     FontName.TIMES_ROMAN,
-                    Standard14Fonts.FontName.TIMES_ROMAN,
-                    Standard14Fonts.FontName.TIMES_BOLD,
-                    Standard14Fonts.FontName.TIMES_ITALIC,
-                    Standard14Fonts.FontName.TIMES_BOLD_ITALIC),
+                    "TIMES_ROMAN",
+                    "TIMES_BOLD",
+                    "TIMES_ITALIC",
+                    "TIMES_BOLD_ITALIC"),
             FontFamilyDefinition.standard14(
                     FontName.COURIER,
-                    Standard14Fonts.FontName.COURIER,
-                    Standard14Fonts.FontName.COURIER_BOLD,
-                    Standard14Fonts.FontName.COURIER_OBLIQUE,
-                    Standard14Fonts.FontName.COURIER_BOLD_OBLIQUE));
+                    "COURIER",
+                    "COURIER_BOLD",
+                    "COURIER_OBLIQUE",
+                    "COURIER_BOLD_OBLIQUE"));
 
     private static final List<FontFamilyDefinition> GOOGLE_FONT_FAMILIES = List.of(
             google(FontName.LATO, "lato", "Lato"),
@@ -63,36 +66,74 @@ public class DefaultFonts {
     private DefaultFonts() {
     }
 
+    /**
+     * Creates a PDF-backed font library containing the standard 14 families.
+     *
+     * @return font library with standard fonts
+     */
     public static FontLibrary standardLibrary() {
-        FontLibrary fontLibrary = new FontLibrary();
-        STANDARD_FONT_FAMILIES.forEach(definition -> definition.register(fontLibrary, null));
-        return fontLibrary;
+        return PdfFontLibraryFactory.standardLibrary();
     }
 
+    /**
+     * Creates a PDF-backed font library containing bundled families.
+     *
+     * @param document PDF document that owns loaded fonts
+     * @return font library
+     */
     public static FontLibrary library(PDDocument document) {
-        return library(document, List.of());
+        return PdfFontLibraryFactory.library(document);
     }
 
+    /**
+     * Creates a PDF-backed font library containing bundled and custom families.
+     *
+     * @param document PDF document that owns loaded fonts
+     * @param customFamilies document-local custom font families
+     * @return font library
+     */
     public static FontLibrary library(PDDocument document, Collection<FontFamilyDefinition> customFamilies) {
-        FontLibrary fontLibrary = new FontLibrary();
-
-        for (FontFamilyDefinition definition : STANDARD_FONT_FAMILIES) {
-            definition.register(fontLibrary, document);
-        }
-        for (FontFamilyDefinition definition : GOOGLE_FONT_FAMILIES) {
-            definition.register(fontLibrary, document);
-        }
-        for (FontFamilyDefinition definition : customFamilies) {
-            definition.register(fontLibrary, document);
-        }
-
-        return fontLibrary;
+        return PdfFontLibraryFactory.library(document, customFamilies);
     }
 
+    /**
+     * Returns bundled font family definitions.
+     *
+     * @return standard and bundled Google font definitions
+     */
+    public static List<FontFamilyDefinition> bundledFamilies() {
+        List<FontFamilyDefinition> result = new ArrayList<>();
+        result.addAll(STANDARD_FONT_FAMILIES);
+        result.addAll(GOOGLE_FONT_FAMILIES);
+        return List.copyOf(result);
+    }
+
+    /**
+     * Returns standard 14 font family definitions.
+     *
+     * @return standard family definitions
+     */
+    public static List<FontFamilyDefinition> standardFamilies() {
+        return STANDARD_FONT_FAMILIES;
+    }
+
+    /**
+     * Returns bundled Google font family definitions.
+     *
+     * @return Google font family definitions
+     */
+    public static List<FontFamilyDefinition> googleFamilies() {
+        return GOOGLE_FONT_FAMILIES;
+    }
+
+    /**
+     * Returns logical names for all bundled font families.
+     *
+     * @return bundled logical font names
+     */
     public static List<FontName> bundledFontNames() {
         List<FontName> result = new ArrayList<>();
-        STANDARD_FONT_FAMILIES.stream().map(FontFamilyDefinition::name).forEach(result::add);
-        GOOGLE_FONT_FAMILIES.stream().map(FontFamilyDefinition::name).forEach(result::add);
+        bundledFamilies().stream().map(FontFamilyDefinition::name).forEach(result::add);
         return List.copyOf(result);
     }
 

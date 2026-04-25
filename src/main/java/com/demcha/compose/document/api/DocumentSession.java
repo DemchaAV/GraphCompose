@@ -2,8 +2,6 @@ package com.demcha.compose.document.api;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.font.FontFamilyDefinition;
-import com.demcha.compose.font.FontLibrary;
-import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
 import com.demcha.compose.document.backend.fixed.pdf.PdfMeasurementResources;
@@ -27,9 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -71,8 +67,6 @@ public final class DocumentSession implements AutoCloseable {
     private boolean markdown;
 
     private PdfMeasurementResources measurementResources;
-    private FontLibrary fontLibrary;
-    private TextMeasurementSystem textMeasurementSystem;
 
     private long revision;
     private LayoutGraph cachedLayout;
@@ -374,7 +368,12 @@ public final class DocumentSession implements AutoCloseable {
         long startNanos = System.nanoTime();
         LIFECYCLE_LOG.debug("document.layout.start sessionId={} revision={} roots={}", sessionId, revision, roots.size());
         try {
-            V2Context context = new V2Context();
+            DocumentLayoutPassContext context = new DocumentLayoutPassContext(
+                    registry,
+                    canvas,
+                    measurementResources.fontLibrary(),
+                    measurementResources.textMeasurementSystem(),
+                    markdown);
             cachedLayout = compiler.compile(documentGraph(), context, context);
             cachedLayoutRevision = revision;
             LIFECYCLE_LOG.debug(
@@ -647,9 +646,6 @@ public final class DocumentSession implements AutoCloseable {
         closed = true;
         LIFECYCLE_LOG.debug("document.session.close.start sessionId={} revision={} roots={}", sessionId, revision, roots.size());
         try {
-            if (textMeasurementSystem != null) {
-                textMeasurementSystem.clearCaches();
-            }
             if (measurementResources != null) {
                 measurementResources.close();
             }
@@ -707,8 +703,6 @@ public final class DocumentSession implements AutoCloseable {
         }
 
         measurementResources = PdfMeasurementResources.open(customFontFamilies);
-        fontLibrary = measurementResources.fontLibrary();
-        textMeasurementSystem = measurementResources.textMeasurementSystem();
     }
 
     private void invalidate() {
@@ -721,68 +715,4 @@ public final class DocumentSession implements AutoCloseable {
         return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
     }
 
-    private final class V2Context implements PrepareContext, FragmentContext {
-        private final Map<PreparedNodeCacheKey, PreparedNode<?>> preparedNodes = new HashMap<>();
-
-        @Override
-        public <E extends DocumentNode> PreparedNode<E> prepare(E node, BoxConstraints constraints) {
-            PreparedNodeCacheKey cacheKey = new PreparedNodeCacheKey(node, normalizeWidth(constraints.availableWidth()));
-            PreparedNode<?> cached = preparedNodes.get(cacheKey);
-            if (cached != null) {
-                @SuppressWarnings("unchecked")
-                PreparedNode<E> typed = (PreparedNode<E>) cached;
-                return typed;
-            }
-
-            @SuppressWarnings("unchecked")
-            NodeDefinition<E> definition = (NodeDefinition<E>) registry.definitionFor(node);
-            PreparedNode<E> prepared = Objects.requireNonNull(
-                    definition.prepare(node, this, constraints),
-                    "Node definition prepare(...) must not return null for " + node.nodeKind());
-            preparedNodes.put(cacheKey, prepared);
-            return prepared;
-        }
-
-        @Override
-        public FontLibrary fonts() {
-            return fontLibrary;
-        }
-
-        @Override
-        public TextMeasurementSystem textMeasurement() {
-            return textMeasurementSystem;
-        }
-
-        @Override
-        public LayoutCanvas canvas() {
-            return canvas;
-        }
-
-        @Override
-        public boolean markdownEnabled() {
-            return markdown;
-        }
-    }
-
-    private long normalizeWidth(double value) {
-        return Math.round(value * 1_000.0);
-    }
-
-    private record PreparedNodeCacheKey(DocumentNode node, long widthKey) {
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) {
-                return true;
-            }
-            if (!(other instanceof PreparedNodeCacheKey that)) {
-                return false;
-            }
-            return widthKey == that.widthKey && node == that.node;
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * System.identityHashCode(node) + Long.hashCode(widthKey);
-        }
-    }
 }

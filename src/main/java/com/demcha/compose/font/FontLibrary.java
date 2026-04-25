@@ -1,26 +1,26 @@
 package com.demcha.compose.font;
 
-import com.demcha.compose.engine.render.pdf.PdfFont;
-import com.demcha.compose.engine.render.pdf.PdfFontGetter;
-import com.demcha.compose.engine.font.Font;
-
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 /**
  * Document-scoped font registry and resolver.
- * <p>
- * {@code FontLibrary} maps logical {@link FontName} values to concrete backend
- * font implementations such as {@code PdfFont}. Builders and styles only deal
- * with logical names; measurement and rendering phases resolve those names
- * through this library when they need backend-specific font objects.
- * </p>
+ *
+ * <p>{@code FontLibrary} maps logical {@link FontName} values to concrete
+ * backend font objects. Public authoring code deals only with logical names;
+ * measurement and rendering phases resolve those names through typed backend
+ * lookups such as {@code getFont(name, PdfFont.class)}.</p>
  *
  * <p>The library supports both eagerly registered fonts and lazily created
  * fonts through factories.</p>
  */
-public class FontLibrary implements PdfFontGetter {
+public class FontLibrary {
 
     private static final Map<FontName, FontName> FONT_ALIASES = Map.ofEntries(
             Map.entry(FontName.HELVETICA_BOLD, FontName.HELVETICA),
@@ -33,91 +33,108 @@ public class FontLibrary implements PdfFontGetter {
             Map.entry(FontName.COURIER_OBLIQUE, FontName.COURIER),
             Map.entry(FontName.COURIER_BOLD_OBLIQUE, FontName.COURIER));
 
-    // 1. ЗАМЕНА: Используем высокопроизводительную ConcurrentHashMap вместо LinkedHashMap
-    private final Map<FontName, Map<Class<?>, Font<?>>> fonts = new ConcurrentHashMap<>();
-    private final Map<FontName, Map<Class<?>, Supplier<Font<?>>>> fontFactories = new ConcurrentHashMap<>();
+    private final Map<FontName, Map<Class<?>, Object>> fonts = new ConcurrentHashMap<>();
+    private final Map<FontName, Map<Class<?>, Supplier<?>>> fontFactories = new ConcurrentHashMap<>();
 
     /**
-     * Resolves a font family to a concrete backend font implementation.
+     * Resolves a font family to a concrete backend font object.
      *
      * @param fontName logical family requested by styles or templates
      * @param fontClass backend font type to resolve
+     * @param <F> backend font type
      * @return the matching backend font when available
      */
-    @SuppressWarnings("unchecked")
-    public <F extends Font<?>> Optional<F> getFont(FontName fontName, Class<F> fontClass) {
+    public <F> Optional<F> getFont(FontName fontName, Class<F> fontClass) {
+        Objects.requireNonNull(fontClass, "fontClass");
         FontName resolvedName = resolveBaseFont(fontName);
-        
-        // 1. Check instantiated fonts
-        var fontRegistry = fonts.get(resolvedName);
+
+        Map<Class<?>, Object> fontRegistry = fonts.get(resolvedName);
         if (fontRegistry != null) {
-            Font<?> genericFont = fontRegistry.get(fontClass);
-            if (genericFont != null && fontClass.isInstance(genericFont)) {
-                return Optional.of(fontClass.cast(genericFont));
+            Object registered = fontRegistry.get(fontClass);
+            if (fontClass.isInstance(registered)) {
+                return Optional.of(fontClass.cast(registered));
             }
         }
 
-        // 2. Check font factories and evaluate lazily if present
-        var factoryRegistry = fontFactories.get(resolvedName);
+        Map<Class<?>, Supplier<?>> factoryRegistry = fontFactories.get(resolvedName);
         if (factoryRegistry != null) {
-            Supplier<Font<?>> factory = factoryRegistry.get(fontClass);
+            Supplier<?> factory = factoryRegistry.get(fontClass);
             if (factory != null) {
-                Font<?> newFont = factory.get();
-                addFont(resolvedName, fontClass, (F) newFont);
-                return Optional.of(fontClass.cast(newFont));
+                Object created = Objects.requireNonNull(
+                        factory.get(),
+                        "Font factory returned null for " + resolvedName + " and " + fontClass.getName());
+                F typed = fontClass.cast(created);
+                addFont(resolvedName, fontClass, typed);
+                return Optional.of(typed);
             }
         }
 
         return Optional.empty();
     }
 
-    private FontName resolveBaseFont(FontName fontName) {
-        if (fontName == null || FontName.DEFAULT.equals(fontName)) {
-            return FontName.HELVETICA;
-        }
-        return FONT_ALIASES.getOrDefault(fontName, fontName);
-    }
-
     /**
-     * Registers an already created backend font instance under a logical family.
+     * Registers an already created backend font object under a logical family.
+     *
+     * @param name logical font family
+     * @param fontClass backend font type
+     * @param font backend font instance
+     * @param <F> backend font type
      */
-    public <F extends Font<?>> void addFont(FontName name, Class<F> fontClass, F font) {
+    public <F> void addFont(FontName name, Class<F> fontClass, F font) {
+        Objects.requireNonNull(name, "name");
+        Objects.requireNonNull(fontClass, "fontClass");
+        Objects.requireNonNull(font, "font");
         if (!fontClass.isInstance(font)) {
-            throw new IllegalArgumentException(
-                    "Font instance does not match the provided class type"
-            );
+            throw new IllegalArgumentException("Font instance does not match the provided class type.");
         }
-        fonts.computeIfAbsent(name, k -> new ConcurrentHashMap<>())
+        fonts.computeIfAbsent(name, key -> new ConcurrentHashMap<>())
                 .put(fontClass, font);
     }
 
     /**
-     * Registers a lazy factory for a backend font implementation.
+     * Registers a lazy factory for a backend font object.
+     *
+     * @param name logical font family
+     * @param fontClass backend font type
+     * @param factory lazy factory that creates the backend font object
+     * @param <F> backend font type
      */
-    public <F extends Font<?>> void addFontFactory(FontName name, Class<F> fontClass, Supplier<F> factory) {
-        // Safe cast in factory wrapping since we expect supplier returning F
-        fontFactories.computeIfAbsent(name, k -> new ConcurrentHashMap<>())
-                .put(fontClass, (Supplier<Font<?>>) (Supplier<?>) factory);
+    public <F> void addFontFactory(FontName name, Class<F> fontClass, Supplier<? extends F> factory) {
+        Objects.requireNonNull(name, "name");
+        Objects.requireNonNull(fontClass, "fontClass");
+        Objects.requireNonNull(factory, "factory");
+        fontFactories.computeIfAbsent(name, key -> new ConcurrentHashMap<>())
+                .put(fontClass, factory);
     }
 
     /**
      * Convenience overload that registers a font under its runtime class.
+     *
+     * @param name logical font family
+     * @param font backend font object
+     * @param <F> backend font type
      */
     @SuppressWarnings("unchecked")
-    public <F extends Font<?>> void addFont(FontName name, F font) {
+    public <F> void addFont(FontName name, F font) {
+        Objects.requireNonNull(font, "font");
         addFont(name, (Class<F>) font.getClass(), font);
     }
 
     /**
      * Registers a font from a logical family plus concrete font pair.
+     *
+     * @param set font registration tuple
+     * @param <F> backend font type
      */
-    @SuppressWarnings("unchecked")
-    public <F extends Font<?>> void addFont(FontSet set) {
-        addFont(set.name(), (Class<F>) set.font().getClass(), (F) set.font());
+    public <F> void addFont(FontSet<F> set) {
+        Objects.requireNonNull(set, "set");
+        addFont(set.name(), set.fontClass(), set.font());
     }
 
     /**
      * Returns the set of logical families currently known to this library.
+     *
+     * @return available logical font names
      */
     public Set<FontName> availableFonts() {
         Set<FontName> all = new LinkedHashSet<>();
@@ -126,14 +143,10 @@ public class FontLibrary implements PdfFontGetter {
         return Collections.unmodifiableSet(all);
     }
 
-    /**
-     * Resolves the PDF font implementation for a logical family.
-     *
-     * @param fontName logical family requested by the renderer
-     * @return the PDF font implementation
-     */
-    @Override
-    public PdfFont getPdfFont(FontName fontName) {
-        return getFont(fontName, PdfFont.class).orElseThrow();
+    private FontName resolveBaseFont(FontName fontName) {
+        if (fontName == null || FontName.DEFAULT.equals(fontName)) {
+            return FontName.HELVETICA;
+        }
+        return FONT_ALIASES.getOrDefault(fontName, fontName);
     }
 }

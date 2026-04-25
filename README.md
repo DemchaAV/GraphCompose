@@ -42,6 +42,12 @@
   ·
   <a href="./docs/layout-snapshot-testing.md">Layout Snapshot Testing</a>
   ·
+  <a href="./docs/migration-v1-to-v2.md">Migration v1 → v2</a>
+  ·
+  <a href="./docs/v2-roadmap.md">v2 Roadmap</a>
+  ·
+  <a href="./docs/release-process.md">Release Process</a>
+  ·
   <a href="./CHANGELOG.md">Changelog</a>
   ·
   <a href="./CONTRIBUTING.md">Contributing</a>
@@ -88,20 +94,18 @@ GraphCompose is a good fit for:
 
 ---
 
-## New in v1.1.0
+## New in v2.0.0
 
-- compose-first template usage is now the documented default for built-in templates
-- canonical `DocumentSession` and handler-driven rendering make the engine less PDF-centric internally
-- the PDF render path now uses page-scoped render sessions, reusing one `PDPageContentStream` per page during a render pass instead of reopening a stream per entity
-- layout snapshot testing is now part of the practical regression workflow for pagination and geometry changes
-- runnable examples now cover module-first custom documents plus CV, cover letter, invoice, proposal, and weekly schedule generation
-- new PDF document features include QR/barcodes, watermarks, headers/footers, bookmarks, metadata, protection, explicit page breaks, and dividers
-- architecture guard rails now cover template scene builders in CI, not just the engine layer
-- visual showcase tests now make pagination, document chrome, and barcode output easier to inspect
-- benchmark tooling now includes coarse PR smoke checks, fuller scheduled/manual current-speed runs, diffable JSON/CSV reports, and repeated median-based local comparisons
-- an experimental live preview dev tool is available in test scope for fast template iteration
+- the canonical authoring surface is now `GraphCompose.document(...) → DocumentSession → DocumentDsl`; legacy template-first helpers stay available but are no longer the documented entry point
+- `DocumentSession` is a strict `AutoCloseable` lifecycle owner: `close()` is idempotent, and authoring or rendering on a closed session fails fast with `IllegalStateException`
+- empty-document rendering throws a domain-specific `IllegalStateException` instead of producing a zero-page PDF
+- `margin(Margin)` overloads are deprecated for removal — prefer `margin(DocumentInsets)` or `margin(top, right, bottom, left)` to keep the public API renderer-neutral
+- new architecture-guard tests baseline engine-type leaks (`PublicApiNoEngineLeakTest`) and PDFBox dependencies in the semantic layer (`SemanticLayerNoPdfBoxDependencyTest`)
+- new pagination edge-case suite (`PaginationEdgeCaseTest`) pins exact-fit, near-boundary, leading / trailing page-break, and nested-section behaviour
+- Maven coordinates moved to `io.github.demchaav:GraphCompose:2.0.0` (JitPack still resolves `com.github.DemchaAV:GraphCompose:v2.0.0` by git tag)
+- new [`docs/migration-v1-to-v2.md`](./docs/migration-v1-to-v2.md), [`docs/v2-roadmap.md`](./docs/v2-roadmap.md) and [`docs/release-process.md`](./docs/release-process.md) capture the upgrade path, remaining v2 stabilisation tracks, and the release checklist
 
-See [CHANGELOG.md](./CHANGELOG.md) for the release summary.
+See [CHANGELOG.md](./CHANGELOG.md) for the full release summary.
 
 ---
 
@@ -162,7 +166,7 @@ GraphCompose is available through JitPack.
 <dependency>
     <groupId>com.github.DemchaAV</groupId>
     <artifactId>GraphCompose</artifactId>
-    <version>v1.1.0</version>
+    <version>v2.0.0</version>
 </dependency>
 ```
 
@@ -174,11 +178,11 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.DemchaAV:GraphCompose:v1.1.0")
+    implementation("com.github.DemchaAV:GraphCompose:v2.0.0")
 }
 ```
 
-JitPack consumers can keep using older tagged releases by pinning the tag they want, for example `v1.0.3` or `v1.0.2`.
+JitPack consumers can keep using older tagged releases by pinning the tag they want, for example `v1.1.0`, `v1.0.3`, or `v1.0.2`. Migrating from a v1.x release? See the [v1 → v2 migration guide](./docs/migration-v1-to-v2.md).
 
 ---
 

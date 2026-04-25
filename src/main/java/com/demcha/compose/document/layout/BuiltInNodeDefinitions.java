@@ -59,7 +59,6 @@ import static com.demcha.compose.document.layout.DocumentNodeAdapters.toTextStyl
  */
 public final class BuiltInNodeDefinitions {
     private static final double EPS = 1e-6;
-    private static final double NATURAL_HEIGHT = 1_000_000.0;
 
     private BuiltInNodeDefinitions() {
     }
@@ -1745,7 +1744,7 @@ public final class BuiltInNodeDefinitions {
             DocumentNode child = children.get(index);
             PreparedNode<DocumentNode> childPrepared = ctx.prepare(
                     child,
-                    new BoxConstraints(Math.max(0.0, innerWidth - child.margin().horizontal()), NATURAL_HEIGHT));
+                    BoxConstraints.unboundedHeight(Math.max(0.0, innerWidth - child.margin().horizontal())));
             totalHeight += child.margin().vertical() + childPrepared.measureResult().height();
             maxWidth = Math.max(maxWidth, child.margin().horizontal() + childPrepared.measureResult().width());
             if (index < children.size() - 1) {

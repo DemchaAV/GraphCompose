@@ -1,6 +1,7 @@
 package com.demcha.compose;
 
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
@@ -49,7 +50,7 @@ final class CanonicalBenchmarkSupport {
                                                 String title,
                                                 String body) throws Exception {
         try (DocumentSession document = GraphCompose.document()
-                .pageSize(pageSize)
+                .pageSize(DocumentPageSize.of(pageSize.getWidth(), pageSize.getHeight()))
                 .margin(new DocumentInsets(margin.top(), margin.right(), margin.bottom(), margin.left()))
                 .create()) {
             composeSimpleBenchmarkFlow(document, rootName, title, body);

@@ -1,6 +1,7 @@
 package com.demcha.compose.document.templates;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.data.common.Header;
 import com.demcha.compose.document.templates.data.coverletter.CoverLetterDocumentSpec;
@@ -141,7 +142,7 @@ public final class TemplateTestSupport {
                                                        float bottom,
                                                        float left) {
         return GraphCompose.document()
-                .pageSize(pageSize)
+                .pageSize(toDocumentPageSize(pageSize))
                 .margin(top, right, bottom, left)
                 .create();
     }
@@ -154,9 +155,8 @@ public final class TemplateTestSupport {
                                                    float left,
                                                    boolean guideLines) {
         return GraphCompose.document(outputFile)
-                .pageSize(pageSize)
+                .pageSize(toDocumentPageSize(pageSize))
                 .margin(top, right, bottom, left)
-                .guideLines(guideLines)
                 .create();
     }
 
@@ -229,5 +229,9 @@ public final class TemplateTestSupport {
 
     private static String normalizeFontName(String value) {
         return NON_ALPHANUMERIC.matcher(value.toLowerCase(Locale.ROOT)).replaceAll("");
+    }
+
+    private static DocumentPageSize toDocumentPageSize(PDRectangle pageSize) {
+        return DocumentPageSize.of(pageSize.getWidth(), pageSize.getHeight());
     }
 }

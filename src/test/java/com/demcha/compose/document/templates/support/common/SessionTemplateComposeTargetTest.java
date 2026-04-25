@@ -25,7 +25,7 @@ class SessionTemplateComposeTargetTest {
     @Test
     void addModuleShouldAttachSectionNodeInsteadOfFlatteningBlocks() throws Exception {
         try (DocumentSession session = GraphCompose.document()
-                .pageSize(new PDRectangle(240, 180))
+                .pageSize(240, 180)
                 .margin(DocumentInsets.of(12))
                 .create()) {
             SessionTemplateComposeTarget target = new SessionTemplateComposeTarget(session);
@@ -83,7 +83,7 @@ class SessionTemplateComposeTargetTest {
     @Test
     void customBlocksInsideModuleShouldRenderIntoTheModuleSection() throws Exception {
         try (DocumentSession session = GraphCompose.document()
-                .pageSize(new PDRectangle(240, 180))
+                .pageSize(240, 180)
                 .margin(DocumentInsets.of(12))
                 .create()) {
             SessionTemplateComposeTarget target = new SessionTemplateComposeTarget(session);

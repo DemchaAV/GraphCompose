@@ -127,7 +127,7 @@ public class ComparativeBenchmark {
      * GraphCompose canonical: тестируем semantic-first DocumentSession на эквивалентном сценарии.
      */
     private static byte[] benchmarkGraphComposeCanonical() throws Exception {
-        try (DocumentSession session = GraphCompose.document().pageSize(PDRectangle.A4).create()) {
+        try (DocumentSession session = GraphCompose.document().pageSize(com.demcha.compose.document.api.DocumentPageSize.A4).create()) {
             session.add(new ContainerNode(
                     "Invoice",
                     List.of(

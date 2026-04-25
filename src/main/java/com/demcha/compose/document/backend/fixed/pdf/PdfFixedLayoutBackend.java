@@ -7,6 +7,11 @@ import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfImageFragmentRe
 import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfParagraphFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfShapeFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfTableRowFragmentRenderHandler;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterZone;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.document.exceptions.UnsupportedNodeCapabilityException;
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.LayoutGraph;
@@ -21,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -48,20 +54,47 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
     private static final Logger RENDER_LOG = LoggerFactory.getLogger("com.demcha.compose.engine.render");
 
     private final Map<Class<?>, PdfFragmentRenderHandler<?>> handlers;
+    private final boolean guideLines;
+    private final PdfMetadataOptions metadataOptions;
+    private final PdfWatermarkOptions watermarkOptions;
+    private final PdfProtectionOptions protectionOptions;
+    private final List<PdfHeaderFooterOptions> headerFooterOptions;
 
     /**
      * Creates a backend with the built-in paragraph, shape, image, and table handlers.
      */
     public PdfFixedLayoutBackend() {
-        this(List.of(
+        this(defaultHandlers(), false, null, null, null, List.of());
+    }
+
+    /**
+     * Returns a builder for PDF-specific render options.
+     *
+     * @return PDF backend builder
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    private static List<PdfFragmentRenderHandler<?>> defaultHandlers() {
+        return List.of(
                 new PdfBarcodeFragmentRenderHandler(),
                 new PdfParagraphFragmentRenderHandler(),
                 new PdfShapeFragmentRenderHandler(),
                 new PdfImageFragmentRenderHandler(),
-                new PdfTableRowFragmentRenderHandler()));
+                new PdfTableRowFragmentRenderHandler());
     }
 
     PdfFixedLayoutBackend(Collection<? extends PdfFragmentRenderHandler<?>> handlers) {
+        this(handlers, false, null, null, null, List.of());
+    }
+
+    private PdfFixedLayoutBackend(Collection<? extends PdfFragmentRenderHandler<?>> handlers,
+                                  boolean guideLines,
+                                  PdfMetadataOptions metadataOptions,
+                                  PdfWatermarkOptions watermarkOptions,
+                                  PdfProtectionOptions protectionOptions,
+                                  Collection<PdfHeaderFooterOptions> headerFooterOptions) {
         Map<Class<?>, PdfFragmentRenderHandler<?>> registry = new LinkedHashMap<>();
         for (PdfFragmentRenderHandler<?> handler : handlers) {
             PdfFragmentRenderHandler<?> previous = registry.put(handler.payloadType(), Objects.requireNonNull(handler, "handler"));
@@ -70,6 +103,11 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
             }
         }
         this.handlers = Map.copyOf(registry);
+        this.guideLines = guideLines;
+        this.metadataOptions = metadataOptions;
+        this.watermarkOptions = watermarkOptions;
+        this.protectionOptions = protectionOptions;
+        this.headerFooterOptions = List.copyOf(headerFooterOptions);
     }
 
     @Override
@@ -98,10 +136,13 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                 graph.fragments().size(),
                 context.outputFile() != null,
                 context.outputStream() != null,
-                context.guideLines());
+                guideLines);
         try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             int pageCount = renderToOutput(graph, context, output);
             byte[] bytes = output.toByteArray();
+            if (context.outputFile() != null) {
+                Files.write(context.outputFile(), bytes);
+            }
             RENDER_LOG.debug(
                     "render.pdf.fixed.end pages={} fragments={} byteCount={} durationMs={}",
                     pageCount,
@@ -142,9 +183,19 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                 graph.totalPages(),
                 graph.fragments().size(),
                 context.outputFile() != null,
-                context.guideLines());
+                guideLines);
         try {
-            int pageCount = renderToOutput(graph, context, output);
+            int pageCount;
+            if (context.outputFile() == null) {
+                pageCount = renderToOutput(graph, context, output);
+            } else {
+                try (ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
+                    pageCount = renderToOutput(graph, context, buffer);
+                    byte[] bytes = buffer.toByteArray();
+                    Files.write(context.outputFile(), bytes);
+                    output.write(bytes);
+                }
+            }
             RENDER_LOG.debug(
                     "render.pdf.fixed.stream.end pages={} fragments={} durationMs={}",
                     pageCount,
@@ -169,7 +220,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
             try (PdfRenderSession session = new PdfRenderSession(document, pages)) {
                 PdfRenderEnvironment environment = new PdfRenderEnvironment(document, fonts, session);
                 for (PlacedFragment fragment : graph.fragments()) {
-                    renderFragment(fragment, environment, context.guideLines());
+                    renderFragment(fragment, environment, guideLines);
                 }
                 PdfBookmarkOutlineWriter.apply(document, environment.bookmarkRecords());
             }
@@ -177,14 +228,11 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
             PdfDocumentPostProcessor.apply(
                     document,
                     context.canvas(),
-                    context.metadataOptions(),
-                    context.watermarkOptions(),
-                    context.protectionOptions(),
-                    context.headerFooterOptions());
+                    metadataOptions,
+                    watermarkOptions,
+                    protectionOptions,
+                    headerFooterOptions);
 
-            if (context.outputFile() != null) {
-                document.save(context.outputFile().toFile());
-            }
             document.save(output);
             return pages.size();
         }
@@ -285,5 +333,102 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         }
 
         throw new UnsupportedNodeCapabilityException("PDF backend does not support fragment payload: " + payload.getClass().getName());
+    }
+
+    /**
+     * Fluent builder for PDF-specific render options.
+     */
+    public static final class Builder {
+        private boolean guideLines;
+        private PdfMetadataOptions metadataOptions;
+        private PdfWatermarkOptions watermarkOptions;
+        private PdfProtectionOptions protectionOptions;
+        private final List<PdfHeaderFooterOptions> headerFooterOptions = new ArrayList<>();
+
+        private Builder() {
+        }
+
+        /**
+         * Enables or disables guide-line overlays in rendered PDFs.
+         *
+         * @param enabled {@code true} to draw guide lines
+         * @return this builder
+         */
+        public Builder guideLines(boolean enabled) {
+            this.guideLines = enabled;
+            return this;
+        }
+
+        /**
+         * Configures PDF metadata.
+         *
+         * @param options metadata options, or {@code null} to clear
+         * @return this builder
+         */
+        public Builder metadata(PdfMetadataOptions options) {
+            this.metadataOptions = options;
+            return this;
+        }
+
+        /**
+         * Configures a document-wide PDF watermark.
+         *
+         * @param options watermark options, or {@code null} to clear
+         * @return this builder
+         */
+        public Builder watermark(PdfWatermarkOptions options) {
+            this.watermarkOptions = options;
+            return this;
+        }
+
+        /**
+         * Configures PDF protection and permissions.
+         *
+         * @param options protection options, or {@code null} to clear
+         * @return this builder
+         */
+        public Builder protect(PdfProtectionOptions options) {
+            this.protectionOptions = options;
+            return this;
+        }
+
+        /**
+         * Registers a repeating PDF page header.
+         *
+         * @param options header options
+         * @return this builder
+         */
+        public Builder header(PdfHeaderFooterOptions options) {
+            this.headerFooterOptions.add(Objects.requireNonNull(options, "options")
+                    .withZone(PdfHeaderFooterZone.HEADER));
+            return this;
+        }
+
+        /**
+         * Registers a repeating PDF page footer.
+         *
+         * @param options footer options
+         * @return this builder
+         */
+        public Builder footer(PdfHeaderFooterOptions options) {
+            this.headerFooterOptions.add(Objects.requireNonNull(options, "options")
+                    .withZone(PdfHeaderFooterZone.FOOTER));
+            return this;
+        }
+
+        /**
+         * Creates an immutable PDF backend instance with the configured options.
+         *
+         * @return configured PDF fixed-layout backend
+         */
+        public PdfFixedLayoutBackend build() {
+            return new PdfFixedLayoutBackend(
+                    defaultHandlers(),
+                    guideLines,
+                    metadataOptions,
+                    watermarkOptions,
+                    protectionOptions,
+                    headerFooterOptions);
+        }
     }
 }

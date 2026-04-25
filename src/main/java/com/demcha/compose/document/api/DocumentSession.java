@@ -1,20 +1,12 @@
 package com.demcha.compose.document.api;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterZone;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
-import com.demcha.compose.font.DefaultFonts;
 import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.font.FontLibrary;
-import com.demcha.compose.engine.debug.LayoutSnapshot;
-import com.demcha.compose.engine.render.pdf.PdfFont;
-import com.demcha.compose.engine.measurement.FontLibraryTextMeasurementSystem;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
+import com.demcha.compose.document.backend.fixed.pdf.PdfMeasurementResources;
 import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
 import com.demcha.compose.document.backend.semantic.SemanticBackend;
 import com.demcha.compose.document.backend.semantic.SemanticExportContext;
@@ -24,9 +16,8 @@ import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.layout.*;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ContainerNode;
+import com.demcha.compose.document.snapshot.LayoutSnapshot;
 import com.demcha.compose.document.style.DocumentInsets;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,18 +64,13 @@ public final class DocumentSession implements AutoCloseable {
     private final LayoutCompiler compiler;
     private final List<DocumentNode> roots = new ArrayList<>();
     private final List<FontFamilyDefinition> customFontFamilies = new ArrayList<>();
-    private final List<PdfHeaderFooterOptions> headerFooterOptions = new ArrayList<>();
 
-    private PDRectangle pageSize;
+    private DocumentPageSize pageSize;
     private DocumentInsets margin;
     private LayoutCanvas canvas;
     private boolean markdown;
-    private boolean guideLines;
-    private PdfMetadataOptions metadataOptions;
-    private PdfWatermarkOptions watermarkOptions;
-    private PdfProtectionOptions protectionOptions;
 
-    private PDDocument measurementDocument;
+    private PdfMeasurementResources measurementResources;
     private FontLibrary fontLibrary;
     private TextMeasurementSystem textMeasurementSystem;
 
@@ -104,44 +90,28 @@ public final class DocumentSession implements AutoCloseable {
      * @param margin page margin
      * @param customFontFamilies document-local font families
      * @param markdown whether markdown parsing is enabled
-     * @param guideLines whether PDF guide-line overlays are enabled
-     * @param metadataOptions optional PDF metadata options
-     * @param watermarkOptions optional PDF watermark options
-     * @param protectionOptions optional PDF protection options
-     * @param headerFooterOptions repeating page header/footer options
      */
     public DocumentSession(Path defaultOutputFile,
-                           PDRectangle pageSize,
+                           DocumentPageSize pageSize,
                            DocumentInsets margin,
                            Collection<FontFamilyDefinition> customFontFamilies,
-                           boolean markdown,
-                           boolean guideLines,
-                           PdfMetadataOptions metadataOptions,
-                           PdfWatermarkOptions watermarkOptions,
-                           PdfProtectionOptions protectionOptions,
-                           Collection<PdfHeaderFooterOptions> headerFooterOptions) {
+                           boolean markdown) {
         this.defaultOutputFile = defaultOutputFile;
         this.pageSize = Objects.requireNonNull(pageSize, "pageSize");
         this.margin = margin == null ? DocumentInsets.zero() : margin;
-        this.canvas = LayoutCanvas.from(pageSize, toEngineMargin(this.margin));
+        this.canvas = LayoutCanvas.from(pageSize.width(), pageSize.height(), toEngineMargin(this.margin));
         this.markdown = markdown;
-        this.guideLines = guideLines;
-        this.metadataOptions = metadataOptions;
-        this.watermarkOptions = watermarkOptions;
-        this.protectionOptions = protectionOptions;
         this.registry = BuiltInNodeDefinitions.registerDefaults(new NodeRegistry());
         this.compiler = new LayoutCompiler(registry);
         this.customFontFamilies.addAll(List.copyOf(customFontFamilies));
-        this.headerFooterOptions.addAll(List.copyOf(headerFooterOptions));
         refreshMeasurementServices();
         LIFECYCLE_LOG.debug(
-                "document.session.created sessionId={} outputConfigured={} pageSize={}x{} customFontFamilies={} guideLines={} markdown={}",
+                "document.session.created sessionId={} outputConfigured={} pageSize={}x{} customFontFamilies={} markdown={}",
                 sessionId,
                 defaultOutputFile != null,
-                Math.round(pageSize.getWidth()),
-                Math.round(pageSize.getHeight()),
+                Math.round(pageSize.width()),
+                Math.round(pageSize.height()),
                 this.customFontFamilies.size(),
-                guideLines,
                 markdown);
     }
 
@@ -269,15 +239,26 @@ public final class DocumentSession implements AutoCloseable {
     /**
      * Updates the physical page size for subsequent layout passes.
      *
-     * @param pageSize target page rectangle
+     * @param pageSize target page size
      * @return this session
      */
-    public DocumentSession pageSize(PDRectangle pageSize) {
+    public DocumentSession pageSize(DocumentPageSize pageSize) {
         ensureOpen();
         this.pageSize = Objects.requireNonNull(pageSize, "pageSize");
-        this.canvas = LayoutCanvas.from(this.pageSize, toEngineMargin(margin));
+        this.canvas = LayoutCanvas.from(this.pageSize.width(), this.pageSize.height(), toEngineMargin(margin));
         invalidate();
         return this;
+    }
+
+    /**
+     * Updates the physical page size from point dimensions.
+     *
+     * @param width page width in points
+     * @param height page height in points
+     * @return this session
+     */
+    public DocumentSession pageSize(double width, double height) {
+        return pageSize(DocumentPageSize.of(width, height));
     }
 
     /**
@@ -290,7 +271,7 @@ public final class DocumentSession implements AutoCloseable {
     public DocumentSession margin(DocumentInsets margin) {
         ensureOpen();
         this.margin = margin == null ? DocumentInsets.zero() : margin;
-        this.canvas = LayoutCanvas.from(pageSize, toEngineMargin(this.margin));
+        this.canvas = LayoutCanvas.from(pageSize.width(), pageSize.height(), toEngineMargin(this.margin));
         invalidate();
         return this;
     }
@@ -305,87 +286,6 @@ public final class DocumentSession implements AutoCloseable {
         ensureOpen();
         this.markdown = enabled;
         invalidate();
-        return this;
-    }
-
-    /**
-     * Enables or disables PDF guide-line overlays for debugging rendered
-     * semantic fragment geometry.
-     *
-     * @param enabled {@code true} to draw guide lines in rendered PDFs
-     * @return this session
-     */
-    public DocumentSession guideLines(boolean enabled) {
-        ensureOpen();
-        this.guideLines = enabled;
-        invalidatePdfArtifacts();
-        return this;
-    }
-
-    /**
-     * Configures document metadata for PDFs rendered from this session.
-     *
-     * @param options canonical metadata options, or {@code null} to clear
-     * @return this session
-     */
-    public DocumentSession metadata(PdfMetadataOptions options) {
-        ensureOpen();
-        this.metadataOptions = options;
-        invalidatePdfArtifacts();
-        return this;
-    }
-
-    /**
-     * Configures a document-wide watermark for PDFs rendered from this session.
-     *
-     * @param options canonical watermark options, or {@code null} to clear
-     * @return this session
-     */
-    public DocumentSession watermark(PdfWatermarkOptions options) {
-        ensureOpen();
-        this.watermarkOptions = options;
-        invalidatePdfArtifacts();
-        return this;
-    }
-
-    /**
-     * Configures PDF protection and permissions for this session.
-     *
-     * @param options canonical protection options, or {@code null} to clear
-     * @return this session
-     */
-    public DocumentSession protect(PdfProtectionOptions options) {
-        ensureOpen();
-        this.protectionOptions = options;
-        invalidatePdfArtifacts();
-        return this;
-    }
-
-    /**
-     * Registers a repeating page header.
-     *
-     * @param options canonical header options
-     * @return this session
-     */
-    public DocumentSession header(PdfHeaderFooterOptions options) {
-        ensureOpen();
-        this.headerFooterOptions.add(Objects.requireNonNull(options, "options")
-                .withZone(PdfHeaderFooterZone.HEADER));
-        invalidatePdfArtifacts();
-        return this;
-    }
-
-    /**
-     * Registers a repeating page footer.
-     *
-     * @param options canonical footer options
-     * @return this session
-     */
-    public DocumentSession footer(PdfHeaderFooterOptions options) {
-        ensureOpen();
-        this.headerFooterOptions.add(Objects.requireNonNull(options, "options")
-                .withZone(PdfHeaderFooterZone.FOOTER));
-        invalidatePdfArtifacts();
         return this;
     }
 
@@ -564,12 +464,7 @@ public final class DocumentSession implements AutoCloseable {
                     canvas,
                     customFontFamilies,
                     outputFile,
-                    null,
-                    guideLines,
-                    metadataOptions,
-                    watermarkOptions,
-                    protectionOptions,
-                    headerFooterOptions));
+                    null));
             LIFECYCLE_LOG.debug(
                     "document.render.end sessionId={} backend={} revision={} durationMs={}",
                     sessionId,
@@ -674,12 +569,7 @@ public final class DocumentSession implements AutoCloseable {
                     canvas,
                     customFontFamilies,
                     null,
-                    target,
-                    guideLines,
-                    metadataOptions,
-                    watermarkOptions,
-                    protectionOptions,
-                    headerFooterOptions));
+                    target));
             LIFECYCLE_LOG.debug(
                     "document.pdf.stream.end sessionId={} revision={} durationMs={}",
                     sessionId,
@@ -760,8 +650,8 @@ public final class DocumentSession implements AutoCloseable {
             if (textMeasurementSystem != null) {
                 textMeasurementSystem.clearCaches();
             }
-            if (measurementDocument != null) {
-                measurementDocument.close();
+            if (measurementResources != null) {
+                measurementResources.close();
             }
             LIFECYCLE_LOG.debug("document.session.close.end sessionId={} revision={} roots={}", sessionId, revision, roots.size());
         } catch (Exception ex) {
@@ -809,29 +699,22 @@ public final class DocumentSession implements AutoCloseable {
 
     private void refreshMeasurementServices() {
         try {
-            if (textMeasurementSystem != null) {
-                textMeasurementSystem.clearCaches();
-            }
-            if (measurementDocument != null) {
-                measurementDocument.close();
+            if (measurementResources != null) {
+                measurementResources.close();
             }
         } catch (Exception ignored) {
             // Best-effort close while reloading measurement resources.
         }
 
-        measurementDocument = new PDDocument();
-        fontLibrary = DefaultFonts.library(measurementDocument, customFontFamilies);
-        textMeasurementSystem = new FontLibraryTextMeasurementSystem(fontLibrary, PdfFont.class);
+        measurementResources = PdfMeasurementResources.open(customFontFamilies);
+        fontLibrary = measurementResources.fontLibrary();
+        textMeasurementSystem = measurementResources.textMeasurementSystem();
     }
 
     private void invalidate() {
         revision++;
         cachedLayout = null;
         cachedSnapshot = null;
-    }
-
-    private void invalidatePdfArtifacts() {
-        // PDF bytes are streamed per render pass; no session-level PDF artifact cache is retained.
     }
 
     private long elapsedMillis(long startNanos) {

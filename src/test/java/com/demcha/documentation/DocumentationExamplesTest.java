@@ -1,6 +1,7 @@
 package com.demcha.documentation;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.InvoiceTemplate;
 import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
@@ -13,7 +14,6 @@ import com.demcha.compose.font.FontName;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -42,7 +42,7 @@ class DocumentationExamplesTest {
         Path outputFile = VisualTestOutputs.preparePdf("quick-start", "clean", "documentation");
 
         try (DocumentSession document = GraphCompose.document(outputFile)
-                .pageSize(PDRectangle.A4)
+                .pageSize(DocumentPageSize.A4)
                 .margin(24, 24, 24, 24)
                 .create()) {
             document.pageFlow(page -> page
@@ -60,7 +60,7 @@ class DocumentationExamplesTest {
         Path outputFile = VisualTestOutputs.preparePdf("quick-start-bytes", "clean", "documentation");
 
         try (DocumentSession document = GraphCompose.document()
-                .pageSize(PDRectangle.A4)
+                .pageSize(DocumentPageSize.A4)
                 .margin(24, 24, 24, 24)
                 .create()) {
             document.pageFlow(page -> page
@@ -78,7 +78,7 @@ class DocumentationExamplesTest {
         Path outputFile = VisualTestOutputs.preparePdf("section-dsl-bytes", "clean", "documentation");
 
         try (DocumentSession document = GraphCompose.document()
-                .pageSize(PDRectangle.A4)
+                .pageSize(DocumentPageSize.A4)
                 .margin(24, 24, 24, 24)
                 .create()) {
             document.compose(dsl -> dsl.pageFlow(flow -> flow
@@ -102,7 +102,7 @@ class DocumentationExamplesTest {
         Path outputFile = VisualTestOutputs.preparePdf("module-first-dsl", "clean", "documentation");
 
         try (DocumentSession document = GraphCompose.document(outputFile)
-                .pageSize(PDRectangle.A4)
+                .pageSize(DocumentPageSize.A4)
                 .margin(24, 24, 24, 24)
                 .create()) {
             document.pageFlow()
@@ -132,7 +132,7 @@ class DocumentationExamplesTest {
         InvoiceTemplate template = new InvoiceTemplateV1();
 
         try (DocumentSession document = GraphCompose.document(outputFile)
-                .pageSize(PDRectangle.A4)
+                .pageSize(DocumentPageSize.A4)
                 .margin(22, 22, 22, 22)
                 .create()) {
             template.compose(document, sampleInvoice());
@@ -176,7 +176,7 @@ class DocumentationExamplesTest {
         Path outputFile = VisualTestOutputs.preparePdf("line-primitive", "clean", "documentation");
 
         try (DocumentSession document = GraphCompose.document(outputFile)
-                .pageSize(PDRectangle.A4)
+                .pageSize(DocumentPageSize.A4)
                 .margin(24, 24, 24, 24)
                 .create()) {
             document.pageFlow()
@@ -207,7 +207,7 @@ class DocumentationExamplesTest {
         Path outputFile = VisualTestOutputs.preparePdf("table-component", "clean", "documentation");
 
         try (DocumentSession document = GraphCompose.document(outputFile)
-                .pageSize(PDRectangle.A4)
+                .pageSize(DocumentPageSize.A4)
                 .margin(24, 24, 24, 24)
                 .create()) {
             document.pageFlow()

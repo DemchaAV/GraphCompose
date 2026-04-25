@@ -39,7 +39,7 @@ public class FullCvBenchmark {
 
     private static void generateCvInMemory(CvTemplateV1 template, CvDocumentSpec cv) {
         try (DocumentSession document = GraphCompose.document()
-                .pageSize(PDRectangle.A4)
+                .pageSize(com.demcha.compose.document.api.DocumentPageSize.A4)
                 .margin(15, 10, 15, 15)
                 .create()) {
             template.compose(document, cv);

@@ -1,8 +1,5 @@
 package com.demcha.compose.engine.utils;
 
-import org.apache.pdfbox.pdmodel.font.PDFont;
-
-import java.io.IOException;
 import java.text.Normalizer;
 import java.util.Map;
 
@@ -42,30 +39,6 @@ public final class TextSanitizer {
 
             String candidate = REPLACEMENTS.getOrDefault(cp, new String(Character.toChars(cp)));
             out.append(candidate); // <-- IMPORTANT: append and continue
-        }
-
-        return out.toString();
-    }
-
-
-    /** Make text safe for a specific PDFBox font (e.g. PDType1Font.COURIER). */
-    public static String sanitizeForFont(String raw, PDFont font) {
-        String replaced = sanitize(raw);
-        if (font == null || replaced.isBlank()) return replaced;
-
-        StringBuilder out = new StringBuilder(replaced.length());
-
-        for (int i = 0; i < replaced.length(); ) {
-            int cp = replaced.codePointAt(i);
-            i += Character.charCount(cp);
-
-            String ch = new String(Character.toChars(cp));
-            try {
-                font.encode(ch);       // throws if not supported
-                out.append(ch);
-            } catch (IllegalArgumentException | IOException ex) {
-                out.append('?');       // fallback for unsupported / encoding problems
-            }
         }
 
         return out.toString();

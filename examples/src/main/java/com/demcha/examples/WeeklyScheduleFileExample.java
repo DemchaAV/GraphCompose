@@ -1,11 +1,11 @@
 package com.demcha.examples;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.builtins.WeeklyScheduleTemplateV1;
 import com.demcha.examples.support.ExampleDataFactory;
 import com.demcha.examples.support.ExampleOutputPaths;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
 
@@ -19,7 +19,7 @@ public final class WeeklyScheduleFileExample {
         WeeklyScheduleTemplateV1 template = new WeeklyScheduleTemplateV1();
 
         try (DocumentSession document = GraphCompose.document(outputFile)
-                .pageSize(new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth()))
+                .pageSize(DocumentPageSize.A4.landscape())
                 .margin(18, 18, 18, 18)
                 .create()) {
             template.compose(document, ExampleDataFactory.sampleWeeklySchedule());

@@ -1,6 +1,7 @@
 package com.demcha.compose.font;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.ModuleBuilder;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
@@ -8,7 +9,6 @@ import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.awt.Color;
 import java.nio.file.Path;
@@ -30,7 +30,7 @@ public final class FontShowcase {
 
     public static void renderAvailableFontsPreview(Path outputFile) throws Exception {
         try (DocumentSession document = GraphCompose.document(outputFile)
-                .pageSize(PDRectangle.A4)
+                .pageSize(DocumentPageSize.A4)
                 .margin(28, 28, 28, 28)
                 .markdown(false)
                 .create()) {
@@ -42,7 +42,7 @@ public final class FontShowcase {
 
     public static byte[] renderAvailableFontsPreview() throws Exception {
         try (DocumentSession document = GraphCompose.document()
-                .pageSize(PDRectangle.A4)
+                .pageSize(DocumentPageSize.A4)
                 .margin(28, 28, 28, 28)
                 .markdown(false)
                 .create()) {
@@ -54,7 +54,7 @@ public final class FontShowcase {
 
     public static byte[] renderFontsPreview(Collection<FontName> fonts) throws Exception {
         try (DocumentSession document = GraphCompose.document()
-                .pageSize(PDRectangle.A4)
+                .pageSize(DocumentPageSize.A4)
                 .margin(28, 28, 28, 28)
                 .markdown(false)
                 .create()) {

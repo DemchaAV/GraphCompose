@@ -1,11 +1,11 @@
 package com.demcha.examples;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.builtins.CoverLetterTemplateV1;
 import com.demcha.examples.support.ExampleDataFactory;
 import com.demcha.examples.support.ExampleOutputPaths;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
 
@@ -19,7 +19,7 @@ public final class CoverLetterFileExample {
         CoverLetterTemplateV1 template = new CoverLetterTemplateV1();
 
         try (DocumentSession document = GraphCompose.document(outputFile)
-                .pageSize(PDRectangle.A4)
+                .pageSize(DocumentPageSize.A4)
                 .margin(15, 10, 15, 15)
                 .create()) {
             template.compose(

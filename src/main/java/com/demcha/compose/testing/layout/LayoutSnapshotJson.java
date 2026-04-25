@@ -1,6 +1,6 @@
 package com.demcha.compose.testing.layout;
 
-import com.demcha.compose.engine.debug.LayoutSnapshot;
+import com.demcha.compose.document.snapshot.LayoutSnapshot;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -32,6 +32,17 @@ public final class LayoutSnapshotJson {
      * @throws IOException if JSON serialization fails
      */
     public static String toJson(LayoutSnapshot snapshot) throws IOException {
+        return normalizeLineEndings(WRITER.writeValueAsString(snapshot)) + "\n";
+    }
+
+    /**
+     * Serializes the legacy engine snapshot shape used by low-level engine tests.
+     *
+     * @param snapshot resolved engine snapshot to serialize
+     * @return normalized JSON payload with trailing newline
+     * @throws IOException if JSON serialization fails
+     */
+    public static String toJson(com.demcha.compose.engine.debug.LayoutSnapshot snapshot) throws IOException {
         return normalizeLineEndings(WRITER.writeValueAsString(snapshot)) + "\n";
     }
 

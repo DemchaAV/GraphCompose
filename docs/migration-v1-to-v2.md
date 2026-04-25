@@ -50,7 +50,7 @@ session.buildPdf();
 
 ```java
 try (DocumentSession document = GraphCompose.document(Path.of("output.pdf"))
-        .pageSize(PDRectangle.A4)
+        .pageSize(DocumentPageSize.A4)
         .margin(24, 24, 24, 24)
         .create()) {
 
@@ -72,7 +72,7 @@ Key differences:
 `DocumentSession` is now `AutoCloseable` with explicit lifecycle rules. After the session is closed, every public authoring or rendering method throws `IllegalStateException("DocumentSession is already closed.")`. Calling `close()` twice is safe.
 
 ```java
-DocumentSession document = GraphCompose.document().pageSize(PDRectangle.A4).create();
+DocumentSession document = GraphCompose.document().pageSize(DocumentPageSize.A4).create();
 try {
     document.pageFlow(page -> page.module("Summary", m -> m.paragraph("...")));
     byte[] pdf = document.toPdfBytes();

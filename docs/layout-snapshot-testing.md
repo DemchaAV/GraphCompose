@@ -68,7 +68,7 @@ If application code never calls `layoutSnapshot()`, this feature does not change
 
 ```java
 try (DocumentSession document = GraphCompose.document()
-        .pageSize(PDRectangle.A4)
+        .pageSize(DocumentPageSize.A4)
         .margin(24, 24, 24, 24)
         .create()) {
 
@@ -91,7 +91,7 @@ void shouldMatchInvoiceLayoutSnapshotAndRenderPdf() throws Exception {
     Path outputFile = VisualTestOutputs.preparePdf("invoice_render_file", "clean", "templates", "invoice");
 
     try (DocumentSession document = GraphCompose.document(outputFile)
-            .pageSize(PDRectangle.A4)
+            .pageSize(DocumentPageSize.A4)
             .margin(22, 22, 22, 22)
             .create()) {
 
@@ -120,11 +120,11 @@ Minimal pattern:
 
 ```java
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
 
 class MyFeatureLayoutSnapshotTest {
@@ -132,7 +132,7 @@ class MyFeatureLayoutSnapshotTest {
     @Test
     void shouldKeepMyFeatureLayoutStable() throws Exception {
         try (DocumentSession document = GraphCompose.document()
-                .pageSize(PDRectangle.A4)
+                .pageSize(DocumentPageSize.A4)
                 .margin(22, 22, 22, 22)
                 .create()) {
 
@@ -175,9 +175,9 @@ Library consumers can use the same public helpers that GraphCompose uses in its 
 
 ```java
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
 
 class InvoiceTemplateSnapshotTest {
@@ -188,7 +188,7 @@ class InvoiceTemplateSnapshotTest {
         InvoiceDocumentSpec spec = invoiceFixture();
 
         try (DocumentSession document = GraphCompose.document()
-                .pageSize(PDRectangle.A4)
+                .pageSize(DocumentPageSize.A4)
                 .margin(22, 22, 22, 22)
                 .create()) {
 

@@ -22,9 +22,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * types into these packages will fail the test, while removing a leak (the desired
  * direction) requires shrinking the allowlist below.</p>
  *
- * <p>Some leaks are deprecated and slated for removal in a future major; others are
- * intentional bridge points (font types, layout snapshot view objects) that the
- * public API deliberately surfaces.</p>
+ * <p>Some leaks are internal bridge points where the canonical API still delegates
+ * to the shared engine. The allowlist should shrink as those bridge points gain
+ * public adapters.</p>
  */
 class PublicApiNoEngineLeakTest {
 
@@ -52,15 +52,10 @@ class PublicApiNoEngineLeakTest {
      */
     private static final Map<String, Set<String>> ALLOWED_ENGINE_IMPORTS = new LinkedHashMap<>();
     static {
-        // DocumentSession bridges semantic API to the engine and exposes a few
-        // engine view-types intentionally (LayoutSnapshot, PdfFont).
+        // DocumentSession still uses the shared text measurement seam internally.
         ALLOWED_ENGINE_IMPORTS.put(
                 "src/main/java/com/demcha/compose/document/api/DocumentSession.java",
-                Set.of(
-                        "com.demcha.compose.engine.debug.LayoutSnapshot",
-                        "com.demcha.compose.engine.render.pdf.PdfFont",
-                        "com.demcha.compose.engine.measurement.FontLibraryTextMeasurementSystem",
-                        "com.demcha.compose.engine.measurement.TextMeasurementSystem"));
+                Set.of("com.demcha.compose.engine.measurement.TextMeasurementSystem"));
 
         // Font integration package re-exposes engine font types by design.
         ALLOWED_ENGINE_IMPORTS.put(

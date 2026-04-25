@@ -88,16 +88,13 @@ class DocumentSessionLifecycleTest {
         DocumentSession session = newSession();
         session.close();
 
-        assertThatThrownBy(() -> session.pageSize(PDRectangle.A4))
+        assertThatThrownBy(() -> session.pageSize(com.demcha.compose.document.api.DocumentPageSize.A4))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThatThrownBy(() -> session.margin(DocumentInsets.of(8)))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThatThrownBy(() -> session.markdown(false))
-                .isInstanceOf(IllegalStateException.class);
-
-        assertThatThrownBy(() -> session.guideLines(true))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -121,7 +118,7 @@ class DocumentSessionLifecycleTest {
         java.nio.file.Files.deleteIfExists(outputPath);
         try {
             try (DocumentSession session = GraphCompose.document(outputPath)
-                    .pageSize(new PDRectangle(220, 180))
+                    .pageSize(220, 180)
                     .margin(DocumentInsets.of(12))
                     .create()) {
 
@@ -169,7 +166,7 @@ class DocumentSessionLifecycleTest {
 
     private DocumentSession newSession() {
         return GraphCompose.document()
-                .pageSize(new PDRectangle(220, 180))
+                .pageSize(220, 180)
                 .margin(DocumentInsets.of(12))
                 .create();
     }

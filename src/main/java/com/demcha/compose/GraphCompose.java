@@ -4,14 +4,9 @@ import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.font.FontName;
 import com.demcha.compose.font.FontShowcase;
 import com.demcha.compose.font.DefaultFonts;
+import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterZone;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.document.style.DocumentInsets;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -40,7 +35,7 @@ import java.util.Objects;
  * <h3>Build a PDF file with the canonical DSL</h3>
  * <pre>
  * try (DocumentSession document = GraphCompose.document(outputFile)
- *         .pageSize(PDRectangle.A4)
+ *         .pageSize(DocumentPageSize.A4)
  *         .margin(24, 24, 24, 24)
  *         .create()) {
  *
@@ -54,7 +49,7 @@ import java.util.Objects;
  * <h3>Get bytes instead of writing to disk</h3>
  * <pre>
  * try (DocumentSession document = GraphCompose.document()
- *         .pageSize(PDRectangle.A4)
+ *         .pageSize(DocumentPageSize.A4)
  *         .create()) {
  *
  *     document.pageFlow(page -> page
@@ -135,14 +130,9 @@ public final class GraphCompose {
      */
     public static final class DocumentBuilder {
         private final Path outputFile;
-        private PDRectangle pageSize = PDRectangle.A4;
+        private DocumentPageSize pageSize = DocumentPageSize.A4;
         private DocumentInsets margin = DocumentInsets.zero();
         private boolean markdown = true;
-        private boolean guideLines = false;
-        private PdfMetadataOptions metadataOptions;
-        private PdfWatermarkOptions watermarkOptions;
-        private PdfProtectionOptions protectionOptions;
-        private final List<PdfHeaderFooterOptions> headerFooterOptions = new ArrayList<>();
         private final List<FontFamilyDefinition> customFontFamilies = new ArrayList<>();
 
         private DocumentBuilder(Path outputFile) {
@@ -152,12 +142,23 @@ public final class GraphCompose {
         /**
          * Sets the page size used by the semantic canvas.
          *
-         * @param pageSize physical page rectangle
+         * @param pageSize physical page size
          * @return this builder
          */
-        public DocumentBuilder pageSize(PDRectangle pageSize) {
+        public DocumentBuilder pageSize(DocumentPageSize pageSize) {
             this.pageSize = Objects.requireNonNull(pageSize, "pageSize");
             return this;
+        }
+
+        /**
+         * Convenience overload for setting page dimensions in points.
+         *
+         * @param width page width in points
+         * @param height page height in points
+         * @return this builder
+         */
+        public DocumentBuilder pageSize(double width, double height) {
+            return pageSize(DocumentPageSize.of(width, height));
         }
 
         /**
@@ -197,78 +198,6 @@ public final class GraphCompose {
          */
         public DocumentBuilder markdown(boolean enabled) {
             this.markdown = enabled;
-            return this;
-        }
-
-        /**
-         * Enables or disables PDF guide-line overlays for debugging rendered
-         * semantic fragment geometry.
-         *
-         * @param enabled {@code true} to draw guide lines in rendered PDFs
-         * @return this builder
-         */
-        public DocumentBuilder guideLines(boolean enabled) {
-            this.guideLines = enabled;
-            return this;
-        }
-
-        /**
-         * Configures document metadata for PDFs rendered from the created
-         * semantic session.
-         *
-         * @param options canonical metadata options, or {@code null} to clear
-         * @return this builder
-         */
-        public DocumentBuilder metadata(PdfMetadataOptions options) {
-            this.metadataOptions = options;
-            return this;
-        }
-
-        /**
-         * Configures a document-wide watermark for PDFs rendered from the
-         * created semantic session.
-         *
-         * @param options canonical watermark options, or {@code null} to clear
-         * @return this builder
-         */
-        public DocumentBuilder watermark(PdfWatermarkOptions options) {
-            this.watermarkOptions = options;
-            return this;
-        }
-
-        /**
-         * Configures PDF protection and permissions for the created semantic
-         * session.
-         *
-         * @param options canonical protection options, or {@code null} to clear
-         * @return this builder
-         */
-        public DocumentBuilder protect(PdfProtectionOptions options) {
-            this.protectionOptions = options;
-            return this;
-        }
-
-        /**
-         * Registers a repeating page header.
-         *
-         * @param options canonical header options
-         * @return this builder
-         */
-        public DocumentBuilder header(PdfHeaderFooterOptions options) {
-            this.headerFooterOptions.add(Objects.requireNonNull(options, "options")
-                    .withZone(PdfHeaderFooterZone.HEADER));
-            return this;
-        }
-
-        /**
-         * Registers a repeating page footer.
-         *
-         * @param options canonical footer options
-         * @return this builder
-         */
-        public DocumentBuilder footer(PdfHeaderFooterOptions options) {
-            this.headerFooterOptions.add(Objects.requireNonNull(options, "options")
-                    .withZone(PdfHeaderFooterZone.FOOTER));
             return this;
         }
 
@@ -372,7 +301,7 @@ public final class GraphCompose {
          *
          * <pre>{@code
          * try (var document = GraphCompose.document(Path.of("output.pdf"))
-         *         .pageSize(PDRectangle.A4)
+         *         .pageSize(DocumentPageSize.A4)
          *         .margin(24, 24, 24, 24)
          *         .create()) {
          *     document.pageFlow(page -> page
@@ -390,12 +319,7 @@ public final class GraphCompose {
                     pageSize,
                     margin,
                     List.copyOf(customFontFamilies),
-                    markdown,
-                    guideLines,
-                    metadataOptions,
-                    watermarkOptions,
-                    protectionOptions,
-                    List.copyOf(headerFooterOptions));
+                    markdown);
         }
     }
 }

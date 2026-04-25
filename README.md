@@ -65,11 +65,11 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.DemchaAV:GraphCompose:v1.2.0")
+    implementation("com.github.demchaav:GraphCompose:v1.2.0")
 }
 ```
 
-The project POM coordinates are `io.github.demchaav:graphcompose:1.2.0`. JitPack keeps the GitHub repository coordinate and `v1.2.0` tag.
+The project POM coordinates are `io.github.demchaav:graphcompose:1.2.0`. JitPack keeps the GitHub repository coordinate with a lowercase owner (`com.github.demchaav:GraphCompose:v1.2.0`) and the `v1.2.0` tag.
 
 ## Quick start
 

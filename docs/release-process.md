@@ -2,7 +2,7 @@
 
 This checklist applies to current GraphCompose 1.x releases. The library is published through JitPack today; Maven Central is a future distribution channel.
 
-- JitPack - `com.github.DemchaAV:GraphCompose:v<version>` (current)
+- JitPack - `com.github.demchaav:GraphCompose:v<version>` (current)
 - Maven Central - `io.github.demchaav:graphcompose:<version>` (planned)
 
 ## Pre-release
@@ -22,7 +22,7 @@ This checklist applies to current GraphCompose 1.x releases. The library is publ
   - title `GraphCompose v<version>`
   - body copied from the matching `CHANGELOG.md` section
   - "Generated release notes" disabled (we author the changelog by hand)
-- [ ] verify JitPack picked up the tag: `https://jitpack.io/com/github/DemchaAV/GraphCompose/v<version>/build.log` returns success
+- [ ] verify JitPack picked up the tag: `https://jitpack.io/com/github/demchaav/GraphCompose/v<version>/build.log` returns success
 - [ ] announce the release where appropriate (pinned README badge already points at JitPack)
 
 ## Post-release

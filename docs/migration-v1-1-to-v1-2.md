@@ -6,7 +6,7 @@ This guide explains how to move from earlier v1.1 usage patterns to the v1.2 can
 
 | Concern | v1.1 style | v1.2 canonical style |
 | --- | --- | --- |
-| Maven coordinates | `com.github.DemchaAV:GraphCompose:v1.1.0` | `com.github.DemchaAV:GraphCompose:v1.2.0` |
+| Maven coordinates | `com.github.demchaav:GraphCompose:v1.1.0` | `com.github.demchaav:GraphCompose:v1.2.0` |
 | Authoring entry point | template helpers or lower-level composer paths | `GraphCompose.document(path).create()` returning a `DocumentSession` |
 | Lifecycle | ad-hoc close paths in examples | `try-with-resources` `DocumentSession` with idempotent `close()` |
 | Empty document | easy to miss until render time | throws `IllegalStateException` with a domain-specific message |
@@ -28,7 +28,7 @@ This guide explains how to move from earlier v1.1 usage patterns to the v1.2 can
 
 ```kotlin
 dependencies {
-    implementation("com.github.DemchaAV:GraphCompose:v1.2.0")
+    implementation("com.github.demchaav:GraphCompose:v1.2.0")
 }
 ```
 

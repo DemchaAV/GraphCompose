@@ -133,6 +133,7 @@ public final class GraphCompose {
         private DocumentPageSize pageSize = DocumentPageSize.A4;
         private DocumentInsets margin = DocumentInsets.zero();
         private boolean markdown = true;
+        private boolean guideLines;
         private final List<FontFamilyDefinition> customFontFamilies = new ArrayList<>();
 
         private DocumentBuilder(Path outputFile) {
@@ -198,6 +199,22 @@ public final class GraphCompose {
          */
         public DocumentBuilder markdown(boolean enabled) {
             this.markdown = enabled;
+            return this;
+        }
+
+        /**
+         * Enables or disables PDF guide-line overlays for convenience PDF output.
+         *
+         * <p>This option affects {@link DocumentSession#buildPdf()},
+         * {@link DocumentSession#writePdf(java.io.OutputStream)}, and
+         * {@link DocumentSession#toPdfBytes()}. It does not alter semantic layout
+         * geometry or layout snapshots.</p>
+         *
+         * @param enabled {@code true} to draw debug guide-line overlays
+         * @return this builder
+         */
+        public DocumentBuilder guideLines(boolean enabled) {
+            this.guideLines = enabled;
             return this;
         }
 
@@ -319,7 +336,8 @@ public final class GraphCompose {
                     pageSize,
                     margin,
                     List.copyOf(customFontFamilies),
-                    markdown);
+                    markdown,
+                    guideLines);
         }
     }
 }

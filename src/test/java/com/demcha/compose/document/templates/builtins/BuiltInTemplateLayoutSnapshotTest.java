@@ -44,7 +44,7 @@ class BuiltInTemplateLayoutSnapshotTest {
     void shouldMatchInvoiceLayoutSnapshotAndRenderPdf() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("invoice_layout_snapshot", "clean", "templates", "invoice");
 
-        try (DocumentSession document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 22, 22, 22, 22, false)) {
+        try (DocumentSession document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 22, 22, 22, 22)) {
             new InvoiceTemplateV1().compose(document, TemplateTestSupport.canonicalInvoice());
             TemplateTestSupport.assertCanonicalSnapshot(document, "invoice/invoice_standard_layout");
             document.buildPdf();

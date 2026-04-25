@@ -53,7 +53,7 @@ class CvTemplateRenderTest {
         Path outputFile = VisualTestOutputs.preparePdf("template_cv_1_render_file", "clean", "templates", "cv");
         var cv = TemplateTestSupport.canonicalCv();
 
-        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15, false)) {
+        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15)) {
             new CvTemplateV1().compose(document, cv);
             document.buildPdf();
         }
@@ -72,6 +72,7 @@ class CvTemplateRenderTest {
         }
 
         TemplateTestSupport.assertPdfFileLooksValid(outputFile, 1);
+        TemplateTestSupport.assertPdfContainsGuideLines(outputFile);
     }
 
     @Test
@@ -189,7 +190,7 @@ class CvTemplateRenderTest {
         Path outputFile = VisualTestOutputs.preparePdf("template_cv_1_render_markdown_fonts", "clean", "templates", "cv");
         var cv = TemplateTestSupport.canonicalCv();
 
-        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15, false)) {
+        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15)) {
             new CvTemplateV1().compose(document, cv);
             document.buildPdf();
         }
@@ -204,7 +205,7 @@ class CvTemplateRenderTest {
         Path outputFile = VisualTestOutputs.preparePdf("template_cv_1_render_file_rich_one_and_half_pages", "clean", "templates", "cv");
         var cv = TemplateTestSupport.expandedCanonicalCv();
 
-        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15, false)) {
+        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15)) {
             new CvTemplateV1().compose(document, cv);
             document.buildPdf();
         }
@@ -229,6 +230,7 @@ class CvTemplateRenderTest {
 
         TemplateTestSupport.assertPdfFileLooksValid(outputFile, 2);
         TemplateTestSupport.assertPdfPageCount(outputFile, 2);
+        TemplateTestSupport.assertPdfContainsGuideLines(outputFile);
     }
 
     @ParameterizedTest(name = "theme font {0}")
@@ -241,7 +243,7 @@ class CvTemplateRenderTest {
         Path outputFile = VisualTestOutputs.preparePdf("template_cv_1_render_" + slug, "clean", "templates", "cv", "font-themes");
         var cv = TemplateTestSupport.canonicalCv();
 
-        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15, false)) {
+        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 15, 10, 15, 15)) {
             new CvTemplateV1(TemplateTestSupport.cvThemeWith(fontName)).compose(document, cv);
             document.buildPdf();
         }
@@ -255,7 +257,7 @@ class CvTemplateRenderTest {
         Path outputFile = VisualTestOutputs.preparePdf("editorial_blue_cv_render_file", "clean", "templates", "cv");
         var cv = TemplateTestSupport.canonicalCv();
 
-        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 18, 18, 18, 18, false)) {
+        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 18, 18, 18, 18)) {
             new EditorialBlueCvTemplate().compose(document, cv);
             document.buildPdf();
         }
@@ -276,6 +278,7 @@ class CvTemplateRenderTest {
 
         TemplateTestSupport.assertPdfFileLooksValid(outputFile, 1);
         TemplateTestSupport.assertPdfPageCount(outputFile, 1);
+        TemplateTestSupport.assertPdfContainsGuideLines(outputFile);
     }
 
     @Test
@@ -283,7 +286,7 @@ class CvTemplateRenderTest {
         Path outputFile = VisualTestOutputs.preparePdf("executive_slate_cv_render_file", "clean", "templates", "cv");
         var cv = TemplateTestSupport.canonicalCv();
 
-        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 20, 20, 20, 20, false)) {
+        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 20, 20, 20, 20)) {
             new ExecutiveSlateCvTemplate().compose(document, cv);
             document.buildPdf();
         }

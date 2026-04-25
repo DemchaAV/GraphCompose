@@ -96,6 +96,9 @@ class DocumentSessionLifecycleTest {
 
         assertThatThrownBy(() -> session.markdown(false))
                 .isInstanceOf(IllegalStateException.class);
+
+        assertThatThrownBy(() -> session.guideLines(true))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

@@ -2,7 +2,7 @@
 
 This checklist applies to v2.x releases of GraphCompose. The library is published via two channels:
 
-- Maven Central — `io.github.demchaav:GraphCompose:<version>` (planned)
+- Maven Central — `io.github.demchaav:graphcompose:<version>` (planned)
 - JitPack — `com.github.DemchaAV:GraphCompose:v<version>` (current)
 
 ## Pre-release

@@ -28,7 +28,7 @@ class DocumentListNodeTest {
     void listShortcutShouldBuildBulletListWithoutManualParagraphLoop() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(260, 200))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             ContainerNode root = session.pageFlow()
@@ -60,7 +60,7 @@ class DocumentListNodeTest {
     void listBuilderShouldSupportDashPlainAndCustomMarkers() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(320, 260))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             session.pageFlow()
@@ -93,7 +93,7 @@ class DocumentListNodeTest {
     void wrappedListItemShouldIndentContinuationWithoutRepeatingMarker() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(165, 220))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             session.pageFlow()
@@ -121,7 +121,7 @@ class DocumentListNodeTest {
     void markerlessListShouldIndentWrappedContinuationWithoutIndentingEveryItem() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(150, 220))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             session.pageFlow()
@@ -152,7 +152,7 @@ class DocumentListNodeTest {
     void listShouldSplitAcrossPages() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(180, 120))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             session.pageFlow()
@@ -179,7 +179,7 @@ class DocumentListNodeTest {
     void listLayoutSnapshotShouldCoverMarkerStyles() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(320, 260))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             session.pageFlow()
@@ -211,7 +211,7 @@ class DocumentListNodeTest {
     void listFragmentsShouldCarryPaddingThroughParagraphPayload() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(320, 220))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             session.pageFlow()

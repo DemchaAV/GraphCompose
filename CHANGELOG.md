@@ -5,7 +5,7 @@
 ### Release identity
 
 - the `graphcompose-v2-engine` rewrite is being shipped as **v2.0.0** because the public composition model has changed: `GraphCompose.document(...) → DocumentSession → DocumentDsl` is now the canonical authoring path
-- Maven coordinates moved to `io.github.demchaav:GraphCompose:2.0.0` (the `v` prefix is now reserved for git tags only); JitPack consumers continue to use `com.github.DemchaAV:GraphCompose:v2.0.0`
+- Maven coordinates moved to `io.github.demchaav:graphcompose:2.0.0` (the `v` prefix is now reserved for git tags only); JitPack consumers continue to use `com.github.DemchaAV:GraphCompose:v2.0.0`
 - consumers of `v1.x` should follow the [migration guide](./docs/migration-v1-to-v2.md) before upgrading
 
 ### Public API

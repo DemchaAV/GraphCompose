@@ -2,7 +2,8 @@ package com.demcha.compose.font;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.dsl.DocumentDsl;
+import com.demcha.compose.document.dsl.ModuleBuilder;
+import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
@@ -85,7 +86,7 @@ public final class FontShowcase {
         });
     }
 
-    private static void addFontSection(DocumentDsl.PageFlowBuilder flow, FontName fontName) {
+    private static void addFontSection(PageFlowBuilder flow, FontName fontName) {
         flow.module(fontName.name(), module -> {
             module.name("FontSection_" + fontName.name())
                     .spacing(2)
@@ -99,7 +100,7 @@ public final class FontShowcase {
         });
     }
 
-    private static void sampleLine(DocumentDsl.ModuleBuilder module,
+    private static void sampleLine(ModuleBuilder module,
                                    String label,
                                    FontName fontName,
                                    DocumentTextDecoration decoration,

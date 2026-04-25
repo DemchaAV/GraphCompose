@@ -9,7 +9,7 @@ The roadmap is split into 10 phases. Phases marked **Done** have already been me
 ## Phase 0 — Freeze release identity — **Done**
 
 - [x] The next release ships as **v2.0.0** because the public composition surface (`GraphCompose.document() → DocumentSession → DocumentDsl`) is a deliberate replacement of the v1.x template-first API
-- [x] Maven coordinates moved to `io.github.demchaav:GraphCompose:2.0.0`; JitPack tag remains `v2.0.0`
+- [x] Maven coordinates moved to `io.github.demchaav:graphcompose:2.0.0`; JitPack tag remains `v2.0.0`
 - [x] CHANGELOG entry committed for v2.0.0
 - [x] Migration guide stub published at `docs/migration-v1-to-v2.md`
 
@@ -97,23 +97,23 @@ Rules:
 
 Acceptance criteria:
 
-- `DocumentDsl.java` becomes a thin facade
+- `DocumentDsl.java` is now a thin facade
 - each builder has a single responsibility and no circular dependencies
 - existing snapshot/render tests still pass
 
-## Phase 3 — Semantic layer purity — *Planned*
+## Phase 3 — Semantic layer purity — *Done*
 
-Semantic nodes should describe document intent, never PDF implementation. Today `ParagraphNode` and friends still reference `PdfLinkOptions` and `PdfBookmarkOptions`.
+Semantic nodes describe document intent, never PDF implementation. Link, bookmark, and barcode metadata now use renderer-neutral `DocumentLinkOptions`, `DocumentBookmarkOptions`, and `DocumentBarcodeOptions`.
 
-Plan:
+Implemented:
 
-- introduce `document.node.DocumentLinkOptions` and `document.node.DocumentBookmarkOptions`
-- move PDF translation into `document.backend.fixed.pdf.PdfOptionsAdapter`
-- keep PDF-specific options under the PDF backend layer only
+- introduced `document.node.DocumentLinkOptions`, `DocumentBookmarkOptions`, `DocumentBarcodeOptions`, and `DocumentBarcodeType`
+- moved PDF translation into the fixed PDF backend/layout adapter layer
+- kept PDF-specific options under the PDF backend layer only
 
 Acceptance criteria:
 
-- `document.node.*` has zero PDFBox imports
+- `document.node.*` has zero PDFBox imports and zero `document.backend.fixed.pdf.options.*` imports
 - semantic nodes are renderer-neutral
 - PDF links / bookmarks still render correctly
 - architecture guard tests enforce the boundary
@@ -235,7 +235,7 @@ Detail moves to:
 ## Phase 9 — Release packaging — *Planned*
 
 - groupId `io.github.demchaav` ✅
-- artifactId `graphcompose` (currently `GraphCompose` — decide whether to rename for v2.0 final or keep)
+- artifactId `graphcompose` ✅
 - version `2.0.0` ✅
 - git tag `v2.0.0`
 - GitHub release notes

@@ -1,7 +1,11 @@
 package com.demcha.compose.document.templates.support.common;
 
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.dsl.AbstractFlowBuilder;
 import com.demcha.compose.document.dsl.DocumentDsl;
+import com.demcha.compose.document.dsl.ModuleBuilder;
+import com.demcha.compose.document.dsl.PageFlowBuilder;
+import com.demcha.compose.document.dsl.TableBuilder;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.table.DocumentTableColumn;
 
@@ -15,7 +19,7 @@ import java.util.Objects;
  */
 public final class SessionTemplateComposeTarget implements TemplateComposeTarget {
     private final DocumentSession session;
-    private DocumentDsl.PageFlowBuilder root;
+    private PageFlowBuilder root;
 
     /**
      * Creates a target backed by one live document session.
@@ -78,7 +82,7 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
         root = null;
     }
 
-    private void addParagraph(DocumentDsl.AbstractFlowBuilder<?, ?> flow, TemplateParagraphSpec paragraph) {
+    private void addParagraph(AbstractFlowBuilder<?, ?> flow, TemplateParagraphSpec paragraph) {
         flow.addParagraph(builder -> builder
                 .name(paragraph.name())
                 .text(paragraph.text())
@@ -93,7 +97,7 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
                 .inlineRuns(paragraph.inlineTextRuns()));
     }
 
-    private void addModule(DocumentDsl.AbstractFlowBuilder<?, ?> flow, TemplateModuleSpec module) {
+    private void addModule(AbstractFlowBuilder<?, ?> flow, TemplateModuleSpec module) {
         TemplateModuleSpec safeModule = Objects.requireNonNull(module, "module");
         long startNanos = TemplateLifecycleLog.moduleStart(safeModule);
         try {
@@ -112,7 +116,7 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
         }
     }
 
-    private static void applyTitle(DocumentDsl.ModuleBuilder builder, TemplateParagraphSpec title) {
+    private static void applyTitle(ModuleBuilder builder, TemplateParagraphSpec title) {
         if (title == null) {
             return;
         }
@@ -124,7 +128,7 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
                 .titleMargin(TemplateDocumentAdapters.insets(title.margin()));
     }
 
-    private void addList(DocumentDsl.AbstractFlowBuilder<?, ?> flow, TemplateListSpec list) {
+    private void addList(AbstractFlowBuilder<?, ?> flow, TemplateListSpec list) {
         flow.addList(builder -> builder
                 .name(list.name())
                 .items(list.items())
@@ -139,7 +143,7 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
                 .margin(TemplateDocumentAdapters.insets(list.margin())));
     }
 
-    private void addDivider(DocumentDsl.AbstractFlowBuilder<?, ?> flow, TemplateDividerSpec divider) {
+    private void addDivider(AbstractFlowBuilder<?, ?> flow, TemplateDividerSpec divider) {
         flow.addDivider(builder -> builder
                 .name(divider.name())
                 .width(divider.width())
@@ -149,8 +153,8 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
                 .margin(TemplateDocumentAdapters.insets(divider.margin())));
     }
 
-    private void addTable(DocumentDsl.AbstractFlowBuilder<?, ?> flow, TemplateTableSpec table) {
-        DocumentDsl.TableBuilder builder = session.dsl()
+    private void addTable(AbstractFlowBuilder<?, ?> flow, TemplateTableSpec table) {
+        TableBuilder builder = session.dsl()
                 .table()
                 .name(table.name())
                 .columns(table.columns().stream()
@@ -170,7 +174,7 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
         flow.add(builder.build());
     }
 
-    private DocumentDsl.PageFlowBuilder requireRoot() {
+    private PageFlowBuilder requireRoot() {
         if (root == null) {
             throw new IllegalStateException("Template document flow has not been started.");
         }
@@ -178,9 +182,9 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
     }
 
     private final class FlowTemplateComposeTarget implements TemplateComposeTarget {
-        private final DocumentDsl.AbstractFlowBuilder<?, ?> flow;
+        private final AbstractFlowBuilder<?, ?> flow;
 
-        private FlowTemplateComposeTarget(DocumentDsl.AbstractFlowBuilder<?, ?> flow) {
+        private FlowTemplateComposeTarget(AbstractFlowBuilder<?, ?> flow) {
             this.flow = Objects.requireNonNull(flow, "flow");
         }
 

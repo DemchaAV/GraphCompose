@@ -102,7 +102,7 @@ GraphCompose is a good fit for:
 - `margin(Margin)` overloads are deprecated for removal — prefer `margin(DocumentInsets)` or `margin(top, right, bottom, left)` to keep the public API renderer-neutral
 - new architecture-guard tests baseline engine-type leaks (`PublicApiNoEngineLeakTest`) and PDFBox dependencies in the semantic layer (`SemanticLayerNoPdfBoxDependencyTest`)
 - new pagination edge-case suite (`PaginationEdgeCaseTest`) pins exact-fit, near-boundary, leading / trailing page-break, and nested-section behaviour
-- Maven coordinates moved to `io.github.demchaav:GraphCompose:2.0.0` (JitPack still resolves `com.github.DemchaAV:GraphCompose:v2.0.0` by git tag)
+- Maven coordinates moved to `io.github.demchaav:graphcompose:2.0.0` (JitPack still resolves `com.github.DemchaAV:GraphCompose:v2.0.0` by git tag)
 - new [`docs/migration-v1-to-v2.md`](./docs/migration-v1-to-v2.md), [`docs/v2-roadmap.md`](./docs/v2-roadmap.md) and [`docs/release-process.md`](./docs/release-process.md) capture the upgrade path, remaining v2 stabilisation tracks, and the release checklist
 
 See [CHANGELOG.md](./CHANGELOG.md) for the full release summary.

@@ -1,6 +1,6 @@
 package com.demcha.compose.document.templates.support.common;
 
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
+import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
@@ -63,7 +63,7 @@ public final class TemplateHeaderContactSupport {
 
     private static void addHeaderLink(List<InlineTextRun> runs,
                                       String text,
-                                      PdfLinkOptions linkOptions,
+                                      DocumentLinkOptions linkOptions,
                                       CvTheme theme) {
         if (text.isBlank() || linkOptions == null) {
             return;
@@ -99,7 +99,7 @@ public final class TemplateHeaderContactSupport {
         };
     }
 
-    private static PdfLinkOptions emailLinkOptions(EmailYaml email) {
+    private static DocumentLinkOptions emailLinkOptions(EmailYaml email) {
         if (email == null) {
             return null;
         }
@@ -112,15 +112,15 @@ public final class TemplateHeaderContactSupport {
         appendMailQuery(queryParts, "subject", safe(email.getSubject()));
         appendMailQuery(queryParts, "body", safe(email.getBody()));
         String query = queryParts.isEmpty() ? "" : "?" + String.join("&", queryParts);
-        return new PdfLinkOptions("mailto:" + to + query);
+        return new DocumentLinkOptions("mailto:" + to + query);
     }
 
-    private static PdfLinkOptions externalLinkOptions(LinkYml link) {
+    private static DocumentLinkOptions externalLinkOptions(LinkYml link) {
         if (link == null || link.getLinkUrl() == null || !link.getLinkUrl().isValid()) {
             return null;
         }
         String uri = safe(link.getLinkUrl().getUrl());
-        return uri.isBlank() ? null : new PdfLinkOptions(uri);
+        return uri.isBlank() ? null : new DocumentLinkOptions(uri);
     }
 
     private static void appendMailQuery(List<String> queryParts, String key, String value) {

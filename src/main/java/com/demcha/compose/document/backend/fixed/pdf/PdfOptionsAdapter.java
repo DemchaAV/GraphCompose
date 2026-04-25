@@ -1,7 +1,7 @@
 package com.demcha.compose.document.backend.fixed.pdf;
 
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfBarcodeOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfBarcodeType;
+import com.demcha.compose.document.node.DocumentBarcodeOptions;
+import com.demcha.compose.document.node.DocumentBarcodeType;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterZone;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
@@ -94,15 +94,16 @@ final class PdfOptionsAdapter {
                 .build();
     }
 
-    static BarcodeData toEngine(PdfBarcodeOptions options) {
+    static BarcodeData toEngine(DocumentBarcodeOptions options) {
         if (options == null) {
             return null;
         }
+        DocumentBarcodeType type = options.getType() == null ? DocumentBarcodeType.QR_CODE : options.getType();
         return BarcodeData.of(
                 options.getContent(),
-                map(options.getType()),
-                options.getForeground(),
-                options.getBackground(),
+                map(type),
+                options.getForeground() == null ? java.awt.Color.BLACK : options.getForeground().color(),
+                options.getBackground() == null ? java.awt.Color.WHITE : options.getBackground().color(),
                 options.getQuietZoneMargin());
     }
 
@@ -127,7 +128,7 @@ final class PdfOptionsAdapter {
         return zone == PdfHeaderFooterZone.FOOTER ? HeaderFooterZone.FOOTER : HeaderFooterZone.HEADER;
     }
 
-    private static BarcodeType map(PdfBarcodeType type) {
+    private static BarcodeType map(DocumentBarcodeType type) {
         return switch (type) {
             case CODE_128 -> BarcodeType.CODE_128;
             case CODE_39 -> BarcodeType.CODE_39;

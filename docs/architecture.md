@@ -20,6 +20,10 @@ That separation is the core project concept. Public code describes document inte
 
 The same separation also enables layout snapshot regression tests. Test code can inspect the resolved document after layout and pagination, before rendering, through `DocumentSession.layoutSnapshot()`. Older low-level snapshot adapters remain internal compatibility paths and are not part of the supported public workflow.
 
+Semantic nodes are renderer-neutral. Link, bookmark, and barcode metadata live in `document.node.DocumentLinkOptions`, `DocumentBookmarkOptions`, and `DocumentBarcodeOptions`; PDF-specific translation happens inside `document.backend.fixed.pdf`.
+
+`DocumentDsl` is intentionally a small facade. The public builder classes live beside it in `com.demcha.compose.document.dsl`, while implementation helpers such as semantic name normalization stay in `document.dsl.internal`.
+
 The rendering layer now also has an explicit render-pass seam:
 
 - the engine opens one backend-neutral render session for one document render pass
@@ -123,7 +127,7 @@ Fixed leaf primitives such as `Rectangle`, `Circle`, `Image`, and `Line` follow 
 - `...templates.builtins` contains concrete canonical template implementations.
 - `...templates.support.common` contains backend-neutral composition primitives, while domain packages such as `...templates.support.cv`, `...templates.support.business`, and `...templates.support.schedule` contain concrete scene composers.
 - canonical template contracts are compose-first: `compose(DocumentSession, ...)` is the primary seam.
-- canonical built-ins should start one semantic page-flow root through `DocumentSession.dsl().pageFlow()` or the internal `TemplateComposeTarget` seam that feeds that same path.
+- canonical built-ins should start one semantic page-flow root through `DocumentSession.pageFlow(...)`, `DocumentSession.dsl().pageFlow()`, or the internal `TemplateComposeTarget` seam that feeds that same path.
 
 ## Current package roots
 

@@ -1,6 +1,6 @@
 package com.demcha.compose.document.templates.support.common;
 
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
+import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.node.TextAlign;
@@ -63,7 +63,7 @@ public final class TemplateSceneSupport {
                                                   TextStyle style,
                                                   TextAlign align,
                                                   double lineSpacing,
-                                                  PdfLinkOptions linkOptions,
+                                                  DocumentLinkOptions linkOptions,
                                                   Padding padding,
                                                   Margin margin) {
         return new TemplateParagraphSpec(name, text, List.of(), style, align, lineSpacing, "", TextIndentStrategy.NONE, linkOptions, padding, margin);
@@ -140,7 +140,7 @@ public final class TemplateSceneSupport {
                                                        double lineSpacing,
                                                        String bulletOffset,
                                                        TextIndentStrategy indentStrategy,
-                                                       PdfLinkOptions linkOptions,
+                                                       DocumentLinkOptions linkOptions,
                                                        Padding padding,
                                                        Margin margin) {
         return new TemplateParagraphSpec(name, text, List.of(), style, align, lineSpacing, bulletOffset, indentStrategy, linkOptions, padding, margin);

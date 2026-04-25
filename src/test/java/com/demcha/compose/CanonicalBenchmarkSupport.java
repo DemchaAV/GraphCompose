@@ -2,6 +2,7 @@ package com.demcha.compose;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
@@ -49,7 +50,7 @@ final class CanonicalBenchmarkSupport {
                                                 String body) throws Exception {
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(pageSize)
-                .margin(margin)
+                .margin(new DocumentInsets(margin.top(), margin.right(), margin.bottom(), margin.left()))
                 .create()) {
             composeSimpleBenchmarkFlow(document, rootName, title, body);
             return document.toPdfBytes();

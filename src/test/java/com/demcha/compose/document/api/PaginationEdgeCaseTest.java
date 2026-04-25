@@ -1,7 +1,11 @@
 package com.demcha.compose.document.api;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
+import com.demcha.compose.document.exceptions.AtomicNodeTooLargeException;
+import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.layout.LayoutGraph;
+import com.demcha.compose.document.node.ImageNode;
 import com.demcha.compose.document.node.PageBreakNode;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.SectionNode;
@@ -11,16 +15,21 @@ import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.engine.components.style.Margin;
+import com.demcha.compose.document.table.DocumentTableCell;
+import com.demcha.compose.document.table.DocumentTableColumn;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
 
 import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.util.List;
+import javax.imageio.ImageIO;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Pagination edge cases for Phase 4.3 of the v2 roadmap.
@@ -38,7 +47,7 @@ class PaginationEdgeCaseTest {
         // Page 200x200 with margin 10 → inner area 180x180.
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(200, 200))
-                .margin(Margin.of(10))
+                .margin(DocumentInsets.of(10))
                 .create()) {
 
             session.add(new ShapeNode(
@@ -65,7 +74,7 @@ class PaginationEdgeCaseTest {
         // overflow the remaining region must move to a new page rather than crash.
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(200, 200))
-                .margin(Margin.of(10))
+                .margin(DocumentInsets.of(10))
                 .create()) {
 
             session.add(new ShapeNode("Header", 80, 30, Color.LIGHT_GRAY,
@@ -89,7 +98,7 @@ class PaginationEdgeCaseTest {
         // logs and keeps subsequent content anchored to page 0.
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(220, 180))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             session.add(new PageBreakNode("LeadingBreak", DocumentInsets.zero()));
@@ -118,7 +127,7 @@ class PaginationEdgeCaseTest {
         // content, the trailing page is part of the layout graph.
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(220, 180))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             session.add(new ParagraphNode(
@@ -147,7 +156,7 @@ class PaginationEdgeCaseTest {
     void pageBreakBetweenContentShouldEndExactlyOnePage() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(220, 180))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             session.add(new ParagraphNode(
@@ -186,7 +195,7 @@ class PaginationEdgeCaseTest {
         // paragraph forces pagination. Insets must remain visible on both pages.
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(220, 180))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             ParagraphNode body = new ParagraphNode(
@@ -234,7 +243,7 @@ class PaginationEdgeCaseTest {
     void singleParagraphLargerThanOnePageShouldStillRenderEveryFragment() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(220, 180))
-                .margin(Margin.of(12))
+                .margin(DocumentInsets.of(12))
                 .create()) {
 
             session.add(new ParagraphNode(
@@ -265,13 +274,99 @@ class PaginationEdgeCaseTest {
     }
 
     @Test
+    void oversizedAtomicImageShouldThrowDomainSpecificError() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(new PDRectangle(180, 180))
+                .margin(DocumentInsets.of(12))
+                .create()) {
+
+            session.add(new ImageNode(
+                    "TooTallImage",
+                    DocumentImageData.fromBytes(onePixelPng()),
+                    96.0,
+                    240.0,
+                    DocumentInsets.zero(),
+                    DocumentInsets.zero()));
+
+            assertThatThrownBy(session::layoutGraph)
+                    .isInstanceOf(AtomicNodeTooLargeException.class)
+                    .hasMessageContaining("TooTallImage")
+                    .hasMessageContaining("requires outer height")
+                    .hasMessageContaining("page capacity");
+        }
+    }
+
+    @Test
+    void tableRowTooTallForAnEmptyPageShouldThrowDomainSpecificError() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(new PDRectangle(220, 180))
+                .margin(DocumentInsets.of(12))
+                .create()) {
+
+            session.pageFlow(page -> page.addTable(table -> table
+                    .name("TooTallRowTable")
+                    .columns(DocumentTableColumn.fixed(120))
+                    .rowCells(DocumentTableCell.lines(repeatedLines(90)))));
+
+            assertThatThrownBy(session::layoutGraph)
+                    .isInstanceOf(AtomicNodeTooLargeException.class)
+                    .hasMessageContaining("TooTallRowTable")
+                    .hasMessageContaining("page capacity");
+        }
+    }
+
+    @Test
+    void moduleSplitAcrossPagesShouldSurvivePdfChrome() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(new PDRectangle(240, 180))
+                .margin(DocumentInsets.of(14))
+                .header(PdfHeaderFooterOptions.builder()
+                        .centerText("GraphCompose")
+                        .height(18)
+                        .showSeparator(true)
+                        .build())
+                .footer(PdfHeaderFooterOptions.builder()
+                        .centerText("Page {page} of {pages}")
+                        .height(18)
+                        .build())
+                .create()) {
+
+            session.pageFlow(page -> page
+                    .name("ChromeFlow")
+                    .module("Chrome Module", module -> {
+                        module.spacing(4)
+                                .padding(DocumentInsets.of(4));
+                        for (int index = 0; index < 18; index++) {
+                            module.paragraph("Paragraph " + index
+                                    + " keeps the semantic module split stable while PDF chrome is enabled.");
+                        }
+                    }));
+
+            LayoutGraph graph = session.layoutGraph();
+            assertThat(graph.totalPages()).isGreaterThan(1);
+
+            var moduleNode = graph.nodes().stream()
+                    .filter(node -> "ChromeModule".equals(node.semanticName()))
+                    .findFirst()
+                    .orElseThrow();
+            assertThat(moduleNode.startPage()).isEqualTo(0);
+            assertThat(moduleNode.endPage()).isGreaterThan(0);
+
+            byte[] pdfBytes = session.toPdfBytes();
+            try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+                assertThat(document.getNumberOfPages()).isEqualTo(graph.totalPages());
+            }
+        }
+    }
+
+    @Test
     void boundaryShapeMatchingInnerHeightWithinEpsilonShouldRemainOnSinglePage() throws Exception {
         // Shape barely below inner height — within the engine's float tolerance
         // — must not spuriously trigger a second page.
         double innerHeight = 180.0;
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(new PDRectangle(200, 200))
-                .margin(Margin.of(10))
+                .margin(DocumentInsets.of(10))
                 .create()) {
 
             session.add(new ShapeNode(
@@ -286,5 +381,21 @@ class PaginationEdgeCaseTest {
             LayoutGraph graph = session.layoutGraph();
             assertThat(graph.totalPages()).isEqualTo(1);
         }
+    }
+
+    private static byte[] onePixelPng() throws Exception {
+        BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
+        image.setRGB(0, 0, Color.WHITE.getRGB());
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", output);
+        return output.toByteArray();
+    }
+
+    private static String[] repeatedLines(int count) {
+        String[] lines = new String[count];
+        for (int index = 0; index < count; index++) {
+            lines[index] = "short";
+        }
+        return lines;
     }
 }

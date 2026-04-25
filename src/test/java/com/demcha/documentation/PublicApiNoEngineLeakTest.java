@@ -52,17 +52,11 @@ class PublicApiNoEngineLeakTest {
      */
     private static final Map<String, Set<String>> ALLOWED_ENGINE_IMPORTS = new LinkedHashMap<>();
     static {
-        // GraphCompose facade — only the deprecated Margin overload remains.
-        ALLOWED_ENGINE_IMPORTS.put(
-                "src/main/java/com/demcha/compose/GraphCompose.java",
-                Set.of("com.demcha.compose.engine.components.style.Margin"));
-
         // DocumentSession bridges semantic API to the engine and exposes a few
         // engine view-types intentionally (LayoutSnapshot, PdfFont).
         ALLOWED_ENGINE_IMPORTS.put(
                 "src/main/java/com/demcha/compose/document/api/DocumentSession.java",
                 Set.of(
-                        "com.demcha.compose.engine.components.style.Margin",
                         "com.demcha.compose.engine.debug.LayoutSnapshot",
                         "com.demcha.compose.engine.render.pdf.PdfFont",
                         "com.demcha.compose.engine.measurement.FontLibraryTextMeasurementSystem",

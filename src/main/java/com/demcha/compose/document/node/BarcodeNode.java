@@ -1,8 +1,8 @@
 package com.demcha.compose.document.node;
 
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfBarcodeOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions;
+import com.demcha.compose.document.node.DocumentBarcodeOptions;
+import com.demcha.compose.document.node.DocumentBookmarkOptions;
+import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.style.DocumentInsets;
 
 import java.util.Objects;
@@ -24,11 +24,11 @@ import java.util.Objects;
  */
 public record BarcodeNode(
         String name,
-        PdfBarcodeOptions barcodeOptions,
+        DocumentBarcodeOptions barcodeOptions,
         double width,
         double height,
-        PdfLinkOptions linkOptions,
-        PdfBookmarkOptions bookmarkOptions,
+        DocumentLinkOptions linkOptions,
+        DocumentBookmarkOptions bookmarkOptions,
         DocumentInsets padding,
         DocumentInsets margin
 ) implements DocumentNode {
@@ -62,7 +62,7 @@ public record BarcodeNode(
      * @param margin outer margin
      */
     public BarcodeNode(String name,
-                       PdfBarcodeOptions barcodeOptions,
+                       DocumentBarcodeOptions barcodeOptions,
                        double width,
                        double height,
                        DocumentInsets padding,

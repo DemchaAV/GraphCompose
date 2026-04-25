@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.demchaav</groupId>
-    <artifactId>GraphCompose</artifactId>
+    <artifactId>graphcompose</artifactId>
     <version>2.0.0</version>
 
     <name>GraphCompose</name>

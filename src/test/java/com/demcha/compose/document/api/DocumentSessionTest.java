@@ -81,7 +81,7 @@ class DocumentSessionTest {
     @Test
     void atomicNodeShouldMoveWholeToNextPage() {
         try (DocumentSession session = GraphCompose.document()
-                .pageSize(new PDRectangle(200, 200))
+                .pageSize(200, 200)
                 .margin(DocumentInsets.of(10))
                 .create()) {
 
@@ -105,7 +105,7 @@ class DocumentSessionTest {
     @Test
     void pageFlowShortcutShouldAttachRootWithoutDslFacade() throws Exception {
         try (DocumentSession session = GraphCompose.document()
-                .pageSize(new PDRectangle(240, 180))
+                .pageSize(240, 180)
                 .margin(DocumentInsets.of(12))
                 .create()) {
 
@@ -126,7 +126,7 @@ class DocumentSessionTest {
     @Test
     void composeShortcutShouldBatchDslCallsWithoutManualBuilderLifecycle() throws Exception {
         try (DocumentSession session = GraphCompose.document()
-                .pageSize(new PDRectangle(240, 180))
+                .pageSize(240, 180)
                 .margin(DocumentInsets.of(12))
                 .create()) {
 
@@ -150,7 +150,7 @@ class DocumentSessionTest {
     @Test
     void namedSectionShortcutShouldAvoidRepeatingSectionNameInsideNestedBuilder() throws Exception {
         try (DocumentSession session = GraphCompose.document()
-                .pageSize(new PDRectangle(240, 180))
+                .pageSize(240, 180)
                 .margin(DocumentInsets.of(12))
                 .create()) {
 
@@ -177,7 +177,7 @@ class DocumentSessionTest {
     @Test
     void moduleShortcutShouldBuildTitledSemanticBlocks() throws Exception {
         try (DocumentSession session = GraphCompose.document()
-                .pageSize(new PDRectangle(320, 240))
+                .pageSize(320, 240)
                 .margin(DocumentInsets.of(12))
                 .create()) {
 
@@ -220,7 +220,7 @@ class DocumentSessionTest {
     @Test
     void moduleShortcutShouldPaginateLongBodyThroughCanonicalCompositePath() throws Exception {
         try (DocumentSession session = GraphCompose.document()
-                .pageSize(new PDRectangle(220, 180))
+                .pageSize(220, 180)
                 .margin(DocumentInsets.of(12))
                 .create()) {
 
@@ -248,7 +248,7 @@ class DocumentSessionTest {
     @Test
     void tableConvenienceMethodsShouldBuildHeaderAndBulkRows() throws Exception {
         try (DocumentSession session = GraphCompose.document()
-                .pageSize(new PDRectangle(320, 220))
+                .pageSize(320, 220)
                 .margin(DocumentInsets.of(12))
                 .create()) {
 
@@ -290,7 +290,7 @@ class DocumentSessionTest {
     @Test
     void atomicNodeTooLargeShouldFailDeterministically() {
         try (DocumentSession session = GraphCompose.document()
-                .pageSize(new PDRectangle(200, 200))
+                .pageSize(200, 200)
                 .margin(DocumentInsets.of(10))
                 .create()) {
 
@@ -307,7 +307,7 @@ class DocumentSessionTest {
     @Test
     void paragraphShouldSplitAcrossPagesAndPdfShouldMatchPageCount() throws Exception {
         try (DocumentSession session = GraphCompose.document()
-                .pageSize(new PDRectangle(220, 180))
+                .pageSize(220, 180)
                 .margin(DocumentInsets.of(12))
                 .create()) {
 
@@ -348,7 +348,7 @@ class DocumentSessionTest {
     @Test
     void writePdfShouldStreamValidPdfWithoutClosingCallerStream() throws Exception {
         try (DocumentSession session = GraphCompose.document()
-                .pageSize(new PDRectangle(220, 180))
+                .pageSize(220, 180)
                 .margin(DocumentInsets.of(12))
                 .create()) {
 
@@ -378,7 +378,7 @@ class DocumentSessionTest {
         assertThat(fieldNames).doesNotContain("cachedPdfBytes", "cachedPdfRevision");
 
         try (DocumentSession session = GraphCompose.document()
-                .pageSize(new PDRectangle(220, 180))
+                .pageSize(220, 180)
                 .margin(DocumentInsets.of(12))
                 .create()) {
 
@@ -397,7 +397,7 @@ class DocumentSessionTest {
     @Test
     void paragraphShouldPreserveExplicitNewlinesInPreparedFragments() throws Exception {
         try (DocumentSession session = GraphCompose.document()
-                .pageSize(new PDRectangle(240, 220))
+                .pageSize(240, 220)
                 .margin(DocumentInsets.of(12))
                 .create()) {
 
@@ -462,7 +462,7 @@ class DocumentSessionTest {
     @Test
     void tableShouldSplitByAtomicRows() {
         try (DocumentSession session = GraphCompose.document()
-                .pageSize(new PDRectangle(220, 180))
+                .pageSize(220, 180)
                 .margin(DocumentInsets.of(12))
                 .create()) {
 
@@ -510,7 +510,7 @@ class DocumentSessionTest {
     @Test
     void customNodeShouldWorkViaRegisteredDefinitionAndBackend() throws Exception {
         try (DocumentSession session = GraphCompose.document()
-                .pageSize(new PDRectangle(200, 160))
+                .pageSize(200, 160)
                 .margin(DocumentInsets.of(10))
                 .create()) {
 
@@ -539,7 +539,7 @@ class DocumentSessionTest {
     @Test
     void semanticBackendsShouldExportManifestsFromDocumentGraph() throws Exception {
         try (DocumentSession session = GraphCompose.document()
-                .pageSize(new PDRectangle(200, 200))
+                .pageSize(200, 200)
                 .margin(DocumentInsets.of(10))
                 .create()) {
 
@@ -576,7 +576,7 @@ class DocumentSessionTest {
     @Test
     void documentLevelPdfOptionsShouldReuseCompiledLayout() throws Exception {
         try (DocumentSession session = GraphCompose.document()
-                .pageSize(new PDRectangle(220, 180))
+                .pageSize(220, 180)
                 .margin(DocumentInsets.of(12))
                 .create()) {
 
@@ -591,10 +591,13 @@ class DocumentSessionTest {
 
             LayoutGraph graph = session.layoutGraph();
 
-            session.metadata(PdfMetadataOptions.builder().title("Chrome test").build())
+            PdfFixedLayoutBackend backend = PdfFixedLayoutBackend.builder()
+                    .metadata(PdfMetadataOptions.builder().title("Chrome test").build())
                     .watermark(PdfWatermarkOptions.builder().text("DRAFT").build())
                     .header(PdfHeaderFooterOptions.builder().centerText("Header").build())
-                    .guideLines(true);
+                    .guideLines(true)
+                    .build();
+            assertThat(session.render(backend)).isNotEmpty();
 
             assertThat(session.layoutGraph()).isSameAs(graph);
         }
@@ -603,7 +606,7 @@ class DocumentSessionTest {
     @Test
     void paragraphShouldRenderMarkdownStylesByDefault() throws Exception {
         try (DocumentSession session = GraphCompose.document()
-                .pageSize(new PDRectangle(240, 180))
+                .pageSize(240, 180)
                 .margin(DocumentInsets.of(12))
                 .create()) {
 
@@ -631,7 +634,7 @@ class DocumentSessionTest {
     @Test
     void paragraphShouldKeepMarkdownMarkersWhenDisabled() throws Exception {
         try (DocumentSession session = GraphCompose.document()
-                .pageSize(new PDRectangle(240, 180))
+                .pageSize(240, 180)
                 .margin(DocumentInsets.of(12))
                 .markdown(false)
                 .create()) {
@@ -662,9 +665,8 @@ class DocumentSessionTest {
         Color boxColor = new Color(150, 150, 150);
 
         try (DocumentSession session = GraphCompose.document()
-                .pageSize(new PDRectangle(260, 200))
+                .pageSize(260, 200)
                 .margin(DocumentInsets.of(12))
-                .guideLines(true)
                 .create()) {
 
             session.add(new ParagraphNode(
@@ -677,7 +679,9 @@ class DocumentSessionTest {
                     DocumentInsets.of(14)));
 
             LayoutGraph graph = session.layoutGraph();
-            byte[] pdfBytes = session.toPdfBytes();
+            byte[] pdfBytes = session.render(PdfFixedLayoutBackend.builder()
+                    .guideLines(true)
+                    .build());
 
             try (PDDocument document = Loader.loadPDF(pdfBytes)) {
                 BufferedImage image = new PDFRenderer(document).renderImageWithDPI(0, RENDER_DPI);
@@ -783,7 +787,7 @@ class DocumentSessionTest {
 
         private CountingPrepareContext(NodeRegistry registry, PDRectangle pageSize, Margin margin) throws Exception {
             this.registry = registry;
-            this.canvas = LayoutCanvas.from(pageSize, margin);
+            this.canvas = LayoutCanvas.from(pageSize.getWidth(), pageSize.getHeight(), margin);
             this.measurementDocument = new PDDocument();
             this.fonts = DefaultFonts.library(measurementDocument);
             this.textMeasurement = new CountingTextMeasurementSystem(

@@ -1,6 +1,7 @@
 package com.demcha.compose.document.templates.api;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.TemplateTestSupport;
 import com.demcha.compose.document.templates.builtins.CoverLetterTemplateV1;
@@ -134,7 +135,7 @@ class TemplateComposeApiTest {
                                      float left,
                                      SessionAction action) throws Exception {
         try (DocumentSession document = GraphCompose.document()
-                .pageSize(pageSize)
+                .pageSize(DocumentPageSize.of(pageSize.getWidth(), pageSize.getHeight()))
                 .margin(top, right, bottom, left)
                 .create()) {
             action.apply(document);

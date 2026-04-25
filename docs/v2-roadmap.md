@@ -38,10 +38,11 @@ Internal / advanced:
 Acceptance criteria:
 
 - [x] `PublicApiNoEngineLeakTest` baselines every accepted engine import in the public API and fails on new leaks
-- README states the public entry point is `GraphCompose.document(...)`
-- `engine.*` is documented as advanced/internal
-- `package-map.md` clearly separates the two zones
-- examples import only from the public list
+- [x] `PdfBackendIsolationGuardTest` keeps PDFBox out of canonical API, DSL, semantic nodes, layout, snapshots, and non-PDF backend contracts
+- [x] README states the public entry point is `GraphCompose.document(...)`
+- [x] `engine.*` is documented as advanced/internal
+- [x] `package-map.md` clearly separates the two zones
+- [x] runnable examples import only the public document API for page sizing and authoring
 
 ### 1.2 Remove engine types from the public DSL — **Partial**
 
@@ -54,10 +55,11 @@ The public DSL still accepts internal-flavoured types in some places. Targeted r
 
 Acceptance criteria:
 
-- [x] `GraphCompose.DocumentBuilder#margin(Margin)` and `DocumentSession#margin(Margin)` are deprecated for removal; `DocumentInsets`-based overloads are the preferred path
-- the public DSL compiles without importing from `com.demcha.compose.engine.*`
-- internal conversions live in `dsl/internal/StyleAdapters.java` (or similar)
-- README and example code import only public style classes
+- [x] `GraphCompose.DocumentBuilder#margin(Margin)` and `DocumentSession#margin(Margin)` overloads were removed from the canonical API
+- [x] page sizing uses backend-neutral `DocumentPageSize` or point dimensions instead of `PDRectangle`
+- [x] the public DSL compiles without importing from `com.demcha.compose.engine.*`
+- [x] internal conversions live in `dsl/internal/StyleAdapters.java` and related adapter helpers
+- [x] README and example code import only public document style classes
 
 ### 1.3 `DocumentSession` lifecycle safety — **Done**
 
@@ -65,9 +67,9 @@ Acceptance criteria:
 - [x] `ensureOpen()` guard on every public authoring / rendering method
 - [x] `DocumentSessionLifecycleTest` covering the closed-state contract
 
-## Phase 2 — Split `DocumentDsl` — *Planned*
+## Phase 2 — Split `DocumentDsl` — **Done**
 
-`DocumentDsl.java` is currently 2,500+ lines. Split into focused builders under `com.demcha.compose.document.dsl`:
+`DocumentDsl.java` is now a small facade. Focused builders live under `com.demcha.compose.document.dsl`:
 
 ```
 DocumentDsl.java          (facade only)
@@ -97,9 +99,9 @@ Rules:
 
 Acceptance criteria:
 
-- `DocumentDsl.java` is now a thin facade
-- each builder has a single responsibility and no circular dependencies
-- existing snapshot/render tests still pass
+- [x] `DocumentDsl.java` is now a thin facade
+- [x] each builder has a single responsibility and no circular dependencies
+- [x] existing snapshot/render tests still pass
 
 ## Phase 3 — Semantic layer purity — *Done*
 
@@ -134,9 +136,9 @@ BoxConstraints.unboundedHeight(width);
 - [x] Empty render now throws `IllegalStateException` with a domain-specific message
 - [x] `DocumentSessionLifecycleTest#emptyDocumentRenderShouldThrow` covers this
 
-### 4.3 Pagination edge cases — **Partial**
+### 4.3 Pagination edge cases — **Mostly done**
 
-`PaginationEdgeCaseTest` lands the first eight cases:
+`PaginationEdgeCaseTest` covers the main edge cases:
 
 - [x] single paragraph larger than one page
 - [x] page break at start (no-op)
@@ -146,21 +148,24 @@ BoxConstraints.unboundedHeight(width);
 - [x] exact-fit shape at page bottom
 - [x] near-boundary float (epsilon under inner height)
 - [x] tall atomic shape moves to next page when current page is partially used
+- [x] atomic image larger than page fails fast with a domain-specific message
+- [x] table row too tall fails fast with a domain-specific message
+- [x] module split across pages survives PDF header/footer chrome
 
-Still planned:
-
-- atomic image larger than page (today fails fast — verify the dedicated message)
-- table row too tall (atomic row larger than inner height)
-- module split across pages with header/footer chrome
-
-## Phase 5 — Render backend polishing — *Planned*
+## Phase 5 — Render backend polishing — **In progress**
 
 Make PDF rendering reliable, fast, and isolated.
 
 ### 5.1 PDF backend ownership
 
 Allowed: `document.backend.fixed.pdf.*`, `engine.render.pdf.*`.
-Forbidden: PDFBox imports inside `document.node.*`, `document.dsl.*`, `document.layout.*`.
+Forbidden: PDFBox imports inside `GraphCompose`, `document.api.*`, `document.node.*`, `document.dsl.*`, `document.layout.*`, `document.snapshot.*`, and non-PDF backend contracts.
+
+- [x] `GraphCompose`, `DocumentSession`, and `LayoutCanvas` are free of direct PDFBox imports
+- [x] `DocumentPageSize` replaces public `PDRectangle` page-size usage
+- [x] PDF metadata/protection/watermark/header/footer options are configured through `PdfFixedLayoutBackend.builder()`
+- [x] `PdfBackendIsolationGuardTest` enforces the canonical/non-PDF boundary
+- [ ] the public font package still contains PDF font materialisation bridges; move those behind the PDF backend in a later cleanup
 
 ### 5.2 Render-pass resource safety
 
@@ -170,7 +175,7 @@ Forbidden: PDFBox imports inside `document.node.*`, `document.dsl.*`, `document.
 - text-mode state isolated
 - exceptions close PDF resources correctly
 
-## Phase 6 — Testing pyramid — *Planned*
+## Phase 6 — Testing pyramid — **In progress**
 
 Layers:
 
@@ -189,11 +194,11 @@ Important new tests:
 - `EmptyDocumentRenderTest` — covered by `DocumentSessionLifecycleTest`
 - `LargeAtomicNodeErrorTest` — covered by `DocumentSessionTest#atomicNodeTooLargeShouldFailDeterministically`
 - `PaginationExactFitTest` — covered by `PaginationEdgeCaseTest`
-- `TablePaginationRegressionTest`
-- `DslPublicApiCompileTest`
-- `MigrationExampleCompileTest`
+- `TablePaginationRegressionTest` — covered by `PaginationEdgeCaseTest` and existing table pagination tests
+- `DslPublicApiCompileTest` — covered by `DocumentationExamplesTest` plus runnable examples compile
+- `MigrationExampleCompileTest` — covered by `DocumentationExamplesTest` and migration snippets
 
-## Phase 7 — Performance and benchmarks — *Planned*
+## Phase 7 — Performance and benchmarks — **Done**
 
 Rules:
 
@@ -202,6 +207,14 @@ Rules:
 - keep PR benchmark smoke small; full run is weekly / manual
 - store JSON / CSV reports as CI artifacts
 - document machine variability in `docs/benchmarks.md`
+
+Implemented:
+
+- [x] PR smoke benchmark profile
+- [x] scheduled/manual full benchmark workflow
+- [x] JSON/CSV artifact output
+- [x] median repeated-run mode for local comparison
+- [x] conservative benchmark documentation
 
 ## Phase 8 — Documentation polish — *Planned*
 

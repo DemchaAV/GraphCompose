@@ -2,11 +2,12 @@ package com.demcha.compose.document.debug.snapshot;
 
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedNode;
-
-import com.demcha.compose.engine.debug.LayoutCanvasSnapshot;
-import com.demcha.compose.engine.debug.LayoutInsetsSnapshot;
-import com.demcha.compose.engine.debug.LayoutNodeSnapshot;
-import com.demcha.compose.engine.debug.LayoutSnapshot;
+import com.demcha.compose.document.snapshot.LayoutCanvasSnapshot;
+import com.demcha.compose.document.snapshot.LayoutInsetsSnapshot;
+import com.demcha.compose.document.snapshot.LayoutNodeSnapshot;
+import com.demcha.compose.document.snapshot.LayoutSnapshot;
+import com.demcha.compose.engine.components.style.Margin;
+import com.demcha.compose.engine.components.style.Padding;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -40,7 +41,7 @@ public final class LayoutGraphSnapshotExtractor {
                         normalize(graph.canvas().height()),
                         normalize(graph.canvas().innerWidth()),
                         normalize(graph.canvas().innerHeight()),
-                        LayoutInsetsSnapshot.from(graph.canvas().margin())),
+                        from(graph.canvas().margin())),
                 graph.totalPages(),
                 graph.nodes().stream()
                         .map(LayoutGraphSnapshotExtractor::toNodeSnapshot)
@@ -66,8 +67,26 @@ public final class LayoutGraphSnapshotExtractor {
                 node.endPage(),
                 normalize(node.contentWidth()),
                 normalize(node.contentHeight()),
-                LayoutInsetsSnapshot.from(node.margin()),
-                LayoutInsetsSnapshot.from(node.padding()));
+                from(node.margin()),
+                from(node.padding()));
+    }
+
+    private static LayoutInsetsSnapshot from(Margin margin) {
+        Margin safeMargin = margin == null ? Margin.zero() : margin;
+        return new LayoutInsetsSnapshot(
+                normalize(safeMargin.top()),
+                normalize(safeMargin.right()),
+                normalize(safeMargin.bottom()),
+                normalize(safeMargin.left()));
+    }
+
+    private static LayoutInsetsSnapshot from(Padding padding) {
+        Padding safePadding = padding == null ? Padding.zero() : padding;
+        return new LayoutInsetsSnapshot(
+                normalize(safePadding.top()),
+                normalize(safePadding.right()),
+                normalize(safePadding.bottom()),
+                normalize(safePadding.left()));
     }
 
     static double normalize(double value) {

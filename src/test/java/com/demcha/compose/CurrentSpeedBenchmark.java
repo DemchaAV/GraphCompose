@@ -1,6 +1,7 @@
 package com.demcha.compose;
 
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkLayer;
@@ -358,7 +359,7 @@ public final class CurrentSpeedBenchmark {
 
     private byte[] renderInvoiceTemplateDocument() throws Exception {
         try (DocumentSession document = GraphCompose.document()
-                .pageSize(PDRectangle.A4)
+                .pageSize(com.demcha.compose.document.api.DocumentPageSize.A4)
                 .margin(22, 22, 22, 22)
                 .create()) {
             invoiceTemplate.compose(document, invoice);
@@ -368,7 +369,7 @@ public final class CurrentSpeedBenchmark {
 
     private byte[] renderCvTemplateDocument() throws Exception {
         try (DocumentSession document = GraphCompose.document()
-                .pageSize(PDRectangle.A4)
+                .pageSize(com.demcha.compose.document.api.DocumentPageSize.A4)
                 .margin(15, 10, 15, 15)
                 .create()) {
             cvTemplate.compose(document, cv);
@@ -378,7 +379,7 @@ public final class CurrentSpeedBenchmark {
 
     private byte[] renderProposalTemplateDocument() throws Exception {
         try (DocumentSession document = GraphCompose.document()
-                .pageSize(PDRectangle.A4)
+                .pageSize(com.demcha.compose.document.api.DocumentPageSize.A4)
                 .margin(22, 22, 22, 22)
                 .create()) {
             proposalTemplate.compose(document, proposal);
@@ -387,9 +388,7 @@ public final class CurrentSpeedBenchmark {
     }
 
     private byte[] renderFeatureRichDocument() throws Exception {
-        try (DocumentSession document = GraphCompose.document()
-                .pageSize(PDRectangle.A4)
-                .margin(28, 28, 42, 28)
+        PdfFixedLayoutBackend backend = PdfFixedLayoutBackend.builder()
                 .metadata(PdfMetadataOptions.builder()
                         .title("GraphCompose Feature Benchmark")
                         .author("CurrentSpeedBenchmark")
@@ -416,6 +415,11 @@ public final class CurrentSpeedBenchmark {
                         .rightText("feature-rich")
                         .showSeparator(true)
                         .build())
+                .build();
+
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(com.demcha.compose.document.api.DocumentPageSize.A4)
+                .margin(28, 28, 42, 28)
                 .create()) {
 
             var root = document.dsl()
@@ -463,7 +467,7 @@ public final class CurrentSpeedBenchmark {
             }
 
             root.build();
-            return document.toPdfBytes();
+            return document.render(backend);
         }
     }
 

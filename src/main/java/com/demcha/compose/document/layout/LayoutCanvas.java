@@ -1,7 +1,6 @@
 package com.demcha.compose.document.layout;
 
 import com.demcha.compose.engine.components.style.Margin;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 /**
  * Page geometry used by the v2 compiler and backends.
@@ -15,16 +14,15 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 public record LayoutCanvas(double width, double height, double innerWidth, double innerHeight, Margin margin) {
 
     /**
-     * Creates canvas geometry from PDF page size and margin.
+     * Creates canvas geometry from backend-neutral page dimensions and margin.
      *
-     * @param pageSize physical PDF page size
+     * @param width physical page width
+     * @param height physical page height
      * @param margin page margin; null becomes zero margin
      * @return normalized canvas geometry
      */
-    public static LayoutCanvas from(PDRectangle pageSize, Margin margin) {
+    public static LayoutCanvas from(double width, double height, Margin margin) {
         Margin safeMargin = margin == null ? Margin.zero() : margin;
-        double width = pageSize.getWidth();
-        double height = pageSize.getHeight();
         return new LayoutCanvas(
                 width,
                 height,

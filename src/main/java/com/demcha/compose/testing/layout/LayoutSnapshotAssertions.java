@@ -1,7 +1,7 @@
 package com.demcha.compose.testing.layout;
 
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.engine.debug.LayoutSnapshot;
+import com.demcha.compose.document.snapshot.LayoutSnapshot;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -149,6 +149,27 @@ public final class LayoutSnapshotAssertions {
     }
 
     /**
+     * Resolves and compares a legacy engine snapshot using an explicit file name
+     * plus folders. New canonical callers should pass {@link LayoutSnapshot}.
+     *
+     * @param snapshot resolved legacy engine snapshot to compare
+     * @param snapshotName file name without the {@code .json} suffix
+     * @param folders optional folder segments under the default snapshot root
+     * @throws IOException if reading or writing snapshot files fails
+     */
+    public static void assertMatches(com.demcha.compose.engine.debug.LayoutSnapshot snapshot,
+                                     String snapshotName,
+                                     String... folders) throws IOException {
+        assertMatches(
+                snapshot,
+                EXPECTED_ROOT,
+                ACTUAL_ROOT,
+                Boolean.getBoolean(UPDATE_PROPERTY),
+                snapshotName,
+                folders);
+    }
+
+    /**
      * Compares a precomputed layout snapshot against a slash-delimited logical
      * path under caller-provided baseline roots.
      *
@@ -159,6 +180,24 @@ public final class LayoutSnapshotAssertions {
      * @throws IOException if reading or writing snapshot files fails
      */
     public static void assertMatches(LayoutSnapshot snapshot,
+                                     Path expectedRoot,
+                                     Path actualRoot,
+                                     String snapshotPath) throws IOException {
+        SnapshotTarget target = parseSnapshotPath(snapshotPath);
+        assertMatches(snapshot, expectedRoot, actualRoot, Boolean.getBoolean(UPDATE_PROPERTY), target.snapshotName(), target.folders());
+    }
+
+    /**
+     * Compares a legacy engine snapshot against a slash-delimited logical path
+     * under caller-provided baseline roots.
+     *
+     * @param snapshot resolved legacy engine snapshot to compare
+     * @param expectedRoot root folder that stores committed JSON baselines
+     * @param actualRoot root folder for mismatch artifacts
+     * @param snapshotPath logical snapshot path relative to {@code expectedRoot}
+     * @throws IOException if reading or writing snapshot files fails
+     */
+    public static void assertMatches(com.demcha.compose.engine.debug.LayoutSnapshot snapshot,
                                      Path expectedRoot,
                                      Path actualRoot,
                                      String snapshotPath) throws IOException {
@@ -185,6 +224,25 @@ public final class LayoutSnapshotAssertions {
         assertMatches(snapshot, expectedRoot, actualRoot, Boolean.getBoolean(UPDATE_PROPERTY), snapshotName, folders);
     }
 
+    /**
+     * Compares a legacy engine snapshot against an explicit file name plus
+     * folders under caller-provided baseline roots.
+     *
+     * @param snapshot resolved legacy engine snapshot to compare
+     * @param expectedRoot root folder that stores committed JSON baselines
+     * @param actualRoot root folder for mismatch artifacts
+     * @param snapshotName file name without the {@code .json} suffix
+     * @param folders optional folder segments under {@code expectedRoot}
+     * @throws IOException if reading or writing snapshot files fails
+     */
+    public static void assertMatches(com.demcha.compose.engine.debug.LayoutSnapshot snapshot,
+                                     Path expectedRoot,
+                                     Path actualRoot,
+                                     String snapshotName,
+                                     String... folders) throws IOException {
+        assertMatches(snapshot, expectedRoot, actualRoot, Boolean.getBoolean(UPDATE_PROPERTY), snapshotName, folders);
+    }
+
     static void assertMatches(LayoutSnapshot snapshot,
                               Path expectedRoot,
                               Path actualRoot,
@@ -200,12 +258,47 @@ public final class LayoutSnapshotAssertions {
                               boolean updateSnapshots,
                               String snapshotName,
                               String... folders) throws IOException {
-        Objects.requireNonNull(snapshot, "snapshot");
+        assertMatchesJson(LayoutSnapshotJson.toJson(Objects.requireNonNull(snapshot, "snapshot")),
+                expectedRoot,
+                actualRoot,
+                updateSnapshots,
+                snapshotName,
+                folders);
+    }
+
+    static void assertMatches(com.demcha.compose.engine.debug.LayoutSnapshot snapshot,
+                              Path expectedRoot,
+                              Path actualRoot,
+                              boolean updateSnapshots,
+                              String snapshotPath) throws IOException {
+        SnapshotTarget target = parseSnapshotPath(snapshotPath);
+        assertMatches(snapshot, expectedRoot, actualRoot, updateSnapshots, target.snapshotName(), target.folders());
+    }
+
+    static void assertMatches(com.demcha.compose.engine.debug.LayoutSnapshot snapshot,
+                              Path expectedRoot,
+                              Path actualRoot,
+                              boolean updateSnapshots,
+                              String snapshotName,
+                              String... folders) throws IOException {
+        assertMatchesJson(LayoutSnapshotJson.toJson(Objects.requireNonNull(snapshot, "snapshot")),
+                expectedRoot,
+                actualRoot,
+                updateSnapshots,
+                snapshotName,
+                folders);
+    }
+
+    private static void assertMatchesJson(String actualJson,
+                                          Path expectedRoot,
+                                          Path actualRoot,
+                                          boolean updateSnapshots,
+                                          String snapshotName,
+                                          String... folders) throws IOException {
         Objects.requireNonNull(expectedRoot, "expectedRoot");
         Objects.requireNonNull(actualRoot, "actualRoot");
         Objects.requireNonNull(snapshotName, "snapshotName");
 
-        String actualJson = LayoutSnapshotJson.toJson(snapshot);
         Path expectedPath = resolveExpectedPath(expectedRoot, snapshotName, folders);
         Path actualPath = resolveActualPath(actualRoot, snapshotName, folders);
 

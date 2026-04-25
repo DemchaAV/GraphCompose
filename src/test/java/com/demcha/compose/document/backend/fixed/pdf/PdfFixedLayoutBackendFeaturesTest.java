@@ -48,9 +48,7 @@ class PdfFixedLayoutBackendFeaturesTest {
     void shouldRenderCanonicalPdfChromeAndSemanticAnnotations() throws Exception {
         Path outputFile = tempDir.resolve("canonical-features.pdf");
         byte[] pdfBytes;
-
-        try (DocumentSession document = GraphCompose.document(outputFile)
-                .margin(36, 36, 48, 36)
+        PdfFixedLayoutBackend backend = PdfFixedLayoutBackend.builder()
                 .metadata(PdfMetadataOptions.builder()
                         .title("Canonical Feature Test")
                         .author("GraphCompose")
@@ -75,6 +73,10 @@ class PdfFixedLayoutBackendFeaturesTest {
                         .centerText("Page {page} of {pages}")
                         .build())
                 .guideLines(true)
+                .build();
+
+        try (DocumentSession document = GraphCompose.document(outputFile)
+                .margin(36, 36, 48, 36)
                 .create()) {
 
             document.dsl()
@@ -98,7 +100,7 @@ class PdfFixedLayoutBackendFeaturesTest {
                             .textStyle(DocumentTextStyle.DEFAULT))
                     .build();
 
-            pdfBytes = document.toPdfBytes();
+            pdfBytes = document.render(backend);
         }
 
         Files.write(outputFile, pdfBytes);
@@ -165,7 +167,7 @@ class PdfFixedLayoutBackendFeaturesTest {
     void failedRenderShouldCloseOwnedPdfResourcesAndLeaveCallerStreamOpen() throws Exception {
         LayoutGraph graph;
         try (DocumentSession document = GraphCompose.document()
-                .pageSize(new org.apache.pdfbox.pdmodel.common.PDRectangle(180, 180))
+                .pageSize(180, 180)
                 .margin(12, 12, 12, 12)
                 .create()) {
             document.add(new ShapeNode(
@@ -232,12 +234,7 @@ class PdfFixedLayoutBackendFeaturesTest {
                 graph.canvas(),
                 List.of(),
                 null,
-                output,
-                false,
-                null,
-                null,
-                null,
-                List.of());
+                output);
     }
 
     private static final class FailingShapeHandler

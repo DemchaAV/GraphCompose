@@ -48,7 +48,7 @@ class LayoutSnapshotPublicApiDogfoodTest {
 
     private DocumentSession createDocument() {
         return GraphCompose.document()
-                .pageSize(PDRectangle.A4)
+                .pageSize(com.demcha.compose.document.api.DocumentPageSize.A4)
                 .margin(18, 18, 18, 18)
                 .create();
     }

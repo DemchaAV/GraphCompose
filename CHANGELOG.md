@@ -1,6 +1,6 @@
 # Changelog
 
-## v2.0.0 - Unreleased
+## v2.0.0 - 2026-04-25
 
 ### Release identity
 
@@ -12,17 +12,21 @@
 
 - `DocumentSession` is now an `AutoCloseable` lifecycle owner: `close()` is idempotent, and authoring/rendering methods on a closed session fail fast with `IllegalStateException` instead of returning broken state
 - empty document rendering (`writePdf` / `toPdfBytes` / `buildPdf`) now throws a domain-specific `IllegalStateException` instead of producing a zero-byte / zero-page PDF; add at least one root before rendering
-- `DocumentSession#margin(Margin)` and `GraphCompose.DocumentBuilder#margin(Margin)` are deprecated for removal; use the `DocumentInsets` overload (or `margin(top, right, bottom, left)`) which keeps the public API renderer-neutral
+- `DocumentPageSize` is the public page-size value; `GraphCompose.document(...).pageSize(PDRectangle)` was removed from the canonical API
+- `DocumentSession#margin(Margin)` and `GraphCompose.DocumentBuilder#margin(Margin)` were removed from the canonical API; use `DocumentInsets` or `margin(top, right, bottom, left)` to keep authoring renderer-neutral
+- PDF-specific metadata, protection, watermark, header/footer, and guide-line options moved behind `PdfFixedLayoutBackend.builder()` instead of the canonical `GraphCompose` / `DocumentSession` surface
+- `DocumentSession.layoutSnapshot()` now returns public renderer-neutral `com.demcha.compose.document.snapshot.*` DTOs instead of engine debug types
 - `BoxConstraints.unboundedHeight(width)` factory replaces the previous magic `1_000_000.0` height constant in internal layout call sites
 
 ### Architecture guards
 
 - `PublicApiNoEngineLeakTest` baselines the inventory of `com.demcha.compose.engine.*` imports allowed in the public API surface — any new leak fails the build
 - `SemanticLayerNoPdfBoxDependencyTest` keeps `document.node.*` free of direct PDFBox imports and pins the remaining `backend.fixed.pdf.options.*` references for Phase 3 cleanup
+- `PdfBackendIsolationGuardTest` keeps PDFBox out of canonical API, DSL, semantic nodes, layout, snapshots, and non-PDF backend contracts
 
 ### Layout
 
-- `PaginationEdgeCaseTest` adds focused regressions for exact-fit content, near-boundary float handling, leading / trailing page breaks, and nested sections that paginate while preserving margin and padding
+- `PaginationEdgeCaseTest` adds focused regressions for exact-fit content, near-boundary float handling, leading / trailing page breaks, oversized atomic images, too-tall table rows, module splits with PDF chrome, and nested sections that paginate while preserving margin and padding
 
 ### Documentation
 

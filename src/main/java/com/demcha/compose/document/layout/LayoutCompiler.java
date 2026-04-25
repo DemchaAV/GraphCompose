@@ -24,7 +24,6 @@ public final class LayoutCompiler {
     private static final Logger LAYOUT_LOG = LoggerFactory.getLogger("com.demcha.compose.engine.layout");
     private static final Logger PAGINATION_LOG = LoggerFactory.getLogger("com.demcha.compose.engine.pagination");
     private static final double EPS = 1e-6;
-    private static final double NATURAL_HEIGHT = 1_000_000.0;
 
     private final NodeRegistry registry;
 
@@ -503,7 +502,7 @@ public final class LayoutCompiler {
     private PreparedNode<DocumentNode> prepareForRegionWidth(PrepareContext prepareContext,
                                                              DocumentNode node,
                                                              double regionWidth) {
-        return prepareContext.prepare(node, new BoxConstraints(childAvailableWidth(regionWidth, node), NATURAL_HEIGHT));
+        return prepareContext.prepare(node, BoxConstraints.unboundedHeight(childAvailableWidth(regionWidth, node)));
     }
 
     private double childAvailableWidth(double regionWidth, DocumentNode node) {

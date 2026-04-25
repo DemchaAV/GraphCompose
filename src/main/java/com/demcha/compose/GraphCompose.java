@@ -162,11 +162,16 @@ public final class GraphCompose {
         }
 
         /**
-         * Sets the semantic document margin.
+         * Sets the semantic document margin using the engine spacing type.
          *
          * @param margin outer page margin
          * @return this builder
+         * @deprecated since 2.0.0 — use {@link #margin(DocumentInsets)} or
+         *     {@link #margin(float, float, float, float)} so the public API
+         *     stops importing engine types. This overload is scheduled for
+         *     removal in the v2.x line.
          */
+        @Deprecated(since = "2.0.0", forRemoval = true)
         public DocumentBuilder margin(Margin margin) {
             this.margin = margin == null ? Margin.zero() : margin;
             return this;

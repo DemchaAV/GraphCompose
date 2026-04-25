@@ -7,6 +7,16 @@ package com.demcha.compose.document.layout;
  * @param availableHeight available content height
  */
 public record BoxConstraints(double availableWidth, double availableHeight) {
+
+    /**
+     * Sentinel value used to represent an effectively unbounded vertical axis.
+     *
+     * <p>The constraint contract rejects {@link Double#POSITIVE_INFINITY}, so the
+     * engine uses a large finite ceiling instead. Use the {@link #unboundedHeight(double)}
+     * factory rather than this constant directly.</p>
+     */
+    public static final double UNBOUNDED_HEIGHT = 1_000_000.0;
+
     /**
      * Creates validated non-negative layout constraints.
      */
@@ -18,6 +28,15 @@ public record BoxConstraints(double availableWidth, double availableHeight) {
             throw new IllegalArgumentException("availableHeight must be finite and non-negative: " + availableHeight);
         }
     }
+
+    /**
+     * Constraints with a fixed width and an effectively unbounded height, used when
+     * the engine wants a node to report its natural / preferred height.
+     *
+     * @param availableWidth available content width
+     * @return constraints fixing the width and using {@link #UNBOUNDED_HEIGHT} for the height
+     */
+    public static BoxConstraints unboundedHeight(double availableWidth) {
+        return new BoxConstraints(availableWidth, UNBOUNDED_HEIGHT);
+    }
 }
-
-

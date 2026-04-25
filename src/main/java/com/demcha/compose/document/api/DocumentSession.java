@@ -24,6 +24,7 @@ import com.demcha.compose.document.dsl.DocumentDsl;
 import com.demcha.compose.document.layout.*;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ContainerNode;
+import com.demcha.compose.document.style.DocumentInsets;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.slf4j.Logger;
@@ -92,6 +93,7 @@ public final class DocumentSession implements AutoCloseable {
     private long cachedLayoutRevision = -1;
     private LayoutSnapshot cachedSnapshot;
     private long cachedSnapshotRevision = -1;
+    private boolean closed;
 
 
     /**
@@ -147,8 +149,10 @@ public final class DocumentSession implements AutoCloseable {
      * Returns the fluent semantic DSL facade bound to this session.
      *
      * @return a new DSL facade for authoring roots and semantic nodes
+     * @throws IllegalStateException if this session has already been closed
      */
     public DocumentDsl dsl() {
+        ensureOpen();
         return new DocumentDsl(this);
     }
 
@@ -156,6 +160,7 @@ public final class DocumentSession implements AutoCloseable {
      * Alias for {@link #dsl()} for callers that prefer a builder-oriented name.
      *
      * @return a new DSL facade for authoring roots and semantic nodes
+     * @throws IllegalStateException if this session has already been closed
      */
     public DocumentDsl builder() {
         return dsl();
@@ -169,8 +174,10 @@ public final class DocumentSession implements AutoCloseable {
      *
      * @param spec callback that receives a live DSL facade
      * @return this session
+     * @throws IllegalStateException if this session has already been closed
      */
     public DocumentSession compose(Consumer<DocumentDsl> spec) {
+        ensureOpen();
         long startNanos = System.nanoTime();
         LIFECYCLE_LOG.debug("document.compose.start sessionId={} revision={} roots={}", sessionId, revision, roots.size());
         try {
@@ -200,6 +207,7 @@ public final class DocumentSession implements AutoCloseable {
      * compose-first authoring path.</p>
      *
      * @return a root flow builder that attaches to this session when built
+     * @throws IllegalStateException if this session has already been closed
      */
     public DocumentDsl.PageFlowBuilder pageFlow() {
         return dsl().pageFlow();
@@ -210,6 +218,7 @@ public final class DocumentSession implements AutoCloseable {
      *
      * @param spec callback that configures the root flow
      * @return the built root container node
+     * @throws IllegalStateException if this session has already been closed
      */
     public ContainerNode pageFlow(Consumer<DocumentDsl.PageFlowBuilder> spec) {
         return dsl().pageFlow(spec);
@@ -220,8 +229,10 @@ public final class DocumentSession implements AutoCloseable {
      *
      * @param node root or detached semantic node to append
      * @return this session
+     * @throws IllegalStateException if this session has already been closed
      */
     public DocumentSession add(DocumentNode node) {
+        ensureOpen();
         roots.add(Objects.requireNonNull(node, "node"));
         invalidate();
         return this;
@@ -232,8 +243,10 @@ public final class DocumentSession implements AutoCloseable {
      *
      * @param nodes semantic nodes to append
      * @return this session
+     * @throws IllegalStateException if this session has already been closed
      */
     public DocumentSession addAll(Collection<? extends DocumentNode> nodes) {
+        ensureOpen();
         for (DocumentNode node : nodes) {
             add(node);
         }
@@ -244,8 +257,10 @@ public final class DocumentSession implements AutoCloseable {
      * Removes all registered roots and invalidates cached layout/render state.
      *
      * @return this session
+     * @throws IllegalStateException if this session has already been closed
      */
     public DocumentSession clear() {
+        ensureOpen();
         roots.clear();
         invalidate();
         return this;
@@ -258,6 +273,7 @@ public final class DocumentSession implements AutoCloseable {
      * @return this session
      */
     public DocumentSession pageSize(PDRectangle pageSize) {
+        ensureOpen();
         this.pageSize = Objects.requireNonNull(pageSize, "pageSize");
         this.canvas = LayoutCanvas.from(this.pageSize, margin);
         invalidate();
@@ -265,13 +281,37 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
-     * Updates the outer document margin and recomputes the semantic canvas.
+     * Updates the outer document margin and recomputes the semantic canvas
+     * using the engine spacing type.
      *
      * @param margin new canvas margin, or {@code null} to reset to zero
      * @return this session
+     * @throws IllegalStateException if this session has already been closed
+     * @deprecated since 2.0.0 — use {@link #margin(DocumentInsets)} so the
+     *     public API stops importing engine types. This overload is scheduled
+     *     for removal in the v2.x line.
      */
+    @Deprecated(since = "2.0.0", forRemoval = true)
     public DocumentSession margin(Margin margin) {
+        ensureOpen();
         this.margin = margin == null ? Margin.zero() : margin;
+        this.canvas = LayoutCanvas.from(pageSize, this.margin);
+        invalidate();
+        return this;
+    }
+
+    /**
+     * Updates the outer document margin using the public canonical spacing value.
+     *
+     * @param margin new canvas margin, or {@code null} to reset to zero
+     * @return this session
+     * @throws IllegalStateException if this session has already been closed
+     */
+    public DocumentSession margin(DocumentInsets margin) {
+        ensureOpen();
+        this.margin = margin == null
+                ? Margin.zero()
+                : new Margin(margin.top(), margin.right(), margin.bottom(), margin.left());
         this.canvas = LayoutCanvas.from(pageSize, this.margin);
         invalidate();
         return this;
@@ -284,6 +324,7 @@ public final class DocumentSession implements AutoCloseable {
      * @return this session
      */
     public DocumentSession markdown(boolean enabled) {
+        ensureOpen();
         this.markdown = enabled;
         invalidate();
         return this;
@@ -297,6 +338,7 @@ public final class DocumentSession implements AutoCloseable {
      * @return this session
      */
     public DocumentSession guideLines(boolean enabled) {
+        ensureOpen();
         this.guideLines = enabled;
         invalidatePdfArtifacts();
         return this;
@@ -309,6 +351,7 @@ public final class DocumentSession implements AutoCloseable {
      * @return this session
      */
     public DocumentSession metadata(PdfMetadataOptions options) {
+        ensureOpen();
         this.metadataOptions = options;
         invalidatePdfArtifacts();
         return this;
@@ -321,6 +364,7 @@ public final class DocumentSession implements AutoCloseable {
      * @return this session
      */
     public DocumentSession watermark(PdfWatermarkOptions options) {
+        ensureOpen();
         this.watermarkOptions = options;
         invalidatePdfArtifacts();
         return this;
@@ -333,6 +377,7 @@ public final class DocumentSession implements AutoCloseable {
      * @return this session
      */
     public DocumentSession protect(PdfProtectionOptions options) {
+        ensureOpen();
         this.protectionOptions = options;
         invalidatePdfArtifacts();
         return this;
@@ -345,6 +390,7 @@ public final class DocumentSession implements AutoCloseable {
      * @return this session
      */
     public DocumentSession header(PdfHeaderFooterOptions options) {
+        ensureOpen();
         this.headerFooterOptions.add(Objects.requireNonNull(options, "options")
                 .withZone(PdfHeaderFooterZone.HEADER));
         invalidatePdfArtifacts();
@@ -358,6 +404,7 @@ public final class DocumentSession implements AutoCloseable {
      * @return this session
      */
     public DocumentSession footer(PdfHeaderFooterOptions options) {
+        ensureOpen();
         this.headerFooterOptions.add(Objects.requireNonNull(options, "options")
                 .withZone(PdfHeaderFooterZone.FOOTER));
         invalidatePdfArtifacts();
@@ -371,6 +418,7 @@ public final class DocumentSession implements AutoCloseable {
      * @return this session
      */
     public DocumentSession registerFontFamily(FontFamilyDefinition definition) {
+        ensureOpen();
         customFontFamilies.add(Objects.requireNonNull(definition, "definition"));
         refreshMeasurementServices();
         invalidate();
@@ -385,6 +433,7 @@ public final class DocumentSession implements AutoCloseable {
      * @return this session
      */
     public <E extends DocumentNode> DocumentSession registerNodeDefinition(NodeDefinition<E> definition) {
+        ensureOpen();
         registry.register(Objects.requireNonNull(definition, "definition"));
         invalidate();
         return this;
@@ -432,6 +481,7 @@ public final class DocumentSession implements AutoCloseable {
      * @return cached or freshly compiled layout graph
      */
     public LayoutGraph layoutGraph() {
+        ensureOpen();
         if (cachedLayout != null && cachedLayoutRevision == revision) {
             LIFECYCLE_LOG.debug(
                     "document.layout.cache.hit sessionId={} revision={} roots={} pages={} nodes={} fragments={}",
@@ -476,6 +526,7 @@ public final class DocumentSession implements AutoCloseable {
      * @return layout snapshot derived from the current layout graph
      */
     public LayoutSnapshot layoutSnapshot() {
+        ensureOpen();
         if (cachedSnapshot != null && cachedSnapshotRevision == revision) {
             LIFECYCLE_LOG.debug(
                     "document.layoutSnapshot.cache.hit sessionId={} revision={} roots={}",
@@ -520,6 +571,7 @@ public final class DocumentSession implements AutoCloseable {
      * @throws Exception if rendering fails
      */
     public <R> R render(FixedLayoutBackend<R> backend, Path outputFile) throws Exception {
+        ensureOpen();
         Objects.requireNonNull(backend, "backend");
         long startNanos = System.nanoTime();
         LIFECYCLE_LOG.debug(
@@ -581,6 +633,7 @@ public final class DocumentSession implements AutoCloseable {
      * @throws Exception if export fails
      */
     public <R> R export(SemanticBackend<R> backend, Path outputFile) throws Exception {
+        ensureOpen();
         Objects.requireNonNull(backend, "backend");
         return backend.export(documentGraph(), new SemanticExportContext(canvas, customFontFamilies, outputFile));
     }
@@ -597,6 +650,7 @@ public final class DocumentSession implements AutoCloseable {
      * @throws Exception if PDF rendering fails
      */
     public byte[] toPdfBytes() throws Exception {
+        ensureOpen();
         long startNanos = System.nanoTime();
         LIFECYCLE_LOG.debug("document.pdf.bytes.start sessionId={} revision={} roots={}", sessionId, revision, roots.size());
         try {
@@ -632,6 +686,8 @@ public final class DocumentSession implements AutoCloseable {
      * @throws Exception if PDF rendering fails
      */
     public void writePdf(OutputStream output) throws Exception {
+        ensureOpen();
+        ensureRenderable();
         OutputStream target = Objects.requireNonNull(output, "output");
         long startNanos = System.nanoTime();
         LIFECYCLE_LOG.debug("document.pdf.stream.start sessionId={} revision={} roots={}", sessionId, revision, roots.size());
@@ -668,6 +724,7 @@ public final class DocumentSession implements AutoCloseable {
      * @throws Exception if no default output file exists or PDF rendering fails
      */
     public void buildPdf() throws Exception {
+        ensureOpen();
         if (defaultOutputFile == null) {
             throw new IllegalStateException("No default output file was configured for this document session.");
         }
@@ -681,6 +738,8 @@ public final class DocumentSession implements AutoCloseable {
      * @throws Exception if PDF rendering fails
      */
     public void buildPdf(Path outputFile) throws Exception {
+        ensureOpen();
+        ensureRenderable();
         Path target = Objects.requireNonNull(outputFile, "outputFile");
         long startNanos = System.nanoTime();
         LIFECYCLE_LOG.debug("document.pdf.build.start sessionId={} revision={} roots={}", sessionId, revision, roots.size());
@@ -705,10 +764,19 @@ public final class DocumentSession implements AutoCloseable {
     /**
      * Closes measurement resources owned by the session.
      *
+     * <p>This method is idempotent: a second call is a no-op. After the session
+     * is closed, every public authoring or rendering method throws
+     * {@link IllegalStateException}.</p>
+     *
      * @throws Exception if the measurement document close fails
      */
     @Override
     public void close() throws Exception {
+        if (closed) {
+            LIFECYCLE_LOG.debug("document.session.close.skip sessionId={} revision={}", sessionId, revision);
+            return;
+        }
+        closed = true;
         LIFECYCLE_LOG.debug("document.session.close.start sessionId={} revision={} roots={}", sessionId, revision, roots.size());
         try {
             if (textMeasurementSystem != null) {
@@ -725,6 +793,28 @@ public final class DocumentSession implements AutoCloseable {
                     revision,
                     ex.getClass().getSimpleName());
             throw ex;
+        }
+    }
+
+    /**
+     * Returns {@code true} once {@link #close()} has been called on this session.
+     *
+     * @return whether the session is closed
+     */
+    public boolean isClosed() {
+        return closed;
+    }
+
+    private void ensureOpen() {
+        if (closed) {
+            throw new IllegalStateException("DocumentSession is already closed.");
+        }
+    }
+
+    private void ensureRenderable() {
+        if (roots.isEmpty()) {
+            throw new IllegalStateException(
+                    "Cannot render an empty document. Add at least one root before calling writePdf/toPdfBytes/buildPdf.");
         }
     }
 

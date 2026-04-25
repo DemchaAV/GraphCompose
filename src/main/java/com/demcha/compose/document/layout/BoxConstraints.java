@@ -12,7 +12,7 @@ public record BoxConstraints(double availableWidth, double availableHeight) {
      * Sentinel value used to represent an effectively unbounded vertical axis.
      *
      * <p>The constraint contract rejects {@link Double#POSITIVE_INFINITY}, so the
-     * engine uses a large finite ceiling instead. Use the {@link #unboundedHeight(double)}
+     * engine uses a large finite ceiling instead. Use the {@link #natural(double)}
      * factory rather than this constant directly.</p>
      */
     public static final double UNBOUNDED_HEIGHT = 1_000_000.0;
@@ -36,7 +36,17 @@ public record BoxConstraints(double availableWidth, double availableHeight) {
      * @param availableWidth available content width
      * @return constraints fixing the width and using {@link #UNBOUNDED_HEIGHT} for the height
      */
-    public static BoxConstraints unboundedHeight(double availableWidth) {
+    public static BoxConstraints natural(double availableWidth) {
         return new BoxConstraints(availableWidth, UNBOUNDED_HEIGHT);
+    }
+
+    /**
+     * Compatibility alias for {@link #natural(double)}.
+     *
+     * @param availableWidth available content width
+     * @return natural measurement constraints
+     */
+    public static BoxConstraints unboundedHeight(double availableWidth) {
+        return natural(availableWidth);
     }
 }

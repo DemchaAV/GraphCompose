@@ -3,7 +3,6 @@ package com.demcha.compose.document.backend.fixed.pdf;
 import com.demcha.compose.engine.measurement.FontLibraryTextMeasurementSystem;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 import com.demcha.compose.engine.render.pdf.PdfFont;
-import com.demcha.compose.font.DefaultFonts;
 import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -38,7 +37,7 @@ public final class PdfMeasurementResources implements AutoCloseable {
      */
     public static PdfMeasurementResources open(Collection<FontFamilyDefinition> customFontFamilies) {
         PDDocument document = new PDDocument();
-        FontLibrary fontLibrary = DefaultFonts.library(document, customFontFamilies);
+        FontLibrary fontLibrary = PdfFontLibraryFactory.library(document, customFontFamilies);
         TextMeasurementSystem measurement = new FontLibraryTextMeasurementSystem(fontLibrary, PdfFont.class);
         return new PdfMeasurementResources(document, fontLibrary, measurement);
     }

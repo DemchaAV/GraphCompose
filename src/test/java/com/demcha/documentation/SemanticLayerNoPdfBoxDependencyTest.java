@@ -15,7 +15,7 @@ import java.util.TreeSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Architectural guard for Phase 3 of the v2 roadmap (Semantic layer purity).
+ * Architectural guard for semantic layer purity.
  *
  * <p>This test pins two invariants for the {@code document.node} semantic layer:</p>
  * <ol>

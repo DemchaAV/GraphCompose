@@ -13,6 +13,7 @@ import com.demcha.compose.engine.components.layout.coordinator.Placement;
 import com.demcha.compose.engine.components.style.ComponentColor;
 import com.demcha.compose.engine.components.style.Padding;
 import com.demcha.compose.engine.core.EntityManager;
+import com.demcha.compose.engine.render.pdf.PdfFont;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -104,7 +105,9 @@ class PdfTableRowRenderHandlerTest {
 
     @Test
     void shouldResolveTopAndMiddleAnchorsForMultilineContent() {
-        var font = DefaultFonts.standardLibrary().getPdfFont(TextStyle.DEFAULT_STYLE.fontName());
+        PdfFont font = DefaultFonts.standardLibrary()
+                .getFont(TextStyle.DEFAULT_STYLE.fontName(), PdfFont.class)
+                .orElseThrow();
 
         TableResolvedCell topCell = new TableResolvedCell(
                 "top",
@@ -145,7 +148,9 @@ class PdfTableRowRenderHandlerTest {
 
     @Test
     void shouldApplyCellLineSpacingWhenResolvingMultilineContent() {
-        var font = DefaultFonts.standardLibrary().getPdfFont(TextStyle.DEFAULT_STYLE.fontName());
+        PdfFont font = DefaultFonts.standardLibrary()
+                .getFont(TextStyle.DEFAULT_STYLE.fontName(), PdfFont.class)
+                .orElseThrow();
         double lineSpacing = 2.5;
 
         TableResolvedCell cell = new TableResolvedCell(

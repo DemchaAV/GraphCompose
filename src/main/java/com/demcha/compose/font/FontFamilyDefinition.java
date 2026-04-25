@@ -1,81 +1,209 @@
 package com.demcha.compose.font;
 
-import com.demcha.compose.engine.render.pdf.PdfFont;
-import com.demcha.compose.engine.render.word.WordFont;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
- * Describes a reusable font family that can be materialized for different
- * renderers.
- * <p>
- * PDF fonts are loaded into the current {@link PDDocument}, while the Word
- * backend keeps only the family name so it can be reused later when the Word
- * renderer is implemented.
+ * Describes a reusable font family in backend-neutral terms.
+ *
+ * <p>A definition records the logical family name plus either a standard-font
+ * descriptor or binary font sources. Backends materialize those descriptors into
+ * their own concrete font objects during measurement or rendering.</p>
  */
 public final class FontFamilyDefinition {
 
     private final FontName name;
     private final String wordFamily;
-    private final PdfFontFactory pdfFontFactory;
+    private final Standard14Family standard14Family;
+    private final FontSourceSet fontSourceSet;
 
-    private FontFamilyDefinition(FontName name, String wordFamily, PdfFontFactory pdfFontFactory) {
+    private FontFamilyDefinition(FontName name,
+                                 String wordFamily,
+                                 Standard14Family standard14Family,
+                                 FontSourceSet fontSourceSet) {
         this.name = Objects.requireNonNull(name, "name");
         this.wordFamily = Objects.requireNonNull(wordFamily, "wordFamily");
-        this.pdfFontFactory = Objects.requireNonNull(pdfFontFactory, "pdfFontFactory");
+        this.standard14Family = standard14Family;
+        this.fontSourceSet = fontSourceSet;
+        if ((standard14Family == null) == (fontSourceSet == null)) {
+            throw new IllegalArgumentException("Exactly one font descriptor must be provided.");
+        }
     }
 
+    /**
+     * Returns the logical font family name.
+     *
+     * @return logical family
+     */
     public FontName name() {
         return name;
     }
 
-    public void register(FontLibrary library, PDDocument document) {
-        library.addFontFactory(name, PdfFont.class, () -> {
-            try {
-                return pdfFontFactory.create(document);
-            } catch (IOException e) {
-                throw new IllegalStateException("Unable to register pdf font family " + name, e);
-            }
-        });
-        library.addFontFactory(name, WordFont.class, () -> new WordFont(wordFamily));
+    /**
+     * Returns the family name used by Word-style backends.
+     *
+     * @return word family name
+     */
+    public String wordFamily() {
+        return wordFamily;
     }
 
+    /**
+     * Returns the standard 14 PDF font descriptor when this family maps to a
+     * built-in font.
+     *
+     * @return optional standard font descriptor
+     */
+    public Optional<Standard14Family> standard14Family() {
+        return Optional.ofNullable(standard14Family);
+    }
+
+    /**
+     * Returns binary font sources when this family is backed by font files or
+     * classpath resources.
+     *
+     * @return optional font sources
+     */
+    public Optional<FontSourceSet> fontSourceSet() {
+        return Optional.ofNullable(fontSourceSet);
+    }
+
+    /**
+     * Creates a standard 14 font family descriptor.
+     *
+     * @param name logical family name
+     * @param regular standard regular face identifier
+     * @param bold standard bold face identifier
+     * @param italic standard italic face identifier
+     * @param boldItalic standard bold-italic face identifier
+     * @return font family descriptor
+     */
     public static FontFamilyDefinition standard14(FontName name,
-            Standard14Fonts.FontName regular,
-            Standard14Fonts.FontName bold,
-            Standard14Fonts.FontName italic,
-            Standard14Fonts.FontName boldItalic) {
-
-        return new FontFamilyDefinition(name, name.name(), doc -> new PdfFont(
-                new PDType1Font(regular),
-                new PDType1Font(bold),
-                new PDType1Font(italic),
-                new PDType1Font(boldItalic)));
+                                                  String regular,
+                                                  String bold,
+                                                  String italic,
+                                                  String boldItalic) {
+        return new FontFamilyDefinition(
+                name,
+                name.name(),
+                new Standard14Family(regular, bold, italic, boldItalic),
+                null);
     }
 
+    /**
+     * Starts a classpath-backed custom font family definition.
+     *
+     * @param name logical family name
+     * @param regularResource classpath resource for the regular face
+     * @return custom font builder
+     */
     public static Builder classpath(FontName name, String regularResource) {
         return new Builder(name, new ClasspathFontSource(regularResource));
     }
 
+    /**
+     * Starts a classpath-backed custom font family definition.
+     *
+     * @param name logical family name
+     * @param regularResource classpath resource for the regular face
+     * @return custom font builder
+     */
     public static Builder classpath(String name, String regularResource) {
         return classpath(FontName.of(name), regularResource);
     }
 
+    /**
+     * Starts a file-backed custom font family definition.
+     *
+     * @param name logical family name
+     * @param regularPath regular font file
+     * @return custom font builder
+     */
     public static Builder files(FontName name, Path regularPath) {
         return new Builder(name, new FileFontSource(regularPath));
     }
 
+    /**
+     * Starts a file-backed custom font family definition.
+     *
+     * @param name logical family name
+     * @param regularPath regular font file
+     * @return custom font builder
+     */
     public static Builder files(String name, Path regularPath) {
         return files(FontName.of(name), regularPath);
     }
 
+    /**
+     * Backend-neutral descriptor for a standard 14 font family.
+     *
+     * @param regular regular face identifier
+     * @param bold bold face identifier
+     * @param italic italic face identifier
+     * @param boldItalic bold-italic face identifier
+     */
+    public record Standard14Family(String regular, String bold, String italic, String boldItalic) {
+        /**
+         * Creates a validated standard font descriptor.
+         */
+        public Standard14Family {
+            Objects.requireNonNull(regular, "regular");
+            Objects.requireNonNull(bold, "bold");
+            Objects.requireNonNull(italic, "italic");
+            Objects.requireNonNull(boldItalic, "boldItalic");
+        }
+    }
+
+    /**
+     * Backend-neutral binary sources for a four-face font family.
+     *
+     * @param regular regular face source
+     * @param bold bold face source
+     * @param italic italic face source
+     * @param boldItalic bold-italic face source
+     */
+    public record FontSourceSet(FontBinarySource regular,
+                                FontBinarySource bold,
+                                FontBinarySource italic,
+                                FontBinarySource boldItalic) {
+        /**
+         * Creates a validated source set.
+         */
+        public FontSourceSet {
+            Objects.requireNonNull(regular, "regular");
+            Objects.requireNonNull(bold, "bold");
+            Objects.requireNonNull(italic, "italic");
+            Objects.requireNonNull(boldItalic, "boldItalic");
+        }
+    }
+
+    /**
+     * Backend-neutral binary font source.
+     */
+    public interface FontBinarySource {
+        /**
+         * Opens a new stream for the font data.
+         *
+         * @return input stream owned by the caller
+         * @throws IOException if the source cannot be opened
+         */
+        InputStream openStream() throws IOException;
+
+        /**
+         * Describes this source for diagnostics and cache keys.
+         *
+         * @return source description
+         */
+        String description();
+    }
+
+    /**
+     * Builder for file- or classpath-backed custom font families.
+     */
     public static final class Builder {
         private final FontName name;
         private final FontBinarySource regular;
@@ -90,41 +218,88 @@ public final class FontFamilyDefinition {
             this.wordFamily = name.name();
         }
 
+        /**
+         * Sets the Word-style family name.
+         *
+         * @param wordFamily word family name
+         * @return this builder
+         */
         public Builder wordFamily(String wordFamily) {
             this.wordFamily = Objects.requireNonNull(wordFamily, "wordFamily").trim();
             return this;
         }
 
+        /**
+         * Sets the bold face from a classpath resource.
+         *
+         * @param resourcePath resource path
+         * @return this builder
+         */
         public Builder boldResource(String resourcePath) {
             this.bold = new ClasspathFontSource(resourcePath);
             return this;
         }
 
+        /**
+         * Sets the italic face from a classpath resource.
+         *
+         * @param resourcePath resource path
+         * @return this builder
+         */
         public Builder italicResource(String resourcePath) {
             this.italic = new ClasspathFontSource(resourcePath);
             return this;
         }
 
+        /**
+         * Sets the bold-italic face from a classpath resource.
+         *
+         * @param resourcePath resource path
+         * @return this builder
+         */
         public Builder boldItalicResource(String resourcePath) {
             this.boldItalic = new ClasspathFontSource(resourcePath);
             return this;
         }
 
+        /**
+         * Sets the bold face from a file path.
+         *
+         * @param path font file path
+         * @return this builder
+         */
         public Builder boldPath(Path path) {
             this.bold = new FileFontSource(path);
             return this;
         }
 
+        /**
+         * Sets the italic face from a file path.
+         *
+         * @param path font file path
+         * @return this builder
+         */
         public Builder italicPath(Path path) {
             this.italic = new FileFontSource(path);
             return this;
         }
 
+        /**
+         * Sets the bold-italic face from a file path.
+         *
+         * @param path font file path
+         * @return this builder
+         */
         public Builder boldItalicPath(Path path) {
             this.boldItalic = new FileFontSource(path);
             return this;
         }
 
+        /**
+         * Builds an immutable custom font family definition.
+         *
+         * @return font family definition
+         */
         public FontFamilyDefinition build() {
             FontBinarySource resolvedBold = bold != null ? bold : regular;
             FontBinarySource resolvedItalic = italic != null ? italic : regular;
@@ -132,23 +307,12 @@ public final class FontFamilyDefinition {
                     ? boldItalic
                     : (bold != null ? bold : (italic != null ? italic : regular));
 
-            return new FontFamilyDefinition(name, wordFamily, doc -> new PdfFont(
-                    Pdf_FontLoader.loadFont(doc, regular.openStream(), regular.description()),
-                    Pdf_FontLoader.loadFont(doc, resolvedBold.openStream(), resolvedBold.description()),
-                    Pdf_FontLoader.loadFont(doc, resolvedItalic.openStream(), resolvedItalic.description()),
-                    Pdf_FontLoader.loadFont(doc, resolvedBoldItalic.openStream(), resolvedBoldItalic.description())));
+            return new FontFamilyDefinition(
+                    name,
+                    wordFamily,
+                    null,
+                    new FontSourceSet(regular, resolvedBold, resolvedItalic, resolvedBoldItalic));
         }
-    }
-
-    @FunctionalInterface
-    private interface PdfFontFactory {
-        PdfFont create(PDDocument document) throws IOException;
-    }
-
-    private interface FontBinarySource {
-        InputStream openStream() throws IOException;
-
-        String description();
     }
 
     private record ClasspathFontSource(String resourcePath) implements FontBinarySource {

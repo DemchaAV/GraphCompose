@@ -16,7 +16,6 @@ import com.demcha.compose.document.exceptions.UnsupportedNodeCapabilityException
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
-import com.demcha.compose.font.DefaultFonts;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -214,7 +213,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
 
     private int renderToOutput(LayoutGraph graph, FixedLayoutRenderContext context, OutputStream output) throws Exception {
         try (PDDocument document = new PDDocument()) {
-            FontLibrary fonts = DefaultFonts.library(document, context.customFontFamilies());
+            FontLibrary fonts = PdfFontLibraryFactory.library(document, context.customFontFamilies());
             List<PDPage> pages = createPages(document, graph);
 
             try (PdfRenderSession session = new PdfRenderSession(document, pages)) {

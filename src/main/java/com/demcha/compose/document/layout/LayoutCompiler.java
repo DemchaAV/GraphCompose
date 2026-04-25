@@ -502,7 +502,7 @@ public final class LayoutCompiler {
     private PreparedNode<DocumentNode> prepareForRegionWidth(PrepareContext prepareContext,
                                                              DocumentNode node,
                                                              double regionWidth) {
-        return prepareContext.prepare(node, BoxConstraints.unboundedHeight(childAvailableWidth(regionWidth, node)));
+        return prepareContext.prepare(node, BoxConstraints.natural(childAvailableWidth(regionWidth, node)));
     }
 
     private double childAvailableWidth(double regionWidth, DocumentNode node) {
@@ -590,6 +590,5 @@ public final class LayoutCompiler {
         }
     }
 }
-
 
 

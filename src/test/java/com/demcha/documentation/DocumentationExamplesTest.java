@@ -3,11 +3,14 @@ package com.demcha.documentation;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.templates.api.InvoiceTemplate;
 import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.font.FontName;
@@ -16,6 +19,9 @@ import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.junit.jupiter.api.Test;
 
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -23,6 +29,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import javax.imageio.ImageIO;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -95,6 +102,33 @@ class DocumentationExamplesTest {
         }
 
         assertPdfBytesLookValid(pdfBytes, outputFile);
+    }
+
+    @Test
+    void shouldRenderRoundedCardRecipeToFile() throws Exception {
+        Path outputFile = VisualTestOutputs.preparePdf("rounded-card", "clean", "documentation");
+
+        try (DocumentSession document = GraphCompose.document(outputFile)
+                .pageSize(DocumentPageSize.A4)
+                .margin(24, 24, 24, 24)
+                .create()) {
+            document.pageFlow(page -> page
+                    .spacing(12)
+                    .addSection("InfoCard", card -> card
+                            .fillColor(DocumentColor.rgb(245, 248, 255))
+                            .stroke(DocumentStroke.of(DocumentColor.ROYAL_BLUE, 0.8))
+                            .cornerRadius(10)
+                            .padding(DocumentInsets.of(12))
+                            .margin(DocumentInsets.bottom(10))
+                            .addParagraph(paragraph -> paragraph
+                                    .text("Block text inside a filled rounded card.")
+                                    .textStyle(DocumentTextStyle.DEFAULT)
+                                    .lineSpacing(2))));
+
+            document.buildPdf();
+        }
+
+        assertPdfFileLooksValid(outputFile);
     }
 
     @Test
@@ -203,6 +237,64 @@ class DocumentationExamplesTest {
     }
 
     @Test
+    void shouldRenderSpacerLineAndCircleRecipeToFile() throws Exception {
+        Path outputFile = VisualTestOutputs.preparePdf("spacer-line-circle", "clean", "documentation");
+
+        try (DocumentSession document = GraphCompose.document(outputFile)
+                .pageSize(DocumentPageSize.A4)
+                .margin(24, 24, 24, 24)
+                .create()) {
+            document.pageFlow(page -> page
+                    .name("VisualPrimitives")
+                    .spacing(8)
+                    .addSpacer(spacer -> spacer.name("Gap").height(12))
+                    .addLine(line -> line
+                            .name("Rule")
+                            .horizontal(180)
+                            .thickness(2)
+                            .color(DocumentColor.ROYAL_BLUE))
+                    .addEllipse(ellipse -> ellipse
+                            .name("Badge")
+                            .circle(24)
+                            .fillColor(DocumentColor.ORANGE)
+                            .stroke(DocumentStroke.of(DocumentColor.BLACK, 0.5))));
+
+            document.buildPdf();
+        }
+
+        assertPdfFileLooksValid(outputFile);
+    }
+
+    @Test
+    void shouldRenderImageFitRecipeToFile() throws Exception {
+        Path outputFile = VisualTestOutputs.preparePdf("image-fit", "clean", "documentation");
+        byte[] logo = testPng(96, 32);
+        byte[] avatar = testPng(48, 72);
+
+        try (DocumentSession document = GraphCompose.document(outputFile)
+                .pageSize(DocumentPageSize.A4)
+                .margin(24, 24, 24, 24)
+                .create()) {
+            document.pageFlow(page -> page
+                    .name("ImageFit")
+                    .addImage(image -> image
+                            .name("Logo")
+                            .source(logo)
+                            .fitToBounds(96, 48)
+                            .fitMode(DocumentImageFitMode.CONTAIN))
+                    .addImage(image -> image
+                            .name("Avatar")
+                            .source(avatar)
+                            .fitToBounds(48, 48)
+                            .fitMode(DocumentImageFitMode.COVER)));
+
+            document.buildPdf();
+        }
+
+        assertPdfFileLooksValid(outputFile);
+    }
+
+    @Test
     void shouldRenderCanonicalTableExampleToFile() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("table-component", "clean", "documentation");
 
@@ -273,6 +365,18 @@ class DocumentationExamplesTest {
         } catch (IOException e) {
             throw new RuntimeException("Failed to inspect " + path, e);
         }
+    }
+
+    private byte[] testPng(int width, int height) throws IOException {
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                image.setRGB(x, y, x < width / 2 ? Color.RED.getRGB() : Color.BLUE.getRGB());
+            }
+        }
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", output);
+        return output.toByteArray();
     }
 
     private InvoiceDocumentSpec sampleInvoice() {

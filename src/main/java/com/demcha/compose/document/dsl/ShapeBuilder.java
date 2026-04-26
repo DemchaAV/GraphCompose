@@ -22,6 +22,7 @@ import com.demcha.compose.document.node.ShapeNode;
 import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextIndent;
@@ -41,6 +42,8 @@ import java.util.function.Consumer;
 
 /**
  * Builder for rectangle-like semantic shape nodes.
+ *
+ * @author Artem Demchyshyn
  */
 public class ShapeBuilder {
     protected String name = "";
@@ -48,6 +51,7 @@ public class ShapeBuilder {
     protected double height;
     protected DocumentColor fillColor;
     protected DocumentStroke stroke;
+    protected DocumentCornerRadius cornerRadius = DocumentCornerRadius.ZERO;
     protected DocumentLinkOptions linkOptions;
     protected DocumentBookmarkOptions bookmarkOptions;
     protected DocumentInsets padding = DocumentInsets.zero();
@@ -139,6 +143,27 @@ public class ShapeBuilder {
     }
 
     /**
+     * Sets the rectangle corner radius in points.
+     *
+     * @param radius corner radius in points
+     * @return this builder
+     */
+    public ShapeBuilder cornerRadius(double radius) {
+        return cornerRadius(DocumentCornerRadius.of(radius));
+    }
+
+    /**
+     * Sets the rectangle corner radius with the public canonical value.
+     *
+     * @param cornerRadius corner radius, or {@code null} for square corners
+     * @return this builder
+     */
+    public ShapeBuilder cornerRadius(DocumentCornerRadius cornerRadius) {
+        this.cornerRadius = cornerRadius == null ? DocumentCornerRadius.ZERO : cornerRadius;
+        return this;
+    }
+
+    /**
      * Attaches link metadata to the shape.
      *
      * @param linkOptions link metadata
@@ -188,10 +213,6 @@ public class ShapeBuilder {
      * @return shape node
      */
     public ShapeNode build() {
-        return new ShapeNode(name, width, height, fillColor, stroke, linkOptions, bookmarkOptions, padding, margin);
+        return new ShapeNode(name, width, height, fillColor, stroke, cornerRadius, linkOptions, bookmarkOptions, padding, margin);
     }
 }
-
-/**
- * Builder for semantic barcode and QR-code nodes.
- */

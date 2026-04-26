@@ -4,6 +4,7 @@ import com.demcha.compose.document.node.DocumentBarcodeOptions;
 import com.demcha.compose.document.node.DocumentBarcodeType;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.node.DocumentNode;
@@ -25,13 +26,16 @@ import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 import com.demcha.compose.engine.text.markdown.MarkDownParser;
 import com.demcha.compose.document.node.BarcodeNode;
 import com.demcha.compose.document.node.ContainerNode;
+import com.demcha.compose.document.node.EllipseNode;
 import com.demcha.compose.document.node.ImageNode;
 import com.demcha.compose.document.node.InlineTextRun;
+import com.demcha.compose.document.node.LineNode;
 import com.demcha.compose.document.node.ListNode;
 import com.demcha.compose.document.node.PageBreakNode;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.SectionNode;
 import com.demcha.compose.document.node.ShapeNode;
+import com.demcha.compose.document.node.SpacerNode;
 import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.node.TextAlign;
 import java.awt.Color;
@@ -76,6 +80,9 @@ public final class BuiltInNodeDefinitions {
                 .register(new ParagraphDefinition())
                 .register(new ListDefinition())
                 .register(new ShapeDefinition())
+                .register(new SpacerDefinition())
+                .register(new LineDefinition())
+                .register(new EllipseDefinition())
                 .register(new ImageDefinition())
                 .register(new BarcodeDefinition())
                 .register(new PageBreakDefinition())
@@ -189,10 +196,58 @@ public final class BuiltInNodeDefinitions {
      *
      * @param fillColor optional shape fill color
      * @param stroke optional shape stroke
+     * @param cornerRadius rectangle corner radius in points
      * @param linkOptions optional fragment-level link metadata
      * @param bookmarkOptions optional fragment-level bookmark metadata
      */
     public record ShapeFragmentPayload(
+            Color fillColor,
+            Stroke stroke,
+            double cornerRadius,
+            DocumentLinkOptions linkOptions,
+            DocumentBookmarkOptions bookmarkOptions
+    ) implements PdfSemanticFragmentPayload {
+        /**
+         * Normalizes the render-only corner radius.
+         */
+        public ShapeFragmentPayload {
+            if (cornerRadius < 0 || Double.isNaN(cornerRadius) || Double.isInfinite(cornerRadius)) {
+                cornerRadius = 0.0;
+            }
+        }
+    }
+
+    /**
+     * PDF payload for a resolved line fragment.
+     *
+     * @param stroke line stroke
+     * @param startX line start x offset inside the fragment
+     * @param startY line start y offset inside the fragment
+     * @param endX line end x offset inside the fragment
+     * @param endY line end y offset inside the fragment
+     * @param linkOptions optional fragment-level link metadata
+     * @param bookmarkOptions optional fragment-level bookmark metadata
+     */
+    public record LineFragmentPayload(
+            Stroke stroke,
+            double startX,
+            double startY,
+            double endX,
+            double endY,
+            DocumentLinkOptions linkOptions,
+            DocumentBookmarkOptions bookmarkOptions
+    ) implements PdfSemanticFragmentPayload {
+    }
+
+    /**
+     * PDF payload for a resolved ellipse or circle fragment.
+     *
+     * @param fillColor optional fill color
+     * @param stroke optional stroke
+     * @param linkOptions optional fragment-level link metadata
+     * @param bookmarkOptions optional fragment-level bookmark metadata
+     */
+    public record EllipseFragmentPayload(
             Color fillColor,
             Stroke stroke,
             DocumentLinkOptions linkOptions,
@@ -204,14 +259,22 @@ public final class BuiltInNodeDefinitions {
      * PDF payload for a resolved image fragment.
      *
      * @param imageData image source data
+     * @param fitMode image fit policy used inside the resolved fragment
      * @param linkOptions optional fragment-level link metadata
      * @param bookmarkOptions optional fragment-level bookmark metadata
      */
     public record ImageFragmentPayload(
             ImageData imageData,
+            DocumentImageFitMode fitMode,
             DocumentLinkOptions linkOptions,
             DocumentBookmarkOptions bookmarkOptions
     ) implements PdfSemanticFragmentPayload {
+        /**
+         * Normalizes optional fit policy.
+         */
+        public ImageFragmentPayload {
+            fitMode = fitMode == null ? DocumentImageFitMode.STRETCH : fitMode;
+        }
     }
 
     /**
@@ -483,6 +546,116 @@ public final class BuiltInNodeDefinitions {
                     new ShapeFragmentPayload(
                             node.fillColor() == null ? null : node.fillColor().color(),
                             toStroke(node.stroke()),
+                            node.cornerRadius().radius(),
+                            node.linkOptions(),
+                            node.bookmarkOptions())));
+        }
+    }
+
+    private static final class SpacerDefinition implements NodeDefinition<SpacerNode> {
+        @Override
+        public Class<SpacerNode> nodeType() {
+            return SpacerNode.class;
+        }
+
+        @Override
+        public PreparedNode<SpacerNode> prepare(SpacerNode node, PrepareContext ctx, BoxConstraints constraints) {
+            return PreparedNode.leaf(node, new MeasureResult(
+                    node.width() + node.padding().horizontal(),
+                    node.height() + node.padding().vertical()));
+        }
+
+        @Override
+        public PaginationPolicy paginationPolicy(SpacerNode node) {
+            return PaginationPolicy.ATOMIC;
+        }
+
+        @Override
+        public List<LayoutFragment> emitFragments(PreparedNode<SpacerNode> prepared, FragmentContext ctx, FragmentPlacement placement) {
+            return List.of();
+        }
+    }
+
+    private static final class LineDefinition implements NodeDefinition<LineNode> {
+        @Override
+        public Class<LineNode> nodeType() {
+            return LineNode.class;
+        }
+
+        @Override
+        public PreparedNode<LineNode> prepare(LineNode node, PrepareContext ctx, BoxConstraints constraints) {
+            return PreparedNode.leaf(node, new MeasureResult(
+                    node.width() + node.padding().horizontal(),
+                    node.height() + node.padding().vertical()));
+        }
+
+        @Override
+        public PaginationPolicy paginationPolicy(LineNode node) {
+            return PaginationPolicy.ATOMIC;
+        }
+
+        @Override
+        public List<LayoutFragment> emitFragments(PreparedNode<LineNode> prepared, FragmentContext ctx, FragmentPlacement placement) {
+            LineNode node = prepared.node();
+            double width = Math.max(0.0, placement.width() - node.padding().horizontal());
+            double height = Math.max(0.0, placement.height() - node.padding().vertical());
+            if (width <= EPS && height <= EPS) {
+                return List.of();
+            }
+            return List.of(new LayoutFragment(
+                    placement.path(),
+                    0,
+                    node.padding().left(),
+                    node.padding().bottom(),
+                    width,
+                    height,
+                    new LineFragmentPayload(
+                            toStroke(node.stroke()),
+                            node.startX(),
+                            node.startY(),
+                            node.endX(),
+                            node.endY(),
+                            node.linkOptions(),
+                            node.bookmarkOptions())));
+        }
+    }
+
+    private static final class EllipseDefinition implements NodeDefinition<EllipseNode> {
+        @Override
+        public Class<EllipseNode> nodeType() {
+            return EllipseNode.class;
+        }
+
+        @Override
+        public PreparedNode<EllipseNode> prepare(EllipseNode node, PrepareContext ctx, BoxConstraints constraints) {
+            return PreparedNode.leaf(node, new MeasureResult(
+                    node.width() + node.padding().horizontal(),
+                    node.height() + node.padding().vertical()));
+        }
+
+        @Override
+        public PaginationPolicy paginationPolicy(EllipseNode node) {
+            return PaginationPolicy.ATOMIC;
+        }
+
+        @Override
+        public List<LayoutFragment> emitFragments(PreparedNode<EllipseNode> prepared, FragmentContext ctx, FragmentPlacement placement) {
+            EllipseNode node = prepared.node();
+            double width = Math.max(0.0, placement.width() - node.padding().horizontal());
+            double height = Math.max(0.0, placement.height() - node.padding().vertical());
+            if (width <= EPS || height <= EPS) {
+                return List.of();
+            }
+            return List.of(new LayoutFragment(
+                    placement.path(),
+                    0,
+                    node.padding().left(),
+                    node.padding().bottom(),
+                    width,
+                    height,
+                    new EllipseFragmentPayload(
+                            node.fillColor() == null ? null : node.fillColor().color(),
+                            toStroke(node.stroke()),
                             node.linkOptions(),
                             node.bookmarkOptions())));
         }
@@ -522,7 +695,11 @@ public final class BuiltInNodeDefinitions {
                     node.padding().bottom(),
                     width,
                     height,
-                    new ImageFragmentPayload(toImageData(node.imageData()), node.linkOptions(), node.bookmarkOptions())));
+                    new ImageFragmentPayload(
+                            toImageData(node.imageData()),
+                            node.fitMode(),
+                            node.linkOptions(),
+                            node.bookmarkOptions())));
         }
     }
 
@@ -617,6 +794,7 @@ public final class BuiltInNodeDefinitions {
             return emitDecorationFragment(
                     node.fillColor() == null ? null : node.fillColor().color(),
                     toStroke(node.stroke()),
+                    node.cornerRadius().radius(),
                     placement);
         }
     }
@@ -651,6 +829,7 @@ public final class BuiltInNodeDefinitions {
             return emitDecorationFragment(
                     node.fillColor() == null ? null : node.fillColor().color(),
                     toStroke(node.stroke()),
+                    node.cornerRadius().radius(),
                     placement);
         }
     }
@@ -741,6 +920,7 @@ public final class BuiltInNodeDefinitions {
 
     private static List<LayoutFragment> emitDecorationFragment(Color fillColor,
                                                                Stroke stroke,
+                                                               double cornerRadius,
                                                                FragmentPlacement placement) {
         boolean hasFill = fillColor != null;
         boolean hasStroke = stroke != null
@@ -758,7 +938,7 @@ public final class BuiltInNodeDefinitions {
                 0.0,
                 placement.width(),
                 placement.height(),
-                new ShapeFragmentPayload(fillColor, stroke, null, null)));
+                new ShapeFragmentPayload(fillColor, stroke, cornerRadius, null, null)));
     }
 
     private static BarcodeData toBarcodeData(DocumentBarcodeOptions options) {
@@ -801,6 +981,9 @@ public final class BuiltInNodeDefinitions {
         } else if (!Double.isNaN(requestedHeight)) {
             height = requestedHeight;
             width = requestedHeight * ratio;
+        } else if (node.scale() != null) {
+            width = intrinsicWidth * node.scale();
+            height = intrinsicHeight * node.scale();
         } else {
             width = intrinsicWidth;
             height = intrinsicHeight;

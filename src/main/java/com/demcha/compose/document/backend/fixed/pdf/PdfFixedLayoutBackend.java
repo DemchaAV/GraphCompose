@@ -3,7 +3,9 @@ package com.demcha.compose.document.backend.fixed.pdf;
 import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
 import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfBarcodeFragmentRenderHandler;
+import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfEllipseFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfImageFragmentRenderHandler;
+import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfLineFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfParagraphFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfShapeFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfTableRowFragmentRenderHandler;
@@ -80,6 +82,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                 new PdfBarcodeFragmentRenderHandler(),
                 new PdfParagraphFragmentRenderHandler(),
                 new PdfShapeFragmentRenderHandler(),
+                new PdfLineFragmentRenderHandler(),
+                new PdfEllipseFragmentRenderHandler(),
                 new PdfImageFragmentRenderHandler(),
                 new PdfTableRowFragmentRenderHandler());
     }

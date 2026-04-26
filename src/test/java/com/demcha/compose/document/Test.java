@@ -32,6 +32,7 @@ public class Test {
                     .addSection("InfoCard", card -> card
                             .fillColor(DocumentColor.rgb(245, 248, 255))
                             .stroke(DocumentStroke.of(DocumentColor.ROYAL_BLUE, 0.8))
+                            .cornerRadius(12)
                             .padding(DocumentInsets.of(12))
                             .margin(DocumentInsets.bottom(10))
                             .addParagraph(paragraph -> paragraph

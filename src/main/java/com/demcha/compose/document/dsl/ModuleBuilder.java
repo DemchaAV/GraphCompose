@@ -41,6 +41,8 @@ import java.util.function.Consumer;
 
 /**
  * Builder for named semantic modules with optional title content.
+ *
+ * @author Artem Demchyshyn
  */
 public final class ModuleBuilder extends AbstractFlowBuilder<ModuleBuilder, SectionNode> {
     private String title = "";
@@ -332,7 +334,7 @@ public final class ModuleBuilder extends AbstractFlowBuilder<ModuleBuilder, Sect
                     .build());
         }
         moduleChildren.addAll(children());
-        return new SectionNode(name(), moduleChildren, spacing(), padding(), margin(), fillColor(), stroke());
+        return new SectionNode(name(), moduleChildren, spacing(), padding(), margin(), fillColor(), stroke(), cornerRadius());
     }
 
     /**
@@ -344,7 +346,3 @@ public final class ModuleBuilder extends AbstractFlowBuilder<ModuleBuilder, Sect
         return buildNode();
     }
 }
-
-/**
- * Builder for paragraph-like semantic text blocks.
- */

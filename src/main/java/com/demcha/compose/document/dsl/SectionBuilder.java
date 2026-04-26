@@ -41,6 +41,8 @@ import java.util.function.Consumer;
 
 /**
  * Builder for semantic sections inside document flows.
+ *
+ * @author Artem Demchyshyn
  */
 public final class SectionBuilder extends AbstractFlowBuilder<SectionBuilder, SectionNode> {
     /**
@@ -56,7 +58,7 @@ public final class SectionBuilder extends AbstractFlowBuilder<SectionBuilder, Se
 
     @Override
     protected SectionNode buildNode() {
-        return new SectionNode(name(), children(), spacing(), padding(), margin(), fillColor(), stroke());
+        return new SectionNode(name(), children(), spacing(), padding(), margin(), fillColor(), stroke(), cornerRadius());
     }
 
     /**
@@ -68,12 +70,3 @@ public final class SectionBuilder extends AbstractFlowBuilder<SectionBuilder, Se
         return buildNode();
     }
 }
-
-/**
- * Developer-friendly semantic module builder.
- *
- * <p>A module is a titled full-width section that lowers to canonical
- * paragraph, list, table, image, divider, and page-break nodes. It keeps the
- * authoring API close to document language without introducing a separate
- * low-level builder layer.</p>
- */

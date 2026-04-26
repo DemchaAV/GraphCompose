@@ -1,6 +1,7 @@
 package com.demcha.compose.document.node;
 
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 
@@ -17,6 +18,9 @@ import java.util.Objects;
  * @param margin outer margin
  * @param fillColor optional background fill
  * @param stroke optional border stroke
+ * @param cornerRadius optional render-only corner radius
+ *
+ * @author Artem Demchyshyn
  */
 public record ContainerNode(
         String name,
@@ -25,7 +29,8 @@ public record ContainerNode(
         DocumentInsets padding,
         DocumentInsets margin,
         DocumentColor fillColor,
-        DocumentStroke stroke
+        DocumentStroke stroke,
+        DocumentCornerRadius cornerRadius
 ) implements DocumentNode {
     /**
      * Creates a normalized vertical flow container.
@@ -36,9 +41,23 @@ public record ContainerNode(
         children = List.copyOf(children);
         padding = padding == null ? DocumentInsets.zero() : padding;
         margin = margin == null ? DocumentInsets.zero() : margin;
+        cornerRadius = cornerRadius == null ? DocumentCornerRadius.ZERO : cornerRadius;
         if (spacing < 0 || Double.isNaN(spacing) || Double.isInfinite(spacing)) {
             throw new IllegalArgumentException("spacing must be finite and non-negative: " + spacing);
         }
+    }
+
+    /**
+     * Creates a vertical flow container with square corners.
+     */
+    public ContainerNode(String name,
+                         List<DocumentNode> children,
+                         double spacing,
+                         DocumentInsets padding,
+                         DocumentInsets margin,
+                         DocumentColor fillColor,
+                         DocumentStroke stroke) {
+        this(name, children, spacing, padding, margin, fillColor, stroke, DocumentCornerRadius.ZERO);
     }
 }
 

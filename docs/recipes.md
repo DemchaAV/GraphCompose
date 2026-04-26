@@ -1,6 +1,6 @@
 # Recipes
 
-These recipes use only the canonical V2 authoring API. Public application code should not import `com.demcha.compose.engine.*`.
+These recipes use only the canonical v1.2 session-first authoring API. Public application code should not import `com.demcha.compose.engine.*`.
 
 ## Paragraph Module
 

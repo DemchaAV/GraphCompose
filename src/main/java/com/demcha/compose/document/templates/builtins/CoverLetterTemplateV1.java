@@ -9,7 +9,7 @@ import com.demcha.compose.document.templates.support.common.TemplateLifecycleLog
 import com.demcha.compose.document.templates.theme.CvTheme;
 
 /**
- * Canonical V2 implementation of the standard cover-letter template.
+ * Canonical implementation of the standard cover-letter template.
  */
 public final class CoverLetterTemplateV1 implements CoverLetterTemplate {
     private final CoverLetterTemplateComposer composer;

@@ -1,6 +1,6 @@
 # Canonical Document Lifecycle
 
-GraphCompose V2 follows a simple lifecycle:
+GraphCompose v1.2 follows the canonical session-first lifecycle:
 
 ```text
 GraphCompose.document(...)
@@ -32,13 +32,19 @@ for layout, pagination, diagnostics, and rendering.
 
 `GraphCompose.document(...)` creates a `DocumentSession`. The session owns:
 
-- page size, margins, guide-line mode, markdown mode, and public PDF options
+- page size and margins
+- markdown mode and render-only guide-line mode
 - custom font family registrations
 - the semantic root nodes added by `DocumentDsl` or templates
-- cached layout snapshots
+- cached layout graphs and layout snapshots
 - measurement resources used before rendering
 
 `DocumentSession` is mutable and not thread-safe. Create one session per document/request.
+
+Advanced PDF-only options such as metadata, protection, watermark, headers,
+and footers are configured through `PdfFixedLayoutBackend.builder()`. The
+session convenience PDF methods expose only the common document-level options,
+including guide-line overlays.
 
 ## 2. Authoring
 
@@ -63,6 +69,10 @@ Templates follow the same idea. A built-in template receives a domain spec, crea
 - the compiler produces placed nodes and placed fragments
 
 `DocumentSession.layoutSnapshot()` extracts test-friendly geometry from the same layout graph. Snapshot tests should use this public method instead of internal engine adapters.
+
+Guide-line mode is not part of layout. Calling `guideLines(true)` changes only
+convenience PDF output and does not invalidate a cached layout graph or
+snapshot.
 
 ## 4. Pagination
 

@@ -1,5 +1,5 @@
 /**
- * Canonical semantic document API for GraphCompose V2.
+ * Canonical semantic document API for GraphCompose.
  *
  * <p>This package tree hosts the stable node-first and DSL-first authoring
  * contracts, the semantic-to-layout compiler, fixed-layout backends, semantic

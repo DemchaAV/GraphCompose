@@ -8,8 +8,8 @@ import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
  *
  * <p>Implementations author content directly against a live
  * {@link DocumentSession}, which means callers can inspect layout snapshots,
- * export through semantic backends, or render to PDF through the canonical V2
- * pipeline.</p>
+ * export through semantic backends, or render to PDF through the canonical
+ * document API pipeline.</p>
  *
  * <p><b>Responsibility:</b> provide one stable, reusable CV scene definition.
  * Implementations are typically immutable and reusable across sessions, but the

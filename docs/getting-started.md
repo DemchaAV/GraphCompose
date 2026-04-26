@@ -1,6 +1,6 @@
 # Getting Started
 
-GraphCompose V2 is canonical-only. Application code starts with `GraphCompose.document(...)`, creates one `DocumentSession`, describes content with `DocumentDsl`, and finishes with `writePdf(...)`, `buildPdf()`, or `toPdfBytes()`.
+GraphCompose v1.2 uses the canonical session-first API. Application code starts with `GraphCompose.document(...)`, creates one `DocumentSession`, describes content with `DocumentDsl`, and finishes with `writePdf(...)`, `buildPdf()`, or `toPdfBytes()`.
 
 ## Minimal File Output
 
@@ -50,6 +50,31 @@ try (DocumentSession document = GraphCompose.document().create()) {
 
 `toPdfBytes()` is a convenience wrapper around the streaming path. Prefer
 `writePdf(...)` when the next step is already a stream.
+
+## Debug Guide Lines
+
+Guide lines are a render-only diagnostic overlay for checking page margins,
+padding, and resolved boxes. They do not change layout geometry or layout
+snapshots.
+
+```java
+try (DocumentSession document = GraphCompose.document(Path.of("debug.pdf"))
+        .guideLines(true)
+        .create()) {
+    document.pageFlow(page -> page
+            .module("Summary", module -> module.paragraph("Guide-line preview")));
+
+    document.buildPdf();
+}
+```
+
+You can also toggle the same option on an open session before convenience PDF
+output:
+
+```java
+document.guideLines(true);
+byte[] debugPdf = document.toPdfBytes();
+```
 
 ## Module-First Authoring
 

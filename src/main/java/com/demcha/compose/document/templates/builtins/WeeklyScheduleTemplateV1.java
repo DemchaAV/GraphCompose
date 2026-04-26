@@ -11,7 +11,7 @@ import com.demcha.compose.document.templates.theme.WeeklyScheduleTheme;
 import java.util.Objects;
 
 /**
- * Canonical V2 implementation of the weekly schedule template.
+ * Canonical implementation of the weekly schedule template.
  */
 public final class WeeklyScheduleTemplateV1 implements WeeklyScheduleTemplate {
     private final WeeklyScheduleTemplateComposer composer;

@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Converts the canonical v2 layout graph into the existing snapshot format.
+ * Converts the canonical layout graph into the existing snapshot format.
  */
 public final class LayoutGraphSnapshotExtractor {
     /**

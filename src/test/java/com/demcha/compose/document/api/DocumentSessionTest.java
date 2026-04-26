@@ -175,6 +175,43 @@ class DocumentSessionTest {
     }
 
     @Test
+    void styledSectionShouldEmitDecorationBeforeChildFragments() throws Exception {
+        DocumentColor fill = DocumentColor.rgb(245, 248, 255);
+        DocumentStroke stroke = DocumentStroke.of(DocumentColor.ROYAL_BLUE, 0.8);
+
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(260, 180)
+                .margin(DocumentInsets.of(12))
+                .create()) {
+
+            session.pageFlow(page -> page
+                    .name("CardFlow")
+                    .addSection("InfoCard", card -> card
+                            .fillColor(fill)
+                            .stroke(stroke)
+                            .padding(DocumentInsets.of(8))
+                            .addParagraph(paragraph -> paragraph
+                                    .text("Block text inside a filled card.")
+                                    .textStyle(DocumentTextStyle.DEFAULT))));
+
+            LayoutGraph graph = session.layoutGraph();
+
+            assertThat(graph.fragments()).hasSize(2);
+            assertThat(graph.fragments().getFirst().path()).contains("InfoCard[0]");
+            assertThat(graph.fragments().getFirst().payload())
+                    .isInstanceOf(BuiltInNodeDefinitions.ShapeFragmentPayload.class);
+            assertThat(graph.fragments().get(1).payload())
+                    .isInstanceOf(BuiltInNodeDefinitions.ParagraphFragmentPayload.class);
+
+            BuiltInNodeDefinitions.ShapeFragmentPayload payload =
+                    (BuiltInNodeDefinitions.ShapeFragmentPayload) graph.fragments().getFirst().payload();
+            assertThat(payload.fillColor()).isEqualTo(fill.color());
+            assertThat(payload.stroke().strokeColor().color()).isEqualTo(DocumentColor.ROYAL_BLUE.color());
+            assertThat(payload.stroke().width()).isEqualTo(0.8);
+        }
+    }
+
+    @Test
     void moduleShortcutShouldBuildTitledSemanticBlocks() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(320, 240)

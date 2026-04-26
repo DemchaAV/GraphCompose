@@ -213,7 +213,9 @@ public final class LayoutCompiler {
 
         int startPage = state.pageIndex;
         double placementX = regionX + margin.left();
-        double placementY = state.pageTop() - state.usedHeight - margin.top() - naturalMeasure.height();
+        double placementTopY = state.pageTop() - state.usedHeight - margin.top();
+        double placementY = placementTopY - naturalMeasure.height();
+        int decorationInsertIndex = fragments.size();
         int nodeIndex = nodes.size();
         nodes.add(null);
 
@@ -243,6 +245,27 @@ public final class LayoutCompiler {
 
         advanceSpace(padding.bottom() + margin.bottom(), state);
         int endPage = state.pageIndex;
+        double endPageBottomY = state.pageTop() - state.usedHeight + margin.bottom();
+        List<PlacedFragment> decorationFragments = compositeDecorationFragments(
+                prepared,
+                definition,
+                path,
+                parentPath,
+                childIndex,
+                depth,
+                placementX,
+                placementTopY,
+                endPageBottomY,
+                naturalMeasure.width(),
+                startPage,
+                endPage,
+                margin,
+                padding,
+                state.canvas,
+                fragmentContext);
+        if (!decorationFragments.isEmpty()) {
+            fragments.addAll(decorationInsertIndex, decorationFragments);
+        }
         nodes.set(nodeIndex, new PlacedNode(
                 path,
                 semanticName,
@@ -499,6 +522,56 @@ public final class LayoutCompiler {
                 originalPadding));
     }
 
+    private List<PlacedFragment> compositeDecorationFragments(PreparedNode<DocumentNode> prepared,
+                                                              NodeDefinition<DocumentNode> definition,
+                                                              String path,
+                                                              String parentPath,
+                                                              int childIndex,
+                                                              int depth,
+                                                              double placementX,
+                                                              double startPageTopY,
+                                                              double endPageBottomY,
+                                                              double placementWidth,
+                                                              int startPage,
+                                                              int endPage,
+                                                              Margin margin,
+                                                              Padding padding,
+                                                              LayoutCanvas canvas,
+                                                              FragmentContext fragmentContext) {
+        List<PlacedFragment> placed = new ArrayList<>();
+        double pageTopY = canvas.height() - canvas.margin().top();
+        double pageBottomY = canvas.margin().bottom();
+
+        for (int pageIndex = startPage; pageIndex <= endPage; pageIndex++) {
+            double segmentTopY = pageIndex == startPage ? startPageTopY : pageTopY;
+            double segmentBottomY = pageIndex == endPage ? endPageBottomY : pageBottomY;
+            segmentTopY = Math.min(segmentTopY, pageTopY);
+            segmentBottomY = Math.max(pageBottomY, Math.min(segmentBottomY, segmentTopY));
+            double segmentHeight = segmentTopY - segmentBottomY;
+            if (segmentHeight <= EPS) {
+                continue;
+            }
+
+            FragmentPlacement placement = new FragmentPlacement(
+                    path,
+                    parentPath,
+                    childIndex,
+                    depth,
+                    pageIndex,
+                    placementX,
+                    segmentBottomY,
+                    placementWidth,
+                    segmentHeight,
+                    startPage,
+                    endPage,
+                    margin,
+                    padding);
+            placed.addAll(toPlacedFragments(definition.emitFragments(prepared, fragmentContext, placement), placement));
+        }
+
+        return List.copyOf(placed);
+    }
+
     private PreparedNode<DocumentNode> prepareForRegionWidth(PrepareContext prepareContext,
                                                              DocumentNode node,
                                                              double regionWidth) {
@@ -513,6 +586,12 @@ public final class LayoutCompiler {
     private void addPlacedFragments(List<LayoutFragment> emitted,
                                     FragmentPlacement placement,
                                     List<PlacedFragment> fragments) {
+        fragments.addAll(toPlacedFragments(emitted, placement));
+    }
+
+    private List<PlacedFragment> toPlacedFragments(List<LayoutFragment> emitted,
+                                                   FragmentPlacement placement) {
+        List<PlacedFragment> placed = new ArrayList<>(emitted.size());
         int fragmentIndex = 0;
         for (LayoutFragment fragment : emitted) {
             LayoutFragment normalized = new LayoutFragment(
@@ -523,8 +602,9 @@ public final class LayoutCompiler {
                     fragment.width(),
                     fragment.height(),
                     fragment.payload());
-            fragments.add(PlacedFragment.from(normalized, placement));
+            placed.add(PlacedFragment.from(normalized, placement));
         }
+        return placed;
     }
 
     private void advanceSpace(double amount, CompilerState state) {
@@ -590,5 +670,4 @@ public final class LayoutCompiler {
         }
     }
 }
-
 

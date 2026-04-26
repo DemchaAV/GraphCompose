@@ -613,7 +613,11 @@ public final class BuiltInNodeDefinitions {
 
         @Override
         public List<LayoutFragment> emitFragments(PreparedNode<ContainerNode> prepared, FragmentContext ctx, FragmentPlacement placement) {
-            return List.of();
+            ContainerNode node = prepared.node();
+            return emitDecorationFragment(
+                    node.fillColor() == null ? null : node.fillColor().color(),
+                    toStroke(node.stroke()),
+                    placement);
         }
     }
 
@@ -643,7 +647,11 @@ public final class BuiltInNodeDefinitions {
 
         @Override
         public List<LayoutFragment> emitFragments(PreparedNode<SectionNode> prepared, FragmentContext ctx, FragmentPlacement placement) {
-            return List.of();
+            SectionNode node = prepared.node();
+            return emitDecorationFragment(
+                    node.fillColor() == null ? null : node.fillColor().color(),
+                    toStroke(node.stroke()),
+                    placement);
         }
     }
 
@@ -730,6 +738,28 @@ public final class BuiltInNodeDefinitions {
     }
 
     // HELPERS
+
+    private static List<LayoutFragment> emitDecorationFragment(Color fillColor,
+                                                               Stroke stroke,
+                                                               FragmentPlacement placement) {
+        boolean hasFill = fillColor != null;
+        boolean hasStroke = stroke != null
+                && stroke.strokeColor() != null
+                && stroke.strokeColor().color() != null
+                && stroke.width() > 0;
+        if ((!hasFill && !hasStroke) || placement.width() <= EPS || placement.height() <= EPS) {
+            return List.of();
+        }
+
+        return List.of(new LayoutFragment(
+                placement.path(),
+                0,
+                0.0,
+                0.0,
+                placement.width(),
+                placement.height(),
+                new ShapeFragmentPayload(fillColor, stroke, null, null)));
+    }
 
     private static BarcodeData toBarcodeData(DocumentBarcodeOptions options) {
         DocumentBarcodeType type = options.getType() == null ? DocumentBarcodeType.QR_CODE : options.getType();
@@ -2176,4 +2206,3 @@ public final class BuiltInNodeDefinitions {
         }
     }
 }
-

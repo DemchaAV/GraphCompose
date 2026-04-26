@@ -6,6 +6,11 @@ import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
 import com.demcha.compose.document.backend.fixed.pdf.PdfMeasurementResources;
 import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterZone;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.document.backend.semantic.SemanticBackend;
 import com.demcha.compose.document.backend.semantic.SemanticExportContext;
 import com.demcha.compose.document.debug.snapshot.LayoutGraphSnapshotExtractor;
@@ -67,6 +72,11 @@ public final class DocumentSession implements AutoCloseable {
     private LayoutCanvas canvas;
     private boolean markdown;
     private boolean guideLines;
+
+    private PdfMetadataOptions metadataOptions;
+    private PdfWatermarkOptions watermarkOptions;
+    private PdfProtectionOptions protectionOptions;
+    private final List<PdfHeaderFooterOptions> headerFooterOptions = new ArrayList<>();
 
     private PdfMeasurementResources measurementResources;
 
@@ -302,6 +312,93 @@ public final class DocumentSession implements AutoCloseable {
     public DocumentSession guideLines(boolean enabled) {
         ensureOpen();
         this.guideLines = enabled;
+        return this;
+    }
+
+    /**
+     * Configures PDF document-level metadata applied by the convenience PDF
+     * methods ({@link #buildPdf()}, {@link #writePdf(OutputStream)},
+     * {@link #toPdfBytes()}).
+     *
+     * <p>Pass {@code null} to clear any previously configured metadata.</p>
+     *
+     * @param options metadata options, or {@code null} to clear
+     * @return this session
+     * @throws IllegalStateException if this session has already been closed
+     */
+    public DocumentSession metadata(PdfMetadataOptions options) {
+        ensureOpen();
+        this.metadataOptions = options;
+        return this;
+    }
+
+    /**
+     * Configures a document-wide PDF watermark applied by the convenience PDF
+     * methods. Pass {@code null} to clear.
+     *
+     * @param options watermark options, or {@code null} to clear
+     * @return this session
+     * @throws IllegalStateException if this session has already been closed
+     */
+    public DocumentSession watermark(PdfWatermarkOptions options) {
+        ensureOpen();
+        this.watermarkOptions = options;
+        return this;
+    }
+
+    /**
+     * Configures PDF protection (passwords and permissions) applied by the
+     * convenience PDF methods. Pass {@code null} to clear.
+     *
+     * @param options protection options, or {@code null} to clear
+     * @return this session
+     * @throws IllegalStateException if this session has already been closed
+     */
+    public DocumentSession protect(PdfProtectionOptions options) {
+        ensureOpen();
+        this.protectionOptions = options;
+        return this;
+    }
+
+    /**
+     * Registers a repeating page header that the convenience PDF methods will
+     * stamp on every page. The session may carry multiple header registrations.
+     *
+     * @param options header options
+     * @return this session
+     * @throws IllegalStateException if this session has already been closed
+     */
+    public DocumentSession header(PdfHeaderFooterOptions options) {
+        ensureOpen();
+        Objects.requireNonNull(options, "options");
+        this.headerFooterOptions.add(options.withZone(PdfHeaderFooterZone.HEADER));
+        return this;
+    }
+
+    /**
+     * Registers a repeating page footer that the convenience PDF methods will
+     * stamp on every page. The session may carry multiple footer registrations.
+     *
+     * @param options footer options
+     * @return this session
+     * @throws IllegalStateException if this session has already been closed
+     */
+    public DocumentSession footer(PdfHeaderFooterOptions options) {
+        ensureOpen();
+        Objects.requireNonNull(options, "options");
+        this.headerFooterOptions.add(options.withZone(PdfHeaderFooterZone.FOOTER));
+        return this;
+    }
+
+    /**
+     * Removes all previously registered headers and footers from this session.
+     *
+     * @return this session
+     * @throws IllegalStateException if this session has already been closed
+     */
+    public DocumentSession clearHeadersAndFooters() {
+        ensureOpen();
+        this.headerFooterOptions.clear();
         return this;
     }
 
@@ -705,12 +802,26 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     private PdfFixedLayoutBackend conveniencePdfBackend() {
-        if (!guideLines) {
+        if (!guideLines
+                && metadataOptions == null
+                && watermarkOptions == null
+                && protectionOptions == null
+                && headerFooterOptions.isEmpty()) {
             return new PdfFixedLayoutBackend();
         }
-        return PdfFixedLayoutBackend.builder()
-                .guideLines(true)
-                .build();
+        PdfFixedLayoutBackend.Builder builder = PdfFixedLayoutBackend.builder()
+                .guideLines(guideLines)
+                .metadata(metadataOptions)
+                .watermark(watermarkOptions)
+                .protect(protectionOptions);
+        for (PdfHeaderFooterOptions options : headerFooterOptions) {
+            if (options.getZone() == PdfHeaderFooterZone.FOOTER) {
+                builder.footer(options);
+            } else {
+                builder.header(options);
+            }
+        }
+        return builder.build();
     }
 
     private com.demcha.compose.engine.components.style.Margin toEngineMargin(DocumentInsets insets) {

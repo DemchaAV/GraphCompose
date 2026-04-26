@@ -1,5 +1,6 @@
 package com.demcha.compose.document.node;
 
+import com.demcha.compose.document.style.DocumentBorders;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -17,8 +18,9 @@ import java.util.Objects;
  * @param padding inner padding
  * @param margin outer margin
  * @param fillColor optional background fill
- * @param stroke optional border stroke
+ * @param stroke optional uniform border stroke
  * @param cornerRadius optional render-only corner radius
+ * @param borders optional per-side border strokes overriding the uniform stroke
  *
  * @author Artem Demchyshyn
  */
@@ -30,7 +32,8 @@ public record ContainerNode(
         DocumentInsets margin,
         DocumentColor fillColor,
         DocumentStroke stroke,
-        DocumentCornerRadius cornerRadius
+        DocumentCornerRadius cornerRadius,
+        DocumentBorders borders
 ) implements DocumentNode {
     /**
      * Creates a normalized vertical flow container.
@@ -42,13 +45,28 @@ public record ContainerNode(
         padding = padding == null ? DocumentInsets.zero() : padding;
         margin = margin == null ? DocumentInsets.zero() : margin;
         cornerRadius = cornerRadius == null ? DocumentCornerRadius.ZERO : cornerRadius;
+        borders = borders == null ? DocumentBorders.NONE : borders;
         if (spacing < 0 || Double.isNaN(spacing) || Double.isInfinite(spacing)) {
             throw new IllegalArgumentException("spacing must be finite and non-negative: " + spacing);
         }
     }
 
     /**
-     * Creates a vertical flow container with square corners.
+     * Creates a vertical flow container without per-side borders.
+     */
+    public ContainerNode(String name,
+                         List<DocumentNode> children,
+                         double spacing,
+                         DocumentInsets padding,
+                         DocumentInsets margin,
+                         DocumentColor fillColor,
+                         DocumentStroke stroke,
+                         DocumentCornerRadius cornerRadius) {
+        this(name, children, spacing, padding, margin, fillColor, stroke, cornerRadius, DocumentBorders.NONE);
+    }
+
+    /**
+     * Creates a vertical flow container with square corners and no per-side borders.
      */
     public ContainerNode(String name,
                          List<DocumentNode> children,
@@ -57,7 +75,7 @@ public record ContainerNode(
                          DocumentInsets margin,
                          DocumentColor fillColor,
                          DocumentStroke stroke) {
-        this(name, children, spacing, padding, margin, fillColor, stroke, DocumentCornerRadius.ZERO);
+        this(name, children, spacing, padding, margin, fillColor, stroke, DocumentCornerRadius.ZERO, DocumentBorders.NONE);
     }
 }
 

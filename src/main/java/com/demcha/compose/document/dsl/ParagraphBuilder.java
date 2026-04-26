@@ -24,6 +24,7 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextAutoSize;
 import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableCell;
@@ -55,6 +56,7 @@ public final class ParagraphBuilder {
     private DocumentBookmarkOptions bookmarkOptions;
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
+    private DocumentTextAutoSize autoSize;
 
     /**
      * Creates a paragraph builder.
@@ -276,6 +278,43 @@ public final class ParagraphBuilder {
     }
 
     /**
+     * Enables auto-size paragraph rendering. The layout pipeline searches the
+     * inclusive font-size range {@code [minSize, maxSize]} (in points) and
+     * picks the largest size that still renders the paragraph on a single line
+     * inside the resolved inner width. Pass {@code null} to clear.
+     *
+     * @param autoSize auto-size hint, or {@code null} to disable
+     * @return this builder
+     */
+    public ParagraphBuilder autoSize(DocumentTextAutoSize autoSize) {
+        this.autoSize = autoSize;
+        return this;
+    }
+
+    /**
+     * Convenience overload of {@link #autoSize(DocumentTextAutoSize)} taking
+     * explicit max and min font sizes with the default search step.
+     *
+     * @param maxSize upper bound for the resolved font size in points
+     * @param minSize lower bound for the resolved font size in points
+     * @return this builder
+     */
+    public ParagraphBuilder autoSize(double maxSize, double minSize) {
+        return autoSize(DocumentTextAutoSize.between(maxSize, minSize));
+    }
+
+    /**
+     * Convenience overload of {@link #autoSize(DocumentTextAutoSize)} that uses
+     * {@link DocumentTextAutoSize#DEFAULT_MIN_SIZE} as the lower bound.
+     *
+     * @param maxSize upper bound for the resolved font size in points
+     * @return this builder
+     */
+    public ParagraphBuilder autoSize(double maxSize) {
+        return autoSize(DocumentTextAutoSize.upTo(maxSize));
+    }
+
+    /**
      * Builds the semantic paragraph node.
      *
      * @return paragraph node
@@ -293,7 +332,8 @@ public final class ParagraphBuilder {
                 linkOptions,
                 bookmarkOptions,
                 padding,
-                margin);
+                margin,
+                autoSize);
     }
 }
 

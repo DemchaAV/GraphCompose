@@ -3,7 +3,9 @@ package com.demcha.compose.document.backend.fixed.pdf.handlers;
 import com.demcha.compose.document.backend.fixed.pdf.PdfFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
+import com.demcha.compose.document.layout.BuiltInNodeDefinitions.SideBorders;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.engine.components.content.shape.Stroke;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.io.IOException;
@@ -40,37 +42,65 @@ public final class PdfShapeFragmentRenderHandler
         boolean hasStroke = payload.stroke() != null
                 && payload.stroke().strokeColor() != null
                 && payload.stroke().width() > 0;
-        if (!hasFill && !hasStroke) {
+        boolean hasSideBorders = payload.sideBorders() != null && payload.sideBorders().hasAny();
+        if (!hasFill && !hasStroke && !hasSideBorders) {
             return;
         }
 
         PDPageContentStream stream = environment.pageSurface(fragment.pageIndex());
         stream.saveGraphicsState();
         try {
-            if (hasStroke) {
-                stream.setStrokingColor(payload.stroke().strokeColor().color());
-                stream.setLineWidth((float) payload.stroke().width());
-            }
-            if (hasFill) {
-                stream.setNonStrokingColor(payload.fillColor());
-            }
             float x = (float) fragment.x();
             float y = (float) fragment.y();
             float width = (float) fragment.width();
             float height = (float) fragment.height();
             float radius = (float) Math.min(payload.cornerRadius(), Math.min(fragment.width(), fragment.height()) / 2.0);
-            if (radius > 0f) {
-                drawRoundedRectangle(stream, x, y, width, height, radius);
-            } else {
-                stream.addRect(x, y, width, height);
-            }
-            if (hasFill && hasStroke) {
-                stream.fillAndStroke();
-            } else if (hasFill) {
+
+            if (hasFill) {
+                stream.setNonStrokingColor(payload.fillColor());
+                if (radius > 0f) {
+                    drawRoundedRectangle(stream, x, y, width, height, radius);
+                } else {
+                    stream.addRect(x, y, width, height);
+                }
                 stream.fill();
-            } else {
+            }
+
+            if (hasSideBorders) {
+                // Per-side borders override the uniform rectangle stroke; rounded
+                // corners are not combined with mixed-side borders in v1.3.
+                drawSideBorder(stream, payload.sideBorders().top(),    x,         y + height, x + width, y + height);
+                drawSideBorder(stream, payload.sideBorders().right(),  x + width, y + height, x + width, y);
+                drawSideBorder(stream, payload.sideBorders().bottom(), x,         y,          x + width, y);
+                drawSideBorder(stream, payload.sideBorders().left(),   x,         y + height, x,         y);
+            } else if (hasStroke) {
+                stream.setStrokingColor(payload.stroke().strokeColor().color());
+                stream.setLineWidth((float) payload.stroke().width());
+                if (radius > 0f) {
+                    drawRoundedRectangle(stream, x, y, width, height, radius);
+                } else {
+                    stream.addRect(x, y, width, height);
+                }
                 stream.stroke();
             }
+        } finally {
+            stream.restoreGraphicsState();
+        }
+    }
+
+    private static void drawSideBorder(PDPageContentStream stream,
+                                       Stroke side,
+                                       float x1, float y1, float x2, float y2) throws IOException {
+        if (side == null || side.strokeColor() == null || side.width() <= 0) {
+            return;
+        }
+        stream.saveGraphicsState();
+        try {
+            stream.setStrokingColor(side.strokeColor().color());
+            stream.setLineWidth((float) side.width());
+            stream.moveTo(x1, y1);
+            stream.lineTo(x2, y2);
+            stream.stroke();
         } finally {
             stream.restoreGraphicsState();
         }

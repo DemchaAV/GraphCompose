@@ -28,7 +28,7 @@ compatibility concerns. New authoring features should be added through
 | --- | --- | --- |
 | Vertical document flow | Done | `pageFlow`, `module`, and `section` remain the default document model. |
 | Nested vertical grouping | Done | Use `addSection(...)` or module body blocks. |
-| Horizontal rows | Planned | Add explicit `row(...)` or `columns(...)` for v1.3. |
+| Horizontal rows | Done | Use `addRow(...)` with optional `weights(...)` and `gap(...)`; row children must be atomic primitives in v1.3. |
 | Spacers | Done | Use `addSpacer(...)` or `spacer(width, height)` for fixed flow gaps. |
 | Child horizontal alignment | Planned | Add container-level alignment without absolute coordinates. |
 | Child vertical alignment | Planned | Add after row/columns semantics are stable. |
@@ -40,7 +40,7 @@ compatibility concerns. New authoring features should be added through
 | --- | --- | --- |
 | Filled/stroked card sections | Done | Sections and flows emit background decoration fragments. |
 | Rounded cards and shapes | Done | `cornerRadius(...)` is available on flows, sections, modules, and shapes. |
-| Per-side borders | Planned | Add a public border-sides value only when recipes need it. |
+| Per-side borders | Done | Use `borders(DocumentBorders...)` on flows, sections, modules, and rows; rounded corners and per-side mixed strokes are not combined in v1.3. |
 | Horizontal divider | Partial | `DividerBuilder` remains a convenience over a thin shape. |
 | Arbitrary line path | Done | Use `addLine(...)` for horizontal, vertical, diagonal, and custom lines. |
 | Circle/ellipse | Done | Use `addEllipse(...)` or `addCircle(...)` with fill and stroke. |
@@ -53,7 +53,7 @@ compatibility concerns. New authoring features should be added through
 | Inline text/link runs | Done | Keep as paragraph-level semantic content. |
 | Lists | Done | Existing marker and indentation APIs remain canonical. |
 | Nested list ergonomics | Planned | Evaluate a nested list builder instead of forcing sections. |
-| Auto-size text | Planned | Treat as a separate constrained feature after row/column layout. |
+| Auto-size text | Done | Use `ParagraphBuilder.autoSize(maxSize, minSize)` to fit single-line headlines into the resolved inner width. |
 
 ## Images
 
@@ -81,7 +81,9 @@ compatibility concerns. New authoring features should be added through
 | Stream output | Done | Use `writePdf(OutputStream)`. |
 | Byte output | Done | Use `toPdfBytes()`. |
 | Guide lines | Done | `guideLines(true)` is available on document builder and session. |
-| Metadata/protection/watermark/header/footer | Done | Use `PdfFixedLayoutBackend.builder()` for advanced output. |
+| Metadata/protection/watermark/header/footer | Done | Configure on `DocumentSession` (e.g. `metadata(...)`, `watermark(...)`, `protect(...)`, `header(...)`, `footer(...)`); convenience PDF entrypoints (`buildPdf`, `writePdf`, `toPdfBytes`) honour these options without an explicit backend builder. `PdfFixedLayoutBackend.builder()` remains for advanced cases. |
+| DOCX semantic export | Done | Use `session.export(new DocxSemanticBackend())` for paragraph/table/image-aware Word output. Requires `org.apache.poi:poi-ooxml` on the consumer classpath. |
+| PPTX semantic export | Planned | Skeleton manifest backend remains; richer slide layout work is scheduled after v1.3. |
 | PDFBox types in session API | Rejected | Keep PDFBox behind the fixed PDF backend. |
 
 ## Diagnostics

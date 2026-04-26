@@ -9,7 +9,7 @@ import com.demcha.compose.document.templates.support.common.SessionTemplateCompo
 import com.demcha.compose.document.templates.support.common.TemplateLifecycleLog;
 
 /**
- * Canonical V2 implementation of the invoice template.
+ * Canonical implementation of the invoice template.
  */
 public final class InvoiceTemplateV1 implements InvoiceTemplate {
     private final InvoiceTemplateComposer composer = new InvoiceTemplateComposer(new BusinessDocumentSceneStyles());

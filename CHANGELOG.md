@@ -35,6 +35,7 @@
 - new `docs/migration-v1-1-to-v1-2.md` outlines the move from older v1.1 usage patterns to the canonical session-first API
 - new `docs/v1.2-roadmap.md` tracks the remaining stabilization work for the v1.2 release polish window
 - `docs/release-process.md` now describes the current JitPack-first 1.x release flow and runnable examples verification
+- user-facing docs now describe debug guide-line overlays through `GraphCompose.document(...).guideLines(true)` / `DocumentSession.guideLines(true)` and call out JitPack tag-cache handling during release verification
 
 ---
 

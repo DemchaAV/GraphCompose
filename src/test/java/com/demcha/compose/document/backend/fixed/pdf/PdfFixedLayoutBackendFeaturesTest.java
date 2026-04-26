@@ -17,9 +17,13 @@ import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.contentstream.operator.Operator;
+import org.apache.pdfbox.cos.COSNumber;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdfparser.PDFStreamParser;
 import org.apache.pdfbox.pdmodel.interactive.action.PDActionURI;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocumentOutline;
@@ -40,6 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PdfFixedLayoutBackendFeaturesTest {
+    private static final double COLOR_OPERATOR_TOLERANCE = 0.001;
 
     @TempDir
     Path tempDir;
@@ -164,6 +169,34 @@ class PdfFixedLayoutBackendFeaturesTest {
     }
 
     @Test
+    void shouldRenderSectionFillAndStrokeFromCanonicalDsl() throws Exception {
+        Path outputFile = VisualTestOutputs.preparePdf("section-fill-and-stroke", "clean", "document-backend");
+        DocumentColor fill = DocumentColor.rgb(245, 248, 255);
+
+        try (DocumentSession document = GraphCompose.document(outputFile)
+                .pageSize(260, 180)
+                .margin(DocumentInsets.of(12))
+                .create()) {
+            document.pageFlow(page -> page
+                    .name("CardFlow")
+                    .addSection("InfoCard", card -> card
+                            .fillColor(fill)
+                            .stroke(DocumentStroke.of(DocumentColor.ROYAL_BLUE, 0.8))
+                            .padding(DocumentInsets.of(8))
+                            .addParagraph("Block text inside a filled card.", DocumentTextStyle.DEFAULT)));
+
+            document.buildPdf();
+        }
+
+        assertThat(outputFile).exists().isNotEmptyFile();
+        try (PDDocument document = Loader.loadPDF(outputFile.toFile())) {
+            assertThat(hasFillColor(document, fill.color())).isTrue();
+            assertThat(hasStrokeColor(document, DocumentColor.ROYAL_BLUE.color())).isTrue();
+            assertThat(new PDFTextStripper().getText(document)).contains("Block text inside a filled card.");
+        }
+    }
+
+    @Test
     void failedRenderShouldCloseOwnedPdfResourcesAndLeaveCallerStreamOpen() throws Exception {
         LayoutGraph graph;
         try (DocumentSession document = GraphCompose.document()
@@ -227,6 +260,44 @@ class PdfFixedLayoutBackendFeaturesTest {
             }
         }
         return List.copyOf(uris);
+    }
+
+    private static boolean hasStrokeColor(PDDocument document, Color expected) throws IOException {
+        return hasRgbOperator(document, "RG", expected) || hasRgbOperator(document, "SC", expected);
+    }
+
+    private static boolean hasFillColor(PDDocument document, Color expected) throws IOException {
+        return hasRgbOperator(document, "rg", expected) || hasRgbOperator(document, "sc", expected);
+    }
+
+    private static boolean hasRgbOperator(PDDocument document, String operatorName, Color expected) throws IOException {
+        for (var page : document.getPages()) {
+            List<Object> tokens = new PDFStreamParser(page).parse();
+            for (int index = 3; index < tokens.size(); index++) {
+                Object token = tokens.get(index);
+                if (token instanceof Operator operator
+                        && operatorName.equals(operator.getName())
+                        && matchesRgb(tokens.get(index - 3), tokens.get(index - 2), tokens.get(index - 1), expected)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean matchesRgb(Object redToken, Object greenToken, Object blueToken, Color expected) {
+        if (!(redToken instanceof COSNumber red)
+                || !(greenToken instanceof COSNumber green)
+                || !(blueToken instanceof COSNumber blue)) {
+            return false;
+        }
+        return closeTo(red.floatValue(), expected.getRed() / 255.0)
+                && closeTo(green.floatValue(), expected.getGreen() / 255.0)
+                && closeTo(blue.floatValue(), expected.getBlue() / 255.0);
+    }
+
+    private static boolean closeTo(double actual, double expected) {
+        return Math.abs(actual - expected) <= COLOR_OPERATOR_TOLERANCE;
     }
 
     private static FixedLayoutRenderContext renderContext(LayoutGraph graph, ByteArrayOutputStream output) {

@@ -14,7 +14,7 @@ import java.awt.Color;
 import java.util.Objects;
 
 /**
- * Canonical V2 implementation of the executive slate CV template.
+ * Canonical implementation of the executive slate CV template.
  *
  * <p>This built-in is meant for business-oriented CVs: compact header,
  * restrained slate typography, warm accent headings, and the same universal

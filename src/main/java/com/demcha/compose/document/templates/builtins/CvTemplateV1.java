@@ -11,7 +11,7 @@ import com.demcha.compose.document.templates.theme.CvTheme;
 import java.util.Objects;
 
 /**
- * Canonical V2 implementation of the standard CV template.
+ * Canonical implementation of the standard CV template.
  */
 public final class CvTemplateV1 implements CvTemplate {
     private final CvTemplateComposer composer;

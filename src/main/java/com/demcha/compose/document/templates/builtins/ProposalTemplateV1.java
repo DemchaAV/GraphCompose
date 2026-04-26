@@ -9,7 +9,7 @@ import com.demcha.compose.document.templates.support.common.SessionTemplateCompo
 import com.demcha.compose.document.templates.support.common.TemplateLifecycleLog;
 
 /**
- * Canonical V2 implementation of the proposal template.
+ * Canonical implementation of the proposal template.
  */
 public final class ProposalTemplateV1 implements ProposalTemplate {
     private final ProposalTemplateComposer composer = new ProposalTemplateComposer(new BusinessDocumentSceneStyles());

@@ -31,7 +31,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
- * Mutable semantic document session used by the canonical GraphCompose V2 API.
+ * Mutable semantic document session used by the canonical GraphCompose
+ * session-first API.
  *
  * <p>A session owns one document graph, the measurement services required to
  * prepare that graph, cached layout/render artifacts, and the fluent DSL facade

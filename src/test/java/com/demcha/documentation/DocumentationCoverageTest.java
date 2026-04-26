@@ -83,6 +83,9 @@ class DocumentationCoverageTest {
                 PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/GraphCompose.java"),
                 "public DocumentSession create()");
         assertHasJavadocBefore(
+                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/GraphCompose.java"),
+                "public DocumentBuilder guideLines(boolean enabled)");
+        assertHasJavadocBefore(
                 PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
                 "public DocumentDsl dsl()");
         assertHasJavadocBefore(
@@ -94,6 +97,9 @@ class DocumentationCoverageTest {
         assertHasJavadocBefore(
                 PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
                 "public ContainerNode pageFlow(Consumer<PageFlowBuilder> spec)");
+        assertHasJavadocBefore(
+                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
+                "public DocumentSession guideLines(boolean enabled)");
         assertHasJavadocBefore(
                 PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
                 "public LayoutGraph layoutGraph()");

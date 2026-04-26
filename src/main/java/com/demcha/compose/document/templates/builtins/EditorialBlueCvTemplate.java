@@ -14,7 +14,7 @@ import java.awt.Color;
 import java.util.Objects;
 
 /**
- * Canonical V2 implementation of the editorial blue CV template.
+ * Canonical implementation of the editorial blue CV template.
  */
 public final class EditorialBlueCvTemplate implements CvTemplate {
     private final EditorialBlueCvTemplateComposer composer;

@@ -23,6 +23,7 @@ This checklist applies to current GraphCompose 1.x releases. The library is publ
   - body copied from the matching `CHANGELOG.md` section
   - "Generated release notes" disabled (we author the changelog by hand)
 - [ ] verify JitPack picked up the tag: `https://jitpack.io/com/github/demchaav/GraphCompose/v<version>/build.log` returns success
+- [ ] confirm the JitPack build is fresh for the current tag commit. Do not force-move a tag after JitPack has already built it unless you also delete the cached build through the authenticated JitPack API. If the cache cannot be cleared, publish a new patch tag instead.
 - [ ] announce the release where appropriate (pinned README badge already points at JitPack)
 
 ## Post-release

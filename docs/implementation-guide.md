@@ -69,6 +69,11 @@ What `EmptyBox<T>` gives you:
 - access to `EntityManager`
 - default `build()` behavior through the builder hierarchy
 
+This `EntityManager` access is for low-level engine tests and compatibility
+harnesses only. Canonical application behavior should be described through
+`GraphCompose.document(...)`, `DocumentSession`, and `DocumentDsl`; session
+features such as `guideLines(true)` are not routed through `EntityManager`.
+
 ### Use `ShapeBuilderBase<T>` in tests when
 
 Use [ShapeBuilderBase.java](./../src/test/java/com/demcha/compose/testsupport/engine/assembly/container/ShapeBuilderBase.java) when the object is still a leaf, but you want common shape helpers such as:

@@ -24,6 +24,7 @@ import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
 import com.demcha.compose.document.backend.semantic.PptxSemanticBackend;
 import com.demcha.compose.document.backend.semantic.SemanticExportManifest;
 import com.demcha.compose.document.exceptions.AtomicNodeTooLargeException;
+import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.layout.BoxConstraints;
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.FragmentContext;
@@ -70,6 +71,7 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.List;
+import javax.imageio.ImageIO;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -189,6 +191,7 @@ class DocumentSessionTest {
                     .addSection("InfoCard", card -> card
                             .fillColor(fill)
                             .stroke(stroke)
+                            .cornerRadius(10)
                             .padding(DocumentInsets.of(8))
                             .addParagraph(paragraph -> paragraph
                                     .text("Block text inside a filled card.")
@@ -208,6 +211,94 @@ class DocumentSessionTest {
             assertThat(payload.fillColor()).isEqualTo(fill.color());
             assertThat(payload.stroke().strokeColor().color()).isEqualTo(DocumentColor.ROYAL_BLUE.color());
             assertThat(payload.stroke().width()).isEqualTo(0.8);
+            assertThat(payload.cornerRadius()).isEqualTo(10.0);
+        }
+    }
+
+    @Test
+    void visualPrimitiveNodesShouldEmitCanonicalFragments() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(260, 180)
+                .margin(DocumentInsets.of(12))
+                .create()) {
+
+            session.pageFlow(page -> page
+                    .name("VisualPrimitives")
+                    .addSpacer(spacer -> spacer.name("Gap").size(0, 12))
+                    .addLine(line -> line
+                            .name("Rule")
+                            .horizontal(120)
+                            .thickness(2)
+                            .color(DocumentColor.ROYAL_BLUE))
+                    .addEllipse(ellipse -> ellipse
+                            .name("Badge")
+                            .circle(18)
+                            .fillColor(DocumentColor.ORANGE)
+                            .stroke(DocumentStroke.of(DocumentColor.BLACK, 0.5))));
+
+            LayoutGraph graph = session.layoutGraph();
+
+            assertThat(graph.nodes())
+                    .anySatisfy(node -> {
+                        assertThat(node.path()).contains("Gap");
+                        assertThat(node.nodeKind()).isEqualTo("SpacerNode");
+                        assertThat(node.placementHeight()).isEqualTo(12.0);
+                    });
+            assertThat(graph.fragments()).hasSize(2);
+            assertThat(graph.fragments().get(0).payload())
+                    .isInstanceOf(BuiltInNodeDefinitions.LineFragmentPayload.class);
+            assertThat(graph.fragments().get(1).payload())
+                    .isInstanceOf(BuiltInNodeDefinitions.EllipseFragmentPayload.class);
+
+            BuiltInNodeDefinitions.LineFragmentPayload line =
+                    (BuiltInNodeDefinitions.LineFragmentPayload) graph.fragments().get(0).payload();
+            assertThat(line.stroke().strokeColor().color()).isEqualTo(DocumentColor.ROYAL_BLUE.color());
+            assertThat(line.stroke().width()).isEqualTo(2.0);
+
+            BuiltInNodeDefinitions.EllipseFragmentPayload ellipse =
+                    (BuiltInNodeDefinitions.EllipseFragmentPayload) graph.fragments().get(1).payload();
+            assertThat(ellipse.fillColor()).isEqualTo(DocumentColor.ORANGE.color());
+            assertThat(ellipse.stroke().strokeColor().color()).isEqualTo(DocumentColor.BLACK.color());
+        }
+    }
+
+    @Test
+    void imageFitHelpersShouldResolveCanonicalLayoutPayloads() throws Exception {
+        byte[] wideImage = testPng(20, 10);
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(260, 180)
+                .margin(DocumentInsets.of(12))
+                .create()) {
+
+            session.pageFlow(page -> page
+                    .name("ImageFit")
+                    .spacing(6)
+                    .addImage(image -> image
+                            .name("ScaledLogo")
+                            .source(wideImage)
+                            .scale(0.5))
+                    .addImage(image -> image
+                            .name("CoverLogo")
+                            .source(wideImage)
+                            .fitToBounds(40, 40)
+                            .fitMode(DocumentImageFitMode.COVER)));
+
+            LayoutGraph graph = session.layoutGraph();
+            List<PlacedFragment> imageFragments = graph.fragments().stream()
+                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ImageFragmentPayload)
+                    .toList();
+
+            assertThat(imageFragments).hasSize(2);
+            assertThat(imageFragments.get(0).path()).contains("ScaledLogo");
+            assertThat(imageFragments.get(0).width()).isEqualTo(10.0);
+            assertThat(imageFragments.get(0).height()).isEqualTo(5.0);
+
+            assertThat(imageFragments.get(1).path()).contains("CoverLogo");
+            assertThat(imageFragments.get(1).width()).isEqualTo(40.0);
+            assertThat(imageFragments.get(1).height()).isEqualTo(40.0);
+            BuiltInNodeDefinitions.ImageFragmentPayload payload =
+                    (BuiltInNodeDefinitions.ImageFragmentPayload) imageFragments.get(1).payload();
+            assertThat(payload.fitMode()).isEqualTo(DocumentImageFitMode.COVER);
         }
     }
 
@@ -965,6 +1056,18 @@ class DocumentSessionTest {
 
     private String normalizeWhitespace(String value) {
         return value == null ? "" : value.replaceAll("\\s+", " ").trim();
+    }
+
+    private static byte[] testPng(int width, int height) throws Exception {
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                image.setRGB(x, y, x < width / 2 ? Color.RED.getRGB() : Color.BLUE.getRGB());
+            }
+        }
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", output);
+        return output.toByteArray();
     }
 
     private boolean hasColorNear(BufferedImage image,

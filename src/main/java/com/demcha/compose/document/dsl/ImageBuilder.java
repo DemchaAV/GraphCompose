@@ -1,52 +1,27 @@
 package com.demcha.compose.document.dsl;
 
-import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.dsl.internal.BuilderSupport;
-import com.demcha.compose.document.dsl.internal.SemanticNameNormalizer;
 import com.demcha.compose.document.image.DocumentImageData;
-import com.demcha.compose.document.node.BarcodeNode;
-import com.demcha.compose.document.node.ContainerNode;
-import com.demcha.compose.document.node.DocumentBarcodeOptions;
-import com.demcha.compose.document.node.DocumentBarcodeType;
+import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
-import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ImageNode;
-import com.demcha.compose.document.node.InlineTextRun;
-import com.demcha.compose.document.node.ListMarker;
-import com.demcha.compose.document.node.ListNode;
-import com.demcha.compose.document.node.PageBreakNode;
-import com.demcha.compose.document.node.ParagraphNode;
-import com.demcha.compose.document.node.SectionNode;
-import com.demcha.compose.document.node.ShapeNode;
-import com.demcha.compose.document.node.TableNode;
-import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTextIndent;
-import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.document.table.DocumentTableCell;
-import com.demcha.compose.document.table.DocumentTableColumn;
-import com.demcha.compose.document.table.DocumentTableStyle;
 
-import java.awt.Color;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 /**
  * Builder for semantic image nodes.
+ *
+ * @author Artem Demchyshyn
  */
 public final class ImageBuilder {
     private String name = "";
     private DocumentImageData imageData;
     private Double width;
     private Double height;
+    private Double scale;
+    private DocumentImageFitMode fitMode = DocumentImageFitMode.STRETCH;
     private DocumentLinkOptions linkOptions;
     private DocumentBookmarkOptions bookmarkOptions;
     private DocumentInsets padding = DocumentInsets.zero();
@@ -146,6 +121,42 @@ public final class ImageBuilder {
     }
 
     /**
+     * Applies a uniform image scale when explicit width and height are omitted.
+     *
+     * @param scale scale factor
+     * @return this builder
+     */
+    public ImageBuilder scale(double scale) {
+        this.scale = scale;
+        return this;
+    }
+
+    /**
+     * Sets the image bounds and preserves aspect ratio by default.
+     *
+     * @param width maximum drawing width in points
+     * @param height maximum drawing height in points
+     * @return this builder
+     */
+    public ImageBuilder fitToBounds(double width, double height) {
+        this.width = width;
+        this.height = height;
+        this.fitMode = DocumentImageFitMode.CONTAIN;
+        return this;
+    }
+
+    /**
+     * Sets how the image is drawn inside explicit bounds.
+     *
+     * @param fitMode image fit mode
+     * @return this builder
+     */
+    public ImageBuilder fitMode(DocumentImageFitMode fitMode) {
+        this.fitMode = fitMode == null ? DocumentImageFitMode.STRETCH : fitMode;
+        return this;
+    }
+
+    /**
      * Attaches image-level link metadata.
      *
      * @param linkOptions link metadata
@@ -200,13 +211,11 @@ public final class ImageBuilder {
                 Objects.requireNonNull(imageData, "imageData"),
                 width,
                 height,
+                scale,
+                fitMode,
                 linkOptions,
                 bookmarkOptions,
                 padding,
                 margin);
     }
 }
-
-/**
- * Builder for simple rectangle-like shapes.
- */

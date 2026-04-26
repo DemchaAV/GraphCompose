@@ -7,6 +7,7 @@ import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOpti
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
+import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
@@ -33,12 +34,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.awt.Color;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import javax.imageio.ImageIO;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -182,6 +185,7 @@ class PdfFixedLayoutBackendFeaturesTest {
                     .addSection("InfoCard", card -> card
                             .fillColor(fill)
                             .stroke(DocumentStroke.of(DocumentColor.ROYAL_BLUE, 0.8))
+                            .cornerRadius(10)
                             .padding(DocumentInsets.of(8))
                             .addParagraph("Block text inside a filled card.", DocumentTextStyle.DEFAULT)));
 
@@ -192,7 +196,70 @@ class PdfFixedLayoutBackendFeaturesTest {
         try (PDDocument document = Loader.loadPDF(outputFile.toFile())) {
             assertThat(hasFillColor(document, fill.color())).isTrue();
             assertThat(hasStrokeColor(document, DocumentColor.ROYAL_BLUE.color())).isTrue();
+            assertThat(hasOperator(document, "c")).isTrue();
             assertThat(new PDFTextStripper().getText(document)).contains("Block text inside a filled card.");
+        }
+    }
+
+    @Test
+    void shouldRenderCanonicalLineAndEllipsePrimitives() throws Exception {
+        Path outputFile = VisualTestOutputs.preparePdf("line-and-ellipse-primitives", "clean", "document-backend");
+
+        try (DocumentSession document = GraphCompose.document(outputFile)
+                .pageSize(260, 180)
+                .margin(DocumentInsets.of(12))
+                .create()) {
+            document.pageFlow(page -> page
+                    .name("VisualPrimitives")
+                    .spacing(8)
+                    .addLine(line -> line
+                            .name("Rule")
+                            .horizontal(120)
+                            .thickness(2)
+                            .color(DocumentColor.ROYAL_BLUE))
+                    .addEllipse(ellipse -> ellipse
+                            .name("Badge")
+                            .size(32, 20)
+                            .fillColor(DocumentColor.ORANGE)
+                            .stroke(DocumentStroke.of(DocumentColor.BLACK, 0.5))));
+
+            document.buildPdf();
+        }
+
+        assertThat(outputFile).exists().isNotEmptyFile();
+        try (PDDocument document = Loader.loadPDF(outputFile.toFile())) {
+            assertThat(hasStrokeColor(document, DocumentColor.ROYAL_BLUE.color())).isTrue();
+            assertThat(hasFillColor(document, DocumentColor.ORANGE.color())).isTrue();
+            assertThat(hasOperator(document, "l")).isTrue();
+            assertThat(hasOperator(document, "c")).isTrue();
+        }
+    }
+
+    @Test
+    void shouldRenderCanonicalImageFitModes() throws Exception {
+        Path outputFile = VisualTestOutputs.preparePdf("image-fit-modes", "clean", "document-backend");
+        byte[] imageBytes = testPng(30, 10);
+
+        try (DocumentSession document = GraphCompose.document(outputFile)
+                .pageSize(260, 180)
+                .margin(DocumentInsets.of(12))
+                .create()) {
+            document.pageFlow(page -> page
+                    .name("ImageFit")
+                    .addImage(image -> image
+                            .name("CoverLogo")
+                            .source(imageBytes)
+                            .fitToBounds(40, 40)
+                            .fitMode(DocumentImageFitMode.COVER)));
+
+            document.buildPdf();
+        }
+
+        assertThat(outputFile).exists().isNotEmptyFile();
+        try (PDDocument document = Loader.loadPDF(outputFile.toFile())) {
+            assertThat(document.getPage(0).getResources().getXObjectNames()).isNotEmpty();
+            assertThat(hasOperator(document, "Do")).isTrue();
+            assertThat(hasOperator(document, "W")).isTrue();
         }
     }
 
@@ -285,6 +352,18 @@ class PdfFixedLayoutBackendFeaturesTest {
         return false;
     }
 
+    private static boolean hasOperator(PDDocument document, String operatorName) throws IOException {
+        for (var page : document.getPages()) {
+            List<Object> tokens = new PDFStreamParser(page).parse();
+            for (Object token : tokens) {
+                if (token instanceof Operator operator && operatorName.equals(operator.getName())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private static boolean matchesRgb(Object redToken, Object greenToken, Object blueToken, Color expected) {
         if (!(redToken instanceof COSNumber red)
                 || !(greenToken instanceof COSNumber green)
@@ -298,6 +377,18 @@ class PdfFixedLayoutBackendFeaturesTest {
 
     private static boolean closeTo(double actual, double expected) {
         return Math.abs(actual - expected) <= COLOR_OPERATOR_TOLERANCE;
+    }
+
+    private static byte[] testPng(int width, int height) throws IOException {
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                image.setRGB(x, y, x < width / 2 ? Color.RED.getRGB() : Color.BLUE.getRGB());
+            }
+        }
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", output);
+        return output.toByteArray();
     }
 
     private static FixedLayoutRenderContext renderContext(LayoutGraph graph, ByteArrayOutputStream output) {

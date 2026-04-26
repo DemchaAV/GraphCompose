@@ -41,6 +41,8 @@ import java.util.function.Consumer;
 
 /**
  * Builder for root page-flow containers that attach to a document session.
+ *
+ * @author Artem Demchyshyn
  */
 public final class PageFlowBuilder extends AbstractFlowBuilder<PageFlowBuilder, ContainerNode> {
     private final DocumentSession session;
@@ -56,7 +58,7 @@ public final class PageFlowBuilder extends AbstractFlowBuilder<PageFlowBuilder, 
 
     @Override
     protected ContainerNode buildNode() {
-        return new ContainerNode(name(), children(), spacing(), padding(), margin(), fillColor(), stroke());
+        return new ContainerNode(name(), children(), spacing(), padding(), margin(), fillColor(), stroke(), cornerRadius());
     }
 
     /**
@@ -70,7 +72,3 @@ public final class PageFlowBuilder extends AbstractFlowBuilder<PageFlowBuilder, 
         return root;
     }
 }
-
-/**
- * Semantic section builder for nested full-width sections.
- */

@@ -11,17 +11,21 @@ import com.demcha.compose.document.node.DocumentBarcodeType;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.EllipseNode;
 import com.demcha.compose.document.node.ImageNode;
 import com.demcha.compose.document.node.InlineTextRun;
+import com.demcha.compose.document.node.LineNode;
 import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.node.ListNode;
 import com.demcha.compose.document.node.PageBreakNode;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.SectionNode;
 import com.demcha.compose.document.node.ShapeNode;
+import com.demcha.compose.document.node.SpacerNode;
 import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextIndent;
@@ -53,6 +57,7 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     private DocumentInsets margin = DocumentInsets.zero();
     private DocumentColor fillColor;
     private DocumentStroke stroke;
+    private DocumentCornerRadius cornerRadius = DocumentCornerRadius.ZERO;
 
     /**
      * Creates a base flow builder.
@@ -164,6 +169,30 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      */
     public T stroke(DocumentStroke stroke) {
         this.stroke = stroke;
+        return self();
+    }
+
+    /**
+     * Sets the flow background corner radius in points.
+     *
+     * <p>The radius affects only rectangle-like background rendering; it does not
+     * change layout measurement, padding, or child placement.</p>
+     *
+     * @param radius corner radius in points
+     * @return this builder
+     */
+    public T cornerRadius(double radius) {
+        return cornerRadius(DocumentCornerRadius.of(radius));
+    }
+
+    /**
+     * Sets the flow background corner radius with the public canonical value.
+     *
+     * @param cornerRadius corner radius, or {@code null} for square corners
+     * @return this builder
+     */
+    public T cornerRadius(DocumentCornerRadius cornerRadius) {
+        this.cornerRadius = cornerRadius == null ? DocumentCornerRadius.ZERO : cornerRadius;
         return self();
     }
 
@@ -291,6 +320,68 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      */
     public T addShape(Consumer<ShapeBuilder> spec) {
         return add(BuilderSupport.configure(new ShapeBuilder(), spec).build());
+    }
+
+    /**
+     * Adds an invisible fixed-size spacer.
+     *
+     * @param spec spacer builder callback
+     * @return this builder
+     */
+    public T addSpacer(Consumer<SpacerBuilder> spec) {
+        return add(BuilderSupport.configure(new SpacerBuilder(), spec).build());
+    }
+
+    /**
+     * Adds an invisible fixed-size spacer.
+     *
+     * @param width spacer width in points
+     * @param height spacer height in points
+     * @return this builder
+     */
+    public T spacer(double width, double height) {
+        return add(new SpacerBuilder().size(width, height).build());
+    }
+
+    /**
+     * Adds a line configured through a nested builder.
+     *
+     * @param spec line builder callback
+     * @return this builder
+     */
+    public T addLine(Consumer<LineBuilder> spec) {
+        return add(BuilderSupport.configure(new LineBuilder(), spec).build());
+    }
+
+    /**
+     * Adds an ellipse configured through a nested builder.
+     *
+     * @param spec ellipse builder callback
+     * @return this builder
+     */
+    public T addEllipse(Consumer<EllipseBuilder> spec) {
+        return add(BuilderSupport.configure(new EllipseBuilder(), spec).build());
+    }
+
+    /**
+     * Adds a circle with equal width and height.
+     *
+     * @param diameter circle diameter in points
+     * @return this builder
+     */
+    public T addCircle(double diameter) {
+        return add(new EllipseBuilder().circle(diameter).build());
+    }
+
+    /**
+     * Adds a circle with equal width and height.
+     *
+     * @param diameter circle diameter in points
+     * @param spec optional additional ellipse builder callback
+     * @return this builder
+     */
+    public T addCircle(double diameter, Consumer<EllipseBuilder> spec) {
+        return add(BuilderSupport.configure(new EllipseBuilder().circle(diameter), spec).build());
     }
 
     /**
@@ -422,6 +513,10 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
 
     protected DocumentStroke stroke() {
         return stroke;
+    }
+
+    protected DocumentCornerRadius cornerRadius() {
+        return cornerRadius;
     }
 }
 

@@ -105,6 +105,7 @@ try (DocumentSession document = GraphCompose.document(Path.of("invoice.pdf")).cr
 ## Where To Go Next
 
 - Use [Recipes](./recipes.md) for copy-paste examples.
+- Use [Canonical Legacy-Parity Matrix](./canonical-legacy-parity.md) to track v1.3 authoring parity.
 - Use [Lifecycle](./lifecycle.md) to understand the session, layout, and render flow.
 - Use [Production Rendering](./production-rendering.md) for server-side lifecycle, privacy, and load guidance.
 - Use [Package Map](./package-map.md) before adding new public APIs or engine internals.

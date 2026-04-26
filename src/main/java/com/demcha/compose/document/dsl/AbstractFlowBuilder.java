@@ -24,6 +24,7 @@ import com.demcha.compose.document.node.ShapeNode;
 import com.demcha.compose.document.node.SpacerNode;
 import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.style.DocumentBorders;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -58,6 +59,7 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     private DocumentColor fillColor;
     private DocumentStroke stroke;
     private DocumentCornerRadius cornerRadius = DocumentCornerRadius.ZERO;
+    private DocumentBorders borders = DocumentBorders.NONE;
 
     /**
      * Creates a base flow builder.
@@ -169,6 +171,20 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      */
     public T stroke(DocumentStroke stroke) {
         this.stroke = stroke;
+        return self();
+    }
+
+    /**
+     * Sets per-side flow borders. When set, the per-side borders override the
+     * uniform stroke configured via {@link #stroke(DocumentStroke)} for the
+     * rectangle outline. Pass {@code null} or {@link DocumentBorders#NONE} to
+     * fall back to the uniform stroke.
+     *
+     * @param borders per-side border strokes
+     * @return this builder
+     */
+    public T borders(DocumentBorders borders) {
+        this.borders = borders == null ? DocumentBorders.NONE : borders;
         return self();
     }
 
@@ -415,6 +431,30 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     }
 
     /**
+     * Adds a horizontal row configured through a nested builder.
+     *
+     * <p>Rows arrange their direct children left-to-right inside a single row band
+     * and are treated atomically by the canonical paginator.</p>
+     *
+     * @param spec row builder callback
+     * @return this builder
+     */
+    public T addRow(Consumer<RowBuilder> spec) {
+        return add(BuilderSupport.configure(new RowBuilder(), spec).build());
+    }
+
+    /**
+     * Adds a named horizontal row without repeating the name inside the nested builder.
+     *
+     * @param name row name used in snapshots and layout graph paths
+     * @param spec row builder callback
+     * @return this builder
+     */
+    public T addRow(String name, Consumer<RowBuilder> spec) {
+        return add(BuilderSupport.configure(new RowBuilder().name(name), spec).build());
+    }
+
+    /**
      * Adds a section configured through a nested builder.
      *
      * @param spec section builder callback
@@ -517,6 +557,10 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
 
     protected DocumentCornerRadius cornerRadius() {
         return cornerRadius;
+    }
+
+    protected DocumentBorders borders() {
+        return borders;
     }
 }
 

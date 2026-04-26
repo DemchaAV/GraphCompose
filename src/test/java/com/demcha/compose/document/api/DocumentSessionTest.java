@@ -680,10 +680,13 @@ class DocumentSessionTest {
                     null,
                     null));
 
-            SemanticExportManifest docx = session.export(new DocxSemanticBackend());
+            byte[] docx = session.export(new DocxSemanticBackend());
 
-            assertThat(docx.backendName()).isEqualTo("docx-semantic");
-            assertThat(docx.nodeKinds()).contains("ContainerNode", "ParagraphNode");
+            assertThat(docx).isNotEmpty();
+            // DOCX files are ZIP-archived OOXML packages; the first two bytes
+            // of any ZIP container are the local-file-header signature.
+            assertThat(docx[0]).isEqualTo((byte) 'P');
+            assertThat(docx[1]).isEqualTo((byte) 'K');
 
             session.clear();
             session.add(new ContainerNode(

@@ -3,6 +3,7 @@ package com.demcha.compose.document.node;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTextAutoSize;
 import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
 
@@ -38,7 +39,8 @@ public record ParagraphNode(
         DocumentLinkOptions linkOptions,
         DocumentBookmarkOptions bookmarkOptions,
         DocumentInsets padding,
-        DocumentInsets margin
+        DocumentInsets margin,
+        DocumentTextAutoSize autoSize
 ) implements DocumentNode {
     /**
      * Normalizes optional text, inline runs, style, alignment, spacing, and
@@ -62,6 +64,25 @@ public record ParagraphNode(
         if (lineSpacing < 0 || Double.isNaN(lineSpacing) || Double.isInfinite(lineSpacing)) {
             throw new IllegalArgumentException("lineSpacing must be finite and non-negative: " + lineSpacing);
         }
+    }
+
+    /**
+     * Backwards-compatible 12-arg canonical constructor without auto-size.
+     */
+    public ParagraphNode(String name,
+                         String text,
+                         List<InlineTextRun> inlineTextRuns,
+                         DocumentTextStyle textStyle,
+                         TextAlign align,
+                         double lineSpacing,
+                         String bulletOffset,
+                         DocumentTextIndent indentStrategy,
+                         DocumentLinkOptions linkOptions,
+                         DocumentBookmarkOptions bookmarkOptions,
+                         DocumentInsets padding,
+                         DocumentInsets margin) {
+        this(name, text, inlineTextRuns, textStyle, align, lineSpacing, bulletOffset, indentStrategy,
+                linkOptions, bookmarkOptions, padding, margin, null);
     }
 
     /**

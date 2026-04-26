@@ -205,6 +205,13 @@ public final class LayoutCompiler {
         CompositeLayoutSpec layoutSpec = prepared.requireCompositeLayout();
         MeasureResult naturalMeasure = prepared.measureResult();
 
+        if (layoutSpec.axis() == CompositeLayoutSpec.Axis.HORIZONTAL) {
+            compileHorizontalRow(prepared, definition, path, semanticName, parentPath, childIndex, depth,
+                    regionX, regionWidth, state, prepareContext, fragmentContext, nodes, fragments,
+                    margin, padding, availableWidth, layoutSpec, naturalMeasure);
+            return;
+        }
+
         double startReservation = margin.top() + padding.top();
         if (startReservation > state.remainingHeight() + EPS && state.usedHeight > EPS) {
             state.newPage();
@@ -286,6 +293,201 @@ public final class LayoutCompiler {
                 naturalMeasure.height(),
                 margin,
                 padding));
+    }
+
+    private void compileHorizontalRow(PreparedNode<DocumentNode> prepared,
+                                      NodeDefinition<DocumentNode> definition,
+                                      String path,
+                                      String semanticName,
+                                      String parentPath,
+                                      int childIndex,
+                                      int depth,
+                                      double regionX,
+                                      double regionWidth,
+                                      CompilerState state,
+                                      PrepareContext prepareContext,
+                                      FragmentContext fragmentContext,
+                                      List<PlacedNode> nodes,
+                                      List<PlacedFragment> fragments,
+                                      Margin margin,
+                                      Padding padding,
+                                      double availableWidth,
+                                      CompositeLayoutSpec layoutSpec,
+                                      MeasureResult naturalMeasure) {
+        DocumentNode node = prepared.node();
+        double rowOuterHeight = naturalMeasure.height() + margin.vertical();
+        double fullPageHeight = state.canvas.innerHeight();
+        if (rowOuterHeight > fullPageHeight + EPS) {
+            throw atomicTooLarge(path, rowOuterHeight, fullPageHeight);
+        }
+        if (rowOuterHeight > state.remainingHeight() + EPS && state.usedHeight > EPS) {
+            state.newPage();
+        }
+        state.touchPage();
+
+        int startPage = state.pageIndex;
+        double placementX = regionX + margin.left();
+        double placementTopY = state.pageTop() - state.usedHeight - margin.top();
+        double placementY = placementTopY - naturalMeasure.height();
+        int decorationInsertIndex = fragments.size();
+        int rowNodeIndex = nodes.size();
+        nodes.add(null);
+
+        List<DocumentNode> children = definition.children(node);
+        double childRegionWidth = Math.max(0.0, availableWidth - padding.horizontal());
+        double rowInnerY = placementTopY - padding.top();
+
+        if (!children.isEmpty()) {
+            double[] slotWidths = distributeRowSlotWidths(children, layoutSpec.weights(),
+                    layoutSpec.spacing(), childRegionWidth);
+            double cursorX = placementX + padding.left();
+
+            for (int index = 0; index < children.size(); index++) {
+                DocumentNode child = children.get(index);
+                Margin childMargin = toMargin(child.margin());
+                double slotWidth = slotWidths[index];
+                double childRegionX = cursorX + childMargin.left();
+                double childInnerWidth = Math.max(0.0, slotWidth - childMargin.horizontal());
+
+                PreparedNode<DocumentNode> childPrepared =
+                        prepareForRegionWidth(prepareContext, child, childInnerWidth);
+                MeasureResult childMeasure = childPrepared.measureResult();
+                @SuppressWarnings("unchecked")
+                NodeDefinition<DocumentNode> childDefinition =
+                        (NodeDefinition<DocumentNode>) registry.definitionFor(child);
+                if (childPrepared.isComposite()) {
+                    throw new IllegalStateException("Row '" + path + "' child '" + child.nodeKind()
+                            + "' is composite; nested composites inside rows are not supported in v1.3.");
+                }
+                if (childMeasure.height() > naturalMeasure.height() - padding.vertical() + EPS) {
+                    throw new IllegalStateException("Row '" + path + "' child '" + child.nodeKind()
+                            + "' measured height " + childMeasure.height() + " exceeds row inner height.");
+                }
+
+                String childPath = pathFor(child, path, index);
+                String childSemanticName = semanticName(child);
+                double childTopY = rowInnerY - childMargin.top();
+                double childPlacementY = childTopY - childMeasure.height();
+                Padding childPadding = toPadding(child.padding());
+
+                FragmentPlacement childPlacement = new FragmentPlacement(
+                        childPath,
+                        path,
+                        index,
+                        depth + 1,
+                        state.pageIndex,
+                        childRegionX,
+                        childPlacementY,
+                        childMeasure.width(),
+                        childMeasure.height(),
+                        state.pageIndex,
+                        state.pageIndex,
+                        childMargin,
+                        childPadding);
+                addPlacedFragments(childDefinition.emitFragments(childPrepared, fragmentContext, childPlacement),
+                        childPlacement, fragments);
+
+                nodes.add(new PlacedNode(
+                        childPath,
+                        childSemanticName,
+                        child.nodeKind(),
+                        path,
+                        index,
+                        depth + 1,
+                        depth + 1,
+                        childRegionX,
+                        childPlacementY,
+                        childRegionX,
+                        childPlacementY,
+                        childMeasure.width(),
+                        childMeasure.height(),
+                        state.pageIndex,
+                        state.pageIndex,
+                        childMeasure.width(),
+                        childMeasure.height(),
+                        childMargin,
+                        childPadding));
+
+                cursorX += slotWidth + layoutSpec.spacing();
+            }
+        }
+
+        int endPage = state.pageIndex;
+        double endPageBottomY = placementTopY - naturalMeasure.height() + margin.bottom();
+        List<PlacedFragment> decorationFragments = compositeDecorationFragments(
+                prepared,
+                definition,
+                path,
+                parentPath,
+                childIndex,
+                depth,
+                placementX,
+                placementTopY,
+                endPageBottomY,
+                naturalMeasure.width(),
+                startPage,
+                endPage,
+                margin,
+                padding,
+                state.canvas,
+                fragmentContext);
+        if (!decorationFragments.isEmpty()) {
+            fragments.addAll(decorationInsertIndex, decorationFragments);
+        }
+
+        nodes.set(rowNodeIndex, new PlacedNode(
+                path,
+                semanticName,
+                node.nodeKind(),
+                parentPath,
+                childIndex,
+                depth,
+                depth,
+                placementX,
+                placementY,
+                placementX,
+                placementY,
+                naturalMeasure.width(),
+                naturalMeasure.height(),
+                startPage,
+                endPage,
+                naturalMeasure.width(),
+                naturalMeasure.height(),
+                margin,
+                padding));
+
+        state.usedHeight += rowOuterHeight;
+    }
+
+    private static double[] distributeRowSlotWidths(List<DocumentNode> children,
+                                                    List<Double> weights,
+                                                    double gap,
+                                                    double innerWidth) {
+        int n = children.size();
+        double available = Math.max(0.0, innerWidth - gap * Math.max(0, n - 1));
+        double[] slots = new double[n];
+        if (weights == null || weights.isEmpty()) {
+            double share = n > 0 ? available / n : 0.0;
+            for (int i = 0; i < n; i++) {
+                slots[i] = share;
+            }
+            return slots;
+        }
+        double total = 0.0;
+        for (double w : weights) {
+            total += w;
+        }
+        if (total <= 0.0) {
+            double share = n > 0 ? available / n : 0.0;
+            for (int i = 0; i < n; i++) {
+                slots[i] = share;
+            }
+            return slots;
+        }
+        for (int i = 0; i < n; i++) {
+            slots[i] = available * (weights.get(i) / total);
+        }
+        return slots;
     }
 
     private void compileAtomicLeaf(PreparedNode<DocumentNode> prepared,

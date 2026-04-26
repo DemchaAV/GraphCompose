@@ -5,8 +5,11 @@ import com.demcha.compose.document.node.DocumentBarcodeType;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.image.DocumentImageFitMode;
+import com.demcha.compose.document.style.DocumentBorders;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTextAutoSize;
 import com.demcha.compose.document.style.DocumentTextIndent;
+import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
 import com.demcha.compose.engine.components.content.table.TableCellContent;
@@ -33,6 +36,7 @@ import com.demcha.compose.document.node.LineNode;
 import com.demcha.compose.document.node.ListNode;
 import com.demcha.compose.document.node.PageBreakNode;
 import com.demcha.compose.document.node.ParagraphNode;
+import com.demcha.compose.document.node.RowNode;
 import com.demcha.compose.document.node.SectionNode;
 import com.demcha.compose.document.node.ShapeNode;
 import com.demcha.compose.document.node.SpacerNode;
@@ -88,6 +92,7 @@ public final class BuiltInNodeDefinitions {
                 .register(new PageBreakDefinition())
                 .register(new ContainerDefinition())
                 .register(new SectionDefinition())
+                .register(new RowDefinition())
                 .register(new TableDefinition());
     }
 
@@ -205,7 +210,8 @@ public final class BuiltInNodeDefinitions {
             Stroke stroke,
             double cornerRadius,
             DocumentLinkOptions linkOptions,
-            DocumentBookmarkOptions bookmarkOptions
+            DocumentBookmarkOptions bookmarkOptions,
+            SideBorders sideBorders
     ) implements PdfSemanticFragmentPayload {
         /**
          * Normalizes the render-only corner radius.
@@ -214,6 +220,40 @@ public final class BuiltInNodeDefinitions {
             if (cornerRadius < 0 || Double.isNaN(cornerRadius) || Double.isInfinite(cornerRadius)) {
                 cornerRadius = 0.0;
             }
+        }
+
+        /**
+         * Backwards-compatible constructor without per-side borders.
+         */
+        public ShapeFragmentPayload(Color fillColor,
+                                     Stroke stroke,
+                                     double cornerRadius,
+                                     DocumentLinkOptions linkOptions,
+                                     DocumentBookmarkOptions bookmarkOptions) {
+            this(fillColor, stroke, cornerRadius, linkOptions, bookmarkOptions, null);
+        }
+    }
+
+    /**
+     * Resolved engine-level per-side border strokes attached to a shape payload.
+     *
+     * <p>Each side stroke is independent. {@code null} disables the corresponding
+     * side. The renderer treats this record as a request to draw the four lines
+     * separately rather than rely on a single uniform rectangle stroke.</p>
+     *
+     * @param top top side stroke, or {@code null} for no border on that side
+     * @param right right side stroke, or {@code null} for no border on that side
+     * @param bottom bottom side stroke, or {@code null} for no border on that side
+     * @param left left side stroke, or {@code null} for no border on that side
+     */
+    public record SideBorders(Stroke top, Stroke right, Stroke bottom, Stroke left) {
+        /**
+         * Indicates whether at least one side carries a stroke.
+         *
+         * @return {@code true} when any side is set
+         */
+        public boolean hasAny() {
+            return top != null || right != null || bottom != null || left != null;
         }
     }
 
@@ -795,6 +835,7 @@ public final class BuiltInNodeDefinitions {
                     node.fillColor() == null ? null : node.fillColor().color(),
                     toStroke(node.stroke()),
                     node.cornerRadius().radius(),
+                    toSideBorders(node.borders()),
                     placement);
         }
     }
@@ -830,8 +871,84 @@ public final class BuiltInNodeDefinitions {
                     node.fillColor() == null ? null : node.fillColor().color(),
                     toStroke(node.stroke()),
                     node.cornerRadius().radius(),
+                    toSideBorders(node.borders()),
                     placement);
         }
+    }
+
+    private static final class RowDefinition implements NodeDefinition<RowNode> {
+        @Override
+        public Class<RowNode> nodeType() {
+            return RowNode.class;
+        }
+
+        @Override
+        public PreparedNode<RowNode> prepare(RowNode node, PrepareContext ctx, BoxConstraints constraints) {
+            return PreparedNode.composite(
+                    node,
+                    measureRow(node, toPadding(node.padding()), ctx, constraints),
+                    new CompositeLayoutSpec(node.gap(), CompositeLayoutSpec.Axis.HORIZONTAL, node.weights()));
+        }
+
+        @Override
+        public PaginationPolicy paginationPolicy(RowNode node) {
+            return PaginationPolicy.ATOMIC;
+        }
+
+        @Override
+        public List<DocumentNode> children(RowNode node) {
+            return node.children();
+        }
+
+        @Override
+        public List<LayoutFragment> emitFragments(PreparedNode<RowNode> prepared, FragmentContext ctx, FragmentPlacement placement) {
+            RowNode node = prepared.node();
+            return emitDecorationFragment(
+                    node.fillColor() == null ? null : node.fillColor().color(),
+                    toStroke(node.stroke()),
+                    node.cornerRadius().radius(),
+                    toSideBorders(node.borders()),
+                    placement);
+        }
+    }
+
+    private static MeasureResult measureRow(RowNode node,
+                                            Padding padding,
+                                            PrepareContext ctx,
+                                            BoxConstraints constraints) {
+        double availableWidth = Math.max(0.0, constraints.availableWidth() - padding.horizontal());
+        int n = node.children().size();
+        double gap = node.gap();
+        double totalGap = n > 1 ? gap * (n - 1) : 0.0;
+        double slotsTotal = Math.max(0.0, availableWidth - totalGap);
+        double[] slotWidths = new double[n];
+        if (node.weights().isEmpty()) {
+            double share = n > 0 ? slotsTotal / n : 0.0;
+            for (int i = 0; i < n; i++) {
+                slotWidths[i] = share;
+            }
+        } else {
+            double total = 0.0;
+            for (Double w : node.weights()) {
+                total += w;
+            }
+            for (int i = 0; i < n; i++) {
+                slotWidths[i] = total > 0.0 ? slotsTotal * (node.weights().get(i) / total) : (n > 0 ? slotsTotal / n : 0.0);
+            }
+        }
+
+        double maxChildHeight = 0.0;
+        for (int i = 0; i < n; i++) {
+            DocumentNode child = node.children().get(i);
+            double childInner = Math.max(0.0, slotWidths[i] - child.margin().horizontal());
+            PreparedNode<DocumentNode> childPrepared = ctx.prepare(child, BoxConstraints.natural(childInner));
+            double childOuter = childPrepared.measureResult().height() + child.margin().vertical();
+            if (childOuter > maxChildHeight) {
+                maxChildHeight = childOuter;
+            }
+        }
+
+        return new MeasureResult(constraints.availableWidth(), padding.vertical() + maxChildHeight);
     }
 
     private static final class TableDefinition implements NodeDefinition<TableNode> {
@@ -922,12 +1039,21 @@ public final class BuiltInNodeDefinitions {
                                                                Stroke stroke,
                                                                double cornerRadius,
                                                                FragmentPlacement placement) {
+        return emitDecorationFragment(fillColor, stroke, cornerRadius, null, placement);
+    }
+
+    private static List<LayoutFragment> emitDecorationFragment(Color fillColor,
+                                                               Stroke stroke,
+                                                               double cornerRadius,
+                                                               SideBorders sideBorders,
+                                                               FragmentPlacement placement) {
         boolean hasFill = fillColor != null;
         boolean hasStroke = stroke != null
                 && stroke.strokeColor() != null
                 && stroke.strokeColor().color() != null
                 && stroke.width() > 0;
-        if ((!hasFill && !hasStroke) || placement.width() <= EPS || placement.height() <= EPS) {
+        boolean hasSideBorders = sideBorders != null && sideBorders.hasAny();
+        if ((!hasFill && !hasStroke && !hasSideBorders) || placement.width() <= EPS || placement.height() <= EPS) {
             return List.of();
         }
 
@@ -938,7 +1064,18 @@ public final class BuiltInNodeDefinitions {
                 0.0,
                 placement.width(),
                 placement.height(),
-                new ShapeFragmentPayload(fillColor, stroke, cornerRadius, null, null)));
+                new ShapeFragmentPayload(fillColor, stroke, cornerRadius, null, null, sideBorders)));
+    }
+
+    private static SideBorders toSideBorders(DocumentBorders borders) {
+        if (borders == null || !borders.hasAny()) {
+            return null;
+        }
+        return new SideBorders(
+                toStroke(borders.top()),
+                toStroke(borders.right()),
+                toStroke(borders.bottom()),
+                toStroke(borders.left()));
     }
 
     private static BarcodeData toBarcodeData(DocumentBarcodeOptions options) {
@@ -1193,13 +1330,63 @@ public final class BuiltInNodeDefinitions {
         return normalized;
     }
 
+    private static DocumentTextStyle resolveAutoSizeTextStyle(ParagraphNode node,
+                                                              double innerWidth,
+                                                              TextMeasurementSystem measurement,
+                                                              boolean markdownEnabled) {
+        DocumentTextAutoSize autoSize = node.autoSize();
+        if (autoSize == null) {
+            return node.textStyle();
+        }
+        DocumentTextStyle baseStyle = node.textStyle();
+        double maxSize = autoSize.maxSize();
+        double minSize = autoSize.minSize();
+        double step = Math.max(0.1, autoSize.step());
+
+        // Single-line text: shrink the font size until the longest logical line
+        // measures inside the available inner width, otherwise fall back to the
+        // smallest configured size.
+        for (double size = maxSize; size >= minSize - 1e-6; size -= step) {
+            DocumentTextStyle candidate = baseStyle.withSize(size);
+            if (paragraphFitsSingleLine(node, candidate, innerWidth, measurement, markdownEnabled)) {
+                return candidate;
+            }
+        }
+        return baseStyle.withSize(minSize);
+    }
+
+    private static boolean paragraphFitsSingleLine(ParagraphNode node,
+                                                   DocumentTextStyle candidate,
+                                                   double innerWidth,
+                                                   TextMeasurementSystem measurement,
+                                                   boolean markdownEnabled) {
+        TextStyle engineStyle = toTextStyle(candidate);
+        if (!node.inlineTextRuns().isEmpty()) {
+            double width = 0.0;
+            for (InlineTextRun run : node.inlineTextRuns()) {
+                width += measurement.textWidth(engineStyle, run.text());
+            }
+            return width <= innerWidth;
+        }
+        List<String> lines = sanitizeLogicalLines(node.text());
+        if (lines.size() != 1) {
+            return false;
+        }
+        // Auto-size measurement is intentionally approximate when markdown is
+        // enabled: the raw source includes formatting markers that add a few
+        // characters of width, which keeps the search slightly conservative.
+        return measurement.textWidth(engineStyle, lines.get(0)) <= innerWidth;
+    }
+
     private static PreparedParagraphLayout prepareParagraphLayout(ParagraphNode node,
                                                                  double innerWidth,
                                                                  TextMeasurementSystem measurement,
                                                                  boolean markdownEnabled) {
         List<String> logicalLines = sanitizeLogicalLines(node.text());
         boolean useMarkdownLayout = markdownEnabled && logicalLines.stream().anyMatch(BuiltInNodeDefinitions::containsMarkdownSyntax);
-        TextStyle textStyle = toTextStyle(node.textStyle());
+        TextStyle textStyle = node.autoSize() != null
+                ? toTextStyle(resolveAutoSizeTextStyle(node, innerWidth, measurement, useMarkdownLayout))
+                : toTextStyle(node.textStyle());
         TextIndentStrategy indentStrategy = toIndentStrategy(node.indentStrategy());
         List<ParagraphLine> visualLines = !node.inlineTextRuns().isEmpty()
                 ? wrapInlineParagraph(

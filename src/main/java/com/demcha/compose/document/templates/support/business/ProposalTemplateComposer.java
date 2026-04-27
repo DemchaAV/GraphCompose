@@ -19,7 +19,6 @@ import com.demcha.compose.engine.components.style.Padding;
 
 import java.awt.Color;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +30,10 @@ import java.util.Objects;
 public final class ProposalTemplateComposer {
     private static final double BODY_SIZE = 10.0;
     private static final double LABEL_SIZE = 8.5;
+    private static final double HEADER_LEFT_WIDTH = 340.0;
+    private static final double META_WIDTH = 190.0;
+    private static final double PROPOSAL_ROOT_SPACING = 7.0;
+    private static final double PROPOSAL_BODY_GAP = 7.0;
 
     private final BusinessDocumentSceneStyles styles;
     private final BusinessDocumentLayoutPolicy sceneLayout;
@@ -57,14 +60,15 @@ public final class ProposalTemplateComposer {
         ProposalData safe = Objects.requireNonNull(spec, "spec").proposal();
         double width = target.pageWidth();
 
-        target.startDocument("ProposalRoot", layout.rootSpacing());
-        target.addTable(headerTable(target, safe));
+        target.startDocument("ProposalRoot", PROPOSAL_ROOT_SPACING);
+        target.addRow(headerRow(width, safe));
         target.addDivider(TemplateSceneSupport.divider(
                 "ProposalRule",
                 width,
                 sceneLayout.mainDividerThickness(),
                 styles.accentColor(),
-                layout.subsectionMargin()));
+                layout.top(3.0)));
+        target.addRow(partiesRow(width, safe));
 
         if (!safe.executiveSummary().isBlank()) {
             target.addModule(sectionModule(
@@ -73,40 +77,40 @@ public final class ProposalTemplateComposer {
                     "EXECUTIVE SUMMARY",
                     sceneLayout.proposalSummaryRuleWidth(),
                     sceneLayout.proposalSummaryDividerThickness(),
-                    layout.subsectionMargin(),
-                    TemplateModuleBlock.paragraph(TemplateSceneSupport.blockParagraph(
+                    layout.top(4.0),
+                    TemplateModuleBlock.paragraph(TemplateSceneSupport.paragraph(
                             "ProposalExecutiveSummary",
                             safe.executiveSummary(),
                             styles.bodyStyle(BODY_SIZE),
                             TextAlign.LEFT,
                             layout.bodyLineSpacing(),
-                            "",
-                            com.demcha.compose.engine.components.content.text.TextIndentStrategy.FIRST_LINE,
-                            layout.bodyPadding(),
-                            sceneLayout.moduleBodyGap(Margin.zero())))));
+                            Padding.zero(),
+                            layout.top(PROPOSAL_BODY_GAP)))));
         }
 
-        for (int index = 0; index < safe.sections().size(); index++) {
-            ProposalSection section = safe.sections().get(index);
-            target.addModule(sectionModule(
-                    width,
-                    "ProposalSection" + index,
-                    valueOrFallback(section.title(), "SECTION"),
-                    sceneLayout.proposalSectionRuleWidth(),
-                    sceneLayout.sectionDividerThickness(),
-                    layout.subsectionMargin(),
-                    TemplateModuleBlock.paragraph(TemplateSceneSupport.blockParagraph(
-                            "ProposalSection_" + index,
-                            String.join("\n", section.paragraphs().isEmpty()
-                                    ? List.of("Content is intentionally left blank.")
-                                    : section.paragraphs()),
-                            styles.bodyStyle(BODY_SIZE),
-                            TextAlign.LEFT,
-                            layout.bodyLineSpacing(),
-                            "",
-                            com.demcha.compose.engine.components.content.text.TextIndentStrategy.FIRST_LINE,
-                            layout.bodyPadding(),
-                            sceneLayout.moduleBodyGap(Margin.zero())))));
+        if (!safe.sections().isEmpty()) {
+            if (safe.sections().size() <= 2) {
+                target.addRow(sectionsRow(width, safe.sections()));
+            } else {
+                for (int index = 0; index < safe.sections().size(); index++) {
+                    ProposalSection section = safe.sections().get(index);
+                    target.addModule(sectionModule(
+                            width,
+                            "ProposalSection" + index,
+                            valueOrFallback(section.title(), "SECTION"),
+                            sceneLayout.proposalSectionRuleWidth(),
+                            sceneLayout.sectionDividerThickness(),
+                            layout.top(4.0),
+                            TemplateModuleBlock.paragraph(TemplateSceneSupport.paragraph(
+                                    "ProposalSection_" + index,
+                                    sectionText(section),
+                                    styles.bodyStyle(BODY_SIZE),
+                                    TextAlign.LEFT,
+                                    layout.bodyLineSpacing(),
+                                    Padding.zero(),
+                                    layout.top(PROPOSAL_BODY_GAP)))));
+                }
+            }
         }
 
         if (!safe.timeline().isEmpty()) {
@@ -116,7 +120,7 @@ public final class ProposalTemplateComposer {
                     "TIMELINE",
                     sceneLayout.proposalSectionRuleWidth(),
                     sceneLayout.sectionDividerThickness(),
-                    layout.sectionMargin(),
+                    layout.top(5.0),
                     TemplateModuleBlock.table(timelineTable(target, safe.timeline()))));
         }
 
@@ -127,7 +131,7 @@ public final class ProposalTemplateComposer {
                     "PRICING",
                     sceneLayout.proposalSectionRuleWidth(),
                     sceneLayout.sectionDividerThickness(),
-                    layout.sectionMargin(),
+                    layout.top(5.0),
                     TemplateModuleBlock.table(pricingTable(target, safe.pricingRows()))));
         }
 
@@ -138,17 +142,17 @@ public final class ProposalTemplateComposer {
                     "ACCEPTANCE",
                     sceneLayout.proposalSectionRuleWidth(),
                     sceneLayout.sectionDividerThickness(),
-                    layout.sectionMargin(),
+                    layout.top(5.0),
                     TemplateModuleBlock.list(TemplateSceneSupport.list(
                             "ProposalAcceptanceTerms",
                             TemplateSceneSupport.sanitizeLines(safe.acceptanceTerms()),
                             com.demcha.compose.document.node.ListMarker.bullet(),
-                            styles.bodyStyle(BODY_SIZE),
+                            styles.bodyStyle(9.6),
                             TextAlign.LEFT,
-                            layout.bodyLineSpacing(),
-                            layout.bodyItemSpacing(),
-                            layout.bodyPadding(),
-                            sceneLayout.moduleBodyGap(layout.blockMargin())))));
+                            0.8,
+                            0.8,
+                            Padding.zero(),
+                            layout.top(PROPOSAL_BODY_GAP)))));
         }
 
         if (!safe.footerNote().isBlank()) {
@@ -157,15 +161,15 @@ public final class ProposalTemplateComposer {
                     width,
                     sceneLayout.subtleDividerThickness(),
                     styles.accentColor(),
-                    layout.sectionMargin());
+                    layout.top(5.0));
             TemplateParagraphSpec footerNote = TemplateSceneSupport.paragraph(
                     "ProposalFooter",
                     safe.footerNote(),
-                    styles.metaStyle(9.2),
+                    styles.bodyStyle(9.2),
                     TextAlign.LEFT,
                     1.0,
                     Padding.zero(),
-                    sceneLayout.moduleBodyGap(layout.blockMargin()));
+                    layout.top(5.0));
 
             target.addModule(new TemplateModuleSpec(
                     "ProposalFooter",
@@ -178,13 +182,41 @@ public final class ProposalTemplateComposer {
         target.finishDocument();
     }
 
-    private TemplateTableSpec headerTable(TemplateComposeTarget target, ProposalData data) {
-        double width = target.pageWidth();
-        double leftWidth = sceneLayout.leftWidthForReservedRight(
-                width,
-                200,
-                sceneLayout.proposalHeaderReservedWidth());
-        double rightWidth = sceneLayout.rightWidth(width, leftWidth);
+    private TemplateRowSpec headerRow(double pageWidth, ProposalData data) {
+        double metaWidth = Math.min(META_WIDTH, pageWidth - HEADER_LEFT_WIDTH - sceneLayout.columnGap());
+        return new TemplateRowSpec(
+                "ProposalHeader",
+                List.of(
+                        TemplateColumnSpec.of(
+                                "ProposalHeaderTitle",
+                                List.of(
+                                        TemplateModuleBlock.paragraph(p(
+                                                "ProposalTitle",
+                                                valueOrFallback(data.title(), "Proposal"),
+                                                styles.titleStyle(27.0),
+                                                Margin.zero())),
+                                        TemplateModuleBlock.paragraph(p(
+                                                "ProposalProjectTitle",
+                                                valueOrFallback(data.projectTitle(), "Project proposal"),
+                                                styles.bodyBoldStyle(11.4),
+                                                layout.top(8.0))),
+                                        TemplateModuleBlock.paragraph(p(
+                                                "ProposalNumber",
+                                                "Proposal #" + valueOrFallback(data.proposalNumber(), "Draft"),
+                                                styles.labelStyle(9.0),
+                                                layout.top(3.0)))),
+                                0.0),
+                        TemplateColumnSpec.of(
+                                "ProposalHeaderMeta",
+                                List.of(TemplateModuleBlock.table(headerMetaTable(data, metaWidth))),
+                                0.0)),
+                List.of(Math.max(220.0, pageWidth - metaWidth - sceneLayout.columnGap()), metaWidth),
+                sceneLayout.columnGap(),
+                Padding.zero(),
+                Margin.zero());
+    }
+
+    private TemplateTableSpec headerMetaTable(ProposalData data, double width) {
         TableCellLayoutStyle baseStyle = TableCellLayoutStyle.builder()
                 .padding(layout.compactCellPadding())
                 .fillColor(Color.WHITE)
@@ -193,29 +225,122 @@ public final class ProposalTemplateComposer {
                 .textAnchor(Anchor.topLeft())
                 .lineSpacing(layout.tableLineSpacing())
                 .build();
+        TableCellLayoutStyle valueStyle = TableCellLayoutStyle.builder()
+                .padding(layout.compactCellPadding())
+                .fillColor(Color.WHITE)
+                .stroke(new Stroke(Color.WHITE, 0.0))
+                .textStyle(styles.bodyBoldStyle(9.7))
+                .textAnchor(Anchor.topLeft())
+                .lineSpacing(layout.tableLineSpacing())
+                .build();
+        TableCellLayoutStyle labelStyle = TableCellLayoutStyle.builder()
+                .padding(layout.compactCellPadding())
+                .fillColor(Color.WHITE)
+                .stroke(new Stroke(Color.WHITE, 0.0))
+                .textStyle(styles.labelStyle(8.3))
+                .textAnchor(Anchor.topLeft())
+                .lineSpacing(layout.tableLineSpacing())
+                .build();
 
         return new TemplateTableSpec(
-                "ProposalHeader",
+                "ProposalHeaderMetaTable",
+                List.of(TableColumnLayout.fixed(width * 0.56), TableColumnLayout.fixed(width * 0.44)),
                 List.of(
-                        TableColumnLayout.fixed(leftWidth),
-                        TableColumnLayout.fixed(sceneLayout.columnGap()),
-                        TableColumnLayout.fixed(rightWidth)),
-                List.of(List.of(
-                        TableCellContent.of(headerLeftLines(data)).withStyle(TableCellLayoutStyle.builder()
-                                .textStyle(styles.bodyStyle(BODY_SIZE))
-                                .textAnchor(Anchor.topLeft())
-                                .build()),
-                        TableCellContent.text(""),
-                        TableCellContent.of(partyLines("PREPARED FOR", data.recipient())).withStyle(TableCellLayoutStyle.builder()
-                                .textStyle(styles.bodyStyle(BODY_SIZE))
-                                .textAnchor(Anchor.topLeft())
-                                .build()))),
+                        List.of(
+                                TableCellContent.text(valueOrFallback(data.preparedDate(), "TBD")).withStyle(valueStyle),
+                                TableCellContent.text("Prepared").withStyle(labelStyle)),
+                        List.of(
+                                TableCellContent.text(valueOrFallback(data.validUntil(), "TBD")).withStyle(valueStyle),
+                                TableCellContent.text("Valid Until").withStyle(labelStyle)),
+                        List.of(
+                                TableCellContent.text(valueOrFallback(data.proposalNumber(), "Draft")).withStyle(valueStyle),
+                                TableCellContent.text("Reference").withStyle(labelStyle))),
                 baseStyle,
                 Map.of(),
                 Map.of(),
                 width,
                 Padding.zero(),
                 Margin.zero());
+    }
+
+    private TemplateRowSpec partiesRow(double pageWidth, ProposalData data) {
+        double columnWidth = sceneLayout.twoColumnWidth(pageWidth);
+        return TemplateRowSpec.weighted(
+                "ProposalParties",
+                List.of(
+                        TemplateColumnSpec.of("ProposalPreparedBy", partyBlocks("PREPARED BY", data.sender()), 0.0),
+                        TemplateColumnSpec.of("ProposalPreparedFor", partyBlocks("PREPARED FOR", data.recipient()), 0.0)),
+                List.of(columnWidth, columnWidth),
+                sceneLayout.columnGap());
+    }
+
+    private List<TemplateModuleBlock> partyBlocks(String label, ProposalParty party) {
+        ProposalParty safeParty = party == null ? new ProposalParty("", List.of(), "", "", "") : party;
+        List<TemplateModuleBlock> blocks = new ArrayList<>();
+        String prefix = "Proposal" + label.replace(" ", "");
+        blocks.add(TemplateModuleBlock.paragraph(p(prefix + "Heading", label, styles.labelStyle(LABEL_SIZE), Margin.zero())));
+        if (!safeParty.name().isBlank()) {
+            blocks.add(TemplateModuleBlock.paragraph(p(prefix + "Name", safeParty.name(), styles.bodyBoldStyle(BODY_SIZE), layout.top(7.0))));
+        }
+        for (String line : safeParty.addressLines()) {
+            blocks.add(TemplateModuleBlock.paragraph(p(prefix + "Address", line, styles.bodyStyle(BODY_SIZE), layout.top(1.0))));
+        }
+        addPartyContact(blocks, prefix, "Email: ", safeParty.email());
+        addPartyContact(blocks, prefix, "Phone: ", safeParty.phone());
+        addPartyContact(blocks, prefix, "Web: ", safeParty.website());
+        return List.copyOf(blocks);
+    }
+
+    private void addPartyContact(List<TemplateModuleBlock> blocks, String prefix, String label, String value) {
+        if (value == null || value.isBlank()) {
+            return;
+        }
+        blocks.add(TemplateModuleBlock.paragraph(p(
+                prefix + label.replace(": ", ""),
+                label + value,
+                styles.bodyStyle(BODY_SIZE),
+                layout.top(1.0))));
+    }
+
+    private TemplateRowSpec sectionsRow(double pageWidth, List<ProposalSection> sections) {
+        double columnWidth = sceneLayout.twoColumnWidth(pageWidth);
+        List<TemplateColumnSpec> columns = new ArrayList<>();
+        List<Double> weights = new ArrayList<>();
+        for (int index = 0; index < sections.size(); index++) {
+            ProposalSection section = sections.get(index);
+            columns.add(TemplateColumnSpec.of(
+                    "ProposalSection" + index,
+                    sectionBlocks(index, columnWidth, section),
+                    0.0));
+            weights.add(columnWidth);
+        }
+        return new TemplateRowSpec(
+                "ProposalSections",
+                columns,
+                weights,
+                sceneLayout.columnGap(),
+                Padding.zero(),
+                layout.top(5.0));
+    }
+
+    private List<TemplateModuleBlock> sectionBlocks(int index, double width, ProposalSection section) {
+        String title = valueOrFallback(section.title(), "SECTION");
+        return List.of(
+                TemplateModuleBlock.paragraph(p("ProposalSection" + index + "Heading", title, styles.labelStyle(LABEL_SIZE), Margin.zero())),
+                TemplateModuleBlock.divider(TemplateSceneSupport.divider(
+                        "ProposalSection" + index + "Rule",
+                        sceneLayout.boundedRuleWidth(width, sceneLayout.proposalSectionRuleWidth()),
+                        sceneLayout.sectionDividerThickness(),
+                        styles.accentColor(),
+                        layout.top(2.0))),
+                TemplateModuleBlock.paragraph(TemplateSceneSupport.paragraph(
+                        "ProposalSection_" + index,
+                        sectionText(section),
+                        styles.bodyStyle(9.6),
+                        TextAlign.LEFT,
+                        1.0,
+                        Padding.zero(),
+                        layout.top(7.0))));
     }
 
     private TemplateTableSpec timelineTable(TemplateComposeTarget target, List<ProposalTimelineItem> items) {
@@ -256,7 +381,7 @@ public final class ProposalTemplateComposer {
                 columnStyles,
                 width,
                 Padding.zero(),
-                sceneLayout.moduleBodyGap(layout.blockMargin()));
+                layout.top(PROPOSAL_BODY_GAP));
     }
 
     private TemplateTableSpec pricingTable(TemplateComposeTarget target, List<ProposalPricingRow> rowsData) {
@@ -305,7 +430,7 @@ public final class ProposalTemplateComposer {
                 columnStyles,
                 width,
                 Padding.zero(),
-                sceneLayout.moduleBodyGap(layout.blockMargin()));
+                layout.top(PROPOSAL_BODY_GAP));
     }
 
     private List<String> partyLines(String label, ProposalParty party) {
@@ -343,8 +468,28 @@ public final class ProposalTemplateComposer {
         return lines;
     }
 
+    private static String sectionText(ProposalSection section) {
+        return String.join("\n", section.paragraphs().isEmpty()
+                ? List.of("Content is intentionally left blank.")
+                : section.paragraphs());
+    }
+
     private static String valueOrFallback(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value;
+    }
+
+    private TemplateParagraphSpec p(String name,
+                                    String text,
+                                    com.demcha.compose.engine.components.content.text.TextStyle style,
+                                    Margin margin) {
+        return TemplateSceneSupport.paragraph(
+                name,
+                text,
+                style,
+                TextAlign.LEFT,
+                1.0,
+                Padding.zero(),
+                margin);
     }
 
     private TemplateModuleSpec sectionModule(double width,
@@ -360,8 +505,8 @@ public final class ProposalTemplateComposer {
                 sceneLayout.boundedRuleWidth(width, ruleWidth),
                 ruleThickness,
                 styles.accentColor(),
-                layout.top(layout.rootSpacing()))));
-        blocks.addAll(Arrays.asList(bodyBlocks));
+                layout.top(PROPOSAL_BODY_GAP))));
+        blocks.addAll(List.of(bodyBlocks));
         return new TemplateModuleSpec(
                 moduleName,
                 TemplateSceneSupport.paragraph(

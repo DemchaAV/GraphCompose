@@ -312,6 +312,7 @@ public final class ProposalTemplateComposer {
         ProposalParty safeParty = party == null ? new ProposalParty("", List.of(), "", "", "") : party;
         List<String> lines = new ArrayList<>();
         lines.add(label);
+        lines.add("");
         if (!safeParty.name().isBlank()) {
             lines.add(safeParty.name());
         }
@@ -332,10 +333,11 @@ public final class ProposalTemplateComposer {
         List<String> lines = new ArrayList<>();
         lines.add(valueOrFallback(data.title(), "Proposal"));
         lines.add(valueOrFallback(data.projectTitle(), "Project proposal"));
-        lines.add("Proposal" + valueOrFallback(data.proposalNumber(), "Draft"));
-        lines.add("Prepared" + valueOrFallback(data.preparedDate(), "TBD"));
-        lines.add("Valid Until" + valueOrFallback(data.validUntil(), "TBD"));
+        lines.add("Proposal #" + valueOrFallback(data.proposalNumber(), "Draft"));
+        lines.add("Prepared: " + valueOrFallback(data.preparedDate(), "TBD"));
+        lines.add("Valid Until: " + valueOrFallback(data.validUntil(), "TBD"));
         if (data.sender() != null) {
+            lines.add("");
             lines.addAll(partyLines("PREPARED BY", data.sender()));
         }
         return lines;

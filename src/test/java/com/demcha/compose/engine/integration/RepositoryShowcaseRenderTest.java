@@ -211,9 +211,9 @@ class RepositoryShowcaseRenderTest {
                         .textAnchor(Anchor.center())
                         .build())
                 .row("Library", "Avg Time (ms)", "Avg Heap (MB)")
-                .row("GraphCompose", "2.89", "0.21")
-                .row("iText 5 (Old)", "1.80", "0.16")
-                .row("JasperReports", "4.50", "0.19")
+                .row("GraphCompose", "2.45", "0.16")
+                .row("iText 5 (Old)", "1.57", "0.16")
+                .row("JasperReports", "4.45", "0.19")
                 .build();
     }
 

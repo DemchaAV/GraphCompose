@@ -200,6 +200,33 @@ public final class ParagraphBuilder {
     }
 
     /**
+     * Replaces inline runs with the contents of a {@link RichText} builder.
+     *
+     * @param rich rich-text builder; must not be {@code null}
+     * @return this builder
+     */
+    public ParagraphBuilder rich(RichText rich) {
+        Objects.requireNonNull(rich, "rich");
+        return inlineRuns(rich.runs());
+    }
+
+    /**
+     * Replaces inline runs by configuring a fresh {@link RichText} builder.
+     *
+     * <p>Convenient for inline declaration:
+     * {@code paragraph.rich(t -> t.text("Status: ").bold("Pending"))}.</p>
+     *
+     * @param spec callback that configures the rich-text builder
+     * @return this builder
+     */
+    public ParagraphBuilder rich(Consumer<RichText> spec) {
+        Objects.requireNonNull(spec, "spec");
+        RichText builder = RichText.empty();
+        spec.accept(builder);
+        return inlineRuns(builder.runs());
+    }
+
+    /**
      * Replaces inline runs.
      *
      * @param inlineTextRuns inline text runs in source order

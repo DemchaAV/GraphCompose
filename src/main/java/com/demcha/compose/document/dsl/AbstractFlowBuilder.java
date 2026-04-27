@@ -213,6 +213,99 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     }
 
     /**
+     * Convenience preset that paints a colored "band" as the flow background.
+     *
+     * <p>Equivalent to calling {@link #fillColor(DocumentColor)}.</p>
+     *
+     * @param color band fill color, or {@code null} to clear
+     * @return this builder
+     */
+    public T band(DocumentColor color) {
+        return fillColor(color);
+    }
+
+    /**
+     * Convenience preset for a "soft panel" background — a filled, padded,
+     * rounded rectangle commonly used for hero blocks, callouts and cards.
+     *
+     * <p>The preset only configures background fill, corner radius, and inner
+     * padding. Pass {@code 0.0} for {@code radius} or {@code padding} to skip
+     * either step.</p>
+     *
+     * @param color panel fill color
+     * @param radius corner radius in points
+     * @param padding inner padding in points (applied uniformly on all sides)
+     * @return this builder
+     */
+    public T softPanel(DocumentColor color, double radius, double padding) {
+        fillColor(color);
+        if (radius > 0) {
+            cornerRadius(radius);
+        }
+        if (padding > 0) {
+            padding(DocumentInsets.of(padding));
+        }
+        return self();
+    }
+
+    /**
+     * Convenience preset for a soft panel with a default 8pt corner radius and
+     * 12pt uniform padding.
+     *
+     * @param color panel fill color
+     * @return this builder
+     */
+    public T softPanel(DocumentColor color) {
+        return softPanel(color, 8.0, 12.0);
+    }
+
+    /**
+     * Convenience preset for a left accent strip (decorative bar on the left
+     * edge, common in callouts, asides, and quote blocks).
+     *
+     * @param color accent color
+     * @param width accent stripe width in points
+     * @return this builder
+     */
+    public T accentLeft(DocumentColor color, double width) {
+        return borders(DocumentBorders.left(new DocumentStroke(color, width)));
+    }
+
+    /**
+     * Convenience preset for a right accent strip.
+     *
+     * @param color accent color
+     * @param width accent stripe width in points
+     * @return this builder
+     */
+    public T accentRight(DocumentColor color, double width) {
+        return borders(DocumentBorders.right(new DocumentStroke(color, width)));
+    }
+
+    /**
+     * Convenience preset for a top accent strip.
+     *
+     * @param color accent color
+     * @param width accent stripe width in points
+     * @return this builder
+     */
+    public T accentTop(DocumentColor color, double width) {
+        return borders(DocumentBorders.top(new DocumentStroke(color, width)));
+    }
+
+    /**
+     * Convenience preset for a bottom accent strip (e.g., a colored rule under
+     * a header section).
+     *
+     * @param color accent color
+     * @param width accent stripe width in points
+     * @return this builder
+     */
+    public T accentBottom(DocumentColor color, double width) {
+        return borders(DocumentBorders.bottom(new DocumentStroke(color, width)));
+    }
+
+    /**
      * Adds an already-created child node.
      *
      * @param node child semantic node
@@ -428,6 +521,28 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      */
     public T addTable(Consumer<TableBuilder> spec) {
         return add(BuilderSupport.configure(new TableBuilder(), spec).build());
+    }
+
+    /**
+     * Adds a paragraph composed of a {@link RichText} run sequence.
+     *
+     * @param rich rich-text builder
+     * @return this builder
+     */
+    public T addRich(RichText rich) {
+        return addParagraph(paragraph -> paragraph.rich(rich));
+    }
+
+    /**
+     * Adds a paragraph composed by configuring a fresh {@link RichText} builder.
+     *
+     * <p>Useful for label/value lines: {@code section.addRich(t -> t.text("Status: ").bold("Pending"))}.</p>
+     *
+     * @param spec rich-text configuration callback
+     * @return this builder
+     */
+    public T addRich(Consumer<RichText> spec) {
+        return addParagraph(paragraph -> paragraph.rich(spec));
     }
 
     /**

@@ -134,6 +134,7 @@ public final class GraphCompose {
         private DocumentInsets margin = DocumentInsets.zero();
         private boolean markdown = true;
         private boolean guideLines;
+        private com.demcha.compose.document.style.DocumentColor pageBackground;
         private final List<FontFamilyDefinition> customFontFamilies = new ArrayList<>();
 
         private DocumentBuilder(Path outputFile) {
@@ -216,6 +217,30 @@ public final class GraphCompose {
         public DocumentBuilder guideLines(boolean enabled) {
             this.guideLines = enabled;
             return this;
+        }
+
+        /**
+         * Configures a document-wide page background fill applied behind every
+         * fragment on every page.
+         *
+         * @param color page background color, or {@code null} to clear
+         * @return this builder
+         */
+        public DocumentBuilder pageBackground(com.demcha.compose.document.style.DocumentColor color) {
+            this.pageBackground = color;
+            return this;
+        }
+
+        /**
+         * Convenience overload for {@link java.awt.Color}.
+         *
+         * @param color page background color, or {@code null} to clear
+         * @return this builder
+         */
+        public DocumentBuilder pageBackground(java.awt.Color color) {
+            return pageBackground(color == null
+                    ? null
+                    : com.demcha.compose.document.style.DocumentColor.of(color));
         }
 
         /**
@@ -331,13 +356,17 @@ public final class GraphCompose {
          * @return a new semantic document session
          */
         public DocumentSession create() {
-            return new DocumentSession(
+            DocumentSession session = new DocumentSession(
                     outputFile,
                     pageSize,
                     margin,
                     List.copyOf(customFontFamilies),
                     markdown,
                     guideLines);
+            if (pageBackground != null) {
+                session.pageBackground(pageBackground);
+            }
+            return session;
         }
     }
 }

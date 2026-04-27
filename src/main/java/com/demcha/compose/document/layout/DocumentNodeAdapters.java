@@ -120,8 +120,8 @@ final class DocumentNodeAdapters {
 
     static TableCellContent toTableCell(DocumentTableCell cell) {
         Objects.requireNonNull(cell, "cell");
-        TableCellContent spec = TableCellContent.of(cell.lines());
-        return cell.style() == null ? spec : spec.withStyle(toTableStyle(cell.style()));
+        TableCellLayoutStyle style = cell.style() == null ? null : toTableStyle(cell.style());
+        return new TableCellContent(cell.lines(), style, cell.colSpan());
     }
 
     static List<List<TableCellContent>> toTableRows(List<List<DocumentTableCell>> rows) {

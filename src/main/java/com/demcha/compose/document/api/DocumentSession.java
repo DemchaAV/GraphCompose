@@ -6,6 +6,7 @@ import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
 import com.demcha.compose.document.backend.fixed.pdf.PdfMeasurementResources;
 import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
+import com.demcha.compose.document.backend.fixed.pdf.PdfOutputOptionsTranslator;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterZone;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
@@ -13,6 +14,12 @@ import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOption
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.document.backend.semantic.SemanticBackend;
 import com.demcha.compose.document.backend.semantic.SemanticExportContext;
+import com.demcha.compose.document.output.DocumentHeaderFooter;
+import com.demcha.compose.document.output.DocumentHeaderFooterZone;
+import com.demcha.compose.document.output.DocumentMetadata;
+import com.demcha.compose.document.output.DocumentOutputOptions;
+import com.demcha.compose.document.output.DocumentProtection;
+import com.demcha.compose.document.output.DocumentWatermark;
 import com.demcha.compose.document.debug.snapshot.LayoutGraphSnapshotExtractor;
 import com.demcha.compose.document.dsl.DocumentDsl;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
@@ -73,10 +80,10 @@ public final class DocumentSession implements AutoCloseable {
     private boolean markdown;
     private boolean guideLines;
 
-    private PdfMetadataOptions metadataOptions;
-    private PdfWatermarkOptions watermarkOptions;
-    private PdfProtectionOptions protectionOptions;
-    private final List<PdfHeaderFooterOptions> headerFooterOptions = new ArrayList<>();
+    private DocumentMetadata documentMetadata;
+    private DocumentWatermark documentWatermark;
+    private DocumentProtection documentProtection;
+    private final List<DocumentHeaderFooter> documentHeadersAndFooters = new ArrayList<>();
 
     private PdfMeasurementResources measurementResources;
 
@@ -316,78 +323,134 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
-     * Configures PDF document-level metadata applied by the convenience PDF
-     * methods ({@link #buildPdf()}, {@link #writePdf(OutputStream)},
-     * {@link #toPdfBytes()}).
+     * Configures backend-neutral document metadata applied by every output
+     * backend that supports it (PDF and DOCX in v1.3). Pass {@code null} to
+     * clear.
      *
-     * <p>Pass {@code null} to clear any previously configured metadata.</p>
-     *
-     * @param options metadata options, or {@code null} to clear
+     * @param metadata canonical metadata, or {@code null} to clear
      * @return this session
      * @throws IllegalStateException if this session has already been closed
+     */
+    public DocumentSession metadata(DocumentMetadata metadata) {
+        ensureOpen();
+        this.documentMetadata = metadata;
+        return this;
+    }
+
+    /**
+     * Compatibility overload that accepts the PDF-specific metadata value and
+     * stores it as canonical metadata.
+     *
+     * @param options PDF metadata options, or {@code null} to clear
+     * @return this session
      */
     public DocumentSession metadata(PdfMetadataOptions options) {
+        return metadata(options == null ? null : DocumentMetadata.builder()
+                .title(options.getTitle())
+                .author(options.getAuthor())
+                .subject(options.getSubject())
+                .keywords(options.getKeywords())
+                .creator(options.getCreator())
+                .producer(options.getProducer())
+                .build());
+    }
+
+    /**
+     * Configures a backend-neutral document-wide watermark. Pass {@code null}
+     * to clear.
+     *
+     * @param watermark canonical watermark, or {@code null} to clear
+     * @return this session
+     * @throws IllegalStateException if this session has already been closed
+     */
+    public DocumentSession watermark(DocumentWatermark watermark) {
         ensureOpen();
-        this.metadataOptions = options;
+        this.documentWatermark = watermark;
         return this;
     }
 
     /**
-     * Configures a document-wide PDF watermark applied by the convenience PDF
-     * methods. Pass {@code null} to clear.
+     * Compatibility overload that accepts the PDF-specific watermark value.
      *
-     * @param options watermark options, or {@code null} to clear
+     * @param options PDF watermark options, or {@code null} to clear
      * @return this session
-     * @throws IllegalStateException if this session has already been closed
      */
     public DocumentSession watermark(PdfWatermarkOptions options) {
+        return watermark(options == null ? null : PdfOutputOptionsToCanonical.toCanonical(options));
+    }
+
+    /**
+     * Configures backend-neutral document protection (passwords and
+     * permissions). Pass {@code null} to clear.
+     *
+     * @param protection canonical protection, or {@code null} to clear
+     * @return this session
+     * @throws IllegalStateException if this session has already been closed
+     */
+    public DocumentSession protect(DocumentProtection protection) {
         ensureOpen();
-        this.watermarkOptions = options;
+        this.documentProtection = protection;
         return this;
     }
 
     /**
-     * Configures PDF protection (passwords and permissions) applied by the
-     * convenience PDF methods. Pass {@code null} to clear.
+     * Compatibility overload that accepts the PDF-specific protection value.
      *
-     * @param options protection options, or {@code null} to clear
+     * @param options PDF protection options, or {@code null} to clear
      * @return this session
-     * @throws IllegalStateException if this session has already been closed
      */
     public DocumentSession protect(PdfProtectionOptions options) {
+        return protect(options == null ? null : PdfOutputOptionsToCanonical.toCanonical(options));
+    }
+
+    /**
+     * Registers a backend-neutral repeating page header.
+     *
+     * @param header header options
+     * @return this session
+     * @throws IllegalStateException if this session has already been closed
+     */
+    public DocumentSession header(DocumentHeaderFooter header) {
         ensureOpen();
-        this.protectionOptions = options;
+        Objects.requireNonNull(header, "header");
+        this.documentHeadersAndFooters.add(header.withZone(DocumentHeaderFooterZone.HEADER));
         return this;
     }
 
     /**
-     * Registers a repeating page header that the convenience PDF methods will
-     * stamp on every page. The session may carry multiple header registrations.
+     * Compatibility overload that accepts the PDF-specific header value.
      *
-     * @param options header options
+     * @param options PDF header options
      * @return this session
-     * @throws IllegalStateException if this session has already been closed
      */
     public DocumentSession header(PdfHeaderFooterOptions options) {
-        ensureOpen();
         Objects.requireNonNull(options, "options");
-        this.headerFooterOptions.add(options.withZone(PdfHeaderFooterZone.HEADER));
+        return header(PdfOutputOptionsToCanonical.toCanonical(options.withZone(PdfHeaderFooterZone.HEADER)));
+    }
+
+    /**
+     * Registers a backend-neutral repeating page footer.
+     *
+     * @param footer footer options
+     * @return this session
+     * @throws IllegalStateException if this session has already been closed
+     */
+    public DocumentSession footer(DocumentHeaderFooter footer) {
+        ensureOpen();
+        Objects.requireNonNull(footer, "footer");
+        this.documentHeadersAndFooters.add(footer.withZone(DocumentHeaderFooterZone.FOOTER));
         return this;
     }
 
     /**
-     * Registers a repeating page footer that the convenience PDF methods will
-     * stamp on every page. The session may carry multiple footer registrations.
+     * Compatibility overload that accepts the PDF-specific footer value.
      *
-     * @param options footer options
+     * @param options PDF footer options
      * @return this session
-     * @throws IllegalStateException if this session has already been closed
      */
     public DocumentSession footer(PdfHeaderFooterOptions options) {
-        ensureOpen();
         Objects.requireNonNull(options, "options");
-        this.headerFooterOptions.add(options.withZone(PdfHeaderFooterZone.FOOTER));
-        return this;
+        return footer(PdfOutputOptionsToCanonical.toCanonical(options.withZone(PdfHeaderFooterZone.FOOTER)));
     }
 
     /**
@@ -398,7 +461,7 @@ public final class DocumentSession implements AutoCloseable {
      */
     public DocumentSession clearHeadersAndFooters() {
         ensureOpen();
-        this.headerFooterOptions.clear();
+        this.documentHeadersAndFooters.clear();
         return this;
     }
 
@@ -626,7 +689,8 @@ public final class DocumentSession implements AutoCloseable {
     public <R> R export(SemanticBackend<R> backend, Path outputFile) throws Exception {
         ensureOpen();
         Objects.requireNonNull(backend, "backend");
-        return backend.export(documentGraph(), new SemanticExportContext(canvas, customFontFamilies, outputFile));
+        return backend.export(documentGraph(),
+                new SemanticExportContext(canvas, customFontFamilies, outputFile, buildOutputOptions()));
     }
 
     /**
@@ -803,25 +867,40 @@ public final class DocumentSession implements AutoCloseable {
 
     private PdfFixedLayoutBackend conveniencePdfBackend() {
         if (!guideLines
-                && metadataOptions == null
-                && watermarkOptions == null
-                && protectionOptions == null
-                && headerFooterOptions.isEmpty()) {
+                && documentMetadata == null
+                && documentWatermark == null
+                && documentProtection == null
+                && documentHeadersAndFooters.isEmpty()) {
             return new PdfFixedLayoutBackend();
         }
         PdfFixedLayoutBackend.Builder builder = PdfFixedLayoutBackend.builder()
                 .guideLines(guideLines)
-                .metadata(metadataOptions)
-                .watermark(watermarkOptions)
-                .protect(protectionOptions);
-        for (PdfHeaderFooterOptions options : headerFooterOptions) {
-            if (options.getZone() == PdfHeaderFooterZone.FOOTER) {
-                builder.footer(options);
+                .metadata(PdfOutputOptionsTranslator.toPdf(documentMetadata))
+                .watermark(PdfOutputOptionsTranslator.toPdf(documentWatermark))
+                .protect(PdfOutputOptionsTranslator.toPdf(documentProtection));
+        for (DocumentHeaderFooter entry : documentHeadersAndFooters) {
+            PdfHeaderFooterOptions translated = PdfOutputOptionsTranslator.toPdf(entry);
+            if (entry.getZone() == DocumentHeaderFooterZone.FOOTER) {
+                builder.footer(translated);
             } else {
-                builder.header(options);
+                builder.header(translated);
             }
         }
         return builder.build();
+    }
+
+    private DocumentOutputOptions buildOutputOptions() {
+        if (documentMetadata == null
+                && documentWatermark == null
+                && documentProtection == null
+                && documentHeadersAndFooters.isEmpty()) {
+            return DocumentOutputOptions.EMPTY;
+        }
+        return new DocumentOutputOptions(
+                documentMetadata,
+                documentWatermark,
+                documentProtection,
+                List.copyOf(documentHeadersAndFooters));
     }
 
     private com.demcha.compose.engine.components.style.Margin toEngineMargin(DocumentInsets insets) {

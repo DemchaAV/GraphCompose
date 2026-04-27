@@ -4,6 +4,8 @@ import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.layout.DocumentGraph;
 import com.demcha.compose.document.layout.LayoutCanvas;
 import com.demcha.compose.document.node.ContainerNode;
+import com.demcha.compose.document.output.DocumentMetadata;
+import com.demcha.compose.document.output.DocumentOutputOptions;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ImageNode;
 import com.demcha.compose.document.node.PageBreakNode;
@@ -70,6 +72,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     public byte[] export(DocumentGraph graph, SemanticExportContext context) throws Exception {
         try (XWPFDocument document = new XWPFDocument()) {
             applyPageGeometry(document, context.canvas());
+            applyOutputOptions(document, context.outputOptions());
             for (DocumentNode root : graph.roots()) {
                 writeNode(document, root);
             }
@@ -82,6 +85,31 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 return bytes;
             }
         }
+    }
+
+    private void applyOutputOptions(XWPFDocument document, DocumentOutputOptions options) {
+        if (options == null) {
+            return;
+        }
+        DocumentMetadata metadata = options.metadata();
+        if (metadata != null) {
+            org.apache.poi.ooxml.POIXMLProperties props = document.getProperties();
+            if (metadata.getTitle() != null) {
+                props.getCoreProperties().setTitle(metadata.getTitle());
+            }
+            if (metadata.getAuthor() != null) {
+                props.getCoreProperties().setCreator(metadata.getAuthor());
+            }
+            if (metadata.getSubject() != null) {
+                props.getCoreProperties().setSubjectProperty(metadata.getSubject());
+            }
+            if (metadata.getKeywords() != null) {
+                props.getCoreProperties().setKeywords(metadata.getKeywords());
+            }
+        }
+        // Headers/footers, watermark, and protection are ignored by the v1.3
+        // DOCX exporter. Word documents do not have a direct analogue for the
+        // PDF chrome model, so these values are reserved for future expansion.
     }
 
     private void writeNode(XWPFDocument document, DocumentNode node) throws Exception {

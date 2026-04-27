@@ -2,6 +2,7 @@ package com.demcha.compose.document.backend.semantic;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.output.DocumentMetadata;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableColumn;
@@ -55,6 +56,38 @@ class DocxSemanticBackendTest {
             assertThat(table.getRows()).hasSize(2);
             assertThat(table.getRow(0).getCell(0).getText().trim()).isEqualTo("R1C1");
             assertThat(table.getRow(1).getCell(1).getText().trim()).isEqualTo("R2C2");
+        }
+    }
+
+    @Test
+    void exportPropagatesSessionLevelMetadataIntoCoreProperties() throws Exception {
+        byte[] docxBytes;
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(595, 842)
+                .margin(DocumentInsets.of(36))
+                .create()) {
+
+            session.metadata(DocumentMetadata.builder()
+                    .title("Q1 Report")
+                    .author("Engineering")
+                    .subject("Quarterly summary")
+                    .keywords("docx, metadata, report")
+                    .build());
+
+            session.dsl()
+                    .pageFlow()
+                    .name("Flow")
+                    .addParagraph("Body content", DocumentTextStyle.DEFAULT)
+                    .build();
+
+            docxBytes = session.export(new DocxSemanticBackend());
+        }
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
+            var props = document.getProperties().getCoreProperties();
+            assertThat(props.getTitle()).isEqualTo("Q1 Report");
+            assertThat(props.getCreator()).isEqualTo("Engineering");
+            assertThat(props.getKeywords()).isEqualTo("docx, metadata, report");
         }
     }
 }

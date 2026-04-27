@@ -328,13 +328,14 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                                                                            double baselineOffsetFromBottom) {
         if (span instanceof BuiltInNodeDefinitions.ParagraphImageSpan imageSpan) {
             double baselineY = lineTop - lineHeight + baselineOffsetFromBottom;
+            double lineBottom = baselineY - baselineOffsetFromBottom;
             double base = switch (imageSpan.alignment() == null
                     ? com.demcha.compose.document.node.InlineImageAlignment.CENTER
                     : imageSpan.alignment()) {
                 case BASELINE -> baselineY;
-                case CENTER -> baselineY + (textAscent - imageSpan.height()) / 2.0;
+                case CENTER -> lineBottom + (lineHeight - imageSpan.height()) / 2.0;
                 case TEXT_TOP -> baselineY + textAscent - imageSpan.height();
-                case TEXT_BOTTOM -> baselineY - baselineOffsetFromBottom;
+                case TEXT_BOTTOM -> lineBottom;
             };
             double imageBottom = base + imageSpan.baselineOffset();
             return new PdfLinkAnnotationWriter.PlacedPdfRect(

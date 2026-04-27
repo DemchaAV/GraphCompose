@@ -105,7 +105,12 @@ public final class PdfParagraphFragmentRenderHandler
                         stream.endText();
                         inTextBlock = false;
                     }
-                    double imageBottom = resolveImageBottom(imageSpan, baselineY, line.textAscent(), line.baselineOffsetFromBottom());
+                    double imageBottom = resolveImageBottom(
+                            imageSpan,
+                            baselineY,
+                            line.textAscent(),
+                            line.baselineOffsetFromBottom(),
+                            line.lineHeight());
                     PDImageXObject image = environment.resolveImage(imageSpan.imageData());
                     stream.drawImage(image,
                             (float) cursorX,
@@ -125,13 +130,18 @@ public final class PdfParagraphFragmentRenderHandler
     private static double resolveImageBottom(BuiltInNodeDefinitions.ParagraphImageSpan imageSpan,
                                              double baselineY,
                                              double textAscent,
-                                             double baselineOffsetFromBottom) {
+                                             double baselineOffsetFromBottom,
+                                             double lineHeight) {
         double imageHeight = imageSpan.height();
+        double lineBottom = baselineY - baselineOffsetFromBottom;
         double base = switch (imageSpan.alignment() == null ? InlineImageAlignment.CENTER : imageSpan.alignment()) {
             case BASELINE -> baselineY;
-            case CENTER -> baselineY + (textAscent - imageHeight) / 2.0;
+            // Visually centers the image inside the resolved line box
+            // (lineBottom + lineHeight/2). This matches how readers expect
+            // icons next to text to sit, regardless of text ascender height.
+            case CENTER -> lineBottom + (lineHeight - imageHeight) / 2.0;
             case TEXT_TOP -> baselineY + textAscent - imageHeight;
-            case TEXT_BOTTOM -> baselineY - baselineOffsetFromBottom;
+            case TEXT_BOTTOM -> lineBottom;
         };
         return base + imageSpan.baselineOffset();
     }

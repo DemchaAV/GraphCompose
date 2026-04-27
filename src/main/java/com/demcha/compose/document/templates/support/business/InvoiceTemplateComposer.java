@@ -57,6 +57,7 @@ public final class InvoiceTemplateComposer {
 
         target.startDocument("InvoiceRoot", layout.rootSpacing());
         target.addTable(headerTable(target, safe));
+        target.addTable(headerSubtitleTable(target, safe, headerRightOffset(width)));
         target.addDivider(TemplateSceneSupport.divider(
                 "InvoiceRule",
                 width,
@@ -83,7 +84,8 @@ public final class InvoiceTemplateComposer {
                                 styles.accentColor(),
                                 layout.top(layout.rootSpacing()))),
                         TemplateModuleBlock.table(itemsTable(target, safe)),
-                        TemplateModuleBlock.table(notesAndSummaryTable(target, safe)))));
+                        TemplateModuleBlock.table(summaryTable(target, safe)),
+                        TemplateModuleBlock.table(notesTable(target, safe)))));
 
         if (!safe.footerNote().isBlank()) {
             TemplateDividerSpec footerRule = TemplateSceneSupport.divider(
@@ -113,12 +115,41 @@ public final class InvoiceTemplateComposer {
 
     private TemplateTableSpec headerTable(TemplateComposeTarget target, InvoiceData data) {
         double width = target.pageWidth();
-        double leftWidth = sceneLayout.leftWidthForReservedRight(
-                width,
-                220,
-                sceneLayout.invoiceHeaderReservedWidth());
-        double rightWidth = sceneLayout.rightWidth(width, leftWidth);
-        TableCellLayoutStyle baseStyle = TableCellLayoutStyle.builder()
+        // README-style header: a 2-row chip grid on the left (value + small
+        // muted label per chip) plus a large "Invoice" title hugging the
+        // right edge. The title cell visually anchors the top-right corner
+        // while the chip rows fill the leading columns.
+        double chipValueA = 86.0;
+        double chipLabelA = 56.0;
+        double chipValueB = Math.max(140.0, (width - 200.0) * 0.40);
+        double chipLabelB = 64.0;
+        double titleWidth = Math.max(140.0, width - chipValueA - chipLabelA - chipValueB - chipLabelB);
+
+        TableCellLayoutStyle valueStyle = TableCellLayoutStyle.builder()
+                .padding(layout.compactCellPadding())
+                .fillColor(Color.WHITE)
+                .stroke(new Stroke(Color.WHITE, 0.0))
+                .textStyle(styles.bodyBoldStyle(10.2))
+                .textAnchor(Anchor.topLeft())
+                .lineSpacing(layout.tableLineSpacing())
+                .build();
+        TableCellLayoutStyle labelStyle = TableCellLayoutStyle.builder()
+                .padding(layout.compactCellPadding())
+                .fillColor(Color.WHITE)
+                .stroke(new Stroke(Color.WHITE, 0.0))
+                .textStyle(styles.labelStyle(8.4))
+                .textAnchor(Anchor.topLeft())
+                .lineSpacing(layout.tableLineSpacing())
+                .build();
+        TableCellLayoutStyle titleStyle = TableCellLayoutStyle.builder()
+                .padding(layout.compactCellPadding())
+                .fillColor(Color.WHITE)
+                .stroke(new Stroke(Color.WHITE, 0.0))
+                .textStyle(styles.titleStyle(28.0))
+                .textAnchor(Anchor.topLeft())
+                .lineSpacing(layout.tableLineSpacing())
+                .build();
+        TableCellLayoutStyle emptyStyle = TableCellLayoutStyle.builder()
                 .padding(layout.compactCellPadding())
                 .fillColor(Color.WHITE)
                 .stroke(new Stroke(Color.WHITE, 0.0))
@@ -127,28 +158,71 @@ public final class InvoiceTemplateComposer {
                 .lineSpacing(layout.tableLineSpacing())
                 .build();
 
+        String docTitle = valueOrFallback(data.title(), "Invoice");
+        String issued = valueOrFallback(data.issueDate(), "TBD");
+        String due = valueOrFallback(data.dueDate(), "TBD");
+        String reference = valueOrFallback(data.reference(), "—");
+        String status = valueOrFallback(data.status(), "—");
+
+        List<List<TableCellContent>> rows = List.of(
+                List.of(
+                        TableCellContent.text(issued).withStyle(valueStyle),
+                        TableCellContent.text("Issued").withStyle(labelStyle),
+                        TableCellContent.text(reference).withStyle(valueStyle),
+                        TableCellContent.text("Reference").withStyle(labelStyle),
+                        TableCellContent.text(docTitle).withStyle(titleStyle)),
+                List.of(
+                        TableCellContent.text(due).withStyle(valueStyle),
+                        TableCellContent.text("Due").withStyle(labelStyle),
+                        TableCellContent.text(status).withStyle(valueStyle),
+                        TableCellContent.text("Status").withStyle(labelStyle),
+                        TableCellContent.text("").withStyle(emptyStyle)));
+
         return new TemplateTableSpec(
                 "InvoiceHeader",
                 List.of(
-                        TableColumnLayout.fixed(leftWidth),
-                        TableColumnLayout.fixed(sceneLayout.columnGap()),
-                        TableColumnLayout.fixed(rightWidth)),
-                List.of(List.of(
-                        TableCellContent.of(headerLeftLines(data)).withStyle(TableCellLayoutStyle.builder()
-                                .textStyle(styles.bodyStyle(BODY_SIZE))
-                                .textAnchor(Anchor.topLeft())
-                                .build()),
-                        TableCellContent.text(""),
-                        TableCellContent.of(headerRightLines(data)).withStyle(TableCellLayoutStyle.builder()
-                                .textStyle(styles.bodyBoldStyle(9.3))
-                                .textAnchor(Anchor.topRight())
-                                .build()))),
-                baseStyle,
+                        TableColumnLayout.fixed(chipValueA),
+                        TableColumnLayout.fixed(chipLabelA),
+                        TableColumnLayout.fixed(chipValueB),
+                        TableColumnLayout.fixed(chipLabelB),
+                        TableColumnLayout.fixed(titleWidth)),
+                rows,
+                emptyStyle,
                 Map.of(),
                 Map.of(),
                 width,
                 Padding.zero(),
                 Margin.zero());
+    }
+
+    private TemplateTableSpec headerSubtitleTable(TemplateComposeTarget target, InvoiceData data, double leftOffset) {
+        double width = target.pageWidth();
+        TableCellLayoutStyle baseStyle = TableCellLayoutStyle.builder()
+                .padding(layout.compactCellPadding())
+                .fillColor(Color.WHITE)
+                .stroke(new Stroke(Color.WHITE, 0.0))
+                .textStyle(styles.bodyBoldStyle(BODY_SIZE))
+                .textAnchor(Anchor.topLeft())
+                .lineSpacing(layout.tableLineSpacing())
+                .build();
+        List<String> lines = new ArrayList<>();
+        lines.add("Invoice #" + valueOrFallback(data.invoiceNumber(), "Draft"));
+        if (!data.status().isBlank()) {
+            lines.add("Status: " + data.status());
+        }
+        if (!data.reference().isBlank()) {
+            lines.add("Reference: " + data.reference());
+        }
+        return new TemplateTableSpec(
+                "InvoiceHeaderSubtitle",
+                List.of(TableColumnLayout.fixed(width - leftOffset)),
+                List.of(List.of(TableCellContent.of(lines).withStyle(baseStyle))),
+                baseStyle,
+                Map.of(),
+                Map.of(),
+                width - leftOffset,
+                Padding.zero(),
+                new Margin(0, 0, 0, leftOffset));
     }
 
     private TemplateTableSpec partiesTable(TemplateComposeTarget target, InvoiceData data) {
@@ -166,8 +240,8 @@ public final class InvoiceTemplateComposer {
                 "InvoiceParties",
                 List.of(TableColumnLayout.fixed(columnWidth), TableColumnLayout.fixed(columnWidth)),
                 List.of(List.of(
-                        TableCellContent.of(partyLines("FROM", data.fromParty())),
-                        TableCellContent.of(partyLines("BILL TO", data.billToParty())))),
+                        TableCellContent.of(partyLines("BILL TO", data.billToParty())),
+                        TableCellContent.of(partyLines("FROM", data.fromParty())))),
                 style,
                 Map.of(),
                 Map.of(),
@@ -230,73 +304,83 @@ public final class InvoiceTemplateComposer {
                 sceneLayout.moduleBodyGap(layout.subsectionMargin()));
     }
 
-    private TemplateTableSpec notesAndSummaryTable(TemplateComposeTarget target, InvoiceData data) {
+    private TemplateTableSpec summaryTable(TemplateComposeTarget target, InvoiceData data) {
+        double summaryWidth = sceneLayout.invoiceSummaryWidth();
+        double summaryLabelWidth = Math.max(60, summaryWidth * 0.55);
+        double summaryValueWidth = Math.max(40, summaryWidth - summaryLabelWidth);
+        List<InvoiceSummaryRow> rows = summaryRowsOrDefault(data);
+
+        TableCellLayoutStyle defaultStyle = TableCellLayoutStyle.builder()
+                .padding(layout.compactCellPadding())
+                .fillColor(Color.WHITE)
+                .stroke(new Stroke(Color.WHITE, 0.0))
+                .textStyle(styles.bodyStyle(BODY_SIZE))
+                .textAnchor(Anchor.centerLeft())
+                .lineSpacing(layout.tableLineSpacing())
+                .build();
+        Map<Integer, TableCellLayoutStyle> rowStyles = new LinkedHashMap<>();
+        for (int row = 0; row < rows.size(); row++) {
+            if (rows.get(row).emphasized()) {
+                rowStyles.put(row, TableCellLayoutStyle.builder()
+                        .textStyle(styles.bodyBoldStyle(BODY_SIZE))
+                        .build());
+            }
+        }
+        Map<Integer, TableCellLayoutStyle> columnStyles = new LinkedHashMap<>();
+        columnStyles.put(1, TableCellLayoutStyle.builder().textAnchor(Anchor.centerRight()).build());
+
+        List<List<TableCellContent>> cells = new ArrayList<>();
+        for (InvoiceSummaryRow row : rows) {
+            cells.add(List.of(
+                    TableCellContent.text(row.label()),
+                    TableCellContent.text(row.value())));
+        }
+
+        return new TemplateTableSpec(
+                "InvoiceSummary",
+                List.of(
+                        TableColumnLayout.fixed(summaryLabelWidth),
+                        TableColumnLayout.fixed(summaryValueWidth)),
+                cells,
+                defaultStyle,
+                rowStyles,
+                columnStyles,
+                summaryWidth,
+                Padding.zero(),
+                sceneLayout.moduleBodyGap(sceneLayout.notesSummaryMargin()));
+    }
+
+    private TemplateTableSpec notesTable(TemplateComposeTarget target, InvoiceData data) {
         double width = target.pageWidth();
-        double leftWidth = Math.max(220, width - sceneLayout.invoiceSummaryWidth() - sceneLayout.columnGap());
-        double rightWidth = sceneLayout.rightWidth(width, leftWidth);
-        List<String> noteLines = notesAndTermsLines(data);
+        double summaryWidth = sceneLayout.invoiceSummaryWidth();
+        double notesWidth = Math.max(220, width - summaryWidth - sceneLayout.columnGap());
         TableCellLayoutStyle defaultStyle = TableCellLayoutStyle.builder()
                 .padding(Padding.zero())
                 .fillColor(Color.WHITE)
                 .stroke(new Stroke(Color.WHITE, 0.0))
                 .textStyle(styles.bodyStyle(9.4))
-                .textAnchor(Anchor.centerLeft())
+                .textAnchor(Anchor.topLeft())
                 .lineSpacing(layout.tableLineSpacing())
                 .build();
+        TableCellLayoutStyle notesStyle = TableCellLayoutStyle.builder()
+                .padding(layout.compactCellPadding())
+                .fillColor(Color.WHITE)
+                .stroke(new Stroke(Color.WHITE, 0.0))
+                .textStyle(styles.bodyStyle(BODY_SIZE))
+                .textAnchor(Anchor.topLeft())
+                .build();
+
         return new TemplateTableSpec(
-                "InvoiceNotesSummary",
-                List.of(
-                        TableColumnLayout.fixed(leftWidth),
-                        TableColumnLayout.fixed(sceneLayout.columnGap()),
-                        TableColumnLayout.fixed(rightWidth)),
+                "InvoiceNotes",
+                List.of(TableColumnLayout.fixed(notesWidth)),
                 List.of(List.of(
-                        TableCellContent.of(noteLines).withStyle(TableCellLayoutStyle.builder()
-                                .padding(layout.compactCellPadding())
-                                .fillColor(Color.WHITE)
-                                .stroke(new Stroke(Color.WHITE, 0.0))
-                                .textStyle(styles.bodyStyle(BODY_SIZE))
-                                .textAnchor(Anchor.topLeft())
-                                .build()),
-                        TableCellContent.text(""),
-                        TableCellContent.of(summaryLines(data)).withStyle(TableCellLayoutStyle.builder()
-                                .padding(layout.contentCellPadding())
-                                .fillColor(styles.softFill())
-                                .stroke(new Stroke(styles.borderColor(), sceneLayout.tableBorderThickness()))
-                                .textStyle(styles.bodyBoldStyle(9.6))
-                                .textAnchor(Anchor.topLeft())
-                                .build()))),
+                        TableCellContent.of(notesAndTermsLines(data)).withStyle(notesStyle))),
                 defaultStyle,
                 Map.of(),
                 Map.of(),
-                width,
+                notesWidth,
                 Padding.zero(),
-                sceneLayout.moduleBodyGap(sceneLayout.notesSummaryMargin()));
-    }
-
-    private List<String> headerLeftLines(InvoiceData data) {
-        List<String> lines = new ArrayList<>();
-        lines.add(valueOrFallback(data.title(), "Invoice"));
-        lines.add("Invoice #" + valueOrFallback(data.invoiceNumber(), "Draft"));
-        if (!data.status().isBlank()) {
-            lines.add("Status: " + data.status());
-        }
-        if (!data.reference().isBlank()) {
-            lines.add("Reference: " + data.reference());
-        }
-        return lines;
-    }
-
-    private List<String> headerRightLines(InvoiceData data) {
-        List<String> lines = new ArrayList<>();
-        lines.add("Issued: " + valueOrFallback(data.issueDate(), "TBD"));
-        lines.add("Due: " + valueOrFallback(data.dueDate(), "TBD"));
-        if (!data.reference().isBlank()) {
-            lines.add("Reference: " + data.reference());
-        }
-        if (!data.status().isBlank()) {
-            lines.add("Status: " + data.status());
-        }
-        return lines;
+                new Margin(-20, 0, 0, summaryWidth + sceneLayout.columnGap()));
     }
 
     private List<String> partyLines(String title, InvoiceParty party) {
@@ -339,15 +423,18 @@ public final class InvoiceTemplateComposer {
         return List.copyOf(lines);
     }
 
-    private List<String> summaryLines(InvoiceData data) {
-        List<InvoiceSummaryRow> rows = data.summaryRows().isEmpty()
+    private List<InvoiceSummaryRow> summaryRowsOrDefault(InvoiceData data) {
+        return data.summaryRows().isEmpty()
                 ? List.of(new InvoiceSummaryRow("Total", "-", true))
                 : data.summaryRows();
-        List<String> lines = new ArrayList<>(rows.size());
-        for (InvoiceSummaryRow row : rows) {
-            lines.add(row.label() + " " + row.value());
-        }
-        return List.copyOf(lines);
+    }
+
+    private double headerRightOffset(double width) {
+        double chipValueA = 86.0;
+        double chipLabelA = 56.0;
+        double chipValueB = Math.max(140.0, (width - 200.0) * 0.40);
+        double chipLabelB = 64.0;
+        return chipValueA + chipLabelA + chipValueB + chipLabelB;
     }
 
     private static String valueOrFallback(String value, String fallback) {

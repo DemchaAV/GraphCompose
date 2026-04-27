@@ -112,8 +112,8 @@ final class TemplateDocumentAdapters {
 
     static DocumentTableCell tableCell(TableCellContent cell) {
         Objects.requireNonNull(cell, "cell");
-        DocumentTableCell result = new DocumentTableCell(cell.lines(), null);
-        return cell.styleOverride() == null ? result : result.withStyle(tableStyle(cell.styleOverride()));
+        DocumentTableStyle style = cell.styleOverride() == null ? null : tableStyle(cell.styleOverride());
+        return new DocumentTableCell(cell.lines(), style, cell.colSpan());
     }
 
     static List<DocumentTableCell> tableRow(List<TableCellContent> row) {

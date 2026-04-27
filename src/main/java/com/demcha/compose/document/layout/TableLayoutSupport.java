@@ -3,6 +3,7 @@ package com.demcha.compose.document.layout;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.engine.components.content.shape.Side;
 import com.demcha.compose.engine.components.content.table.TableCellContent;
 import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
@@ -18,7 +19,6 @@ import java.util.Map;
 
 import static com.demcha.compose.document.layout.DocumentNodeAdapters.toTableCell;
 import static com.demcha.compose.document.layout.DocumentNodeAdapters.toTableColumns;
-import static com.demcha.compose.document.layout.DocumentNodeAdapters.toTableRows;
 import static com.demcha.compose.document.layout.DocumentNodeAdapters.toTableStyle;
 import static com.demcha.compose.document.layout.DocumentNodeAdapters.toTableStyles;
 
@@ -58,17 +58,23 @@ final class TableLayoutSupport {
     ) {
     }
 
+    /**
+     * Logical cell: a single user-authored cell that may span multiple columns.
+     */
+    private record LogicalCell(int startColumn, int colSpan, TableCellContent content) {
+    }
+
     static ResolvedTableLayout resolveTableLayout(TableNode node,
                                                   TextMeasurementSystem measurement,
                                                   double availableWidth) {
         validateRowsExist(node);
         int columnCount = resolveColumnCount(node);
-        validateRowLengths(node, columnCount);
+        validateRowSpans(node, columnCount);
 
+        List<List<LogicalCell>> logicalRows = buildLogicalRows(node);
         List<TableColumnLayout> normalizedSpecs = normalizeSpecs(node, columnCount);
-        List<List<TableCellLayoutStyle>> stylesByRow = resolveCellStyles(node, columnCount);
-        List<List<TableCellContent>> tableRows = toTableRows(node.rows());
-        double[] naturalWidths = resolveNaturalColumnWidths(node, normalizedSpecs, stylesByRow, columnCount, measurement);
+        TableCellLayoutStyle[][] stylesGrid = buildStylesGrid(node, logicalRows, columnCount);
+        double[] naturalWidths = resolveNaturalColumnWidths(node, normalizedSpecs, logicalRows, stylesGrid, columnCount, measurement);
         double naturalWidth = sum(naturalWidths);
         double[] finalWidths = resolveFinalColumnWidths(node, normalizedSpecs, naturalWidths, naturalWidth);
         double finalWidth = sum(finalWidths);
@@ -79,33 +85,34 @@ final class TableLayoutSupport {
                     + " exceeds available width " + innerAvailableWidth + ".");
         }
 
-        List<List<TableResolvedCell>> rows = new ArrayList<>(node.rows().size());
-        List<Double> rowHeights = new ArrayList<>(node.rows().size());
+        List<List<TableResolvedCell>> rows = new ArrayList<>(logicalRows.size());
+        List<Double> rowHeights = new ArrayList<>(logicalRows.size());
 
-        for (int rowIndex = 0; rowIndex < node.rows().size(); rowIndex++) {
-            List<TableCellContent> rowValues = tableRows.get(rowIndex);
-            List<TableCellLayoutStyle> resolvedStyles = stylesByRow.get(rowIndex);
+        for (int rowIndex = 0; rowIndex < logicalRows.size(); rowIndex++) {
+            List<LogicalCell> rowCells = logicalRows.get(rowIndex);
             double rowHeight = 0.0;
-            for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-                rowHeight = Math.max(rowHeight, cellNaturalHeight(rowValues.get(columnIndex), resolvedStyles.get(columnIndex), measurement));
+            for (LogicalCell logical : rowCells) {
+                TableCellLayoutStyle style = stylesGrid[rowIndex][logical.startColumn()];
+                rowHeight = Math.max(rowHeight, cellNaturalHeight(logical.content(), style, measurement));
             }
             rowHeights.add(rowHeight);
 
-            List<TableResolvedCell> cells = new ArrayList<>(columnCount);
-            double x = 0.0;
-            for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-                cells.add(new TableResolvedCell(
-                        cellName(node, rowIndex, columnIndex),
+            List<TableResolvedCell> resolved = new ArrayList<>(rowCells.size());
+            for (LogicalCell logical : rowCells) {
+                TableCellLayoutStyle style = stylesGrid[rowIndex][logical.startColumn()];
+                double x = sumRange(finalWidths, 0, logical.startColumn());
+                double width = sumRange(finalWidths, logical.startColumn(), logical.startColumn() + logical.colSpan());
+                resolved.add(new TableResolvedCell(
+                        cellName(node, rowIndex, logical.startColumn()),
                         x,
-                        finalWidths[columnIndex],
+                        width,
                         rowHeight,
-                        sanitizeCellLines(rowValues.get(columnIndex)),
-                        resolvedStyles.get(columnIndex),
-                        fillInsets(stylesByRow, rowIndex, columnIndex),
-                        borderSides(stylesByRow, rowIndex, columnIndex)));
-                x += finalWidths[columnIndex];
+                        sanitizeCellLines(logical.content()),
+                        style,
+                        fillInsets(stylesGrid, rowIndex, logical.startColumn(), logical.colSpan()),
+                        borderSides(stylesGrid, rowIndex, logical.startColumn(), logical.colSpan())));
             }
-            rows.add(List.copyOf(cells));
+            rows.add(List.copyOf(resolved));
         }
 
         return new ResolvedTableLayout(
@@ -165,56 +172,119 @@ final class TableLayoutSupport {
         return PreparedNode.leaf(fragmentNode, measure, new PreparedTableLayout(fragmentLayout, keepTopInsets));
     }
 
-    private static List<List<TableCellLayoutStyle>> resolveCellStyles(TableNode node, int columnCount) {
-        TableCellLayoutStyle tableDefault = TableCellLayoutStyle.merge(TableCellLayoutStyle.DEFAULT, toTableStyle(node.defaultCellStyle()));
+    private static List<List<LogicalCell>> buildLogicalRows(TableNode node) {
+        List<List<LogicalCell>> result = new ArrayList<>(node.rows().size());
+        for (List<DocumentTableCell> row : node.rows()) {
+            List<LogicalCell> logical = new ArrayList<>(row.size());
+            int col = 0;
+            for (DocumentTableCell cell : row) {
+                logical.add(new LogicalCell(col, cell.colSpan(), toTableCell(cell)));
+                col += cell.colSpan();
+            }
+            result.add(List.copyOf(logical));
+        }
+        return List.copyOf(result);
+    }
+
+    private static TableCellLayoutStyle[][] buildStylesGrid(TableNode node,
+                                                            List<List<LogicalCell>> logicalRows,
+                                                            int columnCount) {
+        TableCellLayoutStyle tableDefault = TableCellLayoutStyle.merge(
+                TableCellLayoutStyle.DEFAULT, toTableStyle(node.defaultCellStyle()));
         Map<Integer, TableCellLayoutStyle> rowStyleOverrides = toTableStyles(node.rowStyles());
         Map<Integer, TableCellLayoutStyle> columnStyleOverrides = toTableStyles(node.columnStyles());
-        List<List<TableCellLayoutStyle>> result = new ArrayList<>(node.rows().size());
+        TableCellLayoutStyle[][] grid = new TableCellLayoutStyle[logicalRows.size()][columnCount];
 
-        for (int rowIndex = 0; rowIndex < node.rows().size(); rowIndex++) {
-            List<TableCellLayoutStyle> rowResult = new ArrayList<>(columnCount);
+        for (int rowIndex = 0; rowIndex < logicalRows.size(); rowIndex++) {
             TableCellLayoutStyle rowOverride = rowStyleOverrides.get(rowIndex);
-            for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-                TableCellLayoutStyle resolved = TableCellLayoutStyle.merge(tableDefault, columnStyleOverrides.get(columnIndex));
+            for (LogicalCell logical : logicalRows.get(rowIndex)) {
+                TableCellLayoutStyle resolved = TableCellLayoutStyle.merge(
+                        tableDefault, columnStyleOverrides.get(logical.startColumn()));
                 resolved = TableCellLayoutStyle.merge(resolved, rowOverride);
-                resolved = TableCellLayoutStyle.merge(resolved, toTableStyle(node.rows().get(rowIndex).get(columnIndex).style()));
-                rowResult.add(resolved);
+                resolved = TableCellLayoutStyle.merge(resolved, logical.content().styleOverride());
+                for (int col = logical.startColumn(); col < logical.startColumn() + logical.colSpan(); col++) {
+                    grid[rowIndex][col] = resolved;
+                }
             }
-            result.add(List.copyOf(rowResult));
         }
 
-        return List.copyOf(result);
+        return grid;
     }
 
     private static double[] resolveNaturalColumnWidths(TableNode node,
                                                        List<TableColumnLayout> normalizedSpecs,
-                                                       List<List<TableCellLayoutStyle>> stylesByRow,
+                                                       List<List<LogicalCell>> logicalRows,
+                                                       TableCellLayoutStyle[][] stylesGrid,
                                                        int columnCount,
                                                        TextMeasurementSystem measurement) {
         double[] widths = new double[columnCount];
+        double[] singleCellRequired = new double[columnCount];
+
+        for (int rowIndex = 0; rowIndex < logicalRows.size(); rowIndex++) {
+            for (LogicalCell logical : logicalRows.get(rowIndex)) {
+                if (logical.colSpan() != 1) {
+                    continue;
+                }
+                int col = logical.startColumn();
+                singleCellRequired[col] = Math.max(singleCellRequired[col],
+                        cellNaturalWidth(logical.content(), stylesGrid[rowIndex][col], measurement));
+            }
+        }
 
         for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-            double requiredNaturalWidth = 0.0;
-            for (int rowIndex = 0; rowIndex < node.rows().size(); rowIndex++) {
-                requiredNaturalWidth = Math.max(
-                        requiredNaturalWidth,
-                        cellNaturalWidth(toTableCell(node.rows().get(rowIndex).get(columnIndex)),
-                                stylesByRow.get(rowIndex).get(columnIndex), measurement));
-            }
-
             TableColumnLayout spec = normalizedSpecs.get(columnIndex);
             if (spec.isFixed()) {
-                if (spec.requiredFixedWidth() + EPS < requiredNaturalWidth) {
+                if (spec.requiredFixedWidth() + EPS < singleCellRequired[columnIndex]) {
                     throw new IllegalStateException("Fixed column " + columnIndex + " width " + spec.requiredFixedWidth()
-                            + " is smaller than required natural width " + requiredNaturalWidth + ".");
+                            + " is smaller than required natural width " + singleCellRequired[columnIndex] + ".");
                 }
                 widths[columnIndex] = spec.requiredFixedWidth();
             } else {
-                widths[columnIndex] = requiredNaturalWidth;
+                widths[columnIndex] = singleCellRequired[columnIndex];
+            }
+        }
+
+        for (int rowIndex = 0; rowIndex < logicalRows.size(); rowIndex++) {
+            for (LogicalCell logical : logicalRows.get(rowIndex)) {
+                if (logical.colSpan() == 1) {
+                    continue;
+                }
+                int startCol = logical.startColumn();
+                int endCol = startCol + logical.colSpan();
+                double need = cellNaturalWidth(logical.content(), stylesGrid[rowIndex][startCol], measurement);
+                double have = sumRange(widths, startCol, endCol);
+                if (need <= have + EPS) {
+                    continue;
+                }
+                distributeDeficit(widths, normalizedSpecs, startCol, endCol, need - have, rowIndex, logical.colSpan());
             }
         }
 
         return widths;
+    }
+
+    private static void distributeDeficit(double[] widths,
+                                          List<TableColumnLayout> normalizedSpecs,
+                                          int startCol,
+                                          int endCol,
+                                          double deficit,
+                                          int rowIndex,
+                                          int colSpan) {
+        List<Integer> autoColumns = new ArrayList<>();
+        for (int col = startCol; col < endCol; col++) {
+            if (normalizedSpecs.get(col).isAuto()) {
+                autoColumns.add(col);
+            }
+        }
+        if (autoColumns.isEmpty()) {
+            throw new IllegalStateException("Spanned cell at row " + rowIndex + " over " + colSpan
+                    + " fixed columns starting at " + startCol + " requires extra width " + deficit
+                    + " but all spanned columns are fixed.");
+        }
+        double share = deficit / autoColumns.size();
+        for (int col : autoColumns) {
+            widths[col] += share;
+        }
     }
 
     private static double[] resolveFinalColumnWidths(TableNode node,
@@ -289,8 +359,15 @@ final class TableLayoutSupport {
     }
 
     private static int resolveColumnCount(TableNode node) {
-        int maxRowColumns = node.rows().stream().mapToInt(List::size).max().orElse(0);
-        return Math.max(node.columns().size(), maxRowColumns);
+        int maxRowSpanSum = 0;
+        for (List<DocumentTableCell> row : node.rows()) {
+            int spanSum = 0;
+            for (DocumentTableCell cell : row) {
+                spanSum += cell.colSpan();
+            }
+            maxRowSpanSum = Math.max(maxRowSpanSum, spanSum);
+        }
+        return Math.max(node.columns().size(), maxRowSpanSum);
     }
 
     private static void validateRowsExist(TableNode node) {
@@ -299,55 +376,89 @@ final class TableLayoutSupport {
         }
     }
 
-    private static void validateRowLengths(TableNode node, int columnCount) {
+    private static void validateRowSpans(TableNode node, int columnCount) {
         for (int rowIndex = 0; rowIndex < node.rows().size(); rowIndex++) {
-            int actual = node.rows().get(rowIndex).size();
-            if (actual != columnCount) {
-                throw new IllegalStateException("Row " + rowIndex + " has " + actual
-                        + " cells but table requires " + columnCount + " columns.");
+            List<DocumentTableCell> row = node.rows().get(rowIndex);
+            int spanSum = 0;
+            for (DocumentTableCell cell : row) {
+                spanSum += cell.colSpan();
+            }
+            if (spanSum != columnCount) {
+                throw new IllegalStateException("Row " + rowIndex + " has cells with colSpan sum " + spanSum
+                        + " but table requires " + columnCount + " columns.");
             }
         }
     }
 
-    private static EnumSet<Side> borderSides(List<List<TableCellLayoutStyle>> stylesByRow, int rowIndex, int columnIndex) {
+    private static EnumSet<Side> borderSides(TableCellLayoutStyle[][] stylesGrid,
+                                             int rowIndex,
+                                             int startCol,
+                                             int colSpan) {
         EnumSet<Side> sides = EnumSet.of(Side.BOTTOM, Side.RIGHT);
-        if (ownsTopBoundary(stylesByRow, rowIndex, columnIndex)) {
+        if (ownsTopBoundary(stylesGrid, rowIndex, startCol, colSpan)) {
             sides.add(Side.TOP);
         }
-        if (ownsLeftBoundary(stylesByRow, rowIndex, columnIndex)) {
+        if (ownsLeftBoundary(stylesGrid, rowIndex, startCol)) {
             sides.add(Side.LEFT);
         }
         return sides;
     }
 
-    private static Padding fillInsets(List<List<TableCellLayoutStyle>> stylesByRow, int rowIndex, int columnIndex) {
-        double topInset = topBoundaryStrokeWidth(stylesByRow, rowIndex, columnIndex) / 2.0;
-        double rightInset = strokeWidth(stylesByRow.get(rowIndex).get(columnIndex)) / 2.0;
-        double bottomInset = strokeWidth(stylesByRow.get(rowIndex).get(columnIndex)) / 2.0;
-        double leftInset = leftBoundaryStrokeWidth(stylesByRow, rowIndex, columnIndex) / 2.0;
+    private static Padding fillInsets(TableCellLayoutStyle[][] stylesGrid,
+                                      int rowIndex,
+                                      int startCol,
+                                      int colSpan) {
+        TableCellLayoutStyle ownStyle = stylesGrid[rowIndex][startCol];
+        double ownStroke = strokeWidth(ownStyle);
+        double topInset = topBoundaryStrokeWidth(stylesGrid, rowIndex, startCol, colSpan) / 2.0;
+        double rightInset = ownStroke / 2.0;
+        double bottomInset = ownStroke / 2.0;
+        double leftInset = leftBoundaryStrokeWidth(stylesGrid, rowIndex, startCol) / 2.0;
         return new Padding(topInset, rightInset, bottomInset, leftInset);
     }
 
-    private static double topBoundaryStrokeWidth(List<List<TableCellLayoutStyle>> stylesByRow, int rowIndex, int columnIndex) {
-        if (ownsTopBoundary(stylesByRow, rowIndex, columnIndex)) {
-            return strokeWidth(stylesByRow.get(rowIndex).get(columnIndex));
+    private static double topBoundaryStrokeWidth(TableCellLayoutStyle[][] stylesGrid,
+                                                 int rowIndex,
+                                                 int startCol,
+                                                 int colSpan) {
+        if (ownsTopBoundary(stylesGrid, rowIndex, startCol, colSpan)) {
+            return strokeWidth(stylesGrid[rowIndex][startCol]);
         }
-        return strokeWidth(stylesByRow.get(rowIndex - 1).get(columnIndex));
-    }
-
-    private static double leftBoundaryStrokeWidth(List<List<TableCellLayoutStyle>> stylesByRow, int rowIndex, int columnIndex) {
-        if (ownsLeftBoundary(stylesByRow, rowIndex, columnIndex)) {
-            return strokeWidth(stylesByRow.get(rowIndex).get(columnIndex));
+        double maxAbove = 0.0;
+        for (int col = startCol; col < startCol + colSpan; col++) {
+            maxAbove = Math.max(maxAbove, strokeWidth(stylesGrid[rowIndex - 1][col]));
         }
-        return strokeWidth(stylesByRow.get(rowIndex).get(columnIndex - 1));
+        return maxAbove;
     }
 
-    private static boolean ownsTopBoundary(List<List<TableCellLayoutStyle>> stylesByRow, int rowIndex, int columnIndex) {
-        return rowIndex == 0 || !hasVisibleStroke(stylesByRow.get(rowIndex - 1).get(columnIndex));
+    private static double leftBoundaryStrokeWidth(TableCellLayoutStyle[][] stylesGrid,
+                                                  int rowIndex,
+                                                  int startCol) {
+        if (ownsLeftBoundary(stylesGrid, rowIndex, startCol)) {
+            return strokeWidth(stylesGrid[rowIndex][startCol]);
+        }
+        return strokeWidth(stylesGrid[rowIndex][startCol - 1]);
     }
 
-    private static boolean ownsLeftBoundary(List<List<TableCellLayoutStyle>> stylesByRow, int rowIndex, int columnIndex) {
-        return columnIndex == 0 || !hasVisibleStroke(stylesByRow.get(rowIndex).get(columnIndex - 1));
+    private static boolean ownsTopBoundary(TableCellLayoutStyle[][] stylesGrid,
+                                           int rowIndex,
+                                           int startCol,
+                                           int colSpan) {
+        if (rowIndex == 0) {
+            return true;
+        }
+        for (int col = startCol; col < startCol + colSpan; col++) {
+            if (hasVisibleStroke(stylesGrid[rowIndex - 1][col])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean ownsLeftBoundary(TableCellLayoutStyle[][] stylesGrid,
+                                            int rowIndex,
+                                            int startCol) {
+        return startCol == 0 || !hasVisibleStroke(stylesGrid[rowIndex][startCol - 1]);
     }
 
     private static double strokeWidth(TableCellLayoutStyle style) {
@@ -381,6 +492,14 @@ final class TableLayoutSupport {
         double total = 0.0;
         for (double value : values) {
             total += value;
+        }
+        return total;
+    }
+
+    private static double sumRange(double[] values, int fromInclusive, int toExclusive) {
+        double total = 0.0;
+        for (int i = fromInclusive; i < toExclusive; i++) {
+            total += values[i];
         }
         return total;
     }

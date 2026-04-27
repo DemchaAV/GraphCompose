@@ -12,6 +12,7 @@ import com.demcha.compose.document.templates.builtins.ExecutiveSlateCvTemplate;
 import com.demcha.compose.document.templates.builtins.NordicCleanCvTemplate;
 import com.demcha.compose.document.templates.builtins.ProductLeaderCvTemplate;
 import com.demcha.compose.document.templates.builtins.TechLeadCvTemplate;
+import com.demcha.compose.document.templates.builtins.TimelineMinimalCvTemplate;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.font.FontName;
 import com.demcha.testing.VisualTestOutputs;
@@ -325,7 +326,7 @@ class CvTemplateRenderTest {
 
     @ParameterizedTest(name = "modern CV template {0}")
     @MethodSource("modernCvTemplates")
-    void shouldRenderModernCvTemplateVariantsToFile(CvTemplate template, float margin) throws Exception {
+    void shouldRenderModernCvTemplateVariantsToFile(CvTemplate template, float margin, int expectedPages) throws Exception {
         String slug = template.getTemplateId().replace('-', '_');
         Path outputFile = VisualTestOutputs.preparePdf(slug + "_cv_render_file", "clean", "templates", "cv", "variants");
         var cv = TemplateTestSupport.canonicalCv();
@@ -335,8 +336,8 @@ class CvTemplateRenderTest {
             document.buildPdf();
         }
 
-        TemplateTestSupport.assertPdfFileLooksValid(outputFile, 1);
-        TemplateTestSupport.assertPdfPageCount(outputFile, 1);
+        TemplateTestSupport.assertPdfFileLooksValid(outputFile, expectedPages);
+        TemplateTestSupport.assertPdfPageCount(outputFile, expectedPages);
     }
 
     private static Stream<Arguments> fontThemes() {
@@ -355,11 +356,12 @@ class CvTemplateRenderTest {
 
     private static Stream<Arguments> modernCvTemplates() {
         return Stream.of(
-                Arguments.of(new NordicCleanCvTemplate(), 18),
-                Arguments.of(new CompactMonoCvTemplate(), 20),
-                Arguments.of(new ProductLeaderCvTemplate(), 18),
-                Arguments.of(new ClassicSerifCvTemplate(), 20),
-                Arguments.of(new TechLeadCvTemplate(), 20));
+                Arguments.of(new NordicCleanCvTemplate(), 18, 2),
+                Arguments.of(new CompactMonoCvTemplate(), 20, 1),
+                Arguments.of(new ProductLeaderCvTemplate(), 18, 1),
+                Arguments.of(new ClassicSerifCvTemplate(), 20, 2),
+                Arguments.of(new TechLeadCvTemplate(), 20, 1),
+                Arguments.of(new TimelineMinimalCvTemplate(), 22, 2));
     }
 
     private static String section(String text, String start, String end) {

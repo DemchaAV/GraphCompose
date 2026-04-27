@@ -15,6 +15,7 @@ import com.demcha.compose.document.templates.builtins.NordicCleanCvTemplate;
 import com.demcha.compose.document.templates.builtins.ProductLeaderCvTemplate;
 import com.demcha.compose.document.templates.builtins.ProposalTemplateV1;
 import com.demcha.compose.document.templates.builtins.TechLeadCvTemplate;
+import com.demcha.compose.document.templates.builtins.TimelineMinimalCvTemplate;
 import com.demcha.compose.document.templates.builtins.WeeklyScheduleTemplateV1;
 import com.demcha.compose.document.templates.data.coverletter.CoverLetterDocumentSpec;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
@@ -78,6 +79,7 @@ class TemplateComposeApiTest {
         CvTemplate product = new ProductLeaderCvTemplate();
         CvTemplate classic = new ClassicSerifCvTemplate();
         CvTemplate techLead = new TechLeadCvTemplate();
+        CvTemplate timeline = new TimelineMinimalCvTemplate();
         CvTemplateRegistry registry = new CvTemplateRegistry(List.of(
                 standard,
                 editorial,
@@ -86,7 +88,8 @@ class TemplateComposeApiTest {
                 compact,
                 product,
                 classic,
-                techLead));
+                techLead,
+                timeline));
 
         assertThat(registry.getDefaultTemplateId()).isEqualTo("modern-professional");
         assertThat(registry.hasTemplate("modern-professional")).isTrue();
@@ -97,6 +100,7 @@ class TemplateComposeApiTest {
         assertThat(registry.hasTemplate("product-leader")).isTrue();
         assertThat(registry.hasTemplate("classic-serif")).isTrue();
         assertThat(registry.hasTemplate("tech-lead")).isTrue();
+        assertThat(registry.hasTemplate("timeline-minimal")).isTrue();
         assertThat(registry.getTemplate("modern-professional")).isSameAs(standard);
         assertThat(registry.getTemplateOrDefault("missing", "editorial-blue")).isSameAs(editorial);
         assertThat(registry.getTemplate("executive-slate")).isSameAs(executive);
@@ -105,6 +109,7 @@ class TemplateComposeApiTest {
         assertThat(registry.getTemplate("product-leader")).isSameAs(product);
         assertThat(registry.getTemplate("classic-serif")).isSameAs(classic);
         assertThat(registry.getTemplate("tech-lead")).isSameAs(techLead);
+        assertThat(registry.getTemplate("timeline-minimal")).isSameAs(timeline);
         assertThat(registry.getAllTemplates()).containsExactlyInAnyOrder(
                 standard,
                 editorial,
@@ -113,7 +118,8 @@ class TemplateComposeApiTest {
                 compact,
                 product,
                 classic,
-                techLead);
+                techLead,
+                timeline);
     }
 
     @Test
@@ -128,6 +134,7 @@ class TemplateComposeApiTest {
         assertComposesToPdf(PDRectangle.A4, 18, document -> new ProductLeaderCvTemplate().compose(document, composeFirst));
         assertComposesToPdf(PDRectangle.A4, 20, document -> new ClassicSerifCvTemplate().compose(document, composeFirst));
         assertComposesToPdf(PDRectangle.A4, 20, document -> new TechLeadCvTemplate().compose(document, composeFirst));
+        assertComposesToPdf(PDRectangle.A4, 22, document -> new TimelineMinimalCvTemplate().compose(document, composeFirst));
     }
 
     @Test
@@ -140,6 +147,7 @@ class TemplateComposeApiTest {
         assertMethodPresent(ProductLeaderCvTemplate.class, "compose", DocumentSession.class, CvDocumentSpec.class);
         assertMethodPresent(ClassicSerifCvTemplate.class, "compose", DocumentSession.class, CvDocumentSpec.class);
         assertMethodPresent(TechLeadCvTemplate.class, "compose", DocumentSession.class, CvDocumentSpec.class);
+        assertMethodPresent(TimelineMinimalCvTemplate.class, "compose", DocumentSession.class, CvDocumentSpec.class);
     }
 
     @Test

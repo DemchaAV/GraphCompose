@@ -382,27 +382,81 @@ graph TD
 
 Public authoring lives in `com.demcha.compose`, `document.api`, `document.dsl`, `document.node`, `document.style`, `document.table`, `document.theme` (v1.4), and `font`. Engine internals live under `com.demcha.compose.engine.*` and are not the recommended application API; they are guarded by `PublicApiNoEngineLeakTest`.
 
-## Performance (smoke profile, v1.4)
+## Performance (v1.4)
 
-Numbers below come from `CurrentSpeedBenchmark` (`-Dgraphcompose.benchmark.profile=smoke`, 30 warmup + 100 measurement, with `System.gc()` between warmup and measurement). They were captured on a developer laptop; CI machines are typically 1.5&ndash;2&times; slower.
+All numbers below come from `scripts/run-benchmarks.ps1` &mdash; the full local benchmark workflow that builds the test classpath once and runs `current-speed`, `comparative`, `core-engine`, `full-cv`, `scalability`, and `stress` suites in sequence. They were captured on a developer laptop; CI machines are typically 1.5&ndash;2&times; slower.
+
+### End-to-end latency (`current-speed` full profile, 12 warmup + 40 measurement)
 
 | Scenario          | Avg ms | p50 ms | p95 ms | Docs/sec |
 |-------------------|-------:|-------:|-------:|---------:|
-| engine-simple     |   2.01 |   1.93 |   2.82 |   497.47 |
-| invoice-template  |  14.29 |  14.04 |  17.18 |    69.98 |
-| cv-template       |   7.08 |   6.92 |   8.86 |   141.17 |
-| proposal-template |  14.99 |  15.26 |  17.42 |    66.70 |
-| feature-rich      |  39.75 |  38.25 |  45.16 |    25.16 |
+| engine-simple     |   3.00 |   2.73 |   4.86 |   333.83 |
+| invoice-template  |  17.74 |  17.44 |  25.13 |    56.38 |
+| cv-template       |  10.16 |   9.91 |  14.08 |    98.46 |
+| proposal-template |  18.21 |  16.93 |  23.57 |    54.91 |
+| feature-rich      |  36.02 |  34.18 |  41.79 |    27.76 |
 
 Per-stage breakdown (median ms per stage):
 
 | Scenario          | Compose | Layout | Render | Total |
 |-------------------|--------:|-------:|-------:|------:|
-| invoice-template  |   0.31  |  3.11  |  7.13  | 10.70 |
-| cv-template       |   0.23  |  2.94  |  2.00  |  5.16 |
-| proposal-template |   0.29  |  6.42  |  6.54  | 13.26 |
+| invoice-template  |   0.33  |  2.55  |  5.76  |  8.63 |
+| cv-template       |   0.27  |  2.77  |  1.60  |  4.72 |
+| proposal-template |   0.34  |  9.54  |  5.66  | 15.65 |
 
-Render time is dominated by PDFBox serialization (35&ndash;68 % of total), so engine-side optimisations look smaller in the end-to-end avg than they do in the layout column. Page-background injection is a constant 1 fragment per page; column spans, layer stacks, and themes do not change the number of fragments emitted. See [docs/benchmarks.md](./docs/benchmarks.md) for the full methodology and the local `scripts/run-benchmarks.ps1` workflow.
+Render time is dominated by PDFBox serialization (36&ndash;67 % of total), so engine-side optimisations look smaller in the end-to-end avg than they do in the layout column. Page-background injection is a constant 1 fragment per page; column spans, layer stacks, and themes do not change the number of fragments emitted.
+
+### Parallel throughput (invoice template, 12 docs per thread)
+
+| Threads | Total docs | Throughput | Avg doc ms |
+|--------:|-----------:|-----------:|-----------:|
+| 1       |        12  |    89.56/s |     11.17  |
+| 2       |        24  |   143.53/s |      6.97  |
+| 4       |        48  |   245.26/s |      4.08  |
+| 8       |        96  |   328.78/s |      3.04  |
+
+Near-linear scaling through 4 cores, ~2.7&times; throughput by 8 threads on a hyper-threaded CPU.
+
+### Linear scalability (`scalability` suite, simple docs)
+
+| Threads | Total docs | Throughput   |
+|--------:|-----------:|-------------:|
+| 1       |       100  |     807.41/s |
+| 2       |       200  |   1,960.75/s |
+| 4       |       400  |   3,839.64/s |
+| 8       |       800  |   7,394.56/s |
+| 16      |     1,600  |  11,164.76/s |
+
+13.8&times; throughput at 16 threads &mdash; the engine has no global synchronisation in the hot path.
+
+### Stress test
+
+50-thread pool, 5,000 documents, single run:
+
+```
+Successful: 5000
+Errors:     0
+Time:       2499 ms
+```
+
+~2,000 docs/sec sustained under contention, **zero failures**.
+
+### Comparative benchmark (simple invoice-class document, 100 measurement iterations)
+
+| Library                | Avg ms | Avg heap MB | Notes                       |
+|------------------------|-------:|------------:|-----------------------------|
+| iText 5                |   1.57 |        0.16 | low-level page primitives   |
+| **GraphCompose v1.4**  |   2.45 |        0.16 | **semantic DSL + pagination** |
+| JasperReports          |   4.45 |        0.19 | XML-template based engine   |
+
+GraphCompose sits between low-level PDF generators (iText 5) and template engines (JasperReports): close to iText latency on a per-doc basis while exposing a fully semantic Java DSL with deterministic snapshots.
+
+### Engine-only timings
+
+`GraphComposeBenchmark` (engine-only, no PDF render): avg **1.04 ms**, p50 **0.97 ms**, p95 **1.64 ms**.<br/>
+`FullCvBenchmark` (full CV template, including render): avg **4.14 ms**, p50 **3.80 ms**, p95 **6.37 ms**.
+
+See [docs/benchmarks.md](./docs/benchmarks.md) for the full methodology, profiles, GC stabilization, percentile rule, and how to compare two benchmark runs locally.
 
 ## Documentation
 

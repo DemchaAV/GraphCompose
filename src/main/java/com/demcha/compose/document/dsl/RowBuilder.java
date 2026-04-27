@@ -3,14 +3,17 @@ package com.demcha.compose.document.dsl;
 import com.demcha.compose.document.dsl.internal.BuilderSupport;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.BarcodeNode;
+import com.demcha.compose.document.node.ContainerNode;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.EllipseNode;
 import com.demcha.compose.document.node.ImageNode;
 import com.demcha.compose.document.node.LineNode;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.RowNode;
+import com.demcha.compose.document.node.SectionNode;
 import com.demcha.compose.document.node.ShapeNode;
 import com.demcha.compose.document.node.SpacerNode;
+import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.style.DocumentBorders;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentCornerRadius;
@@ -24,13 +27,20 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Builder for horizontal rows of atomic semantic blocks.
+ * Builder for horizontal rows of semantic blocks.
  *
  * <p>A row arranges its direct children left-to-right inside a single row band
- * and is treated as an atomic unit by the canonical paginator. Children are
- * limited to atomic primitives (paragraph, image, line, ellipse, shape, spacer,
- * barcode) in v1.3; nested rows, sections, modules, and tables remain on the
- * roadmap.</p>
+ * and is treated as an atomic unit by the canonical paginator: the whole row
+ * moves to the next page when its measured height does not fit on the current
+ * page.</p>
+ *
+ * <p>Allowed children: atomic primitives (paragraph, image, line, ellipse,
+ * shape, spacer, barcode) and vertical containers ({@link SectionNode},
+ * {@link ContainerNode}). Vertical containers act as columns inside the row
+ * and inherit the row's atomic pagination. Nested rows and tables are not
+ * supported as row children: nested rows would conflict with the single-axis
+ * layout contract, and tables are splittable and would clash with the row's
+ * atomic pagination.</p>
  *
  * @author Artem Demchyshyn
  */
@@ -321,6 +331,30 @@ public final class RowBuilder {
     }
 
     /**
+     * Adds a section as a column-shaped row child configured through a nested
+     * builder. The section provides an independently-measured vertical stack of
+     * blocks that occupies one row slot.
+     *
+     * @param spec section builder callback
+     * @return this builder
+     */
+    public RowBuilder addSection(Consumer<SectionBuilder> spec) {
+        return add(BuilderSupport.configure(new SectionBuilder(), spec).build());
+    }
+
+    /**
+     * Adds a named section as a column-shaped row child without repeating the
+     * name inside the nested builder.
+     *
+     * @param name section name used in snapshots and layout graph paths
+     * @param spec section builder callback
+     * @return this builder
+     */
+    public RowBuilder addSection(String name, Consumer<SectionBuilder> spec) {
+        return add(BuilderSupport.configure(new SectionBuilder().name(name), spec).build());
+    }
+
+    /**
      * Builds the detached row node.
      *
      * @return the built {@link RowNode}
@@ -346,14 +380,18 @@ public final class RowBuilder {
                     + " does not match children size " + children.size()
                     + ". Pass " + children.size() + " weights or call evenWeights().");
         }
-        // Disallow node kinds that are composite or splittable inside a v1.3 row.
         for (DocumentNode child : children) {
             if (child instanceof RowNode) {
-                throw new IllegalStateException("Row '" + name + "' cannot contain another row in v1.3.");
+                throw new IllegalStateException("Row '" + name
+                        + "' cannot contain another row; use a section as a column instead.");
+            }
+            if (child instanceof TableNode) {
+                throw new IllegalStateException("Row '" + name
+                        + "' cannot contain a table; tables are splittable and would conflict with the row's atomic pagination.");
             }
             if (!isAllowedRowChild(child)) {
                 throw new IllegalStateException("Row '" + name + "' does not support child node type '"
-                        + child.getClass().getSimpleName() + "' in v1.3.");
+                        + child.getClass().getSimpleName() + "'.");
             }
         }
     }
@@ -365,6 +403,8 @@ public final class RowBuilder {
                 || child instanceof LineNode
                 || child instanceof EllipseNode
                 || child instanceof SpacerNode
-                || child instanceof BarcodeNode;
+                || child instanceof BarcodeNode
+                || child instanceof SectionNode
+                || child instanceof ContainerNode;
     }
 }

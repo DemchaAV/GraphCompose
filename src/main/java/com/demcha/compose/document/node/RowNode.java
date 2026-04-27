@@ -18,6 +18,11 @@ import java.util.Objects;
  * the current page. Child nodes share the row width using either explicit
  * weights or an even split when no weights are configured.</p>
  *
+ * <p>Children may be atomic primitives (paragraph, image, shape, line, ellipse,
+ * spacer, barcode) or vertical containers ({@link SectionNode},
+ * {@link ContainerNode}) acting as columns. Nested rows and tables are
+ * disallowed at the DSL boundary.</p>
+ *
  * @param name node name used in snapshots and layout graph paths
  * @param children child semantic nodes in source order
  * @param weights optional per-child weights (length must match children, or be empty)

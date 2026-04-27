@@ -4,12 +4,17 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.TemplateTestSupport;
+import com.demcha.compose.document.templates.builtins.ClassicSerifCvTemplate;
+import com.demcha.compose.document.templates.builtins.CompactMonoCvTemplate;
 import com.demcha.compose.document.templates.builtins.CoverLetterTemplateV1;
 import com.demcha.compose.document.templates.builtins.CvTemplateV1;
 import com.demcha.compose.document.templates.builtins.EditorialBlueCvTemplate;
 import com.demcha.compose.document.templates.builtins.ExecutiveSlateCvTemplate;
 import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
+import com.demcha.compose.document.templates.builtins.NordicCleanCvTemplate;
+import com.demcha.compose.document.templates.builtins.ProductLeaderCvTemplate;
 import com.demcha.compose.document.templates.builtins.ProposalTemplateV1;
+import com.demcha.compose.document.templates.builtins.TechLeadCvTemplate;
 import com.demcha.compose.document.templates.builtins.WeeklyScheduleTemplateV1;
 import com.demcha.compose.document.templates.data.coverletter.CoverLetterDocumentSpec;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
@@ -68,16 +73,47 @@ class TemplateComposeApiTest {
         CvTemplate standard = new CvTemplateV1();
         CvTemplate editorial = new EditorialBlueCvTemplate();
         CvTemplate executive = new ExecutiveSlateCvTemplate();
-        CvTemplateRegistry registry = new CvTemplateRegistry(List.of(standard, editorial, executive));
+        CvTemplate nordic = new NordicCleanCvTemplate();
+        CvTemplate compact = new CompactMonoCvTemplate();
+        CvTemplate product = new ProductLeaderCvTemplate();
+        CvTemplate classic = new ClassicSerifCvTemplate();
+        CvTemplate techLead = new TechLeadCvTemplate();
+        CvTemplateRegistry registry = new CvTemplateRegistry(List.of(
+                standard,
+                editorial,
+                executive,
+                nordic,
+                compact,
+                product,
+                classic,
+                techLead));
 
         assertThat(registry.getDefaultTemplateId()).isEqualTo("modern-professional");
         assertThat(registry.hasTemplate("modern-professional")).isTrue();
         assertThat(registry.hasTemplate("editorial-blue")).isTrue();
         assertThat(registry.hasTemplate("executive-slate")).isTrue();
+        assertThat(registry.hasTemplate("nordic-clean")).isTrue();
+        assertThat(registry.hasTemplate("compact-mono")).isTrue();
+        assertThat(registry.hasTemplate("product-leader")).isTrue();
+        assertThat(registry.hasTemplate("classic-serif")).isTrue();
+        assertThat(registry.hasTemplate("tech-lead")).isTrue();
         assertThat(registry.getTemplate("modern-professional")).isSameAs(standard);
         assertThat(registry.getTemplateOrDefault("missing", "editorial-blue")).isSameAs(editorial);
         assertThat(registry.getTemplate("executive-slate")).isSameAs(executive);
-        assertThat(registry.getAllTemplates()).containsExactlyInAnyOrder(standard, editorial, executive);
+        assertThat(registry.getTemplate("nordic-clean")).isSameAs(nordic);
+        assertThat(registry.getTemplate("compact-mono")).isSameAs(compact);
+        assertThat(registry.getTemplate("product-leader")).isSameAs(product);
+        assertThat(registry.getTemplate("classic-serif")).isSameAs(classic);
+        assertThat(registry.getTemplate("tech-lead")).isSameAs(techLead);
+        assertThat(registry.getAllTemplates()).containsExactlyInAnyOrder(
+                standard,
+                editorial,
+                executive,
+                nordic,
+                compact,
+                product,
+                classic,
+                techLead);
     }
 
     @Test
@@ -87,6 +123,11 @@ class TemplateComposeApiTest {
         assertComposesToPdf(PDRectangle.A4, 24, document -> new CvTemplateV1().compose(document, composeFirst));
         assertComposesToPdf(PDRectangle.A4, 18, document -> new EditorialBlueCvTemplate().compose(document, composeFirst));
         assertComposesToPdf(PDRectangle.A4, 20, document -> new ExecutiveSlateCvTemplate().compose(document, composeFirst));
+        assertComposesToPdf(PDRectangle.A4, 18, document -> new NordicCleanCvTemplate().compose(document, composeFirst));
+        assertComposesToPdf(PDRectangle.A4, 20, document -> new CompactMonoCvTemplate().compose(document, composeFirst));
+        assertComposesToPdf(PDRectangle.A4, 18, document -> new ProductLeaderCvTemplate().compose(document, composeFirst));
+        assertComposesToPdf(PDRectangle.A4, 20, document -> new ClassicSerifCvTemplate().compose(document, composeFirst));
+        assertComposesToPdf(PDRectangle.A4, 20, document -> new TechLeadCvTemplate().compose(document, composeFirst));
     }
 
     @Test
@@ -94,6 +135,11 @@ class TemplateComposeApiTest {
         assertMethodPresent(CvTemplateV1.class, "compose", DocumentSession.class, CvDocumentSpec.class);
         assertMethodPresent(EditorialBlueCvTemplate.class, "compose", DocumentSession.class, CvDocumentSpec.class);
         assertMethodPresent(ExecutiveSlateCvTemplate.class, "compose", DocumentSession.class, CvDocumentSpec.class);
+        assertMethodPresent(NordicCleanCvTemplate.class, "compose", DocumentSession.class, CvDocumentSpec.class);
+        assertMethodPresent(CompactMonoCvTemplate.class, "compose", DocumentSession.class, CvDocumentSpec.class);
+        assertMethodPresent(ProductLeaderCvTemplate.class, "compose", DocumentSession.class, CvDocumentSpec.class);
+        assertMethodPresent(ClassicSerifCvTemplate.class, "compose", DocumentSession.class, CvDocumentSpec.class);
+        assertMethodPresent(TechLeadCvTemplate.class, "compose", DocumentSession.class, CvDocumentSpec.class);
     }
 
     @Test

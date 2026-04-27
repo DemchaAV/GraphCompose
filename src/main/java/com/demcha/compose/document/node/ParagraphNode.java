@@ -15,7 +15,8 @@ import java.util.Objects;
  *
  * @param name node name used in snapshots and layout graph paths
  * @param text paragraph text when inline runs are not supplied
- * @param inlineTextRuns optional styled inline runs in source order
+ * @param inlineRuns optional inline runs in source order; may mix text and
+ *                   image runs and is wrapped on a single baseline
  * @param textStyle base paragraph text style
  * @param align horizontal text alignment
  * @param lineSpacing extra space between wrapped lines
@@ -30,7 +31,7 @@ import java.util.Objects;
 public record ParagraphNode(
         String name,
         String text,
-        List<InlineTextRun> inlineTextRuns,
+        List<InlineRun> inlineRuns,
         DocumentTextStyle textStyle,
         TextAlign align,
         double lineSpacing,
@@ -48,12 +49,16 @@ public record ParagraphNode(
      */
     public ParagraphNode {
         name = name == null ? "" : name;
-        inlineTextRuns = normalizeInlineRuns(inlineTextRuns);
+        inlineRuns = normalizeInlineRuns(inlineRuns);
         text = Objects.requireNonNullElse(text, "");
-        if (text.isBlank() && !inlineTextRuns.isEmpty()) {
-            text = inlineTextRuns.stream()
-                    .map(InlineTextRun::text)
-                    .reduce("", String::concat);
+        if (text.isBlank() && !inlineRuns.isEmpty()) {
+            StringBuilder concatenated = new StringBuilder();
+            for (InlineRun run : inlineRuns) {
+                if (run instanceof InlineTextRun textRun) {
+                    concatenated.append(textRun.text());
+                }
+            }
+            text = concatenated.toString();
         }
         textStyle = textStyle == null ? DocumentTextStyle.DEFAULT : textStyle;
         align = align == null ? TextAlign.LEFT : align;
@@ -71,7 +76,7 @@ public record ParagraphNode(
      */
     public ParagraphNode(String name,
                          String text,
-                         List<InlineTextRun> inlineTextRuns,
+                         List<InlineRun> inlineRuns,
                          DocumentTextStyle textStyle,
                          TextAlign align,
                          double lineSpacing,
@@ -81,7 +86,7 @@ public record ParagraphNode(
                          DocumentBookmarkOptions bookmarkOptions,
                          DocumentInsets padding,
                          DocumentInsets margin) {
-        this(name, text, inlineTextRuns, textStyle, align, lineSpacing, bulletOffset, indentStrategy,
+        this(name, text, inlineRuns, textStyle, align, lineSpacing, bulletOffset, indentStrategy,
                 linkOptions, bookmarkOptions, padding, margin, null);
     }
 
@@ -160,14 +165,43 @@ public record ParagraphNode(
         this(name, text, textStyle, align, lineSpacing, "", DocumentTextIndent.NONE, null, null, padding, margin);
     }
 
-    private static List<InlineTextRun> normalizeInlineRuns(List<InlineTextRun> runs) {
+    /**
+     * Returns inline text runs in source order, filtering out image runs.
+     *
+     * <p>Provided for callers that only consume textual content (e.g. the
+     * DOCX semantic backend or text-only tests). Image runs are silently
+     * dropped — use {@link #inlineRuns()} to access the full mixed list.</p>
+     *
+     * @return inline text runs in source order
+     */
+    public List<InlineTextRun> inlineTextRuns() {
+        if (inlineRuns.isEmpty()) {
+            return List.of();
+        }
+        List<InlineTextRun> textRuns = new java.util.ArrayList<>(inlineRuns.size());
+        for (InlineRun run : inlineRuns) {
+            if (run instanceof InlineTextRun textRun) {
+                textRuns.add(textRun);
+            }
+        }
+        return List.copyOf(textRuns);
+    }
+
+    private static List<InlineRun> normalizeInlineRuns(List<InlineRun> runs) {
         if (runs == null || runs.isEmpty()) {
             return List.of();
         }
-        return runs.stream()
-                .filter(Objects::nonNull)
-                .filter(run -> !run.text().isEmpty())
-                .toList();
+        List<InlineRun> normalized = new java.util.ArrayList<>(runs.size());
+        for (InlineRun run : runs) {
+            if (run == null) {
+                continue;
+            }
+            if (run instanceof InlineTextRun textRun && textRun.text().isEmpty()) {
+                continue;
+            }
+            normalized.add(run);
+        }
+        return List.copyOf(normalized);
     }
 }
 

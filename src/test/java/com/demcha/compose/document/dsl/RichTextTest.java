@@ -1,6 +1,7 @@
 package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.SectionNode;
@@ -29,70 +30,76 @@ class RichTextTest {
 
     @Test
     void textFactorySeedsBuilderWithPlainRun() {
-        List<InlineTextRun> runs = RichText.text("Hello").runs();
+        List<InlineRun> runs = RichText.text("Hello").runs();
         assertThat(runs).hasSize(1);
-        assertThat(runs.get(0).text()).isEqualTo("Hello");
-        assertThat(runs.get(0).textStyle()).isNull();
-        assertThat(runs.get(0).linkOptions()).isNull();
+        InlineTextRun run = (InlineTextRun) runs.get(0);
+        assertThat(run.text()).isEqualTo("Hello");
+        assertThat(run.textStyle()).isNull();
+        assertThat(run.linkOptions()).isNull();
     }
 
     @Test
     void labelValuePatternProducesThreeRunsInSourceOrder() {
-        List<InlineTextRun> runs = RichText.text("Status: ")
+        List<InlineRun> runs = RichText.text("Status: ")
                 .bold("Pending")
                 .plain(" — review needed")
                 .runs();
 
         assertThat(runs).hasSize(3);
 
-        assertThat(runs.get(0).text()).isEqualTo("Status: ");
-        assertThat(runs.get(0).textStyle()).isNull();
+        InlineTextRun first = (InlineTextRun) runs.get(0);
+        assertThat(first.text()).isEqualTo("Status: ");
+        assertThat(first.textStyle()).isNull();
 
-        assertThat(runs.get(1).text()).isEqualTo("Pending");
-        assertThat(runs.get(1).textStyle()).isNotNull();
-        assertThat(runs.get(1).textStyle().decoration()).isEqualTo(DocumentTextDecoration.BOLD);
+        InlineTextRun second = (InlineTextRun) runs.get(1);
+        assertThat(second.text()).isEqualTo("Pending");
+        assertThat(second.textStyle()).isNotNull();
+        assertThat(second.textStyle().decoration()).isEqualTo(DocumentTextDecoration.BOLD);
 
-        assertThat(runs.get(2).text()).isEqualTo(" — review needed");
-        assertThat(runs.get(2).textStyle()).isNull();
+        InlineTextRun third = (InlineTextRun) runs.get(2);
+        assertThat(third.text()).isEqualTo(" — review needed");
+        assertThat(third.textStyle()).isNull();
     }
 
     @Test
     void colorRunCarriesColorButLeavesDecorationDefault() {
-        List<InlineTextRun> runs = RichText.empty().color("Highlighted", RED).runs();
+        List<InlineRun> runs = RichText.empty().color("Highlighted", RED).runs();
         assertThat(runs).hasSize(1);
-        assertThat(runs.get(0).textStyle().color()).isEqualTo(RED);
-        assertThat(runs.get(0).textStyle().decoration()).isEqualTo(DocumentTextDecoration.DEFAULT);
+        InlineTextRun run = (InlineTextRun) runs.get(0);
+        assertThat(run.textStyle().color()).isEqualTo(RED);
+        assertThat(run.textStyle().decoration()).isEqualTo(DocumentTextDecoration.DEFAULT);
     }
 
     @Test
     void accentRunCarriesBothBoldAndColor() {
-        List<InlineTextRun> runs = RichText.empty().accent("Important", ACCENT).runs();
+        List<InlineRun> runs = RichText.empty().accent("Important", ACCENT).runs();
         assertThat(runs).hasSize(1);
-        assertThat(runs.get(0).textStyle().color()).isEqualTo(ACCENT);
-        assertThat(runs.get(0).textStyle().decoration()).isEqualTo(DocumentTextDecoration.BOLD);
+        InlineTextRun run = (InlineTextRun) runs.get(0);
+        assertThat(run.textStyle().color()).isEqualTo(ACCENT);
+        assertThat(run.textStyle().decoration()).isEqualTo(DocumentTextDecoration.BOLD);
     }
 
     @Test
     void italicAndBoldItalicAndUnderlineAndStrikethroughEachUseCorrectDecoration() {
-        assertThat(RichText.empty().italic("x").runs().get(0).textStyle().decoration())
+        assertThat(((InlineTextRun) RichText.empty().italic("x").runs().get(0)).textStyle().decoration())
                 .isEqualTo(DocumentTextDecoration.ITALIC);
-        assertThat(RichText.empty().boldItalic("x").runs().get(0).textStyle().decoration())
+        assertThat(((InlineTextRun) RichText.empty().boldItalic("x").runs().get(0)).textStyle().decoration())
                 .isEqualTo(DocumentTextDecoration.BOLD_ITALIC);
-        assertThat(RichText.empty().underline("x").runs().get(0).textStyle().decoration())
+        assertThat(((InlineTextRun) RichText.empty().underline("x").runs().get(0)).textStyle().decoration())
                 .isEqualTo(DocumentTextDecoration.UNDERLINE);
-        assertThat(RichText.empty().strikethrough("x").runs().get(0).textStyle().decoration())
+        assertThat(((InlineTextRun) RichText.empty().strikethrough("x").runs().get(0)).textStyle().decoration())
                 .isEqualTo(DocumentTextDecoration.STRIKETHROUGH);
     }
 
     @Test
     void sizeRunOverridesFontSize() {
-        InlineTextRun run = RichText.empty().size("HEADLINE", 32.0).runs().get(0);
+        InlineTextRun run = (InlineTextRun) RichText.empty().size("HEADLINE", 32.0).runs().get(0);
         assertThat(run.textStyle().size()).isEqualTo(32.0, within(EPS));
     }
 
     @Test
     void linkRunCarriesLinkOptionsWithoutStyle() {
-        InlineTextRun run = RichText.empty().link("Click", "https://example.com").runs().get(0);
+        InlineTextRun run = (InlineTextRun) RichText.empty().link("Click", "https://example.com").runs().get(0);
         assertThat(run.linkOptions()).isNotNull();
         assertThat(run.linkOptions().uri()).isEqualTo("https://example.com");
         assertThat(run.textStyle()).isNull();
@@ -103,18 +110,18 @@ class RichTextTest {
         RichText prefix = RichText.text("Status: ").bold("Pending");
         RichText suffix = RichText.empty().plain(" — ").italic("retry tomorrow");
 
-        List<InlineTextRun> runs = prefix.append(suffix).runs();
+        List<InlineRun> runs = prefix.append(suffix).runs();
 
         assertThat(runs).hasSize(4);
-        assertThat(runs.get(0).text()).isEqualTo("Status: ");
-        assertThat(runs.get(1).text()).isEqualTo("Pending");
-        assertThat(runs.get(2).text()).isEqualTo(" — ");
-        assertThat(runs.get(3).text()).isEqualTo("retry tomorrow");
+        assertThat(((InlineTextRun) runs.get(0)).text()).isEqualTo("Status: ");
+        assertThat(((InlineTextRun) runs.get(1)).text()).isEqualTo("Pending");
+        assertThat(((InlineTextRun) runs.get(2)).text()).isEqualTo(" — ");
+        assertThat(((InlineTextRun) runs.get(3)).text()).isEqualTo("retry tomorrow");
     }
 
     @Test
     void nullTextNormalizesToEmptyString() {
-        InlineTextRun run = RichText.empty().plain(null).runs().get(0);
+        InlineTextRun run = (InlineTextRun) RichText.empty().plain(null).runs().get(0);
         assertThat(run.text()).isEqualTo("");
     }
 
@@ -177,7 +184,7 @@ class RichTextTest {
     @Test
     void linkRunWithExplicitOptionsPreservesAllFields() {
         DocumentLinkOptions options = new DocumentLinkOptions("https://demcha.io");
-        InlineTextRun run = RichText.empty().link("Author", options).runs().get(0);
+        InlineTextRun run = (InlineTextRun) RichText.empty().link("Author", options).runs().get(0);
         assertThat(run.linkOptions()).isSameAs(options);
         assertThat(run.text()).isEqualTo("Author");
     }

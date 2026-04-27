@@ -340,6 +340,31 @@ class CvTemplateRenderTest {
         TemplateTestSupport.assertPdfPageCount(outputFile, expectedPages);
     }
 
+    @Test
+    void shouldRenderTimelineMinimalContactLinksAsPdfAnnotations() throws Exception {
+        byte[] pdfBytes;
+        try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 22, 22, 22, 22)) {
+            new TimelineMinimalCvTemplate().compose(document, TemplateTestSupport.canonicalCv());
+            pdfBytes = document.toPdfBytes();
+        }
+
+        try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+            List<String> uris = new ArrayList<>();
+            for (var page : document.getPages()) {
+                for (var annotation : page.getAnnotations()) {
+                    if (annotation instanceof PDAnnotationLink link && link.getAction() instanceof PDActionURI action) {
+                        uris.add(action.getURI());
+                    }
+                }
+            }
+
+            assertThat(uris).contains(
+                    "mailto:alex.carter@example.dev",
+                    "https://www.linkedin.com/in/alex-carter-demo",
+                    "https://github.com/example/alex-carter");
+        }
+    }
+
     private static Stream<Arguments> fontThemes() {
         return Stream.of(
                 Arguments.of(FontName.HELVETICA, "Helvetica"),

@@ -3,10 +3,11 @@ package com.demcha.compose.document.templates.builtins;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.CvTemplate;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
-import com.demcha.compose.document.templates.support.cv.ExecutiveSlateCvTemplateComposer;
+import com.demcha.compose.document.templates.support.cv.PanelCvTemplateComposer;
 import com.demcha.compose.document.templates.theme.CvTheme;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.font.FontName;
+import com.demcha.compose.document.node.TextAlign;
 
 import java.awt.Color;
 import java.util.Objects;
@@ -15,15 +16,27 @@ import java.util.Objects;
  * Compact engineering CV with mono-inspired typography and sharp blue accents.
  */
 public final class CompactMonoCvTemplate implements CvTemplate {
-    private final ExecutiveSlateCvTemplateComposer composer;
+    private final PanelCvTemplateComposer composer;
 
     public CompactMonoCvTemplate() {
         this(null);
     }
 
     public CompactMonoCvTemplate(CvTheme theme) {
-        this.composer = new ExecutiveSlateCvTemplateComposer(
-                Objects.requireNonNullElseGet(theme, CompactMonoCvTemplate::defaultTheme));
+        CvTheme resolvedTheme = Objects.requireNonNullElseGet(theme, CompactMonoCvTemplate::defaultTheme);
+        this.composer = new PanelCvTemplateComposer(
+                "CompactMonoPanelRoot",
+                resolvedTheme,
+                new PanelCvTemplateComposer.Palette(
+                        new Color(22, 27, 34),
+                        Color.WHITE,
+                        new Color(202, 211, 222),
+                        new Color(242, 246, 250),
+                        Color.WHITE,
+                        new Color(198, 207, 218),
+                        new Color(0, 95, 184),
+                        new Color(42, 49, 58)),
+                PanelCvTemplateComposer.Layout.sidebar(TextAlign.LEFT));
     }
 
     @Override
@@ -43,7 +56,7 @@ public final class CompactMonoCvTemplate implements CvTemplate {
 
     @Override
     public void compose(DocumentSession document, CvDocumentSpec documentSpec) {
-        BuiltInCvTemplateSupport.compose(getTemplateId(), document, documentSpec, composer::compose);
+        BuiltInCvTemplateSupport.composeDirect(getTemplateId(), document, documentSpec, composer::compose);
     }
 
     private static CvTheme defaultTheme() {

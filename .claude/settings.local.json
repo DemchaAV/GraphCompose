@@ -4,7 +4,9 @@
       "Bash(git ls-tree *)",
       "Bash(./gradlew --no-daemon -q compileTestJava)",
       "Bash(./mvnw -q -o test-compile)",
-      "Bash(./mvnw -q -o -Dtest='RowBuilderTest,BuiltInTemplateLayoutSnapshotTest' test)"
+      "Bash(./mvnw -q -o -Dtest='RowBuilderTest,BuiltInTemplateLayoutSnapshotTest' test)",
+      "Bash(mvn -q -DskipTests compile)",
+      "Bash(grep -E '\\\\.\\(pdf|PDF\\)$')"
     ]
   }
 }

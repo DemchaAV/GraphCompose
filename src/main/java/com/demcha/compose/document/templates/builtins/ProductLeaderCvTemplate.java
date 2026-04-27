@@ -3,10 +3,11 @@ package com.demcha.compose.document.templates.builtins;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.CvTemplate;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
-import com.demcha.compose.document.templates.support.cv.EditorialBlueCvTemplateComposer;
+import com.demcha.compose.document.templates.support.cv.PanelCvTemplateComposer;
 import com.demcha.compose.document.templates.theme.CvTheme;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.font.FontName;
+import com.demcha.compose.document.node.TextAlign;
 
 import java.awt.Color;
 import java.util.Objects;
@@ -15,15 +16,27 @@ import java.util.Objects;
  * Editorial CV variant for product-minded engineers and technical leads.
  */
 public final class ProductLeaderCvTemplate implements CvTemplate {
-    private final EditorialBlueCvTemplateComposer composer;
+    private final PanelCvTemplateComposer composer;
 
     public ProductLeaderCvTemplate() {
         this(null);
     }
 
     public ProductLeaderCvTemplate(CvTheme theme) {
-        this.composer = new EditorialBlueCvTemplateComposer(
-                Objects.requireNonNullElseGet(theme, ProductLeaderCvTemplate::defaultTheme));
+        CvTheme resolvedTheme = Objects.requireNonNullElseGet(theme, ProductLeaderCvTemplate::defaultTheme);
+        this.composer = new PanelCvTemplateComposer(
+                "ProductLeaderPanelRoot",
+                resolvedTheme,
+                new PanelCvTemplateComposer.Palette(
+                        new Color(231, 246, 244),
+                        new Color(20, 44, 66),
+                        new Color(54, 68, 84),
+                        new Color(244, 249, 248),
+                        Color.WHITE,
+                        new Color(179, 214, 211),
+                        new Color(0, 128, 128),
+                        new Color(54, 68, 84)),
+                PanelCvTemplateComposer.Layout.stacked(TextAlign.CENTER));
     }
 
     @Override
@@ -43,7 +56,7 @@ public final class ProductLeaderCvTemplate implements CvTemplate {
 
     @Override
     public void compose(DocumentSession document, CvDocumentSpec documentSpec) {
-        BuiltInCvTemplateSupport.compose(getTemplateId(), document, documentSpec, composer::compose);
+        BuiltInCvTemplateSupport.composeDirect(getTemplateId(), document, documentSpec, composer::compose);
     }
 
     private static CvTheme defaultTheme() {

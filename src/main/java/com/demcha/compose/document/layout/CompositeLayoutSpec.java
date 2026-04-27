@@ -21,7 +21,13 @@ public record CompositeLayoutSpec(double spacing, Axis axis, List<Double> weight
         /** Children stack top to bottom. */
         VERTICAL,
         /** Children flow left to right inside a single row band. */
-        HORIZONTAL
+        HORIZONTAL,
+        /**
+         * Children share the same bounding box and are painted in source order
+         * (first child behind, last child in front). Used by {@code LayerStackNode}
+         * to compose background panels, watermarks, and overlay decorations.
+         */
+        STACK
     }
 
     /**

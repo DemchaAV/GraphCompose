@@ -32,6 +32,8 @@ import com.demcha.compose.document.node.ContainerNode;
 import com.demcha.compose.document.node.EllipseNode;
 import com.demcha.compose.document.node.ImageNode;
 import com.demcha.compose.document.node.InlineTextRun;
+import com.demcha.compose.document.node.LayerAlign;
+import com.demcha.compose.document.node.LayerStackNode;
 import com.demcha.compose.document.node.LineNode;
 import com.demcha.compose.document.node.ListNode;
 import com.demcha.compose.document.node.PageBreakNode;
@@ -93,6 +95,7 @@ public final class BuiltInNodeDefinitions {
                 .register(new ContainerDefinition())
                 .register(new SectionDefinition())
                 .register(new RowDefinition())
+                .register(new LayerStackDefinition())
                 .register(new TableDefinition());
     }
 
@@ -910,6 +913,78 @@ public final class BuiltInNodeDefinitions {
                     toSideBorders(node.borders()),
                     placement);
         }
+    }
+
+    /**
+     * Prepared layout payload attached to {@link LayerStackNode} prepared nodes.
+     *
+     * @param alignments per-layer alignments resolved from the source order
+     */
+    public record PreparedStackLayout(List<LayerAlign> alignments) implements PreparedNodeLayout {
+        /**
+         * Creates a prepared stack layout payload with frozen alignment metadata.
+         */
+        public PreparedStackLayout {
+            alignments = List.copyOf(alignments);
+        }
+    }
+
+    private static final class LayerStackDefinition implements NodeDefinition<LayerStackNode> {
+        @Override
+        public Class<LayerStackNode> nodeType() {
+            return LayerStackNode.class;
+        }
+
+        @Override
+        public PreparedNode<LayerStackNode> prepare(LayerStackNode node, PrepareContext ctx, BoxConstraints constraints) {
+            List<LayerAlign> alignments = node.layers().stream()
+                    .map(LayerStackNode.Layer::align)
+                    .toList();
+            return PreparedNode.composite(
+                    node,
+                    measureStack(node, toPadding(node.padding()), ctx, constraints),
+                    new PreparedStackLayout(alignments),
+                    new CompositeLayoutSpec(0.0, CompositeLayoutSpec.Axis.STACK));
+        }
+
+        @Override
+        public PaginationPolicy paginationPolicy(LayerStackNode node) {
+            return PaginationPolicy.ATOMIC;
+        }
+
+        @Override
+        public List<DocumentNode> children(LayerStackNode node) {
+            return node.children();
+        }
+
+        @Override
+        public List<LayoutFragment> emitFragments(PreparedNode<LayerStackNode> prepared, FragmentContext ctx, FragmentPlacement placement) {
+            return List.of();
+        }
+    }
+
+    private static MeasureResult measureStack(LayerStackNode node,
+                                              Padding padding,
+                                              PrepareContext ctx,
+                                              BoxConstraints constraints) {
+        double availableWidth = Math.max(0.0, constraints.availableWidth() - padding.horizontal());
+        double maxOuterWidth = 0.0;
+        double maxOuterHeight = 0.0;
+        for (LayerStackNode.Layer layer : node.layers()) {
+            DocumentNode child = layer.node();
+            double childInner = Math.max(0.0, availableWidth - child.margin().horizontal());
+            PreparedNode<DocumentNode> childPrepared = ctx.prepare(child, BoxConstraints.natural(childInner));
+            double outerWidth = childPrepared.measureResult().width() + child.margin().horizontal();
+            double outerHeight = childPrepared.measureResult().height() + child.margin().vertical();
+            if (outerWidth > maxOuterWidth) {
+                maxOuterWidth = outerWidth;
+            }
+            if (outerHeight > maxOuterHeight) {
+                maxOuterHeight = outerHeight;
+            }
+        }
+        double width = Math.min(constraints.availableWidth(), padding.horizontal() + maxOuterWidth);
+        return new MeasureResult(width, padding.vertical() + maxOuterHeight);
     }
 
     private static MeasureResult measureRow(RowNode node,

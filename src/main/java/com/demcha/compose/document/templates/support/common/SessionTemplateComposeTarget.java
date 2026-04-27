@@ -5,6 +5,7 @@ import com.demcha.compose.document.dsl.AbstractFlowBuilder;
 import com.demcha.compose.document.dsl.DocumentDsl;
 import com.demcha.compose.document.dsl.ModuleBuilder;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
+import com.demcha.compose.document.dsl.RowBuilder;
 import com.demcha.compose.document.dsl.TableBuilder;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.table.DocumentTableColumn;
@@ -64,6 +65,11 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
     @Override
     public void addDivider(TemplateDividerSpec divider) {
         addDivider(requireRoot(), divider);
+    }
+
+    @Override
+    public void addRow(TemplateRowSpec row) {
+        addRow(requireRoot(), row);
     }
 
     @Override
@@ -153,6 +159,31 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
                 .margin(TemplateDocumentAdapters.insets(divider.margin())));
     }
 
+    private void addRow(AbstractFlowBuilder<?, ?> flow, TemplateRowSpec row) {
+        TemplateRowSpec safeRow = Objects.requireNonNull(row, "row");
+        RowBuilder builder = new RowBuilder()
+                .name(safeRow.name())
+                .gap(safeRow.gap())
+                .padding(TemplateDocumentAdapters.insets(safeRow.padding()))
+                .margin(TemplateDocumentAdapters.insets(safeRow.margin()));
+        if (!safeRow.weights().isEmpty()) {
+            double[] weights = safeRow.weights().stream().mapToDouble(Double::doubleValue).toArray();
+            builder.weights(weights);
+        }
+        for (TemplateColumnSpec column : safeRow.columns()) {
+            builder.addSection(column.name(), section -> {
+                section.spacing(column.spacing())
+                        .padding(TemplateDocumentAdapters.insets(column.padding()))
+                        .margin(TemplateDocumentAdapters.insets(column.margin()));
+                FlowTemplateComposeTarget nestedTarget = new FlowTemplateComposeTarget(section);
+                for (TemplateModuleBlock block : column.blocks()) {
+                    block.render(nestedTarget);
+                }
+            });
+        }
+        flow.add(builder.build());
+    }
+
     private void addTable(AbstractFlowBuilder<?, ?> flow, TemplateTableSpec table) {
         TableBuilder builder = session.dsl()
                 .table()
@@ -216,6 +247,11 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
         @Override
         public void addDivider(TemplateDividerSpec divider) {
             SessionTemplateComposeTarget.this.addDivider(flow, divider);
+        }
+
+        @Override
+        public void addRow(TemplateRowSpec row) {
+            SessionTemplateComposeTarget.this.addRow(flow, row);
         }
 
         @Override

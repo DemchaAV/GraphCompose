@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 public sealed interface TemplateModuleBlock permits
         TemplateModuleBlock.Paragraph,
         TemplateModuleBlock.ListBlock,
+        TemplateModuleBlock.Row,
         TemplateModuleBlock.Table,
         TemplateModuleBlock.Divider,
         TemplateModuleBlock.PageBreak,
@@ -45,6 +46,16 @@ public sealed interface TemplateModuleBlock permits
      */
     static TemplateModuleBlock list(TemplateListSpec list) {
         return new ListBlock(list);
+    }
+
+    /**
+     * Creates a row module block.
+     *
+     * @param row row instruction
+     * @return module block
+     */
+    static TemplateModuleBlock row(TemplateRowSpec row) {
+        return new Row(row);
     }
 
     /**
@@ -122,6 +133,25 @@ public sealed interface TemplateModuleBlock permits
         @Override
         public void render(TemplateComposeTarget target) {
             target.addList(list);
+        }
+    }
+
+    /**
+     * Row-backed module block.
+     *
+     * @param row row instruction
+     */
+    record Row(TemplateRowSpec row) implements TemplateModuleBlock {
+        /**
+         * Validates the row instruction.
+         */
+        public Row {
+            Objects.requireNonNull(row, "row");
+        }
+
+        @Override
+        public void render(TemplateComposeTarget target) {
+            target.addRow(row);
         }
     }
 

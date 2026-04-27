@@ -346,17 +346,61 @@ To bless a fresh baseline, set `-Dgraphcompose.visual.approve=true` (or `GRAPHCO
 
 ---
 
-## Extending GraphCompose
+## Table component
 
-GraphCompose is built around explicit seams &mdash; you do not have to fork the library to add a new node, a new backend, or a new template family.
+```java
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.table.DocumentTableColumn;
+import com.demcha.compose.document.table.DocumentTableStyle;
 
-- **Add a new semantic node.** Implement `DocumentNode`, register a `NodeDefinition<MyNode>` with the `NodeRegistry`, and the layout compiler picks it up. The definition controls measurement, pagination policy, splitting, and fragment emission. See [`com.demcha.compose.document.layout.NodeDefinition`](./src/main/java/com/demcha/compose/document/layout/NodeDefinition.java) and the built-ins in `BuiltInNodeDefinitions` for the established pattern.
-- **Add a fragment payload.** Reuse `BuiltInNodeDefinitions.ShapeFragmentPayload` / `ParagraphFragmentPayload` / `LineFragmentPayload` / `BarcodeFragmentPayload` / `ImageFragmentPayload` &mdash; or define your own and register a matching `PdfFragmentRenderHandler`. The PDF backend dispatches by payload type.
-- **Add a fluent builder.** Extend `AbstractFlowBuilder<T, N>` to inherit `addParagraph / addTable / addRow / addSection / addRich / softPanel / accent*` etc. for free.
-- **Add a backend.** Implement `FixedLayoutBackend<R>` (PDF-style) or `SemanticBackend` (DOCX/PPTX-style) and consume the resolved `LayoutGraph`. Page background, layer stacks, spans, and theme tokens are all expressed in canonical fragment types &mdash; no engine internals needed.
-- **Test for layout regressions.** Use `LayoutSnapshotAssertions` (graph-level) and `PdfVisualRegression` (pixel-level). Both ship in test scope, both gate at the snapshot/baseline level so you can refactor with confidence.
+document.pageFlow()
+        .name("StatusSection")
+        .spacing(12)
+        .addTable(table -> table
+                .name("StatusTable")
+                .columns(
+                        DocumentTableColumn.fixed(90),
+                        DocumentTableColumn.auto(),
+                        DocumentTableColumn.auto())
+                .width(520)
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .padding(DocumentInsets.of(6))
+                        .build())
+                .headerStyle(DocumentTableStyle.builder()
+                        .fillColor(DocumentColor.LIGHT_GRAY)
+                        .padding(DocumentInsets.of(6))
+                        .build())
+                .header("Role", "Owner", "Status")
+                .rows(
+                        new String[]{"Engine", "GraphCompose", "Stable"},
+                        new String[]{"Feature", "Table Builder", "Canonical"}))
+        .build();
+```
 
-The architecture diagram:
+For totals rows, header groupings, and full-width section dividers, combine the snippet above with `DocumentTableCell.text(...).colSpan(n)` &mdash; see [Column spans](#column-spans).
+
+## Line primitive
+
+```java
+import com.demcha.compose.document.style.DocumentColor;
+
+document.pageFlow()
+        .name("LinePrimitives")
+        .spacing(12)
+        .addDivider(divider -> divider
+                .name("HorizontalRule")
+                .width(220)
+                .thickness(3)
+                .color(DocumentColor.ROYAL_BLUE))
+        .addShape(shape -> shape
+                .name("VerticalAccent")
+                .size(3, 90)
+                .fillColor(DocumentColor.ORANGE))
+        .build();
+```
+
+## Architecture at a glance
 
 ```mermaid
 graph TD
@@ -381,6 +425,16 @@ graph TD
 ```
 
 Public authoring lives in `com.demcha.compose`, `document.api`, `document.dsl`, `document.node`, `document.style`, `document.table`, `document.theme` (v1.4), and `font`. Engine internals live under `com.demcha.compose.engine.*` and are not the recommended application API; they are guarded by `PublicApiNoEngineLeakTest`.
+
+## Extending GraphCompose
+
+GraphCompose is built around explicit seams &mdash; you do not have to fork the library to add a new node, a new backend, or a new template family.
+
+- **Add a new semantic node.** Implement `DocumentNode`, register a `NodeDefinition<MyNode>` with the `NodeRegistry`, and the layout compiler picks it up. The definition controls measurement, pagination policy, splitting, and fragment emission. See [`com.demcha.compose.document.layout.NodeDefinition`](./src/main/java/com/demcha/compose/document/layout/NodeDefinition.java) and the built-ins in `BuiltInNodeDefinitions` for the established pattern.
+- **Add a fragment payload.** Reuse `BuiltInNodeDefinitions.ShapeFragmentPayload` / `ParagraphFragmentPayload` / `LineFragmentPayload` / `BarcodeFragmentPayload` / `ImageFragmentPayload` &mdash; or define your own and register a matching `PdfFragmentRenderHandler`. The PDF backend dispatches by payload type.
+- **Add a fluent builder.** Extend `AbstractFlowBuilder<T, N>` to inherit `addParagraph / addTable / addRow / addSection / addRich / softPanel / accent*` etc. for free.
+- **Add a backend.** Implement `FixedLayoutBackend<R>` (PDF-style) or `SemanticBackend` (DOCX/PPTX-style) and consume the resolved `LayoutGraph`. Page background, layer stacks, spans, and theme tokens are all expressed in canonical fragment types &mdash; no engine internals needed.
+- **Test for layout regressions.** Use `LayoutSnapshotAssertions` (graph-level) and `PdfVisualRegression` (pixel-level). Both ship in test scope, both gate at the snapshot/baseline level so you can refactor with confidence.
 
 ## Performance (v1.4)
 

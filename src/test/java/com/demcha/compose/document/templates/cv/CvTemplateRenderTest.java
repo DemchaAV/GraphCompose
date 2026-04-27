@@ -4,6 +4,7 @@ import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.templates.TemplateTestSupport;
 import com.demcha.compose.document.templates.api.CvTemplate;
+import com.demcha.compose.document.templates.builtins.CenteredHeadlineCvTemplate;
 import com.demcha.compose.document.templates.builtins.ClassicSerifCvTemplate;
 import com.demcha.compose.document.templates.builtins.CompactMonoCvTemplate;
 import com.demcha.compose.document.templates.builtins.CvTemplateV1;
@@ -406,7 +407,8 @@ class CvTemplateRenderTest {
                 Arguments.of(new ProductLeaderCvTemplate(), 18, 1),
                 Arguments.of(new ClassicSerifCvTemplate(), 20, 2),
                 Arguments.of(new TechLeadCvTemplate(), 20, 1),
-                Arguments.of(new TimelineMinimalCvTemplate(), 22, 2));
+                Arguments.of(new TimelineMinimalCvTemplate(), 22, 2),
+                Arguments.of(new CenteredHeadlineCvTemplate(), 22, 1));
     }
 
     private static String section(String text, String start, String end) {

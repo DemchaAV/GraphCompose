@@ -289,9 +289,11 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         double innerWidth = Math.max(0.0, fragment.width() - payload.padding().horizontal());
         double contentTop = fragment.y() + fragment.height() - payload.padding().top();
 
+        double cursorTop = contentTop;
         for (int lineIndex = 0; lineIndex < payload.lines().size(); lineIndex++) {
             BuiltInNodeDefinitions.ParagraphLine line = payload.lines().get(lineIndex);
-            double lineTop = contentTop - lineIndex * (payload.lineHeight() + payload.lineGap());
+            double lineTop = cursorTop;
+            double resolvedLineHeight = line.lineHeight();
             double lineX = switch (payload.align()) {
                 case RIGHT -> innerX + innerWidth - line.width();
                 case CENTER -> innerX + (innerWidth - line.width()) / 2.0;
@@ -300,18 +302,52 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
             double spanX = lineX;
             for (BuiltInNodeDefinitions.ParagraphSpan span : line.spans()) {
                 if (span.linkOptions() != null && span.width() > 0.0) {
+                    PdfLinkAnnotationWriter.PlacedPdfRect rect = spanLinkRectangle(
+                            span,
+                            spanX,
+                            lineTop,
+                            resolvedLineHeight,
+                            line.textAscent(),
+                            line.baselineOffsetFromBottom());
                     PdfLinkAnnotationWriter.addUriLink(
                             environment.document().getPage(fragment.pageIndex()),
-                            new PdfLinkAnnotationWriter.PlacedPdfRect(
-                                    spanX,
-                                    lineTop - payload.lineHeight(),
-                                    span.width(),
-                                    payload.lineHeight()),
+                            rect,
                             span.linkOptions());
                 }
                 spanX += span.width();
             }
+            cursorTop = lineTop - resolvedLineHeight - payload.lineGap();
         }
+    }
+
+    private static PdfLinkAnnotationWriter.PlacedPdfRect spanLinkRectangle(BuiltInNodeDefinitions.ParagraphSpan span,
+                                                                           double spanX,
+                                                                           double lineTop,
+                                                                           double lineHeight,
+                                                                           double textAscent,
+                                                                           double baselineOffsetFromBottom) {
+        if (span instanceof BuiltInNodeDefinitions.ParagraphImageSpan imageSpan) {
+            double baselineY = lineTop - lineHeight + baselineOffsetFromBottom;
+            double base = switch (imageSpan.alignment() == null
+                    ? com.demcha.compose.document.node.InlineImageAlignment.CENTER
+                    : imageSpan.alignment()) {
+                case BASELINE -> baselineY;
+                case CENTER -> baselineY + (textAscent - imageSpan.height()) / 2.0;
+                case TEXT_TOP -> baselineY + textAscent - imageSpan.height();
+                case TEXT_BOTTOM -> baselineY - baselineOffsetFromBottom;
+            };
+            double imageBottom = base + imageSpan.baselineOffset();
+            return new PdfLinkAnnotationWriter.PlacedPdfRect(
+                    spanX,
+                    imageBottom,
+                    imageSpan.width(),
+                    imageSpan.height());
+        }
+        return new PdfLinkAnnotationWriter.PlacedPdfRect(
+                spanX,
+                lineTop - lineHeight,
+                span.width(),
+                lineHeight);
     }
 
     @SuppressWarnings("unchecked")

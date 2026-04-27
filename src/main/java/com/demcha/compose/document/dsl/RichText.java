@@ -1,6 +1,10 @@
 package com.demcha.compose.document.dsl;
 
+import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.InlineImageAlignment;
+import com.demcha.compose.document.node.InlineImageRun;
+import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentTextDecoration;
@@ -33,7 +37,7 @@ import java.util.Objects;
  * @author Artem Demchyshyn
  */
 public final class RichText {
-    private final List<InlineTextRun> runs = new ArrayList<>();
+    private final List<InlineRun> runs = new ArrayList<>();
 
     private RichText() {
     }
@@ -248,11 +252,68 @@ public final class RichText {
     }
 
     /**
+     * Appends an inline image run with default {@link InlineImageAlignment#CENTER}
+     * alignment and zero offset.
+     *
+     * @param imageData image payload
+     * @param width target width in points
+     * @param height target height in points
+     * @return this builder
+     */
+    public RichText image(DocumentImageData imageData, double width, double height) {
+        return image(imageData, width, height, InlineImageAlignment.CENTER, 0.0, null);
+    }
+
+    /**
+     * Appends an inline image run with explicit vertical alignment.
+     *
+     * @param imageData image payload
+     * @param width target width in points
+     * @param height target height in points
+     * @param alignment vertical alignment relative to surrounding text
+     * @return this builder
+     */
+    public RichText image(DocumentImageData imageData,
+                          double width,
+                          double height,
+                          InlineImageAlignment alignment) {
+        return image(imageData, width, height, alignment, 0.0, null);
+    }
+
+    /**
+     * Appends a clickable inline image run; the link annotation covers the
+     * image rectangle on supporting backends.
+     *
+     * @param imageData image payload
+     * @param width target width in points
+     * @param height target height in points
+     * @param alignment vertical alignment relative to surrounding text
+     * @param baselineOffset extra vertical shift in points; positive moves up
+     * @param linkOptions optional link metadata
+     * @return this builder
+     */
+    public RichText image(DocumentImageData imageData,
+                          double width,
+                          double height,
+                          InlineImageAlignment alignment,
+                          double baselineOffset,
+                          DocumentLinkOptions linkOptions) {
+        runs.add(new InlineImageRun(
+                imageData,
+                width,
+                height,
+                alignment == null ? InlineImageAlignment.CENTER : alignment,
+                baselineOffset,
+                linkOptions));
+        return this;
+    }
+
+    /**
      * Returns the accumulated runs as an immutable list.
      *
      * @return inline runs in source order
      */
-    public List<InlineTextRun> runs() {
+    public List<InlineRun> runs() {
         return List.copyOf(runs);
     }
 

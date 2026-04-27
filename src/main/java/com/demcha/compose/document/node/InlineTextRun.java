@@ -15,7 +15,7 @@ public record InlineTextRun(
         String text,
         DocumentTextStyle textStyle,
         DocumentLinkOptions linkOptions
-) {
+) implements InlineRun {
     /**
      * Normalizes null text to an empty run.
      */

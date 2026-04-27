@@ -12,6 +12,9 @@ import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ImageNode;
+import com.demcha.compose.document.node.InlineImageAlignment;
+import com.demcha.compose.document.node.InlineImageRun;
+import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.node.ListNode;
@@ -46,7 +49,7 @@ import java.util.function.Consumer;
 public final class ParagraphBuilder {
     private String name = "";
     private String text = "";
-    private final List<InlineTextRun> inlineTextRuns = new ArrayList<>();
+    private final List<InlineRun> inlineRuns = new ArrayList<>();
     private DocumentTextStyle textStyle = DocumentTextStyle.DEFAULT;
     private TextAlign align = TextAlign.LEFT;
     private double lineSpacing = 0.0;
@@ -83,7 +86,7 @@ public final class ParagraphBuilder {
      */
     public ParagraphBuilder text(String text) {
         this.text = text == null ? "" : text;
-        this.inlineTextRuns.clear();
+        this.inlineRuns.clear();
         return this;
     }
 
@@ -194,7 +197,68 @@ public final class ParagraphBuilder {
      * @return this builder
      */
     public ParagraphBuilder inlineText(String text, DocumentTextStyle textStyle, DocumentLinkOptions linkOptions) {
-        this.inlineTextRuns.add(new InlineTextRun(text, textStyle, linkOptions));
+        this.inlineRuns.add(new InlineTextRun(text, textStyle, linkOptions));
+        this.text = "";
+        return this;
+    }
+
+    /**
+     * Adds an inline image run measured on the same baseline as the
+     * surrounding text. Width and height are explicit and uniform across
+     * backends; vertical alignment defaults to {@link InlineImageAlignment#CENTER}.
+     *
+     * @param imageData image payload
+     * @param width target width in points
+     * @param height target height in points
+     * @return this builder
+     */
+    public ParagraphBuilder inlineImage(DocumentImageData imageData, double width, double height) {
+        return inlineImage(imageData, width, height, InlineImageAlignment.CENTER, 0.0, null);
+    }
+
+    /**
+     * Adds an inline image run with explicit vertical alignment.
+     *
+     * @param imageData image payload
+     * @param width target width in points
+     * @param height target height in points
+     * @param alignment vertical alignment relative to surrounding text
+     * @return this builder
+     */
+    public ParagraphBuilder inlineImage(DocumentImageData imageData,
+                                        double width,
+                                        double height,
+                                        InlineImageAlignment alignment) {
+        return inlineImage(imageData, width, height, alignment, 0.0, null);
+    }
+
+    /**
+     * Adds an inline image run with optional link metadata. The link
+     * annotation covers only the image rectangle — wrap an adjacent text
+     * run in a matching {@code inlineLink} call to extend the hit area.
+     *
+     * @param imageData image payload
+     * @param width target width in points
+     * @param height target height in points
+     * @param alignment vertical alignment relative to surrounding text
+     * @param baselineOffset extra vertical shift in points; positive values move
+     *                       the image up
+     * @param linkOptions optional inline link metadata
+     * @return this builder
+     */
+    public ParagraphBuilder inlineImage(DocumentImageData imageData,
+                                        double width,
+                                        double height,
+                                        InlineImageAlignment alignment,
+                                        double baselineOffset,
+                                        DocumentLinkOptions linkOptions) {
+        this.inlineRuns.add(new InlineImageRun(
+                imageData,
+                width,
+                height,
+                alignment == null ? InlineImageAlignment.CENTER : alignment,
+                baselineOffset,
+                linkOptions));
         this.text = "";
         return this;
     }
@@ -207,7 +271,7 @@ public final class ParagraphBuilder {
      */
     public ParagraphBuilder rich(RichText rich) {
         Objects.requireNonNull(rich, "rich");
-        return inlineRuns(rich.runs());
+        return inlineRunsMixed(rich.runs());
     }
 
     /**
@@ -223,23 +287,47 @@ public final class ParagraphBuilder {
         Objects.requireNonNull(spec, "spec");
         RichText builder = RichText.empty();
         spec.accept(builder);
-        return inlineRuns(builder.runs());
+        return inlineRunsMixed(builder.runs());
     }
 
     /**
-     * Replaces inline runs.
+     * Replaces inline runs with text-only runs. Equivalent to
+     * {@link #inlineRunsMixed(List)} when the supplied list is text-only.
      *
      * @param inlineTextRuns inline text runs in source order
      * @return this builder
      */
     public ParagraphBuilder inlineRuns(List<InlineTextRun> inlineTextRuns) {
-        this.inlineTextRuns.clear();
+        this.inlineRuns.clear();
         if (inlineTextRuns != null) {
-            inlineTextRuns.stream()
-                    .filter(Objects::nonNull)
-                    .forEach(this.inlineTextRuns::add);
+            for (InlineTextRun run : inlineTextRuns) {
+                if (run != null) {
+                    this.inlineRuns.add(run);
+                }
+            }
         }
-        if (!this.inlineTextRuns.isEmpty()) {
+        if (!this.inlineRuns.isEmpty()) {
+            this.text = "";
+        }
+        return this;
+    }
+
+    /**
+     * Replaces inline runs with a mixed list of text and image runs.
+     *
+     * @param runs inline runs in source order; may mix text and image
+     * @return this builder
+     */
+    public ParagraphBuilder inlineRunsMixed(List<? extends InlineRun> runs) {
+        this.inlineRuns.clear();
+        if (runs != null) {
+            for (InlineRun run : runs) {
+                if (run != null) {
+                    this.inlineRuns.add(run);
+                }
+            }
+        }
+        if (!this.inlineRuns.isEmpty()) {
             this.text = "";
         }
         return this;
@@ -350,7 +438,7 @@ public final class ParagraphBuilder {
         return new ParagraphNode(
                 name,
                 text,
-                List.copyOf(inlineTextRuns),
+                List.copyOf(inlineRuns),
                 textStyle,
                 align,
                 lineSpacing,

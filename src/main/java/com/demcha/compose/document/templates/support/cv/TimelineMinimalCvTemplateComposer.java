@@ -2,21 +2,31 @@ package com.demcha.compose.document.templates.support.cv;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.SectionBuilder;
+import com.demcha.compose.document.image.DocumentImageData;
+import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.templates.data.common.EmailYaml;
 import com.demcha.compose.document.templates.data.common.Header;
+import com.demcha.compose.document.templates.data.common.LinkYml;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.cv.CvModule;
 import com.demcha.compose.font.FontName;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Minimal two-column CV inspired by classic timeline resume layouts.
@@ -29,6 +39,8 @@ public final class TimelineMinimalCvTemplateComposer {
     private static final double TIMELINE_DOT = 7.0;
     private static final double TIMELINE_LINE_BOX = 1.0;
     private static final double TIMELINE_LINE_OFFSET = (TIMELINE_DOT - TIMELINE_LINE_BOX) / 2.0;
+    private static final String CONTACT_ICON_ROOT = "/templates/cv/timeline-minimal/icons/";
+    private static final Map<String, byte[]> CONTACT_ICON_CACHE = new ConcurrentHashMap<>();
 
     public void compose(DocumentSession document, CvDocumentSpec documentSpec) {
         CvDocumentSpec spec = Objects.requireNonNull(documentSpec, "documentSpec");
@@ -38,8 +50,8 @@ public final class TimelineMinimalCvTemplateComposer {
                 .name("TimelineMinimalRoot")
                 .spacing(12)
                 .addRow("TimelineMinimalHeader", row -> row
-                        .gap(18)
-                        .weights(1.35, 0.65)
+                        .gap(3)
+                        .weights(1.00, 0.61)
                         .addSection("TimelineMinimalName", section -> section
                                 .spacing(4)
                                 .addParagraph(paragraph -> paragraph
@@ -99,28 +111,102 @@ public final class TimelineMinimalCvTemplateComposer {
 
     private void addContact(SectionBuilder section, Header header) {
         section.spacing(3);
-        if (header == null) {
-            return;
-        }
-        addContactLine(section, safe(header.getAddress()));
-        addContactLine(section, safe(header.getPhoneNumber()));
-        if (header.getEmail() != null) {
-            addContactLine(section, header.getEmail().getDisplayText());
-        }
-        if (header.getLinkedIn() != null) {
-            addContactLine(section, header.getLinkedIn().getDisplayText());
+        DocumentTextStyle textStyle = style(FontName.LATO, 7.8, DocumentTextDecoration.BOLD, SOFT);
+        DocumentTextStyle fallbackIconStyle = style(FontName.BARLOW_CONDENSED, 8.0, DocumentTextDecoration.BOLD, SOFT);
+        for (ContactLine line : contactLines(header)) {
+            section.addParagraph(paragraph -> paragraph
+                    .textStyle(textStyle)
+                    .align(TextAlign.RIGHT)
+                    .link(line.linkOptions())
+                    .margin(DocumentInsets.zero())
+                    .rich(rich -> {
+                        rich.style(line.text(), textStyle);
+                        rich.plain("  ");
+                        if (line.iconFile() != null) {
+                            rich.image(
+                                    contactIcon(line.iconFile()),
+                                    7.0,
+                                    7.0,
+                                    InlineImageAlignment.CENTER,
+                                    0.0,
+                                    line.linkOptions());
+                        } else {
+                            rich.style(line.fallbackIcon(), fallbackIconStyle);
+                        }
+                    }));
         }
     }
 
-    private void addContactLine(SectionBuilder section, String text) {
-        if (text.isBlank()) {
-            return;
+    private List<ContactLine> contactLines(Header header) {
+        if (header == null) {
+            return List.of();
         }
-        section.addParagraph(paragraph -> paragraph
-                .text(text)
-                .textStyle(style(FontName.LATO, 7.8, DocumentTextDecoration.BOLD, SOFT))
-                .align(TextAlign.RIGHT)
-                .margin(DocumentInsets.zero()));
+        List<ContactLine> lines = new ArrayList<>();
+        addContactLine(lines, "LOC", "location.png", safe(header.getAddress()), null);
+        addContactLine(lines, "TEL", "phone.png", safe(header.getPhoneNumber()), null);
+        if (header.getEmail() != null) {
+            addContactLine(lines, "@", "email.png", emailDisplayText(header.getEmail()), emailLink(header.getEmail()));
+        }
+        if (header.getLinkedIn() != null) {
+            addContactLine(lines, "in", "linkedin.png", linkDisplayText(header.getLinkedIn()), linkOptions(header.getLinkedIn()));
+        }
+        if (header.getGitHub() != null) {
+            addContactLine(lines, "GH", "github.png", linkDisplayText(header.getGitHub()), linkOptions(header.getGitHub()));
+        }
+        return List.copyOf(lines);
+    }
+
+    private void addContactLine(List<ContactLine> lines,
+                                String fallbackIcon,
+                                String iconFile,
+                                String text,
+                                DocumentLinkOptions linkOptions) {
+        if (!text.isBlank()) {
+            lines.add(new ContactLine(fallbackIcon, iconFile, text, linkOptions));
+        }
+    }
+
+    private DocumentImageData contactIcon(String iconFile) {
+        return DocumentImageData.fromBytes(CONTACT_ICON_CACHE.computeIfAbsent(iconFile, TimelineMinimalCvTemplateComposer::readIconBytes));
+    }
+
+    private static byte[] readIconBytes(String iconFile) {
+        try (InputStream input = TimelineMinimalCvTemplateComposer.class.getResourceAsStream(CONTACT_ICON_ROOT + iconFile)) {
+            if (input == null) {
+                throw new IllegalStateException("Missing timeline minimal contact icon: " + iconFile);
+            }
+            return input.readAllBytes();
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to read timeline minimal contact icon: " + iconFile, e);
+        }
+    }
+
+    private DocumentLinkOptions emailLink(EmailYaml email) {
+        String to = safe(email.getTo());
+        if (to.isBlank()) {
+            return null;
+        }
+        return new DocumentLinkOptions("mailto:" + to);
+    }
+
+    private DocumentLinkOptions linkOptions(LinkYml link) {
+        if (link.getLinkUrl() == null || !link.getLinkUrl().isValid()) {
+            return null;
+        }
+        return new DocumentLinkOptions(link.getLinkUrl().getUrl());
+    }
+
+    private String emailDisplayText(EmailYaml email) {
+        String displayText = safe(email.getDisplayText());
+        return displayText.isBlank() ? safe(email.getTo()) : displayText;
+    }
+
+    private String linkDisplayText(LinkYml link) {
+        String displayText = safe(link.getDisplayText());
+        if (!displayText.isBlank()) {
+            return displayText;
+        }
+        return link.getLinkUrl() == null ? "" : safe(link.getLinkUrl().getUrl());
     }
 
     private void addSidebarModule(SectionBuilder sidebar, String title, CvModule module, int limit) {
@@ -205,6 +291,9 @@ public final class TimelineMinimalCvTemplateComposer {
     }
 
     private record ModulePlacement(String title, CvModule module, int limit) {
+    }
+
+    private record ContactLine(String fallbackIcon, String iconFile, String text, DocumentLinkOptions linkOptions) {
     }
 
     private CvModule find(CvDocumentSpec spec, String... keys) {

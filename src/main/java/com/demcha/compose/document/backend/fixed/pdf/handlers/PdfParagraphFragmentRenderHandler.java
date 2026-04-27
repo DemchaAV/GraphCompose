@@ -4,15 +4,23 @@ import com.demcha.compose.document.backend.fixed.pdf.PdfFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.engine.text.TextControlSanitizer;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Renders wrapped paragraph fragments emitted by the semantic layout compiler.
+ *
+ * <p>Lines may carry both text spans and inline image spans. The handler
+ * walks per-line heights, opens a {@code BT/ET} block for runs of text spans
+ * and switches to {@code drawImage} for image spans without losing the
+ * shared baseline.</p>
  */
 public final class PdfParagraphFragmentRenderHandler
         implements PdfFragmentRenderHandler<BuiltInNodeDefinitions.ParagraphFragmentPayload> {
@@ -40,37 +48,92 @@ public final class PdfParagraphFragmentRenderHandler
 
         stream.saveGraphicsState();
         try {
+            double cursorTop = contentTop;
             for (int lineIndex = 0; lineIndex < payload.lines().size(); lineIndex++) {
                 BuiltInNodeDefinitions.ParagraphLine line = payload.lines().get(lineIndex);
-                if (sanitize(line.text()).isEmpty()) {
-                    continue;
-                }
-
-                double lineTop = contentTop - lineIndex * (payload.lineHeight() + payload.lineGap());
-                double baselineY = lineTop - payload.lineHeight() + payload.baselineOffset();
+                double lineTop = cursorTop;
+                double resolvedLineHeight = line.lineHeight();
+                double baselineY = lineTop - resolvedLineHeight + line.baselineOffsetFromBottom();
                 double lineX = switch (payload.align()) {
                     case RIGHT -> innerX + innerWidth - line.width();
                     case CENTER -> innerX + (innerWidth - line.width()) / 2.0;
                     case LEFT -> innerX;
                 };
 
-                stream.beginText();
-                stream.newLineAtOffset((float) lineX, (float) baselineY);
-                for (BuiltInNodeDefinitions.ParagraphSpan span : line.spans()) {
-                    String text = sanitize(span.text());
-                    if (text.isEmpty()) {
-                        continue;
-                    }
-                    PdfFont font = fonts.getFont(span.textStyle().fontName(), PdfFont.class).orElseThrow();
-                    stream.setFont(font.fontType(span.textStyle().decoration()), (float) span.textStyle().size());
-                    stream.setNonStrokingColor(span.textStyle().color());
-                    stream.showText(text);
-                }
-                stream.endText();
+                renderLine(stream, fonts, line, lineX, baselineY, environment);
+
+                cursorTop = lineTop - resolvedLineHeight - payload.lineGap();
             }
         } finally {
             stream.restoreGraphicsState();
         }
+    }
+
+    private void renderLine(PDPageContentStream stream,
+                            FontLibrary fonts,
+                            BuiltInNodeDefinitions.ParagraphLine line,
+                            double lineX,
+                            double baselineY,
+                            PdfRenderEnvironment environment) throws IOException {
+        List<BuiltInNodeDefinitions.ParagraphSpan> spans = line.spans();
+        if (spans.isEmpty()) {
+            return;
+        }
+
+        boolean inTextBlock = false;
+        double cursorX = lineX;
+        try {
+            for (BuiltInNodeDefinitions.ParagraphSpan span : spans) {
+                if (span instanceof BuiltInNodeDefinitions.ParagraphTextSpan textSpan) {
+                    String text = sanitize(textSpan.text());
+                    if (text.isEmpty()) {
+                        cursorX += textSpan.width();
+                        continue;
+                    }
+                    if (!inTextBlock) {
+                        stream.beginText();
+                        stream.newLineAtOffset((float) cursorX, (float) baselineY);
+                        inTextBlock = true;
+                    }
+                    PdfFont font = fonts.getFont(textSpan.textStyle().fontName(), PdfFont.class).orElseThrow();
+                    stream.setFont(font.fontType(textSpan.textStyle().decoration()), (float) textSpan.textStyle().size());
+                    stream.setNonStrokingColor(textSpan.textStyle().color());
+                    stream.showText(text);
+                    cursorX += textSpan.width();
+                } else if (span instanceof BuiltInNodeDefinitions.ParagraphImageSpan imageSpan) {
+                    if (inTextBlock) {
+                        stream.endText();
+                        inTextBlock = false;
+                    }
+                    double imageBottom = resolveImageBottom(imageSpan, baselineY, line.textAscent(), line.baselineOffsetFromBottom());
+                    PDImageXObject image = environment.resolveImage(imageSpan.imageData());
+                    stream.drawImage(image,
+                            (float) cursorX,
+                            (float) imageBottom,
+                            (float) imageSpan.width(),
+                            (float) imageSpan.height());
+                    cursorX += imageSpan.width();
+                }
+            }
+        } finally {
+            if (inTextBlock) {
+                stream.endText();
+            }
+        }
+    }
+
+    private static double resolveImageBottom(BuiltInNodeDefinitions.ParagraphImageSpan imageSpan,
+                                             double baselineY,
+                                             double textAscent,
+                                             double baselineOffsetFromBottom) {
+        double imageHeight = imageSpan.height();
+        double base = switch (imageSpan.alignment() == null ? InlineImageAlignment.CENTER : imageSpan.alignment()) {
+            case BASELINE -> baselineY;
+            case CENTER -> baselineY + (textAscent - imageHeight) / 2.0;
+            case TEXT_TOP -> baselineY + textAscent - imageHeight;
+            case TEXT_BOTTOM -> baselineY - baselineOffsetFromBottom;
+        };
+        return base + imageSpan.baselineOffset();
     }
 
     private String sanitize(String text) {

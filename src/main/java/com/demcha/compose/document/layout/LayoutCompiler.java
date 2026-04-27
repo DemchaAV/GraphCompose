@@ -212,6 +212,13 @@ public final class LayoutCompiler {
             return;
         }
 
+        if (layoutSpec.axis() == CompositeLayoutSpec.Axis.STACK) {
+            compileStackedLayer(prepared, definition, path, semanticName, parentPath, childIndex, depth,
+                    regionX, state, prepareContext, fragmentContext, nodes, fragments,
+                    margin, padding, availableWidth, naturalMeasure);
+            return;
+        }
+
         double startReservation = margin.top() + padding.top();
         if (startReservation > state.remainingHeight() + EPS && state.usedHeight > EPS) {
             state.newPage();
@@ -472,6 +479,148 @@ public final class LayoutCompiler {
                 padding));
 
         state.usedHeight += rowOuterHeight;
+    }
+
+    private void compileStackedLayer(PreparedNode<DocumentNode> prepared,
+                                     NodeDefinition<DocumentNode> definition,
+                                     String path,
+                                     String semanticName,
+                                     String parentPath,
+                                     int childIndex,
+                                     int depth,
+                                     double regionX,
+                                     CompilerState state,
+                                     PrepareContext prepareContext,
+                                     FragmentContext fragmentContext,
+                                     List<PlacedNode> nodes,
+                                     List<PlacedFragment> fragments,
+                                     Margin margin,
+                                     Padding padding,
+                                     double availableWidth,
+                                     MeasureResult naturalMeasure) {
+        DocumentNode node = prepared.node();
+        double stackOuterHeight = naturalMeasure.height() + margin.vertical();
+        double fullPageHeight = state.canvas.innerHeight();
+        if (stackOuterHeight > fullPageHeight + EPS) {
+            throw atomicTooLarge(path, stackOuterHeight, fullPageHeight);
+        }
+        if (stackOuterHeight > state.remainingHeight() + EPS && state.usedHeight > EPS) {
+            state.newPage();
+        }
+        state.touchPage();
+
+        int startPage = state.pageIndex;
+        double placementX = regionX + margin.left();
+        double placementTopY = state.pageTop() - state.usedHeight - margin.top();
+        double placementY = placementTopY - naturalMeasure.height();
+        int decorationInsertIndex = fragments.size();
+        int stackNodeIndex = nodes.size();
+        nodes.add(null);
+
+        BuiltInNodeDefinitions.PreparedStackLayout stackLayout =
+                prepared.requirePreparedLayout(BuiltInNodeDefinitions.PreparedStackLayout.class);
+        List<DocumentNode> children = definition.children(node);
+        double innerWidth = Math.max(0.0, naturalMeasure.width() - padding.horizontal());
+        double innerHeight = Math.max(0.0, naturalMeasure.height() - padding.vertical());
+        double innerStartX = placementX + padding.left();
+        double innerTopY = placementTopY - padding.top();
+
+        for (int index = 0; index < children.size(); index++) {
+            DocumentNode child = children.get(index);
+            com.demcha.compose.document.node.LayerAlign align =
+                    stackLayout.alignments().get(index);
+
+            PreparedNode<DocumentNode> childPrepared =
+                    prepareForRegionWidth(prepareContext, child, innerWidth);
+            MeasureResult childMeasure = childPrepared.measureResult();
+            Margin childMargin = toMargin(child.margin());
+            double childOuterWidth = childMeasure.width() + childMargin.horizontal();
+            double childOuterHeight = childMeasure.height() + childMargin.vertical();
+
+            double alignedSlotX = innerStartX + horizontalLayerOffset(align, innerWidth, childOuterWidth);
+            double alignedSlotTopY = innerTopY - verticalLayerOffset(align, innerHeight, childOuterHeight);
+
+            compileNodeInFixedSlot(
+                    childPrepared,
+                    path,
+                    index,
+                    depth + 1,
+                    alignedSlotX,
+                    alignedSlotTopY,
+                    childOuterWidth,
+                    state.pageIndex,
+                    prepareContext,
+                    fragmentContext,
+                    state.canvas,
+                    nodes,
+                    fragments);
+        }
+
+        int endPage = state.pageIndex;
+        double endPageBottomY = placementTopY - naturalMeasure.height() + margin.bottom();
+        List<PlacedFragment> decorationFragments = compositeDecorationFragments(
+                prepared,
+                definition,
+                path,
+                parentPath,
+                childIndex,
+                depth,
+                placementX,
+                placementTopY,
+                endPageBottomY,
+                naturalMeasure.width(),
+                startPage,
+                endPage,
+                margin,
+                padding,
+                state.canvas,
+                fragmentContext);
+        if (!decorationFragments.isEmpty()) {
+            fragments.addAll(decorationInsertIndex, decorationFragments);
+        }
+
+        nodes.set(stackNodeIndex, new PlacedNode(
+                path,
+                semanticName,
+                node.nodeKind(),
+                parentPath,
+                childIndex,
+                depth,
+                depth,
+                placementX,
+                placementY,
+                placementX,
+                placementY,
+                naturalMeasure.width(),
+                naturalMeasure.height(),
+                startPage,
+                endPage,
+                naturalMeasure.width(),
+                naturalMeasure.height(),
+                margin,
+                padding));
+
+        state.usedHeight += stackOuterHeight;
+    }
+
+    private static double horizontalLayerOffset(com.demcha.compose.document.node.LayerAlign align,
+                                                double innerWidth,
+                                                double childOuterWidth) {
+        return switch (align) {
+            case TOP_LEFT, CENTER_LEFT, BOTTOM_LEFT -> 0.0;
+            case TOP_CENTER, CENTER, BOTTOM_CENTER -> Math.max(0.0, (innerWidth - childOuterWidth) / 2.0);
+            case TOP_RIGHT, CENTER_RIGHT, BOTTOM_RIGHT -> Math.max(0.0, innerWidth - childOuterWidth);
+        };
+    }
+
+    private static double verticalLayerOffset(com.demcha.compose.document.node.LayerAlign align,
+                                              double innerHeight,
+                                              double childOuterHeight) {
+        return switch (align) {
+            case TOP_LEFT, TOP_CENTER, TOP_RIGHT -> 0.0;
+            case CENTER_LEFT, CENTER, CENTER_RIGHT -> Math.max(0.0, (innerHeight - childOuterHeight) / 2.0);
+            case BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT -> Math.max(0.0, innerHeight - childOuterHeight);
+        };
     }
 
     private static double[] distributeRowSlotWidths(List<DocumentNode> children,

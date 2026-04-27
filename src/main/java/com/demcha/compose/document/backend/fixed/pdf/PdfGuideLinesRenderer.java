@@ -7,6 +7,9 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.awt.Color;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Internal guide renderer for the canonical semantic PDF backend.
@@ -23,15 +26,79 @@ final class PdfGuideLinesRenderer {
     private PdfGuideLinesRenderer() {
     }
 
-    static void draw(PlacedFragment fragment, Object payload, PdfRenderEnvironment environment) throws IOException {
+    /**
+     * Builds the union bounds (per page) for each owner path so the guide
+     * renderer can paint margin and padding once around the entire owner
+     * instead of stacking dashed rectangles inside every sub-fragment.
+     *
+     * @param fragments resolved fragments for the rendered document
+     * @return path → page → bounds map; never {@code null}
+     */
+    static Map<String, Map<Integer, Bounds>> computeOwnerBounds(List<PlacedFragment> fragments) {
+        Map<String, Map<Integer, Bounds>> result = new HashMap<>();
+        for (PlacedFragment fragment : fragments) {
+            String path = fragment.path();
+            if (path == null) {
+                continue;
+            }
+            Map<Integer, Bounds> byPage = result.computeIfAbsent(path, k -> new HashMap<>());
+            byPage.merge(fragment.pageIndex(), Bounds.from(fragment), Bounds::union);
+        }
+        return result;
+    }
+
+    static void draw(PlacedFragment fragment,
+                     Object payload,
+                     PdfRenderEnvironment environment,
+                     Map<String, Map<Integer, Bounds>> ownerBoundsByPath) throws IOException {
         PDPageContentStream stream = environment.pageSurface(fragment.pageIndex());
         stream.saveGraphicsState();
         try {
             drawBox(stream, fragment);
-            drawMargin(stream, fragment);
-            drawPadding(stream, fragment, guidePadding(fragment, payload));
+            // Margin and padding belong to the owning semantic node, not to
+            // each sub-fragment. Table rows inherit the outer table's
+            // margin/padding through PlacedFragment; rendering them per-row
+            // produces stacked dashed rectangles that visually cut through
+            // row text. We render those guides once per owner path on the
+            // first sub-fragment, using the union bounds of all sibling
+            // sub-fragments so the rectangle wraps the whole table.
+            if (fragment.fragmentIndex() == 0) {
+                Bounds ownerBounds = lookupOwnerBounds(fragment, ownerBoundsByPath);
+                drawMargin(stream, ownerBounds, fragment.margin());
+                drawPadding(stream, ownerBounds, guidePadding(fragment, payload));
+            }
         } finally {
             stream.restoreGraphicsState();
+        }
+    }
+
+    private static Bounds lookupOwnerBounds(PlacedFragment fragment,
+                                            Map<String, Map<Integer, Bounds>> ownerBoundsByPath) {
+        if (ownerBoundsByPath == null || fragment.path() == null) {
+            return Bounds.from(fragment);
+        }
+        Map<Integer, Bounds> byPage = ownerBoundsByPath.get(fragment.path());
+        if (byPage == null) {
+            return Bounds.from(fragment);
+        }
+        Bounds bounds = byPage.get(fragment.pageIndex());
+        return bounds == null ? Bounds.from(fragment) : bounds;
+    }
+
+    /**
+     * Lightweight axis-aligned bounding box used to compute owner unions.
+     */
+    record Bounds(double x, double y, double width, double height) {
+        static Bounds from(PlacedFragment fragment) {
+            return new Bounds(fragment.x(), fragment.y(), fragment.width(), fragment.height());
+        }
+
+        Bounds union(Bounds other) {
+            double minX = Math.min(this.x, other.x);
+            double minY = Math.min(this.y, other.y);
+            double maxX = Math.max(this.x + this.width, other.x + other.width);
+            double maxY = Math.max(this.y + this.height, other.y + other.height);
+            return new Bounds(minX, minY, maxX - minX, maxY - minY);
         }
     }
 
@@ -43,16 +110,19 @@ final class PdfGuideLinesRenderer {
         stream.stroke();
     }
 
-    private static void drawMargin(PDPageContentStream stream, PlacedFragment fragment) throws IOException {
-        if (fragment.margin() == null
-                || (fragment.margin().horizontal() <= 0.0 && fragment.margin().vertical() <= 0.0)) {
+    private static void drawMargin(PDPageContentStream stream,
+                                   Bounds bounds,
+                                   com.demcha.compose.engine.components.style.Margin margin) throws IOException {
+        if (bounds == null
+                || margin == null
+                || (margin.horizontal() <= 0.0 && margin.vertical() <= 0.0)) {
             return;
         }
 
-        double x = fragment.x() - fragment.margin().left();
-        double y = fragment.y() - fragment.margin().bottom();
-        double width = fragment.width() + fragment.margin().horizontal();
-        double height = fragment.height() + fragment.margin().vertical();
+        double x = bounds.x() - margin.left();
+        double y = bounds.y() - margin.bottom();
+        double width = bounds.width() + margin.horizontal();
+        double height = bounds.height() + margin.vertical();
         if (width <= 0.0 || height <= 0.0) {
             return;
         }
@@ -66,17 +136,18 @@ final class PdfGuideLinesRenderer {
     }
 
     private static void drawPadding(PDPageContentStream stream,
-                                    PlacedFragment fragment,
+                                    Bounds bounds,
                                     Padding padding) throws IOException {
-        if (padding == null
+        if (bounds == null
+                || padding == null
                 || (padding.horizontal() <= 0.0 && padding.vertical() <= 0.0)) {
             return;
         }
 
-        double x = fragment.x() + padding.left();
-        double y = fragment.y() + padding.bottom();
-        double width = fragment.width() - padding.horizontal();
-        double height = fragment.height() - padding.vertical();
+        double x = bounds.x() + padding.left();
+        double y = bounds.y() + padding.bottom();
+        double width = bounds.width() - padding.horizontal();
+        double height = bounds.height() - padding.vertical();
         if (width <= 0.0 || height <= 0.0) {
             return;
         }

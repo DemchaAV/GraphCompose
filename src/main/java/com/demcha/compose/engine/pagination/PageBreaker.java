@@ -242,11 +242,36 @@ public class PageBreaker {
      *         {@link #orderedForPagination}
      */
     private Comparator<UUID> paginationPriority(Map<UUID, Entity> entities, Map<UUID, Integer> depthById) {
-        return Comparator
-                .comparingDouble((UUID entityId) -> positionY(requireEntity(entities, entityId)))
-                .reversed()
-                .thenComparing(Comparator.comparingInt((UUID entityId) -> depthOf(entityId, requireEntity(entities, entityId), depthById)).reversed())
-                .thenComparing(UUID::toString);
+        // Pre-compute Y and depth so PriorityQueue compares stay alloc-free.
+        // The previous implementation called requireEntity(entities, id) twice
+        // per compare (once for Y, once for depth) and finally fell back to
+        // UUID::toString which allocates a 36-char string for every tie-break.
+        Map<UUID, PaginationKey> keys = new java.util.HashMap<>(entities.size() * 2);
+        for (UUID id : entities.keySet()) {
+            Entity entity = entities.get(id);
+            double y = entity.require(ComputedPosition.class).y();
+            int depth = depthOf(id, entity, depthById);
+            keys.put(id, new PaginationKey(y, depth));
+        }
+        return (left, right) -> {
+            PaginationKey leftKey = keys.get(left);
+            PaginationKey rightKey = keys.get(right);
+            int yCompare = Double.compare(rightKey.y(), leftKey.y());        // Y descending
+            if (yCompare != 0) {
+                return yCompare;
+            }
+            int depthCompare = Integer.compare(rightKey.depth(), leftKey.depth()); // depth descending
+            if (depthCompare != 0) {
+                return depthCompare;
+            }
+            return left.compareTo(right); // UUID.compareTo() is alloc-free (MSB then LSB)
+        };
+    }
+
+    /**
+     * Lightweight precomputed sort key for the pagination priority queue.
+     */
+    private record PaginationKey(double y, int depth) {
     }
 
     /**

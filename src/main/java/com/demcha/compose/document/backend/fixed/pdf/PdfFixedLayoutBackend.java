@@ -222,8 +222,11 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
 
             try (PdfRenderSession session = new PdfRenderSession(document, pages)) {
                 PdfRenderEnvironment environment = new PdfRenderEnvironment(document, fonts, session);
+                Map<String, Map<Integer, PdfGuideLinesRenderer.Bounds>> ownerBounds = guideLines
+                        ? PdfGuideLinesRenderer.computeOwnerBounds(graph.fragments())
+                        : Map.of();
                 for (PlacedFragment fragment : graph.fragments()) {
-                    renderFragment(fragment, environment, guideLines);
+                    renderFragment(fragment, environment, guideLines, ownerBounds);
                 }
                 PdfBookmarkOutlineWriter.apply(document, environment.bookmarkRecords());
             }
@@ -253,7 +256,10 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         return List.copyOf(pages);
     }
 
-    private void renderFragment(PlacedFragment fragment, PdfRenderEnvironment environment, boolean guideLines) throws Exception {
+    private void renderFragment(PlacedFragment fragment,
+                                PdfRenderEnvironment environment,
+                                boolean guideLines,
+                                Map<String, Map<Integer, PdfGuideLinesRenderer.Bounds>> ownerBounds) throws Exception {
         Object payload = fragment.payload();
         PdfFragmentRenderHandler<Object> handler = handlerFor(payload);
         handler.render(fragment, payload, environment);
@@ -272,7 +278,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
             }
         }
         if (guideLines) {
-            PdfGuideLinesRenderer.draw(fragment, payload, environment);
+            PdfGuideLinesRenderer.draw(fragment, payload, environment, ownerBounds);
         }
     }
 

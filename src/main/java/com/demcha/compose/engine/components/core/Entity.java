@@ -190,14 +190,8 @@ public final class Entity {
      * @return the component wrapped in an {@link Optional}, or empty when absent
      */
     public <T extends Component> Optional<T> getComponent(Class<T> type) {
-        if (log.isDebugEnabled()) {
-            log.debug("Getting component {} from  {}", type, this);
-        }
         T value = type.cast(comps.get(type));
         if (value == null) {
-            if (log.isDebugEnabled()) {
-                log.debug("Component {} from {} not found!", type, this);
-            }
             return Optional.empty();
         }
         return Optional.of(value);
@@ -212,13 +206,12 @@ public final class Entity {
      * @throws NoSuchElementException when the component is missing
      */
     public <T extends Component> T require(Class<T> type) {
-        if (log.isDebugEnabled()) {
-            log.debug("Require component {} {}", type, this);
+        T value = type.cast(comps.get(type));
+        if (value != null) {
+            return value;
         }
-        return getComponent(type).orElseThrow(() -> {
-            log.error("No component found for type {} for entity [{}]", type.getName(), uuid);
-            return new NoSuchElementException("Missing " + type.getName() + " for " + uuid);
-        });
+        log.error("No component found for type {} for entity [{}]", type.getName(), uuid);
+        throw new NoSuchElementException("Missing " + type.getName() + " for " + uuid);
     }
 
     /**

@@ -22,10 +22,12 @@ import com.demcha.compose.document.layout.*;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ContainerNode;
 import com.demcha.compose.document.snapshot.LayoutSnapshot;
+import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.Color;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -72,6 +74,7 @@ public final class DocumentSession implements AutoCloseable {
     private LayoutCanvas canvas;
     private boolean markdown;
     private boolean guideLines;
+    private DocumentColor pageBackground;
 
     private final DocumentChromeOptions chromeOptions = new DocumentChromeOptions();
 
@@ -307,6 +310,35 @@ public final class DocumentSession implements AutoCloseable {
         ensureOpen();
         this.guideLines = enabled;
         return this;
+    }
+
+    /**
+     * Configures a document-wide page background fill applied behind every
+     * fragment on every page.
+     *
+     * <p>Use this for cinematic looks (cream paper, deep navy hero documents,
+     * etc.) without having to wrap every section in a stack and shape. Pass
+     * {@code null} to clear the background.</p>
+     *
+     * @param color page background color, or {@code null} to clear
+     * @return this session
+     * @throws IllegalStateException if this session has already been closed
+     */
+    public DocumentSession pageBackground(DocumentColor color) {
+        ensureOpen();
+        this.pageBackground = color;
+        invalidate();
+        return this;
+    }
+
+    /**
+     * Convenience overload that accepts a {@link Color} value.
+     *
+     * @param color page background color, or {@code null} to clear
+     * @return this session
+     */
+    public DocumentSession pageBackground(Color color) {
+        return pageBackground(color == null ? null : DocumentColor.of(color));
     }
 
     /**
@@ -546,7 +578,7 @@ public final class DocumentSession implements AutoCloseable {
                     measurementResources.fontLibrary(),
                     measurementResources.textMeasurementSystem(),
                     markdown);
-            LayoutGraph computed = layoutCache.layout(() -> compiler.compile(documentGraph(), context, context));
+            LayoutGraph computed = layoutCache.layout(() -> withPageBackgrounds(compiler.compile(documentGraph(), context, context)));
             LIFECYCLE_LOG.debug(
                     "document.layout.end sessionId={} revision={} roots={} pages={} nodes={} fragments={} durationMs={}",
                     sessionId,
@@ -781,6 +813,29 @@ public final class DocumentSession implements AutoCloseable {
 
     private void invalidate() {
         layoutCache.invalidate();
+    }
+
+    private LayoutGraph withPageBackgrounds(LayoutGraph base) {
+        if (pageBackground == null || base.totalPages() == 0) {
+            return base;
+        }
+        Color color = pageBackground.color();
+        List<PlacedFragment> combined = new ArrayList<>(base.fragments().size() + base.totalPages());
+        for (int page = 0; page < base.totalPages(); page++) {
+            combined.add(new PlacedFragment(
+                    "@page-background[" + page + "]",
+                    0,
+                    page,
+                    0.0,
+                    0.0,
+                    base.canvas().width(),
+                    base.canvas().height(),
+                    com.demcha.compose.engine.components.style.Margin.zero(),
+                    com.demcha.compose.engine.components.style.Padding.zero(),
+                    new BuiltInNodeDefinitions.ShapeFragmentPayload(color, null, 0.0, null, null, null)));
+        }
+        combined.addAll(base.fragments());
+        return new LayoutGraph(base.canvas(), base.totalPages(), base.nodes(), combined);
     }
 
     private long elapsedMillis(long startNanos) {

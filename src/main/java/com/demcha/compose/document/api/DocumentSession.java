@@ -3,7 +3,6 @@ package com.demcha.compose.document.api;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
-import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
 import com.demcha.compose.document.backend.fixed.pdf.PdfMeasurementResources;
 import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
@@ -11,7 +10,6 @@ import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.document.backend.semantic.SemanticBackend;
-import com.demcha.compose.document.backend.semantic.SemanticExportContext;
 import com.demcha.compose.document.output.DocumentHeaderFooter;
 import com.demcha.compose.document.output.DocumentMetadata;
 import com.demcha.compose.document.output.DocumentOutputOptions;
@@ -28,9 +26,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,6 +78,7 @@ public final class DocumentSession implements AutoCloseable {
     private PdfMeasurementResources measurementResources;
 
     private final DocumentLayoutCache layoutCache = new DocumentLayoutCache();
+    private final DocumentRenderingFacade renderingFacade = new DocumentRenderingFacade(new RenderingContextImpl());
     private boolean closed;
 
 
@@ -612,7 +609,7 @@ public final class DocumentSession implements AutoCloseable {
      * @throws Exception if rendering fails
      */
     public <R> R render(FixedLayoutBackend<R> backend) throws Exception {
-        return render(backend, defaultOutputFile);
+        return renderingFacade.render(backend, defaultOutputFile);
     }
 
     /**
@@ -625,39 +622,7 @@ public final class DocumentSession implements AutoCloseable {
      * @throws Exception if rendering fails
      */
     public <R> R render(FixedLayoutBackend<R> backend, Path outputFile) throws Exception {
-        ensureOpen();
-        Objects.requireNonNull(backend, "backend");
-        long startNanos = System.nanoTime();
-        LIFECYCLE_LOG.debug(
-                "document.render.start sessionId={} backend={} revision={} roots={} outputConfigured={}",
-                sessionId,
-                backend.name(),
-                layoutCache.revision(),
-                roots.size(),
-                outputFile != null);
-        try {
-            R result = backend.render(layoutGraph(), new FixedLayoutRenderContext(
-                    canvas,
-                    customFontFamilies,
-                    outputFile,
-                    null));
-            LIFECYCLE_LOG.debug(
-                    "document.render.end sessionId={} backend={} revision={} durationMs={}",
-                    sessionId,
-                    backend.name(),
-                    layoutCache.revision(),
-                    elapsedMillis(startNanos));
-            return result;
-        } catch (Exception ex) {
-            LIFECYCLE_LOG.error(
-                    "document.render.failed sessionId={} backend={} revision={} errorType={}",
-                    sessionId,
-                    backend.name(),
-                    layoutCache.revision(),
-                    ex.getClass().getSimpleName(),
-                    ex);
-            throw ex;
-        }
+        return renderingFacade.render(backend, outputFile);
     }
 
     /**
@@ -669,7 +634,7 @@ public final class DocumentSession implements AutoCloseable {
      * @throws Exception if export fails
      */
     public <R> R export(SemanticBackend<R> backend) throws Exception {
-        return export(backend, defaultOutputFile);
+        return renderingFacade.export(backend, defaultOutputFile);
     }
 
     /**
@@ -682,10 +647,7 @@ public final class DocumentSession implements AutoCloseable {
      * @throws Exception if export fails
      */
     public <R> R export(SemanticBackend<R> backend, Path outputFile) throws Exception {
-        ensureOpen();
-        Objects.requireNonNull(backend, "backend");
-        return backend.export(documentGraph(),
-                new SemanticExportContext(canvas, customFontFamilies, outputFile, buildOutputOptions()));
+        return renderingFacade.export(backend, outputFile);
     }
 
     /**
@@ -700,29 +662,7 @@ public final class DocumentSession implements AutoCloseable {
      * @throws Exception if PDF rendering fails
      */
     public byte[] toPdfBytes() throws Exception {
-        ensureOpen();
-        long startNanos = System.nanoTime();
-        LIFECYCLE_LOG.debug("document.pdf.bytes.start sessionId={} revision={} roots={}", sessionId, layoutCache.revision(), roots.size());
-        try {
-            ByteArrayOutputStream output = new ByteArrayOutputStream();
-            writePdf(output);
-            byte[] bytes = output.toByteArray();
-            LIFECYCLE_LOG.debug(
-                    "document.pdf.bytes.end sessionId={} revision={} byteCount={} durationMs={}",
-                    sessionId,
-                    layoutCache.revision(),
-                    bytes.length,
-                    elapsedMillis(startNanos));
-            return bytes;
-        } catch (Exception ex) {
-            LIFECYCLE_LOG.error(
-                    "document.pdf.bytes.failed sessionId={} revision={} errorType={}",
-                    sessionId,
-                    layoutCache.revision(),
-                    ex.getClass().getSimpleName(),
-                    ex);
-            throw ex;
-        }
+        return renderingFacade.toPdfBytes();
     }
 
     /**
@@ -736,31 +676,7 @@ public final class DocumentSession implements AutoCloseable {
      * @throws Exception if PDF rendering fails
      */
     public void writePdf(OutputStream output) throws Exception {
-        ensureOpen();
-        ensureRenderable();
-        OutputStream target = Objects.requireNonNull(output, "output");
-        long startNanos = System.nanoTime();
-        LIFECYCLE_LOG.debug("document.pdf.stream.start sessionId={} revision={} roots={}", sessionId, layoutCache.revision(), roots.size());
-        try {
-            conveniencePdfBackend().write(layoutGraph(), new FixedLayoutRenderContext(
-                    canvas,
-                    customFontFamilies,
-                    null,
-                    target));
-            LIFECYCLE_LOG.debug(
-                    "document.pdf.stream.end sessionId={} revision={} durationMs={}",
-                    sessionId,
-                    layoutCache.revision(),
-                    elapsedMillis(startNanos));
-        } catch (Exception ex) {
-            LIFECYCLE_LOG.error(
-                    "document.pdf.stream.failed sessionId={} revision={} errorType={}",
-                    sessionId,
-                    layoutCache.revision(),
-                    ex.getClass().getSimpleName(),
-                    ex);
-            throw ex;
-        }
+        renderingFacade.writePdf(output);
     }
 
     /**
@@ -773,7 +689,7 @@ public final class DocumentSession implements AutoCloseable {
         if (defaultOutputFile == null) {
             throw new IllegalStateException("No default output file was configured for this document session.");
         }
-        buildPdf(defaultOutputFile);
+        renderingFacade.buildPdf(defaultOutputFile);
     }
 
     /**
@@ -783,27 +699,7 @@ public final class DocumentSession implements AutoCloseable {
      * @throws Exception if PDF rendering fails
      */
     public void buildPdf(Path outputFile) throws Exception {
-        ensureOpen();
-        ensureRenderable();
-        Path target = Objects.requireNonNull(outputFile, "outputFile");
-        long startNanos = System.nanoTime();
-        LIFECYCLE_LOG.debug("document.pdf.build.start sessionId={} revision={} roots={}", sessionId, layoutCache.revision(), roots.size());
-        try (OutputStream output = Files.newOutputStream(target)) {
-            writePdf(output);
-            LIFECYCLE_LOG.debug(
-                    "document.pdf.build.end sessionId={} revision={} durationMs={}",
-                    sessionId,
-                    layoutCache.revision(),
-                    elapsedMillis(startNanos));
-        } catch (Exception ex) {
-            LIFECYCLE_LOG.error(
-                    "document.pdf.build.failed sessionId={} revision={} errorType={}",
-                    sessionId,
-                    layoutCache.revision(),
-                    ex.getClass().getSimpleName(),
-                    ex);
-            throw ex;
-        }
+        renderingFacade.buildPdf(outputFile);
     }
 
     /**
@@ -860,14 +756,6 @@ public final class DocumentSession implements AutoCloseable {
         }
     }
 
-    private PdfFixedLayoutBackend conveniencePdfBackend() {
-        return chromeOptions.toConveniencePdfBackend(guideLines);
-    }
-
-    private DocumentOutputOptions buildOutputOptions() {
-        return chromeOptions.snapshot();
-    }
-
     private com.demcha.compose.engine.components.style.Margin toEngineMargin(DocumentInsets insets) {
         if (insets == null) {
             return com.demcha.compose.engine.components.style.Margin.zero();
@@ -899,4 +787,64 @@ public final class DocumentSession implements AutoCloseable {
         return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
     }
 
+    /**
+     * Inner adapter exposing session-private state to {@link DocumentRenderingFacade}
+     * without making the corresponding session methods public.
+     */
+    private final class RenderingContextImpl implements DocumentRenderingFacade.Context {
+        @Override
+        public void ensureOpen() {
+            DocumentSession.this.ensureOpen();
+        }
+
+        @Override
+        public void ensureRenderable() {
+            DocumentSession.this.ensureRenderable();
+        }
+
+        @Override
+        public String sessionId() {
+            return sessionId;
+        }
+
+        @Override
+        public long revision() {
+            return layoutCache.revision();
+        }
+
+        @Override
+        public int rootCount() {
+            return roots.size();
+        }
+
+        @Override
+        public LayoutCanvas canvas() {
+            return canvas;
+        }
+
+        @Override
+        public List<FontFamilyDefinition> customFontFamilies() {
+            return List.copyOf(customFontFamilies);
+        }
+
+        @Override
+        public LayoutGraph layoutGraph() {
+            return DocumentSession.this.layoutGraph();
+        }
+
+        @Override
+        public DocumentGraph documentGraph() {
+            return DocumentSession.this.documentGraph();
+        }
+
+        @Override
+        public DocumentOutputOptions outputOptions() {
+            return chromeOptions.snapshot();
+        }
+
+        @Override
+        public PdfFixedLayoutBackend conveniencePdfBackend() {
+            return chromeOptions.toConveniencePdfBackend(guideLines);
+        }
+    }
 }

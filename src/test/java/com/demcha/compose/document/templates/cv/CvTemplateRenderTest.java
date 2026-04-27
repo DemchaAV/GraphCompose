@@ -365,6 +365,26 @@ class CvTemplateRenderTest {
         }
     }
 
+    @Test
+    void shouldRenderTimelineMinimalTemplateToFileWithGuideLines() throws Exception {
+        Path outputFile = VisualTestOutputs.preparePdf(
+                "timeline_minimal_cv_render_file_with_guide_lines",
+                "guides",
+                "templates",
+                "cv",
+                "variants");
+        var cv = TemplateTestSupport.canonicalCv();
+
+        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, 22, 22, 22, 22, true)) {
+            new TimelineMinimalCvTemplate().compose(document, cv);
+            document.buildPdf();
+        }
+
+        TemplateTestSupport.assertPdfFileLooksValid(outputFile, 2);
+        TemplateTestSupport.assertPdfPageCount(outputFile, 2);
+        TemplateTestSupport.assertPdfContainsGuideLines(outputFile);
+    }
+
     private static Stream<Arguments> fontThemes() {
         return Stream.of(
                 Arguments.of(FontName.HELVETICA, "Helvetica"),

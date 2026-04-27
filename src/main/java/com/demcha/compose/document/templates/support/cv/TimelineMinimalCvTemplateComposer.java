@@ -125,8 +125,8 @@ public final class TimelineMinimalCvTemplateComposer {
                         if (line.iconFile() != null) {
                             rich.image(
                                     contactIcon(line.iconFile()),
-                                    7.0,
-                                    7.0,
+                                    9.0,
+                                    9.0,
                                     InlineImageAlignment.CENTER,
                                     0.0,
                                     line.linkOptions());

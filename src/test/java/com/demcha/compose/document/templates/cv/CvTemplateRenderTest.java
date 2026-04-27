@@ -3,9 +3,15 @@ package com.demcha.compose.document.templates.cv;
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.templates.TemplateTestSupport;
+import com.demcha.compose.document.templates.api.CvTemplate;
+import com.demcha.compose.document.templates.builtins.ClassicSerifCvTemplate;
+import com.demcha.compose.document.templates.builtins.CompactMonoCvTemplate;
 import com.demcha.compose.document.templates.builtins.CvTemplateV1;
 import com.demcha.compose.document.templates.builtins.EditorialBlueCvTemplate;
 import com.demcha.compose.document.templates.builtins.ExecutiveSlateCvTemplate;
+import com.demcha.compose.document.templates.builtins.NordicCleanCvTemplate;
+import com.demcha.compose.document.templates.builtins.ProductLeaderCvTemplate;
+import com.demcha.compose.document.templates.builtins.TechLeadCvTemplate;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.font.FontName;
 import com.demcha.testing.VisualTestOutputs;
@@ -317,6 +323,22 @@ class CvTemplateRenderTest {
         }
     }
 
+    @ParameterizedTest(name = "modern CV template {0}")
+    @MethodSource("modernCvTemplates")
+    void shouldRenderModernCvTemplateVariantsToFile(CvTemplate template, float margin) throws Exception {
+        String slug = template.getTemplateId().replace('-', '_');
+        Path outputFile = VisualTestOutputs.preparePdf(slug + "_cv_render_file", "clean", "templates", "cv", "variants");
+        var cv = TemplateTestSupport.canonicalCv();
+
+        try (var document = TemplateTestSupport.openFileDocument(outputFile, PDRectangle.A4, margin, margin, margin, margin)) {
+            template.compose(document, cv);
+            document.buildPdf();
+        }
+
+        TemplateTestSupport.assertPdfFileLooksValid(outputFile, 1);
+        TemplateTestSupport.assertPdfPageCount(outputFile, 1);
+    }
+
     private static Stream<Arguments> fontThemes() {
         return Stream.of(
                 Arguments.of(FontName.HELVETICA, "Helvetica"),
@@ -329,6 +351,15 @@ class CvTemplateRenderTest {
                 Arguments.of(FontName.KANIT, "Kanit"),
                 Arguments.of(FontName.VOLKHOV, "Volkhov"),
                 Arguments.of(FontName.ANDIKA, "Andika"));
+    }
+
+    private static Stream<Arguments> modernCvTemplates() {
+        return Stream.of(
+                Arguments.of(new NordicCleanCvTemplate(), 18),
+                Arguments.of(new CompactMonoCvTemplate(), 20),
+                Arguments.of(new ProductLeaderCvTemplate(), 18),
+                Arguments.of(new ClassicSerifCvTemplate(), 20),
+                Arguments.of(new TechLeadCvTemplate(), 20));
     }
 
     private static String section(String text, String start, String end) {

@@ -628,15 +628,15 @@ public final class EditorialBlueCvTemplateComposer {
     }
 
     private Color primaryTextColor() {
-        return new Color(18, 31, 72);
+        return theme.primaryColor();
     }
 
     private Color bodyTextColor() {
-        return new Color(60, 72, 106);
+        return theme.bodyColor();
     }
 
     private Color accentColor() {
-        return new Color(86, 136, 255);
+        return theme.accentColor();
     }
 
     private Color mutedBorderColor() {

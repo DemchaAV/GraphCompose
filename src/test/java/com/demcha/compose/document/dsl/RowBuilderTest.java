@@ -138,22 +138,124 @@ class RowBuilderTest {
     }
 
     @Test
-    void rowRejectsCompositeChildren() {
+    void rowRejectsNestedRow() {
         DocumentSession session = GraphCompose.document().pageSize(300, 200).create();
         try {
             assertThatThrownBy(() -> session.dsl()
                     .pageFlow()
                     .name("Flow")
-                    .addRow("BadRow", row -> row
+                    .addRow("Outer", row -> row
                             .addParagraph("Ok", DocumentTextStyle.DEFAULT)
-                            .add(new SectionBuilder().name("Inner").build()))
+                            .add(new RowBuilder().name("Inner").build()))
                     .build())
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("BadRow");
+                    .hasMessageContaining("Outer")
+                    .hasMessageContaining("another row");
         } finally {
             try {
                 session.close();
             } catch (Exception ignored) {
+            }
+        }
+    }
+
+    @Test
+    void rowRejectsTableChild() {
+        DocumentSession session = GraphCompose.document().pageSize(300, 200).create();
+        try {
+            assertThatThrownBy(() -> session.dsl()
+                    .pageFlow()
+                    .name("Flow")
+                    .addRow("Outer", row -> row
+                            .addParagraph("Ok", DocumentTextStyle.DEFAULT)
+                            .add(new TableBuilder()
+                                    .columns(com.demcha.compose.document.table.DocumentTableColumn.auto())
+                                    .row("only")
+                                    .build()))
+                    .build())
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Outer")
+                    .hasMessageContaining("table");
+        } finally {
+            try {
+                session.close();
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    @Test
+    void rowAcceptsSectionsAsColumns() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.of(10))
+                .create()) {
+
+            session.dsl()
+                    .pageFlow()
+                    .name("Flow")
+                    .addRow("Header", row -> row
+                            .gap(12)
+                            .addSection("LeftCol", section -> section
+                                    .spacing(2)
+                                    .addParagraph(p -> p.name("LeftTop").text("Left top").textStyle(DocumentTextStyle.DEFAULT))
+                                    .addParagraph(p -> p.name("LeftBottom").text("Left bottom").textStyle(DocumentTextStyle.DEFAULT)))
+                            .addSection("RightCol", section -> section
+                                    .spacing(2)
+                                    .addParagraph(p -> p.name("RightTop").text("Right top").textStyle(DocumentTextStyle.DEFAULT))
+                                    .addParagraph(p -> p.name("RightBottom").text("Right bottom").textStyle(DocumentTextStyle.DEFAULT))
+                                    .addParagraph(p -> p.name("RightTail").text("Right tail").textStyle(DocumentTextStyle.DEFAULT))))
+                    .build();
+
+            LayoutGraph graph = session.layoutGraph();
+            assertThat(graph.totalPages()).isEqualTo(1);
+
+            List<PlacedNode> nodes = graph.nodes();
+            PlacedNode leftCol = findNodeBySemanticName(nodes, "LeftCol");
+            PlacedNode rightCol = findNodeBySemanticName(nodes, "RightCol");
+            PlacedNode leftTop = findNodeBySemanticName(nodes, "LeftTop");
+            PlacedNode rightTop = findNodeBySemanticName(nodes, "RightTop");
+            PlacedNode leftBottom = findNodeBySemanticName(nodes, "LeftBottom");
+            PlacedNode rightTail = findNodeBySemanticName(nodes, "RightTail");
+
+            assertThat(leftCol).as("left column section is placed").isNotNull();
+            assertThat(rightCol).as("right column section is placed").isNotNull();
+            assertThat(leftTop).isNotNull();
+            assertThat(rightTop).isNotNull();
+            assertThat(leftBottom).isNotNull();
+            assertThat(rightTail).isNotNull();
+
+            assertThat(leftCol.placementX()).isLessThan(rightCol.placementX());
+
+            // PlacedNode.placementY is the bottom-left y. Compare top-y
+            // (placementY + height) to verify both columns start on the same
+            // row band.
+            double leftColTopY = leftCol.placementY() + leftCol.placementHeight();
+            double rightColTopY = rightCol.placementY() + rightCol.placementHeight();
+            assertThat(Math.abs(leftColTopY - rightColTopY))
+                    .as("Both column sections start at the same top y inside the row band")
+                    .isLessThan(TOLERANCE);
+
+            // Top paragraphs of both columns share the same baseline.
+            assertThat(Math.abs(leftTop.placementY() - rightTop.placementY()))
+                    .as("Top paragraphs of both columns share the same baseline")
+                    .isLessThan(TOLERANCE);
+
+            // Each column measures its own children: the right column has an
+            // extra paragraph, so its tail bottom sits at or below the left
+            // column's last paragraph bottom (smaller y in PDF coordinates).
+            assertThat(rightTail.placementY())
+                    .as("Right column tail bottom sits at or below left column's last paragraph bottom")
+                    .isLessThanOrEqualTo(leftBottom.placementY() + TOLERANCE);
+
+            byte[] pdfBytes = session.toPdfBytes();
+            try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+                String text = new PDFTextStripper().getText(document);
+                assertThat(text).contains("Left top");
+                assertThat(text).contains("Left bottom");
+                assertThat(text).contains("Right top");
+                assertThat(text).contains("Right bottom");
+                assertThat(text).contains("Right tail");
             }
         }
     }

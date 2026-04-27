@@ -355,13 +355,28 @@ public final class LayoutCompiler {
                 @SuppressWarnings("unchecked")
                 NodeDefinition<DocumentNode> childDefinition =
                         (NodeDefinition<DocumentNode>) registry.definitionFor(child);
-                if (childPrepared.isComposite()) {
-                    throw new IllegalStateException("Row '" + path + "' child '" + child.nodeKind()
-                            + "' is composite; nested composites inside rows are not supported in v1.3.");
-                }
                 if (childMeasure.height() > naturalMeasure.height() - padding.vertical() + EPS) {
                     throw new IllegalStateException("Row '" + path + "' child '" + child.nodeKind()
                             + "' measured height " + childMeasure.height() + " exceeds row inner height.");
+                }
+
+                if (childPrepared.isComposite()) {
+                    compileNodeInFixedSlot(
+                            childPrepared,
+                            path,
+                            index,
+                            depth + 1,
+                            cursorX,
+                            rowInnerY,
+                            slotWidth,
+                            state.pageIndex,
+                            prepareContext,
+                            fragmentContext,
+                            state.canvas,
+                            nodes,
+                            fragments);
+                    cursorX += slotWidth + layoutSpec.spacing();
+                    continue;
                 }
 
                 String childPath = pathFor(child, path, index);
@@ -722,6 +737,166 @@ public final class LayoutCompiler {
                 originalMeasure.height(),
                 originalMargin,
                 originalPadding));
+    }
+
+    /**
+     * Compiles a composite or leaf node inside a fixed horizontal row slot.
+     *
+     * <p>The slot is constrained to a single page: composite row children are
+     * laid out as columns inside the row's atomic band, with a local
+     * top-down y-cursor. No global pagination state is mutated; the row's
+     * outer height check guarantees the column fits.</p>
+     *
+     * @return outer height (measured height + vertical margin) consumed by the
+     *         node, used by the caller's local y-cursor
+     */
+    private double compileNodeInFixedSlot(PreparedNode<DocumentNode> prepared,
+                                          String parentPath,
+                                          int childIndex,
+                                          int depth,
+                                          double slotX,
+                                          double slotTopY,
+                                          double slotWidth,
+                                          int pageIndex,
+                                          PrepareContext prepareContext,
+                                          FragmentContext fragmentContext,
+                                          LayoutCanvas canvas,
+                                          List<PlacedNode> nodes,
+                                          List<PlacedFragment> fragments) {
+        DocumentNode node = prepared.node();
+        @SuppressWarnings("unchecked")
+        NodeDefinition<DocumentNode> definition = (NodeDefinition<DocumentNode>) registry.definitionFor(node);
+        String path = pathFor(node, parentPath, childIndex);
+        String semanticName = semanticName(node);
+        Margin margin = toMargin(node.margin());
+        Padding padding = toPadding(node.padding());
+        double availableWidth = childAvailableWidth(slotWidth, node);
+        MeasureResult measure = prepared.measureResult();
+        double placementX = slotX + margin.left();
+        double placementTopY = slotTopY - margin.top();
+        double placementY = placementTopY - measure.height();
+
+        if (prepared.isComposite()) {
+            CompositeLayoutSpec layoutSpec = prepared.requireCompositeLayout();
+            if (layoutSpec.axis() != CompositeLayoutSpec.Axis.VERTICAL) {
+                throw new IllegalStateException("Row '" + path
+                        + "' nested horizontal composites are not supported.");
+            }
+
+            int decorationInsertIndex = fragments.size();
+            int nodeIndex = nodes.size();
+            nodes.add(null);
+
+            List<DocumentNode> children = definition.children(node);
+            double childRegionX = placementX + padding.left();
+            double childRegionWidth = Math.max(0.0, availableWidth - padding.horizontal());
+            double childTopY = placementTopY - padding.top();
+
+            for (int i = 0; i < children.size(); i++) {
+                DocumentNode child = children.get(i);
+                PreparedNode<DocumentNode> childPrepared =
+                        prepareForRegionWidth(prepareContext, child, childRegionWidth);
+                double consumed = compileNodeInFixedSlot(
+                        childPrepared,
+                        path,
+                        i,
+                        depth + 1,
+                        childRegionX,
+                        childTopY,
+                        childRegionWidth,
+                        pageIndex,
+                        prepareContext,
+                        fragmentContext,
+                        canvas,
+                        nodes,
+                        fragments);
+                childTopY -= consumed;
+                if (i < children.size() - 1) {
+                    childTopY -= layoutSpec.spacing();
+                }
+            }
+
+            double endPageBottomY = placementY + margin.bottom();
+            List<PlacedFragment> decorationFragments = compositeDecorationFragments(
+                    prepared,
+                    definition,
+                    path,
+                    parentPath,
+                    childIndex,
+                    depth,
+                    placementX,
+                    placementTopY,
+                    endPageBottomY,
+                    measure.width(),
+                    pageIndex,
+                    pageIndex,
+                    margin,
+                    padding,
+                    canvas,
+                    fragmentContext);
+            if (!decorationFragments.isEmpty()) {
+                fragments.addAll(decorationInsertIndex, decorationFragments);
+            }
+
+            nodes.set(nodeIndex, new PlacedNode(
+                    path,
+                    semanticName,
+                    node.nodeKind(),
+                    parentPath,
+                    childIndex,
+                    depth,
+                    depth,
+                    placementX,
+                    placementY,
+                    placementX,
+                    placementY,
+                    measure.width(),
+                    measure.height(),
+                    pageIndex,
+                    pageIndex,
+                    measure.width(),
+                    measure.height(),
+                    margin,
+                    padding));
+            return measure.height() + margin.vertical();
+        }
+
+        FragmentPlacement placement = new FragmentPlacement(
+                path,
+                parentPath,
+                childIndex,
+                depth,
+                pageIndex,
+                placementX,
+                placementY,
+                measure.width(),
+                measure.height(),
+                pageIndex,
+                pageIndex,
+                margin,
+                padding);
+        addPlacedFragments(definition.emitFragments(prepared, fragmentContext, placement), placement, fragments);
+        nodes.add(new PlacedNode(
+                path,
+                semanticName,
+                node.nodeKind(),
+                parentPath,
+                childIndex,
+                depth,
+                depth,
+                placementX,
+                placementY,
+                placementX,
+                placementY,
+                measure.width(),
+                measure.height(),
+                pageIndex,
+                pageIndex,
+                measure.width(),
+                measure.height(),
+                margin,
+                padding));
+        return measure.height() + margin.vertical();
     }
 
     private List<PlacedFragment> compositeDecorationFragments(PreparedNode<DocumentNode> prepared,

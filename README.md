@@ -28,7 +28,7 @@ Most Java PDF libraries expose low-level drawing commands. GraphCompose gives Ja
 - automatic pagination and deterministic layout snapshots are built into the engine
 - PDF rendering is isolated behind a PDFBox backend
 
-The current release is **v1.2.0**, an early stabilization release focused on the canonical Java-first API, lifecycle safety, layout determinism, and cleaner release documentation.
+The current release is **v1.3.0**, expanding the canonical authoring path with horizontal rows, per-side borders, auto-size text, session-level PDF chrome (metadata / watermark / protection / header / footer), and a functional Apache POI based DOCX semantic backend. The release also lands engine-side perf work (templates render 19–30 % faster than v1.2.0 on the canonical benchmark suite).
 
 ## Visual Preview
 
@@ -55,7 +55,7 @@ GraphCompose is currently distributed through JitPack.
 <dependency>
     <groupId>com.github.DemchaAV</groupId>
     <artifactId>GraphCompose</artifactId>
-    <version>v1.2.0</version>
+    <version>v1.3.0</version>
 </dependency>
 ```
 
@@ -65,11 +65,11 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.demchaav:GraphCompose:v1.2.0")
+    implementation("com.github.demchaav:GraphCompose:v1.3.0")
 }
 ```
 
-The project POM coordinates are `io.github.demchaav:graphcompose:1.2.0`. JitPack keeps the GitHub repository coordinate with a lowercase owner (`com.github.demchaav:GraphCompose:v1.2.0`) and the `v1.2.0` tag.
+The project POM coordinates are `io.github.demchaav:graphcompose:1.3.0`. JitPack keeps the GitHub repository coordinate with a lowercase owner (`com.github.demchaav:GraphCompose:v1.3.0`) and the `v1.3.0` tag. The DOCX backend depends on `org.apache.poi:poi-ooxml`, declared as `optional` — add it explicitly when you call `session.export(new DocxSemanticBackend())`.
 
 ## Quick start
 
@@ -242,6 +242,38 @@ graph TD
 
 Public authoring lives in `com.demcha.compose`, `document.api`, `document.dsl`, `document.node`, `document.style`, `document.table`, and `font`. Engine internals live under `com.demcha.compose.engine.*` and are not the recommended application API.
 
+## What's new in v1.3
+
+- **Horizontal rows**: `addRow(...)` on flows, sections, and modules with optional `weights(...)` and `gap(...)`. Children render side-by-side; the row is one atomic block from the paginator's perspective.
+- **Per-side borders**: `DocumentBorders` value type and `borders(...)` on flows, sections, modules, and rows. Each side carries an optional stroke; per-side borders override the uniform `stroke(...)` setting.
+- **Auto-size paragraph text**: `ParagraphBuilder.autoSize(maxSize, minSize)` searches for the largest font that fits the paragraph on a single line within the resolved inner width.
+- **Session-level PDF chrome**: `DocumentSession.metadata(...)`, `watermark(...)`, `protect(...)`, `header(...)`, and `footer(...)` apply through the convenience entrypoints (`buildPdf`, `writePdf`, `toPdfBytes`) without an explicit backend builder.
+- **Backend-neutral output options**: types in `com.demcha.compose.document.output` (`DocumentMetadata`, `DocumentWatermark`, `DocumentProtection`, `DocumentHeaderFooter`) — both PDF and DOCX backends translate them. Session-level metadata propagates to DOCX core properties.
+- **Functional DOCX export**: `session.export(new DocxSemanticBackend())` emits real DOCX bytes (paragraphs, tables, images, spacers, page breaks, page geometry) via Apache POI. POI is declared `optional`, so PDF-only consumers do not pay the dependency cost.
+- **Engine performance**: pagination priority queue uses `UUID.compareTo` (no per-compare string allocation), `Entity` hot-path component lookups dropped per-call debug logging, and table layout helpers were extracted into `TableLayoutSupport` for clarity. Templates render 19–30 % faster than v1.2.0 on the canonical benchmark suite.
+
+## Performance (smoke profile, post-v1.3)
+
+Numbers below come from `CurrentSpeedBenchmark` (`-Dgraphcompose.benchmark.profile=smoke`, 30 warmup + 100 measurement, with `System.gc()` between warmup and measurement). They were captured on a developer laptop; CI machines are typically 1.5–2× slower.
+
+| Scenario          | Avg ms | p50 ms | p95 ms | Docs/sec |
+|-------------------|-------:|-------:|-------:|---------:|
+| engine-simple     |   1.83 |   1.67 |   2.78 |   546.84 |
+| invoice-template  |  10.77 |  10.76 |  13.46 |    92.89 |
+| cv-template       |   6.50 |   5.63 |  10.27 |   153.81 |
+| proposal-template |  13.44 |  13.36 |  15.42 |    74.43 |
+| feature-rich      |  34.28 |  29.52 |  34.87 |    29.18 |
+
+The same harness reports a per-stage breakdown so consumers can attribute regressions to compose / layout / render independently:
+
+| Scenario          | Compose | Layout | Render | Total |
+|-------------------|--------:|-------:|-------:|------:|
+| invoice-template  |    0.18 |   2.10 |   5.17 |  7.60 |
+| cv-template       |    0.16 |   2.20 |   1.35 |  3.75 |
+| proposal-template |    0.22 |   5.82 |   5.93 | 12.40 |
+
+Render time is dominated by PDFBox serialization (35–68 % of total), so engine-side optimisations look smaller in the end-to-end avg than they do in the layout column. See [docs/benchmarks.md](./docs/benchmarks.md) for the full methodology.
+
 ## Documentation
 
 - [Getting Started](./docs/getting-started.md)
@@ -252,8 +284,9 @@ Public authoring lives in `com.demcha.compose`, `document.api`, `document.dsl`, 
 - [Production Rendering](./docs/production-rendering.md)
 - [Layout Snapshot Testing](./docs/layout-snapshot-testing.md)
 - [Benchmarks](./docs/benchmarks.md)
+- [Canonical / Legacy Parity](./docs/canonical-legacy-parity.md)
 - [Migration v1.1 to v1.2](./docs/migration-v1-1-to-v1-2.md)
-- [v1.2 Roadmap](./docs/v1.2-roadmap.md)
+- [v1.2 / v1.3 Roadmap](./docs/v1.2-roadmap.md)
 - [Release Process](./docs/release-process.md)
 - [Changelog](./CHANGELOG.md)
 
@@ -265,8 +298,11 @@ Public authoring lives in `com.demcha.compose`, `document.api`, `document.dsl`, 
 - [x] deterministic layout snapshots
 - [x] built-in templates
 - [x] public API boundary guards
+- [x] horizontal rows + per-side borders + auto-size text (v1.3)
+- [x] backend-neutral output options + functional DOCX export (v1.3)
 - [ ] Maven Central release
-- [ ] DOCX / PPTX backends
+- [ ] real PPTX export (v1.3 ships a manifest skeleton)
+- [ ] child horizontal/vertical alignment, nested list builder, complex table cell composition
 
 ## License
 

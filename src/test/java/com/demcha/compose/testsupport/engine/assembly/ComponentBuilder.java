@@ -64,13 +64,6 @@ public class ComponentBuilder {
     }
 
     /**
-     * Creates a builder for a button-like shape entity.
-     */
-    public ButtonBuilder button() {
-        return register(new ButtonBuilder(entityManager));
-    }
-
-    /**
      * Creates a builder for a circle leaf entity.
      */
     public CircleBuilder circle() {

@@ -431,6 +431,34 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     }
 
     /**
+     * Adds a paragraph that contains a single clickable link span.
+     *
+     * <p>Convenience over {@code addParagraph(p -> p.inlineLink(text, options))} for
+     * the common single-link case. The visible text is the same as the supplied
+     * text; the link target comes from the supplied URI.</p>
+     *
+     * @param text visible link text
+     * @param uri target URI
+     * @return this builder
+     */
+    public T addLink(String text, String uri) {
+        return addParagraph(paragraph -> paragraph
+                .inlineLink(text == null ? "" : text, new DocumentLinkOptions(uri == null ? "" : uri)));
+    }
+
+    /**
+     * Adds a paragraph that contains a single clickable link span configured
+     * with explicit link options.
+     *
+     * @param text visible link text
+     * @param options link target metadata
+     * @return this builder
+     */
+    public T addLink(String text, DocumentLinkOptions options) {
+        return addParagraph(paragraph -> paragraph.inlineLink(text == null ? "" : text, options));
+    }
+
+    /**
      * Adds a horizontal row configured through a nested builder.
      *
      * <p>Rows arrange their direct children left-to-right inside a single row band

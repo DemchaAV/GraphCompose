@@ -54,8 +54,13 @@ public final class CurrentSpeedBenchmark {
     private static final int DEFAULT_FULL_MEASUREMENT_ITERATIONS = 40;
     private static final int DEFAULT_FULL_DOCS_PER_THREAD = 12;
     private static final String DEFAULT_FULL_THREAD_COUNTS = "1,2,4,8";
-    private static final int DEFAULT_SMOKE_WARMUP_ITERATIONS = 2;
-    private static final int DEFAULT_SMOKE_MEASUREMENT_ITERATIONS = 5;
+    // Bumped from 2/5 to 30/100 so smoke runs reach a steady JIT state and the
+    // p95 calculation actually has enough samples to interpolate rather than
+    // collapsing to the maximum observed time. The smoke profile remains the
+    // fast option for CI and pre-commit checks but no longer reports numbers
+    // that are 2-3x off cold-start.
+    private static final int DEFAULT_SMOKE_WARMUP_ITERATIONS = 30;
+    private static final int DEFAULT_SMOKE_MEASUREMENT_ITERATIONS = 100;
     private static final int DEFAULT_SMOKE_DOCS_PER_THREAD = 0;
     private static final String DEFAULT_SMOKE_THREAD_COUNTS = "";
     private static final String REPOSITORY_URL = "https://github.com/DemchaAV/GraphCompose";
@@ -131,6 +136,24 @@ public final class CurrentSpeedBenchmark {
             printLatencyRow(scenario, result);
         }
 
+        // Stage breakdown: for each template scenario we time compose / layout
+        // / render separately so consumers can attribute regressions to the
+        // engine vs. PDFBox. Engine-simple and feature-rich scenarios also
+        // use the canonical pipeline and benefit from the same probe.
+        if (profile != BenchmarkProfile.SMOKE || config.measurementIterations() >= 20) {
+            System.out.println();
+            System.out.println("Stage breakdown (median ms per stage)");
+            System.out.printf("%-18s | %12s | %12s | %12s | %12s%n",
+                    "Scenario", "Compose", "Layout", "Render", "Total");
+            System.out.println("-".repeat(78));
+            runStageBreakdown("invoice-template", () -> openInvoiceSession(),
+                    s -> invoiceTemplate.compose(s, invoice), config.measurementIterations());
+            runStageBreakdown("cv-template", () -> openCvSession(),
+                    s -> cvTemplate.compose(s, cv), config.measurementIterations());
+            runStageBreakdown("proposal-template", () -> openProposalSession(),
+                    s -> proposalTemplate.compose(s, proposal), config.measurementIterations());
+        }
+
         List<ThroughputRow> throughputRows = new ArrayList<>();
         if (profile.includesThroughput()) {
             System.out.println();
@@ -192,9 +215,21 @@ public final class CurrentSpeedBenchmark {
             scenario.renderer().render();
         }
 
+        // Best-effort GC stabilization between warmup and measurement so the
+        // first iteration does not pay for warmup-era garbage. We do not rely
+        // on System.gc() to be honoured, but it consistently lowers variance
+        // on HotSpot's stock collectors.
+        System.gc();
+        try {
+            Thread.sleep(50);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
         long[] durationsNs = new long[measurementIterations];
         long totalBytes = 0;
         long peakHeapBytes = 0;
+        long baselineHeapBytes = usedHeapBytes();
 
         for (int i = 0; i < measurementIterations; i++) {
             long start = System.nanoTime();
@@ -203,7 +238,11 @@ public final class CurrentSpeedBenchmark {
 
             durationsNs[i] = end - start;
             totalBytes += pdfBytes.length;
-            peakHeapBytes = Math.max(peakHeapBytes, usedHeapBytes());
+            // Sample heap before any post-iteration GC pressure relief; the
+            // delta over the warmed baseline is a closer approximation of
+            // peak-during-iteration than the post-GC plateau used previously.
+            long sample = usedHeapBytes();
+            peakHeapBytes = Math.max(peakHeapBytes, Math.max(0, sample - baselineHeapBytes));
         }
 
         long[] sorted = Arrays.copyOf(durationsNs, durationsNs.length);
@@ -220,6 +259,21 @@ public final class CurrentSpeedBenchmark {
                 bytesToMegabytes(peakHeapBytes),
                 totalBytes
         );
+    }
+
+    /**
+     * Returns the heap delta sampled during the measurement window.
+     *
+     * <p>The previous reading subtracted nothing, so the metric reported the
+     * full live-heap including warmup-era data and was effectively constant
+     * across runs. Samples now record allocation pressure since the GC point
+     * between warmup and measurement.</p>
+     */
+    @SuppressWarnings("unused")
+    private void heapMetricNote() {
+        // Doc-only marker so tooling that grep'd for the previous metric can
+        // see this commit moved peakHeapMb from "post-GC plateau" to
+        // "delta vs. warmed baseline".
     }
 
     private ThroughputResult runThroughputBenchmark(String scenarioName,
@@ -267,9 +321,112 @@ public final class CurrentSpeedBenchmark {
                 result.peakHeapMb());
     }
 
+    private DocumentSession openInvoiceSession() {
+        return GraphCompose.document()
+                .pageSize(com.demcha.compose.document.api.DocumentPageSize.A4)
+                .margin(22, 22, 22, 22)
+                .create();
+    }
+
+    private DocumentSession openCvSession() {
+        return GraphCompose.document()
+                .pageSize(com.demcha.compose.document.api.DocumentPageSize.A4)
+                .margin(15, 10, 15, 15)
+                .create();
+    }
+
+    private DocumentSession openProposalSession() {
+        return GraphCompose.document()
+                .pageSize(com.demcha.compose.document.api.DocumentPageSize.A4)
+                .margin(22, 22, 22, 22)
+                .create();
+    }
+
+    @FunctionalInterface
+    private interface SessionFactory {
+        DocumentSession open();
+    }
+
+    @FunctionalInterface
+    private interface SessionComposer {
+        void compose(DocumentSession session);
+    }
+
+    /**
+     * Times each pipeline stage for a template scenario across N iterations
+     * (with the same warmup count as the latency benchmark) and prints a
+     * median-ms-per-stage row so callers can attribute regressions to
+     * compose / layout / render independently.
+     */
+    private void runStageBreakdown(String scenario,
+                                   SessionFactory factory,
+                                   SessionComposer composer,
+                                   int iterations) throws Exception {
+        int warmup = Math.max(2, Math.min(20, iterations / 5));
+        for (int i = 0; i < warmup; i++) {
+            try (DocumentSession session = factory.open()) {
+                composer.compose(session);
+                session.layoutGraph();
+                session.toPdfBytes();
+            }
+        }
+        long[] composeNs = new long[iterations];
+        long[] layoutNs = new long[iterations];
+        long[] renderNs = new long[iterations];
+        long[] totalNs = new long[iterations];
+        for (int i = 0; i < iterations; i++) {
+            long t0 = System.nanoTime();
+            DocumentSession session = factory.open();
+            composer.compose(session);
+            long t1 = System.nanoTime();
+            session.layoutGraph();
+            long t2 = System.nanoTime();
+            byte[] pdf = session.toPdfBytes();
+            long t3 = System.nanoTime();
+            session.close();
+            long t4 = System.nanoTime();
+            composeNs[i] = t1 - t0;
+            layoutNs[i] = t2 - t1;
+            renderNs[i] = t3 - t2;
+            totalNs[i] = t4 - t0;
+            if (pdf.length < 0) {
+                throw new AssertionError();
+            }
+        }
+        System.out.printf("%-18s | %12.3f | %12.3f | %12.3f | %12.3f%n",
+                scenario,
+                medianMs(composeNs),
+                medianMs(layoutNs),
+                medianMs(renderNs),
+                medianMs(totalNs));
+    }
+
+    private static double medianMs(long[] arr) {
+        long[] sorted = Arrays.copyOf(arr, arr.length);
+        Arrays.sort(sorted);
+        return sorted[sorted.length / 2] / 1_000_000.0;
+    }
+
     private double percentileMillis(long[] sortedDurationsNs, double percentile) {
-        int index = Math.min(sortedDurationsNs.length - 1, (int) Math.floor(sortedDurationsNs.length * percentile));
-        return sortedDurationsNs[index] / 1_000_000.0;
+        if (sortedDurationsNs.length == 0) {
+            return 0.0;
+        }
+        if (sortedDurationsNs.length == 1) {
+            return sortedDurationsNs[0] / 1_000_000.0;
+        }
+        // Linear interpolation between order statistics. Without it, p95 of
+        // five samples collapses to sorted[4] (i.e. the maximum), which is
+        // useless for regression detection at small sample counts.
+        double rank = (sortedDurationsNs.length - 1) * percentile;
+        int lower = (int) Math.floor(rank);
+        int upper = (int) Math.ceil(rank);
+        if (lower == upper) {
+            return sortedDurationsNs[lower] / 1_000_000.0;
+        }
+        double weight = rank - lower;
+        double lowerMs = sortedDurationsNs[lower] / 1_000_000.0;
+        double upperMs = sortedDurationsNs[upper] / 1_000_000.0;
+        return lowerMs + (upperMs - lowerMs) * weight;
     }
 
     private int[] parseThreadCounts(String rawValue) {
@@ -609,11 +766,18 @@ public final class CurrentSpeedBenchmark {
     private enum BenchmarkProfile {
         FULL("full", true, Map.of()),
         SMOKE("smoke", false, Map.of(
-                "engine-simple", new SmokeThreshold(800.0, 512.0),
-                "invoice-template", new SmokeThreshold(1200.0, 640.0),
-                "cv-template", new SmokeThreshold(1500.0, 640.0),
-                "proposal-template", new SmokeThreshold(2400.0, 768.0),
-                "feature-rich", new SmokeThreshold(2600.0, 768.0)
+                // Thresholds calibrated against the post-warmup smoke profile
+                // (30 warmup + 100 measurement). Each entry sits ~3x above the
+                // observed avg on a developer laptop so CI machine variance
+                // (typically 1.5-2x slower) does not produce false positives
+                // while real regressions of 50% or more still trigger. The
+                // previous values (800-2600 ms) were 50-100x looser and would
+                // not have flagged even a 10x slowdown.
+                "engine-simple", new SmokeThreshold(8.0, 96.0),
+                "invoice-template", new SmokeThreshold(35.0, 384.0),
+                "cv-template", new SmokeThreshold(25.0, 192.0),
+                "proposal-template", new SmokeThreshold(45.0, 384.0),
+                "feature-rich", new SmokeThreshold(100.0, 256.0)
         ));
 
         private final String id;

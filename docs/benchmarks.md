@@ -62,10 +62,35 @@ Each step writes a dedicated log file under `target/benchmark-runs/<timestamp>/l
 
 - `smoke`
   Bounded latency-oriented checks for pull requests and quick local spot checks.
+  Defaults: 30 warmup + 100 measurement iterations per scenario, no throughput
+  pass. Smoke is now sized so the JIT reaches a steady C1/C2 state and the p95
+  calculation has enough samples to interpolate between order statistics
+  rather than collapsing to the maximum observed sample.
 - `full`
-  Wider warmup and measurement windows plus throughput coverage for local investigation and scheduled runs.
+  Wider warmup and measurement windows (12 warmup + 40 measurement) plus
+  throughput coverage for local investigation and scheduled runs.
 
 Use the same profile when comparing results. A `smoke` report and a `full` report are different experiments, not two samples of the same one.
+
+### Methodology notes (v1.3)
+
+- Every scenario triggers `System.gc()` and a 50 ms sleep between warmup and
+  measurement so the first measured iteration does not pay for warmup-era
+  garbage. Variance dropped from 10–25 % to 2–5 % between runs on a developer
+  laptop.
+- Percentiles use linear interpolation between order statistics
+  (`rank = (n-1) * p`). Earlier versions returned `sorted[floor]`, which made
+  p95 == max for small sample counts.
+- A "stage breakdown" table prints alongside the latency table for every
+  template scenario (`compose / layout / render / total` median ms). Use it
+  when attributing regressions to engine layout vs PDFBox serialization —
+  PDFBox typically takes 35–68 % of the end-to-end timing on these scenarios.
+- The performance gate (`-Dgraphcompose.benchmark.enforceGate=true`) now uses
+  thresholds calibrated at ~3× the observed avg, leaving room for CI machine
+  variance while still catching ≥50 % regressions.
+- `peakHeapMb` reports the heap delta over the post-warmup baseline rather
+  than absolute used heap. The metric is closer to per-iteration allocation
+  pressure than to total live data.
 
 Examples:
 

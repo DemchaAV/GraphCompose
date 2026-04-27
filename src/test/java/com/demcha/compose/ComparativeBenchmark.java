@@ -54,8 +54,9 @@ public class ComparativeBenchmark {
 
         // Замер
         System.out.println("Measuring performance (" + MEASUREMENT_ITERATIONS + " iterations)...");
-        System.out.println(String.format("%-20s | %-12s | %-12s", "Library", "Avg Time (ms)", "Avg Heap (MB)"));
-        System.out.println("------------------------------------------------------------");
+        System.out.println();
+        System.out.printf("%-24s | %14s | %14s%n", "Library", "Avg Time (ms)", "Avg Heap (MB)");
+        System.out.println("-".repeat(60));
 
         List<ComparativeRow> rows = List.of(
                 runBenchmark("GraphCompose Canonical", ComparativeBenchmark::benchmarkGraphComposeCanonical),
@@ -79,7 +80,7 @@ public class ComparativeBenchmark {
                                 "%.2f".formatted(row.avgTimeMs()),
                                 "%.2f".formatted(row.avgHeapMb())))
                         .toList());
-        System.out.println("------------------------------------------------------------");
+        System.out.println("-".repeat(60));
         System.out.println("Saved JSON benchmark report to " + jsonPath);
         System.out.println("Saved CSV benchmark report to " + csvPath);
     }
@@ -111,7 +112,7 @@ public class ComparativeBenchmark {
         double avgTimeMs = (totalTimeNs / (double) MEASUREMENT_ITERATIONS) / 1_000_000.0;
         double avgMemMb = (totalAllocatedBytes / (double) MEASUREMENT_ITERATIONS) / (1024.0 * 1024.0);
 
-        System.out.println(String.format("%-20s | %12.2f | %12.2f", name, avgTimeMs, avgMemMb));
+        System.out.printf("%-24s | %14.2f | %14.2f%n", name, avgTimeMs, avgMemMb);
 
         // Печатаем dummy-переменную, чтобы JIT не вырезал код генерации
         if (dummyAccumulator == 0) System.out.println("Error: No bytes generated");

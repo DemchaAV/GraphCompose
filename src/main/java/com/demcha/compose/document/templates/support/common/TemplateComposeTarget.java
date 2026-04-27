@@ -120,6 +120,15 @@ public interface TemplateComposeTarget {
     void addDivider(TemplateDividerSpec divider);
 
     /**
+     * Appends one horizontal row block.
+     *
+     * @param row row instruction
+     */
+    default void addRow(TemplateRowSpec row) {
+        throw new UnsupportedOperationException("Template row rendering is not supported by this target.");
+    }
+
+    /**
      * Appends one semantic table block.
      *
      * @param table table instruction

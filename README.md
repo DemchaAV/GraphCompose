@@ -31,7 +31,7 @@ What you get out of the box:
 - **PDFBox rendering, isolated.** PDF backend lives behind a single backend interface. The DOCX semantic backend (Apache POI) is ready for callers who need an editable file.
 - **Tested at every layer.** 525 green tests on `main`, including 41 cinematic-feature tests, public-API leak guards, semantic-vs-engine isolation guards, and a brand-new `PdfVisualRegression` harness for screenshot-level checks.
 
-The current release is **v1.4.0** &mdash; the "cinematic" release. v1.3 stabilised the core (rows, per-side borders, auto-size text, DOCX export); v1.4 lands the visual-design layer that turns "tidy PDF" into "designed document".
+The current release is **v1.4.1** &mdash; the "cinematic" release. v1.3 stabilised the core (rows, per-side borders, auto-size text, DOCX export); v1.4 lands the visual-design layer that turns "tidy PDF" into "designed document".
 
 ## Visual preview
 
@@ -60,7 +60,7 @@ GraphCompose is currently distributed through JitPack.
 <dependency>
     <groupId>com.github.DemchaAV</groupId>
     <artifactId>GraphCompose</artifactId>
-    <version>v1.4.0</version>
+    <version>v1.4.1</version>
 </dependency>
 ```
 
@@ -70,11 +70,11 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.demchaav:GraphCompose:v1.4.0")
+    implementation("com.github.demchaav:GraphCompose:v1.4.1")
 }
 ```
 
-The project POM coordinates are `io.github.demchaav:graphcompose:1.4.0`. JitPack keeps the GitHub repository coordinate with a lowercase owner (`com.github.demchaav:GraphCompose:v1.4.0`) and the `v1.4.0` tag. The DOCX backend depends on `org.apache.poi:poi-ooxml`, declared as `optional` &mdash; add it explicitly when you call `session.export(new DocxSemanticBackend())`.
+The project POM coordinates are `io.github.demchaav:graphcompose:1.4.1`. JitPack keeps the GitHub repository coordinate with a lowercase owner (`com.github.demchaav:GraphCompose:v1.4.1`) and the `v1.4.1` tag. The DOCX backend depends on `org.apache.poi:poi-ooxml`, declared as `optional` &mdash; add it explicitly when you call `session.export(new DocxSemanticBackend())`.
 
 ## Quick start
 

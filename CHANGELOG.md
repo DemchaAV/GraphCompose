@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.4.1 - 2026-04-27
+
+### Documentation
+
+- README rewrite for v1.4.0 dropped three structural sections (`## Table component`, `## Line primitive`, `## Architecture at a glance`) that the `DocumentationCoverageTest` guards baseline. CI flagged the regression on the `main` branch; v1.4.1 restores the sections (the table snippet now also points readers to the new column-span feature), keeps the canonical-DSL anti-patterns out of the snippets, and moves the architecture mermaid diagram back into its dedicated section.
+
+### Tooling
+
+- `examples/src/main/java/com/demcha/examples/GenerateAllExamples.java` now wires `CinematicProposalFileExample.generate()` into the orchestrator, so the runnable examples module produces all seven fixtures (including `project-proposal-cinematic.pdf`) used by the README visual previews.
+
+This is a documentation-only patch release. There are no public API changes; v1.4.0 consumers can upgrade with no code changes.
+
+---
+
 ## v1.4.0 - 2026-04-27
 
 ### Headline — "cinematic document engine"

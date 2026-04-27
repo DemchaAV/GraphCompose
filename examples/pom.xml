@@ -6,12 +6,12 @@
 
     <groupId>io.github.demchaav</groupId>
     <artifactId>graphcompose-examples</artifactId>
-    <version>1.4.0</version>
+    <version>1.4.1</version>
     <name>GraphCompose Examples</name>
     <description>Runnable file-render examples for GraphCompose templates.</description>
 
     <properties>
-        <graphcompose.version>1.4.0</graphcompose.version>
+        <graphcompose.version>1.4.1</graphcompose.version>
         <logback.version>1.5.18</logback.version>
         <maven.compiler.release>21</maven.compiler.release>
     </properties>

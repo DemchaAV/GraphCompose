@@ -39,13 +39,21 @@ import java.util.concurrent.ConcurrentHashMap;
  * timeline of bold position + subtitle + description + bullets.</p>
  */
 public final class SidebarPortraitCvTemplateComposer {
-    private static final DocumentColor INK = DocumentColor.rgb(34, 34, 34);
-    private static final DocumentColor SOFT = DocumentColor.rgb(85, 85, 85);
-    private static final DocumentColor MUTED = DocumentColor.rgb(120, 120, 120);
+    // Body palette — used on the white main column.
+    private static final DocumentColor INK = DocumentColor.rgb(28, 28, 30);
+    private static final DocumentColor SOFT = DocumentColor.rgb(85, 85, 90);
+    private static final DocumentColor MUTED = DocumentColor.rgb(120, 120, 130);
+    // Cinematic sidebar — deep slate with a warm bronze accent and cream
+    // text. The header banner shares the same fill so the photo column
+    // and the headline land on a single bleed-to-edge backdrop.
+    private static final DocumentColor SIDEBAR_BG = DocumentColor.rgb(28, 32, 40);
+    private static final DocumentColor SIDEBAR_INK = DocumentColor.rgb(244, 240, 232);
+    private static final DocumentColor SIDEBAR_SOFT = DocumentColor.rgb(180, 178, 174);
+    private static final DocumentColor SIDEBAR_RULE = DocumentColor.rgb(70, 76, 86);
+    private static final DocumentColor ACCENT = DocumentColor.rgb(196, 166, 110);
     private static final DocumentColor RULE = DocumentColor.rgb(190, 190, 190);
-    private static final DocumentColor SIDEBAR_BG = DocumentColor.rgb(244, 244, 244);
-    private static final DocumentColor PHOTO_RING = DocumentColor.rgb(210, 210, 210);
-    private static final DocumentColor PHOTO_FILL = DocumentColor.rgb(225, 225, 225);
+    private static final DocumentColor PHOTO_RING = DocumentColor.rgb(196, 166, 110);
+    private static final DocumentColor PHOTO_FILL = DocumentColor.rgb(70, 78, 88);
     private static final FontName HEADLINE_FONT = FontName.CRIMSON_TEXT;
     private static final FontName SUBHEAD_FONT = FontName.PT_SERIF;
     private static final FontName BODY_FONT = FontName.LATO;
@@ -136,7 +144,7 @@ public final class SidebarPortraitCvTemplateComposer {
         if (lines.isEmpty()) {
             return;
         }
-        DocumentTextStyle style = style(BODY_FONT, 8.4, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle style = style(BODY_FONT, 8.4, DocumentTextDecoration.DEFAULT, SIDEBAR_INK);
         for (ContactLine contact : lines) {
             section.addParagraph(paragraph -> paragraph
                     .textStyle(style)
@@ -164,13 +172,13 @@ public final class SidebarPortraitCvTemplateComposer {
             return;
         }
         section.addLine(line -> line
-                .horizontal(170)
-                .color(RULE)
-                .thickness(0.6)
-                .margin(new DocumentInsets(8, 0, 4, 0)));
+                .horizontal(40)
+                .color(ACCENT)
+                .thickness(1.0)
+                .margin(new DocumentInsets(10, 0, 4, 0)));
         section.addParagraph(paragraph -> paragraph
                 .text(title.toUpperCase(Locale.ROOT))
-                .textStyle(style(SUBHEAD_FONT, 12.5, DocumentTextDecoration.BOLD, INK))
+                .textStyle(style(SUBHEAD_FONT, 12.5, DocumentTextDecoration.BOLD, SIDEBAR_INK))
                 .align(TextAlign.LEFT)
                 .margin(DocumentInsets.zero()));
     }
@@ -179,8 +187,8 @@ public final class SidebarPortraitCvTemplateComposer {
         List<String> items = moduleItems(module);
         for (String item : items.subList(0, Math.min(EDUCATION_LIMIT, items.size()))) {
             EducationEntry entry = parseEducationEntry(item);
-            DocumentTextStyle headingStyle = style(BODY_FONT, 8.6, DocumentTextDecoration.BOLD, INK);
-            DocumentTextStyle metaStyle = style(BODY_FONT, 8.2, DocumentTextDecoration.DEFAULT, SOFT);
+            DocumentTextStyle headingStyle = style(BODY_FONT, 8.6, DocumentTextDecoration.BOLD, SIDEBAR_INK);
+            DocumentTextStyle metaStyle = style(BODY_FONT, 8.2, DocumentTextDecoration.DEFAULT, SIDEBAR_SOFT);
 
             section.addParagraph(paragraph -> paragraph
                     .text(stripBasicMarkdown(entry.heading()).toUpperCase(Locale.ROOT))
@@ -208,7 +216,7 @@ public final class SidebarPortraitCvTemplateComposer {
     }
 
     private void addSkillsList(SectionBuilder section, CvModule module) {
-        DocumentTextStyle skillStyle = style(BODY_FONT, 8.4, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle skillStyle = style(BODY_FONT, 8.4, DocumentTextDecoration.DEFAULT, SIDEBAR_INK);
         List<String> items = moduleItems(module);
         for (String item : items.subList(0, Math.min(SKILL_LIMIT, items.size()))) {
             String text = firstClauseOf(item);
@@ -225,8 +233,8 @@ public final class SidebarPortraitCvTemplateComposer {
     }
 
     private void addLanguageList(SectionBuilder section, CvModule module) {
-        DocumentTextStyle nameStyle = style(BODY_FONT, 8.6, DocumentTextDecoration.BOLD, INK);
-        DocumentTextStyle metaStyle = style(BODY_FONT, 8.4, DocumentTextDecoration.DEFAULT, SOFT);
+        DocumentTextStyle nameStyle = style(BODY_FONT, 8.6, DocumentTextDecoration.BOLD, SIDEBAR_INK);
+        DocumentTextStyle metaStyle = style(BODY_FONT, 8.4, DocumentTextDecoration.DEFAULT, SIDEBAR_SOFT);
         List<String> items = moduleItems(module);
         for (String item : items.subList(0, Math.min(LANGUAGE_LIMIT, items.size()))) {
             String text = stripBasicMarkdown(item);
@@ -275,16 +283,21 @@ public final class SidebarPortraitCvTemplateComposer {
 
     private void addNameBlock(SectionBuilder section, Header header) {
         String name = name(header);
-        section.spacing(4)
+        section.spacing(6)
                 .padding(new DocumentInsets(34, 22, 20, 22))
                 .addParagraph(paragraph -> paragraph
                         .text(name)
-                        .textStyle(style(HEADLINE_FONT, 32, DocumentTextDecoration.DEFAULT, INK))
+                        .textStyle(style(HEADLINE_FONT, 34, DocumentTextDecoration.DEFAULT, SIDEBAR_INK))
                         .align(TextAlign.LEFT)
                         .margin(DocumentInsets.zero()))
+                .addLine(line -> line
+                        .horizontal(80)
+                        .color(ACCENT)
+                        .thickness(1.2)
+                        .margin(new DocumentInsets(2, 0, 2, 0)))
                 .addParagraph(paragraph -> paragraph
                         .text(spacedUpper("Your Professional Title Goes Here"))
-                        .textStyle(style(BODY_FONT, 9.0, DocumentTextDecoration.DEFAULT, SOFT))
+                        .textStyle(style(BODY_FONT, 9.0, DocumentTextDecoration.BOLD, ACCENT))
                         .align(TextAlign.LEFT)
                         .margin(DocumentInsets.zero()));
     }
@@ -298,6 +311,11 @@ public final class SidebarPortraitCvTemplateComposer {
                 .textStyle(style(SUBHEAD_FONT, 13, DocumentTextDecoration.BOLD, INK))
                 .align(TextAlign.LEFT)
                 .margin(DocumentInsets.top(8)));
+        section.addLine(line -> line
+                .horizontal(48)
+                .color(ACCENT)
+                .thickness(1.2)
+                .margin(new DocumentInsets(2, 0, 2, 0)));
     }
 
     private void addProfileBody(SectionBuilder section, CvModule module) {

@@ -38,6 +38,8 @@ public final class CinematicProposalFileExample {
     private static final DocumentColor PURPLE = DocumentColor.rgb(124, 82, 213);
     private static final DocumentColor PAPER_BLUE = DocumentColor.rgb(244, 248, 255);
     private static final DocumentColor LINE = DocumentColor.rgb(199, 211, 230);
+    private static final DocumentColor TABLE_BORDER = DocumentColor.rgb(178, 192, 218);
+    private static final DocumentColor STRIPE = DocumentColor.rgb(228, 236, 248);
 
     private CinematicProposalFileExample() {
     }
@@ -134,6 +136,8 @@ public final class CinematicProposalFileExample {
                                     .headerStyle(cellStyle(bold(8.2, NAVY), PAPER_BLUE, DocumentTableTextAnchor.CENTER))
                                     .columnStyle(0, cellStyle(regular(8.2, TEXT), null, DocumentTableTextAnchor.CENTER))
                                     .columnStyle(2, cellStyle(regular(8.2, TEXT), null, DocumentTableTextAnchor.CENTER))
+                                    .rowStyle(2, DocumentTableStyle.builder().fillColor(STRIPE).build())
+                                    .rowStyle(4, DocumentTableStyle.builder().fillColor(STRIPE).build())
                                     .header("Phase", "Description", "Timeline")
                                     .row("1", "Discovery", "2 weeks")
                                     .row("2", "Design", "3 weeks")
@@ -195,7 +199,7 @@ public final class CinematicProposalFileExample {
         return DocumentTableStyle.builder()
                 .padding(new DocumentInsets(5, 7, 5, 7))
                 .fillColor(fillColor)
-                .stroke(DocumentStroke.of(LINE, 0.45))
+                .stroke(DocumentStroke.of(TABLE_BORDER, 0.6))
                 .textStyle(textStyle)
                 .textAnchor(anchor)
                 .lineSpacing(1.2)

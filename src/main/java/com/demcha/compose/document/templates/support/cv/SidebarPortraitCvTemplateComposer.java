@@ -40,20 +40,20 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class SidebarPortraitCvTemplateComposer {
     // Body palette — used on the white main column.
-    private static final DocumentColor INK = DocumentColor.rgb(28, 28, 30);
-    private static final DocumentColor SOFT = DocumentColor.rgb(85, 85, 90);
-    private static final DocumentColor MUTED = DocumentColor.rgb(120, 120, 130);
-    // Cinematic sidebar — deep slate with a warm bronze accent and cream
-    // text. The header banner shares the same fill so the photo column
-    // and the headline land on a single bleed-to-edge backdrop.
-    private static final DocumentColor SIDEBAR_BG = DocumentColor.rgb(28, 32, 40);
-    private static final DocumentColor SIDEBAR_INK = DocumentColor.rgb(244, 240, 232);
-    private static final DocumentColor SIDEBAR_SOFT = DocumentColor.rgb(180, 178, 174);
-    private static final DocumentColor SIDEBAR_RULE = DocumentColor.rgb(70, 76, 86);
-    private static final DocumentColor ACCENT = DocumentColor.rgb(196, 166, 110);
+    private static final DocumentColor INK = DocumentColor.rgb(34, 34, 34);
+    private static final DocumentColor SOFT = DocumentColor.rgb(85, 85, 85);
+    private static final DocumentColor MUTED = DocumentColor.rgb(120, 120, 120);
+    // Light sidebar palette — soft grey banner that bleeds to the page
+    // edges, dark text on the grey column, and discreet hairline rules
+    // shared with the main section headers.
+    private static final DocumentColor SIDEBAR_BG = DocumentColor.rgb(244, 244, 244);
+    private static final DocumentColor SIDEBAR_INK = INK;
+    private static final DocumentColor SIDEBAR_SOFT = SOFT;
+    private static final DocumentColor SIDEBAR_RULE = DocumentColor.rgb(200, 200, 200);
+    private static final DocumentColor ACCENT = DocumentColor.rgb(150, 150, 150);
     private static final DocumentColor RULE = DocumentColor.rgb(190, 190, 190);
-    private static final DocumentColor PHOTO_RING = DocumentColor.rgb(196, 166, 110);
-    private static final DocumentColor PHOTO_FILL = DocumentColor.rgb(70, 78, 88);
+    private static final DocumentColor PHOTO_RING = DocumentColor.rgb(210, 210, 210);
+    private static final DocumentColor PHOTO_FILL = DocumentColor.rgb(225, 225, 225);
     private static final FontName HEADLINE_FONT = FontName.CRIMSON_TEXT;
     private static final FontName SUBHEAD_FONT = FontName.PT_SERIF;
     private static final FontName BODY_FONT = FontName.LATO;

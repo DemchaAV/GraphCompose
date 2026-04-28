@@ -39,6 +39,8 @@ public final class TimelineMinimalCvTemplateComposer {
     private static final double TIMELINE_DOT = 7.0;
     private static final double TIMELINE_LINE_BOX = 1.0;
     private static final double TIMELINE_LINE_OFFSET = (TIMELINE_DOT - TIMELINE_LINE_BOX) / 2.0;
+    private static final double CONTACT_ICON_SIZE = 10.5;
+    private static final double CONTACT_ICON_BASELINE_OFFSET = -1.35;
     private static final String CONTACT_ICON_ROOT = "/templates/cv/timeline-minimal/icons/";
     private static final Map<String, byte[]> CONTACT_ICON_CACHE = new ConcurrentHashMap<>();
 
@@ -125,10 +127,10 @@ public final class TimelineMinimalCvTemplateComposer {
                         if (line.iconFile() != null) {
                             rich.image(
                                     contactIcon(line.iconFile()),
-                                    9.0,
-                                    9.0,
+                                    CONTACT_ICON_SIZE,
+                                    CONTACT_ICON_SIZE,
                                     InlineImageAlignment.CENTER,
-                                    0.0,
+                                    CONTACT_ICON_BASELINE_OFFSET,
                                     line.linkOptions());
                         } else {
                             rich.style(line.fallbackIcon(), fallbackIconStyle);

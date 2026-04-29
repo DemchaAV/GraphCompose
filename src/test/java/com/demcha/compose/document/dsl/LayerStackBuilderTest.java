@@ -11,6 +11,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.function.BiConsumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -202,6 +203,61 @@ class LayerStackBuilderTest {
             assertThat(stackChildren).hasSize(3);
             assertThat(stackChildren).extracting(PlacedNode::semanticName)
                     .containsExactly("Behind", "Middle", "Front");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void alignmentShortcutsPlaceLayersAtTheRightCorner() {
+        verifyShortcutPlacement("TopLeft", LayerStackBuilder::topLeft, 0.0, 0.0);
+        verifyShortcutPlacement("TopCenter", LayerStackBuilder::topCenter, 0.5, 0.0);
+        verifyShortcutPlacement("TopRight", LayerStackBuilder::topRight, 1.0, 0.0);
+        verifyShortcutPlacement("CenterLeft", LayerStackBuilder::centerLeft, 0.0, 0.5);
+        verifyShortcutPlacement("Center", LayerStackBuilder::center, 0.5, 0.5);
+        verifyShortcutPlacement("CenterRight", LayerStackBuilder::centerRight, 1.0, 0.5);
+        verifyShortcutPlacement("BottomLeft", LayerStackBuilder::bottomLeft, 0.0, 1.0);
+        verifyShortcutPlacement("BottomCenter", LayerStackBuilder::bottomCenter, 0.5, 1.0);
+        verifyShortcutPlacement("BottomRight", LayerStackBuilder::bottomRight, 1.0, 1.0);
+    }
+
+    private static void verifyShortcutPlacement(
+            String label,
+            BiConsumer<LayerStackBuilder, com.demcha.compose.document.node.DocumentNode> shortcut,
+            double xFraction,
+            double yFraction) {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(420, 320)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            SpacerNode background = new SpacerNode(label + "-Bg", 300.0, 120.0,
+                    DocumentInsets.zero(), DocumentInsets.zero());
+            SpacerNode child = new SpacerNode(label + "-Child", 60.0, 24.0,
+                    DocumentInsets.zero(), DocumentInsets.zero());
+
+            LayerStackBuilder stack = new LayerStackBuilder()
+                    .name(label + "-Stack")
+                    .layer(background, LayerAlign.TOP_LEFT);
+            shortcut.accept(stack, child);
+
+            session.add(stack.build());
+            LayoutGraph graph = session.layoutGraph();
+
+            PlacedNode stackNode = nodeWithSemanticName(graph, label + "-Stack");
+            PlacedNode childNode = nodeWithSemanticName(graph, label + "-Child");
+
+            double expectedX = stackNode.placementX()
+                    + (stackNode.placementWidth() - childNode.placementWidth()) * xFraction;
+            double expectedY = stackNode.placementY()
+                    + (stackNode.placementHeight() - childNode.placementHeight()) * (1.0 - yFraction);
+
+            assertThat(childNode.placementX())
+                    .as("%s: x", label)
+                    .isEqualTo(expectedX, within(EPS));
+            assertThat(childNode.placementY())
+                    .as("%s: y", label)
+                    .isEqualTo(expectedY, within(EPS));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

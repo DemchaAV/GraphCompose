@@ -76,6 +76,46 @@ public final class LayerStackBuilder {
     }
 
     /**
+     * Appends a layer anchored to the top-left corner of the stack box.
+     *
+     * @param node child node
+     * @return this builder
+     */
+    public LayerStackBuilder topLeft(DocumentNode node) {
+        return layer(node, LayerAlign.TOP_LEFT);
+    }
+
+    /**
+     * Appends a layer anchored to the top edge, centered horizontally.
+     *
+     * @param node child node
+     * @return this builder
+     */
+    public LayerStackBuilder topCenter(DocumentNode node) {
+        return layer(node, LayerAlign.TOP_CENTER);
+    }
+
+    /**
+     * Appends a layer anchored to the top-right corner of the stack box.
+     *
+     * @param node child node
+     * @return this builder
+     */
+    public LayerStackBuilder topRight(DocumentNode node) {
+        return layer(node, LayerAlign.TOP_RIGHT);
+    }
+
+    /**
+     * Appends a layer anchored to the left edge, centered vertically.
+     *
+     * @param node child node
+     * @return this builder
+     */
+    public LayerStackBuilder centerLeft(DocumentNode node) {
+        return layer(node, LayerAlign.CENTER_LEFT);
+    }
+
+    /**
      * Appends a centered layer (typically the content above a background).
      *
      * @param node child node
@@ -83,6 +123,46 @@ public final class LayerStackBuilder {
      */
     public LayerStackBuilder center(DocumentNode node) {
         return layer(node, LayerAlign.CENTER);
+    }
+
+    /**
+     * Appends a layer anchored to the right edge, centered vertically.
+     *
+     * @param node child node
+     * @return this builder
+     */
+    public LayerStackBuilder centerRight(DocumentNode node) {
+        return layer(node, LayerAlign.CENTER_RIGHT);
+    }
+
+    /**
+     * Appends a layer anchored to the bottom-left corner of the stack box.
+     *
+     * @param node child node
+     * @return this builder
+     */
+    public LayerStackBuilder bottomLeft(DocumentNode node) {
+        return layer(node, LayerAlign.BOTTOM_LEFT);
+    }
+
+    /**
+     * Appends a layer anchored to the bottom edge, centered horizontally.
+     *
+     * @param node child node
+     * @return this builder
+     */
+    public LayerStackBuilder bottomCenter(DocumentNode node) {
+        return layer(node, LayerAlign.BOTTOM_CENTER);
+    }
+
+    /**
+     * Appends a layer anchored to the bottom-right corner of the stack box.
+     *
+     * @param node child node
+     * @return this builder
+     */
+    public LayerStackBuilder bottomRight(DocumentNode node) {
+        return layer(node, LayerAlign.BOTTOM_RIGHT);
     }
 
     /**

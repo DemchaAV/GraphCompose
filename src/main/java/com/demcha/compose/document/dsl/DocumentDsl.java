@@ -155,4 +155,19 @@ public final class DocumentDsl {
     public PageBreakBuilder pageBreak() {
         return new PageBreakBuilder();
     }
+
+    /**
+     * Builds a {@link RichText} run sequence in one call. Mirrors
+     * {@code RichText.empty()} chained with the supplied callback so the entry
+     * point lives next to the rest of the DSL builders.
+     *
+     * @param spec callback that appends runs to a fresh rich-text builder
+     * @return the configured rich-text run sequence
+     */
+    public RichText richText(Consumer<RichText> spec) {
+        Objects.requireNonNull(spec, "spec");
+        RichText richText = RichText.empty();
+        spec.accept(richText);
+        return richText;
+    }
 }

@@ -1,5 +1,61 @@
 # Changelog
 
+## v1.5.0-alpha.1 (in progress) - Phase A "Quick UX wins"
+
+This is the first slice of the v1.5 "Intuitive" release. Phase A only adds
+fluent shortcuts and renames; no public record signatures change for builders
+that survive — the one record extension lands in `LayerStackNode.Layer`, but
+its old constructors stay backward-compatible.
+
+### Public API
+
+- `LayerStackBuilder` now exposes nine alignment shortcuts (`topLeft`,
+  `topCenter`, `topRight`, `centerLeft`, `center`, `centerRight`, `bottomLeft`,
+  `bottomCenter`, `bottomRight`) on top of the existing `back`/`center` helpers.
+  Discoverable from autocomplete instead of forcing callers to remember the
+  full `LayerAlign` enum.
+- `LayerStackBuilder.position(node, offsetX, offsetY, anchor)` nudges a layer
+  from its anchor by an on-screen offset (positive `offsetX` = right, positive
+  `offsetY` = down). `LayerStackNode.Layer` gains `offsetX` / `offsetY`
+  components; the two existing constructors (`Layer(node)`, `Layer(node, align)`)
+  default both to `0.0` so existing callers compile unchanged.
+- `AbstractFlowBuilder` gains five convenience overloads for the most common
+  cases: `addShape(w, h, fill)`, `addEllipse(diameter, fill)`,
+  `addEllipse(w, h, fill)`, `addCircle(diameter, fill)`,
+  `addImage(data, w, h)`. Sugar over the existing builder-callback signatures.
+- `RowBuilder.spacing(double)` is now the canonical name for horizontal child
+  spacing. `RowBuilder.gap(double)` remains as a `@Deprecated(since = "1.5.0")`
+  alias that delegates to `spacing(...)`. CV templates and runnable examples
+  were migrated to the new name.
+- `RowBuilder.add(node)` now validates the child type **eagerly** and throws
+  `IllegalArgumentException` from the offending call site — instead of waiting
+  until `build()` and reporting `IllegalStateException` later. Existing tests
+  that asserted the deferred `IllegalStateException` were updated.
+- `DocumentDsl.richText(Consumer<RichText>)` is a new callback entry point
+  that builds a `RichText` run sequence in one fluent call alongside the rest
+  of the DSL builders.
+
+### Architecture
+
+- `BuiltInNodeDefinitions.PreparedStackLayout` now carries per-layer
+  `offsetsX` / `offsetsY` lists in addition to the existing `alignments`. A
+  backward-compatible single-arg constructor fills both with zeros.
+- `LayoutCompiler.compileStackedLayer` honours layer offsets after applying
+  alignment, so positioned layers shift in screen-space units.
+
+### Deferred to Phase B
+
+- `expandWidth()` / `expandHeight()` shortcuts and the matching
+  `addLine(thickness, color)` overload need new `expandWidth` / `expandHeight`
+  flags on the canonical record types. They are folded into Phase B together
+  with `ShapeContainerNode` and `Transform`, since all three are public-record
+  extensions and benefit from being released together.
+- `ListBuilder.addItem(label, Consumer<ListBuilder>)` for nested lists requires
+  a new `ListItem` value type and a `ListNode` record signature change. Also
+  moved into Phase B for the same reason.
+
+---
+
 ## v1.4.1 - 2026-04-27
 
 ### Documentation

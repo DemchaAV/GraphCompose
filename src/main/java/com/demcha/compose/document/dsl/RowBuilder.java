@@ -201,14 +201,31 @@ public final class RowBuilder {
     }
 
     /**
-     * Adds a pre-built atomic node as the next row child.
+     * Adds a pre-built atomic node as the next row child. Validates the child
+     * type immediately so authoring mistakes (e.g. dropping a row or a table
+     * into a row) fail at the offending call site rather than from {@code build()}.
      *
      * @param node atomic semantic node
      * @return this builder
+     * @throws NullPointerException if {@code node} is null
+     * @throws IllegalArgumentException if {@code node} is a {@link RowNode},
+     *         a {@link TableNode}, or any other type the row layout cannot host
      */
     public RowBuilder add(DocumentNode node) {
         if (node == null) {
             throw new NullPointerException("node");
+        }
+        if (node instanceof RowNode) {
+            throw new IllegalArgumentException("Row '" + name
+                    + "' cannot contain another row; use a section as a column instead.");
+        }
+        if (node instanceof TableNode) {
+            throw new IllegalArgumentException("Row '" + name
+                    + "' cannot contain a table; tables are splittable and would conflict with the row's atomic pagination.");
+        }
+        if (!isAllowedRowChild(node)) {
+            throw new IllegalArgumentException("Row '" + name + "' does not support child node type '"
+                    + node.getClass().getSimpleName() + "'.");
         }
         this.children.add(node);
         return this;
@@ -394,20 +411,6 @@ public final class RowBuilder {
             throw new IllegalStateException("RowBuilder weights size " + weights.size()
                     + " does not match children size " + children.size()
                     + ". Pass " + children.size() + " weights or call evenWeights().");
-        }
-        for (DocumentNode child : children) {
-            if (child instanceof RowNode) {
-                throw new IllegalStateException("Row '" + name
-                        + "' cannot contain another row; use a section as a column instead.");
-            }
-            if (child instanceof TableNode) {
-                throw new IllegalStateException("Row '" + name
-                        + "' cannot contain a table; tables are splittable and would conflict with the row's atomic pagination.");
-            }
-            if (!isAllowedRowChild(child)) {
-                throw new IllegalStateException("Row '" + name + "' does not support child node type '"
-                        + child.getClass().getSimpleName() + "'.");
-            }
         }
     }
 

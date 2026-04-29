@@ -151,7 +151,7 @@ class RowBuilderTest {
                             .addParagraph("Ok", DocumentTextStyle.DEFAULT)
                             .add(new RowBuilder().name("Inner").build()))
                     .build())
-                    .isInstanceOf(IllegalStateException.class)
+                    .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("Outer")
                     .hasMessageContaining("another row");
         } finally {
@@ -176,7 +176,7 @@ class RowBuilderTest {
                                     .row("only")
                                     .build()))
                     .build())
-                    .isInstanceOf(IllegalStateException.class)
+                    .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("Outer")
                     .hasMessageContaining("table");
         } finally {
@@ -185,6 +185,32 @@ class RowBuilderTest {
             } catch (Exception ignored) {
             }
         }
+    }
+
+    @Test
+    void rowAddRejectsNestedRowImmediately() {
+        // Validation runs at the offending add() call site, not deferred to build().
+        RowBuilder outer = new RowBuilder().name("EagerOuter");
+        RowNode innerRow = new RowBuilder().name("Inner").build();
+
+        assertThatThrownBy(() -> outer.add(innerRow))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("EagerOuter")
+                .hasMessageContaining("another row");
+    }
+
+    @Test
+    void rowAddRejectsTableImmediately() {
+        RowBuilder outer = new RowBuilder().name("EagerTbl");
+        var table = new TableBuilder()
+                .columns(com.demcha.compose.document.table.DocumentTableColumn.auto())
+                .row("only")
+                .build();
+
+        assertThatThrownBy(() -> outer.add(table))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("EagerTbl")
+                .hasMessageContaining("table");
     }
 
     @Test

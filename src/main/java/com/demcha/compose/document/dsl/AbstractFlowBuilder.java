@@ -422,6 +422,19 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     }
 
     /**
+     * Adds an image with explicit dimensions — shortcut for the common
+     * {@code addImage(i -> i.source(data).size(w, h))} call.
+     *
+     * @param data image source bytes/path/url
+     * @param width image width in points
+     * @param height image height in points
+     * @return this builder
+     */
+    public T addImage(DocumentImageData data, double width, double height) {
+        return add(new ImageBuilder().source(data).size(width, height).build());
+    }
+
+    /**
      * Adds a shape configured through a nested builder.
      *
      * @param spec shape builder callback
@@ -429,6 +442,19 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      */
     public T addShape(Consumer<ShapeBuilder> spec) {
         return add(BuilderSupport.configure(new ShapeBuilder(), spec).build());
+    }
+
+    /**
+     * Adds a filled shape with explicit dimensions — shortcut for the common
+     * {@code addShape(s -> s.size(w, h).fillColor(c))} call.
+     *
+     * @param width shape width in points
+     * @param height shape height in points
+     * @param fillColor canonical fill color
+     * @return this builder
+     */
+    public T addShape(double width, double height, DocumentColor fillColor) {
+        return add(new ShapeBuilder().size(width, height).fillColor(fillColor).build());
     }
 
     /**
@@ -473,6 +499,31 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     }
 
     /**
+     * Adds a filled circle ellipse — shortcut for
+     * {@code addEllipse(e -> e.circle(diameter).fillColor(fillColor))}.
+     *
+     * @param diameter circle diameter in points
+     * @param fillColor canonical fill color
+     * @return this builder
+     */
+    public T addEllipse(double diameter, DocumentColor fillColor) {
+        return add(new EllipseBuilder().circle(diameter).fillColor(fillColor).build());
+    }
+
+    /**
+     * Adds a filled ellipse with explicit width and height — shortcut for
+     * {@code addEllipse(e -> e.size(w, h).fillColor(fillColor))}.
+     *
+     * @param width ellipse width in points
+     * @param height ellipse height in points
+     * @param fillColor canonical fill color
+     * @return this builder
+     */
+    public T addEllipse(double width, double height, DocumentColor fillColor) {
+        return add(new EllipseBuilder().size(width, height).fillColor(fillColor).build());
+    }
+
+    /**
      * Adds a circle with equal width and height.
      *
      * @param diameter circle diameter in points
@@ -480,6 +531,18 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      */
     public T addCircle(double diameter) {
         return add(new EllipseBuilder().circle(diameter).build());
+    }
+
+    /**
+     * Adds a filled circle — shortcut for
+     * {@code addCircle(diameter, e -> e.fillColor(fillColor))}.
+     *
+     * @param diameter circle diameter in points
+     * @param fillColor canonical fill color
+     * @return this builder
+     */
+    public T addCircle(double diameter, DocumentColor fillColor) {
+        return add(new EllipseBuilder().circle(diameter).fillColor(fillColor).build());
     }
 
     /**

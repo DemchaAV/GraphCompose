@@ -7,6 +7,7 @@ import com.demcha.compose.document.node.ContainerNode;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.EllipseNode;
 import com.demcha.compose.document.node.ImageNode;
+import com.demcha.compose.document.node.LayerStackNode;
 import com.demcha.compose.document.node.LineNode;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.RowNode;
@@ -405,6 +406,11 @@ public final class RowBuilder {
                 || child instanceof SpacerNode
                 || child instanceof BarcodeNode
                 || child instanceof SectionNode
-                || child instanceof ContainerNode;
+                || child instanceof ContainerNode
+                // LayerStackNode is an atomic overlay composite: its layers
+                // share the same bounding box and do not compete with the
+                // parent row's horizontal band, so it is safe to drop into a
+                // row slot just like a section column.
+                || child instanceof LayerStackNode;
     }
 }

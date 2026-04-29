@@ -1,10 +1,13 @@
 package com.demcha.compose.document.templates.support.cv;
 
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.dsl.EllipseBuilder;
+import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.InlineImageAlignment;
+import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -35,13 +38,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * right.
  */
 public final class MonogramSidebarCvTemplateComposer {
-    private static final DocumentColor INK = DocumentColor.rgb(34, 42, 56);
-    private static final DocumentColor SOFT = DocumentColor.rgb(95, 105, 120);
-    private static final DocumentColor MUTED = DocumentColor.rgb(135, 145, 160);
-    private static final DocumentColor SIDEBAR_BG = DocumentColor.rgb(228, 230, 222);
-    private static final DocumentColor SIDEBAR_RULE = DocumentColor.rgb(170, 175, 165);
-    private static final DocumentColor ACCENT = DocumentColor.rgb(120, 135, 160);
-    private static final DocumentColor MONOGRAM_RING = DocumentColor.rgb(60, 75, 95);
+    private static final DocumentColor INK = DocumentColor.rgb(37, 45, 58);
+    private static final DocumentColor SOFT = DocumentColor.rgb(112, 119, 125);
+    private static final DocumentColor MUTED = DocumentColor.rgb(128, 135, 139);
+    private static final DocumentColor SIDEBAR_BG = DocumentColor.rgb(226, 235, 235);
+    private static final DocumentColor SIDEBAR_RULE = DocumentColor.rgb(138, 146, 148);
+    private static final DocumentColor MAIN_RULE = DocumentColor.rgb(72, 79, 84);
+    private static final DocumentColor ACCENT = DocumentColor.rgb(158, 146, 104);
+    private static final DocumentColor MONOGRAM_RING = DocumentColor.rgb(54, 62, 74);
     private static final FontName HEADLINE_FONT = FontName.CRIMSON_TEXT;
     private static final FontName MONOGRAM_FONT = FontName.PT_SERIF;
     private static final FontName BODY_FONT = FontName.LATO;
@@ -56,7 +60,7 @@ public final class MonogramSidebarCvTemplateComposer {
     private static final int EXPERIENCE_LIMIT = 2;
     private static final int DESCRIPTION_MAX_CHARS = 220;
     private static final int PROFILE_MAX_CHARS = 320;
-    private static final double MONOGRAM_DIAMETER = 78;
+    private static final double MONOGRAM_DIAMETER = 98;
 
     public void compose(DocumentSession document, CvDocumentSpec documentSpec) {
         CvDocumentSpec spec = Objects.requireNonNull(documentSpec, "documentSpec");
@@ -68,7 +72,7 @@ public final class MonogramSidebarCvTemplateComposer {
                 .padding(DocumentInsets.zero())
                 .addRow("MonogramSidebarFrame", row -> row
                         .gap(0)
-                        .weights(0.36, 0.64)
+                        .weights(0.33, 0.67)
                         .addSection("MonogramSidebarSidebar", section -> addSidebar(section, spec))
                         .addSection("MonogramSidebarMain", section -> addMain(section, spec)))
                 .build();
@@ -78,8 +82,8 @@ public final class MonogramSidebarCvTemplateComposer {
         // Generous bottom padding so the pale grey banner reaches the
         // bottom edge of an A4 page; the row child does not stretch on
         // its own.
-        section.spacing(10)
-                .padding(new DocumentInsets(28, 16, 70, 16))
+        section.spacing(8)
+                .padding(new DocumentInsets(18, 13, 70, 13))
                 .fillColor(SIDEBAR_BG);
 
         addMonogramBlock(section, initials(spec.header()));
@@ -101,20 +105,24 @@ public final class MonogramSidebarCvTemplateComposer {
     }
 
     private void addMonogramBlock(SectionBuilder section, String initials) {
-        // The engine forbids nested horizontal composites (LayerStack) inside
-        // a Row, so the monogram is rendered as a stack of two flow children:
-        // a stroked circle on top and the initials paragraph immediately
-        // beneath it. Visually reads as a labelled badge.
-        section.addCircle(MONOGRAM_DIAMETER, circle -> circle
-                .name("MonogramRing")
-                .stroke(DocumentStroke.of(MONOGRAM_RING, 1.6))
-                .margin(DocumentInsets.zero()));
-        section.addParagraph(paragraph -> paragraph
-                .name("MonogramInitials")
-                .text(initials)
-                .textStyle(style(MONOGRAM_FONT, 18, DocumentTextDecoration.BOLD, MONOGRAM_RING))
-                .align(TextAlign.CENTER)
-                .margin(DocumentInsets.top(4)));
+        // Real overlay: the engine now allows LayerStackNode inside row
+        // slots, so the monogram is a single atomic stack with a stroked
+        // circle on the back layer and the initials centered on the front
+        // layer.
+        section.addLayerStack(stack -> stack
+                .name("MonogramBadge")
+                .margin(DocumentInsets.zero())
+                .back(new EllipseBuilder()
+                        .name("MonogramRing")
+                        .size(MONOGRAM_DIAMETER, MONOGRAM_DIAMETER)
+                        .stroke(DocumentStroke.of(MONOGRAM_RING, 1.25))
+                        .build())
+                .layer(new ParagraphBuilder()
+                        .name("MonogramInitials")
+                        .text(initials)
+                        .textStyle(style(MONOGRAM_FONT, 22, DocumentTextDecoration.BOLD, MONOGRAM_RING))
+                        .align(TextAlign.CENTER)
+                        .build(), LayerAlign.CENTER));
     }
 
     private void addSidebarHeader(SectionBuilder section, String title) {
@@ -123,15 +131,15 @@ public final class MonogramSidebarCvTemplateComposer {
         }
         section.addParagraph(paragraph -> paragraph
                 .text(spacedUpper(title))
-                .textStyle(style(BODY_FONT, 8.6, DocumentTextDecoration.BOLD, INK))
+                .textStyle(style(BODY_FONT, 8.0, DocumentTextDecoration.BOLD, INK))
                 .align(TextAlign.CENTER)
                 .lineSpacing(1.2)
-                .margin(DocumentInsets.top(8)));
+                .margin(DocumentInsets.top(6)));
         section.addLine(line -> line
-                .horizontal(110)
+                .horizontal(105)
                 .color(SIDEBAR_RULE)
-                .thickness(0.5)
-                .margin(new DocumentInsets(2, 0, 2, 0)));
+                .thickness(0.45)
+                .margin(new DocumentInsets(1, 0, 2, 0)));
     }
 
     private void addContactBlock(SectionBuilder section, Header header) {
@@ -139,17 +147,17 @@ public final class MonogramSidebarCvTemplateComposer {
         if (lines.isEmpty()) {
             return;
         }
-        DocumentTextStyle textStyle = style(BODY_FONT, 8.2, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle textStyle = style(BODY_FONT, 7.4, DocumentTextDecoration.DEFAULT, SOFT);
         for (ContactLine contact : lines) {
             if (contact.iconFile() != null) {
                 section.addParagraph(paragraph -> paragraph
                         .textStyle(textStyle)
                         .align(TextAlign.CENTER)
-                        .margin(DocumentInsets.top(6))
+                        .margin(DocumentInsets.top(4))
                         .rich(rich -> rich.image(
                                 contactIcon(contact.iconFile()),
-                                10.0,
-                                10.0,
+                                9.0,
+                                9.0,
                                 InlineImageAlignment.CENTER,
                                 0.0,
                                 contact.linkOptions())));
@@ -171,9 +179,9 @@ public final class MonogramSidebarCvTemplateComposer {
     }
 
     private void addEducationEntries(SectionBuilder section, CvModule module) {
-        DocumentTextStyle headingStyle = style(BODY_FONT, 8.6, DocumentTextDecoration.BOLD, INK);
-        DocumentTextStyle subStyle = style(BODY_FONT, 8.2, DocumentTextDecoration.DEFAULT, INK);
-        DocumentTextStyle metaStyle = style(BODY_FONT, 7.8, DocumentTextDecoration.DEFAULT, MUTED);
+        DocumentTextStyle headingStyle = style(BODY_FONT, 7.6, DocumentTextDecoration.BOLD, INK);
+        DocumentTextStyle subStyle = style(BODY_FONT, 7.4, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle metaStyle = style(BODY_FONT, 7.2, DocumentTextDecoration.DEFAULT, ACCENT);
 
         List<String> items = moduleItems(module);
         for (String item : items.subList(0, Math.min(EDUCATION_LIMIT, items.size()))) {
@@ -204,7 +212,7 @@ public final class MonogramSidebarCvTemplateComposer {
     }
 
     private void addSkillsList(SectionBuilder section, CvModule module) {
-        DocumentTextStyle skillStyle = style(BODY_FONT, 8.4, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle skillStyle = style(BODY_FONT, 7.4, DocumentTextDecoration.DEFAULT, SOFT);
         List<String> items = moduleItems(module);
         for (String item : items.subList(0, Math.min(SKILL_LIMIT, items.size()))) {
             String text = firstClauseOf(item);
@@ -215,14 +223,14 @@ public final class MonogramSidebarCvTemplateComposer {
                     .text(stripBasicMarkdown(text))
                     .textStyle(skillStyle)
                     .align(TextAlign.CENTER)
-                    .lineSpacing(1.3)
-                    .margin(DocumentInsets.top(2)));
+                    .lineSpacing(1.25)
+                    .margin(DocumentInsets.top(1)));
         }
     }
 
     private void addMain(SectionBuilder section, CvDocumentSpec spec) {
-        section.spacing(8)
-                .padding(new DocumentInsets(36, 28, 24, 28));
+        section.spacing(5)
+                .padding(new DocumentInsets(12, 20, 24, 18));
 
         addNameBlock(section, spec.header());
 
@@ -241,22 +249,22 @@ public final class MonogramSidebarCvTemplateComposer {
 
     private void addNameBlock(SectionBuilder section, Header header) {
         String[] parts = splitName(name(header));
-        DocumentTextStyle nameStyle = style(HEADLINE_FONT, 32, DocumentTextDecoration.DEFAULT, INK);
-        DocumentTextStyle titleStyle = style(BODY_FONT, 9.0, DocumentTextDecoration.BOLD, SOFT);
+        DocumentTextStyle nameStyle = style(HEADLINE_FONT, 30, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle titleStyle = style(BODY_FONT, 7.4, DocumentTextDecoration.BOLD, ACCENT);
 
         for (String part : parts) {
             section.addParagraph(paragraph -> paragraph
                     .text(spacedUpper(part))
                     .textStyle(nameStyle)
-                    .align(TextAlign.LEFT)
-                    .lineSpacing(2)
+                    .align(TextAlign.CENTER)
+                    .lineSpacing(1.0)
                     .margin(DocumentInsets.zero()));
         }
         section.addParagraph(paragraph -> paragraph
                 .text(spacedUpper("Your Professional Title"))
                 .textStyle(titleStyle)
-                .align(TextAlign.LEFT)
-                .margin(DocumentInsets.top(4)));
+                .align(TextAlign.CENTER)
+                .margin(DocumentInsets.zero()));
     }
 
     private void addMainSectionHeader(SectionBuilder section, String title) {
@@ -265,13 +273,18 @@ public final class MonogramSidebarCvTemplateComposer {
         }
         section.addParagraph(paragraph -> paragraph
                 .text(spacedUpper(title))
-                .textStyle(style(BODY_FONT, 11.5, DocumentTextDecoration.BOLD, INK))
+                .textStyle(style(BODY_FONT, 9.0, DocumentTextDecoration.BOLD, INK))
                 .align(TextAlign.LEFT)
-                .margin(DocumentInsets.top(8)));
+                .margin(DocumentInsets.top(6)));
+        section.addLine(line -> line
+                .horizontal(355)
+                .color(MAIN_RULE)
+                .thickness(0.55)
+                .margin(new DocumentInsets(1, 0, 4, 0)));
     }
 
     private void addProfileBody(SectionBuilder section, CvModule module) {
-        DocumentTextStyle bodyStyle = style(BODY_FONT, 8.8, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle bodyStyle = style(BODY_FONT, 7.5, DocumentTextDecoration.DEFAULT, INK);
         for (CvModule.BodyBlock block : module.bodyBlocks()) {
             if (block.kind() == CvModule.BodyKind.PARAGRAPH) {
                 String text = safe(block.text()).trim();
@@ -279,9 +292,9 @@ public final class MonogramSidebarCvTemplateComposer {
                     continue;
                 }
                 section.addParagraph(paragraph -> paragraph
-                        .text(excerpt(text, PROFILE_MAX_CHARS))
+                        .text(excerpt(stripBasicMarkdown(text), PROFILE_MAX_CHARS))
                         .textStyle(bodyStyle)
-                        .lineSpacing(1.5)
+                        .lineSpacing(1.35)
                         .align(TextAlign.LEFT)
                         .margin(DocumentInsets.top(4)));
             } else if (block.kind() == CvModule.BodyKind.LIST) {
@@ -291,9 +304,9 @@ public final class MonogramSidebarCvTemplateComposer {
                     continue;
                 }
                 section.addParagraph(paragraph -> paragraph
-                        .text(excerpt(joined, PROFILE_MAX_CHARS))
+                        .text(excerpt(stripBasicMarkdown(joined), PROFILE_MAX_CHARS))
                         .textStyle(bodyStyle)
-                        .lineSpacing(1.5)
+                        .lineSpacing(1.35)
                         .align(TextAlign.LEFT)
                         .margin(DocumentInsets.top(4)));
             }
@@ -301,9 +314,9 @@ public final class MonogramSidebarCvTemplateComposer {
     }
 
     private void addExperienceEntries(SectionBuilder section, CvModule module) {
-        DocumentTextStyle positionStyle = style(BODY_FONT, 9.4, DocumentTextDecoration.BOLD, INK);
-        DocumentTextStyle dateStyle = style(BODY_FONT, 8.2, DocumentTextDecoration.BOLD, ACCENT);
-        DocumentTextStyle bodyStyle = style(BODY_FONT, 8.6, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle positionStyle = style(BODY_FONT, 7.8, DocumentTextDecoration.BOLD, INK);
+        DocumentTextStyle dateStyle = style(BODY_FONT, 7.4, DocumentTextDecoration.BOLD, ACCENT);
+        DocumentTextStyle bodyStyle = style(BODY_FONT, 7.4, DocumentTextDecoration.DEFAULT, INK);
 
         List<String> items = moduleItems(module);
         for (String item : items.subList(0, Math.min(EXPERIENCE_LIMIT, items.size()))) {
@@ -312,7 +325,8 @@ public final class MonogramSidebarCvTemplateComposer {
                     .text(stripBasicMarkdown(entry.position()).toUpperCase(Locale.ROOT))
                     .textStyle(positionStyle)
                     .align(TextAlign.LEFT)
-                    .margin(DocumentInsets.top(8)));
+                    .lineSpacing(1.15)
+                    .margin(DocumentInsets.top(5)));
             if (!entry.date().isBlank()) {
                 section.addParagraph(paragraph -> paragraph
                         .text(spacedUpper(stripBasicMarkdown(entry.date())))
@@ -324,9 +338,9 @@ public final class MonogramSidebarCvTemplateComposer {
                 section.addParagraph(paragraph -> paragraph
                         .text(excerpt(entry.description(), DESCRIPTION_MAX_CHARS))
                         .textStyle(bodyStyle)
-                        .lineSpacing(1.4)
+                        .lineSpacing(1.35)
                         .align(TextAlign.LEFT)
-                        .margin(DocumentInsets.top(2)));
+                        .margin(DocumentInsets.top(1)));
             }
         }
     }

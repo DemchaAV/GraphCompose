@@ -8,6 +8,7 @@ import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTransform;
 import com.demcha.compose.document.style.ShapeOutline;
 
 import java.awt.Color;
@@ -27,7 +28,7 @@ import java.util.Objects;
  *
  * @author Artem Demchyshyn
  */
-public final class ShapeContainerBuilder {
+public final class ShapeContainerBuilder implements Transformable<ShapeContainerBuilder> {
     private String name = "";
     private ShapeOutline outline;
     private final List<LayerStackNode.Layer> layers = new ArrayList<>();
@@ -38,6 +39,7 @@ public final class ShapeContainerBuilder {
     private DocumentStroke stroke;
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
+    private DocumentTransform transform = DocumentTransform.NONE;
 
     /**
      * Creates a shape-container builder with no outline configured yet.
@@ -202,6 +204,28 @@ public final class ShapeContainerBuilder {
     }
 
     /**
+     * Sets the render-time affine transform (rotation around the
+     * placement centre and/or scaling). The {@link Transformable#rotate(double)},
+     * {@link Transformable#scale(double)}, and
+     * {@link Transformable#scale(double, double)} shortcuts delegate
+     * through this setter.
+     *
+     * @param transform new transform; {@code null} resets to
+     *                  {@link DocumentTransform#NONE}
+     * @return this builder
+     */
+    @Override
+    public ShapeContainerBuilder transform(DocumentTransform transform) {
+        this.transform = transform == null ? DocumentTransform.NONE : transform;
+        return this;
+    }
+
+    @Override
+    public DocumentTransform currentTransform() {
+        return transform;
+    }
+
+    /**
      * Appends a layer with explicit alignment.
      *
      * @param node child node
@@ -313,6 +337,6 @@ public final class ShapeContainerBuilder {
                     "ShapeContainerBuilder '" + name + "' requires an outline; "
                             + "call rectangle/roundedRect/ellipse/circle before build().");
         }
-        return new ShapeContainerNode(name, outline, layers, clipPolicy, fillColor, stroke, padding, margin);
+        return new ShapeContainerNode(name, outline, layers, clipPolicy, fillColor, stroke, padding, margin, transform);
     }
 }

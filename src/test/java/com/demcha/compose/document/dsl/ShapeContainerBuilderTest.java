@@ -15,6 +15,7 @@ import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTransform;
 import com.demcha.compose.document.style.ShapeOutline;
 import org.junit.jupiter.api.Test;
 
@@ -435,6 +436,108 @@ class ShapeContainerBuilderTest {
                         .as("clip-begin at index %d (owner %s) must be followed by a matching clip-end on the same page",
                                 i, begin.ownerPath())
                         .isGreaterThan(i);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void defaultTransformIsIdentity() {
+        ShapeContainerNode node = new ShapeContainerBuilder()
+                .name("Plain")
+                .circle(40)
+                .center(spacer("L", 10, 10))
+                .build();
+        assertThat(node.transform()).isEqualTo(DocumentTransform.NONE);
+        assertThat(node.transform().isIdentity()).isTrue();
+    }
+
+    @Test
+    void rotateShortcutSetsTransformWithIdentityScales() {
+        ShapeContainerNode node = new ShapeContainerBuilder()
+                .name("Rotated")
+                .circle(40)
+                .rotate(15)
+                .center(spacer("L", 10, 10))
+                .build();
+        assertThat(node.transform().rotationDegrees()).isEqualTo(15.0, within(EPS));
+        assertThat(node.transform().scaleX()).isEqualTo(1.0, within(EPS));
+        assertThat(node.transform().scaleY()).isEqualTo(1.0, within(EPS));
+        assertThat(node.transform().isIdentity()).isFalse();
+    }
+
+    @Test
+    void scaleUniformShortcutAppliesToBothAxes() {
+        ShapeContainerNode node = new ShapeContainerBuilder()
+                .name("Scaled")
+                .circle(40)
+                .scale(0.5)
+                .center(spacer("L", 10, 10))
+                .build();
+        assertThat(node.transform().scaleX()).isEqualTo(0.5, within(EPS));
+        assertThat(node.transform().scaleY()).isEqualTo(0.5, within(EPS));
+        assertThat(node.transform().rotationDegrees()).isEqualTo(0.0, within(EPS));
+    }
+
+    @Test
+    void rotateThenScaleComposesIntoSameTransform() {
+        // The Transformable mixin defaults preserve the existing scale
+        // when rotate(...) is called and vice-versa, so calling them in
+        // sequence yields a single transform with both effects applied.
+        ShapeContainerNode node = new ShapeContainerBuilder()
+                .name("RotatedAndScaled")
+                .circle(40)
+                .rotate(45)
+                .scale(2.0, 0.5)
+                .center(spacer("L", 10, 10))
+                .build();
+        assertThat(node.transform().rotationDegrees()).isEqualTo(45.0, within(EPS));
+        assertThat(node.transform().scaleX()).isEqualTo(2.0, within(EPS));
+        assertThat(node.transform().scaleY()).isEqualTo(0.5, within(EPS));
+    }
+
+    @Test
+    void transformDoesNotShiftPlacementCoordinates() {
+        // Render-time transform: the canonical layout layer measures and
+        // places against the natural bounding box, so layout snapshots
+        // stay deterministic regardless of rotation/scale. A 45-degree
+        // rotation must not change placementX / placementY.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            session.add(new ShapeContainerBuilder()
+                    .name("RotatedCircle")
+                    .circle(80)
+                    .fillColor(BRAND)
+                    .center(spacer("L", 20, 10))
+                    .build());
+
+            LayoutGraph plain = session.layoutGraph();
+            PlacedNode plainNode = nodeWithSemanticName(plain, "RotatedCircle");
+
+            try (DocumentSession rotated = GraphCompose.document()
+                    .pageSize(400, 300)
+                    .margin(DocumentInsets.of(20))
+                    .create()) {
+
+                rotated.add(new ShapeContainerBuilder()
+                        .name("RotatedCircle")
+                        .circle(80)
+                        .fillColor(BRAND)
+                        .rotate(45)
+                        .center(spacer("L", 20, 10))
+                        .build());
+
+                LayoutGraph rotatedGraph = rotated.layoutGraph();
+                PlacedNode rotatedNode = nodeWithSemanticName(rotatedGraph, "RotatedCircle");
+
+                assertThat(rotatedNode.placementX()).isEqualTo(plainNode.placementX(), within(EPS));
+                assertThat(rotatedNode.placementY()).isEqualTo(plainNode.placementY(), within(EPS));
+                assertThat(rotatedNode.placementWidth()).isEqualTo(plainNode.placementWidth(), within(EPS));
+                assertThat(rotatedNode.placementHeight()).isEqualTo(plainNode.placementHeight(), within(EPS));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

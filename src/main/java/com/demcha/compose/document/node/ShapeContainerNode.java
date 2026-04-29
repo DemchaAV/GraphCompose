@@ -4,6 +4,7 @@ import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTransform;
 import com.demcha.compose.document.style.ShapeOutline;
 
 import java.util.ArrayList;
@@ -39,6 +40,14 @@ import java.util.Objects;
  * @param stroke optional outline stroke
  * @param padding inner padding applied around all layers (subtracted from outline)
  * @param margin outer margin around the container
+ * @param transform render-time affine transform (rotation around the
+ *                  placement centre and/or scaling) applied to the
+ *                  outline + layers as a single unit; defaults to
+ *                  {@link DocumentTransform#NONE}. The canonical layout
+ *                  layer measures and places the node against its
+ *                  natural bounding box — backends apply the transform
+ *                  during render so layout snapshots stay deterministic
+ *                  regardless of rotation/scale.
  *
  * @author Artem Demchyshyn
  */
@@ -50,8 +59,34 @@ public record ShapeContainerNode(
         DocumentColor fillColor,
         DocumentStroke stroke,
         DocumentInsets padding,
-        DocumentInsets margin
+        DocumentInsets margin,
+        DocumentTransform transform
 ) implements DocumentNode {
+
+    /**
+     * Convenience constructor that defaults the {@code transform} to
+     * {@link DocumentTransform#NONE}. Lets existing callers built before
+     * Phase C compile without changes.
+     *
+     * @param name node name used in snapshots and layout graph paths
+     * @param outline geometric outline that drives the bounding box
+     * @param layers child layers in back-to-front order
+     * @param clipPolicy how children are clipped relative to the outline
+     * @param fillColor optional outline fill colour
+     * @param stroke optional outline stroke
+     * @param padding inner padding applied around all layers
+     * @param margin outer margin around the container
+     */
+    public ShapeContainerNode(String name,
+                              ShapeOutline outline,
+                              List<LayerStackNode.Layer> layers,
+                              ClipPolicy clipPolicy,
+                              DocumentColor fillColor,
+                              DocumentStroke stroke,
+                              DocumentInsets padding,
+                              DocumentInsets margin) {
+        this(name, outline, layers, clipPolicy, fillColor, stroke, padding, margin, DocumentTransform.NONE);
+    }
 
     /**
      * Normalizes optional values, copies the layer list defensively, and
@@ -79,6 +114,7 @@ public record ShapeContainerNode(
         clipPolicy = clipPolicy == null ? ClipPolicy.CLIP_PATH : clipPolicy;
         padding = padding == null ? DocumentInsets.zero() : padding;
         margin = margin == null ? DocumentInsets.zero() : margin;
+        transform = transform == null ? DocumentTransform.NONE : transform;
     }
 
     /**

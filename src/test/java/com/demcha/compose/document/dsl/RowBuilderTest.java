@@ -6,6 +6,7 @@ import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.PlacedNode;
 import com.demcha.compose.document.node.LayerAlign;
+import com.demcha.compose.document.node.RowNode;
 import com.demcha.compose.document.node.SpacerNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -342,6 +343,17 @@ class RowBuilderTest {
             assertThat(graph.totalPages()).isEqualTo(1);
             assertThat(findNodeBySemanticName(graph.nodes(), "DirectBadge")).isNotNull();
         }
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void spacingAndDeprecatedGapProduceTheSameRowNode() {
+        RowNode viaSpacing = new RowBuilder().name("Row").spacing(12).build();
+        RowNode viaGap = new RowBuilder().name("Row").gap(12).build();
+
+        assertThat(viaSpacing.gap()).isEqualTo(12.0);
+        assertThat(viaGap.gap()).isEqualTo(12.0);
+        assertThat(viaSpacing.gap()).isEqualTo(viaGap.gap());
     }
 
     private static PlacedNode findNodeBySemanticName(List<PlacedNode> nodes, String name) {

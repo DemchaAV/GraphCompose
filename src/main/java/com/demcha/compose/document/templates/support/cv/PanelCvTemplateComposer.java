@@ -82,7 +82,7 @@ public final class PanelCvTemplateComposer {
 
     private void addTwoColumnBody(PageFlowBuilder flow, CvDocumentSpec spec) {
         flow.addRow("PanelCvColumns", row -> row
-                .gap(layout.columnGap())
+                .spacing(layout.columnGap())
                 .weights(layout.sidebarWeight(), layout.mainWeight())
                 .addSection("PanelCvSidebar", sidebar -> {
                     sidebar.spacing(layout.panelGap())
@@ -105,7 +105,7 @@ public final class PanelCvTemplateComposer {
     private void addStackedBody(PageFlowBuilder flow, CvDocumentSpec spec) {
         addModulePanel(flow, "Summary", "Profile", findModule(spec, "summary", "professional summary", "profile"), false);
         flow.addRow("PanelCvStackedCards", row -> row
-                .gap(layout.columnGap())
+                .spacing(layout.columnGap())
                 .weights(1, 1)
                 .addSection("PanelCvStackedLeft", left -> {
                     left.spacing(layout.panelGap());

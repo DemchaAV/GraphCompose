@@ -81,7 +81,7 @@ public final class MonogramSidebarCvTemplateComposer {
                 .spacing(0)
                 .padding(DocumentInsets.zero())
                 .addRow("MonogramSidebarFrame", row -> row
-                        .gap(0)
+                        .spacing(0)
                         .weights(0.33, 0.67)
                         .addSection("MonogramSidebarSidebar",
                                 section -> addSidebar(section, spec, sidebarInnerWidth))

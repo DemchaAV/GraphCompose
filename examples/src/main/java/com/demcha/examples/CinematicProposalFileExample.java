@@ -57,7 +57,7 @@ public final class CinematicProposalFileExample {
                     .name("CinematicProjectProposal")
                     .spacing(12)
                     .addRow("ProposalHeader", row -> row
-                            .gap(18)
+                            .spacing(18)
                             .weights(4.2, 0.8)
                             .addSection("TitleBlock", section -> section
                                     .spacing(6)
@@ -91,7 +91,7 @@ public final class CinematicProposalFileExample {
                                     .lineSpacing(2)
                                     .margin(DocumentInsets.zero())))
                     .addRow("ObjectivesAndImage", row -> row
-                            .gap(18)
+                            .spacing(18)
                             .weights(1.05, 1)
                             .addSection("Objectives", section -> section
                                     .spacing(7)

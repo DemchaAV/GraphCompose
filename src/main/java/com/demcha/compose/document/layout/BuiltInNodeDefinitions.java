@@ -374,6 +374,63 @@ public final class BuiltInNodeDefinitions {
     }
 
     /**
+     * Marker payload that opens a graphics-state clip region for the layers
+     * inside a {@link ShapeContainerNode}. The fragment carries the absolute
+     * outline rectangle (its {@code x}/{@code y}/{@code width}/{@code height}
+     * already match the outline once placed) plus the policy that decided
+     * whether the clip applies to the bounding box, the outline path, or is
+     * skipped.
+     *
+     * <p>The PDF backend uses this payload to emit
+     * {@code saveGraphicsState() + add path + clip()}; a matching
+     * {@link ShapeClipEndPayload} fragment that arrives after every layer
+     * fragment of the same container then emits {@code restoreGraphicsState()}.
+     * Backends that cannot express path clipping (e.g. DOCX/POI) skip both
+     * fragments and emit a capability warning instead.</p>
+     *
+     * @param outline outline geometry to clip against
+     * @param policy clip policy chosen for the container; renderers may
+     *               degrade {@link com.demcha.compose.document.style.ClipPolicy#CLIP_PATH}
+     *               to {@link com.demcha.compose.document.style.ClipPolicy#CLIP_BOUNDS}
+     *               when path clipping is unavailable
+     * @param ownerPath semantic path of the owning container — used by
+     *                  architecture-guard tests to verify the begin/end
+     *                  pair balance
+     */
+    public record ShapeClipBeginPayload(
+            com.demcha.compose.document.style.ShapeOutline outline,
+            com.demcha.compose.document.style.ClipPolicy policy,
+            String ownerPath
+    ) {
+        /**
+         * Validates the outline / policy and normalizes the owner path.
+         */
+        public ShapeClipBeginPayload {
+            Objects.requireNonNull(outline, "outline");
+            Objects.requireNonNull(policy, "policy");
+            ownerPath = ownerPath == null ? "" : ownerPath;
+        }
+    }
+
+    /**
+     * Marker payload that closes the graphics-state clip region opened by a
+     * matching {@link ShapeClipBeginPayload}. The {@code ownerPath} is
+     * carried so balance can be verified — every begin must have an end with
+     * the same path, and they must arrive on the same page.
+     *
+     * @param ownerPath semantic path of the owning container; matches the
+     *                  begin payload that opened the clip region
+     */
+    public record ShapeClipEndPayload(String ownerPath) {
+        /**
+         * Normalizes the owner path.
+         */
+        public ShapeClipEndPayload {
+            ownerPath = ownerPath == null ? "" : ownerPath;
+        }
+    }
+
+    /**
      * PDF payload for a resolved image fragment.
      *
      * @param imageData image source data
@@ -1106,32 +1163,71 @@ public final class BuiltInNodeDefinitions {
             }
             Color awtFill = node.fillColor() == null ? null : node.fillColor().color();
             Stroke stroke = toStroke(node.stroke());
-            return switch (outline) {
-                case ShapeOutline.Ellipse ignored -> List.of(new LayoutFragment(
+            LayoutFragment outlineFragment = switch (outline) {
+                case ShapeOutline.Ellipse ignored -> new LayoutFragment(
                         placement.path(),
                         0,
                         padLeft,
                         padBottom,
                         width,
                         height,
-                        new EllipseFragmentPayload(awtFill, stroke, null, null)));
-                case ShapeOutline.Rectangle ignored -> List.of(new LayoutFragment(
+                        new EllipseFragmentPayload(awtFill, stroke, null, null));
+                case ShapeOutline.Rectangle ignored -> new LayoutFragment(
                         placement.path(),
                         0,
                         padLeft,
                         padBottom,
                         width,
                         height,
-                        new ShapeFragmentPayload(awtFill, stroke, 0.0, null, null, null)));
-                case ShapeOutline.RoundedRectangle r -> List.of(new LayoutFragment(
+                        new ShapeFragmentPayload(awtFill, stroke, 0.0, null, null, null));
+                case ShapeOutline.RoundedRectangle r -> new LayoutFragment(
                         placement.path(),
                         0,
                         padLeft,
                         padBottom,
                         width,
                         height,
-                        new ShapeFragmentPayload(awtFill, stroke, r.cornerRadius(), null, null, null)));
+                        new ShapeFragmentPayload(awtFill, stroke, r.cornerRadius(), null, null, null));
             };
+            // For OVERFLOW_VISIBLE we emit just the outline. Otherwise we
+            // also emit a clip-begin marker that the PDF render handler
+            // turns into saveGraphicsState() + add path + clip(). The
+            // matching clip-end marker is emitted by emitOverlayFragments
+            // so it arrives after every layer fragment of this container.
+            if (node.clipPolicy() == com.demcha.compose.document.style.ClipPolicy.OVERFLOW_VISIBLE) {
+                return List.of(outlineFragment);
+            }
+            return List.of(
+                    outlineFragment,
+                    new LayoutFragment(
+                            placement.path(),
+                            1,
+                            padLeft,
+                            padBottom,
+                            width,
+                            height,
+                            new ShapeClipBeginPayload(outline, node.clipPolicy(), placement.path())));
+        }
+
+        @Override
+        public List<LayoutFragment> emitOverlayFragments(PreparedNode<ShapeContainerNode> prepared,
+                                                         FragmentContext ctx,
+                                                         FragmentPlacement placement) {
+            ShapeContainerNode node = prepared.node();
+            if (node.clipPolicy() == com.demcha.compose.document.style.ClipPolicy.OVERFLOW_VISIBLE) {
+                return List.of();
+            }
+            // The end marker carries no spatial extent: it is a graphics-state
+            // restore op, not a drawn shape. The owning placement contributes
+            // page index + path so begin and end land on the same page surface.
+            return List.of(new LayoutFragment(
+                    placement.path(),
+                    2,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    new ShapeClipEndPayload(placement.path())));
         }
     }
 

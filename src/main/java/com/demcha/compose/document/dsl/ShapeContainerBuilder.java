@@ -31,7 +31,9 @@ public final class ShapeContainerBuilder {
     private String name = "";
     private ShapeOutline outline;
     private final List<LayerStackNode.Layer> layers = new ArrayList<>();
-    private ClipPolicy clipPolicy = ClipPolicy.CLIP_BOUNDS;
+    // Default to CLIP_PATH per ADR §Decision — see ShapeContainerNode for
+    // the rationale.
+    private ClipPolicy clipPolicy = ClipPolicy.CLIP_PATH;
     private DocumentColor fillColor;
     private DocumentStroke stroke;
     private DocumentInsets padding = DocumentInsets.zero();
@@ -120,7 +122,7 @@ public final class ShapeContainerBuilder {
      * @return this builder
      */
     public ShapeContainerBuilder clipPolicy(ClipPolicy clipPolicy) {
-        this.clipPolicy = clipPolicy == null ? ClipPolicy.CLIP_BOUNDS : clipPolicy;
+        this.clipPolicy = clipPolicy == null ? ClipPolicy.CLIP_PATH : clipPolicy;
         return this;
     }
 

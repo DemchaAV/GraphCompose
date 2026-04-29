@@ -44,6 +44,7 @@ compatibility concerns. New authoring features should be added through
 | Horizontal divider | Partial | `DividerBuilder` remains a convenience over a thin shape. |
 | Arbitrary line path | Done | Use `addLine(...)` for horizontal, vertical, diagonal, and custom lines. |
 | Circle/ellipse | Done | Use `addEllipse(...)` or `addCircle(...)` with fill and stroke. |
+| Shape-as-container (clipped) | Partial | Use `addCircle(diameter, fill, inside)` / `addEllipse(w, h, fill, inside)` / `addContainer(...)` (canonical `ShapeContainerNode`). PDF backend honours `ClipPolicy.CLIP_PATH` / `CLIP_BOUNDS` / `OVERFLOW_VISIBLE`; DOCX backend cannot express graphics-state path clipping (Apache POI limitation), so it renders the layers inline without the outline frame and logs a one-time `docx.export.shape-container-fallback` capability warning per export pass. Authors who need the outline must export to PDF. |
 
 ## Text
 

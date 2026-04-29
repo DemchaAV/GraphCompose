@@ -37,16 +37,13 @@ class CanonicalSurfaceGuardTest {
 
     private static final Set<String> CANONICAL_BENCHMARK_ALLOWLIST = Set.of();
 
-    private static final Set<String> PUBLIC_MARKDOWN_ALLOWLIST = Set.of(
-            // The v1.5 audit doc is itself a historical audit note — it
-            // names the retired legacy surface (com.demcha.templates.*,
-            // com.demcha.compose.v2.*, GraphCompose.pdf(...), PdfComposer)
-            // to record that those packages have been removed. The test
-            // method name (publicMarkdownDocsShouldAvoidLegacySurface
-            // *OutsideHistoricalAuditNotes*) explicitly carves this case
-            // out; add new entries only when the document is genuinely
-            // an audit / migration / parity log.
-            "docs/v1.5-audit-and-roadmap.md");
+    // Add an entry here only when a public markdown document genuinely
+    // needs to name retired legacy surface (com.demcha.templates.*,
+    // com.demcha.compose.v2.*, GraphCompose.pdf(...), PdfComposer) —
+    // i.e. an audit / migration / parity log. Internal planning docs
+    // should live outside the public docs surface (see .gitignore →
+    // docs/private/).
+    private static final Set<String> PUBLIC_MARKDOWN_ALLOWLIST = Set.of();
     private static final List<String> FORBIDDEN_PUBLIC_AUTHORING_IMPORTS = List.of(
             "import com.demcha.compose.engine.");
 
@@ -164,6 +161,11 @@ class CanonicalSurfaceGuardTest {
             try (var paths = Files.walk(root)) {
                 paths.filter(Files::isRegularFile)
                         .filter(path -> path.toString().endsWith(".md"))
+                        // docs/private/ is gitignored — it holds local-only
+                        // planning notes, audits, and roadmap drafts that
+                        // are not part of the public docs surface and so
+                        // are not subject to this guard.
+                        .filter(path -> !relative(path).startsWith("docs/private/"))
                         .filter(path -> !allowlist.contains(relative(path)))
                         .filter(this::containsForbiddenToken)
                         .map(this::relative)

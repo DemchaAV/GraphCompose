@@ -43,5 +43,11 @@ build/
 /rectangle.pdf
 /Test.pdf
 /AGENTS.md
-/.claude/worktrees/objective-austin-6d3a65/
-/.claude/worktrees/
+
+### Local-only / not for the public repo ###
+# Claude Code working directory (settings, worktrees, transcripts).
+.claude/
+# Internal planning, audit, and roadmap notes that should not ship in the
+# public docs surface. Files placed here stay on disk for the author and
+# stay out of git.
+docs/private/

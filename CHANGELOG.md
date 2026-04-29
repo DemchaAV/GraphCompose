@@ -1,5 +1,109 @@
 # Changelog
 
+## v1.5.0-beta.1 (in progress) - Phase B "Shape-as-container" (full pipeline)
+
+Phase B follow-up to alpha.2: lands the actual shape-clipped render path.
+The PDF backend now honours `ClipPolicy.CLIP_PATH` (default) and
+`CLIP_BOUNDS`, so a circle with a child label clips the label to the
+circle's outline. `OVERFLOW_VISIBLE` skips clipping entirely. The DOCX
+backend renders a graceful fallback (layers without outline + capability
+warning) since Apache POI cannot express graphics-state path clipping.
+
+### Public API
+
+- `ShapeContainerNode` and `ShapeContainerBuilder` now default to
+  `ClipPolicy.CLIP_PATH` per ADR §Decision — the natural reading of "add
+  a circle with a label inside" is that the label is clipped by the
+  circle's outline. Callers who explicitly want axis-aligned bbox
+  clipping or no clipping at all set the policy through
+  `clipPolicy(...)`.
+
+### Architecture
+
+- `NodeDefinition` gains a default `emitOverlayFragments(...)` hook
+  alongside the existing `emitFragments(...)`. Most node types do not
+  need it — opening decorations (backgrounds, borders, outlines) already
+  render before children. The overlay hook exists for paired begin/end
+  markers such as the graphics-state save/restore pair used by
+  `ShapeContainerNode`: the clip-begin fragment is emitted via
+  `emitFragments` (so it sits behind the children), and the matching
+  clip-end fragment via `emitOverlayFragments` (so it sits after the
+  children, restoring graphics state on the same page).
+- New engine-side payload pair on `BuiltInNodeDefinitions`:
+  `ShapeClipBeginPayload` (carries outline geometry + chosen policy +
+  owner path) and `ShapeClipEndPayload` (carries owner path). They are
+  marker payloads — the begin emits `saveGraphicsState() + add path +
+  clip()`, the end emits `restoreGraphicsState()`. Owner path lets
+  invariant tests verify that every begin pairs with an end on the
+  same page.
+- `LayoutCompiler.compileStackedLayer` and
+  `LayoutCompiler.compileNodeInFixedSlot` (STACK branch) now invoke
+  `definition.emitOverlayFragments(...)` after children are placed and
+  append the result to the fragment list. A new
+  `compositeOverlayFragments(...)` helper mirrors the existing
+  `compositeDecorationFragments(...)` shape so multi-page composites can
+  emit per-page overlays if they ever need to. Today only
+  `ShapeContainerDefinition` opts in.
+- New PDF render handlers in
+  `com.demcha.compose.document.backend.fixed.pdf.handlers`:
+  `PdfShapeClipBeginRenderHandler` and `PdfShapeClipEndRenderHandler`,
+  registered alongside the existing default handlers in
+  `PdfFixedLayoutBackend`. The begin handler builds an ellipse,
+  rounded-rectangle, or rectangle path (matching the outline kind) and
+  applies it as a graphics-state clip; the end handler issues the
+  matching `restoreGraphicsState()`.
+
+### DOCX backend
+
+- `DocxSemanticBackend` now recognises `ShapeContainerNode`. Apache POI
+  cannot express path clipping, so the backend renders the container's
+  layers inline without the outline frame and logs a one-time
+  `docx.export.shape-container-fallback` capability warning per export
+  pass. The fallback rule is recorded in
+  `docs/canonical-legacy-parity.md` under "Surfaces and structure".
+  Authors who need the outline must export to PDF.
+
+### Tests
+
+- `ShapeContainerBuilderTest` extended with three fragment-ordering
+  tests: default `CLIP_PATH` emits outline → clip-begin → layer →
+  clip-end in the right order with matching owner paths;
+  `OVERFLOW_VISIBLE` emits no clip markers; multi-container documents
+  keep every begin/end pair balanced. Plus a PDF render smoke test that
+  ensures the new handlers dispatch cleanly through
+  `PdfFixedLayoutBackend.toPdfBytes()`.
+- New `DocxSemanticBackendTest.shapeContainerExportsLayersInlineWithoutOutline`
+  pins the DOCX fallback contract: layer paragraph text survives,
+  outline does not.
+- New `ShapeContainerInvariantsTest` (architecture-guard) pins the two
+  cross-document invariants: `ShapeContainerNode` placement is
+  single-page (`SHAPE_ATOMIC`), and every `ShapeClipBeginPayload` has a
+  matching `ShapeClipEndPayload` with the same owner path on the same
+  page across an arbitrary mix of policies and outline kinds.
+
+### Documentation
+
+- New recipe `docs/recipes/shape-as-container.md` covers hello-circle,
+  layered ellipse with a badge + label, rounded card with `RichText`
+  body, the three clip policies, and edge cases (oversized container,
+  DOCX fallback). Plus a "How the rendering pipeline emits a clipped
+  container" section that documents the fragment sequence so readers
+  who hit visual surprises can trace them through the layout layer.
+- `docs/canonical-legacy-parity.md` gains a "Shape-as-container
+  (clipped)" row explaining that the PDF backend honours all three clip
+  policies while DOCX renders layers inline without the outline.
+
+### Deferred
+
+- B.7 (snapshot extension exposing the clip-path geometry directly on
+  `PlacedFragment` plus an `assertHasClipPath(...)` helper) is partly
+  redundant with the existing `ShapeClipBeginPayload` already carried on
+  the placed fragment — the dedicated helper lands later.
+- Visual baselines (`circle-with-text`, `ellipse-with-overlay`,
+  `rounded-rect-card`) come with B.10 / Phase F polish.
+
+---
+
 ## v1.5.0-alpha.2 (in progress) - Phase B "Shape-as-container"
 
 This release starts Phase B: shape-as-container support on the canonical

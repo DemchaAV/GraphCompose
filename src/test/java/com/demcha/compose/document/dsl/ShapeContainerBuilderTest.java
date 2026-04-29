@@ -3,7 +3,9 @@ package com.demcha.compose.document.dsl;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.exceptions.AtomicNodeTooLargeException;
+import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.LayoutGraph;
+import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.PlacedNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.ShapeContainerNode;
@@ -17,6 +19,7 @@ import com.demcha.compose.document.style.ShapeOutline;
 import org.junit.jupiter.api.Test;
 
 import java.awt.Color;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -259,6 +262,192 @@ class ShapeContainerBuilderTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Test
+    void defaultClipPolicyEmitsClipPathBeginAndEndFragmentsAroundLayers() {
+        // The default clip policy is CLIP_PATH, so a circle with a label
+        // should produce four ordered fragments on the same page:
+        //   1) outline (Ellipse payload)
+        //   2) clip-begin marker referencing the outline geometry
+        //   3) the label (Spacer has no payload, but every layer fragment
+        //      from descendants ends up between begin and end)
+        //   4) clip-end marker
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            session.add(new ShapeContainerBuilder()
+                    .name("ClipDefault")
+                    .circle(80.0)
+                    .fillColor(BRAND)
+                    .center(spacer("Inside", 30.0, 14.0))
+                    .build());
+
+            LayoutGraph graph = session.layoutGraph();
+            List<PlacedFragment> fragments = graph.fragments();
+
+            int begin = indexOfPayload(fragments, BuiltInNodeDefinitions.ShapeClipBeginPayload.class);
+            int end = indexOfPayload(fragments, BuiltInNodeDefinitions.ShapeClipEndPayload.class);
+            int outline = indexOfPayload(fragments, BuiltInNodeDefinitions.EllipseFragmentPayload.class);
+
+            assertThat(outline).as("outline fragment present").isGreaterThanOrEqualTo(0);
+            assertThat(begin).as("clip-begin fragment present").isGreaterThanOrEqualTo(0);
+            assertThat(end).as("clip-end fragment present").isGreaterThanOrEqualTo(0);
+            assertThat(outline).isLessThan(begin);
+            assertThat(begin).isLessThan(end);
+
+            BuiltInNodeDefinitions.ShapeClipBeginPayload beginPayload =
+                    (BuiltInNodeDefinitions.ShapeClipBeginPayload) fragments.get(begin).payload();
+            BuiltInNodeDefinitions.ShapeClipEndPayload endPayload =
+                    (BuiltInNodeDefinitions.ShapeClipEndPayload) fragments.get(end).payload();
+
+            assertThat(beginPayload.policy()).isEqualTo(ClipPolicy.CLIP_PATH);
+            assertThat(beginPayload.outline()).isInstanceOf(ShapeOutline.Ellipse.class);
+            assertThat(endPayload.ownerPath())
+                    .as("begin and end markers must reference the same owner path")
+                    .isEqualTo(beginPayload.ownerPath())
+                    .isNotEmpty();
+            assertThat(fragments.get(begin).pageIndex())
+                    .as("begin and end must land on the same page so save/restore balance")
+                    .isEqualTo(fragments.get(end).pageIndex());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void overflowVisibleEmitsNoClipMarkers() {
+        // Explicit OVERFLOW_VISIBLE means the layout should NOT emit clip
+        // markers — children render without graphics-state changes, so
+        // floating overlays such as badges sticking past the outline are
+        // intentional.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            session.add(new ShapeContainerBuilder()
+                    .name("Overflow")
+                    .circle(80.0)
+                    .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                    .fillColor(BRAND)
+                    .center(spacer("Inside", 30.0, 14.0))
+                    .build());
+
+            LayoutGraph graph = session.layoutGraph();
+            List<PlacedFragment> fragments = graph.fragments();
+
+            assertThat(indexOfPayload(fragments, BuiltInNodeDefinitions.ShapeClipBeginPayload.class))
+                    .as("OVERFLOW_VISIBLE must skip the clip-begin marker")
+                    .isEqualTo(-1);
+            assertThat(indexOfPayload(fragments, BuiltInNodeDefinitions.ShapeClipEndPayload.class))
+                    .as("OVERFLOW_VISIBLE must skip the clip-end marker")
+                    .isEqualTo(-1);
+            assertThat(indexOfPayload(fragments, BuiltInNodeDefinitions.EllipseFragmentPayload.class))
+                    .as("outline still rendered")
+                    .isGreaterThanOrEqualTo(0);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void shapeContainerRendersToValidPdfBytesWithoutError() throws Exception {
+        // End-to-end smoke: ensure the new clip-begin/clip-end fragments
+        // dispatch cleanly through the PDF backend (handlers registered,
+        // graphics state balances per page). The test does not enforce a
+        // pixel baseline — visual baselines land later in B.7.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            session.add(new ShapeContainerBuilder()
+                    .name("Smoke")
+                    .circle(80.0)
+                    .fillColor(BRAND)
+                    .center(spacer("Inside", 30.0, 14.0))
+                    .build());
+            session.add(new ShapeContainerBuilder()
+                    .name("OverlayCard")
+                    .roundedRect(180.0, 80.0, 8.0)
+                    .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                    .center(spacer("Caption", 60.0, 12.0))
+                    .build());
+
+            byte[] bytes = session.toPdfBytes();
+            assertThat(bytes).isNotEmpty();
+            // PDF magic header — every valid PDF starts with %PDF-
+            assertThat(new String(bytes, 0, 5, java.nio.charset.StandardCharsets.US_ASCII))
+                    .isEqualTo("%PDF-");
+        }
+    }
+
+    @Test
+    void everyClipBeginHasAMatchingClipEnd() {
+        // Architecture invariant: the page-breaker keeps outline + clip
+        // markers on a single page (SHAPE_ATOMIC), so every begin must
+        // pair with an end that shares the same owner path AND page index.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 600)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            session.add(new ShapeContainerBuilder()
+                    .name("First")
+                    .circle(60.0)
+                    .center(spacer("L1", 20.0, 10.0))
+                    .build());
+            session.add(new ShapeContainerBuilder()
+                    .name("Second")
+                    .roundedRect(180.0, 80.0, 8.0)
+                    .center(spacer("L2", 40.0, 12.0))
+                    .build());
+
+            LayoutGraph graph = session.layoutGraph();
+            List<PlacedFragment> fragments = graph.fragments();
+
+            long begins = fragments.stream()
+                    .filter(f -> f.payload() instanceof BuiltInNodeDefinitions.ShapeClipBeginPayload)
+                    .count();
+            long ends = fragments.stream()
+                    .filter(f -> f.payload() instanceof BuiltInNodeDefinitions.ShapeClipEndPayload)
+                    .count();
+            assertThat(begins).isEqualTo(2);
+            assertThat(ends).isEqualTo(2);
+
+            for (int i = 0; i < fragments.size(); i++) {
+                if (!(fragments.get(i).payload() instanceof BuiltInNodeDefinitions.ShapeClipBeginPayload begin)) {
+                    continue;
+                }
+                int pairedEnd = -1;
+                for (int j = i + 1; j < fragments.size(); j++) {
+                    if (fragments.get(j).payload() instanceof BuiltInNodeDefinitions.ShapeClipEndPayload end
+                            && end.ownerPath().equals(begin.ownerPath())
+                            && fragments.get(j).pageIndex() == fragments.get(i).pageIndex()) {
+                        pairedEnd = j;
+                        break;
+                    }
+                }
+                assertThat(pairedEnd)
+                        .as("clip-begin at index %d (owner %s) must be followed by a matching clip-end on the same page",
+                                i, begin.ownerPath())
+                        .isGreaterThan(i);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static int indexOfPayload(List<PlacedFragment> fragments, Class<?> payloadType) {
+        for (int i = 0; i < fragments.size(); i++) {
+            if (payloadType.isInstance(fragments.get(i).payload())) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private static SpacerNode spacer(String name, double width, double height) {

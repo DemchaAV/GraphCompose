@@ -588,6 +588,30 @@ public final class LayoutCompiler {
             fragments.addAll(decorationInsertIndex, decorationFragments);
         }
 
+        // Overlay fragments arrive AFTER children — they are the
+        // "after the body" half of paired begin/end markers (e.g. the
+        // graphics-state restore of a ShapeContainerNode clip path).
+        List<PlacedFragment> overlayFragments = compositeOverlayFragments(
+                prepared,
+                definition,
+                path,
+                parentPath,
+                childIndex,
+                depth,
+                placementX,
+                placementTopY,
+                endPageBottomY,
+                naturalMeasure.width(),
+                startPage,
+                endPage,
+                margin,
+                padding,
+                state.canvas,
+                fragmentContext);
+        if (!overlayFragments.isEmpty()) {
+            fragments.addAll(overlayFragments);
+        }
+
         nodes.set(stackNodeIndex, new PlacedNode(
                 path,
                 semanticName,
@@ -1014,6 +1038,27 @@ public final class LayoutCompiler {
                     fragments.addAll(decorationInsertIndex, stackDecorations);
                 }
 
+                List<PlacedFragment> stackOverlays = compositeOverlayFragments(
+                        prepared,
+                        definition,
+                        path,
+                        parentPath,
+                        childIndex,
+                        depth,
+                        placementX,
+                        placementTopY,
+                        placementY + margin.bottom(),
+                        measure.width(),
+                        pageIndex,
+                        pageIndex,
+                        margin,
+                        padding,
+                        canvas,
+                        fragmentContext);
+                if (!stackOverlays.isEmpty()) {
+                    fragments.addAll(stackOverlays);
+                }
+
                 nodes.set(nodeIndex, new PlacedNode(
                         path,
                         semanticName,
@@ -1194,6 +1239,56 @@ public final class LayoutCompiler {
                     margin,
                     padding);
             placed.addAll(toPlacedFragments(definition.emitFragments(prepared, fragmentContext, placement), placement));
+        }
+
+        return List.copyOf(placed);
+    }
+
+    private List<PlacedFragment> compositeOverlayFragments(PreparedNode<DocumentNode> prepared,
+                                                           NodeDefinition<DocumentNode> definition,
+                                                           String path,
+                                                           String parentPath,
+                                                           int childIndex,
+                                                           int depth,
+                                                           double placementX,
+                                                           double startPageTopY,
+                                                           double endPageBottomY,
+                                                           double placementWidth,
+                                                           int startPage,
+                                                           int endPage,
+                                                           Margin margin,
+                                                           Padding padding,
+                                                           LayoutCanvas canvas,
+                                                           FragmentContext fragmentContext) {
+        List<PlacedFragment> placed = new ArrayList<>();
+        double pageTopY = canvas.height() - canvas.margin().top();
+        double pageBottomY = canvas.margin().bottom();
+
+        for (int pageIndex = startPage; pageIndex <= endPage; pageIndex++) {
+            double segmentTopY = pageIndex == startPage ? startPageTopY : pageTopY;
+            double segmentBottomY = pageIndex == endPage ? endPageBottomY : pageBottomY;
+            segmentTopY = Math.min(segmentTopY, pageTopY);
+            segmentBottomY = Math.max(pageBottomY, Math.min(segmentBottomY, segmentTopY));
+            double segmentHeight = segmentTopY - segmentBottomY;
+            if (segmentHeight <= EPS) {
+                continue;
+            }
+
+            FragmentPlacement placement = new FragmentPlacement(
+                    path,
+                    parentPath,
+                    childIndex,
+                    depth,
+                    pageIndex,
+                    placementX,
+                    segmentBottomY,
+                    placementWidth,
+                    segmentHeight,
+                    startPage,
+                    endPage,
+                    margin,
+                    padding);
+            placed.addAll(toPlacedFragments(definition.emitOverlayFragments(prepared, fragmentContext, placement), placement));
         }
 
         return List.copyOf(placed);

@@ -2,7 +2,11 @@ package com.demcha.compose.document.backend.semantic;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.dsl.ParagraphBuilder;
+import com.demcha.compose.document.dsl.ShapeContainerBuilder;
+import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.output.DocumentMetadata;
+import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableColumn;
@@ -88,6 +92,42 @@ class DocxSemanticBackendTest {
             assertThat(props.getTitle()).isEqualTo("Q1 Report");
             assertThat(props.getCreator()).isEqualTo("Engineering");
             assertThat(props.getKeywords()).isEqualTo("docx, metadata, report");
+        }
+    }
+
+    @Test
+    void shapeContainerExportsLayersInlineWithoutOutline() throws Exception {
+        // POI/DOCX has no portable equivalent of a graphics-state path
+        // clip, so the canonical contract (canonical-legacy-parity.md)
+        // is for DocxSemanticBackend to render a ShapeContainer's layers
+        // inline — the inner paragraph survives, but the circle outline
+        // is not drawn. The single capability warning is logged once per
+        // export pass.
+        ParagraphNode label = new ParagraphBuilder()
+                .text("Featured")
+                .build();
+        byte[] docxBytes;
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(595, 842)
+                .margin(DocumentInsets.of(36))
+                .create()) {
+
+            session.add(new ShapeContainerBuilder()
+                    .name("Highlight")
+                    .circle(80.0)
+                    .fillColor(DocumentColor.rgb(180, 40, 40))
+                    .center(label)
+                    .build());
+
+            docxBytes = session.export(new DocxSemanticBackend());
+        }
+
+        assertThat(docxBytes).isNotEmpty();
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
+            assertThat(document.getParagraphs().stream().map(XWPFParagraph::getText))
+                    .as("layer paragraph text survives the ShapeContainer fallback")
+                    .anyMatch(text -> text.contains("Featured"));
         }
     }
 }

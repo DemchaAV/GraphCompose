@@ -70,7 +70,13 @@ public record ShapeContainerNode(
             normalized.add(Objects.requireNonNull(layer, "layer"));
         }
         layers = List.copyOf(normalized);
-        clipPolicy = clipPolicy == null ? ClipPolicy.CLIP_BOUNDS : clipPolicy;
+        // Default to CLIP_PATH per ADR §Decision: a ShapeContainerNode is
+        // *the* shape-with-children primitive, and the natural reading of
+        // "add a circle with a label inside" is that the label is clipped
+        // by the circle's outline. Callers who explicitly want
+        // axis-aligned bbox clipping or no clipping at all set the policy
+        // through the builder.
+        clipPolicy = clipPolicy == null ? ClipPolicy.CLIP_PATH : clipPolicy;
         padding = padding == null ? DocumentInsets.zero() : padding;
         margin = margin == null ? DocumentInsets.zero() : margin;
     }

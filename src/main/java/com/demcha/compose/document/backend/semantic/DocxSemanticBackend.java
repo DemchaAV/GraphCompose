@@ -12,6 +12,7 @@ import com.demcha.compose.document.node.PageBreakNode;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.RowNode;
 import com.demcha.compose.document.node.SectionNode;
+import com.demcha.compose.document.node.ShapeContainerNode;
 import com.demcha.compose.document.node.SpacerNode;
 import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.node.TextAlign;
@@ -31,6 +32,8 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageMar;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageSz;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STPageOrientation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -38,6 +41,7 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Functional canonical DOCX semantic backend backed by Apache POI.
@@ -56,6 +60,11 @@ import java.util.List;
  */
 public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static final double POINT_TO_TWIP = 20.0;
+    private static final Logger LOG = LoggerFactory.getLogger(DocxSemanticBackend.class);
+    // One capability warning per export pass keeps the log readable when a
+    // template uses many shape containers. Reset on every export() call so
+    // each session sees the warning at least once.
+    private final AtomicBoolean shapeContainerWarned = new AtomicBoolean(false);
 
     /**
      * Creates a DOCX semantic backend.
@@ -70,6 +79,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     @Override
     public byte[] export(DocumentGraph graph, SemanticExportContext context) throws Exception {
+        shapeContainerWarned.set(false);
         try (XWPFDocument document = new XWPFDocument()) {
             applyPageGeometry(document, context.canvas());
             applyOutputOptions(document, context.outputOptions());
@@ -125,6 +135,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writePageBreak(document);
         } else if (node instanceof RowNode row) {
             writeRow(document, row);
+        } else if (node instanceof ShapeContainerNode shapeContainer) {
+            writeShapeContainer(document, shapeContainer);
         } else if (node instanceof ContainerNode || node instanceof SectionNode) {
             for (DocumentNode child : node.children()) {
                 writeNode(document, child);
@@ -133,6 +145,26 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // Unsupported node kinds (line, ellipse, shape, barcode) are silently
         // skipped in the semantic export. Authors who need pixel-perfect output
         // should use the PDF fixed-layout backend.
+    }
+
+    private void writeShapeContainer(XWPFDocument document, ShapeContainerNode node) throws Exception {
+        // POI/DOCX has no portable equivalent of a graphics-state path clip.
+        // The fallback rule (recorded in docs/canonical-legacy-parity.md) is
+        // to render the container's layers inline, in source order, without
+        // the outline frame and without clipping. The resulting Word document
+        // shows the layer content but not the shape boundary — authors who
+        // need the boundary must export to PDF.
+        if (shapeContainerWarned.compareAndSet(false, true)) {
+            LOG.warn("docx.export.shape-container-fallback "
+                    + "outline='{}' clipPolicy={} — DOCX has no graphics-state clip; "
+                    + "rendering layers inline without outline. "
+                    + "(One warning per export; use the PDF backend for full fidelity.)",
+                    node.outline().getClass().getSimpleName(),
+                    node.clipPolicy());
+        }
+        for (DocumentNode child : node.children()) {
+            writeNode(document, child);
+        }
     }
 
     private void writeParagraph(XWPFDocument document, ParagraphNode node) {

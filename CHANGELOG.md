@@ -1,5 +1,64 @@
 # Changelog
 
+## v1.5.0-beta.2 (in progress) - Phase C kickoff: Transform mixin
+
+Phase C lands the canonical-surface transform primitive (rotation around
+the placement centre and/or scaling). C.1 introduces the public value
+type and mixin and opts `ShapeContainerBuilder` in as the first
+consumer; render-side support (C.2) and other-builder opt-ins land in
+follow-up commits.
+
+### Public API
+
+- New value type `com.demcha.compose.document.style.DocumentTransform`
+  carries `rotationDegrees`, `scaleX`, `scaleY` plus an
+  {@code isIdentity()} helper. Static factories: `none()` (alias for
+  `NONE`), `rotate(deg)`, `scale(uniformFactor)`, `scale(sx, sy)`.
+  `withRotation(deg)` / `withScale(sx, sy)` produce updated copies that
+  preserve the unchanged axis. Validates that rotation is finite and
+  scale factors are finite and non-zero (zero would collapse the
+  geometry to a point).
+- New mixin interface `com.demcha.compose.document.dsl.Transformable<T>`
+  exposes `transform(DocumentTransform)`, `rotate(degrees)`,
+  `scale(uniformFactor)`, `scale(sx, sy)` as default methods. Builders
+  opt in by implementing two abstract methods: the transform setter and
+  `currentTransform()`. The defaults preserve the unmodified axis when
+  callers chain `rotate(...).scale(...)`.
+- `ShapeContainerBuilder` now implements `Transformable<ShapeContainerBuilder>`,
+  so authors can write
+  `addCircle(60, brand, c -> c.rotate(15).scale(0.9).center(label))`.
+  Default transform is `DocumentTransform.NONE`.
+- `ShapeContainerNode` gains a `transform: DocumentTransform` field
+  (ninth canonical-constructor parameter, defaulted to
+  `DocumentTransform.NONE` by the existing eight-arg compatibility
+  constructor). The transform is a render-time concern: the canonical
+  layout layer still measures and places the node against its natural
+  bounding box, so layout snapshots stay deterministic regardless of
+  rotation/scale.
+
+### Tests
+
+- New `DocumentTransformTest` (9 cases) pins value-type contracts —
+  identity, factories, axis-preserving updates, zero-scale rejection,
+  non-finite rejection, mirror via negative scale.
+- `ShapeContainerBuilderTest` grows five C.1 cases: default identity
+  transform, `rotate(...)` shortcut, `scale(uniform)` shortcut,
+  rotate+scale composition, and the layout invariant that a transform
+  does not shift placement coordinates (placement of a 45°-rotated
+  circle equals placement of the same circle without rotation).
+
+### Deferred
+
+- C.2 — PDF render of the transform via graphics-state `cm` push/pop
+  around the placement centre. Until then the transform value is stored
+  and exposed but not actually rendered, so the visual baselines for
+  rotated content stay open.
+- Other builders opt in to `Transformable<T>` later — `ShapeBuilder`,
+  `EllipseBuilder`, `ImageBuilder`, `LineBuilder`, `BarcodeBuilder` are
+  natural candidates once C.2 ships.
+
+---
+
 ## v1.5.0-beta.1 (in progress) - Phase B "Shape-as-container" (full pipeline)
 
 Phase B follow-up to alpha.2: lands the actual shape-clipped render path.

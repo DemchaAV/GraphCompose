@@ -524,6 +524,28 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     }
 
     /**
+     * Adds a layer stack composed through a nested builder.
+     *
+     * <p>{@link com.demcha.compose.document.node.LayerStackNode} is an atomic
+     * overlay composite: its child layers share the same bounding box and are
+     * painted in source order (first behind, last on top). Use it for
+     * monogram badges, watermark stamps, image-with-caption tiles, framed
+     * hero blocks, and any other case where two or more nodes need to sit on
+     * the same coordinates with explicit alignment.</p>
+     *
+     * <p>Stacks are atomic for pagination — they always move whole to the
+     * next page when they do not fit — and are allowed inside row column
+     * slots since they do not compete with the parent row's horizontal
+     * band.</p>
+     *
+     * @param spec layer stack builder callback
+     * @return this builder
+     */
+    public T addLayerStack(Consumer<LayerStackBuilder> spec) {
+        return add(BuilderSupport.configure(new LayerStackBuilder(), spec).build());
+    }
+
+    /**
      * Adds a paragraph composed of a {@link RichText} run sequence.
      *
      * @param rich rich-text builder

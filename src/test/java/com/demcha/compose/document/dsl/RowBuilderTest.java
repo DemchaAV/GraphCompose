@@ -5,6 +5,8 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.PlacedNode;
+import com.demcha.compose.document.node.LayerAlign;
+import com.demcha.compose.document.node.SpacerNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
@@ -257,6 +259,88 @@ class RowBuilderTest {
                 assertThat(text).contains("Right bottom");
                 assertThat(text).contains("Right tail");
             }
+        }
+    }
+
+    @Test
+    void rowAcceptsLayerStackOverlayInsideColumnSection() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.of(10))
+                .create()) {
+
+            session.dsl()
+                    .pageFlow()
+                    .name("Flow")
+                    .addRow("BadgeRow", row -> row
+                            .gap(8)
+                            .addSection("Sidebar", section -> section
+                                    .addLayerStack(stack -> stack
+                                            .name("OverlayBadge")
+                                            .back(new SpacerNode("BadgeBg", 60.0, 60.0,
+                                                    DocumentInsets.zero(), DocumentInsets.zero()))
+                                            .layer(new SpacerNode("BadgeFront", 30.0, 18.0,
+                                                            DocumentInsets.zero(), DocumentInsets.zero()),
+                                                    LayerAlign.CENTER)))
+                            .addSection("Main", section -> section
+                                    .addParagraph(p -> p.name("MainText").text("Hello").textStyle(DocumentTextStyle.DEFAULT))))
+                    .build();
+
+            LayoutGraph graph = session.layoutGraph();
+            assertThat(graph.totalPages()).isEqualTo(1);
+
+            List<PlacedNode> nodes = graph.nodes();
+            PlacedNode stackNode = findNodeBySemanticName(nodes, "OverlayBadge");
+            PlacedNode badgeBg = findNodeBySemanticName(nodes, "BadgeBg");
+            PlacedNode badgeFront = findNodeBySemanticName(nodes, "BadgeFront");
+            PlacedNode mainText = findNodeBySemanticName(nodes, "MainText");
+
+            assertThat(stackNode).as("LayerStack inside row column compiles").isNotNull();
+            assertThat(badgeBg).isNotNull();
+            assertThat(badgeFront).isNotNull();
+            assertThat(mainText).isNotNull();
+
+            // Stack must be at most as tall as its tallest layer (back).
+            assertThat(stackNode.placementHeight()).isLessThanOrEqualTo(60.0 + TOLERANCE);
+
+            // Front layer must overlap the back layer's bounding box.
+            double backLeft = badgeBg.placementX();
+            double backRight = backLeft + badgeBg.placementWidth();
+            double backBottom = badgeBg.placementY();
+            double backTop = backBottom + badgeBg.placementHeight();
+            double frontCenterX = badgeFront.placementX() + badgeFront.placementWidth() / 2.0;
+            double frontCenterY = badgeFront.placementY() + badgeFront.placementHeight() / 2.0;
+            assertThat(frontCenterX).isGreaterThan(backLeft).isLessThan(backRight);
+            assertThat(frontCenterY).isGreaterThan(backBottom).isLessThan(backTop);
+        }
+    }
+
+    @Test
+    void rowAcceptsLayerStackNodeDirectlyAsColumn() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.of(10))
+                .create()) {
+
+            session.dsl()
+                    .pageFlow()
+                    .name("Flow")
+                    .addRow("DirectBadgeRow", row -> row
+                            .gap(8)
+                            .add(new LayerStackBuilder()
+                                    .name("DirectBadge")
+                                    .back(new SpacerNode("DBBack", 50.0, 50.0,
+                                            DocumentInsets.zero(), DocumentInsets.zero()))
+                                    .layer(new SpacerNode("DBFront", 20.0, 20.0,
+                                                    DocumentInsets.zero(), DocumentInsets.zero()),
+                                            LayerAlign.CENTER)
+                                    .build())
+                            .addParagraph(p -> p.name("DirectMain").text("ok").textStyle(DocumentTextStyle.DEFAULT)))
+                    .build();
+
+            LayoutGraph graph = session.layoutGraph();
+            assertThat(graph.totalPages()).isEqualTo(1);
+            assertThat(findNodeBySemanticName(graph.nodes(), "DirectBadge")).isNotNull();
         }
     }
 

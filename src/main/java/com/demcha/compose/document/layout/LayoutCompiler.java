@@ -927,9 +927,14 @@ public final class LayoutCompiler {
 
         if (prepared.isComposite()) {
             CompositeLayoutSpec layoutSpec = prepared.requireCompositeLayout();
-            if (layoutSpec.axis() != CompositeLayoutSpec.Axis.VERTICAL) {
+            // Horizontal rows and splittable tables remain forbidden inside a
+            // row slot — they would compete with the parent row's horizontal
+            // band or break atomic pagination. STACK overlays (e.g.
+            // LayerStackNode) are allowed because they are atomic and place
+            // their layers at the same point with explicit alignment.
+            if (layoutSpec.axis() == CompositeLayoutSpec.Axis.HORIZONTAL) {
                 throw new IllegalStateException("Row '" + path
-                        + "' nested horizontal composites are not supported.");
+                        + "' cannot contain a nested horizontal row; use a section column instead.");
             }
 
             int decorationInsertIndex = fragments.size();
@@ -937,6 +942,93 @@ public final class LayoutCompiler {
             nodes.add(null);
 
             List<DocumentNode> children = definition.children(node);
+
+            if (layoutSpec.axis() == CompositeLayoutSpec.Axis.STACK) {
+                BuiltInNodeDefinitions.PreparedStackLayout stackLayout =
+                        prepared.requirePreparedLayout(BuiltInNodeDefinitions.PreparedStackLayout.class);
+                double stackInnerWidth = Math.max(0.0, measure.width() - padding.horizontal());
+                double stackInnerHeight = Math.max(0.0, measure.height() - padding.vertical());
+                double stackInnerStartX = placementX + padding.left();
+                double stackInnerTopY = placementTopY - padding.top();
+
+                for (int i = 0; i < children.size(); i++) {
+                    DocumentNode child = children.get(i);
+                    com.demcha.compose.document.node.LayerAlign align =
+                            stackLayout.alignments().get(i);
+
+                    PreparedNode<DocumentNode> childPrepared =
+                            prepareForRegionWidth(prepareContext, child, stackInnerWidth);
+                    MeasureResult childMeasure = childPrepared.measureResult();
+                    Margin childMargin = toMargin(child.margin());
+                    double childOuterWidth = childMeasure.width() + childMargin.horizontal();
+                    double childOuterHeight = childMeasure.height() + childMargin.vertical();
+
+                    double alignedSlotX = stackInnerStartX
+                            + horizontalLayerOffset(align, stackInnerWidth, childOuterWidth);
+                    double alignedSlotTopY = stackInnerTopY
+                            - verticalLayerOffset(align, stackInnerHeight, childOuterHeight);
+
+                    compileNodeInFixedSlot(
+                            childPrepared,
+                            path,
+                            i,
+                            depth + 1,
+                            alignedSlotX,
+                            alignedSlotTopY,
+                            childOuterWidth,
+                            pageIndex,
+                            prepareContext,
+                            fragmentContext,
+                            canvas,
+                            nodes,
+                            fragments);
+                }
+
+                List<PlacedFragment> stackDecorations = compositeDecorationFragments(
+                        prepared,
+                        definition,
+                        path,
+                        parentPath,
+                        childIndex,
+                        depth,
+                        placementX,
+                        placementTopY,
+                        placementY + margin.bottom(),
+                        measure.width(),
+                        pageIndex,
+                        pageIndex,
+                        margin,
+                        padding,
+                        canvas,
+                        fragmentContext);
+                if (!stackDecorations.isEmpty()) {
+                    fragments.addAll(decorationInsertIndex, stackDecorations);
+                }
+
+                nodes.set(nodeIndex, new PlacedNode(
+                        path,
+                        semanticName,
+                        node.nodeKind(),
+                        parentPath,
+                        childIndex,
+                        depth,
+                        depth,
+                        placementX,
+                        placementY,
+                        placementX,
+                        placementY,
+                        measure.width(),
+                        measure.height(),
+                        pageIndex,
+                        pageIndex,
+                        measure.width(),
+                        measure.height(),
+                        margin,
+                        padding));
+
+                return measure.height() + margin.vertical();
+            }
+
             double childRegionX = placementX + padding.left();
             double childRegionWidth = Math.max(0.0, availableWidth - padding.horizontal());
             double childTopY = placementTopY - padding.top();

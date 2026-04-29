@@ -188,4 +188,27 @@ class RichTextTest {
         assertThat(run.linkOptions()).isSameAs(options);
         assertThat(run.text()).isEqualTo("Author");
     }
+
+    @Test
+    void documentDslRichTextBuildsEquivalentRunSequence() {
+        try (com.demcha.compose.document.api.DocumentSession session =
+                     com.demcha.compose.GraphCompose.document().pageSize(200, 100).create()) {
+            RichText viaDsl = session.dsl().richText(t -> t
+                    .plain("Status: ")
+                    .bold("OK"));
+
+            RichText direct = RichText.text("Status: ").bold("OK");
+
+            assertThat(viaDsl.runs()).hasSize(2);
+            assertThat(viaDsl.runs()).hasSameSizeAs(direct.runs());
+            for (int i = 0; i < viaDsl.runs().size(); i++) {
+                InlineTextRun a = (InlineTextRun) viaDsl.runs().get(i);
+                InlineTextRun b = (InlineTextRun) direct.runs().get(i);
+                assertThat(a.text()).isEqualTo(b.text());
+                assertThat(a.textStyle()).isEqualTo(b.textStyle());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

@@ -1,5 +1,89 @@
 # Changelog
 
+## v1.5.0-alpha.2 (in progress) - Phase B "Shape-as-container"
+
+This release starts Phase B: shape-as-container support on the canonical
+surface. The opening slice (B.1, B.2, B.4) lands the public DSL, the new
+`ShapeContainerNode` record, and the `SHAPE_ATOMIC` pagination policy. The
+PDF clip-path render path (B.5) and snapshot infrastructure (B.7) are still
+in flight — the layout compiler currently treats `SHAPE_ATOMIC` like
+`ATOMIC` for placement purposes, so children render *atop* the outline but
+are not yet clipped to its path.
+
+### Public API
+
+- New semantic node `com.demcha.compose.document.node.ShapeContainerNode`:
+  a composite whose bounding box is dictated by a `ShapeOutline` (rectangle,
+  rounded rectangle, ellipse, or circle) and that hosts one or more child
+  `LayerStackNode.Layer`s. Unlike `LayerStackNode` (where the bbox is
+  `max(child outer size)`), the outline drives the size — children can be
+  smaller and the container still occupies the full outline.
+- New sealed value type `com.demcha.compose.document.style.ShapeOutline`
+  with `Rectangle`, `RoundedRectangle`, and `Ellipse` cases plus a
+  `circle(diameter)` factory. Validates that dimensions are finite and
+  positive at construction time.
+- New enum `com.demcha.compose.document.style.ClipPolicy` with
+  `CLIP_BOUNDS`, `CLIP_PATH`, `OVERFLOW_VISIBLE` cases. The PDF backend
+  will honour `CLIP_PATH` once B.5 lands; today every policy renders the
+  outline plus layers without clipping.
+- New builder `com.demcha.compose.document.dsl.ShapeContainerBuilder`
+  exposing the same nine-point alignment vocabulary as `LayerStackBuilder`
+  (`topLeft`/`topCenter`/.../`bottomRight` plus
+  `position(node, offsetX, offsetY, anchor)`), plus outline configuration
+  (`rectangle(w, h)`, `roundedRect(w, h, radius)`, `ellipse(w, h)`,
+  `circle(diameter)`) and `clipPolicy(...)`, `fillColor(...)`,
+  `stroke(...)`, `padding(...)`, `margin(...)` setters.
+- `AbstractFlowBuilder` gains three new convenience overloads:
+  `addContainer(Consumer<ShapeContainerBuilder>)`,
+  `addCircle(double diameter, DocumentColor fill, Consumer<ShapeContainerBuilder> inside)`,
+  `addEllipse(double w, double h, DocumentColor fill, Consumer<ShapeContainerBuilder> inside)`.
+- New pagination policy `PaginationPolicy.SHAPE_ATOMIC`. From the
+  page-breaker's perspective it is identical to `ATOMIC` — the outline
+  plus every layer move to the next page as one unit — but it lets render
+  handlers and snapshots tell "shape-clipped atomicity" apart from
+  "bbox-only atomicity". Oversized containers raise the existing
+  `AtomicNodeTooLargeException` with the offending semantic name.
+
+### Architecture
+
+- New ADR `docs/adr/0001-shape-as-container.md` records the decision to
+  introduce `ShapeContainerNode` as a separate semantic type rather than
+  overload `LayerStackNode` with a `clipOutline` flag. The ADR captures
+  the alternative considered (clip flag on the existing record), the
+  reasons it was rejected (mixed semantics, harder pagination policy,
+  public-record signature change for an already-shipped v1.4 type), and
+  the implementation order through B.2 → B.10.
+- `BuiltInNodeDefinitions` registers the new `ShapeContainerDefinition`.
+  Its `prepare(...)` derives the bounding box from `outline.size() +
+  padding` (children do not influence the container size). Its
+  `emitFragments(...)` materialises the outline as an existing
+  `EllipseFragmentPayload` or `ShapeFragmentPayload`
+  (RoundedRectangle reuses the rectangle payload with a corner radius), so
+  the renderer keeps a single source of truth for shape geometry.
+
+### Tests
+
+- New `ShapeContainerBuilderTest` covers builder validation (missing
+  outline, empty layers), bbox derivation from outline (circle and
+  rounded-rectangle cases), screen-space `position(...)` offsets, the
+  flow-shortcut form (`section.addCircle(diameter, fill, inside)`), and
+  pagination invariants under `SHAPE_ATOMIC` (atomic page-break and
+  oversized-container rejection).
+- `FlowShortcutOverloadsTest` was migrated off the no-arg
+  `PageFlowBuilder` constructor (which now requires a `DocumentSession`)
+  to `SectionBuilder`, since the test exercises shortcut overloads on the
+  shared `AbstractFlowBuilder` parent.
+
+### Deferred
+
+- B.3 (layout shape geometry pre-pass + `ShapeClipPath` engine
+  component), B.5 (PDF clip-path render via graphics state), B.6 (DOCX
+  fallback), B.7 (snapshot extension for `clipPath`), B.8
+  (architecture-guard tests), B.9 (recipe + runnable example) and B.10
+  (wrap-up) remain in flight. See `docs/v1.5-execution-plan.md`.
+
+---
+
 ## v1.5.0-alpha.1 (in progress) - Phase A "Quick UX wins"
 
 This is the first slice of the v1.5 "Intuitive" release. Phase A only adds

@@ -557,6 +557,57 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     }
 
     /**
+     * Adds a {@code ShapeContainerNode} configured through a callback. The
+     * outline (rectangle, rounded rectangle, ellipse, or circle) is mandatory
+     * — the spec must call one of {@code rectangle / roundedRect / ellipse /
+     * circle} on the builder before children are appended.
+     *
+     * @param spec container builder callback
+     * @return this builder
+     */
+    public T addContainer(Consumer<ShapeContainerBuilder> spec) {
+        return add(BuilderSupport.configure(new ShapeContainerBuilder(), spec).build());
+    }
+
+    /**
+     * Adds a circular {@link com.demcha.compose.document.node.ShapeContainerNode}
+     * with the supplied fill, then defers to a callback for layers — the
+     * shortest path to "draw a circle and put a label inside it":
+     *
+     * <pre>{@code
+     * section.addCircle(60, brand, c -> c.center(label));
+     * }</pre>
+     *
+     * @param diameter circle diameter in points
+     * @param fillColor canonical fill colour
+     * @param spec callback that appends layers
+     * @return this builder
+     */
+    public T addCircle(double diameter, DocumentColor fillColor, Consumer<ShapeContainerBuilder> spec) {
+        return addContainer(c -> {
+            c.circle(diameter).fillColor(fillColor);
+            spec.accept(c);
+        });
+    }
+
+    /**
+     * Adds an ellipse {@link com.demcha.compose.document.node.ShapeContainerNode}
+     * with the supplied fill, then defers to a callback for layers.
+     *
+     * @param width ellipse outer width in points
+     * @param height ellipse outer height in points
+     * @param fillColor canonical fill colour
+     * @param spec callback that appends layers
+     * @return this builder
+     */
+    public T addEllipse(double width, double height, DocumentColor fillColor, Consumer<ShapeContainerBuilder> spec) {
+        return addContainer(c -> {
+            c.ellipse(width, height).fillColor(fillColor);
+            spec.accept(c);
+        });
+    }
+
+    /**
      * Adds a barcode or QR code configured through a nested builder.
      *
      * @param spec barcode builder callback

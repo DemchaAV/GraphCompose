@@ -1,10 +1,10 @@
 package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.image.DocumentImageData;
-import com.demcha.compose.document.node.ContainerNode;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.EllipseNode;
 import com.demcha.compose.document.node.ImageNode;
+import com.demcha.compose.document.node.SectionNode;
 import com.demcha.compose.document.node.ShapeNode;
 import com.demcha.compose.document.style.DocumentColor;
 import org.junit.jupiter.api.Test;
@@ -24,7 +24,7 @@ class FlowShortcutOverloadsTest {
 
     @Test
     void addShapeWithDimensionsAndFill() {
-        ContainerNode flow = new PageFlowBuilder()
+        SectionNode flow = new SectionBuilder()
                 .name("Flow")
                 .addShape(50.0, 30.0, BRAND)
                 .build();
@@ -37,7 +37,7 @@ class FlowShortcutOverloadsTest {
 
     @Test
     void addEllipseWithDiameterAndFill() {
-        ContainerNode flow = new PageFlowBuilder()
+        SectionNode flow = new SectionBuilder()
                 .addEllipse(40.0, BRAND)
                 .build();
 
@@ -49,7 +49,7 @@ class FlowShortcutOverloadsTest {
 
     @Test
     void addEllipseWithSizeAndFill() {
-        ContainerNode flow = new PageFlowBuilder()
+        SectionNode flow = new SectionBuilder()
                 .addEllipse(80.0, 40.0, BRAND)
                 .build();
 
@@ -61,7 +61,7 @@ class FlowShortcutOverloadsTest {
 
     @Test
     void addCircleWithFill() {
-        ContainerNode flow = new PageFlowBuilder()
+        SectionNode flow = new SectionBuilder()
                 .addCircle(60.0, BRAND)
                 .build();
 
@@ -75,7 +75,7 @@ class FlowShortcutOverloadsTest {
     void addImageWithExplicitDimensions() throws Exception {
         DocumentImageData data = DocumentImageData.fromBytes(onePixelPng());
 
-        ContainerNode flow = new PageFlowBuilder()
+        SectionNode flow = new SectionBuilder()
                 .addImage(data, 96.0, 64.0)
                 .build();
 
@@ -87,7 +87,7 @@ class FlowShortcutOverloadsTest {
         assertThat(image.height()).isEqualTo(64.0, within(EPS));
     }
 
-    private static DocumentNode firstChild(ContainerNode container) {
+    private static DocumentNode firstChild(SectionNode container) {
         List<DocumentNode> children = container.children();
         assertThat(children).hasSize(1);
         return children.get(0);

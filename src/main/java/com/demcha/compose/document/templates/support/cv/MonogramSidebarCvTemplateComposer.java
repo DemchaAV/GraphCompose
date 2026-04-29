@@ -2,12 +2,15 @@ package com.demcha.compose.document.templates.support.cv;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.EllipseBuilder;
+import com.demcha.compose.document.dsl.LayerStackBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.LayerAlign;
+import com.demcha.compose.document.node.LayerStackNode;
+import com.demcha.compose.document.node.SpacerNode;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -65,6 +68,13 @@ public final class MonogramSidebarCvTemplateComposer {
     public void compose(DocumentSession document, CvDocumentSpec documentSpec) {
         CvDocumentSpec spec = Objects.requireNonNull(documentSpec, "documentSpec");
 
+        // Resolve usable widths once so children can fill the sidebar band
+        // and center their decorative rules / monogram horizontally.
+        double pageInnerWidth = document.canvas().innerWidth();
+        double sidebarOuterWidth = pageInnerWidth * 0.33;
+        double sidebarHorizontalPadding = 13.0 * 2.0;
+        double sidebarInnerWidth = Math.max(0.0, sidebarOuterWidth - sidebarHorizontalPadding);
+
         document.dsl()
                 .pageFlow()
                 .name("MonogramSidebarRoot")
@@ -73,12 +83,13 @@ public final class MonogramSidebarCvTemplateComposer {
                 .addRow("MonogramSidebarFrame", row -> row
                         .gap(0)
                         .weights(0.33, 0.67)
-                        .addSection("MonogramSidebarSidebar", section -> addSidebar(section, spec))
+                        .addSection("MonogramSidebarSidebar",
+                                section -> addSidebar(section, spec, sidebarInnerWidth))
                         .addSection("MonogramSidebarMain", section -> addMain(section, spec)))
                 .build();
     }
 
-    private void addSidebar(SectionBuilder section, CvDocumentSpec spec) {
+    private void addSidebar(SectionBuilder section, CvDocumentSpec spec, double innerWidth) {
         // Generous bottom padding so the pale grey banner reaches the
         // bottom edge of an A4 page; the row child does not stretch on
         // its own.
@@ -86,32 +97,32 @@ public final class MonogramSidebarCvTemplateComposer {
                 .padding(new DocumentInsets(18, 13, 225, 13))
                 .fillColor(SIDEBAR_BG);
 
-        addMonogramBlock(section, initials(spec.header()));
+        addMonogramBlock(section, initials(spec.header()), innerWidth);
 
-        addSidebarHeader(section, "CONTACT");
+        addSidebarHeader(section, "CONTACT", innerWidth);
         addContactBlock(section, spec.header());
 
         CvModule education = findModule(spec, EDUCATION_KEYS);
         if (education != null) {
-            addSidebarHeader(section, education.title());
+            addSidebarHeader(section, education.title(), innerWidth);
             addEducationEntries(section, education);
         }
 
         CvModule skills = findModule(spec, SKILL_KEYS);
         if (skills != null) {
-            addSidebarHeader(section, "EXPERTISE");
+            addSidebarHeader(section, "EXPERTISE", innerWidth);
             addSkillsList(section, skills);
         }
     }
 
-    private void addMonogramBlock(SectionBuilder section, String initials) {
-        // Real overlay: the engine now allows LayerStackNode inside row
-        // slots, so the monogram is a single atomic stack with a stroked
-        // circle on the back layer and the initials centered on the front
-        // layer.
-        section.addLayerStack(stack -> stack
+    private void addMonogramBlock(SectionBuilder section, String initials, double innerWidth) {
+        // Real overlay: the engine allows LayerStackNode inside row slots, so
+        // the monogram is an atomic stack — circle ring as the back layer and
+        // initials centered on the front. An outer stack with a transparent
+        // full-width spacer centers the badge horizontally inside the sidebar
+        // band without ad-hoc margin math.
+        LayerStackNode badge = new LayerStackBuilder()
                 .name("MonogramBadge")
-                .margin(DocumentInsets.zero())
                 .back(new EllipseBuilder()
                         .name("MonogramRing")
                         .size(MONOGRAM_DIAMETER, MONOGRAM_DIAMETER)
@@ -121,11 +132,27 @@ public final class MonogramSidebarCvTemplateComposer {
                         .name("MonogramInitials")
                         .text(initials)
                         .textStyle(style(MONOGRAM_FONT, 22, DocumentTextDecoration.BOLD, MONOGRAM_RING))
-                        .align(TextAlign.CENTER)
-                        .build(), LayerAlign.CENTER));
+                        // align LEFT so the paragraph's natural width is the
+                        // glyph width — otherwise CENTER alignment expands the
+                        // paragraph to the entire available constraint and the
+                        // badge stack inherits that width, pulling the circle
+                        // to the left and the initials away from the centre.
+                        .align(TextAlign.LEFT)
+                        .build(), LayerAlign.CENTER)
+                .build();
+
+        section.addLayerStack(outer -> outer
+                .name("MonogramFrame")
+                .back(new SpacerNode(
+                        "MonogramSpace",
+                        Math.max(MONOGRAM_DIAMETER, innerWidth),
+                        MONOGRAM_DIAMETER,
+                        DocumentInsets.zero(),
+                        DocumentInsets.zero()))
+                .layer(badge, LayerAlign.TOP_CENTER));
     }
 
-    private void addSidebarHeader(SectionBuilder section, String title) {
+    private void addSidebarHeader(SectionBuilder section, String title, double innerWidth) {
         if (title == null || title.isBlank()) {
             return;
         }
@@ -136,7 +163,7 @@ public final class MonogramSidebarCvTemplateComposer {
                 .lineSpacing(1.2)
                 .margin(DocumentInsets.top(6)));
         section.addLine(line -> line
-                .horizontal(105)
+                .horizontal(innerWidth)
                 .color(SIDEBAR_RULE)
                 .thickness(0.45)
                 .margin(new DocumentInsets(1, 0, 2, 0)));

@@ -442,6 +442,69 @@ Do not add a method there if the new object is only an internal helper for templ
 - template-level composition helper:
   [CvTemplateComposer.java](./../src/main/java/com/demcha/compose/document/templates/support/cv/CvTemplateComposer.java)
 
+## Overlay primitive: `LayerStackNode`
+
+`LayerStackNode` is the canonical atomic overlay composite. Its layers
+share the same bounding box and are painted in source order — first
+layer behind, last layer in front. Use it whenever two or more nodes
+need to sit at the same coordinates with explicit alignment instead of
+stacking vertically.
+
+### Where it can live
+
+- inside `pageFlow` directly (root flow);
+- inside any `SectionNode` body;
+- inside a row column slot — the layout compiler treats stacks as
+  atomic overlays, distinct from the still-forbidden nested horizontal
+  rows or splittable tables.
+
+### Layout contract
+
+- measurement: stack outer size = `max(child outer size)` plus stack
+  padding and margin. Smaller layers are aligned inside the resolved
+  box;
+- pagination: stacks are atomic — they always move whole to the next
+  page when they do not fit on the current page;
+- alignment: each layer carries its own `LayerAlign` (`TOP_LEFT`,
+  `CENTER`, `BOTTOM_RIGHT`, etc.) that resolves inside the inner box
+  obtained by subtracting stack padding from the outer box.
+
+### DSL surface
+
+Use `addLayerStack(Consumer<LayerStackBuilder>)` on any flow builder
+(page flow, section, container) to drop a stack inline. Place the
+background as the first layer, then add foreground layers with the
+desired alignment:
+
+```java
+section.addLayerStack(stack -> stack
+        .name("MonogramBadge")
+        .back(new EllipseBuilder()
+                .name("MonogramRing")
+                .size(78, 78)
+                .stroke(DocumentStroke.of(MONOGRAM_RING, 1.25))
+                .build())
+        .layer(new ParagraphBuilder()
+                .name("MonogramInitials")
+                .text("M | H")
+                .textStyle(monogramStyle())
+                .align(TextAlign.CENTER)
+                .build(),
+                LayerAlign.CENTER));
+```
+
+### Typical use cases
+
+- monogram and initial badges,
+- watermark stamps on certificates and invoices,
+- image-with-caption hero blocks,
+- status labels overlaid on cards,
+- decorative seals, signatures, and embossed marks.
+
+`RowBuilder.add(...)` accepts `LayerStackNode` directly when the stack
+is constructed manually. Nested rows and tables remain forbidden inside
+row slots — only stacks pass the atomic-overlay capability check.
+
 ## Current caveats
 
 - the PDF path is the supported renderer today

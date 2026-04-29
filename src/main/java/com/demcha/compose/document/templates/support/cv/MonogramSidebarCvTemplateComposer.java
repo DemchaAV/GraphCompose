@@ -83,7 +83,7 @@ public final class MonogramSidebarCvTemplateComposer {
         // bottom edge of an A4 page; the row child does not stretch on
         // its own.
         section.spacing(8)
-                .padding(new DocumentInsets(18, 13, 70, 13))
+                .padding(new DocumentInsets(18, 13, 225, 13))
                 .fillColor(SIDEBAR_BG);
 
         addMonogramBlock(section, initials(spec.header()));

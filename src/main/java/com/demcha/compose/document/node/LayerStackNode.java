@@ -60,10 +60,19 @@ public record LayerStackNode(
     /**
      * One layer inside a {@link LayerStackNode}.
      *
+     * <p>The layer is positioned by anchoring its bounding box to the
+     * {@code align} corner/edge of the stack box, then nudging it by
+     * {@code offsetX} / {@code offsetY}. Offsets follow on-screen conventions:
+     * positive {@code offsetX} moves the layer to the right, positive
+     * {@code offsetY} moves it down. Use the two-arg constructor or
+     * {@link #of(DocumentNode, LayerAlign)} when no offset is needed.</p>
+     *
      * @param node child node painted in this layer
      * @param align alignment of the layer inside the stack box
+     * @param offsetX horizontal offset from the anchor (positive = right)
+     * @param offsetY vertical offset from the anchor (positive = down)
      */
-    public record Layer(DocumentNode node, LayerAlign align) {
+    public record Layer(DocumentNode node, LayerAlign align, double offsetX, double offsetY) {
         /**
          * Validates required references and applies a {@link LayerAlign#TOP_LEFT}
          * default when alignment is omitted.
@@ -79,7 +88,17 @@ public record LayerStackNode(
          * @param node child node
          */
         public Layer(DocumentNode node) {
-            this(node, LayerAlign.TOP_LEFT);
+            this(node, LayerAlign.TOP_LEFT, 0.0, 0.0);
+        }
+
+        /**
+         * Creates a layer with explicit alignment and zero offset.
+         *
+         * @param node child node
+         * @param align alignment of the layer
+         */
+        public Layer(DocumentNode node, LayerAlign align) {
+            this(node, align, 0.0, 0.0);
         }
 
         /**
@@ -89,7 +108,7 @@ public record LayerStackNode(
          * @return back layer
          */
         public static Layer back(DocumentNode node) {
-            return new Layer(node, LayerAlign.TOP_LEFT);
+            return new Layer(node, LayerAlign.TOP_LEFT, 0.0, 0.0);
         }
 
         /**
@@ -99,18 +118,31 @@ public record LayerStackNode(
          * @return centered layer
          */
         public static Layer center(DocumentNode node) {
-            return new Layer(node, LayerAlign.CENTER);
+            return new Layer(node, LayerAlign.CENTER, 0.0, 0.0);
         }
 
         /**
-         * Convenience factory for an explicitly aligned layer.
+         * Convenience factory for an explicitly aligned layer with no offset.
          *
          * @param node child node
          * @param align alignment of the layer
          * @return aligned layer
          */
         public static Layer of(DocumentNode node, LayerAlign align) {
-            return new Layer(node, align);
+            return new Layer(node, align, 0.0, 0.0);
+        }
+
+        /**
+         * Convenience factory for a layer positioned by anchor + screen-space offset.
+         *
+         * @param node child node
+         * @param align anchor inside the stack box
+         * @param offsetX horizontal offset from the anchor (positive = right)
+         * @param offsetY vertical offset from the anchor (positive = down)
+         * @return positioned layer
+         */
+        public static Layer of(DocumentNode node, LayerAlign align, double offsetX, double offsetY) {
+            return new Layer(node, align, offsetX, offsetY);
         }
     }
 }

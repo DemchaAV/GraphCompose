@@ -989,14 +989,47 @@ public final class BuiltInNodeDefinitions {
     /**
      * Prepared layout payload attached to {@link LayerStackNode} prepared nodes.
      *
+     * <p>Carries per-layer alignment plus an on-screen offset (positive
+     * {@code offsetX} = right, positive {@code offsetY} = down) so the layout
+     * compiler can nudge layers from their anchor without breaking the existing
+     * stack measurement contract.</p>
+     *
      * @param alignments per-layer alignments resolved from the source order
+     * @param offsetsX per-layer horizontal offsets from the alignment anchor
+     * @param offsetsY per-layer vertical offsets from the alignment anchor
      */
-    public record PreparedStackLayout(List<LayerAlign> alignments) implements PreparedNodeLayout {
+    public record PreparedStackLayout(
+            List<LayerAlign> alignments,
+            List<Double> offsetsX,
+            List<Double> offsetsY) implements PreparedNodeLayout {
         /**
-         * Creates a prepared stack layout payload with frozen alignment metadata.
+         * Creates a prepared stack layout payload with frozen alignment and offset metadata.
          */
         public PreparedStackLayout {
             alignments = List.copyOf(alignments);
+            offsetsX = List.copyOf(offsetsX);
+            offsetsY = List.copyOf(offsetsY);
+            if (offsetsX.size() != alignments.size() || offsetsY.size() != alignments.size()) {
+                throw new IllegalArgumentException(
+                        "PreparedStackLayout: alignments/offsets size mismatch ("
+                                + alignments.size() + "/" + offsetsX.size() + "/" + offsetsY.size() + ")");
+            }
+        }
+
+        /**
+         * Backward-compatible factory for callers that only carry alignments;
+         * fills both offset lists with zeros.
+         *
+         * @param alignments per-layer alignments
+         */
+        public PreparedStackLayout(List<LayerAlign> alignments) {
+            this(alignments, zeros(alignments.size()), zeros(alignments.size()));
+        }
+
+        private static List<Double> zeros(int size) {
+            Double[] out = new Double[size];
+            java.util.Arrays.fill(out, 0.0);
+            return List.of(out);
         }
     }
 
@@ -1008,13 +1041,19 @@ public final class BuiltInNodeDefinitions {
 
         @Override
         public PreparedNode<LayerStackNode> prepare(LayerStackNode node, PrepareContext ctx, BoxConstraints constraints) {
-            List<LayerAlign> alignments = node.layers().stream()
-                    .map(LayerStackNode.Layer::align)
-                    .toList();
+            int n = node.layers().size();
+            List<LayerAlign> alignments = new java.util.ArrayList<>(n);
+            List<Double> offsetsX = new java.util.ArrayList<>(n);
+            List<Double> offsetsY = new java.util.ArrayList<>(n);
+            for (LayerStackNode.Layer layer : node.layers()) {
+                alignments.add(layer.align());
+                offsetsX.add(layer.offsetX());
+                offsetsY.add(layer.offsetY());
+            }
             return PreparedNode.composite(
                     node,
                     measureStack(node, toPadding(node.padding()), ctx, constraints),
-                    new PreparedStackLayout(alignments),
+                    new PreparedStackLayout(alignments, offsetsX, offsetsY),
                     new CompositeLayoutSpec(0.0, CompositeLayoutSpec.Axis.STACK));
         }
 

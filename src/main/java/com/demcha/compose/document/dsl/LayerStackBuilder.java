@@ -66,6 +66,26 @@ public final class LayerStackBuilder {
     }
 
     /**
+     * Appends a layer anchored to {@code align} and nudged by an on-screen
+     * offset from that anchor point. Positive {@code offsetX} moves the layer
+     * to the right, positive {@code offsetY} moves it down.
+     *
+     * @param node child node
+     * @param offsetX horizontal offset from the anchor (positive = right)
+     * @param offsetY vertical offset from the anchor (positive = down)
+     * @param align anchor inside the stack box
+     * @return this builder
+     */
+    public LayerStackBuilder position(DocumentNode node,
+                                      double offsetX,
+                                      double offsetY,
+                                      LayerAlign align) {
+        layers.add(new LayerStackNode.Layer(
+                Objects.requireNonNull(node, "node"), align, offsetX, offsetY));
+        return this;
+    }
+
+    /**
      * Appends a back layer (top-left aligned, drawn first/behind).
      *
      * @param node child node

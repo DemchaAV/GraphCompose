@@ -529,6 +529,8 @@ public final class LayoutCompiler {
             DocumentNode child = children.get(index);
             com.demcha.compose.document.node.LayerAlign align =
                     stackLayout.alignments().get(index);
+            double layerOffsetX = stackLayout.offsetsX().get(index);
+            double layerOffsetY = stackLayout.offsetsY().get(index);
 
             PreparedNode<DocumentNode> childPrepared =
                     prepareForRegionWidth(prepareContext, child, innerWidth);
@@ -537,8 +539,15 @@ public final class LayoutCompiler {
             double childOuterWidth = childMeasure.width() + childMargin.horizontal();
             double childOuterHeight = childMeasure.height() + childMargin.vertical();
 
-            double alignedSlotX = innerStartX + horizontalLayerOffset(align, innerWidth, childOuterWidth);
-            double alignedSlotTopY = innerTopY - verticalLayerOffset(align, innerHeight, childOuterHeight);
+            // Anchor placement, then apply on-screen offsets:
+            // offsetX > 0 nudges the layer right; offsetY > 0 nudges it down
+            // (PDF y grows upward, so "down" subtracts from the top-Y).
+            double alignedSlotX = innerStartX
+                    + horizontalLayerOffset(align, innerWidth, childOuterWidth)
+                    + layerOffsetX;
+            double alignedSlotTopY = innerTopY
+                    - verticalLayerOffset(align, innerHeight, childOuterHeight)
+                    - layerOffsetY;
 
             compileNodeInFixedSlot(
                     childPrepared,

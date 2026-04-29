@@ -1,0 +1,167 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 260.0,
+    "pageHeight" : 180.0,
+    "innerWidth" : 224.0,
+    "innerHeight" : 144.0,
+    "margin" : {
+      "top" : 18.0,
+      "right" : 18.0,
+      "bottom" : 18.0,
+      "left" : 18.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "ShapeContainerCircleFixture[0]",
+    "entityName" : "ShapeContainerCircleFixture",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 18.0,
+    "computedY" : 34.137,
+    "placementX" : 18.0,
+    "placementY" : 34.137,
+    "placementWidth" : 198.892,
+    "placementHeight" : 127.863,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 198.892,
+    "contentHeight" : 127.863,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ShapeContainerCircleFixture[0]/InitialCircle[0]",
+    "entityName" : "InitialCircle",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "ShapeContainerCircleFixture[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 50.0,
+    "placementX" : 18.0,
+    "placementY" : 50.0,
+    "placementWidth" : 112.0,
+    "placementHeight" : 112.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 112.0,
+    "contentHeight" : 112.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 10.0,
+      "right" : 10.0,
+      "bottom" : 10.0,
+      "left" : 10.0
+    }
+  }, {
+    "path" : "ShapeContainerCircleFixture[0]/InitialCircle[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ShapeContainerCircleFixture[0]/InitialCircle[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.0,
+    "computedY" : 95.825,
+    "placementX" : 28.0,
+    "placementY" : 95.825,
+    "placementWidth" : 92.0,
+    "placementHeight" : 20.35,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 92.0,
+    "contentHeight" : 20.35,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ShapeContainerCircleFixture[0]/InitialCircle[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ShapeContainerCircleFixture[0]/InitialCircle[0]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.0,
+    "computedY" : 70.0,
+    "placementX" : 28.0,
+    "placementY" : 70.0,
+    "placementWidth" : 92.0,
+    "placementHeight" : 6.475,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 92.0,
+    "contentHeight" : 6.475,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ShapeContainerCircleFixture[0]/CircleCaption[1]",
+    "entityName" : "CircleCaption",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ShapeContainerCircleFixture[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 34.137,
+    "placementX" : 18.0,
+    "placementY" : 34.137,
+    "placementWidth" : 198.892,
+    "placementHeight" : 7.863,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 198.892,
+    "contentHeight" : 7.863,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

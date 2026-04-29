@@ -1,0 +1,197 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 320.0,
+    "pageHeight" : 210.0,
+    "innerWidth" : 280.0,
+    "innerHeight" : 170.0,
+    "margin" : {
+      "top" : 20.0,
+      "right" : 20.0,
+      "bottom" : 20.0,
+      "left" : 20.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "ShapeContainerEllipseFixture[0]",
+    "entityName" : "ShapeContainerEllipseFixture",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 20.0,
+    "computedY" : 68.137,
+    "placementX" : 20.0,
+    "placementY" : 68.137,
+    "placementWidth" : 260.789,
+    "placementHeight" : 121.863,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 260.789,
+    "contentHeight" : 121.863,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ShapeContainerEllipseFixture[0]/OffsetEllipse[0]",
+    "entityName" : "OffsetEllipse",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "ShapeContainerEllipseFixture[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 20.0,
+    "computedY" : 86.0,
+    "placementX" : 20.0,
+    "placementY" : 86.0,
+    "placementWidth" : 188.0,
+    "placementHeight" : 104.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 188.0,
+    "contentHeight" : 104.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 9.0,
+      "right" : 9.0,
+      "bottom" : 9.0,
+      "left" : 9.0
+    }
+  }, {
+    "path" : "ShapeContainerEllipseFixture[0]/OffsetEllipse[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ShapeContainerEllipseFixture[0]/OffsetEllipse[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 29.0,
+    "computedY" : 131.063,
+    "placementX" : 29.0,
+    "placementY" : 131.063,
+    "placementWidth" : 170.0,
+    "placementHeight" : 13.875,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.0,
+    "contentHeight" : 13.875,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ShapeContainerEllipseFixture[0]/OffsetEllipse[0]/BadgePill[1]",
+    "entityName" : "BadgePill",
+    "entityKind" : "ShapeNode",
+    "parentPath" : "ShapeContainerEllipseFixture[0]/OffsetEllipse[0]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 157.0,
+    "computedY" : 163.0,
+    "placementX" : 157.0,
+    "placementY" : 163.0,
+    "placementWidth" : 42.0,
+    "placementHeight" : 18.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 42.0,
+    "contentHeight" : 18.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ShapeContainerEllipseFixture[0]/OffsetEllipse[0]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ShapeContainerEllipseFixture[0]/OffsetEllipse[0]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 23.0,
+    "computedY" : 169.525,
+    "placementX" : 23.0,
+    "placementY" : 169.525,
+    "placementWidth" : 170.0,
+    "placementHeight" : 6.475,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.0,
+    "contentHeight" : 6.475,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ShapeContainerEllipseFixture[0]/EllipseCaption[1]",
+    "entityName" : "EllipseCaption",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ShapeContainerEllipseFixture[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 20.0,
+    "computedY" : 68.137,
+    "placementX" : 20.0,
+    "placementY" : 68.137,
+    "placementWidth" : 260.789,
+    "placementHeight" : 7.863,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 260.789,
+    "contentHeight" : 7.863,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

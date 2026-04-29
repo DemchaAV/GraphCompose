@@ -163,7 +163,7 @@ public final class SessionTemplateComposeTarget implements TemplateComposeTarget
         TemplateRowSpec safeRow = Objects.requireNonNull(row, "row");
         RowBuilder builder = new RowBuilder()
                 .name(safeRow.name())
-                .gap(safeRow.gap())
+                .spacing(safeRow.gap())
                 .padding(TemplateDocumentAdapters.insets(safeRow.padding()))
                 .margin(TemplateDocumentAdapters.insets(safeRow.margin()));
         if (!safeRow.weights().isEmpty()) {

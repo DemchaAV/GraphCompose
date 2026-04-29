@@ -52,7 +52,7 @@ public final class TimelineMinimalCvTemplateComposer {
                 .name("TimelineMinimalRoot")
                 .spacing(12)
                 .addRow("TimelineMinimalHeader", row -> row
-                        .gap(3)
+                        .spacing(3)
                         .weights(1.00, 0.61)
                         .addSection("TimelineMinimalName", section -> section
                                 .spacing(4)
@@ -93,7 +93,7 @@ public final class TimelineMinimalCvTemplateComposer {
                             List<ModulePlacement> sidebarModules,
                             List<ModulePlacement> mainModules,
                             double axisHeight) {
-        row.gap(16)
+        row.spacing(16)
                 .weights(0.74, 0.12, 1.74)
                 .addSection("TimelineMinimalSidebar", sidebar -> {
                     sidebar.spacing(10);

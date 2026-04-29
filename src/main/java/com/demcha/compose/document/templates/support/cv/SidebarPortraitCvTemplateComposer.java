@@ -80,7 +80,7 @@ public final class SidebarPortraitCvTemplateComposer {
                 .spacing(0)
                 .padding(DocumentInsets.zero())
                 .addRow("SidebarPortraitHeaderRow", row -> row
-                        .gap(0)
+                        .spacing(0)
                         .weights(0.36, 0.64)
                         .fillColor(SIDEBAR_BG)
                         .addSection("SidebarPortraitHeaderPhoto",
@@ -88,7 +88,7 @@ public final class SidebarPortraitCvTemplateComposer {
                         .addSection("SidebarPortraitHeaderName",
                                 section -> addNameBlock(section, spec.header())))
                 .addRow("SidebarPortraitBodyRow", row -> row
-                        .gap(0)
+                        .spacing(0)
                         .weights(0.36, 0.64)
                         .addSection("SidebarPortraitBodySidebar",
                                 section -> addSidebar(section, spec))

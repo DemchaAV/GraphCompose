@@ -208,7 +208,7 @@ public final class CenteredHeadlineCvTemplateComposer {
         DocumentTextStyle bodyStyle = style(BODY_FONT, 8.6, DocumentTextDecoration.DEFAULT, INK);
 
         section.addRow("CenteredHeadlineWorkEntry", row -> row
-                .gap(8)
+                .spacing(8)
                 .weights(1.0, 0.45)
                 .addSection("Title", titleColumn -> titleColumn
                         .padding(DocumentInsets.zero())

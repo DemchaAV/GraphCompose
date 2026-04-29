@@ -76,14 +76,28 @@ public final class RowBuilder {
     }
 
     /**
+     * Sets the horizontal spacing between row children. This is the canonical
+     * name; vertical flows use the same {@code spacing(...)} verb.
+     *
+     * @param spacing spacing in points
+     * @return this builder
+     */
+    public RowBuilder spacing(double spacing) {
+        this.gap = spacing;
+        return this;
+    }
+
+    /**
      * Sets the horizontal gap between row children.
      *
      * @param gap gap in points
      * @return this builder
+     * @deprecated since 1.5.0, use {@link #spacing(double)} instead — vertical
+     *             flows and rows now share the same {@code spacing(...)} verb.
      */
+    @Deprecated(since = "1.5.0")
     public RowBuilder gap(double gap) {
-        this.gap = gap;
-        return this;
+        return spacing(gap);
     }
 
     /**

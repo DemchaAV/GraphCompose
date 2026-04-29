@@ -264,6 +264,84 @@ class LayerStackBuilderTest {
     }
 
     @Test
+    void positionNudgesLayerFromAnchor() {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(420, 320)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            SpacerNode background = new SpacerNode("PosBg", 300.0, 120.0,
+                    DocumentInsets.zero(), DocumentInsets.zero());
+            SpacerNode badge = new SpacerNode("PosBadge", 40.0, 20.0,
+                    DocumentInsets.zero(), DocumentInsets.zero());
+
+            LayerStackNode stack = new LayerStackBuilder()
+                    .name("PositionedStack")
+                    .layer(background, LayerAlign.TOP_LEFT)
+                    .position(badge, 12.0, 6.0, LayerAlign.TOP_LEFT)
+                    .build();
+
+            session.add(stack);
+            LayoutGraph graph = session.layoutGraph();
+
+            PlacedNode stackNode = nodeWithSemanticName(graph, "PositionedStack");
+            PlacedNode badgeNode = nodeWithSemanticName(graph, "PosBadge");
+
+            // offsetX > 0 → right; offsetY > 0 → down (top-Y decreases by 6).
+            double stackTopY = stackNode.placementY() + stackNode.placementHeight();
+            double badgeTopY = badgeNode.placementY() + badgeNode.placementHeight();
+
+            assertThat(badgeNode.placementX())
+                    .isEqualTo(stackNode.placementX() + 12.0, within(EPS));
+            assertThat(badgeTopY)
+                    .isEqualTo(stackTopY - 6.0, within(EPS));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void positionFromBottomRightMovesUpAndLeft() {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(420, 320)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            SpacerNode background = new SpacerNode("PosBg2", 300.0, 120.0,
+                    DocumentInsets.zero(), DocumentInsets.zero());
+            SpacerNode dot = new SpacerNode("PosDot", 10.0, 10.0,
+                    DocumentInsets.zero(), DocumentInsets.zero());
+
+            // Anchor BOTTOM_RIGHT; positive offsetX still means "right of anchor",
+            // positive offsetY still means "down from anchor". To pull the dot
+            // 8pt to the left and 4pt up from the bottom-right corner, use
+            // negative offsets — preserving the screen-space convention.
+            LayerStackNode stack = new LayerStackBuilder()
+                    .name("CornerStack")
+                    .layer(background, LayerAlign.TOP_LEFT)
+                    .position(dot, -8.0, -4.0, LayerAlign.BOTTOM_RIGHT)
+                    .build();
+
+            session.add(stack);
+            LayoutGraph graph = session.layoutGraph();
+
+            PlacedNode stackNode = nodeWithSemanticName(graph, "CornerStack");
+            PlacedNode dotNode = nodeWithSemanticName(graph, "PosDot");
+
+            double stackRightX = stackNode.placementX() + stackNode.placementWidth();
+            double dotRightX = dotNode.placementX() + dotNode.placementWidth();
+
+            assertThat(dotRightX)
+                    .isEqualTo(stackRightX - 8.0, within(EPS));
+            // dot is 4pt above the bottom edge: bottom-Y of dot = stack bottom + 4.
+            assertThat(dotNode.placementY())
+                    .isEqualTo(stackNode.placementY() + 4.0, within(EPS));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
     void stackPaddingShrinksLayerBoundingBox() {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(420, 320)

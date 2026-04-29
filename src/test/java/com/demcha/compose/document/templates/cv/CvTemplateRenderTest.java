@@ -7,6 +7,7 @@ import com.demcha.compose.document.templates.api.CvTemplate;
 import com.demcha.compose.document.templates.builtins.BlueBannerCvTemplate;
 import com.demcha.compose.document.templates.builtins.BoxedSectionsCvTemplate;
 import com.demcha.compose.document.templates.builtins.CenteredHeadlineCvTemplate;
+import com.demcha.compose.document.templates.builtins.MonogramSidebarCvTemplate;
 import com.demcha.compose.document.templates.builtins.SidebarPortraitCvTemplate;
 import com.demcha.compose.document.templates.builtins.ClassicSerifCvTemplate;
 import com.demcha.compose.document.templates.builtins.CompactMonoCvTemplate;
@@ -414,7 +415,8 @@ class CvTemplateRenderTest {
                 Arguments.of(new CenteredHeadlineCvTemplate(), 22, 1),
                 Arguments.of(new BoxedSectionsCvTemplate(), 22, 2),
                 Arguments.of(new SidebarPortraitCvTemplate(), 0, 1),
-                Arguments.of(new BlueBannerCvTemplate(), 28, 2));
+                Arguments.of(new BlueBannerCvTemplate(), 28, 2),
+                Arguments.of(new MonogramSidebarCvTemplate(), 0, 1));
     }
 
     private static String section(String text, String start, String end) {

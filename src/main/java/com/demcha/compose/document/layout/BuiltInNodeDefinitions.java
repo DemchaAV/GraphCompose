@@ -37,6 +37,8 @@ import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.LayerStackNode;
+import com.demcha.compose.document.node.ShapeContainerNode;
+import com.demcha.compose.document.style.ShapeOutline;
 import com.demcha.compose.document.node.LineNode;
 import com.demcha.compose.document.node.ListNode;
 import com.demcha.compose.document.node.PageBreakNode;
@@ -99,6 +101,7 @@ public final class BuiltInNodeDefinitions {
                 .register(new SectionDefinition())
                 .register(new RowDefinition())
                 .register(new LayerStackDefinition())
+                .register(new ShapeContainerDefinition())
                 .register(new TableDefinition());
     }
 
@@ -1030,6 +1033,105 @@ public final class BuiltInNodeDefinitions {
             Double[] out = new Double[size];
             java.util.Arrays.fill(out, 0.0);
             return List.of(out);
+        }
+    }
+
+    private static final class ShapeContainerDefinition implements NodeDefinition<ShapeContainerNode> {
+        @Override
+        public Class<ShapeContainerNode> nodeType() {
+            return ShapeContainerNode.class;
+        }
+
+        @Override
+        public PreparedNode<ShapeContainerNode> prepare(ShapeContainerNode node, PrepareContext ctx, BoxConstraints constraints) {
+            // The bounding box is dictated by the outline plus padding — children
+            // do not influence the container size (unlike LayerStackNode where
+            // bbox = max(child outer size)). We still PRE-PREPARE children so
+            // their own prepared payload is cached for compileStackedLayer.
+            ShapeOutline outline = node.outline();
+            Padding padding = toPadding(node.padding());
+            double measureWidth = outline.width() + padding.horizontal();
+            double measureHeight = outline.height() + padding.vertical();
+            double innerWidthForChildren = outline.width();
+            for (LayerStackNode.Layer layer : node.layers()) {
+                DocumentNode child = layer.node();
+                double childInner = Math.max(0.0, innerWidthForChildren - child.margin().horizontal());
+                ctx.prepare(child, BoxConstraints.natural(childInner));
+            }
+
+            int n = node.layers().size();
+            List<LayerAlign> alignments = new ArrayList<>(n);
+            List<Double> offsetsX = new ArrayList<>(n);
+            List<Double> offsetsY = new ArrayList<>(n);
+            for (LayerStackNode.Layer layer : node.layers()) {
+                alignments.add(layer.align());
+                offsetsX.add(layer.offsetX());
+                offsetsY.add(layer.offsetY());
+            }
+
+            return PreparedNode.composite(
+                    node,
+                    new MeasureResult(measureWidth, measureHeight),
+                    new PreparedStackLayout(alignments, offsetsX, offsetsY),
+                    new CompositeLayoutSpec(0.0, CompositeLayoutSpec.Axis.STACK));
+        }
+
+        @Override
+        public PaginationPolicy paginationPolicy(ShapeContainerNode node) {
+            // SHAPE_ATOMIC reuses the atomic page-break path (shape + every
+            // layer stay together), but distinguishes itself from plain
+            // ATOMIC for downstream consumers — render handlers that need
+            // to apply a clip path, and snapshots that mark "this is a
+            // shape-clipped atom, not a bbox-only atom".
+            return PaginationPolicy.SHAPE_ATOMIC;
+        }
+
+        @Override
+        public List<DocumentNode> children(ShapeContainerNode node) {
+            return node.children();
+        }
+
+        @Override
+        public List<LayoutFragment> emitFragments(PreparedNode<ShapeContainerNode> prepared, FragmentContext ctx, FragmentPlacement placement) {
+            ShapeContainerNode node = prepared.node();
+            ShapeOutline outline = node.outline();
+            // Outline is rendered inside the container's inner box: that's
+            // placement minus padding, which by construction equals outline.size().
+            double padLeft = node.padding().left();
+            double padBottom = node.padding().bottom();
+            double width = outline.width();
+            double height = outline.height();
+            if (width <= EPS || height <= EPS) {
+                return List.of();
+            }
+            Color awtFill = node.fillColor() == null ? null : node.fillColor().color();
+            Stroke stroke = toStroke(node.stroke());
+            return switch (outline) {
+                case ShapeOutline.Ellipse ignored -> List.of(new LayoutFragment(
+                        placement.path(),
+                        0,
+                        padLeft,
+                        padBottom,
+                        width,
+                        height,
+                        new EllipseFragmentPayload(awtFill, stroke, null, null)));
+                case ShapeOutline.Rectangle ignored -> List.of(new LayoutFragment(
+                        placement.path(),
+                        0,
+                        padLeft,
+                        padBottom,
+                        width,
+                        height,
+                        new ShapeFragmentPayload(awtFill, stroke, 0.0, null, null, null)));
+                case ShapeOutline.RoundedRectangle r -> List.of(new LayoutFragment(
+                        placement.path(),
+                        0,
+                        padLeft,
+                        padBottom,
+                        width,
+                        height,
+                        new ShapeFragmentPayload(awtFill, stroke, r.cornerRadius(), null, null, null)));
+            };
         }
     }
 

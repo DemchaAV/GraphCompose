@@ -100,7 +100,7 @@ warning) since Apache POI cannot express graphics-state path clipping.
   redundant with the existing `ShapeClipBeginPayload` already carried on
   the placed fragment — the dedicated helper lands later.
 - Visual baselines (`circle-with-text`, `ellipse-with-overlay`,
-  `rounded-rect-card`) come with B.10 / Phase F polish.
+  `rounded-rect-card`) come with later Phase B / Phase F polish.
 
 ---
 
@@ -184,7 +184,7 @@ are not yet clipped to its path.
   component), B.5 (PDF clip-path render via graphics state), B.6 (DOCX
   fallback), B.7 (snapshot extension for `clipPath`), B.8
   (architecture-guard tests), B.9 (recipe + runnable example) and B.10
-  (wrap-up) remain in flight. See `docs/v1.5-execution-plan.md`.
+  (wrap-up) remain in flight.
 
 ---
 

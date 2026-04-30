@@ -141,11 +141,22 @@ final class TableLayoutSupport {
                 // so they visually merge across rows when rendered.
                 double height = sumRange(rowHeightsArr, logical.startRow(),
                         logical.startRow() + logical.rowSpan());
+                // PDF y grows up, the row fragment's y is the row's bottom
+                // line, and a single-row cell's bottom equals the row
+                // fragment's bottom (yOffset = 0). A multi-row cell's
+                // bottom must sit at the bottom of its LAST spanned row,
+                // which in PDF coordinates is BELOW the starting row's
+                // bottom by the cumulative height of the rows below the
+                // starting one — hence the negative offset.
+                double yOffset = -sumRange(rowHeightsArr,
+                        logical.startRow() + 1,
+                        logical.startRow() + logical.rowSpan());
                 resolved.add(new TableResolvedCell(
                         cellName(node, rowIndex, logical.startColumn()),
                         x,
                         width,
                         height,
+                        yOffset,
                         sanitizeCellLines(logical.content()),
                         style,
                         fillInsets(stylesGrid, rowIndex, logical.startColumn(), logical.colSpan()),

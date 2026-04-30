@@ -54,7 +54,11 @@ public final class PdfTableRowRenderHandler implements RenderHandler<TableRow, P
         PDPageContentStream stream = renderingSystem.pageSurface(entity);
         for (TableResolvedCell cell : rowData.cells()) {
             double cellX = placement.x() + cell.x();
-            double cellY = placement.y();
+            // Spanning cells carry a negative yOffset so their bottom edge
+            // sits at the bottom of their last spanned row (PDF y grows
+            // up); single-row cells use 0 and stay flush with the row
+            // fragment's bottom.
+            double cellY = placement.y() + cell.yOffset();
             TableCellLayoutStyle style = cell.style();
 
             cellRenderer.render(

@@ -45,7 +45,12 @@ public final class PdfTableRowFragmentRenderHandler
 
         for (TableResolvedCell cell : payload.cells()) {
             double cellX = fragment.x() + cell.x();
-            double cellY = fragment.y();
+            // yOffset is 0 for single-row cells and negative for
+            // spanning cells — see TableResolvedCell javadoc. Adding it
+            // shifts the spanning cell's bottom edge DOWNWARD in PDF
+            // coordinates so the cell rectangle covers all the rows it
+            // merges instead of overflowing above the starting row.
+            double cellY = fragment.y() + cell.yOffset();
             renderCellBox(stream, cell, cellX, cellY, payload.startsPageFragment());
             renderCellText(stream, fonts, cell, cellX, cellY);
         }

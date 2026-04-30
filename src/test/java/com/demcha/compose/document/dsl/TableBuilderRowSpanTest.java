@@ -82,6 +82,18 @@ class TableBuilderRowSpanTest {
             assertThat(topRight.x())
                     .as("the right column starts where the merged cell ends")
                     .isEqualTo(merged.x() + merged.width(), within(EPS));
+
+            // yOffset shifts the spanning cell's bottom edge DOWNWARD in
+            // PDF coords (negative offset). For a 2-row span the offset
+            // equals -row1.height — that's exactly enough to put the
+            // cell's bottom at row 1's bottom instead of row 0's bottom.
+            // Single-row cells stay at yOffset = 0 so they remain flush
+            // with the row fragment's bottom.
+            assertThat(merged.yOffset())
+                    .as("merged cell bottom shifts down by row 1's height")
+                    .isEqualTo(-bottomRight.height(), within(EPS));
+            assertThat(topRight.yOffset()).isZero();
+            assertThat(bottomRight.yOffset()).isZero();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -134,6 +146,12 @@ class TableBuilderRowSpanTest {
             double row1H = rows.get(1).get(0).height();
             double row2H = rows.get(2).get(0).height();
             assertThat(tall.height()).isEqualTo(row0H + row1H + row2H, within(EPS));
+            // yOffset shifts the tall cell's bottom edge DOWNWARD by
+            // (row1 + row2) heights so it lands at row 2's bottom in
+            // PDF coordinates instead of overflowing above row 0.
+            assertThat(tall.yOffset())
+                    .as("3-row span shifts bottom down by row1 + row2 heights")
+                    .isEqualTo(-(row1H + row2H), within(EPS));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

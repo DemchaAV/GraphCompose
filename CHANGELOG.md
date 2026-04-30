@@ -39,6 +39,20 @@ two compose freely (a single cell can be both `colSpan(2).rowSpan(3)`).
 - `TableResolvedCell.height` for a cell with `rowSpan > 1` equals the
   sum of its covered row heights, so the cell visually merges across
   rows when the renderer paints it.
+- `TableResolvedCell` gains a fifth field `double yOffset` (default
+  `0` via a back-compat 8-arg constructor). Spanning cells use a
+  NEGATIVE offset equal to the cumulative height of the rows below
+  the starting row so the cell's rectangle extends downward through
+  the rows it merges instead of upward beyond the starting row. Both
+  PDF row-render handlers (canonical `PdfTableRowFragmentRenderHandler`
+  and engine `PdfTableRowRenderHandler`) honour the offset by
+  computing `cellY = rowFragment.y() + yOffset`. Without this offset
+  spanning cells extended above the table area in PDF coordinates,
+  which produced the symptoms reported on the first round of
+  visual demos: missing top border on the merged cell and missing
+  left borders on the cells right of it (the merged cell's right
+  border was drawn at the wrong y range, leaving the visible boundary
+  unstroked).
 - `buildStylesGrid` propagates the spanning cell's resolved style to
   every `(row, column)` position it occupies, so neighbour-style
   lookups for borders and fill insets correctly detect a single shared

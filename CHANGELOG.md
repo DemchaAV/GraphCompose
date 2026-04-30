@@ -1,5 +1,49 @@
 # Changelog
 
+## v1.5.0-beta.16 (in progress) - F.3 / E.5 cleanup: recipes split + v1.5 PDF previews
+
+Closes the documentation-side gaps that were missed in earlier passes
+of Phase F.3 and Phase E.5.
+
+### Documentation
+
+- **F.3 — recipes split completed.** New
+  [`docs/recipes/shapes.md`](docs/recipes/shapes.md) covers visual
+  primitives (filled cards, dividers, spacers, lines, ellipses,
+  image fit, theme soft panels) — the inline snippets that used to
+  sit in the old `recipes.md` body. New
+  [`docs/recipes/extending.md`](docs/recipes/extending.md) is a thin
+  recipe-style cheatsheet for the four extension paths, linking to
+  the long-form `extension-guide.md` for each.
+- **F.3 — `recipes.md` is now a pure index.** The file lists every
+  topic-focused recipe page plus four 5-line "common DSL primitives"
+  starter snippets (paragraph, bullets, rows, snapshot) so first-time
+  readers still land on copy-pasteable code.
+- **F.5 — verified.** `docs/archive/{v1.2-roadmap.md, migration-v1-1-to-v1-2.md}`
+  and `docs/archive/README.md` are already in place from earlier
+  archive work; the plan checkbox sync was overdue.
+
+### Visual previews
+
+- **E.5 — v1.5 PDF previews shipped.** New `assets/readme/v1.5/`
+  folder with six committed PDFs the README links to:
+  - `invoice-cinematic-v2.pdf` — `InvoiceTemplateV2 + BusinessTheme.modern()`
+  - `invoice-custom-theme-studio-emerald.pdf` — `CustomBusinessThemeExample`
+  - `proposal-cinematic-v2.pdf` — `ProposalTemplateV2 + BusinessTheme.modern()`
+  - `shape-container.pdf` — clipped shape containers (`ClipPolicy.CLIP_PATH`)
+  - `transforms.pdf` — rotate / scale / z-index swap
+  - `table-advanced.pdf` — row span / zebra / totals / repeated header
+- README "Visual preview" section gains a v1.5 sub-section that links
+  to all six. Each PDF is the actual output of the corresponding
+  `examples/.../*.java` runnable.
+
+### Tests
+
+- 647/647 still green. Docs-only changes — no production code
+  touched.
+
+---
+
 ## v1.5.0-beta.15 (in progress) - Phase E.5: README quick-start refresh
 
 E.5 closes Phase E by lifting the README quick-start to the v1.5

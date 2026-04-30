@@ -1,27 +1,40 @@
 # Recipes
 
-These recipes use only the canonical session-first authoring API.
-Public application code should not import
+GraphCompose recipes are split into focused pages so each page covers
+one topic end-to-end. All recipes use only the canonical session-first
+authoring API; public application code should not import
 `com.demcha.compose.engine.*`.
 
 ## Topic-focused recipe pages
 
-Skip ahead to a focused page when you know what you're after:
-
 | Page | Covers |
 | --- | --- |
-| [Themes](recipes/themes.md) | `BusinessTheme.classic / modern / executive`, page background, palette slots, text scale |
-| [Shape-as-container](recipes/shape-as-container.md) | `addCircle` / `addEllipse` / `addContainer` with `ClipPolicy` |
+| [Themes](recipes/themes.md) | `BusinessTheme.classic / modern / executive`, page background, palette slots, text scale, the `CvTheme` ↔ `BusinessTheme` bridge |
+| [Shapes and visual primitives](recipes/shapes.md) | Filled cards, dividers, spacers, lines, ellipses, image fit modes, soft panels |
+| [Shape-as-container](recipes/shape-as-container.md) | `addCircle` / `addEllipse` / `addContainer` with `ClipPolicy` (clipped layered children) |
 | [Transforms and z-index](recipes/transforms.md) | `rotate` / `scale` mixin, per-layer `zIndex` for overlays |
 | [Tables](recipes/tables.md) | Row span, zebra rows, totals row, repeated header on page break |
-| [Streaming and output](recipes/streaming.md) | `buildPdf` / `writePdf` / `toPdfBytes`, DOCX export, header / footer chrome, guide lines |
-| [Extension guide](extension-guide.md) | Add a semantic node, extend a builder, write a render handler, write a backend |
+| [Streaming and output](recipes/streaming.md) | `buildPdf` / `writePdf` / `toPdfBytes`, DOCX export, layout snapshots, header / footer chrome, guide lines |
+| [Extending GraphCompose](recipes/extending.md) | New semantic node, fluent setter, render backend, snapshot-based regression tests |
 
-The general DSL primitives (paragraphs, bullet lists, cards, divider,
-images, snapshot regression) live below this page as ready-to-copy
-snippets.
+For longer-form material:
 
-## Paragraph Module
+- [Extension guide](extension-guide.md) — walkthrough of the four
+  extension paths with the v1.5 `ShapeContainerNode` work as a
+  worked example.
+- [Migration v1.4 → v1.5](migration-v1-4-to-v1-5.md) — every public
+  API change in v1.5 plus suggested migration order.
+- [`ADR 0001 — Shape as container`](adr/0001-shape-as-container.md)
+  and [`ADR 0002 — Theme unification`](adr/0002-theme-unification.md)
+  for the design reasoning behind the two largest v1.5 additions.
+
+## Common DSL primitives — quick snippets
+
+The following snippets cover the three smallest "I just want to put
+text on a page" patterns. Use them as starting points before reaching
+for a focused recipe page.
+
+### Paragraph module
 
 ```java
 document.pageFlow(page -> page
@@ -29,7 +42,7 @@ document.pageFlow(page -> page
                 "Backend engineer focused on secure Java systems and reliable document generation.")));
 ```
 
-## Bullet List
+### Bullet list
 
 ```java
 document.pageFlow(page -> page
@@ -40,7 +53,7 @@ document.pageFlow(page -> page
                 "Docker")));
 ```
 
-## Markerless Rows
+### Markerless rows
 
 ```java
 document.pageFlow(page -> page
@@ -49,125 +62,18 @@ document.pageFlow(page -> page
                 "CVRewriter - Profile-aware CV tailoring platform.")));
 ```
 
-## Filled Card With Rounded Corners
+### Snapshot regression in a test
 
 ```java
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 
-document.pageFlow(page -> page
-        .spacing(12)
-        .addSection("InfoCard", card -> card
-                .fillColor(DocumentColor.rgb(245, 248, 255))
-                .stroke(DocumentStroke.of(DocumentColor.ROYAL_BLUE, 0.8))
-                .cornerRadius(10)
-                .padding(DocumentInsets.of(12))
-                .margin(DocumentInsets.bottom(10))
-                .addParagraph(paragraph -> paragraph
-                        .text("Block text inside a filled rounded card.")
-                        .textStyle(DocumentTextStyle.DEFAULT)
-                        .lineSpacing(2))));
-```
-
-## Styled Table
-
-```java
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.table.DocumentTableColumn;
-import com.demcha.compose.document.table.DocumentTableStyle;
-
-document.pageFlow(page -> page
-        .module("Status", module -> module.table(table -> table
-                .columns(
-                        DocumentTableColumn.fixed(90),
-                        DocumentTableColumn.auto(),
-                        DocumentTableColumn.auto())
-                .defaultCellStyle(DocumentTableStyle.builder()
-                        .padding(DocumentInsets.of(6))
-                        .build())
-                .headerStyle(DocumentTableStyle.builder()
-                        .fillColor(DocumentColor.LIGHT_GRAY)
-                        .padding(DocumentInsets.of(6))
-                        .build())
-                .header("Area", "Owner", "Status")
-                .rows(
-                        new String[]{"Engine", "GraphCompose", "Stable"},
-                        new String[]{"Templates", "Canonical", "Active"}))));
-```
-
-## Divider And Accent Shape
-
-```java
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentInsets;
-
-document.pageFlow(page -> page
-        .module("Visual Blocks", module -> module
-                .divider(divider -> divider
-                        .width(220)
-                        .thickness(3)
-                        .color(DocumentColor.ROYAL_BLUE)
-                        .padding(DocumentInsets.of(6)))
-                .addShape(shape -> shape
-                        .name("Accent")
-                        .size(3, 90)
-                        .fillColor(DocumentColor.ORANGE)
-                        .padding(DocumentInsets.of(6)))));
-```
-
-## Spacer, Line, And Circle
-
-```java
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentStroke;
-
-document.pageFlow(page -> page
-        .name("VisualPrimitives")
-        .spacing(8)
-        .addSpacer(spacer -> spacer.name("Gap").height(12))
-        .addLine(line -> line
-                .name("Rule")
-                .horizontal(180)
-                .thickness(2)
-                .color(DocumentColor.ROYAL_BLUE))
-        .addEllipse(ellipse -> ellipse
-                .name("Badge")
-                .circle(24)
-                .fillColor(DocumentColor.ORANGE)
-                .stroke(DocumentStroke.of(DocumentColor.BLACK, 0.5))));
-```
-
-## Image Fit
-
-```java
-import com.demcha.compose.document.image.DocumentImageFitMode;
-
-import java.nio.file.Path;
-
-document.pageFlow(page -> page
-        .name("ImageFit")
-        .addImage(image -> image
-                .name("Logo")
-                .source(Path.of("assets/logo.png"))
-                .fitToBounds(96, 48)
-                .fitMode(DocumentImageFitMode.CONTAIN))
-        .addImage(image -> image
-                .name("Avatar")
-                .source(Path.of("assets/avatar.png"))
-                .fitToBounds(48, 48)
-                .fitMode(DocumentImageFitMode.COVER)));
-```
-
-## Snapshot Regression
-
-```java
 try (DocumentSession document = GraphCompose.document().create()) {
     document.pageFlow(page -> page
             .module("Snapshot Example", module -> module.paragraph("Hello GraphCompose")));
 
-    LayoutSnapshot snapshot = document.layoutSnapshot();
+    LayoutSnapshotAssertions.assertMatches(document, "my-feature/hello");
 }
 ```
+
+See [recipes/extending.md § 4](recipes/extending.md#4-validate-a-custom-nodes-layout-via-snapshots)
+for the full snapshot workflow including baseline approval.

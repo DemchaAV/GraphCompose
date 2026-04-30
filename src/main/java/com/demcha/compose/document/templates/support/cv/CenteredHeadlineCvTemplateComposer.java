@@ -101,15 +101,18 @@ public final class CenteredHeadlineCvTemplateComposer {
 
     private void addModuleBanner(SectionBuilder section, String title) {
         // accentTop + accentBottom draw the framing rules; uniform
-        // 3pt vertical padding gives equal breathing room above and
-        // below the heading text. Tight enough that the standard CV
-        // still fits on one A4 page.
+        // 5pt vertical padding gives equal breathing room above and
+        // below the heading text — matches the boutique-resume
+        // proportions where the title text height + padding feels
+        // generous without pushing the standard CV onto a second
+        // page. Letter-spaced uppercase title is left-aligned,
+        // mirroring the reference design.
         section.accentTop(RULE, 0.55)
                 .accentBottom(RULE, 0.55)
                 .padding(DocumentInsets.symmetric(3, 0))
                 .margin(DocumentInsets.zero())
                 .addParagraph(paragraph -> paragraph
-                        .text(title.toUpperCase(Locale.ROOT))
+                        .text(spacedUpper(title))
                         .textStyle(style(theme.bodyFont(), 10.0, DocumentTextDecoration.BOLD, INK))
                         .align(TextAlign.LEFT)
                         .margin(DocumentInsets.zero()));

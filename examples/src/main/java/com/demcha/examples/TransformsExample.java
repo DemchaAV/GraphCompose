@@ -167,6 +167,14 @@ public final class TransformsExample {
                                     .align(TextAlign.CENTER)
                                     .margin(DocumentInsets.zero())))
                     .build();
+
+            // DocumentSession.close() only releases measurement resources;
+            // the PDF is persisted only when buildPdf/writePdf/toPdfBytes
+            // is invoked explicitly. Forgetting this is a silent footgun
+            // — the example would print "Generated: ...transforms.pdf"
+            // (the path returned by ExampleOutputPaths.prepare) yet
+            // leave nothing on disk.
+            document.buildPdf();
         }
 
         return outputFile;

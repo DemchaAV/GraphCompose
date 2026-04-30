@@ -1,5 +1,35 @@
 # Changelog
 
+## v1.5.0-beta.12 (in progress) - Phase E.4 (slice 1): custom BusinessTheme example
+
+E.4 lifts the runnable-examples module to the v1.4 bar. This slice adds
+the first of three remaining showpieces — a hand-built `BusinessTheme`
+that proves every visible token on `InvoiceTemplateV2` is theme-driven.
+
+### Examples
+
+- New runnable
+  `examples/.../CustomBusinessThemeExample.java` constructs a
+  "Studio Emerald" theme from raw `DocumentPalette`, `SpacingScale`,
+  `TextScale`, and `TablePreset` records (no factory shortcut), then
+  pipes `ExampleDataFactory.sampleInvoice()` through
+  `InvoiceTemplateV2`. Output: `examples/target/generated-pdfs/
+  invoice-custom-theme.pdf`. Hooked into `GenerateAllExamples`.
+- The example doubles as a copy-and-paste starter for projects that
+  want to brand GraphCompose output for their own product.
+
+### Tests
+
+- New `CustomBusinessThemeDemoTest` (3 cases): renders the same
+  invoice once with `BusinessTheme.modern()` and once with the
+  hand-built Studio Emerald theme, validates both files are well-
+  formed PDFs, and asserts the custom theme is accepted by
+  `InvoiceTemplateV2`. Output PDFs land under
+  `target/visual-tests/custom-business-theme/` for side-by-side
+  review.
+
+---
+
 ## v1.5.0-beta.11 (in progress) - Phase E.3: CvTheme ↔ BusinessTheme bridge
 
 E.3 takes a phased approach to theme unification, captured in the new

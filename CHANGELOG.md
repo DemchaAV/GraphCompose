@@ -1,5 +1,42 @@
 # Changelog
 
+## v1.5.0-beta.13 (in progress) - Phase E.4 (slice 2): HTTP streaming example
+
+E.4 continues. This slice ships the canonical "render PDF straight to
+an output stream" example — the pattern most production adopters reach
+for first.
+
+### Examples
+
+- New runnable
+  `examples/.../HttpStreamingExample.java` isolates the streaming code
+  path into a single
+  `streamInvoiceTo(InvoiceDocumentSpec, OutputStream)` method so
+  Servlet / S3 / GCS adopters can copy-paste the body. The class
+  javadoc shows the matching Spring Boot `@RestController` snippet.
+- The example's `main` runs the same code path against
+  `ByteArrayOutputStream`, then writes the captured bytes to disk —
+  output: `examples/target/generated-pdfs/invoice-http-stream.pdf`.
+  Hooked into `GenerateAllExamples`.
+
+### Tests
+
+- New `HttpStreamingDemoTest` (2 cases) pins the streaming contract:
+  - `writePdf(OutputStream)` produces a valid PDF and **does not**
+    close the caller's stream (mandatory for the Servlet response
+    pattern). Verified by a `TrackingOutputStream` that records
+    whether `close()` was called.
+  - `writePdf(OutputStream)` and `toPdfBytes()` produce equally-sized
+    documents with identical PDF version headers for the same input.
+    Byte-for-byte equality is not achievable (PDFBox stamps every
+    render with a fresh `/ID` UUID), but the length-and-header check
+    proves both code paths route through the same renderer.
+- Stream output PDF lives at
+  `target/visual-tests/http-streaming/invoice-http-stream.pdf` for
+  reviewer inspection.
+
+---
+
 ## v1.5.0-beta.12 (in progress) - Phase E.4 (slice 1): custom BusinessTheme example
 
 E.4 lifts the runnable-examples module to the v1.4 bar. This slice adds

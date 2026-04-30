@@ -79,22 +79,40 @@ public final class CenteredHeadlineCvTemplateComposer {
         List<CvModule> modules = spec.modules() == null ? List.of() : spec.modules();
         for (int i = 0; i < modules.size(); i++) {
             final CvModule module = modules.get(i);
-            final int index = i;
+            String title = safe(module.title());
+            if (title.isBlank()) {
+                continue;
+            }
+            // Module title sits inside a banner: hairline rule on top,
+            // matching rule on the bottom, equal 6pt vertical padding
+            // around the centred uppercase heading. This is the v1.5
+            // accentTop + accentBottom idiom — mirrors the blue-banner
+            // template so the gallery stays visually consistent.
             pageFlow.addSection(
-                    "CenteredHeadlineModule" + normalize(safe(module.title())) + "_" + i,
-                    section -> {
-                        // Hairline rule between modules — render as
-                        // accentTop on every module after the first.
-                        // Same visual as the original between-module
-                        // addLine call.
-                        if (index > 0) {
-                            section.accentTop(RULE, 0.55);
-                        }
-                        addModule(section, module);
-                    });
+                    "CenteredHeadlineBanner" + normalize(title) + "_" + i,
+                    section -> addModuleBanner(section, title));
+            pageFlow.addSection(
+                    "CenteredHeadlineModuleBody" + normalize(title) + "_" + i,
+                    section -> renderBody(section, module));
         }
 
         pageFlow.build();
+    }
+
+    private void addModuleBanner(SectionBuilder section, String title) {
+        // accentTop + accentBottom draw the framing rules; uniform
+        // 3pt vertical padding gives equal breathing room above and
+        // below the heading text. Tight enough that the standard CV
+        // still fits on one A4 page.
+        section.accentTop(RULE, 0.55)
+                .accentBottom(RULE, 0.55)
+                .padding(DocumentInsets.symmetric(3, 0))
+                .margin(DocumentInsets.zero())
+                .addParagraph(paragraph -> paragraph
+                        .text(title.toUpperCase(Locale.ROOT))
+                        .textStyle(style(theme.bodyFont(), 10.0, DocumentTextDecoration.BOLD, INK))
+                        .align(TextAlign.LEFT)
+                        .margin(DocumentInsets.zero()));
     }
 
     private void addHeadline(SectionBuilder section, Header header) {
@@ -141,24 +159,16 @@ public final class CenteredHeadlineCvTemplateComposer {
                         }));
     }
 
-    private void addModule(SectionBuilder section, CvModule module) {
+    private void renderBody(SectionBuilder section, CvModule module) {
         if (module == null) {
             return;
         }
-        String title = safe(module.title());
-        if (title.isBlank()) {
-            return;
-        }
+        // Body sits flush below the banner. Spacing(4) preserves the
+        // original between-paragraph rhythm; padding-top(2) gives the
+        // body breathing room below the banner's bottom rule without
+        // pushing the standard CV onto a second page.
         section.spacing(4)
-                .padding(new DocumentInsets(2, 0, 0, 0))
-                .addParagraph(paragraph -> paragraph
-                        .text(title.toUpperCase(Locale.ROOT))
-                        .textStyle(style(theme.bodyFont(), 10.0, DocumentTextDecoration.BOLD, INK))
-                        .margin(DocumentInsets.zero()));
-        renderBody(section, module);
-    }
-
-    private void renderBody(SectionBuilder section, CvModule module) {
+                .padding(new DocumentInsets(2, 0, 0, 0));
         for (CvModule.BodyBlock block : module.bodyBlocks()) {
             switch (block.kind()) {
                 case PARAGRAPH -> renderParagraphBlock(section, block);

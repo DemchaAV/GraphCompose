@@ -233,7 +233,14 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                 Map<String, Map<Integer, PdfGuideLinesRenderer.Bounds>> ownerBounds = guideLines
                         ? PdfGuideLinesRenderer.computeOwnerBounds(graph.fragments())
                         : Map.of();
-                for (PlacedFragment fragment : graph.fragments()) {
+                PdfFragmentRenderHandler<?> tableRowHandler = handlers.get(BuiltInNodeDefinitions.TableRowFragmentPayload.class);
+                for (int index = 0; index < graph.fragments().size(); index++) {
+                    PlacedFragment fragment = graph.fragments().get(index);
+                    if (fragment.payload() instanceof BuiltInNodeDefinitions.TableRowFragmentPayload
+                            && tableRowHandler instanceof PdfTableRowFragmentRenderHandler tableHandler) {
+                        index = renderTableRowGroup(graph.fragments(), index, tableHandler, environment, guideLines, ownerBounds);
+                        continue;
+                    }
                     renderFragment(fragment, environment, guideLines, ownerBounds);
                 }
                 PdfBookmarkOutlineWriter.apply(document, environment.bookmarkRecords());
@@ -250,6 +257,38 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
             document.save(output);
             return pages.size();
         }
+    }
+
+    private int renderTableRowGroup(List<PlacedFragment> fragments,
+                                    int startIndex,
+                                    PdfTableRowFragmentRenderHandler handler,
+                                    PdfRenderEnvironment environment,
+                                    boolean guideLines,
+                                    Map<String, Map<Integer, PdfGuideLinesRenderer.Bounds>> ownerBounds) throws Exception {
+        String tablePath = fragments.get(startIndex).path();
+        int endExclusive = startIndex;
+        while (endExclusive < fragments.size()
+                && Objects.equals(fragments.get(endExclusive).path(), tablePath)
+                && fragments.get(endExclusive).payload() instanceof BuiltInNodeDefinitions.TableRowFragmentPayload) {
+            endExclusive++;
+        }
+
+        for (int index = startIndex; index < endExclusive; index++) {
+            PlacedFragment fragment = fragments.get(index);
+            handler.renderFills(
+                    fragment,
+                    (BuiltInNodeDefinitions.TableRowFragmentPayload) fragment.payload(),
+                    environment);
+        }
+        for (int index = startIndex; index < endExclusive; index++) {
+            PlacedFragment fragment = fragments.get(index);
+            BuiltInNodeDefinitions.TableRowFragmentPayload payload =
+                    (BuiltInNodeDefinitions.TableRowFragmentPayload) fragment.payload();
+            handler.renderBordersAndText(fragment, payload, environment);
+            finishRenderedFragment(fragment, payload, environment, guideLines, ownerBounds);
+        }
+
+        return endExclusive - 1;
     }
 
     private List<PDPage> createPages(PDDocument document, LayoutGraph graph) {
@@ -271,6 +310,14 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         Object payload = fragment.payload();
         PdfFragmentRenderHandler<Object> handler = handlerFor(payload);
         handler.render(fragment, payload, environment);
+        finishRenderedFragment(fragment, payload, environment, guideLines, ownerBounds);
+    }
+
+    private void finishRenderedFragment(PlacedFragment fragment,
+                                        Object payload,
+                                        PdfRenderEnvironment environment,
+                                        boolean guideLines,
+                                        Map<String, Map<Integer, PdfGuideLinesRenderer.Bounds>> ownerBounds) throws Exception {
         if (payload instanceof BuiltInNodeDefinitions.ParagraphFragmentPayload paragraphPayload) {
             addParagraphSpanLinks(fragment, paragraphPayload, environment);
         }

@@ -1,5 +1,62 @@
 # Changelog
 
+## v1.5.0-beta.11 (in progress) - Phase E.3: CvTheme ↔ BusinessTheme bridge
+
+E.3 takes a phased approach to theme unification, captured in the new
+[ADR 0002](docs/adr/0002-theme-unification.md). Rather than collapse
+the two theme types under a common interface (rejected — it loses the
+CV-specific vocabulary that ten templates rely on), we add a thin
+adapter so projects that already chose a `BusinessTheme` for their
+invoices and proposals can derive a visually-matching `CvTheme`
+without re-stating the visual tokens.
+
+### Public API
+
+- New `CvTheme.fromBusinessTheme(BusinessTheme)` static factory
+  derives a CV theme from a business theme. The bridge maps the
+  business palette / text-scale slots into the CV-specific tokens:
+  - `primaryColor`   ← `palette().primary()`
+  - `secondaryColor` ← `palette().accent()`
+  - `bodyColor`      ← `palette().textPrimary()`
+  - `accentColor`    ← `palette().accent()`
+  - `headerFont`     ← `text().h1().fontName()`
+  - `bodyFont`       ← `text().body().fontName()`
+  - `nameFontSize`   ← `text().h1().size()`
+  - `headerFontSize` ← `text().h2().size()`
+  - `bodyFontSize`   ← `text().body().size()`
+  - CV-specific layout tokens (`spacing`, `modulMargin`,
+    `spacingModuleName`) keep the existing CV defaults.
+- Existing `CvTheme.defaultTheme()` / `timesRoman()` / `courier()`
+  factories are unchanged. The ten existing CV templates and the
+  `CvTemplateV1` composer continue to work without code changes.
+
+### Documentation
+
+- New `docs/adr/0002-theme-unification.md` records the analysis,
+  the rejected alternative ("Option B: common Theme interface"),
+  and the migration plan.
+- `docs/recipes/themes.md` gets a new "Sharing themes with CV
+  templates" section that shows the bridge in use, and an
+  "Layered themes for invoices and proposals" section refreshed for
+  the V2 templates that landed in E.1 / E.2.
+
+### Tests
+
+- New `CvThemeBusinessThemeAdapterTest` pins the bridge mapping:
+  colours follow the business palette slots, fonts and sizes follow
+  the business text scale, three different business themes produce
+  three distinct CV themes, and the CV-specific layout tokens
+  (`spacing`, `moduleMargin`, `spacingModuleName`) match the CV
+  defaults.
+
+### Out of scope for v1.5
+
+- Mass migration of the ten CV templates to a `BusinessTheme`-driven
+  composer. Templates can opt in incrementally when they're touched
+  for unrelated reasons.
+
+---
+
 ## v1.5.0-beta.10 (in progress) - Phase E.2: cinematic proposal template
 
 E.2 lands `ProposalTemplateV2`, the canonical-DSL proposal counterpart

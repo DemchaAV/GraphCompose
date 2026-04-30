@@ -1,5 +1,7 @@
 package com.demcha.compose.document.templates.theme;
 
+import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.theme.BusinessTheme;
 import com.demcha.compose.font.FontName;
 import com.demcha.compose.engine.components.content.text.TextDecoration;
 import com.demcha.compose.engine.components.content.text.TextStyle;
@@ -7,6 +9,7 @@ import com.demcha.compose.engine.components.style.ComponentColor;
 import com.demcha.compose.engine.components.style.Margin;
 
 import java.awt.Color;
+import java.util.Objects;
 
 /**
  * Reusable visual theme for CV and cover-letter style templates.
@@ -156,6 +159,57 @@ public record CvTheme(
                 5,
                 Margin.top(5),
                 5);
+    }
+
+    /**
+     * Bridges a {@link BusinessTheme} into a {@link CvTheme} per
+     * ADR 0002 (Theme unification). The resulting CV theme reuses the
+     * business theme's palette colours (primary / accent / muted body)
+     * and the business {@link com.demcha.compose.document.theme.TextScale}'s
+     * font choices and sizes, so a project that picks
+     * {@code BusinessTheme.modern()} for its invoices can derive a
+     * matching CV theme without re-stating the visual tokens.
+     *
+     * <p>Mapping:</p>
+     * <ul>
+     *   <li>{@code primaryColor}   ← {@code palette().primary()}</li>
+     *   <li>{@code secondaryColor} ← {@code palette().accent()}</li>
+     *   <li>{@code bodyColor}      ← {@code palette().textPrimary()}</li>
+     *   <li>{@code accentColor}    ← {@code palette().accent()}</li>
+     *   <li>{@code headerFont}     ← {@code text().h1().fontName()} (or
+     *       Helvetica if the business theme used a default style)</li>
+     *   <li>{@code bodyFont}       ← {@code text().body().fontName()}</li>
+     *   <li>{@code nameFontSize}   ← {@code text().h1().size()}</li>
+     *   <li>{@code headerFontSize} ← {@code text().h2().size()}</li>
+     *   <li>{@code bodyFontSize}   ← {@code text().body().size()}</li>
+     *   <li>{@code spacing}        ← {@code 5} (existing CV default)</li>
+     *   <li>{@code modulMargin}    ← {@code Margin.top(5)} (existing CV default)</li>
+     *   <li>{@code spacingModuleName} ← {@code 0} (existing CV default)</li>
+     * </ul>
+     *
+     * @param theme business theme to derive CV tokens from
+     * @return CV theme whose colours and fonts match the business theme
+     */
+    public static CvTheme fromBusinessTheme(BusinessTheme theme) {
+        Objects.requireNonNull(theme, "theme");
+        DocumentTextStyle h1 = theme.text().h1();
+        DocumentTextStyle h2 = theme.text().h2();
+        DocumentTextStyle body = theme.text().body();
+        FontName headerFont = h1.fontName() == null ? FontName.HELVETICA : h1.fontName();
+        FontName bodyFont = body.fontName() == null ? FontName.HELVETICA : body.fontName();
+        return new CvTheme(
+                theme.palette().primary().color(),
+                theme.palette().accent().color(),
+                theme.palette().textPrimary().color(),
+                theme.palette().accent().color(),
+                headerFont,
+                bodyFont,
+                h1.size(),
+                h2.size(),
+                body.size(),
+                5,
+                Margin.top(5),
+                0);
     }
 
     /**

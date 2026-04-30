@@ -59,9 +59,14 @@ final class TableLayoutSupport {
     }
 
     /**
-     * Logical cell: a single user-authored cell that may span multiple columns.
+     * Logical cell: a single user-authored cell after the cell-grid pre-pass
+     * has resolved its starting position and colSpan/rowSpan extent. A
+     * spanning cell appears once at its starting (row, column); the
+     * positions it occupies in subsequent rows are tracked by the
+     * occupancy grid built in {@link #buildLogicalRows(TableNode, int)} and
+     * are skipped when iterating later source rows.
      */
-    private record LogicalCell(int startColumn, int colSpan, TableCellContent content) {
+    private record LogicalCell(int startRow, int startColumn, int colSpan, int rowSpan, TableCellContent content) {
     }
 
     static ResolvedTableLayout resolveTableLayout(TableNode node,
@@ -69,9 +74,7 @@ final class TableLayoutSupport {
                                                   double availableWidth) {
         validateRowsExist(node);
         int columnCount = resolveColumnCount(node);
-        validateRowSpans(node, columnCount);
-
-        List<List<LogicalCell>> logicalRows = buildLogicalRows(node);
+        List<List<LogicalCell>> logicalRows = buildLogicalRows(node, columnCount);
         List<TableColumnLayout> normalizedSpecs = normalizeSpecs(node, columnCount);
         TableCellLayoutStyle[][] stylesGrid = buildStylesGrid(node, logicalRows, columnCount);
         double[] naturalWidths = resolveNaturalColumnWidths(node, normalizedSpecs, logicalRows, stylesGrid, columnCount, measurement);
@@ -85,28 +88,64 @@ final class TableLayoutSupport {
                     + " exceeds available width " + innerAvailableWidth + ".");
         }
 
+        // Two-pass row height resolution. First pass: row height = max of
+        // natural heights of the single-row cells starting in that row.
+        // Second pass: for every spanning cell, ensure the SUM of its
+        // covered row heights is at least its natural height; if short,
+        // distribute the deficit equally across the spanned rows. This
+        // keeps single-row content predictable while still satisfying
+        // tall spanned content.
+        double[] rowHeightsArr = new double[node.rows().size()];
+        for (int rowIndex = 0; rowIndex < logicalRows.size(); rowIndex++) {
+            for (LogicalCell logical : logicalRows.get(rowIndex)) {
+                if (logical.rowSpan() != 1) {
+                    continue;
+                }
+                TableCellLayoutStyle style = stylesGrid[rowIndex][logical.startColumn()];
+                rowHeightsArr[rowIndex] = Math.max(rowHeightsArr[rowIndex],
+                        cellNaturalHeight(logical.content(), style, measurement));
+            }
+        }
+        for (int rowIndex = 0; rowIndex < logicalRows.size(); rowIndex++) {
+            for (LogicalCell logical : logicalRows.get(rowIndex)) {
+                if (logical.rowSpan() == 1) {
+                    continue;
+                }
+                TableCellLayoutStyle style = stylesGrid[rowIndex][logical.startColumn()];
+                double need = cellNaturalHeight(logical.content(), style, measurement);
+                double have = sumRange(rowHeightsArr, logical.startRow(),
+                        logical.startRow() + logical.rowSpan());
+                if (need <= have + EPS) {
+                    continue;
+                }
+                double share = (need - have) / logical.rowSpan();
+                for (int r = logical.startRow(); r < logical.startRow() + logical.rowSpan(); r++) {
+                    rowHeightsArr[r] += share;
+                }
+            }
+        }
+
         List<List<TableResolvedCell>> rows = new ArrayList<>(logicalRows.size());
         List<Double> rowHeights = new ArrayList<>(logicalRows.size());
 
         for (int rowIndex = 0; rowIndex < logicalRows.size(); rowIndex++) {
             List<LogicalCell> rowCells = logicalRows.get(rowIndex);
-            double rowHeight = 0.0;
-            for (LogicalCell logical : rowCells) {
-                TableCellLayoutStyle style = stylesGrid[rowIndex][logical.startColumn()];
-                rowHeight = Math.max(rowHeight, cellNaturalHeight(logical.content(), style, measurement));
-            }
-            rowHeights.add(rowHeight);
+            rowHeights.add(rowHeightsArr[rowIndex]);
 
             List<TableResolvedCell> resolved = new ArrayList<>(rowCells.size());
             for (LogicalCell logical : rowCells) {
                 TableCellLayoutStyle style = stylesGrid[rowIndex][logical.startColumn()];
                 double x = sumRange(finalWidths, 0, logical.startColumn());
                 double width = sumRange(finalWidths, logical.startColumn(), logical.startColumn() + logical.colSpan());
+                // Spanning cells take the SUM of their covered row heights,
+                // so they visually merge across rows when rendered.
+                double height = sumRange(rowHeightsArr, logical.startRow(),
+                        logical.startRow() + logical.rowSpan());
                 resolved.add(new TableResolvedCell(
                         cellName(node, rowIndex, logical.startColumn()),
                         x,
                         width,
-                        rowHeight,
+                        height,
                         sanitizeCellLines(logical.content()),
                         style,
                         fillInsets(stylesGrid, rowIndex, logical.startColumn(), logical.colSpan()),
@@ -172,14 +211,70 @@ final class TableLayoutSupport {
         return PreparedNode.leaf(fragmentNode, measure, new PreparedTableLayout(fragmentLayout, keepTopInsets));
     }
 
-    private static List<List<LogicalCell>> buildLogicalRows(TableNode node) {
-        List<List<LogicalCell>> result = new ArrayList<>(node.rows().size());
-        for (List<DocumentTableCell> row : node.rows()) {
-            List<LogicalCell> logical = new ArrayList<>(row.size());
+    /**
+     * Builds the logical-cell grid using an occupancy mask to reconcile
+     * source-order author input with multi-cell colSpan / rowSpan extents.
+     *
+     * <p>For each source row the algorithm walks columns left-to-right.
+     * When a column is already covered by a prior row's spanning cell the
+     * algorithm skips it (the author should not — and must not — provide
+     * a source cell there). Otherwise the algorithm consumes the next
+     * source cell, validates that its colSpan/rowSpan fit inside the
+     * remaining grid, and marks every {@code (r, c)} position it occupies.
+     * Misalignments raise a precise diagnostic instead of producing a
+     * silently corrupted grid.</p>
+     */
+    private static List<List<LogicalCell>> buildLogicalRows(TableNode node, int columnCount) {
+        int rowCount = node.rows().size();
+        boolean[][] occupied = new boolean[rowCount][columnCount];
+        List<List<LogicalCell>> result = new ArrayList<>(rowCount);
+
+        for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+            List<DocumentTableCell> source = node.rows().get(rowIndex);
+            List<LogicalCell> logical = new ArrayList<>(source.size());
+            int sourceIdx = 0;
             int col = 0;
-            for (DocumentTableCell cell : row) {
-                logical.add(new LogicalCell(col, cell.colSpan(), toTableCell(cell)));
+            while (col < columnCount) {
+                if (occupied[rowIndex][col]) {
+                    col++;
+                    continue;
+                }
+                if (sourceIdx >= source.size()) {
+                    throw new IllegalStateException("Row " + rowIndex
+                            + " is missing a cell for column " + col
+                            + " (table has " + columnCount + " columns; source row provides "
+                            + source.size() + " cells, prior rowSpan covers some columns).");
+                }
+                DocumentTableCell cell = source.get(sourceIdx++);
+                if (col + cell.colSpan() > columnCount) {
+                    throw new IllegalStateException("Cell at row " + rowIndex
+                            + " column " + col + " has colSpan " + cell.colSpan()
+                            + " but only " + (columnCount - col) + " columns remain.");
+                }
+                if (rowIndex + cell.rowSpan() > rowCount) {
+                    throw new IllegalStateException("Cell at row " + rowIndex
+                            + " column " + col + " has rowSpan " + cell.rowSpan()
+                            + " but only " + (rowCount - rowIndex) + " rows remain.");
+                }
+                for (int r = rowIndex; r < rowIndex + cell.rowSpan(); r++) {
+                    for (int c = col; c < col + cell.colSpan(); c++) {
+                        if (occupied[r][c]) {
+                            throw new IllegalStateException("Cell at row " + rowIndex
+                                    + " column " + col + " (colSpan=" + cell.colSpan()
+                                    + ", rowSpan=" + cell.rowSpan()
+                                    + ") overlaps an already-spanned position (" + r + ", " + c + ").");
+                        }
+                        occupied[r][c] = true;
+                    }
+                }
+                logical.add(new LogicalCell(rowIndex, col, cell.colSpan(), cell.rowSpan(), toTableCell(cell)));
                 col += cell.colSpan();
+            }
+            if (sourceIdx < source.size()) {
+                throw new IllegalStateException("Row " + rowIndex
+                        + " has " + (source.size() - sourceIdx) + " extra source cell(s) "
+                        + "after the grid was already filled — column slots are accounted for "
+                        + "by colSpan plus rowSpan from earlier rows.");
             }
             result.add(List.copyOf(logical));
         }
@@ -202,8 +297,14 @@ final class TableLayoutSupport {
                         tableDefault, columnStyleOverrides.get(logical.startColumn()));
                 resolved = TableCellLayoutStyle.merge(resolved, rowOverride);
                 resolved = TableCellLayoutStyle.merge(resolved, logical.content().styleOverride());
-                for (int col = logical.startColumn(); col < logical.startColumn() + logical.colSpan(); col++) {
-                    grid[rowIndex][col] = resolved;
+                // Propagate the spanning cell's resolved style to every
+                // grid position it occupies (across rowSpan rows AND
+                // colSpan columns) so neighbour-style lookups for borders
+                // and fill insets correctly detect a single shared cell.
+                for (int r = logical.startRow(); r < logical.startRow() + logical.rowSpan(); r++) {
+                    for (int c = logical.startColumn(); c < logical.startColumn() + logical.colSpan(); c++) {
+                        grid[r][c] = resolved;
+                    }
                 }
             }
         }
@@ -359,15 +460,18 @@ final class TableLayoutSupport {
     }
 
     private static int resolveColumnCount(TableNode node) {
-        int maxRowSpanSum = 0;
-        for (List<DocumentTableCell> row : node.rows()) {
-            int spanSum = 0;
-            for (DocumentTableCell cell : row) {
-                spanSum += cell.colSpan();
+        // The first row by definition has no rowSpan-occupied slots from
+        // earlier rows, so its colSpan sum equals the table's column count.
+        // Subsequent rows may have fewer source cells when prior rowSpan
+        // covers some of their columns, so they must not be used to derive
+        // the column count.
+        int firstRowColSpanSum = 0;
+        if (!node.rows().isEmpty()) {
+            for (DocumentTableCell cell : node.rows().get(0)) {
+                firstRowColSpanSum += cell.colSpan();
             }
-            maxRowSpanSum = Math.max(maxRowSpanSum, spanSum);
         }
-        return Math.max(node.columns().size(), maxRowSpanSum);
+        return Math.max(node.columns().size(), firstRowColSpanSum);
     }
 
     private static void validateRowsExist(TableNode node) {
@@ -376,19 +480,10 @@ final class TableLayoutSupport {
         }
     }
 
-    private static void validateRowSpans(TableNode node, int columnCount) {
-        for (int rowIndex = 0; rowIndex < node.rows().size(); rowIndex++) {
-            List<DocumentTableCell> row = node.rows().get(rowIndex);
-            int spanSum = 0;
-            for (DocumentTableCell cell : row) {
-                spanSum += cell.colSpan();
-            }
-            if (spanSum != columnCount) {
-                throw new IllegalStateException("Row " + rowIndex + " has cells with colSpan sum " + spanSum
-                        + " but table requires " + columnCount + " columns.");
-            }
-        }
-    }
+    // Note: row colSpan-sum validation is no longer a separate pass — the
+    // occupancy-grid algorithm in buildLogicalRows enforces both
+    // colSpan/rowSpan bounds and per-row coverage with precise diagnostics
+    // (missing cell, extra cell, overlap, out-of-bounds span).
 
     private static EnumSet<Side> borderSides(TableCellLayoutStyle[][] stylesGrid,
                                              int rowIndex,

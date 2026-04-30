@@ -67,12 +67,21 @@ public record LayerStackNode(
      * {@code offsetY} moves it down. Use the two-arg constructor or
      * {@link #of(DocumentNode, LayerAlign)} when no offset is needed.</p>
      *
+     * <p>{@code zIndex} controls the rendering order inside the parent
+     * stack/container: layers are stable-sorted by ascending {@code zIndex}
+     * before render, so a layer with {@code zIndex = 10} declared before
+     * a layer with {@code zIndex = 5} still draws on top. Layers that
+     * share a {@code zIndex} keep source order. The default is
+     * {@code 0} which preserves source order entirely.</p>
+     *
      * @param node child node painted in this layer
      * @param align alignment of the layer inside the stack box
      * @param offsetX horizontal offset from the anchor (positive = right)
      * @param offsetY vertical offset from the anchor (positive = down)
+     * @param zIndex render-order key; higher values render on top of
+     *               lower values in the same parent stack/container
      */
-    public record Layer(DocumentNode node, LayerAlign align, double offsetX, double offsetY) {
+    public record Layer(DocumentNode node, LayerAlign align, double offsetX, double offsetY, int zIndex) {
         /**
          * Validates required references and applies a {@link LayerAlign#TOP_LEFT}
          * default when alignment is omitted.
@@ -88,17 +97,31 @@ public record LayerStackNode(
          * @param node child node
          */
         public Layer(DocumentNode node) {
-            this(node, LayerAlign.TOP_LEFT, 0.0, 0.0);
+            this(node, LayerAlign.TOP_LEFT, 0.0, 0.0, 0);
         }
 
         /**
-         * Creates a layer with explicit alignment and zero offset.
+         * Creates a layer with explicit alignment and zero offset / zero zIndex.
          *
          * @param node child node
          * @param align alignment of the layer
          */
         public Layer(DocumentNode node, LayerAlign align) {
-            this(node, align, 0.0, 0.0);
+            this(node, align, 0.0, 0.0, 0);
+        }
+
+        /**
+         * Back-compat constructor — keeps the v1.5.0-alpha.1 four-arg
+         * shape (node + align + offsets) compiling for callers that
+         * pre-date Phase C.3. Defaults {@code zIndex} to {@code 0}.
+         *
+         * @param node child node
+         * @param align alignment of the layer
+         * @param offsetX horizontal offset from the anchor
+         * @param offsetY vertical offset from the anchor
+         */
+        public Layer(DocumentNode node, LayerAlign align, double offsetX, double offsetY) {
+            this(node, align, offsetX, offsetY, 0);
         }
 
         /**
@@ -108,7 +131,7 @@ public record LayerStackNode(
          * @return back layer
          */
         public static Layer back(DocumentNode node) {
-            return new Layer(node, LayerAlign.TOP_LEFT, 0.0, 0.0);
+            return new Layer(node, LayerAlign.TOP_LEFT, 0.0, 0.0, 0);
         }
 
         /**
@@ -118,7 +141,7 @@ public record LayerStackNode(
          * @return centered layer
          */
         public static Layer center(DocumentNode node) {
-            return new Layer(node, LayerAlign.CENTER, 0.0, 0.0);
+            return new Layer(node, LayerAlign.CENTER, 0.0, 0.0, 0);
         }
 
         /**
@@ -129,7 +152,7 @@ public record LayerStackNode(
          * @return aligned layer
          */
         public static Layer of(DocumentNode node, LayerAlign align) {
-            return new Layer(node, align, 0.0, 0.0);
+            return new Layer(node, align, 0.0, 0.0, 0);
         }
 
         /**
@@ -142,7 +165,7 @@ public record LayerStackNode(
          * @return positioned layer
          */
         public static Layer of(DocumentNode node, LayerAlign align, double offsetX, double offsetY) {
-            return new Layer(node, align, offsetX, offsetY);
+            return new Layer(node, align, offsetX, offsetY, 0);
         }
     }
 }

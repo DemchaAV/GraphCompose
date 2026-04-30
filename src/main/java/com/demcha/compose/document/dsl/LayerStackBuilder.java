@@ -66,6 +66,22 @@ public final class LayerStackBuilder {
     }
 
     /**
+     * Appends a layer with explicit alignment and z-index. Higher
+     * {@code zIndex} renders on top of lower {@code zIndex} regardless
+     * of source order; the default is {@code 0}.
+     *
+     * @param node child node
+     * @param align layer alignment
+     * @param zIndex render-order key
+     * @return this builder
+     */
+    public LayerStackBuilder layer(DocumentNode node, LayerAlign align, int zIndex) {
+        layers.add(new LayerStackNode.Layer(
+                Objects.requireNonNull(node, "node"), align, 0.0, 0.0, zIndex));
+        return this;
+    }
+
+    /**
      * Appends a layer anchored to {@code align} and nudged by an on-screen
      * offset from that anchor point. Positive {@code offsetX} moves the layer
      * to the right, positive {@code offsetY} moves it down.
@@ -82,6 +98,27 @@ public final class LayerStackBuilder {
                                       LayerAlign align) {
         layers.add(new LayerStackNode.Layer(
                 Objects.requireNonNull(node, "node"), align, offsetX, offsetY));
+        return this;
+    }
+
+    /**
+     * Appends a layer anchored to {@code align}, nudged by an on-screen
+     * offset, and assigned an explicit z-index.
+     *
+     * @param node child node
+     * @param offsetX horizontal offset from the anchor (positive = right)
+     * @param offsetY vertical offset from the anchor (positive = down)
+     * @param align anchor inside the stack box
+     * @param zIndex render-order key
+     * @return this builder
+     */
+    public LayerStackBuilder position(DocumentNode node,
+                                      double offsetX,
+                                      double offsetY,
+                                      LayerAlign align,
+                                      int zIndex) {
+        layers.add(new LayerStackNode.Layer(
+                Objects.requireNonNull(node, "node"), align, offsetX, offsetY, zIndex));
         return this;
     }
 

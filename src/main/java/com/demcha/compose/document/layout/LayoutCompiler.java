@@ -525,7 +525,14 @@ public final class LayoutCompiler {
         double innerStartX = placementX + padding.left();
         double innerTopY = placementTopY - padding.top();
 
-        for (int index = 0; index < children.size(); index++) {
+        // Sort layers by ascending zIndex (stable — equal zIndex keeps
+        // source order). Iteration order then determines render order:
+        // earlier in the list → drawn first / behind. childIndex below
+        // is the SOURCE index so semantic paths stay stable for tests
+        // and snapshots; only the iteration order shifts.
+        int[] iterationOrder = stableZIndexOrder(stackLayout.zIndices());
+        for (int slot = 0; slot < iterationOrder.length; slot++) {
+            int index = iterationOrder[slot];
             DocumentNode child = children.get(index);
             com.demcha.compose.document.node.LayerAlign align =
                     stackLayout.alignments().get(index);
@@ -634,6 +641,32 @@ public final class LayoutCompiler {
                 padding));
 
         state.usedHeight += stackOuterHeight;
+    }
+
+    /**
+     * Returns an iteration order over {@code zIndices} that is stable on
+     * ties. Layers with equal {@code zIndex} keep their source order, so
+     * the default of all-zero zIndices yields the identity permutation
+     * {@code [0, 1, ..., n-1]} and existing snapshots stay deterministic.
+     *
+     * @param zIndices per-layer render-order keys (in source order)
+     * @return source indices sorted by ascending {@code zIndex}, stable
+     *         on ties
+     */
+    private static int[] stableZIndexOrder(java.util.List<Integer> zIndices) {
+        int n = zIndices.size();
+        Integer[] boxed = new Integer[n];
+        for (int i = 0; i < n; i++) {
+            boxed[i] = i;
+        }
+        // Comparator.comparingInt + java.util.Arrays.sort on boxed array is
+        // documented stable; primitive int[] sort is not.
+        java.util.Arrays.sort(boxed, java.util.Comparator.comparingInt(zIndices::get));
+        int[] order = new int[n];
+        for (int i = 0; i < n; i++) {
+            order[i] = boxed[i];
+        }
+        return order;
     }
 
     private static double horizontalLayerOffset(com.demcha.compose.document.node.LayerAlign align,
@@ -984,7 +1017,12 @@ public final class LayoutCompiler {
                 double stackInnerStartX = placementX + padding.left();
                 double stackInnerTopY = placementTopY - padding.top();
 
-                for (int i = 0; i < children.size(); i++) {
+                // Same z-index iteration order as compileStackedLayer
+                // (root-level case). Source-order semantic paths are
+                // preserved — only render order shifts.
+                int[] iterationOrder = stableZIndexOrder(stackLayout.zIndices());
+                for (int slot = 0; slot < iterationOrder.length; slot++) {
+                    int i = iterationOrder[slot];
                     DocumentNode child = children.get(i);
                     com.demcha.compose.document.node.LayerAlign align =
                             stackLayout.alignments().get(i);

@@ -238,6 +238,22 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
     }
 
     /**
+     * Appends a layer with explicit alignment and z-index. Higher
+     * {@code zIndex} renders on top of lower {@code zIndex} regardless
+     * of source order; the default is {@code 0}.
+     *
+     * @param node child node
+     * @param align anchor inside the inner box
+     * @param zIndex render-order key
+     * @return this builder
+     */
+    public ShapeContainerBuilder layer(DocumentNode node, LayerAlign align, int zIndex) {
+        layers.add(new LayerStackNode.Layer(
+                Objects.requireNonNull(node, "node"), align, 0.0, 0.0, zIndex));
+        return this;
+    }
+
+    /**
      * Appends a top-left aligned layer.
      *
      * @param node child node
@@ -263,6 +279,27 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
                                           LayerAlign align) {
         layers.add(new LayerStackNode.Layer(
                 Objects.requireNonNull(node, "node"), align, offsetX, offsetY));
+        return this;
+    }
+
+    /**
+     * Appends a layer anchored to {@code align}, shifted by an on-screen
+     * offset, and assigned an explicit z-index.
+     *
+     * @param node child node
+     * @param offsetX horizontal offset in points
+     * @param offsetY vertical offset in points
+     * @param align anchor inside the inner box
+     * @param zIndex render-order key
+     * @return this builder
+     */
+    public ShapeContainerBuilder position(DocumentNode node,
+                                          double offsetX,
+                                          double offsetY,
+                                          LayerAlign align,
+                                          int zIndex) {
+        layers.add(new LayerStackNode.Layer(
+                Objects.requireNonNull(node, "node"), align, offsetX, offsetY, zIndex));
         return this;
     }
 

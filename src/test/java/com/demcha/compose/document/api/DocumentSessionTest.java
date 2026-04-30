@@ -211,7 +211,13 @@ class DocumentSessionTest {
             assertThat(payload.fillColor()).isEqualTo(fill.color());
             assertThat(payload.stroke().strokeColor().color()).isEqualTo(DocumentColor.ROYAL_BLUE.color());
             assertThat(payload.stroke().width()).isEqualTo(0.8);
-            assertThat(payload.cornerRadius()).isEqualTo(10.0);
+            // The payload now carries per-corner radii (Phase E.1.1
+            // follow-up). The pre-Phase-E uniform-radius API is preserved
+            // via DocumentCornerRadius.radius() returning the topLeft
+            // value, which equals every other corner when constructed
+            // from a single radius.
+            assertThat(payload.cornerRadius().radius()).isEqualTo(10.0);
+            assertThat(payload.cornerRadius().isUniform()).isTrue();
         }
     }
 

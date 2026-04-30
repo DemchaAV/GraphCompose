@@ -3,6 +3,7 @@ package com.demcha.compose.document.templates.builtins;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.TableBuilder;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
@@ -121,7 +122,11 @@ public final class InvoiceTemplateV2 implements InvoiceTemplate {
                     .name("InvoiceCinematicRoot")
                     .spacing(14)
                     .addSection("InvoiceHero", section -> section
-                            .softPanel(surfaceMuted, 10, 14)
+                            // Round only the right corners. The left
+                            // edge sits flush against the accent stripe
+                            // so a left rounding would gap unevenly
+                            // against the strip.
+                            .softPanel(surfaceMuted, DocumentCornerRadius.right(10), 14)
                             .accentLeft(accent, 4)
                             .spacing(6)
                             .addParagraph(p -> p

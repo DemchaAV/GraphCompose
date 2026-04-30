@@ -5,6 +5,7 @@ import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions.SideBorders;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
@@ -54,12 +55,22 @@ public final class PdfShapeFragmentRenderHandler
             float y = (float) fragment.y();
             float width = (float) fragment.width();
             float height = (float) fragment.height();
-            float radius = (float) Math.min(payload.cornerRadius(), Math.min(fragment.width(), fragment.height()) / 2.0);
+            // Per-corner radii. Each is independently clamped to half
+            // the smaller side so an over-sized radius never overshoots
+            // the box.
+            DocumentCornerRadius radii = payload.cornerRadius();
+            float maxRadius = (float) (Math.min(width, height) / 2.0);
+            float topLeft = clampCornerRadius(radii.topLeft(), maxRadius);
+            float topRight = clampCornerRadius(radii.topRight(), maxRadius);
+            float bottomRight = clampCornerRadius(radii.bottomRight(), maxRadius);
+            float bottomLeft = clampCornerRadius(radii.bottomLeft(), maxRadius);
+            boolean anyRounded = topLeft > 0f || topRight > 0f || bottomRight > 0f || bottomLeft > 0f;
 
             if (hasFill) {
                 stream.setNonStrokingColor(payload.fillColor());
-                if (radius > 0f) {
-                    drawRoundedRectangle(stream, x, y, width, height, radius);
+                if (anyRounded) {
+                    drawRoundedRectangle(stream, x, y, width, height,
+                            topLeft, topRight, bottomRight, bottomLeft);
                 } else {
                     stream.addRect(x, y, width, height);
                 }
@@ -76,8 +87,9 @@ public final class PdfShapeFragmentRenderHandler
             } else if (hasStroke) {
                 stream.setStrokingColor(payload.stroke().strokeColor().color());
                 stream.setLineWidth((float) payload.stroke().width());
-                if (radius > 0f) {
-                    drawRoundedRectangle(stream, x, y, width, height, radius);
+                if (anyRounded) {
+                    drawRoundedRectangle(stream, x, y, width, height,
+                            topLeft, topRight, bottomRight, bottomLeft);
                 } else {
                     stream.addRect(x, y, width, height);
                 }
@@ -106,30 +118,72 @@ public final class PdfShapeFragmentRenderHandler
         }
     }
 
+    private static float clampCornerRadius(double raw, float maxAllowed) {
+        if (raw <= 0.0 || Double.isNaN(raw)) {
+            return 0f;
+        }
+        float capped = (float) raw;
+        return capped > maxAllowed ? maxAllowed : capped;
+    }
+
+    /**
+     * Draws a rectangle outline whose four corners may have independent
+     * radii. Each radius gets its own Bezier arc; a zero radius keeps a
+     * sharp 90° corner (no arc, just a line into the corner). PDF y
+     * grows up, so {@code (x, y)} is the bottom-left of the rectangle.
+     */
     private static void drawRoundedRectangle(PDPageContentStream stream,
                                              float x,
                                              float y,
                                              float width,
                                              float height,
-                                             float radius) throws IOException {
-        float control = radius * BEZIER_CIRCLE_CONSTANT;
-        stream.moveTo(x + radius, y + height);
-        stream.lineTo(x + width - radius, y + height);
-        stream.curveTo(x + width - radius + control, y + height,
-                x + width, y + height - radius + control,
-                x + width, y + height - radius);
-        stream.lineTo(x + width, y + radius);
-        stream.curveTo(x + width, y + radius - control,
-                x + width - radius + control, y,
-                x + width - radius, y);
-        stream.lineTo(x + radius, y);
-        stream.curveTo(x + radius - control, y,
-                x, y + radius - control,
-                x, y + radius);
-        stream.lineTo(x, y + height - radius);
-        stream.curveTo(x, y + height - radius + control,
-                x + radius - control, y + height,
-                x + radius, y + height);
+                                             float topLeft,
+                                             float topRight,
+                                             float bottomRight,
+                                             float bottomLeft) throws IOException {
+        float right = x + width;
+        float top = y + height;
+        // Start at the right end of the top edge (one radius left of the
+        // top-right corner) and walk clockwise around the box. Each
+        // corner emits either a curveTo (for radius > 0) or just lets
+        // the next lineTo land on the corner point (for radius == 0).
+        stream.moveTo(x + topLeft, top);
+        stream.lineTo(right - topRight, top);
+        if (topRight > 0f) {
+            float control = topRight * BEZIER_CIRCLE_CONSTANT;
+            stream.curveTo(right - topRight + control, top,
+                    right, top - topRight + control,
+                    right, top - topRight);
+        } else {
+            stream.lineTo(right, top);
+        }
+        stream.lineTo(right, y + bottomRight);
+        if (bottomRight > 0f) {
+            float control = bottomRight * BEZIER_CIRCLE_CONSTANT;
+            stream.curveTo(right, y + bottomRight - control,
+                    right - bottomRight + control, y,
+                    right - bottomRight, y);
+        } else {
+            stream.lineTo(right, y);
+        }
+        stream.lineTo(x + bottomLeft, y);
+        if (bottomLeft > 0f) {
+            float control = bottomLeft * BEZIER_CIRCLE_CONSTANT;
+            stream.curveTo(x + bottomLeft - control, y,
+                    x, y + bottomLeft - control,
+                    x, y + bottomLeft);
+        } else {
+            stream.lineTo(x, y);
+        }
+        stream.lineTo(x, top - topLeft);
+        if (topLeft > 0f) {
+            float control = topLeft * BEZIER_CIRCLE_CONSTANT;
+            stream.curveTo(x, top - topLeft + control,
+                    x + topLeft - control, top,
+                    x + topLeft, top);
+        } else {
+            stream.lineTo(x, top);
+        }
         stream.closePath();
     }
 }

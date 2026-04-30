@@ -90,23 +90,26 @@ public final class PdfTableRowFragmentRenderHandler
 
         stream.saveGraphicsState();
         try {
+            double strokeWidth = cell.style().stroke().width();
             stream.setStrokingColor(cell.style().stroke().strokeColor().color());
-            stream.setLineWidth((float) cell.style().stroke().width());
-            // Borders for adjacent cells are drawn as four independent
-            // line segments, so where two perpendicular borders meet
-            // (cell corner) the default butt cap leaves a half-pixel
-            // gap after rasterization. Projecting-square caps extend
-            // each endpoint by half the stroke width, which makes
-            // perpendicular borders overlap cleanly at the corner — no
-            // visible 1px notch where a row separator meets a column
-            // separator. Scoped inside the saveGraphicsState/restore
-            // pair so it does not leak to other render handlers.
-            stream.setLineCapStyle(2);
+            stream.setLineWidth((float) strokeWidth);
+            // Default butt caps. Adjacent cells' perpendicular borders
+            // would otherwise leave a ~1px notch at every cell corner
+            // after rasterization (the line endpoint is exactly at the
+            // corner so the two strokes don't overlap perpendicular to
+            // each other). To fix that we manually extend HORIZONTAL
+            // border lines by half the stroke width on both ends, which
+            // covers the corner pixel without the overhead of a global
+            // line-cap change. Vertical lines stay un-extended so the
+            // top/bottom of every cell column has clean butt endpoints
+            // — extending verticals creates visible nubs that read as
+            // a "thicker" right border on the cells of merged columns.
+            double cap = strokeWidth / 2.0;
             if (sides.contains(Side.TOP)) {
-                line(stream, cellX, cellY + cell.height(), cellX + cell.width(), cellY + cell.height());
+                line(stream, cellX - cap, cellY + cell.height(), cellX + cell.width() + cap, cellY + cell.height());
             }
             if (sides.contains(Side.BOTTOM)) {
-                line(stream, cellX, cellY, cellX + cell.width(), cellY);
+                line(stream, cellX - cap, cellY, cellX + cell.width() + cap, cellY);
             }
             if (sides.contains(Side.LEFT)) {
                 line(stream, cellX, cellY, cellX, cellY + cell.height());

@@ -123,6 +123,74 @@ class ShapeContainerInvariantsTest {
         }
     }
 
+    @Test
+    void everyTransformBeginInArbitraryDocumentHasMatchingEndOnSamePage() throws Exception {
+        // Mix transformed and non-transformed containers and mix policies
+        // so transform begin/end pairs cross-cut clip begin/end pairs.
+        // Both pair types must remain balanced and properly nested
+        // independently — a transform begin/end can wrap a clip
+        // begin/end, but neither can interleave with the other's owner.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 700)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            session.add(new ShapeContainerBuilder()
+                    .name("RotatedClipped")
+                    .circle(60)
+                    .rotate(15)
+                    .fillColor(DocumentColor.rgb(180, 40, 40))
+                    .center(spacer("L1", 20, 10))
+                    .build());
+            session.add(new ShapeContainerBuilder()
+                    .name("PlainClipped")
+                    .roundedRect(180, 80, 8)
+                    .center(spacer("L2", 60, 12))
+                    .build());
+            session.add(new ShapeContainerBuilder()
+                    .name("RotatedOverflow")
+                    .ellipse(160, 60)
+                    .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                    .scale(0.8)
+                    .center(spacer("L3", 40, 10))
+                    .build());
+
+            LayoutGraph graph = session.layoutGraph();
+            assertTransformPairsBalance(graph.fragments());
+            // Transformed containers: RotatedClipped + RotatedOverflow → 2 pairs.
+            long transformBeginCount = graph.fragments().stream()
+                    .filter(f -> f.payload() instanceof BuiltInNodeDefinitions.TransformBeginPayload)
+                    .count();
+            assertThat(transformBeginCount).isEqualTo(2L);
+        }
+    }
+
+    private static void assertTransformPairsBalance(List<PlacedFragment> fragments) {
+        Map<String, Integer> openOwners = new HashMap<>();
+        for (int i = 0; i < fragments.size(); i++) {
+            PlacedFragment fragment = fragments.get(i);
+            Object payload = fragment.payload();
+            if (payload instanceof BuiltInNodeDefinitions.TransformBeginPayload begin) {
+                assertThat(begin.ownerPath()).isNotEmpty();
+                assertThat(openOwners)
+                        .as("transform-begin must not nest with itself: %s already open", begin.ownerPath())
+                        .doesNotContainKey(begin.ownerPath());
+                openOwners.put(begin.ownerPath(), fragment.pageIndex());
+            } else if (payload instanceof BuiltInNodeDefinitions.TransformEndPayload end) {
+                assertThat(openOwners)
+                        .as("transform-end without matching begin: %s", end.ownerPath())
+                        .containsKey(end.ownerPath());
+                int beginPage = openOwners.remove(end.ownerPath());
+                assertThat(fragment.pageIndex())
+                        .as("transform-end must land on the same page as its begin (%s)", end.ownerPath())
+                        .isEqualTo(beginPage);
+            }
+        }
+        assertThat(openOwners)
+                .as("every transform-begin must be closed by an end before the document ends")
+                .isEmpty();
+    }
+
     private static void assertClipPairsBalance(List<PlacedFragment> fragments) {
         // Walk left to right with a per-owner stack of open begin indices.
         // Each end pops the matching begin; mismatch or leftover = invariant

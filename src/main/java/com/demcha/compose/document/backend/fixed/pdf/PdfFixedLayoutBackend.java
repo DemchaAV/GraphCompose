@@ -11,6 +11,8 @@ import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfShapeClipBeginR
 import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfShapeClipEndRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfShapeFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfTableRowFragmentRenderHandler;
+import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfTransformBeginRenderHandler;
+import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfTransformEndRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterZone;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
@@ -89,7 +91,9 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                 new PdfImageFragmentRenderHandler(),
                 new PdfTableRowFragmentRenderHandler(),
                 new PdfShapeClipBeginRenderHandler(),
-                new PdfShapeClipEndRenderHandler());
+                new PdfShapeClipEndRenderHandler(),
+                new PdfTransformBeginRenderHandler(),
+                new PdfTransformEndRenderHandler());
     }
 
     PdfFixedLayoutBackend(Collection<? extends PdfFragmentRenderHandler<?>> handlers) {

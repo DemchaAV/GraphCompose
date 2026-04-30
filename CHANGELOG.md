@@ -1,12 +1,87 @@
 # Changelog
 
-## v1.5.0-beta.2 (in progress) - Phase C kickoff: Transform mixin
+## v1.5.0-beta.2 (in progress) - Phase C kickoff: Transform mixin + render
 
 Phase C lands the canonical-surface transform primitive (rotation around
-the placement centre and/or scaling). C.1 introduces the public value
-type and mixin and opts `ShapeContainerBuilder` in as the first
-consumer; render-side support (C.2) and other-builder opt-ins land in
-follow-up commits.
+the placement centre and/or scaling). C.1 introduced the public value
+type, mixin, and `ShapeContainerBuilder` opt-in; C.2 wires the PDF
+backend so the transform actually rotates and scales the rendered
+output. Other-builder opt-ins (`ShapeBuilder`, `EllipseBuilder`, etc.)
+land in follow-up commits.
+
+### Render pipeline (C.2)
+
+- New marker payload pair on `BuiltInNodeDefinitions`:
+  `TransformBeginPayload(transform, ownerPath)` and
+  `TransformEndPayload(ownerPath)`. Same architectural pattern as the
+  existing `ShapeClipBeginPayload` / `ShapeClipEndPayload` pair —
+  emitted from `emitFragments` and `emitOverlayFragments` respectively
+  so a single layout pass produces a flat sequence
+  `[transform-begin → outline → clip-begin → … layers … → clip-end → transform-end]`.
+- New PDF render handlers
+  `PdfTransformBeginRenderHandler` and `PdfTransformEndRenderHandler`,
+  registered in `PdfFixedLayoutBackend.defaultHandlers()`. The begin
+  handler issues `saveGraphicsState() + cm(matrix)` where the matrix is
+  derived from `T(cx,cy) · R(θ) · S(sx,sy) · T(-cx,-cy)` so rotation
+  and scaling pivot around the outline's geometric centre. The end
+  handler issues `restoreGraphicsState()`.
+- Convention: `DocumentTransform.rotationDegrees()` is interpreted as
+  *clockwise* (matches the engine convention). PDF native rotation is
+  counter-clockwise, so the begin handler negates the angle when
+  building the `cm` matrix.
+- `ShapeContainerDefinition` now emits the transform pair only when
+  `transform.isIdentity()` is `false`. The clip pair is independent —
+  a container can rotate without clipping (`OVERFLOW_VISIBLE`), clip
+  without rotating (the previous default), or both.
+
+### Tests (C.2)
+
+- `ShapeContainerBuilderTest` grows three fragment-ordering cases:
+  rotated container brackets everything else with transform begin/end,
+  identity transform skips emitting the markers, and
+  `OVERFLOW_VISIBLE` + rotation emits transform markers without clip
+  markers.
+- `ShapeContainerInvariantsTest` adds an architecture-guard
+  `everyTransformBeginInArbitraryDocumentHasMatchingEndOnSamePage`
+  that mixes transformed and non-transformed containers across clip
+  policies and verifies every transform begin/end pair stays balanced
+  on the same page (no nesting of the same owner).
+- New `ShapeContainerTransformDemoTest` renders three demo scenarios
+  (rotated circle, scaled card, rotated+scaled ellipse) to PDF
+  artefacts under `target/visual-tests/shape-container-transform/`.
+  The PDFs are not pixel-asserted yet — they exist so a reviewer can
+  open them and verify the rotation/scaling behaviour visually.
+  A graphics-state leak from an unbalanced transform begin/end would
+  corrupt the PDF byte stream, so each scenario also asserts the
+  `%PDF-` magic header is intact as a smoke check.
+
+### Public API (C.1, recap)
+
+- New value type `com.demcha.compose.document.style.DocumentTransform`
+  carries `rotationDegrees`, `scaleX`, `scaleY` plus an
+  `isIdentity()` helper. Static factories: `none()` (alias for
+  `NONE`), `rotate(deg)`, `scale(uniformFactor)`, `scale(sx, sy)`.
+  `withRotation(deg)` / `withScale(sx, sy)` produce updated copies that
+  preserve the unchanged axis. Validates that rotation is finite and
+  scale factors are finite and non-zero (zero would collapse the
+  geometry to a point).
+- New mixin interface `com.demcha.compose.document.dsl.Transformable<T>`
+  exposes `transform(DocumentTransform)`, `rotate(degrees)`,
+  `scale(uniformFactor)`, `scale(sx, sy)` as default methods. Builders
+  opt in by implementing two abstract methods: the transform setter and
+  `currentTransform()`. The defaults preserve the unmodified axis when
+  callers chain `rotate(...).scale(...)`.
+- `ShapeContainerBuilder` now implements `Transformable<ShapeContainerBuilder>`,
+  so authors can write
+  `addCircle(60, brand, c -> c.rotate(15).scale(0.9).center(label))`.
+  Default transform is `DocumentTransform.NONE`.
+- `ShapeContainerNode` gains a `transform: DocumentTransform` field
+  (ninth canonical-constructor parameter, defaulted to
+  `DocumentTransform.NONE` by the existing eight-arg compatibility
+  constructor). The transform is a render-time concern: the canonical
+  layout layer still measures and places the node against its natural
+  bounding box, so layout snapshots stay deterministic regardless of
+  rotation/scale.
 
 ### Public API
 
@@ -49,13 +124,14 @@ follow-up commits.
 
 ### Deferred
 
-- C.2 — PDF render of the transform via graphics-state `cm` push/pop
-  around the placement centre. Until then the transform value is stored
-  and exposed but not actually rendered, so the visual baselines for
-  rotated content stay open.
 - Other builders opt in to `Transformable<T>` later — `ShapeBuilder`,
   `EllipseBuilder`, `ImageBuilder`, `LineBuilder`, `BarcodeBuilder` are
-  natural candidates once C.2 ships.
+  natural candidates now that C.2 ships and rotate/scale produces
+  visible output.
+- C.3 — per-entity z-index (`zIndex(int)` + `Layer` ECS-component
+  honoured by `EntityRenderOrder`).
+- C.4 — recipe + extending the runnable example with rotated/scaled
+  scenarios.
 
 ---
 

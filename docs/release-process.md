@@ -11,8 +11,8 @@ This checklist applies to current GraphCompose 1.x releases. The library is publ
 - [ ] `CHANGELOG.md` has an entry for the upcoming version under `## v<version> - <date>` with the date set to release day
 - [ ] `pom.xml` and `examples/pom.xml` `<version>` fields match the target release version (no `-SNAPSHOT` suffix)
 - [ ] `README.md` installation snippets reference the new version
-- [ ] migration notes (`docs/migration-v1-1-to-v1-2.md` for v1.2) are up to date
-- [ ] roadmap (`docs/v1.2-roadmap.md`) reflects what shipped vs. what remains for the next milestone
+- [ ] migration notes (`docs/migration-v1-4-to-v1-5.md` for v1.5; older guides live under `docs/archive/`) are up to date
+- [ ] CHANGELOG sections accurately reflect what shipped versus what remains for the next milestone (the historical roadmap files in `docs/archive/` are reference-only)
 
 ## Release
 

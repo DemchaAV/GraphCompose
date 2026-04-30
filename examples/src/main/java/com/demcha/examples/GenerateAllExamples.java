@@ -10,6 +10,7 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + CvFileExample.generate());
         System.out.println("Generated: " + CoverLetterFileExample.generate());
         System.out.println("Generated: " + InvoiceFileExample.generate());
+        System.out.println("Generated: " + InvoiceCinematicFileExample.generate());
         System.out.println("Generated: " + ProposalFileExample.generate());
         System.out.println("Generated: " + CinematicProposalFileExample.generate());
         System.out.println("Generated: " + ShapeContainerExample.generate());

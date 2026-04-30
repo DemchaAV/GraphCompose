@@ -4,15 +4,26 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.CvTemplate;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.support.cv.MonogramSidebarCvTemplateComposer;
+import com.demcha.compose.document.templates.theme.CvTheme;
 
 /**
  * Two-column resume with a pale neutral sidebar holding a monogram circle,
  * centered contact icons, plus education and expertise blocks. The right
  * column carries a large two-line letter-spaced headline, professional
  * profile, and experience entries.
+ *
+ * <p>Modernised under v1.5 — accepts an optional {@link CvTheme}.</p>
  */
 public final class MonogramSidebarCvTemplate implements CvTemplate {
-    private final MonogramSidebarCvTemplateComposer composer = new MonogramSidebarCvTemplateComposer();
+    private final MonogramSidebarCvTemplateComposer composer;
+
+    public MonogramSidebarCvTemplate() {
+        this.composer = new MonogramSidebarCvTemplateComposer();
+    }
+
+    public MonogramSidebarCvTemplate(CvTheme theme) {
+        this.composer = new MonogramSidebarCvTemplateComposer(theme);
+    }
 
     @Override
     public String getTemplateId() {

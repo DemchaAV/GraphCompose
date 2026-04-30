@@ -16,7 +16,11 @@ import com.demcha.compose.document.templates.data.common.Header;
 import com.demcha.compose.document.templates.data.common.LinkYml;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.cv.CvModule;
+import com.demcha.compose.document.templates.theme.CvTheme;
+import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.font.FontName;
+
+import java.awt.Color;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,7 +60,6 @@ public final class SidebarPortraitCvTemplateComposer {
     private static final DocumentColor PHOTO_FILL = DocumentColor.rgb(225, 225, 225);
     private static final FontName HEADLINE_FONT = FontName.CRIMSON_TEXT;
     private static final FontName SUBHEAD_FONT = FontName.PT_SERIF;
-    private static final FontName BODY_FONT = FontName.LATO;
     private static final String CONTACT_ICON_ROOT = "/templates/cv/timeline-minimal/icons/";
     private static final Map<String, byte[]> CONTACT_ICON_CACHE = new ConcurrentHashMap<>();
     private static final List<String> EDUCATION_KEYS = List.of("education", "certifications");
@@ -70,6 +73,23 @@ public final class SidebarPortraitCvTemplateComposer {
     private static final int EXPERIENCE_LIMIT = 2;
     private static final int DESCRIPTION_MAX_CHARS = 200;
     private static final int PROFILE_MAX_CHARS = 320;
+
+    private final CvTheme theme;
+
+    public SidebarPortraitCvTemplateComposer() {
+        this(defaultTheme());
+    }
+
+    /**
+     * Constructs the composer with a custom {@link CvTheme}. The
+     * sidebar background, photo ring, and serif headline font stay
+     * template-owned; body type follows the theme.
+     *
+     * @param theme CV theme driving body type and accent colour
+     */
+    public SidebarPortraitCvTemplateComposer(CvTheme theme) {
+        this.theme = Objects.requireNonNull(theme, "theme");
+    }
 
     public void compose(DocumentSession document, CvDocumentSpec documentSpec) {
         CvDocumentSpec spec = Objects.requireNonNull(documentSpec, "documentSpec");
@@ -144,7 +164,7 @@ public final class SidebarPortraitCvTemplateComposer {
         if (lines.isEmpty()) {
             return;
         }
-        DocumentTextStyle style = style(BODY_FONT, 8.4, DocumentTextDecoration.DEFAULT, SIDEBAR_INK);
+        DocumentTextStyle style = style(theme.bodyFont(), 8.4, DocumentTextDecoration.DEFAULT, SIDEBAR_INK);
         for (ContactLine contact : lines) {
             section.addParagraph(paragraph -> paragraph
                     .textStyle(style)
@@ -187,8 +207,8 @@ public final class SidebarPortraitCvTemplateComposer {
         List<String> items = moduleItems(module);
         for (String item : items.subList(0, Math.min(EDUCATION_LIMIT, items.size()))) {
             EducationEntry entry = parseEducationEntry(item);
-            DocumentTextStyle headingStyle = style(BODY_FONT, 8.6, DocumentTextDecoration.BOLD, SIDEBAR_INK);
-            DocumentTextStyle metaStyle = style(BODY_FONT, 8.2, DocumentTextDecoration.DEFAULT, SIDEBAR_SOFT);
+            DocumentTextStyle headingStyle = style(theme.bodyFont(), 8.6, DocumentTextDecoration.BOLD, SIDEBAR_INK);
+            DocumentTextStyle metaStyle = style(theme.bodyFont(), 8.2, DocumentTextDecoration.DEFAULT, SIDEBAR_SOFT);
 
             section.addParagraph(paragraph -> paragraph
                     .text(stripBasicMarkdown(entry.heading()).toUpperCase(Locale.ROOT))
@@ -216,7 +236,7 @@ public final class SidebarPortraitCvTemplateComposer {
     }
 
     private void addSkillsList(SectionBuilder section, CvModule module) {
-        DocumentTextStyle skillStyle = style(BODY_FONT, 8.4, DocumentTextDecoration.DEFAULT, SIDEBAR_INK);
+        DocumentTextStyle skillStyle = style(theme.bodyFont(), 8.4, DocumentTextDecoration.DEFAULT, SIDEBAR_INK);
         List<String> items = moduleItems(module);
         for (String item : items.subList(0, Math.min(SKILL_LIMIT, items.size()))) {
             String text = firstClauseOf(item);
@@ -233,8 +253,8 @@ public final class SidebarPortraitCvTemplateComposer {
     }
 
     private void addLanguageList(SectionBuilder section, CvModule module) {
-        DocumentTextStyle nameStyle = style(BODY_FONT, 8.6, DocumentTextDecoration.BOLD, SIDEBAR_INK);
-        DocumentTextStyle metaStyle = style(BODY_FONT, 8.4, DocumentTextDecoration.DEFAULT, SIDEBAR_SOFT);
+        DocumentTextStyle nameStyle = style(theme.bodyFont(), 8.6, DocumentTextDecoration.BOLD, SIDEBAR_INK);
+        DocumentTextStyle metaStyle = style(theme.bodyFont(), 8.4, DocumentTextDecoration.DEFAULT, SIDEBAR_SOFT);
         List<String> items = moduleItems(module);
         for (String item : items.subList(0, Math.min(LANGUAGE_LIMIT, items.size()))) {
             String text = stripBasicMarkdown(item);
@@ -297,7 +317,7 @@ public final class SidebarPortraitCvTemplateComposer {
                         .margin(new DocumentInsets(2, 0, 2, 0)))
                 .addParagraph(paragraph -> paragraph
                         .text(spacedUpper("Your Professional Title Goes Here"))
-                        .textStyle(style(BODY_FONT, 9.0, DocumentTextDecoration.BOLD, ACCENT))
+                        .textStyle(style(theme.bodyFont(), 9.0, DocumentTextDecoration.BOLD, ACCENT))
                         .align(TextAlign.LEFT)
                         .margin(DocumentInsets.zero()));
     }
@@ -319,7 +339,7 @@ public final class SidebarPortraitCvTemplateComposer {
     }
 
     private void addProfileBody(SectionBuilder section, CvModule module) {
-        DocumentTextStyle bodyStyle = style(BODY_FONT, 8.8, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle bodyStyle = style(theme.bodyFont(), 8.8, DocumentTextDecoration.DEFAULT, INK);
         for (CvModule.BodyBlock block : module.bodyBlocks()) {
             if (block.kind() == CvModule.BodyKind.PARAGRAPH) {
                 String text = safe(block.text()).trim();
@@ -349,9 +369,9 @@ public final class SidebarPortraitCvTemplateComposer {
     }
 
     private void addExperienceEntries(SectionBuilder section, CvModule module) {
-        DocumentTextStyle positionStyle = style(BODY_FONT, 9.4, DocumentTextDecoration.BOLD, INK);
-        DocumentTextStyle subtitleStyle = style(BODY_FONT, 8.4, DocumentTextDecoration.DEFAULT, MUTED);
-        DocumentTextStyle bodyStyle = style(BODY_FONT, 8.6, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle positionStyle = style(theme.bodyFont(), 9.4, DocumentTextDecoration.BOLD, INK);
+        DocumentTextStyle subtitleStyle = style(theme.bodyFont(), 8.4, DocumentTextDecoration.DEFAULT, MUTED);
+        DocumentTextStyle bodyStyle = style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, INK);
 
         List<String> items = moduleItems(module);
         for (String item : items.subList(0, Math.min(EXPERIENCE_LIMIT, items.size()))) {
@@ -380,7 +400,7 @@ public final class SidebarPortraitCvTemplateComposer {
     }
 
     private void renderGenericModule(SectionBuilder section, CvModule module) {
-        DocumentTextStyle bodyStyle = style(BODY_FONT, 8.6, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle bodyStyle = style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, INK);
         for (CvModule.BodyBlock block : module.bodyBlocks()) {
             if (block.kind() == CvModule.BodyKind.PARAGRAPH) {
                 String text = safe(block.text()).trim();
@@ -720,5 +740,21 @@ public final class SidebarPortraitCvTemplateComposer {
                 .decoration(decoration)
                 .color(color)
                 .build();
+    }
+
+    private static CvTheme defaultTheme() {
+        return new CvTheme(
+                new Color(34, 34, 34),
+                new Color(150, 150, 150),
+                new Color(34, 34, 34),
+                new Color(150, 150, 150),
+                FontName.CRIMSON_TEXT,
+                FontName.LATO,
+                28,
+                10.0,
+                8.4,
+                4,
+                Margin.top(2),
+                0);
     }
 }

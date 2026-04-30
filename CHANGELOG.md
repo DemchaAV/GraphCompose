@@ -1,5 +1,56 @@
 # Changelog
 
+## v1.5.0-beta.17 (in progress) - Template authoring cheatsheet
+
+Adds [`docs/template-authoring.md`](docs/template-authoring.md) as the
+canonical reference for writing new templates and DSL code without
+boilerplate. Distilled from a full audit of `DocumentSession`, every
+DSL builder, the `BusinessTheme` system, the style types, and the V1
+vs V2 reference templates.
+
+### Documentation
+
+- New `docs/template-authoring.md` (~620 lines) covers:
+  - Entry & output pipeline (`buildPdf` vs `writePdf` vs
+    `toPdfBytes` vs `export`)
+  - Builder hierarchy ASCII tree
+  - Per-builder one-liner cheatsheet (`PageFlowBuilder` →
+    `BarcodeBuilder`, plus `RichText` and `Transformable<T>`)
+  - Style types reference (`DocumentColor`, `Stroke`, `Insets`,
+    `TextStyle`, `CornerRadius`, `Decoration`, `ClipPolicy`,
+    `ShapeOutline`, `Transform`)
+  - Theme system in 60 seconds — palette / text scale / table preset
+    slot → role mapping, plus the `CvTheme` bridge
+  - Six golden patterns (theme-driven hero, address line spacing,
+    weighted row, themed table with header/zebra/total, inline
+    `RichText` accent, per-side accent strips)
+  - Ten anti-patterns (no raw `Color`, no engine imports, no
+    `RowBuilder.gap`, no nested `Row`/`Table` in row, etc.)
+  - 40-line `StatusReportTemplateV1` skeleton showing the canonical
+    template shape (constructor takes `BusinessTheme`, every visible
+    token routed through `theme.*`)
+  - Testing pattern — one snapshot per `BusinessTheme` plus a visual
+    PDF write
+  - "Where to look next" table mapping every specific question to a
+    recipe / ADR / example
+- README "Built-in templates" section gains a callout linking the
+  cheatsheet so first-time template authors land on it before they
+  copy-paste old V1 code.
+
+### Tests
+
+- 647/647 still green. Documentation-only delivery.
+
+### Companion (not committed — local agent rules)
+
+- `~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md` get a new
+  "GraphCompose authoring rules" section that points future AI
+  sessions at `docs/template-authoring.md` and lists the top
+  anti-patterns inline so the most common mistakes are caught
+  without a file fetch.
+
+---
+
 ## v1.5.0-beta.16 (in progress) - F.3 / E.5 cleanup: recipes split + v1.5 PDF previews
 
 Closes the documentation-side gaps that were missed in earlier passes

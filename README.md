@@ -184,6 +184,90 @@ Use built-in templates when they fit, or compose your own document directly with
 
 ---
 
+## What's new in v1.5 &mdash; "intuitive"
+
+v1.5 builds on the cinematic primitives from v1.4 and adds three feature pillars:
+**shape-as-container** for clipped composites, **transform & z-index** for
+rotated and re-stacked layers, and **advanced tables** that cover the most
+common rendered-report patterns.
+
+### Shape-as-container with clip path
+
+`addCircle(diameter, fill, inside)` / `addEllipse(w, h, fill, inside)` /
+`addContainer(...)` build a `ShapeContainerNode` whose bounding box is
+dictated by the outline. Children are clipped to the outline path
+(`ClipPolicy.CLIP_PATH` &mdash; the default), to the bounding box
+(`CLIP_BOUNDS`), or render unclipped (`OVERFLOW_VISIBLE`).
+
+```java
+import com.demcha.compose.document.dsl.ParagraphBuilder;
+
+document.pageFlow(page -> page
+        .addCircle(80, brand, circle -> circle
+                .name("BrandSeal")
+                .center(new ParagraphBuilder().text("M&A").build())));
+```
+
+The PDF backend honours every clip policy via graphics-state
+`saveGraphicsState() + clip(path)` / `restoreGraphicsState()` markers
+emitted by the layout layer. The DOCX backend renders the layers inline
+without the outline frame and logs a one-time capability warning, since
+Apache POI cannot express path clipping. See
+[docs/recipes/shape-as-container.md](docs/recipes/shape-as-container.md).
+
+### Transforms (rotate / scale) and per-layer z-index
+
+`ShapeContainerBuilder` implements a `Transformable<T>` mixin. `rotate`
+and `scale` chain naturally and pivot around the outline's geometric
+centre.
+
+```java
+.addCircle(110, brand, circle -> circle
+        .rotate(15)              // clockwise degrees
+        .scale(0.9))             // uniform; (sx, sy) overload also exists
+```
+
+Per-layer `zIndex` lets a layer declared earlier in source draw on top
+of layers declared later when it has a higher z-index. The layout
+compiler stable-sorts layers before render; equal z-index keeps source
+order. See [docs/recipes/transforms.md](docs/recipes/transforms.md).
+
+### Advanced tables (row span, zebra, totals, repeated header)
+
+Tables now cover the four features most rendered reports need:
+
+```java
+addTable(table -> {
+    TableBuilder t = table
+            .columns(autoColumns(3))
+            .defaultCellStyle(bordered)
+            .headerRow("Item", "Qty", "Amount")
+            .headerStyle(headerStyle)
+            .repeatHeader()                       // re-emit on every continuation page
+            .zebra(zebraOdd, zebraEven);
+    for (int i = 1; i <= 60; i++) {
+        t.row("Line item " + i, String.valueOf(i), String.format("$%d.00", i));
+    }
+    t.totalRow(totalStyle, "Total", String.valueOf(60), "$1830.00");
+});
+```
+
+`DocumentTableCell.text(...).rowSpan(n)` merges a cell vertically; the
+layout layer skips the occupied grid positions when interpreting
+subsequent source rows. See [docs/recipes/tables.md](docs/recipes/tables.md).
+
+### Runnable examples
+
+The `examples/` module gains five new runnable showcases that you can
+inspect under `examples/target/generated-pdfs/` after running
+`GenerateAllExamples.main`:
+
+- `shape-container.pdf` &mdash; circles, ellipses, rounded cards with clipped layers
+- `transforms.pdf` &mdash; rotate row, scale row, and a z-swap stage
+- `table-advanced.pdf` &mdash; row span, zebra, totals, repeating header
+
+---
+
 ## What's new in v1.4 &mdash; "cinematic"
 
 Six designer-grade features lift GraphCompose from a tidy PDF layouter to a cinematic document engine.

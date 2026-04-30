@@ -650,6 +650,91 @@ class ShapeContainerBuilderTest {
         }
     }
 
+    @Test
+    void higherZIndexLayerRendersOnTopRegardlessOfSourceOrder() {
+        // Two filled squares declared in source order BACK then FRONT
+        // but with zIndex 10 on BACK — BACK must render LAST (on top).
+        // The layout layer reorders iteration but keeps source-order
+        // semantic paths, so FRONT's fragment appears in the placed
+        // list BEFORE BACK's (rendered first → behind).
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            session.add(new ShapeContainerBuilder()
+                    .name("ZOrdered")
+                    .roundedRect(160, 80, 6)
+                    .fillColor(BRAND)
+                    .layer(filledSquare("BACK", 40, DocumentColor.rgb(80, 120, 80)),
+                            LayerAlign.CENTER, 10)
+                    .layer(filledSquare("FRONT", 40, DocumentColor.rgb(40, 40, 200)),
+                            LayerAlign.CENTER)
+                    .build());
+
+            List<PlacedFragment> fragments = session.layoutGraph().fragments();
+            int frontIdx = indexOfPath(fragments, "FRONT");
+            int backIdx = indexOfPath(fragments, "BACK");
+            assertThat(frontIdx).isGreaterThanOrEqualTo(0);
+            assertThat(backIdx).isGreaterThanOrEqualTo(0);
+            assertThat(frontIdx)
+                    .as("FRONT square (zIndex=0) must render before BACK (zIndex=10), "
+                            + "so BACK draws on top")
+                    .isLessThan(backIdx);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void equalZIndexLayersPreserveSourceOrder() {
+        // Default zIndex is 0 for every layer. Three layers with the
+        // same zIndex must render in source order — the sort is stable.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            session.add(new ShapeContainerBuilder()
+                    .name("StableOrder")
+                    .roundedRect(160, 80, 6)
+                    .fillColor(BRAND)
+                    .layer(filledSquare("FIRST", 20, DocumentColor.rgb(80, 80, 80)),
+                            LayerAlign.CENTER)
+                    .layer(filledSquare("SECOND", 20, DocumentColor.rgb(120, 120, 120)),
+                            LayerAlign.CENTER)
+                    .layer(filledSquare("THIRD", 20, DocumentColor.rgb(160, 160, 160)),
+                            LayerAlign.CENTER)
+                    .build());
+
+            List<PlacedFragment> fragments = session.layoutGraph().fragments();
+            int first = indexOfPath(fragments, "FIRST");
+            int second = indexOfPath(fragments, "SECOND");
+            int third = indexOfPath(fragments, "THIRD");
+            assertThat(first).isLessThan(second);
+            assertThat(second).isLessThan(third);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static com.demcha.compose.document.node.ShapeNode filledSquare(String name,
+                                                                           double size,
+                                                                           DocumentColor fillColor) {
+        return new com.demcha.compose.document.node.ShapeNode(
+                name, size, size, fillColor.color(), null,
+                DocumentInsets.zero(), DocumentInsets.zero());
+    }
+
+    private static int indexOfPath(List<PlacedFragment> fragments, String pathFragment) {
+        for (int i = 0; i < fragments.size(); i++) {
+            if (fragments.get(i).path().contains(pathFragment)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     private static int indexOfPayload(List<PlacedFragment> fragments, Class<?> payloadType) {
         for (int i = 0; i < fragments.size(); i++) {
             if (payloadType.isInstance(fragments.get(i).payload())) {

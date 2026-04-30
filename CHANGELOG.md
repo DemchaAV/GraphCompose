@@ -1,5 +1,72 @@
 # Changelog
 
+## v1.5.0-beta.3 (in progress) - Phase C continues: per-layer z-index
+
+Phase C.3: introduce explicit per-layer z-index inside
+`LayerStackNode` / `ShapeContainerNode`. Layers are stable-sorted by
+ascending `zIndex` before render, so a later-declared layer with
+`zIndex = 10` draws on top of an earlier-declared layer with
+`zIndex = 5`. Default is `0`, so existing layouts and snapshots stay
+deterministic without any code changes.
+
+### Public API
+
+- `LayerStackNode.Layer` gains a fifth field, `int zIndex` (default
+  `0`). The five-arg canonical constructor is the new shape; the
+  existing 1-, 2-, and 4-arg constructors plus the static factories
+  default `zIndex = 0`, so all v1.4 / v1.5.0-alpha callers compile
+  unchanged.
+- `LayerStackBuilder` adds two zIndex overloads:
+  `layer(node, align, zIndex)` and
+  `position(node, offsetX, offsetY, align, zIndex)`.
+- `ShapeContainerBuilder` adds the same pair of overloads.
+- The semantic placement / path of each layer stays in source order —
+  only the render iteration shifts. Snapshots and architecture-guard
+  tests therefore continue to assert the same fragment paths; only
+  the order of renderable fragments inside a stack/container changes
+  with z-index.
+
+### Architecture
+
+- `BuiltInNodeDefinitions.PreparedStackLayout` gains a fourth list
+  `zIndices: List<Integer>`. The new four-arg canonical constructor is
+  the source of truth; the previous 3-arg and 1-arg constructors keep
+  compiling and default zIndices to all-zero (source order). Both
+  `ShapeContainerDefinition` and `LayerStackDefinition` populate the
+  new list from each layer.
+- `LayoutCompiler.compileStackedLayer` and the STACK branch of
+  `compileNodeInFixedSlot` now compute a stable `iterationOrder`
+  permutation via a private `stableZIndexOrder(...)` helper before
+  iterating the layer list. Stable on ties → equal `zIndex` keeps
+  source order.
+
+### Tests
+
+- `ShapeContainerBuilderTest` grows two cases:
+  - `higherZIndexLayerRendersOnTopRegardlessOfSourceOrder` — BACK and
+    FRONT squares declared in source order BACK then FRONT, but BACK
+    carries `zIndex = 10`. The test asserts FRONT's fragment lands
+    BEFORE BACK's in the placed-fragment list (rendered first → behind),
+    so BACK draws on top.
+  - `equalZIndexLayersPreserveSourceOrder` — three equal-zIndex
+    layers stay in source order (stable sort).
+- New `ShapeContainerZIndexDemoTest` renders two demo scenarios to
+  PDF artefacts under `target/visual-tests/shape-container-zindex/`:
+  intersecting RED + TEAL squares with z-swap, and a feature card
+  with backdrop + gold badge background + white "NEW" label stacked
+  via z-index. Both assert the PDF magic header is intact as a smoke
+  check.
+
+### Deferred
+
+- Other builders (`ShapeBuilder`, `EllipseBuilder`, `ImageBuilder`,
+  `LineBuilder`, `BarcodeBuilder`) opt in to `Transformable<T>`
+  in follow-up commits — same pattern as ShapeContainer.
+- C.4 — recipe `docs/recipes/transforms.md` + extending the runnable
+  example with rotated / scaled / z-stacked scenarios.
+
+---
+
 ## v1.5.0-beta.2 (in progress) - Phase C kickoff: Transform mixin + render
 
 Phase C lands the canonical-surface transform primitive (rotation around

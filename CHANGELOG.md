@@ -1,5 +1,53 @@
 # Changelog
 
+## v1.5.0-beta.14 (in progress) - Phase E.4 (slice 3): layout-snapshot regression example
+
+E.4 closes out. This slice ships the example that demonstrates how
+adopters wire GraphCompose into their own regression-test suite using
+the deterministic, renderer-agnostic layout snapshot.
+
+### Examples
+
+- New runnable
+  `examples/.../LayoutSnapshotRegressionExample.java` walks through
+  the full workflow: compose the document, call
+  `DocumentSession.layoutSnapshot()`, serialize via
+  `LayoutSnapshotJson.toJson(...)`, and either write a baseline
+  (first run) or compare against the existing baseline (subsequent
+  runs) reporting drift to stdout. Output:
+  `examples/target/generated-pdfs/invoice-snapshot-regression.pdf`
+  alongside the JSON baseline. Hooked into `GenerateAllExamples`.
+- The example doubles as a copy-and-paste starter; the javadoc points
+  adopters at the production helper
+  `LayoutSnapshotAssertions.assertMatches(document, "...")` for
+  in-test usage.
+
+### Tests
+
+- New `LayoutSnapshotRegressionDemoTest` (3 cases) pins the
+  invariants the example relies on:
+  - Two renders of the same input produce byte-identical snapshot
+    JSON. PDFBox's `/ID` randomness does **not** leak into the
+    layout snapshot.
+  - Structurally different invoices (1 line item vs 20) produce
+    different snapshot JSON, proving the snapshot reflects layout
+    shape rather than just being a constant.
+  - The snapshot reports a positive page count, a non-empty node
+    list, and a non-null canvas, proving extraction actually
+    walked the layout graph.
+
+### Phase E.4 — done
+
+All five planned examples now exist:
+
+- `ShapeContainerExample` (B.9)
+- `TableAdvancedExample` (D.4)
+- `CustomBusinessThemeExample` (E.4 slice 1)
+- `HttpStreamingExample` (E.4 slice 2)
+- `LayoutSnapshotRegressionExample` (E.4 slice 3)
+
+---
+
 ## v1.5.0-beta.13 (in progress) - Phase E.4 (slice 2): HTTP streaming example
 
 E.4 continues. This slice ships the canonical "render PDF straight to

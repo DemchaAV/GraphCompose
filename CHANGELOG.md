@@ -1,5 +1,41 @@
 # Changelog
 
+## v1.5.0-beta.15 (in progress) - Phase E.5: README quick-start refresh
+
+E.5 closes Phase E by lifting the README quick-start to the v1.5
+cinematic stack so first-time readers see a designed PDF, not a
+plain "Hello GraphCompose" snippet.
+
+### Documentation
+
+- README quick-start now opens with a `BusinessTheme.modern()`-driven
+  hero (`softPanel` + `accentLeft` + `theme.text().h1()`), with the
+  plain-text DSL kept underneath for callers who do not want a theme.
+- Built-in templates section now demonstrates `InvoiceTemplateV2`
+  taking `BusinessTheme.modern()` in its constructor (the V1 path
+  still ships side-by-side; the README mentions both).
+- New "v1.5-specific showcases" bullet list links to all six v1.5
+  runnable examples: `ShapeContainerExample`, `TransformsExample`,
+  `TableAdvancedExample`, `CustomBusinessThemeExample`,
+  `HttpStreamingExample`, `LayoutSnapshotRegressionExample`.
+- Test count claim refreshed to 647 green (was 525 — the v1.5 work
+  added cinematic clip-path, CTM, table, theme-bridge, streaming,
+  and snapshot tests).
+- Example output path corrected to `examples/target/generated-pdfs/`.
+
+### Phase E — done
+
+All five planned slices are shipped:
+
+- E.1 — `InvoiceTemplateV2` cinematic invoice
+- E.2 — `ProposalTemplateV2` cinematic proposal
+- E.3 — `CvTheme` ↔ `BusinessTheme` bridge (ADR 0002)
+- E.4 — Five new runnable examples (shape, transforms, tables, custom
+  theme, streaming, snapshot)
+- E.5 — README quick-start on `BusinessTheme.modern()`
+
+---
+
 ## v1.5.0-beta.14 (in progress) - Phase E.4 (slice 3): layout-snapshot regression example
 
 E.4 closes out. This slice ships the example that demonstrates how

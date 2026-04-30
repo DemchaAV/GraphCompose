@@ -1,5 +1,59 @@
 # Changelog
 
+## v1.5.0-beta.6 (in progress) - Phase D continues: zebra rows, totals row, header alias
+
+D.2 lands three table-builder shortcuts that cover the most common
+"rendered-report" styling patterns: alternating row fills (`zebra`),
+a totals row appended at the bottom (`totalRow`), and a naming alias
+for the existing `header(...)` method that reads consistently with
+`totalRow(...)` (`headerRow`).
+
+### Public API
+
+- `TableBuilder.zebra(DocumentTableStyle odd, DocumentTableStyle even)`
+  configures alternating row styles. Odd-indexed rows (0, 2, 4 — first,
+  third, fifth visually) take the {@code odd} style; even-indexed rows
+  (1, 3, 5) take the {@code even} style. Either argument may be
+  {@code null} to skip painting that parity.
+- `TableBuilder.zebra(DocumentColor odd, DocumentColor even)` is a
+  convenience overload that wraps the colours into fill-only
+  {@code DocumentTableStyle} values.
+- `TableBuilder.totalRow(String... values)` adds a totals row as the
+  last logical row and assigns a default totals style: bold text plus
+  a subtle gray-blue fill (RGB 240, 240, 245).
+- `TableBuilder.totalRow(DocumentTableStyle style, String... values)`
+  is the customisable overload — pass any fill, text style, padding,
+  or stroke as the totals row look.
+- `TableBuilder.headerRow(String... values)` is a naming alias for
+  `header(String...)` so callers writing
+  `headerRow(...).row(...).totalRow(...)` keep a parallel vocabulary.
+
+### Architecture
+
+- Zebra is applied lazily at `build()` time — the builder remembers
+  the odd / even style and walks the row list only after every other
+  row has been added. Existing entries in the {@code rowStyles} map
+  (set via `headerStyle(...)`, `rowStyle(idx, ...)`, or
+  `totalRow(...)` itself) are NEVER overwritten, so explicit per-row
+  styling always wins over zebra alternation.
+- `totalRow(...)` adds the row first, then registers the totals style
+  at the row's index. The registration happens before zebra is
+  applied at `build()` time, so the totals style takes precedence on
+  the totals row regardless of zebra parity.
+
+### Tests
+
+- New `TableBuilderZebraAndTotalsTest` covers seven invariants:
+  zebra parity assignment, headerStyle wins over zebra, null-style
+  parity is skipped, default totals style, totals row + zebra
+  precedence, custom totals style, and `headerRow` alias.
+- New `TableZebraAndTotalsDemoTest` renders an invoice-style table
+  to `target/visual-tests/table-zebra-totals/zebra-invoice.pdf`:
+  white-on-teal header, alternating white / pale-blue data rows,
+  bold gold totals row.
+
+---
+
 ## v1.5.0-beta.5 (in progress) - Phase D kickoff: table row span
 
 D.1 lands canonical row-span support for tables. A cell can declare

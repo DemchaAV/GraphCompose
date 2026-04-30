@@ -24,6 +24,7 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableCell;
@@ -54,6 +55,11 @@ public final class TableBuilder {
     private DocumentBookmarkOptions bookmarkOptions;
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
+    // Zebra row styling (D.2). Applied at build() time to every row that
+    // does not already have an explicit rowStyle override, so totalRow()
+    // and headerStyle() always win.
+    private DocumentTableStyle zebraOddStyle;
+    private DocumentTableStyle zebraEvenStyle;
 
     /**
      * Creates a table builder.
@@ -168,6 +174,101 @@ public final class TableBuilder {
      */
     public TableBuilder header(String... values) {
         return row(values);
+    }
+
+    /**
+     * Naming alias for {@link #header(String...)}. Reads consistently
+     * with {@link #totalRow(String...)} when laying out a table that
+     * has both a header and a totals row.
+     *
+     * @param values header cell text values
+     * @return this builder
+     */
+    public TableBuilder headerRow(String... values) {
+        return header(values);
+    }
+
+    /**
+     * Adds a totals row as the last logical row of the table and assigns
+     * it the supplied style. The style wins over {@link #zebra(DocumentTableStyle, DocumentTableStyle)}
+     * row alternation because the row's index is added to {@code rowStyles}
+     * directly.
+     *
+     * @param style totals-row style override (typically bold + a subtle
+     *              fill to separate the totals from the data rows)
+     * @param values totals cell text values
+     * @return this builder
+     */
+    public TableBuilder totalRow(DocumentTableStyle style, String... values) {
+        Objects.requireNonNull(style, "style");
+        row(values);
+        rowStyle(rows.size() - 1, style);
+        return this;
+    }
+
+    /**
+     * Adds a totals row with a default totals style: bold text plus a
+     * subtle gray-blue fill (RGB 240, 240, 245). Use the two-arg
+     * {@link #totalRow(DocumentTableStyle, String...)} overload to
+     * customise the look.
+     *
+     * @param values totals cell text values
+     * @return this builder
+     */
+    public TableBuilder totalRow(String... values) {
+        return totalRow(defaultTotalRowStyle(), values);
+    }
+
+    private static DocumentTableStyle defaultTotalRowStyle() {
+        return DocumentTableStyle.builder()
+                .textStyle(DocumentTextStyle.builder()
+                        .decoration(DocumentTextDecoration.BOLD)
+                        .build())
+                .fillColor(DocumentColor.rgb(240, 240, 245))
+                .build();
+    }
+
+    /**
+     * Configures alternating row fill colours. The {@code odd} style is
+     * applied to rows at index 0, 2, 4 (visually first, third, fifth);
+     * the {@code even} style to rows at index 1, 3, 5 (second, fourth,
+     * sixth). Either style may be {@code null} to skip painting that
+     * parity.
+     *
+     * <p>Zebra styling is applied lazily at {@link #build()} time and
+     * only to rows that do not already have an explicit
+     * {@link #rowStyle(int, DocumentTableStyle)} override, so calls to
+     * {@link #headerStyle(DocumentTableStyle)} or
+     * {@link #totalRow(String...)} take precedence.</p>
+     *
+     * @param odd style for odd-indexed rows (index 0, 2, 4 — first,
+     *            third, fifth visually)
+     * @param even style for even-indexed rows (index 1, 3, 5)
+     * @return this builder
+     */
+    public TableBuilder zebra(DocumentTableStyle odd, DocumentTableStyle even) {
+        this.zebraOddStyle = odd;
+        this.zebraEvenStyle = even;
+        return this;
+    }
+
+    /**
+     * Convenience overload that paints zebra rows from two fill colours,
+     * skipping any other styling. Either colour may be {@code null} to
+     * leave that parity unstyled.
+     *
+     * @param odd fill colour for odd-indexed rows (1st, 3rd, 5th)
+     * @param even fill colour for even-indexed rows (2nd, 4th, 6th)
+     * @return this builder
+     */
+    public TableBuilder zebra(DocumentColor odd, DocumentColor even) {
+        DocumentTableStyle oddStyle = odd == null
+                ? null
+                : DocumentTableStyle.builder().fillColor(odd).build();
+        DocumentTableStyle evenStyle = even == null
+                ? null
+                : DocumentTableStyle.builder().fillColor(even).build();
+        return zebra(oddStyle, evenStyle);
     }
 
     /**
@@ -317,12 +418,27 @@ public final class TableBuilder {
      * @return table node
      */
     public TableNode build() {
+        // Apply zebra row styling lazily so totalRow() / headerStyle()
+        // overrides registered earlier still win. Existing rowStyles
+        // entries are never replaced.
+        Map<Integer, DocumentTableStyle> resolvedRowStyles = new LinkedHashMap<>(rowStyles);
+        if (zebraOddStyle != null || zebraEvenStyle != null) {
+            for (int i = 0; i < rows.size(); i++) {
+                if (resolvedRowStyles.containsKey(i)) {
+                    continue;
+                }
+                DocumentTableStyle parityStyle = (i % 2 == 0) ? zebraOddStyle : zebraEvenStyle;
+                if (parityStyle != null) {
+                    resolvedRowStyles.put(i, parityStyle);
+                }
+            }
+        }
         return new TableNode(
                 name,
                 List.copyOf(columns),
                 List.copyOf(rows),
                 defaultCellStyle,
-                Map.copyOf(rowStyles),
+                Map.copyOf(resolvedRowStyles),
                 Map.copyOf(columnStyles),
                 width,
                 linkOptions,

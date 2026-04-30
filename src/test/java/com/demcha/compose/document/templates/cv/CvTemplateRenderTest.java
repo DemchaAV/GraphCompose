@@ -33,6 +33,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import javax.imageio.ImageIO;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -346,6 +347,85 @@ class CvTemplateRenderTest {
     }
 
     @Test
+    void shouldUseFullWidthReferenceRulesInCenteredHeadlineTemplate() throws Exception {
+        try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 22, 22, 22, 22)) {
+            new CenteredHeadlineCvTemplate().compose(document, TemplateTestSupport.canonicalCv());
+
+            double innerWidth = document.canvas().innerWidth();
+            List<PlacedFragment> rules = document.layoutGraph().fragments().stream()
+                    .filter(fragment -> fragment.path().contains("CenteredHeadline"))
+                    .filter(fragment -> fragment.path().contains("Rule"))
+                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.LineFragmentPayload)
+                    .toList();
+
+            assertThat(rules).hasSizeGreaterThanOrEqualTo(3);
+            assertThat(rules)
+                    .allSatisfy(fragment -> assertThat(fragment.width()).isCloseTo(innerWidth, within(0.01)));
+            assertThat(document.layoutGraph().fragments())
+                    .extracting(PlacedFragment::path)
+                    .noneMatch(path -> path.contains("CenteredHeadlineBanner"));
+        }
+    }
+
+    @Test
+    void shouldShipTimelineContactIconsAsTransparentPngAssets() throws Exception {
+        for (String icon : List.of("github.png", "linkedin.png", "google.png", "dribbble.png")) {
+            assertTransparentPngAsset("/templates/cv/timeline-minimal/icons/", icon);
+        }
+    }
+
+    @Test
+    void shouldShipMonogramSidebarContactIconsAsTransparentPngAssets() throws Exception {
+        for (String icon : List.of("phone.png", "email.png", "location.png", "linkedin.png")) {
+            assertTransparentPngAsset("/templates/cv/monogram-sidebar/icons/", icon);
+        }
+    }
+
+    @Test
+    void shouldKeepMonogramSidebarReferenceProportions() throws Exception {
+        try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 0, 0, 0, 0)) {
+            new MonogramSidebarCvTemplate().compose(document, TemplateTestSupport.canonicalCv());
+
+            double pageHeight = document.canvas().height();
+            double sidebarWidth = document.canvas().innerWidth() * 0.33;
+            List<PlacedFragment> fragments = document.layoutGraph().fragments();
+            PlacedFragment sidebar = fragments.stream()
+                    .filter(fragment -> fragment.path().endsWith("MonogramSidebarSidebar[0]"))
+                    .findFirst()
+                    .orElseThrow();
+            PlacedFragment monogramRing = fragments.stream()
+                    .filter(fragment -> fragment.path().contains("MonogramRing"))
+                    .findFirst()
+                    .orElseThrow();
+
+            assertThat(sidebar.y()).isCloseTo(0.0, within(0.25));
+            assertThat(monogramRing.width()).isCloseTo(122.0, within(0.01));
+            assertThat(monogramRing.height()).isCloseTo(122.0, within(0.01));
+            assertThat(topOf(pageHeight, monogramRing)).isCloseTo(36.0, within(0.01));
+
+            List<PlacedFragment> sidebarRules = fragments.stream()
+                    .filter(fragment -> fragment.path().contains("MonogramSidebarSidebar"))
+                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.LineFragmentPayload)
+                    .toList();
+
+            assertThat(sidebarRules).hasSize(3);
+            assertThat(sidebarRules)
+                    .allSatisfy(rule -> {
+                        assertThat(rule.width()).isCloseTo(118.0, within(0.01));
+                        assertThat(rule.x()).isCloseTo((sidebarWidth - 118.0) / 2.0, within(0.01));
+                    });
+
+            PlacedFragment profileHeader = fragments.stream()
+                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ParagraphFragmentPayload)
+                    .filter(fragment -> firstLine(fragment).contains("P R O F E S S I O N A L   S U M M A R Y"))
+                    .findFirst()
+                    .orElseThrow();
+
+            assertThat(topOf(pageHeight, profileHeader)).isCloseTo(209.87, within(0.01));
+        }
+    }
+
+    @Test
     void shouldRenderTimelineMinimalContactLinksAsPdfAnnotations() throws Exception {
         byte[] pdfBytes;
         try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 22, 22, 22, 22)) {
@@ -443,6 +523,24 @@ class CvTemplateRenderTest {
                 .filter(fragment -> fragment.path().contains(pathPart))
                 .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ParagraphFragmentPayload)
                 .toList();
+    }
+
+    private static void assertTransparentPngAsset(String root, String icon) throws Exception {
+        try (var stream = CvTemplateRenderTest.class.getResourceAsStream(root + icon)) {
+            assertThat(stream).as(icon + " resource").isNotNull();
+
+            var image = ImageIO.read(stream);
+
+            assertThat(image).as(icon + " image").isNotNull();
+            assertThat(image.getWidth()).as(icon + " width").isEqualTo(64);
+            assertThat(image.getHeight()).as(icon + " height").isEqualTo(64);
+            assertThat(image.getColorModel().hasAlpha()).as(icon + " alpha channel").isTrue();
+            assertThat((image.getRGB(0, 0) >>> 24) & 0xff).as(icon + " transparent corner").isZero();
+        }
+    }
+
+    private static double topOf(double pageHeight, PlacedFragment fragment) {
+        return pageHeight - (fragment.y() + fragment.height());
     }
 
     private static String firstLine(PlacedFragment fragment) {

@@ -73,7 +73,7 @@ public final class MonogramSidebarCvTemplateComposer {
     public MonogramSidebarCvTemplateComposer(CvTheme theme) {
         this.theme = Objects.requireNonNull(theme, "theme");
     }
-    private static final String CONTACT_ICON_ROOT = "/templates/cv/timeline-minimal/icons/";
+    private static final String CONTACT_ICON_ROOT = "/templates/cv/monogram-sidebar/icons/";
     private static final Map<String, byte[]> CONTACT_ICON_CACHE = new ConcurrentHashMap<>();
     private static final List<String> EDUCATION_KEYS = List.of("education", "certifications");
     private static final List<String> SKILL_KEYS = List.of("skills", "technical skills", "key skills", "expertise");
@@ -82,9 +82,11 @@ public final class MonogramSidebarCvTemplateComposer {
     private static final int EDUCATION_LIMIT = 2;
     private static final int SKILL_LIMIT = 7;
     private static final int EXPERIENCE_LIMIT = 2;
-    private static final int DESCRIPTION_MAX_CHARS = 220;
-    private static final int PROFILE_MAX_CHARS = 320;
-    private static final double MONOGRAM_DIAMETER = 98;
+    private static final int DESCRIPTION_MAX_CHARS = 280;
+    private static final int PROFILE_MAX_CHARS = 520;
+    private static final double MONOGRAM_DIAMETER = 122;
+    private static final double SIDEBAR_RULE_WIDTH = 118;
+    private static final double CONTACT_ICON_SIZE = 18;
 
     public void compose(DocumentSession document, CvDocumentSpec documentSpec) {
         CvDocumentSpec spec = Objects.requireNonNull(documentSpec, "documentSpec");
@@ -115,7 +117,7 @@ public final class MonogramSidebarCvTemplateComposer {
         // bottom edge of an A4 page; the row child does not stretch on
         // its own.
         section.spacing(8)
-                .padding(new DocumentInsets(18, 13, 225, 13))
+                .padding(new DocumentInsets(36, 13, 109, 13))
                 .fillColor(SIDEBAR_BG);
 
         addMonogramBlock(section, initials(spec.header()), innerWidth);
@@ -164,6 +166,7 @@ public final class MonogramSidebarCvTemplateComposer {
 
         section.addLayerStack(outer -> outer
                 .name("MonogramFrame")
+                .margin(DocumentInsets.bottom(42))
                 .back(new SpacerNode(
                         "MonogramSpace",
                         Math.max(MONOGRAM_DIAMETER, innerWidth),
@@ -183,11 +186,13 @@ public final class MonogramSidebarCvTemplateComposer {
                 .align(TextAlign.CENTER)
                 .lineSpacing(1.2)
                 .margin(DocumentInsets.top(6)));
+        double ruleWidth = Math.min(innerWidth, SIDEBAR_RULE_WIDTH);
+        double sideInset = Math.max(0.0, (innerWidth - ruleWidth) / 2.0);
         section.addLine(line -> line
-                .horizontal(innerWidth)
+                .horizontal(ruleWidth)
                 .color(SIDEBAR_RULE)
                 .thickness(0.45)
-                .margin(new DocumentInsets(1, 0, 2, 0)));
+                .margin(new DocumentInsets(1, sideInset, 2, sideInset)));
     }
 
     private void addContactBlock(SectionBuilder section, Header header) {
@@ -204,8 +209,8 @@ public final class MonogramSidebarCvTemplateComposer {
                         .margin(DocumentInsets.top(4))
                         .rich(rich -> rich.image(
                                 contactIcon(contact.iconFile()),
-                                9.0,
-                                9.0,
+                                CONTACT_ICON_SIZE,
+                                CONTACT_ICON_SIZE,
                                 InlineImageAlignment.CENTER,
                                 0.0,
                                 contact.linkOptions())));
@@ -278,7 +283,7 @@ public final class MonogramSidebarCvTemplateComposer {
 
     private void addMain(SectionBuilder section, CvDocumentSpec spec) {
         section.spacing(5)
-                .padding(new DocumentInsets(12, 20, 24, 18));
+                .padding(new DocumentInsets(38, 20, 24, 18));
 
         addNameBlock(section, spec.header());
 
@@ -300,19 +305,23 @@ public final class MonogramSidebarCvTemplateComposer {
         DocumentTextStyle nameStyle = style(HEADLINE_FONT, 30, DocumentTextDecoration.DEFAULT, INK);
         DocumentTextStyle titleStyle = style(theme.bodyFont(), 7.4, DocumentTextDecoration.BOLD, ACCENT);
 
-        for (String part : parts) {
+        for (int index = 0; index < parts.length; index++) {
+            String part = parts[index];
+            DocumentInsets margin = index == parts.length - 1
+                    ? DocumentInsets.zero()
+                    : DocumentInsets.bottom(6);
             section.addParagraph(paragraph -> paragraph
                     .text(spacedUpper(part))
                     .textStyle(nameStyle)
                     .align(TextAlign.CENTER)
                     .lineSpacing(1.0)
-                    .margin(DocumentInsets.zero()));
+                    .margin(margin));
         }
         section.addParagraph(paragraph -> paragraph
                 .text(spacedUpper("Your Professional Title"))
                 .textStyle(titleStyle)
                 .align(TextAlign.CENTER)
-                .margin(DocumentInsets.zero()));
+                .margin(new DocumentInsets(16, 0, 42, 0)));
     }
 
     private void addMainSectionHeader(SectionBuilder section, String title) {
@@ -344,7 +353,7 @@ public final class MonogramSidebarCvTemplateComposer {
                         .textStyle(bodyStyle)
                         .lineSpacing(1.35)
                         .align(TextAlign.LEFT)
-                        .margin(DocumentInsets.top(4)));
+                        .margin(new DocumentInsets(4, 0, 12, 0)));
             } else if (block.kind() == CvModule.BodyKind.LIST) {
                 List<String> items = block.items() == null ? List.of() : block.items();
                 String joined = String.join(" ", items).trim();
@@ -356,7 +365,7 @@ public final class MonogramSidebarCvTemplateComposer {
                         .textStyle(bodyStyle)
                         .lineSpacing(1.35)
                         .align(TextAlign.LEFT)
-                        .margin(DocumentInsets.top(4)));
+                        .margin(new DocumentInsets(4, 0, 12, 0)));
             }
         }
     }

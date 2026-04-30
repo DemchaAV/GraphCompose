@@ -33,14 +33,16 @@ import java.util.Objects;
  * paragraph block or a list of items where every item is parsed
  * heuristically — entries shaped like {@code <heading> | <date> - <description>}
  * become two-column rows (bold company plus thin location on the left,
- * italic date on the right) followed by an optional description paragraph.
- * A thin horizontal rule is drawn between modules so the page reads as a
- * borderless table of sections.</p>
+ * regular date on the right) followed by an optional description paragraph.
+ * Thin full-width rules are drawn explicitly instead of as section borders so
+ * the template matches the centered reference and avoids short underlines
+ * under module titles.</p>
  */
 public final class CenteredHeadlineCvTemplateComposer {
-    private static final DocumentColor INK = DocumentColor.rgb(34, 34, 34);
-    private static final DocumentColor SOFT = DocumentColor.rgb(85, 85, 85);
-    private static final DocumentColor RULE = DocumentColor.rgb(170, 170, 170);
+    private static final DocumentColor INK = DocumentColor.rgb(54, 54, 54);
+    private static final DocumentColor HEADLINE = DocumentColor.rgb(70, 70, 70);
+    private static final DocumentColor SOFT = DocumentColor.rgb(105, 105, 105);
+    private static final DocumentColor RULE = DocumentColor.rgb(188, 188, 188);
     private static final FontName HEADLINE_FONT = FontName.POPPINS;
 
     private final CvTheme theme;
@@ -62,75 +64,76 @@ public final class CenteredHeadlineCvTemplateComposer {
 
     public void compose(DocumentSession document, CvDocumentSpec documentSpec) {
         CvDocumentSpec spec = Objects.requireNonNull(documentSpec, "documentSpec");
+        double ruleWidth = document.canvas().innerWidth();
 
         PageFlowBuilder pageFlow = document.dsl()
                 .pageFlow()
                 .name("CenteredHeadlineRoot")
-                .spacing(8)
-                .addSection("CenteredHeadlineHeader", section -> {
-                    section.accentBottom(RULE, 0.7);
-                    addHeadline(section, spec.header());
-                })
-                .addSection("CenteredHeadlineContact", section -> {
-                    section.accentBottom(RULE, 0.7);
-                    addContactLine(section, spec.header());
-                });
+                .spacing(0)
+                .addSection("CenteredHeadlineHeader", section -> addHeadline(section, spec.header()))
+                .addLine(line -> referenceRule(line, "CenteredHeadlineHeaderRule", ruleWidth, 7, 0))
+                .addSection("CenteredHeadlineContact", section -> addContactLine(section, spec.header()))
+                .addLine(line -> referenceRule(line, "CenteredHeadlineContactRule", ruleWidth, 0, 13));
 
         List<CvModule> modules = spec.modules() == null ? List.of() : spec.modules();
         for (int i = 0; i < modules.size(); i++) {
             final CvModule module = modules.get(i);
+            final int index = i;
             String title = safe(module.title());
             if (title.isBlank()) {
                 continue;
             }
-            // Module title sits inside a banner: hairline rule on top,
-            // matching rule on the bottom, equal 6pt vertical padding
-            // around the centred uppercase heading. This is the v1.5
-            // accentTop + accentBottom idiom — mirrors the blue-banner
-            // template so the gallery stays visually consistent.
             pageFlow.addSection(
-                    "CenteredHeadlineBanner" + normalize(title) + "_" + i,
-                    section -> addModuleBanner(section, title));
-            pageFlow.addSection(
-                    "CenteredHeadlineModuleBody" + normalize(title) + "_" + i,
-                    section -> renderBody(section, module));
+                    "CenteredHeadlineModule" + normalize(title) + "_" + index,
+                    section -> {
+                        addModuleTitle(section, title);
+                        renderBody(section, module);
+                    });
+            if (index < modules.size() - 1) {
+                pageFlow.addLine(line -> referenceRule(line,
+                        "CenteredHeadlineModuleRule" + index,
+                        ruleWidth,
+                        5,
+                        12));
+            }
         }
 
         pageFlow.build();
     }
 
-    private void addModuleBanner(SectionBuilder section, String title) {
-        // accentTop + accentBottom draw the framing rules; uniform
-        // 5pt vertical padding gives equal breathing room above and
-        // below the heading text — matches the boutique-resume
-        // proportions where the title text height + padding feels
-        // generous without pushing the standard CV onto a second
-        // page. Letter-spaced uppercase title is left-aligned,
-        // mirroring the reference design.
-        section.accentTop(RULE, 0.55)
-                .accentBottom(RULE, 0.55)
-                .padding(DocumentInsets.symmetric(3, 0))
-                .margin(DocumentInsets.zero())
-                .addParagraph(paragraph -> paragraph
-                        .text(spacedUpper(title))
-                        .textStyle(style(theme.bodyFont(), 10.0, DocumentTextDecoration.BOLD, INK))
-                        .align(TextAlign.LEFT)
-                        .margin(DocumentInsets.zero()));
+    private void addModuleTitle(SectionBuilder section, String title) {
+        section.addParagraph(paragraph -> paragraph
+                .text(spacedUpper(title))
+                .textStyle(style(theme.bodyFont(), 9.5, DocumentTextDecoration.BOLD, SOFT))
+                .align(TextAlign.LEFT)
+                .margin(DocumentInsets.zero()));
+    }
+
+    private void referenceRule(com.demcha.compose.document.dsl.LineBuilder line,
+                               String name,
+                               double width,
+                               double top,
+                               double bottom) {
+        line.name(name)
+                .horizontal(width)
+                .color(RULE)
+                .thickness(0.55)
+                .margin(new DocumentInsets(top, 0, bottom, 0));
     }
 
     private void addHeadline(SectionBuilder section, Header header) {
-        section.spacing(2)
-                .padding(new DocumentInsets(0, 0, 4, 0))
+        section.spacing(4)
+                .padding(new DocumentInsets(8, 0, 0, 0))
                 .addParagraph(paragraph -> paragraph
                         .text(spacedUpper(name(header)))
-                        .textStyle(style(HEADLINE_FONT, 20.5, DocumentTextDecoration.DEFAULT, INK))
+                        .textStyle(style(HEADLINE_FONT, 24.0, DocumentTextDecoration.DEFAULT, HEADLINE))
                         .align(TextAlign.CENTER)
                         .margin(DocumentInsets.zero()))
                 .addParagraph(paragraph -> paragraph
                         .text(spacedUpper("Professional Title"))
-                        .textStyle(style(HEADLINE_FONT, 8.4, DocumentTextDecoration.DEFAULT, SOFT))
+                        .textStyle(style(HEADLINE_FONT, 8.6, DocumentTextDecoration.DEFAULT, SOFT))
                         .align(TextAlign.CENTER)
-                        .margin(DocumentInsets.top(2)));
+                        .margin(DocumentInsets.top(1)));
     }
 
     private void addContactLine(SectionBuilder section, Header header) {
@@ -138,11 +141,11 @@ public final class CenteredHeadlineCvTemplateComposer {
         if (parts.isEmpty()) {
             return;
         }
-        DocumentTextStyle textStyle = style(theme.bodyFont(), 8.5, DocumentTextDecoration.DEFAULT, INK);
-        DocumentTextStyle separatorStyle = style(theme.bodyFont(), 8.5, DocumentTextDecoration.DEFAULT, RULE);
+        DocumentTextStyle textStyle = style(theme.bodyFont(), 8.3, DocumentTextDecoration.DEFAULT, SOFT);
+        DocumentTextStyle separatorStyle = style(theme.bodyFont(), 8.3, DocumentTextDecoration.DEFAULT, RULE);
 
         section.spacing(0)
-                .padding(new DocumentInsets(4, 0, 4, 0))
+                .padding(new DocumentInsets(7, 0, 7, 0))
                 .addParagraph(paragraph -> paragraph
                         .textStyle(textStyle)
                         .align(TextAlign.CENTER)
@@ -166,12 +169,8 @@ public final class CenteredHeadlineCvTemplateComposer {
         if (module == null) {
             return;
         }
-        // Body sits flush below the banner. Spacing(4) preserves the
-        // original between-paragraph rhythm; padding-top(2) gives the
-        // body breathing room below the banner's bottom rule without
-        // pushing the standard CV onto a second page.
         section.spacing(4)
-                .padding(new DocumentInsets(2, 0, 0, 0));
+                .padding(DocumentInsets.zero());
         for (CvModule.BodyBlock block : module.bodyBlocks()) {
             switch (block.kind()) {
                 case PARAGRAPH -> renderParagraphBlock(section, block);
@@ -192,10 +191,10 @@ public final class CenteredHeadlineCvTemplateComposer {
         }
         section.addParagraph(paragraph -> paragraph
                 .text(text)
-                .textStyle(style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, INK))
-                .lineSpacing(1.5)
+                .textStyle(style(theme.bodyFont(), 8.7, DocumentTextDecoration.DEFAULT, INK))
+                .lineSpacing(1.45)
                 .align(TextAlign.LEFT)
-                .margin(DocumentInsets.top(2)));
+                .margin(DocumentInsets.top(3)));
     }
 
     private void renderListBlock(SectionBuilder section, CvModule.BodyBlock block) {
@@ -220,17 +219,17 @@ public final class CenteredHeadlineCvTemplateComposer {
     private void renderItemAsParagraph(SectionBuilder section, String item) {
         section.addParagraph(paragraph -> paragraph
                 .text(item)
-                .textStyle(style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, INK))
-                .lineSpacing(1.4)
+                .textStyle(style(theme.bodyFont(), 8.7, DocumentTextDecoration.DEFAULT, INK))
+                .lineSpacing(1.35)
                 .align(TextAlign.LEFT)
-                .margin(DocumentInsets.top(2)));
+                .margin(DocumentInsets.top(1)));
     }
 
     private void renderWorkEntry(SectionBuilder section, WorkEntry entry) {
         DocumentTextStyle companyStyle = style(theme.bodyFont(), 8.8, DocumentTextDecoration.BOLD, INK);
-        DocumentTextStyle metaStyle = style(theme.bodyFont(), 8.8, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle metaStyle = style(theme.bodyFont(), 8.8, DocumentTextDecoration.DEFAULT, SOFT);
         DocumentTextStyle separatorStyle = style(theme.bodyFont(), 8.8, DocumentTextDecoration.DEFAULT, RULE);
-        DocumentTextStyle dateStyle = style(theme.bodyFont(), 8.6, DocumentTextDecoration.ITALIC, SOFT);
+        DocumentTextStyle dateStyle = style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, SOFT);
         DocumentTextStyle bodyStyle = style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, INK);
 
         section.addRow("CenteredHeadlineWorkEntry", row -> row
@@ -261,7 +260,7 @@ public final class CenteredHeadlineCvTemplateComposer {
             section.addParagraph(paragraph -> paragraph
                     .text(entry.description())
                     .textStyle(bodyStyle)
-                    .lineSpacing(1.4)
+                    .lineSpacing(1.35)
                     .align(TextAlign.LEFT)
                     .margin(DocumentInsets.top(2)));
         }

@@ -29,7 +29,7 @@ What you get out of the box:
 - **Atomic pagination, no manual paging.** Tables split row-by-row, rows are atomic, layer stacks are atomic, and the paginator keeps owner placement and page spans coherent.
 - **Designer-grade output.** Page backgrounds, section bands, soft panels, accent strips, column spans, layered hero blocks, fluent rich text, and a tokenised `BusinessTheme` are all first-class &mdash; not workarounds.
 - **PDFBox rendering, isolated.** PDF backend lives behind a single backend interface. The DOCX semantic backend (Apache POI) is ready for callers who need an editable file.
-- **Tested at every layer.** 525 green tests on `main`, including 41 cinematic-feature tests, public-API leak guards, semantic-vs-engine isolation guards, and a brand-new `PdfVisualRegression` harness for screenshot-level checks.
+- **Tested at every layer.** 647 green tests on `develop` (525 → 647 across v1.5), including cinematic-feature tests, shape-as-container clip-path invariants, transform CTM checks, table row-span / zebra / repeated-header tests, public-API leak guards, semantic-vs-engine isolation guards, and the `PdfVisualRegression` harness for screenshot-level checks.
 
 The current release is **v1.4.1** &mdash; the "cinematic" release. v1.3 stabilised the core (rows, per-side borders, auto-size text, DOCX export); v1.4 lands the visual-design layer that turns "tidy PDF" into "designed document".
 
@@ -78,26 +78,55 @@ The project POM coordinates are `io.github.demchaav:graphcompose:1.4.1`. JitPack
 
 ## Quick start
 
+The fastest path to a designed PDF is the v1.5 cinematic stack: pick a
+`BusinessTheme`, drop a `softPanel` + `accentLeft` hero block on the
+page, and let the theme drive every colour, font, and table style.
+
 ```java
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.theme.BusinessTheme;
 
 import java.nio.file.Path;
 
 public class QuickStart {
     public static void main(String[] args) throws Exception {
+        BusinessTheme theme = BusinessTheme.modern();   // cream paper + teal/gold
+
         try (DocumentSession document = GraphCompose.document(Path.of("output.pdf"))
                 .pageSize(DocumentPageSize.A4)
-                .margin(24, 24, 24, 24)
+                .pageBackground(theme.pageBackground())
+                .margin(28, 28, 28, 28)
                 .create()) {
 
             document.pageFlow(page -> page
-                    .module("Summary", module -> module.paragraph("Hello GraphCompose")));
+                    .addSection("Hero", section -> section
+                            .softPanel(theme.palette().surfaceMuted(), 10, 14)
+                            .accentLeft(theme.palette().accent(), 4)
+                            .addParagraph(p -> p
+                                    .text("GraphCompose")
+                                    .textStyle(theme.text().h1()))
+                            .addParagraph(p -> p
+                                    .text("A theme-driven hero, one page, no manual coordinates.")
+                                    .textStyle(theme.text().body()))));
 
             document.buildPdf();
         }
     }
+}
+```
+
+Need plain text and no theme? Drop straight into the DSL:
+
+```java
+try (DocumentSession document = GraphCompose.document(Path.of("output.pdf"))
+        .pageSize(DocumentPageSize.A4)
+        .margin(24, 24, 24, 24)
+        .create()) {
+    document.pageFlow(page -> page
+            .module("Summary", module -> module.paragraph("Hello GraphCompose")));
+    document.buildPdf();
 }
 ```
 
@@ -119,13 +148,18 @@ try (DocumentSession document = GraphCompose.document()
 
 ### Built-in templates (compose-first)
 
+`InvoiceTemplateV2` and `ProposalTemplateV2` (v1.5) take a
+`BusinessTheme` in their constructor, so the same data renders
+through any of `classic` / `modern` / `executive` (or your own
+custom theme) without touching the call site.
+
 ```java
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.api.InvoiceTemplate;
-import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
+import com.demcha.compose.document.templates.builtins.InvoiceTemplateV2;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
+import com.demcha.compose.document.theme.BusinessTheme;
 
 import java.nio.file.Path;
 
@@ -139,11 +173,13 @@ InvoiceDocumentSpec invoice = InvoiceDocumentSpec.builder()
         .totalRow("Total", "GBP 1,960")
         .build();
 
-InvoiceTemplate template = new InvoiceTemplateV1();
+BusinessTheme theme = BusinessTheme.modern();
+InvoiceTemplateV2 template = new InvoiceTemplateV2(theme);
 
 try (DocumentSession document = GraphCompose.document(Path.of("invoice.pdf"))
         .pageSize(DocumentPageSize.A4)
-        .margin(22, 22, 22, 22)
+        .pageBackground(theme.pageBackground())
+        .margin(28, 28, 28, 28)
         .create()) {
 
     template.compose(document, invoice);
@@ -151,14 +187,30 @@ try (DocumentSession document = GraphCompose.document(Path.of("invoice.pdf"))
 }
 ```
 
-The runnable `examples/` module includes CV, cover letter, invoice, proposal, cinematic proposal, weekly schedule, and module-first documents:
+`InvoiceTemplateV1` ships side-by-side for callers who want the
+hard-coded default theme. To brand the output for your own product,
+hand `InvoiceTemplateV2` a custom `BusinessTheme` instead — see
+[`CustomBusinessThemeExample`](./examples/src/main/java/com/demcha/examples/CustomBusinessThemeExample.java).
+
+The runnable `examples/` module ships fifteen examples covering CV,
+cover letter, invoice (V1 + cinematic V2), proposal (V1 + V2),
+schedule, plus six v1.5-specific showcases:
+
+- [`ShapeContainerExample`](./examples/src/main/java/com/demcha/examples/ShapeContainerExample.java) — circles, ellipses, rounded cards with clipped layers
+- [`TransformsExample`](./examples/src/main/java/com/demcha/examples/TransformsExample.java) — rotate, scale, and z-index swap
+- [`TableAdvancedExample`](./examples/src/main/java/com/demcha/examples/TableAdvancedExample.java) — row span, zebra, totals, repeating header
+- [`CustomBusinessThemeExample`](./examples/src/main/java/com/demcha/examples/CustomBusinessThemeExample.java) — hand-built `BusinessTheme` driving `InvoiceTemplateV2`
+- [`HttpStreamingExample`](./examples/src/main/java/com/demcha/examples/HttpStreamingExample.java) — `writePdf(OutputStream)` for Servlet / S3 paths
+- [`LayoutSnapshotRegressionExample`](./examples/src/main/java/com/demcha/examples/LayoutSnapshotRegressionExample.java) — deterministic layout snapshots for regression tests
+
+Run the whole gallery in one shot:
 
 ```bash
 ./mvnw -f examples/pom.xml clean package
 ./mvnw -f examples/pom.xml exec:java -Dexec.mainClass=com.demcha.examples.GenerateAllExamples
 ```
 
-Each example writes a PDF to `examples/build/`.
+Each example writes a PDF to `examples/target/generated-pdfs/`.
 
 ## Core concepts
 

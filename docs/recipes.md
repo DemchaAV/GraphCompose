@@ -1,6 +1,25 @@
 # Recipes
 
-These recipes use only the canonical session-first authoring API. Public application code should not import `com.demcha.compose.engine.*`.
+These recipes use only the canonical session-first authoring API.
+Public application code should not import
+`com.demcha.compose.engine.*`.
+
+## Topic-focused recipe pages
+
+Skip ahead to a focused page when you know what you're after:
+
+| Page | Covers |
+| --- | --- |
+| [Themes](recipes/themes.md) | `BusinessTheme.classic / modern / executive`, page background, palette slots, text scale |
+| [Shape-as-container](recipes/shape-as-container.md) | `addCircle` / `addEllipse` / `addContainer` with `ClipPolicy` |
+| [Transforms and z-index](recipes/transforms.md) | `rotate` / `scale` mixin, per-layer `zIndex` for overlays |
+| [Tables](recipes/tables.md) | Row span, zebra rows, totals row, repeated header on page break |
+| [Streaming and output](recipes/streaming.md) | `buildPdf` / `writePdf` / `toPdfBytes`, DOCX export, header / footer chrome, guide lines |
+| [Extension guide](extension-guide.md) | Add a semantic node, extend a builder, write a render handler, write a backend |
+
+The general DSL primitives (paragraphs, bullet lists, cards, divider,
+images, snapshot regression) live below this page as ready-to-copy
+snippets.
 
 ## Paragraph Module
 

@@ -80,13 +80,51 @@ consistent.
 
 ## Layered themes for invoices and proposals
 
-The built-in `InvoiceTemplateV1` is hard-coded to a default theme via
-`BusinessDocumentSceneStyles`. To render the same business data with
-a different theme, write a small custom composer that takes a
-`BusinessTheme` parameter and uses the theme's palette / text scale
-instead of the static styles. A future
-`InvoiceTemplateV2(BusinessTheme)` will lift this opt-in to the
-canonical templates.
+`InvoiceTemplateV2` and `ProposalTemplateV2` (Phase E.1 / E.2) take a
+`BusinessTheme` in their constructor:
+
+```java
+import com.demcha.compose.document.templates.builtins.InvoiceTemplateV2;
+import com.demcha.compose.document.theme.BusinessTheme;
+
+InvoiceTemplateV2 invoice = new InvoiceTemplateV2(BusinessTheme.modern());
+ProposalTemplateV2 proposal = new ProposalTemplateV2(BusinessTheme.modern());
+```
+
+The same business data (`InvoiceDocumentSpec`,
+`ProposalDocumentSpec`) renders in any of the three built-in themes
+just by passing the theme to the constructor — no need to refactor
+the call sites.
+
+The earlier `InvoiceTemplateV1` is hard-coded to a default theme via
+the static `BusinessDocumentSceneStyles`. Both V1 and V2 ship side by
+side; V2 is the cinematic theme-driven path.
+
+## Sharing themes with CV templates
+
+`CvTheme` is the legacy theme type used by the CV gallery
+(`CvTemplateV1` and the ten visual variants). It carries the same
+visual concerns as `BusinessTheme` but with CV-specific accessor
+names (`nameTextStyle`, `sectionHeaderTextStyle`, `bodyTextStyle`).
+
+To keep a CV and a business document visually consistent without
+re-stating colours and fonts, derive the `CvTheme` from your chosen
+`BusinessTheme`:
+
+```java
+import com.demcha.compose.document.templates.theme.CvTheme;
+
+BusinessTheme theme = BusinessTheme.modern();
+CvTheme cvTheme = CvTheme.fromBusinessTheme(theme);
+
+// invoice + proposal both use `theme`
+// CV uses `cvTheme`
+```
+
+The bridge maps the business palette / text-scale slots into the
+CV-specific tokens (`primaryColor`, `accentColor`, `nameFontSize`,
+etc.). See [ADR 0002 — Theme unification](../adr/0002-theme-unification.md)
+for the mapping table and the rationale.
 
 ## See also
 

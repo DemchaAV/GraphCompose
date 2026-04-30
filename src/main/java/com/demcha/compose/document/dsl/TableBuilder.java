@@ -60,6 +60,10 @@ public final class TableBuilder {
     // and headerStyle() always win.
     private DocumentTableStyle zebraOddStyle;
     private DocumentTableStyle zebraEvenStyle;
+    // Repeated-header on page break (D.3). 0 disables the feature; n>=1
+    // re-emits the first n rows at the top of every continuation page
+    // when the table is split across pages.
+    private int repeatedHeaderRowCount = 0;
 
     /**
      * Creates a table builder.
@@ -272,6 +276,33 @@ public final class TableBuilder {
     }
 
     /**
+     * Repeats the first row at the top of every continuation page when
+     * the table is split across pages. Equivalent to
+     * {@link #repeatHeader(int)} with {@code 1}.
+     *
+     * @return this builder
+     */
+    public TableBuilder repeatHeader() {
+        return repeatHeader(1);
+    }
+
+    /**
+     * Repeats the first {@code rowCount} rows at the top of every
+     * continuation page when the table is split across pages.
+     *
+     * @param rowCount number of leading rows to repeat (must be {@code >= 0};
+     *                 {@code 0} disables repetition)
+     * @return this builder
+     */
+    public TableBuilder repeatHeader(int rowCount) {
+        if (rowCount < 0) {
+            throw new IllegalArgumentException("rowCount cannot be negative: " + rowCount);
+        }
+        this.repeatedHeaderRowCount = rowCount;
+        return this;
+    }
+
+    /**
      * Adds a semantic header row from public canonical table cells.
      *
      * @param row header cells
@@ -444,7 +475,8 @@ public final class TableBuilder {
                 linkOptions,
                 bookmarkOptions,
                 padding,
-                margin);
+                margin,
+                repeatedHeaderRowCount);
     }
 }
 

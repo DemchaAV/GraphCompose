@@ -1485,6 +1485,17 @@ public final class BuiltInNodeDefinitions {
                     .resolvedLayout();
             double innerAvailableHeight = Math.max(0.0, request.remainingHeight() - node.padding().vertical());
 
+            int totalRows = node.rows().size();
+            int headerCount = node.repeatedHeaderRowCount();
+            // Defensive clamp — TableNode's invariant already ensures
+            // headerCount <= totalRows, but it does not guarantee that
+            // BOTH leading rows are present after a continuation split.
+            // (A tail slice retains the original headerCount even if its
+            // rows were trimmed for some reason.)
+            if (headerCount > totalRows) {
+                headerCount = totalRows;
+            }
+
             int rowCount = 0;
             double consumed = 0.0;
             for (double rowHeight : layout.rowHeights()) {
@@ -1498,12 +1509,25 @@ public final class BuiltInNodeDefinitions {
             if (rowCount <= 0) {
                 return new PreparedSplitResult<>(null, prepared);
             }
-            if (rowCount >= node.rows().size()) {
+            if (rowCount >= totalRows) {
                 return PreparedSplitResult.whole(prepared);
             }
 
-            PreparedNode<TableNode> head = TableLayoutSupport.sliceTablePreparedNode(node, layout, 0, rowCount, true, false);
-            PreparedNode<TableNode> tail = TableLayoutSupport.sliceTablePreparedNode(node, layout, rowCount, node.rows().size(), false, true);
+            // Only meaningful to split if there's at least one body row
+            // ON the head AFTER the header. Otherwise no progress and we
+            // would loop forever.
+            if (headerCount > 0 && rowCount <= headerCount) {
+                return new PreparedSplitResult<>(null, prepared);
+            }
+
+            PreparedNode<TableNode> head = TableLayoutSupport.sliceTablePreparedNode(
+                    node, layout, 0, rowCount, true, false);
+            // Tail re-emits the header rows on the next page. The slice
+            // helper prepends rows [0, headerCount) from the source
+            // (which themselves are the header in a previously-built
+            // tail because each split preserves the prefix invariant).
+            PreparedNode<TableNode> tail = TableLayoutSupport.sliceTablePreparedNode(
+                    node, layout, rowCount, totalRows, false, true, headerCount);
             return new PreparedSplitResult<>(head, tail);
         }
 

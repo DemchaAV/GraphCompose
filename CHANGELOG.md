@@ -1,5 +1,59 @@
 # Changelog
 
+## v1.5.0-beta.7 (in progress) - Phase D continues: repeated header on page break
+
+D.3 lands repeated-header pagination for tables. When a table is split
+across pages the layer compiler now re-emits the configured leading
+rows at the top of every continuation page, so long invoices and
+reports don't lose their column titles partway through.
+
+### Public API
+
+- `TableBuilder.repeatHeader()` — repeats the first row at the top of
+  every continuation page (equivalent to `repeatHeader(1)`).
+- `TableBuilder.repeatHeader(int rowCount)` — repeats the first
+  `rowCount` rows. `0` disables the feature; the builder defaults to
+  `0` so existing tables paginate exactly as before.
+- `TableNode` gains a 12th field `int repeatedHeaderRowCount` (default
+  `0`). Three back-compat constructors (the original 7-arg, 9-arg, and
+  pre-D.3 11-arg signatures) default the new field to `0` so every
+  v1.4 / v1.5.0-alpha caller compiles unchanged.
+
+### Architecture
+
+- `TableLayoutSupport.sliceTablePreparedNode` gains a third overload
+  with a `prependHeaderRowCount` parameter. When non-zero, it prepends
+  rows `[0, prependHeaderRowCount)` from the source table to the body
+  slice, producing a tail prepared node whose first
+  `repeatedHeaderRowCount` rows are the original header. The new
+  measure result accounts for the prepended rows so the page-breaker
+  reserves enough room.
+- `TableDefinition.split` honours `repeatedHeaderRowCount`:
+  - It still fits as many rows as possible into the remaining height
+    (header + body counted together), but rejects splits that would
+    fit ONLY the header rows (no body progress would loop forever).
+  - The tail slice is built with `prependHeaderRowCount = headerCount`,
+    so it carries the header at the top. Each subsequent split on
+    that tail again preserves the prefix invariant.
+- The change is isolated to the table-specific code path; the generic
+  splittable-leaf compiler in `LayoutCompiler` is unchanged.
+
+### Tests
+
+- New `TableBuilderRepeatHeaderTest` covers three scenarios:
+  - 60-row long table with `repeatHeader()` — every page's first
+    table-row fragment must have "Item" in its left cell.
+  - `repeatHeader(2)` repeats both a title row and the column-header
+    row on every continuation page.
+  - `repeatHeader` defaults to `0`, so a table without the call still
+    paginates exactly as before — the second page starts with a data
+    row, not the header.
+- New `TableRepeatHeaderDemoTest` renders a 50-row invoice with
+  zebra rows + repeating "Item / Qty / Amount" header to
+  `target/visual-tests/table-repeat-header/long-invoice.pdf`.
+
+---
+
 ## v1.5.0-beta.6 (in progress) - Phase D continues: zebra rows, totals row, header alias
 
 D.2 lands three table-builder shortcuts that cover the most common

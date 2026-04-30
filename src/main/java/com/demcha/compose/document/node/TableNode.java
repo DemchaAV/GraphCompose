@@ -26,6 +26,10 @@ import java.util.Objects;
  * @param bookmarkOptions optional node-level bookmark metadata
  * @param padding outer table padding
  * @param margin outer table margin
+ * @param repeatedHeaderRowCount number of leading rows to repeat at the
+ *                               top of every continuation page when the
+ *                               table is split across pages; {@code 0}
+ *                               disables the feature
  */
 public record TableNode(
         String name,
@@ -38,7 +42,8 @@ public record TableNode(
         DocumentLinkOptions linkOptions,
         DocumentBookmarkOptions bookmarkOptions,
         DocumentInsets padding,
-        DocumentInsets margin
+        DocumentInsets margin,
+        int repeatedHeaderRowCount
 ) implements DocumentNode {
     /**
      * Backward-compatible constructor that keeps the original advanced V2
@@ -60,7 +65,7 @@ public record TableNode(
                      Double width,
                      DocumentInsets padding,
                      DocumentInsets margin) {
-        this(name, columns, rows, defaultCellStyle, Map.of(), Map.of(), width, null, null, padding, margin);
+        this(name, columns, rows, defaultCellStyle, Map.of(), Map.of(), width, null, null, padding, margin, 0);
     }
 
     /**
@@ -86,11 +91,31 @@ public record TableNode(
                      Double width,
                      DocumentInsets padding,
                      DocumentInsets margin) {
-        this(name, columns, rows, defaultCellStyle, rowStyles, columnStyles, width, null, null, padding, margin);
+        this(name, columns, rows, defaultCellStyle, rowStyles, columnStyles, width, null, null, padding, margin, 0);
     }
 
     /**
-     * Normalizes table rows, styles, spacing, and validates explicit width.
+     * Backward-compatible 11-arg constructor (pre-Phase D.3) that defaults
+     * {@code repeatedHeaderRowCount} to {@code 0}.
+     */
+    public TableNode(String name,
+                     List<DocumentTableColumn> columns,
+                     List<List<DocumentTableCell>> rows,
+                     DocumentTableStyle defaultCellStyle,
+                     Map<Integer, DocumentTableStyle> rowStyles,
+                     Map<Integer, DocumentTableStyle> columnStyles,
+                     Double width,
+                     DocumentLinkOptions linkOptions,
+                     DocumentBookmarkOptions bookmarkOptions,
+                     DocumentInsets padding,
+                     DocumentInsets margin) {
+        this(name, columns, rows, defaultCellStyle, rowStyles, columnStyles, width,
+                linkOptions, bookmarkOptions, padding, margin, 0);
+    }
+
+    /**
+     * Normalizes table rows, styles, spacing, and validates explicit width
+     * and repeated-header row count.
      */
     public TableNode {
         name = name == null ? "" : name;
@@ -105,6 +130,15 @@ public record TableNode(
         margin = margin == null ? DocumentInsets.zero() : margin;
         if (width != null && (width <= 0 || Double.isNaN(width) || Double.isInfinite(width))) {
             throw new IllegalArgumentException("width must be finite and positive when set: " + width);
+        }
+        if (repeatedHeaderRowCount < 0) {
+            throw new IllegalArgumentException(
+                    "repeatedHeaderRowCount cannot be negative: " + repeatedHeaderRowCount);
+        }
+        if (repeatedHeaderRowCount > rows.size()) {
+            throw new IllegalArgumentException(
+                    "repeatedHeaderRowCount " + repeatedHeaderRowCount
+                            + " exceeds row count " + rows.size() + ".");
         }
     }
 

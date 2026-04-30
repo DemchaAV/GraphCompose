@@ -180,8 +180,59 @@ final class TableLayoutSupport {
                                                           int toExclusive,
                                                           boolean keepTopInsets,
                                                           boolean keepBottomInsets) {
-        List<List<TableResolvedCell>> rows = List.copyOf(layout.rows().subList(fromInclusive, toExclusive));
-        List<Double> rowHeights = List.copyOf(layout.rowHeights().subList(fromInclusive, toExclusive));
+        return sliceTablePreparedNode(source, layout, fromInclusive, toExclusive,
+                keepTopInsets, keepBottomInsets, 0);
+    }
+
+    /**
+     * Slices the prepared table layout into a fragment that contains
+     * {@code prependHeaderRowCount} rows from the start of the source
+     * table followed by the body slice {@code [fromInclusive,
+     * toExclusive)}. When {@code prependHeaderRowCount == 0} the result
+     * is identical to the no-header overload.
+     *
+     * <p>Used by {@code TableDefinition.split} to repeat the leading
+     * header rows at the top of every continuation page when the table
+     * has {@code repeatedHeaderRowCount > 0}.</p>
+     */
+    static PreparedNode<TableNode> sliceTablePreparedNode(TableNode source,
+                                                          ResolvedTableLayout layout,
+                                                          int fromInclusive,
+                                                          int toExclusive,
+                                                          boolean keepTopInsets,
+                                                          boolean keepBottomInsets,
+                                                          int prependHeaderRowCount) {
+        List<List<TableResolvedCell>> bodyRows = layout.rows().subList(fromInclusive, toExclusive);
+        List<Double> bodyHeights = layout.rowHeights().subList(fromInclusive, toExclusive);
+        List<List<DocumentTableCell>> bodySource = source.rows().subList(fromInclusive, toExclusive);
+
+        List<List<TableResolvedCell>> rows;
+        List<Double> rowHeights;
+        List<List<DocumentTableCell>> fragmentSourceRows;
+        if (prependHeaderRowCount > 0) {
+            List<List<TableResolvedCell>> headerRows = layout.rows().subList(0, prependHeaderRowCount);
+            List<Double> headerHeights = layout.rowHeights().subList(0, prependHeaderRowCount);
+            List<List<DocumentTableCell>> headerSource = source.rows().subList(0, prependHeaderRowCount);
+
+            List<List<TableResolvedCell>> combinedRows = new java.util.ArrayList<>(headerRows.size() + bodyRows.size());
+            combinedRows.addAll(headerRows);
+            combinedRows.addAll(bodyRows);
+            rows = List.copyOf(combinedRows);
+
+            List<Double> combinedHeights = new java.util.ArrayList<>(headerHeights.size() + bodyHeights.size());
+            combinedHeights.addAll(headerHeights);
+            combinedHeights.addAll(bodyHeights);
+            rowHeights = List.copyOf(combinedHeights);
+
+            List<List<DocumentTableCell>> combinedSource = new java.util.ArrayList<>(headerSource.size() + bodySource.size());
+            combinedSource.addAll(headerSource);
+            combinedSource.addAll(bodySource);
+            fragmentSourceRows = combinedSource;
+        } else {
+            rows = List.copyOf(bodyRows);
+            rowHeights = List.copyOf(bodyHeights);
+            fragmentSourceRows = bodySource;
+        }
         double totalHeight = rowHeights.stream().mapToDouble(Double::doubleValue).sum();
         var fixedColumns = layout.columnWidths().stream()
                 .map(com.demcha.compose.document.table.DocumentTableColumn::fixed)
@@ -190,7 +241,7 @@ final class TableLayoutSupport {
         TableNode fragmentNode = new TableNode(
                 source.name(),
                 fixedColumns,
-                source.rows().subList(fromInclusive, toExclusive),
+                fragmentSourceRows,
                 source.defaultCellStyle(),
                 source.rowStyles(),
                 source.columnStyles(),
@@ -206,7 +257,11 @@ final class TableLayoutSupport {
                         keepTopInsets ? source.margin().top() : 0.0,
                         source.margin().right(),
                         keepBottomInsets ? source.margin().bottom() : 0.0,
-                        source.margin().left()));
+                        source.margin().left()),
+                // Continuation slices retain the same repeat-header
+                // contract — the prepended header rows live at indices
+                // [0, repeatedHeaderRowCount) of fragmentSourceRows.
+                source.repeatedHeaderRowCount());
 
         ResolvedTableLayout fragmentLayout = new ResolvedTableLayout(
                 layout.columnWidths(),

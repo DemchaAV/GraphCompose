@@ -47,6 +47,11 @@ public final class BlueBannerCvTemplateComposer {
     private static final DocumentColor BANNER_RULE = DocumentColor.rgb(60, 70, 90);
     private static final DocumentColor FRAME_RULE = DocumentColor.rgb(34, 34, 34);
     private static final FontName HEADLINE_FONT = FontName.PT_SERIF;
+    private static final List<String> SUMMARY_KEYS = List.of("summary", "professional summary", "profile");
+    private static final List<String> EXPERIENCE_KEYS = List.of("experience", "employment", "work");
+    private static final List<String> EDUCATION_KEYS = List.of("education", "certifications");
+    private static final List<String> SKILL_KEYS = List.of("technical skills", "skills");
+    private static final List<String> ADDITIONAL_KEYS = List.of("additional information", "additional");
 
     private final CvTheme theme;
 
@@ -77,7 +82,7 @@ public final class BlueBannerCvTemplateComposer {
         PageFlowBuilder pageFlow = document.dsl()
                 .pageFlow()
                 .name("BlueBannerRoot")
-                .spacing(6)
+                .spacing(4)
                 .addSection("BlueBannerHeader", section -> addHeadline(section, spec.header()))
                 // Contact line is wrapped by hairline rules above and below the
                 // pipe-delimited contact text. accentTop/Bottom replaces the
@@ -89,7 +94,7 @@ public final class BlueBannerCvTemplateComposer {
                     addContactLine(section, spec.header());
                 });
 
-        List<CvModule> modules = spec.modules() == null ? List.of() : spec.modules();
+        List<CvModule> modules = orderedModules(spec);
         for (int i = 0; i < modules.size(); i++) {
             final CvModule module = modules.get(i);
             final int index = i;
@@ -117,7 +122,7 @@ public final class BlueBannerCvTemplateComposer {
                 .padding(new DocumentInsets(8, 0, 8, 0))
                 .addParagraph(paragraph -> paragraph
                         .text(spacedUpper(name(header)))
-                        .textStyle(style(HEADLINE_FONT, 22, DocumentTextDecoration.BOLD, ink()))
+                        .textStyle(style(HEADLINE_FONT, 20, DocumentTextDecoration.DEFAULT, ink()))
                         .align(TextAlign.CENTER)
                         .margin(DocumentInsets.zero()));
     }
@@ -127,11 +132,11 @@ public final class BlueBannerCvTemplateComposer {
         if (parts.isEmpty()) {
             return;
         }
-        DocumentTextStyle textStyle = style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, ink());
-        DocumentTextStyle separatorStyle = style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, soft());
+        DocumentTextStyle textStyle = style(theme.bodyFont(), 7.5, DocumentTextDecoration.DEFAULT, ink());
+        DocumentTextStyle separatorStyle = style(theme.bodyFont(), 7.5, DocumentTextDecoration.DEFAULT, soft());
 
         section.spacing(0)
-                .padding(new DocumentInsets(2, 0, 2, 0))
+                .padding(new DocumentInsets(1.5, 0, 1.5, 0))
                 .addParagraph(paragraph -> paragraph
                         .textStyle(textStyle)
                         .align(TextAlign.CENTER)
@@ -158,18 +163,18 @@ public final class BlueBannerCvTemplateComposer {
         }
         // softPanel paints fill + uniform padding around the centred title;
         // the accentTop/Bottom rules above the section close the banner.
-        section.softPanel(BANNER_BG, 0.0, 4.0)
+        section.softPanel(BANNER_BG, 0.0, 3.0)
                 .margin(DocumentInsets.zero())
                 .addParagraph(paragraph -> paragraph
                         .text(spacedUpper(title))
-                        .textStyle(style(theme.bodyFont(), 9.5, DocumentTextDecoration.BOLD, ink()))
+                        .textStyle(style(theme.bodyFont(), 7.6, DocumentTextDecoration.BOLD, ink()))
                         .align(TextAlign.CENTER)
                         .margin(DocumentInsets.zero()));
     }
 
     private void addModuleBody(SectionBuilder section, CvModule module) {
-        section.spacing(4)
-                .padding(new DocumentInsets(4, 4, 0, 4));
+        section.spacing(3)
+                .padding(new DocumentInsets(3, 4, 0, 4));
         for (CvModule.BodyBlock block : module.bodyBlocks()) {
             switch (block.kind()) {
                 case PARAGRAPH -> renderParagraphBlock(section, block);
@@ -188,10 +193,10 @@ public final class BlueBannerCvTemplateComposer {
         }
         section.addParagraph(paragraph -> paragraph
                 .text(text)
-                .textStyle(style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, ink()))
-                .lineSpacing(1.5)
+                .textStyle(style(theme.bodyFont(), 7.7, DocumentTextDecoration.DEFAULT, ink()))
+                .lineSpacing(1.3)
                 .align(TextAlign.LEFT)
-                .margin(DocumentInsets.top(2)));
+                .margin(DocumentInsets.top(1.2)));
     }
 
     private void renderListBlock(SectionBuilder section, CvModule.BodyBlock block) {
@@ -216,17 +221,17 @@ public final class BlueBannerCvTemplateComposer {
     private void renderItemAsParagraph(SectionBuilder section, String item) {
         section.addParagraph(paragraph -> paragraph
                 .text(item)
-                .textStyle(style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, ink()))
-                .lineSpacing(1.4)
+                .textStyle(style(theme.bodyFont(), 7.7, DocumentTextDecoration.DEFAULT, ink()))
+                .lineSpacing(1.25)
                 .align(TextAlign.LEFT)
-                .margin(DocumentInsets.top(2)));
+                .margin(DocumentInsets.top(1.4)));
     }
 
     private void renderWorkEntry(SectionBuilder section, WorkEntry entry) {
-        DocumentTextStyle positionStyle = style(theme.bodyFont(), 9.0, DocumentTextDecoration.BOLD, ink());
-        DocumentTextStyle dateStyle = style(theme.bodyFont(), 8.8, DocumentTextDecoration.DEFAULT, ink());
-        DocumentTextStyle subtitleStyle = style(theme.bodyFont(), 8.4, DocumentTextDecoration.ITALIC, soft());
-        DocumentTextStyle bodyStyle = style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, ink());
+        DocumentTextStyle positionStyle = style(theme.bodyFont(), 8.0, DocumentTextDecoration.BOLD, ink());
+        DocumentTextStyle dateStyle = style(theme.bodyFont(), 7.7, DocumentTextDecoration.BOLD, ink());
+        DocumentTextStyle subtitleStyle = style(theme.bodyFont(), 7.45, DocumentTextDecoration.DEFAULT, ink());
+        DocumentTextStyle bodyStyle = style(theme.bodyFont(), 7.6, DocumentTextDecoration.DEFAULT, ink());
 
         // Two-column header — RowBuilder with weights is the canonical
         // v1.5 idiom for "label | metadata" pairs (RowBuilder rejects
@@ -261,10 +266,42 @@ public final class BlueBannerCvTemplateComposer {
             section.addParagraph(paragraph -> paragraph
                     .text(entry.description())
                     .textStyle(bodyStyle)
-                    .lineSpacing(1.4)
+                    .lineSpacing(1.25)
                     .align(TextAlign.LEFT)
-                    .margin(DocumentInsets.top(2)));
+                    .margin(DocumentInsets.top(1.4)));
         }
+    }
+
+    private List<CvModule> orderedModules(CvDocumentSpec spec) {
+        List<CvModule> modules = spec.modules() == null ? List.of() : spec.modules();
+        List<CvModule> ordered = new ArrayList<>();
+        addIfPresent(ordered, findModule(modules, SUMMARY_KEYS));
+        addIfPresent(ordered, findModule(modules, EXPERIENCE_KEYS));
+        addIfPresent(ordered, findModule(modules, EDUCATION_KEYS));
+        addIfPresent(ordered, findModule(modules, SKILL_KEYS));
+        addIfPresent(ordered, findModule(modules, ADDITIONAL_KEYS));
+        for (CvModule module : modules) {
+            addIfPresent(ordered, module);
+        }
+        return List.copyOf(ordered);
+    }
+
+    private void addIfPresent(List<CvModule> modules, CvModule module) {
+        if (module != null && !modules.contains(module)) {
+            modules.add(module);
+        }
+    }
+
+    private CvModule findModule(List<CvModule> modules, List<String> keys) {
+        for (CvModule module : modules) {
+            String normalized = normalize(safe(module.name()) + " " + safe(module.title()));
+            for (String key : keys) {
+                if (normalized.contains(normalize(key))) {
+                    return module;
+                }
+            }
+        }
+        return null;
     }
 
     private WorkEntry parseWorkEntry(String item) {
@@ -435,6 +472,17 @@ public final class BlueBannerCvTemplateComposer {
                 .replace("`", "")
                 .replace("*", "")
                 .replace("_", "");
+    }
+
+    private static String normalize(String value) {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < safe(value).length(); i++) {
+            char current = Character.toLowerCase(safe(value).charAt(i));
+            if (Character.isLetterOrDigit(current)) {
+                builder.append(current);
+            }
+        }
+        return builder.toString();
     }
 
     private static String spacedUpper(String value) {

@@ -39,6 +39,8 @@ build/
 /logs/
 /CV_Generated.pdf
 *.pdf
+# Allow PDF previews that are committed README assets.
+!assets/readme/**/*.pdf
 /patch-root-position.diff
 /rectangle.pdf
 /Test.pdf

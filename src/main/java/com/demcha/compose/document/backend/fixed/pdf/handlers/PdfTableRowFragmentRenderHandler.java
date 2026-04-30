@@ -24,6 +24,8 @@ import java.util.Set;
  */
 public final class PdfTableRowFragmentRenderHandler
         implements PdfFragmentRenderHandler<BuiltInNodeDefinitions.TableRowFragmentPayload> {
+    private static final double EPS = 1e-6;
+
 
     /**
      * Creates the table-row fragment renderer.
@@ -40,6 +42,36 @@ public final class PdfTableRowFragmentRenderHandler
     public void render(PlacedFragment fragment,
                        BuiltInNodeDefinitions.TableRowFragmentPayload payload,
                        PdfRenderEnvironment environment) throws IOException {
+        renderFills(fragment, payload, environment);
+        renderBordersAndText(fragment, payload, environment);
+    }
+
+    /**
+     * Paints table cell backgrounds for one row fragment.
+     *
+     * <p>The canonical PDF backend batches this method for all contiguous row
+     * fragments of a table before rendering borders. Painting fills under the
+     * eventual stroke avoids sub-pixel page-background seams around row-span
+     * joins.</p>
+     */
+    public void renderFills(PlacedFragment fragment,
+                            BuiltInNodeDefinitions.TableRowFragmentPayload payload,
+                            PdfRenderEnvironment environment) throws IOException {
+        PDPageContentStream stream = environment.pageSurface(fragment.pageIndex());
+
+        for (TableResolvedCell cell : payload.cells()) {
+            double cellX = fragment.x() + cell.x();
+            double cellY = fragment.y() + cell.yOffset();
+            renderCellFill(stream, cell, cellX, cellY);
+        }
+    }
+
+    /**
+     * Paints table cell borders and text for one row fragment.
+     */
+    public void renderBordersAndText(PlacedFragment fragment,
+                                     BuiltInNodeDefinitions.TableRowFragmentPayload payload,
+                                     PdfRenderEnvironment environment) throws IOException {
         PDPageContentStream stream = environment.pageSurface(fragment.pageIndex());
         FontLibrary fonts = environment.fonts();
 
@@ -51,34 +83,35 @@ public final class PdfTableRowFragmentRenderHandler
             // coordinates so the cell rectangle covers all the rows it
             // merges instead of overflowing above the starting row.
             double cellY = fragment.y() + cell.yOffset();
-            renderCellBox(stream, cell, cellX, cellY, payload.startsPageFragment());
+            renderCellBorders(stream, cell, cellX, cellY, fragment.width(), payload.startsPageFragment());
             renderCellText(stream, fonts, cell, cellX, cellY);
         }
     }
 
-    private void renderCellBox(PDPageContentStream stream,
-                               TableResolvedCell cell,
-                               double cellX,
-                               double cellY,
-                               boolean startsPageFragment) throws IOException {
-        Padding fillInsets = effectiveFillInsets(cell, startsPageFragment);
+    private void renderCellFill(PDPageContentStream stream,
+                                TableResolvedCell cell,
+                                double cellX,
+                                double cellY) throws IOException {
         if (cell.style().fillColor() != null) {
-            double fillX = cellX + fillInsets.left();
-            double fillY = cellY + fillInsets.bottom();
-            double fillWidth = Math.max(0.0, cell.width() - fillInsets.horizontal());
-            double fillHeight = Math.max(0.0, cell.height() - fillInsets.vertical());
-            if (fillWidth > 0 && fillHeight > 0) {
+            if (cell.width() > 0 && cell.height() > 0) {
                 stream.saveGraphicsState();
                 try {
                     stream.setNonStrokingColor(cell.style().fillColor());
-                    stream.addRect((float) fillX, (float) fillY, (float) fillWidth, (float) fillHeight);
+                    stream.addRect((float) cellX, (float) cellY, (float) cell.width(), (float) cell.height());
                     stream.fill();
                 } finally {
                     stream.restoreGraphicsState();
                 }
             }
         }
+    }
 
+    private void renderCellBorders(PDPageContentStream stream,
+                                   TableResolvedCell cell,
+                                   double cellX,
+                                   double cellY,
+                                   double rowWidth,
+                                   boolean startsPageFragment) throws IOException {
         if (cell.style().stroke() == null || cell.style().stroke().width() <= 0) {
             return;
         }
@@ -98,18 +131,20 @@ public final class PdfTableRowFragmentRenderHandler
             // after rasterization (the line endpoint is exactly at the
             // corner so the two strokes don't overlap perpendicular to
             // each other). To fix that we manually extend HORIZONTAL
-            // border lines by half the stroke width on both ends, which
-            // covers the corner pixel without the overhead of a global
-            // line-cap change. Vertical lines stay un-extended so the
-            // top/bottom of every cell column has clean butt endpoints
-            // — extending verticals creates visible nubs that read as
-            // a "thicker" right border on the cells of merged columns.
+            // border lines by half the stroke width on internal joins,
+            // which covers the corner pixel without the overhead of a
+            // global line-cap change. External table edges stay clamped
+            // to the real cell box so row separators never protrude
+            // outside the table.
             double cap = strokeWidth / 2.0;
+            double leftCap = isOuterLeftEdge(cell) ? 0.0 : cap;
+            double rightCap = isOuterRightEdge(cell, rowWidth) ? 0.0 : cap;
             if (sides.contains(Side.TOP)) {
-                line(stream, cellX - cap, cellY + cell.height(), cellX + cell.width() + cap, cellY + cell.height());
+                line(stream, cellX - leftCap, cellY + cell.height(),
+                        cellX + cell.width() + rightCap, cellY + cell.height());
             }
             if (sides.contains(Side.BOTTOM)) {
-                line(stream, cellX - cap, cellY, cellX + cell.width() + cap, cellY);
+                line(stream, cellX - leftCap, cellY, cellX + cell.width() + rightCap, cellY);
             }
             if (sides.contains(Side.LEFT)) {
                 line(stream, cellX, cellY, cellX, cellY + cell.height());
@@ -120,6 +155,14 @@ public final class PdfTableRowFragmentRenderHandler
         } finally {
             stream.restoreGraphicsState();
         }
+    }
+
+    private boolean isOuterLeftEdge(TableResolvedCell cell) {
+        return cell.x() <= EPS;
+    }
+
+    private boolean isOuterRightEdge(TableResolvedCell cell, double rowWidth) {
+        return Math.abs((cell.x() + cell.width()) - rowWidth) <= EPS;
     }
 
     private void renderCellText(PDPageContentStream stream,
@@ -196,14 +239,6 @@ public final class PdfTableRowFragmentRenderHandler
             sides.add(Side.TOP);
         }
         return sides;
-    }
-
-    private Padding effectiveFillInsets(TableResolvedCell cell, boolean startsPageFragment) {
-        if (!startsPageFragment) {
-            return cell.fillInsets();
-        }
-        double topInset = cell.style().stroke() == null ? 0.0 : cell.style().stroke().width() / 2.0;
-        return new Padding(topInset, cell.fillInsets().right(), cell.fillInsets().bottom(), cell.fillInsets().left());
     }
 
     private void line(PDPageContentStream stream, double x1, double y1, double x2, double y2) throws IOException {

@@ -22,7 +22,11 @@ import com.demcha.compose.document.templates.data.common.Header;
 import com.demcha.compose.document.templates.data.common.LinkYml;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.cv.CvModule;
+import com.demcha.compose.document.templates.theme.CvTheme;
+import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.font.FontName;
+
+import java.awt.Color;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,7 +55,24 @@ public final class MonogramSidebarCvTemplateComposer {
     private static final DocumentColor MONOGRAM_RING = DocumentColor.rgb(54, 62, 74);
     private static final FontName HEADLINE_FONT = FontName.CRIMSON_TEXT;
     private static final FontName MONOGRAM_FONT = FontName.PT_SERIF;
-    private static final FontName BODY_FONT = FontName.LATO;
+
+    private final CvTheme theme;
+
+    public MonogramSidebarCvTemplateComposer() {
+        this(defaultTheme());
+    }
+
+    /**
+     * Constructs the composer with a custom {@link CvTheme}. Body
+     * paragraphs and contact icons follow the theme; the monogram
+     * ring colour and pale-grey sidebar background stay
+     * template-owned.
+     *
+     * @param theme CV theme driving body type and accent colour
+     */
+    public MonogramSidebarCvTemplateComposer(CvTheme theme) {
+        this.theme = Objects.requireNonNull(theme, "theme");
+    }
     private static final String CONTACT_ICON_ROOT = "/templates/cv/timeline-minimal/icons/";
     private static final Map<String, byte[]> CONTACT_ICON_CACHE = new ConcurrentHashMap<>();
     private static final List<String> EDUCATION_KEYS = List.of("education", "certifications");
@@ -158,7 +179,7 @@ public final class MonogramSidebarCvTemplateComposer {
         }
         section.addParagraph(paragraph -> paragraph
                 .text(spacedUpper(title))
-                .textStyle(style(BODY_FONT, 8.0, DocumentTextDecoration.BOLD, INK))
+                .textStyle(style(theme.bodyFont(), 8.0, DocumentTextDecoration.BOLD, INK))
                 .align(TextAlign.CENTER)
                 .lineSpacing(1.2)
                 .margin(DocumentInsets.top(6)));
@@ -174,7 +195,7 @@ public final class MonogramSidebarCvTemplateComposer {
         if (lines.isEmpty()) {
             return;
         }
-        DocumentTextStyle textStyle = style(BODY_FONT, 7.4, DocumentTextDecoration.DEFAULT, SOFT);
+        DocumentTextStyle textStyle = style(theme.bodyFont(), 7.4, DocumentTextDecoration.DEFAULT, SOFT);
         for (ContactLine contact : lines) {
             if (contact.iconFile() != null) {
                 section.addParagraph(paragraph -> paragraph
@@ -206,9 +227,9 @@ public final class MonogramSidebarCvTemplateComposer {
     }
 
     private void addEducationEntries(SectionBuilder section, CvModule module) {
-        DocumentTextStyle headingStyle = style(BODY_FONT, 7.6, DocumentTextDecoration.BOLD, INK);
-        DocumentTextStyle subStyle = style(BODY_FONT, 7.4, DocumentTextDecoration.DEFAULT, INK);
-        DocumentTextStyle metaStyle = style(BODY_FONT, 7.2, DocumentTextDecoration.DEFAULT, ACCENT);
+        DocumentTextStyle headingStyle = style(theme.bodyFont(), 7.6, DocumentTextDecoration.BOLD, INK);
+        DocumentTextStyle subStyle = style(theme.bodyFont(), 7.4, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle metaStyle = style(theme.bodyFont(), 7.2, DocumentTextDecoration.DEFAULT, ACCENT);
 
         List<String> items = moduleItems(module);
         for (String item : items.subList(0, Math.min(EDUCATION_LIMIT, items.size()))) {
@@ -239,7 +260,7 @@ public final class MonogramSidebarCvTemplateComposer {
     }
 
     private void addSkillsList(SectionBuilder section, CvModule module) {
-        DocumentTextStyle skillStyle = style(BODY_FONT, 7.4, DocumentTextDecoration.DEFAULT, SOFT);
+        DocumentTextStyle skillStyle = style(theme.bodyFont(), 7.4, DocumentTextDecoration.DEFAULT, SOFT);
         List<String> items = moduleItems(module);
         for (String item : items.subList(0, Math.min(SKILL_LIMIT, items.size()))) {
             String text = firstClauseOf(item);
@@ -277,7 +298,7 @@ public final class MonogramSidebarCvTemplateComposer {
     private void addNameBlock(SectionBuilder section, Header header) {
         String[] parts = splitName(name(header));
         DocumentTextStyle nameStyle = style(HEADLINE_FONT, 30, DocumentTextDecoration.DEFAULT, INK);
-        DocumentTextStyle titleStyle = style(BODY_FONT, 7.4, DocumentTextDecoration.BOLD, ACCENT);
+        DocumentTextStyle titleStyle = style(theme.bodyFont(), 7.4, DocumentTextDecoration.BOLD, ACCENT);
 
         for (String part : parts) {
             section.addParagraph(paragraph -> paragraph
@@ -300,7 +321,7 @@ public final class MonogramSidebarCvTemplateComposer {
         }
         section.addParagraph(paragraph -> paragraph
                 .text(spacedUpper(title))
-                .textStyle(style(BODY_FONT, 9.0, DocumentTextDecoration.BOLD, INK))
+                .textStyle(style(theme.bodyFont(), 9.0, DocumentTextDecoration.BOLD, INK))
                 .align(TextAlign.LEFT)
                 .margin(DocumentInsets.top(6)));
         section.addLine(line -> line
@@ -311,7 +332,7 @@ public final class MonogramSidebarCvTemplateComposer {
     }
 
     private void addProfileBody(SectionBuilder section, CvModule module) {
-        DocumentTextStyle bodyStyle = style(BODY_FONT, 7.5, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle bodyStyle = style(theme.bodyFont(), 7.5, DocumentTextDecoration.DEFAULT, INK);
         for (CvModule.BodyBlock block : module.bodyBlocks()) {
             if (block.kind() == CvModule.BodyKind.PARAGRAPH) {
                 String text = safe(block.text()).trim();
@@ -341,9 +362,9 @@ public final class MonogramSidebarCvTemplateComposer {
     }
 
     private void addExperienceEntries(SectionBuilder section, CvModule module) {
-        DocumentTextStyle positionStyle = style(BODY_FONT, 7.8, DocumentTextDecoration.BOLD, INK);
-        DocumentTextStyle dateStyle = style(BODY_FONT, 7.4, DocumentTextDecoration.BOLD, ACCENT);
-        DocumentTextStyle bodyStyle = style(BODY_FONT, 7.4, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle positionStyle = style(theme.bodyFont(), 7.8, DocumentTextDecoration.BOLD, INK);
+        DocumentTextStyle dateStyle = style(theme.bodyFont(), 7.4, DocumentTextDecoration.BOLD, ACCENT);
+        DocumentTextStyle bodyStyle = style(theme.bodyFont(), 7.4, DocumentTextDecoration.DEFAULT, INK);
 
         List<String> items = moduleItems(module);
         for (String item : items.subList(0, Math.min(EXPERIENCE_LIMIT, items.size()))) {
@@ -646,5 +667,21 @@ public final class MonogramSidebarCvTemplateComposer {
                 .decoration(decoration)
                 .color(color)
                 .build();
+    }
+
+    private static CvTheme defaultTheme() {
+        return new CvTheme(
+                new Color(37, 45, 58),
+                new Color(158, 146, 104),
+                new Color(37, 45, 58),
+                new Color(158, 146, 104),
+                FontName.CRIMSON_TEXT,
+                FontName.LATO,
+                30,
+                9.0,
+                7.5,
+                4,
+                Margin.top(2),
+                0);
     }
 }

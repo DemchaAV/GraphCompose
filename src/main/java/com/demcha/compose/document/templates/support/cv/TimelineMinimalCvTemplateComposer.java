@@ -16,7 +16,11 @@ import com.demcha.compose.document.templates.data.common.Header;
 import com.demcha.compose.document.templates.data.common.LinkYml;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.cv.CvModule;
+import com.demcha.compose.document.templates.theme.CvTheme;
+import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.font.FontName;
+
+import java.awt.Color;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,6 +47,23 @@ public final class TimelineMinimalCvTemplateComposer {
     private static final double CONTACT_ICON_BASELINE_OFFSET = -1.35;
     private static final String CONTACT_ICON_ROOT = "/templates/cv/timeline-minimal/icons/";
     private static final Map<String, byte[]> CONTACT_ICON_CACHE = new ConcurrentHashMap<>();
+
+    private final CvTheme theme;
+
+    public TimelineMinimalCvTemplateComposer() {
+        this(defaultTheme());
+    }
+
+    /**
+     * Constructs the composer with a custom {@link CvTheme}. Body
+     * paragraphs and contact icons follow the theme; the timeline
+     * dots and rule colours stay template-owned.
+     *
+     * @param theme CV theme driving body type and accent colour
+     */
+    public TimelineMinimalCvTemplateComposer(CvTheme theme) {
+        this.theme = Objects.requireNonNull(theme, "theme");
+    }
 
     public void compose(DocumentSession document, CvDocumentSpec documentSpec) {
         CvDocumentSpec spec = Objects.requireNonNull(documentSpec, "documentSpec");
@@ -392,5 +413,21 @@ public final class TimelineMinimalCvTemplateComposer {
                 .decoration(decoration)
                 .color(color)
                 .build();
+    }
+
+    private static CvTheme defaultTheme() {
+        return new CvTheme(
+                new Color(74, 74, 74),
+                new Color(122, 122, 122),
+                new Color(74, 74, 74),
+                new Color(170, 170, 170),
+                FontName.BARLOW_CONDENSED,
+                FontName.LATO,
+                28,
+                9.5,
+                7.8,
+                4,
+                Margin.top(2),
+                0);
     }
 }

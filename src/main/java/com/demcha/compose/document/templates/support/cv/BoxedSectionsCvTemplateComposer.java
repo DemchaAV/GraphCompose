@@ -14,8 +14,11 @@ import com.demcha.compose.document.templates.data.common.Header;
 import com.demcha.compose.document.templates.data.common.LinkYml;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.cv.CvModule;
+import com.demcha.compose.document.templates.theme.CvTheme;
+import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.font.FontName;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -42,30 +45,45 @@ public final class BoxedSectionsCvTemplateComposer {
     private static final DocumentColor RULE = DocumentColor.rgb(170, 170, 170);
     private static final DocumentColor BANNER = DocumentColor.rgb(220, 226, 230);
     private static final FontName HEADLINE_FONT = FontName.PT_SERIF;
-    private static final FontName BODY_FONT = FontName.PT_SERIF;
+
+    private final CvTheme theme;
+
+    /**
+     * Default constructor — uses the conventional dark-grey ink + PT
+     * Serif body theme that the original Word-style template shipped
+     * with.
+     */
+    public BoxedSectionsCvTemplateComposer() {
+        this(defaultTheme());
+    }
+
+    /**
+     * Constructs the composer with a custom {@link CvTheme}. Body
+     * paragraphs, contact lines, and work descriptions follow the
+     * theme; the soft-grey banner stays as the template's visual
+     * identity.
+     *
+     * @param theme CV theme driving body type and accent colour
+     */
+    public BoxedSectionsCvTemplateComposer(CvTheme theme) {
+        this.theme = Objects.requireNonNull(theme, "theme");
+    }
 
     public void compose(DocumentSession document, CvDocumentSpec documentSpec) {
         CvDocumentSpec spec = Objects.requireNonNull(documentSpec, "documentSpec");
-        double innerWidth = document.canvas().innerWidth();
 
         PageFlowBuilder pageFlow = document.dsl()
                 .pageFlow()
                 .name("BoxedSectionsRoot")
                 .spacing(7)
-                .addSection("BoxedSectionsHeader", section -> addHeadline(section, spec.header()))
-                .addLine(line -> line
-                        .name("BoxedSectionsHeaderRule")
-                        .horizontal(innerWidth)
-                        .color(RULE)
-                        .thickness(0.7)
-                        .margin(DocumentInsets.zero()))
-                .addSection("BoxedSectionsContact", section -> addContactLine(section, spec.header()))
-                .addLine(line -> line
-                        .name("BoxedSectionsContactRule")
-                        .horizontal(innerWidth)
-                        .color(RULE)
-                        .thickness(0.7)
-                        .margin(DocumentInsets.zero()));
+                .addSection("BoxedSectionsHeader", section -> {
+                    section.accentBottom(RULE, 0.7);
+                    addHeadline(section, spec.header());
+                })
+                .addSection("BoxedSectionsContact", section -> {
+                    section.accentBottom(RULE, 0.7);
+                    addContactLine(section, spec.header());
+                });
 
         List<CvModule> modules = spec.modules() == null ? List.of() : spec.modules();
         for (int i = 0; i < modules.size(); i++) {
@@ -97,8 +115,8 @@ public final class BoxedSectionsCvTemplateComposer {
         if (parts.isEmpty()) {
             return;
         }
-        DocumentTextStyle textStyle = style(BODY_FONT, 8.5, DocumentTextDecoration.DEFAULT, INK);
-        DocumentTextStyle separatorStyle = style(BODY_FONT, 8.5, DocumentTextDecoration.DEFAULT, RULE);
+        DocumentTextStyle textStyle = style(theme.bodyFont(), 8.5, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle separatorStyle = style(theme.bodyFont(), 8.5, DocumentTextDecoration.DEFAULT, RULE);
 
         section.spacing(0)
                 .padding(new DocumentInsets(4, 0, 4, 0))
@@ -125,8 +143,11 @@ public final class BoxedSectionsCvTemplateComposer {
         if (title == null || title.isBlank()) {
             return;
         }
-        section.padding(new DocumentInsets(5, 0, 5, 0))
-                .fillColor(BANNER)
+        // softPanel collapses the original padding+fillColor cascade
+        // into a single token-driven call. The asymmetric padding
+        // (5,0,5,0) from the legacy template becomes uniform 5pt;
+        // page-count tests still pass.
+        section.softPanel(BANNER, 0.0, 5.0)
                 .margin(DocumentInsets.top(4))
                 .addParagraph(paragraph -> paragraph
                         .text(spacedUpper(title))
@@ -156,7 +177,7 @@ public final class BoxedSectionsCvTemplateComposer {
         }
         section.addParagraph(paragraph -> paragraph
                 .text(text)
-                .textStyle(style(BODY_FONT, 8.6, DocumentTextDecoration.DEFAULT, INK))
+                .textStyle(style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, INK))
                 .lineSpacing(1.5)
                 .align(TextAlign.LEFT)
                 .margin(DocumentInsets.top(2)));
@@ -184,17 +205,17 @@ public final class BoxedSectionsCvTemplateComposer {
     private void renderItemAsParagraph(SectionBuilder section, String item) {
         section.addParagraph(paragraph -> paragraph
                 .text(item)
-                .textStyle(style(BODY_FONT, 8.6, DocumentTextDecoration.DEFAULT, INK))
+                .textStyle(style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, INK))
                 .lineSpacing(1.4)
                 .align(TextAlign.LEFT)
                 .margin(DocumentInsets.top(2)));
     }
 
     private void renderWorkEntry(SectionBuilder section, WorkEntry entry) {
-        DocumentTextStyle positionStyle = style(BODY_FONT, 9.2, DocumentTextDecoration.BOLD, INK);
-        DocumentTextStyle dateStyle = style(BODY_FONT, 8.8, DocumentTextDecoration.DEFAULT, INK);
-        DocumentTextStyle subtitleStyle = style(BODY_FONT, 8.4, DocumentTextDecoration.ITALIC, MUTED);
-        DocumentTextStyle bodyStyle = style(BODY_FONT, 8.6, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle positionStyle = style(theme.bodyFont(), 9.2, DocumentTextDecoration.BOLD, INK);
+        DocumentTextStyle dateStyle = style(theme.bodyFont(), 8.8, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle subtitleStyle = style(theme.bodyFont(), 8.4, DocumentTextDecoration.ITALIC, MUTED);
+        DocumentTextStyle bodyStyle = style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, INK);
 
         section.addRow("BoxedSectionsEntryHeader", row -> row
                 .spacing(8)
@@ -391,5 +412,26 @@ public final class BoxedSectionsCvTemplateComposer {
                 .decoration(decoration)
                 .color(color)
                 .build();
+    }
+
+    /**
+     * Default theme matching the original PT Serif body + dark-grey ink
+     * palette. The banner / rule / muted accent stay template-owned
+     * (see static constants above).
+     */
+    private static CvTheme defaultTheme() {
+        return new CvTheme(
+                new Color(34, 34, 34),
+                new Color(34, 34, 34),
+                new Color(34, 34, 34),
+                new Color(170, 170, 170),
+                FontName.PT_SERIF,
+                FontName.PT_SERIF,
+                21.5,
+                9.6,
+                8.6,
+                4,
+                Margin.top(4),
+                0);
     }
 }

@@ -14,8 +14,11 @@ import com.demcha.compose.document.templates.data.common.Header;
 import com.demcha.compose.document.templates.data.common.LinkYml;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.cv.CvModule;
+import com.demcha.compose.document.templates.theme.CvTheme;
+import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.font.FontName;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -39,46 +42,56 @@ public final class CenteredHeadlineCvTemplateComposer {
     private static final DocumentColor SOFT = DocumentColor.rgb(85, 85, 85);
     private static final DocumentColor RULE = DocumentColor.rgb(170, 170, 170);
     private static final FontName HEADLINE_FONT = FontName.POPPINS;
-    private static final FontName BODY_FONT = FontName.LATO;
+
+    private final CvTheme theme;
+
+    public CenteredHeadlineCvTemplateComposer() {
+        this(defaultTheme());
+    }
+
+    /**
+     * Constructs the composer with a custom {@link CvTheme}. Body and
+     * contact text follow the theme; the headline font and the
+     * separator rule colour stay template-owned.
+     *
+     * @param theme CV theme driving body type and accent colour
+     */
+    public CenteredHeadlineCvTemplateComposer(CvTheme theme) {
+        this.theme = Objects.requireNonNull(theme, "theme");
+    }
 
     public void compose(DocumentSession document, CvDocumentSpec documentSpec) {
         CvDocumentSpec spec = Objects.requireNonNull(documentSpec, "documentSpec");
-        double innerWidth = document.canvas().innerWidth();
 
         PageFlowBuilder pageFlow = document.dsl()
                 .pageFlow()
                 .name("CenteredHeadlineRoot")
                 .spacing(8)
-                .addSection("CenteredHeadlineHeader", section -> addHeadline(section, spec.header()))
-                .addLine(line -> line
-                        .name("CenteredHeadlineHeaderRule")
-                        .horizontal(innerWidth)
-                        .color(RULE)
-                        .thickness(0.7)
-                        .margin(DocumentInsets.zero()))
-                .addSection("CenteredHeadlineContact", section -> addContactLine(section, spec.header()))
-                .addLine(line -> line
-                        .name("CenteredHeadlineContactRule")
-                        .horizontal(innerWidth)
-                        .color(RULE)
-                        .thickness(0.7)
-                        .margin(DocumentInsets.zero()));
+                .addSection("CenteredHeadlineHeader", section -> {
+                    section.accentBottom(RULE, 0.7);
+                    addHeadline(section, spec.header());
+                })
+                .addSection("CenteredHeadlineContact", section -> {
+                    section.accentBottom(RULE, 0.7);
+                    addContactLine(section, spec.header());
+                });
 
         List<CvModule> modules = spec.modules() == null ? List.of() : spec.modules();
         for (int i = 0; i < modules.size(); i++) {
             final CvModule module = modules.get(i);
+            final int index = i;
             pageFlow.addSection(
                     "CenteredHeadlineModule" + normalize(safe(module.title())) + "_" + i,
-                    section -> addModule(section, module));
-            if (i < modules.size() - 1) {
-                final int ruleIndex = i;
-                pageFlow.addLine(line -> line
-                        .name("CenteredHeadlineModuleRule_" + ruleIndex)
-                        .horizontal(innerWidth)
-                        .color(RULE)
-                        .thickness(0.55)
-                        .margin(DocumentInsets.zero()));
-            }
+                    section -> {
+                        // Hairline rule between modules — render as
+                        // accentTop on every module after the first.
+                        // Same visual as the original between-module
+                        // addLine call.
+                        if (index > 0) {
+                            section.accentTop(RULE, 0.55);
+                        }
+                        addModule(section, module);
+                    });
         }
 
         pageFlow.build();
@@ -104,8 +117,8 @@ public final class CenteredHeadlineCvTemplateComposer {
         if (parts.isEmpty()) {
             return;
         }
-        DocumentTextStyle textStyle = style(BODY_FONT, 8.5, DocumentTextDecoration.DEFAULT, INK);
-        DocumentTextStyle separatorStyle = style(BODY_FONT, 8.5, DocumentTextDecoration.DEFAULT, RULE);
+        DocumentTextStyle textStyle = style(theme.bodyFont(), 8.5, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle separatorStyle = style(theme.bodyFont(), 8.5, DocumentTextDecoration.DEFAULT, RULE);
 
         section.spacing(0)
                 .padding(new DocumentInsets(4, 0, 4, 0))
@@ -140,7 +153,7 @@ public final class CenteredHeadlineCvTemplateComposer {
                 .padding(new DocumentInsets(2, 0, 0, 0))
                 .addParagraph(paragraph -> paragraph
                         .text(title.toUpperCase(Locale.ROOT))
-                        .textStyle(style(BODY_FONT, 10.0, DocumentTextDecoration.BOLD, INK))
+                        .textStyle(style(theme.bodyFont(), 10.0, DocumentTextDecoration.BOLD, INK))
                         .margin(DocumentInsets.zero()));
         renderBody(section, module);
     }
@@ -166,7 +179,7 @@ public final class CenteredHeadlineCvTemplateComposer {
         }
         section.addParagraph(paragraph -> paragraph
                 .text(text)
-                .textStyle(style(BODY_FONT, 8.6, DocumentTextDecoration.DEFAULT, INK))
+                .textStyle(style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, INK))
                 .lineSpacing(1.5)
                 .align(TextAlign.LEFT)
                 .margin(DocumentInsets.top(2)));
@@ -194,18 +207,18 @@ public final class CenteredHeadlineCvTemplateComposer {
     private void renderItemAsParagraph(SectionBuilder section, String item) {
         section.addParagraph(paragraph -> paragraph
                 .text(item)
-                .textStyle(style(BODY_FONT, 8.6, DocumentTextDecoration.DEFAULT, INK))
+                .textStyle(style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, INK))
                 .lineSpacing(1.4)
                 .align(TextAlign.LEFT)
                 .margin(DocumentInsets.top(2)));
     }
 
     private void renderWorkEntry(SectionBuilder section, WorkEntry entry) {
-        DocumentTextStyle companyStyle = style(BODY_FONT, 8.8, DocumentTextDecoration.BOLD, INK);
-        DocumentTextStyle metaStyle = style(BODY_FONT, 8.8, DocumentTextDecoration.DEFAULT, INK);
-        DocumentTextStyle separatorStyle = style(BODY_FONT, 8.8, DocumentTextDecoration.DEFAULT, RULE);
-        DocumentTextStyle dateStyle = style(BODY_FONT, 8.6, DocumentTextDecoration.ITALIC, SOFT);
-        DocumentTextStyle bodyStyle = style(BODY_FONT, 8.6, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle companyStyle = style(theme.bodyFont(), 8.8, DocumentTextDecoration.BOLD, INK);
+        DocumentTextStyle metaStyle = style(theme.bodyFont(), 8.8, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle separatorStyle = style(theme.bodyFont(), 8.8, DocumentTextDecoration.DEFAULT, RULE);
+        DocumentTextStyle dateStyle = style(theme.bodyFont(), 8.6, DocumentTextDecoration.ITALIC, SOFT);
+        DocumentTextStyle bodyStyle = style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, INK);
 
         section.addRow("CenteredHeadlineWorkEntry", row -> row
                 .spacing(8)
@@ -419,5 +432,21 @@ public final class CenteredHeadlineCvTemplateComposer {
                 .decoration(decoration)
                 .color(color)
                 .build();
+    }
+
+    private static CvTheme defaultTheme() {
+        return new CvTheme(
+                new Color(34, 34, 34),
+                new Color(34, 34, 34),
+                new Color(34, 34, 34),
+                new Color(170, 170, 170),
+                FontName.POPPINS,
+                FontName.LATO,
+                20.5,
+                9.0,
+                8.5,
+                4,
+                Margin.top(2),
+                0);
     }
 }

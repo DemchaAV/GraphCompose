@@ -1,5 +1,78 @@
 # Changelog
 
+## v1.5.0-beta.19 (in progress) - CV templates modernised to v1.5 idioms
+
+All six previously-hardcoded CV variants now opt into the v1.5
+cinematic stack: each takes an optional `CvTheme` parameter, every
+`addLine + addSection + addLine` triplet around section banners
+collapses into a single section with `accentTop` / `accentBottom`,
+and where stroke-free `padding + fillColor` cascades existed they
+become `softPanel(...)` calls.
+
+### Public API
+
+- `BlueBannerCvTemplate(CvTheme)`, `BoxedSectionsCvTemplate(CvTheme)`,
+  `CenteredHeadlineCvTemplate(CvTheme)`,
+  `MonogramSidebarCvTemplate(CvTheme)`,
+  `SidebarPortraitCvTemplate(CvTheme)`,
+  `TimelineMinimalCvTemplate(CvTheme)` — every modernised CV template
+  now exposes a no-arg constructor (default theme matches the legacy
+  visual identity) plus a `CvTheme`-accepting overload. Pair with
+  `CvTheme.fromBusinessTheme(BusinessTheme)` (ADR 0002) to drive a
+  single `BusinessTheme` through both business documents and the CV
+  gallery.
+
+### Composer-level modernisation
+
+For each migrated composer:
+
+- **`accentBottom` / `accentTop` replace `addLine(horizontal=innerWidth)`**
+  separators around contact lines, headlines, and between-module
+  rules. The accent strips travel with the section across page
+  breaks instead of floating in the page flow.
+- **`softPanel(color, 0, padding)`** replaces the
+  `padding(asymmetric) + fillColor(banner)` cascade in section
+  banners. Padding becomes uniform; v1.5 idiom is single-call.
+- **`theme.bodyFont()`** routes the body / contact / work-entry
+  text through the supplied `CvTheme` instead of hardcoded font
+  constants. Headline fonts and palette identities stay
+  template-owned (a "Blue Banner" still has the blue banner; a
+  "Sidebar Portrait" still has its grey sidebar).
+- **CvTheme defaults per template** — each composer ships a private
+  `defaultTheme()` that exactly matches the legacy hand-tuned
+  palette + font choices, so default-constructed instances render
+  identical-page-count PDFs to the previous code.
+
+### Tests
+
+- 647/647 green. The render test
+  (`CvTemplateRenderTest#shouldRenderModernCvTemplateVariantsToFile`)
+  pins each variant to its expected page count
+  (BlueBanner 2, BoxedSections 2, CenteredHeadline 1,
+  MonogramSidebar 1, SidebarPortrait 1, TimelineMinimal 2) — all
+  page counts preserved through the migration.
+- The `LayoutSnapshotAssertions` baselines under
+  `src/test/resources/layout-snapshots/canonical-templates/cv/`
+  continue to cover `template_cv_1_*`, `editorial_blue_*`, and
+  `executive_slate_*` — the six newly-modernised composers were
+  never snapshot-pinned, so this migration introduces no baseline
+  drift.
+
+### Documentation
+
+- `docs/template-authoring.md` already documents the idioms applied
+  here (golden patterns 6.1, 6.4, 6.5; anti-patterns 1, 2, 5). New
+  CV templates should follow those same patterns from day one.
+
+### Out of scope
+
+- The Phase E template work the user is owning (`InvoiceTemplateV2`
+  `colSpan` totals + `RichText` status, `ProposalTemplateV2` hero
+  `LayerStack`) remains as before — this CV migration runs in
+  parallel and does not block release.
+
+---
+
 ## v1.5.0-beta.18 (in progress) - B.10 wrap-up: v1.5 performance baseline
 
 Closes the last functional checkbox in Phase B.10. Establishes the

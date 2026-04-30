@@ -498,6 +498,112 @@ class ShapeContainerBuilderTest {
     }
 
     @Test
+    void rotatedContainerEmitsTransformBeginAndEndBracketingEverythingElse() {
+        // With a non-identity transform the fragment order on the page
+        // must be: transform-begin → outline → clip-begin → … → clip-end
+        // → transform-end. The transform brackets the entire shape
+        // composite (outline + clip + layers) so the whole unit
+        // rotates / scales together in the rendered PDF.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            session.add(new ShapeContainerBuilder()
+                    .name("RotatedBracket")
+                    .circle(80)
+                    .fillColor(BRAND)
+                    .rotate(15)
+                    .center(spacer("Inside", 30, 14))
+                    .build());
+
+            LayoutGraph graph = session.layoutGraph();
+            List<PlacedFragment> fragments = graph.fragments();
+
+            int transformBegin = indexOfPayload(fragments, BuiltInNodeDefinitions.TransformBeginPayload.class);
+            int outline = indexOfPayload(fragments, BuiltInNodeDefinitions.EllipseFragmentPayload.class);
+            int clipBegin = indexOfPayload(fragments, BuiltInNodeDefinitions.ShapeClipBeginPayload.class);
+            int clipEnd = indexOfPayload(fragments, BuiltInNodeDefinitions.ShapeClipEndPayload.class);
+            int transformEnd = indexOfPayload(fragments, BuiltInNodeDefinitions.TransformEndPayload.class);
+
+            assertThat(transformBegin).isGreaterThanOrEqualTo(0);
+            assertThat(outline).isGreaterThan(transformBegin);
+            assertThat(clipBegin).isGreaterThan(outline);
+            assertThat(clipEnd).isGreaterThan(clipBegin);
+            assertThat(transformEnd).isGreaterThan(clipEnd);
+
+            BuiltInNodeDefinitions.TransformBeginPayload beginPayload =
+                    (BuiltInNodeDefinitions.TransformBeginPayload) fragments.get(transformBegin).payload();
+            assertThat(beginPayload.transform().rotationDegrees()).isEqualTo(15.0, within(EPS));
+            assertThat(beginPayload.ownerPath())
+                    .isEqualTo(((BuiltInNodeDefinitions.TransformEndPayload) fragments.get(transformEnd).payload()).ownerPath());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void identityTransformEmitsNoTransformMarkers() {
+        // The default transform is identity; in that case the layout
+        // layer must not emit transform-begin/end markers — extra
+        // markers would force the PDF backend into needless
+        // saveGraphicsState/restoreGraphicsState pairs.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            session.add(new ShapeContainerBuilder()
+                    .name("Plain")
+                    .circle(60)
+                    .fillColor(BRAND)
+                    .center(spacer("Inside", 20, 10))
+                    .build());
+
+            List<PlacedFragment> fragments = session.layoutGraph().fragments();
+            assertThat(indexOfPayload(fragments, BuiltInNodeDefinitions.TransformBeginPayload.class))
+                    .isEqualTo(-1);
+            assertThat(indexOfPayload(fragments, BuiltInNodeDefinitions.TransformEndPayload.class))
+                    .isEqualTo(-1);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void rotatedOverflowVisibleEmitsTransformWithoutClipMarkers() {
+        // OVERFLOW_VISIBLE skips clip markers; rotation still emits
+        // transform begin/end. The two bracketing concerns are
+        // independent.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            session.add(new ShapeContainerBuilder()
+                    .name("OverflowRotated")
+                    .circle(60)
+                    .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                    .rotate(10)
+                    .fillColor(BRAND)
+                    .center(spacer("Inside", 20, 10))
+                    .build());
+
+            List<PlacedFragment> fragments = session.layoutGraph().fragments();
+            assertThat(indexOfPayload(fragments, BuiltInNodeDefinitions.ShapeClipBeginPayload.class))
+                    .isEqualTo(-1);
+            assertThat(indexOfPayload(fragments, BuiltInNodeDefinitions.ShapeClipEndPayload.class))
+                    .isEqualTo(-1);
+            assertThat(indexOfPayload(fragments, BuiltInNodeDefinitions.TransformBeginPayload.class))
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(indexOfPayload(fragments, BuiltInNodeDefinitions.TransformEndPayload.class))
+                    .isGreaterThanOrEqualTo(0);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
     void transformDoesNotShiftPlacementCoordinates() {
         // Render-time transform: the canonical layout layer measures and
         // places against the natural bounding box, so layout snapshots

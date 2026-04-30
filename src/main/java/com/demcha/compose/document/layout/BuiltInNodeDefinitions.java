@@ -431,6 +431,57 @@ public final class BuiltInNodeDefinitions {
     }
 
     /**
+     * Marker payload that opens a graphics-state transform region for the
+     * outline + layers of a {@link ShapeContainerNode} that carries a
+     * non-identity {@link com.demcha.compose.document.style.DocumentTransform}.
+     * The fragment uses the outline's placement rectangle so the renderer
+     * can compute the rotation/scale centre as {@code (x + width/2,
+     * y + height/2)}.
+     *
+     * <p>The PDF backend turns this into
+     * {@code saveGraphicsState() + cm(matrix)}; a matching
+     * {@link TransformEndPayload} fragment that arrives after every
+     * other fragment of the same container then emits
+     * {@code restoreGraphicsState()}. The transform brackets the entire
+     * shape composite — outline, optional clip path, and every child
+     * layer — so the whole unit rotates / scales together.</p>
+     *
+     * @param transform render-time transform to apply
+     * @param ownerPath semantic path of the owning container — used by
+     *                  architecture-guard tests to verify the begin/end
+     *                  pair balance
+     */
+    public record TransformBeginPayload(
+            com.demcha.compose.document.style.DocumentTransform transform,
+            String ownerPath
+    ) {
+        /**
+         * Validates the transform and normalizes the owner path.
+         */
+        public TransformBeginPayload {
+            Objects.requireNonNull(transform, "transform");
+            ownerPath = ownerPath == null ? "" : ownerPath;
+        }
+    }
+
+    /**
+     * Marker payload that closes a graphics-state transform region opened
+     * by a matching {@link TransformBeginPayload}. Carries the
+     * {@code ownerPath} for balance verification.
+     *
+     * @param ownerPath semantic path of the owning container; matches the
+     *                  begin payload that opened the transform region
+     */
+    public record TransformEndPayload(String ownerPath) {
+        /**
+         * Normalizes the owner path.
+         */
+        public TransformEndPayload {
+            ownerPath = ownerPath == null ? "" : ownerPath;
+        }
+    }
+
+    /**
      * PDF payload for a resolved image fragment.
      *
      * @param imageData image source data
@@ -1189,24 +1240,43 @@ public final class BuiltInNodeDefinitions {
                         height,
                         new ShapeFragmentPayload(awtFill, stroke, r.cornerRadius(), null, null, null));
             };
-            // For OVERFLOW_VISIBLE we emit just the outline. Otherwise we
-            // also emit a clip-begin marker that the PDF render handler
-            // turns into saveGraphicsState() + add path + clip(). The
-            // matching clip-end marker is emitted by emitOverlayFragments
-            // so it arrives after every layer fragment of this container.
-            if (node.clipPolicy() == com.demcha.compose.document.style.ClipPolicy.OVERFLOW_VISIBLE) {
-                return List.of(outlineFragment);
+            // Three independent bracketing concerns:
+            //   * Transform — wraps EVERYTHING (outline + clip + layers) so
+            //     the composite rotates / scales as one unit. Goes first
+            //     and matches a transform-end emitted from
+            //     emitOverlayFragments after every layer fragment.
+            //   * Outline — the visible fill / stroke.
+            //   * Clip — wraps only the layers (not the outline draw),
+            //     so the outline's own fill always shows but children are
+            //     restricted to the path.
+            // For OVERFLOW_VISIBLE we drop both clip markers; for an
+            // identity transform we drop both transform markers. Either
+            // marker type pairs by ownerPath so multiple containers nest
+            // safely.
+            List<LayoutFragment> opening = new ArrayList<>(4);
+            boolean hasTransform = !node.transform().isIdentity();
+            if (hasTransform) {
+                opening.add(new LayoutFragment(
+                        placement.path(),
+                        0,
+                        padLeft,
+                        padBottom,
+                        width,
+                        height,
+                        new TransformBeginPayload(node.transform(), placement.path())));
             }
-            return List.of(
-                    outlineFragment,
-                    new LayoutFragment(
-                            placement.path(),
-                            1,
-                            padLeft,
-                            padBottom,
-                            width,
-                            height,
-                            new ShapeClipBeginPayload(outline, node.clipPolicy(), placement.path())));
+            opening.add(outlineFragment);
+            if (node.clipPolicy() != com.demcha.compose.document.style.ClipPolicy.OVERFLOW_VISIBLE) {
+                opening.add(new LayoutFragment(
+                        placement.path(),
+                        1,
+                        padLeft,
+                        padBottom,
+                        width,
+                        height,
+                        new ShapeClipBeginPayload(outline, node.clipPolicy(), placement.path())));
+            }
+            return List.copyOf(opening);
         }
 
         @Override
@@ -1214,20 +1284,38 @@ public final class BuiltInNodeDefinitions {
                                                          FragmentContext ctx,
                                                          FragmentPlacement placement) {
             ShapeContainerNode node = prepared.node();
-            if (node.clipPolicy() == com.demcha.compose.document.style.ClipPolicy.OVERFLOW_VISIBLE) {
+            boolean hasClip = node.clipPolicy() != com.demcha.compose.document.style.ClipPolicy.OVERFLOW_VISIBLE;
+            boolean hasTransform = !node.transform().isIdentity();
+            if (!hasClip && !hasTransform) {
                 return List.of();
             }
-            // The end marker carries no spatial extent: it is a graphics-state
-            // restore op, not a drawn shape. The owning placement contributes
-            // page index + path so begin and end land on the same page surface.
-            return List.of(new LayoutFragment(
-                    placement.path(),
-                    2,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    new ShapeClipEndPayload(placement.path())));
+            // End markers are graphics-state restore ops — no spatial
+            // extent. The owning placement contributes page index + path
+            // so begin and end land on the same page surface. Order is
+            // the inverse of opening (innermost-first close): clip-end
+            // first, then transform-end.
+            List<LayoutFragment> closing = new ArrayList<>(2);
+            if (hasClip) {
+                closing.add(new LayoutFragment(
+                        placement.path(),
+                        2,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        new ShapeClipEndPayload(placement.path())));
+            }
+            if (hasTransform) {
+                closing.add(new LayoutFragment(
+                        placement.path(),
+                        3,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        new TransformEndPayload(placement.path())));
+            }
+            return List.copyOf(closing);
         }
     }
 

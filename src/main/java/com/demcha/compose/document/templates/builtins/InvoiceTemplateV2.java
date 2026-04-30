@@ -149,6 +149,13 @@ public final class InvoiceTemplateV2 implements InvoiceTemplate {
                                     .addParagraph(p -> p
                                             .text(joinAddress(data.fromParty()))
                                             .textStyle(theme.text().body())
+                                            // Multi-line address blocks otherwise
+                                            // run together with the default 1.0
+                                            // line height. 1.3 gives the address /
+                                            // email / phone lines a small breathing
+                                            // gap that matches the rest of the
+                                            // template.
+                                            .lineSpacing(1.3)
                                             .margin(DocumentInsets.zero())))
                             .addSection("InvoiceBillToParty", col -> col
                                     .spacing(2)
@@ -163,6 +170,7 @@ public final class InvoiceTemplateV2 implements InvoiceTemplate {
                                     .addParagraph(p -> p
                                             .text(joinAddress(data.billToParty()))
                                             .textStyle(theme.text().body())
+                                            .lineSpacing(1.3)
                                             .margin(DocumentInsets.zero()))))
                     .addTable(table -> {
                         TableBuilder configured = table

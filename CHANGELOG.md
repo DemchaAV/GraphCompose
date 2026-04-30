@@ -1,5 +1,61 @@
 # Changelog
 
+## v1.5.0-beta.18 (in progress) - B.10 wrap-up: v1.5 performance baseline
+
+Closes the last functional checkbox in Phase B.10. Establishes the
+v1.5 single-thread smoke baseline that future runs diff against.
+
+### Performance — `CurrentSpeedBenchmark` smoke profile (v1.5 baseline)
+
+Single-thread, 30 warmup + 100 measurement iterations per scenario,
+recorded on `develop @ 8267764` (Java 21, Windows 11). All five
+scenarios well within healthy production ranges.
+
+| Scenario | Avg ms | p50 ms | p95 ms | Docs/sec | Peak MB |
+|---|---|---|---|---|---|
+| `engine-simple` | 2.25 | 1.96 | 4.20 | 444.60 | 22 |
+| `invoice-template` (V1) | 13.39 | 13.12 | 17.55 | 74.67 | 182 |
+| `cv-template` (V1) | 6.94 | 6.58 | 10.18 | 144.02 | 78 |
+| `proposal-template` (V1) | 15.77 | 15.50 | 18.31 | 63.43 | 182 |
+| `feature-rich` | 36.80 | 32.06 | 35.51 | 27.18 | 94 |
+
+Stage breakdown (median ms per stage):
+
+| Scenario | Compose | Layout | Render | Total |
+|---|---|---|---|---|
+| invoice-template | 0.249 | 2.774 | 6.042 | 9.312 |
+| cv-template | 0.173 | 2.343 | 1.544 | 4.087 |
+| proposal-template | 0.256 | 8.715 | 5.345 | 14.563 |
+
+Notes:
+
+- The smoke profile is single-thread by design; throughput numbers
+  reflect "one document at a time" latency, not concurrent
+  throughput.
+- The v1.4 era never committed a baseline file, so the formal
+  "no >5% regression" gate first activates between this run and the
+  next `v1.5.0-beta.X` snapshot.
+- Reproduce locally:
+  `./mvnw -B -ntp -pl . -DskipTests test-compile dependency:build-classpath -DincludeScope=test -Dmdep.outputFile=target/benchmark.classpath`
+  then
+  `java -cp "target/test-classes;target/classes;$(cat target/benchmark.classpath)" -Dgraphcompose.benchmark.profile=smoke com.demcha.compose.CurrentSpeedBenchmark`.
+  Reports land under `target/benchmarks/current-speed/`.
+
+### Phase B.10 — closed (functional)
+
+The B.10 wrap-up was the last open checkbox in Phase B. With this
+baseline recorded, the only items still pending for v1.5 release
+are out of Claude's lane:
+
+- E.1 follow-ups in `InvoiceTemplateV2` — `colSpan` on the total
+  row, `RichText` for the status keyword (the user is owning these).
+- E.2 follow-up in `ProposalTemplateV2` — hero LayerStack with a
+  background shape and a centred title (the user is owning this).
+- Tag `v1.5.0-beta.1` (or jump straight to `v1.5.0`) and JitPack
+  build verification — final release step.
+
+---
+
 ## v1.5.0-beta.17 (in progress) - Template authoring cheatsheet
 
 Adds [`docs/template-authoring.md`](docs/template-authoring.md) as the

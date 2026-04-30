@@ -495,7 +495,7 @@ class CvTemplateRenderTest {
                 Arguments.of(new CenteredHeadlineCvTemplate(), 22, 1),
                 Arguments.of(new BoxedSectionsCvTemplate(), 22, 2),
                 Arguments.of(new SidebarPortraitCvTemplate(), 0, 1),
-                Arguments.of(new BlueBannerCvTemplate(), 28, 2),
+                Arguments.of(new BlueBannerCvTemplate(), 28, 1),
                 Arguments.of(new MonogramSidebarCvTemplate(), 0, 1));
     }
 

@@ -158,9 +158,15 @@ class TableBuilderColSpanTest {
 
             session.add(table);
 
+            // The cell-grid pre-pass (D.1) replaced the dedicated
+            // "colSpan sum" check with a more precise diagnostic that
+            // names the offending row index and surplus cell count.
+            // Either reading is fine — both messages identify the same
+            // root cause.
             assertThatThrownBy(session::layoutGraph)
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("colSpan sum");
+                    .hasMessageContaining("Row 1")
+                    .hasMessageContaining("extra source cell");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -1,5 +1,78 @@
 # Changelog
 
+## v1.5.0-beta.5 (in progress) - Phase D kickoff: table row span
+
+D.1 lands canonical row-span support for tables. A cell can declare
+`rowSpan(n)` to merge vertically across the next `n - 1` rows; the
+layout layer skips occupied grid positions when interpreting subsequent
+source rows so authors only specify the cells that are not yet covered
+by a prior spanning cell. Existing `colSpan` continues to work and the
+two compose freely (a single cell can be both `colSpan(2).rowSpan(3)`).
+
+### Public API
+
+- `DocumentTableCell` gains a fifth field `int rowSpan` (default `1`).
+  Four-arg canonical constructor + back-compat 2/3-arg constructors so
+  every v1.4 / v1.5.0-alpha caller compiles unchanged.
+- New mutator `DocumentTableCell.rowSpan(int)` mirrors the existing
+  `colSpan(int)`. Authors compose by chaining:
+  `DocumentTableCell.text("Tall").colSpan(2).rowSpan(3)`.
+
+### Architecture
+
+- `TableLayoutSupport` replaces the per-row colSpan-sum check with a
+  unified cell-grid pre-pass driven by an occupancy mask. The new
+  `buildLogicalRows(node, columnCount)` walks columns left-to-right
+  per source row, skips positions already covered by a prior row's
+  spanning cell, and consumes the next source cell otherwise.
+  Misalignments raise precise diagnostics: missing cell, extra source
+  cell, overlapping span, span exceeding remaining rows / columns.
+- `LogicalCell` now carries `(startRow, startColumn, colSpan,
+  rowSpan, content)` so downstream resolution knows the cell's full
+  extent.
+- Row-height resolution is two-pass: first pass derives each row's
+  height from single-row cells (`rowSpan = 1`); second pass walks
+  spanning cells and distributes any deficit (`naturalHeight - sum
+  of spanned row heights`) equally across the spanned rows. Single-row
+  layouts therefore stay deterministic; spanning layouts grow the
+  shortest contributing rows just enough to satisfy the span.
+- `TableResolvedCell.height` for a cell with `rowSpan > 1` equals the
+  sum of its covered row heights, so the cell visually merges across
+  rows when the renderer paints it.
+- `buildStylesGrid` propagates the spanning cell's resolved style to
+  every `(row, column)` position it occupies, so neighbour-style
+  lookups for borders and fill insets correctly detect a single shared
+  cell — a spanning cell does not draw an internal horizontal border
+  between the rows it merges.
+- `resolveColumnCount` now derives the column count from the FIRST
+  source row's colSpan sum (which by definition is not affected by
+  prior rowSpan). Subsequent rows may have fewer source cells when
+  prior rowSpan covers some columns, so they cannot be used to derive
+  the count.
+
+### Tests
+
+- New `TableBuilderRowSpanTest` covers four invariants:
+  - 2x2 merged top-left cell — width, height, and right-column x
+    coordinates line up correctly.
+  - Middle-column rowSpan — first row has 3 cells, subsequent rows
+    have 2 each (middle is occupied by the spanning cell), and the
+    spanning cell's height equals the sum of all three row heights.
+  - rowSpan exceeding remaining rows is rejected with a precise
+    diagnostic (`rowSpan 3` / `only 2 rows remain`).
+  - Overlapping rowSpan is rejected with a precise diagnostic
+    (`Row 1` / `extra source cell`).
+- `TableBuilderColSpanTest.rowWithMismatchedColSpanSumIsRejectedDuringLayout`
+  was updated to assert the new error message wording (the dedicated
+  "colSpan sum" check is now subsumed by the cell-grid pre-pass that
+  reports the offending row index and surplus cell count).
+- New `TableRowSpanDemoTest` renders two scenarios to PDF artefacts
+  under `target/visual-tests/table-rowspan/`: a 2x2 merged cell with
+  a teal fill, and a tall middle column spanning three rows. Each
+  scenario asserts the PDF magic header is intact.
+
+---
+
 ## v1.5.0-beta.4 (in progress) - Phase C wrap-up: recipe + runnable example
 
 C.4 closes Phase C with author-facing documentation and a runnable

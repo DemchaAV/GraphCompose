@@ -1,5 +1,79 @@
 # Changelog
 
+## v1.5.0-beta.9 (in progress) - Phase E.1: cinematic invoice template
+
+E.1 lands `InvoiceTemplateV2`, the first canonical template that
+composes against the canonical DSL using a `BusinessTheme` for every
+visual choice. Same `InvoiceDocumentSpec` data renders in any of the
+three built-in themes (or a custom one) by passing it to the
+constructor.
+
+### Public API
+
+- New `com.demcha.compose.document.templates.builtins.InvoiceTemplateV2`
+  implementing the existing `InvoiceTemplate` interface. Two
+  constructors: the no-arg form picks `BusinessTheme.modern()`; the
+  one-arg `InvoiceTemplateV2(BusinessTheme)` accepts any theme.
+- `InvoiceTemplateV1` is unchanged — both templates ship side by
+  side. Authors who want the cinematic look opt in by switching the
+  type; nothing else has to change.
+
+### Visual composition
+
+The template stacks the v1.4 / v1.5 cinematic primitives:
+
+- `softPanel` hero block carrying the invoice number, dates, and the
+  status read out as inline rich text via the new
+  `DocumentDsl.richText` callback.
+- A two-column row with `From` / `Bill to` parties, each rendered as
+  a small section using the theme's `text().label()` and
+  `text().body()` styles.
+- A line-items table with header style on the first row, zebra
+  alternation on the body, the totals row anchored at the bottom via
+  `TableBuilder.totalRow(style, values)`, and `repeatHeader()` so the
+  totals header re-emits on every continuation page when the invoice
+  paginates.
+- A footer row with `accentLeft` accent strips on the notes / payment
+  terms columns.
+
+Every visual style is derived from `BusinessTheme` — palette,
+text scale, stroke colour, fill colours.
+
+### Tests + examples
+
+- New `InvoiceTemplateV2Test` covers four invariants:
+  - Default constructor uses `BusinessTheme.modern()` and the
+    template id is stable.
+  - `compose(...)` produces a valid PDF byte stream for the standard
+    sample invoice.
+  - The same invoice rendered with `BusinessTheme.modern()` and
+    `BusinessTheme.classic()` produces DIFFERENT byte streams (the
+    theme colours get embedded in the PDF), so a theme switch is
+    observable downstream.
+  - The resulting layout graph contains a node whose semantic name
+    contains `InvoiceLineItems` — anchor invariant that proves the
+    template ran the table composition, not just the hero block.
+- New `InvoiceTemplateV2DemoTest` renders the same sample invoice
+  with each of the three built-in themes
+  (`modern` / `classic` / `executive`) to PDF artefacts under
+  `target/visual-tests/invoice-template-v2/` so a reviewer can flip
+  through the three side-by-side.
+- New `examples/.../InvoiceCinematicFileExample.java` (hooked into
+  `GenerateAllExamples`) renders the standard sample invoice with
+  the modern theme to
+  `examples/target/generated-pdfs/invoice-cinematic.pdf`.
+
+### Known limitations
+
+- The `InvoiceLineItem.details` field is omitted from the rendered
+  table cell. Including it would force the auto-sized description
+  column to measure against the much longer "details" sentence and
+  overflow the inner page width on typical A4 invoices. Templates
+  that need the details alongside should compose them in a separate
+  notes column or section.
+
+---
+
 ## v1.5.0-beta.8 (in progress) - Phase D wrap-up: tables recipe + runnable example
 
 D.4 closes Phase D with author-facing documentation and a runnable

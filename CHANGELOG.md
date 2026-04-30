@@ -1,5 +1,33 @@
 # Changelog
 
+## v1.5.0-beta.8 (in progress) - Phase D wrap-up: tables recipe + runnable example
+
+D.4 closes Phase D with author-facing documentation and a runnable
+demo for the four advanced-table features that landed in D.1 / D.2 /
+D.3 (row span, zebra rows, totals row, repeating header).
+
+### Documentation
+
+- New recipe `docs/recipes/tables.md` covers row span (with note on
+  composition with `colSpan`), zebra row alternation (single and
+  two-arg overloads, precedence rule), totals row (default + custom
+  styles), and repeated header on page break (single-row + multi-row
+  variants). Includes a "Layout invariants you can rely on" section
+  pinning the five test invariants from `TableBuilderRowSpanTest`,
+  `TableBuilderZebraAndTotalsTest`, and
+  `TableBuilderRepeatHeaderTest`.
+
+### Examples
+
+- New `examples/.../TableAdvancedExample.java` (hooked into
+  `GenerateAllExamples`) renders three sections to one PDF:
+  hero callout, a small row-span demo (Q1/Q2/Q3 with a 3-row spanning
+  side note), and a 36-row invoice with bold-on-teal repeating header,
+  zebra body rows, and a gold totals row at the bottom. Output lands
+  at `examples/target/generated-pdfs/table-advanced.pdf`.
+
+---
+
 ## v1.5.0-beta.7 (in progress) - Phase D continues: repeated header on page break
 
 D.3 lands repeated-header pagination for tables. When a table is split

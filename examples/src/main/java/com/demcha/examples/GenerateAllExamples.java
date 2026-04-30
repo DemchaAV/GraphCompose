@@ -14,6 +14,7 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + CinematicProposalFileExample.generate());
         System.out.println("Generated: " + ShapeContainerExample.generate());
         System.out.println("Generated: " + TransformsExample.generate());
+        System.out.println("Generated: " + TableAdvancedExample.generate());
         System.out.println("Generated: " + WeeklyScheduleFileExample.generate());
     }
 }

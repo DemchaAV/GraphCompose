@@ -231,7 +231,11 @@ public final class InvoiceTemplateV2 implements InvoiceTemplate {
                         .name("InvoiceCinematicFooter")
                         .addParagraph(p -> p
                                 .text(data.footerNote())
-                                .textStyle(theme.text().caption()))
+                                .textStyle(theme.text().caption())
+                                // Push the thank-you line down off the
+                                // notes / payment-terms block above so it
+                                // does not visually merge with them.
+                                .margin(new DocumentInsets(14, 0, 0, 0)))
                         .build();
             }
 

@@ -92,6 +92,16 @@ public final class PdfTableRowFragmentRenderHandler
         try {
             stream.setStrokingColor(cell.style().stroke().strokeColor().color());
             stream.setLineWidth((float) cell.style().stroke().width());
+            // Borders for adjacent cells are drawn as four independent
+            // line segments, so where two perpendicular borders meet
+            // (cell corner) the default butt cap leaves a half-pixel
+            // gap after rasterization. Projecting-square caps extend
+            // each endpoint by half the stroke width, which makes
+            // perpendicular borders overlap cleanly at the corner — no
+            // visible 1px notch where a row separator meets a column
+            // separator. Scoped inside the saveGraphicsState/restore
+            // pair so it does not leak to other render handlers.
+            stream.setLineCapStyle(2);
             if (sides.contains(Side.TOP)) {
                 line(stream, cellX, cellY + cell.height(), cellX + cell.width(), cellY + cell.height());
             }

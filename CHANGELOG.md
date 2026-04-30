@@ -1,5 +1,33 @@
 # Changelog
 
+## v1.5.0-beta.4 (in progress) - Phase C wrap-up: recipe + runnable example
+
+C.4 closes Phase C with author-facing documentation and a runnable
+demo for the transform mixin and per-layer z-index features that
+landed in C.1 / C.2 / C.3.
+
+### Documentation
+
+- New recipe `docs/recipes/transforms.md` covers rotation around the
+  placement centre, uniform and non-uniform scale (including the
+  mirror case via negative scale), the `rotate(...).scale(...)`
+  composition rule (each call preserves the unmodified axis), and
+  per-layer z-index for overlays. Includes a "Layout invariants you
+  can rely on" section that names the three pinned tests so authors
+  can trust the determinism guarantees.
+
+### Examples
+
+- New `examples/.../TransformsExample.java` (hooked into
+  `GenerateAllExamples`) renders three sections to one PDF:
+  three-circle rotate row (15° / -15° / no tilt), three-card scale
+  row (`scale(0.7)`, `scale(1.1, 0.85)`, identity), and a z-swap
+  stage where a RED square declared first with `zIndex = 10` draws
+  on top of a TEAL square declared second with default zIndex.
+  Output lands at `examples/target/generated-pdfs/transforms.pdf`.
+
+---
+
 ## v1.5.0-beta.3 (in progress) - Phase C continues: per-layer z-index
 
 Phase C.3: introduce explicit per-layer z-index inside
@@ -62,8 +90,6 @@ deterministic without any code changes.
 - Other builders (`ShapeBuilder`, `EllipseBuilder`, `ImageBuilder`,
   `LineBuilder`, `BarcodeBuilder`) opt in to `Transformable<T>`
   in follow-up commits — same pattern as ShapeContainer.
-- C.4 — recipe `docs/recipes/transforms.md` + extending the runnable
-  example with rotated / scaled / z-stacked scenarios.
 
 ---
 

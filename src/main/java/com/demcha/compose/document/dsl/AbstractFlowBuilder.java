@@ -249,6 +249,31 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     }
 
     /**
+     * Convenience preset for a "soft panel" background with a per-corner
+     * radius value. Useful for cards that should be rounded on only one
+     * side — e.g. a hero block that sits flush against a left accent
+     * strip and only rounds its right corners.
+     *
+     * @param color panel fill color
+     * @param cornerRadius per-corner radii (use the
+     *                     {@link DocumentCornerRadius#right(double)} /
+     *                     {@code .left} / {@code .top} / {@code .bottom}
+     *                     factories for asymmetric layouts)
+     * @param padding inner padding in points (applied uniformly on all sides)
+     * @return this builder
+     */
+    public T softPanel(DocumentColor color, DocumentCornerRadius cornerRadius, double padding) {
+        fillColor(color);
+        if (cornerRadius != null) {
+            cornerRadius(cornerRadius);
+        }
+        if (padding > 0) {
+            padding(DocumentInsets.of(padding));
+        }
+        return self();
+    }
+
+    /**
      * Convenience preset for a soft panel with a default 8pt corner radius and
      * 12pt uniform padding.
      *

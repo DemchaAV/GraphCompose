@@ -277,16 +277,21 @@ public final class BuiltInNodeDefinitions {
     /**
      * PDF payload for a resolved shape fragment.
      *
+     * <p>The {@code cornerRadius} carries the four per-corner radii so
+     * authors can round, e.g., only the right side of a card while
+     * leaving the left edge square. Single-radius callers continue to
+     * work via the legacy double-precision constructor.</p>
+     *
      * @param fillColor optional shape fill color
      * @param stroke optional shape stroke
-     * @param cornerRadius rectangle corner radius in points
+     * @param cornerRadius per-corner radii in points
      * @param linkOptions optional fragment-level link metadata
      * @param bookmarkOptions optional fragment-level bookmark metadata
      */
     public record ShapeFragmentPayload(
             Color fillColor,
             Stroke stroke,
-            double cornerRadius,
+            com.demcha.compose.document.style.DocumentCornerRadius cornerRadius,
             DocumentLinkOptions linkOptions,
             DocumentBookmarkOptions bookmarkOptions,
             SideBorders sideBorders
@@ -295,19 +300,36 @@ public final class BuiltInNodeDefinitions {
          * Normalizes the render-only corner radius.
          */
         public ShapeFragmentPayload {
-            if (cornerRadius < 0 || Double.isNaN(cornerRadius) || Double.isInfinite(cornerRadius)) {
-                cornerRadius = 0.0;
+            if (cornerRadius == null) {
+                cornerRadius = com.demcha.compose.document.style.DocumentCornerRadius.ZERO;
             }
+        }
+
+        /**
+         * Backwards-compatible constructor that accepts a single uniform
+         * radius (pre-Phase E.1.1 wiring) and applies it to every corner.
+         */
+        public ShapeFragmentPayload(Color fillColor,
+                                    Stroke stroke,
+                                    double cornerRadius,
+                                    DocumentLinkOptions linkOptions,
+                                    DocumentBookmarkOptions bookmarkOptions,
+                                    SideBorders sideBorders) {
+            this(fillColor, stroke,
+                    cornerRadius < 0 || Double.isNaN(cornerRadius) || Double.isInfinite(cornerRadius)
+                            ? com.demcha.compose.document.style.DocumentCornerRadius.ZERO
+                            : com.demcha.compose.document.style.DocumentCornerRadius.of(cornerRadius),
+                    linkOptions, bookmarkOptions, sideBorders);
         }
 
         /**
          * Backwards-compatible constructor without per-side borders.
          */
         public ShapeFragmentPayload(Color fillColor,
-                                     Stroke stroke,
-                                     double cornerRadius,
-                                     DocumentLinkOptions linkOptions,
-                                     DocumentBookmarkOptions bookmarkOptions) {
+                                    Stroke stroke,
+                                    double cornerRadius,
+                                    DocumentLinkOptions linkOptions,
+                                    DocumentBookmarkOptions bookmarkOptions) {
             this(fillColor, stroke, cornerRadius, linkOptions, bookmarkOptions, null);
         }
     }
@@ -771,9 +793,10 @@ public final class BuiltInNodeDefinitions {
                     new ShapeFragmentPayload(
                             node.fillColor() == null ? null : node.fillColor().color(),
                             toStroke(node.stroke()),
-                            node.cornerRadius().radius(),
+                            node.cornerRadius(),
                             node.linkOptions(),
-                            node.bookmarkOptions())));
+                            node.bookmarkOptions(),
+                            null)));
         }
     }
 
@@ -1019,7 +1042,7 @@ public final class BuiltInNodeDefinitions {
             return emitDecorationFragment(
                     node.fillColor() == null ? null : node.fillColor().color(),
                     toStroke(node.stroke()),
-                    node.cornerRadius().radius(),
+                    node.cornerRadius(),
                     toSideBorders(node.borders()),
                     placement);
         }
@@ -1055,7 +1078,7 @@ public final class BuiltInNodeDefinitions {
             return emitDecorationFragment(
                     node.fillColor() == null ? null : node.fillColor().color(),
                     toStroke(node.stroke()),
-                    node.cornerRadius().radius(),
+                    node.cornerRadius(),
                     toSideBorders(node.borders()),
                     placement);
         }
@@ -1091,7 +1114,7 @@ public final class BuiltInNodeDefinitions {
             return emitDecorationFragment(
                     node.fillColor() == null ? null : node.fillColor().color(),
                     toStroke(node.stroke()),
-                    node.cornerRadius().radius(),
+                    node.cornerRadius(),
                     toSideBorders(node.borders()),
                     placement);
         }
@@ -1570,14 +1593,32 @@ public final class BuiltInNodeDefinitions {
 
     private static List<LayoutFragment> emitDecorationFragment(Color fillColor,
                                                                Stroke stroke,
-                                                               double cornerRadius,
+                                                               com.demcha.compose.document.style.DocumentCornerRadius cornerRadius,
+                                                               SideBorders sideBorders,
                                                                FragmentPlacement placement) {
-        return emitDecorationFragment(fillColor, stroke, cornerRadius, null, placement);
+        return emitDecorationFragment(fillColor, stroke, cornerRadius == null ? 0.0 : cornerRadius.radius(),
+                cornerRadius, sideBorders, placement);
     }
 
     private static List<LayoutFragment> emitDecorationFragment(Color fillColor,
                                                                Stroke stroke,
                                                                double cornerRadius,
+                                                               FragmentPlacement placement) {
+        return emitDecorationFragment(fillColor, stroke, cornerRadius, null, null, placement);
+    }
+
+    private static List<LayoutFragment> emitDecorationFragment(Color fillColor,
+                                                               Stroke stroke,
+                                                               double cornerRadius,
+                                                               SideBorders sideBorders,
+                                                               FragmentPlacement placement) {
+        return emitDecorationFragment(fillColor, stroke, cornerRadius, null, sideBorders, placement);
+    }
+
+    private static List<LayoutFragment> emitDecorationFragment(Color fillColor,
+                                                               Stroke stroke,
+                                                               double cornerRadius,
+                                                               com.demcha.compose.document.style.DocumentCornerRadius perCornerRadius,
                                                                SideBorders sideBorders,
                                                                FragmentPlacement placement) {
         boolean hasFill = fillColor != null;
@@ -1590,6 +1631,14 @@ public final class BuiltInNodeDefinitions {
             return List.of();
         }
 
+        // Prefer the per-corner radius value when available so callers
+        // that opted into asymmetric rounding (DocumentCornerRadius.right /
+        // .left / .top / .bottom / .of(tl, tr, br, bl)) reach the
+        // renderer with the full information. Legacy callers that pass
+        // a single double still hit the back-compat constructor.
+        ShapeFragmentPayload payload = perCornerRadius != null
+                ? new ShapeFragmentPayload(fillColor, stroke, perCornerRadius, null, null, sideBorders)
+                : new ShapeFragmentPayload(fillColor, stroke, cornerRadius, null, null, sideBorders);
         return List.of(new LayoutFragment(
                 placement.path(),
                 0,
@@ -1597,7 +1646,7 @@ public final class BuiltInNodeDefinitions {
                 0.0,
                 placement.width(),
                 placement.height(),
-                new ShapeFragmentPayload(fillColor, stroke, cornerRadius, null, null, sideBorders)));
+                payload));
     }
 
     private static SideBorders toSideBorders(DocumentBorders borders) {

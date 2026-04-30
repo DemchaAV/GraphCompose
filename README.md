@@ -163,6 +163,12 @@ try (DocumentSession document = GraphCompose.document()
 
 ### Built-in templates (compose-first)
 
+> Writing your own template? Start with the
+> [**Template authoring cheatsheet**](./docs/template-authoring.md) — it covers
+> the builder hierarchy, theme tokens, golden patterns, anti-patterns,
+> a 40-line new-template skeleton, and the testing pattern, all on one
+> page. Read it once and you have everything to skip the boilerplate.
+
 `InvoiceTemplateV2` and `ProposalTemplateV2` (v1.5) take a
 `BusinessTheme` in their constructor, so the same data renders
 through any of `classic` / `modern` / `executive` (or your own

@@ -1,5 +1,56 @@
 # Changelog
 
+## v1.5.0-beta.10 (in progress) - Phase E.2: cinematic proposal template
+
+E.2 lands `ProposalTemplateV2`, the canonical-DSL proposal counterpart
+to `InvoiceTemplateV2`. Same `ProposalDocumentSpec` data renders in
+any of the three built-in `BusinessTheme` themes by passing the theme
+to the constructor.
+
+### Public API
+
+- New `com.demcha.compose.document.templates.builtins.ProposalTemplateV2`
+  implementing the existing `ProposalTemplate` interface. The no-arg
+  constructor picks `BusinessTheme.modern()`; the one-arg
+  `ProposalTemplateV2(BusinessTheme)` accepts any theme.
+- `ProposalTemplateV1` is unchanged — both ship side by side.
+
+### Visual composition
+
+- Hero soft panel rounded only on the right (via Phase E.1.1
+  `DocumentCornerRadius.right(...)`), with the title, project title,
+  and proposal-number / prepared / valid-until row read out as inline
+  rich text.
+- Themed executive-summary panel with line-spaced body text.
+- Sender / recipient parties row using `theme.text().label()` and
+  line-spaced `body()` styles for the address block.
+- Sections rendered as `theme.text().h2()` headings + body paragraphs.
+- Timeline table (Phase / Duration / Details) and pricing table
+  (Item / Description / Amount) both use `headerStyle` on row 0,
+  `repeatHeader()` for pagination, and zebra rows on the pricing
+  table. The emphasized total-pricing row is anchored at the bottom
+  via `TableBuilder.totalRow(style, values)`.
+- Acceptance terms list with `accentLeft` strip; footer note with
+  top margin so it breathes off the body content.
+
+### Tests + examples
+
+- New `ProposalTemplateV2Test` pins five invariants — default
+  constructor uses modern theme; sample proposal produces a valid
+  PDF byte stream; modern vs classic produces distinct bytes (theme
+  switch observable); the layout graph contains both
+  `ProposalTimeline` and `ProposalPricing` table nodes.
+- New `ProposalTemplateV2DemoTest` renders the same sample proposal
+  with each of the three built-in themes
+  (`modern` / `classic` / `executive`) to PDF artefacts under
+  `target/visual-tests/proposal-template-v2/`.
+- New `examples/.../ProposalCinematicFileExample.java` (hooked into
+  `GenerateAllExamples`) renders the standard sample proposal with
+  the modern theme to
+  `examples/target/generated-pdfs/proposal-cinematic.pdf`.
+
+---
+
 ## v1.5.0-beta.9 (in progress) - Phase E.1: cinematic invoice template
 
 E.1 lands `InvoiceTemplateV2`, the first canonical template that

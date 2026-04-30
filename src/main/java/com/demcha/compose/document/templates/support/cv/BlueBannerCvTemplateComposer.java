@@ -14,74 +14,96 @@ import com.demcha.compose.document.templates.data.common.Header;
 import com.demcha.compose.document.templates.data.common.LinkYml;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.cv.CvModule;
+import com.demcha.compose.document.templates.theme.CvTheme;
+import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.font.FontName;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
 /**
- * Conventional "blue banner" resume composer: a centered headline framed by
- * thin black rules, a pipe-delimited contact line, and one light-blue
- * banner per section bracketed by hairline black borders.
+ * Conventional "blue banner" resume composer modernised under the v1.5
+ * cinematic stack: a {@link CvTheme}-driven body type, every accent strip
+ * declared via {@code accentTop} / {@code accentBottom}, and each section
+ * banner emitted as a single {@code softPanel}-backed section instead of
+ * the original {@code addLine + addSection + addLine} triplet.
  *
- * <p>Mirrors the popular Word resume look where every module title sits in
- * a soft blue strip. Body content stays on the white page; work entries
- * lay out as bold position + right-aligned date with a regular
+ * <p>Mirrors the popular Word resume look where every module title sits
+ * inside a soft blue strip. Body content stays on the white page; work
+ * entries lay out as bold position + right-aligned date with a regular
  * {@code Company, Location} subtitle and an optional description.</p>
+ *
+ * <p>Pass any {@link CvTheme} (including
+ * {@link CvTheme#fromBusinessTheme(com.demcha.compose.document.theme.BusinessTheme)})
+ * to re-skin the body text without touching the banner identity.</p>
+ *
+ * @author Artem Demchyshyn
  */
 public final class BlueBannerCvTemplateComposer {
-    private static final DocumentColor INK = DocumentColor.rgb(34, 34, 34);
-    private static final DocumentColor SOFT = DocumentColor.rgb(85, 85, 85);
     private static final DocumentColor BANNER_BG = DocumentColor.rgb(196, 216, 234);
     private static final DocumentColor BANNER_RULE = DocumentColor.rgb(60, 70, 90);
     private static final DocumentColor FRAME_RULE = DocumentColor.rgb(34, 34, 34);
     private static final FontName HEADLINE_FONT = FontName.PT_SERIF;
-    private static final FontName BODY_FONT = FontName.LATO;
+
+    private final CvTheme theme;
+
+    /**
+     * Default constructor — uses the conventional dark-grey ink + Lato
+     * body theme that the original Word-style template shipped with.
+     */
+    public BlueBannerCvTemplateComposer() {
+        this(defaultTheme());
+    }
+
+    /**
+     * Constructs the composer with a custom {@link CvTheme}. Body
+     * paragraphs, contact line, work descriptions, and link styling
+     * follow the supplied theme; the blue section banner and the
+     * dark-ink frame around the headline stay as the template's
+     * visual identity regardless of theme.
+     *
+     * @param theme CV theme driving body type and accent colour
+     */
+    public BlueBannerCvTemplateComposer(CvTheme theme) {
+        this.theme = Objects.requireNonNull(theme, "theme");
+    }
 
     public void compose(DocumentSession document, CvDocumentSpec documentSpec) {
         CvDocumentSpec spec = Objects.requireNonNull(documentSpec, "documentSpec");
-        double innerWidth = document.canvas().innerWidth();
 
         PageFlowBuilder pageFlow = document.dsl()
                 .pageFlow()
                 .name("BlueBannerRoot")
                 .spacing(6)
                 .addSection("BlueBannerHeader", section -> addHeadline(section, spec.header()))
-                .addLine(line -> line
-                        .name("BlueBannerContactRuleTop")
-                        .horizontal(innerWidth)
-                        .color(FRAME_RULE)
-                        .thickness(0.7)
-                        .margin(new DocumentInsets(2, 0, 0, 0)))
-                .addSection("BlueBannerContact", section -> addContactLine(section, spec.header()))
-                .addLine(line -> line
-                        .name("BlueBannerContactRuleBottom")
-                        .horizontal(innerWidth)
-                        .color(FRAME_RULE)
-                        .thickness(0.7)
-                        .margin(DocumentInsets.zero()));
+                // Contact line is wrapped by hairline rules above and below the
+                // pipe-delimited contact text. accentTop/Bottom replaces the
+                // original addLine + addSection + addLine triplet so the rules
+                // travel with the section across page breaks.
+                .addSection("BlueBannerContact", section -> {
+                    section.accentTop(FRAME_RULE, 0.7);
+                    section.accentBottom(FRAME_RULE, 0.7);
+                    addContactLine(section, spec.header());
+                });
 
         List<CvModule> modules = spec.modules() == null ? List.of() : spec.modules();
         for (int i = 0; i < modules.size(); i++) {
             final CvModule module = modules.get(i);
             final int index = i;
-            pageFlow.addLine(line -> line
-                    .name("BlueBannerRuleTop_" + index)
-                    .horizontal(innerWidth)
-                    .color(BANNER_RULE)
-                    .thickness(0.7)
-                    .margin(new DocumentInsets(4, 0, 0, 0)));
+            // Each section is a softPanel-style banner with thin top/bottom
+            // accent rules. Single section instead of the original
+            // addLine + addSection + addLine triple keeps z-order stable
+            // across pagination.
             pageFlow.addSection(
                     "BlueBannerBanner_" + index,
-                    section -> addSectionBanner(section, safe(module.title())));
-            pageFlow.addLine(line -> line
-                    .name("BlueBannerRuleBottom_" + index)
-                    .horizontal(innerWidth)
-                    .color(BANNER_RULE)
-                    .thickness(0.7)
-                    .margin(DocumentInsets.zero()));
+                    section -> {
+                        section.accentTop(BANNER_RULE, 0.7);
+                        section.accentBottom(BANNER_RULE, 0.7);
+                        addSectionBanner(section, safe(module.title()));
+                    });
             pageFlow.addSection(
                     "BlueBannerBody_" + index,
                     section -> addModuleBody(section, module));
@@ -95,7 +117,7 @@ public final class BlueBannerCvTemplateComposer {
                 .padding(new DocumentInsets(8, 0, 8, 0))
                 .addParagraph(paragraph -> paragraph
                         .text(spacedUpper(name(header)))
-                        .textStyle(style(HEADLINE_FONT, 22, DocumentTextDecoration.BOLD, INK))
+                        .textStyle(style(HEADLINE_FONT, 22, DocumentTextDecoration.BOLD, ink()))
                         .align(TextAlign.CENTER)
                         .margin(DocumentInsets.zero()));
     }
@@ -105,14 +127,15 @@ public final class BlueBannerCvTemplateComposer {
         if (parts.isEmpty()) {
             return;
         }
-        DocumentTextStyle textStyle = style(BODY_FONT, 8.6, DocumentTextDecoration.DEFAULT, INK);
-        DocumentTextStyle separatorStyle = style(BODY_FONT, 8.6, DocumentTextDecoration.DEFAULT, SOFT);
+        DocumentTextStyle textStyle = style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, ink());
+        DocumentTextStyle separatorStyle = style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, soft());
 
         section.spacing(0)
                 .padding(new DocumentInsets(2, 0, 2, 0))
                 .addParagraph(paragraph -> paragraph
                         .textStyle(textStyle)
                         .align(TextAlign.CENTER)
+                        .lineSpacing(1.3)
                         .margin(DocumentInsets.zero())
                         .rich(rich -> {
                             for (int i = 0; i < parts.size(); i++) {
@@ -133,12 +156,13 @@ public final class BlueBannerCvTemplateComposer {
         if (title == null || title.isBlank()) {
             return;
         }
-        section.padding(new DocumentInsets(4, 0, 4, 0))
-                .fillColor(BANNER_BG)
+        // softPanel paints fill + uniform padding around the centred title;
+        // the accentTop/Bottom rules above the section close the banner.
+        section.softPanel(BANNER_BG, 0.0, 4.0)
                 .margin(DocumentInsets.zero())
                 .addParagraph(paragraph -> paragraph
                         .text(spacedUpper(title))
-                        .textStyle(style(BODY_FONT, 9.5, DocumentTextDecoration.BOLD, INK))
+                        .textStyle(style(theme.bodyFont(), 9.5, DocumentTextDecoration.BOLD, ink()))
                         .align(TextAlign.CENTER)
                         .margin(DocumentInsets.zero()));
     }
@@ -164,7 +188,7 @@ public final class BlueBannerCvTemplateComposer {
         }
         section.addParagraph(paragraph -> paragraph
                 .text(text)
-                .textStyle(style(BODY_FONT, 8.6, DocumentTextDecoration.DEFAULT, INK))
+                .textStyle(style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, ink()))
                 .lineSpacing(1.5)
                 .align(TextAlign.LEFT)
                 .margin(DocumentInsets.top(2)));
@@ -192,18 +216,21 @@ public final class BlueBannerCvTemplateComposer {
     private void renderItemAsParagraph(SectionBuilder section, String item) {
         section.addParagraph(paragraph -> paragraph
                 .text(item)
-                .textStyle(style(BODY_FONT, 8.6, DocumentTextDecoration.DEFAULT, INK))
+                .textStyle(style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, ink()))
                 .lineSpacing(1.4)
                 .align(TextAlign.LEFT)
                 .margin(DocumentInsets.top(2)));
     }
 
     private void renderWorkEntry(SectionBuilder section, WorkEntry entry) {
-        DocumentTextStyle positionStyle = style(BODY_FONT, 9.0, DocumentTextDecoration.BOLD, INK);
-        DocumentTextStyle dateStyle = style(BODY_FONT, 8.8, DocumentTextDecoration.DEFAULT, INK);
-        DocumentTextStyle subtitleStyle = style(BODY_FONT, 8.4, DocumentTextDecoration.ITALIC, SOFT);
-        DocumentTextStyle bodyStyle = style(BODY_FONT, 8.6, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle positionStyle = style(theme.bodyFont(), 9.0, DocumentTextDecoration.BOLD, ink());
+        DocumentTextStyle dateStyle = style(theme.bodyFont(), 8.8, DocumentTextDecoration.DEFAULT, ink());
+        DocumentTextStyle subtitleStyle = style(theme.bodyFont(), 8.4, DocumentTextDecoration.ITALIC, soft());
+        DocumentTextStyle bodyStyle = style(theme.bodyFont(), 8.6, DocumentTextDecoration.DEFAULT, ink());
 
+        // Two-column header — RowBuilder with weights is the canonical
+        // v1.5 idiom for "label | metadata" pairs (RowBuilder rejects
+        // nested rows + tables, so addSection is the canonical column).
         section.addRow("BlueBannerEntryHeader", row -> row
                 .spacing(8)
                 .weights(1.0, 0.4)
@@ -341,6 +368,50 @@ public final class BlueBannerCvTemplateComposer {
             return displayText;
         }
         return link.getLinkUrl() == null ? "" : safe(link.getLinkUrl().getUrl());
+    }
+
+    /**
+     * Returns the body / ink colour from the theme, falling back to the
+     * conventional dark-grey if the theme defines a brighter body colour
+     * (helps keep contrast on the blue banner area).
+     */
+    private DocumentColor ink() {
+        return DocumentColor.of(theme.bodyColor());
+    }
+
+    private DocumentColor soft() {
+        // Slightly muted variant of the body colour for separators and
+        // italic subtitles. We re-derive from the theme so a swap of the
+        // BusinessTheme palette propagates automatically.
+        Color base = theme.bodyColor();
+        int r = clamp(base.getRed() + 51);
+        int g = clamp(base.getGreen() + 51);
+        int b = clamp(base.getBlue() + 51);
+        return DocumentColor.rgb(r, g, b);
+    }
+
+    private static int clamp(int value) {
+        return Math.max(0, Math.min(255, value));
+    }
+
+    /**
+     * Default theme matching the original hand-tuned palette: dark-grey
+     * ink (rgb 34,34,34), Lato body, Royal-Blue accent.
+     */
+    private static CvTheme defaultTheme() {
+        return new CvTheme(
+                new Color(34, 34, 34),
+                new Color(34, 34, 34),
+                new Color(34, 34, 34),
+                new Color(40, 90, 200),
+                FontName.PT_SERIF,
+                FontName.LATO,
+                22,
+                9.5,
+                8.6,
+                4,
+                Margin.top(2),
+                0);
     }
 
     private record ContactPart(String text, DocumentLinkOptions linkOptions) {

@@ -26,10 +26,8 @@ import java.util.Objects;
 
 /**
  * Conventional "blue banner" resume composer modernised under the v1.5
- * cinematic stack: a {@link CvTheme}-driven body type, every accent strip
- * declared via {@code accentTop} / {@code accentBottom}, and each section
- * banner emitted as a single {@code softPanel}-backed section instead of
- * the original {@code addLine + addSection + addLine} triplet.
+ * cinematic stack: a {@link CvTheme}-driven body type and each section
+ * title drawn as the classic thin rule + blue strip + thin rule motif.
  *
  * <p>Mirrors the popular Word resume look where every module title sits
  * inside a soft blue strip. Body content stays on the white page; work
@@ -43,9 +41,10 @@ import java.util.Objects;
  * @author Artem Demchyshyn
  */
 public final class BlueBannerCvTemplateComposer {
-    private static final DocumentColor BANNER_BG = DocumentColor.rgb(196, 216, 234);
-    private static final DocumentColor BANNER_RULE = DocumentColor.rgb(60, 70, 90);
-    private static final DocumentColor FRAME_RULE = DocumentColor.rgb(34, 34, 34);
+    private static final double BANNER_RULE_WIDTH = 500.0;
+    private static final double BANNER_RULE_HORIZONTAL_INSET = 18.0;
+    private static final DocumentColor BANNER_BG = DocumentColor.rgb(112, 146, 190);
+    private static final DocumentColor BANNER_RULE = DocumentColor.rgb(58, 82, 118);
     private static final FontName HEADLINE_FONT = FontName.PT_SERIF;
     private static final List<String> SUMMARY_KEYS = List.of("summary", "professional summary", "profile");
     private static final List<String> EXPERIENCE_KEYS = List.of("experience", "employment", "work");
@@ -84,37 +83,41 @@ public final class BlueBannerCvTemplateComposer {
                 .name("BlueBannerRoot")
                 .spacing(4)
                 .addSection("BlueBannerHeader", section -> addHeadline(section, spec.header()))
-                // Contact line is wrapped by hairline rules above and below the
-                // pipe-delimited contact text. accentTop/Bottom replaces the
-                // original addLine + addSection + addLine triplet so the rules
-                // travel with the section across page breaks.
-                .addSection("BlueBannerContact", section -> {
-                    section.accentTop(FRAME_RULE, 0.7);
-                    section.accentBottom(FRAME_RULE, 0.7);
-                    addContactLine(section, spec.header());
-                });
+                // Reference keeps the contact row quiet: no address frame,
+                // just centered pipe-delimited contact text.
+                .addSection("BlueBannerContact", section -> addContactLine(section, spec.header()));
 
         List<CvModule> modules = orderedModules(spec);
         for (int i = 0; i < modules.size(); i++) {
             final CvModule module = modules.get(i);
             final int index = i;
-            // Each section is a softPanel-style banner with thin top/bottom
-            // accent rules. Single section instead of the original
-            // addLine + addSection + addLine triple keeps z-order stable
-            // across pagination.
+            // Reference motif: thin rule, blue strip with centred title,
+            // thin rule. These are separate primitives so the band has
+            // the same crisp silhouette as the Word-style reference.
+            addBannerRule(pageFlow, "BlueBannerRuleTop_" + index, 3, 1);
             pageFlow.addSection(
                     "BlueBannerBanner_" + index,
-                    section -> {
-                        section.accentTop(BANNER_RULE, 0.7);
-                        section.accentBottom(BANNER_RULE, 0.7);
-                        addSectionBanner(section, safe(module.title()));
-                    });
+                    section -> addSectionBanner(section, safe(module.title())));
+            addBannerRule(pageFlow, "BlueBannerRuleBottom_" + index, 1, 1);
             pageFlow.addSection(
                     "BlueBannerBody_" + index,
                     section -> addModuleBody(section, module));
         }
 
         pageFlow.build();
+    }
+
+    private void addBannerRule(PageFlowBuilder pageFlow, String name, double topMargin, double bottomMargin) {
+        pageFlow.addLine(line -> line
+                .name(name)
+                .horizontal(BANNER_RULE_WIDTH)
+                .color(BANNER_RULE)
+                .thickness(0.55)
+                .margin(new DocumentInsets(
+                        topMargin,
+                        BANNER_RULE_HORIZONTAL_INSET,
+                        bottomMargin,
+                        BANNER_RULE_HORIZONTAL_INSET)));
     }
 
     private void addHeadline(SectionBuilder section, Header header) {
@@ -161,13 +164,12 @@ public final class BlueBannerCvTemplateComposer {
         if (title == null || title.isBlank()) {
             return;
         }
-        // softPanel paints fill + uniform padding around the centred title;
-        // the accentTop/Bottom rules above the section close the banner.
-        section.softPanel(BANNER_BG, 0.0, 3.0)
+        section.fillColor(BANNER_BG)
+                .padding(new DocumentInsets(3.2, 0, 3.2, 0))
                 .margin(DocumentInsets.zero())
                 .addParagraph(paragraph -> paragraph
                         .text(spacedUpper(title))
-                        .textStyle(style(theme.bodyFont(), 7.6, DocumentTextDecoration.BOLD, ink()))
+                        .textStyle(style(theme.bodyFont(), 7.3, DocumentTextDecoration.BOLD, DocumentColor.rgb(22, 32, 48)))
                         .align(TextAlign.CENTER)
                         .margin(DocumentInsets.zero()));
     }

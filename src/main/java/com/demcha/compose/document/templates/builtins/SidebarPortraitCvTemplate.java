@@ -7,9 +7,9 @@ import com.demcha.compose.document.templates.support.cv.SidebarPortraitCvTemplat
 import com.demcha.compose.document.templates.theme.CvTheme;
 
 /**
- * Two-column resume with a portrait sidebar (photo placeholder, contact
- * icons, education and skills) on the left and the main hero, professional
- * profile, and experience timeline on the right.
+ * Two-column resume with a portrait sidebar (circular photo, contact icons,
+ * education and skills) on the left and the main hero, professional profile,
+ * and experience timeline on the right.
  *
  * <p>Modernised under v1.5 — accepts an optional {@link CvTheme}.</p>
  */

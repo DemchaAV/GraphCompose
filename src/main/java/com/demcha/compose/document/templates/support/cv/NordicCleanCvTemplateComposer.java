@@ -5,6 +5,7 @@ import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
@@ -109,7 +110,7 @@ public final class NordicCleanCvTemplateComposer {
                 .padding(new DocumentInsets(8, 10, 8, 10))
                 .fillColor(ACCENT_SOFT)
                 .accentLeft(ACCENT, 3.0)
-                .cornerRadius(4)
+                .cornerRadius(DocumentCornerRadius.right(4))
                 .addParagraph(paragraph -> paragraph
                         .text("PROFILE")
                         .textStyle(labelStyle(8.0, ACCENT))

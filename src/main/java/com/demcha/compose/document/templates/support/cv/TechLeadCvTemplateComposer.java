@@ -5,6 +5,7 @@ import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
@@ -77,7 +78,7 @@ public final class TechLeadCvTemplateComposer {
                 .spacing(5)
                 .padding(new DocumentInsets(13, 15, 13, 15))
                 .fillColor(NAVY)
-                .cornerRadius(4)
+                .cornerRadius(DocumentCornerRadius.top(4))
                 .accentBottom(GREEN, 2.5)
                 .addRow("TechLeadHeaderRow", row -> row
                         .spacing(12)
@@ -107,7 +108,7 @@ public final class TechLeadCvTemplateComposer {
                     rail.spacing(8)
                             .padding(new DocumentInsets(10, 10, 11, 10))
                             .fillColor(NAVY)
-                            .cornerRadius(4)
+                            .cornerRadius(DocumentCornerRadius.bottom(4))
                             .accentTop(GREEN, 2.0);
                     addSkills(rail, ProfessionalCvTemplateSupport.findModule(spec, "technical skills", "skills"));
                     addEducation(rail, ProfessionalCvTemplateSupport.findModule(spec, "education", "certifications"));
@@ -132,7 +133,7 @@ public final class TechLeadCvTemplateComposer {
                 .padding(new DocumentInsets(8, 10, 8, 10))
                 .fillColor(GREEN_SOFT)
                 .accentLeft(GREEN, 3.0)
-                .cornerRadius(4)
+                .cornerRadius(DocumentCornerRadius.right(4))
                 .addParagraph(paragraph -> paragraph
                         .text("ENGINEERING PROFILE")
                         .textStyle(labelStyle(8.0, GREEN))
@@ -229,7 +230,7 @@ public final class TechLeadCvTemplateComposer {
                             .padding(new DocumentInsets(6, 8, 6, 8))
                             .fillColor(WHITE)
                             .stroke(DocumentStroke.of(RULE, 0.35))
-                            .cornerRadius(3)
+                            .cornerRadius(DocumentCornerRadius.right(3))
                             .accentLeft(GREEN, 2.0);
                     addRoleHeader(card, entry);
                     if (!entry.subtitle().isBlank()) {

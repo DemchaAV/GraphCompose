@@ -1,17 +1,13 @@
 package com.demcha.compose.document.templates.support.cv;
 
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.dsl.ImageBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.image.DocumentImageData;
-import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.data.common.EmailYaml;
@@ -57,8 +53,6 @@ public final class SidebarPortraitCvTemplateComposer {
     private static final DocumentColor SIDEBAR_RULE = DocumentColor.rgb(200, 200, 200);
     private static final DocumentColor ACCENT = DocumentColor.rgb(106, 106, 106);
     private static final DocumentColor RULE = DocumentColor.rgb(178, 178, 178);
-    private static final DocumentColor PHOTO_RING = DocumentColor.rgb(208, 206, 202);
-    private static final DocumentColor PHOTO_FILL = DocumentColor.rgb(218, 216, 211);
     private static final FontName DISPLAY_FONT = FontName.CRIMSON_TEXT;
     private static final double SIDEBAR_INNER_WIDTH = 156.4;
     private static final double PHOTO_DIAMETER = 98.0;
@@ -121,7 +115,7 @@ public final class SidebarPortraitCvTemplateComposer {
 
     private void addSidebar(SectionBuilder section, CvDocumentSpec spec) {
         section.spacing(9)
-                .padding(new DocumentInsets(72, 20, 22.4, 26))
+                .padding(new DocumentInsets(54, 20, 45.45, 26))
                 .fillColor(SIDEBAR_BG);
 
         addPhotoBlock(section);
@@ -147,20 +141,14 @@ public final class SidebarPortraitCvTemplateComposer {
     }
 
     private void addPhotoBlock(SectionBuilder section) {
-        // The template ships a reference portrait and clips it through the
-        // circular shape container, so the PDF path keeps a real photo slot.
+        // The asset is already circular with transparent corners; rendering it
+        // directly avoids a grey cap around the clipped portrait.
         double sideInset = Math.max(0.0, (SIDEBAR_INNER_WIDTH - PHOTO_DIAMETER) / 2.0);
-        section.addCircle(PHOTO_DIAMETER, PHOTO_FILL, circle -> circle
-                        .name("SidebarPortraitPhoto")
-                        .clipPolicy(ClipPolicy.CLIP_PATH)
-                        .stroke(DocumentStroke.of(PHOTO_RING, 0.8))
-                        .margin(new DocumentInsets(0, sideInset, 17, sideInset))
-                        .center(new ImageBuilder()
-                                .name("SidebarPortraitPhotoImage")
-                                .source(portraitImage())
-                                .size(PHOTO_DIAMETER, PHOTO_DIAMETER)
-                                .fitMode(DocumentImageFitMode.COVER)
-                                .build()));
+        section.addImage(image -> image
+                .name("SidebarPortraitPhoto")
+                .source(portraitImage())
+                .size(PHOTO_DIAMETER, PHOTO_DIAMETER)
+                .margin(new DocumentInsets(0, sideInset, 17, sideInset)));
     }
 
     private void addContactBlock(SectionBuilder section, Header header) {
@@ -178,7 +166,7 @@ public final class SidebarPortraitCvTemplateComposer {
                     .link(contact.linkOptions())
                     .rich(rich -> {
                         if (contact.iconFile() != null) {
-                            rich.image(contactIcon(contact.iconFile()), 11.0, 11.0,
+                            rich.image(contactIcon(contact.iconFile()), 10.0, 10.0,
                                     InlineImageAlignment.CENTER, 0.0, contact.linkOptions());
                             rich.style("  ", style);
                         }

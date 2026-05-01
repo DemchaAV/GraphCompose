@@ -347,6 +347,34 @@ class CvTemplateRenderTest {
     }
 
     @Test
+    void shouldKeepBlueBannerRulesShortAndAvoidContactFrame() throws Exception {
+        try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 28, 28, 28, 28)) {
+            new BlueBannerCvTemplate().compose(document, TemplateTestSupport.canonicalCv());
+
+            List<PlacedFragment> fragments = document.layoutGraph().fragments();
+            PlacedFragment banner = fragments.stream()
+                    .filter(fragment -> fragment.path().contains("BlueBannerBanner_0"))
+                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ShapeFragmentPayload)
+                    .findFirst()
+                    .orElseThrow();
+            PlacedFragment topRule = blueBannerRule(fragments, "BlueBannerRuleTop_0");
+            PlacedFragment bottomRule = blueBannerRule(fragments, "BlueBannerRuleBottom_0");
+
+            assertThat(topRule.width()).isCloseTo(bottomRule.width(), within(0.01));
+            assertThat(topRule.x()).isCloseTo(bottomRule.x(), within(0.01));
+            assertThat(topRule.width()).isLessThan(banner.width() - 20.0);
+            assertThat(topRule.x()).isGreaterThan(banner.x());
+            assertThat(topRule.x() + topRule.width()).isLessThan(banner.x() + banner.width());
+
+            assertThat(fragments.stream()
+                    .filter(fragment -> fragment.path().contains("BlueBannerContact"))
+                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ShapeFragmentPayload)
+                    .toList())
+                    .isEmpty();
+        }
+    }
+
+    @Test
     void shouldUseFullWidthReferenceRulesInCenteredHeadlineTemplate() throws Exception {
         try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 22, 22, 22, 22)) {
             new CenteredHeadlineCvTemplate().compose(document, TemplateTestSupport.canonicalCv());
@@ -599,6 +627,14 @@ class CvTemplateRenderTest {
                 .filter(fragment -> fragment.path().contains(pathPart))
                 .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ParagraphFragmentPayload)
                 .toList();
+    }
+
+    private static PlacedFragment blueBannerRule(List<PlacedFragment> fragments, String name) {
+        return fragments.stream()
+                .filter(fragment -> fragment.path().contains(name))
+                .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.LineFragmentPayload)
+                .findFirst()
+                .orElseThrow();
     }
 
     private static void assertTransparentPngAsset(String root, String icon) throws Exception {

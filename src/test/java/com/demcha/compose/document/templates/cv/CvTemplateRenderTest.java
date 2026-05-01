@@ -2,6 +2,7 @@ package com.demcha.compose.document.templates.cv;
 
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.templates.TemplateTestSupport;
 import com.demcha.compose.document.templates.api.CvTemplate;
 import com.demcha.compose.document.templates.builtins.BlueBannerCvTemplate;
@@ -38,6 +39,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -363,6 +365,30 @@ class CvTemplateRenderTest {
     }
 
     @Test
+    void shouldSquareCornersWhereAccentRulesTouchCvPanels() throws Exception {
+        try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 20, 20, 20, 20)) {
+            new TechLeadCvTemplate().compose(document, TemplateTestSupport.canonicalCv());
+            List<PlacedFragment> fragments = document.layoutGraph().fragments();
+
+            assertShapeCornerRadius(fragments, "TechLeadHeader", DocumentCornerRadius.top(4),
+                    fragment -> fragment.width() > 400 && fragment.height() > 20);
+            assertShapeCornerRadius(fragments, "TechLeadRail", DocumentCornerRadius.bottom(4),
+                    fragment -> fragment.width() > 100 && fragment.height() > 200);
+            assertShapeCornerRadius(fragments, "TechLeadProfile", DocumentCornerRadius.right(4),
+                    fragment -> fragment.width() > 200 && fragment.height() > 20);
+            assertShapeCornerRadius(fragments, "TechLeadRoleCard", DocumentCornerRadius.right(3),
+                    fragment -> fragment.width() > 200 && fragment.height() > 20);
+        }
+
+        try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 18, 18, 18, 18)) {
+            new NordicCleanCvTemplate().compose(document, TemplateTestSupport.canonicalCv());
+
+            assertShapeCornerRadius(document.layoutGraph().fragments(), "NordicCleanProfile",
+                    DocumentCornerRadius.right(4), fragment -> fragment.width() > 400 && fragment.height() > 20);
+        }
+    }
+
+    @Test
     void shouldKeepNordicAndTechLeadContactLinksClickable() throws Exception {
         for (CvTemplate template : List.of(new NordicCleanCvTemplate(), new TechLeadCvTemplate())) {
             var cv = TemplateTestSupport.canonicalCv();
@@ -662,6 +688,19 @@ class CvTemplateRenderTest {
                 assertThat(pdf.getNumberOfPages()).isEqualTo(1);
             }
         }
+    }
+
+    private static void assertShapeCornerRadius(List<PlacedFragment> fragments,
+                                                String pathContains,
+                                                DocumentCornerRadius expected,
+                                                Predicate<PlacedFragment> geometry) {
+        assertThat(fragments.stream()
+                .filter(fragment -> fragment.path().contains(pathContains))
+                .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ShapeFragmentPayload)
+                .filter(geometry)
+                .map(fragment -> ((BuiltInNodeDefinitions.ShapeFragmentPayload) fragment.payload()).cornerRadius())
+                .toList())
+                .anySatisfy(cornerRadius -> assertThat(cornerRadius).isEqualTo(expected));
     }
 
     private static String section(String text, String start, String end) {

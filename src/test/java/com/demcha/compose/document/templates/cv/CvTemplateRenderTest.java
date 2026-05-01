@@ -382,6 +382,15 @@ class CvTemplateRenderTest {
     }
 
     @Test
+    void shouldShipSidebarPortraitContactIconsAsTransparentPngAssets() throws Exception {
+        for (String icon : List.of(
+                "phone.png", "email.png", "location.png",
+                "google.png", "linkedin.png", "github.png", "dribbble.png")) {
+            assertTransparentPngAsset("/templates/cv/sidebar-portrait/icons/", icon);
+        }
+    }
+
+    @Test
     void shouldKeepMonogramSidebarReferenceProportions() throws Exception {
         try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 0, 0, 0, 0)) {
             new MonogramSidebarCvTemplate().compose(document, TemplateTestSupport.canonicalCv());
@@ -422,6 +431,56 @@ class CvTemplateRenderTest {
                     .orElseThrow();
 
             assertThat(topOf(pageHeight, profileHeader)).isCloseTo(209.87, within(0.01));
+        }
+    }
+
+    @Test
+    void shouldKeepSidebarPortraitReferenceProportions() throws Exception {
+        try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 0, 0, 0, 0)) {
+            new SidebarPortraitCvTemplate().compose(document, TemplateTestSupport.canonicalCv());
+
+            double pageWidth = document.canvas().innerWidth();
+            double pageHeight = document.canvas().height();
+            List<PlacedFragment> fragments = document.layoutGraph().fragments();
+            PlacedFragment sidebar = fragments.stream()
+                    .filter(fragment -> fragment.path().endsWith("SidebarPortraitBodySidebar[0]"))
+                    .findFirst()
+                    .orElseThrow();
+            double sidebarWidth = sidebar.width();
+            PlacedFragment heroPanel = fragments.stream()
+                    .filter(fragment -> fragment.path().contains("SidebarPortraitHero"))
+                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ShapeFragmentPayload)
+                    .findFirst()
+                    .orElseThrow();
+            PlacedFragment photo = fragments.stream()
+                    .filter(fragment -> fragment.path().contains("SidebarPortraitPhoto"))
+                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.EllipseFragmentPayload)
+                    .findFirst()
+                    .orElseThrow();
+            BuiltInNodeDefinitions.ParagraphFragmentPayload titlePayload = fragments.stream()
+                    .filter(fragment -> fragment.path().contains("SidebarPortraitHero"))
+                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ParagraphFragmentPayload)
+                    .map(fragment -> (BuiltInNodeDefinitions.ParagraphFragmentPayload) fragment.payload())
+                    .filter(payload -> payload.lines().getFirst().text().contains("Y O U R"))
+                    .findFirst()
+                    .orElseThrow();
+            PlacedFragment profileRule = fragments.stream()
+                    .filter(fragment -> fragment.path().contains("SidebarPortraitContent"))
+                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.LineFragmentPayload)
+                    .findFirst()
+                    .orElseThrow();
+
+            assertThat(sidebar.x()).isCloseTo(0.0, within(0.01));
+            assertThat(sidebar.y()).isCloseTo(0.0, within(0.25));
+            assertThat(sidebar.width()).isCloseTo(sidebarWidth, within(0.01));
+            assertThat(sidebar.height()).isCloseTo(pageHeight, within(0.25));
+            assertThat(heroPanel.x()).isCloseTo(sidebarWidth, within(0.01));
+            assertThat(heroPanel.width()).isCloseTo(pageWidth - sidebarWidth, within(0.01));
+            assertThat(heroPanel.height()).isLessThan(105.0);
+            assertThat(photo.y() + photo.height() / 2.0)
+                    .isCloseTo(heroPanel.y() + heroPanel.height() / 2.0, within(4.0));
+            assertThat(titlePayload.lines()).hasSize(1);
+            assertThat(profileRule.x()).isCloseTo(sidebarWidth + 34.0, within(0.01));
         }
     }
 

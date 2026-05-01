@@ -2,7 +2,6 @@ package com.demcha.compose.document.templates.cv;
 
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
-import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.templates.TemplateTestSupport;
 import com.demcha.compose.document.templates.api.CvTemplate;
 import com.demcha.compose.document.templates.builtins.BlueBannerCvTemplate;
@@ -387,7 +386,7 @@ class CvTemplateRenderTest {
         for (String icon : List.of(
                 "phone.png", "email.png", "location.png",
                 "google.png", "linkedin.png", "github.png", "dribbble.png")) {
-            assertTransparentPngAsset("/templates/cv/sidebar-portrait/icons/", icon);
+            assertTransparentPngAsset("/templates/cv/sidebar-portrait/icons/", icon, 256);
         }
     }
 
@@ -401,6 +400,8 @@ class CvTemplateRenderTest {
             assertThat(image).as("sidebar portrait image").isNotNull();
             assertThat(image.getWidth()).isEqualTo(512);
             assertThat(image.getHeight()).isEqualTo(512);
+            assertThat(image.getColorModel().hasAlpha()).isTrue();
+            assertThat((image.getRGB(0, 0) >>> 24) & 0xff).as("transparent portrait corner").isZero();
         }
     }
 
@@ -468,16 +469,9 @@ class CvTemplateRenderTest {
                     .orElseThrow();
             PlacedFragment photo = fragments.stream()
                     .filter(fragment -> fragment.path().contains("SidebarPortraitPhoto"))
-                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.EllipseFragmentPayload)
-                    .findFirst()
-                    .orElseThrow();
-            PlacedFragment photoImage = fragments.stream()
-                    .filter(fragment -> fragment.path().contains("SidebarPortraitPhotoImage"))
                     .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ImageFragmentPayload)
                     .findFirst()
                     .orElseThrow();
-            BuiltInNodeDefinitions.ImageFragmentPayload photoImagePayload =
-                    (BuiltInNodeDefinitions.ImageFragmentPayload) photoImage.payload();
             BuiltInNodeDefinitions.ParagraphFragmentPayload titlePayload = fragments.stream()
                     .filter(fragment -> fragment.path().contains("SidebarPortraitHero"))
                     .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ParagraphFragmentPayload)
@@ -500,9 +494,8 @@ class CvTemplateRenderTest {
             assertThat(heroPanel.height()).isLessThan(105.0);
             assertThat(photo.y() + photo.height() / 2.0)
                     .isCloseTo(heroPanel.y() + heroPanel.height() / 2.0, within(4.0));
-            assertThat(photoImagePayload.fitMode()).isEqualTo(DocumentImageFitMode.COVER);
-            assertThat(photoImage.width()).isCloseTo(photo.width(), within(0.01));
-            assertThat(photoImage.height()).isCloseTo(photo.height(), within(0.01));
+            assertThat(photo.width()).isCloseTo(98.0, within(0.01));
+            assertThat(photo.height()).isCloseTo(98.0, within(0.01));
             assertThat(titlePayload.lines()).hasSize(1);
             assertThat(profileRule.x()).isCloseTo(sidebarWidth + 34.0, within(0.01));
         }
@@ -609,14 +602,18 @@ class CvTemplateRenderTest {
     }
 
     private static void assertTransparentPngAsset(String root, String icon) throws Exception {
+        assertTransparentPngAsset(root, icon, 64);
+    }
+
+    private static void assertTransparentPngAsset(String root, String icon, int expectedSize) throws Exception {
         try (var stream = CvTemplateRenderTest.class.getResourceAsStream(root + icon)) {
             assertThat(stream).as(icon + " resource").isNotNull();
 
             var image = ImageIO.read(stream);
 
             assertThat(image).as(icon + " image").isNotNull();
-            assertThat(image.getWidth()).as(icon + " width").isEqualTo(64);
-            assertThat(image.getHeight()).as(icon + " height").isEqualTo(64);
+            assertThat(image.getWidth()).as(icon + " width").isEqualTo(expectedSize);
+            assertThat(image.getHeight()).as(icon + " height").isEqualTo(expectedSize);
             assertThat(image.getColorModel().hasAlpha()).as(icon + " alpha channel").isTrue();
             assertThat((image.getRGB(0, 0) >>> 24) & 0xff).as(icon + " transparent corner").isZero();
         }

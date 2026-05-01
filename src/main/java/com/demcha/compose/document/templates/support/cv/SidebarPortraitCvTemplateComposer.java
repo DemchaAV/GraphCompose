@@ -1,12 +1,14 @@
 package com.demcha.compose.document.templates.support.cv;
 
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.dsl.ParagraphBuilder;
+import com.demcha.compose.document.dsl.ImageBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.image.DocumentImageData;
+import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
@@ -36,11 +38,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * Two-column resume composer with a portrait sidebar on the left and the
  * main career narrative on the right.
  *
- * <p>The sidebar carries a circular photo placeholder, contact items with
- * inline icons (reused from the timeline-minimal template), and short
- * sections for education, skills, and languages. The main column hosts the
- * large serif name, the professional profile paragraph, and the experience
- * timeline of bold position + subtitle + description + bullets.</p>
+ * <p>The sidebar carries a circular portrait, contact items with inline icons,
+ * and short sections for education, skills, and languages. The main column
+ * hosts the large serif name, the professional profile paragraph, and the
+ * experience timeline of bold position + subtitle + description + bullets.</p>
  */
 public final class SidebarPortraitCvTemplateComposer {
     // Body palette — used on the white main column.
@@ -62,8 +63,10 @@ public final class SidebarPortraitCvTemplateComposer {
     private static final double SIDEBAR_INNER_WIDTH = 156.4;
     private static final double PHOTO_DIAMETER = 98.0;
     private static final double HERO_TOP_OFFSET = 54.0;
-    private static final String CONTACT_ICON_ROOT = "/templates/cv/sidebar-portrait/icons/";
-    private static final Map<String, byte[]> CONTACT_ICON_CACHE = new ConcurrentHashMap<>();
+    private static final String TEMPLATE_ASSET_ROOT = "/templates/cv/sidebar-portrait/";
+    private static final String CONTACT_ICON_ROOT = TEMPLATE_ASSET_ROOT + "icons/";
+    private static final String PORTRAIT_FILE = "portrait.png";
+    private static final Map<String, byte[]> ASSET_CACHE = new ConcurrentHashMap<>();
     private static final List<String> EDUCATION_KEYS = List.of("education", "certifications");
     private static final List<String> SKILL_KEYS = List.of("skills", "technical skills", "key skills");
     private static final List<String> LANGUAGE_KEYS = List.of("languages", "language", "additional information", "additional");
@@ -121,7 +124,7 @@ public final class SidebarPortraitCvTemplateComposer {
                 .padding(new DocumentInsets(72, 20, 22.4, 26))
                 .fillColor(SIDEBAR_BG);
 
-        addPhotoBlock(section, spec.header());
+        addPhotoBlock(section);
         addContactBlock(section, spec.header());
 
         CvModule education = findModule(spec, EDUCATION_KEYS);
@@ -143,19 +146,20 @@ public final class SidebarPortraitCvTemplateComposer {
         }
     }
 
-    private void addPhotoBlock(SectionBuilder section, Header header) {
-        // CvDocumentSpec does not carry a portrait image yet; keep the
-        // reference-inspired circular slot with candidate initials.
+    private void addPhotoBlock(SectionBuilder section) {
+        // The template ships a reference portrait and clips it through the
+        // circular shape container, so the PDF path keeps a real photo slot.
         double sideInset = Math.max(0.0, (SIDEBAR_INNER_WIDTH - PHOTO_DIAMETER) / 2.0);
         section.addCircle(PHOTO_DIAMETER, PHOTO_FILL, circle -> circle
                         .name("SidebarPortraitPhoto")
+                        .clipPolicy(ClipPolicy.CLIP_PATH)
                         .stroke(DocumentStroke.of(PHOTO_RING, 0.8))
                         .margin(new DocumentInsets(0, sideInset, 17, sideInset))
-                        .center(new ParagraphBuilder()
-                                .name("SidebarPortraitPhotoInitials")
-                                .text(initials(name(header)))
-                                .textStyle(style(templateFont(), 24, DocumentTextDecoration.BOLD, ACCENT))
-                                .align(TextAlign.LEFT)
+                        .center(new ImageBuilder()
+                                .name("SidebarPortraitPhotoImage")
+                                .source(portraitImage())
+                                .size(PHOTO_DIAMETER, PHOTO_DIAMETER)
+                                .fitMode(DocumentImageFitMode.COVER)
                                 .build()));
     }
 
@@ -644,18 +648,25 @@ public final class SidebarPortraitCvTemplateComposer {
     }
 
     private DocumentImageData contactIcon(String iconFile) {
-        return DocumentImageData.fromBytes(CONTACT_ICON_CACHE.computeIfAbsent(iconFile,
-                SidebarPortraitCvTemplateComposer::readIconBytes));
+        return DocumentImageData.fromBytes(assetBytes(CONTACT_ICON_ROOT + iconFile));
     }
 
-    private static byte[] readIconBytes(String iconFile) {
-        try (InputStream input = SidebarPortraitCvTemplateComposer.class.getResourceAsStream(CONTACT_ICON_ROOT + iconFile)) {
+    private DocumentImageData portraitImage() {
+        return DocumentImageData.fromBytes(assetBytes(TEMPLATE_ASSET_ROOT + PORTRAIT_FILE));
+    }
+
+    private static byte[] assetBytes(String resourcePath) {
+        return ASSET_CACHE.computeIfAbsent(resourcePath, SidebarPortraitCvTemplateComposer::readAssetBytes);
+    }
+
+    private static byte[] readAssetBytes(String resourcePath) {
+        try (InputStream input = SidebarPortraitCvTemplateComposer.class.getResourceAsStream(resourcePath)) {
             if (input == null) {
-                throw new IllegalStateException("Missing sidebar portrait contact icon: " + iconFile);
+                throw new IllegalStateException("Missing sidebar portrait asset: " + resourcePath);
             }
             return input.readAllBytes();
         } catch (IOException e) {
-            throw new UncheckedIOException("Failed to read sidebar portrait contact icon: " + iconFile, e);
+            throw new UncheckedIOException("Failed to read sidebar portrait asset: " + resourcePath, e);
         }
     }
 
@@ -718,21 +729,6 @@ public final class SidebarPortraitCvTemplateComposer {
                 .replace("`", "")
                 .replace("*", "")
                 .replace("_", "");
-    }
-
-    private static String initials(String value) {
-        String clean = safe(value).trim();
-        if (clean.isBlank()) {
-            return "";
-        }
-        String[] parts = clean.split("\\s+");
-        StringBuilder builder = new StringBuilder();
-        for (String part : parts) {
-            if (!part.isBlank() && builder.length() < 2) {
-                builder.append(Character.toUpperCase(part.charAt(0)));
-            }
-        }
-        return builder.toString();
     }
 
     private static String spacedUpper(String value) {

@@ -2,6 +2,7 @@ package com.demcha.compose.document.templates.cv;
 
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.templates.TemplateTestSupport;
 import com.demcha.compose.document.templates.api.CvTemplate;
 import com.demcha.compose.document.templates.builtins.BlueBannerCvTemplate;
@@ -391,6 +392,19 @@ class CvTemplateRenderTest {
     }
 
     @Test
+    void shouldShipSidebarPortraitReferencePortraitAsset() throws Exception {
+        try (var stream = CvTemplateRenderTest.class.getResourceAsStream("/templates/cv/sidebar-portrait/portrait.png")) {
+            assertThat(stream).as("sidebar portrait resource").isNotNull();
+
+            var image = ImageIO.read(stream);
+
+            assertThat(image).as("sidebar portrait image").isNotNull();
+            assertThat(image.getWidth()).isEqualTo(512);
+            assertThat(image.getHeight()).isEqualTo(512);
+        }
+    }
+
+    @Test
     void shouldKeepMonogramSidebarReferenceProportions() throws Exception {
         try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 0, 0, 0, 0)) {
             new MonogramSidebarCvTemplate().compose(document, TemplateTestSupport.canonicalCv());
@@ -457,6 +471,13 @@ class CvTemplateRenderTest {
                     .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.EllipseFragmentPayload)
                     .findFirst()
                     .orElseThrow();
+            PlacedFragment photoImage = fragments.stream()
+                    .filter(fragment -> fragment.path().contains("SidebarPortraitPhotoImage"))
+                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ImageFragmentPayload)
+                    .findFirst()
+                    .orElseThrow();
+            BuiltInNodeDefinitions.ImageFragmentPayload photoImagePayload =
+                    (BuiltInNodeDefinitions.ImageFragmentPayload) photoImage.payload();
             BuiltInNodeDefinitions.ParagraphFragmentPayload titlePayload = fragments.stream()
                     .filter(fragment -> fragment.path().contains("SidebarPortraitHero"))
                     .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ParagraphFragmentPayload)
@@ -479,6 +500,9 @@ class CvTemplateRenderTest {
             assertThat(heroPanel.height()).isLessThan(105.0);
             assertThat(photo.y() + photo.height() / 2.0)
                     .isCloseTo(heroPanel.y() + heroPanel.height() / 2.0, within(4.0));
+            assertThat(photoImagePayload.fitMode()).isEqualTo(DocumentImageFitMode.COVER);
+            assertThat(photoImage.width()).isCloseTo(photo.width(), within(0.01));
+            assertThat(photoImage.height()).isCloseTo(photo.height(), within(0.01));
             assertThat(titlePayload.lines()).hasSize(1);
             assertThat(profileRule.x()).isCloseTo(sidebarWidth + 34.0, within(0.01));
         }

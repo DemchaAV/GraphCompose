@@ -347,6 +347,43 @@ class CvTemplateRenderTest {
     }
 
     @Test
+    void shouldRenderNordicAndTechLeadAsDistinctProfessionalLayouts() throws Exception {
+        assertProfessionalCvLayout(
+                new NordicCleanCvTemplate(),
+                18,
+                "NordicCleanRoot",
+                "NordicCleanRail",
+                "NordicCleanProfile");
+        assertProfessionalCvLayout(
+                new TechLeadCvTemplate(),
+                20,
+                "TechLeadRoot",
+                "TechLeadRail",
+                "TechLeadHeader");
+    }
+
+    @Test
+    void shouldKeepNordicAndTechLeadContactLinksClickable() throws Exception {
+        for (CvTemplate template : List.of(new NordicCleanCvTemplate(), new TechLeadCvTemplate())) {
+            var cv = TemplateTestSupport.canonicalCv();
+            byte[] pdfBytes;
+
+            try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 20, 20, 20, 20)) {
+                template.compose(document, cv);
+                pdfBytes = document.toPdfBytes();
+            }
+
+            try (PDDocument pdf = Loader.loadPDF(pdfBytes)) {
+                List<String> uris = linkAnnotationUris(pdf);
+
+                assertThat(uris).anySatisfy(uri -> assertThat(uri).startsWith("mailto:" + cv.header().getEmail().getTo()));
+                assertThat(uris).contains(cv.header().getLinkedIn().getLinkUrl().getUrl());
+                assertThat(uris).contains(cv.header().getGitHub().getLinkUrl().getUrl());
+            }
+        }
+    }
+
+    @Test
     void shouldKeepBlueBannerRulesShortAndAvoidContactFrame() throws Exception {
         try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 28, 28, 28, 28)) {
             new BlueBannerCvTemplate().compose(document, TemplateTestSupport.canonicalCv());
@@ -590,7 +627,7 @@ class CvTemplateRenderTest {
 
     private static Stream<Arguments> modernCvTemplates() {
         return Stream.of(
-                Arguments.of(new NordicCleanCvTemplate(), 18, 2),
+                Arguments.of(new NordicCleanCvTemplate(), 18, 1),
                 Arguments.of(new CompactMonoCvTemplate(), 20, 1),
                 Arguments.of(new ProductLeaderCvTemplate(), 18, 1),
                 Arguments.of(new ClassicSerifCvTemplate(), 20, 2),
@@ -601,6 +638,30 @@ class CvTemplateRenderTest {
                 Arguments.of(new SidebarPortraitCvTemplate(), 0, 1),
                 Arguments.of(new BlueBannerCvTemplate(), 28, 1),
                 Arguments.of(new MonogramSidebarCvTemplate(), 0, 1));
+    }
+
+    private static void assertProfessionalCvLayout(CvTemplate template,
+                                                   float margin,
+                                                   String rootPath,
+                                                   String structurePath,
+                                                   String featurePath) throws Exception {
+        try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, margin, margin, margin, margin)) {
+            template.compose(document, TemplateTestSupport.canonicalCv());
+
+            List<String> paths = document.layoutGraph().fragments().stream()
+                    .map(PlacedFragment::path)
+                    .toList();
+
+            assertThat(paths).anyMatch(path -> path.contains(rootPath));
+            assertThat(paths).anyMatch(path -> path.contains(structurePath));
+            assertThat(paths).anyMatch(path -> path.contains(featurePath));
+            assertThat(paths).noneMatch(path -> path.contains("PanelCv"));
+
+            byte[] pdfBytes = document.toPdfBytes();
+            try (PDDocument pdf = Loader.loadPDF(pdfBytes)) {
+                assertThat(pdf.getNumberOfPages()).isEqualTo(1);
+            }
+        }
     }
 
     private static String section(String text, String start, String end) {

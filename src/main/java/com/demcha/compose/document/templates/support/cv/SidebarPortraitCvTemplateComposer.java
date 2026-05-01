@@ -1,6 +1,7 @@
 package com.demcha.compose.document.templates.support.cv;
 
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentLinkOptions;
@@ -21,7 +22,6 @@ import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.font.FontName;
 
 import java.awt.Color;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -50,29 +50,31 @@ public final class SidebarPortraitCvTemplateComposer {
     // Light sidebar palette — soft grey banner that bleeds to the page
     // edges, dark text on the grey column, and discreet hairline rules
     // shared with the main section headers.
-    private static final DocumentColor SIDEBAR_BG = DocumentColor.rgb(242, 242, 242);
+    private static final DocumentColor SIDEBAR_BG = DocumentColor.rgb(241, 240, 237);
     private static final DocumentColor SIDEBAR_INK = INK;
     private static final DocumentColor SIDEBAR_SOFT = SOFT;
     private static final DocumentColor SIDEBAR_RULE = DocumentColor.rgb(200, 200, 200);
-    private static final DocumentColor ACCENT = DocumentColor.rgb(150, 150, 150);
-    private static final DocumentColor RULE = DocumentColor.rgb(190, 190, 190);
-    private static final DocumentColor PHOTO_RING = DocumentColor.rgb(212, 212, 212);
-    private static final DocumentColor PHOTO_FILL = DocumentColor.rgb(224, 224, 224);
-    private static final FontName HEADLINE_FONT = FontName.CRIMSON_TEXT;
-    private static final FontName SUBHEAD_FONT = FontName.PT_SERIF;
-    private static final String CONTACT_ICON_ROOT = "/templates/cv/timeline-minimal/icons/";
+    private static final DocumentColor ACCENT = DocumentColor.rgb(106, 106, 106);
+    private static final DocumentColor RULE = DocumentColor.rgb(178, 178, 178);
+    private static final DocumentColor PHOTO_RING = DocumentColor.rgb(208, 206, 202);
+    private static final DocumentColor PHOTO_FILL = DocumentColor.rgb(218, 216, 211);
+    private static final FontName DISPLAY_FONT = FontName.CRIMSON_TEXT;
+    private static final double SIDEBAR_INNER_WIDTH = 156.4;
+    private static final double PHOTO_DIAMETER = 98.0;
+    private static final double HERO_TOP_OFFSET = 54.0;
+    private static final String CONTACT_ICON_ROOT = "/templates/cv/sidebar-portrait/icons/";
     private static final Map<String, byte[]> CONTACT_ICON_CACHE = new ConcurrentHashMap<>();
     private static final List<String> EDUCATION_KEYS = List.of("education", "certifications");
     private static final List<String> SKILL_KEYS = List.of("skills", "technical skills", "key skills");
-    private static final List<String> LANGUAGE_KEYS = List.of("languages", "language");
+    private static final List<String> LANGUAGE_KEYS = List.of("languages", "language", "additional information", "additional");
     private static final List<String> SUMMARY_KEYS = List.of("profile", "professional profile", "summary", "professional summary", "overview");
     private static final List<String> EXPERIENCE_KEYS = List.of("experience", "employment", "work", "professional experience");
     private static final int EDUCATION_LIMIT = 2;
     private static final int SKILL_LIMIT = 5;
     private static final int LANGUAGE_LIMIT = 3;
     private static final int EXPERIENCE_LIMIT = 2;
-    private static final int DESCRIPTION_MAX_CHARS = 200;
-    private static final int PROFILE_MAX_CHARS = 320;
+    private static final int DESCRIPTION_MAX_CHARS = 260;
+    private static final int PROFILE_MAX_CHARS = 430;
 
     private final CvTheme theme;
 
@@ -101,11 +103,13 @@ public final class SidebarPortraitCvTemplateComposer {
                 .padding(DocumentInsets.zero())
                 .addRow("SidebarPortraitBodyRow", row -> row
                         .spacing(0)
-                        .weights(0.32, 0.68)
+                        .weights(0.34, 0.66)
                         .addSection("SidebarPortraitBodySidebar",
                                 section -> addSidebar(section, spec))
                         .addSection("SidebarPortraitBodyMain",
                                 section -> {
+                                    section.spacing(0)
+                                            .padding(DocumentInsets.zero());
                                     addNameBlock(section, spec.header());
                                     addMain(section, spec);
                                 }))
@@ -113,40 +117,46 @@ public final class SidebarPortraitCvTemplateComposer {
     }
 
     private void addSidebar(SectionBuilder section, CvDocumentSpec spec) {
-        section.spacing(8)
-                .padding(new DocumentInsets(18, 15, 250, 20))
+        section.spacing(9)
+                .padding(new DocumentInsets(72, 20, 22.4, 26))
                 .fillColor(SIDEBAR_BG);
 
-        addPhotoBlock(section);
+        addPhotoBlock(section, spec.header());
         addContactBlock(section, spec.header());
 
         CvModule education = findModule(spec, EDUCATION_KEYS);
         if (education != null) {
-            addSidebarHeader(section, education.title());
+            addSidebarHeader(section, "Education");
             addEducationEntries(section, education);
         }
 
         CvModule skills = findModule(spec, SKILL_KEYS);
         if (skills != null) {
-            addSidebarHeader(section, skills.title());
+            addSidebarHeader(section, "Key Skills");
             addSkillsList(section, skills);
         }
 
         CvModule languages = findModule(spec, LANGUAGE_KEYS);
         if (languages != null) {
-            addSidebarHeader(section, languages.title());
+            addSidebarHeader(section, "Languages");
             addLanguageList(section, languages);
         }
     }
 
-    private void addPhotoBlock(SectionBuilder section) {
+    private void addPhotoBlock(SectionBuilder section, Header header) {
         // CvDocumentSpec does not carry a portrait image yet; keep the
-        // reference silhouette as a circular drop-in slot.
-        section.addCircle(74, circle -> circle
+        // reference-inspired circular slot with candidate initials.
+        double sideInset = Math.max(0.0, (SIDEBAR_INNER_WIDTH - PHOTO_DIAMETER) / 2.0);
+        section.addCircle(PHOTO_DIAMETER, PHOTO_FILL, circle -> circle
                         .name("SidebarPortraitPhoto")
                         .stroke(DocumentStroke.of(PHOTO_RING, 0.8))
-                        .fillColor(PHOTO_FILL)
-                        .margin(new DocumentInsets(0, 0, 12, 0)));
+                        .margin(new DocumentInsets(0, sideInset, 17, sideInset))
+                        .center(new ParagraphBuilder()
+                                .name("SidebarPortraitPhotoInitials")
+                                .text(initials(name(header)))
+                                .textStyle(style(templateFont(), 24, DocumentTextDecoration.BOLD, ACCENT))
+                                .align(TextAlign.LEFT)
+                                .build()));
     }
 
     private void addContactBlock(SectionBuilder section, Header header) {
@@ -154,17 +164,17 @@ public final class SidebarPortraitCvTemplateComposer {
         if (lines.isEmpty()) {
             return;
         }
-        DocumentTextStyle style = style(theme.bodyFont(), 7.6, DocumentTextDecoration.DEFAULT, SIDEBAR_INK);
+        DocumentTextStyle style = style(templateFont(), 8.3, DocumentTextDecoration.DEFAULT, SIDEBAR_INK);
         for (ContactLine contact : lines) {
             section.addParagraph(paragraph -> paragraph
                     .textStyle(style)
                     .align(TextAlign.LEFT)
-                    .lineSpacing(1.2)
-                    .margin(DocumentInsets.zero())
+                    .lineSpacing(1.35)
+                    .margin(DocumentInsets.top(3))
                     .link(contact.linkOptions())
                     .rich(rich -> {
                         if (contact.iconFile() != null) {
-                            rich.image(contactIcon(contact.iconFile()), 8.5, 8.5,
+                            rich.image(contactIcon(contact.iconFile()), 11.0, 11.0,
                                     InlineImageAlignment.CENTER, 0.0, contact.linkOptions());
                             rich.style("  ", style);
                         }
@@ -182,13 +192,13 @@ public final class SidebarPortraitCvTemplateComposer {
             return;
         }
         section.addLine(line -> line
-                .horizontal(40)
+                .horizontal(50)
                 .color(ACCENT)
-                .thickness(1.0)
-                .margin(new DocumentInsets(9, 0, 4, 0)));
+                .thickness(0.75)
+                .margin(new DocumentInsets(12, 0, 7, 0)));
         section.addParagraph(paragraph -> paragraph
-                .text(title.toUpperCase(Locale.ROOT))
-                .textStyle(style(theme.bodyFont(), 9.3, DocumentTextDecoration.BOLD, SIDEBAR_INK))
+                .text(spacedUpper(title))
+                .textStyle(style(templateFont(), 10.8, DocumentTextDecoration.BOLD, SIDEBAR_INK))
                 .align(TextAlign.LEFT)
                 .margin(DocumentInsets.zero()));
     }
@@ -197,15 +207,15 @@ public final class SidebarPortraitCvTemplateComposer {
         List<String> items = moduleItems(module);
         for (String item : items.subList(0, Math.min(EDUCATION_LIMIT, items.size()))) {
             EducationEntry entry = parseEducationEntry(item);
-            DocumentTextStyle headingStyle = style(theme.bodyFont(), 7.6, DocumentTextDecoration.BOLD, SIDEBAR_INK);
-            DocumentTextStyle metaStyle = style(theme.bodyFont(), 7.1, DocumentTextDecoration.DEFAULT, SIDEBAR_SOFT);
+            DocumentTextStyle headingStyle = style(templateFont(), 8.4, DocumentTextDecoration.BOLD, SIDEBAR_INK);
+            DocumentTextStyle metaStyle = style(templateFont(), 7.8, DocumentTextDecoration.DEFAULT, SIDEBAR_SOFT);
 
             section.addParagraph(paragraph -> paragraph
                     .text(stripBasicMarkdown(entry.heading()).toUpperCase(Locale.ROOT))
                     .textStyle(headingStyle)
                     .align(TextAlign.LEFT)
                     .lineSpacing(1.2)
-                    .margin(DocumentInsets.top(4)));
+                    .margin(DocumentInsets.top(6)));
             if (!entry.subtitle().isBlank()) {
                 section.addParagraph(paragraph -> paragraph
                         .text(stripBasicMarkdown(entry.subtitle()))
@@ -226,7 +236,7 @@ public final class SidebarPortraitCvTemplateComposer {
     }
 
     private void addSkillsList(SectionBuilder section, CvModule module) {
-        DocumentTextStyle skillStyle = style(theme.bodyFont(), 7.25, DocumentTextDecoration.DEFAULT, SIDEBAR_INK);
+        DocumentTextStyle skillStyle = style(templateFont(), 8.0, DocumentTextDecoration.DEFAULT, SIDEBAR_INK);
         List<String> items = moduleItems(module);
         for (String item : items.subList(0, Math.min(SKILL_LIMIT, items.size()))) {
             String text = firstClauseOf(item);
@@ -236,16 +246,16 @@ public final class SidebarPortraitCvTemplateComposer {
             section.addParagraph(paragraph -> paragraph
                     .text(stripBasicMarkdown(text))
                     .textStyle(skillStyle)
-                    .lineSpacing(1.3)
+                    .lineSpacing(1.35)
                     .align(TextAlign.LEFT)
-                    .margin(DocumentInsets.top(2)));
+                    .margin(DocumentInsets.top(3)));
         }
     }
 
     private void addLanguageList(SectionBuilder section, CvModule module) {
-        DocumentTextStyle nameStyle = style(theme.bodyFont(), 7.35, DocumentTextDecoration.BOLD, SIDEBAR_INK);
-        DocumentTextStyle metaStyle = style(theme.bodyFont(), 7.15, DocumentTextDecoration.DEFAULT, SIDEBAR_SOFT);
-        List<String> items = moduleItems(module);
+        DocumentTextStyle nameStyle = style(templateFont(), 8.1, DocumentTextDecoration.BOLD, SIDEBAR_INK);
+        DocumentTextStyle metaStyle = style(templateFont(), 7.9, DocumentTextDecoration.DEFAULT, SIDEBAR_SOFT);
+        List<String> items = languageItems(module);
         for (String item : items.subList(0, Math.min(LANGUAGE_LIMIT, items.size()))) {
             String text = stripBasicMarkdown(item);
             int pipe = text.indexOf('|');
@@ -257,7 +267,7 @@ public final class SidebarPortraitCvTemplateComposer {
             section.addParagraph(paragraph -> paragraph
                     .textStyle(nameStyle)
                     .align(TextAlign.LEFT)
-                    .margin(DocumentInsets.top(2))
+                    .margin(DocumentInsets.top(4))
                     .rich(rich -> {
                         rich.style(name.toUpperCase(Locale.ROOT), nameStyle);
                         if (!level.isBlank()) {
@@ -268,48 +278,45 @@ public final class SidebarPortraitCvTemplateComposer {
     }
 
     private void addMain(SectionBuilder section, CvDocumentSpec spec) {
-        section.spacing(10)
-                .padding(new DocumentInsets(0, 24, 24, 24));
+        section.addSection("SidebarPortraitContent", content -> {
+            content.spacing(10)
+                    .padding(new DocumentInsets(24, 34, 24, 34));
 
-        CvModule profile = findModule(spec, SUMMARY_KEYS);
-        if (profile != null) {
-            addMainSectionHeader(section, profile.title());
-            addProfileBody(section, profile);
-        }
+            CvModule profile = findModule(spec, SUMMARY_KEYS);
+            if (profile != null) {
+                addMainSectionHeader(content, "Professional Profile");
+                addProfileBody(content, profile);
+            }
 
-        CvModule experience = findModule(spec, EXPERIENCE_KEYS);
-        if (experience != null) {
-            addMainSectionHeader(section, experience.title());
-            addExperienceEntries(section, experience);
-        }
+            CvModule experience = findModule(spec, EXPERIENCE_KEYS);
+            if (experience != null) {
+                addMainSectionHeader(content, "Experience");
+                addExperienceEntries(content, experience);
+            }
 
-        // Generic modules (projects, additional info) intentionally fall
-        // outside this fixed-row layout: the page is sized for headline +
-        // profile + experience, and overflowing the row would surface as
-        // an "atomic node too large" error since side-bar rows do not
-        // paginate. Callers wanting projects in this template should fold
-        // them into the experience module ahead of time.
+            // Keep the row atomic and one-page: projects/additional modules can
+            // be folded into experience by callers that need them here.
+        });
     }
 
     private void addNameBlock(SectionBuilder section, Header header) {
         String name = name(header);
-        section.spacing(6)
-                .padding(new DocumentInsets(30, 24, 22, 24))
+        section.addSection("SidebarPortraitHero", hero -> hero
+                .fillColor(SIDEBAR_BG)
+                .padding(new DocumentInsets(19, 34, 15, 34))
+                .spacing(5)
+                .margin(DocumentInsets.top(HERO_TOP_OFFSET))
                 .addParagraph(paragraph -> paragraph
                         .text(name)
-                        .textStyle(style(HEADLINE_FONT, 31, DocumentTextDecoration.DEFAULT, SIDEBAR_INK))
-                        .align(TextAlign.LEFT)
+                        .textStyle(style(DISPLAY_FONT, 38, DocumentTextDecoration.BOLD, SIDEBAR_INK))
+                        .align(TextAlign.CENTER)
+                        .lineSpacing(1.0)
                         .margin(DocumentInsets.zero()))
-                .addLine(line -> line
-                        .horizontal(80)
-                        .color(ACCENT)
-                        .thickness(1.2)
-                        .margin(new DocumentInsets(2, 0, 2, 0)))
                 .addParagraph(paragraph -> paragraph
                         .text(spacedUpper("Your Professional Title Goes Here"))
-                        .textStyle(style(theme.bodyFont(), 7.5, DocumentTextDecoration.BOLD, ACCENT))
-                        .align(TextAlign.LEFT)
-                        .margin(DocumentInsets.zero()));
+                        .textStyle(style(templateFont(), 8.4, DocumentTextDecoration.DEFAULT, INK))
+                        .align(TextAlign.CENTER)
+                        .margin(DocumentInsets.zero())));
     }
 
     private void addMainSectionHeader(SectionBuilder section, String title) {
@@ -317,19 +324,19 @@ public final class SidebarPortraitCvTemplateComposer {
             return;
         }
         section.addParagraph(paragraph -> paragraph
-                .text(title.toUpperCase(Locale.ROOT))
-                .textStyle(style(theme.bodyFont(), 9.6, DocumentTextDecoration.BOLD, INK))
+                .text(spacedUpper(title))
+                .textStyle(style(templateFont(), 12.0, DocumentTextDecoration.BOLD, INK))
                 .align(TextAlign.LEFT)
                 .margin(DocumentInsets.top(8)));
         section.addLine(line -> line
-                .horizontal(320)
+                .horizontal(346)
                 .color(RULE)
-                .thickness(0.6)
-                .margin(new DocumentInsets(2, 0, 2, 0)));
+                .thickness(0.55)
+                .margin(new DocumentInsets(2, 0, 7, 0)));
     }
 
     private void addProfileBody(SectionBuilder section, CvModule module) {
-        DocumentTextStyle bodyStyle = style(theme.bodyFont(), 7.9, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle bodyStyle = style(templateFont(), 9.4, DocumentTextDecoration.DEFAULT, INK);
         for (CvModule.BodyBlock block : module.bodyBlocks()) {
             if (block.kind() == CvModule.BodyKind.PARAGRAPH) {
                 String text = safe(block.text()).trim();
@@ -339,7 +346,7 @@ public final class SidebarPortraitCvTemplateComposer {
                 section.addParagraph(paragraph -> paragraph
                         .text(excerpt(text, PROFILE_MAX_CHARS))
                         .textStyle(bodyStyle)
-                        .lineSpacing(1.5)
+                        .lineSpacing(1.35)
                         .align(TextAlign.LEFT)
                         .margin(DocumentInsets.top(2)));
             } else if (block.kind() == CvModule.BodyKind.LIST) {
@@ -351,7 +358,7 @@ public final class SidebarPortraitCvTemplateComposer {
                 section.addParagraph(paragraph -> paragraph
                         .text(excerpt(joined, PROFILE_MAX_CHARS))
                         .textStyle(bodyStyle)
-                        .lineSpacing(1.5)
+                        .lineSpacing(1.35)
                         .align(TextAlign.LEFT)
                         .margin(DocumentInsets.top(2)));
             }
@@ -359,9 +366,9 @@ public final class SidebarPortraitCvTemplateComposer {
     }
 
     private void addExperienceEntries(SectionBuilder section, CvModule module) {
-        DocumentTextStyle positionStyle = style(theme.bodyFont(), 8.4, DocumentTextDecoration.BOLD, INK);
-        DocumentTextStyle subtitleStyle = style(theme.bodyFont(), 7.6, DocumentTextDecoration.DEFAULT, MUTED);
-        DocumentTextStyle bodyStyle = style(theme.bodyFont(), 7.75, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle positionStyle = style(templateFont(), 10.0, DocumentTextDecoration.BOLD, INK);
+        DocumentTextStyle subtitleStyle = style(templateFont(), 9.2, DocumentTextDecoration.DEFAULT, INK);
+        DocumentTextStyle bodyStyle = style(templateFont(), 9.0, DocumentTextDecoration.DEFAULT, INK);
 
         List<String> items = moduleItems(module);
         for (String item : items.subList(0, Math.min(EXPERIENCE_LIMIT, items.size()))) {
@@ -370,7 +377,7 @@ public final class SidebarPortraitCvTemplateComposer {
                     .text(stripBasicMarkdown(entry.position()).toUpperCase(Locale.ROOT))
                     .textStyle(positionStyle)
                     .align(TextAlign.LEFT)
-                    .margin(DocumentInsets.top(6)));
+                    .margin(DocumentInsets.top(8)));
             if (!entry.subtitle().isBlank()) {
                 section.addParagraph(paragraph -> paragraph
                         .text(stripBasicMarkdown(entry.subtitle()))
@@ -382,7 +389,7 @@ public final class SidebarPortraitCvTemplateComposer {
                 section.addParagraph(paragraph -> paragraph
                         .text(excerpt(entry.description(), DESCRIPTION_MAX_CHARS))
                         .textStyle(bodyStyle)
-                        .lineSpacing(1.4)
+                        .lineSpacing(1.35)
                         .align(TextAlign.LEFT)
                         .margin(DocumentInsets.top(2)));
             }
@@ -470,6 +477,24 @@ public final class SidebarPortraitCvTemplateComposer {
                 if (!text.isBlank()) {
                     result.add(text);
                 }
+            }
+        }
+        return result;
+    }
+
+    private List<String> languageItems(CvModule module) {
+        List<String> result = new ArrayList<>();
+        for (String item : moduleItems(module)) {
+            String text = stripBasicMarkdown(item).trim();
+            if (text.toLowerCase(Locale.ROOT).startsWith("languages:")) {
+                String languages = text.substring("languages:".length()).trim();
+                for (String part : languages.split(",")) {
+                    if (!part.isBlank()) {
+                        result.add(part.trim());
+                    }
+                }
+            } else if (text.contains("|")) {
+                result.add(text);
             }
         }
         return result;
@@ -695,6 +720,21 @@ public final class SidebarPortraitCvTemplateComposer {
                 .replace("_", "");
     }
 
+    private static String initials(String value) {
+        String clean = safe(value).trim();
+        if (clean.isBlank()) {
+            return "";
+        }
+        String[] parts = clean.split("\\s+");
+        StringBuilder builder = new StringBuilder();
+        for (String part : parts) {
+            if (!part.isBlank() && builder.length() < 2) {
+                builder.append(Character.toUpperCase(part.charAt(0)));
+            }
+        }
+        return builder.toString();
+    }
+
     private static String spacedUpper(String value) {
         String upper = safe(value).toUpperCase(Locale.ROOT);
         StringBuilder builder = new StringBuilder();
@@ -732,13 +772,17 @@ public final class SidebarPortraitCvTemplateComposer {
                 .build();
     }
 
+    private FontName templateFont() {
+        return theme.bodyFont();
+    }
+
     private static CvTheme defaultTheme() {
         return new CvTheme(
                 new Color(34, 34, 34),
                 new Color(150, 150, 150),
                 new Color(34, 34, 34),
                 new Color(150, 150, 150),
-                FontName.CRIMSON_TEXT,
+                FontName.LATO,
                 FontName.LATO,
                 28,
                 10.0,

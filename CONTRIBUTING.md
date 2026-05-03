@@ -20,6 +20,50 @@ They explain the current public surface, the engine/template split, and the reco
 - Run a focused documentation sanity check with `./mvnw -B -ntp "-Dtest=DocumentationExamplesTest" test`.
 - Run the local benchmark wrapper with `powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1` when you change performance-sensitive code or benchmark tooling.
 
+## How to propose changes
+
+GraphCompose follows a fork &rarr; feature branch &rarr; pull request flow. External contributions land on `develop` (the working branch); `main` is the public stable line and only accepts release merges from `develop`.
+
+### Contribution flow
+
+1. **Fork** the repository on GitHub and clone your fork locally.
+2. **Create a feature branch** from `develop`:
+   ```bash
+   git checkout develop
+   git pull --ff-only origin develop
+   git checkout -b feature/short-description
+   ```
+   Use `feature/...` for new functionality, `fix/...` for bug fixes, and `docs/...` for documentation-only changes.
+3. **Commit small, focused changes.** Each commit message should describe the *why*, not just the *what*. Recent commits on `develop` (`Prepare v1.5.0 release`, `Align public docs with the canonical surface`) are reasonable length and structure templates.
+4. **Run the validation gate locally** before opening a PR:
+   ```bash
+   ./mvnw -B -ntp clean verify
+   ```
+   This runs the architecture-and-documentation guards plus the full test suite. The same gate runs in CI on every PR.
+5. **Push** your feature branch to your fork and open a pull request against `develop` on `DemchaAV/GraphCompose`. Reference any related issue and describe the user-visible change in the PR body.
+6. **CI runs automatically.** The required status checks are `Architecture and Documentation Guards` and `Build and run tests`. The PR cannot merge into a protected branch until both are green.
+7. **Address review comments**, then squash any fixup commits before merge. The maintainer merges through GitHub once review is complete.
+
+### Branch protection
+
+`main` is protected:
+
+- pull request required (no direct pushes)
+- both CI status checks must pass before merge
+- linear history is enforced (squash or rebase, no merge commits)
+- force pushes and branch deletion are disabled
+
+`develop` accepts feature-branch PRs from contributors. The maintainer may push directly to `develop` for solo-driven release prep work; external contributions still flow through PRs.
+
+### Release flow
+
+1. Release prep lands on `develop` &mdash; version bump in `pom.xml` + `examples/pom.xml`, fresh CHANGELOG entry, README install snippets refreshed, migration guide updated when needed.
+2. The maintainer merges `develop` into `main` via pull request &mdash; this is the only path a commit takes to reach `main`.
+3. The maintainer tags the release on `main` (`vX.Y.Z`) and creates the GitHub release with notes copied from the matching `CHANGELOG.md` section.
+4. JitPack picks up the new tag automatically; the `Installation` block in the README is the consumer-facing source of truth.
+
+See [docs/release-process.md](./docs/release-process.md) for the full checklist.
+
 ## Repository map
 
 - `src/main/java/com/demcha/compose/document/api`, `document.dsl`, `document.node`, `document.style`, `document.table`, `document.image`, `document.output`, `document.exceptions`, `document.snapshot`

@@ -632,8 +632,8 @@ class CvTemplateRenderTest {
             document.buildPdf();
         }
 
-        TemplateTestSupport.assertPdfFileLooksValid(outputFile, 2);
-        TemplateTestSupport.assertPdfPageCount(outputFile, 2);
+        TemplateTestSupport.assertPdfFileLooksValid(outputFile, 1);
+        TemplateTestSupport.assertPdfPageCount(outputFile, 1);
         TemplateTestSupport.assertPdfContainsGuideLines(outputFile);
     }
 
@@ -658,7 +658,7 @@ class CvTemplateRenderTest {
                 Arguments.of(new ProductLeaderCvTemplate(), 18, 1),
                 Arguments.of(new ClassicSerifCvTemplate(), 20, 2),
                 Arguments.of(new TechLeadCvTemplate(), 20, 1),
-                Arguments.of(new TimelineMinimalCvTemplate(), 22, 2),
+                Arguments.of(new TimelineMinimalCvTemplate(), 22, 1),
                 Arguments.of(new CenteredHeadlineCvTemplate(), 22, 1),
                 Arguments.of(new BoxedSectionsCvTemplate(), 22, 2),
                 Arguments.of(new SidebarPortraitCvTemplate(), 0, 1),

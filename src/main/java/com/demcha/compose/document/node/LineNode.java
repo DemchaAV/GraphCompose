@@ -2,6 +2,7 @@ package com.demcha.compose.document.node;
 
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTransform;
 
 /**
  * Atomic semantic line drawn inside a fixed-size box.
@@ -18,6 +19,8 @@ import com.demcha.compose.document.style.DocumentStroke;
  * @param bookmarkOptions optional node-level bookmark metadata
  * @param padding inner padding
  * @param margin outer margin
+ * @param transform render-time affine transform; defaults to
+ *                  {@link DocumentTransform#NONE}.
  * @author Artem Demchyshyn
  */
 public record LineNode(
@@ -32,7 +35,8 @@ public record LineNode(
         DocumentLinkOptions linkOptions,
         DocumentBookmarkOptions bookmarkOptions,
         DocumentInsets padding,
-        DocumentInsets margin
+        DocumentInsets margin,
+        DocumentTransform transform
 ) implements DocumentNode {
     /**
      * Normalizes spacing defaults and validates explicit line geometry.
@@ -41,12 +45,32 @@ public record LineNode(
         name = name == null ? "" : name;
         padding = padding == null ? DocumentInsets.zero() : padding;
         margin = margin == null ? DocumentInsets.zero() : margin;
+        transform = transform == null ? DocumentTransform.NONE : transform;
         requireNonNegativeFinite(width, "width");
         requireNonNegativeFinite(height, "height");
         requireFinite(startX, "startX");
         requireFinite(startY, "startY");
         requireFinite(endX, "endX");
         requireFinite(endY, "endY");
+    }
+
+    /**
+     * Backward-compatible convenience constructor without transform — defaults
+     * to {@link DocumentTransform#NONE}.
+     */
+    public LineNode(String name,
+                    double width,
+                    double height,
+                    double startX,
+                    double startY,
+                    double endX,
+                    double endY,
+                    DocumentStroke stroke,
+                    DocumentLinkOptions linkOptions,
+                    DocumentBookmarkOptions bookmarkOptions,
+                    DocumentInsets padding,
+                    DocumentInsets margin) {
+        this(name, width, height, startX, startY, endX, endY, stroke, linkOptions, bookmarkOptions, padding, margin, DocumentTransform.NONE);
     }
 
     private static void requireNonNegativeFinite(double value, String name) {

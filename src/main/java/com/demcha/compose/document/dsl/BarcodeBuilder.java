@@ -26,6 +26,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.style.DocumentTransform;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
@@ -42,7 +43,7 @@ import java.util.function.Consumer;
 /**
  * Builder for semantic barcode and QR-code nodes.
  */
-public final class BarcodeBuilder {
+public final class BarcodeBuilder implements Transformable<BarcodeBuilder> {
     private String name = "";
     private String content = "";
     private DocumentBarcodeType type = DocumentBarcodeType.QR_CODE;
@@ -55,6 +56,7 @@ public final class BarcodeBuilder {
     private DocumentBookmarkOptions bookmarkOptions;
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
+    private DocumentTransform transform = DocumentTransform.NONE;
 
     /**
      * Creates a barcode builder.
@@ -289,6 +291,21 @@ public final class BarcodeBuilder {
     }
 
     /**
+     * Sets the render-time affine transform (rotation around the placement
+     * centre and/or scaling).
+     */
+    @Override
+    public BarcodeBuilder transform(DocumentTransform transform) {
+        this.transform = transform == null ? DocumentTransform.NONE : transform;
+        return this;
+    }
+
+    @Override
+    public DocumentTransform currentTransform() {
+        return transform;
+    }
+
+    /**
      * Builds the semantic barcode node.
      *
      * @return barcode node
@@ -301,7 +318,7 @@ public final class BarcodeBuilder {
                 .background(background)
                 .quietZoneMargin(quietZoneMargin)
                 .build();
-        return new BarcodeNode(name, options, width, height, linkOptions, bookmarkOptions, padding, margin);
+        return new BarcodeNode(name, options, width, height, linkOptions, bookmarkOptions, padding, margin, transform);
     }
 }
 

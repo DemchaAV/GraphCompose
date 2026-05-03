@@ -783,7 +783,7 @@ public final class BuiltInNodeDefinitions {
             if (width <= EPS || height <= EPS) {
                 return List.of();
             }
-            return List.of(new LayoutFragment(
+            LayoutFragment leaf = new LayoutFragment(
                     placement.path(),
                     0,
                     node.padding().left(),
@@ -796,7 +796,8 @@ public final class BuiltInNodeDefinitions {
                             node.cornerRadius(),
                             node.linkOptions(),
                             node.bookmarkOptions(),
-                            null)));
+                            null));
+            return wrapAtomicWithTransform(leaf, placement, node.transform());
         }
     }
 
@@ -850,7 +851,7 @@ public final class BuiltInNodeDefinitions {
             if (width <= EPS && height <= EPS) {
                 return List.of();
             }
-            return List.of(new LayoutFragment(
+            LayoutFragment leaf = new LayoutFragment(
                     placement.path(),
                     0,
                     node.padding().left(),
@@ -864,7 +865,8 @@ public final class BuiltInNodeDefinitions {
                             node.endX(),
                             node.endY(),
                             node.linkOptions(),
-                            node.bookmarkOptions())));
+                            node.bookmarkOptions()));
+            return wrapAtomicWithTransform(leaf, placement, node.transform());
         }
     }
 
@@ -894,7 +896,7 @@ public final class BuiltInNodeDefinitions {
             if (width <= EPS || height <= EPS) {
                 return List.of();
             }
-            return List.of(new LayoutFragment(
+            LayoutFragment leaf = new LayoutFragment(
                     placement.path(),
                     0,
                     node.padding().left(),
@@ -905,7 +907,8 @@ public final class BuiltInNodeDefinitions {
                             node.fillColor() == null ? null : node.fillColor().color(),
                             toStroke(node.stroke()),
                             node.linkOptions(),
-                            node.bookmarkOptions())));
+                            node.bookmarkOptions()));
+            return wrapAtomicWithTransform(leaf, placement, node.transform());
         }
     }
 
@@ -936,7 +939,7 @@ public final class BuiltInNodeDefinitions {
             if (width <= EPS || height <= EPS) {
                 return List.of();
             }
-            return List.of(new LayoutFragment(
+            LayoutFragment leaf = new LayoutFragment(
                     placement.path(),
                     0,
                     node.padding().left(),
@@ -947,7 +950,8 @@ public final class BuiltInNodeDefinitions {
                             toImageData(node.imageData()),
                             node.fitMode(),
                             node.linkOptions(),
-                            node.bookmarkOptions())));
+                            node.bookmarkOptions()));
+            return wrapAtomicWithTransform(leaf, placement, node.transform());
         }
     }
 
@@ -977,14 +981,15 @@ public final class BuiltInNodeDefinitions {
             if (width <= EPS || height <= EPS) {
                 return List.of();
             }
-            return List.of(new LayoutFragment(
+            LayoutFragment leaf = new LayoutFragment(
                     placement.path(),
                     0,
                     node.padding().left(),
                     node.padding().bottom(),
                     width,
                     height,
-                    new BarcodeFragmentPayload(toBarcodeData(node.barcodeOptions()), node.linkOptions(), node.bookmarkOptions())));
+                    new BarcodeFragmentPayload(toBarcodeData(node.barcodeOptions()), node.linkOptions(), node.bookmarkOptions()));
+            return wrapAtomicWithTransform(leaf, placement, node.transform());
         }
     }
 
@@ -1590,6 +1595,51 @@ public final class BuiltInNodeDefinitions {
     }
 
     // HELPERS
+
+    /**
+     * Wraps an atomic leaf fragment with transform-begin / transform-end
+     * markers when the supplied {@link com.demcha.compose.document.style.DocumentTransform}
+     * is non-identity. Identity transforms short-circuit and return the
+     * leaf alone, so default callers (no rotate/scale) keep emitting a
+     * single fragment exactly as before — guaranteeing layout-snapshot
+     * stability for every existing test fixture. The wrap mirrors
+     * {@code ShapeContainerDefinition}: open with begin, render the leaf
+     * payload, close with end. Sub-fragment indices 0/1/2 establish render
+     * order; {@code ownerPath} pairs the begin/end so the architecture-
+     * guard tests can verify balance.
+     */
+    private static List<LayoutFragment> wrapAtomicWithTransform(LayoutFragment leaf,
+                                                                FragmentPlacement placement,
+                                                                com.demcha.compose.document.style.DocumentTransform transform) {
+        if (transform == null || transform.isIdentity()) {
+            return List.of(leaf);
+        }
+        return List.of(
+                new LayoutFragment(
+                        placement.path(),
+                        0,
+                        leaf.localX(),
+                        leaf.localY(),
+                        leaf.width(),
+                        leaf.height(),
+                        new TransformBeginPayload(transform, placement.path())),
+                new LayoutFragment(
+                        placement.path(),
+                        1,
+                        leaf.localX(),
+                        leaf.localY(),
+                        leaf.width(),
+                        leaf.height(),
+                        leaf.payload()),
+                new LayoutFragment(
+                        placement.path(),
+                        2,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        new TransformEndPayload(placement.path())));
+    }
 
     private static List<LayoutFragment> emitDecorationFragment(Color fillColor,
                                                                Stroke stroke,

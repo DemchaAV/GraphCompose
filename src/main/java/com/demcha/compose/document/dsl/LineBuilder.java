@@ -6,13 +6,14 @@ import com.demcha.compose.document.node.LineNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTransform;
 
 /**
  * Builder for fixed-size semantic line nodes.
  *
  * @author Artem Demchyshyn
  */
-public final class LineBuilder {
+public final class LineBuilder implements Transformable<LineBuilder> {
     private String name = "";
     private double width = 1.0;
     private double height = 1.0;
@@ -25,6 +26,7 @@ public final class LineBuilder {
     private DocumentBookmarkOptions bookmarkOptions;
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
+    private DocumentTransform transform = DocumentTransform.NONE;
 
     /**
      * Creates a line builder.
@@ -242,6 +244,21 @@ public final class LineBuilder {
     }
 
     /**
+     * Sets the render-time affine transform (rotation around the placement
+     * centre and/or scaling).
+     */
+    @Override
+    public LineBuilder transform(DocumentTransform transform) {
+        this.transform = transform == null ? DocumentTransform.NONE : transform;
+        return this;
+    }
+
+    @Override
+    public DocumentTransform currentTransform() {
+        return transform;
+    }
+
+    /**
      * Builds the line node.
      *
      * @return line node
@@ -263,7 +280,8 @@ public final class LineBuilder {
                 linkOptions,
                 bookmarkOptions,
                 padding,
-                margin);
+                margin,
+                transform);
     }
 
     private boolean isHorizontalLine() {

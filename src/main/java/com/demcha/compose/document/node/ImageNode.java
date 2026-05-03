@@ -3,6 +3,7 @@ package com.demcha.compose.document.node;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTransform;
 
 import java.util.Objects;
 
@@ -19,6 +20,8 @@ import java.util.Objects;
  * @param bookmarkOptions optional node-level bookmark metadata
  * @param padding inner padding
  * @param margin outer margin
+ * @param transform render-time affine transform; defaults to
+ *                  {@link DocumentTransform#NONE}.
  *
  * @author Artem Demchyshyn
  */
@@ -32,7 +35,8 @@ public record ImageNode(
         DocumentLinkOptions linkOptions,
         DocumentBookmarkOptions bookmarkOptions,
         DocumentInsets padding,
-        DocumentInsets margin
+        DocumentInsets margin,
+        DocumentTransform transform
 ) implements DocumentNode {
     /**
      * Normalizes spacing defaults and validates explicit image dimensions.
@@ -43,6 +47,7 @@ public record ImageNode(
         padding = padding == null ? DocumentInsets.zero() : padding;
         margin = margin == null ? DocumentInsets.zero() : margin;
         fitMode = fitMode == null ? DocumentImageFitMode.STRETCH : fitMode;
+        transform = transform == null ? DocumentTransform.NONE : transform;
         if (width != null && (width <= 0 || Double.isNaN(width) || Double.isInfinite(width))) {
             throw new IllegalArgumentException("width must be finite and positive when set: " + width);
         }
@@ -56,13 +61,6 @@ public record ImageNode(
 
     /**
      * Backward-compatible convenience constructor without link/bookmark metadata.
-     *
-     * @param name node name used in snapshots and layout graph paths
-     * @param imageData semantic image payload
-     * @param width optional target width
-     * @param height optional target height
-     * @param padding inner padding
-     * @param margin outer margin
      */
     public ImageNode(String name,
                      DocumentImageData imageData,
@@ -70,20 +68,11 @@ public record ImageNode(
                      Double height,
                      DocumentInsets padding,
                      DocumentInsets margin) {
-        this(name, imageData, width, height, null, DocumentImageFitMode.STRETCH, null, null, padding, margin);
+        this(name, imageData, width, height, null, DocumentImageFitMode.STRETCH, null, null, padding, margin, DocumentTransform.NONE);
     }
 
     /**
      * Backward-compatible convenience constructor without image fit options.
-     *
-     * @param name node name used in snapshots and layout graph paths
-     * @param imageData semantic image payload
-     * @param width optional target width
-     * @param height optional target height
-     * @param linkOptions optional node-level link metadata
-     * @param bookmarkOptions optional node-level bookmark metadata
-     * @param padding inner padding
-     * @param margin outer margin
      */
     public ImageNode(String name,
                      DocumentImageData imageData,
@@ -93,7 +82,24 @@ public record ImageNode(
                      DocumentBookmarkOptions bookmarkOptions,
                      DocumentInsets padding,
                      DocumentInsets margin) {
-        this(name, imageData, width, height, null, DocumentImageFitMode.STRETCH, linkOptions, bookmarkOptions, padding, margin);
+        this(name, imageData, width, height, null, DocumentImageFitMode.STRETCH, linkOptions, bookmarkOptions, padding, margin, DocumentTransform.NONE);
+    }
+
+    /**
+     * Backward-compatible convenience constructor without transform — defaults
+     * to {@link DocumentTransform#NONE}.
+     */
+    public ImageNode(String name,
+                     DocumentImageData imageData,
+                     Double width,
+                     Double height,
+                     Double scale,
+                     DocumentImageFitMode fitMode,
+                     DocumentLinkOptions linkOptions,
+                     DocumentBookmarkOptions bookmarkOptions,
+                     DocumentInsets padding,
+                     DocumentInsets margin) {
+        this(name, imageData, width, height, scale, fitMode, linkOptions, bookmarkOptions, padding, margin, DocumentTransform.NONE);
     }
 }
 

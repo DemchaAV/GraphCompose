@@ -6,6 +6,7 @@ import com.demcha.compose.document.node.EllipseNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTransform;
 
 import java.awt.Color;
 
@@ -14,7 +15,7 @@ import java.awt.Color;
  *
  * @author Artem Demchyshyn
  */
-public final class EllipseBuilder {
+public final class EllipseBuilder implements Transformable<EllipseBuilder> {
     private String name = "";
     private double width;
     private double height;
@@ -24,6 +25,7 @@ public final class EllipseBuilder {
     private DocumentBookmarkOptions bookmarkOptions;
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
+    private DocumentTransform transform = DocumentTransform.NONE;
 
     /**
      * Creates an ellipse builder.
@@ -167,11 +169,26 @@ public final class EllipseBuilder {
     }
 
     /**
+     * Sets the render-time affine transform (rotation around the placement
+     * centre and/or scaling).
+     */
+    @Override
+    public EllipseBuilder transform(DocumentTransform transform) {
+        this.transform = transform == null ? DocumentTransform.NONE : transform;
+        return this;
+    }
+
+    @Override
+    public DocumentTransform currentTransform() {
+        return transform;
+    }
+
+    /**
      * Builds the ellipse node.
      *
      * @return ellipse node
      */
     public EllipseNode build() {
-        return new EllipseNode(name, width, height, fillColor, stroke, linkOptions, bookmarkOptions, padding, margin);
+        return new EllipseNode(name, width, height, fillColor, stroke, linkOptions, bookmarkOptions, padding, margin, transform);
     }
 }

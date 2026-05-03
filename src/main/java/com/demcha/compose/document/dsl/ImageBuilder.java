@@ -6,6 +6,7 @@ import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.ImageNode;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTransform;
 
 import java.nio.file.Path;
 import java.util.Objects;
@@ -15,7 +16,7 @@ import java.util.Objects;
  *
  * @author Artem Demchyshyn
  */
-public final class ImageBuilder {
+public final class ImageBuilder implements Transformable<ImageBuilder> {
     private String name = "";
     private DocumentImageData imageData;
     private Double width;
@@ -26,6 +27,7 @@ public final class ImageBuilder {
     private DocumentBookmarkOptions bookmarkOptions;
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
+    private DocumentTransform transform = DocumentTransform.NONE;
 
     /**
      * Creates an image builder.
@@ -201,6 +203,21 @@ public final class ImageBuilder {
     }
 
     /**
+     * Sets the render-time affine transform (rotation around the placement
+     * centre and/or scaling).
+     */
+    @Override
+    public ImageBuilder transform(DocumentTransform transform) {
+        this.transform = transform == null ? DocumentTransform.NONE : transform;
+        return this;
+    }
+
+    @Override
+    public DocumentTransform currentTransform() {
+        return transform;
+    }
+
+    /**
      * Builds the semantic image node.
      *
      * @return image node
@@ -216,6 +233,7 @@ public final class ImageBuilder {
                 linkOptions,
                 bookmarkOptions,
                 padding,
-                margin);
+                margin,
+                transform);
     }
 }

@@ -46,6 +46,13 @@ build/
 /Test.pdf
 /AGENTS.md
 
+### Editor / OS scratch files ###
+*.tmp
+*.bak
+*~
+*.swp
+*.swo
+
 ### Local-only / not for the public repo ###
 # Claude Code working directory (settings, worktrees, transcripts).
 .claude/

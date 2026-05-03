@@ -1,1254 +1,356 @@
 # Changelog
 
-## v1.5.0-beta.19 (in progress) - CV templates modernised to v1.5 idioms
+All notable changes to GraphCompose are documented here. Versions
+follow semantic versioning; release dates are ISO 8601.
 
-All six previously-hardcoded CV variants now opt into the v1.5
-cinematic stack: each takes an optional `CvTheme` parameter, every
-`addLine + addSection + addLine` triplet around section banners
-collapses into a single section with `accentTop` / `accentBottom`,
-and where stroke-free `padding + fillColor` cascades existed they
-become `softPanel(...)` calls.
+## v1.5.0 — Unreleased
 
-### Public API
+### Headline — "intuitive"
 
-- `BlueBannerCvTemplate(CvTheme)`, `BoxedSectionsCvTemplate(CvTheme)`,
-  `CenteredHeadlineCvTemplate(CvTheme)`,
-  `MonogramSidebarCvTemplate(CvTheme)`,
-  `SidebarPortraitCvTemplate(CvTheme)`,
-  `TimelineMinimalCvTemplate(CvTheme)` — every modernised CV template
-  now exposes a no-arg constructor (default theme matches the legacy
-  visual identity) plus a `CvTheme`-accepting overload. Pair with
-  `CvTheme.fromBusinessTheme(BusinessTheme)` (ADR 0002) to drive a
-  single `BusinessTheme` through both business documents and the CV
-  gallery.
+v1.5 keeps every v1.4 cinematic primitive and turns the canonical
+authoring surface into a polished, theme-driven experience. Three new
+visual feature pillars — **shape-as-container with clip path**,
+**transforms (rotate / scale) + per-layer z-index**, and **advanced
+tables** — combine with **two new cinematic templates**
+(`InvoiceTemplateV2`, `ProposalTemplateV2`), a **`CvTheme` ↔
+`BusinessTheme` bridge** (ADR 0002), six **modernised CV templates**,
+and a documentation pass that covers every new primitive with a recipe
+and a runnable example. Test count grew from 525 (v1.4.1) to 675 — an
+extra +150 tests across the cinematic, transform, table, theme-bridge,
+streaming, snapshot, CV-render, and Transformable-leaf-builder surfaces.
 
-### Composer-level modernisation
+v1.5 is **fully source-compatible with v1.4**. Every public record
+that grew a new field ships back-compat constructors that default the
+new value, so v1.4 callers compile and behave unchanged. See
+[`docs/migration-v1-4-to-v1-5.md`](docs/migration-v1-4-to-v1-5.md).
 
-For each migrated composer:
+### Public API — visual primitives
 
-- **`accentBottom` / `accentTop` replace `addLine(horizontal=innerWidth)`**
-  separators around contact lines, headlines, and between-module
-  rules. The accent strips travel with the section across page
-  breaks instead of floating in the page flow.
-- **`softPanel(color, 0, padding)`** replaces the
-  `padding(asymmetric) + fillColor(banner)` cascade in section
-  banners. Padding becomes uniform; v1.5 idiom is single-call.
-- **`theme.bodyFont()`** routes the body / contact / work-entry
-  text through the supplied `CvTheme` instead of hardcoded font
-  constants. Headline fonts and palette identities stay
-  template-owned (a "Blue Banner" still has the blue banner; a
-  "Sidebar Portrait" still has its grey sidebar).
-- **CvTheme defaults per template** — each composer ships a private
-  `defaultTheme()` that exactly matches the legacy hand-tuned
-  palette + font choices, so default-constructed instances render
-  identical-page-count PDFs to the previous code.
+- **Shape-as-container.** New `addCircle(diameter, fill, inside)`,
+  `addEllipse(w, h, fill, inside)`, and `addContainer(...)` shortcuts
+  on `AbstractFlowBuilder` build a `ShapeContainerNode` whose bounding
+  box is dictated by a `ShapeOutline` (`Rectangle`,
+  `RoundedRectangle`, `Ellipse`, plus a `circle(diameter)` factory).
+  Children are clipped via the new `ClipPolicy` enum
+  (`CLIP_PATH` — default — / `CLIP_BOUNDS` / `OVERFLOW_VISIBLE`). The
+  PDF backend honours every clip policy via graphics-state
+  `saveGraphicsState() + clip(path)` markers; the DOCX backend renders
+  layers inline without the outline frame and logs a one-time
+  `docx.export.shape-container-fallback` capability warning.
+  `ShapeContainerBuilder` exposes the same nine-point alignment
+  vocabulary as `LayerStackBuilder` plus `position(node, dx, dy,
+  anchor)` for screen-space nudges.
+- **Transforms (rotate / scale).** New
+  `com.demcha.compose.document.style.DocumentTransform` value type
+  with `rotate(deg)`, `scale(uniform)`, `scale(sx, sy)` factories
+  plus `withRotation(...)` / `withScale(...)` axis-preserving copies
+  and an `isIdentity()` helper. New
+  `com.demcha.compose.document.dsl.Transformable<T>` mixin exposes
+  `transform(...)`, `rotate(...)`, `scale(...)` as default methods.
+  Every shape-shaped builder opts in: `ShapeContainerBuilder`,
+  `ShapeBuilder`, `LineBuilder`, `EllipseBuilder`, `ImageBuilder`,
+  `BarcodeBuilder`. `rotate(...).scale(...)` chain naturally and pivot
+  around the placement centre. The PDF backend issues
+  `saveGraphicsState() + cm(matrix)` around each transformed leaf
+  (rotation is negated on the way out so the engine's clockwise
+  convention matches PDF native counter-clockwise). Identity
+  transforms short-circuit and emit no markers, so layout snapshots
+  for default-configured nodes are byte-identical to v1.4.
+- **Per-layer z-index.** `LayerStackNode.Layer` and shape-container
+  layers gain `int zIndex` (default `0`).
+  `LayerStackBuilder.layer(node, align, zIndex)` /
+  `position(node, dx, dy, align, zIndex)` and the matching
+  `ShapeContainerBuilder` overloads let a layer declared earlier draw
+  on top of layers declared later. The layout compiler stable-sorts
+  layers before render; equal `zIndex` keeps source order.
 
-### Tests
+### Public API — advanced tables
 
-- 647/647 green. The render test
-  (`CvTemplateRenderTest#shouldRenderModernCvTemplateVariantsToFile`)
-  pins each variant to its expected page count
-  (BlueBanner 2, BoxedSections 2, CenteredHeadline 1,
-  MonogramSidebar 1, SidebarPortrait 1, TimelineMinimal 2) — all
-  page counts preserved through the migration.
-- The `LayoutSnapshotAssertions` baselines under
-  `src/test/resources/layout-snapshots/canonical-templates/cv/`
-  continue to cover `template_cv_1_*`, `editorial_blue_*`, and
-  `executive_slate_*` — the six newly-modernised composers were
-  never snapshot-pinned, so this migration introduces no baseline
-  drift.
+- `DocumentTableCell.rowSpan(int)` mirrors the existing
+  `colSpan(int)`. Cells compose freely:
+  `DocumentTableCell.text("Tall").colSpan(2).rowSpan(3)`. The layout
+  layer skips occupied grid positions when interpreting subsequent
+  source rows; misalignments (missing cell, extra source cell,
+  overlapping span, span exceeding remaining rows) raise precise
+  diagnostics.
+- `TableBuilder.zebra(odd, even)` paints alternating row fills.
+  Available as `(DocumentTableStyle, DocumentTableStyle)` and as a
+  `(DocumentColor, DocumentColor)` overload. Either argument may be
+  `null` to skip painting that parity. Existing entries in the
+  `rowStyles` map (`headerStyle(...)`, `rowStyle(idx, ...)`,
+  `totalRow(...)`) always win over zebra alternation.
+- `TableBuilder.totalRow(values)` adds a totals row with a default
+  bold-on-grey-blue style; `totalRow(style, values)` is the
+  customisable form.
+- `TableBuilder.repeatHeader()` / `repeatHeader(rowCount)` re-emits
+  the configured leading rows at the top of every continuation page
+  when a table paginates. Default is `0` so existing tables paginate
+  exactly as before.
+- `TableBuilder.headerRow(values)` is a naming alias for
+  `header(...)` so authors writing
+  `headerRow(...).row(...).totalRow(...)` keep a parallel vocabulary.
+
+### Public API — templates and themes
+
+- **`InvoiceTemplateV2`** is the cinematic invoice counterpart to
+  `InvoiceTemplateV1`. Two constructors: the no-arg form picks
+  `BusinessTheme.modern()`, the one-arg
+  `InvoiceTemplateV2(BusinessTheme)` accepts any theme. Hero
+  `softPanel` carrying invoice number / dates / inline rich-text
+  status, a two-column row with `From` / `Bill to` parties, themed
+  line-items table with `headerStyle` / zebra / totals /
+  `repeatHeader()`, and a footer row with `accentLeft` strips on the
+  notes / payment-terms columns.
+- **`ProposalTemplateV2`** is the proposal counterpart, sharing the
+  same `BusinessTheme`-driven composition: hero panel rounded only on
+  the right (via the new `DocumentCornerRadius.right(...)` form),
+  themed executive-summary panel, sender / recipient parties row,
+  sections rendered through `theme.text().h2()` headings, a timeline
+  table (Phase / Duration / Details), and a pricing table (Item /
+  Description / Amount) with `repeatHeader()`, zebra rows, and a
+  total-pricing row anchored at the bottom via `totalRow(...)`.
+- **`CvTheme.fromBusinessTheme(BusinessTheme)`** static factory
+  derives a CV theme from a business theme (ADR 0002). The bridge
+  maps palette / text-scale slots into `primaryColor` /
+  `secondaryColor` / `bodyColor` / `accentColor` / `headerFont` /
+  `bodyFont` / font sizes; CV-specific layout tokens (`spacing`,
+  `moduleMargin`, `spacingModuleName`) keep the existing CV defaults.
+  The ten existing CV templates and `CvTemplateV1` continue to work
+  unchanged.
+- **Six CV templates modernised** to v1.5 idioms:
+  `BlueBannerCvTemplate`, `BoxedSectionsCvTemplate`,
+  `CenteredHeadlineCvTemplate`, `MonogramSidebarCvTemplate`,
+  `SidebarPortraitCvTemplate`, `TimelineMinimalCvTemplate`. Each
+  gains a `(CvTheme)` constructor and keeps a no-arg one whose
+  default theme matches the legacy palette/font choices, so default-
+  constructed instances render identical-page-count PDFs to v1.4.
+  `accentTop` / `accentBottom` replace the old
+  `addLine(horizontal=innerWidth)` separators around section banners,
+  and `softPanel(...)` collapses the
+  `padding(asymmetric) + fillColor(...)` cascade.
+- `InvoiceTemplateV1` and `ProposalTemplateV1` continue to ship
+  side-by-side. Authors who want the cinematic look opt in by
+  switching the type.
+
+### Public API — DSL ergonomics (Phase A)
+
+- `LayerStackBuilder` exposes nine alignment shortcuts (`topLeft`,
+  `topCenter`, `topRight`, `centerLeft`, `center`, `centerRight`,
+  `bottomLeft`, `bottomCenter`, `bottomRight`) on top of `back` /
+  `center` so authors do not need to remember the full `LayerAlign`
+  enum.
+- `LayerStackBuilder.position(node, offsetX, offsetY, anchor)` nudges
+  a layer from its anchor by an on-screen offset (positive `offsetX`
+  = right, positive `offsetY` = down).
+- `AbstractFlowBuilder` gains five convenience overloads on top of
+  the v1.4 surface: `addShape(w, h, fill)`,
+  `addEllipse(diameter, fill)`, `addEllipse(w, h, fill)`,
+  `addCircle(diameter, fill)`, `addImage(data, w, h)`.
+- `RowBuilder.spacing(double)` is the canonical name for horizontal
+  child spacing; `RowBuilder.gap(double)` becomes a deprecated alias
+  (`@Deprecated(since = "1.5.0")`) that delegates to `spacing(...)`.
+- `RowBuilder.add(node)` validates the child type **eagerly** and
+  raises `IllegalArgumentException` from the offending call site
+  instead of deferring to `build()` and raising
+  `IllegalStateException` later.
+- `DocumentDsl.richText(Consumer<RichText>)` is a new callback entry
+  point that builds a `RichText` run sequence in one fluent call.
+
+### Architecture
+
+- New `NodeDefinition.emitOverlayFragments(...)` hook complements the
+  existing `emitFragments(...)`. It exists for paired begin/end
+  marker pairs (clip-begin/end, transform-begin/end) so the layout
+  compiler can emit a single flat fragment sequence
+  `[transform-begin → outline → clip-begin → … layers … → clip-end →
+  transform-end]` in one pass. Most node types inherit the empty
+  default and need no changes.
+- New marker payloads on `BuiltInNodeDefinitions`:
+  `ShapeClipBeginPayload` / `ShapeClipEndPayload` (carry outline +
+  policy + owner path), `TransformBeginPayload` /
+  `TransformEndPayload`. PDF render handlers ship alongside:
+  `PdfShapeClipBeginRenderHandler`, `PdfShapeClipEndRenderHandler`,
+  `PdfTransformBeginRenderHandler`, `PdfTransformEndRenderHandler`,
+  registered in `PdfFixedLayoutBackend.defaultHandlers()`.
+- New `PaginationPolicy.SHAPE_ATOMIC` distinguishes shape-clipped
+  atomicity from bbox-only `ATOMIC` for snapshots and render
+  handlers. Oversized containers raise the existing
+  `AtomicNodeTooLargeException` with the offending semantic name.
+- `TableLayoutSupport` replaces the per-row `colSpan`-sum check with
+  a unified cell-grid pre-pass driven by an occupancy mask. The new
+  `buildLogicalRows(node, columnCount)` walks columns left-to-right,
+  skipping positions covered by a prior row's spanning cell.
+  `LogicalCell` carries the cell's full
+  `(startRow, startColumn, colSpan, rowSpan, content)` extent.
+  Row-height resolution is two-pass: single-row first, then spanning
+  cells distribute deficit equally across covered rows.
+- `TableResolvedCell` gains `double yOffset` (eighth field). Spanning
+  cells use a NEGATIVE offset equal to the cumulative height of the
+  rows below the starting row, so the cell's rectangle extends
+  downward through the rows it merges instead of upward beyond the
+  starting row. Both PDF row-render handlers honour the offset.
+- `TableNode` gains a 12th field `int repeatedHeaderRowCount`
+  (default `0`). `TableDefinition.split` honours the field: the tail
+  slice is built with `prependHeaderRowCount = headerCount` so each
+  continuation carries the header at the top.
+- `LayoutCompiler.compileStackedLayer` and the STACK branch of
+  `compileNodeInFixedSlot` compute a stable `iterationOrder`
+  permutation via `stableZIndexOrder(...)` before iterating the
+  layer list. Stable on ties → equal `zIndex` keeps source order.
+- `BuiltInNodeDefinitions.PreparedStackLayout` gains a fourth list
+  `zIndices: List<Integer>` populated by both
+  `ShapeContainerDefinition` and `LayerStackDefinition`.
+- New ADR `docs/adr/0001-shape-as-container.md` records the
+  "separate semantic type" decision (rejected: a clip flag on the
+  existing `LayerStackNode` record).
+- New ADR `docs/adr/0002-theme-unification.md` records the phased
+  approach to `CvTheme` ↔ `BusinessTheme` (rejected: a common
+  `Theme` interface that loses CV-specific vocabulary).
+
+### Examples
+
+The runnable `examples/` module gains six new showcases hooked into
+`GenerateAllExamples`:
+
+- `ShapeContainerExample` — circles, ellipses, rounded cards with
+  clipped layers (`ClipPolicy.CLIP_PATH`).
+- `TransformsExample` — three-circle rotate row (15° / -15° / no
+  tilt), three-card scale row (`scale(0.7)`, `scale(1.1, 0.85)`,
+  identity), and a z-swap stage where a RED square declared first
+  with `zIndex = 10` draws on top of a TEAL square declared second.
+- `TableAdvancedExample` — hero callout, a 3-row spanning side note,
+  and a 36-row invoice with bold-on-teal repeating header, zebra
+  body rows, and a gold totals row.
+- `CustomBusinessThemeExample` — a hand-built "Studio Emerald"
+  `BusinessTheme` constructed from raw `DocumentPalette` /
+  `SpacingScale` / `TextScale` / `TablePreset` records (no factory
+  shortcut), feeding `InvoiceTemplateV2`.
+- `HttpStreamingExample` — `writePdf(OutputStream)` for Servlet /
+  S3 / GCS adopters. Includes a Spring Boot `@RestController`
+  snippet in the Javadoc and a `TrackingOutputStream` test that
+  proves the caller's stream is **not** closed.
+- `LayoutSnapshotRegressionExample` — full
+  compose → `layoutSnapshot()` → `LayoutSnapshotJson.toJson(...)`
+  workflow with a copy-and-paste baseline / drift-report pattern,
+  plus a pointer to the production
+  `LayoutSnapshotAssertions.assertMatches(document, "...")` helper
+  for in-test usage.
 
 ### Documentation
 
-- `docs/template-authoring.md` already documents the idioms applied
-  here (golden patterns 6.1, 6.4, 6.5; anti-patterns 1, 2, 5). New
-  CV templates should follow those same patterns from day one.
+- README quick-start refreshed to open with a
+  `BusinessTheme.modern()`-driven hero (`softPanel` + `accentLeft` +
+  `theme.text().h1()`); the plain-text DSL stays underneath for
+  callers who do not want a theme.
+- New "v1.5 sample renders (PDF)" section links six committed PDFs
+  under `assets/readme/v1.5/` so the README works without running
+  anything.
+- New [`docs/template-authoring.md`](docs/template-authoring.md) (~620
+  lines) — the canonical cheatsheet covering builder hierarchy, a
+  per-builder one-liner cheatsheet, a style-types reference, the
+  theme system in 60 seconds, six golden patterns, ten anti-patterns,
+  a 40-line `StatusReportTemplateV1` skeleton, and a "where to look
+  next" map.
+- New recipes:
+  - [`docs/recipes/shape-as-container.md`](docs/recipes/shape-as-container.md)
+  - [`docs/recipes/transforms.md`](docs/recipes/transforms.md)
+  - [`docs/recipes/tables.md`](docs/recipes/tables.md) (row span /
+    zebra / totals / repeating header)
+  - [`docs/recipes/shapes.md`](docs/recipes/shapes.md) (filled cards,
+    dividers, spacers, lines, ellipses, image fit, soft panels)
+  - [`docs/recipes/extending.md`](docs/recipes/extending.md)
+- [`docs/recipes.md`](docs/recipes.md) is now a pure index linking
+  every topic-focused recipe page plus four 5-line "common DSL
+  primitives" starter snippets.
+- [`docs/canonical-legacy-parity.md`](docs/canonical-legacy-parity.md)
+  gains a "Shape-as-container (clipped)" row recording the DOCX
+  fallback rule.
+- New [`docs/migration-v1-4-to-v1-5.md`](docs/migration-v1-4-to-v1-5.md)
+  — fresh migration guide for v1.4 consumers.
 
-### Out of scope
+### Performance — v1.5 baseline
 
-- The Phase E template work the user is owning (`InvoiceTemplateV2`
-  `colSpan` totals + `RichText` status, `ProposalTemplateV2` hero
-  `LayerStack`) remains as before — this CV migration runs in
-  parallel and does not block release.
-
----
-
-## v1.5.0-beta.18 (in progress) - B.10 wrap-up: v1.5 performance baseline
-
-Closes the last functional checkbox in Phase B.10. Establishes the
-v1.5 single-thread smoke baseline that future runs diff against.
-
-### Performance — `CurrentSpeedBenchmark` smoke profile (v1.5 baseline)
-
-Single-thread, 30 warmup + 100 measurement iterations per scenario,
-recorded on `develop @ 8267764` (Java 21, Windows 11). All five
-scenarios well within healthy production ranges.
+`CurrentSpeedBenchmark` smoke profile (single-thread, 30 warmup +
+100 measurement iterations per scenario) recorded on Java 21,
+Windows 11. All five scenarios are well within healthy production
+ranges.
 
 | Scenario | Avg ms | p50 ms | p95 ms | Docs/sec | Peak MB |
-|---|---|---|---|---|---|
-| `engine-simple` | 2.25 | 1.96 | 4.20 | 444.60 | 22 |
-| `invoice-template` (V1) | 13.39 | 13.12 | 17.55 | 74.67 | 182 |
-| `cv-template` (V1) | 6.94 | 6.58 | 10.18 | 144.02 | 78 |
-| `proposal-template` (V1) | 15.77 | 15.50 | 18.31 | 63.43 | 182 |
-| `feature-rich` | 36.80 | 32.06 | 35.51 | 27.18 | 94 |
+|---|---:|---:|---:|---:|---:|
+| `engine-simple`        |  2.25 |  1.96 |  4.20 | 444.60 |  22 |
+| `invoice-template` (V1) | 13.39 | 13.12 | 17.55 |  74.67 | 182 |
+| `cv-template` (V1)     |  6.94 |  6.58 | 10.18 | 144.02 |  78 |
+| `proposal-template` (V1) | 15.77 | 15.50 | 18.31 |  63.43 | 182 |
+| `feature-rich`         | 36.80 | 32.06 | 35.51 |  27.18 |  94 |
 
 Stage breakdown (median ms per stage):
 
 | Scenario | Compose | Layout | Render | Total |
-|---|---|---|---|---|
-| invoice-template | 0.249 | 2.774 | 6.042 | 9.312 |
-| cv-template | 0.173 | 2.343 | 1.544 | 4.087 |
-| proposal-template | 0.256 | 8.715 | 5.345 | 14.563 |
+|---|---:|---:|---:|---:|
+| invoice-template       | 0.249 | 2.774 | 6.042 |  9.312 |
+| cv-template            | 0.173 | 2.343 | 1.544 |  4.087 |
+| proposal-template      | 0.256 | 8.715 | 5.345 | 14.563 |
 
-Notes:
-
-- The smoke profile is single-thread by design; throughput numbers
-  reflect "one document at a time" latency, not concurrent
-  throughput.
-- The v1.4 era never committed a baseline file, so the formal
-  "no >5% regression" gate first activates between this run and the
-  next `v1.5.0-beta.X` snapshot.
-- Reproduce locally:
-  `./mvnw -B -ntp -pl . -DskipTests test-compile dependency:build-classpath -DincludeScope=test -Dmdep.outputFile=target/benchmark.classpath`
-  then
-  `java -cp "target/test-classes;target/classes;$(cat target/benchmark.classpath)" -Dgraphcompose.benchmark.profile=smoke com.demcha.compose.CurrentSpeedBenchmark`.
-  Reports land under `target/benchmarks/current-speed/`.
-
-### Phase B.10 — closed (functional)
-
-The B.10 wrap-up was the last open checkbox in Phase B. With this
-baseline recorded, the only items still pending for v1.5 release
-are out of Claude's lane:
-
-- E.1 follow-ups in `InvoiceTemplateV2` — `colSpan` on the total
-  row, `RichText` for the status keyword (the user is owning these).
-- E.2 follow-up in `ProposalTemplateV2` — hero LayerStack with a
-  background shape and a centred title (the user is owning this).
-- Tag `v1.5.0-beta.1` (or jump straight to `v1.5.0`) and JitPack
-  build verification — final release step.
-
----
-
-## v1.5.0-beta.17 (in progress) - Template authoring cheatsheet
-
-Adds [`docs/template-authoring.md`](docs/template-authoring.md) as the
-canonical reference for writing new templates and DSL code without
-boilerplate. Distilled from a full audit of `DocumentSession`, every
-DSL builder, the `BusinessTheme` system, the style types, and the V1
-vs V2 reference templates.
-
-### Documentation
-
-- New `docs/template-authoring.md` (~620 lines) covers:
-  - Entry & output pipeline (`buildPdf` vs `writePdf` vs
-    `toPdfBytes` vs `export`)
-  - Builder hierarchy ASCII tree
-  - Per-builder one-liner cheatsheet (`PageFlowBuilder` →
-    `BarcodeBuilder`, plus `RichText` and `Transformable<T>`)
-  - Style types reference (`DocumentColor`, `Stroke`, `Insets`,
-    `TextStyle`, `CornerRadius`, `Decoration`, `ClipPolicy`,
-    `ShapeOutline`, `Transform`)
-  - Theme system in 60 seconds — palette / text scale / table preset
-    slot → role mapping, plus the `CvTheme` bridge
-  - Six golden patterns (theme-driven hero, address line spacing,
-    weighted row, themed table with header/zebra/total, inline
-    `RichText` accent, per-side accent strips)
-  - Ten anti-patterns (no raw `Color`, no engine imports, no
-    `RowBuilder.gap`, no nested `Row`/`Table` in row, etc.)
-  - 40-line `StatusReportTemplateV1` skeleton showing the canonical
-    template shape (constructor takes `BusinessTheme`, every visible
-    token routed through `theme.*`)
-  - Testing pattern — one snapshot per `BusinessTheme` plus a visual
-    PDF write
-  - "Where to look next" table mapping every specific question to a
-    recipe / ADR / example
-- README "Built-in templates" section gains a callout linking the
-  cheatsheet so first-time template authors land on it before they
-  copy-paste old V1 code.
+The smoke profile is single-thread by design; throughput numbers
+reflect "one document at a time" latency, not concurrent throughput.
+The formal "no >5% regression" gate first activates between this
+baseline and the next snapshot.
 
 ### Tests
 
-- 647/647 still green. Documentation-only delivery.
-
-### Companion (not committed — local agent rules)
-
-- `~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md` get a new
-  "GraphCompose authoring rules" section that points future AI
-  sessions at `docs/template-authoring.md` and lists the top
-  anti-patterns inline so the most common mistakes are caught
-  without a file fetch.
-
----
-
-## v1.5.0-beta.16 (in progress) - F.3 / E.5 cleanup: recipes split + v1.5 PDF previews
-
-Closes the documentation-side gaps that were missed in earlier passes
-of Phase F.3 and Phase E.5.
-
-### Documentation
-
-- **F.3 — recipes split completed.** New
-  [`docs/recipes/shapes.md`](docs/recipes/shapes.md) covers visual
-  primitives (filled cards, dividers, spacers, lines, ellipses,
-  image fit, theme soft panels) — the inline snippets that used to
-  sit in the old `recipes.md` body. New
-  [`docs/recipes/extending.md`](docs/recipes/extending.md) is a thin
-  recipe-style cheatsheet for the four extension paths, linking to
-  the long-form `extension-guide.md` for each.
-- **F.3 — `recipes.md` is now a pure index.** The file lists every
-  topic-focused recipe page plus four 5-line "common DSL primitives"
-  starter snippets (paragraph, bullets, rows, snapshot) so first-time
-  readers still land on copy-pasteable code.
-- **F.5 — verified.** `docs/archive/{v1.2-roadmap.md, migration-v1-1-to-v1-2.md}`
-  and `docs/archive/README.md` are already in place from earlier
-  archive work; the plan checkbox sync was overdue.
-
-### Visual previews
-
-- **E.5 — v1.5 PDF previews shipped.** New `assets/readme/v1.5/`
-  folder with six committed PDFs the README links to:
-  - `invoice-cinematic-v2.pdf` — `InvoiceTemplateV2 + BusinessTheme.modern()`
-  - `invoice-custom-theme-studio-emerald.pdf` — `CustomBusinessThemeExample`
-  - `proposal-cinematic-v2.pdf` — `ProposalTemplateV2 + BusinessTheme.modern()`
-  - `shape-container.pdf` — clipped shape containers (`ClipPolicy.CLIP_PATH`)
-  - `transforms.pdf` — rotate / scale / z-index swap
-  - `table-advanced.pdf` — row span / zebra / totals / repeated header
-- README "Visual preview" section gains a v1.5 sub-section that links
-  to all six. Each PDF is the actual output of the corresponding
-  `examples/.../*.java` runnable.
-
-### Tests
-
-- 647/647 still green. Docs-only changes — no production code
-  touched.
-
----
-
-## v1.5.0-beta.15 (in progress) - Phase E.5: README quick-start refresh
-
-E.5 closes Phase E by lifting the README quick-start to the v1.5
-cinematic stack so first-time readers see a designed PDF, not a
-plain "Hello GraphCompose" snippet.
-
-### Documentation
-
-- README quick-start now opens with a `BusinessTheme.modern()`-driven
-  hero (`softPanel` + `accentLeft` + `theme.text().h1()`), with the
-  plain-text DSL kept underneath for callers who do not want a theme.
-- Built-in templates section now demonstrates `InvoiceTemplateV2`
-  taking `BusinessTheme.modern()` in its constructor (the V1 path
-  still ships side-by-side; the README mentions both).
-- New "v1.5-specific showcases" bullet list links to all six v1.5
-  runnable examples: `ShapeContainerExample`, `TransformsExample`,
-  `TableAdvancedExample`, `CustomBusinessThemeExample`,
-  `HttpStreamingExample`, `LayoutSnapshotRegressionExample`.
-- Test count claim refreshed to 647 green (was 525 — the v1.5 work
-  added cinematic clip-path, CTM, table, theme-bridge, streaming,
-  and snapshot tests).
-- Example output path corrected to `examples/target/generated-pdfs/`.
-
-### Phase E — done
-
-All five planned slices are shipped:
-
-- E.1 — `InvoiceTemplateV2` cinematic invoice
-- E.2 — `ProposalTemplateV2` cinematic proposal
-- E.3 — `CvTheme` ↔ `BusinessTheme` bridge (ADR 0002)
-- E.4 — Five new runnable examples (shape, transforms, tables, custom
-  theme, streaming, snapshot)
-- E.5 — README quick-start on `BusinessTheme.modern()`
-
----
-
-## v1.5.0-beta.14 (in progress) - Phase E.4 (slice 3): layout-snapshot regression example
-
-E.4 closes out. This slice ships the example that demonstrates how
-adopters wire GraphCompose into their own regression-test suite using
-the deterministic, renderer-agnostic layout snapshot.
-
-### Examples
-
-- New runnable
-  `examples/.../LayoutSnapshotRegressionExample.java` walks through
-  the full workflow: compose the document, call
-  `DocumentSession.layoutSnapshot()`, serialize via
-  `LayoutSnapshotJson.toJson(...)`, and either write a baseline
-  (first run) or compare against the existing baseline (subsequent
-  runs) reporting drift to stdout. Output:
-  `examples/target/generated-pdfs/invoice-snapshot-regression.pdf`
-  alongside the JSON baseline. Hooked into `GenerateAllExamples`.
-- The example doubles as a copy-and-paste starter; the javadoc points
-  adopters at the production helper
-  `LayoutSnapshotAssertions.assertMatches(document, "...")` for
-  in-test usage.
-
-### Tests
-
-- New `LayoutSnapshotRegressionDemoTest` (3 cases) pins the
-  invariants the example relies on:
-  - Two renders of the same input produce byte-identical snapshot
-    JSON. PDFBox's `/ID` randomness does **not** leak into the
-    layout snapshot.
-  - Structurally different invoices (1 line item vs 20) produce
-    different snapshot JSON, proving the snapshot reflects layout
-    shape rather than just being a constant.
-  - The snapshot reports a positive page count, a non-empty node
-    list, and a non-null canvas, proving extraction actually
-    walked the layout graph.
-
-### Phase E.4 — done
-
-All five planned examples now exist:
-
-- `ShapeContainerExample` (B.9)
-- `TableAdvancedExample` (D.4)
-- `CustomBusinessThemeExample` (E.4 slice 1)
-- `HttpStreamingExample` (E.4 slice 2)
-- `LayoutSnapshotRegressionExample` (E.4 slice 3)
-
----
-
-## v1.5.0-beta.13 (in progress) - Phase E.4 (slice 2): HTTP streaming example
-
-E.4 continues. This slice ships the canonical "render PDF straight to
-an output stream" example — the pattern most production adopters reach
-for first.
-
-### Examples
-
-- New runnable
-  `examples/.../HttpStreamingExample.java` isolates the streaming code
-  path into a single
-  `streamInvoiceTo(InvoiceDocumentSpec, OutputStream)` method so
-  Servlet / S3 / GCS adopters can copy-paste the body. The class
-  javadoc shows the matching Spring Boot `@RestController` snippet.
-- The example's `main` runs the same code path against
-  `ByteArrayOutputStream`, then writes the captured bytes to disk —
-  output: `examples/target/generated-pdfs/invoice-http-stream.pdf`.
-  Hooked into `GenerateAllExamples`.
-
-### Tests
-
-- New `HttpStreamingDemoTest` (2 cases) pins the streaming contract:
-  - `writePdf(OutputStream)` produces a valid PDF and **does not**
-    close the caller's stream (mandatory for the Servlet response
-    pattern). Verified by a `TrackingOutputStream` that records
-    whether `close()` was called.
-  - `writePdf(OutputStream)` and `toPdfBytes()` produce equally-sized
-    documents with identical PDF version headers for the same input.
-    Byte-for-byte equality is not achievable (PDFBox stamps every
-    render with a fresh `/ID` UUID), but the length-and-header check
-    proves both code paths route through the same renderer.
-- Stream output PDF lives at
-  `target/visual-tests/http-streaming/invoice-http-stream.pdf` for
-  reviewer inspection.
-
----
-
-## v1.5.0-beta.12 (in progress) - Phase E.4 (slice 1): custom BusinessTheme example
-
-E.4 lifts the runnable-examples module to the v1.4 bar. This slice adds
-the first of three remaining showpieces — a hand-built `BusinessTheme`
-that proves every visible token on `InvoiceTemplateV2` is theme-driven.
-
-### Examples
-
-- New runnable
-  `examples/.../CustomBusinessThemeExample.java` constructs a
-  "Studio Emerald" theme from raw `DocumentPalette`, `SpacingScale`,
-  `TextScale`, and `TablePreset` records (no factory shortcut), then
-  pipes `ExampleDataFactory.sampleInvoice()` through
-  `InvoiceTemplateV2`. Output: `examples/target/generated-pdfs/
-  invoice-custom-theme.pdf`. Hooked into `GenerateAllExamples`.
-- The example doubles as a copy-and-paste starter for projects that
-  want to brand GraphCompose output for their own product.
-
-### Tests
-
-- New `CustomBusinessThemeDemoTest` (3 cases): renders the same
-  invoice once with `BusinessTheme.modern()` and once with the
-  hand-built Studio Emerald theme, validates both files are well-
-  formed PDFs, and asserts the custom theme is accepted by
-  `InvoiceTemplateV2`. Output PDFs land under
-  `target/visual-tests/custom-business-theme/` for side-by-side
-  review.
-
----
-
-## v1.5.0-beta.11 (in progress) - Phase E.3: CvTheme ↔ BusinessTheme bridge
-
-E.3 takes a phased approach to theme unification, captured in the new
-[ADR 0002](docs/adr/0002-theme-unification.md). Rather than collapse
-the two theme types under a common interface (rejected — it loses the
-CV-specific vocabulary that ten templates rely on), we add a thin
-adapter so projects that already chose a `BusinessTheme` for their
-invoices and proposals can derive a visually-matching `CvTheme`
-without re-stating the visual tokens.
-
-### Public API
-
-- New `CvTheme.fromBusinessTheme(BusinessTheme)` static factory
-  derives a CV theme from a business theme. The bridge maps the
-  business palette / text-scale slots into the CV-specific tokens:
-  - `primaryColor`   ← `palette().primary()`
-  - `secondaryColor` ← `palette().accent()`
-  - `bodyColor`      ← `palette().textPrimary()`
-  - `accentColor`    ← `palette().accent()`
-  - `headerFont`     ← `text().h1().fontName()`
-  - `bodyFont`       ← `text().body().fontName()`
-  - `nameFontSize`   ← `text().h1().size()`
-  - `headerFontSize` ← `text().h2().size()`
-  - `bodyFontSize`   ← `text().body().size()`
-  - CV-specific layout tokens (`spacing`, `modulMargin`,
-    `spacingModuleName`) keep the existing CV defaults.
-- Existing `CvTheme.defaultTheme()` / `timesRoman()` / `courier()`
-  factories are unchanged. The ten existing CV templates and the
-  `CvTemplateV1` composer continue to work without code changes.
-
-### Documentation
-
-- New `docs/adr/0002-theme-unification.md` records the analysis,
-  the rejected alternative ("Option B: common Theme interface"),
-  and the migration plan.
-- `docs/recipes/themes.md` gets a new "Sharing themes with CV
-  templates" section that shows the bridge in use, and an
-  "Layered themes for invoices and proposals" section refreshed for
-  the V2 templates that landed in E.1 / E.2.
-
-### Tests
-
-- New `CvThemeBusinessThemeAdapterTest` pins the bridge mapping:
-  colours follow the business palette slots, fonts and sizes follow
-  the business text scale, three different business themes produce
-  three distinct CV themes, and the CV-specific layout tokens
-  (`spacing`, `moduleMargin`, `spacingModuleName`) match the CV
-  defaults.
-
-### Out of scope for v1.5
-
-- Mass migration of the ten CV templates to a `BusinessTheme`-driven
-  composer. Templates can opt in incrementally when they're touched
-  for unrelated reasons.
-
----
-
-## v1.5.0-beta.10 (in progress) - Phase E.2: cinematic proposal template
-
-E.2 lands `ProposalTemplateV2`, the canonical-DSL proposal counterpart
-to `InvoiceTemplateV2`. Same `ProposalDocumentSpec` data renders in
-any of the three built-in `BusinessTheme` themes by passing the theme
-to the constructor.
-
-### Public API
-
-- New `com.demcha.compose.document.templates.builtins.ProposalTemplateV2`
-  implementing the existing `ProposalTemplate` interface. The no-arg
-  constructor picks `BusinessTheme.modern()`; the one-arg
-  `ProposalTemplateV2(BusinessTheme)` accepts any theme.
-- `ProposalTemplateV1` is unchanged — both ship side by side.
-
-### Visual composition
-
-- Hero soft panel rounded only on the right (via Phase E.1.1
-  `DocumentCornerRadius.right(...)`), with the title, project title,
-  and proposal-number / prepared / valid-until row read out as inline
-  rich text.
-- Themed executive-summary panel with line-spaced body text.
-- Sender / recipient parties row using `theme.text().label()` and
-  line-spaced `body()` styles for the address block.
-- Sections rendered as `theme.text().h2()` headings + body paragraphs.
-- Timeline table (Phase / Duration / Details) and pricing table
-  (Item / Description / Amount) both use `headerStyle` on row 0,
-  `repeatHeader()` for pagination, and zebra rows on the pricing
-  table. The emphasized total-pricing row is anchored at the bottom
-  via `TableBuilder.totalRow(style, values)`.
-- Acceptance terms list with `accentLeft` strip; footer note with
-  top margin so it breathes off the body content.
-
-### Tests + examples
-
-- New `ProposalTemplateV2Test` pins five invariants — default
-  constructor uses modern theme; sample proposal produces a valid
-  PDF byte stream; modern vs classic produces distinct bytes (theme
-  switch observable); the layout graph contains both
-  `ProposalTimeline` and `ProposalPricing` table nodes.
-- New `ProposalTemplateV2DemoTest` renders the same sample proposal
-  with each of the three built-in themes
-  (`modern` / `classic` / `executive`) to PDF artefacts under
-  `target/visual-tests/proposal-template-v2/`.
-- New `examples/.../ProposalCinematicFileExample.java` (hooked into
-  `GenerateAllExamples`) renders the standard sample proposal with
-  the modern theme to
-  `examples/target/generated-pdfs/proposal-cinematic.pdf`.
-
----
-
-## v1.5.0-beta.9 (in progress) - Phase E.1: cinematic invoice template
-
-E.1 lands `InvoiceTemplateV2`, the first canonical template that
-composes against the canonical DSL using a `BusinessTheme` for every
-visual choice. Same `InvoiceDocumentSpec` data renders in any of the
-three built-in themes (or a custom one) by passing it to the
-constructor.
-
-### Public API
-
-- New `com.demcha.compose.document.templates.builtins.InvoiceTemplateV2`
-  implementing the existing `InvoiceTemplate` interface. Two
-  constructors: the no-arg form picks `BusinessTheme.modern()`; the
-  one-arg `InvoiceTemplateV2(BusinessTheme)` accepts any theme.
-- `InvoiceTemplateV1` is unchanged — both templates ship side by
-  side. Authors who want the cinematic look opt in by switching the
-  type; nothing else has to change.
-
-### Visual composition
-
-The template stacks the v1.4 / v1.5 cinematic primitives:
-
-- `softPanel` hero block carrying the invoice number, dates, and the
-  status read out as inline rich text via the new
-  `DocumentDsl.richText` callback.
-- A two-column row with `From` / `Bill to` parties, each rendered as
-  a small section using the theme's `text().label()` and
-  `text().body()` styles.
-- A line-items table with header style on the first row, zebra
-  alternation on the body, the totals row anchored at the bottom via
-  `TableBuilder.totalRow(style, values)`, and `repeatHeader()` so the
-  totals header re-emits on every continuation page when the invoice
-  paginates.
-- A footer row with `accentLeft` accent strips on the notes / payment
-  terms columns.
-
-Every visual style is derived from `BusinessTheme` — palette,
-text scale, stroke colour, fill colours.
-
-### Tests + examples
-
-- New `InvoiceTemplateV2Test` covers four invariants:
-  - Default constructor uses `BusinessTheme.modern()` and the
-    template id is stable.
-  - `compose(...)` produces a valid PDF byte stream for the standard
-    sample invoice.
-  - The same invoice rendered with `BusinessTheme.modern()` and
-    `BusinessTheme.classic()` produces DIFFERENT byte streams (the
-    theme colours get embedded in the PDF), so a theme switch is
-    observable downstream.
-  - The resulting layout graph contains a node whose semantic name
-    contains `InvoiceLineItems` — anchor invariant that proves the
-    template ran the table composition, not just the hero block.
-- New `InvoiceTemplateV2DemoTest` renders the same sample invoice
-  with each of the three built-in themes
-  (`modern` / `classic` / `executive`) to PDF artefacts under
-  `target/visual-tests/invoice-template-v2/` so a reviewer can flip
-  through the three side-by-side.
-- New `examples/.../InvoiceCinematicFileExample.java` (hooked into
-  `GenerateAllExamples`) renders the standard sample invoice with
-  the modern theme to
-  `examples/target/generated-pdfs/invoice-cinematic.pdf`.
-
-### Known limitations
-
-- The `InvoiceLineItem.details` field is omitted from the rendered
-  table cell. Including it would force the auto-sized description
-  column to measure against the much longer "details" sentence and
-  overflow the inner page width on typical A4 invoices. Templates
-  that need the details alongside should compose them in a separate
-  notes column or section.
-
----
-
-## v1.5.0-beta.8 (in progress) - Phase D wrap-up: tables recipe + runnable example
-
-D.4 closes Phase D with author-facing documentation and a runnable
-demo for the four advanced-table features that landed in D.1 / D.2 /
-D.3 (row span, zebra rows, totals row, repeating header).
-
-### Documentation
-
-- New recipe `docs/recipes/tables.md` covers row span (with note on
-  composition with `colSpan`), zebra row alternation (single and
-  two-arg overloads, precedence rule), totals row (default + custom
-  styles), and repeated header on page break (single-row + multi-row
-  variants). Includes a "Layout invariants you can rely on" section
-  pinning the five test invariants from `TableBuilderRowSpanTest`,
-  `TableBuilderZebraAndTotalsTest`, and
-  `TableBuilderRepeatHeaderTest`.
-
-### Examples
-
-- New `examples/.../TableAdvancedExample.java` (hooked into
-  `GenerateAllExamples`) renders three sections to one PDF:
-  hero callout, a small row-span demo (Q1/Q2/Q3 with a 3-row spanning
-  side note), and a 36-row invoice with bold-on-teal repeating header,
-  zebra body rows, and a gold totals row at the bottom. Output lands
-  at `examples/target/generated-pdfs/table-advanced.pdf`.
-
----
-
-## v1.5.0-beta.7 (in progress) - Phase D continues: repeated header on page break
-
-D.3 lands repeated-header pagination for tables. When a table is split
-across pages the layer compiler now re-emits the configured leading
-rows at the top of every continuation page, so long invoices and
-reports don't lose their column titles partway through.
-
-### Public API
-
-- `TableBuilder.repeatHeader()` — repeats the first row at the top of
-  every continuation page (equivalent to `repeatHeader(1)`).
-- `TableBuilder.repeatHeader(int rowCount)` — repeats the first
-  `rowCount` rows. `0` disables the feature; the builder defaults to
-  `0` so existing tables paginate exactly as before.
-- `TableNode` gains a 12th field `int repeatedHeaderRowCount` (default
-  `0`). Three back-compat constructors (the original 7-arg, 9-arg, and
-  pre-D.3 11-arg signatures) default the new field to `0` so every
-  v1.4 / v1.5.0-alpha caller compiles unchanged.
-
-### Architecture
-
-- `TableLayoutSupport.sliceTablePreparedNode` gains a third overload
-  with a `prependHeaderRowCount` parameter. When non-zero, it prepends
-  rows `[0, prependHeaderRowCount)` from the source table to the body
-  slice, producing a tail prepared node whose first
-  `repeatedHeaderRowCount` rows are the original header. The new
-  measure result accounts for the prepended rows so the page-breaker
-  reserves enough room.
-- `TableDefinition.split` honours `repeatedHeaderRowCount`:
-  - It still fits as many rows as possible into the remaining height
-    (header + body counted together), but rejects splits that would
-    fit ONLY the header rows (no body progress would loop forever).
-  - The tail slice is built with `prependHeaderRowCount = headerCount`,
-    so it carries the header at the top. Each subsequent split on
-    that tail again preserves the prefix invariant.
-- The change is isolated to the table-specific code path; the generic
-  splittable-leaf compiler in `LayoutCompiler` is unchanged.
-
-### Tests
-
-- New `TableBuilderRepeatHeaderTest` covers three scenarios:
-  - 60-row long table with `repeatHeader()` — every page's first
-    table-row fragment must have "Item" in its left cell.
-  - `repeatHeader(2)` repeats both a title row and the column-header
-    row on every continuation page.
-  - `repeatHeader` defaults to `0`, so a table without the call still
-    paginates exactly as before — the second page starts with a data
-    row, not the header.
-- New `TableRepeatHeaderDemoTest` renders a 50-row invoice with
-  zebra rows + repeating "Item / Qty / Amount" header to
-  `target/visual-tests/table-repeat-header/long-invoice.pdf`.
-
----
-
-## v1.5.0-beta.6 (in progress) - Phase D continues: zebra rows, totals row, header alias
-
-D.2 lands three table-builder shortcuts that cover the most common
-"rendered-report" styling patterns: alternating row fills (`zebra`),
-a totals row appended at the bottom (`totalRow`), and a naming alias
-for the existing `header(...)` method that reads consistently with
-`totalRow(...)` (`headerRow`).
-
-### Public API
-
-- `TableBuilder.zebra(DocumentTableStyle odd, DocumentTableStyle even)`
-  configures alternating row styles. Odd-indexed rows (0, 2, 4 — first,
-  third, fifth visually) take the {@code odd} style; even-indexed rows
-  (1, 3, 5) take the {@code even} style. Either argument may be
-  {@code null} to skip painting that parity.
-- `TableBuilder.zebra(DocumentColor odd, DocumentColor even)` is a
-  convenience overload that wraps the colours into fill-only
-  {@code DocumentTableStyle} values.
-- `TableBuilder.totalRow(String... values)` adds a totals row as the
-  last logical row and assigns a default totals style: bold text plus
-  a subtle gray-blue fill (RGB 240, 240, 245).
-- `TableBuilder.totalRow(DocumentTableStyle style, String... values)`
-  is the customisable overload — pass any fill, text style, padding,
-  or stroke as the totals row look.
-- `TableBuilder.headerRow(String... values)` is a naming alias for
-  `header(String...)` so callers writing
-  `headerRow(...).row(...).totalRow(...)` keep a parallel vocabulary.
-
-### Architecture
-
-- Zebra is applied lazily at `build()` time — the builder remembers
-  the odd / even style and walks the row list only after every other
-  row has been added. Existing entries in the {@code rowStyles} map
-  (set via `headerStyle(...)`, `rowStyle(idx, ...)`, or
-  `totalRow(...)` itself) are NEVER overwritten, so explicit per-row
-  styling always wins over zebra alternation.
-- `totalRow(...)` adds the row first, then registers the totals style
-  at the row's index. The registration happens before zebra is
-  applied at `build()` time, so the totals style takes precedence on
-  the totals row regardless of zebra parity.
-
-### Tests
-
-- New `TableBuilderZebraAndTotalsTest` covers seven invariants:
-  zebra parity assignment, headerStyle wins over zebra, null-style
-  parity is skipped, default totals style, totals row + zebra
-  precedence, custom totals style, and `headerRow` alias.
-- New `TableZebraAndTotalsDemoTest` renders an invoice-style table
-  to `target/visual-tests/table-zebra-totals/zebra-invoice.pdf`:
-  white-on-teal header, alternating white / pale-blue data rows,
-  bold gold totals row.
-
----
-
-## v1.5.0-beta.5 (in progress) - Phase D kickoff: table row span
-
-D.1 lands canonical row-span support for tables. A cell can declare
-`rowSpan(n)` to merge vertically across the next `n - 1` rows; the
-layout layer skips occupied grid positions when interpreting subsequent
-source rows so authors only specify the cells that are not yet covered
-by a prior spanning cell. Existing `colSpan` continues to work and the
-two compose freely (a single cell can be both `colSpan(2).rowSpan(3)`).
-
-### Public API
-
-- `DocumentTableCell` gains a fifth field `int rowSpan` (default `1`).
-  Four-arg canonical constructor + back-compat 2/3-arg constructors so
-  every v1.4 / v1.5.0-alpha caller compiles unchanged.
-- New mutator `DocumentTableCell.rowSpan(int)` mirrors the existing
-  `colSpan(int)`. Authors compose by chaining:
-  `DocumentTableCell.text("Tall").colSpan(2).rowSpan(3)`.
-
-### Architecture
-
-- `TableLayoutSupport` replaces the per-row colSpan-sum check with a
-  unified cell-grid pre-pass driven by an occupancy mask. The new
-  `buildLogicalRows(node, columnCount)` walks columns left-to-right
-  per source row, skips positions already covered by a prior row's
-  spanning cell, and consumes the next source cell otherwise.
-  Misalignments raise precise diagnostics: missing cell, extra source
-  cell, overlapping span, span exceeding remaining rows / columns.
-- `LogicalCell` now carries `(startRow, startColumn, colSpan,
-  rowSpan, content)` so downstream resolution knows the cell's full
-  extent.
-- Row-height resolution is two-pass: first pass derives each row's
-  height from single-row cells (`rowSpan = 1`); second pass walks
-  spanning cells and distributes any deficit (`naturalHeight - sum
-  of spanned row heights`) equally across the spanned rows. Single-row
-  layouts therefore stay deterministic; spanning layouts grow the
-  shortest contributing rows just enough to satisfy the span.
-- `TableResolvedCell.height` for a cell with `rowSpan > 1` equals the
-  sum of its covered row heights, so the cell visually merges across
-  rows when the renderer paints it.
-- `TableResolvedCell` gains a fifth field `double yOffset` (default
-  `0` via a back-compat 8-arg constructor). Spanning cells use a
-  NEGATIVE offset equal to the cumulative height of the rows below
-  the starting row so the cell's rectangle extends downward through
-  the rows it merges instead of upward beyond the starting row. Both
-  PDF row-render handlers (canonical `PdfTableRowFragmentRenderHandler`
-  and engine `PdfTableRowRenderHandler`) honour the offset by
-  computing `cellY = rowFragment.y() + yOffset`. Without this offset
-  spanning cells extended above the table area in PDF coordinates,
-  which produced the symptoms reported on the first round of
-  visual demos: missing top border on the merged cell and missing
-  left borders on the cells right of it (the merged cell's right
-  border was drawn at the wrong y range, leaving the visible boundary
-  unstroked).
-- `buildStylesGrid` propagates the spanning cell's resolved style to
-  every `(row, column)` position it occupies, so neighbour-style
-  lookups for borders and fill insets correctly detect a single shared
-  cell — a spanning cell does not draw an internal horizontal border
-  between the rows it merges.
-- `resolveColumnCount` now derives the column count from the FIRST
-  source row's colSpan sum (which by definition is not affected by
-  prior rowSpan). Subsequent rows may have fewer source cells when
-  prior rowSpan covers some columns, so they cannot be used to derive
-  the count.
-
-### Tests
-
-- New `TableBuilderRowSpanTest` covers four invariants:
-  - 2x2 merged top-left cell — width, height, and right-column x
-    coordinates line up correctly.
-  - Middle-column rowSpan — first row has 3 cells, subsequent rows
-    have 2 each (middle is occupied by the spanning cell), and the
-    spanning cell's height equals the sum of all three row heights.
-  - rowSpan exceeding remaining rows is rejected with a precise
-    diagnostic (`rowSpan 3` / `only 2 rows remain`).
-  - Overlapping rowSpan is rejected with a precise diagnostic
-    (`Row 1` / `extra source cell`).
-- `TableBuilderColSpanTest.rowWithMismatchedColSpanSumIsRejectedDuringLayout`
-  was updated to assert the new error message wording (the dedicated
-  "colSpan sum" check is now subsumed by the cell-grid pre-pass that
-  reports the offending row index and surplus cell count).
-- New `TableRowSpanDemoTest` renders two scenarios to PDF artefacts
-  under `target/visual-tests/table-rowspan/`: a 2x2 merged cell with
-  a teal fill, and a tall middle column spanning three rows. Each
-  scenario asserts the PDF magic header is intact.
-
----
-
-## v1.5.0-beta.4 (in progress) - Phase C wrap-up: recipe + runnable example
-
-C.4 closes Phase C with author-facing documentation and a runnable
-demo for the transform mixin and per-layer z-index features that
-landed in C.1 / C.2 / C.3.
-
-### Documentation
-
-- New recipe `docs/recipes/transforms.md` covers rotation around the
-  placement centre, uniform and non-uniform scale (including the
-  mirror case via negative scale), the `rotate(...).scale(...)`
-  composition rule (each call preserves the unmodified axis), and
-  per-layer z-index for overlays. Includes a "Layout invariants you
-  can rely on" section that names the three pinned tests so authors
-  can trust the determinism guarantees.
-
-### Examples
-
-- New `examples/.../TransformsExample.java` (hooked into
-  `GenerateAllExamples`) renders three sections to one PDF:
-  three-circle rotate row (15° / -15° / no tilt), three-card scale
-  row (`scale(0.7)`, `scale(1.1, 0.85)`, identity), and a z-swap
-  stage where a RED square declared first with `zIndex = 10` draws
-  on top of a TEAL square declared second with default zIndex.
-  Output lands at `examples/target/generated-pdfs/transforms.pdf`.
-
----
-
-## v1.5.0-beta.3 (in progress) - Phase C continues: per-layer z-index
-
-Phase C.3: introduce explicit per-layer z-index inside
-`LayerStackNode` / `ShapeContainerNode`. Layers are stable-sorted by
-ascending `zIndex` before render, so a later-declared layer with
-`zIndex = 10` draws on top of an earlier-declared layer with
-`zIndex = 5`. Default is `0`, so existing layouts and snapshots stay
-deterministic without any code changes.
-
-### Public API
-
-- `LayerStackNode.Layer` gains a fifth field, `int zIndex` (default
-  `0`). The five-arg canonical constructor is the new shape; the
-  existing 1-, 2-, and 4-arg constructors plus the static factories
-  default `zIndex = 0`, so all v1.4 / v1.5.0-alpha callers compile
-  unchanged.
-- `LayerStackBuilder` adds two zIndex overloads:
-  `layer(node, align, zIndex)` and
-  `position(node, offsetX, offsetY, align, zIndex)`.
-- `ShapeContainerBuilder` adds the same pair of overloads.
-- The semantic placement / path of each layer stays in source order —
-  only the render iteration shifts. Snapshots and architecture-guard
-  tests therefore continue to assert the same fragment paths; only
-  the order of renderable fragments inside a stack/container changes
-  with z-index.
-
-### Architecture
-
-- `BuiltInNodeDefinitions.PreparedStackLayout` gains a fourth list
-  `zIndices: List<Integer>`. The new four-arg canonical constructor is
-  the source of truth; the previous 3-arg and 1-arg constructors keep
-  compiling and default zIndices to all-zero (source order). Both
-  `ShapeContainerDefinition` and `LayerStackDefinition` populate the
-  new list from each layer.
-- `LayoutCompiler.compileStackedLayer` and the STACK branch of
-  `compileNodeInFixedSlot` now compute a stable `iterationOrder`
-  permutation via a private `stableZIndexOrder(...)` helper before
-  iterating the layer list. Stable on ties → equal `zIndex` keeps
-  source order.
-
-### Tests
-
-- `ShapeContainerBuilderTest` grows two cases:
-  - `higherZIndexLayerRendersOnTopRegardlessOfSourceOrder` — BACK and
-    FRONT squares declared in source order BACK then FRONT, but BACK
-    carries `zIndex = 10`. The test asserts FRONT's fragment lands
-    BEFORE BACK's in the placed-fragment list (rendered first → behind),
-    so BACK draws on top.
-  - `equalZIndexLayersPreserveSourceOrder` — three equal-zIndex
-    layers stay in source order (stable sort).
-- New `ShapeContainerZIndexDemoTest` renders two demo scenarios to
-  PDF artefacts under `target/visual-tests/shape-container-zindex/`:
-  intersecting RED + TEAL squares with z-swap, and a feature card
-  with backdrop + gold badge background + white "NEW" label stacked
-  via z-index. Both assert the PDF magic header is intact as a smoke
-  check.
-
-### Deferred
-
-- Other builders (`ShapeBuilder`, `EllipseBuilder`, `ImageBuilder`,
-  `LineBuilder`, `BarcodeBuilder`) opt in to `Transformable<T>`
-  in follow-up commits — same pattern as ShapeContainer.
-
----
-
-## v1.5.0-beta.2 (in progress) - Phase C kickoff: Transform mixin + render
-
-Phase C lands the canonical-surface transform primitive (rotation around
-the placement centre and/or scaling). C.1 introduced the public value
-type, mixin, and `ShapeContainerBuilder` opt-in; C.2 wires the PDF
-backend so the transform actually rotates and scales the rendered
-output. Other-builder opt-ins (`ShapeBuilder`, `EllipseBuilder`, etc.)
-land in follow-up commits.
-
-### Render pipeline (C.2)
-
-- New marker payload pair on `BuiltInNodeDefinitions`:
-  `TransformBeginPayload(transform, ownerPath)` and
-  `TransformEndPayload(ownerPath)`. Same architectural pattern as the
-  existing `ShapeClipBeginPayload` / `ShapeClipEndPayload` pair —
-  emitted from `emitFragments` and `emitOverlayFragments` respectively
-  so a single layout pass produces a flat sequence
-  `[transform-begin → outline → clip-begin → … layers … → clip-end → transform-end]`.
-- New PDF render handlers
-  `PdfTransformBeginRenderHandler` and `PdfTransformEndRenderHandler`,
-  registered in `PdfFixedLayoutBackend.defaultHandlers()`. The begin
-  handler issues `saveGraphicsState() + cm(matrix)` where the matrix is
-  derived from `T(cx,cy) · R(θ) · S(sx,sy) · T(-cx,-cy)` so rotation
-  and scaling pivot around the outline's geometric centre. The end
-  handler issues `restoreGraphicsState()`.
-- Convention: `DocumentTransform.rotationDegrees()` is interpreted as
-  *clockwise* (matches the engine convention). PDF native rotation is
-  counter-clockwise, so the begin handler negates the angle when
-  building the `cm` matrix.
-- `ShapeContainerDefinition` now emits the transform pair only when
-  `transform.isIdentity()` is `false`. The clip pair is independent —
-  a container can rotate without clipping (`OVERFLOW_VISIBLE`), clip
-  without rotating (the previous default), or both.
-
-### Tests (C.2)
-
-- `ShapeContainerBuilderTest` grows three fragment-ordering cases:
-  rotated container brackets everything else with transform begin/end,
-  identity transform skips emitting the markers, and
-  `OVERFLOW_VISIBLE` + rotation emits transform markers without clip
-  markers.
-- `ShapeContainerInvariantsTest` adds an architecture-guard
-  `everyTransformBeginInArbitraryDocumentHasMatchingEndOnSamePage`
-  that mixes transformed and non-transformed containers across clip
-  policies and verifies every transform begin/end pair stays balanced
-  on the same page (no nesting of the same owner).
-- New `ShapeContainerTransformDemoTest` renders three demo scenarios
-  (rotated circle, scaled card, rotated+scaled ellipse) to PDF
-  artefacts under `target/visual-tests/shape-container-transform/`.
-  The PDFs are not pixel-asserted yet — they exist so a reviewer can
-  open them and verify the rotation/scaling behaviour visually.
-  A graphics-state leak from an unbalanced transform begin/end would
-  corrupt the PDF byte stream, so each scenario also asserts the
-  `%PDF-` magic header is intact as a smoke check.
-
-### Public API (C.1, recap)
-
-- New value type `com.demcha.compose.document.style.DocumentTransform`
-  carries `rotationDegrees`, `scaleX`, `scaleY` plus an
-  `isIdentity()` helper. Static factories: `none()` (alias for
-  `NONE`), `rotate(deg)`, `scale(uniformFactor)`, `scale(sx, sy)`.
-  `withRotation(deg)` / `withScale(sx, sy)` produce updated copies that
-  preserve the unchanged axis. Validates that rotation is finite and
-  scale factors are finite and non-zero (zero would collapse the
-  geometry to a point).
-- New mixin interface `com.demcha.compose.document.dsl.Transformable<T>`
-  exposes `transform(DocumentTransform)`, `rotate(degrees)`,
-  `scale(uniformFactor)`, `scale(sx, sy)` as default methods. Builders
-  opt in by implementing two abstract methods: the transform setter and
-  `currentTransform()`. The defaults preserve the unmodified axis when
-  callers chain `rotate(...).scale(...)`.
-- `ShapeContainerBuilder` now implements `Transformable<ShapeContainerBuilder>`,
-  so authors can write
-  `addCircle(60, brand, c -> c.rotate(15).scale(0.9).center(label))`.
-  Default transform is `DocumentTransform.NONE`.
-- `ShapeContainerNode` gains a `transform: DocumentTransform` field
-  (ninth canonical-constructor parameter, defaulted to
-  `DocumentTransform.NONE` by the existing eight-arg compatibility
-  constructor). The transform is a render-time concern: the canonical
-  layout layer still measures and places the node against its natural
-  bounding box, so layout snapshots stay deterministic regardless of
-  rotation/scale.
-
-### Public API
-
-- New value type `com.demcha.compose.document.style.DocumentTransform`
-  carries `rotationDegrees`, `scaleX`, `scaleY` plus an
-  {@code isIdentity()} helper. Static factories: `none()` (alias for
-  `NONE`), `rotate(deg)`, `scale(uniformFactor)`, `scale(sx, sy)`.
-  `withRotation(deg)` / `withScale(sx, sy)` produce updated copies that
-  preserve the unchanged axis. Validates that rotation is finite and
-  scale factors are finite and non-zero (zero would collapse the
-  geometry to a point).
-- New mixin interface `com.demcha.compose.document.dsl.Transformable<T>`
-  exposes `transform(DocumentTransform)`, `rotate(degrees)`,
-  `scale(uniformFactor)`, `scale(sx, sy)` as default methods. Builders
-  opt in by implementing two abstract methods: the transform setter and
-  `currentTransform()`. The defaults preserve the unmodified axis when
-  callers chain `rotate(...).scale(...)`.
-- `ShapeContainerBuilder` now implements `Transformable<ShapeContainerBuilder>`,
-  so authors can write
-  `addCircle(60, brand, c -> c.rotate(15).scale(0.9).center(label))`.
-  Default transform is `DocumentTransform.NONE`.
-- `ShapeContainerNode` gains a `transform: DocumentTransform` field
-  (ninth canonical-constructor parameter, defaulted to
-  `DocumentTransform.NONE` by the existing eight-arg compatibility
-  constructor). The transform is a render-time concern: the canonical
-  layout layer still measures and places the node against its natural
-  bounding box, so layout snapshots stay deterministic regardless of
-  rotation/scale.
-
-### Tests
-
-- New `DocumentTransformTest` (9 cases) pins value-type contracts —
-  identity, factories, axis-preserving updates, zero-scale rejection,
-  non-finite rejection, mirror via negative scale.
-- `ShapeContainerBuilderTest` grows five C.1 cases: default identity
-  transform, `rotate(...)` shortcut, `scale(uniform)` shortcut,
-  rotate+scale composition, and the layout invariant that a transform
-  does not shift placement coordinates (placement of a 45°-rotated
-  circle equals placement of the same circle without rotation).
-
-### Deferred
-
-- Other builders opt in to `Transformable<T>` later — `ShapeBuilder`,
-  `EllipseBuilder`, `ImageBuilder`, `LineBuilder`, `BarcodeBuilder` are
-  natural candidates now that C.2 ships and rotate/scale produces
-  visible output.
-- C.3 — per-entity z-index (`zIndex(int)` + `Layer` ECS-component
-  honoured by `EntityRenderOrder`).
-- C.4 — recipe + extending the runnable example with rotated/scaled
-  scenarios.
-
----
-
-## v1.5.0-beta.1 (in progress) - Phase B "Shape-as-container" (full pipeline)
-
-Phase B follow-up to alpha.2: lands the actual shape-clipped render path.
-The PDF backend now honours `ClipPolicy.CLIP_PATH` (default) and
-`CLIP_BOUNDS`, so a circle with a child label clips the label to the
-circle's outline. `OVERFLOW_VISIBLE` skips clipping entirely. The DOCX
-backend renders a graceful fallback (layers without outline + capability
-warning) since Apache POI cannot express graphics-state path clipping.
-
-### Public API
-
-- `ShapeContainerNode` and `ShapeContainerBuilder` now default to
-  `ClipPolicy.CLIP_PATH` per ADR §Decision — the natural reading of "add
-  a circle with a label inside" is that the label is clipped by the
-  circle's outline. Callers who explicitly want axis-aligned bbox
-  clipping or no clipping at all set the policy through
-  `clipPolicy(...)`.
-
-### Architecture
-
-- `NodeDefinition` gains a default `emitOverlayFragments(...)` hook
-  alongside the existing `emitFragments(...)`. Most node types do not
-  need it — opening decorations (backgrounds, borders, outlines) already
-  render before children. The overlay hook exists for paired begin/end
-  markers such as the graphics-state save/restore pair used by
-  `ShapeContainerNode`: the clip-begin fragment is emitted via
-  `emitFragments` (so it sits behind the children), and the matching
-  clip-end fragment via `emitOverlayFragments` (so it sits after the
-  children, restoring graphics state on the same page).
-- New engine-side payload pair on `BuiltInNodeDefinitions`:
-  `ShapeClipBeginPayload` (carries outline geometry + chosen policy +
-  owner path) and `ShapeClipEndPayload` (carries owner path). They are
-  marker payloads — the begin emits `saveGraphicsState() + add path +
-  clip()`, the end emits `restoreGraphicsState()`. Owner path lets
-  invariant tests verify that every begin pairs with an end on the
-  same page.
-- `LayoutCompiler.compileStackedLayer` and
-  `LayoutCompiler.compileNodeInFixedSlot` (STACK branch) now invoke
-  `definition.emitOverlayFragments(...)` after children are placed and
-  append the result to the fragment list. A new
-  `compositeOverlayFragments(...)` helper mirrors the existing
-  `compositeDecorationFragments(...)` shape so multi-page composites can
-  emit per-page overlays if they ever need to. Today only
-  `ShapeContainerDefinition` opts in.
-- New PDF render handlers in
-  `com.demcha.compose.document.backend.fixed.pdf.handlers`:
-  `PdfShapeClipBeginRenderHandler` and `PdfShapeClipEndRenderHandler`,
-  registered alongside the existing default handlers in
-  `PdfFixedLayoutBackend`. The begin handler builds an ellipse,
-  rounded-rectangle, or rectangle path (matching the outline kind) and
-  applies it as a graphics-state clip; the end handler issues the
-  matching `restoreGraphicsState()`.
-
-### DOCX backend
-
-- `DocxSemanticBackend` now recognises `ShapeContainerNode`. Apache POI
-  cannot express path clipping, so the backend renders the container's
-  layers inline without the outline frame and logs a one-time
-  `docx.export.shape-container-fallback` capability warning per export
-  pass. The fallback rule is recorded in
-  `docs/canonical-legacy-parity.md` under "Surfaces and structure".
-  Authors who need the outline must export to PDF.
-
-### Tests
-
-- `ShapeContainerBuilderTest` extended with three fragment-ordering
-  tests: default `CLIP_PATH` emits outline → clip-begin → layer →
-  clip-end in the right order with matching owner paths;
-  `OVERFLOW_VISIBLE` emits no clip markers; multi-container documents
-  keep every begin/end pair balanced. Plus a PDF render smoke test that
-  ensures the new handlers dispatch cleanly through
-  `PdfFixedLayoutBackend.toPdfBytes()`.
-- New `DocxSemanticBackendTest.shapeContainerExportsLayersInlineWithoutOutline`
-  pins the DOCX fallback contract: layer paragraph text survives,
-  outline does not.
-- New `ShapeContainerInvariantsTest` (architecture-guard) pins the two
-  cross-document invariants: `ShapeContainerNode` placement is
-  single-page (`SHAPE_ATOMIC`), and every `ShapeClipBeginPayload` has a
-  matching `ShapeClipEndPayload` with the same owner path on the same
-  page across an arbitrary mix of policies and outline kinds.
-
-### Documentation
-
-- New recipe `docs/recipes/shape-as-container.md` covers hello-circle,
-  layered ellipse with a badge + label, rounded card with `RichText`
-  body, the three clip policies, and edge cases (oversized container,
-  DOCX fallback). Plus a "How the rendering pipeline emits a clipped
-  container" section that documents the fragment sequence so readers
-  who hit visual surprises can trace them through the layout layer.
-- `docs/canonical-legacy-parity.md` gains a "Shape-as-container
-  (clipped)" row explaining that the PDF backend honours all three clip
-  policies while DOCX renders layers inline without the outline.
-
-### Deferred
-
-- B.7 (snapshot extension exposing the clip-path geometry directly on
-  `PlacedFragment` plus an `assertHasClipPath(...)` helper) is partly
-  redundant with the existing `ShapeClipBeginPayload` already carried on
-  the placed fragment — the dedicated helper lands later.
-- Visual baselines (`circle-with-text`, `ellipse-with-overlay`,
-  `rounded-rect-card`) come with later Phase B / Phase F polish.
-
----
-
-## v1.5.0-alpha.2 (in progress) - Phase B "Shape-as-container"
-
-This release starts Phase B: shape-as-container support on the canonical
-surface. The opening slice (B.1, B.2, B.4) lands the public DSL, the new
-`ShapeContainerNode` record, and the `SHAPE_ATOMIC` pagination policy. The
-PDF clip-path render path (B.5) and snapshot infrastructure (B.7) are still
-in flight — the layout compiler currently treats `SHAPE_ATOMIC` like
-`ATOMIC` for placement purposes, so children render *atop* the outline but
-are not yet clipped to its path.
-
-### Public API
-
-- New semantic node `com.demcha.compose.document.node.ShapeContainerNode`:
-  a composite whose bounding box is dictated by a `ShapeOutline` (rectangle,
-  rounded rectangle, ellipse, or circle) and that hosts one or more child
-  `LayerStackNode.Layer`s. Unlike `LayerStackNode` (where the bbox is
-  `max(child outer size)`), the outline drives the size — children can be
-  smaller and the container still occupies the full outline.
-- New sealed value type `com.demcha.compose.document.style.ShapeOutline`
-  with `Rectangle`, `RoundedRectangle`, and `Ellipse` cases plus a
-  `circle(diameter)` factory. Validates that dimensions are finite and
-  positive at construction time.
-- New enum `com.demcha.compose.document.style.ClipPolicy` with
-  `CLIP_BOUNDS`, `CLIP_PATH`, `OVERFLOW_VISIBLE` cases. The PDF backend
-  will honour `CLIP_PATH` once B.5 lands; today every policy renders the
-  outline plus layers without clipping.
-- New builder `com.demcha.compose.document.dsl.ShapeContainerBuilder`
-  exposing the same nine-point alignment vocabulary as `LayerStackBuilder`
-  (`topLeft`/`topCenter`/.../`bottomRight` plus
-  `position(node, offsetX, offsetY, anchor)`), plus outline configuration
-  (`rectangle(w, h)`, `roundedRect(w, h, radius)`, `ellipse(w, h)`,
-  `circle(diameter)`) and `clipPolicy(...)`, `fillColor(...)`,
-  `stroke(...)`, `padding(...)`, `margin(...)` setters.
-- `AbstractFlowBuilder` gains three new convenience overloads:
-  `addContainer(Consumer<ShapeContainerBuilder>)`,
-  `addCircle(double diameter, DocumentColor fill, Consumer<ShapeContainerBuilder> inside)`,
-  `addEllipse(double w, double h, DocumentColor fill, Consumer<ShapeContainerBuilder> inside)`.
-- New pagination policy `PaginationPolicy.SHAPE_ATOMIC`. From the
-  page-breaker's perspective it is identical to `ATOMIC` — the outline
-  plus every layer move to the next page as one unit — but it lets render
-  handlers and snapshots tell "shape-clipped atomicity" apart from
-  "bbox-only atomicity". Oversized containers raise the existing
-  `AtomicNodeTooLargeException` with the offending semantic name.
-
-### Architecture
-
-- New ADR `docs/adr/0001-shape-as-container.md` records the decision to
-  introduce `ShapeContainerNode` as a separate semantic type rather than
-  overload `LayerStackNode` with a `clipOutline` flag. The ADR captures
-  the alternative considered (clip flag on the existing record), the
-  reasons it was rejected (mixed semantics, harder pagination policy,
-  public-record signature change for an already-shipped v1.4 type), and
-  the implementation order through B.2 → B.10.
-- `BuiltInNodeDefinitions` registers the new `ShapeContainerDefinition`.
-  Its `prepare(...)` derives the bounding box from `outline.size() +
-  padding` (children do not influence the container size). Its
-  `emitFragments(...)` materialises the outline as an existing
-  `EllipseFragmentPayload` or `ShapeFragmentPayload`
-  (RoundedRectangle reuses the rectangle payload with a corner radius), so
-  the renderer keeps a single source of truth for shape geometry.
-
-### Tests
-
-- New `ShapeContainerBuilderTest` covers builder validation (missing
-  outline, empty layers), bbox derivation from outline (circle and
-  rounded-rectangle cases), screen-space `position(...)` offsets, the
-  flow-shortcut form (`section.addCircle(diameter, fill, inside)`), and
-  pagination invariants under `SHAPE_ATOMIC` (atomic page-break and
-  oversized-container rejection).
-- `FlowShortcutOverloadsTest` was migrated off the no-arg
-  `PageFlowBuilder` constructor (which now requires a `DocumentSession`)
-  to `SectionBuilder`, since the test exercises shortcut overloads on the
-  shared `AbstractFlowBuilder` parent.
-
-### Deferred
-
-- B.3 (layout shape geometry pre-pass + `ShapeClipPath` engine
-  component), B.5 (PDF clip-path render via graphics state), B.6 (DOCX
-  fallback), B.7 (snapshot extension for `clipPath`), B.8
-  (architecture-guard tests), B.9 (recipe + runnable example) and B.10
-  (wrap-up) remain in flight.
-
----
-
-## v1.5.0-alpha.1 (in progress) - Phase A "Quick UX wins"
-
-This is the first slice of the v1.5 "Intuitive" release. Phase A only adds
-fluent shortcuts and renames; no public record signatures change for builders
-that survive — the one record extension lands in `LayerStackNode.Layer`, but
-its old constructors stay backward-compatible.
-
-### Public API
-
-- `LayerStackBuilder` now exposes nine alignment shortcuts (`topLeft`,
-  `topCenter`, `topRight`, `centerLeft`, `center`, `centerRight`, `bottomLeft`,
-  `bottomCenter`, `bottomRight`) on top of the existing `back`/`center` helpers.
-  Discoverable from autocomplete instead of forcing callers to remember the
-  full `LayerAlign` enum.
-- `LayerStackBuilder.position(node, offsetX, offsetY, anchor)` nudges a layer
-  from its anchor by an on-screen offset (positive `offsetX` = right, positive
-  `offsetY` = down). `LayerStackNode.Layer` gains `offsetX` / `offsetY`
-  components; the two existing constructors (`Layer(node)`, `Layer(node, align)`)
-  default both to `0.0` so existing callers compile unchanged.
-- `AbstractFlowBuilder` gains five convenience overloads for the most common
-  cases: `addShape(w, h, fill)`, `addEllipse(diameter, fill)`,
-  `addEllipse(w, h, fill)`, `addCircle(diameter, fill)`,
-  `addImage(data, w, h)`. Sugar over the existing builder-callback signatures.
-- `RowBuilder.spacing(double)` is now the canonical name for horizontal child
-  spacing. `RowBuilder.gap(double)` remains as a `@Deprecated(since = "1.5.0")`
-  alias that delegates to `spacing(...)`. CV templates and runnable examples
-  were migrated to the new name.
-- `RowBuilder.add(node)` now validates the child type **eagerly** and throws
-  `IllegalArgumentException` from the offending call site — instead of waiting
-  until `build()` and reporting `IllegalStateException` later. Existing tests
-  that asserted the deferred `IllegalStateException` were updated.
-- `DocumentDsl.richText(Consumer<RichText>)` is a new callback entry point
-  that builds a `RichText` run sequence in one fluent call alongside the rest
-  of the DSL builders.
-
-### Architecture
-
-- `BuiltInNodeDefinitions.PreparedStackLayout` now carries per-layer
-  `offsetsX` / `offsetsY` lists in addition to the existing `alignments`. A
-  backward-compatible single-arg constructor fills both with zeros.
-- `LayoutCompiler.compileStackedLayer` honours layer offsets after applying
-  alignment, so positioned layers shift in screen-space units.
-
-### Deferred to Phase B
-
-- `expandWidth()` / `expandHeight()` shortcuts and the matching
-  `addLine(thickness, color)` overload need new `expandWidth` / `expandHeight`
-  flags on the canonical record types. They are folded into Phase B together
-  with `ShapeContainerNode` and `Transform`, since all three are public-record
-  extensions and benefit from being released together.
-- `ListBuilder.addItem(label, Consumer<ListBuilder>)` for nested lists requires
-  a new `ListItem` value type and a `ListNode` record signature change. Also
-  moved into Phase B for the same reason.
+- 675/675 green (was 525 on v1.4.1) — +150 new tests across:
+  - shape-clip-path fragment ordering and pagination invariants
+    (`ShapeContainerBuilderTest`, `ShapeContainerInvariantsTest`)
+  - transform mixin contract and CTM checks
+    (`DocumentTransformTest`, the
+    `everyTransformBeginInArbitraryDocumentHasMatchingEndOnSamePage`
+    architecture-guard test)
+  - per-layer z-index ordering and stable-tie behaviour
+    (`ShapeContainerZIndexDemoTest` plus the two zIndex cases on
+    `ShapeContainerBuilderTest`)
+  - table row-span / zebra / totals / repeating-header invariants
+    (`TableBuilderRowSpanTest`, `TableBuilderZebraAndTotalsTest`,
+    `TableBuilderRepeatHeaderTest`)
+  - `InvoiceTemplateV2` / `ProposalTemplateV2` invariants and three-
+    theme demo renders
+    (`InvoiceTemplateV2Test`, `InvoiceTemplateV2DemoTest`,
+    `ProposalTemplateV2Test`, `ProposalTemplateV2DemoTest`)
+  - custom `BusinessTheme` end-to-end
+    (`CustomBusinessThemeDemoTest`)
+  - HTTP streaming contract (`HttpStreamingDemoTest` —
+    no-close-on-caller invariant)
+  - layout-snapshot determinism
+    (`LayoutSnapshotRegressionDemoTest`)
+  - `CvTheme.fromBusinessTheme` mapping
+    (`CvThemeBusinessThemeAdapterTest`)
+  - six modernised CV templates rendered to file at expected page
+    counts (`CvTemplateRenderTest`)
+  - `Transformable<T>` contract pinned for every leaf builder that
+    opted in (`TransformableLeafBuildersTest`): default identity
+    transform, `rotate(...)` / `scale(...)` propagation, identity
+    short-circuit emits no markers, non-identity wraps the leaf
+    payload with matching transform-begin / transform-end carrying the
+    same owner path
+
+### Migration from v1.4.x
+
+- `RowBuilder.gap(double)` is deprecated in favour of
+  `spacing(double)`. The deprecated alias still compiles; CV
+  templates and runnable examples were migrated.
+- `RowBuilder.add(node)` now throws `IllegalArgumentException`
+  eagerly. Tests that asserted the deferred `IllegalStateException`
+  in `build()` must switch their expectation.
+- All other v1.4 record signatures stay backward-compatible:
+  `LayerStackNode.Layer`, `ShapeContainerNode`, `TableNode`,
+  `DocumentTableCell`, `TableResolvedCell`, and
+  `BuiltInNodeDefinitions.PreparedStackLayout` ship new canonical
+  constructors *and* preserve every existing constructor as a back-
+  compat shim that defaults the new fields. `InvoiceTemplateV1` and
+  `ProposalTemplateV1` ship side-by-side with the V2 templates;
+  callers who want the cinematic look opt in by switching the type.
+
+See [`docs/migration-v1-4-to-v1-5.md`](docs/migration-v1-4-to-v1-5.md)
+for the full guide.
 
 ---
 

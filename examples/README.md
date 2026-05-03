@@ -56,6 +56,16 @@ kitchen-sink master demo.
   128 footer barcode. Use as a reference when composing your own
   multi-page documents.
 
+### Flagship business report cover
+
+- `BusinessReportExample` — single-page "Q1 2024 BUSINESS REPORT"
+  cover modelled on a real-world investor brief. Top band identifier,
+  serif headline + procedurally rendered hero image, three gold-ringed
+  KPI cards, strategic-highlights bullet list paired with a five-
+  quarter Revenue / Profit bar chart, YoY metrics table, and a
+  confidential / page-number footer. Use this as the visual template
+  for landing-page hero shots.
+
 ## Workflow
 
 1. Install the root library artifact from the repository root:

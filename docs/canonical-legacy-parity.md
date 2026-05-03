@@ -33,6 +33,7 @@ compatibility concerns. New authoring features should be added through
 | Child horizontal alignment | Done via `LayerStack` / `ShapeContainer` | Use `LayerStackBuilder.topLeft(...)` … `bottomRight(...)` (nine alignment shortcuts) or `ShapeContainerBuilder` with the same vocabulary; v1.5 also exposes `position(node, offsetX, offsetY, anchor)` for screen-space nudges from an anchor. |
 | Child vertical alignment | Done via `LayerStack` / `ShapeContainer` | Same nine alignment anchors cover top, centre, bottom edges. |
 | Absolute placement | Rejected for normal authoring | Keep coordinates inside layout and backend internals. Use `LayerStack.position(...)` if you need anchor-plus-offset placement. |
+| Controlled free canvas (`CanvasLayerNode`) | Planned for v1.6 (stretch) | New atomic semantic node accepting children at explicit `(x, y)` coordinates. Separate from `LayerStackNode` and `ShapeContainerNode` so absolute placement stays an opt-in primitive, not a global policy. See [v1.6 roadmap, Phase C](./v1.6-roadmap.md). |
 
 ## Visual Primitives
 
@@ -55,7 +56,7 @@ compatibility concerns. New authoring features should be added through
 | Paragraph wrapping | Done | Keep wrapping in paragraph layout preparation. |
 | Inline text/link runs | Done | Keep as paragraph-level semantic content. |
 | Lists | Done | Existing marker and indentation APIs remain canonical. |
-| Nested list ergonomics | Planned | Evaluate a nested list builder instead of forcing sections. |
+| Nested list ergonomics | Planned for v1.6 (committed) | `ListBuilder.addItem(label, Consumer<ListBuilder>)` plus a new `ListItem` value type and a `ListNode` record extension with back-compat constructor. See [v1.6 roadmap, Phase A](./v1.6-roadmap.md). |
 | Auto-size text | Done | Use `ParagraphBuilder.autoSize(maxSize, minSize)` to fit single-line headlines into the resolved inner width. |
 
 ## Images
@@ -79,7 +80,7 @@ compatibility concerns. New authoring features should be added through
 | Zebra rows | Done | `TableBuilder.zebra(odd, even)` (style or colour overload) alternates row fills. Applied lazily at `build()`; explicit `rowStyle(idx, ...)` always wins. |
 | Totals row | Done | `TableBuilder.totalRow(values)` appends a row with a default bold + subtle-fill style. `totalRow(style, values)` for a custom look. |
 | Repeated header on page break | Done | `TableBuilder.repeatHeader()` repeats the first row at the top of every continuation page; `repeatHeader(int n)` for multi-row headers. |
-| Complex cell composition | Planned | Consider only after row/column layout primitives land. |
+| Complex cell composition | Planned for v1.6 (committed) | New `TableCellContent.NodeContent(DocumentNode child)` variant + `DocumentTableCell.node(DocumentNode)` factory. Two-pass cell measurement preserves row pagination behaviour. See [v1.6 roadmap, Phase B](./v1.6-roadmap.md). |
 
 ## PDF Output
 
@@ -91,7 +92,7 @@ compatibility concerns. New authoring features should be added through
 | Guide lines | Done | `guideLines(true)` is available on document builder and session. |
 | Metadata/protection/watermark/header/footer | Done | Configure on `DocumentSession` (e.g. `metadata(...)`, `watermark(...)`, `protect(...)`, `header(...)`, `footer(...)`); convenience PDF entrypoints (`buildPdf`, `writePdf`, `toPdfBytes`) honour these options without an explicit backend builder. `PdfFixedLayoutBackend.builder()` remains for advanced cases. |
 | DOCX semantic export | Done | Use `session.export(new DocxSemanticBackend())` for paragraph/table/image-aware Word output. Requires `org.apache.poi:poi-ooxml` on the consumer classpath. |
-| PPTX semantic export | Planned | Skeleton manifest backend remains; richer slide layout work is scheduled for v1.6+. |
+| PPTX semantic export | Planned for v1.6 (stretch) | Build out `PptxSemanticBackend` from the existing manifest skeleton to a working POI-based exporter — paragraphs as text boxes, tables as PowerPoint tables, sections as slides. See [v1.6 roadmap, Phase D](./v1.6-roadmap.md). |
 | PDFBox types in session API | Rejected | Keep PDFBox behind the fixed PDF backend. |
 
 ## Diagnostics

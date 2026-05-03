@@ -43,6 +43,20 @@ for the phased plan, verification gates, and ADRs.
   signing + automated deployment on tag push. Primary install
   coordinates switch to `io.github.demchaav:graphcompose:1.6.0`;
   JitPack stays documented as a fallback.
+- **Phase F — Benchmark infrastructure modernisation.** Replace the
+  custom warmup / measurement harness with `org.openjdk.jmh` for
+  JIT-aware measurement, dead-code elimination protection, and proper
+  statistical output. Move the benchmark suite (currently in test
+  scope: `CurrentSpeedBenchmark`, `ComparativeBenchmark`,
+  `ScalabilityBenchmark`, `FullCvBenchmark`, `GraphComposeBenchmark`)
+  into a separate `benchmarks/` Maven module mirroring the
+  `examples/` pattern, with a self-executing JMH jar built via
+  `maven-shade-plugin`. Add a standalone `layoutGraph()`-only
+  scenario so the README can publish a true Layout-vs-Render table
+  backed by independently measured values rather than stage
+  breakdown subtractions. CI Performance Smoke Check switches to the
+  new JMH jar; `scripts/run-benchmarks.ps1` becomes a thin wrapper so
+  the documented workflow keeps working.
 
 ### Non-goals
 

@@ -756,6 +756,7 @@ See [docs/benchmarks.md](./docs/benchmarks.md) for the full methodology, profile
 - [ ] **controlled free canvas (`CanvasLayerNode`)** (v1.6 — stretch)
 - [ ] real PPTX export (v1.6 — stretch; v1.3 shipped a manifest skeleton)
 - [ ] Maven Central release (v1.6 — stretch)
+- [ ] benchmark infrastructure modernisation (JMH + separate `benchmarks/` module) (v1.6 — stretch)
 
 See [docs/v1.6-roadmap.md](./docs/v1.6-roadmap.md) for the full v1.6 plan.
 

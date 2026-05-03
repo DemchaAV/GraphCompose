@@ -27,6 +27,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.style.DocumentTransform;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
@@ -45,7 +46,7 @@ import java.util.function.Consumer;
  *
  * @author Artem Demchyshyn
  */
-public class ShapeBuilder {
+public class ShapeBuilder implements Transformable<ShapeBuilder> {
     protected String name = "";
     protected double width;
     protected double height;
@@ -56,6 +57,7 @@ public class ShapeBuilder {
     protected DocumentBookmarkOptions bookmarkOptions;
     protected DocumentInsets padding = DocumentInsets.zero();
     protected DocumentInsets margin = DocumentInsets.zero();
+    protected DocumentTransform transform = DocumentTransform.NONE;
 
     /**
      * Creates a shape builder.
@@ -208,11 +210,29 @@ public class ShapeBuilder {
     }
 
     /**
+     * Sets the render-time affine transform (rotation around the placement
+     * centre and/or scaling). The {@link Transformable#rotate(double)},
+     * {@link Transformable#scale(double)}, and
+     * {@link Transformable#scale(double, double)} shortcuts delegate
+     * through this setter.
+     */
+    @Override
+    public ShapeBuilder transform(DocumentTransform transform) {
+        this.transform = transform == null ? DocumentTransform.NONE : transform;
+        return this;
+    }
+
+    @Override
+    public DocumentTransform currentTransform() {
+        return transform;
+    }
+
+    /**
      * Builds the semantic shape node.
      *
      * @return shape node
      */
     public ShapeNode build() {
-        return new ShapeNode(name, width, height, fillColor, stroke, cornerRadius, linkOptions, bookmarkOptions, padding, margin);
+        return new ShapeNode(name, width, height, fillColor, stroke, cornerRadius, linkOptions, bookmarkOptions, padding, margin, transform);
     }
 }

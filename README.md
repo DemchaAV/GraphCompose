@@ -29,9 +29,9 @@ What you get out of the box:
 - **Atomic pagination, no manual paging.** Tables split row-by-row, rows are atomic, layer stacks are atomic, and the paginator keeps owner placement and page spans coherent.
 - **Designer-grade output.** Page backgrounds, section bands, soft panels, accent strips, column spans, layered hero blocks, fluent rich text, and a tokenised `BusinessTheme` are all first-class &mdash; not workarounds.
 - **PDFBox rendering, isolated.** PDF backend lives behind a single backend interface. The DOCX semantic backend (Apache POI) is ready for callers who need an editable file.
-- **Tested at every layer.** 647 green tests on `develop` (525 → 647 across v1.5), including cinematic-feature tests, shape-as-container clip-path invariants, transform CTM checks, table row-span / zebra / repeated-header tests, public-API leak guards, semantic-vs-engine isolation guards, and the `PdfVisualRegression` harness for screenshot-level checks.
+- **Tested at every layer.** 675 green tests on `develop` (525 → 675 across v1.5), including cinematic-feature tests, shape-as-container clip-path invariants, transform CTM checks, table row-span / zebra / repeated-header tests, public-API leak guards, semantic-vs-engine isolation guards, and the `PdfVisualRegression` harness for screenshot-level checks.
 
-The current release is **v1.4.1** &mdash; the "cinematic" release. v1.3 stabilised the core (rows, per-side borders, auto-size text, DOCX export); v1.4 lands the visual-design layer that turns "tidy PDF" into "designed document".
+The current release is **v1.5.0** &mdash; the "intuitive" release. v1.3 stabilised the core (rows, per-side borders, auto-size text, DOCX export); v1.4 added the cinematic visual-design layer (layer stacks, page backgrounds, business themes); v1.5 turns the surface intuitive — shape-as-container with clip path, rotate / scale + per-layer z-index, advanced tables (row span, zebra, totals, repeating header), and two new theme-driven cinematic templates (`InvoiceTemplateV2`, `ProposalTemplateV2`). v1.5 is fully source-compatible with v1.4 — every public record gained back-compat constructors that default the new fields. See [docs/migration-v1-4-to-v1-5.md](docs/migration-v1-4-to-v1-5.md).
 
 ## Visual preview
 
@@ -75,7 +75,7 @@ GraphCompose is currently distributed through JitPack.
 <dependency>
     <groupId>com.github.DemchaAV</groupId>
     <artifactId>GraphCompose</artifactId>
-    <version>v1.4.1</version>
+    <version>v1.5.0</version>
 </dependency>
 ```
 
@@ -85,11 +85,11 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.demchaav:GraphCompose:v1.4.1")
+    implementation("com.github.demchaav:GraphCompose:v1.5.0")
 }
 ```
 
-The project POM coordinates are `io.github.demchaav:graphcompose:1.4.1`. JitPack keeps the GitHub repository coordinate with a lowercase owner (`com.github.demchaav:GraphCompose:v1.4.1`) and the `v1.4.1` tag. The DOCX backend depends on `org.apache.poi:poi-ooxml`, declared as `optional` &mdash; add it explicitly when you call `session.export(new DocxSemanticBackend())`.
+The project POM coordinates are `io.github.demchaav:graphcompose:1.5.0`. JitPack keeps the GitHub repository coordinate with a lowercase owner (`com.github.demchaav:GraphCompose:v1.5.0`) and the `v1.5.0` tag. The DOCX backend depends on `org.apache.poi:poi-ooxml`, declared as `optional` &mdash; add it explicitly when you call `session.export(new DocxSemanticBackend())`.
 
 ## Quick start
 
@@ -701,9 +701,13 @@ See [docs/benchmarks.md](./docs/benchmarks.md) for the full methodology, profile
 - [x] **rich-text DSL** (v1.4)
 - [x] **`BusinessTheme` design tokens** (v1.4)
 - [x] **`PdfVisualRegression` harness** (v1.4)
-- [ ] table row spans
-- [ ] header repeat on page break + zebra rows + total row presets in `TablePreset`
-- [ ] anchored overlay positions (e.g. `position(x, y)` inside a layer)
+- [x] **shape-as-container with clip path** (v1.5)
+- [x] **transforms (rotate / scale) + per-layer z-index** (v1.5)
+- [x] **table row spans** (v1.5)
+- [x] **zebra rows + totals row + repeating header on page break** (v1.5)
+- [x] **anchored overlay positions (`position(x, y, anchor)`)** (v1.5)
+- [x] **cinematic templates (`InvoiceTemplateV2`, `ProposalTemplateV2`)** (v1.5)
+- [x] **`CvTheme` ↔ `BusinessTheme` bridge** (v1.5)
 - [ ] Maven Central release
 - [ ] real PPTX export (v1.3 ships a manifest skeleton)
 

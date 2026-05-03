@@ -43,10 +43,13 @@ public final class CoverLetterFileExample {
                     .name("CoverLetter")
                     .spacing(18)
 
-                    // Header band — sender identity + date.
+                    // Header band — sender identity + date. Two-thirds for the
+                    // identity column gives the contact line enough room to
+                    // stay on a single line at 9.5pt; the date column is a
+                    // narrow right-aligned strip.
                     .addRow("Header", row -> row
                             .spacing(14)
-                            .weights(2, 1)
+                            .weights(3, 1)
                             .addSection("Identity", section -> section
                                     .spacing(2)
                                     .addParagraph(p -> p
@@ -61,24 +64,32 @@ public final class CoverLetterFileExample {
                                             .text("Senior Backend Engineer · Document Tooling")
                                             .textStyle(headlineMuted())
                                             .margin(DocumentInsets.zero()))
-                                    .addRich(rich -> rich
-                                            .plain("mariia.demchyshyn@example.com  ·  +44 20 7946 0234  ·  ")
-                                            .accent("github.com/mariia-d", BRAND)))
+                                    // Contact split across two short paragraphs
+                                    // so neither line is forced to wrap mid-token
+                                    // when the page is narrow.
+                                    .addParagraph(p -> p
+                                            .text("mariia.demchyshyn@example.com  ·  +44 20 7946 0234")
+                                            .textStyle(contactStyle())
+                                            .margin(new DocumentInsets(2, 0, 0, 0)))
+                                    .addParagraph(p -> p
+                                            .text("github.com/mariia-d  ·  linkedin.com/in/mariia-d")
+                                            .textStyle(contactLinkStyle())
+                                            .margin(DocumentInsets.zero())))
                             .addSection("Date", section -> section
-                                    .padding(new DocumentInsets(2, 0, 0, 0))
+                                    .padding(new DocumentInsets(4, 0, 0, 0))
                                     .addParagraph(p -> p
                                             .text("15 May 2026")
                                             .textStyle(DocumentTextStyle.builder()
                                                     .fontName(FontName.HELVETICA)
-                                                    .size(10.5)
+                                                    .size(10)
                                                     .color(MUTED)
                                                     .build())
                                             .margin(DocumentInsets.zero()))
                                     .addParagraph(p -> p
-                                            .text("Re: Senior Engineer · Documents")
+                                            .text("Re: Senior Engineer")
                                             .textStyle(DocumentTextStyle.builder()
                                                     .fontName(FontName.HELVETICA_BOLD)
-                                                    .size(10.5)
+                                                    .size(10)
                                                     .color(BRAND)
                                                     .build())
                                             .margin(DocumentInsets.zero()))))
@@ -267,6 +278,22 @@ public final class CoverLetterFileExample {
                 .fontName(FontName.HELVETICA)
                 .size(9)
                 .color(MUTED)
+                .build();
+    }
+
+    private static DocumentTextStyle contactStyle() {
+        return DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA)
+                .size(9.5)
+                .color(MUTED)
+                .build();
+    }
+
+    private static DocumentTextStyle contactLinkStyle() {
+        return DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA)
+                .size(9.5)
+                .color(BRAND)
                 .build();
     }
 }

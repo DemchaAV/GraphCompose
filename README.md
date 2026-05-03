@@ -33,6 +33,49 @@ What you get out of the box:
 
 The current release is **v1.5.0** &mdash; the "intuitive" release. v1.3 stabilised the core (rows, per-side borders, auto-size text, DOCX export); v1.4 added the cinematic visual-design layer (layer stacks, page backgrounds, business themes); v1.5 turns the surface intuitive — shape-as-container with clip path, rotate / scale + per-layer z-index, advanced tables (row span, zebra, totals, repeating header), and two new theme-driven cinematic templates (`InvoiceTemplateV2`, `ProposalTemplateV2`). v1.5 is fully source-compatible with v1.4 — every public record gained back-compat constructors that default the new fields. See [docs/migration-v1-4-to-v1-5.md](docs/migration-v1-4-to-v1-5.md).
 
+## Who is GraphCompose for?
+
+GraphCompose is built for **server-side Java services that need to generate structured business PDFs** &mdash; the kind of documents your application has to produce on demand from real data, not the kind a human types into Word.
+
+Typical fits:
+
+- **Invoices and quotes** generated per request from order data (`InvoiceTemplateV2 + BusinessTheme.modern()` is the canonical entry point).
+- **Proposals, statements of work, and reports** with consistent branding across teams (`ProposalTemplateV2`, custom `BusinessTheme`).
+- **CVs and cover letters** for ATS exports, hiring tools, and recruiter dashboards (six modernised CV templates plus the `CvTheme.fromBusinessTheme(...)` bridge).
+- **Schedules, dispatch sheets, and operational reports** with deterministic pagination on long data (advanced tables: row span, zebra, totals, repeating header on page break).
+- **Internal tooling and admin PDFs** that need to ship today through Spring Boot, Quarkus, Micronaut, Ktor, or any plain Java HTTP service &mdash; `writePdf(OutputStream)` streams straight into a Servlet response without buffering in memory.
+
+If you are reaching for **iText** for low-level page primitives or **JasperReports** for XML-template-driven layout, GraphCompose sits between them: a Java DSL describes the document semantically, the engine resolves layout and pagination deterministically, and the PDF backend renders the result with PDFBox.
+
+### Spring Boot quick example
+
+```java
+@GetMapping(value = "/invoice/{id}", produces = MediaType.APPLICATION_PDF_VALUE)
+public ResponseEntity<StreamingResponseBody> invoice(@PathVariable Long id) {
+    InvoiceDocumentSpec spec = invoiceService.loadInvoice(id);
+    InvoiceTemplateV2 template = new InvoiceTemplateV2(BusinessTheme.modern());
+
+    StreamingResponseBody body = response -> {
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(DocumentPageSize.A4)
+                .pageBackground(BusinessTheme.modern().pageBackground())
+                .margin(28, 28, 28, 28)
+                .create()) {
+            template.compose(document, spec);
+            document.writePdf(response);   // streams directly, no in-memory PDF
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    };
+
+    return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=invoice-" + id + ".pdf")
+            .body(body);
+}
+```
+
+The same pattern fits any HTTP framework that exposes an `OutputStream` &mdash; `writePdf(OutputStream)` does not close the caller's stream, which is the contract Servlet, S3, GCS, and message-queue uploads all expect. See the runnable [`HttpStreamingExample`](./examples/src/main/java/com/demcha/examples/HttpStreamingExample.java) for the full version with a `@RestController` snippet and the no-close stream invariant pinned by `HttpStreamingDemoTest`.
+
 ## Visual preview
 
 <p align="center">

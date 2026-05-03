@@ -1,171 +1,315 @@
 # Architecture
 
-GraphCompose is split into two practical layers.
+GraphCompose is split into two practical layers: a **canonical authoring
+surface** that application code is expected to use, and a **shared engine
+foundation** that resolves geometry, pagination, and render ordering
+behind that surface. New features land on the canonical surface;
+the engine foundation stays an internal detail kept stable enough to
+support multiple backends.
 
 ## Pipeline overview
 
-The supported canonical flow is:
+The supported runtime pipeline is:
 
-1. application code describes a document through `GraphCompose.document(...)`, `DocumentSession`, and `DocumentDsl`
-2. canonical nodes describe semantic intent: modules, paragraphs, lists, rows, tables, images, dividers, and page breaks
-3. `document.layout` prepares those nodes into deterministic layout fragments
-4. the shared engine foundation resolves measurement, pagination, placement, and render ordering
-5. the active backend turns resolved fragments/entities into output bytes
+`GraphCompose.document(...) → DocumentSession → DocumentDsl
+   → semantic DocumentNode tree → layout fragments
+   → pagination + placement → backend render`
 
-In short, the runtime pipeline is:
+Concretely:
 
-`document -> semantic nodes -> layout fragments -> pagination -> render`
+1. application code describes a document through
+   `GraphCompose.document(...)`, `DocumentSession`, and `DocumentDsl`.
+2. canonical nodes describe semantic intent: modules, sections,
+   paragraphs, lists, rows, tables, images, dividers, layer stacks,
+   shape containers, and page breaks (every public node lives under
+   `com.demcha.compose.document.node`).
+3. `document.layout` prepares those nodes into deterministic
+   `LayoutFragment` records via `LayoutCompiler` + `NodeRegistry`.
+4. the shared engine foundation resolves measurement, pagination,
+   placement, and render ordering against those prepared fragments.
+5. the active backend turns the resolved `LayoutGraph` /
+   `PlacedFragment` stream into output bytes — `PdfFixedLayoutBackend`
+   for PDF, `DocxSemanticBackend` for DOCX, future PPTX backend
+   skeleton in place.
 
-That separation is the core project concept. Public code describes document intent, layout resolves geometry, and renderers only draw already-resolved output.
+That separation is the core project concept. Public code describes
+document intent, layout resolves geometry, renderers only draw already
+resolved output. It also enables layout snapshot regression tests —
+test code can inspect the resolved document through
+`DocumentSession.layoutSnapshot()` before any byte is rendered.
 
-The same separation also enables layout snapshot regression tests. Test code can inspect the resolved document after layout and pagination, before rendering, through `DocumentSession.layoutSnapshot()`. Older low-level snapshot adapters remain internal compatibility paths and are not part of the supported public workflow.
+Semantic nodes are renderer-neutral. Link, bookmark, and barcode
+metadata live in `document.node.DocumentLinkOptions`,
+`DocumentBookmarkOptions`, and `DocumentBarcodeOptions`; PDF-specific
+translation happens inside `document.backend.fixed.pdf`.
 
-Semantic nodes are renderer-neutral. Link, bookmark, and barcode metadata live in `document.node.DocumentLinkOptions`, `DocumentBookmarkOptions`, and `DocumentBarcodeOptions`; PDF-specific translation happens inside `document.backend.fixed.pdf`.
+## Canonical authoring layer (`com.demcha.compose.document.*`)
 
-`DocumentDsl` is intentionally a small facade. The public builder classes live beside it in `com.demcha.compose.document.dsl`, while implementation helpers such as semantic name normalization stay in `document.dsl.internal`.
+This is the supported public surface. Application code should never
+need to reach below it.
 
-The rendering layer now also has an explicit render-pass seam:
+- **`document.api`** — `DocumentSession` (the lifecycle owner),
+  `GraphCompose.DocumentBuilder`, `DocumentPageSize`, and the
+  convenience render entry points (`buildPdf`, `writePdf(OutputStream)`,
+  `toPdfBytes`).
+- **`document.dsl`** — public builders behind `DocumentDsl`:
+  `PageFlowBuilder`, `SectionBuilder`, `ModuleBuilder`,
+  `ParagraphBuilder`, `RowBuilder`, `TableBuilder`, `ListBuilder`,
+  `ShapeBuilder`, `EllipseBuilder`, `LineBuilder`, `ImageBuilder`,
+  `BarcodeBuilder`, `LayerStackBuilder`, `ShapeContainerBuilder`,
+  `RichText`, plus the `Transformable<T>` mixin. Implementation helpers
+  such as semantic-name normalization stay in `document.dsl.internal`
+  and are not part of the public API.
+- **`document.node`** — semantic node records (`ParagraphNode`,
+  `TableNode`, `ShapeContainerNode`, `LayerStackNode`, etc.) plus
+  shared option types (`DocumentLinkOptions`, `DocumentBookmarkOptions`,
+  `DocumentBarcodeOptions`). All renderer-neutral.
+- **`document.style`** — public style values (`DocumentColor`,
+  `DocumentInsets`, `DocumentStroke`, `DocumentTextStyle`,
+  `DocumentCornerRadius`, `DocumentTransform`, `ClipPolicy`,
+  `ShapeOutline`, `Decoration`).
+- **`document.table`** — public table types
+  (`DocumentTableColumn`, `DocumentTableCell`, `DocumentTableStyle`).
+- **`document.image`** — public image types
+  (`DocumentImageData`, `DocumentImageFitMode`).
+- **`document.theme`** — `BusinessTheme` design tokens
+  (`DocumentPalette`, `SpacingScale`, `TextScale`, `TablePreset`) plus
+  `CvTheme` and the `CvTheme.fromBusinessTheme(...)` bridge.
+- **`document.output`** — backend-neutral output options
+  (`DocumentMetadata`, `DocumentWatermark`, `DocumentProtection`,
+  `DocumentHeaderFooter`).
+- **`document.snapshot`** — public layout-snapshot DTOs returned by
+  `DocumentSession.layoutSnapshot()`.
+- **`document.exceptions`** — public exception types raised across the
+  authoring surface (`AtomicNodeTooLargeException`, etc.).
+- **`document.layout`** — `LayoutCompiler`, `NodeRegistry`,
+  `BuiltInNodeDefinitions`, `TableLayoutSupport`, `PreparedNode`,
+  `PlacedFragment`, `LayoutGraph`. Public for advanced extension paths
+  (custom `NodeDefinition` registration); ordinary application code
+  does not need to touch it.
+- **`document.backend.fixed.pdf`** — the canonical PDF backend
+  (`PdfFixedLayoutBackend`, fragment render handlers, option
+  translators). The only place PDFBox imports are allowed outside the
+  engine foundation.
+- **`document.backend.semantic`** — semantic exporters
+  (`DocxSemanticBackend` based on Apache POI; `PptxSemanticBackend`
+  manifest skeleton).
 
-- the engine opens one backend-neutral render session for one document render pass
+## Template layer (`com.demcha.compose.document.templates.*`)
+
+Built-in templates compose against the canonical authoring layer using
+the same `DocumentDsl` an application would use directly.
+
+- **`...templates.api`** — template-facing contracts
+  (`InvoiceTemplate`, `ProposalTemplate`, `CvTemplate`,
+  `CoverLetterTemplate`, `WeeklyScheduleTemplate`,
+  `CvTemplateRegistry`). Compose-first: every contract takes a
+  `DocumentSession` plus the template-specific data spec.
+- **`...templates.builtins`** — concrete built-ins
+  (`InvoiceTemplateV1`, `InvoiceTemplateV2`, `ProposalTemplateV1`,
+  `ProposalTemplateV2`, `CvTemplateV1`, plus a CV gallery that takes a
+  `BusinessTheme` or `CvTheme` in their constructor).
+- **`...templates.support`** — backend-neutral scene composers per
+  domain (`...support.cv`, `...support.business`, `...support.schedule`)
+  plus shared composition primitives in `...support.common`.
+- **`...templates.data`** — DTOs (`InvoiceDocumentSpec`,
+  `ProposalDocumentSpec`, etc.).
+
+V2 templates (`InvoiceTemplateV2`, `ProposalTemplateV2`) take a
+`BusinessTheme` so the same data renders through any of `classic` /
+`modern` / `executive` (or a custom theme) without touching the call
+site. V1 templates ship side-by-side for callers who want the legacy
+hard-coded look.
+
+## Shared engine foundation (`com.demcha.compose.engine.*`) — internal
+
+The engine foundation is the runtime that turns prepared layout
+fragments into a placed, paginated, rendered document. It is **not** a
+supported application authoring API. It is documented here so engine
+contributors and authors of new backends know how to extend it without
+breaking the canonical surface.
+
+### Render-pass session
+
+The renderer is fronted by a backend-neutral seam:
+
+- the engine opens one render session for one document render pass
 - the session owns page availability and page-local drawing surfaces
-- handlers may change graphics or text state while drawing, but they must restore that state before returning
+- handlers may change graphics or text state while drawing, but they
+  must restore that state before returning
 - handlers must never close session-owned surfaces directly
 
-For the PDF backend this seam is implemented as a page-scoped session that reuses one `PDPageContentStream` per page for the lifetime of the pass. That keeps PDFBox lifecycle concerns inside the PDF renderer while still letting the engine stay format-neutral for future DOCX/PPTX-style backends.
+For the PDF backend this seam is implemented as a page-scoped session
+that reuses one `PDPageContentStream` per page for the lifetime of the
+pass. PDFBox lifecycle concerns stay inside the PDF renderer; the
+engine stays format-neutral for future backends.
 
-For pagination-sensitive trees, GraphCompose relies on a child-first page-breaking order. Fixed leaf objects are resolved before their parent containers so parent `ContentSize` can reflect child shifts before container placement is finalized.
+### Pagination order
 
-The engine now materializes one deterministic hierarchy snapshot per layout pass:
+Pagination relies on a child-first page-breaking order. Fixed leaf
+objects are resolved before their parent containers so parent
+`ContentSize` reflects child shifts before container placement is
+finalized. See [pagination-ordering.md](./pagination-ordering.md) for
+the detailed rationale and the failure modes that motivated it.
 
-- parent links come from `ParentComponent`
-- sibling order comes from `Entity.children`
-- roots, layers, and depth metadata are rebuilt for every pass instead of being reused across runs
+The engine materializes one deterministic hierarchy snapshot per
+layout pass: parent links from `ParentComponent`, sibling order from
+`Entity.children`, roots / layers / depth metadata rebuilt every pass.
+Layout, pagination, snapshot extraction, and render backends all
+agree on the same tree semantics.
 
-That keeps layout, pagination, snapshot extraction, and render backends aligned on the same tree semantics.
+### Entity / ECS responsibilities (engine-internal)
 
-See [pagination-ordering.md](./pagination-ordering.md) for the detailed explanation of why this rule exists and how ordering bugs can look like render bugs.
-
-## Entity responsibilities and helper boundaries
-
-`Entity` is intentionally being pushed back toward a thinner ECS-style role.
-
-Today `Entity` owns:
+`Entity` is intentionally a thin ECS-style identity object. It owns:
 
 - stable identity
 - the component map
 - canonical child order through `Entity.children`
 - a cached render marker reference for fast `hasRender()` checks
 
-Layout-specific math and pagination mutation now live in dedicated helpers:
-
-- `EntityBounds` owns bounding-line and outer-edge calculations derived from `Placement`, `ContentSize`, and optional `Margin`
-- `ParentContainerUpdater` owns parent-container size and page-shift propagation rules used during pagination-sensitive updates
-
-Deprecated helper methods still exist on `Entity` as compatibility delegates, but new code should treat those methods as migration shims rather than extension points.
-
-## Engine layer: `com.demcha.compose.engine.*`
-
-- `com.demcha.compose.engine.*` contains the ECS engine internals, geometry, layout resolution, pagination, measurement, and rendering systems.
-- `com.demcha.compose.font.*` contains public font names, backend-neutral family descriptors, registration, lookup, and showcase helpers.
-- `com.demcha.compose.engine.text.*` contains internal text utilities used by layout/render hot paths.
-- `com.demcha.compose.engine.text.markdown.*` contains markdown-to-text-token parsing helpers used by semantic text preparation.
-
-This layer is the reusable document engine foundation. It is responsible for turning canonical layout state, ECS components, and styles into positioned render output. It is not a supported application authoring API.
+Layout-specific math and pagination mutation live in dedicated
+helpers — `EntityBounds` for geometry reads,
+`ParentContainerUpdater` for parent-container size and page-shift
+propagation. Deprecated helper methods on `Entity` are migration
+shims, not extension points.
 
 ### Semantic modules
 
-Canonical modules represent full-width document sections rather than plain vertical container aliases.
+Canonical modules represent full-width document sections rather than
+plain vertical container aliases. Modules resolve their width from
+the parent inner box and keep that width stable; they primarily grow
+in height. Page roots should therefore be canonical
+`DocumentSession.pageFlow(...)` flows that stack modules.
 
-- modules resolve their width from the parent inner box
-- modules keep that width stable even if one child is wider
-- modules primarily grow in height as content is added
-- page roots should therefore be canonical `pageFlow(...)` flows that stack modules
+### Table layout
 
-### Table layout in the engine
+The current table implementation lives in the canonical layout plus
+shared engine layer:
 
-The current table implementation lives in the canonical layout plus shared engine layer, not in legacy templates.
+- `DocumentDsl.table(...)` and template table specs create semantic
+  table nodes
+- `TableLayoutSupport` materializes breakable rows and deterministic
+  cell payloads
+- rows materialize as atomic leaf entities with precomputed cell
+  payload
+- row rendering is page-aware so the engine draws both fragment edges
+  at page breaks without double-drawing separators inside a page
 
-Its shape is intentionally hybrid:
-
-- `DocumentDsl.table(...)` and template table specs create semantic table nodes
-- the table layout materializes breakable rows and deterministic cell payloads internally
-- rows materialize as atomic leaf entities with precomputed cell payload
-- row rendering is page-aware, which lets the engine draw both fragment edges at page breaks without double-drawing separators inside a page
-
-This keeps table pagination consistent with the rest of the engine while avoiding a separate ad-hoc table layout subsystem.
+The unified cell-grid pre-pass in `TableLayoutSupport` lets `colSpan`
+and `rowSpan` compose freely (`colSpan(2).rowSpan(3)`). Spanned cells
+emit a single `TableResolvedCell` with the merged width and
+downward `yOffset` so a spanning cell's rectangle extends through the
+rows it merges.
 
 ### Measurement and renderer ownership
 
-- Engine builders and layout helpers should consume an engine-level `TextMeasurementSystem` instead of reaching through `LayoutSystem` into the active renderer.
-- Render marker components should primarily identify what needs to be rendered.
-- Backend-specific drawing logic should live in renderer-owned handler packages such as `...render.pdf.handlers` and backend helper packages such as `...render.pdf.helpers`.
-- `RenderStream` should act as a session factory, not as a per-entity content-stream opener.
-- `RenderPassSession` is the shared seam for page lifetime and page-surface reuse; it must stay free of PDFBox and backend package imports.
-- The PDF entity path dispatches through registered render handlers only; backend-specific render interfaces are not part of the preferred engine extension seam.
-- Renderer-specific draw ordering should be backend-neutral at the policy level and backend-owned at the integration level. In practice the engine exposes resolved layout coordinates, while each backend chooses how to consume the shared deterministic render order for its output format.
-- `EntityRenderOrder` is the shared render-order helper for resolved entities. It now precomputes lightweight sort entries per layer before sorting so render ordering stays deterministic without repeated component lookups inside the comparator hot path.
+These rules apply to engine and backend contributors. Application
+code should not need any of them.
 
-### Migration rule for new renderables
+- engine builders and layout helpers consume an engine-level
+  `TextMeasurementSystem` instead of reaching through `LayoutSystem`
+  into the active renderer
+- render marker components identify *what* needs to be rendered;
+  *how* it is drawn lives in renderer-owned handler packages such as
+  `...render.pdf.handlers` (with helper objects under
+  `...render.pdf.helpers`)
+- `RenderStream` acts as a session factory, not as a per-entity
+  content-stream opener
+- `RenderPassSession` is the shared seam for page lifetime and
+  page-surface reuse — it must stay free of PDFBox and backend
+  package imports
+- the PDF entity path dispatches through registered render handlers;
+  there is no backend-specific render fallback path
+- `EntityRenderOrder` is the shared render-order helper for resolved
+  entities. It precomputes lightweight sort entries per layer before
+  sorting so render ordering stays deterministic without repeated
+  component lookups inside the comparator hot path
 
-- New engine entity renderables must implement backend-neutral `Render`, not backend-specific render interfaces.
-- New PDF drawing code must live in renderer-owned handlers under `...render.pdf.handlers`.
-- PDF-only helper objects that are not entity render markers should live under renderer-owned helper packages such as `...render.pdf.helpers`.
-- Engine-side text sizing and line metrics must come from `TextMeasurementSystem`, not from `LayoutSystem -> RenderingSystem`.
-- The PDF entity path does not support backend-specific render fallback paths.
-
-Fixed leaf primitives such as `Rectangle`, `Circle`, `Image`, and `Line` follow the same general engine contract:
-
-- they materialize as regular entities with render/content/layout components
-- they rely on normal `ContentSize`, `Padding`, `Margin`, and `Placement`
-- they do not introduce a separate layout subsystem or pagination model
-
-## Template layer: `com.demcha.compose.document.templates.*`
-
-- `com.demcha.compose.document.templates.*` contains the canonical higher-level template contracts, built-ins, DTOs, themes, registries, and scene helpers.
-- These classes sit on top of the semantic `document.*` API and package common document structures into reusable templates.
-- `...templates.api` contains template-facing contracts and registries.
-- `...templates.builtins` contains concrete canonical template implementations.
-- `...templates.support.common` contains backend-neutral composition primitives, while domain packages such as `...templates.support.cv`, `...templates.support.business`, and `...templates.support.schedule` contain concrete scene composers.
-- canonical template contracts are compose-first: `compose(DocumentSession, ...)` is the primary seam.
-- canonical built-ins should start one semantic page-flow root through `DocumentSession.pageFlow(...)`, `DocumentSession.dsl().pageFlow()`, or the internal `TemplateComposeTarget` seam that feeds that same path.
+Fixed leaf primitives (`Rectangle`, `Circle`, `Image`, `Line`)
+follow the same engine contract: they materialize as regular
+entities with render/content/layout components, rely on normal
+`ContentSize` / `Padding` / `Margin` / `Placement`, and do not
+introduce a separate layout subsystem.
 
 ## Current package roots
 
-- `com.demcha.compose.document.*` contains the canonical semantic document API, layout graph, backends, exceptions, and snapshot/debug helpers.
-- `com.demcha.compose.document.templates.*` contains the canonical higher-level template layer.
-- `com.demcha.compose.engine.*` contains the engine internals, measurement, layout, pagination, and PDF backend foundation.
-- `com.demcha.compose.engine.render.word.*` contains the experimental Word-specific rendering path.
+Canonical-first ordering — public roots come first, internal foundation
+last:
 
-## Experimental areas
+- `com.demcha.compose.document.*` — **public canonical surface**.
+  Authoring API, layout graph, backends, exceptions, snapshots, and
+  built-in templates.
+- `com.demcha.compose.font.*` — public font names, backend-neutral
+  family descriptors, registration, lookup, and showcase helpers.
+- `com.demcha.compose.engine.*` — **internal engine foundation**.
+  Measurement, layout resolution, pagination, render-pass session, and
+  PDF rendering systems.
+- `com.demcha.compose.engine.text.*` — internal text utilities used by
+  layout and render hot paths.
+- `com.demcha.compose.engine.text.markdown.*` — internal
+  markdown-to-text-token parsing helpers used by semantic text
+  preparation.
+- `com.demcha.compose.engine.render.word.*` — experimental Word render
+  path; the supported DOCX export is `DocxSemanticBackend` under
+  `com.demcha.compose.document.backend.semantic`.
 
-- The PDF backend is the main supported rendering path.
-- The Word backend under `com.demcha.compose.engine.render.word.*` is experimental and should be treated as less stable than the PDF path.
-- Future backends should add their own rendering system, render-pass session, text measurement system, and handler set without changing engine builders such as tables or template data models.
-- The shared abstraction intentionally stops at render-pass lifetime. PDF text mode, PDF annotations, and `PDPageContentStream` state management stay inside `...engine.render.pdf`.
+## Backends and experimental areas
+
+- The PDF backend (`PdfFixedLayoutBackend`) is the main supported
+  rendering path.
+- The DOCX backend (`DocxSemanticBackend`, Apache POI) is supported
+  for paragraph/table/image/section content. Apache POI cannot
+  express graphics-state path clipping or transform matrices, so
+  `ShapeContainerNode` clip and `DocumentTransform` rotation/scale
+  fall back to inline content with a one-time capability warning.
+  Authors who need clipped or rotated output must export to PDF.
+- The PPTX skeleton lives behind `PptxSemanticBackend`; richer slide
+  layout is roadmap for v1.6+.
+- New backends should add their own rendering system, render-pass
+  session, text measurement system, and handler set without changing
+  engine builders such as tables or template data models. The shared
+  abstraction stops at render-pass lifetime — PDF text mode, PDF
+  annotations, and `PDPageContentStream` state management stay inside
+  `...engine.render.pdf`.
 
 ## Language status
 
 - Java is the primary implementation language.
-- The build currently includes Kotlin runtime/plugin support, but the repository does not currently ship production `.kt` sources.
-- Public docs should therefore treat GraphCompose as a Java-first library with Kotlin compatibility in the build setup, not as a full dual-language codebase.
+- The build currently includes Kotlin runtime/plugin support, but the
+  repository does not currently ship production `.kt` sources.
+- Public docs treat GraphCompose as a Java-first library with Kotlin
+  compatibility in the build setup, not as a full dual-language
+  codebase.
 
 ## Developer tools
 
-- `dev-tools/` contains local developer helpers and maintenance scripts.
-- Files in `dev-tools/` are not part of the runtime library API or the published Maven artifact.
+- `dev-tools/` contains local developer helpers and maintenance
+  scripts.
+- Files in `dev-tools/` are not part of the runtime library API or
+  the published Maven artifact.
 
 ## Regression testing pyramid
 
-GraphCompose now uses a practical three-layer regression strategy:
+GraphCompose uses a practical three-layer regression strategy:
 
 1. layout math unit tests for isolated calculations
-2. layout snapshot tests for deterministic full-document geometry checks
-3. PDF render tests for visual smoke coverage and artifact inspection
+2. layout snapshot tests for deterministic full-document geometry
+   checks (`LayoutSnapshotAssertions` plus baselines under
+   `src/test/resources/layout-snapshots/`)
+3. PDF render tests for visual smoke coverage and artifact
+   inspection (`PdfVisualRegression`, `target/visual-tests/`)
 
-See [layout-snapshot-testing.md](./layout-snapshot-testing.md) for the snapshot workflow and developer conventions.
+See [layout-snapshot-testing.md](./layout-snapshot-testing.md) for the
+snapshot workflow and developer conventions.
 
 ## Maintenance references
 
-- [package-map.md](./package-map.md) is the source of truth for package ownership and extension rules.
-- [lifecycle.md](./lifecycle.md) describes the document session, layout, pagination, and render lifecycle.
-- [logging.md](./logging.md) documents the quiet-by-default lifecycle logger categories.
+- [package-map.md](./package-map.md) is the source of truth for
+  package ownership and extension rules.
+- [lifecycle.md](./lifecycle.md) describes the document session,
+  layout, pagination, and render lifecycle.
+- [logging.md](./logging.md) documents the quiet-by-default lifecycle
+  logger categories.
+- [canonical-legacy-parity.md](./canonical-legacy-parity.md) tracks
+  feature parity between the canonical authoring surface and older
+  internal/legacy capabilities.

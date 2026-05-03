@@ -3,6 +3,58 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v1.6.0 — Planned
+
+The "expressive" release. Closes the remaining canonical-vs-legacy
+parity gaps for advanced authoring without architectural rollback.
+Every new primitive ships through `DocumentNode + NodeDefinition +
+render handler`. See [`docs/v1.6-roadmap.md`](docs/v1.6-roadmap.md)
+for the phased plan, verification gates, and ADRs.
+
+### Committed scope
+
+- **Phase A — Nested list ergonomics.**
+  `ListBuilder.addItem(label, Consumer<ListBuilder>)` plus a new
+  `ListItem` value type. `ListNode` record extended with a
+  back-compat constructor. Marker resolution honours per-level
+  defaults; authors override via `ListBuilder.markerFor(int depth, ListMarker)`.
+  ADR 0003 records the `ListNode`-extension-vs-new-`NestedListNode`
+  decision.
+- **Phase B — Composed table cell content.** New
+  `TableCellContent.NodeContent(DocumentNode child)` variant plus
+  `DocumentTableCell.node(DocumentNode)` factory. Two-pass cell
+  measurement when the cell holds composite content; pagination
+  preserves row-by-row behaviour. ADR 0004 records the composite-cell
+  semantic boundary.
+
+### Stretch goals (v1.6 if time allows; otherwise v1.7)
+
+- **Phase C — Controlled free-canvas (`CanvasLayerNode`).** New atomic
+  semantic node accepting children at explicit `(x, y)` coordinates.
+  Separate from `LayerStackNode` / `ShapeContainerNode` so absolute
+  placement stays an opt-in primitive. ADR 0005 records why
+  `CanvasLayer` is its own node and why absolute placement is rejected
+  on `RowBuilder` / `SectionBuilder`.
+- **Phase D — Real PPTX semantic export.** Build out
+  `PptxSemanticBackend` from the existing manifest skeleton to a
+  working POI-based exporter (paragraphs → text boxes, tables →
+  PowerPoint tables, sections → slides).
+- **Phase E — Maven Central distribution.** Sonatype OSSRH + GPG
+  signing + automated deployment on tag push. Primary install
+  coordinates switch to `io.github.demchaav:graphcompose:1.6.0`;
+  JitPack stays documented as a fallback.
+
+### Non-goals
+
+- No revival of `GraphCompose.pdf(...)` or public `EntityManager`.
+- No nested rows or nested tables inside `RowBuilder` (preserves
+  pagination contract).
+- No DOCX path-clipping or transform support (Apache POI limit).
+- No deprecation of v1.4 / v1.5 public records — back-compat
+  constructors stay.
+
+---
+
 ## v1.5.0 — Unreleased
 
 ### Headline — "intuitive"

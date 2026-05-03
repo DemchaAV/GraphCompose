@@ -751,8 +751,13 @@ See [docs/benchmarks.md](./docs/benchmarks.md) for the full methodology, profile
 - [x] **anchored overlay positions (`position(x, y, anchor)`)** (v1.5)
 - [x] **cinematic templates (`InvoiceTemplateV2`, `ProposalTemplateV2`)** (v1.5)
 - [x] **`CvTheme` ↔ `BusinessTheme` bridge** (v1.5)
-- [ ] Maven Central release
-- [ ] real PPTX export (v1.3 ships a manifest skeleton)
+- [ ] **nested list ergonomics** (v1.6 — committed)
+- [ ] **composed table cell content** (v1.6 — committed)
+- [ ] **controlled free canvas (`CanvasLayerNode`)** (v1.6 — stretch)
+- [ ] real PPTX export (v1.6 — stretch; v1.3 shipped a manifest skeleton)
+- [ ] Maven Central release (v1.6 — stretch)
+
+See [docs/v1.6-roadmap.md](./docs/v1.6-roadmap.md) for the full v1.6 plan.
 
 ## License
 

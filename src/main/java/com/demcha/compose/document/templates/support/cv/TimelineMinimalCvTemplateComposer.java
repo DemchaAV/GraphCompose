@@ -92,21 +92,21 @@ public final class TimelineMinimalCvTemplateComposer {
                         .color(RULE)
                         .thickness(0.8)
                         .margin(DocumentInsets.zero()))
+                // Single body row carrying every module — pagination breaks
+                // naturally when the content overflows. Previous releases
+                // forced a hard page break between two body rows, which left
+                // the first page half-empty for light CV fixtures even when
+                // the rest of the content easily fit on one sheet.
                 .addRow("TimelineMinimalBody", row -> addBodyRow(row,
                         List.of(new ModulePlacement("Education", find(spec, "education", "certifications"), 5),
                                 new ModulePlacement("Skills", find(spec, "technical skills", "skills"), 6),
-                                new ModulePlacement("Expertise", find(spec, "projects"), 3)),
-                        List.of(new ModulePlacement("Professional Profile", find(spec, "summary", "professional summary", "profile"), 1),
-                                new ModulePlacement("Work Experience", find(spec, "experience", "employment"), 4)),
-                        300))
-                .addPageBreak(pageBreak -> pageBreak.name("TimelineMinimalContinuedPage"))
-                .addRow("TimelineMinimalBodyContinued", row -> addBodyRow(row,
-                        List.of(new ModulePlacement("Languages", find(spec, "additional information", "additional"), 3),
+                                new ModulePlacement("Expertise", find(spec, "projects"), 3),
+                                new ModulePlacement("Languages", find(spec, "additional information", "additional"), 3),
                                 new ModulePlacement("Interests", find(spec, "interests", "additional"), 4),
                                 new ModulePlacement("References", find(spec, "references", "contact"), 5)),
-                        List.of(new ModulePlacement("Work Experience Continued", find(spec, "experience", "employment"), 3),
-                                new ModulePlacement("Professional Development", find(spec, "projects"), 4)),
-                        320))
+                        List.of(new ModulePlacement("Professional Profile", find(spec, "summary", "professional summary", "profile"), 1),
+                                new ModulePlacement("Work Experience", find(spec, "experience", "employment"), 4)),
+                        620))
                 .build();
     }
 

@@ -34,7 +34,8 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + BarcodeShowcaseExample.generate());
         System.out.println("Generated: " + PdfChromeExample.generate());
 
-        // Kitchen-sink master demo.
+        // Kitchen-sink master demo + flagship business report cover.
         System.out.println("Generated: " + MasterShowcaseExample.generate());
+        System.out.println("Generated: " + BusinessReportExample.generate());
     }
 }

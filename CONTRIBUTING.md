@@ -55,90 +55,175 @@ They explain the current public surface, the engine/template split, and the reco
 
 ## Contributor architecture rules
 
-These rules reflect the current engine design and should be treated as project policy, not just suggestions.
+GraphCompose is split into a public canonical authoring surface
+(`com.demcha.compose.document.*`) and an internal engine foundation
+(`com.demcha.compose.engine.*`). New features land on the canonical
+surface; the engine foundation stays an internal detail. The rules
+below reflect that split.
 
-- Engine render markers must implement backend-neutral `Render`. Do not add backend-specific render interfaces back into `engine/components`.
-- Rendering logic for PDF belongs in `src/main/java/com/demcha/compose/engine/render/pdf/handlers/`.
-- Backend-only helper objects belong in renderer-owned helper packages such as `com.demcha.compose.engine.render.pdf.helpers`, not in `components/renderable`.
-- Builders and layout code must get text width and line metrics from `TextMeasurementSystem`, not from `LayoutSystem -> RenderingSystem`, `PdfFont`, or PDFBox objects.
-- Keep `src/main/java/com/demcha/compose/engine/components/*` free of `org.apache.pdfbox` and `com.demcha.compose.engine.render.pdf` imports.
-- When you add a new render marker, register its handler in `PdfRenderingSystemECS` and add/update dispatch coverage.
+### Canonical surface — primary contributor lane
 
-For built-in templates, use the template-layer split as project policy as well:
+Most contributions add a new public node, builder, style value, or
+template feature. The rules:
 
-- public template contracts are compose-first: prefer `compose(DocumentSession, ...)`
-- built-in template classes in `src/main/java/com/demcha/compose/document/templates/builtins/` should stay thin public facades over reusable scene composers
-- document structure and scene assembly belong in dedicated backend-neutral scene composer classes under `...document.templates.support`
-- keep PDF-only setup in the document session/backend layer rather than inside template composers
-- do not import `PDDocument`, `PDPage`, `PDRectangle`, or low-level PDF composer types into scene composer classes
-- new README snippets, runnable examples, and integration docs should show `compose(DocumentSession, ...)`
-- do not reintroduce the removed low-level PDF entry point, low-level PDF composer types, or the removed template namespace into public-facing usage docs or runnable examples
+- DSL builders live in `com.demcha.compose.document.dsl`.
+  Implementation helpers belong in `document.dsl.internal` and must
+  not leak into the public surface.
+- Semantic node records live in `com.demcha.compose.document.node`.
+  When a new field is added later, ship a back-compat constructor that
+  defaults the new field — see `ShapeContainerNode`, `TableNode`,
+  `LayerStackNode.Layer`, the v1.5 `*Node` records that gained
+  `transform`, etc.
+- Public style / table / image / theme / output value types live under
+  `document.style`, `document.table`, `document.image`,
+  `document.theme`, and `document.output`. They stay renderer-neutral —
+  no `org.apache.pdfbox` imports.
+- Layout integration for a new node is a `NodeDefinition<MyNode>`
+  registered with `NodeRegistry`. See `BuiltInNodeDefinitions` for
+  the established pattern.
+- Built-in templates in `...document.templates.builtins` stay thin
+  public facades over reusable scene composers in
+  `...document.templates.support`. Keep PDF-only setup in the document
+  session/backend layer rather than inside template composers, and do
+  not import `PDDocument`, `PDPage`, `PDRectangle`, or low-level PDF
+  composer types into scene composer classes.
+- Public template contracts are compose-first: prefer
+  `compose(DocumentSession, ...)`. New README snippets, runnable
+  examples, and integration docs must show `compose(...)` rather than
+  the removed low-level PDF entry points.
 
-The current guard rails for these rules live in:
+### Engine internals — only for engine and backend contributors
 
-- [EnginePdfBoundaryTest.java](./src/test/java/com/demcha/compose/engine/architecture/EnginePdfBoundaryTest.java)
-- [CanonicalTemplateComposerPdfBoundaryTest.java](./src/test/java/com/demcha/compose/document/templates/architecture/CanonicalTemplateComposerPdfBoundaryTest.java)
-- [PdfRenderInterfaceGuardTest.java](./src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderInterfaceGuardTest.java)
-- [PdfRenderingSystemECSDispatchTest.java](./src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderingSystemECSDispatchTest.java)
-- [DocumentationExamplesTest.java](./src/test/java/com/demcha/documentation/DocumentationExamplesTest.java)
+These rules apply when you touch measurement, pagination, the
+render-pass session, or PDF render dispatch. Application code should
+not need any of them.
 
-Keep the entity core thin as project policy as well:
+- Engine render markers implement backend-neutral `Render`. Do not
+  add backend-specific render interfaces back into
+  `engine/components`.
+- PDF rendering logic lives in
+  `src/main/java/com/demcha/compose/engine/render/pdf/handlers/`.
+  Backend-only helper objects live in
+  `com.demcha.compose.engine.render.pdf.helpers`, not in
+  `components/renderable`.
+- Builders and layout code get text width and line metrics from
+  `TextMeasurementSystem`, not from
+  `LayoutSystem -> RenderingSystem`, `PdfFont`, or PDFBox objects.
+- Keep `src/main/java/com/demcha/compose/engine/components/*` free of
+  `org.apache.pdfbox` and `com.demcha.compose.engine.render.pdf`
+  imports.
+- When you add a new render marker, register its handler in
+  `PdfRenderingSystemECS` and add or update dispatch coverage.
 
-- `Entity` should stay an identity-plus-components object with compatibility delegates, not a home for new layout math or pagination mutation rules
-- geometry reads belong in `EntityBounds`
-- parent container size and page-shift propagation belong in `ParentContainerUpdater`
-- existing `Entity.bounding*` and `Entity.updateParentContainer*` methods remain deprecated compatibility wrappers and should not be copied into new code
-- render-order optimizations belong in rendering helpers such as `EntityRenderOrder`, not in `Entity`
+Keep the entity core thin:
 
-## Adding or changing engine objects
+- `Entity` stays an identity-plus-components object with compatibility
+  delegates. It is not a home for new layout math or pagination
+  mutation rules.
+- Geometry reads live in `EntityBounds`. Parent-container size and
+  page-shift propagation live in `ParentContainerUpdater`.
+- `Entity.bounding*` and `Entity.updateParentContainer*` are
+  deprecated compatibility wrappers; do not copy them into new code.
+- Render-order optimizations live in rendering helpers such as
+  `EntityRenderOrder`, not in `Entity`.
 
-If you add a new engine object, decide first what kind of object it is.
+### Guard rails
 
-### Use the right extension seam
+The rules above are enforced by tests:
 
-- Add a canonical node and node definition when the feature belongs to supported document authoring.
-- Add an engine content/style/layout component when the feature is an internal runtime primitive.
-- Use test-support builders only for low-level engine tests and dev harnesses.
+- canonical surface guards:
+  [CanonicalSurfaceGuardTest.java](./src/test/java/com/demcha/compose/document/architecture/CanonicalSurfaceGuardTest.java),
+  [TemplateComposeApiTest.java](./src/test/java/com/demcha/compose/document/templates/architecture/TemplateComposeApiTest.java),
+  [PublicApiNoEngineLeakTest.java](./src/test/java/com/demcha/compose/document/architecture/PublicApiNoEngineLeakTest.java),
+  [SemanticLayerNoPdfBoxDependencyTest.java](./src/test/java/com/demcha/compose/document/architecture/SemanticLayerNoPdfBoxDependencyTest.java),
+  [DocumentationExamplesTest.java](./src/test/java/com/demcha/documentation/DocumentationExamplesTest.java),
+  [DocumentationCoverageTest.java](./src/test/java/com/demcha/documentation/DocumentationCoverageTest.java)
+- engine internals guards:
+  [EnginePdfBoundaryTest.java](./src/test/java/com/demcha/compose/engine/architecture/EnginePdfBoundaryTest.java),
+  [CanonicalTemplateComposerPdfBoundaryTest.java](./src/test/java/com/demcha/compose/document/templates/architecture/CanonicalTemplateComposerPdfBoundaryTest.java),
+  [PdfRenderInterfaceGuardTest.java](./src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderInterfaceGuardTest.java),
+  [PdfRenderingSystemECSDispatchTest.java](./src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderingSystemECSDispatchTest.java)
 
-### Make the object participate in the engine
+## Adding a new feature
 
-For a visible object, the implementation usually needs all of the following:
+### New public node + builder (most common path)
 
-- canonical node or internal assembler that creates and configures the entity
-- the components that describe content and style
-- a size signal such as `ContentSize`
-- layout metadata such as `Anchor`, `Margin`, `Padding`, and parent/child links when needed
-- a backend-neutral renderable marker plus a backend-owned render handler
+If application code should be able to add a new visible thing to a
+document:
 
-Marker rule of thumb:
+1. Define a public record under `com.demcha.compose.document.node`
+   with a compact constructor that normalizes optional fields.
+   Validate non-finite or negative dimensions where relevant.
+2. Add a `NodeDefinition<MyNode>` in `BuiltInNodeDefinitions`.
+   Implement `prepare(...)` (measurement),
+   `paginationPolicy(...)`, and `emitFragments(...)`. If your node
+   should support `DocumentTransform`, follow the
+   `wrapAtomicWithTransform` pattern used by `ShapeNode`,
+   `EllipseNode`, `LineNode`, `ImageNode`, and `BarcodeNode`.
+3. Add a public builder under `com.demcha.compose.document.dsl`.
+   Inherit `AbstractFlowBuilder<T, N>` for the common
+   `addParagraph` / `addTable` / `addRow` / `softPanel` / `accent*`
+   surface; implement `Transformable<T>` if rotation / scale should
+   apply.
+4. Add convenience overloads on `AbstractFlowBuilder` for the
+   "common case" if the new node has one worth a one-line shortcut
+   (e.g. `addCircle(diameter, fill)`).
+5. Add a `*Test` covering the builder contract plus a layout snapshot
+   test (`LayoutSnapshotAssertions`) and a PDF render smoke test
+   (`PdfVisualRegression`) when the visual output matters.
+6. Update [docs/recipes/](./docs/recipes) if the feature has a
+   copy-pasteable usage pattern, and add a runnable example under
+   `examples/src/main/java/com/demcha/examples/` with a
+   `GenerateAllExamples` hook if it deserves a PDF preview.
 
-- add `Expendable` only to parent-like boxes that should grow because of child content
-- add `Breakable` only to entities whose own content may continue across pages
-- do not treat `Expendable` as a pagination flag
+Reference templates to copy:
 
-The layout pass is driven by components and entity relationships, not by builder classes directly. See:
+- `ShapeContainerNode` + `ShapeContainerBuilder` +
+  `ShapeContainerBuilderTest` (composite + clip + transform)
+- `TableNode` + `TableBuilder` + `TableBuilderRowSpanTest` /
+  `TableBuilderZebraAndTotalsTest` /
+  `TableBuilderRepeatHeaderTest` (multi-feature node)
+- `EllipseBuilder` + `EllipseNode` + `TransformableLeafBuildersTest`
+  (atomic leaf with transform)
 
-- [LayoutSystem.java](./src/main/java/com/demcha/compose/engine/layout/LayoutSystem.java)
-- [PdfRenderingSystemECS.java](./src/main/java/com/demcha/compose/engine/render/pdf/PdfRenderingSystemECS.java)
+### New built-in template
 
-For text-heavy objects, also read:
+- Constructor takes a `BusinessTheme` (or `CvTheme` for CV
+  templates). Provide a no-arg overload that picks a default theme.
+- Compose against `DocumentDsl` — no PDF-specific imports.
+- Route every visible token through `theme.palette()` /
+  `theme.text()` / `theme.spacing()` / `theme.table()`.
+- Reference: `InvoiceTemplateV2`, `ProposalTemplateV2`. Read
+  [docs/template-authoring.md](./docs/template-authoring.md) before
+  starting.
+
+### New engine internal primitive
+
+If you are extending the engine foundation itself (a new render
+marker, a new layout system, a new render-pass session):
+
+- Decide first whether the feature belongs on the public surface as
+  a `DocumentNode` instead. If yes, see "New public node" above and
+  treat the engine work as plumbing, not as new public ECS surface.
+- For genuine engine primitives, add the engine content / style /
+  layout component plus a backend-neutral renderable marker plus a
+  backend-owned render handler.
+- Marker rule of thumb:
+  - add `Expendable` only to parent-like boxes that should grow
+    because of child content
+  - add `Breakable` only to entities whose own content may continue
+    across pages
+  - do not treat `Expendable` as a pagination flag
+
+For text-heavy primitives, also read:
 
 - [TextMeasurementSystem.java](./src/main/java/com/demcha/compose/engine/measurement/TextMeasurementSystem.java)
 - [docs/architecture.md](./docs/architecture.md)
 - [docs/implementation-guide.md](./docs/implementation-guide.md)
 
-If the object should be available to application developers, expose it through `DocumentDsl`, not the low-level test harness.
-
-### Useful examples to copy
-
-- Leaf builder with measured content:
-  [TextBuilder.java](./src/test/java/com/demcha/compose/testsupport/engine/assembly/TextBuilder.java)
-- Shape-style builder:
-  [RectangleBuilder.java](./src/test/java/com/demcha/compose/testsupport/engine/assembly/RectangleBuilder.java)
-- Container builder:
-  [ModuleBuilder.java](./src/test/java/com/demcha/compose/testsupport/engine/assembly/ModuleBuilder.java)
-- Template-level composition helper:
-  [CvTemplateComposer.java](./src/main/java/com/demcha/compose/document/templates/support/cv/CvTemplateComposer.java)
+If the primitive should be available to application developers,
+expose it through `DocumentDsl` and a public `DocumentNode`, not a
+low-level test harness.
 
 ## Testing expectations
 

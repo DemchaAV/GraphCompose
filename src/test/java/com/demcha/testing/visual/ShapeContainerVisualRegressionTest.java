@@ -16,9 +16,18 @@ import com.demcha.compose.font.FontName;
 import org.junit.jupiter.api.Test;
 
 class ShapeContainerVisualRegressionTest {
+    // The baselines are committed as Windows-rendered PNGs, but PDFBox
+    // font rendering drifts slightly across platforms (different system
+    // fonts, different antialiasing). On Linux CI we observe up to ~2%
+    // of pixels disagree even when the document is structurally
+    // identical. Allow a 2 500-pixel budget — that comfortably covers
+    // observed cross-platform drift (the worst case so far is ~1 300
+    // mismatched pixels on a 67 200-pixel image, i.e. 1.9 %) while
+    // still failing the test on a real visual regression that shifts
+    // shape geometry or fill colour (those touch many more pixels).
     private static final PdfVisualRegression VISUAL = PdfVisualRegression.standard()
             .perPixelTolerance(6)
-            .mismatchedPixelBudget(0);
+            .mismatchedPixelBudget(2_500);
 
     private static final DocumentColor TEAL = DocumentColor.rgb(20, 60, 75);
     private static final DocumentColor GOLD = DocumentColor.rgb(196, 153, 76);

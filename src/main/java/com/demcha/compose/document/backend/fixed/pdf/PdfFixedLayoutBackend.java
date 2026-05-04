@@ -445,8 +445,43 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         private PdfWatermarkOptions watermarkOptions;
         private PdfProtectionOptions protectionOptions;
         private final List<PdfHeaderFooterOptions> headerFooterOptions = new ArrayList<>();
+        private final List<PdfFragmentRenderHandler<?>> additionalHandlers = new ArrayList<>();
 
         private Builder() {
+        }
+
+        /**
+         * Registers a custom {@link PdfFragmentRenderHandler}.
+         *
+         * <p>If the supplied handler reports a {@link PdfFragmentRenderHandler#payloadType()
+         * payload type} that is already covered by a built-in default, the
+         * custom handler replaces the default for the resulting backend
+         * instance. Adding two custom handlers for the same payload type is
+         * not supported &mdash; the second call rejects the duplicate.</p>
+         *
+         * <p>This method is the canonical extension point for adding new
+         * payload types or overriding built-in rendering behaviour without
+         * forking the backend.</p>
+         *
+         * @param handler non-{@code null} handler implementation
+         * @return this builder
+         * @throws IllegalArgumentException if {@code handler} reports the same
+         *         payload type as another custom handler already registered
+         *         on this builder
+         * @since 1.6.0
+         */
+        public Builder addHandler(PdfFragmentRenderHandler<?> handler) {
+            Objects.requireNonNull(handler, "handler");
+            for (PdfFragmentRenderHandler<?> existing : additionalHandlers) {
+                if (existing.payloadType().equals(handler.payloadType())) {
+                    throw new IllegalArgumentException(
+                            "Duplicate custom PDF handler for payload type "
+                                    + handler.payloadType().getName()
+                                    + "; remove the previous addHandler() call before registering another");
+                }
+            }
+            this.additionalHandlers.add(handler);
+            return this;
         }
 
         /**
@@ -520,16 +555,45 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         /**
          * Creates an immutable PDF backend instance with the configured options.
          *
+         * <p>If any handlers were registered via
+         * {@link #addHandler(PdfFragmentRenderHandler)}, they are merged with
+         * the built-in defaults: a custom handler whose payload type matches
+         * a default replaces the default, and a non-matching custom handler
+         * extends the registry.</p>
+         *
          * @return configured PDF fixed-layout backend
          */
         public PdfFixedLayoutBackend build() {
             return new PdfFixedLayoutBackend(
-                    defaultHandlers(),
+                    mergeHandlers(defaultHandlers(), additionalHandlers),
                     guideLines,
                     metadataOptions,
                     watermarkOptions,
                     protectionOptions,
                     headerFooterOptions);
         }
+    }
+
+    private static List<PdfFragmentRenderHandler<?>> mergeHandlers(
+            List<PdfFragmentRenderHandler<?>> defaults,
+            List<PdfFragmentRenderHandler<?>> additions) {
+        if (additions.isEmpty()) {
+            return defaults;
+        }
+        Map<Class<?>, PdfFragmentRenderHandler<?>> byPayloadType = new LinkedHashMap<>();
+        for (PdfFragmentRenderHandler<?> handler : defaults) {
+            byPayloadType.put(handler.payloadType(), handler);
+        }
+        for (PdfFragmentRenderHandler<?> handler : additions) {
+            PdfFragmentRenderHandler<?> previous = byPayloadType.put(handler.payloadType(), handler);
+            if (previous != null) {
+                RENDER_LOG.debug(
+                        "render.pdf.handler.replaced payloadType={} previous={} replacement={}",
+                        handler.payloadType().getName(),
+                        previous.getClass().getName(),
+                        handler.getClass().getName());
+            }
+        }
+        return List.copyOf(byPayloadType.values());
     }
 }

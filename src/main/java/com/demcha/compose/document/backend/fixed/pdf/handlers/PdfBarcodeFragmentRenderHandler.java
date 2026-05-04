@@ -2,8 +2,8 @@ package com.demcha.compose.document.backend.fixed.pdf.handlers;
 
 import com.demcha.compose.document.backend.fixed.pdf.PdfFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
-import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.BarcodeFragmentPayload;
 import com.demcha.compose.engine.components.content.barcode.BarcodeData;
 import com.demcha.compose.engine.components.content.barcode.BarcodeType;
 import com.google.zxing.BarcodeFormat;
@@ -33,7 +33,7 @@ import java.util.Map;
  * and drawing it into the resolved fragment box.
  */
 public final class PdfBarcodeFragmentRenderHandler
-        implements PdfFragmentRenderHandler<BuiltInNodeDefinitions.BarcodeFragmentPayload> {
+        implements PdfFragmentRenderHandler<BarcodeFragmentPayload> {
 
     /**
      * Creates the barcode fragment renderer.
@@ -42,13 +42,13 @@ public final class PdfBarcodeFragmentRenderHandler
     }
 
     @Override
-    public Class<BuiltInNodeDefinitions.BarcodeFragmentPayload> payloadType() {
-        return BuiltInNodeDefinitions.BarcodeFragmentPayload.class;
+    public Class<BarcodeFragmentPayload> payloadType() {
+        return BarcodeFragmentPayload.class;
     }
 
     @Override
     public void render(PlacedFragment fragment,
-                       BuiltInNodeDefinitions.BarcodeFragmentPayload payload,
+                       BarcodeFragmentPayload payload,
                        PdfRenderEnvironment environment) throws IOException {
         if (fragment.width() <= 0 || fragment.height() <= 0) {
             return;

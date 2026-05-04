@@ -2,6 +2,8 @@ package com.demcha.compose.document.templates.cv;
 
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.ImageFragmentPayload;
+import com.demcha.compose.document.layout.payloads.LineFragmentPayload;
 import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.templates.TemplateTestSupport;
 import com.demcha.compose.document.templates.api.CvTemplate;
@@ -349,6 +351,47 @@ class CvTemplateRenderTest {
     }
 
     @Test
+    void shouldRenderClassicSerifAsSinglePassFramedCvWithoutDuplicateSections() throws Exception {
+        Path outputFile = VisualTestOutputs.preparePdf(
+                "classic_serif_dense_single_pass",
+                "clean",
+                "templates",
+                "cv",
+                "variants");
+        byte[] pdfBytes;
+
+        try (var document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 20, 20, 20, 20)) {
+            new ClassicSerifCvTemplate().compose(document, denseClassicSerifCv());
+
+            List<String> paths = document.layoutGraph().fragments().stream()
+                    .map(PlacedFragment::path)
+                    .toList();
+
+            assertThat(paths).noneMatch(path -> path.contains("ClassicSerifDetailsPage"));
+            assertThat(paths).noneMatch(path -> path.contains("ClassicSerifFirstPageGrid"));
+            assertThat(paths).anyMatch(path -> path.contains("ClassicSerifModuletechnicalskills"));
+            assertThat(paths).anyMatch(path -> path.contains("ClassicSerifModuleprofessionalexperience"));
+            assertThat(paths).anyMatch(path -> path.contains("ClassicSerifModuleprojects"));
+
+            pdfBytes = document.toPdfBytes();
+        }
+
+        TemplateTestSupport.writePdf(outputFile, pdfBytes);
+        TemplateTestSupport.assertPdfFileLooksValid(outputFile, 1);
+        TemplateTestSupport.assertPdfPageCount(outputFile, 1);
+
+        try (PDDocument pdf = Loader.loadPDF(pdfBytes)) {
+            String text = new PDFTextStripper().getText(pdf);
+
+            assertThat(pdf.getNumberOfPages()).isEqualTo(1);
+            assertThat(text).doesNotContain("Selected Projects");
+            assertThat(countUpperTitle(text, "Professional Experience")).isEqualTo(1);
+            assertThat(countUpperTitle(text, "Projects")).isEqualTo(1);
+            assertThat(countUpperTitle(text, "Education & Certifications")).isEqualTo(1);
+        }
+    }
+
+    @Test
     void shouldRenderNordicAndTechLeadAsDistinctProfessionalLayouts() throws Exception {
         assertProfessionalCvLayout(
                 new NordicCleanCvTemplate(),
@@ -446,7 +489,7 @@ class CvTemplateRenderTest {
             List<PlacedFragment> rules = document.layoutGraph().fragments().stream()
                     .filter(fragment -> fragment.path().contains("CenteredHeadline"))
                     .filter(fragment -> fragment.path().contains("Rule"))
-                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.LineFragmentPayload)
+                    .filter(fragment -> fragment.payload() instanceof LineFragmentPayload)
                     .toList();
 
             assertThat(rules).hasSizeGreaterThanOrEqualTo(3);
@@ -520,7 +563,7 @@ class CvTemplateRenderTest {
 
             List<PlacedFragment> sidebarRules = fragments.stream()
                     .filter(fragment -> fragment.path().contains("MonogramSidebarSidebar"))
-                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.LineFragmentPayload)
+                    .filter(fragment -> fragment.payload() instanceof LineFragmentPayload)
                     .toList();
 
             assertThat(sidebarRules).hasSize(3);
@@ -560,7 +603,7 @@ class CvTemplateRenderTest {
                     .orElseThrow();
             PlacedFragment photo = fragments.stream()
                     .filter(fragment -> fragment.path().contains("SidebarPortraitPhoto"))
-                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ImageFragmentPayload)
+                    .filter(fragment -> fragment.payload() instanceof ImageFragmentPayload)
                     .findFirst()
                     .orElseThrow();
             BuiltInNodeDefinitions.ParagraphFragmentPayload titlePayload = fragments.stream()
@@ -572,7 +615,7 @@ class CvTemplateRenderTest {
                     .orElseThrow();
             PlacedFragment profileRule = fragments.stream()
                     .filter(fragment -> fragment.path().contains("SidebarPortraitContent"))
-                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.LineFragmentPayload)
+                    .filter(fragment -> fragment.payload() instanceof LineFragmentPayload)
                     .findFirst()
                     .orElseThrow();
 
@@ -656,7 +699,7 @@ class CvTemplateRenderTest {
                 Arguments.of(new NordicCleanCvTemplate(), 18, 1),
                 Arguments.of(new CompactMonoCvTemplate(), 20, 1),
                 Arguments.of(new ProductLeaderCvTemplate(), 18, 1),
-                Arguments.of(new ClassicSerifCvTemplate(), 20, 2),
+                Arguments.of(new ClassicSerifCvTemplate(), 20, 1),
                 Arguments.of(new TechLeadCvTemplate(), 20, 1),
                 Arguments.of(new TimelineMinimalCvTemplate(), 22, 1),
                 Arguments.of(new CenteredHeadlineCvTemplate(), 22, 1),
@@ -722,6 +765,56 @@ class CvTemplateRenderTest {
         return count;
     }
 
+    private static int countUpperTitle(String text, String value) {
+        String compactValue = value.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
+        int count = 0;
+
+        for (String line : text.split("\\R")) {
+            String compactLine = line.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
+            if (compactLine.equals(compactValue)) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private static CvDocumentSpec denseClassicSerifCv() {
+        return CvDocumentSpec.builder()
+                .header(TemplateTestSupport.canonicalHeader())
+                .summary("""
+                        Java Backend Developer with strong experience in Java 17/21, Spring Boot,
+                        REST API design, Spring Security, SQL, and Docker, building secure and reliable
+                        backend systems. Proven ability to develop event-driven, database-backed
+                        applications with concurrency, testing, JWT authentication, validation, and
+                        clean architecture. Delivered portfolio projects involving real-time streaming,
+                        SSE, web scraping, PDF generation, and integration with multiple external
+                        services. Interested in applying strong backend engineering skills to
+                        low-latency, high-throughput platforms and collaborative product teams.
+                        """)
+                .technicalSkills(List.of(
+                        "Languages: Java (17/21), SQL, Kotlin (Basic), TypeScript (Basic), JavaScript (Basic)",
+                        "Backend: Spring Boot, Spring MVC, Spring Data JPA, Hibernate, Spring Security, Validation",
+                        "API & Security: REST API design, Swagger/OpenAPI, DTO mapping, JWT, BCrypt, CORS",
+                        "Core Java: OOP, Collections, Streams API, Multithreading, JDBC, Optional, Records",
+                        "Databases: MySQL, Oracle SQL, SQLite",
+                        "Testing: JUnit 5, AssertJ, Mockito, Vitest, Playwright, Postman",
+                        "Tools: Git/GitHub, Maven, Docker, Docker Compose, Flyway, IntelliJ IDEA"))
+                .experience(
+                        "Bartender, Caprice Holdings - Scott's Richmond, London, UK | Aug 2022 - Present - Operated in a fast-paced customer-facing environment requiring strong communication, teamwork, attention to detail, and reliability.",
+                        "Lead Engineer, Nikoplast, Odesa, Ukraine | Sep 2016 - Feb 2022 - Led projects from planning to execution and quality control, improved process efficiency, maintained delivery standards, and mentored team members.")
+                .projects(
+                        "CVRewriter | 2025 - Built a full-stack AI-powered CV tailoring platform with Spring Boot, React, JWT authentication, profile-based CV management, template PDF generation, and application tracking.",
+                        "Shopping Cart API | 2024 - Developed a portfolio e-commerce REST API with secured endpoints, role-based access control, product management, cart operations, and input validation.",
+                        "GraphCompose | 2025 - Built a declarative PDF layout engine for Java with reusable document templates, page composition primitives, and render-focused tests.")
+                .education(
+                        "Spring Boot & REST API Mastery - Self-Study | Jan 2024 - Mar 2025 - Built RESTful APIs with Spring Boot, DTOs, validation, JWT-based security, CRUD operations, and Postman testing.",
+                        "Oracle SQL Course - Self-Study | Jan 2024 - Jun 2024 - Covered DDL/DML, joins, transactions, views, sequences, and relational database fundamentals.",
+                        "Advanced Java Course - Self-Study | Dec 2023 - Jan 2024 - Studied multithreading, Streams API, JDBC, functional programming, collections, and reflection.",
+                        "BSc in Hydraulic Engineering - Kherson State Agrarian and Economic University | Sep 2012 - May 2017 - Equivalent to UK 2:1.")
+                .build();
+    }
+
     private static List<PlacedFragment> paragraphFragments(List<PlacedFragment> fragments, String pathPart) {
         return fragments.stream()
                 .filter(fragment -> fragment.path().contains(pathPart))
@@ -732,7 +825,7 @@ class CvTemplateRenderTest {
     private static PlacedFragment blueBannerRule(List<PlacedFragment> fragments, String name) {
         return fragments.stream()
                 .filter(fragment -> fragment.path().contains(name))
-                .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.LineFragmentPayload)
+                .filter(fragment -> fragment.payload() instanceof LineFragmentPayload)
                 .findFirst()
                 .orElseThrow();
     }

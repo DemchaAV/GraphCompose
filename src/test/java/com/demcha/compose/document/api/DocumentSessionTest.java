@@ -43,6 +43,9 @@ import com.demcha.compose.document.layout.PrepareContext;
 import com.demcha.compose.document.layout.PreparedNode;
 import com.demcha.compose.document.layout.PreparedSplitResult;
 import com.demcha.compose.document.layout.SplitRequest;
+import com.demcha.compose.document.layout.payloads.EllipseFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ImageFragmentPayload;
+import com.demcha.compose.document.layout.payloads.LineFragmentPayload;
 import com.demcha.compose.document.node.ContainerNode;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ListNode;
@@ -252,17 +255,17 @@ class DocumentSessionTest {
                     });
             assertThat(graph.fragments()).hasSize(2);
             assertThat(graph.fragments().get(0).payload())
-                    .isInstanceOf(BuiltInNodeDefinitions.LineFragmentPayload.class);
+                    .isInstanceOf(LineFragmentPayload.class);
             assertThat(graph.fragments().get(1).payload())
-                    .isInstanceOf(BuiltInNodeDefinitions.EllipseFragmentPayload.class);
+                    .isInstanceOf(EllipseFragmentPayload.class);
 
-            BuiltInNodeDefinitions.LineFragmentPayload line =
-                    (BuiltInNodeDefinitions.LineFragmentPayload) graph.fragments().get(0).payload();
+            LineFragmentPayload line =
+                    (LineFragmentPayload) graph.fragments().get(0).payload();
             assertThat(line.stroke().strokeColor().color()).isEqualTo(DocumentColor.ROYAL_BLUE.color());
             assertThat(line.stroke().width()).isEqualTo(2.0);
 
-            BuiltInNodeDefinitions.EllipseFragmentPayload ellipse =
-                    (BuiltInNodeDefinitions.EllipseFragmentPayload) graph.fragments().get(1).payload();
+            EllipseFragmentPayload ellipse =
+                    (EllipseFragmentPayload) graph.fragments().get(1).payload();
             assertThat(ellipse.fillColor()).isEqualTo(DocumentColor.ORANGE.color());
             assertThat(ellipse.stroke().strokeColor().color()).isEqualTo(DocumentColor.BLACK.color());
         }
@@ -291,7 +294,7 @@ class DocumentSessionTest {
 
             LayoutGraph graph = session.layoutGraph();
             List<PlacedFragment> imageFragments = graph.fragments().stream()
-                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ImageFragmentPayload)
+                    .filter(fragment -> fragment.payload() instanceof ImageFragmentPayload)
                     .toList();
 
             assertThat(imageFragments).hasSize(2);
@@ -302,8 +305,8 @@ class DocumentSessionTest {
             assertThat(imageFragments.get(1).path()).contains("CoverLogo");
             assertThat(imageFragments.get(1).width()).isEqualTo(40.0);
             assertThat(imageFragments.get(1).height()).isEqualTo(40.0);
-            BuiltInNodeDefinitions.ImageFragmentPayload payload =
-                    (BuiltInNodeDefinitions.ImageFragmentPayload) imageFragments.get(1).payload();
+            ImageFragmentPayload payload =
+                    (ImageFragmentPayload) imageFragments.get(1).payload();
             assertThat(payload.fitMode()).isEqualTo(DocumentImageFitMode.COVER);
         }
     }

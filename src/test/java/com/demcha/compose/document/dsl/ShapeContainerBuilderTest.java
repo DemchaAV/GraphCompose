@@ -7,6 +7,7 @@ import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.PlacedNode;
+import com.demcha.compose.document.layout.payloads.EllipseFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload;
 import com.demcha.compose.document.layout.payloads.ShapeClipEndPayload;
 import com.demcha.compose.document.layout.payloads.TransformBeginPayload;
@@ -295,7 +296,7 @@ class ShapeContainerBuilderTest {
 
             int begin = indexOfPayload(fragments, ShapeClipBeginPayload.class);
             int end = indexOfPayload(fragments, ShapeClipEndPayload.class);
-            int outline = indexOfPayload(fragments, BuiltInNodeDefinitions.EllipseFragmentPayload.class);
+            int outline = indexOfPayload(fragments, EllipseFragmentPayload.class);
 
             assertThat(outline).as("outline fragment present").isGreaterThanOrEqualTo(0);
             assertThat(begin).as("clip-begin fragment present").isGreaterThanOrEqualTo(0);
@@ -350,7 +351,7 @@ class ShapeContainerBuilderTest {
             assertThat(indexOfPayload(fragments, ShapeClipEndPayload.class))
                     .as("OVERFLOW_VISIBLE must skip the clip-end marker")
                     .isEqualTo(-1);
-            assertThat(indexOfPayload(fragments, BuiltInNodeDefinitions.EllipseFragmentPayload.class))
+            assertThat(indexOfPayload(fragments, EllipseFragmentPayload.class))
                     .as("outline still rendered")
                     .isGreaterThanOrEqualTo(0);
         } catch (Exception e) {
@@ -525,7 +526,7 @@ class ShapeContainerBuilderTest {
             List<PlacedFragment> fragments = graph.fragments();
 
             int transformBegin = indexOfPayload(fragments, TransformBeginPayload.class);
-            int outline = indexOfPayload(fragments, BuiltInNodeDefinitions.EllipseFragmentPayload.class);
+            int outline = indexOfPayload(fragments, EllipseFragmentPayload.class);
             int clipBegin = indexOfPayload(fragments, ShapeClipBeginPayload.class);
             int clipEnd = indexOfPayload(fragments, ShapeClipEndPayload.class);
             int transformEnd = indexOfPayload(fragments, TransformEndPayload.class);

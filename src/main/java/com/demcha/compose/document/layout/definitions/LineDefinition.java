@@ -1,7 +1,6 @@
 package com.demcha.compose.document.layout.definitions;
 
 import com.demcha.compose.document.layout.BoxConstraints;
-import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.FragmentContext;
 import com.demcha.compose.document.layout.FragmentPlacement;
 import com.demcha.compose.document.layout.LayoutFragment;
@@ -10,6 +9,7 @@ import com.demcha.compose.document.layout.NodeDefinition;
 import com.demcha.compose.document.layout.PaginationPolicy;
 import com.demcha.compose.document.layout.PrepareContext;
 import com.demcha.compose.document.layout.PreparedNode;
+import com.demcha.compose.document.layout.payloads.LineFragmentPayload;
 import com.demcha.compose.document.node.LineNode;
 
 import java.util.List;
@@ -59,7 +59,7 @@ public final class LineDefinition implements NodeDefinition<LineNode> {
                 node.padding().bottom(),
                 width,
                 height,
-                new BuiltInNodeDefinitions.LineFragmentPayload(
+                new LineFragmentPayload(
                         toStroke(node.stroke()),
                         node.startX(),
                         node.startY(),

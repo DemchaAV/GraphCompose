@@ -2,8 +2,8 @@ package com.demcha.compose.document.backend.fixed.pdf.handlers;
 
 import com.demcha.compose.document.backend.fixed.pdf.PdfFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
-import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.EllipseFragmentPayload;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.io.IOException;
@@ -14,7 +14,7 @@ import java.io.IOException;
  * @author Artem Demchyshyn
  */
 public final class PdfEllipseFragmentRenderHandler
-        implements PdfFragmentRenderHandler<BuiltInNodeDefinitions.EllipseFragmentPayload> {
+        implements PdfFragmentRenderHandler<EllipseFragmentPayload> {
     private static final float BEZIER_CIRCLE_CONSTANT = 0.552284749831f;
 
     /**
@@ -24,13 +24,13 @@ public final class PdfEllipseFragmentRenderHandler
     }
 
     @Override
-    public Class<BuiltInNodeDefinitions.EllipseFragmentPayload> payloadType() {
-        return BuiltInNodeDefinitions.EllipseFragmentPayload.class;
+    public Class<EllipseFragmentPayload> payloadType() {
+        return EllipseFragmentPayload.class;
     }
 
     @Override
     public void render(PlacedFragment fragment,
-                       BuiltInNodeDefinitions.EllipseFragmentPayload payload,
+                       EllipseFragmentPayload payload,
                        PdfRenderEnvironment environment) throws IOException {
         if (fragment.width() <= 0 || fragment.height() <= 0) {
             return;

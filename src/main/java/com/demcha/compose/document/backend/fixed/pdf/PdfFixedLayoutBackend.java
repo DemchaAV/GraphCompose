@@ -22,6 +22,9 @@ import com.demcha.compose.document.exceptions.UnsupportedNodeCapabilityException
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.BarcodeFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ImageFragmentPayload;
+import com.demcha.compose.document.layout.payloads.PdfSemanticFragmentPayload;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -321,7 +324,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         if (payload instanceof BuiltInNodeDefinitions.ParagraphFragmentPayload paragraphPayload) {
             addParagraphSpanLinks(fragment, paragraphPayload, environment);
         }
-        if (payload instanceof BuiltInNodeDefinitions.PdfSemanticFragmentPayload semanticPayload) {
+        if (payload instanceof PdfSemanticFragmentPayload semanticPayload) {
             if (semanticPayload.linkOptions() != null) {
                 PdfLinkAnnotationWriter.addUriLink(
                         environment.document().getPage(fragment.pageIndex()),
@@ -423,11 +426,11 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         if (payload instanceof BuiltInNodeDefinitions.ShapeFragmentPayload) {
             return (PdfFragmentRenderHandler<Object>) handlers.get(BuiltInNodeDefinitions.ShapeFragmentPayload.class);
         }
-        if (payload instanceof BuiltInNodeDefinitions.ImageFragmentPayload) {
-            return (PdfFragmentRenderHandler<Object>) handlers.get(BuiltInNodeDefinitions.ImageFragmentPayload.class);
+        if (payload instanceof ImageFragmentPayload) {
+            return (PdfFragmentRenderHandler<Object>) handlers.get(ImageFragmentPayload.class);
         }
-        if (payload instanceof BuiltInNodeDefinitions.BarcodeFragmentPayload) {
-            return (PdfFragmentRenderHandler<Object>) handlers.get(BuiltInNodeDefinitions.BarcodeFragmentPayload.class);
+        if (payload instanceof BarcodeFragmentPayload) {
+            return (PdfFragmentRenderHandler<Object>) handlers.get(BarcodeFragmentPayload.class);
         }
         if (payload instanceof BuiltInNodeDefinitions.TableRowFragmentPayload) {
             return (PdfFragmentRenderHandler<Object>) handlers.get(BuiltInNodeDefinitions.TableRowFragmentPayload.class);

@@ -3,6 +3,7 @@ package com.demcha.compose.document.layout.definitions;
 import com.demcha.compose.document.layout.BoxConstraints;
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.CompositeLayoutSpec;
+import com.demcha.compose.document.layout.payloads.EllipseFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload;
 import com.demcha.compose.document.layout.payloads.ShapeClipEndPayload;
 import com.demcha.compose.document.layout.payloads.TransformBeginPayload;
@@ -111,7 +112,7 @@ public final class ShapeContainerDefinition implements NodeDefinition<ShapeConta
                     padBottom,
                     width,
                     height,
-                    new BuiltInNodeDefinitions.EllipseFragmentPayload(awtFill, stroke, null, null));
+                    new EllipseFragmentPayload(awtFill, stroke, null, null));
             case ShapeOutline.Rectangle ignored -> new LayoutFragment(
                     placement.path(),
                     0,

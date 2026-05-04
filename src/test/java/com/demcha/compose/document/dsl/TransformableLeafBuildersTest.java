@@ -5,6 +5,10 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.BarcodeFragmentPayload;
+import com.demcha.compose.document.layout.payloads.EllipseFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ImageFragmentPayload;
+import com.demcha.compose.document.layout.payloads.LineFragmentPayload;
 import com.demcha.compose.document.layout.payloads.TransformBeginPayload;
 import com.demcha.compose.document.layout.payloads.TransformEndPayload;
 import com.demcha.compose.document.node.BarcodeNode;
@@ -225,7 +229,7 @@ class TransformableLeafBuildersTest {
                     .build());
             assertTransformBracketsLeaf(
                     session.layoutGraph().fragments(),
-                    BuiltInNodeDefinitions.EllipseFragmentPayload.class,
+                    EllipseFragmentPayload.class,
                     20.0);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -245,7 +249,7 @@ class TransformableLeafBuildersTest {
                     .build());
             List<PlacedFragment> fragments = session.layoutGraph().fragments();
             int begin = indexOfPayload(fragments, TransformBeginPayload.class);
-            int leaf = indexOfPayload(fragments, BuiltInNodeDefinitions.LineFragmentPayload.class);
+            int leaf = indexOfPayload(fragments, LineFragmentPayload.class);
             int end = indexOfPayload(fragments, TransformEndPayload.class);
             assertThat(begin).isGreaterThanOrEqualTo(0);
             assertThat(leaf).isGreaterThan(begin);
@@ -273,7 +277,7 @@ class TransformableLeafBuildersTest {
                     .build());
             assertTransformBracketsLeaf(
                     session.layoutGraph().fragments(),
-                    BuiltInNodeDefinitions.ImageFragmentPayload.class,
+                    ImageFragmentPayload.class,
                     90.0);
         }
     }
@@ -293,7 +297,7 @@ class TransformableLeafBuildersTest {
                     .build());
             assertTransformBracketsLeaf(
                     session.layoutGraph().fragments(),
-                    BuiltInNodeDefinitions.BarcodeFragmentPayload.class,
+                    BarcodeFragmentPayload.class,
                     -15.0);
         } catch (Exception e) {
             throw new RuntimeException(e);

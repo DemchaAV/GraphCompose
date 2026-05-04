@@ -3,8 +3,8 @@ package com.demcha.compose.document.backend.fixed.pdf.handlers;
 import com.demcha.compose.document.backend.fixed.pdf.PdfFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
 import com.demcha.compose.document.image.DocumentImageFitMode;
-import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.ImageFragmentPayload;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
@@ -16,7 +16,7 @@ import java.io.IOException;
  * @author Artem Demchyshyn
  */
 public final class PdfImageFragmentRenderHandler
-        implements PdfFragmentRenderHandler<BuiltInNodeDefinitions.ImageFragmentPayload> {
+        implements PdfFragmentRenderHandler<ImageFragmentPayload> {
 
     /**
      * Creates the image fragment renderer.
@@ -25,13 +25,13 @@ public final class PdfImageFragmentRenderHandler
     }
 
     @Override
-    public Class<BuiltInNodeDefinitions.ImageFragmentPayload> payloadType() {
-        return BuiltInNodeDefinitions.ImageFragmentPayload.class;
+    public Class<ImageFragmentPayload> payloadType() {
+        return ImageFragmentPayload.class;
     }
 
     @Override
     public void render(PlacedFragment fragment,
-                       BuiltInNodeDefinitions.ImageFragmentPayload payload,
+                       ImageFragmentPayload payload,
                        PdfRenderEnvironment environment) throws IOException {
         if (fragment.width() <= 0 || fragment.height() <= 0) {
             return;

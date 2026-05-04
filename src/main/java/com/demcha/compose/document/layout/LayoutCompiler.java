@@ -655,6 +655,23 @@ public final class LayoutCompiler {
      */
     private static int[] stableZIndexOrder(java.util.List<Integer> zIndices) {
         int n = zIndices.size();
+        if (n <= 1) {
+            return identityOrder(n);
+        }
+        // Common case: every layer uses the same zIndex (typically 0). A
+        // stable sort would preserve source order anyway, so skip the boxed
+        // array allocation and the full sort.
+        int firstZ = zIndices.get(0);
+        boolean allEqual = true;
+        for (int i = 1; i < n; i++) {
+            if (zIndices.get(i) != firstZ) {
+                allEqual = false;
+                break;
+            }
+        }
+        if (allEqual) {
+            return identityOrder(n);
+        }
         Integer[] boxed = new Integer[n];
         for (int i = 0; i < n; i++) {
             boxed[i] = i;
@@ -665,6 +682,14 @@ public final class LayoutCompiler {
         int[] order = new int[n];
         for (int i = 0; i < n; i++) {
             order[i] = boxed[i];
+        }
+        return order;
+    }
+
+    private static int[] identityOrder(int n) {
+        int[] order = new int[n];
+        for (int i = 0; i < n; i++) {
+            order[i] = i;
         }
         return order;
     }
@@ -1279,7 +1304,7 @@ public final class LayoutCompiler {
             placed.addAll(toPlacedFragments(definition.emitFragments(prepared, fragmentContext, placement), placement));
         }
 
-        return List.copyOf(placed);
+        return placed;
     }
 
     private List<PlacedFragment> compositeOverlayFragments(PreparedNode<DocumentNode> prepared,
@@ -1329,7 +1354,7 @@ public final class LayoutCompiler {
             placed.addAll(toPlacedFragments(definition.emitOverlayFragments(prepared, fragmentContext, placement), placement));
         }
 
-        return List.copyOf(placed);
+        return placed;
     }
 
     private PreparedNode<DocumentNode> prepareForRegionWidth(PrepareContext prepareContext,

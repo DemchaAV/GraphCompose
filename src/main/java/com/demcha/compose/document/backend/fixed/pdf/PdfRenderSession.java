@@ -5,9 +5,8 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Page-scoped PDF render session that reuses one content stream per page.
@@ -22,12 +21,13 @@ import java.util.Map;
 final class PdfRenderSession implements AutoCloseable {
     private final PDDocument document;
     private final List<PDPage> pages;
-    private final Map<Integer, PDPageContentStream> pageSurfaces = new LinkedHashMap<>();
+    private final PDPageContentStream[] pageSurfaces;
     private boolean closed;
 
     PdfRenderSession(PDDocument document, List<PDPage> pages) {
         this.document = document;
         this.pages = List.copyOf(pages);
+        this.pageSurfaces = new PDPageContentStream[this.pages.size()];
     }
 
     PDPageContentStream pageSurface(int pageIndex) throws IOException {
@@ -37,13 +37,13 @@ final class PdfRenderSession implements AutoCloseable {
         if (pageIndex < 0 || pageIndex >= pages.size()) {
             throw new IllegalArgumentException("Page index " + pageIndex + " is outside the render session.");
         }
-        PDPageContentStream existing = pageSurfaces.get(pageIndex);
+        PDPageContentStream existing = pageSurfaces[pageIndex];
         if (existing != null) {
             return existing;
         }
 
         PDPageContentStream opened = new PDPageContentStream(document, pages.get(pageIndex));
-        pageSurfaces.put(pageIndex, opened);
+        pageSurfaces[pageIndex] = opened;
         return opened;
     }
 
@@ -53,7 +53,10 @@ final class PdfRenderSession implements AutoCloseable {
             return;
         }
         IOException failure = null;
-        for (PDPageContentStream stream : pageSurfaces.values()) {
+        for (PDPageContentStream stream : pageSurfaces) {
+            if (stream == null) {
+                continue;
+            }
             try {
                 stream.close();
             } catch (IOException ex) {
@@ -64,7 +67,7 @@ final class PdfRenderSession implements AutoCloseable {
                 }
             }
         }
-        pageSurfaces.clear();
+        Arrays.fill(pageSurfaces, null);
         closed = true;
         if (failure != null) {
             throw failure;

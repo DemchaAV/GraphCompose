@@ -27,7 +27,7 @@ Most Java PDF libraries hand you low-level drawing commands. GraphCompose gives 
 - **Atomic pagination, no manual paging.** Tables split row-by-row, rows are atomic, layer stacks are atomic.
 - **Designer-grade output.** Page backgrounds, section bands, soft panels, accent strips, column spans, layered hero blocks, fluent rich text, and a tokenised `BusinessTheme` are all first-class &mdash; not workarounds.
 - **PDFBox rendering, isolated.** PDF backend lives behind a single backend interface. The DOCX backend (Apache POI) is ready for callers who need an editable file.
-- **Tested at every layer.** 675 green tests on `develop` (525 → 675 across v1.5), including cinematic-feature tests, shape-as-container clip-path invariants, transform CTM checks, table row-span / zebra / repeated-header tests, public-API leak guards, and a `PdfVisualRegression` harness.
+- **Tested at every layer.** 672 green tests on `develop` (525 → 672 across v1.5), including cinematic-feature tests, shape-as-container clip-path invariants, transform CTM checks, table row-span / zebra / repeated-header tests, public-API leak guards, and a `PdfVisualRegression` harness.
 
 The current release is **v1.5.0** &mdash; the "intuitive" release. v1.5 turns the surface intuitive: shape-as-container with clip path, rotate / scale + per-layer z-index, advanced tables (row span, zebra, totals, repeating header), and two new theme-driven cinematic templates (`InvoiceTemplateV2`, `ProposalTemplateV2`). v1.5 is fully source-compatible with v1.4 &mdash; every public record gained back-compat constructors that default the new fields. See [`docs/migration-v1-4-to-v1-5.md`](docs/migration-v1-4-to-v1-5.md).
 

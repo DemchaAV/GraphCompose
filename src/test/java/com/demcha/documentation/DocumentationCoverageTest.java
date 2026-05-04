@@ -136,77 +136,36 @@ class DocumentationCoverageTest {
     }
 
     @Test
-    void readmeQuickStartShouldUseCanonicalDsl() throws IOException {
+    void readmeShouldUseCanonicalDslAndAvoidLegacyApis() throws IOException {
         String readme = Files.readString(PROJECT_ROOT.resolve("README.md"));
-        int quickStart = readme.indexOf("## Quick start");
-        int builtIns = readme.indexOf("### Built-in templates (compose-first)");
-        assertThat(quickStart).isGreaterThanOrEqualTo(0);
-        assertThat(builtIns).isGreaterThan(quickStart);
 
-        String quickStartSection = readme.substring(quickStart, builtIns);
-        assertThat(quickStartSection).contains("GraphCompose.document(Path.of(\"output.pdf\"))");
-        assertThat(quickStartSection).contains("document.pageFlow(page -> page");
-        assertThat(quickStartSection).contains(".module(\"Summary\", module -> module.paragraph(\"Hello GraphCompose\"))");
-        assertThat(quickStartSection).doesNotContain("import com.demcha.compose.engine");
-        assertThat(quickStartSection).doesNotContain("document.dsl()");
-        assertThat(quickStartSection).doesNotContain("try (PdfComposer composer = GraphCompose.pdf(");
-    }
+        // Canonical-DSL fingerprints — the slim v1.5 landing README must
+        // surface at least one example using the canonical authoring path.
+        assertThat(readme).contains("GraphCompose.document(");
+        assertThat(readme).contains("DocumentSession");
+        assertThat(readme).contains("document.pageFlow(");
+        assertThat(readme).contains("BusinessTheme");
 
-    @Test
-    void readmeLinePrimitiveSectionShouldUseCanonicalDsl() throws IOException {
-        String readme = Files.readString(PROJECT_ROOT.resolve("README.md"));
-        int linePrimitive = readme.indexOf("## Line primitive");
-        int architecture = readme.indexOf("## Architecture at a glance");
-        assertThat(linePrimitive).isGreaterThanOrEqualTo(0);
-        assertThat(architecture).isGreaterThan(linePrimitive);
-
-        String linePrimitiveSection = readme.substring(linePrimitive, architecture);
-        assertThat(linePrimitiveSection).contains("document.pageFlow()");
-        assertThat(linePrimitiveSection).contains(".addDivider(");
-        assertThat(linePrimitiveSection).contains(".addShape(");
-        assertThat(linePrimitiveSection).contains("DocumentColor.ROYAL_BLUE");
-        assertThat(linePrimitiveSection).doesNotContain("ComponentColor.");
-        assertThat(linePrimitiveSection).doesNotContain("document.dsl()");
-        assertThat(linePrimitiveSection).doesNotContain("composer.componentBuilder()");
-        assertThat(linePrimitiveSection).doesNotContain("GraphCompose.pdf(");
-    }
-
-    @Test
-    void readmeTableSectionShouldUseCanonicalDsl() throws IOException {
-        String readme = Files.readString(PROJECT_ROOT.resolve("README.md"));
-        int tableComponent = readme.indexOf("## Table component");
-        int linePrimitive = readme.indexOf("## Line primitive");
-        assertThat(tableComponent).isGreaterThanOrEqualTo(0);
-        assertThat(linePrimitive).isGreaterThan(tableComponent);
-
-        String tableSection = readme.substring(tableComponent, linePrimitive);
-        assertThat(tableSection).contains("document.pageFlow()");
-        assertThat(tableSection).contains(".addTable(");
-        assertThat(tableSection).contains(".header(");
-        assertThat(tableSection).contains(".rows(");
-        assertThat(tableSection).contains("DocumentTableColumn.fixed(90)");
-        assertThat(tableSection).doesNotContain("TableColumnLayout.");
-        assertThat(tableSection).doesNotContain("TableCellLayoutStyle.");
-        assertThat(tableSection).doesNotContain(".row(\"Role\", \"Owner\", \"Status\")");
-        assertThat(tableSection).doesNotContain("document.dsl()");
-        assertThat(tableSection).doesNotContain("composer.componentBuilder()");
-        assertThat(tableSection).doesNotContain("GraphCompose.pdf(");
-    }
-
-    @Test
-    void readmeContainerGuidanceShouldPreferCanonicalDsl() throws IOException {
-        String readme = Files.readString(PROJECT_ROOT.resolve("README.md"));
-        int containers = readme.indexOf("### 4. Containers express structure");
-        int templateLayer = readme.indexOf("### 5. The template layer is optional");
-        assertThat(containers).isGreaterThanOrEqualTo(0);
-        assertThat(templateLayer).isGreaterThan(containers);
-
-        String containersSection = readme.substring(containers, templateLayer);
-        assertThat(containersSection).contains("document.pageFlow()");
-        assertThat(containersSection).contains("section()");
-        assertThat(containersSection).doesNotContain("vContainer(");
-        assertThat(containersSection).doesNotContain("hContainer(");
-        assertThat(containersSection).doesNotContain("moduleBuilder(");
+        // Legacy-API guard — the README may not advertise any retired
+        // entry point, builder shape, or pre-canonical field-based CV
+        // type, even if examples that demonstrate them still exist
+        // elsewhere in the codebase.
+        assertThat(readme)
+                .doesNotContain("import com.demcha.compose.engine")
+                .doesNotContain("document.dsl()")
+                .doesNotContain("composer.componentBuilder()")
+                .doesNotContain("GraphCompose.pdf(")
+                .doesNotContain("PdfComposer")
+                .doesNotContain("TemplateBuilder")
+                .doesNotContain("ComponentColor.")
+                .doesNotContain("TableColumnLayout.")
+                .doesNotContain("TableCellLayoutStyle.")
+                .doesNotContain("vContainer(")
+                .doesNotContain("hContainer(")
+                .doesNotContain("moduleBuilder(")
+                .doesNotContain("MainPageCV")
+                .doesNotContain("MainPageCvDTO")
+                .doesNotContain("ModuleYml");
     }
 
     @Test

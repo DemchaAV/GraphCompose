@@ -348,6 +348,32 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
+     * Returns a fluent facade for chrome configuration (metadata,
+     * watermark, protection, header, footer). The facade is a thin
+     * grouping of the canonical chrome methods on this session — both
+     * styles set the same underlying chrome state.
+     *
+     * <p>Example:</p>
+     * <pre>{@code
+     * session.chrome()
+     *         .metadata(DocumentMetadata.builder().title("Q1").build())
+     *         .watermark(DocumentWatermark.builder().text("DRAFT").build());
+     * }</pre>
+     *
+     * <p>Use {@link SessionChromeApi#session()} to chain back to the
+     * session if you need to mix chrome and authoring calls in a single
+     * fluent expression.</p>
+     *
+     * @return chrome configuration facade for this session
+     * @throws IllegalStateException if this session has already been closed
+     * @since 1.6.0
+     */
+    public SessionChromeApi chrome() {
+        ensureOpen();
+        return new SessionChromeApi(this, chromeOptions);
+    }
+
+    /**
      * Configures backend-neutral document metadata applied by every output
      * backend that supports it (PDF and DOCX in v1.3). Pass {@code null} to
      * clear.

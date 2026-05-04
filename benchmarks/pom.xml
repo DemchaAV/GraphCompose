@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.github.demchaav</groupId>
+    <artifactId>graphcompose-benchmarks</artifactId>
+    <version>1.5.0</version>
+    <name>GraphCompose Benchmarks</name>
+    <description>
+        Performance benchmarks, stress tests, and endurance harnesses for
+        GraphCompose. Lives in a sibling module so foreign comparison
+        libraries (iText, openHTMLToPDF, JasperReports) and benchmark
+        tooling do not pollute the main project's test classpath.
+    </description>
+
+    <properties>
+        <graphcompose.version>1.5.0</graphcompose.version>
+        <maven.compiler.release>21</maven.compiler.release>
+
+        <junit.bom.version>5.12.2</junit.bom.version>
+        <assertj.version>3.27.3</assertj.version>
+        <logback.version>1.5.18</logback.version>
+
+        <openhtmltopdf.version>1.0.10</openhtmltopdf.version>
+        <itextpdf.version>5.5.13.3</itextpdf.version>
+        <jasperreports.version>6.21.3</jasperreports.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit.bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- The library under benchmark. -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graphcompose</artifactId>
+            <version>${graphcompose.version}</version>
+        </dependency>
+
+        <!--
+            graphcompose's test-only fixtures (com.demcha.mock.*) used by
+            CanonicalBenchmarkSupport for CV / invoice / proposal sample
+            data. Pulled in via the tests-classifier jar published by
+            the main module's maven-jar-plugin test-jar execution.
+        -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graphcompose</artifactId>
+            <version>${graphcompose.version}</version>
+            <type>test-jar</type>
+            <classifier>tests</classifier>
+        </dependency>
+
+        <!-- Logging for benchmark runs. -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+
+        <!--
+            ComparativeBenchmark renders the same fixture through these
+            alternative PDF stacks so the report can show a side-by-side
+            comparison. They are benchmark-only and intentionally NOT
+            depended on by the main module.
+        -->
+        <dependency>
+            <groupId>com.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-pdfbox</artifactId>
+            <version>${openhtmltopdf.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>itextpdf</artifactId>
+            <version>${itextpdf.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.jasperreports</groupId>
+            <artifactId>jasperreports</artifactId>
+            <version>${jasperreports.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.lowagie</groupId>
+                    <artifactId>itext</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- Test scope for the two utility @Test classes that ship with the harness. -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <release>${maven.compiler.release}</release>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>

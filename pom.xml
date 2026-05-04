@@ -234,31 +234,14 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Benchmark-only comparison dependencies -->
-        <dependency>
-            <groupId>com.openhtmltopdf</groupId>
-            <artifactId>openhtmltopdf-pdfbox</artifactId>
-            <version>1.0.10</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.itextpdf</groupId>
-            <artifactId>itextpdf</artifactId>
-            <version>5.5.13.3</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>net.sf.jasperreports</groupId>
-            <artifactId>jasperreports</artifactId>
-            <version>6.21.3</version>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.lowagie</groupId>
-                    <artifactId>itext</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+        <!--
+            Benchmark-only comparison dependencies (iText, openHTMLToPDF,
+            JasperReports) live in the sibling `benchmarks/` Maven module
+            so the main project's test classpath stays free of foreign
+            comparison libraries that are not part of GraphCompose. Run
+            benchmarks via `mvnw -f benchmarks/pom.xml ...` or the
+            scripts/run-benchmarks.ps1 wrapper.
+        -->
     </dependencies>
 
     <build>
@@ -322,6 +305,26 @@
                 <configuration>
                     <argLine>-javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar</argLine>
                 </configuration>
+            </plugin>
+
+            <!--
+                Publish a tests-classifier jar so the sibling `benchmarks/`
+                module can reuse the test-only fixtures (com.demcha.mock.*,
+                etc.) without duplicating them. The artifact is
+                graphcompose-${version}-tests.jar in the local repository
+                after `mvn install`.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- Canonical API Javadoc validation -->

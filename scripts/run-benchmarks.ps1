@@ -38,7 +38,8 @@ if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction Sile
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $mavenWrapper = Join-Path $repoRoot "mvnw.cmd"
-$benchmarkClasspathFile = Join-Path $repoRoot "target\benchmark.classpath"
+$benchmarksPom = Join-Path $repoRoot "benchmarks\pom.xml"
+$benchmarkClasspathFile = Join-Path $repoRoot "benchmarks\target\benchmark.classpath"
 $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $runRoot = Join-Path $repoRoot "target\benchmark-runs\$timestamp"
 $logRoot = Join-Path $runRoot "logs"
@@ -296,13 +297,22 @@ try {
     $currentSpeedAggregateSuite = $null
     $comparativeAggregateSuite = $null
 
+    # Phase H (v1.6): benchmarks live in a sibling Maven module so the
+    # main project's test classpath stays free of iText / openHTMLToPDF /
+    # JasperReports comparison libraries. We install the main module so
+    # its tests-classifier jar is available, then build the benchmarks
+    # classpath from the sibling pom.
+    Invoke-LoggedCommand -Name "01-install-main" -Command {
+        & $mavenWrapper "-B" "-ntp" "-DskipTests" "install" "-pl" "."
+    }
+
     Invoke-LoggedCommand -Name "01-build-classpath" -Command {
-        & $mavenWrapper "-B" "-ntp" "-DskipTests" "test-compile" "dependency:build-classpath" "-DincludeScope=test" "-Dmdep.outputFile=target/benchmark.classpath"
+        & $mavenWrapper "-B" "-ntp" "-f" $benchmarksPom "test-compile" "dependency:build-classpath" "-DincludeScope=test" "-Dmdep.outputFile=target/benchmark.classpath"
     }
 
     $resolvedClasspathFile = (Resolve-Path $benchmarkClasspathFile).Path
     $dependencyClasspath = (Get-Content $resolvedClasspathFile -Raw).Trim()
-    $javaClasspath = "target\test-classes;target\classes;$dependencyClasspath"
+    $javaClasspath = "benchmarks\target\test-classes;benchmarks\target\classes;$dependencyClasspath"
 
         $currentSpeedProperties = @()
         $currentSpeedProperties += "-Dgraphcompose.benchmark.profile=$CurrentSpeedProfile"

@@ -329,6 +329,15 @@ The runnable `examples/` module gains six new showcases hooked into
 - New "v1.5 sample renders (PDF)" section links six committed PDFs
   under `assets/readme/v1.5/` so the README works without running
   anything.
+- New [`examples/README.md`](examples/README.md) examples gallery —
+  every example listed with description, key code snippet, committed
+  PDF preview, and source link, grouped by category (built-in
+  templates / cinematic templates / v1.5 feature showcases / public-
+  API surface / production patterns / operational documents).
+  Committed PDF previews of all 22 examples live under
+  [`assets/readme/examples/`](assets/readme/examples/) (whitelisted in
+  `.gitignore`) so users can browse renders straight from GitHub
+  without running anything.
 - New [`docs/template-authoring.md`](docs/template-authoring.md) (~620
   lines) — the canonical cheatsheet covering builder hierarchy, a
   per-builder one-liner cheatsheet, a style-types reference, the

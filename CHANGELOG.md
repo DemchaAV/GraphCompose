@@ -69,7 +69,7 @@ for the phased plan, verification gates, and ADRs.
 
 ---
 
-## v1.5.0 — Unreleased
+## v1.5.0 — 2026-05-04
 
 ### Headline — "intuitive"
 

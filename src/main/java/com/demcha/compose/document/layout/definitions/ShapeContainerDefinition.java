@@ -4,6 +4,7 @@ import com.demcha.compose.document.layout.BoxConstraints;
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.CompositeLayoutSpec;
 import com.demcha.compose.document.layout.payloads.EllipseFragmentPayload;
+import com.demcha.compose.document.layout.payloads.PreparedStackLayout;
 import com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload;
 import com.demcha.compose.document.layout.payloads.ShapeClipEndPayload;
 import com.demcha.compose.document.layout.payloads.TransformBeginPayload;
@@ -75,7 +76,7 @@ public final class ShapeContainerDefinition implements NodeDefinition<ShapeConta
         return PreparedNode.composite(
                 node,
                 new MeasureResult(measureWidth, measureHeight),
-                new BuiltInNodeDefinitions.PreparedStackLayout(alignments, offsetsX, offsetsY, zIndices),
+                new PreparedStackLayout(alignments, offsetsX, offsetsY, zIndices),
                 new CompositeLayoutSpec(0.0, CompositeLayoutSpec.Axis.STACK));
     }
 

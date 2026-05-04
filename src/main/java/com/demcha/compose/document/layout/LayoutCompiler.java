@@ -1,5 +1,6 @@
 package com.demcha.compose.document.layout;
 
+import com.demcha.compose.document.layout.payloads.PreparedStackLayout;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.PageBreakNode;
 
@@ -517,8 +518,8 @@ public final class LayoutCompiler {
         int stackNodeIndex = nodes.size();
         nodes.add(null);
 
-        BuiltInNodeDefinitions.PreparedStackLayout stackLayout =
-                prepared.requirePreparedLayout(BuiltInNodeDefinitions.PreparedStackLayout.class);
+        PreparedStackLayout stackLayout =
+                prepared.requirePreparedLayout(PreparedStackLayout.class);
         List<DocumentNode> children = definition.children(node);
         double innerWidth = Math.max(0.0, naturalMeasure.width() - padding.horizontal());
         double innerHeight = Math.max(0.0, naturalMeasure.height() - padding.vertical());
@@ -1035,8 +1036,8 @@ public final class LayoutCompiler {
             List<DocumentNode> children = definition.children(node);
 
             if (layoutSpec.axis() == CompositeLayoutSpec.Axis.STACK) {
-                BuiltInNodeDefinitions.PreparedStackLayout stackLayout =
-                        prepared.requirePreparedLayout(BuiltInNodeDefinitions.PreparedStackLayout.class);
+                PreparedStackLayout stackLayout =
+                        prepared.requirePreparedLayout(PreparedStackLayout.class);
                 double stackInnerWidth = Math.max(0.0, measure.width() - padding.horizontal());
                 double stackInnerHeight = Math.max(0.0, measure.height() - padding.vertical());
                 double stackInnerStartX = placementX + padding.left();

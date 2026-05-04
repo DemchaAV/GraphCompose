@@ -1,6 +1,7 @@
 package com.demcha.compose.document.layout;
 
 import com.demcha.compose.document.image.DocumentImageData;
+import com.demcha.compose.document.layout.payloads.SideBorders;
 import com.demcha.compose.document.layout.payloads.TransformBeginPayload;
 import com.demcha.compose.document.layout.payloads.TransformEndPayload;
 import com.demcha.compose.document.node.DocumentBarcodeOptions;
@@ -129,7 +130,7 @@ public final class NodeDefinitionSupport {
     public static List<LayoutFragment> emitDecorationFragment(Color fillColor,
                                                               Stroke stroke,
                                                               DocumentCornerRadius cornerRadius,
-                                                              BuiltInNodeDefinitions.SideBorders sideBorders,
+                                                              SideBorders sideBorders,
                                                               FragmentPlacement placement) {
         return emitDecorationFragment(fillColor, stroke, cornerRadius == null ? 0.0 : cornerRadius.radius(),
                 cornerRadius, sideBorders, placement);
@@ -164,7 +165,7 @@ public final class NodeDefinitionSupport {
     public static List<LayoutFragment> emitDecorationFragment(Color fillColor,
                                                               Stroke stroke,
                                                               double cornerRadius,
-                                                              BuiltInNodeDefinitions.SideBorders sideBorders,
+                                                              SideBorders sideBorders,
                                                               FragmentPlacement placement) {
         return emitDecorationFragment(fillColor, stroke, cornerRadius, null, sideBorders, placement);
     }
@@ -175,11 +176,11 @@ public final class NodeDefinitionSupport {
      * @param borders public border bundle
      * @return engine side borders, or {@code null} when no side is set
      */
-    public static BuiltInNodeDefinitions.SideBorders toSideBorders(DocumentBorders borders) {
+    public static SideBorders toSideBorders(DocumentBorders borders) {
         if (borders == null || !borders.hasAny()) {
             return null;
         }
-        return new BuiltInNodeDefinitions.SideBorders(
+        return new SideBorders(
                 toStroke(borders.top()),
                 toStroke(borders.right()),
                 toStroke(borders.bottom()),
@@ -490,7 +491,7 @@ public final class NodeDefinitionSupport {
                                                                Stroke stroke,
                                                                double cornerRadius,
                                                                DocumentCornerRadius perCornerRadius,
-                                                               BuiltInNodeDefinitions.SideBorders sideBorders,
+                                                               SideBorders sideBorders,
                                                                FragmentPlacement placement) {
         boolean hasFill = fillColor != null;
         boolean hasStroke = stroke != null

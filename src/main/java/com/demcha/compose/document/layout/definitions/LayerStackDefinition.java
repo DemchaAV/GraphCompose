@@ -1,7 +1,6 @@
 package com.demcha.compose.document.layout.definitions;
 
 import com.demcha.compose.document.layout.BoxConstraints;
-import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.CompositeLayoutSpec;
 import com.demcha.compose.document.layout.FragmentContext;
 import com.demcha.compose.document.layout.FragmentPlacement;
@@ -10,6 +9,7 @@ import com.demcha.compose.document.layout.NodeDefinition;
 import com.demcha.compose.document.layout.PaginationPolicy;
 import com.demcha.compose.document.layout.PrepareContext;
 import com.demcha.compose.document.layout.PreparedNode;
+import com.demcha.compose.document.layout.payloads.PreparedStackLayout;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.LayerStackNode;
@@ -47,7 +47,7 @@ public final class LayerStackDefinition implements NodeDefinition<LayerStackNode
         return PreparedNode.composite(
                 node,
                 measureStack(node, toPadding(node.padding()), ctx, constraints),
-                new BuiltInNodeDefinitions.PreparedStackLayout(alignments, offsetsX, offsetsY, zIndices),
+                new PreparedStackLayout(alignments, offsetsX, offsetsY, zIndices),
                 new CompositeLayoutSpec(0.0, CompositeLayoutSpec.Axis.STACK));
     }
 

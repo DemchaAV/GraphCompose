@@ -15,6 +15,7 @@ import com.demcha.compose.document.layout.definitions.ShapeDefinition;
 import com.demcha.compose.document.layout.definitions.SpacerDefinition;
 import com.demcha.compose.document.layout.definitions.TableDefinition;
 import com.demcha.compose.document.layout.payloads.PdfSemanticFragmentPayload;
+import com.demcha.compose.document.layout.payloads.SideBorders;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.image.DocumentImageFitMode;
@@ -323,29 +324,7 @@ public final class BuiltInNodeDefinitions {
         }
     }
 
-    /**
-     * Resolved engine-level per-side border strokes attached to a shape payload.
-     *
-     * <p>Each side stroke is independent. {@code null} disables the corresponding
-     * side. The renderer treats this record as a request to draw the four lines
-     * separately rather than rely on a single uniform rectangle stroke.</p>
-     *
-     * @param top top side stroke, or {@code null} for no border on that side
-     * @param right right side stroke, or {@code null} for no border on that side
-     * @param bottom bottom side stroke, or {@code null} for no border on that side
-     * @param left left side stroke, or {@code null} for no border on that side
-     */
-    @Internal
-    public record SideBorders(Stroke top, Stroke right, Stroke bottom, Stroke left) {
-        /**
-         * Indicates whether at least one side carries a stroke.
-         *
-         * @return {@code true} when any side is set
-         */
-        public boolean hasAny() {
-            return top != null || right != null || bottom != null || left != null;
-        }
-    }
+    // SideBorders moved to com.demcha.compose.document.layout.payloads in Phase E.2.
 
     // LineFragmentPayload and EllipseFragmentPayload moved to
     // com.demcha.compose.document.layout.payloads in Phase E.2.
@@ -578,82 +557,7 @@ public final class BuiltInNodeDefinitions {
         }
     }
 
-    /**
-     * Prepared layout payload attached to {@link LayerStackNode} prepared nodes.
-     *
-     * <p>Carries per-layer alignment plus an on-screen offset (positive
-     * {@code offsetX} = right, positive {@code offsetY} = down) and an
-     * explicit per-layer {@code zIndex}. The layout compiler stable-sorts
-     * layers by ascending {@code zIndex} before emitting fragments, so a
-     * later-declared layer with {@code zIndex = 10} renders on top of an
-     * earlier-declared layer with {@code zIndex = 5}.</p>
-     *
-     * @param alignments per-layer alignments resolved from the source order
-     * @param offsetsX per-layer horizontal offsets from the alignment anchor
-     * @param offsetsY per-layer vertical offsets from the alignment anchor
-     * @param zIndices per-layer render-order keys (defaults are {@code 0})
-     */
-    @Internal
-    public record PreparedStackLayout(
-            List<LayerAlign> alignments,
-            List<Double> offsetsX,
-            List<Double> offsetsY,
-            List<Integer> zIndices) implements PreparedNodeLayout {
-        /**
-         * Creates a prepared stack layout payload with frozen alignment, offset,
-         * and z-index metadata.
-         */
-        public PreparedStackLayout {
-            alignments = List.copyOf(alignments);
-            offsetsX = List.copyOf(offsetsX);
-            offsetsY = List.copyOf(offsetsY);
-            zIndices = List.copyOf(zIndices);
-            if (offsetsX.size() != alignments.size()
-                    || offsetsY.size() != alignments.size()
-                    || zIndices.size() != alignments.size()) {
-                throw new IllegalArgumentException(
-                        "PreparedStackLayout: alignments/offsets/zIndices size mismatch ("
-                                + alignments.size() + "/" + offsetsX.size() + "/"
-                                + offsetsY.size() + "/" + zIndices.size() + ")");
-            }
-        }
-
-        /**
-         * Backward-compatible 3-arg constructor — defaults zIndices to all
-         * zeros so layers render in source order.
-         *
-         * @param alignments per-layer alignments
-         * @param offsetsX per-layer horizontal offsets
-         * @param offsetsY per-layer vertical offsets
-         */
-        public PreparedStackLayout(List<LayerAlign> alignments,
-                                   List<Double> offsetsX,
-                                   List<Double> offsetsY) {
-            this(alignments, offsetsX, offsetsY, zeroInts(alignments.size()));
-        }
-
-        /**
-         * Backward-compatible factory for callers that only carry alignments;
-         * fills both offset lists with zeros and zIndices with zeros.
-         *
-         * @param alignments per-layer alignments
-         */
-        public PreparedStackLayout(List<LayerAlign> alignments) {
-            this(alignments, zeros(alignments.size()), zeros(alignments.size()), zeroInts(alignments.size()));
-        }
-
-        private static List<Double> zeros(int size) {
-            Double[] out = new Double[size];
-            java.util.Arrays.fill(out, 0.0);
-            return List.of(out);
-        }
-
-        private static List<Integer> zeroInts(int size) {
-            Integer[] out = new Integer[size];
-            java.util.Arrays.fill(out, 0);
-            return List.of(out);
-        }
-    }
+    // PreparedStackLayout moved to com.demcha.compose.document.layout.payloads in Phase E.2.
 
     // HELPERS
 

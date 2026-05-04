@@ -25,7 +25,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>This guarantees that callers do not need to instantiate
  * {@link com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend}
  * just to attach metadata, watermark, protection, or header/footer chrome.</p>
+ *
+ * <p>This test deliberately exercises the deprecated
+ * {@code DocumentSession#metadata(PdfMetadataOptions)} family of overloads
+ * (and their watermark/protect/header/footer siblings) to keep the
+ * compatibility path covered until removal in v2.0.</p>
  */
+@SuppressWarnings("deprecation")
 class DocumentSessionConveniencePdfOptionsTest {
 
     @Test

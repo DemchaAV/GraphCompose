@@ -139,7 +139,11 @@ public final class DocumentSession implements AutoCloseable {
      *
      * @return a new DSL facade for authoring roots and semantic nodes
      * @throws IllegalStateException if this session has already been closed
+     * @deprecated since 1.6.0; prefer {@link #dsl()}. Carrying two names for
+     *             the same operation on the session facade adds maintenance
+     *             cost without clarity. Scheduled for removal in v2.0.
      */
+    @Deprecated(since = "1.6.0", forRemoval = true)
     public DocumentDsl builder() {
         return dsl();
     }
@@ -363,7 +367,13 @@ public final class DocumentSession implements AutoCloseable {
      *
      * @param options PDF metadata options, or {@code null} to clear
      * @return this session
+     * @deprecated since 1.6.0; prefer the canonical
+     *             {@link #metadata(DocumentMetadata)}. The PDF-typed
+     *             overload exists only as a compatibility convenience and
+     *             will be removed in v2.0 to keep the chrome contract
+     *             backend-neutral.
      */
+    @Deprecated(since = "1.6.0", forRemoval = true)
     public DocumentSession metadata(PdfMetadataOptions options) {
         ensureOpen();
         chromeOptions.setMetadata(options);
@@ -389,7 +399,11 @@ public final class DocumentSession implements AutoCloseable {
      *
      * @param options PDF watermark options, or {@code null} to clear
      * @return this session
+     * @deprecated since 1.6.0; prefer the canonical
+     *             {@link #watermark(DocumentWatermark)}. Scheduled for
+     *             removal in v2.0.
      */
+    @Deprecated(since = "1.6.0", forRemoval = true)
     public DocumentSession watermark(PdfWatermarkOptions options) {
         ensureOpen();
         chromeOptions.setWatermark(options);
@@ -415,7 +429,11 @@ public final class DocumentSession implements AutoCloseable {
      *
      * @param options PDF protection options, or {@code null} to clear
      * @return this session
+     * @deprecated since 1.6.0; prefer the canonical
+     *             {@link #protect(DocumentProtection)}. Scheduled for
+     *             removal in v2.0.
      */
+    @Deprecated(since = "1.6.0", forRemoval = true)
     public DocumentSession protect(PdfProtectionOptions options) {
         ensureOpen();
         chromeOptions.setProtection(options);
@@ -440,7 +458,11 @@ public final class DocumentSession implements AutoCloseable {
      *
      * @param options PDF header options
      * @return this session
+     * @deprecated since 1.6.0; prefer the canonical
+     *             {@link #header(DocumentHeaderFooter)}. Scheduled for
+     *             removal in v2.0.
      */
+    @Deprecated(since = "1.6.0", forRemoval = true)
     public DocumentSession header(PdfHeaderFooterOptions options) {
         ensureOpen();
         chromeOptions.addHeader(options);
@@ -465,7 +487,11 @@ public final class DocumentSession implements AutoCloseable {
      *
      * @param options PDF footer options
      * @return this session
+     * @deprecated since 1.6.0; prefer the canonical
+     *             {@link #footer(DocumentHeaderFooter)}. Scheduled for
+     *             removal in v2.0.
      */
+    @Deprecated(since = "1.6.0", forRemoval = true)
     public DocumentSession footer(PdfHeaderFooterOptions options) {
         ensureOpen();
         chromeOptions.addFooter(options);

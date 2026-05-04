@@ -18,6 +18,8 @@ import java.util.List;
  * intrinsic size is the spacer's declared width and height plus its padding.
  * Emits no fragments — the spacer occupies space in the placement graph but
  * has no visual representation.
+ *
+ * @author Artem Demchyshyn
  */
 public final class SpacerDefinition implements NodeDefinition<SpacerNode> {
 

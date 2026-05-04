@@ -19,6 +19,8 @@ import java.util.List;
  * advancing pages. Emits no fragments; the page advance happens because
  * pagination policy is {@link PaginationPolicy#ATOMIC} and the next leaf is
  * placed on a fresh page.
+ *
+ * @author Artem Demchyshyn
  */
 public final class PageBreakDefinition implements NodeDefinition<PageBreakNode> {
 

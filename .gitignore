@@ -60,3 +60,5 @@ build/
 # public docs surface. Files placed here stay on disk for the author and
 # stay out of git.
 docs/private/
+
+.llm-wiki/

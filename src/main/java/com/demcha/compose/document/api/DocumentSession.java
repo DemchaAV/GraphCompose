@@ -566,6 +566,26 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
+     * Returns a fluent facade for read-only layout inspection. The
+     * facade is a thin grouping of {@link #layoutGraph()},
+     * {@link #documentGraph()}, {@link #roots()}, {@link #canvas()},
+     * {@link #registry()}, and {@link #layoutSnapshot()} — both styles
+     * read the same underlying state.
+     *
+     * <p>Example:</p>
+     * <pre>{@code
+     * LayoutGraph graph = session.layout().graph();
+     * LayoutSnapshot snap = session.layout().snapshot();
+     * }</pre>
+     *
+     * @return layout-inspection facade for this session
+     * @since 1.6.0
+     */
+    public SessionLayoutApi layout() {
+        return new SessionLayoutApi(this);
+    }
+
+    /**
      * Returns the mutable node registry used by this session.
      *
      * @return active node registry

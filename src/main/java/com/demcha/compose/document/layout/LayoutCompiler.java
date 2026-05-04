@@ -778,6 +778,39 @@ public final class LayoutCompiler {
         double placementY = state.pageTop() - state.usedHeight - margin.top() - naturalMeasure.height();
         int pageIndex = state.pageIndex;
 
+        placeAtomicLeafFragments(
+                prepared, definition, path, semanticName, parentPath, childIndex, depth,
+                placementX, placementY, pageIndex, margin, padding, naturalMeasure,
+                fragmentContext, nodes, fragments);
+        state.usedHeight += outerHeight;
+    }
+
+    /**
+     * Builds the fragment placement, emits the fragments, and records the
+     * placed-node entry for an atomic leaf. Shared between
+     * {@link #compileAtomicLeaf} (mutating placement path that updates
+     * {@code CompilerState}) and the atomic branch of
+     * {@link #compileNodeInFixedSlot} (non-mutating placement inside a
+     * row slot). Pure plumbing &mdash; no pagination state is touched
+     * here; callers own page/usedHeight bookkeeping.
+     */
+    private void placeAtomicLeafFragments(PreparedNode<DocumentNode> prepared,
+                                          NodeDefinition<DocumentNode> definition,
+                                          String path,
+                                          String semanticName,
+                                          String parentPath,
+                                          int childIndex,
+                                          int depth,
+                                          double placementX,
+                                          double placementY,
+                                          int pageIndex,
+                                          Margin margin,
+                                          Padding padding,
+                                          MeasureResult naturalMeasure,
+                                          FragmentContext fragmentContext,
+                                          List<PlacedNode> nodes,
+                                          List<PlacedFragment> fragments) {
+        DocumentNode node = prepared.node();
         FragmentPlacement placement = new FragmentPlacement(
                 path,
                 parentPath,
@@ -792,7 +825,6 @@ public final class LayoutCompiler {
                 pageIndex,
                 margin,
                 padding);
-
         addPlacedFragments(definition.emitFragments(prepared, fragmentContext, placement), placement, fragments);
         nodes.add(new PlacedNode(
                 path,
@@ -814,7 +846,6 @@ public final class LayoutCompiler {
                 naturalMeasure.height(),
                 margin,
                 padding));
-        state.usedHeight += outerHeight;
     }
 
     private void compileSplittableLeaf(PreparedNode<DocumentNode> prepared,
@@ -1220,41 +1251,10 @@ public final class LayoutCompiler {
             return measure.height() + margin.vertical();
         }
 
-        FragmentPlacement placement = new FragmentPlacement(
-                path,
-                parentPath,
-                childIndex,
-                depth,
-                pageIndex,
-                placementX,
-                placementY,
-                measure.width(),
-                measure.height(),
-                pageIndex,
-                pageIndex,
-                margin,
-                padding);
-        addPlacedFragments(definition.emitFragments(prepared, fragmentContext, placement), placement, fragments);
-        nodes.add(new PlacedNode(
-                path,
-                semanticName,
-                node.nodeKind(),
-                parentPath,
-                childIndex,
-                depth,
-                depth,
-                placementX,
-                placementY,
-                placementX,
-                placementY,
-                measure.width(),
-                measure.height(),
-                pageIndex,
-                pageIndex,
-                measure.width(),
-                measure.height(),
-                margin,
-                padding));
+        placeAtomicLeafFragments(
+                prepared, definition, path, semanticName, parentPath, childIndex, depth,
+                placementX, placementY, pageIndex, margin, padding, measure,
+                fragmentContext, nodes, fragments);
         return measure.height() + margin.vertical();
     }
 

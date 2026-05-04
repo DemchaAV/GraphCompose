@@ -11,28 +11,94 @@ Every new primitive ships through `DocumentNode + NodeDefinition +
 render handler`. See [`docs/v1.6-roadmap.md`](docs/v1.6-roadmap.md)
 for the phased plan, verification gates, and ADRs.
 
-### Committed scope
+### Architecture hardening (committed in v1.6 line, develop)
 
-- **Phase A — Nested list ergonomics.**
+The architecture lane closes the highest-severity findings from the
+post-1.5 audit. None of these change author-facing behaviour for
+unmodified v1.5 code; they sharpen the public-vs-internal boundary,
+open extension points, and split the load-bearing files. See
+[`docs/migration-v1-5-to-v1-6.md`](docs/migration-v1-5-to-v1-6.md)
+for the user-facing summary.
+
+- **`@Internal` API stability marker.** New
+  `com.demcha.compose.document.api.Internal` annotation
+  (runtime-retained) marks `document.layout.*` and the
+  `BuiltInNodeDefinitions` payload records as implementation detail.
+  `InternalAnnotationCoverageTest` enforces propagation. ADR 0003
+  records the boundary decision.
+- **`DocumentRenderingException`** wraps the convenience render path:
+  `buildPdf`, `writePdf`, `toPdfBytes`, and the AutoCloseable `close()`
+  override no longer declare `throws Exception`. Lower-level backend
+  SPIs continue to declare `throws Exception` on purpose.
+- **Public PDF render handler SPI.** The
+  `PdfFragmentRenderHandler` Javadoc is rewritten as an extension
+  point and `PdfFixedLayoutBackend.Builder.addHandler(...)` is the
+  new registration path. Custom handlers replace built-in defaults
+  by `payloadType()`. ADR 0004 records the SPI shape.
+- **Thread-safety contract** documented on
+  `document.api/package-info.java` and
+  `document.backend.fixed.pdf/package-info.java`.
+- **DSL polish.** `DocumentDsl.text()` and `DocumentSession.builder()`
+  aliases are `@Deprecated(forRemoval=true, since="1.6.0")`; prefer
+  `paragraph()` and `dsl()` respectively.
+- **PDF-typed chrome overloads on `DocumentSession`** — `metadata`,
+  `watermark`, `protect`, `header`, `footer` accepting
+  `Pdf*Options` — are `@Deprecated(forRemoval=true, since="1.6.0")`;
+  the canonical backend-neutral overloads are unchanged.
+- **`DocumentPalette.builder()`** replaces the positional
+  `DocumentPalette.of(Color × 7)` factory; the old factory is
+  `@Deprecated(forRemoval=true)`. `BusinessTheme.classic()/modern()/executive()`
+  now use the builder. `IllegalStateException` from `build()` names
+  every missing token in one message.
+- **Targeted layout perf wins** (none alter output bytes):
+  `LayoutCompiler.compositeDecorationFragments` /
+  `compositeOverlayFragments` no longer wrap with `List.copyOf`,
+  `stableZIndexOrder` short-circuits when every layer reports the
+  same `zIndex`, `PdfRenderSession` keeps page surfaces in a
+  `PDPageContentStream[]` (no `Integer.valueOf` autoboxing),
+  `PdfFontLoader.THREAD_LOCAL_TTF_CACHE` is a bounded LRU
+  (max 32 entries per thread). Duplicate
+  `com.demcha.compose.font.Pdf_FontLoader` deleted.
+- **Layout invariant tests.** `LayoutCompilerInvariantsTest` pins
+  four scenarios that previously had only transitive snapshot
+  coverage: page-advance on overflow, layer source-order under
+  uniform `zIndex`, explicit `zIndex` ordering, equal-weight row
+  slot distribution.
+- **`BuiltInNodeDefinitions` split (Phase E.1).** 13 of the 15
+  built-in `NodeDefinition` implementations move to
+  `document.layout.definitions.*`: PageBreak, Spacer, Shape, Line,
+  Ellipse, Image, Barcode, Container, Section, Row, LayerStack,
+  ShapeContainer, Table. Shared inline helpers (`EPS`, transform
+  wrapping, decoration / table / measurement adapters) move to a
+  new `NodeDefinitionSupport` class. `BuiltInNodeDefinitions` drops
+  from 3,037 to 2,087 lines and continues to expose
+  `registerDefaults(NodeRegistry)` as the single registration entry
+  point. `ParagraphDefinition` and `ListDefinition` stay in
+  `BuiltInNodeDefinitions` for now because they share the
+  text-flow / wrapping / splitting cluster; sliced out separately.
+
+### Feature scope (planned)
+
+- **Nested list ergonomics.**
   `ListBuilder.addItem(label, Consumer<ListBuilder>)` plus a new
   `ListItem` value type. `ListNode` record extended with a
   back-compat constructor. Marker resolution honours per-level
   defaults; authors override via `ListBuilder.markerFor(int depth, ListMarker)`.
-  ADR 0003 records the `ListNode`-extension-vs-new-`NestedListNode`
+  ADR 0005 will record the `ListNode`-extension-vs-new-`NestedListNode`
   decision.
-- **Phase B — Composed table cell content.** New
+- **Composed table cell content.** New
   `TableCellContent.NodeContent(DocumentNode child)` variant plus
   `DocumentTableCell.node(DocumentNode)` factory. Two-pass cell
   measurement when the cell holds composite content; pagination
-  preserves row-by-row behaviour. ADR 0004 records the composite-cell
-  semantic boundary.
+  preserves row-by-row behaviour. ADR 0006 will record the
+  composite-cell semantic boundary.
 
 ### Stretch goals (v1.6 if time allows; otherwise v1.7)
 
-- **Phase C — Controlled free-canvas (`CanvasLayerNode`).** New atomic
+- **Controlled free-canvas (`CanvasLayerNode`).** New atomic
   semantic node accepting children at explicit `(x, y)` coordinates.
   Separate from `LayerStackNode` / `ShapeContainerNode` so absolute
-  placement stays an opt-in primitive. ADR 0005 records why
+  placement stays an opt-in primitive. ADR 0007 will record why
   `CanvasLayer` is its own node and why absolute placement is rejected
   on `RowBuilder` / `SectionBuilder`.
 - **Phase D — Real PPTX semantic export.** Build out

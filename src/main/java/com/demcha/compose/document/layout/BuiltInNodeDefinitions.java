@@ -1,6 +1,8 @@
 package com.demcha.compose.document.layout;
 
 import com.demcha.compose.document.api.Internal;
+import com.demcha.compose.document.layout.definitions.PageBreakDefinition;
+import com.demcha.compose.document.layout.definitions.SpacerDefinition;
 import com.demcha.compose.document.node.DocumentBarcodeOptions;
 import com.demcha.compose.document.node.DocumentBarcodeType;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
@@ -811,30 +813,6 @@ public final class BuiltInNodeDefinitions {
         }
     }
 
-    private static final class SpacerDefinition implements NodeDefinition<SpacerNode> {
-        @Override
-        public Class<SpacerNode> nodeType() {
-            return SpacerNode.class;
-        }
-
-        @Override
-        public PreparedNode<SpacerNode> prepare(SpacerNode node, PrepareContext ctx, BoxConstraints constraints) {
-            return PreparedNode.leaf(node, new MeasureResult(
-                    node.width() + node.padding().horizontal(),
-                    node.height() + node.padding().vertical()));
-        }
-
-        @Override
-        public PaginationPolicy paginationPolicy(SpacerNode node) {
-            return PaginationPolicy.ATOMIC;
-        }
-
-        @Override
-        public List<LayoutFragment> emitFragments(PreparedNode<SpacerNode> prepared, FragmentContext ctx, FragmentPlacement placement) {
-            return List.of();
-        }
-    }
-
     private static final class LineDefinition implements NodeDefinition<LineNode> {
         @Override
         public Class<LineNode> nodeType() {
@@ -1000,30 +978,6 @@ public final class BuiltInNodeDefinitions {
                     height,
                     new BarcodeFragmentPayload(toBarcodeData(node.barcodeOptions()), node.linkOptions(), node.bookmarkOptions()));
             return wrapAtomicWithTransform(leaf, placement, node.transform());
-        }
-    }
-
-    private static final class PageBreakDefinition implements NodeDefinition<PageBreakNode> {
-        @Override
-        public Class<PageBreakNode> nodeType() {
-            return PageBreakNode.class;
-        }
-
-        @Override
-        public PreparedNode<PageBreakNode> prepare(PageBreakNode node, PrepareContext ctx, BoxConstraints constraints) {
-            return PreparedNode.leaf(node, new MeasureResult(0.0, 0.0));
-        }
-
-        @Override
-        public PaginationPolicy paginationPolicy(PageBreakNode node) {
-            return PaginationPolicy.ATOMIC;
-        }
-
-        @Override
-        public List<LayoutFragment> emitFragments(PreparedNode<PageBreakNode> prepared,
-                                                  FragmentContext ctx,
-                                                  FragmentPlacement placement) {
-            return List.of();
         }
     }
 

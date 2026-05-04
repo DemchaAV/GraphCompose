@@ -4,6 +4,7 @@ import com.demcha.compose.document.backend.fixed.pdf.PdfFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
 import com.demcha.compose.document.layout.payloads.SideBorders;
 import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.engine.components.content.shape.Stroke;
@@ -17,7 +18,7 @@ import java.io.IOException;
  * @author Artem Demchyshyn
  */
 public final class PdfShapeFragmentRenderHandler
-        implements PdfFragmentRenderHandler<BuiltInNodeDefinitions.ShapeFragmentPayload> {
+        implements PdfFragmentRenderHandler<ShapeFragmentPayload> {
     private static final float BEZIER_CIRCLE_CONSTANT = 0.552284749831f;
 
     /**
@@ -27,13 +28,13 @@ public final class PdfShapeFragmentRenderHandler
     }
 
     @Override
-    public Class<BuiltInNodeDefinitions.ShapeFragmentPayload> payloadType() {
-        return BuiltInNodeDefinitions.ShapeFragmentPayload.class;
+    public Class<ShapeFragmentPayload> payloadType() {
+        return ShapeFragmentPayload.class;
     }
 
     @Override
     public void render(PlacedFragment fragment,
-                       BuiltInNodeDefinitions.ShapeFragmentPayload payload,
+                       ShapeFragmentPayload payload,
                        PdfRenderEnvironment environment) throws IOException {
         if (fragment.width() <= 0 || fragment.height() <= 0) {
             return;

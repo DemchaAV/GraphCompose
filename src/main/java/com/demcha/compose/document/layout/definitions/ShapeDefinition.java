@@ -1,7 +1,6 @@
 package com.demcha.compose.document.layout.definitions;
 
 import com.demcha.compose.document.layout.BoxConstraints;
-import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.FragmentContext;
 import com.demcha.compose.document.layout.FragmentPlacement;
 import com.demcha.compose.document.layout.LayoutFragment;
@@ -10,6 +9,7 @@ import com.demcha.compose.document.layout.NodeDefinition;
 import com.demcha.compose.document.layout.PaginationPolicy;
 import com.demcha.compose.document.layout.PrepareContext;
 import com.demcha.compose.document.layout.PreparedNode;
+import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
 import com.demcha.compose.document.node.ShapeNode;
 
 import java.util.List;
@@ -60,7 +60,7 @@ public final class ShapeDefinition implements NodeDefinition<ShapeNode> {
                 node.padding().bottom(),
                 width,
                 height,
-                new BuiltInNodeDefinitions.ShapeFragmentPayload(
+                new ShapeFragmentPayload(
                         node.fillColor() == null ? null : node.fillColor().color(),
                         toStroke(node.stroke()),
                         node.cornerRadius(),

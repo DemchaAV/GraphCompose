@@ -11,6 +11,8 @@ import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
+import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.ShapeNode;
@@ -400,16 +402,16 @@ class PdfFixedLayoutBackendFeaturesTest {
     }
 
     private static final class FailingShapeHandler
-            implements PdfFragmentRenderHandler<BuiltInNodeDefinitions.ShapeFragmentPayload> {
+            implements PdfFragmentRenderHandler<ShapeFragmentPayload> {
 
         @Override
-        public Class<BuiltInNodeDefinitions.ShapeFragmentPayload> payloadType() {
-            return BuiltInNodeDefinitions.ShapeFragmentPayload.class;
+        public Class<ShapeFragmentPayload> payloadType() {
+            return ShapeFragmentPayload.class;
         }
 
         @Override
         public void render(PlacedFragment fragment,
-                           BuiltInNodeDefinitions.ShapeFragmentPayload payload,
+                           ShapeFragmentPayload payload,
                            PdfRenderEnvironment environment) throws Exception {
             environment.pageSurface(fragment.pageIndex());
             throw new IllegalStateException("intentional render failure");

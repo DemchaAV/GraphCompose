@@ -4,7 +4,7 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
-import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
+import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
 import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.table.DocumentTableCell;
@@ -223,7 +223,7 @@ class TableBuilderRowSpanTest {
     private static List<List<TableResolvedCell>> collectRowFragments(LayoutGraph graph) {
         java.util.List<List<TableResolvedCell>> rows = new java.util.ArrayList<>();
         for (PlacedFragment fragment : graph.fragments()) {
-            if (fragment.payload() instanceof BuiltInNodeDefinitions.TableRowFragmentPayload payload) {
+            if (fragment.payload() instanceof TableRowFragmentPayload payload) {
                 rows.add(payload.cells());
             }
         }

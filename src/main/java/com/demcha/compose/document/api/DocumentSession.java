@@ -20,6 +20,7 @@ import com.demcha.compose.document.dsl.DocumentDsl;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.exceptions.DocumentRenderingException;
 import com.demcha.compose.document.layout.*;
+import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ContainerNode;
 import com.demcha.compose.document.snapshot.LayoutSnapshot;
@@ -904,7 +905,7 @@ public final class DocumentSession implements AutoCloseable {
                     base.canvas().height(),
                     com.demcha.compose.engine.components.style.Margin.zero(),
                     com.demcha.compose.engine.components.style.Padding.zero(),
-                    new BuiltInNodeDefinitions.ShapeFragmentPayload(color, null, 0.0, null, null, null)));
+                    new ShapeFragmentPayload(color, null, 0.0, null, null, null)));
         }
         combined.addAll(base.fragments());
         return new LayoutGraph(base.canvas(), base.totalPages(), base.nodes(), combined);

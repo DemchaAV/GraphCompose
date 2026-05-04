@@ -46,6 +46,8 @@ import com.demcha.compose.document.layout.SplitRequest;
 import com.demcha.compose.document.layout.payloads.EllipseFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ImageFragmentPayload;
 import com.demcha.compose.document.layout.payloads.LineFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
+import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
 import com.demcha.compose.document.node.ContainerNode;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ListNode;
@@ -205,12 +207,12 @@ class DocumentSessionTest {
             assertThat(graph.fragments()).hasSize(2);
             assertThat(graph.fragments().getFirst().path()).contains("InfoCard[0]");
             assertThat(graph.fragments().getFirst().payload())
-                    .isInstanceOf(BuiltInNodeDefinitions.ShapeFragmentPayload.class);
+                    .isInstanceOf(ShapeFragmentPayload.class);
             assertThat(graph.fragments().get(1).payload())
                     .isInstanceOf(BuiltInNodeDefinitions.ParagraphFragmentPayload.class);
 
-            BuiltInNodeDefinitions.ShapeFragmentPayload payload =
-                    (BuiltInNodeDefinitions.ShapeFragmentPayload) graph.fragments().getFirst().payload();
+            ShapeFragmentPayload payload =
+                    (ShapeFragmentPayload) graph.fragments().getFirst().payload();
             assertThat(payload.fillColor()).isEqualTo(fill.color());
             assertThat(payload.stroke().strokeColor().color()).isEqualTo(DocumentColor.ROYAL_BLUE.color());
             assertThat(payload.stroke().width()).isEqualTo(0.8);
@@ -624,7 +626,7 @@ class DocumentSessionTest {
             LayoutGraph graph = session.layoutGraph();
 
             List<PlacedFragment> rowFragments = graph.fragments().stream()
-                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.TableRowFragmentPayload)
+                    .filter(fragment -> fragment.payload() instanceof TableRowFragmentPayload)
                     .toList();
 
             assertThat(rowFragments).hasSize(8);
@@ -632,8 +634,8 @@ class DocumentSessionTest {
 
             int previousPage = -1;
             for (PlacedFragment fragment : rowFragments) {
-                BuiltInNodeDefinitions.TableRowFragmentPayload payload =
-                        (BuiltInNodeDefinitions.TableRowFragmentPayload) fragment.payload();
+                TableRowFragmentPayload payload =
+                        (TableRowFragmentPayload) fragment.payload();
                 if (fragment.pageIndex() != previousPage) {
                     assertThat(payload.startsPageFragment()).isTrue();
                     previousPage = fragment.pageIndex();

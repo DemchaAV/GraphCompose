@@ -2,8 +2,8 @@ package com.demcha.compose.document.backend.fixed.pdf.handlers;
 
 import com.demcha.compose.document.backend.fixed.pdf.PdfFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
-import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
 import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.engine.components.content.shape.Side;
 import com.demcha.compose.engine.components.content.table.TableResolvedCell;
@@ -23,7 +23,7 @@ import java.util.Set;
  * Renders atomic table-row fragments emitted by the semantic table node.
  */
 public final class PdfTableRowFragmentRenderHandler
-        implements PdfFragmentRenderHandler<BuiltInNodeDefinitions.TableRowFragmentPayload> {
+        implements PdfFragmentRenderHandler<TableRowFragmentPayload> {
     private static final double EPS = 1e-6;
 
 
@@ -34,13 +34,13 @@ public final class PdfTableRowFragmentRenderHandler
     }
 
     @Override
-    public Class<BuiltInNodeDefinitions.TableRowFragmentPayload> payloadType() {
-        return BuiltInNodeDefinitions.TableRowFragmentPayload.class;
+    public Class<TableRowFragmentPayload> payloadType() {
+        return TableRowFragmentPayload.class;
     }
 
     @Override
     public void render(PlacedFragment fragment,
-                       BuiltInNodeDefinitions.TableRowFragmentPayload payload,
+                       TableRowFragmentPayload payload,
                        PdfRenderEnvironment environment) throws IOException {
         renderFills(fragment, payload, environment);
         renderBordersAndText(fragment, payload, environment);
@@ -55,7 +55,7 @@ public final class PdfTableRowFragmentRenderHandler
      * joins.</p>
      */
     public void renderFills(PlacedFragment fragment,
-                            BuiltInNodeDefinitions.TableRowFragmentPayload payload,
+                            TableRowFragmentPayload payload,
                             PdfRenderEnvironment environment) throws IOException {
         PDPageContentStream stream = environment.pageSurface(fragment.pageIndex());
 
@@ -70,7 +70,7 @@ public final class PdfTableRowFragmentRenderHandler
      * Paints table cell borders and text for one row fragment.
      */
     public void renderBordersAndText(PlacedFragment fragment,
-                                     BuiltInNodeDefinitions.TableRowFragmentPayload payload,
+                                     TableRowFragmentPayload payload,
                                      PdfRenderEnvironment environment) throws IOException {
         PDPageContentStream stream = environment.pageSurface(fragment.pageIndex());
         FontLibrary fonts = environment.fonts();

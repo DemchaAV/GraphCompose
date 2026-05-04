@@ -4,6 +4,7 @@ import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.ImageFragmentPayload;
 import com.demcha.compose.document.layout.payloads.LineFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
 import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.templates.TemplateTestSupport;
 import com.demcha.compose.document.templates.api.CvTemplate;
@@ -460,7 +461,7 @@ class CvTemplateRenderTest {
             List<PlacedFragment> fragments = document.layoutGraph().fragments();
             PlacedFragment banner = fragments.stream()
                     .filter(fragment -> fragment.path().contains("BlueBannerBanner_0"))
-                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ShapeFragmentPayload)
+                    .filter(fragment -> fragment.payload() instanceof ShapeFragmentPayload)
                     .findFirst()
                     .orElseThrow();
             PlacedFragment topRule = blueBannerRule(fragments, "BlueBannerRuleTop_0");
@@ -474,7 +475,7 @@ class CvTemplateRenderTest {
 
             assertThat(fragments.stream()
                     .filter(fragment -> fragment.path().contains("BlueBannerContact"))
-                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ShapeFragmentPayload)
+                    .filter(fragment -> fragment.payload() instanceof ShapeFragmentPayload)
                     .toList())
                     .isEmpty();
         }
@@ -598,7 +599,7 @@ class CvTemplateRenderTest {
             double sidebarWidth = sidebar.width();
             PlacedFragment heroPanel = fragments.stream()
                     .filter(fragment -> fragment.path().contains("SidebarPortraitHero"))
-                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ShapeFragmentPayload)
+                    .filter(fragment -> fragment.payload() instanceof ShapeFragmentPayload)
                     .findFirst()
                     .orElseThrow();
             PlacedFragment photo = fragments.stream()
@@ -739,9 +740,9 @@ class CvTemplateRenderTest {
                                                 Predicate<PlacedFragment> geometry) {
         assertThat(fragments.stream()
                 .filter(fragment -> fragment.path().contains(pathContains))
-                .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ShapeFragmentPayload)
+                .filter(fragment -> fragment.payload() instanceof ShapeFragmentPayload)
                 .filter(geometry)
-                .map(fragment -> ((BuiltInNodeDefinitions.ShapeFragmentPayload) fragment.payload()).cornerRadius())
+                .map(fragment -> ((ShapeFragmentPayload) fragment.payload()).cornerRadius())
                 .toList())
                 .anySatisfy(cornerRadius -> assertThat(cornerRadius).isEqualTo(expected));
     }

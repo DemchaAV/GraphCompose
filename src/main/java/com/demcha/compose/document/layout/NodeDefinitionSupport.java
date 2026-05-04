@@ -1,7 +1,9 @@
 package com.demcha.compose.document.layout;
 
 import com.demcha.compose.document.image.DocumentImageData;
+import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
 import com.demcha.compose.document.layout.payloads.SideBorders;
+import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
 import com.demcha.compose.document.layout.payloads.TransformBeginPayload;
 import com.demcha.compose.document.layout.payloads.TransformEndPayload;
 import com.demcha.compose.document.node.DocumentBarcodeOptions;
@@ -474,7 +476,7 @@ public final class NodeDefinitionSupport {
                     localY,
                     layout.finalWidth(),
                     rowHeight,
-                    new BuiltInNodeDefinitions.TableRowFragmentPayload(
+                    new TableRowFragmentPayload(
                             layout.rows().get(rowIndex),
                             rowIndex == 0,
                             node.linkOptions(),
@@ -503,9 +505,9 @@ public final class NodeDefinitionSupport {
             return List.of();
         }
 
-        BuiltInNodeDefinitions.ShapeFragmentPayload payload = perCornerRadius != null
-                ? new BuiltInNodeDefinitions.ShapeFragmentPayload(fillColor, stroke, perCornerRadius, null, null, sideBorders)
-                : new BuiltInNodeDefinitions.ShapeFragmentPayload(fillColor, stroke, cornerRadius, null, null, sideBorders);
+        ShapeFragmentPayload payload = perCornerRadius != null
+                ? new ShapeFragmentPayload(fillColor, stroke, perCornerRadius, null, null, sideBorders)
+                : new ShapeFragmentPayload(fillColor, stroke, cornerRadius, null, null, sideBorders);
         return List.of(new LayoutFragment(
                 placement.path(),
                 0,

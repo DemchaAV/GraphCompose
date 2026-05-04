@@ -3,9 +3,9 @@ package com.demcha.testing.visual;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.TableBuilder;
-import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
@@ -141,11 +141,11 @@ class TableRowSpanDemoTest {
                     .getFirst();
 
             List<PlacedFragment> rowFragments = graph.fragments().stream()
-                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.TableRowFragmentPayload)
+                    .filter(fragment -> fragment.payload() instanceof TableRowFragmentPayload)
                     .toList();
             PlacedFragment secondRow = rowFragments.get(1);
-            BuiltInNodeDefinitions.TableRowFragmentPayload secondRowPayload =
-                    (BuiltInNodeDefinitions.TableRowFragmentPayload) secondRow.payload();
+            TableRowFragmentPayload secondRowPayload =
+                    (TableRowFragmentPayload) secondRow.payload();
             TableResolvedCell leftCell = secondRowPayload.cells().getFirst();
 
             double rowTop = secondRow.y() + secondRow.height();
@@ -192,7 +192,7 @@ class TableRowSpanDemoTest {
                     .getFirst();
 
             List<PlacedFragment> rowFragments = graph.fragments().stream()
-                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.TableRowFragmentPayload)
+                    .filter(fragment -> fragment.payload() instanceof TableRowFragmentPayload)
                     .toList();
             PlacedFragment secondRow = rowFragments.get(1);
 

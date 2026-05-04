@@ -9,6 +9,7 @@ import com.demcha.compose.document.layout.payloads.BarcodeFragmentPayload;
 import com.demcha.compose.document.layout.payloads.EllipseFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ImageFragmentPayload;
 import com.demcha.compose.document.layout.payloads.LineFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
 import com.demcha.compose.document.layout.payloads.TransformBeginPayload;
 import com.demcha.compose.document.layout.payloads.TransformEndPayload;
 import com.demcha.compose.document.node.BarcodeNode;
@@ -208,7 +209,7 @@ class TransformableLeafBuildersTest {
                     .build());
             assertTransformBracketsLeaf(
                     session.layoutGraph().fragments(),
-                    BuiltInNodeDefinitions.ShapeFragmentPayload.class,
+                    ShapeFragmentPayload.class,
                     30.0);
         } catch (Exception e) {
             throw new RuntimeException(e);

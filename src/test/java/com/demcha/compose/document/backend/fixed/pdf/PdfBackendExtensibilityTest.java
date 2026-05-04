@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 
@@ -21,16 +21,16 @@ class PdfBackendExtensibilityTest {
     void customHandlerReplacesBuiltInForSamePayloadType() {
         AtomicInteger renderCallCount = new AtomicInteger();
 
-        PdfFragmentRenderHandler<BuiltInNodeDefinitions.ShapeFragmentPayload> custom =
+        PdfFragmentRenderHandler<ShapeFragmentPayload> custom =
                 new PdfFragmentRenderHandler<>() {
                     @Override
-                    public Class<BuiltInNodeDefinitions.ShapeFragmentPayload> payloadType() {
-                        return BuiltInNodeDefinitions.ShapeFragmentPayload.class;
+                    public Class<ShapeFragmentPayload> payloadType() {
+                        return ShapeFragmentPayload.class;
                     }
 
                     @Override
                     public void render(PlacedFragment fragment,
-                                       BuiltInNodeDefinitions.ShapeFragmentPayload payload,
+                                       ShapeFragmentPayload payload,
                                        PdfRenderEnvironment environment) {
                         renderCallCount.incrementAndGet();
                     }
@@ -63,15 +63,15 @@ class PdfBackendExtensibilityTest {
 
     @Test
     void addHandlerRejectsDuplicateCustomHandlersForSamePayloadType() {
-        PdfFragmentRenderHandler<BuiltInNodeDefinitions.ShapeFragmentPayload> first = noopShapeHandler();
-        PdfFragmentRenderHandler<BuiltInNodeDefinitions.ShapeFragmentPayload> second = noopShapeHandler();
+        PdfFragmentRenderHandler<ShapeFragmentPayload> first = noopShapeHandler();
+        PdfFragmentRenderHandler<ShapeFragmentPayload> second = noopShapeHandler();
 
         PdfFixedLayoutBackend.Builder builder = PdfFixedLayoutBackend.builder().addHandler(first);
 
         assertThatThrownBy(() -> builder.addHandler(second))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Duplicate custom PDF handler")
-                .hasMessageContaining(BuiltInNodeDefinitions.ShapeFragmentPayload.class.getName());
+                .hasMessageContaining(ShapeFragmentPayload.class.getName());
     }
 
     @Test
@@ -87,16 +87,16 @@ class PdfBackendExtensibilityTest {
         }
     }
 
-    private static PdfFragmentRenderHandler<BuiltInNodeDefinitions.ShapeFragmentPayload> noopShapeHandler() {
+    private static PdfFragmentRenderHandler<ShapeFragmentPayload> noopShapeHandler() {
         return new PdfFragmentRenderHandler<>() {
             @Override
-            public Class<BuiltInNodeDefinitions.ShapeFragmentPayload> payloadType() {
-                return BuiltInNodeDefinitions.ShapeFragmentPayload.class;
+            public Class<ShapeFragmentPayload> payloadType() {
+                return ShapeFragmentPayload.class;
             }
 
             @Override
             public void render(PlacedFragment fragment,
-                               BuiltInNodeDefinitions.ShapeFragmentPayload payload,
+                               ShapeFragmentPayload payload,
                                PdfRenderEnvironment environment) {
                 // intentional no-op
             }

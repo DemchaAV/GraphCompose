@@ -2,9 +2,9 @@ package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
@@ -78,7 +78,7 @@ class TableBuilderRepeatHeaderTest {
             // fragment on every page has "Item" in its left cell.
             Map<Integer, List<PlacedFragment>> rowsByPage = new HashMap<>();
             for (PlacedFragment fragment : graph.fragments()) {
-                if (fragment.payload() instanceof BuiltInNodeDefinitions.TableRowFragmentPayload) {
+                if (fragment.payload() instanceof TableRowFragmentPayload) {
                     rowsByPage
                             .computeIfAbsent(fragment.pageIndex(), k -> new ArrayList<>())
                             .add(fragment);
@@ -88,8 +88,8 @@ class TableBuilderRepeatHeaderTest {
 
             for (Map.Entry<Integer, List<PlacedFragment>> entry : rowsByPage.entrySet()) {
                 List<PlacedFragment> pageRows = entry.getValue();
-                BuiltInNodeDefinitions.TableRowFragmentPayload firstRow =
-                        (BuiltInNodeDefinitions.TableRowFragmentPayload) pageRows.get(0).payload();
+                TableRowFragmentPayload firstRow =
+                        (TableRowFragmentPayload) pageRows.get(0).payload();
                 TableResolvedCell firstCell = firstRow.cells().get(0);
                 assertThat(firstCell.lines())
                         .as("page %d should start the table with the repeating header", entry.getKey())
@@ -132,7 +132,7 @@ class TableBuilderRepeatHeaderTest {
 
             Map<Integer, List<PlacedFragment>> rowsByPage = new HashMap<>();
             for (PlacedFragment fragment : graph.fragments()) {
-                if (fragment.payload() instanceof BuiltInNodeDefinitions.TableRowFragmentPayload) {
+                if (fragment.payload() instanceof TableRowFragmentPayload) {
                     rowsByPage
                             .computeIfAbsent(fragment.pageIndex(), k -> new ArrayList<>())
                             .add(fragment);
@@ -145,10 +145,10 @@ class TableBuilderRepeatHeaderTest {
                         .as("page %d must have at least the two header rows plus one data row",
                                 entry.getKey())
                         .isGreaterThanOrEqualTo(3);
-                BuiltInNodeDefinitions.TableRowFragmentPayload row0 =
-                        (BuiltInNodeDefinitions.TableRowFragmentPayload) pageRows.get(0).payload();
-                BuiltInNodeDefinitions.TableRowFragmentPayload row1 =
-                        (BuiltInNodeDefinitions.TableRowFragmentPayload) pageRows.get(1).payload();
+                TableRowFragmentPayload row0 =
+                        (TableRowFragmentPayload) pageRows.get(0).payload();
+                TableRowFragmentPayload row1 =
+                        (TableRowFragmentPayload) pageRows.get(1).payload();
                 assertThat(row0.cells().get(0).lines())
                         .as("page %d row 0 = title", entry.getKey())
                         .containsExactly("Quarterly Sales");
@@ -194,11 +194,11 @@ class TableBuilderRepeatHeaderTest {
             // should NOT be "Item" (the header) — it's a data row.
             PlacedFragment firstOnPage1 = graph.fragments().stream()
                     .filter(f -> f.pageIndex() == 1
-                            && f.payload() instanceof BuiltInNodeDefinitions.TableRowFragmentPayload)
+                            && f.payload() instanceof TableRowFragmentPayload)
                     .findFirst()
                     .orElseThrow();
-            BuiltInNodeDefinitions.TableRowFragmentPayload payload =
-                    (BuiltInNodeDefinitions.TableRowFragmentPayload) firstOnPage1.payload();
+            TableRowFragmentPayload payload =
+                    (TableRowFragmentPayload) firstOnPage1.payload();
             assertThat(payload.cells().get(0).lines())
                     .as("without repeatHeader, page 2 should NOT start with the header")
                     .doesNotContain("Item");

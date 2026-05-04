@@ -263,66 +263,7 @@ public final class BuiltInNodeDefinitions {
         }
     }
 
-    /**
-     * PDF payload for a resolved shape fragment.
-     *
-     * <p>The {@code cornerRadius} carries the four per-corner radii so
-     * authors can round, e.g., only the right side of a card while
-     * leaving the left edge square. Single-radius callers continue to
-     * work via the legacy double-precision constructor.</p>
-     *
-     * @param fillColor optional shape fill color
-     * @param stroke optional shape stroke
-     * @param cornerRadius per-corner radii in points
-     * @param linkOptions optional fragment-level link metadata
-     * @param bookmarkOptions optional fragment-level bookmark metadata
-     */
-    @Internal
-    public record ShapeFragmentPayload(
-            Color fillColor,
-            Stroke stroke,
-            com.demcha.compose.document.style.DocumentCornerRadius cornerRadius,
-            DocumentLinkOptions linkOptions,
-            DocumentBookmarkOptions bookmarkOptions,
-            SideBorders sideBorders
-    ) implements PdfSemanticFragmentPayload {
-        /**
-         * Normalizes the render-only corner radius.
-         */
-        public ShapeFragmentPayload {
-            if (cornerRadius == null) {
-                cornerRadius = com.demcha.compose.document.style.DocumentCornerRadius.ZERO;
-            }
-        }
-
-        /**
-         * Backwards-compatible constructor that accepts a single uniform
-         * radius (pre-Phase E.1.1 wiring) and applies it to every corner.
-         */
-        public ShapeFragmentPayload(Color fillColor,
-                                    Stroke stroke,
-                                    double cornerRadius,
-                                    DocumentLinkOptions linkOptions,
-                                    DocumentBookmarkOptions bookmarkOptions,
-                                    SideBorders sideBorders) {
-            this(fillColor, stroke,
-                    cornerRadius < 0 || Double.isNaN(cornerRadius) || Double.isInfinite(cornerRadius)
-                            ? com.demcha.compose.document.style.DocumentCornerRadius.ZERO
-                            : com.demcha.compose.document.style.DocumentCornerRadius.of(cornerRadius),
-                    linkOptions, bookmarkOptions, sideBorders);
-        }
-
-        /**
-         * Backwards-compatible constructor without per-side borders.
-         */
-        public ShapeFragmentPayload(Color fillColor,
-                                    Stroke stroke,
-                                    double cornerRadius,
-                                    DocumentLinkOptions linkOptions,
-                                    DocumentBookmarkOptions bookmarkOptions) {
-            this(fillColor, stroke, cornerRadius, linkOptions, bookmarkOptions, null);
-        }
-    }
+    // ShapeFragmentPayload moved to com.demcha.compose.document.layout.payloads in Phase E.2.
 
     // SideBorders moved to com.demcha.compose.document.layout.payloads in Phase E.2.
 
@@ -338,28 +279,7 @@ public final class BuiltInNodeDefinitions {
     // ImageFragmentPayload and BarcodeFragmentPayload moved to
     // com.demcha.compose.document.layout.payloads in Phase E.2.
 
-    /**
-     * PDF payload for one resolved table row fragment.
-     *
-     * @param cells resolved cells in column order
-     * @param startsPageFragment whether this row starts a table page fragment
-     * @param linkOptions optional fragment-level link metadata
-     * @param bookmarkOptions optional fragment-level bookmark metadata
-     */
-    @Internal
-    public record TableRowFragmentPayload(
-            List<TableResolvedCell> cells,
-            boolean startsPageFragment,
-            DocumentLinkOptions linkOptions,
-            DocumentBookmarkOptions bookmarkOptions
-    ) implements PdfSemanticFragmentPayload {
-        /**
-         * Creates an immutable table row fragment payload.
-         */
-        public TableRowFragmentPayload {
-            cells = List.copyOf(cells);
-        }
-    }
+    // TableRowFragmentPayload moved to com.demcha.compose.document.layout.payloads in Phase E.2.
 
     // DEFINITIONS
 

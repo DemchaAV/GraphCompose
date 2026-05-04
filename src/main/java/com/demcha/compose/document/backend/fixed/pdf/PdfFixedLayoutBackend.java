@@ -25,6 +25,8 @@ import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.BarcodeFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ImageFragmentPayload;
 import com.demcha.compose.document.layout.payloads.PdfSemanticFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
+import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -236,10 +238,10 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                 Map<String, Map<Integer, PdfGuideLinesRenderer.Bounds>> ownerBounds = guideLines
                         ? PdfGuideLinesRenderer.computeOwnerBounds(graph.fragments())
                         : Map.of();
-                PdfFragmentRenderHandler<?> tableRowHandler = handlers.get(BuiltInNodeDefinitions.TableRowFragmentPayload.class);
+                PdfFragmentRenderHandler<?> tableRowHandler = handlers.get(TableRowFragmentPayload.class);
                 for (int index = 0; index < graph.fragments().size(); index++) {
                     PlacedFragment fragment = graph.fragments().get(index);
-                    if (fragment.payload() instanceof BuiltInNodeDefinitions.TableRowFragmentPayload
+                    if (fragment.payload() instanceof TableRowFragmentPayload
                             && tableRowHandler instanceof PdfTableRowFragmentRenderHandler tableHandler) {
                         index = renderTableRowGroup(graph.fragments(), index, tableHandler, environment, guideLines, ownerBounds);
                         continue;
@@ -272,7 +274,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         int endExclusive = startIndex;
         while (endExclusive < fragments.size()
                 && Objects.equals(fragments.get(endExclusive).path(), tablePath)
-                && fragments.get(endExclusive).payload() instanceof BuiltInNodeDefinitions.TableRowFragmentPayload) {
+                && fragments.get(endExclusive).payload() instanceof TableRowFragmentPayload) {
             endExclusive++;
         }
 
@@ -280,13 +282,13 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
             PlacedFragment fragment = fragments.get(index);
             handler.renderFills(
                     fragment,
-                    (BuiltInNodeDefinitions.TableRowFragmentPayload) fragment.payload(),
+                    (TableRowFragmentPayload) fragment.payload(),
                     environment);
         }
         for (int index = startIndex; index < endExclusive; index++) {
             PlacedFragment fragment = fragments.get(index);
-            BuiltInNodeDefinitions.TableRowFragmentPayload payload =
-                    (BuiltInNodeDefinitions.TableRowFragmentPayload) fragment.payload();
+            TableRowFragmentPayload payload =
+                    (TableRowFragmentPayload) fragment.payload();
             handler.renderBordersAndText(fragment, payload, environment);
             finishRenderedFragment(fragment, payload, environment, guideLines, ownerBounds);
         }
@@ -423,8 +425,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         if (payload instanceof BuiltInNodeDefinitions.ParagraphFragmentPayload) {
             return (PdfFragmentRenderHandler<Object>) handlers.get(BuiltInNodeDefinitions.ParagraphFragmentPayload.class);
         }
-        if (payload instanceof BuiltInNodeDefinitions.ShapeFragmentPayload) {
-            return (PdfFragmentRenderHandler<Object>) handlers.get(BuiltInNodeDefinitions.ShapeFragmentPayload.class);
+        if (payload instanceof ShapeFragmentPayload) {
+            return (PdfFragmentRenderHandler<Object>) handlers.get(ShapeFragmentPayload.class);
         }
         if (payload instanceof ImageFragmentPayload) {
             return (PdfFragmentRenderHandler<Object>) handlers.get(ImageFragmentPayload.class);
@@ -432,8 +434,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         if (payload instanceof BarcodeFragmentPayload) {
             return (PdfFragmentRenderHandler<Object>) handlers.get(BarcodeFragmentPayload.class);
         }
-        if (payload instanceof BuiltInNodeDefinitions.TableRowFragmentPayload) {
-            return (PdfFragmentRenderHandler<Object>) handlers.get(BuiltInNodeDefinitions.TableRowFragmentPayload.class);
+        if (payload instanceof TableRowFragmentPayload) {
+            return (PdfFragmentRenderHandler<Object>) handlers.get(TableRowFragmentPayload.class);
         }
 
         throw new UnsupportedNodeCapabilityException("PDF backend does not support fragment payload: " + payload.getClass().getName());

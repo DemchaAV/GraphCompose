@@ -1,9 +1,9 @@
 package com.demcha.compose.document.api;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
 import com.demcha.compose.document.node.SpacerNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -138,7 +138,7 @@ class PageBackgroundTest {
     }
 
     private boolean isPageBackgroundFragment(PlacedFragment fragment) {
-        return fragment.payload() instanceof BuiltInNodeDefinitions.ShapeFragmentPayload payload
+        return fragment.payload() instanceof ShapeFragmentPayload payload
                 && payload.fillColor() != null
                 && payload.stroke() == null
                 && payload.sideBorders() == null

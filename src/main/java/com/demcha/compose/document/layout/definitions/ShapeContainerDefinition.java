@@ -6,6 +6,7 @@ import com.demcha.compose.document.layout.CompositeLayoutSpec;
 import com.demcha.compose.document.layout.payloads.EllipseFragmentPayload;
 import com.demcha.compose.document.layout.payloads.PreparedStackLayout;
 import com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload;
+import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ShapeClipEndPayload;
 import com.demcha.compose.document.layout.payloads.TransformBeginPayload;
 import com.demcha.compose.document.layout.payloads.TransformEndPayload;
@@ -121,7 +122,7 @@ public final class ShapeContainerDefinition implements NodeDefinition<ShapeConta
                     padBottom,
                     width,
                     height,
-                    new BuiltInNodeDefinitions.ShapeFragmentPayload(awtFill, stroke, 0.0, null, null, null));
+                    new ShapeFragmentPayload(awtFill, stroke, 0.0, null, null, null));
             case ShapeOutline.RoundedRectangle r -> new LayoutFragment(
                     placement.path(),
                     0,
@@ -129,7 +130,7 @@ public final class ShapeContainerDefinition implements NodeDefinition<ShapeConta
                     padBottom,
                     width,
                     height,
-                    new BuiltInNodeDefinitions.ShapeFragmentPayload(awtFill, stroke, r.cornerRadius(), null, null, null));
+                    new ShapeFragmentPayload(awtFill, stroke, r.cornerRadius(), null, null, null));
         };
 
         List<LayoutFragment> opening = new ArrayList<>(4);

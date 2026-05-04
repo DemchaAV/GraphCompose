@@ -2,7 +2,7 @@ package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.layout.BuiltInNodeDefinitions.TableRowFragmentPayload;
+import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.node.TableNode;

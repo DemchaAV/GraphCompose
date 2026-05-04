@@ -2,8 +2,8 @@ package com.demcha.compose.document.backend.fixed.pdf.handlers;
 
 import com.demcha.compose.document.backend.fixed.pdf.PdfFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
-import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.ShapeClipEndPayload;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.io.IOException;
@@ -18,7 +18,7 @@ import java.io.IOException;
  * @author Artem Demchyshyn
  */
 public final class PdfShapeClipEndRenderHandler
-        implements PdfFragmentRenderHandler<BuiltInNodeDefinitions.ShapeClipEndPayload> {
+        implements PdfFragmentRenderHandler<ShapeClipEndPayload> {
 
     /**
      * Creates the clip-end handler.
@@ -27,13 +27,13 @@ public final class PdfShapeClipEndRenderHandler
     }
 
     @Override
-    public Class<BuiltInNodeDefinitions.ShapeClipEndPayload> payloadType() {
-        return BuiltInNodeDefinitions.ShapeClipEndPayload.class;
+    public Class<ShapeClipEndPayload> payloadType() {
+        return ShapeClipEndPayload.class;
     }
 
     @Override
     public void render(PlacedFragment fragment,
-                       BuiltInNodeDefinitions.ShapeClipEndPayload payload,
+                       ShapeClipEndPayload payload,
                        PdfRenderEnvironment environment) throws IOException {
         PDPageContentStream stream = environment.pageSurface(fragment.pageIndex());
         stream.restoreGraphicsState();

@@ -7,6 +7,10 @@ import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PaginationPolicy;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload;
+import com.demcha.compose.document.layout.payloads.ShapeClipEndPayload;
+import com.demcha.compose.document.layout.payloads.TransformBeginPayload;
+import com.demcha.compose.document.layout.payloads.TransformEndPayload;
 import com.demcha.compose.document.node.ShapeContainerNode;
 import com.demcha.compose.document.node.SpacerNode;
 import com.demcha.compose.document.style.ClipPolicy;
@@ -32,8 +36,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  *       {@code ATOMIC} would lose the marker that lets render handlers
  *       and snapshots tell shape-clipped atomicity apart from bbox-only
  *       atomicity.</li>
- *   <li>Every {@link BuiltInNodeDefinitions.ShapeClipBeginPayload} has a
- *       matching {@link BuiltInNodeDefinitions.ShapeClipEndPayload} with
+ *   <li>Every {@link ShapeClipBeginPayload} has a
+ *       matching {@link ShapeClipEndPayload} with
  *       the same {@code ownerPath} on the same page, in the right order
  *       (begin before end). Without this invariant the PDF graphics-state
  *       stack would leak save/restore calls across containers.</li>
@@ -117,7 +121,7 @@ class ShapeContainerInvariantsTest {
             // Overflow container must contribute zero markers; the other
             // two contribute one pair each → 2 pairs total.
             long beginCount = graph.fragments().stream()
-                    .filter(f -> f.payload() instanceof BuiltInNodeDefinitions.ShapeClipBeginPayload)
+                    .filter(f -> f.payload() instanceof ShapeClipBeginPayload)
                     .count();
             assertThat(beginCount).isEqualTo(2L);
         }
@@ -159,7 +163,7 @@ class ShapeContainerInvariantsTest {
             assertTransformPairsBalance(graph.fragments());
             // Transformed containers: RotatedClipped + RotatedOverflow → 2 pairs.
             long transformBeginCount = graph.fragments().stream()
-                    .filter(f -> f.payload() instanceof BuiltInNodeDefinitions.TransformBeginPayload)
+                    .filter(f -> f.payload() instanceof TransformBeginPayload)
                     .count();
             assertThat(transformBeginCount).isEqualTo(2L);
         }
@@ -170,13 +174,13 @@ class ShapeContainerInvariantsTest {
         for (int i = 0; i < fragments.size(); i++) {
             PlacedFragment fragment = fragments.get(i);
             Object payload = fragment.payload();
-            if (payload instanceof BuiltInNodeDefinitions.TransformBeginPayload begin) {
+            if (payload instanceof TransformBeginPayload begin) {
                 assertThat(begin.ownerPath()).isNotEmpty();
                 assertThat(openOwners)
                         .as("transform-begin must not nest with itself: %s already open", begin.ownerPath())
                         .doesNotContainKey(begin.ownerPath());
                 openOwners.put(begin.ownerPath(), fragment.pageIndex());
-            } else if (payload instanceof BuiltInNodeDefinitions.TransformEndPayload end) {
+            } else if (payload instanceof TransformEndPayload end) {
                 assertThat(openOwners)
                         .as("transform-end without matching begin: %s", end.ownerPath())
                         .containsKey(end.ownerPath());
@@ -200,14 +204,14 @@ class ShapeContainerInvariantsTest {
         for (int i = 0; i < fragments.size(); i++) {
             PlacedFragment fragment = fragments.get(i);
             Object payload = fragment.payload();
-            if (payload instanceof BuiltInNodeDefinitions.ShapeClipBeginPayload begin) {
+            if (payload instanceof ShapeClipBeginPayload begin) {
                 assertThat(begin.ownerPath()).isNotEmpty();
                 assertThat(openOwners)
                         .as("clip-begin must not nest with itself: %s already open", begin.ownerPath())
                         .doesNotContainKey(begin.ownerPath());
                 openOwners.put(begin.ownerPath(), fragment.pageIndex());
                 seen.add(begin.ownerPath());
-            } else if (payload instanceof BuiltInNodeDefinitions.ShapeClipEndPayload end) {
+            } else if (payload instanceof ShapeClipEndPayload end) {
                 assertThat(openOwners)
                         .as("clip-end without matching begin: %s", end.ownerPath())
                         .containsKey(end.ownerPath());

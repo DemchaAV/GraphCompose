@@ -2,8 +2,8 @@ package com.demcha.compose.document.backend.fixed.pdf.handlers;
 
 import com.demcha.compose.document.backend.fixed.pdf.PdfFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
-import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.TransformBeginPayload;
 import com.demcha.compose.document.style.DocumentTransform;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.util.Matrix;
@@ -40,7 +40,7 @@ import java.io.IOException;
  * @author Artem Demchyshyn
  */
 public final class PdfTransformBeginRenderHandler
-        implements PdfFragmentRenderHandler<BuiltInNodeDefinitions.TransformBeginPayload> {
+        implements PdfFragmentRenderHandler<TransformBeginPayload> {
 
     /**
      * Creates the transform-begin handler.
@@ -49,13 +49,13 @@ public final class PdfTransformBeginRenderHandler
     }
 
     @Override
-    public Class<BuiltInNodeDefinitions.TransformBeginPayload> payloadType() {
-        return BuiltInNodeDefinitions.TransformBeginPayload.class;
+    public Class<TransformBeginPayload> payloadType() {
+        return TransformBeginPayload.class;
     }
 
     @Override
     public void render(PlacedFragment fragment,
-                       BuiltInNodeDefinitions.TransformBeginPayload payload,
+                       TransformBeginPayload payload,
                        PdfRenderEnvironment environment) throws IOException {
         DocumentTransform transform = payload.transform();
         // Defensive: layout layer already skips emitting begin/end for

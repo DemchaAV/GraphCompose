@@ -3,6 +3,10 @@ package com.demcha.compose.document.layout.definitions;
 import com.demcha.compose.document.layout.BoxConstraints;
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.CompositeLayoutSpec;
+import com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload;
+import com.demcha.compose.document.layout.payloads.ShapeClipEndPayload;
+import com.demcha.compose.document.layout.payloads.TransformBeginPayload;
+import com.demcha.compose.document.layout.payloads.TransformEndPayload;
 import com.demcha.compose.document.layout.FragmentContext;
 import com.demcha.compose.document.layout.FragmentPlacement;
 import com.demcha.compose.document.layout.LayoutFragment;
@@ -136,7 +140,7 @@ public final class ShapeContainerDefinition implements NodeDefinition<ShapeConta
                     padBottom,
                     width,
                     height,
-                    new BuiltInNodeDefinitions.TransformBeginPayload(node.transform(), placement.path())));
+                    new TransformBeginPayload(node.transform(), placement.path())));
         }
         opening.add(outlineFragment);
         if (node.clipPolicy() != ClipPolicy.OVERFLOW_VISIBLE) {
@@ -147,7 +151,7 @@ public final class ShapeContainerDefinition implements NodeDefinition<ShapeConta
                     padBottom,
                     width,
                     height,
-                    new BuiltInNodeDefinitions.ShapeClipBeginPayload(outline, node.clipPolicy(), placement.path())));
+                    new ShapeClipBeginPayload(outline, node.clipPolicy(), placement.path())));
         }
         return List.copyOf(opening);
     }
@@ -171,7 +175,7 @@ public final class ShapeContainerDefinition implements NodeDefinition<ShapeConta
                     0.0,
                     0.0,
                     0.0,
-                    new BuiltInNodeDefinitions.ShapeClipEndPayload(placement.path())));
+                    new ShapeClipEndPayload(placement.path())));
         }
         if (hasTransform) {
             closing.add(new LayoutFragment(
@@ -181,7 +185,7 @@ public final class ShapeContainerDefinition implements NodeDefinition<ShapeConta
                     0.0,
                     0.0,
                     0.0,
-                    new BuiltInNodeDefinitions.TransformEndPayload(placement.path())));
+                    new TransformEndPayload(placement.path())));
         }
         return List.copyOf(closing);
     }

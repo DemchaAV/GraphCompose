@@ -2,8 +2,8 @@ package com.demcha.compose.document.backend.fixed.pdf.handlers;
 
 import com.demcha.compose.document.backend.fixed.pdf.PdfFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
-import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.TransformEndPayload;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.io.IOException;
@@ -18,7 +18,7 @@ import java.io.IOException;
  * @author Artem Demchyshyn
  */
 public final class PdfTransformEndRenderHandler
-        implements PdfFragmentRenderHandler<BuiltInNodeDefinitions.TransformEndPayload> {
+        implements PdfFragmentRenderHandler<TransformEndPayload> {
 
     /**
      * Creates the transform-end handler.
@@ -27,13 +27,13 @@ public final class PdfTransformEndRenderHandler
     }
 
     @Override
-    public Class<BuiltInNodeDefinitions.TransformEndPayload> payloadType() {
-        return BuiltInNodeDefinitions.TransformEndPayload.class;
+    public Class<TransformEndPayload> payloadType() {
+        return TransformEndPayload.class;
     }
 
     @Override
     public void render(PlacedFragment fragment,
-                       BuiltInNodeDefinitions.TransformEndPayload payload,
+                       TransformEndPayload payload,
                        PdfRenderEnvironment environment) throws IOException {
         PDPageContentStream stream = environment.pageSurface(fragment.pageIndex());
         stream.restoreGraphicsState();

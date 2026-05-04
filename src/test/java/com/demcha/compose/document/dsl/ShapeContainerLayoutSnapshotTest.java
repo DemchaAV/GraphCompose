@@ -5,6 +5,8 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload;
+import com.demcha.compose.document.layout.payloads.ShapeClipEndPayload;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.ClipPolicy;
@@ -60,16 +62,16 @@ class ShapeContainerLayoutSnapshotTest {
 
             LayoutGraph graph = document.layoutGraph();
             List<PlacedFragment> fragments = graph.fragments();
-            int beginIndex = indexOfPayload(fragments, BuiltInNodeDefinitions.ShapeClipBeginPayload.class);
-            int endIndex = indexOfPayload(fragments, BuiltInNodeDefinitions.ShapeClipEndPayload.class);
+            int beginIndex = indexOfPayload(fragments, ShapeClipBeginPayload.class);
+            int endIndex = indexOfPayload(fragments, ShapeClipEndPayload.class);
 
             assertThat(beginIndex).as("clip-begin marker").isGreaterThanOrEqualTo(0);
             assertThat(endIndex).as("clip-end marker").isGreaterThan(beginIndex);
 
-            BuiltInNodeDefinitions.ShapeClipBeginPayload begin =
-                    (BuiltInNodeDefinitions.ShapeClipBeginPayload) fragments.get(beginIndex).payload();
-            BuiltInNodeDefinitions.ShapeClipEndPayload end =
-                    (BuiltInNodeDefinitions.ShapeClipEndPayload) fragments.get(endIndex).payload();
+            ShapeClipBeginPayload begin =
+                    (ShapeClipBeginPayload) fragments.get(beginIndex).payload();
+            ShapeClipEndPayload end =
+                    (ShapeClipEndPayload) fragments.get(endIndex).payload();
 
             assertThat(begin.policy()).isEqualTo(ClipPolicy.CLIP_PATH);
             assertThat(end.ownerPath()).isEqualTo(begin.ownerPath());

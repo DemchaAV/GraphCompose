@@ -2,8 +2,8 @@ package com.demcha.compose.document.backend.fixed.pdf.handlers;
 
 import com.demcha.compose.document.backend.fixed.pdf.PdfFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
-import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload;
 import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.ShapeOutline;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -31,7 +31,7 @@ import java.io.IOException;
  * @author Artem Demchyshyn
  */
 public final class PdfShapeClipBeginRenderHandler
-        implements PdfFragmentRenderHandler<BuiltInNodeDefinitions.ShapeClipBeginPayload> {
+        implements PdfFragmentRenderHandler<ShapeClipBeginPayload> {
     private static final float BEZIER_CIRCLE_CONSTANT = 0.552284749831f;
 
     /**
@@ -41,13 +41,13 @@ public final class PdfShapeClipBeginRenderHandler
     }
 
     @Override
-    public Class<BuiltInNodeDefinitions.ShapeClipBeginPayload> payloadType() {
-        return BuiltInNodeDefinitions.ShapeClipBeginPayload.class;
+    public Class<ShapeClipBeginPayload> payloadType() {
+        return ShapeClipBeginPayload.class;
     }
 
     @Override
     public void render(PlacedFragment fragment,
-                       BuiltInNodeDefinitions.ShapeClipBeginPayload payload,
+                       ShapeClipBeginPayload payload,
                        PdfRenderEnvironment environment) throws IOException {
         if (fragment.width() <= 0 || fragment.height() <= 0) {
             return;

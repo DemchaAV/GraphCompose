@@ -7,6 +7,10 @@ import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.PlacedNode;
+import com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload;
+import com.demcha.compose.document.layout.payloads.ShapeClipEndPayload;
+import com.demcha.compose.document.layout.payloads.TransformBeginPayload;
+import com.demcha.compose.document.layout.payloads.TransformEndPayload;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.ShapeContainerNode;
 import com.demcha.compose.document.node.ShapeNode;
@@ -289,8 +293,8 @@ class ShapeContainerBuilderTest {
             LayoutGraph graph = session.layoutGraph();
             List<PlacedFragment> fragments = graph.fragments();
 
-            int begin = indexOfPayload(fragments, BuiltInNodeDefinitions.ShapeClipBeginPayload.class);
-            int end = indexOfPayload(fragments, BuiltInNodeDefinitions.ShapeClipEndPayload.class);
+            int begin = indexOfPayload(fragments, ShapeClipBeginPayload.class);
+            int end = indexOfPayload(fragments, ShapeClipEndPayload.class);
             int outline = indexOfPayload(fragments, BuiltInNodeDefinitions.EllipseFragmentPayload.class);
 
             assertThat(outline).as("outline fragment present").isGreaterThanOrEqualTo(0);
@@ -299,10 +303,10 @@ class ShapeContainerBuilderTest {
             assertThat(outline).isLessThan(begin);
             assertThat(begin).isLessThan(end);
 
-            BuiltInNodeDefinitions.ShapeClipBeginPayload beginPayload =
-                    (BuiltInNodeDefinitions.ShapeClipBeginPayload) fragments.get(begin).payload();
-            BuiltInNodeDefinitions.ShapeClipEndPayload endPayload =
-                    (BuiltInNodeDefinitions.ShapeClipEndPayload) fragments.get(end).payload();
+            ShapeClipBeginPayload beginPayload =
+                    (ShapeClipBeginPayload) fragments.get(begin).payload();
+            ShapeClipEndPayload endPayload =
+                    (ShapeClipEndPayload) fragments.get(end).payload();
 
             assertThat(beginPayload.policy()).isEqualTo(ClipPolicy.CLIP_PATH);
             assertThat(beginPayload.outline()).isInstanceOf(ShapeOutline.Ellipse.class);
@@ -340,10 +344,10 @@ class ShapeContainerBuilderTest {
             LayoutGraph graph = session.layoutGraph();
             List<PlacedFragment> fragments = graph.fragments();
 
-            assertThat(indexOfPayload(fragments, BuiltInNodeDefinitions.ShapeClipBeginPayload.class))
+            assertThat(indexOfPayload(fragments, ShapeClipBeginPayload.class))
                     .as("OVERFLOW_VISIBLE must skip the clip-begin marker")
                     .isEqualTo(-1);
-            assertThat(indexOfPayload(fragments, BuiltInNodeDefinitions.ShapeClipEndPayload.class))
+            assertThat(indexOfPayload(fragments, ShapeClipEndPayload.class))
                     .as("OVERFLOW_VISIBLE must skip the clip-end marker")
                     .isEqualTo(-1);
             assertThat(indexOfPayload(fragments, BuiltInNodeDefinitions.EllipseFragmentPayload.class))
@@ -411,21 +415,21 @@ class ShapeContainerBuilderTest {
             List<PlacedFragment> fragments = graph.fragments();
 
             long begins = fragments.stream()
-                    .filter(f -> f.payload() instanceof BuiltInNodeDefinitions.ShapeClipBeginPayload)
+                    .filter(f -> f.payload() instanceof ShapeClipBeginPayload)
                     .count();
             long ends = fragments.stream()
-                    .filter(f -> f.payload() instanceof BuiltInNodeDefinitions.ShapeClipEndPayload)
+                    .filter(f -> f.payload() instanceof ShapeClipEndPayload)
                     .count();
             assertThat(begins).isEqualTo(2);
             assertThat(ends).isEqualTo(2);
 
             for (int i = 0; i < fragments.size(); i++) {
-                if (!(fragments.get(i).payload() instanceof BuiltInNodeDefinitions.ShapeClipBeginPayload begin)) {
+                if (!(fragments.get(i).payload() instanceof ShapeClipBeginPayload begin)) {
                     continue;
                 }
                 int pairedEnd = -1;
                 for (int j = i + 1; j < fragments.size(); j++) {
-                    if (fragments.get(j).payload() instanceof BuiltInNodeDefinitions.ShapeClipEndPayload end
+                    if (fragments.get(j).payload() instanceof ShapeClipEndPayload end
                             && end.ownerPath().equals(begin.ownerPath())
                             && fragments.get(j).pageIndex() == fragments.get(i).pageIndex()) {
                         pairedEnd = j;
@@ -520,11 +524,11 @@ class ShapeContainerBuilderTest {
             LayoutGraph graph = session.layoutGraph();
             List<PlacedFragment> fragments = graph.fragments();
 
-            int transformBegin = indexOfPayload(fragments, BuiltInNodeDefinitions.TransformBeginPayload.class);
+            int transformBegin = indexOfPayload(fragments, TransformBeginPayload.class);
             int outline = indexOfPayload(fragments, BuiltInNodeDefinitions.EllipseFragmentPayload.class);
-            int clipBegin = indexOfPayload(fragments, BuiltInNodeDefinitions.ShapeClipBeginPayload.class);
-            int clipEnd = indexOfPayload(fragments, BuiltInNodeDefinitions.ShapeClipEndPayload.class);
-            int transformEnd = indexOfPayload(fragments, BuiltInNodeDefinitions.TransformEndPayload.class);
+            int clipBegin = indexOfPayload(fragments, ShapeClipBeginPayload.class);
+            int clipEnd = indexOfPayload(fragments, ShapeClipEndPayload.class);
+            int transformEnd = indexOfPayload(fragments, TransformEndPayload.class);
 
             assertThat(transformBegin).isGreaterThanOrEqualTo(0);
             assertThat(outline).isGreaterThan(transformBegin);
@@ -532,11 +536,11 @@ class ShapeContainerBuilderTest {
             assertThat(clipEnd).isGreaterThan(clipBegin);
             assertThat(transformEnd).isGreaterThan(clipEnd);
 
-            BuiltInNodeDefinitions.TransformBeginPayload beginPayload =
-                    (BuiltInNodeDefinitions.TransformBeginPayload) fragments.get(transformBegin).payload();
+            TransformBeginPayload beginPayload =
+                    (TransformBeginPayload) fragments.get(transformBegin).payload();
             assertThat(beginPayload.transform().rotationDegrees()).isEqualTo(15.0, within(EPS));
             assertThat(beginPayload.ownerPath())
-                    .isEqualTo(((BuiltInNodeDefinitions.TransformEndPayload) fragments.get(transformEnd).payload()).ownerPath());
+                    .isEqualTo(((TransformEndPayload) fragments.get(transformEnd).payload()).ownerPath());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -561,9 +565,9 @@ class ShapeContainerBuilderTest {
                     .build());
 
             List<PlacedFragment> fragments = session.layoutGraph().fragments();
-            assertThat(indexOfPayload(fragments, BuiltInNodeDefinitions.TransformBeginPayload.class))
+            assertThat(indexOfPayload(fragments, TransformBeginPayload.class))
                     .isEqualTo(-1);
-            assertThat(indexOfPayload(fragments, BuiltInNodeDefinitions.TransformEndPayload.class))
+            assertThat(indexOfPayload(fragments, TransformEndPayload.class))
                     .isEqualTo(-1);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -590,13 +594,13 @@ class ShapeContainerBuilderTest {
                     .build());
 
             List<PlacedFragment> fragments = session.layoutGraph().fragments();
-            assertThat(indexOfPayload(fragments, BuiltInNodeDefinitions.ShapeClipBeginPayload.class))
+            assertThat(indexOfPayload(fragments, ShapeClipBeginPayload.class))
                     .isEqualTo(-1);
-            assertThat(indexOfPayload(fragments, BuiltInNodeDefinitions.ShapeClipEndPayload.class))
+            assertThat(indexOfPayload(fragments, ShapeClipEndPayload.class))
                     .isEqualTo(-1);
-            assertThat(indexOfPayload(fragments, BuiltInNodeDefinitions.TransformBeginPayload.class))
+            assertThat(indexOfPayload(fragments, TransformBeginPayload.class))
                     .isGreaterThanOrEqualTo(0);
-            assertThat(indexOfPayload(fragments, BuiltInNodeDefinitions.TransformEndPayload.class))
+            assertThat(indexOfPayload(fragments, TransformEndPayload.class))
                     .isGreaterThanOrEqualTo(0);
         } catch (Exception e) {
             throw new RuntimeException(e);

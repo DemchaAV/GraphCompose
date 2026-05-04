@@ -5,6 +5,8 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.TransformBeginPayload;
+import com.demcha.compose.document.layout.payloads.TransformEndPayload;
 import com.demcha.compose.document.node.BarcodeNode;
 import com.demcha.compose.document.node.DocumentBarcodeOptions;
 import com.demcha.compose.document.node.DocumentBarcodeType;
@@ -33,8 +35,8 @@ import static org.assertj.core.api.Assertions.within;
  * (default identity transform; {@code rotate(...)} / {@code scale(...)}
  * propagate to the built node) and fragment ordering (identity transform
  * emits no markers; non-identity transform brackets the leaf payload with
- * a {@link BuiltInNodeDefinitions.TransformBeginPayload} ahead and a
- * {@link BuiltInNodeDefinitions.TransformEndPayload} behind, sharing the
+ * a {@link TransformBeginPayload} ahead and a
+ * {@link TransformEndPayload} behind, sharing the
  * same owner path).
  */
 class TransformableLeafBuildersTest {
@@ -242,14 +244,14 @@ class TransformableLeafBuildersTest {
                     .scale(2.0)
                     .build());
             List<PlacedFragment> fragments = session.layoutGraph().fragments();
-            int begin = indexOfPayload(fragments, BuiltInNodeDefinitions.TransformBeginPayload.class);
+            int begin = indexOfPayload(fragments, TransformBeginPayload.class);
             int leaf = indexOfPayload(fragments, BuiltInNodeDefinitions.LineFragmentPayload.class);
-            int end = indexOfPayload(fragments, BuiltInNodeDefinitions.TransformEndPayload.class);
+            int end = indexOfPayload(fragments, TransformEndPayload.class);
             assertThat(begin).isGreaterThanOrEqualTo(0);
             assertThat(leaf).isGreaterThan(begin);
             assertThat(end).isGreaterThan(leaf);
-            BuiltInNodeDefinitions.TransformBeginPayload payload =
-                    (BuiltInNodeDefinitions.TransformBeginPayload) fragments.get(begin).payload();
+            TransformBeginPayload payload =
+                    (TransformBeginPayload) fragments.get(begin).payload();
             assertThat(payload.transform().scaleX()).isEqualTo(2.0, within(EPS));
             assertThat(payload.transform().scaleY()).isEqualTo(2.0, within(EPS));
         } catch (Exception e) {
@@ -312,13 +314,13 @@ class TransformableLeafBuildersTest {
                     .build());
 
             List<PlacedFragment> fragments = session.layoutGraph().fragments();
-            int begin = indexOfPayload(fragments, BuiltInNodeDefinitions.TransformBeginPayload.class);
-            int end = indexOfPayload(fragments, BuiltInNodeDefinitions.TransformEndPayload.class);
+            int begin = indexOfPayload(fragments, TransformBeginPayload.class);
+            int end = indexOfPayload(fragments, TransformEndPayload.class);
             assertThat(begin).isGreaterThanOrEqualTo(0);
             assertThat(end).isGreaterThan(begin);
 
-            String beginOwner = ((BuiltInNodeDefinitions.TransformBeginPayload) fragments.get(begin).payload()).ownerPath();
-            String endOwner = ((BuiltInNodeDefinitions.TransformEndPayload) fragments.get(end).payload()).ownerPath();
+            String beginOwner = ((TransformBeginPayload) fragments.get(begin).payload()).ownerPath();
+            String endOwner = ((TransformEndPayload) fragments.get(end).payload()).ownerPath();
             assertThat(beginOwner).isNotEmpty();
             assertThat(beginOwner).isEqualTo(endOwner);
         } catch (Exception e) {
@@ -333,9 +335,9 @@ class TransformableLeafBuildersTest {
     private static void assertTransformBracketsLeaf(List<PlacedFragment> fragments,
                                                     Class<?> leafPayloadType,
                                                     double expectedRotationDegrees) {
-        int begin = indexOfPayload(fragments, BuiltInNodeDefinitions.TransformBeginPayload.class);
+        int begin = indexOfPayload(fragments, TransformBeginPayload.class);
         int leaf = indexOfPayload(fragments, leafPayloadType);
-        int end = indexOfPayload(fragments, BuiltInNodeDefinitions.TransformEndPayload.class);
+        int end = indexOfPayload(fragments, TransformEndPayload.class);
         assertThat(begin)
                 .as("transform-begin must be present for non-identity transform")
                 .isGreaterThanOrEqualTo(0);
@@ -345,17 +347,17 @@ class TransformableLeafBuildersTest {
         assertThat(end)
                 .as("transform-end must close after the leaf")
                 .isGreaterThan(leaf);
-        BuiltInNodeDefinitions.TransformBeginPayload beginPayload =
-                (BuiltInNodeDefinitions.TransformBeginPayload) fragments.get(begin).payload();
+        TransformBeginPayload beginPayload =
+                (TransformBeginPayload) fragments.get(begin).payload();
         assertThat(beginPayload.transform().rotationDegrees())
                 .isEqualTo(expectedRotationDegrees, within(EPS));
     }
 
     private static void assertNoTransformMarkers(List<PlacedFragment> fragments) {
-        assertThat(indexOfPayload(fragments, BuiltInNodeDefinitions.TransformBeginPayload.class))
+        assertThat(indexOfPayload(fragments, TransformBeginPayload.class))
                 .as("identity transform must not emit transform-begin")
                 .isEqualTo(-1);
-        assertThat(indexOfPayload(fragments, BuiltInNodeDefinitions.TransformEndPayload.class))
+        assertThat(indexOfPayload(fragments, TransformEndPayload.class))
                 .as("identity transform must not emit transform-end")
                 .isEqualTo(-1);
     }

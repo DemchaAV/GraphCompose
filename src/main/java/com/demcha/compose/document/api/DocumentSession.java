@@ -18,6 +18,7 @@ import com.demcha.compose.document.output.DocumentWatermark;
 import com.demcha.compose.document.debug.snapshot.LayoutGraphSnapshotExtractor;
 import com.demcha.compose.document.dsl.DocumentDsl;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
+import com.demcha.compose.document.exceptions.DocumentRenderingException;
 import com.demcha.compose.document.layout.*;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ContainerNode;
@@ -691,10 +692,17 @@ public final class DocumentSession implements AutoCloseable {
      * {@link #writePdf(OutputStream)}.</p>
      *
      * @return rendered PDF bytes
-     * @throws Exception if PDF rendering fails
+     * @throws DocumentRenderingException if PDF rendering fails
      */
-    public byte[] toPdfBytes() throws Exception {
-        return renderingFacade.toPdfBytes();
+    public byte[] toPdfBytes() throws DocumentRenderingException {
+        try {
+            return renderingFacade.toPdfBytes();
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new DocumentRenderingException(
+                    "Failed to render PDF bytes: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -705,33 +713,55 @@ public final class DocumentSession implements AutoCloseable {
      * responses, cloud storage uploads, and other server-side streaming paths.</p>
      *
      * @param output destination stream that receives the rendered PDF bytes
-     * @throws Exception if PDF rendering fails
+     * @throws DocumentRenderingException if PDF rendering fails
      */
-    public void writePdf(OutputStream output) throws Exception {
-        renderingFacade.writePdf(output);
+    public void writePdf(OutputStream output) throws DocumentRenderingException {
+        try {
+            renderingFacade.writePdf(output);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new DocumentRenderingException(
+                    "Failed to write PDF to stream: " + e.getMessage(), e);
+        }
     }
 
     /**
      * Builds the current document into the default output file configured on the builder.
      *
-     * @throws Exception if no default output file exists or PDF rendering fails
+     * @throws IllegalStateException if no default output file was configured
+     * @throws DocumentRenderingException if PDF rendering fails
      */
-    public void buildPdf() throws Exception {
+    public void buildPdf() throws DocumentRenderingException {
         ensureOpen();
         if (defaultOutputFile == null) {
             throw new IllegalStateException("No default output file was configured for this document session.");
         }
-        renderingFacade.buildPdf(defaultOutputFile);
+        try {
+            renderingFacade.buildPdf(defaultOutputFile);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new DocumentRenderingException(
+                    "Failed to build PDF at '" + defaultOutputFile + "': " + e.getMessage(), e);
+        }
     }
 
     /**
      * Builds the current document into the supplied output file.
      *
      * @param outputFile destination PDF path
-     * @throws Exception if PDF rendering fails
+     * @throws DocumentRenderingException if PDF rendering fails
      */
-    public void buildPdf(Path outputFile) throws Exception {
-        renderingFacade.buildPdf(outputFile);
+    public void buildPdf(Path outputFile) throws DocumentRenderingException {
+        try {
+            renderingFacade.buildPdf(outputFile);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new DocumentRenderingException(
+                    "Failed to build PDF at '" + outputFile + "': " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -741,10 +771,18 @@ public final class DocumentSession implements AutoCloseable {
      * is closed, every public authoring or rendering method throws
      * {@link IllegalStateException}.</p>
      *
-     * @throws Exception if the measurement document close fails
+     * <p>The {@link AutoCloseable#close()} contract permits throwing
+     * {@link Exception}, but GraphCompose narrows the declaration to
+     * {@link DocumentRenderingException} so callers using
+     * {@code try (DocumentSession session = ...) { ... }} do not need to
+     * declare or catch a checked {@code Exception} on the implicit close.
+     * Any underlying {@link java.io.IOException} from PDFBox is preserved
+     * as the {@linkplain Throwable#getCause() cause}.</p>
+     *
+     * @throws DocumentRenderingException if measurement resource close fails
      */
     @Override
-    public void close() throws Exception {
+    public void close() throws DocumentRenderingException {
         if (closed) {
             LIFECYCLE_LOG.debug("document.session.close.skip sessionId={} revision={}", sessionId, layoutCache.revision());
             return;
@@ -756,13 +794,21 @@ public final class DocumentSession implements AutoCloseable {
                 measurementResources.close();
             }
             LIFECYCLE_LOG.debug("document.session.close.end sessionId={} revision={} roots={}", sessionId, layoutCache.revision(), roots.size());
-        } catch (Exception ex) {
+        } catch (RuntimeException ex) {
             LIFECYCLE_LOG.warn(
                     "document.session.close.failed sessionId={} revision={} errorType={}",
                     sessionId,
                     layoutCache.revision(),
                     ex.getClass().getSimpleName());
             throw ex;
+        } catch (Exception ex) {
+            LIFECYCLE_LOG.warn(
+                    "document.session.close.failed sessionId={} revision={} errorType={}",
+                    sessionId,
+                    layoutCache.revision(),
+                    ex.getClass().getSimpleName());
+            throw new DocumentRenderingException(
+                    "Failed to close measurement resources: " + ex.getMessage(), ex);
         }
     }
 

@@ -301,6 +301,24 @@ The runnable `examples/` module gains six new showcases hooked into
   plus a pointer to the production
   `LayoutSnapshotAssertions.assertMatches(document, "...")` helper
   for in-test usage.
+- `WeeklyScheduleFileExample` rewritten to delegate to a new reusable
+  `examples/support/WeeklyScheduleRenderer`. The renderer's typed
+  surface — `JobTitle` enum, `StaffMember` / `DayPlan` / `Shift`
+  records, sealed-interface `Half` and `DayShift` types with factory
+  methods (`DayShift.OFF`, `.acrossDay(start, end, ShiftType.STOCK)`,
+  `.shifts(lunchStart, lunchEnd, dinnerStart, dinnerEnd)`,
+  `.lunchOnly(...)`, `.dinnerOnly(...)`,
+  `.halves(Half.shift(...), Half.STANDBY)`) — replaces the cryptic
+  string tokens used previously. `Theme` (with `aurora()` default and
+  a per-`ShiftStatus` colour map) and `Layout` (page size + margin +
+  column widths) records keep every colour and dimension out of the
+  renderer's static state, so re-skinning the schedule is a
+  swap-one-record call. Auto-fills the seven day labels from a
+  `LocalDate weekStart`, sorts staff by `JobTitle.ordinal()`, and
+  emits a separator row at every job-title boundary so adding or
+  removing a `StaffMember` never requires updating positional indices.
+  The example file shrinks from ~700 lines of literal data to ~180
+  lines of typed declarations.
 
 ### Documentation
 

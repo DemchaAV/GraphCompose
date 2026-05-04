@@ -57,14 +57,15 @@ public record BusinessTheme(
      * @return classic theme
      */
     public static BusinessTheme classic() {
-        DocumentPalette palette = DocumentPalette.of(
-                new Color(28, 38, 60),     // primary navy
-                new Color(40, 90, 200),    // bright accent blue
-                Color.WHITE,               // surface
-                new Color(245, 247, 250),  // surface muted
-                new Color(28, 38, 60),     // text primary
-                new Color(110, 120, 140),  // text muted
-                new Color(210, 218, 230)); // rule
+        DocumentPalette palette = DocumentPalette.builder()
+                .primary(new Color(28, 38, 60))      // navy
+                .accent(new Color(40, 90, 200))      // bright accent blue
+                .surface(Color.WHITE)
+                .surfaceMuted(new Color(245, 247, 250))
+                .textPrimary(new Color(28, 38, 60))
+                .textMuted(new Color(110, 120, 140))
+                .rule(new Color(210, 218, 230))
+                .build();
         SpacingScale spacing = SpacingScale.defaultScale();
         TextScale text = textScale(palette, FontName.HELVETICA, FontName.HELVETICA_BOLD,
                 26, 16, 13, 11, 9);
@@ -79,14 +80,15 @@ public record BusinessTheme(
      * @return modern theme
      */
     public static BusinessTheme modern() {
-        DocumentPalette palette = DocumentPalette.of(
-                new Color(20, 60, 75),
-                new Color(196, 153, 76),
-                new Color(252, 248, 240),  // cream surface
-                new Color(244, 238, 228),  // soft tan panel
-                new Color(34, 38, 50),
-                new Color(110, 110, 120),
-                new Color(212, 200, 178));
+        DocumentPalette palette = DocumentPalette.builder()
+                .primary(new Color(20, 60, 75))
+                .accent(new Color(196, 153, 76))
+                .surface(new Color(252, 248, 240))   // cream surface
+                .surfaceMuted(new Color(244, 238, 228))  // soft tan panel
+                .textPrimary(new Color(34, 38, 50))
+                .textMuted(new Color(110, 110, 120))
+                .rule(new Color(212, 200, 178))
+                .build();
         SpacingScale spacing = new SpacingScale(4.0, 8.0, 14.0, 22.0, 36.0);
         TextScale text = textScale(palette, FontName.HELVETICA, FontName.HELVETICA_BOLD,
                 28, 17, 13, 11, 10);
@@ -101,14 +103,15 @@ public record BusinessTheme(
      * @return executive theme
      */
     public static BusinessTheme executive() {
-        DocumentPalette palette = DocumentPalette.of(
-                new Color(36, 42, 54),     // slate primary
-                new Color(174, 134, 70),   // muted gold accent
-                new Color(248, 248, 248),
-                new Color(232, 232, 235),
-                new Color(36, 42, 54),
-                new Color(110, 116, 124),
-                new Color(214, 216, 220));
+        DocumentPalette palette = DocumentPalette.builder()
+                .primary(new Color(36, 42, 54))      // slate
+                .accent(new Color(174, 134, 70))     // muted gold
+                .surface(new Color(248, 248, 248))
+                .surfaceMuted(new Color(232, 232, 235))
+                .textPrimary(new Color(36, 42, 54))
+                .textMuted(new Color(110, 116, 124))
+                .rule(new Color(214, 216, 220))
+                .build();
         SpacingScale spacing = new SpacingScale(4.0, 8.0, 12.0, 24.0, 40.0);
         TextScale text = textScale(palette, FontName.HELVETICA, FontName.TIMES_ROMAN,
                 24, 15, 12, 11, 9);

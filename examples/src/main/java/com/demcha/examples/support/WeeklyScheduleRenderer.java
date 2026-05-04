@@ -458,10 +458,14 @@ public final class WeeklyScheduleRenderer {
                         }
                         table.rowCells(dayNameRow);
 
-                        // Day-note row.
+                        // Day-note row. Notes are split at "/" delimiters so
+                        // each fragment becomes its own line in the cell —
+                        // table cells use the longest single line as their
+                        // natural width, so splitting keeps long compound
+                        // notes within the four sub-cell column budget.
                         List<DocumentTableCell> dayNoteRow = new ArrayList<>();
                         for (int d = 0; d < DAYS_IN_WEEK; d++) {
-                            dayNoteRow.add(DocumentTableCell.text(week.get(d).note())
+                            dayNoteRow.add(DocumentTableCell.lines(splitNote(week.get(d).note()))
                                     .withStyle(dayNoteCellStyle(theme)).colSpan(4));
                         }
                         table.rowCells(dayNoteRow);
@@ -528,6 +532,20 @@ public final class WeeklyScheduleRenderer {
 
             document.buildPdf();
         }
+    }
+
+    /**
+     * Split a day note like {@code "Bank Holiday Monday / Clean Crushed
+     * Ice Machine & Area"} into its slash-separated fragments so each
+     * fragment becomes its own line in the cell. Table cells measure
+     * natural width as the longest single line, so this keeps long
+     * compound notes within the column budget.
+     */
+    private static String[] splitNote(String note) {
+        if (note == null || note.isBlank()) {
+            return new String[] {""};
+        }
+        return note.split("\\s*/\\s*");
     }
 
     // ───────────────────────── Date formatting ───────────────────────
@@ -708,7 +726,7 @@ public final class WeeklyScheduleRenderer {
                 .padding(new DocumentInsets(8, 4, 8, 4))
                 .textStyle(DocumentTextStyle.builder()
                         .fontName(FontName.TIMES_BOLD)
-                        .size(20)
+                        .size(18)
                         .color(theme.brandAccent())
                         .build())
                 .stroke(DocumentStroke.of(theme.grid(), 0.3))

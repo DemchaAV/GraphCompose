@@ -256,9 +256,17 @@ hard-coded default theme. To brand the output for your own product,
 hand `InvoiceTemplateV2` a custom `BusinessTheme` instead — see
 [`CustomBusinessThemeExample`](./examples/src/main/java/com/demcha/examples/CustomBusinessThemeExample.java).
 
-The runnable `examples/` module ships fifteen examples covering CV,
-cover letter, invoice (V1 + cinematic V2), proposal (V1 + V2),
-schedule, plus six v1.5-specific showcases:
+The runnable `examples/` module ships **22 examples** covering CV
+(seven variants), cover letter, invoice (V1 + cinematic V2), proposal
+(V1 + V2 + handcrafted), weekly schedule, business report cover, six
+v1.5-specific feature showcases, four public-API surface showcases,
+and a kitchen-sink master demo.
+
+> 📚 **[Browse the full examples gallery →](./examples/README.md)** —
+> every example with description, key code snippet, committed PDF
+> preview, and source link.
+
+A few highlights:
 
 - [`ShapeContainerExample`](./examples/src/main/java/com/demcha/examples/ShapeContainerExample.java) — circles, ellipses, rounded cards with clipped layers
 - [`TransformsExample`](./examples/src/main/java/com/demcha/examples/TransformsExample.java) — rotate, scale, and z-index swap
@@ -266,6 +274,8 @@ schedule, plus six v1.5-specific showcases:
 - [`CustomBusinessThemeExample`](./examples/src/main/java/com/demcha/examples/CustomBusinessThemeExample.java) — hand-built `BusinessTheme` driving `InvoiceTemplateV2`
 - [`HttpStreamingExample`](./examples/src/main/java/com/demcha/examples/HttpStreamingExample.java) — `writePdf(OutputStream)` for Servlet / S3 paths
 - [`LayoutSnapshotRegressionExample`](./examples/src/main/java/com/demcha/examples/LayoutSnapshotRegressionExample.java) — deterministic layout snapshots for regression tests
+- [`WeeklyScheduleFileExample`](./examples/src/main/java/com/demcha/examples/WeeklyScheduleFileExample.java) — bar / restaurant shift schedule via the reusable [`WeeklyScheduleRenderer`](./examples/src/main/java/com/demcha/examples/support/WeeklyScheduleRenderer.java) with a typed `DayShift` API (no string parsing)
+- [`BusinessReportExample`](./examples/src/main/java/com/demcha/examples/BusinessReportExample.java) — single-page investor-brief cover with hero image, KPI cards, bar chart, and metrics table
 
 Run the whole gallery in one shot:
 
@@ -275,6 +285,9 @@ Run the whole gallery in one shot:
 ```
 
 Each example writes a PDF to `examples/target/generated-pdfs/`.
+Committed PDF previews of every render live under
+[`assets/readme/examples/`](./assets/readme/examples/) so the gallery
+README links work without running anything.
 
 ## Core concepts
 

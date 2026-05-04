@@ -76,8 +76,8 @@ public final class BusinessReportExample {
 
     // ─────────────────── Layout constants ─────────────────────────
 
-    private static final double CHART_WIDTH = 295;
-    private static final double CHART_HEIGHT = 145;
+    private static final double CHART_WIDTH = 285;
+    private static final double CHART_HEIGHT = 120;
     private static final double BAR_WIDTH = 13;
     private static final double GROUP_GAP = 16;
     private static final double CHART_INSET_LEFT = 18;
@@ -95,12 +95,12 @@ public final class BusinessReportExample {
         try (DocumentSession document = GraphCompose.document(outputFile)
                 .pageSize(DocumentPageSize.A4)
                 .pageBackground(PAPER)
-                .margin(40, 44, 40, 44)
+                .margin(28, 40, 28, 40)
                 .create()) {
 
             document.pageFlow()
                     .name("BusinessReportCover")
-                    .spacing(16)
+                    .spacing(11)
 
                     // Top band — report identifier + month
                     .addRow("Band", row -> row
@@ -126,11 +126,11 @@ public final class BusinessReportExample {
 
                     // Hero — headline + image
                     .addRow("Hero", row -> row
-                            .spacing(20)
+                            .spacing(18)
                             .weights(11, 9)
                             .addSection("HeroCopy", section -> section
-                                    .padding(new DocumentInsets(8, 0, 0, 0))
-                                    .spacing(8)
+                                    .padding(new DocumentInsets(4, 0, 0, 0))
+                                    .spacing(4)
                                     .addParagraph(p -> p
                                             .text("Building the future")
                                             .textStyle(heroTitle())
@@ -142,14 +142,26 @@ public final class BusinessReportExample {
                                     .addParagraph(p -> p
                                             .text("We combine strategy, design, and engineering to deliver impactful digital products that drive real business results and lasting customer value.")
                                             .textStyle(heroBody())
-                                            .lineSpacing(1.45)
-                                            .margin(new DocumentInsets(6, 0, 0, 0))))
+                                            .lineSpacing(1.4)
+                                            .margin(new DocumentInsets(4, 0, 0, 0))))
                             .addSection("HeroImage", section -> section
-                                    .padding(new DocumentInsets(2, 0, 0, 0))
-                                    .addImage(image -> image
-                                            .source(heroImage)
-                                            .size(220, 130)
-                                            .fitMode(DocumentImageFitMode.COVER))))
+                                    .padding(DocumentInsets.zero())
+                                    // Hero image lives inside a rounded
+                                    // shape container so the navy edges
+                                    // soften into a frame instead of
+                                    // bleeding straight to the page edge.
+                                    .addContainer(frame -> frame
+                                            .name("HeroFrame")
+                                            .roundedRect(210, 110, 12)
+                                            .fillColor(NAVY_DARK)
+                                            .stroke(DocumentStroke.of(GOLD, 0.6))
+                                            .clipPolicy(ClipPolicy.CLIP_PATH)
+                                            .center(new com.demcha.compose.document.dsl.ImageBuilder()
+                                                    .name("HeroImage")
+                                                    .source(heroImage)
+                                                    .size(204, 104)
+                                                    .fitMode(DocumentImageFitMode.COVER)
+                                                    .build()))))
 
                     // Three KPI cards
                     .addRow("KpiRow", row -> row
@@ -169,60 +181,88 @@ public final class BusinessReportExample {
                     .addRow("InsightsRow", row -> row
                             .spacing(18)
                             .weights(8, 12)
-                            .addSection("Highlights", section -> highlightsBlock(section))
-                            .addSection("Chart", section -> chartBlock(section)))
+                            .addSection("Highlights", section -> section
+                                    .softPanel(DocumentColor.WHITE, 10, 16)
+                                    .stroke(DocumentStroke.of(CARD_RING, 0.5))
+                                    .accentLeft(NAVY, 3)
+                                    .spacing(8)
+                                    .addParagraph(p -> p
+                                            .text("Strategic highlights")
+                                            .textStyle(sectionTitle())
+                                            .margin(DocumentInsets.zero()))
+                                    .addParagraph(p -> p
+                                            .text("•  Expanded market presence in key regions with double-digit growth.")
+                                            .textStyle(highlightLine())
+                                            .lineSpacing(1.45)
+                                            .margin(new DocumentInsets(2, 0, 0, 0)))
+                                    .addParagraph(p -> p
+                                            .text("•  Launched new platform capabilities improving performance and scalability.")
+                                            .textStyle(highlightLine())
+                                            .lineSpacing(1.45)
+                                            .margin(DocumentInsets.zero()))
+                                    .addParagraph(p -> p
+                                            .text("•  Strengthened partnerships to accelerate innovation and delivery.")
+                                            .textStyle(highlightLine())
+                                            .lineSpacing(1.45)
+                                            .margin(DocumentInsets.zero())))
+                            .addSection("Chart", section -> section
+                                    .softPanel(DocumentColor.WHITE, 10, 14)
+                                    .stroke(DocumentStroke.of(CARD_RING, 0.5))
+                                    .accentLeft(GOLD, 3)
+                                    .spacing(6)
+                                    .addParagraph(p -> p
+                                            .text("Performance overview")
+                                            .textStyle(sectionTitle())
+                                            .margin(DocumentInsets.zero()))
+                                    .addRich(rich -> rich
+                                            .style("Revenue", DocumentTextStyle.builder()
+                                                    .fontName(FontName.HELVETICA_BOLD)
+                                                    .size(9)
+                                                    .color(NAVY)
+                                                    .build())
+                                            .style("    ", legendLabel())
+                                            .style("Profit", DocumentTextStyle.builder()
+                                                    .fontName(FontName.HELVETICA_BOLD)
+                                                    .size(9)
+                                                    .color(GOLD)
+                                                    .build()))
+                                    .add(buildChart())))
 
-                    // Key metrics table
-                    .addParagraph(p -> p
-                            .text("Key metrics")
-                            .textStyle(sectionTitle())
-                            .margin(new DocumentInsets(4, 0, 0, 0)))
-
-                    .addTable(table -> {
-                        table.columns(
-                                        DocumentTableColumn.fixed(110),
-                                        DocumentTableColumn.fixed(60),
-                                        DocumentTableColumn.fixed(60),
-                                        DocumentTableColumn.fixed(60),
-                                        DocumentTableColumn.fixed(60),
-                                        DocumentTableColumn.fixed(60),
-                                        DocumentTableColumn.fixed(78))
-                                .defaultCellStyle(DocumentTableStyle.builder()
-                                        .padding(new DocumentInsets(8, 8, 8, 8))
-                                        .textStyle(DocumentTextStyle.builder()
-                                                .fontName(FontName.HELVETICA)
-                                                .size(9.5)
-                                                .color(INK)
-                                                .build())
-                                        .stroke(DocumentStroke.of(SUBTLE_RULE, 0.3))
-                                        .build())
-                                .headerStyle(DocumentTableStyle.builder()
-                                        .padding(new DocumentInsets(8, 8, 8, 8))
-                                        .textStyle(DocumentTextStyle.builder()
-                                                .fontName(FontName.HELVETICA_BOLD)
-                                                .size(9)
-                                                .color(MUTED)
-                                                .build())
-                                        .stroke(DocumentStroke.of(SUBTLE_RULE, 0.3))
-                                        .build())
-                                .headerRow("Metric", "Q1 2023", "Q2 2023", "Q3 2023", "Q4 2023", "Q1 2024", "YoY Change");
-                        for (String[] row : METRICS) {
-                            table.row(row);
-                        }
-                    })
+                    // Key metrics — wrapped in a soft panel with an
+                    // accent strip so the table reads as a distinct
+                    // dashboard card rather than a bare grid.
+                    .addSection("MetricsCard", card -> card
+                            .softPanel(DocumentColor.WHITE, 10, 12)
+                            .stroke(DocumentStroke.of(CARD_RING, 0.5))
+                            .accentTop(GOLD, 1.5)
+                            .spacing(4)
+                            .addParagraph(p -> p
+                                    .text("Key metrics")
+                                    .textStyle(sectionTitle())
+                                    .margin(DocumentInsets.zero()))
+                            .addParagraph(p -> p
+                                    .text("Year-over-year delta in the right column. Retention reported in percentage points.")
+                                    .textStyle(DocumentTextStyle.builder()
+                                            .fontName(FontName.HELVETICA)
+                                            .size(8.4)
+                                            .color(MUTED)
+                                            .build())
+                                    .lineSpacing(1.35)
+                                    .margin(new DocumentInsets(0, 0, 2, 0)))
+                            .addTable(BusinessReportExample::buildMetricsTable))
 
                     // Footer
                     .addRow("Footer", row -> row
                             .spacing(0)
                             .weights(1, 1)
                             .addSection("FootLeft", section -> section
-                                    .padding(new DocumentInsets(20, 0, 0, 0))
+                                    .padding(new DocumentInsets(8, 0, 0, 0))
                                     .addParagraph(p -> p
                                             .text("Confidential and proprietary")
                                             .textStyle(footerStyle())
                                             .margin(DocumentInsets.zero())))
                             .addSection("FootRight", section -> section
-                                    .padding(new DocumentInsets(20, 0, 0, 0))
+                                    .padding(new DocumentInsets(8, 0, 0, 0))
                                     .addParagraph(p -> p
                                             .text("Page 1 of 8")
                                             .textStyle(footerStyle())
@@ -238,6 +278,41 @@ public final class BusinessReportExample {
 
     public static void main(String[] args) throws Exception {
         System.out.println("Generated: " + generate());
+    }
+
+    private static void buildMetricsTable(com.demcha.compose.document.dsl.TableBuilder table) {
+        table.columns(
+                        DocumentTableColumn.fixed(106),
+                        DocumentTableColumn.fixed(54),
+                        DocumentTableColumn.fixed(54),
+                        DocumentTableColumn.fixed(54),
+                        DocumentTableColumn.fixed(54),
+                        DocumentTableColumn.fixed(54),
+                        DocumentTableColumn.fixed(72))
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .padding(new DocumentInsets(8, 8, 8, 8))
+                        .textStyle(DocumentTextStyle.builder()
+                                .fontName(FontName.HELVETICA)
+                                .size(9.5)
+                                .color(INK)
+                                .build())
+                        .stroke(DocumentStroke.of(SUBTLE_RULE, 0.3))
+                        .build())
+                .headerStyle(DocumentTableStyle.builder()
+                        .padding(new DocumentInsets(8, 8, 8, 8))
+                        .textStyle(DocumentTextStyle.builder()
+                                .fontName(FontName.HELVETICA_BOLD)
+                                .size(9)
+                                .color(MUTED)
+                                .build())
+                        .fillColor(DocumentColor.rgb(248, 246, 240))
+                        .stroke(DocumentStroke.of(SUBTLE_RULE, 0.3))
+                        .build())
+                .headerRow("Metric", "Q1 2023", "Q2 2023", "Q3 2023", "Q4 2023", "Q1 2024", "YoY Change")
+                .zebra(DocumentColor.WHITE, DocumentColor.rgb(252, 250, 244));
+        for (String[] row : METRICS) {
+            table.row(row);
+        }
     }
 
     // ─────────────────── KPI cards ────────────────────────────────
@@ -506,7 +581,7 @@ public final class BusinessReportExample {
     private static DocumentTextStyle heroTitle() {
         return DocumentTextStyle.builder()
                 .fontName(FontName.TIMES_BOLD)
-                .size(28)
+                .size(24)
                 .color(INK)
                 .build();
     }

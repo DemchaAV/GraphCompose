@@ -1,5 +1,6 @@
 package com.demcha.compose.document.layout;
 
+import com.demcha.compose.document.api.Internal;
 import com.demcha.compose.document.node.DocumentBarcodeOptions;
 import com.demcha.compose.document.node.DocumentBarcodeType;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
@@ -110,6 +111,7 @@ public final class BuiltInNodeDefinitions {
      * algorithm can produce either text spans or image spans for the same
      * line — both contribute to wrapping width and per-line height.
      */
+    @Internal
     public sealed interface ParagraphSpan permits ParagraphTextSpan, ParagraphImageSpan {
         /**
          * @return measured span width in points
@@ -137,6 +139,7 @@ public final class BuiltInNodeDefinitions {
      * @param height font line height contribution
      * @param linkOptions optional link metadata for the span
      */
+    @Internal
     public record ParagraphTextSpan(
             String text,
             TextStyle textStyle,
@@ -170,6 +173,7 @@ public final class BuiltInNodeDefinitions {
      * @param baselineOffset extra vertical offset in points; positive moves up
      * @param linkOptions optional link metadata
      */
+    @Internal
     public record ParagraphImageSpan(
             ImageData imageData,
             double width,
@@ -202,6 +206,7 @@ public final class BuiltInNodeDefinitions {
      *                                 baseline
      * @param spans measured styled spans in source order
      */
+    @Internal
     public record ParagraphLine(
             String text,
             double width,
@@ -224,6 +229,7 @@ public final class BuiltInNodeDefinitions {
      * Marker interface for fragment payloads that carry canonical PDF link or
      * bookmark metadata through the resolved semantic graph.
      */
+    @Internal
     public interface PdfSemanticFragmentPayload {
         /**
          * Returns link metadata for the resolved fragment, or {@code null} when
@@ -288,6 +294,7 @@ public final class BuiltInNodeDefinitions {
      * @param linkOptions optional fragment-level link metadata
      * @param bookmarkOptions optional fragment-level bookmark metadata
      */
+    @Internal
     public record ShapeFragmentPayload(
             Color fillColor,
             Stroke stroke,
@@ -346,6 +353,7 @@ public final class BuiltInNodeDefinitions {
      * @param bottom bottom side stroke, or {@code null} for no border on that side
      * @param left left side stroke, or {@code null} for no border on that side
      */
+    @Internal
     public record SideBorders(Stroke top, Stroke right, Stroke bottom, Stroke left) {
         /**
          * Indicates whether at least one side carries a stroke.
@@ -387,6 +395,7 @@ public final class BuiltInNodeDefinitions {
      * @param linkOptions optional fragment-level link metadata
      * @param bookmarkOptions optional fragment-level bookmark metadata
      */
+    @Internal
     public record EllipseFragmentPayload(
             Color fillColor,
             Stroke stroke,
@@ -547,6 +556,7 @@ public final class BuiltInNodeDefinitions {
      * @param linkOptions optional fragment-level link metadata
      * @param bookmarkOptions optional fragment-level bookmark metadata
      */
+    @Internal
     public record TableRowFragmentPayload(
             List<TableResolvedCell> cells,
             boolean startsPageFragment,
@@ -1140,6 +1150,7 @@ public final class BuiltInNodeDefinitions {
      * @param offsetsY per-layer vertical offsets from the alignment anchor
      * @param zIndices per-layer render-order keys (defaults are {@code 0})
      */
+    @Internal
     public record PreparedStackLayout(
             List<LayerAlign> alignments,
             List<Double> offsetsX,

@@ -77,6 +77,19 @@ for the user-facing summary.
   `BuiltInNodeDefinitions` drops from 3,037 to ~60 lines and now
   only exposes `registerDefaults(NodeRegistry)` as the single
   registration entry point.
+- **`DocumentSession` slim (Phase E.3).** New `SessionFontApi`
+  facade (`session.fonts()`) groups
+  `registerFontFamily(FontFamilyDefinition)` and
+  `registerNodeDefinition(NodeDefinition)` alongside the existing
+  `chrome()` and `layout()` facades. Page-background composition
+  moves from a private inner method to a new
+  `DocumentPageBackgrounds` utility. The four convenience PDF
+  methods (`toPdfBytes`, `writePdf`, `buildPdf`, `buildPdf(Path)`)
+  share a single `wrapPdfRendering` exception-mapping helper instead
+  of repeating the same try/catch four times. Javadoc on the
+  deprecated PDF-typed chrome overloads is compacted to a single
+  `@deprecated` tag. `DocumentSession` drops from 1,024 to ~937
+  lines without changing any public method signatures.
 
 ### Feature scope (planned)
 

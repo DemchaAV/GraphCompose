@@ -20,6 +20,9 @@ import com.demcha.compose.document.layout.payloads.ParagraphLine;
 import com.demcha.compose.document.layout.payloads.ParagraphSpan;
 import com.demcha.compose.document.layout.payloads.ParagraphTextSpan;
 import com.demcha.compose.document.layout.payloads.PdfSemanticFragmentPayload;
+import com.demcha.compose.document.layout.payloads.PreparedListItemLayout;
+import com.demcha.compose.document.layout.payloads.PreparedListLayout;
+import com.demcha.compose.document.layout.payloads.PreparedParagraphLayout;
 import com.demcha.compose.document.layout.payloads.SideBorders;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
@@ -1478,39 +1481,8 @@ public final class BuiltInNodeDefinitions {
         return count;
     }
 
-    private record PreparedParagraphLayout(
-            List<String> logicalLines,
-            List<ParagraphLine> visualLines,
-            TextMeasurementSystem.LineMetrics lineMetrics,
-            double baselineOffset,
-            double lineHeight,
-            double lineGap,
-            double maxLineWidth,
-            double totalHeight,
-            boolean emitBookmark
-    ) implements PreparedNodeLayout {
-    }
-
-    private record PreparedListItemLayout(
-            String text,
-            PreparedParagraphLayout paragraphLayout
-    ) {
-        private PreparedListItemLayout {
-            text = text == null ? "" : text;
-            paragraphLayout = Objects.requireNonNull(paragraphLayout, "paragraphLayout");
-        }
-    }
-
-    private record PreparedListLayout(
-            List<PreparedListItemLayout> items,
-            double maxLineWidth,
-            double totalHeight,
-            double resolvedWidth
-    ) implements PreparedNodeLayout {
-        private PreparedListLayout {
-            items = List.copyOf(items);
-        }
-    }
+    // PreparedParagraphLayout / PreparedListItemLayout / PreparedListLayout
+    // moved to com.demcha.compose.document.layout.payloads in Phase E.1.
 
     private record ParagraphIndentSpec(String firstLinePrefix, String continuationPrefix) {
         private static ParagraphIndentSpec from(String bulletOffset,

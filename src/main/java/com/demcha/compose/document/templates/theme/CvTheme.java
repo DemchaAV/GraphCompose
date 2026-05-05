@@ -1,5 +1,8 @@
 package com.demcha.compose.document.templates.theme;
 
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.theme.BusinessTheme;
 import com.demcha.compose.font.FontName;
@@ -52,10 +55,111 @@ public record CvTheme(
     }
 
     /**
+     * Style for the main display name, returned as a canonical
+     * {@link DocumentTextStyle}.
+     *
+     * @return canonical text style
+     * @since 1.6.0
+     */
+    public DocumentTextStyle nameStyle() {
+        return DocumentTextStyle.builder()
+                .fontName(headerFont)
+                .size(nameFontSize)
+                .decoration(DocumentTextDecoration.BOLD)
+                .color(DocumentColor.of(primaryColor))
+                .build();
+    }
+
+    /**
+     * Style for section headings, returned as a canonical
+     * {@link DocumentTextStyle}.
+     *
+     * @return canonical text style
+     * @since 1.6.0
+     */
+    public DocumentTextStyle sectionHeaderStyle() {
+        return DocumentTextStyle.builder()
+                .fontName(headerFont)
+                .size(headerFontSize)
+                .decoration(DocumentTextDecoration.BOLD)
+                .color(DocumentColor.of(secondaryColor))
+                .build();
+    }
+
+    /**
+     * Style for default body text, returned as a canonical
+     * {@link DocumentTextStyle}.
+     *
+     * @return canonical text style
+     * @since 1.6.0
+     */
+    public DocumentTextStyle bodyStyle() {
+        return DocumentTextStyle.builder()
+                .fontName(bodyFont)
+                .size(bodyFontSize)
+                .color(DocumentColor.of(bodyColor))
+                .build();
+    }
+
+    /**
+     * Style for compact metadata text, returned as a canonical
+     * {@link DocumentTextStyle}.
+     *
+     * @return canonical text style
+     * @since 1.6.0
+     */
+    public DocumentTextStyle smallBodyStyle() {
+        return DocumentTextStyle.builder()
+                .fontName(bodyFont)
+                .size(bodyFontSize - 1)
+                .color(DocumentColor.of(bodyColor))
+                .build();
+    }
+
+    /**
+     * Style for link-like values, returned as a canonical
+     * {@link DocumentTextStyle}.
+     *
+     * @return canonical text style
+     * @since 1.6.0
+     */
+    public DocumentTextStyle linkStyle() {
+        return DocumentTextStyle.builder()
+                .fontName(bodyFont)
+                .size(bodyFontSize)
+                .decoration(DocumentTextDecoration.UNDERLINE)
+                .color(DocumentColor.of(accentColor))
+                .build();
+    }
+
+    /**
+     * Returns the module margin as canonical
+     * {@link DocumentInsets}. Equivalent to
+     * {@link #moduleMargin()} but with backend-neutral typing.
+     *
+     * @return canonical module insets
+     * @since 1.6.0
+     */
+    public DocumentInsets moduleInsets() {
+        Margin engineMargin = modulMargin == null ? Margin.zero() : modulMargin;
+        return new DocumentInsets(
+                engineMargin.top(),
+                engineMargin.right(),
+                engineMargin.bottom(),
+                engineMargin.left());
+    }
+
+    /**
      * Style for the main display name.
      *
      * @return semantic text style
+     * @deprecated since 1.6.0; prefer the canonical-typed
+     *             {@link #nameStyle()}. The engine-typed accessor
+     *             will be removed in v2.0 once the
+     *             {@code engine.components.content.text.TextStyle}
+     *             type is migrated out of the public surface.
      */
+    @Deprecated(since = "1.6.0")
     public TextStyle nameTextStyle() {
         return TextStyle.builder()
                 .size(nameFontSize)
@@ -69,7 +173,10 @@ public record CvTheme(
      * Style for section headings.
      *
      * @return semantic text style
+     * @deprecated since 1.6.0; prefer the canonical-typed
+     *             {@link #sectionHeaderStyle()}.
      */
+    @Deprecated(since = "1.6.0")
     public TextStyle sectionHeaderTextStyle() {
         return TextStyle.builder()
                 .size(headerFontSize)
@@ -83,7 +190,10 @@ public record CvTheme(
      * Style for default body text.
      *
      * @return semantic text style
+     * @deprecated since 1.6.0; prefer the canonical-typed
+     *             {@link #bodyStyle()}.
      */
+    @Deprecated(since = "1.6.0")
     public TextStyle bodyTextStyle() {
         return TextStyle.builder()
                 .size(bodyFontSize)
@@ -96,7 +206,10 @@ public record CvTheme(
      * Style for compact metadata text.
      *
      * @return semantic text style
+     * @deprecated since 1.6.0; prefer the canonical-typed
+     *             {@link #smallBodyStyle()}.
      */
+    @Deprecated(since = "1.6.0")
     public TextStyle smallBodyTextStyle() {
         return TextStyle.builder()
                 .size(bodyFontSize - 1)
@@ -109,7 +222,10 @@ public record CvTheme(
      * Style for link-like values.
      *
      * @return semantic text style
+     * @deprecated since 1.6.0; prefer the canonical-typed
+     *             {@link #linkStyle()}.
      */
+    @Deprecated(since = "1.6.0")
     public TextStyle linkTextStyle() {
         return TextStyle.builder()
                 .size(bodyFontSize)

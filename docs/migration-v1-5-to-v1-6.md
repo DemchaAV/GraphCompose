@@ -214,6 +214,48 @@ Each setter accepts either a `DocumentColor` or an AWT `Color`. If you
 forget a token, `build()` throws `IllegalStateException` listing every
 missing field in one message so a single fix-up resolves all gaps.
 
+### `CvTheme` engine-typed style accessors
+
+`CvTheme` historically returned
+`com.demcha.compose.engine.components.content.text.TextStyle` from
+five style accessors and `com.demcha.compose.engine.components.style.Margin`
+from `moduleMargin()` / `modulMargin()`. Engine types in a public
+return position block the v2.0 migration of `engine.*` out of the
+public surface (audit C2).
+
+v1.6 ships canonical-typed companions on `CvTheme` — same logical
+fields, same default values, but with backend-neutral types from
+`com.demcha.compose.document.style.*`:
+
+| Old (engine-typed, deprecated) | New (canonical) | Returns |
+| --- | --- | --- |
+| `nameTextStyle()` | `nameStyle()` | `DocumentTextStyle` |
+| `sectionHeaderTextStyle()` | `sectionHeaderStyle()` | `DocumentTextStyle` |
+| `bodyTextStyle()` | `bodyStyle()` | `DocumentTextStyle` |
+| `smallBodyTextStyle()` | `smallBodyStyle()` | `DocumentTextStyle` |
+| `linkTextStyle()` | `linkStyle()` | `DocumentTextStyle` |
+| `moduleMargin()` | `moduleInsets()` | `DocumentInsets` |
+
+```java
+// v1.5
+TextStyle name = cvTheme.nameTextStyle();        // engine type
+Margin module = cvTheme.moduleMargin();          // engine type
+
+// v1.6 — canonical types in document.style.*
+DocumentTextStyle name = cvTheme.nameStyle();
+DocumentInsets   module = cvTheme.moduleInsets();
+```
+
+The deprecated engine-typed methods continue to work and emit
+`@Deprecated(since="1.6.0")` warnings. The CV templates ship with
+the engine-typed methods on the consumption side for v1.6; their
+internal migration to canonical types is scheduled for v1.7. End
+users that build their own templates against `CvTheme` should switch
+to the canonical accessors during v1.6.
+
+`WeeklyScheduleTheme` migration follows the same pattern in a later
+v1.6.x patch.
+
 ## Internal cleanup that may surface elsewhere
 
 These changes are not part of the public surface but may show up if

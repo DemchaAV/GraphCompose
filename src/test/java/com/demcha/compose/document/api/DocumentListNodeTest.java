@@ -1,8 +1,9 @@
 package com.demcha.compose.document.api;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.LayoutGraph;
+import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ParagraphLine;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.PlacedNode;
 import com.demcha.compose.document.node.ContainerNode;
@@ -39,7 +40,7 @@ class DocumentListNodeTest {
             assertThat(root.children()).hasSize(1);
             assertThat(root.children().getFirst()).isInstanceOf(ListNode.class);
 
-            List<BuiltInNodeDefinitions.ParagraphFragmentPayload> payloads = paragraphPayloads(session.layoutGraph());
+            List<ParagraphFragmentPayload> payloads = paragraphPayloads(session.layoutGraph());
             assertThat(payloads).hasSize(3);
             assertThat(firstLineTexts(payloads)).containsExactly(
                     "\u2022 Java",
@@ -106,9 +107,9 @@ class DocumentListNodeTest {
                                     "Tail"))
                     .build();
 
-            List<BuiltInNodeDefinitions.ParagraphFragmentPayload> payloads = paragraphPayloads(session.layoutGraph());
+            List<ParagraphFragmentPayload> payloads = paragraphPayloads(session.layoutGraph());
             List<String> firstItemLines = payloads.getFirst().lines().stream()
-                    .map(BuiltInNodeDefinitions.ParagraphLine::text)
+                    .map(ParagraphLine::text)
                     .toList();
 
             assertThat(firstItemLines).hasSizeGreaterThan(1);
@@ -135,9 +136,9 @@ class DocumentListNodeTest {
                                     "Beta row starts aligned with alpha."))
                     .build();
 
-            List<BuiltInNodeDefinitions.ParagraphFragmentPayload> payloads = paragraphPayloads(session.layoutGraph());
+            List<ParagraphFragmentPayload> payloads = paragraphPayloads(session.layoutGraph());
             List<String> firstItemLines = payloads.getFirst().lines().stream()
-                    .map(BuiltInNodeDefinitions.ParagraphLine::text)
+                    .map(ParagraphLine::text)
                     .toList();
 
             assertThat(payloads).hasSize(2);
@@ -237,9 +238,9 @@ class DocumentListNodeTest {
                 assertThat(fragment.width()).isCloseTo(listNode.placementWidth(), within(0.01));
             });
 
-            BuiltInNodeDefinitions.ParagraphFragmentPayload first = paragraphPayload(fragments.getFirst());
-            BuiltInNodeDefinitions.ParagraphFragmentPayload middle = paragraphPayload(fragments.get(1));
-            BuiltInNodeDefinitions.ParagraphFragmentPayload last = paragraphPayload(fragments.getLast());
+            ParagraphFragmentPayload first = paragraphPayload(fragments.getFirst());
+            ParagraphFragmentPayload middle = paragraphPayload(fragments.get(1));
+            ParagraphFragmentPayload last = paragraphPayload(fragments.getLast());
 
             assertPadding(first.padding(), 3, 5, 0, 11);
             assertPadding(middle.padding(), 0, 5, 0, 11);
@@ -247,17 +248,17 @@ class DocumentListNodeTest {
         }
     }
 
-    private static List<BuiltInNodeDefinitions.ParagraphFragmentPayload> paragraphPayloads(LayoutGraph graph) {
+    private static List<ParagraphFragmentPayload> paragraphPayloads(LayoutGraph graph) {
         return graph.fragments().stream()
                 .map(PlacedFragment::payload)
-                .filter(BuiltInNodeDefinitions.ParagraphFragmentPayload.class::isInstance)
-                .map(BuiltInNodeDefinitions.ParagraphFragmentPayload.class::cast)
+                .filter(ParagraphFragmentPayload.class::isInstance)
+                .map(ParagraphFragmentPayload.class::cast)
                 .toList();
     }
 
-    private static BuiltInNodeDefinitions.ParagraphFragmentPayload paragraphPayload(PlacedFragment fragment) {
-        assertThat(fragment.payload()).isInstanceOf(BuiltInNodeDefinitions.ParagraphFragmentPayload.class);
-        return (BuiltInNodeDefinitions.ParagraphFragmentPayload) fragment.payload();
+    private static ParagraphFragmentPayload paragraphPayload(PlacedFragment fragment) {
+        assertThat(fragment.payload()).isInstanceOf(ParagraphFragmentPayload.class);
+        return (ParagraphFragmentPayload) fragment.payload();
     }
 
     private static void assertPadding(Padding padding, double top, double right, double bottom, double left) {
@@ -267,7 +268,7 @@ class DocumentListNodeTest {
         assertThat(padding.left()).isCloseTo(left, within(0.01));
     }
 
-    private static List<String> firstLineTexts(List<BuiltInNodeDefinitions.ParagraphFragmentPayload> payloads) {
+    private static List<String> firstLineTexts(List<ParagraphFragmentPayload> payloads) {
         return payloads.stream()
                 .map(payload -> payload.lines().getFirst().text())
                 .toList();

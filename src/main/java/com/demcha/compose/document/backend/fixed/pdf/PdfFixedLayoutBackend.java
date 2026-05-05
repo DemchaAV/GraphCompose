@@ -24,6 +24,10 @@ import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.BarcodeFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ImageFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ParagraphImageSpan;
+import com.demcha.compose.document.layout.payloads.ParagraphLine;
+import com.demcha.compose.document.layout.payloads.ParagraphSpan;
 import com.demcha.compose.document.layout.payloads.PdfSemanticFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
 import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
@@ -323,7 +327,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                                         PdfRenderEnvironment environment,
                                         boolean guideLines,
                                         Map<String, Map<Integer, PdfGuideLinesRenderer.Bounds>> ownerBounds) throws Exception {
-        if (payload instanceof BuiltInNodeDefinitions.ParagraphFragmentPayload paragraphPayload) {
+        if (payload instanceof ParagraphFragmentPayload paragraphPayload) {
             addParagraphSpanLinks(fragment, paragraphPayload, environment);
         }
         if (payload instanceof PdfSemanticFragmentPayload semanticPayload) {
@@ -343,7 +347,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
     }
 
     private void addParagraphSpanLinks(PlacedFragment fragment,
-                                       BuiltInNodeDefinitions.ParagraphFragmentPayload payload,
+                                       ParagraphFragmentPayload payload,
                                        PdfRenderEnvironment environment) throws Exception {
         double innerX = fragment.x() + payload.padding().left();
         double innerWidth = Math.max(0.0, fragment.width() - payload.padding().horizontal());
@@ -351,7 +355,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
 
         double cursorTop = contentTop;
         for (int lineIndex = 0; lineIndex < payload.lines().size(); lineIndex++) {
-            BuiltInNodeDefinitions.ParagraphLine line = payload.lines().get(lineIndex);
+            ParagraphLine line = payload.lines().get(lineIndex);
             double lineTop = cursorTop;
             double resolvedLineHeight = line.lineHeight();
             double lineX = switch (payload.align()) {
@@ -360,7 +364,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                 case LEFT -> innerX;
             };
             double spanX = lineX;
-            for (BuiltInNodeDefinitions.ParagraphSpan span : line.spans()) {
+            for (ParagraphSpan span : line.spans()) {
                 if (span.linkOptions() != null && span.width() > 0.0) {
                     PdfLinkAnnotationWriter.PlacedPdfRect rect = spanLinkRectangle(
                             span,
@@ -380,13 +384,13 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         }
     }
 
-    private static PdfLinkAnnotationWriter.PlacedPdfRect spanLinkRectangle(BuiltInNodeDefinitions.ParagraphSpan span,
+    private static PdfLinkAnnotationWriter.PlacedPdfRect spanLinkRectangle(ParagraphSpan span,
                                                                            double spanX,
                                                                            double lineTop,
                                                                            double lineHeight,
                                                                            double textAscent,
                                                                            double baselineOffsetFromBottom) {
-        if (span instanceof BuiltInNodeDefinitions.ParagraphImageSpan imageSpan) {
+        if (span instanceof ParagraphImageSpan imageSpan) {
             double baselineY = lineTop - lineHeight + baselineOffsetFromBottom;
             double lineBottom = baselineY - baselineOffsetFromBottom;
             double base = switch (imageSpan.alignment() == null
@@ -422,8 +426,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
             return (PdfFragmentRenderHandler<Object>) direct;
         }
 
-        if (payload instanceof BuiltInNodeDefinitions.ParagraphFragmentPayload) {
-            return (PdfFragmentRenderHandler<Object>) handlers.get(BuiltInNodeDefinitions.ParagraphFragmentPayload.class);
+        if (payload instanceof ParagraphFragmentPayload) {
+            return (PdfFragmentRenderHandler<Object>) handlers.get(ParagraphFragmentPayload.class);
         }
         if (payload instanceof ShapeFragmentPayload) {
             return (PdfFragmentRenderHandler<Object>) handlers.get(ShapeFragmentPayload.class);

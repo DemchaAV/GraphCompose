@@ -46,6 +46,11 @@ import com.demcha.compose.document.layout.SplitRequest;
 import com.demcha.compose.document.layout.payloads.EllipseFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ImageFragmentPayload;
 import com.demcha.compose.document.layout.payloads.LineFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ParagraphImageSpan;
+import com.demcha.compose.document.layout.payloads.ParagraphLine;
+import com.demcha.compose.document.layout.payloads.ParagraphSpan;
+import com.demcha.compose.document.layout.payloads.ParagraphTextSpan;
 import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
 import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
 import com.demcha.compose.document.node.ContainerNode;
@@ -209,7 +214,7 @@ class DocumentSessionTest {
             assertThat(graph.fragments().getFirst().payload())
                     .isInstanceOf(ShapeFragmentPayload.class);
             assertThat(graph.fragments().get(1).payload())
-                    .isInstanceOf(BuiltInNodeDefinitions.ParagraphFragmentPayload.class);
+                    .isInstanceOf(ParagraphFragmentPayload.class);
 
             ShapeFragmentPayload payload =
                     (ShapeFragmentPayload) graph.fragments().getFirst().payload();
@@ -466,12 +471,12 @@ class DocumentSessionTest {
             assertThat(graph.nodes().getFirst().endPage()).isGreaterThan(0);
             assertThat(graph.fragments()).extracting(PlacedFragment::pageIndex).doesNotHaveDuplicates();
             assertThat(graph.fragments()).allSatisfy(fragment ->
-                    assertThat(fragment.payload()).isInstanceOf(BuiltInNodeDefinitions.ParagraphFragmentPayload.class));
+                    assertThat(fragment.payload()).isInstanceOf(ParagraphFragmentPayload.class));
 
-            BuiltInNodeDefinitions.ParagraphFragmentPayload firstPayload =
-                    (BuiltInNodeDefinitions.ParagraphFragmentPayload) graph.fragments().getFirst().payload();
-            BuiltInNodeDefinitions.ParagraphFragmentPayload lastPayload =
-                    (BuiltInNodeDefinitions.ParagraphFragmentPayload) graph.fragments().getLast().payload();
+            ParagraphFragmentPayload firstPayload =
+                    (ParagraphFragmentPayload) graph.fragments().getFirst().payload();
+            ParagraphFragmentPayload lastPayload =
+                    (ParagraphFragmentPayload) graph.fragments().getLast().payload();
             assertThat(firstPayload.padding().top()).isEqualTo(4.0);
             assertThat(firstPayload.padding().bottom()).isEqualTo(0.0);
             assertThat(lastPayload.padding().top()).isEqualTo(0.0);
@@ -552,10 +557,10 @@ class DocumentSessionTest {
             LayoutGraph graph = session.layoutGraph();
             assertThat(graph.fragments()).hasSize(1);
 
-            BuiltInNodeDefinitions.ParagraphFragmentPayload payload =
-                    (BuiltInNodeDefinitions.ParagraphFragmentPayload) graph.fragments().getFirst().payload();
+            ParagraphFragmentPayload payload =
+                    (ParagraphFragmentPayload) graph.fragments().getFirst().payload();
             assertThat(payload.lines())
-                    .extracting(BuiltInNodeDefinitions.ParagraphLine::text)
+                    .extracting(ParagraphLine::text)
                     .containsExactly("First line", "", "Second line");
         }
     }

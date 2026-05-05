@@ -4,6 +4,8 @@ import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.ImageFragmentPayload;
 import com.demcha.compose.document.layout.payloads.LineFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ParagraphLine;
 import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
 import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.templates.TemplateTestSupport;
@@ -154,8 +156,8 @@ class CvTemplateRenderTest {
             for (int index = 0; index < skillFragments.size() - 1; index++) {
                 PlacedFragment current = skillFragments.get(index);
                 PlacedFragment next = skillFragments.get(index + 1);
-                BuiltInNodeDefinitions.ParagraphFragmentPayload payload =
-                        (BuiltInNodeDefinitions.ParagraphFragmentPayload) current.payload();
+                ParagraphFragmentPayload payload =
+                        (ParagraphFragmentPayload) current.payload();
                 double gapBetweenItems = current.y() - (next.y() + next.height());
 
                 assertThat(gapBetweenItems).isCloseTo(payload.lineGap(), within(0.01));
@@ -575,7 +577,7 @@ class CvTemplateRenderTest {
                     });
 
             PlacedFragment profileHeader = fragments.stream()
-                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ParagraphFragmentPayload)
+                    .filter(fragment -> fragment.payload() instanceof ParagraphFragmentPayload)
                     .filter(fragment -> firstLine(fragment).contains("P R O F E S S I O N A L   S U M M A R Y"))
                     .findFirst()
                     .orElseThrow();
@@ -607,10 +609,10 @@ class CvTemplateRenderTest {
                     .filter(fragment -> fragment.payload() instanceof ImageFragmentPayload)
                     .findFirst()
                     .orElseThrow();
-            BuiltInNodeDefinitions.ParagraphFragmentPayload titlePayload = fragments.stream()
+            ParagraphFragmentPayload titlePayload = fragments.stream()
                     .filter(fragment -> fragment.path().contains("SidebarPortraitHero"))
-                    .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ParagraphFragmentPayload)
-                    .map(fragment -> (BuiltInNodeDefinitions.ParagraphFragmentPayload) fragment.payload())
+                    .filter(fragment -> fragment.payload() instanceof ParagraphFragmentPayload)
+                    .map(fragment -> (ParagraphFragmentPayload) fragment.payload())
                     .filter(payload -> payload.lines().getFirst().text().contains("Y O U R"))
                     .findFirst()
                     .orElseThrow();
@@ -819,7 +821,7 @@ class CvTemplateRenderTest {
     private static List<PlacedFragment> paragraphFragments(List<PlacedFragment> fragments, String pathPart) {
         return fragments.stream()
                 .filter(fragment -> fragment.path().contains(pathPart))
-                .filter(fragment -> fragment.payload() instanceof BuiltInNodeDefinitions.ParagraphFragmentPayload)
+                .filter(fragment -> fragment.payload() instanceof ParagraphFragmentPayload)
                 .toList();
     }
 
@@ -854,17 +856,17 @@ class CvTemplateRenderTest {
     }
 
     private static String firstLine(PlacedFragment fragment) {
-        BuiltInNodeDefinitions.ParagraphFragmentPayload payload =
-                (BuiltInNodeDefinitions.ParagraphFragmentPayload) fragment.payload();
+        ParagraphFragmentPayload payload =
+                (ParagraphFragmentPayload) fragment.payload();
         return payload.lines().getFirst().text();
     }
 
     private static List<String> continuationLines(PlacedFragment fragment) {
-        BuiltInNodeDefinitions.ParagraphFragmentPayload payload =
-                (BuiltInNodeDefinitions.ParagraphFragmentPayload) fragment.payload();
+        ParagraphFragmentPayload payload =
+                (ParagraphFragmentPayload) fragment.payload();
         return payload.lines().stream()
                 .skip(1)
-                .map(BuiltInNodeDefinitions.ParagraphLine::text)
+                .map(ParagraphLine::text)
                 .toList();
     }
 

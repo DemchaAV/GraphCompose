@@ -14,6 +14,11 @@ import com.demcha.compose.document.layout.definitions.ShapeContainerDefinition;
 import com.demcha.compose.document.layout.definitions.ShapeDefinition;
 import com.demcha.compose.document.layout.definitions.SpacerDefinition;
 import com.demcha.compose.document.layout.definitions.TableDefinition;
+import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ParagraphImageSpan;
+import com.demcha.compose.document.layout.payloads.ParagraphLine;
+import com.demcha.compose.document.layout.payloads.ParagraphSpan;
+import com.demcha.compose.document.layout.payloads.ParagraphTextSpan;
 import com.demcha.compose.document.layout.payloads.PdfSemanticFragmentPayload;
 import com.demcha.compose.document.layout.payloads.SideBorders;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
@@ -109,159 +114,13 @@ public final class BuiltInNodeDefinitions {
                 .register(new TableDefinition());
     }
 
-    /**
-     * One measured span inside a paragraph line. Sealed because the wrapping
-     * algorithm can produce either text spans or image spans for the same
-     * line — both contribute to wrapping width and per-line height.
-     */
-    @Internal
-    public sealed interface ParagraphSpan permits ParagraphTextSpan, ParagraphImageSpan {
-        /**
-         * @return measured span width in points
-         */
-        double width();
-
-        /**
-         * @return optional link metadata anchored to this span
-         */
-        DocumentLinkOptions linkOptions();
-
-        /**
-         * @return effective height contribution for line metrics (font line
-         *         height for text spans, image height for image spans)
-         */
-        double height();
-    }
-
-    /**
-     * Measured text span inside a paragraph line.
-     *
-     * @param text visible text for the span
-     * @param textStyle resolved text style
-     * @param width measured span width
-     * @param height font line height contribution
-     * @param linkOptions optional link metadata for the span
-     */
-    @Internal
-    public record ParagraphTextSpan(
-            String text,
-            TextStyle textStyle,
-            double width,
-            double height,
-            DocumentLinkOptions linkOptions
-    ) implements ParagraphSpan {
-        /**
-         * Creates a normalized measured paragraph text span.
-         */
-        public ParagraphTextSpan {
-            text = text == null ? "" : text;
-            textStyle = textStyle == null ? TextStyle.DEFAULT_STYLE : textStyle;
-        }
-
-        /**
-         * Convenience constructor without link metadata.
-         */
-        public ParagraphTextSpan(String text, TextStyle textStyle, double width, double height) {
-            this(text, textStyle, width, height, null);
-        }
-    }
-
-    /**
-     * Measured inline image span inside a paragraph line.
-     *
-     * @param imageData engine image payload, ready for the PDF backend
-     * @param width target width in points
-     * @param height target height in points
-     * @param alignment vertical alignment relative to the surrounding text
-     * @param baselineOffset extra vertical offset in points; positive moves up
-     * @param linkOptions optional link metadata
-     */
-    @Internal
-    public record ParagraphImageSpan(
-            ImageData imageData,
-            double width,
-            double height,
-            InlineImageAlignment alignment,
-            double baselineOffset,
-            DocumentLinkOptions linkOptions
-    ) implements ParagraphSpan {
-        /**
-         * Validates and normalizes inline image span fields.
-         */
-        public ParagraphImageSpan {
-            Objects.requireNonNull(imageData, "imageData");
-            alignment = alignment == null ? InlineImageAlignment.CENTER : alignment;
-        }
-    }
-
-    /**
-     * One measured paragraph line emitted to the PDF backend.
-     *
-     * @param text line text used for diagnostics and simple rendering paths
-     * @param width measured line width
-     * @param lineHeight resolved line height (max of text and image heights)
-     * @param textLineHeight font-line-height for the dominant text style on
-     *                       this line; equals {@code lineHeight} when no
-     *                       inline image enlarges the line
-     * @param textAscent ascent of the dominant text style on this line; used
-     *                   to position image spans relative to the baseline
-     * @param baselineOffsetFromBottom distance from line bottom to the text
-     *                                 baseline
-     * @param spans measured styled spans in source order
-     */
-    @Internal
-    public record ParagraphLine(
-            String text,
-            double width,
-            double lineHeight,
-            double textLineHeight,
-            double textAscent,
-            double baselineOffsetFromBottom,
-            List<ParagraphSpan> spans
-    ) {
-        /**
-         * Creates a normalized measured paragraph line.
-         */
-        public ParagraphLine {
-            text = text == null ? "" : text;
-            spans = List.copyOf(spans);
-        }
-    }
+    // ParagraphSpan / ParagraphTextSpan / ParagraphImageSpan / ParagraphLine
+    // moved to com.demcha.compose.document.layout.payloads in Phase E.2.
 
     // PdfSemanticFragmentPayload interface moved to
     // com.demcha.compose.document.layout.payloads in Phase E.2.
 
-    /**
-     * PDF payload for a resolved paragraph fragment.
-     *
-     * @param textStyle base text style for the fragment
-     * @param align horizontal text alignment
-     * @param padding fragment padding
-     * @param lineHeight resolved line height
-     * @param lineGap extra spacing between lines
-     * @param baselineOffset offset from line bottom to baseline
-     * @param lines measured lines contained by the fragment
-     * @param linkOptions optional fragment-level link metadata
-     * @param bookmarkOptions optional fragment-level bookmark metadata
-     */
-    public record ParagraphFragmentPayload(
-            TextStyle textStyle,
-            TextAlign align,
-            Padding padding,
-            double lineHeight,
-            double lineGap,
-            double baselineOffset,
-            List<ParagraphLine> lines,
-            DocumentLinkOptions linkOptions,
-            DocumentBookmarkOptions bookmarkOptions
-    ) implements PdfSemanticFragmentPayload {
-        /**
-         * Creates an immutable paragraph fragment payload.
-         */
-        public ParagraphFragmentPayload {
-            lines = List.copyOf(lines);
-        }
-    }
+    // ParagraphFragmentPayload moved to com.demcha.compose.document.layout.payloads in Phase E.2.
 
     // ShapeFragmentPayload moved to com.demcha.compose.document.layout.payloads in Phase E.2.
 

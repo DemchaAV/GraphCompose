@@ -2,8 +2,12 @@ package com.demcha.compose.document.backend.fixed.pdf.handlers;
 
 import com.demcha.compose.document.backend.fixed.pdf.PdfFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
-import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ParagraphImageSpan;
+import com.demcha.compose.document.layout.payloads.ParagraphLine;
+import com.demcha.compose.document.layout.payloads.ParagraphSpan;
+import com.demcha.compose.document.layout.payloads.ParagraphTextSpan;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.engine.render.pdf.PdfFont;
@@ -23,7 +27,7 @@ import java.util.List;
  * shared baseline.</p>
  */
 public final class PdfParagraphFragmentRenderHandler
-        implements PdfFragmentRenderHandler<BuiltInNodeDefinitions.ParagraphFragmentPayload> {
+        implements PdfFragmentRenderHandler<ParagraphFragmentPayload> {
 
     /**
      * Creates the paragraph fragment renderer.
@@ -32,13 +36,13 @@ public final class PdfParagraphFragmentRenderHandler
     }
 
     @Override
-    public Class<BuiltInNodeDefinitions.ParagraphFragmentPayload> payloadType() {
-        return BuiltInNodeDefinitions.ParagraphFragmentPayload.class;
+    public Class<ParagraphFragmentPayload> payloadType() {
+        return ParagraphFragmentPayload.class;
     }
 
     @Override
     public void render(PlacedFragment fragment,
-                       BuiltInNodeDefinitions.ParagraphFragmentPayload payload,
+                       ParagraphFragmentPayload payload,
                        PdfRenderEnvironment environment) throws IOException {
         FontLibrary fonts = environment.fonts();
         double innerX = fragment.x() + payload.padding().left();
@@ -50,7 +54,7 @@ public final class PdfParagraphFragmentRenderHandler
         try {
             double cursorTop = contentTop;
             for (int lineIndex = 0; lineIndex < payload.lines().size(); lineIndex++) {
-                BuiltInNodeDefinitions.ParagraphLine line = payload.lines().get(lineIndex);
+                ParagraphLine line = payload.lines().get(lineIndex);
                 double lineTop = cursorTop;
                 double resolvedLineHeight = line.lineHeight();
                 double baselineY = lineTop - resolvedLineHeight + line.baselineOffsetFromBottom();
@@ -71,11 +75,11 @@ public final class PdfParagraphFragmentRenderHandler
 
     private void renderLine(PDPageContentStream stream,
                             FontLibrary fonts,
-                            BuiltInNodeDefinitions.ParagraphLine line,
+                            ParagraphLine line,
                             double lineX,
                             double baselineY,
                             PdfRenderEnvironment environment) throws IOException {
-        List<BuiltInNodeDefinitions.ParagraphSpan> spans = line.spans();
+        List<ParagraphSpan> spans = line.spans();
         if (spans.isEmpty()) {
             return;
         }
@@ -83,8 +87,8 @@ public final class PdfParagraphFragmentRenderHandler
         boolean inTextBlock = false;
         double cursorX = lineX;
         try {
-            for (BuiltInNodeDefinitions.ParagraphSpan span : spans) {
-                if (span instanceof BuiltInNodeDefinitions.ParagraphTextSpan textSpan) {
+            for (ParagraphSpan span : spans) {
+                if (span instanceof ParagraphTextSpan textSpan) {
                     String text = sanitize(textSpan.text());
                     if (text.isEmpty()) {
                         cursorX += textSpan.width();
@@ -100,7 +104,7 @@ public final class PdfParagraphFragmentRenderHandler
                     stream.setNonStrokingColor(textSpan.textStyle().color());
                     stream.showText(text);
                     cursorX += textSpan.width();
-                } else if (span instanceof BuiltInNodeDefinitions.ParagraphImageSpan imageSpan) {
+                } else if (span instanceof ParagraphImageSpan imageSpan) {
                     if (inTextBlock) {
                         stream.endText();
                         inTextBlock = false;
@@ -127,7 +131,7 @@ public final class PdfParagraphFragmentRenderHandler
         }
     }
 
-    private static double resolveImageBottom(BuiltInNodeDefinitions.ParagraphImageSpan imageSpan,
+    private static double resolveImageBottom(ParagraphImageSpan imageSpan,
                                              double baselineY,
                                              double textAscent,
                                              double baselineOffsetFromBottom,

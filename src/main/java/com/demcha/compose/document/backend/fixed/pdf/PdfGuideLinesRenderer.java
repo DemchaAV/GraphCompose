@@ -1,7 +1,7 @@
 package com.demcha.compose.document.backend.fixed.pdf;
 
-import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
 import com.demcha.compose.engine.components.style.Padding;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
@@ -161,7 +161,7 @@ final class PdfGuideLinesRenderer {
     }
 
     private static Padding guidePadding(PlacedFragment fragment, Object payload) {
-        if (payload instanceof BuiltInNodeDefinitions.ParagraphFragmentPayload paragraphPayload) {
+        if (payload instanceof ParagraphFragmentPayload paragraphPayload) {
             return paragraphPayload.padding();
         }
         return fragment.padding();

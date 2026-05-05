@@ -69,6 +69,30 @@ for the phased plan, verification gates, and ADRs.
 
 ---
 
+## v1.5.1 — 2026-05-05
+
+### Dependencies
+
+- **PDFBox 3.0.7.** Bumped from 3.0.5 to 3.0.7 (Apache PDFBox patch
+  release with upstream rendering and security fixes). No
+  public-API impact for GraphCompose consumers.
+
+### Tooling
+
+- `ShapeContainerVisualRegressionTest` tolerates the cross-platform
+  PDF font-rendering drift that surfaces between Windows-rendered
+  baselines and the Linux CI runner (~1-2% pixel diff), via a
+  calibrated `mismatchedPixelBudget` instead of bit-exact comparison.
+- `DocumentationCoverageTest` no longer pins to the structural
+  section anchors that the v1.5.0 README slim removed; the guard now
+  scans the whole README for canonical-DSL coverage and
+  legacy-API leakage in one whole-file pass.
+
+This is a maintenance patch release. There are no public API
+changes; v1.5.0 consumers can upgrade with no code changes.
+
+---
+
 ## v1.5.0 — 2026-05-04
 
 ### Headline — "intuitive"

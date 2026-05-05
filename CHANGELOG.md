@@ -105,6 +105,23 @@ for the user-facing summary.
   `@deprecated` tag. `DocumentSession` drops from 1,024 to ~937
   lines without changing any public method signatures.
 
+### Visual polish (committed in v1.6 line, develop)
+
+- **Modern Professional CV (`CvTemplateV1`) section spacing.** The
+  built-in standard CV template gains a minimal-but-visible
+  separation between top-level modules and between right-aligned
+  contact rows. `CvTemplateComposer.MINIMUM_TOP_LEVEL_MODULE_SPACING`
+  raised from `6.0` to `7.0` so adjacent section headings no
+  longer touch the trailing line of the previous module body, and
+  `LEGACY_HEADER_RIGHT_MARGIN` gains a `1pt` bottom so the
+  address / phone row and email / links row stop overlapping.
+  Conservative bumps — just enough to break the glue without
+  rebalancing the page. Layout-snapshot baselines
+  (`template_cv_1_standard`, `template_cv_1_rich_one_and_half_pages`,
+  and the nine font-theme variants) regenerated to match. No
+  public API change; downstream `CvTheme` / `CvDocumentSpec`
+  consumers see identical surface.
+
 ### Feature scope (planned)
 
 - **Nested list ergonomics.**

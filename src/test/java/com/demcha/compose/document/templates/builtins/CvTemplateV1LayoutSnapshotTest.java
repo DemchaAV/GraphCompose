@@ -1,6 +1,7 @@
 package com.demcha.compose.document.templates.builtins;
 
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.snapshot.LayoutNodeSnapshot;
 import com.demcha.compose.document.templates.TemplateTestSupport;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.font.FontName;
@@ -27,6 +28,34 @@ class CvTemplateV1LayoutSnapshotTest {
         try (DocumentSession document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 15, 10, 15, 15)) {
             template.compose(document, cv);
             TemplateTestSupport.assertCanonicalSnapshot(document, "template_cv_1_standard", "cv");
+        }
+    }
+
+    @Test
+    void shouldSeparateStandardCvModulesWithReadableTopLevelRhythm() throws Exception {
+        CvDocumentSpec cv = TemplateTestSupport.canonicalCv();
+
+        try (DocumentSession document = TemplateTestSupport.openInMemoryDocument(PDRectangle.A4, 15, 10, 15, 15)) {
+            template.compose(document, cv);
+
+            List<LayoutNodeSnapshot> modules = document.layoutSnapshot().nodes().stream()
+                    .filter(node -> "MainVBoxContainer[0]".equals(node.parentPath()))
+                    .filter(node -> "SectionNode".equals(node.entityKind()))
+                    .toList();
+
+            assertThat(modules)
+                    .extracting(LayoutNodeSnapshot::entityName)
+                    .containsSequence("Summary", "TechnicalSkills", "Education", "Projects", "Experience", "Additional");
+
+            for (int index = 0; index < modules.size() - 1; index++) {
+                LayoutNodeSnapshot current = modules.get(index);
+                LayoutNodeSnapshot next = modules.get(index + 1);
+                double gap = current.computedY() - (next.computedY() + next.placementHeight());
+
+                assertThat(gap)
+                        .as("%s -> %s top-level module gap", current.entityName(), next.entityName())
+                        .isGreaterThanOrEqualTo(5.9);
+            }
         }
     }
 

@@ -26,8 +26,8 @@ import java.util.Locale;
 import java.util.Objects;
 
 /**
- * Editorial serif CV with a measured cover page, generous rules, and a quieter
- * second-page detail flow.
+ * Editorial serif CV with a compact profile band and framed, single-pass
+ * detail flow.
  */
 public final class ClassicSerifCvTemplateComposer {
     private static final DocumentColor INK = DocumentColor.rgb(45, 43, 40);
@@ -55,22 +55,17 @@ public final class ClassicSerifCvTemplateComposer {
 
         addHeader(flow, spec.header(), document.canvas().innerWidth());
         addSummary(flow, findModule(spec, "summary", "professional summary", "profile"));
-        addFeatureRow(flow, spec);
-        flow.addPageBreak(pageBreak -> pageBreak.name("ClassicSerifDetailsPage"));
-        addLinearModule(flow, "Experience", findModule(spec, "experience", "employment"));
-        addLinearModule(flow, "Projects", findModule(spec, "projects"));
-        addLinearModule(flow, "Education", findModule(spec, "education", "certifications"));
-        addLinearModule(flow, "Additional", findModule(spec, "additional information", "additional"));
+        addModules(flow, spec);
         flow.build();
     }
 
     private void addHeader(PageFlowBuilder flow, Header header, double width) {
         flow.addSection("ClassicSerifHeader", section -> {
             section.spacing(5)
-                    .padding(new DocumentInsets(8, 0, 7, 0))
+                    .padding(new DocumentInsets(6, 0, 5, 0))
                     .addParagraph(paragraph -> paragraph
                             .text(spacedUpper(safe(header == null ? "" : header.getName())))
-                            .textStyle(style(theme.headerFont(), 27.0, DocumentTextDecoration.DEFAULT, INK))
+                            .textStyle(style(theme.headerFont(), 24.0, DocumentTextDecoration.DEFAULT, INK))
                             .align(TextAlign.CENTER)
                             .margin(DocumentInsets.zero()))
                     .addLine(line -> line
@@ -117,87 +112,119 @@ public final class ClassicSerifCvTemplateComposer {
             return;
         }
         flow.addSection("ClassicSerifSummary", section -> {
-            section.spacing(5)
-                    .padding(new DocumentInsets(12, 18, 13, 18))
+            section.spacing(4)
+                    .padding(new DocumentInsets(9, 16, 10, 16))
                     .fillColor(SOFT_FILL)
                     .accentTop(ACCENT, 1.15)
                     .accentBottom(RULE, 0.45);
             addTitle(section, "Professional Profile", TextAlign.CENTER);
             section.addParagraph(paragraph -> paragraph
                     .text(stripMarkdown(text))
-                    .textStyle(style(theme.bodyFont(), 9.8, DocumentTextDecoration.DEFAULT, INK))
-                    .lineSpacing(1.55)
+                    .textStyle(style(theme.bodyFont(), 9.2, DocumentTextDecoration.DEFAULT, INK))
+                    .lineSpacing(1.35)
                     .align(TextAlign.CENTER)
                     .margin(DocumentInsets.zero()));
         });
     }
 
-    private void addFeatureRow(PageFlowBuilder flow, CvDocumentSpec spec) {
-        flow.addRow("ClassicSerifFirstPageGrid", row -> row
-                .spacing(15)
-                .weights(1.0, 1.0)
-                .addSection("ClassicSerifSkillsColumn", left -> {
-                    left.spacing(7);
-                    addFeatureModule(left, "Core Skills", findModule(spec, "technical skills", "skills"), 7);
-                    addFeatureModule(left, "Education", findModule(spec, "education", "certifications"), 3);
-                })
-                .addSection("ClassicSerifEvidenceColumn", right -> {
-                    right.spacing(7);
-                    addFeatureModule(right, "Experience", findModule(spec, "experience", "employment"), 2);
-                    addFeatureModule(right, "Selected Projects", findModule(spec, "projects"), 3);
-                }));
+    private void addModules(PageFlowBuilder flow, CvDocumentSpec spec) {
+        List<CvModule> rendered = new ArrayList<>();
+
+        addFirstMatchingModule(flow, spec, rendered, "technical skills", "skills");
+        addFirstMatchingModule(flow, spec, rendered, "experience", "employment");
+        addFirstMatchingModule(flow, spec, rendered, "projects");
+        addFirstMatchingModule(flow, spec, rendered, "education", "certifications");
+        addFirstMatchingModule(flow, spec, rendered, "additional information", "additional");
+
+        for (CvModule module : spec.modules()) {
+            if (!isSummaryModule(module) && !rendered.contains(module)) {
+                addModuleCard(flow, module);
+            }
+        }
     }
 
-    private void addFeatureModule(SectionBuilder parent, String title, CvModule module, int limit) {
-        List<String> lines = moduleLines(module).stream().limit(limit).toList();
-        if (lines.isEmpty()) {
+    private void addFirstMatchingModule(
+            PageFlowBuilder flow,
+            CvDocumentSpec spec,
+            List<CvModule> rendered,
+            String... keys) {
+        for (CvModule module : spec.modules()) {
+            if (!isSummaryModule(module) && !rendered.contains(module) && matches(module, keys)) {
+                addModuleCard(flow, module);
+                rendered.add(module);
+                return;
+            }
+        }
+    }
+
+    private void addModuleCard(PageFlowBuilder flow, CvModule module) {
+        if (moduleLines(module).isEmpty()) {
             return;
         }
-        parent.addSection("ClassicSerifFeature" + normalize(title), section -> {
-            section.spacing(4)
-                    .padding(new DocumentInsets(9, 10, 10, 10))
+
+        String title = module.title().isBlank() ? module.name() : module.title();
+        flow.addSection("ClassicSerifModule" + normalize(title), section -> {
+            section.spacing(3)
+                    .padding(new DocumentInsets(7, 9, 8, 9))
                     .stroke(DocumentStroke.of(RULE, 0.35));
             addTitle(section, title, TextAlign.LEFT);
-            section.addList(list -> list
-                    .items(lines.stream().map(ClassicSerifCvTemplateComposer::stripMarkdown).toList())
-                    .bullet()
-                    .textStyle(style(theme.bodyFont(), 8.65, DocumentTextDecoration.DEFAULT, INK))
-                    .lineSpacing(1.25)
-                    .itemSpacing(2.0)
-                    .margin(DocumentInsets.zero()));
+            renderModuleBody(section, module);
         });
     }
 
-    private void addLinearModule(PageFlowBuilder flow, String title, CvModule module) {
-        List<String> lines = moduleLines(module);
-        if (lines.isEmpty()) {
+    private void renderModuleBody(SectionBuilder section, CvModule module) {
+        for (CvModule.BodyBlock block : module.bodyBlocks()) {
+            switch (block.kind()) {
+                case PARAGRAPH -> renderParagraph(section, block.text());
+                case LIST -> {
+                    if (block.marker().isVisible()) {
+                        renderBulletList(section, block.items());
+                    } else {
+                        for (String item : block.items()) {
+                            renderLine(section, item);
+                        }
+                    }
+                }
+                default -> {
+                    // Classic Serif intentionally consumes plain narrative modules.
+                }
+            }
+        }
+    }
+
+    private void renderBulletList(SectionBuilder section, List<String> items) {
+        List<String> cleaned = items.stream()
+                .filter(item -> !safe(item).isBlank())
+                .map(ClassicSerifCvTemplateComposer::stripMarkdown)
+                .toList();
+        if (cleaned.isEmpty()) {
             return;
         }
-        flow.addSection("ClassicSerif" + normalize(title), section -> {
-            section.spacing(4)
-                    .padding(new DocumentInsets(0, 0, 2, 0));
-            addTitle(section, title, TextAlign.LEFT);
-            section.addLine(line -> line
-                    .name("ClassicSerif" + normalize(title) + "Rule")
-                    .horizontal(72)
-                    .color(ACCENT)
-                    .thickness(1.0)
-                    .margin(new DocumentInsets(0, 0, 2, 0)));
-            for (String line : lines) {
-                renderLine(section, line);
-            }
-        });
+        section.addList(list -> list
+                .items(cleaned)
+                .bullet()
+                .textStyle(style(theme.bodyFont(), 8.3, DocumentTextDecoration.DEFAULT, INK))
+                .lineSpacing(1.15)
+                .itemSpacing(1.2)
+                .margin(DocumentInsets.zero()));
+    }
+
+    private void renderParagraph(SectionBuilder section, String rawLine) {
+        if (safe(rawLine).isBlank()) {
+            return;
+        }
+        section.addParagraph(paragraph -> paragraph
+                .text(stripMarkdown(rawLine))
+                .textStyle(style(theme.bodyFont(), 8.55, DocumentTextDecoration.DEFAULT, INK))
+                .lineSpacing(1.18)
+                .align(TextAlign.LEFT)
+                .margin(DocumentInsets.top(1)));
     }
 
     private void renderLine(SectionBuilder section, String rawLine) {
         WorkEntry entry = parseWorkEntry(rawLine);
         if (entry == null) {
-            section.addParagraph(paragraph -> paragraph
-                    .text(stripMarkdown(rawLine))
-                    .textStyle(style(theme.bodyFont(), 9.0, DocumentTextDecoration.DEFAULT, INK))
-                    .lineSpacing(1.35)
-                    .align(TextAlign.LEFT)
-                    .margin(DocumentInsets.top(1)));
+            renderParagraph(section, rawLine);
             return;
         }
 
@@ -208,21 +235,21 @@ public final class ClassicSerifCvTemplateComposer {
                         .padding(DocumentInsets.zero())
                         .addParagraph(paragraph -> paragraph
                                 .text(stripMarkdown(entry.heading()))
-                                .textStyle(style(theme.bodyFont(), 9.2, DocumentTextDecoration.BOLD, INK))
+                                .textStyle(style(theme.bodyFont(), 8.75, DocumentTextDecoration.BOLD, INK))
                                 .align(TextAlign.LEFT)
                                 .margin(DocumentInsets.zero())))
                 .addSection("Date", date -> date
                         .padding(DocumentInsets.zero())
                         .addParagraph(paragraph -> paragraph
                                 .text(stripMarkdown(entry.date()))
-                                .textStyle(style(theme.bodyFont(), 8.7, DocumentTextDecoration.DEFAULT, MUTED))
+                                .textStyle(style(theme.bodyFont(), 8.25, DocumentTextDecoration.DEFAULT, MUTED))
                                 .align(TextAlign.RIGHT)
                                 .margin(DocumentInsets.zero()))));
         if (!entry.description().isBlank()) {
             section.addParagraph(paragraph -> paragraph
                     .text(stripMarkdown(entry.description()))
-                    .textStyle(style(theme.bodyFont(), 8.8, DocumentTextDecoration.DEFAULT, INK))
-                    .lineSpacing(1.35)
+                    .textStyle(style(theme.bodyFont(), 8.35, DocumentTextDecoration.DEFAULT, INK))
+                    .lineSpacing(1.18)
                     .align(TextAlign.LEFT)
                     .margin(DocumentInsets.top(1)));
         }
@@ -231,7 +258,7 @@ public final class ClassicSerifCvTemplateComposer {
     private void addTitle(SectionBuilder section, String title, TextAlign align) {
         section.addParagraph(paragraph -> paragraph
                 .text(spacedUpper(title))
-                .textStyle(style(theme.headerFont(), 9.2, DocumentTextDecoration.BOLD, ACCENT))
+                .textStyle(style(theme.headerFont(), 8.7, DocumentTextDecoration.BOLD, ACCENT))
                 .align(align)
                 .margin(DocumentInsets.zero()));
     }
@@ -265,6 +292,23 @@ public final class ClassicSerifCvTemplateComposer {
             }
         }
         return null;
+    }
+
+    private boolean isSummaryModule(CvModule module) {
+        String normalized = normalize(module.name() + " " + module.title());
+        return normalized.contains("summary")
+                || normalized.contains("profile")
+                || normalized.contains("professionalsummary");
+    }
+
+    private boolean matches(CvModule module, String... keys) {
+        String normalized = normalize(module.name() + " " + module.title());
+        for (String key : keys) {
+            if (normalized.contains(normalize(key))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private List<String> moduleLines(CvModule module) {

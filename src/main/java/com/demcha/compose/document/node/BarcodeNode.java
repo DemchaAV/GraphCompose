@@ -1,8 +1,5 @@
 package com.demcha.compose.document.node;
 
-import com.demcha.compose.document.node.DocumentBarcodeOptions;
-import com.demcha.compose.document.node.DocumentBookmarkOptions;
-import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTransform;
 
@@ -14,16 +11,16 @@ import java.util.Objects;
  * <p>The node carries backend-neutral barcode payload data that the canonical
  * PDF backend turns into a bitmap at render time.</p>
  *
- * @param name node name used in snapshots and layout graph paths
- * @param barcodeOptions canonical barcode payload
- * @param width target rendered width
- * @param height target rendered height
- * @param linkOptions optional node-level link metadata
+ * @param name            node name used in snapshots and layout graph paths
+ * @param barcodeOptions  canonical barcode payload
+ * @param width           target rendered width
+ * @param height          target rendered height
+ * @param linkOptions     optional node-level link metadata
  * @param bookmarkOptions optional node-level bookmark metadata
- * @param padding inner padding
- * @param margin outer margin
- * @param transform render-time affine transform; defaults to
- *                  {@link DocumentTransform#NONE}.
+ * @param padding         inner padding
+ * @param margin          outer margin
+ * @param transform       render-time affine transform; defaults to
+ *                        {@link DocumentTransform#NONE}.
  */
 public record BarcodeNode(
         String name,

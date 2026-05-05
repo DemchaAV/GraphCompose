@@ -144,7 +144,7 @@ public final class LayoutCompiler {
         }
 
         compileAtomicLeaf(prepared, definition, path, semanticName, parentPath, childIndex, depth, regionX,
-                availableWidth, state, fragmentContext, nodes, fragments);
+                availableWidth, state, prepareContext, fragmentContext, nodes, fragments);
     }
 
     private void compilePageBreak(String path,
@@ -369,6 +369,8 @@ public final class LayoutCompiler {
                 }
 
                 if (childPrepared.isComposite()) {
+                    PlacementContext slotCtx = new FixedSlotPlacementContext(
+                            state.pageIndex, state.canvas, prepareContext, fragmentContext, nodes, fragments);
                     compileNodeInFixedSlot(
                             childPrepared,
                             path,
@@ -377,12 +379,7 @@ public final class LayoutCompiler {
                             cursorX,
                             rowInnerY,
                             slotWidth,
-                            state.pageIndex,
-                            prepareContext,
-                            fragmentContext,
-                            state.canvas,
-                            nodes,
-                            fragments);
+                            slotCtx);
                     cursorX += slotWidth + layoutSpec.spacing();
                     continue;
                 }
@@ -532,6 +529,8 @@ public final class LayoutCompiler {
         // is the SOURCE index so semantic paths stay stable for tests
         // and snapshots; only the iteration order shifts.
         int[] iterationOrder = stableZIndexOrder(stackLayout.zIndices());
+        PlacementContext layerHostCtx = new FixedSlotPlacementContext(
+                state.pageIndex, state.canvas, prepareContext, fragmentContext, nodes, fragments);
         for (int slot = 0; slot < iterationOrder.length; slot++) {
             int index = iterationOrder[slot];
             placeStackLayer(
@@ -546,12 +545,7 @@ public final class LayoutCompiler {
                     stackLayout.alignments().get(index),
                     stackLayout.offsetsX().get(index),
                     stackLayout.offsetsY().get(index),
-                    state.pageIndex,
-                    state.canvas,
-                    prepareContext,
-                    fragmentContext,
-                    nodes,
-                    fragments);
+                    layerHostCtx);
         }
 
         int endPage = state.pageIndex;
@@ -737,6 +731,7 @@ public final class LayoutCompiler {
                                    double regionX,
                                    double availableWidth,
                                    CompilerState state,
+                                   PrepareContext prepareContext,
                                    FragmentContext fragmentContext,
                                    List<PlacedNode> nodes,
                                    List<PlacedFragment> fragments) {
@@ -757,12 +752,12 @@ public final class LayoutCompiler {
 
         double placementX = regionX + margin.left();
         double placementY = state.pageTop() - state.usedHeight - margin.top() - naturalMeasure.height();
-        int pageIndex = state.pageIndex;
 
+        PlacementContext leafCtx = new FixedSlotPlacementContext(
+                state.pageIndex, state.canvas, prepareContext, fragmentContext, nodes, fragments);
         placeAtomicLeafFragments(
                 prepared, definition, path, semanticName, parentPath, childIndex, depth,
-                placementX, placementY, pageIndex, margin, padding, naturalMeasure,
-                fragmentContext, nodes, fragments);
+                placementX, placementY, margin, padding, naturalMeasure, leafCtx);
         state.usedHeight += outerHeight;
     }
 
@@ -784,14 +779,12 @@ public final class LayoutCompiler {
                                           int depth,
                                           double placementX,
                                           double placementY,
-                                          int pageIndex,
                                           Margin margin,
                                           Padding padding,
                                           MeasureResult naturalMeasure,
-                                          FragmentContext fragmentContext,
-                                          List<PlacedNode> nodes,
-                                          List<PlacedFragment> fragments) {
+                                          PlacementContext ctx) {
         DocumentNode node = prepared.node();
+        int pageIndex = ctx.pageIndex();
         FragmentPlacement placement = new FragmentPlacement(
                 path,
                 parentPath,
@@ -806,8 +799,8 @@ public final class LayoutCompiler {
                 pageIndex,
                 margin,
                 padding);
-        addPlacedFragments(definition.emitFragments(prepared, fragmentContext, placement), placement, fragments);
-        nodes.add(new PlacedNode(
+        addPlacedFragments(definition.emitFragments(prepared, ctx.fragmentContext(), placement), placement, ctx.fragments());
+        ctx.nodes().add(new PlacedNode(
                 path,
                 semanticName,
                 node.nodeKind(),
@@ -852,14 +845,9 @@ public final class LayoutCompiler {
                                  com.demcha.compose.document.node.LayerAlign align,
                                  double layerOffsetX,
                                  double layerOffsetY,
-                                 int pageIndex,
-                                 LayoutCanvas canvas,
-                                 PrepareContext prepareContext,
-                                 FragmentContext fragmentContext,
-                                 List<PlacedNode> nodes,
-                                 List<PlacedFragment> fragments) {
+                                 PlacementContext ctx) {
         PreparedNode<DocumentNode> childPrepared =
-                prepareForRegionWidth(prepareContext, child, innerWidth);
+                prepareForRegionWidth(ctx.prepareContext(), child, innerWidth);
         MeasureResult childMeasure = childPrepared.measureResult();
         Margin childMargin = toMargin(child.margin());
         double childOuterWidth = childMeasure.width() + childMargin.horizontal();
@@ -875,6 +863,19 @@ public final class LayoutCompiler {
                 - verticalLayerOffset(align, innerHeight, childOuterHeight)
                 - layerOffsetY;
 
+        // Layers always paint into a fixed page band — even when the
+        // surrounding flow is mutating, the overlay is pinned to ctx's
+        // current page, so we narrow to a fixed-slot context here.
+        PlacementContext layerCtx = ctx instanceof FixedSlotPlacementContext fixed
+                ? fixed
+                : new FixedSlotPlacementContext(
+                        ctx.pageIndex(),
+                        ctx.canvas(),
+                        ctx.prepareContext(),
+                        ctx.fragmentContext(),
+                        ctx.nodes(),
+                        ctx.fragments());
+
         compileNodeInFixedSlot(
                 childPrepared,
                 parentPath,
@@ -883,12 +884,7 @@ public final class LayoutCompiler {
                 alignedSlotX,
                 alignedSlotTopY,
                 childOuterWidth,
-                pageIndex,
-                prepareContext,
-                fragmentContext,
-                canvas,
-                nodes,
-                fragments);
+                layerCtx);
     }
 
     private void compileSplittableLeaf(PreparedNode<DocumentNode> prepared,
@@ -1072,12 +1068,17 @@ public final class LayoutCompiler {
                                           double slotX,
                                           double slotTopY,
                                           double slotWidth,
-                                          int pageIndex,
-                                          PrepareContext prepareContext,
-                                          FragmentContext fragmentContext,
-                                          LayoutCanvas canvas,
-                                          List<PlacedNode> nodes,
-                                          List<PlacedFragment> fragments) {
+                                          PlacementContext ctx) {
+        // Alias locals so the body keeps the same names it had before the
+        // PlacementContext refactor; the context is the only authoritative
+        // source of pagination state for this branch.
+        int pageIndex = ctx.pageIndex();
+        PrepareContext prepareContext = ctx.prepareContext();
+        FragmentContext fragmentContext = ctx.fragmentContext();
+        LayoutCanvas canvas = ctx.canvas();
+        List<PlacedNode> nodes = ctx.nodes();
+        List<PlacedFragment> fragments = ctx.fragments();
+
         DocumentNode node = prepared.node();
         @SuppressWarnings("unchecked")
         NodeDefinition<DocumentNode> definition = (NodeDefinition<DocumentNode>) registry.definitionFor(node);
@@ -1135,12 +1136,7 @@ public final class LayoutCompiler {
                             stackLayout.alignments().get(i),
                             0.0,
                             0.0,
-                            pageIndex,
-                            canvas,
-                            prepareContext,
-                            fragmentContext,
-                            nodes,
-                            fragments);
+                            ctx);
                 }
 
                 List<PlacedFragment> stackDecorations = compositeDecorationFragments(
@@ -1225,12 +1221,7 @@ public final class LayoutCompiler {
                         childRegionX,
                         childTopY,
                         childRegionWidth,
-                        pageIndex,
-                        prepareContext,
-                        fragmentContext,
-                        canvas,
-                        nodes,
-                        fragments);
+                        ctx);
                 childTopY -= consumed;
                 if (i < children.size() - 1) {
                     childTopY -= layoutSpec.spacing();
@@ -1284,8 +1275,7 @@ public final class LayoutCompiler {
 
         placeAtomicLeafFragments(
                 prepared, definition, path, semanticName, parentPath, childIndex, depth,
-                placementX, placementY, pageIndex, margin, padding, measure,
-                fragmentContext, nodes, fragments);
+                placementX, placementY, margin, padding, measure, ctx);
         return measure.height() + margin.vertical();
     }
 
@@ -1458,33 +1448,5 @@ public final class LayoutCompiler {
                 "Node '" + path + "' requires outer height " + outerHeight + " but page capacity is " + pageHeight + ".");
     }
 
-    private static final class CompilerState {
-        private final LayoutCanvas canvas;
-        private int pageIndex;
-        private double usedHeight;
-        private int maxTouchedPage = -1;
-
-        private CompilerState(LayoutCanvas canvas) {
-            this.canvas = canvas;
-        }
-
-        private double remainingHeight() {
-            return Math.max(0.0, canvas.innerHeight() - usedHeight);
-        }
-
-        private double pageTop() {
-            return canvas.height() - canvas.margin().top();
-        }
-
-        private void newPage() {
-            pageIndex++;
-            usedHeight = 0.0;
-            touchPage();
-        }
-
-        private void touchPage() {
-            maxTouchedPage = Math.max(maxTouchedPage, pageIndex);
-        }
-    }
 }
 

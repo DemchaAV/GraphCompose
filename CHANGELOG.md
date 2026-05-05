@@ -77,6 +77,20 @@ for the user-facing summary.
   `BuiltInNodeDefinitions` drops from 3,037 to ~60 lines and now
   only exposes `registerDefaults(NodeRegistry)` as the single
   registration entry point.
+- **`PlacementContext` strategy interface (Phase E.4).** A new
+  `PlacementContext` sealed interface unifies the placement
+  bookkeeping that `LayoutCompiler` helpers need (current page
+  index, canvas, prepare/fragment contexts, target lists for placed
+  nodes/fragments, and a `canAdvancePage()` / `advancePage()` /
+  `touchPage()` strategy). `FixedSlotPlacementContext` pins the page
+  for row slots, stacked layers, and atomic leaf placement;
+  `MutatingPlacementContext` wraps the live `CompilerState` for
+  callers that drive top-down page flow. The previously private
+  inner `CompilerState` is lifted to a sibling package-private
+  class. `placeStackLayer`, `placeAtomicLeafFragments`, and
+  `compileNodeInFixedSlot` now take `PlacementContext` instead of
+  six explicit parameters each. Pure refactor — no public API
+  change, no behaviour change.
 - **`DocumentSession` slim (Phase E.3).** New `SessionFontApi`
   facade (`session.fonts()`) groups
   `registerFontFamily(FontFamilyDefinition)` and

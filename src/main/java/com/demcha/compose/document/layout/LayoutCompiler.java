@@ -534,41 +534,22 @@ public final class LayoutCompiler {
         int[] iterationOrder = stableZIndexOrder(stackLayout.zIndices());
         for (int slot = 0; slot < iterationOrder.length; slot++) {
             int index = iterationOrder[slot];
-            DocumentNode child = children.get(index);
-            com.demcha.compose.document.node.LayerAlign align =
-                    stackLayout.alignments().get(index);
-            double layerOffsetX = stackLayout.offsetsX().get(index);
-            double layerOffsetY = stackLayout.offsetsY().get(index);
-
-            PreparedNode<DocumentNode> childPrepared =
-                    prepareForRegionWidth(prepareContext, child, innerWidth);
-            MeasureResult childMeasure = childPrepared.measureResult();
-            Margin childMargin = toMargin(child.margin());
-            double childOuterWidth = childMeasure.width() + childMargin.horizontal();
-            double childOuterHeight = childMeasure.height() + childMargin.vertical();
-
-            // Anchor placement, then apply on-screen offsets:
-            // offsetX > 0 nudges the layer right; offsetY > 0 nudges it down
-            // (PDF y grows upward, so "down" subtracts from the top-Y).
-            double alignedSlotX = innerStartX
-                    + horizontalLayerOffset(align, innerWidth, childOuterWidth)
-                    + layerOffsetX;
-            double alignedSlotTopY = innerTopY
-                    - verticalLayerOffset(align, innerHeight, childOuterHeight)
-                    - layerOffsetY;
-
-            compileNodeInFixedSlot(
-                    childPrepared,
-                    path,
+            placeStackLayer(
+                    children.get(index),
                     index,
-                    depth + 1,
-                    alignedSlotX,
-                    alignedSlotTopY,
-                    childOuterWidth,
+                    path,
+                    depth,
+                    innerStartX,
+                    innerTopY,
+                    innerWidth,
+                    innerHeight,
+                    stackLayout.alignments().get(index),
+                    stackLayout.offsetsX().get(index),
+                    stackLayout.offsetsY().get(index),
                     state.pageIndex,
+                    state.canvas,
                     prepareContext,
                     fragmentContext,
-                    state.canvas,
                     nodes,
                     fragments);
         }
@@ -848,6 +829,68 @@ public final class LayoutCompiler {
                 padding));
     }
 
+    /**
+     * Places a single layer inside a stack composite at the given inner-box
+     * coordinates. Shared between {@link #compileStackedLayer} (mutating
+     * placement path that feeds offsets from {@link PreparedStackLayout})
+     * and the STACK branch of {@link #compileNodeInFixedSlot} (non-mutating
+     * placement path that ignores offsets — fixed-slot stacks anchor on
+     * alignment only).
+     *
+     * <p>Layer placement is delegated to {@link #compileNodeInFixedSlot}
+     * because each layer occupies a single fixed page slot whose origin
+     * has already been resolved by the alignment + offset math here.</p>
+     */
+    private void placeStackLayer(DocumentNode child,
+                                 int sourceIndex,
+                                 String parentPath,
+                                 int parentDepth,
+                                 double innerStartX,
+                                 double innerTopY,
+                                 double innerWidth,
+                                 double innerHeight,
+                                 com.demcha.compose.document.node.LayerAlign align,
+                                 double layerOffsetX,
+                                 double layerOffsetY,
+                                 int pageIndex,
+                                 LayoutCanvas canvas,
+                                 PrepareContext prepareContext,
+                                 FragmentContext fragmentContext,
+                                 List<PlacedNode> nodes,
+                                 List<PlacedFragment> fragments) {
+        PreparedNode<DocumentNode> childPrepared =
+                prepareForRegionWidth(prepareContext, child, innerWidth);
+        MeasureResult childMeasure = childPrepared.measureResult();
+        Margin childMargin = toMargin(child.margin());
+        double childOuterWidth = childMeasure.width() + childMargin.horizontal();
+        double childOuterHeight = childMeasure.height() + childMargin.vertical();
+
+        // Anchor placement, then apply on-screen offsets:
+        // offsetX > 0 nudges the layer right; offsetY > 0 nudges it down
+        // (PDF y grows upward, so "down" subtracts from the top-Y).
+        double alignedSlotX = innerStartX
+                + horizontalLayerOffset(align, innerWidth, childOuterWidth)
+                + layerOffsetX;
+        double alignedSlotTopY = innerTopY
+                - verticalLayerOffset(align, innerHeight, childOuterHeight)
+                - layerOffsetY;
+
+        compileNodeInFixedSlot(
+                childPrepared,
+                parentPath,
+                sourceIndex,
+                parentDepth + 1,
+                alignedSlotX,
+                alignedSlotTopY,
+                childOuterWidth,
+                pageIndex,
+                prepareContext,
+                fragmentContext,
+                canvas,
+                nodes,
+                fragments);
+    }
+
     private void compileSplittableLeaf(PreparedNode<DocumentNode> prepared,
                                        NodeDefinition<DocumentNode> definition,
                                        String path,
@@ -1080,34 +1123,22 @@ public final class LayoutCompiler {
                 int[] iterationOrder = stableZIndexOrder(stackLayout.zIndices());
                 for (int slot = 0; slot < iterationOrder.length; slot++) {
                     int i = iterationOrder[slot];
-                    DocumentNode child = children.get(i);
-                    com.demcha.compose.document.node.LayerAlign align =
-                            stackLayout.alignments().get(i);
-
-                    PreparedNode<DocumentNode> childPrepared =
-                            prepareForRegionWidth(prepareContext, child, stackInnerWidth);
-                    MeasureResult childMeasure = childPrepared.measureResult();
-                    Margin childMargin = toMargin(child.margin());
-                    double childOuterWidth = childMeasure.width() + childMargin.horizontal();
-                    double childOuterHeight = childMeasure.height() + childMargin.vertical();
-
-                    double alignedSlotX = stackInnerStartX
-                            + horizontalLayerOffset(align, stackInnerWidth, childOuterWidth);
-                    double alignedSlotTopY = stackInnerTopY
-                            - verticalLayerOffset(align, stackInnerHeight, childOuterHeight);
-
-                    compileNodeInFixedSlot(
-                            childPrepared,
-                            path,
+                    placeStackLayer(
+                            children.get(i),
                             i,
-                            depth + 1,
-                            alignedSlotX,
-                            alignedSlotTopY,
-                            childOuterWidth,
+                            path,
+                            depth,
+                            stackInnerStartX,
+                            stackInnerTopY,
+                            stackInnerWidth,
+                            stackInnerHeight,
+                            stackLayout.alignments().get(i),
+                            0.0,
+                            0.0,
                             pageIndex,
+                            canvas,
                             prepareContext,
                             fragmentContext,
-                            canvas,
                             nodes,
                             fragments);
                 }

@@ -16,6 +16,7 @@ import java.util.Objects;
 /**
  * Shared scene composer for the standard cover-letter template.
  */
+@SuppressWarnings("deprecation")
 public final class CoverLetterTemplateComposer {
     private static final String KIND_REGARDS = "Kind regards,";
 

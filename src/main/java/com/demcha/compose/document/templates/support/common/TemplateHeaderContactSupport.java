@@ -25,6 +25,7 @@ import java.util.List;
  *
  * @author Artem Demchyshyn
  */
+@SuppressWarnings("deprecation")
 public final class TemplateHeaderContactSupport {
     private TemplateHeaderContactSupport() {
     }

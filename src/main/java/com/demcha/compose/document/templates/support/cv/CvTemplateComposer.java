@@ -21,8 +21,10 @@ import java.util.Objects;
  *
  * @author Artem Demchyshyn
  */
+@SuppressWarnings("deprecation")
 public final class CvTemplateComposer {
     private static final Margin LEGACY_HEADER_RIGHT_MARGIN = new Margin(0, 10, 0, 0);
+    private static final double MINIMUM_TOP_LEVEL_MODULE_SPACING = 6.0;
 
     private final CvTheme theme;
     private final TemplateLayoutPolicy layout;
@@ -45,7 +47,7 @@ public final class CvTemplateComposer {
      */
     public void compose(TemplateComposeTarget target, CvDocumentSpec documentSpec) {
         CvDocumentSpec spec = Objects.requireNonNull(documentSpec, "documentSpec");
-        target.startDocument("MainVBoxContainer", layout.rootSpacing());
+        target.startDocument("MainVBoxContainer", topLevelModuleSpacing());
         addHeader(target, spec.header());
         for (CvModule module : spec.modules()) {
             addModule(target, module);
@@ -173,6 +175,10 @@ public final class CvTemplateComposer {
                 1.0,
                 Padding.zero(),
                 layout.sectionMargin());
+    }
+
+    private double topLevelModuleSpacing() {
+        return Math.max(layout.rootSpacing(), MINIMUM_TOP_LEVEL_MODULE_SPACING);
     }
 
     private String blockName(CvModule module, CvModule.BodyBlock block, int index) {

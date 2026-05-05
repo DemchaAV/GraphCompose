@@ -64,18 +64,19 @@ for the user-facing summary.
   coverage: page-advance on overflow, layer source-order under
   uniform `zIndex`, explicit `zIndex` ordering, equal-weight row
   slot distribution.
-- **`BuiltInNodeDefinitions` split (Phase E.1).** 13 of the 15
-  built-in `NodeDefinition` implementations move to
-  `document.layout.definitions.*`: PageBreak, Spacer, Shape, Line,
-  Ellipse, Image, Barcode, Container, Section, Row, LayerStack,
-  ShapeContainer, Table. Shared inline helpers (`EPS`, transform
-  wrapping, decoration / table / measurement adapters) move to a
-  new `NodeDefinitionSupport` class. `BuiltInNodeDefinitions` drops
-  from 3,037 to 2,087 lines and continues to expose
-  `registerDefaults(NodeRegistry)` as the single registration entry
-  point. `ParagraphDefinition` and `ListDefinition` stay in
-  `BuiltInNodeDefinitions` for now because they share the
-  text-flow / wrapping / splitting cluster; sliced out separately.
+- **`BuiltInNodeDefinitions` split (Phase E.1).** All 15 built-in
+  `NodeDefinition` implementations now live in
+  `document.layout.definitions.*` (one file per node type):
+  PageBreak, Spacer, Shape, Line, Ellipse, Image, Barcode,
+  Container, Section, Row, LayerStack, ShapeContainer, Table,
+  Paragraph, List. Shared inline helpers (`EPS`, transform
+  wrapping, decoration / table / measurement adapters) live in
+  `NodeDefinitionSupport`; the paragraph / list text-flow cluster
+  (wrapping, markdown tokenisation, inline-run layout, split
+  slicing) lives in the new `TextFlowSupport` helper.
+  `BuiltInNodeDefinitions` drops from 3,037 to ~60 lines and now
+  only exposes `registerDefaults(NodeRegistry)` as the single
+  registration entry point.
 
 ### Feature scope (planned)
 

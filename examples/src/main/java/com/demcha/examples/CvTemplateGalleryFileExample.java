@@ -73,7 +73,7 @@ public final class CvTemplateGalleryFileExample {
                 run(ClassicSerif.ID, ClassicSerif.RECOMMENDED_MARGIN, ClassicSerif::create),
                 run(CompactMono.ID, CompactMono.RECOMMENDED_MARGIN, CompactMono::create),
                 run(Executive.ID, Executive.RECOMMENDED_MARGIN, Executive::create),
-                run(EngineeringResume.ID, 28.0, EngineeringResume::create),
+                run(EngineeringResume.ID, EngineeringResume.RECOMMENDED_MARGIN, EngineeringResume::create),
                 run(TimelineMinimal.ID, 28.0, TimelineMinimal::create),
                 run(BoxedSections.ID, 28.0, BoxedSections::create),
                 run(CenteredHeadline.ID, 28.0, CenteredHeadline::create),

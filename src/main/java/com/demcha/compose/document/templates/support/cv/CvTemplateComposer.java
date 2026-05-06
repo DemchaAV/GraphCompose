@@ -23,8 +23,8 @@ import java.util.Objects;
  */
 @SuppressWarnings("deprecation")
 public final class CvTemplateComposer {
-    private static final Margin LEGACY_HEADER_RIGHT_MARGIN = new Margin(0, 10, 1, 0);
-    private static final double MINIMUM_TOP_LEVEL_MODULE_SPACING = 7.0;
+    private static final Margin LEGACY_HEADER_RIGHT_MARGIN = new Margin(0, 10, 0, 0);
+    private static final double MINIMUM_TOP_LEVEL_MODULE_SPACING = 6.0;
 
     private final CvTheme theme;
     private final TemplateLayoutPolicy layout;

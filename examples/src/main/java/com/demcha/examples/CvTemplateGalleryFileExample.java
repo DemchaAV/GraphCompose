@@ -77,7 +77,7 @@ public final class CvTemplateGalleryFileExample {
                 run(TimelineMinimal.ID, TimelineMinimal.RECOMMENDED_MARGIN, TimelineMinimal::create),
                 run(BoxedSections.ID, BoxedSections.RECOMMENDED_MARGIN, BoxedSections::create),
                 run(CenteredHeadline.ID, CenteredHeadline.RECOMMENDED_MARGIN, CenteredHeadline::create),
-                run(BlueBanner.ID, 28.0, BlueBanner::create),
+                run(BlueBanner.ID, BlueBanner.RECOMMENDED_MARGIN, BlueBanner::create),
                 run(EditorialBlue.ID, 28.0, EditorialBlue::create),
                 run(Panel.ID, 28.0, Panel::create),
                 run(SidebarPortrait.ID, 28.0, SidebarPortrait::create),

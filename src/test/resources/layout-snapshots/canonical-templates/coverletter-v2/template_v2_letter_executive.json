@@ -1,0 +1,347 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 595.276,
+    "pageHeight" : 841.89,
+    "innerWidth" : 555.276,
+    "innerHeight" : 797.89,
+    "margin" : {
+      "top" : 22.0,
+      "right" : 18.0,
+      "bottom" : 22.0,
+      "left" : 22.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "layout.letterFormat[0]",
+    "entityName" : "layout.letterFormat",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 22.0,
+    "computedY" : 592.79,
+    "placementX" : 22.0,
+    "placementY" : 592.79,
+    "placementWidth" : 555.276,
+    "placementHeight" : 227.1,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 555.276,
+    "contentHeight" : 227.1,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "layout.letterFormat[0]/Header[0]",
+    "entityName" : "Header",
+    "entityKind" : "ContainerNode",
+    "parentPath" : "layout.letterFormat[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 22.0,
+    "computedY" : 765.49,
+    "placementX" : 22.0,
+    "placementY" : 765.49,
+    "placementWidth" : 555.276,
+    "placementHeight" : 54.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 555.276,
+    "contentHeight" : 54.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "layout.letterFormat[0]/Header[0]/Header.name[0]",
+    "entityName" : "Header.name",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "layout.letterFormat[0]/Header[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 22.0,
+    "computedY" : 793.99,
+    "placementX" : 22.0,
+    "placementY" : 793.99,
+    "placementWidth" : 555.276,
+    "placementHeight" : 25.9,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 555.276,
+    "contentHeight" : 25.9,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 5.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "layout.letterFormat[0]/Header[0]/Header.contact[1]",
+    "entityName" : "Header.contact",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "layout.letterFormat[0]/Header[0]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 22.0,
+    "computedY" : 779.74,
+    "placementX" : 22.0,
+    "placementY" : 779.74,
+    "placementWidth" : 555.276,
+    "placementHeight" : 9.25,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 555.276,
+    "contentHeight" : 9.25,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 5.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "layout.letterFormat[0]/Header[0]/Header.links[2]",
+    "entityName" : "Header.links",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "layout.letterFormat[0]/Header[0]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 22.0,
+    "computedY" : 765.49,
+    "placementX" : 22.0,
+    "placementY" : 765.49,
+    "placementWidth" : 555.276,
+    "placementHeight" : 9.25,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 555.276,
+    "contentHeight" : 9.25,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "layout.letterFormat[0]/letter.greeting[1]",
+    "entityName" : "letter.greeting",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "layout.letterFormat[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 22.0,
+    "computedY" : 720.04,
+    "placementX" : 22.0,
+    "placementY" : 720.04,
+    "placementWidth" : 180.222,
+    "placementHeight" : 9.45,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 180.222,
+    "contentHeight" : 9.45,
+    "margin" : {
+      "top" : 18.0,
+      "right" : 0.0,
+      "bottom" : 10.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "layout.letterFormat[0]/letter.body[2]",
+    "entityName" : "letter.body",
+    "entityKind" : "ContainerNode",
+    "parentPath" : "layout.letterFormat[0]",
+    "childIndex" : 2,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 22.0,
+    "computedY" : 630.24,
+    "placementX" : 22.0,
+    "placementY" : 630.24,
+    "placementWidth" : 507.717,
+    "placementHeight" : 61.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 507.717,
+    "contentHeight" : 61.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "layout.letterFormat[0]/letter.body[2]/letter.body[0][0]",
+    "entityName" : "letter.body[0]",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "layout.letterFormat[0]/letter.body[2]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 22.0,
+    "computedY" : 669.14,
+    "placementX" : 22.0,
+    "placementY" : 669.14,
+    "placementWidth" : 507.717,
+    "placementHeight" : 22.9,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 507.717,
+    "contentHeight" : 22.9,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "layout.letterFormat[0]/letter.body[2]/letter.body[1][1]",
+    "entityName" : "letter.body[1]",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "layout.letterFormat[0]/letter.body[2]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 22.0,
+    "computedY" : 649.69,
+    "placementX" : 22.0,
+    "placementY" : 649.69,
+    "placementWidth" : 449.064,
+    "placementHeight" : 9.45,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 449.064,
+    "contentHeight" : 9.45,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "layout.letterFormat[0]/letter.body[2]/letter.body[2][2]",
+    "entityName" : "letter.body[2]",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "layout.letterFormat[0]/letter.body[2]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 22.0,
+    "computedY" : 630.24,
+    "placementX" : 22.0,
+    "placementY" : 630.24,
+    "placementWidth" : 447.961,
+    "placementHeight" : 9.45,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 447.961,
+    "contentHeight" : 9.45,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "layout.letterFormat[0]/letter.closing[3]",
+    "entityName" : "letter.closing",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "layout.letterFormat[0]",
+    "childIndex" : 3,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 22.0,
+    "computedY" : 592.79,
+    "placementX" : 22.0,
+    "placementY" : 592.79,
+    "placementWidth" : 126.84,
+    "placementHeight" : 9.45,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 126.84,
+    "contentHeight" : 9.45,
+    "margin" : {
+      "top" : 10.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

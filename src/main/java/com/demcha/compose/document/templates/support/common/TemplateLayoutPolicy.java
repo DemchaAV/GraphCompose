@@ -1,6 +1,5 @@
 package com.demcha.compose.document.templates.support.common;
 
-import com.demcha.compose.document.templates.theme.CvTheme;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
 
@@ -57,28 +56,6 @@ public record TemplateLayoutPolicy(
         bodyPadding = bodyPadding == null ? Padding.zero() : bodyPadding;
         compactCellPadding = compactCellPadding == null ? Padding.zero() : compactCellPadding;
         contentCellPadding = contentCellPadding == null ? Padding.zero() : contentCellPadding;
-    }
-
-    /**
-     * Returns the historical rhythm used by the standard CV template.
-     *
-     * @param theme CV visual theme whose spacing tokens are reused
-     * @return layout policy for the standard CV
-     */
-    public static TemplateLayoutPolicy standardCv(CvTheme theme) {
-        CvTheme safeTheme = Objects.requireNonNull(theme, "theme");
-        return new TemplateLayoutPolicy(
-                safeTheme.spacingModuleName(),
-                Margin.of(5),
-                Margin.zero(),
-                Margin.zero(),
-                safeTheme.spacing(),
-                safeTheme.spacing(),
-                0.0,
-                "  ",
-                new Padding(0, 5, 0, 20),
-                new Padding(2, 0, 2, 0),
-                new Padding(7, 8, 7, 8));
     }
 
     /**

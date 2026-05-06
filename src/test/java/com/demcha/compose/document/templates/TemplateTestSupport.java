@@ -3,24 +3,19 @@ package com.demcha.compose.document.templates;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.data.common.Header;
 import com.demcha.compose.document.templates.data.coverletter.CoverLetterDocumentSpec;
 import com.demcha.compose.document.templates.data.invoice.InvoiceData;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.document.templates.data.coverletter.JobDetails;
-import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.proposal.ProposalData;
 import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
 import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
 import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleDocumentSpec;
-import com.demcha.compose.document.templates.theme.CvTheme;
 import com.demcha.compose.font.FontName;
 import com.demcha.mock.CoverLetterMock;
-import com.demcha.mock.CvDocumentSpecMock;
 import com.demcha.mock.InvoiceDataFixtures;
 import com.demcha.mock.ProposalDataFixtures;
 import com.demcha.mock.WeeklyScheduleDataFixtures;
-import com.demcha.testing.fixtures.CvTestFixtures;
 import org.apache.pdfbox.contentstream.operator.Operator;
 import org.apache.pdfbox.cos.COSNumber;
 import org.apache.pdfbox.Loader;
@@ -55,18 +50,6 @@ public final class TemplateTestSupport {
     private TemplateTestSupport() {
     }
 
-    public static CvDocumentSpec canonicalCv() {
-        return new CvDocumentSpecMock().getCv();
-    }
-
-    public static CvDocumentSpec expandedCanonicalCv() {
-        return CvTestFixtures.createExpandedCvForOneAndHalfPages(new CvDocumentSpecMock().getCv());
-    }
-
-    public static Header canonicalHeader() {
-        return canonicalCv().header();
-    }
-
     public static String coverLetter(String companyName) {
         return CoverLetterMock.letter.replace("${companyName}", companyName);
     }
@@ -80,10 +63,6 @@ public final class TemplateTestSupport {
                 "Visual verification test",
                 "Mid",
                 "Full-time");
-    }
-
-    public static CoverLetterDocumentSpec canonicalCoverLetter(String companyName) {
-        return CoverLetterDocumentSpec.of(canonicalHeader(), coverLetter(companyName), jobDetails(companyName));
     }
 
     public static InvoiceData canonicalInvoiceData() {
@@ -120,23 +99,6 @@ public final class TemplateTestSupport {
 
     public static WeeklyScheduleDocumentSpec canonicalWeeklyScheduleWithChangedCategoryCatalog() {
         return WeeklyScheduleDocumentSpec.from(WeeklyScheduleDataFixtures.withAddedAndRemovedCategory());
-    }
-
-    public static CvTheme cvThemeWith(FontName fontName) {
-        CvTheme base = CvTheme.defaultTheme();
-        return new CvTheme(
-                base.primaryColor(),
-                base.secondaryColor(),
-                base.bodyColor(),
-                base.accentColor(),
-                fontName,
-                fontName,
-                base.nameFontSize(),
-                base.headerFontSize(),
-                base.bodyFontSize(),
-                base.spacing(),
-                base.moduleMargin(),
-                base.spacingModuleName());
     }
 
     public static String snapshotSlug(FontName fontName) {

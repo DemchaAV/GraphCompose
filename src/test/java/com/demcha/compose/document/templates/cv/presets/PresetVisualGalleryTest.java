@@ -139,6 +139,26 @@ class PresetVisualGalleryTest {
     }
 
     @Test
+    void rendersBoxedSections() throws Exception {
+        render("boxed_sections_v2", BoxedSections::create);
+    }
+
+    @Test
+    void rendersCenteredHeadline() throws Exception {
+        render("centered_headline_v2", CenteredHeadline::create);
+    }
+
+    @Test
+    void rendersBlueBanner() throws Exception {
+        render("blue_banner_v2", BlueBanner::create);
+    }
+
+    @Test
+    void rendersEditorialBlue() throws Exception {
+        render("editorial_blue_v2", EditorialBlue::create);
+    }
+
+    @Test
     void exposesStableIdentities() {
         assertThat(NordicClean.ID).isEqualTo("nordic-clean");
         assertThat(NordicClean.DISPLAY_NAME).isEqualTo("Nordic Clean");
@@ -152,6 +172,14 @@ class PresetVisualGalleryTest {
         assertThat(EngineeringResume.DISPLAY_NAME).isEqualTo("Engineering Resume");
         assertThat(TimelineMinimal.ID).isEqualTo("timeline-minimal");
         assertThat(TimelineMinimal.DISPLAY_NAME).isEqualTo("Timeline Minimal");
+        assertThat(BoxedSections.ID).isEqualTo("boxed-sections");
+        assertThat(BoxedSections.DISPLAY_NAME).isEqualTo("Boxed Sections");
+        assertThat(CenteredHeadline.ID).isEqualTo("centered-headline");
+        assertThat(CenteredHeadline.DISPLAY_NAME).isEqualTo("Centered Headline");
+        assertThat(BlueBanner.ID).isEqualTo("blue-banner");
+        assertThat(BlueBanner.DISPLAY_NAME).isEqualTo("Blue Banner");
+        assertThat(EditorialBlue.ID).isEqualTo("editorial-blue");
+        assertThat(EditorialBlue.DISPLAY_NAME).isEqualTo("Editorial Blue");
     }
 
     @Test
@@ -164,5 +192,9 @@ class PresetVisualGalleryTest {
         assertThat(Executive.create(THEME)).isNotNull();
         assertThat(EngineeringResume.create(THEME)).isNotNull();
         assertThat(TimelineMinimal.create(THEME)).isNotNull();
+        assertThat(BoxedSections.create(THEME)).isNotNull();
+        assertThat(CenteredHeadline.create(THEME)).isNotNull();
+        assertThat(BlueBanner.create(THEME)).isNotNull();
+        assertThat(EditorialBlue.create(THEME)).isNotNull();
     }
 }

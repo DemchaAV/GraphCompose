@@ -75,7 +75,7 @@ public final class CvTemplateGalleryFileExample {
                 run(Executive.ID, Executive.RECOMMENDED_MARGIN, Executive::create),
                 run(EngineeringResume.ID, EngineeringResume.RECOMMENDED_MARGIN, EngineeringResume::create),
                 run(TimelineMinimal.ID, TimelineMinimal.RECOMMENDED_MARGIN, TimelineMinimal::create),
-                run(BoxedSections.ID, 28.0, BoxedSections::create),
+                run(BoxedSections.ID, BoxedSections.RECOMMENDED_MARGIN, BoxedSections::create),
                 run(CenteredHeadline.ID, 28.0, CenteredHeadline::create),
                 run(BlueBanner.ID, 28.0, BlueBanner::create),
                 run(EditorialBlue.ID, 28.0, EditorialBlue::create),

@@ -41,6 +41,8 @@ build/
 *.pdf
 # Allow PDF previews that are committed README assets.
 !assets/readme/**/*.pdf
+# Allow GitHub Pages showcase PDFs.
+!docs/assets/pdf/**/*.pdf
 /patch-root-position.diff
 /rectangle.pdf
 /Test.pdf

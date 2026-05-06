@@ -18,6 +18,10 @@
   </a>
 </p>
 
+<p align="center">
+  <a href="https://demchaav.github.io/GraphCompose/"><b>View Live Showcase</b></a>
+</p>
+
 ## Why GraphCompose?
 
 Most Java PDF libraries hand you low-level drawing commands. GraphCompose gives Java applications a **semantic authoring model** &mdash; you describe modules, paragraphs, tables, rows, layers, and themes; the engine measures, paginates, and renders.
@@ -27,7 +31,7 @@ Most Java PDF libraries hand you low-level drawing commands. GraphCompose gives 
 - **Atomic pagination, no manual paging.** Tables split row-by-row, rows are atomic, layer stacks are atomic.
 - **Designer-grade output.** Page backgrounds, section bands, soft panels, accent strips, column spans, layered hero blocks, fluent rich text, and a tokenised `BusinessTheme` are all first-class &mdash; not workarounds.
 - **PDFBox rendering, isolated.** PDF backend lives behind a single backend interface. The DOCX backend (Apache POI) is ready for callers who need an editable file.
-- **Tested at every layer.** 672 green tests on `develop` (525 → 672 across v1.5), including cinematic-feature tests, shape-as-container clip-path invariants, transform CTM checks, table row-span / zebra / repeated-header tests, public-API leak guards, and a `PdfVisualRegression` harness.
+- **Tested at every layer.** 765 green tests on `develop` (525 → 672 across v1.5; +93 in the v1.6 line for Templates v2), including cinematic-feature tests, shape-as-container clip-path invariants, transform CTM checks, table row-span / zebra / repeated-header tests, public-API leak guards, layout-snapshot baselines for every CV / cover-letter preset, and a `PdfVisualRegression` harness.
 
 The current release is **v1.5.1** &mdash; the "intuitive" release. v1.5 turns the surface intuitive: shape-as-container with clip path, rotate / scale + per-layer z-index, advanced tables (row span, zebra, totals, repeating header), and two new theme-driven cinematic templates (`InvoiceTemplateV2`, `ProposalTemplateV2`). v1.5 is fully source-compatible with v1.4 &mdash; every public record gained back-compat constructors that default the new fields. See [`docs/migration-v1-4-to-v1-5.md`](docs/migration-v1-4-to-v1-5.md).
 
@@ -37,7 +41,7 @@ GraphCompose is built for **server-side Java services that need to generate stru
 
 - **Invoices and quotes** generated per request from order data (`InvoiceTemplateV2 + BusinessTheme.modern()` is the canonical entry point).
 - **Proposals, statements of work, and reports** with consistent branding across teams (`ProposalTemplateV2`, custom `BusinessTheme`).
-- **CVs and cover letters** for ATS exports, hiring tools, and recruiter dashboards (seven modernised CV templates plus the `CvTheme.fromBusinessTheme(...)` bridge).
+- **CVs and cover letters** for ATS exports, hiring tools, and recruiter dashboards (modernised CV presets and paired cover-letter presets, all themed via `BusinessTheme`).
 - **Schedules, dispatch sheets, and operational reports** with deterministic pagination on long data (advanced tables: row span, zebra, totals, repeating header on page break).
 - **Internal tooling and admin PDFs** that ship through Spring Boot, Quarkus, Micronaut, Ktor, or any plain Java HTTP service &mdash; `writePdf(OutputStream)` streams straight into a Servlet response without buffering in memory.
 
@@ -142,9 +146,24 @@ Five highlights &mdash; full notes in [`CHANGELOG.md`](./CHANGELOG.md).
 - [Migration v1.4 → v1.5](./docs/migration-v1-4-to-v1-5.md) · [Canonical / legacy parity](./docs/canonical-legacy-parity.md)
 - [Contributing](./CONTRIBUTING.md) · [Release process](./docs/release-process.md) · [v1.6 roadmap](./docs/v1.6-roadmap.md)
 
+## v1.6 develop preview &mdash; Templates v2
+
+`develop` carries the **Templates v2** architecture &mdash; the canonical CV / cover letter / invoice / proposal surface rebuilt from the ground up around four layers (theme tokens → layout slots → components + blocks → spec data). Every preset is one final class with a one-liner `create(BusinessTheme)` factory:
+
+```java
+import com.demcha.compose.document.templates.cv.presets.ModernProfessional;
+import com.demcha.compose.document.templates.cv.spec.CvSpec;
+import com.demcha.compose.document.theme.BusinessTheme;
+
+DocumentTemplate<CvSpec> template = ModernProfessional.create(BusinessTheme.modern());
+template.compose(session, mySpec);
+```
+
+14 CV presets (`ModernProfessional`, `NordicClean`, `ClassicSerif`, `CompactMono`, `Executive`, `EngineeringResume`, `TimelineMinimal`, `BoxedSections`, `CenteredHeadline`, `BlueBanner`, `EditorialBlue`, `Panel`, `SidebarPortrait`, `MonogramSidebar`), 14 paired cover-letter presets, plus minimal v2 `ModernInvoice` / `ModernProposal` builders. Inline markdown rich text (`**bold**`, `*italic*`), active hyperlinks, and slot-based multi-column layouts ship out of the box. **Breaking** &mdash; legacy CV / cover-letter classes are deleted, not deprecated. Full notes (and migration table) in [`CHANGELOG.md`](./CHANGELOG.md) under "v1.6.0 — Planned → Templates v2 restructure".
+
 ## Roadmap
 
-v1.6 (the "expressive" release) is in the planning phase &mdash; nested lists, composed table cells, `CanvasLayer` for free-form drawing, a full DOCX backend pass, and the start of Maven Central publishing. Full plan in [`docs/v1.6-roadmap.md`](./docs/v1.6-roadmap.md). Feature requests and bug reports welcome via GitHub Issues.
+v1.6 (the "expressive" release) is in the planning phase &mdash; Templates v2 (already on develop), nested lists, composed table cells, `CanvasLayer` for free-form drawing, a full DOCX backend pass, and the start of Maven Central publishing. Full plan in [`docs/v1.6-roadmap.md`](./docs/v1.6-roadmap.md). Feature requests and bug reports welcome via GitHub Issues.
 
 ## License
 

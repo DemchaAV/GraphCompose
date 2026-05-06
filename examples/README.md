@@ -42,8 +42,9 @@ Generated PDFs land in `examples/target/generated-pdfs/`. The same
 | [Invoice (V1)](#invoice-v1) | `InvoiceTemplateV1` driven from `InvoiceDocumentSpec` | [PDF](../assets/readme/examples/invoice.pdf) · [Source](src/main/java/com/demcha/examples/InvoiceFileExample.java) |
 | [Proposal (V1)](#proposal-v1) | `ProposalTemplateV1` driven from `ProposalDocumentSpec` | [PDF](../assets/readme/examples/proposal.pdf) · [Source](src/main/java/com/demcha/examples/ProposalFileExample.java) |
 | [Module-first Profile](#module-first-profile) | Authoring directly against `DocumentSession.module(...).paragraph(...)` | [PDF](../assets/readme/examples/module-first-profile.pdf) · [Source](src/main/java/com/demcha/examples/ModuleFirstFileExample.java) |
-| [CV — single template](#cv-single-template) | One CV via `CvTemplateV1` | [PDF](../assets/readme/examples/cv-modern-professional.pdf) · [Source](src/main/java/com/demcha/examples/CvFileExample.java) |
-| [CV — template gallery](#cv-template-gallery) | All seven built-in CV variants in one orchestrated run | [Source](src/main/java/com/demcha/examples/CvTemplateGalleryFileExample.java) |
+| [CV — single template](#cv-single-template) | One CV via `ModernProfessional.create(BusinessTheme.modern())` (Templates v2) | [PDF](../assets/readme/examples/cv-modern-professional.pdf) · [Source](src/main/java/com/demcha/examples/CvFileExample.java) |
+| [CV — template gallery](#cv-template-gallery) | All 14 v2 CV presets in one orchestrated run | [Source](src/main/java/com/demcha/examples/CvTemplateGalleryFileExample.java) |
+| [Cover letter — template gallery](#cover-letter-template-gallery) | All 14 paired v2 cover-letter presets in one orchestrated run | [Source](src/main/java/com/demcha/examples/CoverLetterTemplateGalleryFileExample.java) |
 
 ### Cinematic templates (v1.5)
 
@@ -190,31 +191,47 @@ document.buildPdf();
 
 ### CV — single template
 
-One CV rendered with `CvTemplateV1`, the canonical `CvDocumentSpec`
-data shape, and `CvTheme.fromBusinessTheme(BusinessTheme.modern())`
-bridging into the CV-specific layout tokens.
+One CV rendered through the Templates v2 surface:
+`ModernProfessional.create(BusinessTheme.modern())` paired with a
+`CvSpec` data shape. The preset is one final class with one
+`create(BusinessTheme)` factory — copy-and-tweak rather than
+fork-a-monolith.
 
 [📄 View PDF](../assets/readme/examples/cv-modern-professional.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/CvFileExample.java)
 
 ### CV — template gallery
 
-Generates every built-in CV variant in one orchestrated run: classic
-serif, compact mono, modern professional, Nordic clean, product
-leader, tech lead, timeline minimal. Use this as the side-by-side
-catalogue when picking a base template for your own CV product.
+Generates every v2 CV preset in one orchestrated run — 14 presets
+covering single-column, two-column-sidebar, and three-column-magazine
+layouts. Use this as the side-by-side catalogue when picking a base
+preset for your own CV product. Each preset is a one-liner factory
+(`ModernProfessional.create(theme)`, `NordicClean.create(theme)`,
+…); see `templates/cv/presets/` for the full list.
 
 | Variant | PDF |
 |---|---|
-| Classic serif | [PDF](../assets/readme/examples/cv-classic-serif.pdf) |
-| Compact mono | [PDF](../assets/readme/examples/cv-compact-mono.pdf) |
 | Modern professional | [PDF](../assets/readme/examples/cv-modern-professional.pdf) |
 | Nordic clean | [PDF](../assets/readme/examples/cv-nordic-clean.pdf) |
-| Product leader | [PDF](../assets/readme/examples/cv-product-leader.pdf) |
-| Tech lead | [PDF](../assets/readme/examples/cv-tech-lead.pdf) |
+| Classic serif | [PDF](../assets/readme/examples/cv-classic-serif.pdf) |
+| Compact mono | [PDF](../assets/readme/examples/cv-compact-mono.pdf) |
 | Timeline minimal | [PDF](../assets/readme/examples/cv-timeline-minimal.pdf) |
+| Engineering resume (was "Tech lead") | [PDF](../assets/readme/examples/cv-tech-lead.pdf) |
+| Panel (was "Product leader") | [PDF](../assets/readme/examples/cv-product-leader.pdf) |
+| Executive · BoxedSections · CenteredHeadline · BlueBanner · EditorialBlue · SidebarPortrait · MonogramSidebar | run the gallery to render |
 
 [📜 Full source](src/main/java/com/demcha/examples/CvTemplateGalleryFileExample.java)
+
+### Cover letter — template gallery
+
+Generates all 14 paired v2 cover-letter presets in one run — one
+letter style per CV preset so a candidate's CV and cover letter
+share the same visual language end-to-end. Each preset is a
+one-liner factory (`ModernProfessionalLetter.create(theme)`,
+`NordicCleanLetter.create(theme)`, …) under
+`templates/coverletter/presets/`.
+
+[📜 Full source](src/main/java/com/demcha/examples/CoverLetterTemplateGalleryFileExample.java)
 
 ---
 

@@ -44,6 +44,22 @@ public final class ModernProfessional {
     /** Human-readable display name. */
     public static final String DISPLAY_NAME = "Modern Professional";
 
+    /**
+     * Recommended page margin (in points) for this preset. Matches the
+     * legacy {@code CvFileExample} margin so the v2 render keeps the
+     * V1 visual proportions on A4.
+     */
+    public static final double RECOMMENDED_MARGIN = 18.0;
+
+    /** V1 {@code CvTheme} primary slate-blue used by the display name. */
+    private static final DocumentColor V1_NAME_COLOR = DocumentColor.rgb(44, 62, 80);
+
+    /** V1 {@code CvTheme} secondary bright-blue used by section headings. */
+    private static final DocumentColor V1_SECTION_COLOR = DocumentColor.rgb(41, 128, 185);
+
+    /** V1 link accent (royal blue) used by the contact link row. */
+    private static final DocumentColor V1_LINK_COLOR = DocumentColor.rgb(65, 105, 225);
+
     private ModernProfessional() {
         // utility class — not instantiable
     }
@@ -52,6 +68,12 @@ public final class ModernProfessional {
      * Builds a fresh {@code Modern Professional} template configured
      * for the given business theme.
      *
+     * <p>Visual signature mirrors the legacy {@code CvTemplateV1}:
+     * slate-blue display name, bright-blue section headings, and
+     * royal-blue underlined contact links. Overrides the active theme's
+     * text scale here so the preset reads the same on any
+     * {@link BusinessTheme} variant.</p>
+     *
      * @param theme active business theme (palette + typography)
      * @return ready-to-use template
      * @throws NullPointerException if {@code theme} is null
@@ -59,18 +81,31 @@ public final class ModernProfessional {
     public static DocumentTemplate<CvSpec> create(BusinessTheme theme) {
         Spacing spacing = Spacing.compact();
 
-        // Heading colour and size match the legacy CvTemplateV1 visual
-        // signature: 17.4 pt heading, 10 pt body, secondary blue #2980B9
-        // for the heading colour (V1's CvTheme secondary colour, which
-        // gives the section bands their distinct "blue" rather than the
-        // primary slate-blue muted text colour). Overrides the active
-        // theme's text scale here so the preset reads the same on any
-        // BusinessTheme variant.
+        DocumentTextStyle nameStyle = DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA_BOLD)
+                .size(28.0)
+                .decoration(DocumentTextDecoration.BOLD)
+                .color(V1_NAME_COLOR)
+                .build();
+
+        DocumentTextStyle contactStyle = DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA)
+                .size(9.0)
+                .color(theme.text().body().color())
+                .build();
+
+        DocumentTextStyle linkStyle = DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA)
+                .size(10.0)
+                .decoration(DocumentTextDecoration.UNDERLINE)
+                .color(V1_LINK_COLOR)
+                .build();
+
         DocumentTextStyle headingStyle = DocumentTextStyle.builder()
                 .fontName(FontName.HELVETICA_BOLD)
                 .size(17.4)
                 .decoration(DocumentTextDecoration.BOLD)
-                .color(DocumentColor.rgb(41, 128, 185))
+                .color(V1_SECTION_COLOR)
                 .build();
 
         DocumentTextStyle bodyStyle = DocumentTextStyle.builder()
@@ -92,7 +127,10 @@ public final class ModernProfessional {
                 .spacing(spacing)
                 .layout(SingleColumn.layout()
                         .moduleGap(spacing.moduleGap()))
-                .header(Header.rightAligned(theme, spacing))
+                .header(Header.rightAligned(theme, spacing)
+                        .withNameStyle(nameStyle)
+                        .withContactStyle(contactStyle)
+                        .withLinkStyle(linkStyle))
                 .moduleStyle(moduleStyle)
                 .place(SingleColumn.MAIN,
                         "Professional Summary",

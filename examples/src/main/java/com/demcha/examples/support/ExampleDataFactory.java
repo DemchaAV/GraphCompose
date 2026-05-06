@@ -275,31 +275,25 @@ public final class ExampleDataFactory {
                                 "Template design systems, pagination, semantic layout composition",
                                 "Testing strategy, CI pipelines, developer enablement"))))
                 .module(CvModule.of("Education & Certifications",
-                        new IndentedBlock(List.of(
-                                new IndentedBlock.Item("MSc Computer Science",
-                                        "University of Manchester | 2021"),
-                                new IndentedBlock.Item("Oracle Java Certification",
-                                        "Professional track | 2023")))))
+                        new MultiParagraphBlock(List.of(
+                                "**MSc Computer Science** - University of Manchester | 2021",
+                                "**Oracle Java Certification** - Professional track | 2023"))))
                 .module(CvModule.of("Projects",
-                        new IndentedBlock(List.of(
-                                new IndentedBlock.Item("GraphCompose",
-                                        "Declarative PDF layout engine for reusable document generation"),
-                                new IndentedBlock.Item("Template Studio",
-                                        "Internal tool for evaluating CV, proposal, and invoice output")))))
+                        new MultiParagraphBlock(List.of(
+                                "**GraphCompose** - Declarative PDF layout engine for reusable document generation",
+                                "**Template Studio** - Internal tool for evaluating CV, proposal, and invoice output"))))
                 .module(CvModule.of("Professional Experience",
                         new MultiParagraphBlock(List.of(
                                 "**Senior Platform Engineer**, Northwind Systems | "
-                                        + "*2024-Present* — Led reusable document flows for "
+                                        + "*2024-Present* - Led reusable document flows for "
                                         + "reporting, billing, and hiring operations.",
                                 "**Software Engineer**, BrightLeaf Labs | *2021-2024* "
-                                        + "— Built backend services and production document "
+                                        + "- Built backend services and production document "
                                         + "rendering pipelines."))))
                 .module(CvModule.of("Additional Information",
-                        new KeyValueBlock(List.of(
-                                new KeyValueBlock.Entry("Languages",
-                                        "English (Fluent), German (Intermediate), Spanish (Basic)"),
-                                new KeyValueBlock.Entry("Work Eligibility",
-                                        "Eligible to work in the UK")))))
+                        new MultiParagraphBlock(List.of(
+                                "Based in London and available for hybrid or remote collaboration.",
+                                "Interested in platform architecture, DX, and document-quality automation."))))
                 .build();
     }
 

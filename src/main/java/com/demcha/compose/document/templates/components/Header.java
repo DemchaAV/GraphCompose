@@ -8,6 +8,7 @@ import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.themes.Spacing;
 import com.demcha.compose.document.theme.BusinessTheme;
 
@@ -42,12 +43,23 @@ public final class Header {
     private final BusinessTheme theme;
     private final Spacing spacing;
     private final String namePrefix;
+    private final DocumentTextStyle nameStyleOverride;
+    private final DocumentTextStyle contactStyleOverride;
+    private final DocumentTextStyle linkStyleOverride;
 
-    private Header(TextAlign alignment, BusinessTheme theme, Spacing spacing) {
+    private Header(TextAlign alignment,
+                   BusinessTheme theme,
+                   Spacing spacing,
+                   DocumentTextStyle nameStyleOverride,
+                   DocumentTextStyle contactStyleOverride,
+                   DocumentTextStyle linkStyleOverride) {
         this.alignment = alignment;
         this.theme = theme;
         this.spacing = spacing;
         this.namePrefix = "Header";
+        this.nameStyleOverride = nameStyleOverride;
+        this.contactStyleOverride = contactStyleOverride;
+        this.linkStyleOverride = linkStyleOverride;
     }
 
     /**
@@ -65,7 +77,46 @@ public final class Header {
     public static Header rightAligned(BusinessTheme theme, Spacing spacing) {
         Objects.requireNonNull(theme, "theme");
         Objects.requireNonNull(spacing, "spacing");
-        return new Header(TextAlign.RIGHT, theme, spacing);
+        return new Header(TextAlign.RIGHT, theme, spacing, null, null, null);
+    }
+
+    /**
+     * Returns a copy of this header that uses {@code style} for the
+     * subject's name, overriding the theme's {@code h1} default.
+     *
+     * @param style replacement name text style; pass {@code null} to
+     *              clear an existing override
+     * @return updated header
+     */
+    public Header withNameStyle(DocumentTextStyle style) {
+        return new Header(alignment, theme, spacing, style, contactStyleOverride, linkStyleOverride);
+    }
+
+    /**
+     * Returns a copy of this header that uses {@code style} for the
+     * contact line (address / phone), overriding the theme's
+     * {@code caption} default.
+     *
+     * @param style replacement contact text style; pass {@code null} to
+     *              clear an existing override
+     * @return updated header
+     */
+    public Header withContactStyle(DocumentTextStyle style) {
+        return new Header(alignment, theme, spacing, nameStyleOverride, style, linkStyleOverride);
+    }
+
+    /**
+     * Returns a copy of this header that uses {@code style} for each
+     * link run (email / LinkedIn / GitHub / etc.), overriding the
+     * paragraph-level fallback. Typical usage is an underlined accent
+     * style so the link labels render visibly clickable.
+     *
+     * @param style replacement link text style; pass {@code null} to
+     *              clear an existing override
+     * @return updated header
+     */
+    public Header withLinkStyle(DocumentTextStyle style) {
+        return new Header(alignment, theme, spacing, nameStyleOverride, contactStyleOverride, style);
     }
 
     /**
@@ -104,11 +155,14 @@ public final class Header {
     }
 
     private ParagraphNode nameRow(String name) {
+        DocumentTextStyle style = nameStyleOverride != null
+                ? nameStyleOverride
+                : theme.text().h1();
         return new ParagraphNode(
                 namePrefix + ".name",
                 name,
                 null,
-                theme.text().h1(),
+                style,
                 alignment,
                 /* lineSpacing    */ 0.0,
                 /* bulletOffset   */ "",
@@ -122,11 +176,14 @@ public final class Header {
     }
 
     private ParagraphNode contactRow(String contact) {
+        DocumentTextStyle style = contactStyleOverride != null
+                ? contactStyleOverride
+                : theme.text().caption();
         return new ParagraphNode(
                 namePrefix + ".contact",
                 contact,
                 null,
-                theme.text().caption(),
+                style,
                 alignment,
                 0.0,
                 "",
@@ -140,10 +197,13 @@ public final class Header {
 
     private ParagraphNode linksRow(List<Link> links) {
         // Build inline runs: for each non-blank link, emit one InlineTextRun
-        // for the label (with its own DocumentLinkOptions when the URL is
+        // for the label (carrying its own DocumentLinkOptions when the URL is
         // non-blank, making the run a clickable hyperlink in PDF backends
         // that honour link metadata) and one plain run for the " | "
-        // separator between links.
+        // separator between links. When a link-style override is set, each
+        // link label run receives that explicit style so the link reads
+        // visibly clickable (typical preset choice: accent colour with
+        // underline decoration); separators stay on the paragraph fallback.
         List<InlineRun> runs = new ArrayList<>(links.size() * 2);
         boolean separatorPending = false;
         for (Link link : links) {
@@ -156,14 +216,17 @@ public final class Header {
             DocumentLinkOptions linkOptions = link.url() == null || link.url().isBlank()
                     ? null
                     : new DocumentLinkOptions(link.url().trim());
-            runs.add(new InlineTextRun(link.label().trim(), null, linkOptions));
+            runs.add(new InlineTextRun(link.label().trim(), linkStyleOverride, linkOptions));
             separatorPending = true;
         }
+        DocumentTextStyle paragraphStyle = contactStyleOverride != null
+                ? contactStyleOverride
+                : theme.text().caption();
         return new ParagraphNode(
                 namePrefix + ".links",
                 /* text       */ "",
                 /* inlineRuns */ runs,
-                theme.text().caption(),
+                paragraphStyle,
                 alignment,
                 0.0,
                 "",

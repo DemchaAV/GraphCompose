@@ -68,20 +68,20 @@ public final class CvTemplateGalleryFileExample {
      */
     public static List<Path> generate(String presetId) throws Exception {
         List<Run> runs = List.of(
-                run(ModernProfessional.ID, ModernProfessional::create),
-                run(NordicClean.ID, NordicClean::create),
-                run(ClassicSerif.ID, ClassicSerif::create),
-                run(CompactMono.ID, CompactMono::create),
-                run(Executive.ID, Executive::create),
-                run(EngineeringResume.ID, EngineeringResume::create),
-                run(TimelineMinimal.ID, TimelineMinimal::create),
-                run(BoxedSections.ID, BoxedSections::create),
-                run(CenteredHeadline.ID, CenteredHeadline::create),
-                run(BlueBanner.ID, BlueBanner::create),
-                run(EditorialBlue.ID, EditorialBlue::create),
-                run(Panel.ID, Panel::create),
-                run(SidebarPortrait.ID, SidebarPortrait::create),
-                run(MonogramSidebar.ID, MonogramSidebar::create));
+                run(ModernProfessional.ID, ModernProfessional.RECOMMENDED_MARGIN, ModernProfessional::create),
+                run(NordicClean.ID, 28.0, NordicClean::create),
+                run(ClassicSerif.ID, 28.0, ClassicSerif::create),
+                run(CompactMono.ID, 28.0, CompactMono::create),
+                run(Executive.ID, 28.0, Executive::create),
+                run(EngineeringResume.ID, 28.0, EngineeringResume::create),
+                run(TimelineMinimal.ID, 28.0, TimelineMinimal::create),
+                run(BoxedSections.ID, 28.0, BoxedSections::create),
+                run(CenteredHeadline.ID, 28.0, CenteredHeadline::create),
+                run(BlueBanner.ID, 28.0, BlueBanner::create),
+                run(EditorialBlue.ID, 28.0, EditorialBlue::create),
+                run(Panel.ID, 28.0, Panel::create),
+                run(SidebarPortrait.ID, 28.0, SidebarPortrait::create),
+                run(MonogramSidebar.ID, 28.0, MonogramSidebar::create));
 
         CvSpec spec = ExampleDataFactory.sampleCvSpecV2();
         List<Path> generated = new ArrayList<>();
@@ -111,9 +111,10 @@ public final class CvTemplateGalleryFileExample {
         Path outputFile = ExampleOutputPaths.prepare("cv-" + cv.id + ".pdf");
         DocumentTemplate<CvSpec> template = cv.factory.apply(THEME);
 
+        float m = (float) cv.margin;
         try (DocumentSession document = GraphCompose.document(outputFile)
                 .pageSize(DocumentPageSize.A4)
-                .margin(28, 28, 28, 28)
+                .margin(m, m, m, m)
                 .create()) {
             template.compose(document, spec);
             document.buildPdf();
@@ -121,10 +122,10 @@ public final class CvTemplateGalleryFileExample {
         return outputFile;
     }
 
-    private static Run run(String id, Function<BusinessTheme, DocumentTemplate<CvSpec>> factory) {
-        return new Run(id, factory);
+    private static Run run(String id, double margin, Function<BusinessTheme, DocumentTemplate<CvSpec>> factory) {
+        return new Run(id, margin, factory);
     }
 
-    private record Run(String id, Function<BusinessTheme, DocumentTemplate<CvSpec>> factory) {
+    private record Run(String id, double margin, Function<BusinessTheme, DocumentTemplate<CvSpec>> factory) {
     }
 }

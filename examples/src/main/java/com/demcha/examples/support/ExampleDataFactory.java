@@ -291,9 +291,11 @@ public final class ExampleDataFactory {
                                         + "- Built backend services and production document "
                                         + "rendering pipelines."))))
                 .module(CvModule.of("Additional Information",
-                        new MultiParagraphBlock(List.of(
-                                "Based in London and available for hybrid or remote collaboration.",
-                                "Interested in platform architecture, DX, and document-quality automation."))))
+                        new KeyValueBlock(List.of(
+                                new KeyValueBlock.Entry("Languages",
+                                        "English (Fluent), German (Intermediate), Spanish (Basic)"),
+                                new KeyValueBlock.Entry("Work Eligibility",
+                                        "Eligible to work in the UK")))))
                 .build();
     }
 

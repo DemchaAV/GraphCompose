@@ -1,0 +1,50 @@
+[
+  {
+    "title": "Cinematic Invoice",
+    "description": "A polished invoice template with semantic sections, theme-driven layout, advanced tables, and totals.",
+    "tags": ["Template", "Tables", "Theme"],
+    "image": "assets/screenshots/invoice-v2.png",
+    "pdf": "assets/pdf/invoice-v2.pdf",
+    "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/InvoiceCinematicFileExample.java"
+  },
+  {
+    "title": "Business Proposal",
+    "description": "A multi-section proposal layout using cinematic panels, typography, and reusable document structure.",
+    "tags": ["Template", "Sections", "Layout"],
+    "image": "assets/screenshots/proposal-v2.png",
+    "pdf": "assets/pdf/proposal-v2.pdf",
+    "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/ProposalCinematicFileExample.java"
+  },
+  {
+    "title": "CV Template",
+    "description": "A compact CV render from the canonical template surface, driven by structured profile data.",
+    "tags": ["Template", "CV", "Semantic Data"],
+    "image": "assets/screenshots/cv-template.png",
+    "pdf": "assets/pdf/cv-template.pdf",
+    "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/CvFileExample.java"
+  },
+  {
+    "title": "Advanced Tables",
+    "description": "Table rendering with row spans, repeating headers, zebra rows, totals, and structured layout behavior.",
+    "tags": ["Tables", "Pagination", "PDF"],
+    "image": "assets/screenshots/advanced-table.png",
+    "pdf": "assets/pdf/advanced-table.pdf",
+    "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/TableAdvancedExample.java"
+  },
+  {
+    "title": "Layers and Transforms",
+    "description": "Layered visual composition with rotate, scale, z-index ordering, and PDFBox-backed rendering.",
+    "tags": ["Layers", "Transforms", "Visual Layer"],
+    "image": "assets/screenshots/layers-theme.png",
+    "pdf": "assets/pdf/layers-theme.pdf",
+    "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/TransformsExample.java"
+  },
+  {
+    "title": "Shape Containers",
+    "description": "Visual containers with clipping behavior, rounded shapes, and layout-aware content composition.",
+    "tags": ["Shapes", "Containers", "Visual Layer"],
+    "image": "assets/screenshots/shape-container.png",
+    "pdf": "assets/pdf/shape-container.pdf",
+    "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/ShapeContainerExample.java"
+  }
+]

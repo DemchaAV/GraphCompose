@@ -124,6 +124,21 @@ class PresetVisualGalleryTest {
     }
 
     @Test
+    void rendersExecutive() throws Exception {
+        render("executive_v2", Executive::create);
+    }
+
+    @Test
+    void rendersEngineeringResume() throws Exception {
+        render("engineering_resume_v2", EngineeringResume::create);
+    }
+
+    @Test
+    void rendersTimelineMinimal() throws Exception {
+        render("timeline_minimal_v2", TimelineMinimal::create);
+    }
+
+    @Test
     void exposesStableIdentities() {
         assertThat(NordicClean.ID).isEqualTo("nordic-clean");
         assertThat(NordicClean.DISPLAY_NAME).isEqualTo("Nordic Clean");
@@ -131,14 +146,23 @@ class PresetVisualGalleryTest {
         assertThat(ClassicSerif.DISPLAY_NAME).isEqualTo("Classic Serif");
         assertThat(CompactMono.ID).isEqualTo("compact-mono");
         assertThat(CompactMono.DISPLAY_NAME).isEqualTo("Compact Mono");
+        assertThat(Executive.ID).isEqualTo("executive");
+        assertThat(Executive.DISPLAY_NAME).isEqualTo("Executive");
+        assertThat(EngineeringResume.ID).isEqualTo("engineering-resume");
+        assertThat(EngineeringResume.DISPLAY_NAME).isEqualTo("Engineering Resume");
+        assertThat(TimelineMinimal.ID).isEqualTo("timeline-minimal");
+        assertThat(TimelineMinimal.DISPLAY_NAME).isEqualTo("Timeline Minimal");
     }
 
     @Test
     void presetsAreInvocableWithoutSampleSpec() {
-        // Smoke test that all three preset classes load and return a
+        // Smoke test that every preset class loads and returns a
         // non-null DocumentTemplate without touching the spec layer.
         assertThat(NordicClean.create(THEME)).isNotNull();
         assertThat(ClassicSerif.create(THEME)).isNotNull();
         assertThat(CompactMono.create(THEME)).isNotNull();
+        assertThat(Executive.create(THEME)).isNotNull();
+        assertThat(EngineeringResume.create(THEME)).isNotNull();
+        assertThat(TimelineMinimal.create(THEME)).isNotNull();
     }
 }

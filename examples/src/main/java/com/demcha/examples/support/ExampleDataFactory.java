@@ -1,5 +1,15 @@
 package com.demcha.examples.support;
 
+import com.demcha.compose.document.templates.blocks.BulletListBlock;
+import com.demcha.compose.document.templates.blocks.IndentedBlock;
+import com.demcha.compose.document.templates.blocks.KeyValueBlock;
+import com.demcha.compose.document.templates.blocks.MultiParagraphBlock;
+import com.demcha.compose.document.templates.blocks.ParagraphBlock;
+import com.demcha.compose.document.templates.coverletter.spec.CoverLetterHeader;
+import com.demcha.compose.document.templates.coverletter.spec.CoverLetterSpec;
+import com.demcha.compose.document.templates.cv.spec.CvHeader;
+import com.demcha.compose.document.templates.cv.spec.CvModule;
+import com.demcha.compose.document.templates.cv.spec.CvSpec;
 import com.demcha.compose.document.templates.data.common.EmailYaml;
 import com.demcha.compose.document.templates.data.common.Header;
 import com.demcha.compose.document.templates.data.coverletter.CoverLetterDocumentSpec;
@@ -239,5 +249,117 @@ public final class ExampleDataFactory {
 
     private static ScheduleSlot slot(String start, String end) {
         return ScheduleSlot.of(start, end);
+    }
+
+    // -- Templates v2 sample data ---------------------------------------
+
+    /**
+     * Returns a sample {@code CvSpec} for the Templates v2 CV pipeline.
+     * Mirrors the content of {@link #sampleCv()} in the v2 spec shape
+     * (immutable records, semantic Block kinds, markdown-aware
+     * paragraph text).
+     *
+     * @return sample v2 CV spec
+     */
+    public static CvSpec sampleCvSpecV2() {
+        return CvSpec.builder()
+                .header(sampleCvHeaderV2())
+                .module(CvModule.of("Professional Summary",
+                        new ParagraphBlock(
+                                "Platform engineer building resilient PDF and "
+                                        + "document-generation workflows for reliable "
+                                        + "business output.")))
+                .module(CvModule.of("Technical Skills",
+                        new BulletListBlock(List.of(
+                                "Java 21, PDFBox, Maven, REST APIs",
+                                "Template design systems, pagination, semantic layout composition",
+                                "Testing strategy, CI pipelines, developer enablement"))))
+                .module(CvModule.of("Education & Certifications",
+                        new IndentedBlock(List.of(
+                                new IndentedBlock.Item("MSc Computer Science",
+                                        "University of Manchester | 2021"),
+                                new IndentedBlock.Item("Oracle Java Certification",
+                                        "Professional track | 2023")))))
+                .module(CvModule.of("Projects",
+                        new IndentedBlock(List.of(
+                                new IndentedBlock.Item("GraphCompose",
+                                        "Declarative PDF layout engine for reusable document generation"),
+                                new IndentedBlock.Item("Template Studio",
+                                        "Internal tool for evaluating CV, proposal, and invoice output")))))
+                .module(CvModule.of("Professional Experience",
+                        new MultiParagraphBlock(List.of(
+                                "**Senior Platform Engineer**, Northwind Systems | "
+                                        + "*2024-Present* — Led reusable document flows for "
+                                        + "reporting, billing, and hiring operations.",
+                                "**Software Engineer**, BrightLeaf Labs | *2021-2024* "
+                                        + "— Built backend services and production document "
+                                        + "rendering pipelines."))))
+                .module(CvModule.of("Additional Information",
+                        new KeyValueBlock(List.of(
+                                new KeyValueBlock.Entry("Languages",
+                                        "English (Fluent), German (Intermediate), Spanish (Basic)"),
+                                new KeyValueBlock.Entry("Work Eligibility",
+                                        "Eligible to work in the UK")))))
+                .build();
+    }
+
+    /**
+     * Returns a sample {@code CvHeader} for the Templates v2 CV
+     * pipeline.
+     *
+     * @return sample v2 CV header
+     */
+    public static CvHeader sampleCvHeaderV2() {
+        return CvHeader.builder()
+                .name("Artem Demchyshyn")
+                .address("London, UK")
+                .phone("+44 20 5555 1000")
+                .email("artem@demo.dev")
+                .link("LinkedIn", "https://linkedin.com/in/graphcompose")
+                .link("GitHub", "https://github.com/DemchaAV")
+                .build();
+    }
+
+    /**
+     * Returns a sample {@code CoverLetterSpec} for the Templates v2
+     * cover-letter pipeline.
+     *
+     * @return sample v2 cover letter spec
+     */
+    public static CoverLetterSpec sampleCoverLetterSpecV2() {
+        return CoverLetterSpec.builder()
+                .header(sampleCoverLetterHeaderV2())
+                .greeting("Dear Hiring Team at **Northwind Systems**,")
+                .paragraph("I am excited to share my interest in the Senior "
+                        + "Platform Engineer role. My recent work has focused "
+                        + "on building **reusable document-generation systems** "
+                        + "that balance public API design, render quality, and "
+                        + "maintainability.")
+                .paragraph("I enjoy translating fuzzy workflow requirements into "
+                        + "clear template abstractions, reliable test coverage, "
+                        + "and examples that make adoption easier for the rest "
+                        + "of the team.")
+                .paragraph("I would welcome the opportunity to bring that same "
+                        + "mix of engineering rigor and product thinking to your "
+                        + "platform group.")
+                .closing("Sincerely, *Artem Demchyshyn*")
+                .build();
+    }
+
+    /**
+     * Returns a sample {@code CoverLetterHeader} mirroring the v2 CV
+     * header so a writer's CV and cover letter ship as a matched set.
+     *
+     * @return sample v2 cover letter header
+     */
+    public static CoverLetterHeader sampleCoverLetterHeaderV2() {
+        return CoverLetterHeader.builder()
+                .name("Artem Demchyshyn")
+                .address("London, UK")
+                .phone("+44 20 5555 1000")
+                .email("artem@demo.dev")
+                .link("LinkedIn", "https://linkedin.com/in/graphcompose")
+                .link("GitHub", "https://github.com/DemchaAV")
+                .build();
     }
 }

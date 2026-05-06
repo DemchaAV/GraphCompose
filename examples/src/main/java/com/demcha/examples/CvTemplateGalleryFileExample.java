@@ -3,71 +3,128 @@ package com.demcha.examples;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.api.CvTemplate;
-import com.demcha.compose.document.templates.builtins.ClassicSerifCvTemplate;
-import com.demcha.compose.document.templates.builtins.CompactMonoCvTemplate;
-import com.demcha.compose.document.templates.builtins.NordicCleanCvTemplate;
-import com.demcha.compose.document.templates.builtins.ProductLeaderCvTemplate;
-import com.demcha.compose.document.templates.builtins.TechLeadCvTemplate;
-import com.demcha.compose.document.templates.builtins.TimelineMinimalCvTemplate;
-import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
+import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.cv.presets.BlueBanner;
+import com.demcha.compose.document.templates.cv.presets.BoxedSections;
+import com.demcha.compose.document.templates.cv.presets.CenteredHeadline;
+import com.demcha.compose.document.templates.cv.presets.ClassicSerif;
+import com.demcha.compose.document.templates.cv.presets.CompactMono;
+import com.demcha.compose.document.templates.cv.presets.EditorialBlue;
+import com.demcha.compose.document.templates.cv.presets.EngineeringResume;
+import com.demcha.compose.document.templates.cv.presets.Executive;
+import com.demcha.compose.document.templates.cv.presets.ModernProfessional;
+import com.demcha.compose.document.templates.cv.presets.MonogramSidebar;
+import com.demcha.compose.document.templates.cv.presets.NordicClean;
+import com.demcha.compose.document.templates.cv.presets.Panel;
+import com.demcha.compose.document.templates.cv.presets.SidebarPortrait;
+import com.demcha.compose.document.templates.cv.presets.TimelineMinimal;
+import com.demcha.compose.document.templates.cv.spec.CvSpec;
+import com.demcha.compose.document.theme.BusinessTheme;
 import com.demcha.examples.support.ExampleDataFactory;
 import com.demcha.examples.support.ExampleOutputPaths;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
+/**
+ * Renders all 14 Templates v2 CV presets against the same shared
+ * sample data. Each PDF lands in
+ * {@code examples/target/generated-pdfs/cv-<id>.pdf} where
+ * {@code <id>} is the preset's stable identifier (e.g.
+ * {@code cv-modern-professional.pdf}).
+ *
+ * <p>This is the single source of truth for the example CV gallery
+ * in v2. The matching cover-letter gallery lives in
+ * {@link CoverLetterTemplateGalleryFileExample}.</p>
+ */
 public final class CvTemplateGalleryFileExample {
+
+    private static final BusinessTheme THEME = BusinessTheme.modern();
 
     private CvTemplateGalleryFileExample() {
     }
 
+    /**
+     * Renders all 14 v2 CV preset gallery PDFs.
+     *
+     * @return list of absolute paths of the rendered PDFs in source
+     *         order
+     * @throws Exception if any rendering fails
+     */
     public static List<Path> generate() throws Exception {
         return generate(null);
     }
 
-    public static List<Path> generate(String templateId) throws Exception {
-        CvDocumentSpec cv = ExampleDataFactory.sampleCv();
-        List<TemplateRun> templates = List.of(
-                new TemplateRun(new NordicCleanCvTemplate(), 18),
-                new TemplateRun(new CompactMonoCvTemplate(), 20),
-                new TemplateRun(new ProductLeaderCvTemplate(), 18),
-                new TemplateRun(new ClassicSerifCvTemplate(), 20),
-                new TemplateRun(new TechLeadCvTemplate(), 20),
-                new TemplateRun(new TimelineMinimalCvTemplate(), 22));
+    /**
+     * Renders one preset (when {@code presetId} matches its stable id)
+     * or all presets when {@code presetId} is null.
+     *
+     * @param presetId stable preset id to render exclusively, or null
+     *                 to render all presets
+     * @return list of absolute paths of the rendered PDFs
+     * @throws Exception if any rendering fails
+     */
+    public static List<Path> generate(String presetId) throws Exception {
+        List<Run> runs = List.of(
+                run(ModernProfessional.ID, ModernProfessional::create),
+                run(NordicClean.ID, NordicClean::create),
+                run(ClassicSerif.ID, ClassicSerif::create),
+                run(CompactMono.ID, CompactMono::create),
+                run(Executive.ID, Executive::create),
+                run(EngineeringResume.ID, EngineeringResume::create),
+                run(TimelineMinimal.ID, TimelineMinimal::create),
+                run(BoxedSections.ID, BoxedSections::create),
+                run(CenteredHeadline.ID, CenteredHeadline::create),
+                run(BlueBanner.ID, BlueBanner::create),
+                run(EditorialBlue.ID, EditorialBlue::create),
+                run(Panel.ID, Panel::create),
+                run(SidebarPortrait.ID, SidebarPortrait::create),
+                run(MonogramSidebar.ID, MonogramSidebar::create));
 
+        CvSpec spec = ExampleDataFactory.sampleCvSpecV2();
         List<Path> generated = new ArrayList<>();
-        for (TemplateRun run : templates) {
-            if (templateId != null && !run.template().getTemplateId().equals(templateId)) {
+        for (Run cv : runs) {
+            if (presetId != null && !cv.id.equals(presetId)) {
                 continue;
             }
-            generated.add(generateOne(cv, run));
+            generated.add(renderOne(spec, cv));
         }
         return List.copyOf(generated);
     }
 
+    /**
+     * Renders all v2 CV preset gallery PDFs and prints each path.
+     *
+     * @param args optional first arg = preset id filter
+     * @throws Exception if any rendering fails
+     */
     public static void main(String[] args) throws Exception {
-        String templateId = args.length == 0 ? null : args[0];
-        for (Path outputFile : generate(templateId)) {
-            System.out.println("Generated: " + outputFile);
+        String presetId = args.length == 0 ? null : args[0];
+        for (Path output : generate(presetId)) {
+            System.out.println("Generated: " + output);
         }
     }
 
-    private static Path generateOne(CvDocumentSpec cv, TemplateRun run) throws Exception {
-        Path outputFile = ExampleOutputPaths.prepare("cv-" + run.template().getTemplateId() + ".pdf");
+    private static Path renderOne(CvSpec spec, Run cv) throws Exception {
+        Path outputFile = ExampleOutputPaths.prepare("cv-" + cv.id + ".pdf");
+        DocumentTemplate<CvSpec> template = cv.factory.apply(THEME);
 
         try (DocumentSession document = GraphCompose.document(outputFile)
                 .pageSize(DocumentPageSize.A4)
-                .margin(run.margin(), run.margin(), run.margin(), run.margin())
+                .margin(28, 28, 28, 28)
                 .create()) {
-            run.template().compose(document, cv);
+            template.compose(document, spec);
             document.buildPdf();
         }
-
         return outputFile;
     }
 
-    private record TemplateRun(CvTemplate template, float margin) {
+    private static Run run(String id, Function<BusinessTheme, DocumentTemplate<CvSpec>> factory) {
+        return new Run(id, factory);
+    }
+
+    private record Run(String id, Function<BusinessTheme, DocumentTemplate<CvSpec>> factory) {
     }
 }

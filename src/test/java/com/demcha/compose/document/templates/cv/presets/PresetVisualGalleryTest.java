@@ -159,6 +159,21 @@ class PresetVisualGalleryTest {
     }
 
     @Test
+    void rendersPanel() throws Exception {
+        render("panel_v2", Panel::create);
+    }
+
+    @Test
+    void rendersSidebarPortrait() throws Exception {
+        render("sidebar_portrait_v2", SidebarPortrait::create);
+    }
+
+    @Test
+    void rendersMonogramSidebar() throws Exception {
+        render("monogram_sidebar_v2", MonogramSidebar::create);
+    }
+
+    @Test
     void exposesStableIdentities() {
         assertThat(NordicClean.ID).isEqualTo("nordic-clean");
         assertThat(NordicClean.DISPLAY_NAME).isEqualTo("Nordic Clean");
@@ -180,6 +195,12 @@ class PresetVisualGalleryTest {
         assertThat(BlueBanner.DISPLAY_NAME).isEqualTo("Blue Banner");
         assertThat(EditorialBlue.ID).isEqualTo("editorial-blue");
         assertThat(EditorialBlue.DISPLAY_NAME).isEqualTo("Editorial Blue");
+        assertThat(Panel.ID).isEqualTo("panel");
+        assertThat(Panel.DISPLAY_NAME).isEqualTo("Panel");
+        assertThat(SidebarPortrait.ID).isEqualTo("sidebar-portrait");
+        assertThat(SidebarPortrait.DISPLAY_NAME).isEqualTo("Sidebar Portrait");
+        assertThat(MonogramSidebar.ID).isEqualTo("monogram-sidebar");
+        assertThat(MonogramSidebar.DISPLAY_NAME).isEqualTo("Monogram Sidebar");
     }
 
     @Test
@@ -196,5 +217,8 @@ class PresetVisualGalleryTest {
         assertThat(CenteredHeadline.create(THEME)).isNotNull();
         assertThat(BlueBanner.create(THEME)).isNotNull();
         assertThat(EditorialBlue.create(THEME)).isNotNull();
+        assertThat(Panel.create(THEME)).isNotNull();
+        assertThat(SidebarPortrait.create(THEME)).isNotNull();
+        assertThat(MonogramSidebar.create(THEME)).isNotNull();
     }
 }

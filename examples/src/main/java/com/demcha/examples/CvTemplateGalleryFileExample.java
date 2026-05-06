@@ -69,7 +69,7 @@ public final class CvTemplateGalleryFileExample {
     public static List<Path> generate(String presetId) throws Exception {
         List<Run> runs = List.of(
                 run(ModernProfessional.ID, ModernProfessional.RECOMMENDED_MARGIN, ModernProfessional::create),
-                run(NordicClean.ID, 28.0, NordicClean::create),
+                run(NordicClean.ID, NordicClean.RECOMMENDED_MARGIN, NordicClean::create),
                 run(ClassicSerif.ID, 28.0, ClassicSerif::create),
                 run(CompactMono.ID, 28.0, CompactMono::create),
                 run(Executive.ID, 28.0, Executive::create),

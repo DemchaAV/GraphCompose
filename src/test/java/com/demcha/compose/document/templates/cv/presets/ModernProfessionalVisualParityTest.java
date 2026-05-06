@@ -78,11 +78,11 @@ class ModernProfessionalVisualParityTest {
                                         "Internal tool for evaluating CV, proposal, and invoice output")))))
                 .module(CvModule.of("Professional Experience",
                         new MultiParagraphBlock(List.of(
-                                "Senior Platform Engineer, Northwind Systems | 2024-Present "
-                                        + "— Led reusable document flows for reporting, billing, "
-                                        + "and hiring operations.",
-                                "Software Engineer, BrightLeaf Labs | 2021-2024 — Built backend "
-                                        + "services and production document rendering pipelines."))))
+                                "**Senior Platform Engineer**, Northwind Systems | "
+                                        + "*2024-Present* — Led reusable document flows for "
+                                        + "reporting, billing, and hiring operations.",
+                                "**Software Engineer**, BrightLeaf Labs | *2021-2024* — Built "
+                                        + "backend services and production document rendering pipelines."))))
                 .module(CvModule.of("Additional Information",
                         new KeyValueBlock(List.of(
                                 new KeyValueBlock.Entry(

@@ -144,6 +144,19 @@ class ModuleTest {
         assertThat(above.marginBelow()).isEqualTo(4.0); // unchanged from flat
         assertThat(both.marginAbove()).isEqualTo(20.0); // chained
         assertThat(both.marginBelow()).isEqualTo(7.0);
+        // bodyStyle survives margin adjusters
+        assertThat(both.bodyStyle()).isEqualTo(flat.bodyStyle());
+    }
+
+    @Test
+    void styleBodyStyleAdjusterReturnsCopyWithoutMutating() {
+        Module.Style flat = Module.headingFlat(THEME);
+        Module.Style customBody = flat.bodyStyle(null);
+        assertThat(flat.bodyStyle()).isNotNull();
+        assertThat(customBody.bodyStyle()).isNull();
+        assertThat(customBody.headingStyle()).isEqualTo(flat.headingStyle());
+        assertThat(customBody.marginAbove()).isEqualTo(flat.marginAbove());
+        assertThat(customBody.marginBelow()).isEqualTo(flat.marginBelow());
     }
 
     @Test

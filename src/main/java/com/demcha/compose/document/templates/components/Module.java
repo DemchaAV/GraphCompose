@@ -2,6 +2,7 @@ package com.demcha.compose.document.templates.components;
 
 import com.demcha.compose.document.node.ContainerNode;
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.node.ListNode;
 import com.demcha.compose.document.node.ParagraphNode;
@@ -152,6 +153,10 @@ public final class Module {
                 /* autoSize        */ null);
     }
 
+    private DocumentTextStyle bodyStyle(BusinessTheme theme) {
+        return style.bodyStyle != null ? style.bodyStyle : theme.text().body();
+    }
+
     private DocumentNode renderBody(BusinessTheme theme, Spacing spacing) {
         return switch (body) {
             case ParagraphBlock p -> renderParagraph(p, theme, spacing);
@@ -166,18 +171,20 @@ public final class Module {
     }
 
     private ParagraphNode renderParagraph(ParagraphBlock block, BusinessTheme theme, Spacing spacing) {
+        DocumentTextStyle bodyStyle = bodyStyle(theme);
+        List<InlineRun> runs = MarkdownText.parse(block.text(), bodyStyle);
         return new ParagraphNode(
                 name + ".body",
-                block.text(),
-                null,
-                theme.text().body(),
+                /* text       */ "",
+                /* inlineRuns */ runs,
+                bodyStyle,
                 block.align(),
                 spacing.lineSpacing(),
                 "",
                 null,
                 null,
                 null,
-                DocumentInsets.zero(),
+                /* padding */ leftIndent(spacing),
                 DocumentInsets.zero(),
                 null);
     }
@@ -188,24 +195,26 @@ public final class Module {
                 name + "." + suffix,
                 items,
                 marker,
-                theme.text().body(),
+                bodyStyle(theme),
                 TextAlign.LEFT,
                 spacing.lineSpacing(),
                 spacing.listItemSpacing(),
                 /* continuationIndent */ "",
                 /* normalizeMarkers   */ true,
-                DocumentInsets.zero(),
+                /* padding */ leftIndent(spacing),
                 DocumentInsets.zero());
     }
 
     private DocumentNode renderMultiParagraph(MultiParagraphBlock block, BusinessTheme theme, Spacing spacing) {
+        DocumentTextStyle bodyStyle = bodyStyle(theme);
         List<DocumentNode> paragraphs = new ArrayList<>(block.paragraphs().size());
         for (int i = 0; i < block.paragraphs().size(); i++) {
+            String source = block.paragraphs().get(i);
             paragraphs.add(new ParagraphNode(
                     name + ".paragraph[" + i + "]",
-                    block.paragraphs().get(i),
-                    null,
-                    theme.text().body(),
+                    "",
+                    MarkdownText.parse(source, bodyStyle),
+                    bodyStyle,
                     TextAlign.LEFT,
                     spacing.lineSpacing(),
                     "",
@@ -220,7 +229,7 @@ public final class Module {
                 name + ".body",
                 paragraphs,
                 /* spacing */ spacing.paragraphSpacing(),
-                DocumentInsets.zero(),
+                /* padding */ leftIndent(spacing),
                 DocumentInsets.zero(),
                 null,
                 null,
@@ -229,15 +238,24 @@ public final class Module {
     }
 
     private DocumentNode renderIndented(IndentedBlock block, BusinessTheme theme, Spacing spacing) {
+        DocumentTextStyle bodyStyle = bodyStyle(theme);
+        // Title is the same family as body but rendered bold so it
+        // visually separates from the indented body underneath.
+        DocumentTextStyle titleStyle = DocumentTextStyle.builder()
+                .fontName(bodyStyle.fontName())
+                .size(bodyStyle.size())
+                .decoration(com.demcha.compose.document.style.DocumentTextDecoration.BOLD)
+                .color(bodyStyle.color())
+                .build();
         List<DocumentNode> entries = new ArrayList<>(block.items().size() * 2);
         for (int i = 0; i < block.items().size(); i++) {
             IndentedBlock.Item item = block.items().get(i);
-            // Title — bold weight via h3 style (close to body but emphasised)
+            // Title — bold weight via h3 style; markdown parsed for inline emphasis.
             entries.add(new ParagraphNode(
                     name + ".item[" + i + "].title",
-                    item.title(),
-                    null,
-                    theme.text().h3(),
+                    "",
+                    MarkdownText.parse(item.title(), titleStyle),
+                    titleStyle,
                     TextAlign.LEFT,
                     spacing.lineSpacing(),
                     "",
@@ -247,19 +265,20 @@ public final class Module {
                     DocumentInsets.zero(),
                     DocumentInsets.zero(),
                     null));
-            // Body — regular paragraph indented from the left
+            // Body — regular paragraph nested one half-step beyond the
+            // module body indent so the title visually sits one level above.
             entries.add(new ParagraphNode(
                     name + ".item[" + i + "].body",
-                    item.body(),
-                    null,
-                    theme.text().body(),
+                    "",
+                    MarkdownText.parse(item.body(), bodyStyle),
+                    bodyStyle,
                     TextAlign.LEFT,
                     spacing.lineSpacing(),
                     "",
                     null,
                     null,
                     null,
-                    /* padding */ new DocumentInsets(0.0, 0.0, 0.0, 12.0),
+                    /* padding */ new DocumentInsets(0.0, 0.0, 0.0, spacing.bodyIndent()),
                     DocumentInsets.zero(),
                     null));
         }
@@ -267,7 +286,7 @@ public final class Module {
                 name + ".body",
                 entries,
                 spacing.listItemSpacing(),
-                DocumentInsets.zero(),
+                /* padding */ leftIndent(spacing),
                 DocumentInsets.zero(),
                 null,
                 null,
@@ -276,18 +295,23 @@ public final class Module {
     }
 
     private DocumentNode renderKeyValue(KeyValueBlock block, BusinessTheme theme, Spacing spacing) {
+        DocumentTextStyle bodyStyle = bodyStyle(theme);
+        // Key uses the bold variant of the body font so a "Key: value"
+        // line shows the key emphasised on the same baseline as the
+        // value, without depending on the legacy markdown pipeline.
         List<DocumentNode> rows = new ArrayList<>(block.entries().size());
         for (int i = 0; i < block.entries().size(); i++) {
             KeyValueBlock.Entry entry = block.entries().get(i);
-            // Render as "Key: value" — bold key handled by the engine via
-            // h3 style on the leading run; for v1 simplicity we emit a
-            // single paragraph carrying the concatenation. Inline run
-            // styling will land in a follow-up B.3.b refinement.
+            // Synthesize the key as a markdown bold prefix so all the
+            // emphasis logic flows through the shared MarkdownText
+            // parser; this also means an entry whose key already
+            // contains markdown is rendered correctly.
+            String composed = "**" + entry.key() + ":** " + entry.value();
             rows.add(new ParagraphNode(
                     name + ".entry[" + i + "]",
-                    entry.key() + ": " + entry.value(),
-                    null,
-                    theme.text().body(),
+                    "",
+                    MarkdownText.parse(composed, bodyStyle),
+                    bodyStyle,
                     TextAlign.LEFT,
                     spacing.lineSpacing(),
                     "",
@@ -302,7 +326,7 @@ public final class Module {
                 name + ".body",
                 rows,
                 spacing.lineSpacing(),
-                DocumentInsets.zero(),
+                /* padding */ leftIndent(spacing),
                 DocumentInsets.zero(),
                 null,
                 null,
@@ -310,18 +334,24 @@ public final class Module {
                 null);
     }
 
+    private static DocumentInsets leftIndent(Spacing spacing) {
+        return new DocumentInsets(0.0, 0.0, 0.0, spacing.bodyIndent());
+    }
+
     /**
      * Returns the canonical "flat heading" rendering style — heading
-     * text in the active {@code h2} style, flush with the left edge,
-     * with default vertical margins driven by the active spacing
-     * tokens.
+     * text in the active {@code h2} style, body text in the active
+     * {@code body} style, flush with the left edge, with default
+     * vertical margins driven by the active spacing tokens.
      *
-     * <p>Callers can adjust the margins after the fact:</p>
+     * <p>Callers can adjust the margins or override either style after
+     * the fact:</p>
      *
      * <pre>{@code
      * Module.headingFlat(theme)
      *     .marginAbove(spacing.sectionTitleAbove())
      *     .marginBelow(spacing.sectionTitleBelow())
+     *     .bodyStyle(customSmallerBody)
      * }</pre>
      *
      * @param theme active business theme
@@ -330,7 +360,11 @@ public final class Module {
      */
     public static Style headingFlat(BusinessTheme theme) {
         Objects.requireNonNull(theme, "theme");
-        return new Style(theme.text().h2(), /* above */ 8.0, /* below */ 4.0);
+        return new Style(
+                theme.text().h2(),
+                theme.text().body(),
+                /* above */ 8.0,
+                /* below */ 4.0);
     }
 
     /**
@@ -338,12 +372,17 @@ public final class Module {
      *
      * @param headingStyle text style applied to the heading line; if
      *                     null the active theme's {@code h2} is used
+     * @param bodyStyle    text style applied to the body content
+     *                     (paragraph, list, indented body, key-value);
+     *                     if null the active theme's {@code body} is
+     *                     used
      * @param marginAbove  vertical margin above the heading
      * @param marginBelow  vertical margin below the heading (separates
      *                     it from the body)
      */
     public static record Style(
             DocumentTextStyle headingStyle,
+            DocumentTextStyle bodyStyle,
             double marginAbove,
             double marginBelow) {
 
@@ -354,7 +393,7 @@ public final class Module {
          * @return new style instance
          */
         public Style marginAbove(double value) {
-            return new Style(headingStyle, value, marginBelow);
+            return new Style(headingStyle, bodyStyle, value, marginBelow);
         }
 
         /**
@@ -364,7 +403,18 @@ public final class Module {
          * @return new style instance
          */
         public Style marginBelow(double value) {
-            return new Style(headingStyle, marginAbove, value);
+            return new Style(headingStyle, bodyStyle, marginAbove, value);
+        }
+
+        /**
+         * Returns a copy with the given body style override.
+         *
+         * @param value text style for body content; null falls back to
+         *              the active theme's {@code body} style
+         * @return new style instance
+         */
+        public Style bodyStyle(DocumentTextStyle value) {
+            return new Style(headingStyle, value, marginAbove, marginBelow);
         }
     }
 }

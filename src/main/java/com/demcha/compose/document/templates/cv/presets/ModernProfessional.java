@@ -1,5 +1,7 @@
 package com.demcha.compose.document.templates.cv.presets;
 
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.components.Header;
 import com.demcha.compose.document.templates.components.Module;
@@ -8,6 +10,7 @@ import com.demcha.compose.document.templates.cv.layouts.SingleColumn;
 import com.demcha.compose.document.templates.cv.spec.CvSpec;
 import com.demcha.compose.document.templates.themes.Spacing;
 import com.demcha.compose.document.theme.BusinessTheme;
+import com.demcha.compose.font.FontName;
 
 /**
  * Templates v2 "Modern Professional" CV preset.
@@ -55,6 +58,28 @@ public final class ModernProfessional {
     public static DocumentTemplate<CvSpec> create(BusinessTheme theme) {
         Spacing spacing = Spacing.compact();
 
+        // Heading colour and size match the legacy CvTemplateV1 visual
+        // signature: 17.4 pt heading, 10 pt body, dark slate blue #2C3E50
+        // for headings. Overrides the active theme's text scale here so
+        // the preset reads the same on any BusinessTheme variant.
+        DocumentTextStyle headingStyle = DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA_BOLD)
+                .size(17.4)
+                .color(DocumentColor.rgb(44, 62, 80))
+                .build();
+
+        DocumentTextStyle bodyStyle = DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA)
+                .size(10.0)
+                .color(theme.text().body().color())
+                .build();
+
+        Module.Style moduleStyle = new Module.Style(
+                headingStyle,
+                bodyStyle,
+                spacing.sectionTitleAbove(),
+                spacing.sectionTitleBelow());
+
         return CvBuilder.builder()
                 .id(ID)
                 .displayName(DISPLAY_NAME)
@@ -63,9 +88,7 @@ public final class ModernProfessional {
                 .layout(SingleColumn.layout()
                         .moduleGap(spacing.moduleGap()))
                 .header(Header.rightAligned(theme, spacing))
-                .moduleStyle(Module.headingFlat(theme)
-                        .marginAbove(spacing.sectionTitleAbove())
-                        .marginBelow(spacing.sectionTitleBelow()))
+                .moduleStyle(moduleStyle)
                 .place(SingleColumn.MAIN,
                         "Professional Summary",
                         "Technical Skills",

@@ -23,6 +23,8 @@ import java.util.Objects;
  * @param sectionTitleBelow margin below a section heading (separates it from its body)
  * @param headerLineSpacing vertical gap between contact rows in the document header
  * @param listItemSpacing   vertical gap between list items (bullet, numbered, indented)
+ * @param bodyIndent        left padding applied to module body content so the
+ *                          heading visually sits one level above the body
  * @param contentPadding    overall padding around the document content area
  */
 public record Spacing(
@@ -33,6 +35,7 @@ public record Spacing(
         double sectionTitleBelow,
         double headerLineSpacing,
         double listItemSpacing,
+        double bodyIndent,
         Margin contentPadding) {
 
     /**
@@ -52,6 +55,7 @@ public record Spacing(
         validate(sectionTitleBelow, "sectionTitleBelow");
         validate(headerLineSpacing, "headerLineSpacing");
         validate(listItemSpacing, "listItemSpacing");
+        validate(bodyIndent, "bodyIndent");
     }
 
     /**
@@ -67,8 +71,9 @@ public record Spacing(
                 /* paragraphSpacing  */ 4.0,
                 /* sectionTitleAbove */ 4.0,
                 /* sectionTitleBelow */ 2.0,
-                /* headerLineSpacing */ 1.0,
+                /* headerLineSpacing */ 3.0,
                 /* listItemSpacing   */ 2.0,
+                /* bodyIndent        */ 12.0,
                 /* contentPadding    */ Margin.of(28));
     }
 
@@ -85,8 +90,9 @@ public record Spacing(
                 /* paragraphSpacing  */ 6.0,
                 /* sectionTitleAbove */ 8.0,
                 /* sectionTitleBelow */ 4.0,
-                /* headerLineSpacing */ 2.0,
+                /* headerLineSpacing */ 4.0,
                 /* listItemSpacing   */ 3.0,
+                /* bodyIndent        */ 16.0,
                 /* contentPadding    */ Margin.of(36));
     }
 
@@ -103,8 +109,9 @@ public record Spacing(
                 /* paragraphSpacing  */ 10.0,
                 /* sectionTitleAbove */ 12.0,
                 /* sectionTitleBelow */ 6.0,
-                /* headerLineSpacing */ 3.0,
+                /* headerLineSpacing */ 5.0,
                 /* listItemSpacing   */ 4.0,
+                /* bodyIndent        */ 20.0,
                 /* contentPadding    */ Margin.of(48));
     }
 
@@ -148,6 +155,7 @@ public record Spacing(
         private double sectionTitleBelow;
         private double headerLineSpacing;
         private double listItemSpacing;
+        private double bodyIndent;
         private Margin contentPadding;
 
         private Builder(Spacing seed) {
@@ -158,6 +166,7 @@ public record Spacing(
             this.sectionTitleBelow = seed.sectionTitleBelow;
             this.headerLineSpacing = seed.headerLineSpacing;
             this.listItemSpacing = seed.listItemSpacing;
+            this.bodyIndent = seed.bodyIndent;
             this.contentPadding = seed.contentPadding;
         }
 
@@ -239,6 +248,18 @@ public record Spacing(
         }
 
         /**
+         * Sets the left padding applied to module body content so the
+         * heading visually sits one level above the body.
+         *
+         * @param value non-negative finite indent in points
+         * @return this builder
+         */
+        public Builder bodyIndent(double value) {
+            this.bodyIndent = value;
+            return this;
+        }
+
+        /**
          * Sets the overall content padding.
          *
          * @param value non-null margin
@@ -266,6 +287,7 @@ public record Spacing(
                     sectionTitleBelow,
                     headerLineSpacing,
                     listItemSpacing,
+                    bodyIndent,
                     contentPadding);
         }
     }

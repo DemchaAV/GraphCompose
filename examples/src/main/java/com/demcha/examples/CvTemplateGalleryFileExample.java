@@ -70,7 +70,7 @@ public final class CvTemplateGalleryFileExample {
         List<Run> runs = List.of(
                 run(ModernProfessional.ID, ModernProfessional.RECOMMENDED_MARGIN, ModernProfessional::create),
                 run(NordicClean.ID, NordicClean.RECOMMENDED_MARGIN, NordicClean::create),
-                run(ClassicSerif.ID, 28.0, ClassicSerif::create),
+                run(ClassicSerif.ID, ClassicSerif.RECOMMENDED_MARGIN, ClassicSerif::create),
                 run(CompactMono.ID, 28.0, CompactMono::create),
                 run(Executive.ID, 28.0, Executive::create),
                 run(EngineeringResume.ID, 28.0, EngineeringResume::create),

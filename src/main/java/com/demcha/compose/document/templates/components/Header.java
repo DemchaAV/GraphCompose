@@ -1,7 +1,10 @@
 package com.demcha.compose.document.templates.components;
 
 import com.demcha.compose.document.node.ContainerNode;
+import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.InlineRun;
+import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -84,9 +87,8 @@ public final class Header {
             rows.add(contactRow(contact));
         }
 
-        String links = joinPipe(input.linkLabels());
-        if (!links.isEmpty()) {
-            rows.add(linksRow(links));
+        if (!input.links().isEmpty()) {
+            rows.add(linksRow(input.links()));
         }
 
         return new ContainerNode(
@@ -136,11 +138,31 @@ public final class Header {
                 null);
     }
 
-    private ParagraphNode linksRow(String links) {
+    private ParagraphNode linksRow(List<Link> links) {
+        // Build inline runs: for each non-blank link, emit one InlineTextRun
+        // for the label (with its own DocumentLinkOptions when the URL is
+        // non-blank, making the run a clickable hyperlink in PDF backends
+        // that honour link metadata) and one plain run for the " | "
+        // separator between links.
+        List<InlineRun> runs = new ArrayList<>(links.size() * 2);
+        boolean separatorPending = false;
+        for (Link link : links) {
+            if (link == null || link.label() == null || link.label().isBlank()) {
+                continue;
+            }
+            if (separatorPending) {
+                runs.add(new InlineTextRun(" | ", null, null));
+            }
+            DocumentLinkOptions linkOptions = link.url() == null || link.url().isBlank()
+                    ? null
+                    : new DocumentLinkOptions(link.url().trim());
+            runs.add(new InlineTextRun(link.label().trim(), null, linkOptions));
+            separatorPending = true;
+        }
         return new ParagraphNode(
                 namePrefix + ".links",
-                links,
-                null,
+                /* text       */ "",
+                /* inlineRuns */ runs,
                 theme.text().caption(),
                 alignment,
                 0.0,
@@ -171,6 +193,56 @@ public final class Header {
     }
 
     /**
+     * One labelled link in the header links row. Empty {@code url}
+     * means the label is rendered as plain text rather than a
+     * clickable hyperlink — useful for visible-but-non-clickable
+     * email addresses or social-handle labels.
+     *
+     * @param label visible label text (e.g. "alex@example.dev",
+     *              "LinkedIn", "GitHub"); must not be null or blank
+     * @param url   target URI with scheme (e.g. {@code https://...},
+     *              {@code mailto:...}); empty / blank means no link
+     */
+    public record Link(String label, String url) {
+
+        /**
+         * Compact constructor that rejects null or blank labels and
+         * normalises {@code null} url to empty.
+         *
+         * @throws NullPointerException     if {@code label} is null
+         * @throws IllegalArgumentException if {@code label} is blank
+         */
+        public Link {
+            Objects.requireNonNull(label, "label");
+            if (label.isBlank()) {
+                throw new IllegalArgumentException("label must not be blank");
+            }
+            url = url == null ? "" : url;
+        }
+
+        /**
+         * Convenience factory for an inactive (non-clickable) link.
+         *
+         * @param label visible label text
+         * @return link with empty URL
+         */
+        public static Link plain(String label) {
+            return new Link(label, "");
+        }
+
+        /**
+         * Convenience factory for an active hyperlink.
+         *
+         * @param label visible label text
+         * @param url   target URI with scheme
+         * @return active link
+         */
+        public static Link active(String label, String url) {
+            return new Link(label, url);
+        }
+    }
+
+    /**
      * Header input data — the user-facing identity block carried by a
      * {@code CvSpec} or similar parent spec.
      *
@@ -178,11 +250,14 @@ public final class Header {
      * @param contactItems contact-row items joined with " | " separators
      *                     (typically address, phone); null or blank
      *                     items are skipped
-     * @param linkLabels   link-row labels joined with " | " separators
-     *                     (typically email, LinkedIn, GitHub); null or
-     *                     blank items are skipped
+     * @param links        link-row entries joined with " | " separators
+     *                     (typically email, LinkedIn, GitHub); each
+     *                     {@link Link} carries its label plus an
+     *                     optional URL that becomes a clickable
+     *                     hyperlink in PDF backends honouring link
+     *                     metadata
      */
-    public record Input(String name, List<String> contactItems, List<String> linkLabels) {
+    public record Input(String name, List<String> contactItems, List<Link> links) {
 
         /**
          * Compact constructor that defensively copies the supplied
@@ -193,7 +268,7 @@ public final class Header {
         public Input {
             Objects.requireNonNull(name, "name");
             contactItems = contactItems == null ? List.of() : List.copyOf(contactItems);
-            linkLabels = linkLabels == null ? List.of() : List.copyOf(linkLabels);
+            links = links == null ? List.of() : List.copyOf(links);
         }
     }
 }

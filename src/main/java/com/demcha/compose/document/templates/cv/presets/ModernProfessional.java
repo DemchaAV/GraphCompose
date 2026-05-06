@@ -1,6 +1,7 @@
 package com.demcha.compose.document.templates.cv.presets;
 
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.components.Header;
@@ -59,13 +60,17 @@ public final class ModernProfessional {
         Spacing spacing = Spacing.compact();
 
         // Heading colour and size match the legacy CvTemplateV1 visual
-        // signature: 17.4 pt heading, 10 pt body, dark slate blue #2C3E50
-        // for headings. Overrides the active theme's text scale here so
-        // the preset reads the same on any BusinessTheme variant.
+        // signature: 17.4 pt heading, 10 pt body, secondary blue #2980B9
+        // for the heading colour (V1's CvTheme secondary colour, which
+        // gives the section bands their distinct "blue" rather than the
+        // primary slate-blue muted text colour). Overrides the active
+        // theme's text scale here so the preset reads the same on any
+        // BusinessTheme variant.
         DocumentTextStyle headingStyle = DocumentTextStyle.builder()
                 .fontName(FontName.HELVETICA_BOLD)
                 .size(17.4)
-                .color(DocumentColor.rgb(44, 62, 80))
+                .decoration(DocumentTextDecoration.BOLD)
+                .color(DocumentColor.rgb(41, 128, 185))
                 .build();
 
         DocumentTextStyle bodyStyle = DocumentTextStyle.builder()

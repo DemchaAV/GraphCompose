@@ -7,6 +7,7 @@ import com.demcha.compose.document.templates.api.SlotMap;
 import com.demcha.compose.document.templates.components.Header;
 import com.demcha.compose.document.templates.components.Module;
 import com.demcha.compose.document.templates.cv.layouts.CvLayout;
+import com.demcha.compose.document.templates.cv.spec.CvHeader;
 import com.demcha.compose.document.templates.cv.spec.CvModule;
 import com.demcha.compose.document.templates.cv.spec.CvSpec;
 import com.demcha.compose.document.templates.themes.Spacing;
@@ -230,8 +231,28 @@ public final class CvBuilder {
                 Header.Input input = new Header.Input(
                         spec.header().name(),
                         spec.header().contactItems(),
-                        spec.header().linkLabels());
+                        headerLinks(spec.header()));
                 return capturedHeader.compose(input);
+            }
+
+            private List<Header.Link> headerLinks(CvHeader header) {
+                List<Header.Link> result = new java.util.ArrayList<>();
+                // Email becomes a clickable mailto: link when present.
+                if (!header.email().isBlank()) {
+                    result.add(Header.Link.active(
+                            header.email(),
+                            "mailto:" + header.email()));
+                }
+                // Each labelled link from the spec keeps its URL when one
+                // is supplied; otherwise falls back to plain text.
+                for (CvHeader.Link link : header.links()) {
+                    if (link.url().isBlank()) {
+                        result.add(Header.Link.plain(link.label()));
+                    } else {
+                        result.add(Header.Link.active(link.label(), link.url()));
+                    }
+                }
+                return result;
             }
 
             private SlotMap composeSlots(CvSpec spec) {

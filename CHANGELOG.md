@@ -105,6 +105,110 @@ for the user-facing summary.
   `@deprecated` tag. `DocumentSession` drops from 1,024 to ~937
   lines without changing any public method signatures.
 
+### Templates v2 restructure (committed in v1.6 line, develop)
+
+The **biggest change in v1.6** — the canonical template surface
+(CV, cover letter, invoice, proposal) was rewritten from the ground
+up. Old positional / cinematic-monolith composers (`CvTemplateV1`,
+`NordicCleanCvTemplate`, `InvoiceTemplateV2`, etc.) replaced with a
+four-layer architecture: **Theme tokens → Layout slots → Components
++ Blocks → Spec data**, glued together by per-domain builders that
+preset classes wrap into one-liner factories. The result is a
+copy-and-tweak preset surface where adjusting one visual decision
+takes one method change rather than a fork of a 600-line composer.
+
+**New template package layout** (replaces legacy `templates/builtins`,
+`templates/support/cv`, `templates/data/cv`, `templates/theme/CvTheme`):
+
+```
+templates/
+  api/         DocumentTemplate<S>, SlotMap
+  themes/      Spacing, Typography (token records)
+  components/  Header, Module, MarkdownText
+  blocks/      sealed Block hierarchy:
+               ParagraphBlock, BulletListBlock, NumberedListBlock,
+               IndentedBlock, KeyValueBlock, MultiParagraphBlock
+  decorations/ Spacer, Divider, AccentStrip
+  cv/
+    layouts/   SingleColumn, TwoColumnSidebar, ThreeColumnMagazine
+    presets/   14 flat copy-and-tweak preset classes
+    builder/   CvBuilder
+    spec/      CvSpec, CvHeader, CvModule
+  coverletter/
+    layouts/   LetterFormat
+    presets/   14 paired letter presets (one per CV preset)
+    builder/   CoverLetterBuilder
+    spec/      CoverLetterSpec, CoverLetterHeader
+  invoice/
+    presets/   ModernInvoice (minimal v2 surface)
+    builder/   InvoiceBuilder
+    spec/      InvoiceSpec
+  proposal/
+    presets/   ModernProposal (minimal v2 surface)
+    builder/   ProposalBuilder
+    spec/      ProposalSpec
+```
+
+**14 CV presets**: `ModernProfessional`, `NordicClean`,
+`ClassicSerif`, `CompactMono`, `Executive`, `EngineeringResume` (was
+`TechLeadCvTemplate`), `TimelineMinimal`, `BoxedSections`,
+`CenteredHeadline`, `BlueBanner`, `EditorialBlue`, `Panel` (was
+`ProductLeaderCvTemplate`), `SidebarPortrait`, `MonogramSidebar`.
+Each is one final class with one `create(BusinessTheme)` factory:
+
+```java
+import com.demcha.compose.document.templates.cv.presets.ModernProfessional;
+import com.demcha.compose.document.templates.cv.spec.CvSpec;
+import com.demcha.compose.document.theme.BusinessTheme;
+
+DocumentTemplate<CvSpec> template = ModernProfessional.create(BusinessTheme.modern());
+template.compose(session, mySpec);
+```
+
+**Inline markdown rich text** — body strings carrying
+`**bold**` and `*italic*` markers render with proper
+{@code DocumentTextDecoration} via the new
+`templates.components.MarkdownText` parser. Lets an LLM emit a
+resume bullet like `**Java 21**, SQL, Kotlin` and the preset
+renders Java 21 in bold without separate inline-run construction.
+
+**Active hyperlinks** — header email + LinkedIn / GitHub labels
+become clickable mailto: / https: hyperlinks via
+`DocumentLinkOptions` on per-run inline runs.
+
+**Slot-based layouts** — multi-column CV presets
+(`Panel`, `SidebarPortrait`, `MonogramSidebar`) declare named
+slots (`MAIN`, `SIDEBAR`); a custom preset can rearrange which
+modules go into which slot via `.place(slot, "Module Name", ...)`.
+
+**Layout snapshot tests** lock the rendered tree of every preset
+(28 baselines under
+`src/test/resources/layout-snapshots/canonical-templates/cv-v2/`
+and `.../coverletter-v2/`).
+
+**Examples** — `CvTemplateGalleryFileExample` renders all 14 v2
+CV presets to `examples/target/generated-pdfs/cv-<id>.pdf`; new
+`CoverLetterTemplateGalleryFileExample` renders all 14 paired
+letter presets to `cover-letter-<id>.pdf`.
+
+**Migration**: legacy classes have been **deleted**, not
+deprecated. Anyone on
+`new CvTemplateV1()` / `new NordicCleanCvTemplate()` / etc. must
+switch to the new factory:
+
+| Old | New |
+|---|---|
+| `new CvTemplateV1()` | `ModernProfessional.create(BusinessTheme.modern())` |
+| `new NordicCleanCvTemplate()` | `NordicClean.create(BusinessTheme.modern())` |
+| `CvTheme.defaultTheme()` | `BusinessTheme.modern() + Spacing.compact()` |
+| `CvTemplate` interface | `DocumentTemplate<CvSpec>` |
+
+`InvoiceTemplateV2` and `ProposalTemplateV2` (cinematic) remain
+in `templates/builtins/` as the recommended path for fully-styled
+output; the new `ModernInvoice` / `ModernProposal` v2 presets
+provide the canonical builder seam, with cinematic feature parity
+landing in a follow-up.
+
 ### Feature scope (planned)
 
 - **Nested list ergonomics.**

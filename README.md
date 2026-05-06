@@ -18,6 +18,10 @@
   </a>
 </p>
 
+<p align="center">
+  <a href="https://demchaav.github.io/GraphCompose/"><b>View Live Showcase</b></a>
+</p>
+
 ## Why GraphCompose?
 
 Most Java PDF libraries hand you low-level drawing commands. GraphCompose gives Java applications a **semantic authoring model** &mdash; you describe modules, paragraphs, tables, rows, layers, and themes; the engine measures, paginates, and renders.

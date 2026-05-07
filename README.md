@@ -49,16 +49,16 @@ Sits between **iText** (low-level page primitives) and **JasperReports** (XML-te
 <dependency>
     <groupId>com.github.DemchaAV</groupId>
     <artifactId>GraphCompose</artifactId>
-    <version>v1.5.1</version>
+    <version>v1.6.0</version>
 </dependency>
 ```
 
 ```kotlin
 repositories { maven("https://jitpack.io") }
-dependencies { implementation("com.github.demchaav:GraphCompose:v1.5.1") }
+dependencies { implementation("com.github.demchaav:GraphCompose:v1.6.0") }
 ```
 
-> v1.6.0 ships shortly &mdash; snippets stay pinned to the previously published tag until JitPack confirms the new build.
+> Latest published tag: **v1.6.0** &mdash; the "expressive" release. Full notes in [`CHANGELOG.md`](./CHANGELOG.md).
 
 ## Hello world
 

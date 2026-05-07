@@ -184,12 +184,18 @@ public final class SidebarPortrait {
                 addLanguageList(section, languages);
             }
 
-            // Trailing spacer: small extra height so the sidebar fill
-            // reaches the bottom edge of the page. The natural sidebar
-            // content (photo + contact + Education + Skills + Languages)
-            // already fills most of the page; a modest additional stretch
-            // closes the visual gap without overflowing the row.
-            section.spacer(0, 55);
+            // Trailing spacer: stretches the SIDEBAR_BG fill so it
+            // reaches the bottom edge of the page. Sized adaptively
+            // from the canvas innerHeight so the row honours page
+            // capacity on whatever page size is active (A4 / Letter /
+            // smaller test fixtures). The constant 786pt corresponds
+            // to the natural sidebar outer height (photo + contact +
+            // Education + Skills + Languages with the current sample
+            // data) plus a small safety margin.
+            double maxStretch = Math.max(0.0, pageHeight - 786.0);
+            if (maxStretch > 0.0) {
+                section.spacer(0, maxStretch);
+            }
         }
 
         private void addPhotoBlock(SectionBuilder section) {

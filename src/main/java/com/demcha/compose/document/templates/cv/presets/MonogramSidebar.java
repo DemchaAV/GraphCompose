@@ -173,16 +173,18 @@ public final class MonogramSidebar {
             }
 
             // Trailing spacer: stretches the SIDEBAR_BG fill so it
-            // reaches the bottom edge of the page. We size it to consume
-            // every remaining point of page capacity so the sidebar
-            // background paints right up to the page edge with no
-            // residual white strip below the last sidebar item.
-            // The constant matches the (page capacity - natural sidebar
-            // outer height) budget on a standard A4 page with the
-            // current sidebar content; if the spec content shrinks the
-            // natural height we still hit the bottom edge, and if it
-            // grows the row paginates as expected.
-            section.spacer(0, 51);
+            // reaches the bottom edge of the page. The spacer height
+            // adapts to the active page size by using the canvas
+            // innerHeight minus a constant that captures the natural
+            // sidebar outer height (≈764pt with the current sidebar
+            // content) plus a small safety margin for cross-platform
+            // font drift. On A4 this gives ~72pt of stretch; on the
+            // smaller pages used by visual-test fixtures we still
+            // honour page capacity instead of overflowing the row.
+            double maxStretch = Math.max(0.0, pageHeight - 770.0);
+            if (maxStretch > 0.0) {
+                section.spacer(0, maxStretch);
+            }
         }
 
         private void addMonogramBlock(SectionBuilder section, String initialsText, double innerWidth) {

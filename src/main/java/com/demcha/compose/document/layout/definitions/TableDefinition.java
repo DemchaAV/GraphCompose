@@ -20,7 +20,8 @@ import static com.demcha.compose.document.layout.NodeDefinitionSupport.splitTabl
 
 /**
  * Layout definition for {@link TableNode}: resolves table geometry through
- * {@link TableLayoutSupport} and emits page-aware row fragments.
+ * {@link com.demcha.compose.document.layout.NodeDefinitionSupport} and emits
+ * page-aware row fragments.
  *
  * @author Artem Demchyshyn
  */

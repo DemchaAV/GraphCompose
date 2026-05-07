@@ -112,69 +112,73 @@ public final class CanvasLayerExample {
                                     + "523 x 360 bounding box. Coordinates use the screen convention: "
                                     + "(0, 0) is the canvas's top-left, positive x extends right, "
                                     + "positive y extends down.", caption)
+                    // The canvas is 523pt wide. Centred paragraphs use
+                    // x=0 so the framework prepares them with the full
+                    // canvas width and TextAlign.CENTER places the text
+                    // within. Children placed at x>0 inherit the same
+                    // prepared width, so author-side margins are needed
+                    // for paragraphs that should not overflow — see the
+                    // citation block below.
                     .addCanvas(523, 360, canvas -> canvas
                             .name("Certificate")
                             .clipPolicy(ClipPolicy.CLIP_BOUNDS)
                             // Two thin decorative rules (top + bottom).
-                            .position(rule(503, 1.2, ACCENT), 10, 30)
-                            .position(rule(503, 0.4, RULE), 10, 36)
-                            .position(rule(503, 1.2, ACCENT), 10, 320)
-                            .position(rule(503, 0.4, RULE), 10, 326)
-                            // Eyebrow + headline + awarded text + name.
+                            .position(rule(503, 1.4, ACCENT), 10, 32)
+                            .position(rule(503, 0.5, RULE), 10, 38)
+                            .position(rule(503, 1.4, ACCENT), 10, 318)
+                            .position(rule(503, 0.5, RULE), 10, 324)
+                            // Eyebrow + headline + awarded text + name —
+                            // each x=0 + TextAlign.CENTER → centred
+                            // across the full 523pt canvas width.
                             .position(new ParagraphNode(
                                     "Eyebrow", "CERTIFICATE OF ACHIEVEMENT",
                                     eyebrow, TextAlign.CENTER, 0.0,
                                     DocumentInsets.zero(), DocumentInsets.zero()),
-                                    100, 60)
+                                    0, 60)
                             .position(new ParagraphNode(
                                     "Headline", "GraphCompose v1.6",
                                     headline, TextAlign.CENTER, 0.0,
                                     DocumentInsets.zero(), DocumentInsets.zero()),
-                                    100, 90)
+                                    0, 95)
                             .position(new ParagraphNode(
-                                    "Awarded", "Awarded to",
+                                    "Awarded", "AWARDED TO",
                                     awarded, TextAlign.CENTER, 0.0,
                                     DocumentInsets.zero(), DocumentInsets.zero()),
-                                    100, 145)
+                                    0, 152)
                             .position(new ParagraphNode(
                                     "Recipient", "Artem Demchyshyn",
                                     name, TextAlign.CENTER, 0.0,
                                     DocumentInsets.zero(), DocumentInsets.zero()),
-                                    100, 165)
+                                    0, 172)
+                            // Citation: x=40 + symmetric horizontal margin
+                            // = 40 shrinks the wrap width to canvas - 80
+                            // = 443pt, leaving 40pt breathing room on
+                            // each side.
                             .position(new ParagraphNode(
                                     "Citation",
-                                    "for shipping the v1.6 expressive release with Templates v2, "
-                                            + "nested lists, composed table cells, and pixel-precise "
-                                            + "free-canvas layout in a single iteration.",
-                                    bodyText, TextAlign.CENTER, 1.5,
-                                    DocumentInsets.zero(), DocumentInsets.zero()),
-                                    80, 205)
-                            // Decorative seal block (right side, mid-height).
-                            .position(new ShapeNode(
-                                    "SealBlock", 80, 50,
-                                    SEAL_FILL,
-                                    DocumentStroke.of(ACCENT, 1.0),
-                                    null, null,
-                                    DocumentInsets.zero(), DocumentInsets.zero()),
-                                    410, 250)
-                            .position(new ParagraphNode(
-                                    "SealLabel", "OFFICIAL",
-                                    sealLabel, TextAlign.CENTER, 0.0,
-                                    DocumentInsets.zero(), DocumentInsets.zero()),
-                                    415, 270)
-                            // Two signature lines at the bottom-left + labels.
-                            .position(rule(150, 0.5, INK), 40, 290)
+                                    "Issued for shipping the v1.6 expressive release "
+                                            + "with Templates v2, nested lists, composed "
+                                            + "table cells, and pixel-precise free-canvas "
+                                            + "layout in a single iteration.",
+                                    bodyText, TextAlign.CENTER, 2.0,
+                                    DocumentInsets.zero(),
+                                    new DocumentInsets(0, 80, 0, 0)),
+                                    40, 215)
+                            // Two signature lines + labels at the bottom.
+                            .position(rule(150, 0.6, INK), 70, 285)
                             .position(new ParagraphNode(
                                     "SignatureLeftLabel", "Lead Engineer",
                                     signatureLabel, TextAlign.LEFT, 0.0,
-                                    DocumentInsets.zero(), DocumentInsets.zero()),
-                                    40, 295)
-                            .position(rule(150, 0.5, INK), 220, 290)
+                                    DocumentInsets.zero(),
+                                    new DocumentInsets(0, 303, 0, 0)),
+                                    70, 290)
+                            .position(rule(150, 0.6, INK), 300, 285)
                             .position(new ParagraphNode(
                                     "SignatureRightLabel", "Project Owner",
                                     signatureLabel, TextAlign.LEFT, 0.0,
-                                    DocumentInsets.zero(), DocumentInsets.zero()),
-                                    220, 295))
+                                    DocumentInsets.zero(),
+                                    new DocumentInsets(0, 73, 0, 0)),
+                                    300, 290))
                     .addParagraph(
                             "Notes: the canvas reserves a fixed 523x360 rectangle in the surrounding flow "
                                     + "regardless of where children land. Children whose (x, y) falls inside "

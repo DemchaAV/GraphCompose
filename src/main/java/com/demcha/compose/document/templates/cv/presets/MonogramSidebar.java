@@ -173,17 +173,20 @@ public final class MonogramSidebar {
             }
 
             // Trailing spacer: stretches the SIDEBAR_BG fill so it
-            // reaches the bottom edge of the page. The spacer height
-            // adapts to the active page size by using the canvas
-            // innerHeight minus a constant that captures the natural
-            // sidebar outer height (≈764pt with the current sidebar
-            // content) plus a small safety margin for cross-platform
-            // font drift. On A4 this gives ~72pt of stretch; on the
-            // smaller pages used by visual-test fixtures we still
-            // honour page capacity instead of overflowing the row.
-            double maxStretch = Math.max(0.0, pageHeight - 820.0);
+            // reaches the bottom edge of the page. The natural sidebar
+            // outer height with the canonical sample data measures
+            // ≈800pt (monogram + contact + education + expertise);
+            // subtracting that from the active page's innerHeight
+            // yields the spacer needed to push the fill to the page
+            // bottom. On A4 this gives ~42pt of stretch; on smaller
+            // pages used by visual-test fixtures, Math.max keeps the
+            // spacer non-negative so the row never overflows.
+            double maxStretch = Math.max(0.0, pageHeight - 808.0);
             if (maxStretch > 0.0) {
-                section.spacer(0, maxStretch);
+                section.addShape(shape -> shape
+                        .name("SidebarBgFiller")
+                        .size(innerWidth, maxStretch)
+                        .fillColor(SIDEBAR_BG));
             }
         }
 
@@ -682,12 +685,10 @@ public final class MonogramSidebar {
 
     private static String pickIconFile(String label) {
         String n = normalize(label);
-        if (n.contains("linkedin")) {
-            return "linkedin.png";
-        }
         if (n.contains("github")) {
-            // monogram-sidebar resources only ship phone/email/location/linkedin —
-            // GitHub falls back to the linkedin icon so the row still has glyph
+            return "github.png";
+        }
+        if (n.contains("linkedin")) {
             return "linkedin.png";
         }
         return "linkedin.png";

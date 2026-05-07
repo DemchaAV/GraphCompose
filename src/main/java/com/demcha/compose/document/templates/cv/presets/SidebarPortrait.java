@@ -184,18 +184,19 @@ public final class SidebarPortrait {
                 addLanguageList(section, languages);
             }
 
-            // Trailing spacer: stretches the SIDEBAR_BG fill so it
-            // reaches the bottom edge of the page. Sized adaptively
-            // from the canvas innerHeight so the row honours page
-            // capacity on whatever page size is active (A4 / Letter /
-            // smaller test fixtures). The constant 787pt corresponds
-            // to the natural sidebar outer height (photo + contact +
-            // Education + Skills + Languages with the current sample
-            // data) plus a 1pt safety margin against floating-point
-            // rounding in the layout's row-capacity check.
-            double maxStretch = Math.max(0.0, pageHeight - 820.0);
+            // Trailing background filler: a Shape painted with the
+            // sidebar background color extends the section's natural
+            // content and the SIDEBAR_BG fill all the way to the page
+            // bottom edge. Sized adaptively from the canvas innerHeight
+            // (818pt natural with the canonical sample data); on
+            // smaller test fixtures the filler stays at 0 so the row
+            // never overflows page capacity.
+            double maxStretch = Math.max(0.0, pageHeight - 819.0);
             if (maxStretch > 0.0) {
-                section.spacer(0, maxStretch);
+                section.addShape(shape -> shape
+                        .name("SidebarBgFiller")
+                        .size(SIDEBAR_INNER_WIDTH, maxStretch)
+                        .fillColor(SIDEBAR_BG));
             }
         }
 

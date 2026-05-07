@@ -293,15 +293,28 @@ component library extension + preset refactor is tracked in
 `docs/private/templates-restructure-plan.md` Phase E.4 and
 `docs/private/templates-v2-audit-remediation.md`.
 
-### Feature scope (planned)
+### Feature scope
 
-- **Nested list ergonomics.**
-  `ListBuilder.addItem(label, Consumer<ListBuilder>)` plus a new
-  `ListItem` value type. `ListNode` record extended with a
-  back-compat constructor. Marker resolution honours per-level
-  defaults; authors override via `ListBuilder.markerFor(int depth, ListMarker)`.
-  ADR 0005 will record the `ListNode`-extension-vs-new-`NestedListNode`
-  decision.
+- **Nested list ergonomics (Phase A — landed).**
+  `ListBuilder.addItem(String label, Consumer<ListBuilder> body)`
+  appends a nested item with a builder-callback child scope. New
+  `ListItem` record carries `(label, marker, children)`. `ListNode`
+  gains a `nestedItems` component (record now has 12) and a
+  back-compat 11-component constructor matching the v1.5 shape.
+  Per-depth marker resolution: item-level marker wins, then
+  `ListBuilder.markerFor(int depth, ListMarker)` overrides, then
+  the built-in cascade (`•` → `◦` → `▪` → `·`). The internal
+  `usedNestedAuthoring` flag preserves source order across mixed
+  flat / nested entries — flat-only callers still get the v1.5
+  flat `ListNode`. Layout flattens the tree depth-first into
+  indent-prefixed paragraph fragments using non-breaking spaces
+  (`U+00A0`) for the per-depth indent so the paragraph wrap
+  pipeline preserves them. ADR
+  [0012](docs/adr/0012-nested-list-evolution.md) records the
+  `ListNode`-extension-vs-new-`NestedListNode` decision.
+  Snapshot baseline:
+  `src/test/resources/layout-snapshots/document/nested_list_three_levels.json`.
+  `mvnw verify` → 804 / 0 / 0 / 0.
 - **Composed table cell content.** New
   `TableCellContent.NodeContent(DocumentNode child)` variant plus
   `DocumentTableCell.node(DocumentNode)` factory. Two-pass cell

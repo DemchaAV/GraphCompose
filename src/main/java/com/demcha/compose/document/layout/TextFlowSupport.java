@@ -13,6 +13,8 @@ import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.InlineImageRun;
 import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
+import com.demcha.compose.document.node.ListItem;
+import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.node.ListNode;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TextAlign;
@@ -127,12 +129,84 @@ public final class TextFlowSupport {
     public static PreparedNode<ListNode> prepareList(ListNode node,
                                                      PrepareContext ctx,
                                                      BoxConstraints constraints) {
-        double innerWidth = Math.max(0.0, constraints.availableWidth() - node.padding().horizontal());
-        PreparedListLayout layout = prepareListLayout(node, innerWidth, constraints.availableWidth(), ctx.textMeasurement(), ctx.markdownEnabled());
+        ListNode effective = node.nestedItems().isEmpty()
+                ? node
+                : flattenNestedListNode(node);
+        double innerWidth = Math.max(0.0, constraints.availableWidth() - effective.padding().horizontal());
+        PreparedListLayout layout = prepareListLayout(effective, innerWidth, constraints.availableWidth(), ctx.textMeasurement(), ctx.markdownEnabled());
         return PreparedNode.leaf(
-                node,
-                new MeasureResult(layout.resolvedWidth(), layout.totalHeight() + node.padding().vertical()),
+                effective,
+                new MeasureResult(layout.resolvedWidth(), layout.totalHeight() + effective.padding().vertical()),
                 layout);
+    }
+
+    /**
+     * Indent unit added per nesting depth in a nested list. Two
+     * non-breaking spaces visually match two regular spaces but are
+     * preserved by paragraph wrapping (which strips leading
+     * {@link Character#isWhitespace whitespace} from the first token
+     * of each line). Switching to NBSP keeps depth indentation intact
+     * without rewriting the wrap pipeline.
+     */
+    private static final String NESTED_LIST_INDENT_UNIT = "  ";
+
+    /**
+     * Synthesizes a flat {@link ListNode} from a nested one by walking
+     * the tree depth-first and prefixing each label with
+     * {@code [indent][marker] }. The synthesized node carries
+     * {@code marker = ListMarker.none()} (markers are now baked into
+     * each item's prefix) and {@code normalizeMarkers = false} so the
+     * baked marker characters are not stripped during paragraph
+     * normalization. The existing flat-list rendering pipeline then
+     * paginates and emits fragments unchanged.
+     */
+    private static ListNode flattenNestedListNode(ListNode node) {
+        List<String> flatItems = new ArrayList<>();
+        flattenNestedItems(node.nestedItems(), 0, flatItems);
+        return new ListNode(
+                node.name(),
+                flatItems,
+                List.of(),
+                ListMarker.none(),
+                node.textStyle(),
+                node.align(),
+                node.lineSpacing(),
+                node.itemSpacing(),
+                node.continuationIndent(),
+                false,
+                node.padding(),
+                node.margin());
+    }
+
+    private static void flattenNestedItems(List<ListItem> items, int depth, List<String> output) {
+        for (ListItem item : items) {
+            ListMarker marker = item.marker() != null ? item.marker() : defaultMarkerForDepth(depth);
+            StringBuilder prefix = new StringBuilder(NESTED_LIST_INDENT_UNIT.repeat(depth));
+            if (marker.isVisible()) {
+                // ListMarker.normalize already appends a trailing space
+                // when the marker doesn't end in whitespace, so prefix()
+                // is "<marker> " and we don't append another space.
+                prefix.append(marker.prefix());
+            }
+            output.add(prefix.append(item.label()).toString());
+            if (!item.children().isEmpty()) {
+                flattenNestedItems(item.children(), depth + 1, output);
+            }
+        }
+    }
+
+    /**
+     * Built-in marker cascade used when a nested item has no
+     * {@code marker} override and the list builder didn't set one for
+     * this depth via {@code markerFor(int, ListMarker)}.
+     */
+    private static ListMarker defaultMarkerForDepth(int depth) {
+        return switch (depth) {
+            case 0 -> ListMarker.bullet();        // •
+            case 1 -> new ListMarker("◦");   // ◦
+            case 2 -> new ListMarker("▪");   // ▪
+            default -> new ListMarker("·");  // ·
+        };
     }
 
     public static PreparedSplitResult<ListNode> splitList(PreparedNode<ListNode> prepared,
@@ -412,8 +486,15 @@ public final class TextFlowSupport {
     }
 
     private static String normalizeListItem(String value, boolean normalizeMarkers) {
-        String normalized = value == null ? "" : value.trim();
-        if (!normalizeMarkers || normalized.isEmpty()) {
+        String safe = value == null ? "" : value;
+        if (!normalizeMarkers) {
+            // Preserve raw whitespace and any author-supplied marker
+            // characters. Used by the nested-list flatten path so the
+            // depth-based indent prefix survives layout.
+            return safe;
+        }
+        String normalized = safe.trim();
+        if (normalized.isEmpty()) {
             return normalized;
         }
         if (normalized.startsWith("•")) {

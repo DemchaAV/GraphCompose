@@ -1,50 +1,583 @@
-[
-  {
-    "title": "Cinematic Invoice",
-    "description": "A polished invoice template with semantic sections, theme-driven layout, advanced tables, and totals.",
-    "tags": ["Template", "Tables", "Theme"],
-    "image": "assets/screenshots/invoice-v2.png",
-    "pdf": "assets/pdf/invoice-v2.pdf",
-    "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/InvoiceCinematicFileExample.java"
-  },
-  {
-    "title": "Business Proposal",
-    "description": "A multi-section proposal layout using cinematic panels, typography, and reusable document structure.",
-    "tags": ["Template", "Sections", "Layout"],
-    "image": "assets/screenshots/proposal-v2.png",
-    "pdf": "assets/pdf/proposal-v2.pdf",
-    "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/ProposalCinematicFileExample.java"
-  },
-  {
-    "title": "CV Template",
-    "description": "A compact CV render from the canonical template surface, driven by structured profile data.",
-    "tags": ["Template", "CV", "Semantic Data"],
-    "image": "assets/screenshots/cv-template.png",
-    "pdf": "assets/pdf/cv-template.pdf",
-    "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/CvFileExample.java"
-  },
-  {
-    "title": "Advanced Tables",
-    "description": "Table rendering with row spans, repeating headers, zebra rows, totals, and structured layout behavior.",
-    "tags": ["Tables", "Pagination", "PDF"],
-    "image": "assets/screenshots/advanced-table.png",
-    "pdf": "assets/pdf/advanced-table.pdf",
-    "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/TableAdvancedExample.java"
-  },
-  {
-    "title": "Layers and Transforms",
-    "description": "Layered visual composition with rotate, scale, z-index ordering, and PDFBox-backed rendering.",
-    "tags": ["Layers", "Transforms", "Visual Layer"],
-    "image": "assets/screenshots/layers-theme.png",
-    "pdf": "assets/pdf/layers-theme.pdf",
-    "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/TransformsExample.java"
-  },
-  {
-    "title": "Shape Containers",
-    "description": "Visual containers with clipping behavior, rounded shapes, and layout-aware content composition.",
-    "tags": ["Shapes", "Containers", "Visual Layer"],
-    "image": "assets/screenshots/shape-container.png",
-    "pdf": "assets/pdf/shape-container.pdf",
-    "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/ShapeContainerExample.java"
-  }
-]
+{
+  "categories": [
+    {
+      "id": "templates",
+      "label": "Templates",
+      "groups": [
+        {
+          "id": "coverletter",
+          "label": "Cover Letter",
+          "examples": [
+            {
+              "id": "cover-letter",
+              "title": "Cover Letter (canonical)",
+              "description": "Single-file canonical cover letter authored via CoverLetterFileExample.",
+              "tags": ["letter", "letter"],
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cover-letter-blue-banner",
+              "title": "Blue Banner letter",
+              "description": "Letter paired with Blue Banner CV.",
+              "tags": ["letter"],
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-blue-banner.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-blue-banner.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cover-letter-boxed-sections",
+              "title": "Boxed Sections letter",
+              "description": "Letter with grey-banner section headings.",
+              "tags": ["letter"],
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-boxed-sections.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-boxed-sections.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cover-letter-centered-headline",
+              "title": "Centered Headline letter",
+              "description": "Letter with centered name + accent rules.",
+              "tags": ["letter"],
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-centered-headline.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-centered-headline.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cover-letter-classic-serif",
+              "title": "Classic Serif letter",
+              "description": "Letter with Times-style serif typography.",
+              "tags": ["letter"],
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-classic-serif.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-classic-serif.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cover-letter-compact-mono",
+              "title": "Compact Mono letter",
+              "description": "Letter with mono accent and compact spacing.",
+              "tags": ["letter"],
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-compact-mono.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-compact-mono.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cover-letter-editorial-blue",
+              "title": "Editorial Blue letter",
+              "description": "Editorial-magazine letter paired with Editorial Blue CV.",
+              "tags": ["letter"],
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-editorial-blue.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-editorial-blue.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cover-letter-engineering-resume",
+              "title": "Engineering letter",
+              "description": "Letter paired with EngineeringResume palette.",
+              "tags": ["letter"],
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-engineering-resume.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-engineering-resume.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cover-letter-executive",
+              "title": "Executive letter",
+              "description": "Slate-palette executive letter.",
+              "tags": ["letter"],
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-executive.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-executive.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cover-letter-modern-professional",
+              "title": "Modern Professional letter",
+              "description": "Letter paired with the Modern Professional CV palette.",
+              "tags": ["letter"],
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-modern-professional.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-modern-professional.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cover-letter-monogram-sidebar",
+              "title": "Monogram Sidebar letter",
+              "description": "Letter paired with Monogram Sidebar CV.",
+              "tags": ["letter"],
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-monogram-sidebar.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-monogram-sidebar.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cover-letter-nordic-clean",
+              "title": "Nordic Clean letter",
+              "description": "Letter paired with the Nordic Clean CV palette.",
+              "tags": ["letter"],
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-nordic-clean.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-nordic-clean.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cover-letter-panel",
+              "title": "Panel letter",
+              "description": "Letter paired with Panel CV soft-tinted panels.",
+              "tags": ["letter"],
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-panel.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-panel.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cover-letter-sidebar-portrait",
+              "title": "Sidebar Portrait letter",
+              "description": "Letter paired with Sidebar Portrait CV.",
+              "tags": ["letter"],
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-sidebar-portrait.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-sidebar-portrait.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cover-letter-timeline-minimal",
+              "title": "Timeline Minimal letter",
+              "description": "Letter with timeline-style minimal accents.",
+              "tags": ["letter"],
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-timeline-minimal.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-timeline-minimal.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+            }
+          ]
+        },
+        {
+          "id": "cv",
+          "label": "CV / Resume",
+          "examples": [
+            {
+              "id": "cv-blue-banner",
+              "title": "Blue Banner",
+              "description": "Light-blue full-width section bands with high-contrast headings.",
+              "tags": ["cv", "banner", "blue"],
+              "pdf": "showcase/pdf/templates/cv/cv-blue-banner.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-blue-banner.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cv-boxed-sections",
+              "title": "Boxed Sections",
+              "description": "Each section wrapped in a grey banner header — bold, structured feel.",
+              "tags": ["cv", "structured"],
+              "pdf": "showcase/pdf/templates/cv/cv-boxed-sections.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-boxed-sections.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cv-centered-headline",
+              "title": "Centered Headline",
+              "description": "Centered name + role with full-width accent rules between sections.",
+              "tags": ["cv", "centered"],
+              "pdf": "showcase/pdf/templates/cv/cv-centered-headline.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-centered-headline.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cv-classic-serif",
+              "title": "Classic Serif",
+              "description": "Two-page editorial CV with Times-style serif headings and conservative grey rules.",
+              "tags": ["cv", "serif", "two-page"],
+              "pdf": "showcase/pdf/templates/cv/cv-classic-serif.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-classic-serif.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cv-compact-mono",
+              "title": "Compact Mono",
+              "description": "Single-column dense layout with monospace contact line — favourite for engineering roles.",
+              "tags": ["cv", "compact", "mono"],
+              "pdf": "showcase/pdf/templates/cv/cv-compact-mono.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-compact-mono.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cv-editorial-blue",
+              "title": "Editorial Blue",
+              "description": "Magazine-style editorial layout with two-column body and tinted skills table.",
+              "tags": ["cv", "editorial", "blue"],
+              "pdf": "showcase/pdf/templates/cv/cv-editorial-blue.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-editorial-blue.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cv-engineering-resume",
+              "title": "Engineering Resume",
+              "description": "Tech-lead style layout with prominent skill matrix and stack tagging — was TechLead in v1.5.",
+              "tags": ["cv", "tech"],
+              "pdf": "showcase/pdf/templates/cv/cv-engineering-resume.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-engineering-resume.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cv-executive",
+              "title": "Executive",
+              "description": "Slate palette with prominent name banner, formal tone, and weighted section dividers.",
+              "tags": ["cv", "executive"],
+              "pdf": "showcase/pdf/templates/cv/cv-executive.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-executive.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cv-modern-professional",
+              "title": "Modern Professional CV",
+              "description": "Same data, ModernProfessional preset — single-file CvFileExample for canonical authoring.",
+              "tags": ["cv", "minimal"],
+              "pdf": "showcase/pdf/templates/cv/cv-modern-professional.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-modern-professional.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cv-monogram-sidebar",
+              "title": "Monogram Sidebar",
+              "description": "Sidebar with monogram badge, accent rule, and structured contact + skills column.",
+              "tags": ["cv", "sidebar", "monogram"],
+              "pdf": "showcase/pdf/templates/cv/cv-monogram-sidebar.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-monogram-sidebar.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cv-nordic-clean",
+              "title": "Nordic Clean",
+              "description": "Sidebar layout with soft-tinted PROFILE panel, Nordic palette, and bullet skill list.",
+              "tags": ["cv", "sidebar"],
+              "pdf": "showcase/pdf/templates/cv/cv-nordic-clean.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-nordic-clean.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cv-panel",
+              "title": "Panel",
+              "description": "Soft-tinted panels per section, Product-Leader feel — was ProductLeader in v1.5.",
+              "tags": ["cv", "panel"],
+              "pdf": "showcase/pdf/templates/cv/cv-panel.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-panel.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cv-sidebar-portrait",
+              "title": "Sidebar Portrait",
+              "description": "Edge-to-edge grey sidebar with portrait photo, contact stack, and skills.",
+              "tags": ["cv", "sidebar", "portrait"],
+              "pdf": "showcase/pdf/templates/cv/cv-sidebar-portrait.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-sidebar-portrait.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+            },
+            {
+              "id": "cv-timeline-minimal",
+              "title": "Timeline Minimal",
+              "description": "Vertical timeline of roles with bullet markers and tight whitespace.",
+              "tags": ["cv", "timeline"],
+              "pdf": "showcase/pdf/templates/cv/cv-timeline-minimal.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-timeline-minimal.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+            }
+          ]
+        },
+        {
+          "id": "invoice",
+          "label": "Invoice",
+          "examples": [
+            {
+              "id": "invoice",
+              "title": "Invoice (canonical)",
+              "description": "Single-page invoice with line items, totals, and structured chrome — InvoiceTemplateV1.",
+              "tags": ["invoice", "invoice"],
+              "pdf": "showcase/pdf/templates/invoice/invoice.pdf",
+              "screenshot": "showcase/screenshots/templates/invoice/invoice.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/invoice/InvoiceFileExample.java"
+            },
+            {
+              "id": "invoice-cinematic",
+              "title": "Cinematic Invoice",
+              "description": "Polished V2 invoice template with theme-driven layout, advanced tables, and totals.",
+              "tags": ["invoice", "invoice", "cinematic"],
+              "pdf": "showcase/pdf/templates/invoice/invoice-cinematic.pdf",
+              "screenshot": "showcase/screenshots/templates/invoice/invoice-cinematic.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/invoice/InvoiceCinematicFileExample.java"
+            }
+          ]
+        },
+        {
+          "id": "proposal",
+          "label": "Proposal",
+          "examples": [
+            {
+              "id": "project-proposal-cinematic",
+              "title": "Project Proposal (cinematic)",
+              "description": "End-to-end project proposal with mountain hero, scope panels, and pricing summary.",
+              "tags": ["proposal", "proposal", "cinematic"],
+              "pdf": "showcase/pdf/templates/proposal/project-proposal-cinematic.pdf",
+              "screenshot": "showcase/screenshots/templates/proposal/project-proposal-cinematic.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/proposal/CinematicProposalFileExample.java"
+            },
+            {
+              "id": "proposal",
+              "title": "Proposal (canonical)",
+              "description": "Multi-section proposal with cover, scope, deliverables, and pricing — ProposalTemplateV1.",
+              "tags": ["proposal", "proposal"],
+              "pdf": "showcase/pdf/templates/proposal/proposal.pdf",
+              "screenshot": "showcase/screenshots/templates/proposal/proposal.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/proposal/ProposalFileExample.java"
+            },
+            {
+              "id": "proposal-cinematic",
+              "title": "Cinematic Proposal",
+              "description": "Cinematic V2 proposal layout with cover panel, hero spread, and rich typography.",
+              "tags": ["proposal", "proposal", "cinematic"],
+              "pdf": "showcase/pdf/templates/proposal/proposal-cinematic.pdf",
+              "screenshot": "showcase/screenshots/templates/proposal/proposal-cinematic.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/proposal/ProposalCinematicFileExample.java"
+            }
+          ]
+        },
+        {
+          "id": "schedule",
+          "label": "Schedule",
+          "examples": [
+            {
+              "id": "weekly-schedule",
+              "title": "Weekly Schedule",
+              "description": "Multi-day weekly schedule with shift assignments, category fills, and repeated header.",
+              "tags": ["schedule", "schedule", "table"],
+              "pdf": "showcase/pdf/templates/schedule/weekly-schedule.pdf",
+              "screenshot": "showcase/screenshots/templates/schedule/weekly-schedule.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/templates/schedule/WeeklyScheduleFileExample.java"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "features",
+      "label": "Features",
+      "groups": [
+        {
+          "id": "barcodes",
+          "label": "Barcodes & QR",
+          "examples": [
+            {
+              "id": "barcode-showcase",
+              "title": "Barcodes & QR",
+              "description": "QR code, Code128, EAN-13, PDF417 — every supported barcode + per-barcode styling.",
+              "tags": ["barcodes", "barcodes", "qr"],
+              "pdf": "showcase/pdf/features/barcodes/barcode-showcase.pdf",
+              "screenshot": "showcase/screenshots/features/barcodes/barcode-showcase.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/features/barcodes/BarcodeShowcaseExample.java"
+            }
+          ]
+        },
+        {
+          "id": "canvas",
+          "label": "Canvas / Free Placement",
+          "examples": [
+            {
+              "id": "canvas-layer-showcase",
+              "title": "Canvas Layer (free-canvas)",
+              "description": "CanvasLayerNode — pixel-precise (x,y) placement of children inside a fixed bounding box.",
+              "tags": ["canvas", "canvas", "v1.6", "absolute"],
+              "pdf": "showcase/pdf/features/canvas/canvas-layer-showcase.pdf",
+              "screenshot": "showcase/screenshots/features/canvas/canvas-layer-showcase.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/features/canvas/CanvasLayerExample.java"
+            }
+          ]
+        },
+        {
+          "id": "chrome",
+          "label": "PDF Chrome (header / footer / watermark)",
+          "examples": [
+            {
+              "id": "pdf-chrome",
+              "title": "PDF Chrome",
+              "description": "Headers, footers, watermarks, metadata, document protection / encryption.",
+              "tags": ["chrome", "chrome", "metadata", "watermark"],
+              "pdf": "showcase/pdf/features/chrome/pdf-chrome.pdf",
+              "screenshot": "showcase/screenshots/features/chrome/pdf-chrome.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/features/chrome/PdfChromeExample.java"
+            }
+          ]
+        },
+        {
+          "id": "lists",
+          "label": "Lists & Bullets",
+          "examples": [
+            {
+              "id": "nested-list-showcase",
+              "title": "Nested Lists",
+              "description": "ListBuilder.addItem(label, Consumer) — depth cascade, per-depth markers, mixed flat / nested authoring.",
+              "tags": ["lists", "lists", "v1.6"],
+              "pdf": "showcase/pdf/features/lists/nested-list-showcase.pdf",
+              "screenshot": "showcase/screenshots/features/lists/nested-list-showcase.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/features/lists/NestedListExample.java"
+            }
+          ]
+        },
+        {
+          "id": "shapes",
+          "label": "Shapes & Containers",
+          "examples": [
+            {
+              "id": "shape-container",
+              "title": "Shape-as-Container",
+              "description": "Rounded rect, ellipse, circle containers with ClipPolicy and layered children.",
+              "tags": ["shapes", "shapes", "clip"],
+              "pdf": "showcase/pdf/features/shapes/shape-container.pdf",
+              "screenshot": "showcase/screenshots/features/shapes/shape-container.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/features/shapes/ShapeContainerExample.java"
+            }
+          ]
+        },
+        {
+          "id": "snapshots",
+          "label": "Snapshot Testing",
+          "examples": [
+            {
+              "id": "invoice-snapshot-regression",
+              "title": "Layout Snapshots",
+              "description": "How LayoutSnapshotAssertions captures the resolved layout graph for regression testing.",
+              "tags": ["snapshots", "snapshots", "testing"],
+              "pdf": "showcase/pdf/features/snapshots/invoice-snapshot-regression.pdf",
+              "screenshot": "showcase/screenshots/features/snapshots/invoice-snapshot-regression.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java"
+            }
+          ]
+        },
+        {
+          "id": "streaming",
+          "label": "Streaming & I/O",
+          "examples": [
+            {
+              "id": "invoice-http-stream",
+              "title": "HTTP Streaming",
+              "description": "Stream PDF directly to a Servlet response with no buffering.",
+              "tags": ["streaming", "streaming", "http"],
+              "pdf": "showcase/pdf/features/streaming/invoice-http-stream.pdf",
+              "screenshot": "showcase/screenshots/features/streaming/invoice-http-stream.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java"
+            }
+          ]
+        },
+        {
+          "id": "tables",
+          "label": "Tables",
+          "examples": [
+            {
+              "id": "composed-table-cell-showcase",
+              "title": "Composed Table Cells",
+              "description": "DocumentTableCell.node(DocumentNode) — paragraphs, lists, sub-tables inside cells with two-pass measurement.",
+              "tags": ["tables", "tables", "v1.6"],
+              "pdf": "showcase/pdf/features/tables/composed-table-cell-showcase.pdf",
+              "screenshot": "showcase/screenshots/features/tables/composed-table-cell-showcase.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/features/tables/ComposedTableCellExample.java"
+            },
+            {
+              "id": "table-advanced",
+              "title": "Advanced Tables",
+              "description": "Row span, column span, zebra rows, total rows, and repeating headers across page breaks.",
+              "tags": ["tables", "tables", "pagination"],
+              "pdf": "showcase/pdf/features/tables/table-advanced.pdf",
+              "screenshot": "showcase/screenshots/features/tables/table-advanced.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java"
+            }
+          ]
+        },
+        {
+          "id": "text",
+          "label": "Rich Text",
+          "examples": [
+            {
+              "id": "rich-text-showcase",
+              "title": "Rich Text",
+              "description": "Inline runs with bold / italic / colour / link options, markdown parsing.",
+              "tags": ["text", "text", "rich"],
+              "pdf": "showcase/pdf/features/text/rich-text-showcase.pdf",
+              "screenshot": "showcase/screenshots/features/text/rich-text-showcase.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/features/text/RichTextShowcaseExample.java"
+            },
+            {
+              "id": "section-presets",
+              "title": "Section Presets",
+              "description": "Pre-baked section bands, accent strips, soft panels for templates.",
+              "tags": ["text", "text", "sections"],
+              "pdf": "showcase/pdf/features/text/section-presets.pdf",
+              "screenshot": "showcase/screenshots/features/text/section-presets.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/features/text/SectionPresetsExample.java"
+            }
+          ]
+        },
+        {
+          "id": "themes",
+          "label": "Themes",
+          "examples": [
+            {
+              "id": "invoice-custom-theme",
+              "title": "Custom BusinessTheme",
+              "description": "Authoring a custom palette + typography scale and feeding it through templates.",
+              "tags": ["themes", "themes"],
+              "pdf": "showcase/pdf/features/themes/invoice-custom-theme.pdf",
+              "screenshot": "showcase/screenshots/features/themes/invoice-custom-theme.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/features/themes/CustomBusinessThemeExample.java"
+            }
+          ]
+        },
+        {
+          "id": "transforms",
+          "label": "Transforms & Layers",
+          "examples": [
+            {
+              "id": "transforms",
+              "title": "Layers + Transforms",
+              "description": "rotate / scale on every leaf builder + LayerStack with explicit z-index.",
+              "tags": ["transforms", "transforms", "layers"],
+              "pdf": "showcase/pdf/features/transforms/transforms.pdf",
+              "screenshot": "showcase/screenshots/features/transforms/transforms.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/features/transforms/TransformsExample.java"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "flagships",
+      "label": "Flagship Examples",
+      "groups": [
+        {
+          "id": "default",
+          "label": "Flagship Demos",
+          "examples": [
+            {
+              "id": "business-report",
+              "title": "Business Report Cover",
+              "description": "Flagship cover page with hero panel, KPI table, and accent strip — ready-to-ship template.",
+              "tags": ["flagship", "showcase", "cover"],
+              "pdf": "showcase/pdf/flagships/default/business-report.pdf",
+              "screenshot": "showcase/screenshots/flagships/default/business-report.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/flagships/BusinessReportExample.java"
+            },
+            {
+              "id": "master-showcase",
+              "title": "Master Showcase",
+              "description": "Kitchen-sink demo combining every primitive into a single document — the full GraphCompose surface.",
+              "tags": ["flagship", "showcase"],
+              "pdf": "showcase/pdf/flagships/default/master-showcase.pdf",
+              "screenshot": "showcase/screenshots/flagships/default/master-showcase.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/flagships/MasterShowcaseExample.java"
+            },
+            {
+              "id": "module-first-profile",
+              "title": "Module-First Authoring",
+              "description": "Authoring style focused on declaring data modules first, layout second.",
+              "tags": ["flagship", "authoring"],
+              "pdf": "showcase/pdf/flagships/default/module-first-profile.pdf",
+              "screenshot": "showcase/screenshots/flagships/default/module-first-profile.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/flagships/ModuleFirstFileExample.java"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

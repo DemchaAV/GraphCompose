@@ -3,20 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="GraphCompose showcase: Java-first declarative document layout engine for cinematic PDFs.">
-  <title>GraphCompose Showcase</title>
+  <meta name="description" content="GraphCompose: Java declarative PDF layout engine. Browse 50+ live PDF examples across CV, invoice, proposal templates plus every supported feature.">
+  <title>GraphCompose &mdash; Java declarative PDF engine</title>
   <link rel="icon" href="assets/logo/graphcompose-logo.png">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="site-header">
     <a class="brand" href="#top" aria-label="GraphCompose home">
-      <img src="assets/logo/graphcompose-logo.png" alt="" width="150" height="50">
+      <img src="assets/logo/graphcompose-logo.png" alt="" width="40" height="40">
       <span>GraphCompose</span>
     </a>
     <nav class="site-nav" aria-label="Primary navigation">
-      <a href="#examples">Examples</a>
-      <a href="#architecture">Architecture</a>
+      <a href="#showcase">Showcase</a>
+      <a href="#templates-section">Templates</a>
+      <a href="#features-section">Features</a>
+      <a href="#flagships-section">Flagships</a>
       <a href="#install">Install</a>
       <a href="https://github.com/DemchaAV/GraphCompose">GitHub</a>
     </nav>
@@ -25,324 +27,155 @@
   <main id="top">
     <section class="hero section-shell" aria-labelledby="hero-title">
       <div class="hero-copy">
-        <h1 id="hero-title">GraphCompose</h1>
-        <p class="hero-lead">Java-first declarative document layout engine for cinematic PDFs.</p>
-        <p class="hero-text">Describe documents semantically. GraphCompose handles layout, pagination, snapshots, and PDFBox rendering.</p>
-        <div class="hero-actions" aria-label="Primary actions">
-          <a class="button button-primary" href="#examples">View Examples</a>
-          <a class="button button-secondary" href="https://github.com/DemchaAV/GraphCompose">GitHub Repository</a>
-          <a class="button button-ghost" href="#install">Install via JitPack</a>
+        <p class="eyebrow">Java &middot; v1.6 &middot; MIT</p>
+        <h1 id="hero-title">Describe documents. Render polished PDFs.</h1>
+        <p class="hero-lead">A semantic layout engine for Java services that need <b>structured, paginated, theme-driven</b> PDF output &mdash; CVs, invoices, proposals, reports.</p>
+        <p class="hero-text">No drawing API. No pixel arithmetic. You compose <code>ParagraphNode</code>, <code>TableNode</code>, <code>SectionNode</code>; GraphCompose handles measurement, pagination, fonts, and PDFBox rendering.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#showcase">Browse Examples</a>
+          <a class="button button-secondary" href="https://github.com/DemchaAV/GraphCompose">Source on GitHub</a>
+          <a class="button button-ghost" href="#install">Install in 30s</a>
         </div>
       </div>
 
       <div class="hero-visual" aria-label="Generated PDF previews">
         <div class="document-stack">
-          <img class="doc-preview doc-preview-main" src="assets/screenshots/invoice-v2.png" alt="Generated invoice PDF preview">
-          <img class="doc-preview doc-preview-side doc-preview-top" src="assets/screenshots/proposal-v2.png" alt="Generated proposal PDF preview">
-          <img class="doc-preview doc-preview-side doc-preview-bottom" src="assets/screenshots/cv-template.png" alt="Generated CV PDF preview">
+          <img class="doc-preview doc-preview-main" src="showcase/screenshots/templates/cv/cv-modern-professional.png" alt="CV preview">
+          <img class="doc-preview doc-preview-side doc-preview-top" src="showcase/screenshots/templates/invoice/invoice-cinematic.png" alt="Invoice preview">
+          <img class="doc-preview doc-preview-side doc-preview-bottom" src="showcase/screenshots/templates/proposal/proposal-cinematic.png" alt="Proposal preview">
         </div>
       </div>
     </section>
 
-    <section class="section-shell section-grid" aria-labelledby="what-title">
-      <div>
-        <p class="section-label">What it is</p>
-        <h2 id="what-title">Semantic document authoring for Java services.</h2>
-      </div>
-      <div class="section-copy">
-        <p>GraphCompose is a Java document layout engine that lets you describe document structure using semantic building blocks such as modules, sections, paragraphs, tables, layers, and themes.</p>
-        <p>Instead of manually calculating x/y coordinates, you define what the document means. GraphCompose compiles that structure into a deterministic layout and renders the final output through PDFBox.</p>
+    <section class="value-prop section-shell" aria-labelledby="value-title">
+      <div class="value-grid">
+        <div>
+          <h3>30 lines &rarr; one invoice</h3>
+          <p>The whole stack &mdash; theme tokens, table, totals, chrome &mdash; behind one fluent DSL.</p>
+        </div>
+        <div>
+          <h3>Atomic pagination</h3>
+          <p>Tables split row-by-row, rows are atomic, layer stacks atomic. No manual page math.</p>
+        </div>
+        <div>
+          <h3>14 CV presets, 14 letter pairs</h3>
+          <p>Every preset is one final class with a one-liner <code>create(BusinessTheme)</code> factory.</p>
+        </div>
+        <div>
+          <h3>Tested at every layer</h3>
+          <p>819 green tests, layout snapshots per preset, pixel-diff visual parity gate, public-API leak guards.</p>
+        </div>
       </div>
     </section>
 
-    <section class="section-shell" id="examples" aria-labelledby="examples-title">
+    <section class="section-shell" id="install" aria-labelledby="install-title">
       <div class="section-heading">
-        <p class="section-label">Showcase gallery</p>
-        <h2 id="examples-title">Generated PDFs you can inspect.</h2>
-        <p>Each card is loaded from <code>examples.json</code>. Add a screenshot, add a PDF, then add one JSON object.</p>
+        <p class="section-label">Install</p>
+        <h2 id="install-title">JitPack, no extra setup.</h2>
       </div>
-      <div id="examples-grid" class="examples-grid" aria-live="polite"></div>
+      <div class="install-blocks">
+        <div class="install-block">
+          <h4>Maven</h4>
+<pre><code>&lt;repository&gt;
+  &lt;id&gt;jitpack.io&lt;/id&gt;
+  &lt;url&gt;https://jitpack.io&lt;/url&gt;
+&lt;/repository&gt;
+
+&lt;dependency&gt;
+  &lt;groupId&gt;com.github.DemchaAV&lt;/groupId&gt;
+  &lt;artifactId&gt;GraphCompose&lt;/artifactId&gt;
+  &lt;version&gt;v1.6.0&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+        </div>
+        <div class="install-block">
+          <h4>Gradle</h4>
+<pre><code>repositories { maven { url 'https://jitpack.io' } }
+dependencies {
+  implementation 'com.github.DemchaAV:GraphCompose:v1.6.0'
+}</code></pre>
+        </div>
+        <div class="install-block">
+          <h4>30-second hello world</h4>
+<pre><code>try (var doc = GraphCompose.document(out).create()) {
+  doc.pageFlow()
+     .addParagraph("Hello, GraphCompose")
+     .addList(l -&gt; l.items("PDF", "DOCX", "Tables"))
+     .build();
+  doc.buildPdf();
+}</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-shell" id="showcase" aria-labelledby="showcase-title">
+      <div class="section-heading">
+        <p class="section-label">Showcase</p>
+        <h2 id="showcase-title">50+ generated PDFs you can inspect.</h2>
+        <p class="section-text">Every example below is a real, runnable Java file. Click the preview to open the rendered PDF, or jump straight into the source.</p>
+      </div>
+
+      <div class="showcase-controls" role="search">
+        <input type="search" id="showcase-search" placeholder="Search by title, tag, or keyword..." aria-label="Search showcase examples">
+        <div class="showcase-filters" id="showcase-filters" role="tablist" aria-label="Filter by category">
+          <button class="filter-pill is-active" data-category="all" type="button">All</button>
+          <button class="filter-pill" data-category="templates" type="button">Templates</button>
+          <button class="filter-pill" data-category="features" type="button">Features</button>
+          <button class="filter-pill" data-category="flagships" type="button">Flagships</button>
+        </div>
+      </div>
+
+      <div id="showcase-content" class="showcase-content" aria-live="polite">
+        <p class="showcase-loading">Loading examples...</p>
+      </div>
     </section>
 
     <section class="architecture section-shell" id="architecture" aria-labelledby="architecture-title">
       <div class="section-heading">
         <p class="section-label">Architecture</p>
-        <h2 id="architecture-title">Author intent stays separate from fixed PDF rendering.</h2>
-        <p>GraphCompose is responsible for document structure, layout, pagination, and snapshots. PDFBox is the rendering backend that draws the resolved fixed layout.</p>
+        <h2 id="architecture-title">Author intent stays separate from PDF rendering.</h2>
       </div>
-
-      <ol class="pipeline" aria-label="GraphCompose document pipeline">
-        <li>Semantic DSL</li>
-        <li>Layout Graph</li>
-        <li>Pagination</li>
-        <li>Resolved Geometry</li>
-        <li>PDFBox Backend</li>
-        <li>Generated PDF</li>
+      <ol class="pipeline" aria-label="Document pipeline">
+        <li><strong>Semantic DSL.</strong> You build a tree of <code>ParagraphNode</code>, <code>TableNode</code>, <code>SectionNode</code>, <code>LayerStackNode</code>, <code>CanvasLayerNode</code>.</li>
+        <li><strong>Layout pass.</strong> The engine resolves measurements, pagination, decoration, overlays. Output is a <code>LayoutGraph</code> &mdash; geometry only, no draw calls.</li>
+        <li><strong>Render backend.</strong> The <code>FixedLayoutBackend</code> consumes placed fragments. Default: <code>PdfFixedLayoutBackend</code> via PDFBox. DOCX backend exists for editable output.</li>
       </ol>
-
-      <p class="architecture-copy">The DSL describes semantic structure. The layout engine resolves geometry, pagination, and visual rules. The rendering backend then draws the final fixed layout using PDFBox.</p>
     </section>
 
-    <section class="section-shell" aria-labelledby="features-title">
+    <section class="section-shell" aria-labelledby="why-title">
       <div class="section-heading">
-        <p class="section-label">Highlights</p>
-        <h2 id="features-title">Built for structured business documents.</h2>
+        <p class="section-label">Why GraphCompose</p>
+        <h2 id="why-title">For services that produce structured PDFs at scale.</h2>
       </div>
       <div class="feature-grid">
         <article class="feature-card">
-          <h3>Semantic DSL</h3>
-          <p>Describe modules, sections, paragraphs, tables, layers, and themes instead of manual PDF coordinates.</p>
+          <h3>Stream straight into HTTP responses</h3>
+          <p><code>session.writePdf(OutputStream)</code> writes incrementally with no in-memory buffering. Spring Boot, Quarkus, Micronaut, or plain Java HTTP.</p>
         </article>
         <article class="feature-card">
-          <h3>Automatic pagination</h3>
-          <p>Let the engine split long flows, tables, and document sections across pages with deterministic placement.</p>
+          <h3>Snapshot-tested layouts</h3>
+          <p>Every preset has a layout-graph JSON baseline plus a pixel-diff visual parity baseline. Regressions surface on the first run.</p>
         </article>
         <article class="feature-card">
-          <h3>Reusable templates</h3>
-          <p>Compose invoices, proposals, CVs, cover letters, and operational documents from typed data specs.</p>
+          <h3>Theme tokens, not magic numbers</h3>
+          <p><code>BusinessTheme.modern()</code> / <code>.classic()</code> / <code>.executive()</code> set palette, typography, table styles. Override one or all.</p>
         </article>
         <article class="feature-card">
-          <h3>Layout snapshots</h3>
-          <p>Inspect resolved layout before PDF bytes are written and keep visual regressions testable.</p>
+          <h3>Markdown-aware bodies</h3>
+          <p>Inline <code>**bold**</code>, <code>*italic*</code>, <code>_italic_</code> markers parsed in every paragraph and list block automatically.</p>
         </article>
-        <article class="feature-card">
-          <h3>PDFBox rendering</h3>
-          <p>Render through an isolated PDFBox backend while keeping authoring and layout rules engine-owned.</p>
-        </article>
-        <article class="feature-card">
-          <h3>Themes and visual layers</h3>
-          <p>Use theme tokens, layered panels, transforms, accents, and visual hierarchy without low-level drawing code.</p>
-        </article>
-        <article class="feature-card">
-          <h3>Advanced tables</h3>
-          <p>Build business tables with row spans, zebra rows, totals, and repeated headers.</p>
-        </article>
-        <article class="feature-card">
-          <h3>Shape containers</h3>
-          <p>Place content inside clipped or rounded visual containers while preserving layout behavior.</p>
-        </article>
-        <article class="feature-card">
-          <h3>Streaming-friendly output</h3>
-          <p>Write generated PDFs to caller-owned streams for HTTP responses, storage uploads, and backend workflows.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="section-shell install-grid" id="install" aria-labelledby="install-title">
-      <div>
-        <p class="section-label">Install</p>
-        <h2 id="install-title">Use GraphCompose through JitPack.</h2>
-        <p class="section-copy">Check the GitHub repository for the latest release version.</p>
-      </div>
-      <div class="code-panel" data-label="Maven">
-        <pre><code class="language-xml">&lt;repositories&gt;
-    &lt;repository&gt;
-        &lt;id&gt;jitpack.io&lt;/id&gt;
-        &lt;url&gt;https://jitpack.io&lt;/url&gt;
-    &lt;/repository&gt;
-&lt;/repositories&gt;
-
-&lt;dependency&gt;
-    &lt;groupId&gt;com.github.DemchaAV&lt;/groupId&gt;
-    &lt;artifactId&gt;GraphCompose&lt;/artifactId&gt;
-    &lt;version&gt;v1.5.1&lt;/version&gt;
-&lt;/dependency&gt;</code></pre>
-      </div>
-    </section>
-
-    <section class="section-shell code-example" aria-labelledby="code-title">
-      <div class="section-heading">
-        <p class="section-label">Minimal idea</p>
-        <h2 id="code-title">Describe the document, then render it.</h2>
-      </div>
-      <div class="code-panel" data-label="Java">
-        <pre><code class="language-java">try (DocumentSession document = GraphCompose.document(Path.of("invoice.pdf"))
-        .pageSize(DocumentPageSize.A4)
-        .margin(48)
-        .create()) {
-
-    document.pageFlow(page -&gt; page
-            .addSection("Summary", section -&gt; section
-                    .addParagraph(p -&gt; p.text("Invoice ready for review"))));
-
-    document.buildPdf();
-}</code></pre>
       </div>
     </section>
   </main>
 
   <footer class="site-footer">
-    <span>GraphCompose</span>
-    <a href="https://github.com/DemchaAV/GraphCompose/blob/main/LICENSE">MIT License</a>
-    <a href="https://github.com/DemchaAV/GraphCompose">GitHub</a>
-    <a href="https://jitpack.io/#DemchaAV/GraphCompose">JitPack</a>
-    <span>Built as a lightweight GitHub Pages showcase.</span>
+    <p>GraphCompose &mdash; Java declarative PDF engine. <a href="https://github.com/DemchaAV/GraphCompose/blob/main/LICENSE">MIT-licensed</a>.</p>
+    <p>
+      <a href="https://github.com/DemchaAV/GraphCompose">GitHub</a> &middot;
+      <a href="https://github.com/DemchaAV/GraphCompose/blob/main/CHANGELOG.md">Changelog</a> &middot;
+      <a href="https://github.com/DemchaAV/GraphCompose/blob/main/docs/migration-v1-5-to-v1-6.md">v1.5 &rarr; v1.6 migration</a>
+    </p>
   </footer>
 
-  <script>
-    const gallery = document.querySelector("#examples-grid");
-    const javaKeywords = new Set([
-      "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const",
-      "continue", "default", "do", "double", "else", "enum", "extends", "final", "finally", "float",
-      "for", "if", "implements", "import", "instanceof", "int", "interface", "long", "native", "new",
-      "package", "private", "protected", "public", "return", "short", "static", "strictfp", "super",
-      "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void", "volatile",
-      "while", "var", "record", "sealed", "permits", "non-sealed"
-    ]);
-
-    function escapeHtml(value) {
-      return value
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;");
-    }
-
-    function token(className, value) {
-      return `<span class="token ${className}">${value}</span>`;
-    }
-
-    function highlightXml(source) {
-      return escapeHtml(source).replace(/(&lt;\/?)([\w:.-]+)([\s\S]*?)(&gt;)/g, (_, open, name, body, close) => {
-        const highlightedBody = body.replace(/([\w:.-]+)(=)(&quot;.*?&quot;|'.*?')/g, (match, attr, equals, attrValue) =>
-          `${token("attr", attr)}${token("operator", equals)}${token("string", attrValue)}`
-        );
-        return `${token("punctuation", open)}${token("tag", name)}${highlightedBody}${token("punctuation", close)}`;
-      });
-    }
-
-    function highlightJava(source) {
-      const pattern = /("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\/\/.*|\/\*[\s\S]*?\*\/|\b\d+(?:\.\d+)?\b|@[A-Za-z_]\w*|\b[A-Za-z_]\w*\b|[{}()[\].,;:+\-*/%=<>!&|?]+)/g;
-      let output = "";
-      let cursor = 0;
-      let match;
-
-      while ((match = pattern.exec(source)) !== null) {
-        const value = match[0];
-        output += escapeHtml(source.slice(cursor, match.index));
-
-        if (value.startsWith("//") || value.startsWith("/*")) {
-          output += token("comment", escapeHtml(value));
-        } else if (value.startsWith("\"") || value.startsWith("'")) {
-          output += token("string", escapeHtml(value));
-        } else if (value.startsWith("@")) {
-          output += token("annotation", escapeHtml(value));
-        } else if (/^\d/.test(value)) {
-          output += token("number", escapeHtml(value));
-        } else if (/^[A-Za-z_]/.test(value)) {
-          if (javaKeywords.has(value)) {
-            output += token("keyword", escapeHtml(value));
-          } else if (/^[A-Z]/.test(value)) {
-            output += token("type", escapeHtml(value));
-          } else if (/^\s*\(/.test(source.slice(match.index + value.length))) {
-            output += token("method", escapeHtml(value));
-          } else {
-            output += token("plain", escapeHtml(value));
-          }
-        } else {
-          output += token("operator", escapeHtml(value));
-        }
-
-        cursor = match.index + value.length;
-      }
-
-      output += escapeHtml(source.slice(cursor));
-      return output;
-    }
-
-    function highlightCodeBlocks() {
-      document.querySelectorAll("pre code.language-xml, pre code.language-java").forEach((block) => {
-        const source = block.textContent;
-        block.innerHTML = block.classList.contains("language-xml")
-          ? highlightXml(source)
-          : highlightJava(source);
-      });
-    }
-
-    function createTag(tag) {
-      const item = document.createElement("span");
-      item.className = "tag";
-      item.textContent = tag;
-      return item;
-    }
-
-    function renderExamples(examples) {
-      gallery.textContent = "";
-
-      examples.forEach((example) => {
-        const card = document.createElement("article");
-        card.className = "example-card";
-
-        const preview = document.createElement("div");
-        preview.className = "example-preview";
-
-        const image = document.createElement("img");
-        image.src = example.image;
-        image.alt = `${example.title} preview`;
-        image.loading = "lazy";
-        image.addEventListener("error", () => {
-          image.remove();
-          preview.classList.add("example-preview-missing");
-          preview.textContent = "Preview pending";
-        }, { once: true });
-        preview.appendChild(image);
-
-        const body = document.createElement("div");
-        body.className = "example-body";
-
-        const title = document.createElement("h3");
-        title.textContent = example.title;
-
-        const description = document.createElement("p");
-        description.textContent = example.description;
-
-        const tags = document.createElement("div");
-        tags.className = "tag-list";
-        (example.tags || []).forEach((tag) => tags.appendChild(createTag(tag)));
-
-        const actions = document.createElement("div");
-        actions.className = "card-actions";
-
-        const pdf = document.createElement("a");
-        pdf.className = "button button-small button-primary";
-        pdf.href = example.pdf;
-        pdf.textContent = "View PDF";
-
-        const code = document.createElement("a");
-        code.className = "button button-small button-secondary";
-        code.href = example.code;
-        code.textContent = "View Code";
-
-        actions.append(pdf, code);
-        body.append(title, description, tags, actions);
-        card.append(preview, body);
-        gallery.appendChild(card);
-      });
-    }
-
-    function renderFallback() {
-      gallery.innerHTML = "";
-      const fallback = document.createElement("p");
-      fallback.className = "gallery-fallback";
-      fallback.textContent = "Examples are being prepared. Check the GitHub repository for generated PDFs and source code.";
-        gallery.appendChild(fallback);
-    }
-
-    highlightCodeBlocks();
-
-    fetch("examples.json")
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("examples.json failed to load");
-        }
-        return response.json();
-      })
-      .then((examples) => {
-        if (!Array.isArray(examples) || examples.length === 0) {
-          throw new Error("examples.json is empty");
-        }
-        renderExamples(examples);
-      })
-      .catch(renderFallback);
-  </script>
+  <script src="examples.js"></script>
 </body>
 </html>

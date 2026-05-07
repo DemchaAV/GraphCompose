@@ -133,10 +133,10 @@ pre {
 .hero {
   display: grid;
   grid-template-columns: minmax(0, 1.02fr) minmax(360px, 0.98fr);
-  gap: 56px;
+  gap: 48px;
   align-items: center;
-  padding-top: 82px;
-  padding-bottom: 72px;
+  padding-top: 60px;
+  padding-bottom: 56px;
 }
 
 .hero-copy {
@@ -146,32 +146,32 @@ pre {
 .hero h1 {
   max-width: 100%;
   margin: 0;
-  font-size: 5.55rem;
-  line-height: 0.92;
-  letter-spacing: 0;
+  font-size: 4.4rem;
+  line-height: 1.02;
+  letter-spacing: -0.005em;
 }
 
 .hero-lead {
   max-width: 700px;
-  margin: 28px 0 0;
+  margin: 22px 0 0;
   color: #f8fafc;
-  font-size: 1.95rem;
-  font-weight: 760;
-  line-height: 1.12;
+  font-size: 1.55rem;
+  font-weight: 720;
+  line-height: 1.18;
 }
 
 .hero-text {
   max-width: 660px;
-  margin: 20px 0 0;
+  margin: 18px 0 0;
   color: var(--muted);
-  font-size: 1.08rem;
+  font-size: 1.04rem;
 }
 
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 34px;
+  margin-top: 28px;
 }
 
 .button {
@@ -438,8 +438,8 @@ h2 {
 
 .pipeline {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -637,11 +637,11 @@ h2 {
   }
 
   .hero h1 {
-    font-size: 4.75rem;
+    font-size: 3.5rem;
   }
 
   .hero-lead {
-    font-size: 1.7rem;
+    font-size: 1.35rem;
   }
 
   h2 {
@@ -686,11 +686,11 @@ h2 {
   }
 
   .hero h1 {
-    font-size: 2.85rem;
+    font-size: 2.4rem;
   }
 
   .hero-lead {
-    font-size: 1.34rem;
+    font-size: 1.16rem;
   }
 
   h2 {
@@ -1178,6 +1178,13 @@ code[class*="language-"] .token.class-name {
     flex-direction: column;
     align-items: stretch;
   }
+  /* Reset the desktop flex-grow so the search input does not
+     vertically stretch to ~280pt on narrow viewports — the column
+     layout makes flex-basis act on the cross axis. */
+  #showcase-search {
+    flex: 0 0 auto;
+    width: 100%;
+  }
   .showcase-filters {
     justify-content: flex-start;
   }
@@ -1209,6 +1216,12 @@ code[class*="language-"] .token.class-name {
 
 .example-card[data-id] .example-preview img {
   width: 100%;
+  height: auto;
+  /* Reserve A4 portrait box (595/842 ≈ 1/1.414) before lazy-load
+     resolves so showcase cards do not collapse to a thin strip and
+     trigger Cumulative Layout Shift. object-fit keeps non-A4
+     previews (canvas / wide flagships) from being squished. */
+  aspect-ratio: 595 / 842;
   max-height: 360px;
   object-fit: contain;
   background: white;
@@ -1429,4 +1442,49 @@ body.lightbox-open {
   .lightbox-title {
     font-size: 0.94rem;
   }
+}
+
+/* ===========================================================
+   <noscript> showcase fallback — readable static index for
+   crawlers and JS-disabled clients. Hidden by JS bootstrap if
+   we ever decide to surface it from script paths; for noscript
+   it inherits page typography but with tighter spacing.
+   =========================================================== */
+.showcase-noscript {
+  margin-top: 28px;
+  padding: 24px 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(15, 23, 42, 0.7);
+  color: var(--muted);
+}
+
+.showcase-noscript h3 {
+  margin: 24px 0 8px;
+  color: #e2e8f0;
+  font-size: 1.2rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.showcase-noscript h4 {
+  margin: 16px 0 6px;
+  color: #cbd5f5;
+  font-size: 0.94rem;
+  letter-spacing: 0.06em;
+}
+
+.showcase-noscript ul {
+  margin: 0 0 12px;
+  padding-left: 22px;
+  line-height: 1.7;
+  font-size: 0.92rem;
+}
+
+.showcase-noscript a {
+  color: #7dd3fc;
+}
+
+.showcase-noscript a:hover {
+  color: #bae6fd;
 }

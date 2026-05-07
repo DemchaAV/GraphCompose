@@ -3,11 +3,134 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="GraphCompose: Java declarative PDF layout engine. Browse 50+ live PDF examples across CV, invoice, proposal templates plus every supported feature.">
-  <title>GraphCompose &mdash; Java declarative PDF engine</title>
+  <meta name="description" content="GraphCompose: Java PDF layout engine for structured business documents. Browse 50+ runnable examples across CV, invoice, proposal templates, and every supported feature.">
+  <meta name="keywords" content="Java, PDF, PDF library, PDF layout, document generation, declarative PDF, PDFBox, business documents, Java template engine, CV PDF, invoice PDF, proposal PDF">
+  <meta name="author" content="Artem Demchyshyn">
+  <title>GraphCompose &mdash; Java PDF layout engine for structured business documents</title>
+  <link rel="canonical" href="https://demchaav.github.io/GraphCompose/">
   <link rel="icon" href="assets/logo/graphcompose-logo.png">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://demchaav.github.io/GraphCompose/">
+  <meta property="og:site_name" content="GraphCompose">
+  <meta property="og:title" content="GraphCompose &mdash; Java PDF layout engine for structured business documents">
+  <meta property="og:description" content="Declarative semantic PDF generation for Java. CVs, invoices, proposals, reports — composed from ParagraphNode, TableNode, SectionNode. 50+ runnable examples.">
+  <meta property="og:image" content="https://demchaav.github.io/GraphCompose/showcase/screenshots/templates/proposal/project-proposal-cinematic.png">
+  <meta property="og:image:alt" content="GraphCompose-rendered project proposal PDF preview">
+  <meta property="og:image:width" content="893">
+  <meta property="og:image:height" content="1263">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="GraphCompose &mdash; Java PDF layout engine">
+  <meta name="twitter:description" content="Declarative semantic PDF generation for Java. CVs, invoices, proposals, reports — composed from ParagraphNode, TableNode, SectionNode.">
+  <meta name="twitter:image" content="https://demchaav.github.io/GraphCompose/showcase/screenshots/templates/proposal/project-proposal-cinematic.png">
+
+  <!-- Structured data: SoftwareApplication + SoftwareSourceCode -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "GraphCompose",
+        "alternateName": "GraphCompose Java PDF engine",
+        "description": "Declarative Java PDF layout engine for structured business documents — CVs, invoices, proposals, reports. Compose ParagraphNode, TableNode, SectionNode, LayerStackNode; the engine handles measurement, pagination, fonts, and PDFBox rendering.",
+        "applicationCategory": "DeveloperApplication",
+        "applicationSubCategory": "Library",
+        "operatingSystem": "Cross-platform (JVM 21+)",
+        "programmingLanguage": "Java",
+        "softwareVersion": "1.6.0",
+        "url": "https://demchaav.github.io/GraphCompose/",
+        "downloadUrl": "https://jitpack.io/#DemchaAV/GraphCompose/v1.6.0",
+        "image": "https://demchaav.github.io/GraphCompose/assets/logo/graphcompose-logo.png",
+        "license": "https://github.com/DemchaAV/GraphCompose/blob/main/LICENSE",
+        "author": {
+          "@type": "Person",
+          "name": "Artem Demchyshyn",
+          "url": "https://github.com/DemchaAV"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "keywords": "Java, PDF, layout engine, declarative, business documents, PDFBox, document generation",
+        "featureList": [
+          "Semantic node tree DSL (ParagraphNode, TableNode, SectionNode, LayerStackNode, CanvasLayerNode)",
+          "Atomic pagination with row-by-row table splitting",
+          "14 CV presets and 14 letter pairs out of the box",
+          "Theme tokens via BusinessTheme.modern() / classic() / executive()",
+          "Markdown-aware bodies (bold, italic) in every paragraph and list block",
+          "PDFBox-backed render pipeline plus a DOCX backend for editable output",
+          "819-test verify gate with layout snapshots and pixel-diff visual parity"
+        ]
+      },
+      {
+        "@type": "SoftwareSourceCode",
+        "name": "GraphCompose",
+        "codeRepository": "https://github.com/DemchaAV/GraphCompose",
+        "programmingLanguage": "Java",
+        "runtimePlatform": "JVM 21+",
+        "license": "https://github.com/DemchaAV/GraphCompose/blob/main/LICENSE"
+      },
+      {
+        "@type": "ItemList",
+        "name": "GraphCompose showcase examples",
+        "description": "50+ runnable Java examples that produce real PDFs — CV templates, cover letters, invoices, proposals, schedules, plus every supported feature.",
+        "numberOfItems": 51,
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Cinematic Project Proposal",
+            "url": "https://demchaav.github.io/GraphCompose/showcase/pdf/templates/proposal/project-proposal-cinematic.pdf"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Cinematic Invoice",
+            "url": "https://demchaav.github.io/GraphCompose/showcase/pdf/templates/invoice/invoice-cinematic.pdf"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Modern Professional CV",
+            "url": "https://demchaav.github.io/GraphCompose/showcase/pdf/templates/cv/cv-modern-professional.pdf"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Sidebar Portrait CV",
+            "url": "https://demchaav.github.io/GraphCompose/showcase/pdf/templates/cv/cv-sidebar-portrait.pdf"
+          },
+          {
+            "@type": "ListItem",
+            "position": 5,
+            "name": "Monogram Sidebar CV",
+            "url": "https://demchaav.github.io/GraphCompose/showcase/pdf/templates/cv/cv-monogram-sidebar.pdf"
+          },
+          {
+            "@type": "ListItem",
+            "position": 6,
+            "name": "Master Showcase (flagship)",
+            "url": "https://demchaav.github.io/GraphCompose/showcase/pdf/flagships/default/master-showcase.pdf"
+          },
+          {
+            "@type": "ListItem",
+            "position": 7,
+            "name": "Business Report (flagship)",
+            "url": "https://demchaav.github.io/GraphCompose/showcase/pdf/flagships/default/business-report.pdf"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
   <header class="site-header">
@@ -29,8 +152,8 @@
     <section class="hero section-shell" aria-labelledby="hero-title">
       <div class="hero-copy">
         <p class="eyebrow">Java &middot; v1.6 &middot; MIT</p>
-        <h1 id="hero-title">Describe documents. Render polished PDFs.</h1>
-        <p class="hero-lead">A semantic layout engine for Java services that need <b>structured, paginated, theme-driven</b> PDF output &mdash; CVs, invoices, proposals, reports.</p>
+        <h1 id="hero-title">Java PDF layout engine for structured business documents.</h1>
+        <p class="hero-lead">Describe documents. Render polished PDFs. A semantic layout engine for Java services that need <b>structured, paginated, theme-driven</b> output &mdash; CVs, invoices, proposals, reports.</p>
         <p class="hero-text">No drawing API. No pixel arithmetic. You compose <code>ParagraphNode</code>, <code>TableNode</code>, <code>SectionNode</code>; GraphCompose handles measurement, pagination, fonts, and PDFBox rendering.</p>
         <div class="hero-actions">
           <a class="button button-primary" href="#showcase">Browse Examples</a>
@@ -135,6 +258,76 @@ dependencies {
       <div id="showcase-content" class="showcase-content" aria-live="polite">
         <p class="showcase-loading">Loading examples...</p>
       </div>
+
+      <noscript>
+        <div class="showcase-noscript">
+          <p><strong>JavaScript is disabled.</strong> The full searchable gallery requires JS. Below is a static index of the catalogue so you can still reach the rendered PDFs and source files.</p>
+
+          <h3 id="templates-section">Templates</h3>
+
+          <h4>CV (14 presets)</h4>
+          <ul>
+            <li><a href="showcase/pdf/templates/cv/cv-modern-professional.pdf">Modern Professional CV</a></li>
+            <li><a href="showcase/pdf/templates/cv/cv-nordic-clean.pdf">Nordic Clean CV</a></li>
+            <li><a href="showcase/pdf/templates/cv/cv-classic-serif.pdf">Classic Serif CV</a></li>
+            <li><a href="showcase/pdf/templates/cv/cv-compact-mono.pdf">Compact Mono CV</a></li>
+            <li><a href="showcase/pdf/templates/cv/cv-executive.pdf">Executive CV</a></li>
+            <li><a href="showcase/pdf/templates/cv/cv-engineering-resume.pdf">Engineering Resume CV</a></li>
+            <li><a href="showcase/pdf/templates/cv/cv-timeline-minimal.pdf">Timeline Minimal CV</a></li>
+            <li><a href="showcase/pdf/templates/cv/cv-boxed-sections.pdf">Boxed Sections CV</a></li>
+            <li><a href="showcase/pdf/templates/cv/cv-centered-headline.pdf">Centered Headline CV</a></li>
+            <li><a href="showcase/pdf/templates/cv/cv-blue-banner.pdf">Blue Banner CV</a></li>
+            <li><a href="showcase/pdf/templates/cv/cv-editorial-blue.pdf">Editorial Blue CV</a></li>
+            <li><a href="showcase/pdf/templates/cv/cv-panel.pdf">Panel CV</a></li>
+            <li><a href="showcase/pdf/templates/cv/cv-sidebar-portrait.pdf">Sidebar Portrait CV</a></li>
+            <li><a href="showcase/pdf/templates/cv/cv-monogram-sidebar.pdf">Monogram Sidebar CV</a></li>
+          </ul>
+
+          <h4>Cover Letter (14 paired layouts)</h4>
+          <ul>
+            <li><a href="showcase/pdf/templates/coverletter/cover-letter.pdf">Cover Letter (canonical)</a></li>
+            <li><a href="showcase/pdf/templates/coverletter/cover-letter-modern-professional.pdf">Modern Professional letter</a></li>
+            <li><a href="showcase/pdf/templates/coverletter/cover-letter-executive.pdf">Executive letter</a></li>
+            <li><a href="showcase/pdf/templates/coverletter/cover-letter-monogram-sidebar.pdf">Monogram Sidebar letter</a></li>
+            <li><a href="showcase/pdf/templates/coverletter/cover-letter-sidebar-portrait.pdf">Sidebar Portrait letter</a></li>
+          </ul>
+
+          <h4>Invoice / Proposal / Schedule</h4>
+          <ul>
+            <li><a href="showcase/pdf/templates/invoice/invoice.pdf">Invoice (canonical)</a></li>
+            <li><a href="showcase/pdf/templates/invoice/invoice-cinematic.pdf">Cinematic Invoice</a></li>
+            <li><a href="showcase/pdf/templates/proposal/proposal.pdf">Proposal (canonical)</a></li>
+            <li><a href="showcase/pdf/templates/proposal/project-proposal-cinematic.pdf">Cinematic Project Proposal</a></li>
+            <li><a href="showcase/pdf/templates/schedule/weekly-schedule.pdf">Weekly Schedule</a></li>
+          </ul>
+
+          <h3 id="features-section">Features</h3>
+          <ul>
+            <li><a href="showcase/pdf/features/lists/nested-list-showcase.pdf">Nested List Showcase</a></li>
+            <li><a href="showcase/pdf/features/tables/composed-table-cell-showcase.pdf">Composed Table Cell Showcase</a></li>
+            <li><a href="showcase/pdf/features/tables/table-advanced.pdf">Advanced Tables</a></li>
+            <li><a href="showcase/pdf/features/canvas/canvas-layer-showcase.pdf">Canvas Layer Showcase</a></li>
+            <li><a href="showcase/pdf/features/shapes/shape-container.pdf">Shape Container</a></li>
+            <li><a href="showcase/pdf/features/transforms/transforms.pdf">Transforms</a></li>
+            <li><a href="showcase/pdf/features/text/rich-text-showcase.pdf">Rich Text Showcase</a></li>
+            <li><a href="showcase/pdf/features/text/section-presets.pdf">Section Presets</a></li>
+            <li><a href="showcase/pdf/features/themes/invoice-custom-theme.pdf">Invoice with Custom Theme</a></li>
+            <li><a href="showcase/pdf/features/chrome/pdf-chrome.pdf">PDF Chrome (header/footer)</a></li>
+            <li><a href="showcase/pdf/features/barcodes/barcode-showcase.pdf">Barcode Showcase</a></li>
+            <li><a href="showcase/pdf/features/streaming/invoice-http-stream.pdf">Invoice over HTTP Stream</a></li>
+            <li><a href="showcase/pdf/features/snapshots/invoice-snapshot-regression.pdf">Snapshot Regression Demo</a></li>
+          </ul>
+
+          <h3 id="flagships-section">Flagships</h3>
+          <ul>
+            <li><a href="showcase/pdf/flagships/default/master-showcase.pdf">Master Showcase</a></li>
+            <li><a href="showcase/pdf/flagships/default/business-report.pdf">Business Report</a></li>
+            <li><a href="showcase/pdf/flagships/default/module-first-profile.pdf">Module-first Profile</a></li>
+          </ul>
+
+          <p>Source for every example lives under <a href="https://github.com/DemchaAV/GraphCompose/tree/main/examples/src/main/java/com/demcha/examples"><code>examples/src/main/java/com/demcha/examples</code></a> on GitHub.</p>
+        </div>
+      </noscript>
     </section>
 
     <section class="architecture section-shell" id="architecture" aria-labelledby="architecture-title">

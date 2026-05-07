@@ -209,6 +209,77 @@ output; the new `ModernInvoice` / `ModernProposal` v2 presets
 provide the canonical builder seam, with cinematic feature parity
 landing in a follow-up.
 
+#### Phase E.1 reopen — visual parity recovery (May 2026)
+
+The first Phase E.1 pass shipped visually-broken renders.
+Every CV preset rendered as a teal-tinted single-column
+ModernProfessional clone — `NordicClean` lost its sidebar and
+soft-tinted PROFILE panel, `BlueBanner` lost its full-width
+section banners, `MonogramSidebar` lost its monogram badge,
+`SidebarPortrait` lost its portrait sidebar, `ClassicSerif`
+lost its two-page editorial structure, and so on. The
+`ModernProfessionalVisualParityTest` was a smoke test
+(`assertThat(output).exists()`) and `PresetLayoutSnapshotTest`
+recorded baselines from the new (broken) v2 renders without
+comparing against V1, so the regressions sailed through CI.
+
+**Phase E.1 was reopened.** All 14 CV preset renders + 14
+cover-letter pair renders were rebuilt against the V1 visual
+references (committed `assets/readme/examples/cv-*.pdf` for
+the 7 presets that had a baseline; V1 source code under
+`docs/private/v1-reference/` — gitignored — for the rest).
+The author-facing API stays stable; only the rendered output
+changed.
+
+- **Adaptive sidebar fill** — `SidebarPortrait` and
+  `MonogramSidebar` size the trailing spacer dynamically
+  from `canvas().innerHeight()` so the SIDEBAR_BG fill
+  reaches the bottom of the page on A4 / Letter / smaller
+  test fixtures without overflowing the row's page capacity.
+- **`Header` API gained three fluent overrides** —
+  `withNameStyle(DocumentTextStyle)`,
+  `withContactStyle(DocumentTextStyle)`,
+  `withLinkStyle(DocumentTextStyle)`. Required for V1-parity
+  palette (e.g. slate-blue name + royal-blue underlined
+  links for ModernProfessional) — the unstyled
+  `Header.rightAligned` rendered names with the active
+  `BusinessTheme`'s `h1()` colour instead.
+- **`CvHeader.jobTitle` field added** for the subtitle
+  rendered under the name by presets that surface it
+  (EditorialBlue, Panel, SidebarPortrait, MonogramSidebar).
+  Falls back to a placeholder string when the spec leaves it
+  empty.
+- **Markdown rendering routed through `MarkdownText.parse`
+  in every CV / cover-letter preset paragraph body** so
+  spec-author bold / italic markers (`**bold**` / `*italic*`)
+  carry through to the rendered runs — previously the
+  paragraphs stripped markdown.
+- **Sample data factory** updated so `Education` / `Projects`
+  use `MultiParagraphBlock` with markdown bold prefixes
+  (`**MSc Computer Science** - University of Manchester | 2021`)
+  rather than `IndentedBlock`'s multi-line shape, and
+  `Additional Information` carries `KeyValueBlock` entries
+  (Languages / Work Eligibility) for bold-key + plain-value
+  rendering.
+- **Snapshot baselines regenerated** — 28 `*.json` files
+  under
+  `src/test/resources/layout-snapshots/canonical-templates/cv-v2/`
+  and `coverletter-v2/` updated to lock the V1-parity render
+  in place. `mvnw verify` → 765 / 0 / 0 / 0.
+
+**Tech debt** (deferred to v1.7 as Phase E.4): 13 of the 14
+v2 CV presets are implemented as hand-coded
+`DocumentTemplate` subclasses driving the canonical
+PageFlow DSL directly (≈ 400-700 LOC each) rather than thin
+recipes through the slot-based `CvBuilder`. This was an
+explicit trade-off during the reopen — restoring V1 visual
+fidelity required components the v2 library hadn't grown
+yet (`Panel.softTinted`, `TwoColumnSidebar.tinted`,
+`SectionStyle.uppercaseRule`, `WorkEntryRenderer`). The
+component library extension + preset refactor is tracked in
+`docs/private/templates-restructure-plan.md` Phase E.4 and
+`docs/private/templates-v2-audit-remediation.md`.
+
 ### Feature scope (planned)
 
 - **Nested list ergonomics.**

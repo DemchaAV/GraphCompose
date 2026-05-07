@@ -400,7 +400,11 @@ h2 {
   gap: 8px;
 }
 
-.tag {
+/* Scoped to our gallery containers — bare `.tag` would otherwise
+   collide with Prism's `.token.tag` and turn every XML element in
+   the install snippet into a pill. */
+.tag-list .tag,
+.example-tags .tag {
   display: inline-flex;
   align-items: center;
   min-height: 26px;

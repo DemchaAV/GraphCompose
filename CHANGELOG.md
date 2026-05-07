@@ -11,6 +11,34 @@ Every new primitive ships through `DocumentNode + NodeDefinition +
 render handler`. See [`docs/v1.6-roadmap.md`](docs/v1.6-roadmap.md)
 for the phased plan, verification gates, and ADRs.
 
+### Headline — "expressive"
+
+- **Nested list ergonomics (Phase A — landed).**
+  `ListBuilder.addItem(label, Consumer)` for builder-callback
+  child scopes; per-depth marker cascade; mixed flat / nested
+  authoring preserves source order. ADR 0012.
+- **Composed table cell content (Phase B — landed).**
+  `DocumentTableCell.node(DocumentNode)` accepts any composable
+  canonical node as cell content (paragraphs, lists,
+  layer-stacks, sub-tables) with two-pass measurement. ADR 0013.
+- **Controlled free-canvas placement (Phase C — landed).**
+  `CanvasLayerNode` — pixel-precise `(x, y)` placement of
+  children inside a fixed-size bounding box, with `ClipPolicy`
+  clipping and atomic pagination. ADR 0014.
+- **Templates v2 preset library (committed).** Canonical CV /
+  cover-letter / invoice / proposal surface rebuilt around four
+  layers (theme tokens → layout slots → components + blocks →
+  spec data); 14 CV presets and 14 paired cover-letter presets
+  with one-liner `create(BusinessTheme)` factories, inline
+  markdown, hyperlinks, and slot-based multi-column layouts.
+  ADR 0011.
+- **Architecture hardening (committed).** `@Internal` API
+  stability marker, public `PdfFragmentRenderHandler` SPI,
+  `DocumentRenderingException` on the convenience render path,
+  thread-safety contract documented. ADRs 0003 + 0004.
+- **Verify gate**: 819 / 0 / 0 / 0 (`mvnw verify`). 26 runnable
+  examples regenerate cleanly through `GenerateAllExamples`.
+
 ### Architecture hardening (committed in v1.6 line, develop)
 
 The architecture lane closes the highest-severity findings from the
@@ -344,7 +372,7 @@ component library extension + preset refactor is tracked in
   `src/test/resources/layout-snapshots/document/table_cell_with_paragraph.json`.
   `mvnw verify` → 810 / 0 / 0 / 0.
 
-### Stretch goals (v1.6 if time allows; otherwise v1.7)
+### Feature scope (continued)
 
 - **Controlled free-canvas (Phase C — landed).** New
   `CanvasLayerNode` atomic composite accepts children at
@@ -372,13 +400,19 @@ component library extension + preset refactor is tracked in
   `src/test/resources/layout-snapshots/document/canvas_layer_basic.json`.
   Showcase: `examples/.../CanvasLayerExample.java`.
   `mvnw verify` → 819 / 0 / 0 / 0.
+
+### Deferred to v1.7
+
+These were on the v1.6 stretch list and did not land in time;
+they carry over to v1.7.
+
 - **Phase D — Real PPTX semantic export.** Build out
   `PptxSemanticBackend` from the existing manifest skeleton to a
   working POI-based exporter (paragraphs → text boxes, tables →
   PowerPoint tables, sections → slides).
 - **Phase E — Maven Central distribution.** Sonatype OSSRH + GPG
   signing + automated deployment on tag push. Primary install
-  coordinates switch to `io.github.demchaav:graphcompose:1.6.0`;
+  coordinates switch to `io.github.demchaav:graphcompose:1.7.0`;
   JitPack stays documented as a fallback.
 - **Phase F — Benchmark infrastructure modernisation.** Replace the
   custom warmup / measurement harness with `org.openjdk.jmh` for

@@ -845,22 +845,83 @@ h2 {
   text-transform: uppercase;
 }
 
-.install-block pre {
+.install-block pre,
+.install-block pre[class*="language-"] {
   margin: 0;
-  padding: 14px;
+  padding: 16px 18px;
   border-radius: 7px;
   background: #0b1220;
   color: #e0f2fe;
-  font-size: 0.84rem;
+  font-size: 0.83rem;
   font-family: ui-monospace, "SFMono-Regular", "JetBrains Mono", monospace;
-  overflow-x: auto;
-  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: hidden;
+  line-height: 1.55;
+  text-shadow: none;
 }
 
-.install-block code {
+.install-block code,
+.install-block code[class*="language-"] {
   background: transparent;
   color: inherit;
   font-size: inherit;
+  font-family: inherit;
+  text-shadow: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Override Prism Tomorrow theme bg (keep our dark navy panel) +
+   tweak token colours to match the site palette. */
+pre[class*="language-"].language-java,
+pre[class*="language-"].language-groovy,
+pre[class*="language-"].language-xml,
+pre[class*="language-"].language-markup {
+  background: #0b1220 !important;
+  color: #e0f2fe !important;
+}
+
+code[class*="language-"] .token.comment,
+code[class*="language-"] .token.prolog,
+code[class*="language-"] .token.doctype,
+code[class*="language-"] .token.cdata {
+  color: #64748b;
+  font-style: italic;
+}
+
+code[class*="language-"] .token.string,
+code[class*="language-"] .token.attr-value {
+  color: #fcd34d;
+}
+
+code[class*="language-"] .token.keyword,
+code[class*="language-"] .token.builtin,
+code[class*="language-"] .token.atrule {
+  color: #93c5fd;
+  font-weight: 660;
+}
+
+code[class*="language-"] .token.tag {
+  color: #f0abfc;
+}
+
+code[class*="language-"] .token.attr-name,
+code[class*="language-"] .token.function {
+  color: #a5f3fc;
+}
+
+code[class*="language-"] .token.punctuation,
+code[class*="language-"] .token.operator {
+  color: #94a3b8;
+}
+
+code[class*="language-"] .token.number {
+  color: #f59e0b;
+}
+
+code[class*="language-"] .token.class-name {
+  color: #fde68a;
 }
 
 /* Showcase controls (search + filters) */

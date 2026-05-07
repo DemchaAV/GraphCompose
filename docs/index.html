@@ -7,6 +7,7 @@
   <title>GraphCompose &mdash; Java declarative PDF engine</title>
   <link rel="icon" href="assets/logo/graphcompose-logo.png">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
 </head>
 <body>
   <header class="site-header">
@@ -40,9 +41,9 @@
 
       <div class="hero-visual" aria-label="Generated PDF previews">
         <div class="document-stack">
-          <img class="doc-preview doc-preview-main" src="showcase/screenshots/templates/cv/cv-modern-professional.png" alt="CV preview">
-          <img class="doc-preview doc-preview-side doc-preview-top" src="showcase/screenshots/templates/invoice/invoice-cinematic.png" alt="Invoice preview">
-          <img class="doc-preview doc-preview-side doc-preview-bottom" src="showcase/screenshots/templates/proposal/proposal-cinematic.png" alt="Proposal preview">
+          <img class="doc-preview doc-preview-main" src="showcase/screenshots/templates/proposal/project-proposal-cinematic.png" alt="Cinematic project proposal preview">
+          <img class="doc-preview doc-preview-side doc-preview-top" src="showcase/screenshots/templates/invoice/invoice-cinematic.png" alt="Cinematic invoice preview">
+          <img class="doc-preview doc-preview-side doc-preview-bottom" src="showcase/screenshots/templates/cv/cv-blue-banner.png" alt="Blue Banner CV preview">
         </div>
       </div>
     </section>
@@ -76,7 +77,7 @@
       <div class="install-blocks">
         <div class="install-block">
           <h4>Maven</h4>
-<pre><code>&lt;repository&gt;
+<pre class="language-xml"><code class="language-xml">&lt;repository&gt;
   &lt;id&gt;jitpack.io&lt;/id&gt;
   &lt;url&gt;https://jitpack.io&lt;/url&gt;
 &lt;/repository&gt;
@@ -89,17 +90,24 @@
         </div>
         <div class="install-block">
           <h4>Gradle</h4>
-<pre><code>repositories { maven { url 'https://jitpack.io' } }
+<pre class="language-groovy"><code class="language-groovy">repositories {
+  maven { url 'https://jitpack.io' }
+}
+
 dependencies {
-  implementation 'com.github.DemchaAV:GraphCompose:v1.6.0'
+  implementation(
+    'com.github.DemchaAV:GraphCompose:v1.6.0'
+  )
 }</code></pre>
         </div>
         <div class="install-block">
           <h4>30-second hello world</h4>
-<pre><code>try (var doc = GraphCompose.document(out).create()) {
+<pre class="language-java"><code class="language-java">try (var doc = GraphCompose
+        .document(out).create()) {
   doc.pageFlow()
      .addParagraph("Hello, GraphCompose")
-     .addList(l -&gt; l.items("PDF", "DOCX", "Tables"))
+     .addList(l -&gt; l.items(
+         "PDF", "DOCX", "Tables"))
      .build();
   doc.buildPdf();
 }</code></pre>
@@ -176,6 +184,11 @@ dependencies {
     </p>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markup.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-clike.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-java.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-groovy.min.js"></script>
   <script src="examples.js"></script>
 </body>
 </html>

@@ -43,6 +43,12 @@
     flagships: 'Flagship'
   };
 
+  // Groups whose card grid is collapsed by default to "first 4
+  // visible + Show all (N)" — protects the page from the 15-letter
+  // cover letter wall while still letting users browse the full set.
+  const COLLAPSE_GROUPS = new Set(['coverletter']);
+  const COLLAPSED_VISIBLE = 4;
+
   let manifest = null;
   let activeCategory = 'all';
   let activeQuery = '';
@@ -54,6 +60,7 @@
     })
     .then(data => {
       manifest = data;
+      injectFullItemListJsonLd();
       render();
     })
     .catch(err => {
@@ -62,6 +69,47 @@
         'Run <code>ShowcaseSync</code> in the examples module then refresh.</p>';
       console.error(err);
     });
+
+  // After the manifest loads, append a full ItemList JSON-LD block
+  // listing every example. The static head ships only 7 entries
+  // (so crawlers without JS still see structured data); this
+  // upgrade gives Googlebot the complete 51-item catalogue once the
+  // page renders.
+  function injectFullItemListJsonLd() {
+    if (!manifest || !document.head) return;
+    const baseUrl = 'https://demchaav.github.io/GraphCompose/';
+    const items = [];
+    let position = 1;
+    for (const category of manifest.categories || []) {
+      for (const group of category.groups || []) {
+        for (const ex of group.examples || []) {
+          if (!ex || !ex.id) continue;
+          const item = {
+            '@type': 'ListItem',
+            position: position++,
+            name: ex.title || ex.id,
+            url: ex.pdf ? baseUrl + ex.pdf : baseUrl
+          };
+          if (ex.description) item.description = ex.description;
+          if (ex.screenshot) item.image = baseUrl + ex.screenshot;
+          items.push(item);
+        }
+      }
+    }
+    const data = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: 'GraphCompose showcase examples',
+      description: 'Full searchable catalogue of GraphCompose example PDFs (templates, features, flagships).',
+      numberOfItems: items.length,
+      itemListElement: items
+    };
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.dataset.injected = 'examples-itemlist';
+    script.textContent = JSON.stringify(data);
+    document.head.appendChild(script);
+  }
 
   if (FILTERS) {
     FILTERS.addEventListener('click', e => {
@@ -144,6 +192,70 @@
       return;
     }
     CONTENT.innerHTML = fragments.join('\n');
+    afterRender();
+  }
+
+  // Post-render hook: wire scroll arrows on the highlights strip
+  // (only meaningful once the actual DOM exists and we can measure
+  // overflow). Runs after every render() so it picks up the strip
+  // appearing/disappearing on filter changes.
+  function afterRender() {
+    initHighlightsArrows();
+  }
+
+  function initHighlightsArrows() {
+    const strip = CONTENT.querySelector('.highlights-strip');
+    if (!strip) return;
+    // Skip if we already attached arrows on a previous render.
+    if (strip.dataset.arrowsReady === '1') return;
+    strip.dataset.arrowsReady = '1';
+
+    const wrapper = strip.parentElement;
+    if (!wrapper) return;
+    wrapper.classList.add('has-strip-arrows');
+
+    const left = document.createElement('button');
+    left.type = 'button';
+    left.className = 'strip-arrow strip-arrow-left';
+    left.setAttribute('aria-label', 'Scroll featured examples left');
+    left.innerHTML = '&#x2039;';
+
+    const right = document.createElement('button');
+    right.type = 'button';
+    right.className = 'strip-arrow strip-arrow-right';
+    right.setAttribute('aria-label', 'Scroll featured examples right');
+    right.innerHTML = '&#x203A;';
+
+    const tileStep = () => {
+      const tile = strip.querySelector('.highlight-tile');
+      if (!tile) return 320;
+      const styles = window.getComputedStyle(strip);
+      const gap = parseFloat(styles.columnGap || styles.gap || '0') || 0;
+      return tile.getBoundingClientRect().width + gap;
+    };
+
+    left.addEventListener('click', () => {
+      strip.scrollBy({ left: -tileStep(), behavior: 'smooth' });
+    });
+    right.addEventListener('click', () => {
+      strip.scrollBy({ left: tileStep(), behavior: 'smooth' });
+    });
+
+    const updateArrowState = () => {
+      const max = strip.scrollWidth - strip.clientWidth;
+      const overflow = max > 4;
+      wrapper.classList.toggle('strip-overflow', overflow);
+      left.disabled = strip.scrollLeft <= 2;
+      right.disabled = strip.scrollLeft >= max - 2;
+    };
+
+    strip.addEventListener('scroll', updateArrowState, { passive: true });
+    window.addEventListener('resize', updateArrowState, { passive: true });
+
+    wrapper.appendChild(left);
+    wrapper.appendChild(right);
+    // Initial state once layout settles.
+    requestAnimationFrame(updateArrowState);
   }
 
   function renderHighlightsStrip(tiles) {
@@ -210,13 +322,26 @@
   }
 
   function renderGroup(group, examples) {
+    const collapsible = COLLAPSE_GROUPS.has(group.id) && examples.length > COLLAPSED_VISIBLE;
+    const groupClass = collapsible
+      ? 'showcase-group is-collapsible is-collapsed'
+      : 'showcase-group';
+    const dataAttr = collapsible
+      ? ' data-visible="' + COLLAPSED_VISIBLE + '"'
+      : '';
+    const toggle = collapsible
+      ? '    <button type="button" class="group-toggle" data-action="toggle-group">'
+        + 'Show all <span class="group-toggle-count">' + examples.length + '</span> &darr;'
+        + '</button>'
+      : '';
     return [
-      '  <section class="showcase-group">',
+      '  <section class="' + groupClass + '"' + dataAttr + '>',
       '    <header class="group-heading"><h4>' + escHtml(group.label) + '</h4>',
       '    <span class="group-count">' + examples.length + '</span></header>',
       '    <div class="examples-grid">',
       examples.map(renderCard).join('\n'),
       '    </div>',
+      toggle,
       '  </section>'
     ].join('\n');
   }
@@ -227,6 +352,7 @@
     const screenshot = ex.screenshot || '';
     const pdf = ex.pdf || '';
     const code = ex.code || '#';
+    const altText = buildAlt(ex);
     return [
       '<article class="example-card" data-id="' + escAttr(ex.id || '') + '">',
       '  <button type="button" class="example-preview"',
@@ -236,7 +362,7 @@
       '          data-title="' + escAttr(ex.title || ex.id || '') + '"',
       '          aria-label="Open preview for ' + escAttr(ex.title || ex.id || '') + '">',
       screenshot
-        ? '    <img loading="lazy" decoding="async" width="595" height="842" src="' + escAttr(screenshot) + '" alt="' + escAttr(ex.title || '') + ' preview">'
+        ? '    <img loading="lazy" decoding="async" width="595" height="842" src="' + escAttr(screenshot) + '" alt="' + escAttr(altText) + '">'
         : '    <div class="example-preview-fallback">PDF</div>',
       '    <span class="example-zoom-hint">Click to zoom</span>',
       '  </button>',
@@ -251,6 +377,22 @@
       '  </div>',
       '</article>'
     ].join('\n');
+  }
+
+  // Build a descriptive img alt: prefer "{title} — {first sentence
+  // of description}" so screen-reader users + image-search crawlers
+  // get more than just "X preview".
+  function buildAlt(ex) {
+    const title = (ex.title || ex.id || '').trim();
+    let desc = (ex.description || '').trim();
+    if (desc) {
+      // Strip trailing period, take only first sentence, cap length.
+      const sentenceEnd = desc.search(/[.!?](\s|$)/);
+      if (sentenceEnd > 0) desc = desc.slice(0, sentenceEnd);
+      if (desc.length > 110) desc = desc.slice(0, 107).trim() + '...';
+      return title + ' — ' + desc;
+    }
+    return title + ' preview';
   }
 
   // === Lightbox ===
@@ -309,6 +451,20 @@
     document.body.classList.remove('lightbox-open');
   }
   document.addEventListener('click', e => {
+    // Group expand/collapse (oversized groups like Cover Letter).
+    const toggleBtn = e.target.closest('[data-action="toggle-group"]');
+    if (toggleBtn) {
+      const group = toggleBtn.closest('.showcase-group');
+      if (group) {
+        const collapsed = group.classList.toggle('is-collapsed');
+        const total = group.querySelectorAll('.example-card').length;
+        toggleBtn.innerHTML = collapsed
+          ? 'Show all <span class="group-toggle-count">' + total + '</span> &darr;'
+          : 'Show fewer &uarr;';
+      }
+      return;
+    }
+
     const trigger = e.target.closest('[data-action="lightbox"]');
     if (!trigger) return;
     e.preventDefault();

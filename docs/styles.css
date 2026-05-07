@@ -705,8 +705,12 @@ h2 {
     width: 100%;
   }
 
-  .document-stack {
-    min-height: 390px;
+  /* On phones the hero PDF stack eats ~390pt before users see
+     the value props. Hide it on the smallest viewports — the H1
+     and lead carry the message. The Featured strip below picks
+     up the visual job instead. */
+  .hero-visual {
+    display: none;
   }
 
   .doc-preview-main {
@@ -1649,4 +1653,95 @@ body.lightbox-open {
   .highlights-heading h3 {
     font-size: 1.2rem;
   }
+}
+
+/* Featured strip arrows — only inserted by JS when overflow exists.
+   Sit on top of the edge fade so users get a clear "more here"
+   affordance on desktop without taking layout space when hidden. */
+.showcase-highlights {
+  position: relative;
+}
+
+.strip-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.92);
+  color: #e2e8f0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  cursor: pointer;
+  z-index: 5;
+  transition: border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+}
+
+.showcase-highlights.has-strip-arrows.strip-overflow .strip-arrow {
+  display: inline-flex;
+}
+
+.strip-arrow:hover {
+  border-color: rgba(56, 189, 248, 0.7);
+  background: rgba(56, 189, 248, 0.18);
+}
+
+.strip-arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.strip-arrow-left {
+  left: -4px;
+}
+
+.strip-arrow-right {
+  right: -4px;
+}
+
+@media (hover: none) {
+  /* Touch devices already swipe — hide the arrows to free space. */
+  .showcase-highlights.has-strip-arrows.strip-overflow .strip-arrow {
+    display: none;
+  }
+}
+
+/* ===========================================================
+   Collapsible group (used for "Cover Letter" — 15 entries
+   would otherwise dominate the Templates section).
+   =========================================================== */
+.showcase-group.is-collapsible.is-collapsed .examples-grid > .example-card:nth-child(n + 5) {
+  display: none;
+}
+
+.group-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 8px 16px;
+  border: 1px dashed rgba(56, 189, 248, 0.5);
+  border-radius: 999px;
+  background: transparent;
+  color: #bae6fd;
+  font-size: 0.86rem;
+  font-weight: 660;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.group-toggle:hover,
+.group-toggle:focus-visible {
+  border-color: rgba(56, 189, 248, 0.85);
+  background: rgba(56, 189, 248, 0.1);
+  color: #e0f2fe;
+}
+
+.group-toggle-count {
+  font-variant-numeric: tabular-nums;
 }

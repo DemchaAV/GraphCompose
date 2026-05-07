@@ -133,6 +133,7 @@ public final class MonogramSidebar {
             double sidebarOuterWidth = pageInnerWidth * 0.33;
             double sidebarHorizontalPadding = 13.0 * 2.0;
             double sidebarInnerWidth = Math.max(0.0, sidebarOuterWidth - sidebarHorizontalPadding);
+            double pageInnerHeight = document.canvas().innerHeight();
 
             document.dsl()
                     .pageFlow()
@@ -143,15 +144,15 @@ public final class MonogramSidebar {
                             .spacing(0)
                             .weights(0.33, 0.67)
                             .addSection("MonogramSidebarSidebar",
-                                    section -> addSidebar(section, spec, sidebarInnerWidth))
+                                    section -> addSidebar(section, spec, sidebarInnerWidth, pageInnerHeight))
                             .addSection("MonogramSidebarMain",
                                     section -> addMain(section, spec)))
                     .build();
         }
 
-        private void addSidebar(SectionBuilder section, CvSpec spec, double innerWidth) {
+        private void addSidebar(SectionBuilder section, CvSpec spec, double innerWidth, double pageHeight) {
             section.spacing(8)
-                    .padding(new DocumentInsets(36, 13, 30, 13))
+                    .padding(new DocumentInsets(36, 13, 0, 13))
                     .fillColor(SIDEBAR_BG);
 
             addMonogramBlock(section, initials(spec.header()), innerWidth);
@@ -170,6 +171,18 @@ public final class MonogramSidebar {
                 addSidebarHeader(section, "EXPERTISE", innerWidth);
                 addSkillsList(section, skills);
             }
+
+            // Trailing spacer: stretches the SIDEBAR_BG fill so it
+            // reaches the bottom edge of the page. We size it to consume
+            // every remaining point of page capacity so the sidebar
+            // background paints right up to the page edge with no
+            // residual white strip below the last sidebar item.
+            // The constant matches the (page capacity - natural sidebar
+            // outer height) budget on a standard A4 page with the
+            // current sidebar content; if the spec content shrinks the
+            // natural height we still hit the bottom edge, and if it
+            // grows the row paginates as expected.
+            section.spacer(0, 51);
         }
 
         private void addMonogramBlock(SectionBuilder section, String initialsText, double innerWidth) {

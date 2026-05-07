@@ -176,6 +176,22 @@ public final class ShowcaseSync {
         categoryLabels.put("features", "Features");
         categoryLabels.put("flagships", "Flagship Examples");
 
+        // Per-category group ordering. The bare TreeMap sort would
+        // surface "coverletter" first inside Templates (15 plain
+        // text-only letters) — which is the weakest first impression.
+        // Lead with the visually striking groups (CV gallery,
+        // cinematic invoices/proposals) and tail with the supporting
+        // ones. Features groups are arranged by "show-off" weight.
+        // Groups not listed here fall back to alphabetical order.
+        Map<String, List<String>> groupOrder = new LinkedHashMap<>();
+        groupOrder.put("templates", List.of(
+                "cv", "proposal", "invoice", "schedule", "coverletter"));
+        groupOrder.put("features", List.of(
+                "canvas", "tables", "lists", "shapes", "transforms",
+                "text", "themes", "barcodes", "chrome", "streaming",
+                "snapshots"));
+        groupOrder.put("flagships", List.of("default"));
+
         boolean firstCategory = true;
         for (Map.Entry<String, String> ce : categoryLabels.entrySet()) {
             String catId = ce.getKey();
@@ -189,16 +205,31 @@ public final class ShowcaseSync {
             sb.append("      \"id\": ").append(jsonString(catId)).append(",\n");
             sb.append("      \"label\": ").append(jsonString(ce.getValue())).append(",\n");
             sb.append("      \"groups\": [\n");
+
+            // Order groups: explicit list first, then any leftovers
+            // that weren't pinned (so a newly added group still shows
+            // up rather than being silently dropped).
+            List<String> preferred = groupOrder.getOrDefault(catId, List.of());
+            List<String> orderedKeys = new ArrayList<>();
+            for (String key : preferred) {
+                if (groups.containsKey(key)) orderedKeys.add(key);
+            }
+            for (String key : groups.keySet()) {
+                if (!orderedKeys.contains(key)) orderedKeys.add(key);
+            }
+
             boolean firstGroup = true;
-            for (Map.Entry<String, List<ManifestEntry>> ge : groups.entrySet()) {
+            for (String groupKey : orderedKeys) {
+                List<ManifestEntry> entries = groups.get(groupKey);
+                if (entries == null || entries.isEmpty()) continue;
                 if (!firstGroup) sb.append(",\n");
                 firstGroup = false;
                 sb.append("        {\n");
-                sb.append("          \"id\": ").append(jsonString(ge.getKey())).append(",\n");
-                sb.append("          \"label\": ").append(jsonString(ShowcaseMetadata.groupLabel(catId, ge.getKey()))).append(",\n");
+                sb.append("          \"id\": ").append(jsonString(groupKey)).append(",\n");
+                sb.append("          \"label\": ").append(jsonString(ShowcaseMetadata.groupLabel(catId, groupKey))).append(",\n");
                 sb.append("          \"examples\": [\n");
                 boolean firstExample = true;
-                for (ManifestEntry entry : ge.getValue()) {
+                for (ManifestEntry entry : entries) {
                     if (!firstExample) sb.append(",\n");
                     firstExample = false;
                     sb.append("            ").append(entry.toJson());

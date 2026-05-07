@@ -20,6 +20,29 @@
   const SEARCH = document.getElementById('showcase-search');
   const FILTERS = document.getElementById('showcase-filters');
 
+  // Hand-picked highlights — one strong tile from each category
+  // shown at the top of #showcase so first-time visitors see the
+  // most visually striking work immediately, instead of having to
+  // scroll past 15 plain cover letters to find the cinematic
+  // proposal or the canvas demo.
+  const HIGHLIGHT_IDS = [
+    'project-proposal-cinematic',
+    'master-showcase',
+    'invoice-cinematic',
+    'cv-sidebar-portrait',
+    'business-report',
+    'canvas-layer-showcase',
+    'cv-monogram-sidebar',
+    'table-advanced'
+  ];
+
+  // category id -> short label shown as a badge on each tile.
+  const CATEGORY_BADGE = {
+    templates: 'Template',
+    features: 'Feature',
+    flagships: 'Flagship'
+  };
+
   let manifest = null;
   let activeCategory = 'all';
   let activeQuery = '';
@@ -59,10 +82,44 @@
     });
   }
 
+  // Build an { id -> {example, categoryId} } lookup so highlight
+  // tiles can resolve their data without rerunning the search loop.
+  function buildIndex() {
+    const idx = new Map();
+    for (const category of manifest.categories || []) {
+      for (const group of category.groups || []) {
+        for (const example of group.examples || []) {
+          if (example && example.id) {
+            idx.set(example.id, { example, categoryId: category.id, groupId: group.id });
+          }
+        }
+      }
+    }
+    return idx;
+  }
+
   function render() {
     if (!manifest) return;
     const fragments = [];
     let total = 0;
+    const index = buildIndex();
+
+    // Highlights strip: rendered when no search query is active and
+    // the user hasn't drilled into a single category. Once they
+    // start filtering, hide the strip — they're past the wow stage
+    // and into "find the specific one" territory.
+    const showHighlights =
+        !activeQuery && activeCategory === 'all';
+    if (showHighlights) {
+      const tiles = [];
+      for (const id of HIGHLIGHT_IDS) {
+        const hit = index.get(id);
+        if (hit) tiles.push(renderHighlight(hit.example, hit.categoryId));
+      }
+      if (tiles.length > 0) {
+        fragments.push(renderHighlightsStrip(tiles));
+      }
+    }
 
     for (const category of manifest.categories || []) {
       if (activeCategory !== 'all' && activeCategory !== category.id) {
@@ -87,6 +144,45 @@
       return;
     }
     CONTENT.innerHTML = fragments.join('\n');
+  }
+
+  function renderHighlightsStrip(tiles) {
+    return [
+      '<section class="showcase-highlights" aria-labelledby="highlights-heading">',
+      '  <header class="highlights-heading">',
+      '    <h3 id="highlights-heading">Featured</h3>',
+      '    <p class="highlights-sub">A spread across templates, features, and flagships &mdash; click any tile to zoom.</p>',
+      '  </header>',
+      '  <div class="highlights-strip" role="list">',
+      tiles.join('\n'),
+      '  </div>',
+      '</section>'
+    ].join('\n');
+  }
+
+  function renderHighlight(ex, categoryId) {
+    const screenshot = ex.screenshot || '';
+    const pdf = ex.pdf || '';
+    const badge = CATEGORY_BADGE[categoryId] || '';
+    return [
+      '<article class="highlight-tile" data-id="' + escAttr(ex.id || '') + '" role="listitem">',
+      '  <button type="button" class="highlight-preview"',
+      '          data-action="lightbox"',
+      '          data-screenshot="' + escAttr(screenshot) + '"',
+      '          data-pdf="' + escAttr(pdf) + '"',
+      '          data-title="' + escAttr(ex.title || ex.id || '') + '"',
+      '          aria-label="Open preview for ' + escAttr(ex.title || ex.id || '') + '">',
+      screenshot
+        ? '    <img loading="lazy" decoding="async" width="595" height="842" src="' + escAttr(screenshot) + '" alt="' + escAttr(ex.title || '') + ' preview">'
+        : '    <div class="example-preview-fallback">PDF</div>',
+      badge ? '    <span class="highlight-badge">' + escHtml(badge) + '</span>' : '',
+      '  </button>',
+      '  <div class="highlight-meta">',
+      '    <h5 class="highlight-title">' + escHtml(ex.title || ex.id || '') + '</h5>',
+      '    <p class="highlight-desc">' + escHtml(ex.description || '') + '</p>',
+      '  </div>',
+      '</article>'
+    ].join('\n');
   }
 
   function matchesQuery(example) {

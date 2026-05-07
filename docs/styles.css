@@ -1492,3 +1492,161 @@ body.lightbox-open {
 .showcase-noscript a:hover {
   color: #bae6fd;
 }
+
+/* ===========================================================
+   Showcase Highlights — curated cross-category strip rendered
+   above the regular category grid so first-time visitors hit
+   the visually strongest work immediately. Horizontal scroll
+   with snap + big A4 tiles + a category badge per tile.
+   =========================================================== */
+.showcase-highlights {
+  margin: 12px 0 36px;
+}
+
+.highlights-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-bottom: 18px;
+}
+
+.highlights-heading h3 {
+  margin: 0;
+  font-size: 1.45rem;
+  letter-spacing: 0.02em;
+  color: #f8fafc;
+  text-transform: uppercase;
+}
+
+.highlights-sub {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.94rem;
+}
+
+.highlights-strip {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 12px;
+  padding: 8px 4px 24px;
+  /* Reserve a generous fade at the edges so users see content
+     continues off-screen — strong hint to scroll horizontally. */
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+}
+
+/* Compact native scrollbar for desktops with mouse — visible but
+   subtle so users discover the horizontal axis. */
+.highlights-strip::-webkit-scrollbar {
+  height: 8px;
+}
+.highlights-strip::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.35);
+  border-radius: 999px;
+}
+
+.highlight-tile {
+  flex: 0 0 280px;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.highlight-tile:hover,
+.highlight-tile:focus-within {
+  transform: translateY(-3px);
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow:
+    0 22px 46px rgba(0, 0, 0, 0.45),
+    0 6px 16px rgba(56, 189, 248, 0.12);
+}
+
+.highlight-preview {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 14px 14px 0;
+  border: 0;
+  background:
+    radial-gradient(circle at 30% 18%, rgba(56, 189, 248, 0.10), transparent 60%),
+    #0f172a;
+  cursor: zoom-in;
+  appearance: none;
+}
+
+.highlight-preview img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 595 / 842;
+  /* Cap height so very-tall A4 previews don't make the strip
+     grotesque on desktop. The image still fills the tile cleanly. */
+  max-height: 360px;
+  object-fit: contain;
+  background: white;
+  border: 2px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 14px 28px rgba(0, 0, 0, 0.42);
+}
+
+.highlight-badge {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.86);
+  color: #06111f;
+  font-size: 0.7rem;
+  font-weight: 760;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+
+.highlight-meta {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px 18px;
+}
+
+.highlight-title {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 760;
+  color: #f8fafc;
+}
+
+.highlight-desc {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .highlight-tile {
+    flex-basis: 240px;
+  }
+  .highlights-heading h3 {
+    font-size: 1.2rem;
+  }
+}

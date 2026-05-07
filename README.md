@@ -143,7 +143,7 @@ Five highlights &mdash; full notes in [`CHANGELOG.md`](./CHANGELOG.md).
 - [Architecture](./docs/architecture.md) · [Lifecycle](./docs/lifecycle.md) · [Production rendering](./docs/production-rendering.md)
 - Recipes: [shape-as-container](./docs/recipes/shape-as-container.md) · [transforms](./docs/recipes/transforms.md) · [tables](./docs/recipes/tables.md) · [shapes](./docs/recipes/shapes.md) · [themes](./docs/recipes/themes.md) · [streaming](./docs/recipes/streaming.md) · [extending](./docs/recipes/extending.md)
 - [Layout snapshot testing](./docs/layout-snapshot-testing.md) · [Performance numbers](./docs/performance.md) · [Benchmark methodology](./docs/benchmarks.md)
-- [Migration v1.4 → v1.5](./docs/migration-v1-4-to-v1-5.md) · [Canonical / legacy parity](./docs/canonical-legacy-parity.md)
+- [Migration v1.4 → v1.5](./docs/migration-v1-4-to-v1-5.md) · [Migration v1.5 → v1.6](./docs/migration-v1-5-to-v1-6.md) · [Canonical / legacy parity](./docs/canonical-legacy-parity.md)
 - [Contributing](./CONTRIBUTING.md) · [Release process](./docs/release-process.md) · [v1.6 roadmap](./docs/v1.6-roadmap.md)
 
 ## v1.6 develop preview &mdash; Templates v2
@@ -159,7 +159,9 @@ DocumentTemplate<CvSpec> template = ModernProfessional.create(BusinessTheme.mode
 template.compose(session, mySpec);
 ```
 
-14 CV presets (`ModernProfessional`, `NordicClean`, `ClassicSerif`, `CompactMono`, `Executive`, `EngineeringResume`, `TimelineMinimal`, `BoxedSections`, `CenteredHeadline`, `BlueBanner`, `EditorialBlue`, `Panel`, `SidebarPortrait`, `MonogramSidebar`), 14 paired cover-letter presets, plus minimal v2 `ModernInvoice` / `ModernProposal` builders. Inline markdown rich text (`**bold**`, `*italic*`), active hyperlinks, and slot-based multi-column layouts ship out of the box. **Breaking** &mdash; legacy CV / cover-letter classes are deleted, not deprecated. Full notes (and migration table) in [`CHANGELOG.md`](./CHANGELOG.md) under "v1.6.0 — Planned → Templates v2 restructure".
+14 CV presets (`ModernProfessional`, `NordicClean`, `ClassicSerif`, `CompactMono`, `Executive`, `EngineeringResume`, `TimelineMinimal`, `BoxedSections`, `CenteredHeadline`, `BlueBanner`, `EditorialBlue`, `Panel`, `SidebarPortrait`, `MonogramSidebar`), 14 paired cover-letter presets, plus minimal v2 `ModernInvoice` / `ModernProposal` builders. Inline markdown rich text (`**bold**`, `*italic*`), active hyperlinks, slot-based multi-column layouts, and a first-class `CvHeader.jobTitle` subtitle field ship out of the box.
+
+**Breaking** &mdash; legacy CV / cover-letter classes are deleted, not deprecated. v1.x SemVer "API stability" covers the engine, not the templates layer; the carve-out is documented in [ADR 0011](./docs/adr/0011-templates-v2-architecture.md), and the full migration table (every V1 class → its v2 preset, plus before/after code) is in [`docs/migration-v1-5-to-v1-6.md`](./docs/migration-v1-5-to-v1-6.md). After a Phase E.1 reopen the 14 presets render with verified V1 visual parity; tech debt acknowledged for v1.7 (Phase E.4 — refactor the 13 hand-coded presets back into thin builder recipes once the v2 component library grows the missing primitives). Full notes in [`CHANGELOG.md`](./CHANGELOG.md) under "v1.6.0 — Planned → Templates v2 restructure".
 
 ## Roadmap
 

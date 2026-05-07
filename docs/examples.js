@@ -133,11 +133,17 @@
     const code = ex.code || '#';
     return [
       '<article class="example-card" data-id="' + escAttr(ex.id || '') + '">',
-      '  <a class="example-preview" href="' + escAttr(pdf) + '" target="_blank" rel="noopener">',
+      '  <button type="button" class="example-preview"',
+      '          data-action="lightbox"',
+      '          data-screenshot="' + escAttr(screenshot) + '"',
+      '          data-pdf="' + escAttr(pdf) + '"',
+      '          data-title="' + escAttr(ex.title || ex.id || '') + '"',
+      '          aria-label="Open preview for ' + escAttr(ex.title || ex.id || '') + '">',
       screenshot
         ? '    <img loading="lazy" src="' + escAttr(screenshot) + '" alt="' + escAttr(ex.title || '') + ' preview">'
         : '    <div class="example-preview-fallback">PDF</div>',
-      '  </a>',
+      '    <span class="example-zoom-hint">Click to zoom</span>',
+      '  </button>',
       '  <div class="example-body">',
       '    <h5 class="example-title">' + escHtml(ex.title || ex.id || '') + '</h5>',
       '    <p class="example-desc">' + escHtml(ex.description || '') + '</p>',
@@ -150,6 +156,75 @@
       '</article>'
     ].join('\n');
   }
+
+  // === Lightbox ===
+  // Click a preview card -> open a full-size modal with the
+  // screenshot. Esc / click outside / close button to dismiss.
+  let lightbox = null;
+  function ensureLightbox() {
+    if (lightbox) return lightbox;
+    lightbox = document.createElement('div');
+    lightbox.className = 'lightbox';
+    lightbox.setAttribute('role', 'dialog');
+    lightbox.setAttribute('aria-modal', 'true');
+    lightbox.setAttribute('aria-hidden', 'true');
+    lightbox.innerHTML = [
+      '<div class="lightbox-backdrop" data-close></div>',
+      '<div class="lightbox-frame">',
+      '  <header class="lightbox-header">',
+      '    <h4 class="lightbox-title"></h4>',
+      '    <div class="lightbox-actions">',
+      '      <a class="example-action lightbox-pdf-link" target="_blank" rel="noopener">Open PDF</a>',
+      '      <button class="lightbox-close" type="button" aria-label="Close" data-close>&times;</button>',
+      '    </div>',
+      '  </header>',
+      '  <div class="lightbox-body">',
+      '    <img class="lightbox-image" alt="">',
+      '  </div>',
+      '</div>'
+    ].join('\n');
+    document.body.appendChild(lightbox);
+    lightbox.addEventListener('click', e => {
+      if (e.target.closest('[data-close]')) {
+        closeLightbox();
+      }
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && lightbox.classList.contains('is-open')) {
+        closeLightbox();
+      }
+    });
+    return lightbox;
+  }
+  function openLightbox(screenshot, pdf, title) {
+    const lb = ensureLightbox();
+    lb.querySelector('.lightbox-image').src = screenshot;
+    lb.querySelector('.lightbox-image').alt = title + ' preview';
+    lb.querySelector('.lightbox-title').textContent = title;
+    lb.querySelector('.lightbox-pdf-link').href = pdf;
+    lb.classList.add('is-open');
+    lb.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('lightbox-open');
+  }
+  function closeLightbox() {
+    if (!lightbox) return;
+    lightbox.classList.remove('is-open');
+    lightbox.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('lightbox-open');
+  }
+  document.addEventListener('click', e => {
+    const trigger = e.target.closest('[data-action="lightbox"]');
+    if (!trigger) return;
+    e.preventDefault();
+    const screenshot = trigger.dataset.screenshot;
+    const pdf = trigger.dataset.pdf;
+    const title = trigger.dataset.title;
+    if (screenshot) {
+      openLightbox(screenshot, pdf, title);
+    } else if (pdf) {
+      window.open(pdf, '_blank');
+    }
+  });
 
   function escHtml(s) {
     return String(s)

@@ -10,6 +10,7 @@ import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
@@ -206,7 +207,7 @@ public final class BoxedSections {
                         if (entry != null) {
                             renderWorkEntry(section, entry);
                         } else {
-                            renderParagraph(section, item);
+                            renderBulletItem(section, item);
                         }
                     }
                 }
@@ -246,6 +247,30 @@ public final class BoxedSections {
                     .lineSpacing(1.4)
                     .align(TextAlign.LEFT)
                     .margin(DocumentInsets.top(2))
+                    .rich(rich -> appendMarkdown(rich, text, base)));
+        }
+
+        /**
+         * Renders a bullet-list item with a visible bullet glyph + a
+         * hanging indent, so Technical Skills / capabilities lists in
+         * BoxedSections read as a real bullet list (matching what
+         * authors expect from BulletListBlock) instead of a stack of
+         * unmarked paragraphs.
+         */
+        private void renderBulletItem(SectionBuilder section, String rawLine) {
+            String text = safe(rawLine).trim();
+            if (text.isBlank()) {
+                return;
+            }
+            DocumentTextStyle base = style(BODY_FONT, 8.6,
+                    DocumentTextDecoration.DEFAULT, INK);
+            section.addParagraph(paragraph -> paragraph
+                    .textStyle(base)
+                    .lineSpacing(1.4)
+                    .align(TextAlign.LEFT)
+                    .margin(DocumentInsets.top(2))
+                    .bulletOffset("• ")
+                    .indentStrategy(DocumentTextIndent.ALL_LINES)
                     .rich(rich -> appendMarkdown(rich, text, base)));
         }
 

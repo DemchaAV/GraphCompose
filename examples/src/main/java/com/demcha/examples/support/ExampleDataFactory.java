@@ -266,36 +266,79 @@ public final class ExampleDataFactory {
                 .header(sampleCvHeaderV2())
                 .module(CvModule.of("Professional Summary",
                         new ParagraphBlock(
-                                "Platform engineer building resilient PDF and "
-                                        + "document-generation workflows for reliable "
-                                        + "business output.")))
+                                "Platform engineer with **10+ years** building resilient "
+                                        + "document-generation pipelines, layout engines, and "
+                                        + "developer-facing template systems. Specialised in "
+                                        + "high-throughput PDF rendering, semantic authoring "
+                                        + "DSLs, and turning brittle production-ops scripts "
+                                        + "into typed, snapshot-tested libraries that scale.")))
                 .module(CvModule.of("Technical Skills",
                         new BulletListBlock(List.of(
-                                "Java 21, PDFBox, Maven, REST APIs",
-                                "Template design systems, pagination, semantic layout composition",
-                                "Testing strategy, CI pipelines, developer enablement"))))
+                                "**Languages:** Java 21, Kotlin, Groovy, Python, SQL",
+                                "**Document & Print:** PDFBox, Apache POI (DOCX/XLSX), iText, "
+                                        + "PostScript, ICC colour profiles, font metrics",
+                                "**Layout engines:** Custom DSL design, semantic layout trees, "
+                                        + "pagination, snapshot testing, visual regression",
+                                "**Build & infrastructure:** Maven, Gradle, GitHub Actions, "
+                                        + "JitPack, Docker, JMH benchmarking",
+                                "**Testing:** JUnit 5, AssertJ, PDFBox-based PNG diff, "
+                                        + "layout-graph snapshots, mutation testing (Pitest)",
+                                "**Distribution:** Maven Central, Sonatype OSSRH, GPG signing, "
+                                        + "JitPack, semantic versioning discipline"))))
                 .module(CvModule.of("Education & Certifications",
                         new MultiParagraphBlock(List.of(
-                                "**MSc Computer Science** - University of Manchester | 2021",
-                                "**Oracle Java Certification** - Professional track | 2023"))))
+                                "**MSc Computer Science** - University of Manchester | 2021. "
+                                        + "Distinction. Thesis: *Composable layout primitives for "
+                                        + "deterministic document rendering*.",
+                                "**BSc Software Engineering** - Imperial College London | 2019. "
+                                        + "First-class honours. Specialisation in compilers and "
+                                        + "static analysis.",
+                                "**Oracle Java Certification** - Professional track | 2023. "
+                                        + "Java 17 platform deep-dive: records, sealed types, "
+                                        + "pattern matching, virtual threads."))))
                 .module(CvModule.of("Projects",
-                        new MultiParagraphBlock(List.of(
-                                "**GraphCompose** - Declarative PDF layout engine for reusable document generation",
-                                "**Template Studio** - Internal tool for evaluating CV, proposal, and invoice output"))))
+                        new BulletListBlock(List.of(
+                                "**GraphCompose** - Declarative Java PDF layout engine. "
+                                        + "Semantic DSL, slot-based templates, snapshot testing. "
+                                        + "Powers production CV / invoice / proposal pipelines "
+                                        + "for hiring tools and billing systems. *(Open source)*",
+                                "**Template Studio** - Internal tool for evaluating CV, proposal, "
+                                        + "and invoice output across 14 design presets. PNG "
+                                        + "diffing, side-by-side layout, baseline freezing.",
+                                "**LayoutLint** - Static analyser that flags fragile authoring "
+                                        + "patterns (deeply nested rows, untyped offsets, "
+                                        + "implicit page breaks) before they ship to production.",
+                                "**ChromeForge** - Editorial-magazine document toolkit built on "
+                                        + "GraphCompose: cinematic covers, pull quotes, multi-"
+                                        + "column flow, sidebar callouts."))))
                 .module(CvModule.of("Professional Experience",
                         new MultiParagraphBlock(List.of(
                                 "**Senior Platform Engineer**, Northwind Systems | "
-                                        + "*2024-Present* - Led reusable document flows for "
-                                        + "reporting, billing, and hiring operations.",
-                                "**Software Engineer**, BrightLeaf Labs | *2021-2024* "
-                                        + "- Built backend services and production document "
-                                        + "rendering pipelines."))))
+                                        + "*2024-Present* - Led the reusable document-generation "
+                                        + "platform serving billing, hiring, and reporting flows "
+                                        + "across **8 product teams**. Reduced template "
+                                        + "maintenance time by **70%** by retiring per-team "
+                                        + "PDF scripts in favour of one canonical engine.",
+                                "**Software Engineer**, BrightLeaf Labs | *2021-2024* - Built "
+                                        + "backend services and production document rendering "
+                                        + "pipelines processing **2M+ documents per month**. "
+                                        + "Drove the migration from iText to a custom layout "
+                                        + "engine, eliminating licensing risk and cutting "
+                                        + "p99 render latency from 1.4s to 380ms.",
+                                "**Backend Engineer**, Helix Print Co | *2019-2021* - "
+                                        + "Maintained a high-volume invoice-printing service "
+                                        + "(15M PDFs/year) and authored the compliance test "
+                                        + "harness that gated every template change."))))
                 .module(CvModule.of("Additional Information",
                         new KeyValueBlock(List.of(
                                 new KeyValueBlock.Entry("Languages",
                                         "English (Fluent), German (Intermediate), Spanish (Basic)"),
                                 new KeyValueBlock.Entry("Work Eligibility",
-                                        "Eligible to work in the UK")))))
+                                        "Eligible to work in the UK and the EU"),
+                                new KeyValueBlock.Entry("Open Source",
+                                        "Maintainer of GraphCompose. Regular contributor to PDFBox issue triage."),
+                                new KeyValueBlock.Entry("Speaking",
+                                        "JVM Summit 2024, Devoxx UK 2025 — both on declarative document layout.")))))
                 .build();
     }
 

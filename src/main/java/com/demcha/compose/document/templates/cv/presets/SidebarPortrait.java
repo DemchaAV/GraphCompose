@@ -193,7 +193,7 @@ public final class SidebarPortrait {
             // Education + Skills + Languages with the current sample
             // data) plus a 1pt safety margin against floating-point
             // rounding in the layout's row-capacity check.
-            double maxStretch = Math.max(0.0, pageHeight - 787.0);
+            double maxStretch = Math.max(0.0, pageHeight - 820.0);
             if (maxStretch > 0.0) {
                 section.spacer(0, maxStretch);
             }

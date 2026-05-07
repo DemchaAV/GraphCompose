@@ -15,7 +15,7 @@ Install the library artifact once from the repository root:
 ./mvnw -DskipTests install
 ```
 
-Then run all 22 examples in one shot:
+Then run all 26 examples in one shot:
 
 ```bash
 ./mvnw -f examples/pom.xml exec:java \
@@ -665,4 +665,4 @@ once before writing your own.
 | `examples/target/generated-pdfs/` | Output of running the examples (gitignored) |
 | `assets/readme/examples/` | Committed PDF previews linked from this gallery |
 | `docs/template-authoring.md` | Template authoring cheatsheet |
-| `CHANGELOG.md` | Per-version surface changes (every example link is current to v1.5) |
+| `CHANGELOG.md` | Per-version surface changes (every example link is current to v1.6) |

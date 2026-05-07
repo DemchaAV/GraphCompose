@@ -133,6 +133,7 @@ Each learning maps to a check above.
 - **v1.5.0** — README claimed "the current release is v1.5.0" before the tag existed; install snippets would have failed for any new user landing on the README in that window. *Mitigation*: section C pins the README install snippet to the previous published tag until JitPack confirms the new tag built; the flip is post-release (section 2.B step 2).
 - **v1.5.0** — `Fixed column 0 width 90 is smaller than required natural width 92.44` only surfaced on `exec:java`, not `mvn test`. *Mitigation*: section B mandates a full `GenerateAllExamples` regen before every release.
 - **v1.5.0** — 8 zero-byte junk files (`examples/p,`, `{,`, `[Help`, etc.) crept into the working tree from accidental shell-output expansions. *Mitigation*: section A hard-gates on `git status --short` cleanliness, not just on the script's pre-flight.
+- **v1.6.0 prep** — slimming the README to a marketing landing renamed the canonical `DocumentSession document = …` example variable to `doc`, which silently broke `DocumentationCoverageTest.readmeShouldUseCanonicalDslAndAvoidLegacyApis` because the test asserts the literal string `document.pageFlow(` is present. *Mitigation*: any rewrite of the README "Hello world" snippet must keep `DocumentSession document` as the variable name and `document.pageFlow(`, `document.buildPdf()`, `GraphCompose.document(` as the literal canonical fingerprints the guard scans for. Renaming the variable is a guard-test break, not a stylistic preference.
 
 ---
 

@@ -81,7 +81,7 @@ public final class CvTemplateGalleryFileExample {
                 run(EditorialBlue.ID, EditorialBlue.RECOMMENDED_MARGIN, EditorialBlue::create),
                 run(Panel.ID, Panel.RECOMMENDED_MARGIN, Panel::create),
                 run(SidebarPortrait.ID, SidebarPortrait.RECOMMENDED_MARGIN, SidebarPortrait::create),
-                run(MonogramSidebar.ID, 28.0, MonogramSidebar::create));
+                run(MonogramSidebar.ID, MonogramSidebar.RECOMMENDED_MARGIN, MonogramSidebar::create));
 
         CvSpec spec = ExampleDataFactory.sampleCvSpecV2();
         List<Path> generated = new ArrayList<>();

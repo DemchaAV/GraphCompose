@@ -28,7 +28,12 @@ import java.util.Map;
  */
 final class ShowcaseMetadata {
 
-    private static final String GH_BASE = "https://github.com/DemchaAV/GraphCompose/blob/main";
+    // Tracks the branch / tag the site links into. While v1.6 is being
+    // developed on `develop`, links resolve there (the reorg lives only
+    // on develop). At release time switch this to the published tag
+    // (e.g. "v1.6.0") so users browsing the deployed site land on the
+    // exact source that produced the artefacts.
+    private static final String GH_BASE = "https://github.com/DemchaAV/GraphCompose/blob/develop";
     private static final String EX_BASE = GH_BASE + "/examples/src/main/java/com/demcha/examples";
 
     record Entry(String title, String description, List<String> tags, String codeUrl) {

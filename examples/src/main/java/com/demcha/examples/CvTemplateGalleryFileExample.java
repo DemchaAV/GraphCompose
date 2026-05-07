@@ -79,7 +79,7 @@ public final class CvTemplateGalleryFileExample {
                 run(CenteredHeadline.ID, CenteredHeadline.RECOMMENDED_MARGIN, CenteredHeadline::create),
                 run(BlueBanner.ID, BlueBanner.RECOMMENDED_MARGIN, BlueBanner::create),
                 run(EditorialBlue.ID, EditorialBlue.RECOMMENDED_MARGIN, EditorialBlue::create),
-                run(Panel.ID, 28.0, Panel::create),
+                run(Panel.ID, Panel.RECOMMENDED_MARGIN, Panel::create),
                 run(SidebarPortrait.ID, 28.0, SidebarPortrait::create),
                 run(MonogramSidebar.ID, 28.0, MonogramSidebar::create));
 

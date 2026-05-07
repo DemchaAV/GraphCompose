@@ -35,6 +35,10 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + BarcodeShowcaseExample.generate());
         System.out.println("Generated: " + PdfChromeExample.generate());
 
+        // v1.6 feature showcases.
+        System.out.println("Generated: " + NestedListExample.generate());
+        System.out.println("Generated: " + ComposedTableCellExample.generate());
+
         // Kitchen-sink master demo + flagship business report cover.
         System.out.println("Generated: " + MasterShowcaseExample.generate());
         System.out.println("Generated: " + BusinessReportExample.generate());

@@ -15,7 +15,7 @@
               "tags": ["cv", "banner", "blue"],
               "pdf": "showcase/pdf/templates/cv/cv-blue-banner.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-blue-banner.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
             },
             {
               "id": "cv-boxed-sections",
@@ -24,7 +24,7 @@
               "tags": ["cv", "structured"],
               "pdf": "showcase/pdf/templates/cv/cv-boxed-sections.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-boxed-sections.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
             },
             {
               "id": "cv-centered-headline",
@@ -33,7 +33,7 @@
               "tags": ["cv", "centered"],
               "pdf": "showcase/pdf/templates/cv/cv-centered-headline.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-centered-headline.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
             },
             {
               "id": "cv-classic-serif",
@@ -42,7 +42,7 @@
               "tags": ["cv", "serif", "two-page"],
               "pdf": "showcase/pdf/templates/cv/cv-classic-serif.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-classic-serif.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
             },
             {
               "id": "cv-compact-mono",
@@ -51,7 +51,7 @@
               "tags": ["cv", "compact", "mono"],
               "pdf": "showcase/pdf/templates/cv/cv-compact-mono.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-compact-mono.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
             },
             {
               "id": "cv-editorial-blue",
@@ -60,7 +60,7 @@
               "tags": ["cv", "editorial", "blue"],
               "pdf": "showcase/pdf/templates/cv/cv-editorial-blue.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-editorial-blue.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
             },
             {
               "id": "cv-engineering-resume",
@@ -69,7 +69,7 @@
               "tags": ["cv", "tech"],
               "pdf": "showcase/pdf/templates/cv/cv-engineering-resume.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-engineering-resume.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
             },
             {
               "id": "cv-executive",
@@ -78,7 +78,7 @@
               "tags": ["cv", "executive"],
               "pdf": "showcase/pdf/templates/cv/cv-executive.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-executive.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
             },
             {
               "id": "cv-modern-professional",
@@ -87,7 +87,7 @@
               "tags": ["cv", "minimal"],
               "pdf": "showcase/pdf/templates/cv/cv-modern-professional.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-modern-professional.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
             },
             {
               "id": "cv-monogram-sidebar",
@@ -96,7 +96,7 @@
               "tags": ["cv", "sidebar", "monogram"],
               "pdf": "showcase/pdf/templates/cv/cv-monogram-sidebar.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-monogram-sidebar.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
             },
             {
               "id": "cv-nordic-clean",
@@ -105,7 +105,7 @@
               "tags": ["cv", "sidebar"],
               "pdf": "showcase/pdf/templates/cv/cv-nordic-clean.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-nordic-clean.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
             },
             {
               "id": "cv-panel",
@@ -114,7 +114,7 @@
               "tags": ["cv", "panel"],
               "pdf": "showcase/pdf/templates/cv/cv-panel.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-panel.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
             },
             {
               "id": "cv-sidebar-portrait",
@@ -123,7 +123,7 @@
               "tags": ["cv", "sidebar", "portrait"],
               "pdf": "showcase/pdf/templates/cv/cv-sidebar-portrait.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-sidebar-portrait.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
             },
             {
               "id": "cv-timeline-minimal",
@@ -132,7 +132,7 @@
               "tags": ["cv", "timeline"],
               "pdf": "showcase/pdf/templates/cv/cv-timeline-minimal.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-timeline-minimal.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
             }
           ]
         },
@@ -147,7 +147,7 @@
               "tags": ["proposal", "proposal", "cinematic"],
               "pdf": "showcase/pdf/templates/proposal/project-proposal-cinematic.pdf",
               "screenshot": "showcase/screenshots/templates/proposal/project-proposal-cinematic.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/proposal/CinematicProposalFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/proposal/CinematicProposalFileExample.java"
             },
             {
               "id": "proposal",
@@ -156,7 +156,7 @@
               "tags": ["proposal", "proposal"],
               "pdf": "showcase/pdf/templates/proposal/proposal.pdf",
               "screenshot": "showcase/screenshots/templates/proposal/proposal.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/proposal/ProposalFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/proposal/ProposalFileExample.java"
             },
             {
               "id": "proposal-cinematic",
@@ -165,7 +165,7 @@
               "tags": ["proposal", "proposal", "cinematic"],
               "pdf": "showcase/pdf/templates/proposal/proposal-cinematic.pdf",
               "screenshot": "showcase/screenshots/templates/proposal/proposal-cinematic.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/proposal/ProposalCinematicFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/proposal/ProposalCinematicFileExample.java"
             }
           ]
         },
@@ -180,7 +180,7 @@
               "tags": ["invoice", "invoice"],
               "pdf": "showcase/pdf/templates/invoice/invoice.pdf",
               "screenshot": "showcase/screenshots/templates/invoice/invoice.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/invoice/InvoiceFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/invoice/InvoiceFileExample.java"
             },
             {
               "id": "invoice-cinematic",
@@ -189,7 +189,7 @@
               "tags": ["invoice", "invoice", "cinematic"],
               "pdf": "showcase/pdf/templates/invoice/invoice-cinematic.pdf",
               "screenshot": "showcase/screenshots/templates/invoice/invoice-cinematic.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/invoice/InvoiceCinematicFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/invoice/InvoiceCinematicFileExample.java"
             }
           ]
         },
@@ -204,7 +204,7 @@
               "tags": ["schedule", "schedule", "table"],
               "pdf": "showcase/pdf/templates/schedule/weekly-schedule.pdf",
               "screenshot": "showcase/screenshots/templates/schedule/weekly-schedule.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/schedule/WeeklyScheduleFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/schedule/WeeklyScheduleFileExample.java"
             }
           ]
         },
@@ -219,7 +219,7 @@
               "tags": ["letter", "letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
             },
             {
               "id": "cover-letter-blue-banner",
@@ -228,7 +228,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-blue-banner.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-blue-banner.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
             },
             {
               "id": "cover-letter-boxed-sections",
@@ -237,7 +237,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-boxed-sections.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-boxed-sections.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
             },
             {
               "id": "cover-letter-centered-headline",
@@ -246,7 +246,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-centered-headline.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-centered-headline.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
             },
             {
               "id": "cover-letter-classic-serif",
@@ -255,7 +255,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-classic-serif.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-classic-serif.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
             },
             {
               "id": "cover-letter-compact-mono",
@@ -264,7 +264,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-compact-mono.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-compact-mono.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
             },
             {
               "id": "cover-letter-editorial-blue",
@@ -273,7 +273,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-editorial-blue.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-editorial-blue.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
             },
             {
               "id": "cover-letter-engineering-resume",
@@ -282,7 +282,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-engineering-resume.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-engineering-resume.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
             },
             {
               "id": "cover-letter-executive",
@@ -291,7 +291,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-executive.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-executive.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
             },
             {
               "id": "cover-letter-modern-professional",
@@ -300,7 +300,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-modern-professional.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-modern-professional.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
             },
             {
               "id": "cover-letter-monogram-sidebar",
@@ -309,7 +309,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-monogram-sidebar.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-monogram-sidebar.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
             },
             {
               "id": "cover-letter-nordic-clean",
@@ -318,7 +318,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-nordic-clean.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-nordic-clean.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
             },
             {
               "id": "cover-letter-panel",
@@ -327,7 +327,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-panel.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-panel.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
             },
             {
               "id": "cover-letter-sidebar-portrait",
@@ -336,7 +336,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-sidebar-portrait.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-sidebar-portrait.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
             },
             {
               "id": "cover-letter-timeline-minimal",
@@ -345,7 +345,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-timeline-minimal.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-timeline-minimal.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
             }
           ]
         }
@@ -366,7 +366,7 @@
               "tags": ["canvas", "canvas", "v1.6", "absolute"],
               "pdf": "showcase/pdf/features/canvas/canvas-layer-showcase.pdf",
               "screenshot": "showcase/screenshots/features/canvas/canvas-layer-showcase.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/features/canvas/CanvasLayerExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/canvas/CanvasLayerExample.java"
             }
           ]
         },
@@ -381,7 +381,7 @@
               "tags": ["tables", "tables", "v1.6"],
               "pdf": "showcase/pdf/features/tables/composed-table-cell-showcase.pdf",
               "screenshot": "showcase/screenshots/features/tables/composed-table-cell-showcase.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/features/tables/ComposedTableCellExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/tables/ComposedTableCellExample.java"
             },
             {
               "id": "table-advanced",
@@ -390,7 +390,7 @@
               "tags": ["tables", "tables", "pagination"],
               "pdf": "showcase/pdf/features/tables/table-advanced.pdf",
               "screenshot": "showcase/screenshots/features/tables/table-advanced.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java"
             }
           ]
         },
@@ -405,7 +405,7 @@
               "tags": ["lists", "lists", "v1.6"],
               "pdf": "showcase/pdf/features/lists/nested-list-showcase.pdf",
               "screenshot": "showcase/screenshots/features/lists/nested-list-showcase.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/features/lists/NestedListExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/lists/NestedListExample.java"
             }
           ]
         },
@@ -420,7 +420,7 @@
               "tags": ["shapes", "shapes", "clip"],
               "pdf": "showcase/pdf/features/shapes/shape-container.pdf",
               "screenshot": "showcase/screenshots/features/shapes/shape-container.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/features/shapes/ShapeContainerExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/shapes/ShapeContainerExample.java"
             }
           ]
         },
@@ -435,7 +435,7 @@
               "tags": ["transforms", "transforms", "layers"],
               "pdf": "showcase/pdf/features/transforms/transforms.pdf",
               "screenshot": "showcase/screenshots/features/transforms/transforms.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/features/transforms/TransformsExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/transforms/TransformsExample.java"
             }
           ]
         },
@@ -450,7 +450,7 @@
               "tags": ["text", "text", "rich"],
               "pdf": "showcase/pdf/features/text/rich-text-showcase.pdf",
               "screenshot": "showcase/screenshots/features/text/rich-text-showcase.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/features/text/RichTextShowcaseExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/RichTextShowcaseExample.java"
             },
             {
               "id": "section-presets",
@@ -459,7 +459,7 @@
               "tags": ["text", "text", "sections"],
               "pdf": "showcase/pdf/features/text/section-presets.pdf",
               "screenshot": "showcase/screenshots/features/text/section-presets.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/features/text/SectionPresetsExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/SectionPresetsExample.java"
             }
           ]
         },
@@ -474,7 +474,7 @@
               "tags": ["themes", "themes"],
               "pdf": "showcase/pdf/features/themes/invoice-custom-theme.pdf",
               "screenshot": "showcase/screenshots/features/themes/invoice-custom-theme.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/features/themes/CustomBusinessThemeExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/themes/CustomBusinessThemeExample.java"
             }
           ]
         },
@@ -489,7 +489,7 @@
               "tags": ["barcodes", "barcodes", "qr"],
               "pdf": "showcase/pdf/features/barcodes/barcode-showcase.pdf",
               "screenshot": "showcase/screenshots/features/barcodes/barcode-showcase.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/features/barcodes/BarcodeShowcaseExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/barcodes/BarcodeShowcaseExample.java"
             }
           ]
         },
@@ -504,7 +504,7 @@
               "tags": ["chrome", "chrome", "metadata", "watermark"],
               "pdf": "showcase/pdf/features/chrome/pdf-chrome.pdf",
               "screenshot": "showcase/screenshots/features/chrome/pdf-chrome.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/features/chrome/PdfChromeExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/chrome/PdfChromeExample.java"
             }
           ]
         },
@@ -519,7 +519,7 @@
               "tags": ["streaming", "streaming", "http"],
               "pdf": "showcase/pdf/features/streaming/invoice-http-stream.pdf",
               "screenshot": "showcase/screenshots/features/streaming/invoice-http-stream.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java"
             }
           ]
         },
@@ -534,7 +534,7 @@
               "tags": ["snapshots", "snapshots", "testing"],
               "pdf": "showcase/pdf/features/snapshots/invoice-snapshot-regression.pdf",
               "screenshot": "showcase/screenshots/features/snapshots/invoice-snapshot-regression.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java"
             }
           ]
         }
@@ -555,7 +555,7 @@
               "tags": ["flagship", "showcase", "cover"],
               "pdf": "showcase/pdf/flagships/default/business-report.pdf",
               "screenshot": "showcase/screenshots/flagships/default/business-report.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/flagships/BusinessReportExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/BusinessReportExample.java"
             },
             {
               "id": "master-showcase",
@@ -564,7 +564,7 @@
               "tags": ["flagship", "showcase"],
               "pdf": "showcase/pdf/flagships/default/master-showcase.pdf",
               "screenshot": "showcase/screenshots/flagships/default/master-showcase.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/flagships/MasterShowcaseExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/MasterShowcaseExample.java"
             },
             {
               "id": "module-first-profile",
@@ -573,7 +573,7 @@
               "tags": ["flagship", "authoring"],
               "pdf": "showcase/pdf/flagships/default/module-first-profile.pdf",
               "screenshot": "showcase/screenshots/flagships/default/module-first-profile.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v1.6.0/examples/src/main/java/com/demcha/examples/flagships/ModuleFirstFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/ModuleFirstFileExample.java"
             }
           ]
         }

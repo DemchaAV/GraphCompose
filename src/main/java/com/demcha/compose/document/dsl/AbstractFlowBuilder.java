@@ -569,6 +569,30 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     }
 
     /**
+     * Adds a canvas-layer composite — places child nodes at
+     * explicit {@code (x, y)} pixel coordinates inside a
+     * fixed-size bounding box. See
+     * {@link com.demcha.compose.document.node.CanvasLayerNode}
+     * for the placement contract.
+     *
+     * <pre>{@code
+     * section.addCanvas(400, 200, canvas -> canvas
+     *     .name("Diploma")
+     *     .position(seal, 320, 30)
+     *     .position(badge, 10, 10)
+     *     .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE));
+     * }</pre>
+     *
+     * @param width canvas width in points
+     * @param height canvas height in points
+     * @param spec canvas builder callback
+     * @return this builder
+     */
+    public T addCanvas(double width, double height, Consumer<CanvasLayerBuilder> spec) {
+        return add(BuilderSupport.configure(new CanvasLayerBuilder(width, height), spec).build());
+    }
+
+    /**
      * Adds a circular {@link com.demcha.compose.document.node.ShapeContainerNode}
      * with the supplied fill, then defers to a callback for layers — the
      * shortest path to "draw a circle and put a label inside it":

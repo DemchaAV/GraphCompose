@@ -346,12 +346,32 @@ component library extension + preset refactor is tracked in
 
 ### Stretch goals (v1.6 if time allows; otherwise v1.7)
 
-- **Controlled free-canvas (`CanvasLayerNode`).** New atomic
-  semantic node accepting children at explicit `(x, y)` coordinates.
-  Separate from `LayerStackNode` / `ShapeContainerNode` so absolute
-  placement stays an opt-in primitive. ADR 0007 will record why
-  `CanvasLayer` is its own node and why absolute placement is rejected
-  on `RowBuilder` / `SectionBuilder`.
+- **Controlled free-canvas (Phase C — landed).** New
+  `CanvasLayerNode` atomic composite accepts children at
+  explicit `(x, y)` pixel coordinates inside a fixed-size
+  bounding box. Coordinates use the screen convention:
+  `(0, 0)` is the canvas's top-left, positive `x` extends
+  right, positive `y` extends downward. New `CanvasChild`
+  record carries `(node, x, y)`. `CanvasLayerBuilder`
+  exposes `position(child, x, y)`, `size(width, height)`,
+  `clipPolicy(...)` and is plumbed through
+  `AbstractFlowBuilder.addCanvas(width, height, Consumer)`.
+  `CanvasLayerDefinition` reuses the existing
+  `LayerStackNode` placement plumbing — every child anchors
+  at `LayerAlign.TOP_LEFT` and the canvas's `(x, y)` maps
+  one-to-one onto the stack layout's `(offsetX, offsetY)`.
+  Pagination is atomic; clip policy defaults to
+  `ClipPolicy.CLIP_BOUNDS` and reuses the
+  `ShapeContainerNode` clipping pipeline. The canvas's
+  measured size is explicit (independent of children) so
+  the surrounding flow reserves a deterministic rectangle.
+  ADR [0014](docs/adr/0014-controlled-absolute-placement.md)
+  records why `CanvasLayerNode` is a separate node and why
+  absolute placement is rejected as a global policy on
+  `RowBuilder` / `SectionBuilder`. Snapshot baseline:
+  `src/test/resources/layout-snapshots/document/canvas_layer_basic.json`.
+  Showcase: `examples/.../CanvasLayerExample.java`.
+  `mvnw verify` → 819 / 0 / 0 / 0.
 - **Phase D — Real PPTX semantic export.** Build out
   `PptxSemanticBackend` from the existing manifest skeleton to a
   working POI-based exporter (paragraphs → text boxes, tables →

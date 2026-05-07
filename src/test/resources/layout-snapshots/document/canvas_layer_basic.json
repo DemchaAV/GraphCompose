@@ -1,0 +1,137 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 440.0,
+    "pageHeight" : 320.0,
+    "innerWidth" : 400.0,
+    "innerHeight" : 280.0,
+    "margin" : {
+      "top" : 20.0,
+      "right" : 20.0,
+      "bottom" : 20.0,
+      "left" : 20.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "CanvasSnapshotRoot[0]",
+    "entityName" : "CanvasSnapshotRoot",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 20.0,
+    "computedY" : 100.0,
+    "placementX" : 20.0,
+    "placementY" : 100.0,
+    "placementWidth" : 360.0,
+    "placementHeight" : 200.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 360.0,
+    "contentHeight" : 200.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CanvasSnapshotRoot[0]/SnapshotCanvas[0]",
+    "entityName" : "SnapshotCanvas",
+    "entityKind" : "CanvasLayerNode",
+    "parentPath" : "CanvasSnapshotRoot[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 20.0,
+    "computedY" : 100.0,
+    "placementX" : 20.0,
+    "placementY" : 100.0,
+    "placementWidth" : 360.0,
+    "placementHeight" : 200.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 360.0,
+    "contentHeight" : 200.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CanvasSnapshotRoot[0]/SnapshotCanvas[0]/Topbar[0]",
+    "entityName" : "Topbar",
+    "entityKind" : "SpacerNode",
+    "parentPath" : "CanvasSnapshotRoot[0]/SnapshotCanvas[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 20.0,
+    "computedY" : 276.0,
+    "placementX" : 20.0,
+    "placementY" : 276.0,
+    "placementWidth" : 360.0,
+    "placementHeight" : 24.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 360.0,
+    "contentHeight" : 24.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CanvasSnapshotRoot[0]/SnapshotCanvas[0]/Center[1]",
+    "entityName" : "Center",
+    "entityKind" : "SpacerNode",
+    "parentPath" : "CanvasSnapshotRoot[0]/SnapshotCanvas[0]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 170.0,
+    "computedY" : 180.0,
+    "placementX" : 170.0,
+    "placementY" : 180.0,
+    "placementWidth" : 60.0,
+    "placementHeight" : 40.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 60.0,
+    "contentHeight" : 40.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

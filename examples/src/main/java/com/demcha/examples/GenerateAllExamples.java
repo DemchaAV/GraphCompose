@@ -38,6 +38,7 @@ public final class GenerateAllExamples {
         // v1.6 feature showcases.
         System.out.println("Generated: " + NestedListExample.generate());
         System.out.println("Generated: " + ComposedTableCellExample.generate());
+        System.out.println("Generated: " + CanvasLayerExample.generate());
 
         // Kitchen-sink master demo + flagship business report cover.
         System.out.println("Generated: " + MasterShowcaseExample.generate());

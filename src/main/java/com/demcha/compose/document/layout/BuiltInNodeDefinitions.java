@@ -1,6 +1,7 @@
 package com.demcha.compose.document.layout;
 
 import com.demcha.compose.document.layout.definitions.BarcodeDefinition;
+import com.demcha.compose.document.layout.definitions.CanvasLayerDefinition;
 import com.demcha.compose.document.layout.definitions.ContainerDefinition;
 import com.demcha.compose.document.layout.definitions.EllipseDefinition;
 import com.demcha.compose.document.layout.definitions.ImageDefinition;
@@ -54,6 +55,7 @@ public final class BuiltInNodeDefinitions {
                 .register(new RowDefinition())
                 .register(new LayerStackDefinition())
                 .register(new ShapeContainerDefinition())
-                .register(new TableDefinition());
+                .register(new TableDefinition())
+                .register(new CanvasLayerDefinition());
     }
 }

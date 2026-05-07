@@ -55,49 +55,49 @@ public final class CinematicProposalFileExample {
 
             document.pageFlow()
                     .name("CinematicProjectProposal")
-                    .spacing(12)
+                    .spacing(16)
                     .addRow("ProposalHeader", row -> row
-                            .spacing(18)
+                            .spacing(22)
                             .weights(4.2, 0.8)
                             .addSection("TitleBlock", section -> section
-                                    .spacing(6)
+                                    .spacing(8)
                                     .addParagraph(paragraph -> paragraph
                                             .text("Project Proposal")
-                                            .textStyle(bold(27, NAVY))
+                                            .textStyle(bold(40, NAVY))
                                             .margin(DocumentInsets.zero()))
                                     .addShape(shape -> shape
                                             .name("TitleAccent")
-                                            .size(64, 3)
+                                            .size(96, 4)
                                             .fillColor(ACCENT)
-                                            .cornerRadius(2)))
+                                            .cornerRadius(3)))
                             .addSection("PdfBadge", section -> section
-                                    .padding(DocumentInsets.symmetric(8, 10))
+                                    .padding(DocumentInsets.symmetric(12, 15))
                                     .fillColor(PURPLE)
-                                    .cornerRadius(5)
+                                    .cornerRadius(7)
                                     .addParagraph(paragraph -> paragraph
                                             .text("PDF")
-                                            .textStyle(bold(12, DocumentColor.WHITE))
+                                            .textStyle(bold(18, DocumentColor.WHITE))
                                             .align(TextAlign.CENTER)
                                             .margin(DocumentInsets.zero()))))
                     .addSection("Overview", section -> section
-                            .spacing(7)
+                            .spacing(10)
                             .addParagraph(paragraph -> paragraph
                                     .text("1. Overview")
-                                    .textStyle(bold(11, NAVY))
+                                    .textStyle(bold(16, NAVY))
                                     .margin(DocumentInsets.zero()))
                             .addParagraph(paragraph -> paragraph
                                     .text("A concise delivery plan for a polished document workflow, covering scope, milestones, and the handoff path for production-ready PDF generation.")
-                                    .textStyle(regular(9.6, MUTED))
-                                    .lineSpacing(2)
+                                    .textStyle(regular(14, MUTED))
+                                    .lineSpacing(3)
                                     .margin(DocumentInsets.zero())))
                     .addRow("ObjectivesAndImage", row -> row
-                            .spacing(18)
+                            .spacing(22)
                             .weights(1.05, 1)
                             .addSection("Objectives", section -> section
-                                    .spacing(7)
+                                    .spacing(10)
                                     .addParagraph(paragraph -> paragraph
                                             .text("2. Key Objectives")
-                                            .textStyle(bold(11, NAVY))
+                                            .textStyle(bold(16, NAVY))
                                             .margin(DocumentInsets.zero()))
                                     .addList(list -> list
                                             .items(
@@ -105,25 +105,25 @@ public final class CinematicProposalFileExample {
                                                     "Use semantic GraphCompose sections, rows, lists, tables, and images.",
                                                     "Provide a runnable example that developers can copy into apps.",
                                                     "Preserve a clean one-page business document layout.")
-                                            .textStyle(regular(8.8, TEXT))
-                                            .itemSpacing(4)
-                                            .lineSpacing(1.5)
+                                            .textStyle(regular(13, TEXT))
+                                            .itemSpacing(6)
+                                            .lineSpacing(2)
                                             .margin(DocumentInsets.zero())))
                             .addSection("PreviewImage", section -> section
-                                    .padding(DocumentInsets.of(5))
+                                    .padding(DocumentInsets.of(7))
                                     .fillColor(DocumentColor.rgb(230, 235, 255))
-                                    .stroke(DocumentStroke.of(DocumentColor.rgb(180, 193, 226), 0.45))
-                                    .cornerRadius(5)
+                                    .stroke(DocumentStroke.of(DocumentColor.rgb(180, 193, 226), 0.7))
+                                    .cornerRadius(7)
                                     .addImage(image -> image
                                             .source(imageFile)
-                                            .fitToBounds(220, 118)
+                                            .fitToBounds(250, 134)
                                             .fitMode(DocumentImageFitMode.COVER)
                                             .margin(DocumentInsets.zero()))))
                     .addSection("Plan", section -> section
-                            .spacing(7)
+                            .spacing(10)
                             .addParagraph(paragraph -> paragraph
                                     .text("3. Plan")
-                                    .textStyle(bold(11, NAVY))
+                                    .textStyle(bold(16, NAVY))
                                     .margin(DocumentInsets.zero()))
                             .addTable(table -> table
                                     .name("ProposalPlanTable")
@@ -132,10 +132,10 @@ public final class CinematicProposalFileExample {
                                             DocumentTableColumn.fixed(92),
                                             DocumentTableColumn.fixed(290),
                                             DocumentTableColumn.fixed(166))
-                                    .defaultCellStyle(cellStyle(regular(8.2, TEXT), DocumentColor.WHITE, DocumentTableTextAnchor.CENTER_LEFT))
-                                    .headerStyle(cellStyle(bold(8.2, NAVY), PAPER_BLUE, DocumentTableTextAnchor.CENTER))
-                                    .columnStyle(0, cellStyle(regular(8.2, TEXT), null, DocumentTableTextAnchor.CENTER))
-                                    .columnStyle(2, cellStyle(regular(8.2, TEXT), null, DocumentTableTextAnchor.CENTER))
+                                    .defaultCellStyle(cellStyle(regular(12, TEXT), DocumentColor.WHITE, DocumentTableTextAnchor.CENTER_LEFT))
+                                    .headerStyle(cellStyle(bold(12, NAVY), PAPER_BLUE, DocumentTableTextAnchor.CENTER))
+                                    .columnStyle(0, cellStyle(regular(12, TEXT), null, DocumentTableTextAnchor.CENTER))
+                                    .columnStyle(2, cellStyle(regular(12, TEXT), null, DocumentTableTextAnchor.CENTER))
                                     .rowStyle(2, DocumentTableStyle.builder().fillColor(STRIPE).build())
                                     .rowStyle(4, DocumentTableStyle.builder().fillColor(STRIPE).build())
                                     .header("Phase", "Description", "Timeline")
@@ -146,21 +146,21 @@ public final class CinematicProposalFileExample {
                                     .row("5", "Deployment", "1 week")
                                     .margin(DocumentInsets.zero())))
                     .addSection("FooterLines", section -> section
-                            .spacing(5)
-                            .margin(DocumentInsets.top(2))
+                            .spacing(7)
+                            .margin(DocumentInsets.top(3))
                             .addShape(shape -> shape
                                     .name("FooterLineOne")
-                                    .size(280, 2)
+                                    .size(420, 3)
                                     .fillColor(LINE)
-                                    .cornerRadius(2))
+                                    .cornerRadius(3))
                             .addShape(shape -> shape
                                     .name("FooterLineTwo")
-                                    .size(210, 2)
+                                    .size(315, 3)
                                     .fillColor(LINE)
-                                    .cornerRadius(2)))
+                                    .cornerRadius(3)))
                     .addParagraph(paragraph -> paragraph
                             .text("Page 1 of 1")
-                            .textStyle(regular(8, DocumentColor.rgb(82, 105, 143)))
+                            .textStyle(regular(12, DocumentColor.rgb(82, 105, 143)))
                             .align(TextAlign.RIGHT)
                             .margin(DocumentInsets.zero()))
                     .build();
@@ -197,12 +197,12 @@ public final class CinematicProposalFileExample {
             DocumentColor fillColor,
             DocumentTableTextAnchor anchor) {
         return DocumentTableStyle.builder()
-                .padding(new DocumentInsets(5, 7, 5, 7))
+                .padding(new DocumentInsets(7, 10, 7, 10))
                 .fillColor(fillColor)
-                .stroke(DocumentStroke.of(TABLE_BORDER, 0.6))
+                .stroke(DocumentStroke.of(TABLE_BORDER, 0.9))
                 .textStyle(textStyle)
                 .textAnchor(anchor)
-                .lineSpacing(1.2)
+                .lineSpacing(1.5)
                 .build();
     }
 

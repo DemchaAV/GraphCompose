@@ -146,7 +146,7 @@ public final class CanvasLayerExample {
                                     DocumentInsets.zero(), DocumentInsets.zero()),
                                     0, 152)
                             .position(new ParagraphNode(
-                                    "Recipient", "Artem Demchyshyn",
+                                    "Recipient", "Jordan Rivera",
                                     name, TextAlign.CENTER, 0.0,
                                     DocumentInsets.zero(), DocumentInsets.zero()),
                                     0, 172)

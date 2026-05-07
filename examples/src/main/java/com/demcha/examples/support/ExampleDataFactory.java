@@ -52,17 +52,17 @@ public final class ExampleDataFactory {
 
     public static Header sampleHeader() {
         return Header.builder()
-                .name("Artem Demchyshyn")
+                .name("Jordan Rivera")
                 .address("London, UK")
                 .phoneNumber("+44 20 5555 1000")
                 .email(EmailYaml.builder()
-                        .to("artem@demo.dev")
+                        .to("jordan.rivera@example.com")
                         .subject("Job Application")
                         .body("Hello")
-                        .displayText("artem@demo.dev")
+                        .displayText("jordan.rivera@example.com")
                         .build())
-                .linkedIn("https://linkedin.com/in/graphcompose", "LinkedIn")
-                .gitHub("https://github.com/DemchaAV", "GitHub")
+                .linkedIn("https://linkedin.com/in/jordan-rivera-demo", "LinkedIn")
+                .gitHub("https://github.com/jrivera-demo", "GitHub")
                 .build();
     }
 
@@ -350,13 +350,13 @@ public final class ExampleDataFactory {
      */
     public static CvHeader sampleCvHeaderV2() {
         return CvHeader.builder()
-                .name("Artem Demchyshyn")
+                .name("Jordan Rivera")
                 .jobTitle("Backend Java Developer")
                 .address("London, UK")
                 .phone("+44 20 5555 1000")
-                .email("artem@demo.dev")
-                .link("LinkedIn", "https://linkedin.com/in/graphcompose")
-                .link("GitHub", "https://github.com/DemchaAV")
+                .email("jordan.rivera@example.com")
+                .link("LinkedIn", "https://linkedin.com/in/jordan-rivera-demo")
+                .link("GitHub", "https://github.com/jrivera-demo")
                 .build();
     }
 
@@ -394,12 +394,12 @@ public final class ExampleDataFactory {
      */
     public static CoverLetterHeader sampleCoverLetterHeaderV2() {
         return CoverLetterHeader.builder()
-                .name("Artem Demchyshyn")
+                .name("Jordan Rivera")
                 .address("London, UK")
                 .phone("+44 20 5555 1000")
-                .email("artem@demo.dev")
-                .link("LinkedIn", "https://linkedin.com/in/graphcompose")
-                .link("GitHub", "https://github.com/DemchaAV")
+                .email("jordan.rivera@example.com")
+                .link("LinkedIn", "https://linkedin.com/in/jordan-rivera-demo")
+                .link("GitHub", "https://github.com/jrivera-demo")
                 .build();
     }
 }

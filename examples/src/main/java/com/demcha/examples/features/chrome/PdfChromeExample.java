@@ -60,7 +60,7 @@ public final class PdfChromeExample {
             // 1. Document-level metadata — backend-neutral.
             document.metadata(DocumentMetadata.builder()
                     .title("GraphCompose chrome showcase")
-                    .author("Artem Demchyshyn")
+                    .author("Jordan Rivera")
                     .subject("Demonstrates metadata, watermark, header/footer, and bookmarks")
                     .keywords("graphcompose, pdf, metadata, watermark, header, footer, bookmark")
                     .creator("GraphCompose Examples")

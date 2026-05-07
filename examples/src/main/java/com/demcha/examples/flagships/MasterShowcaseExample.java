@@ -65,7 +65,7 @@ public final class MasterShowcaseExample {
 
             document.metadata(DocumentMetadata.builder()
                     .title("GraphCompose master showcase")
-                    .author("Artem Demchyshyn")
+                    .author("Jordan Rivera")
                     .subject("Comprehensive end-to-end demo of the v1.5 canonical surface")
                     .keywords("graphcompose, showcase, business, theme, rich-text, table, shape, transform, barcode")
                     .creator("GraphCompose Examples")

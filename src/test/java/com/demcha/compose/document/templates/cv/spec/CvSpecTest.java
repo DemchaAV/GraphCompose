@@ -29,15 +29,16 @@ class CvSpecTest {
 
     @Test
     void cvHeaderRequiresNonBlankName() {
-        assertThatThrownBy(() -> new CvHeader("", "a", "b", "c", List.of()))
+        assertThatThrownBy(() -> new CvHeader("", "", "a", "b", "c", List.of()))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new CvHeader(null, "a", "b", "c", List.of()))
+        assertThatThrownBy(() -> new CvHeader(null, "", "a", "b", "c", List.of()))
                 .isInstanceOf(NullPointerException.class);
     }
 
     @Test
     void cvHeaderNormalisesNullStringsToEmpty() {
-        CvHeader h = new CvHeader("X", null, null, null, null);
+        CvHeader h = new CvHeader("X", null, null, null, null, null);
+        assertThat(h.jobTitle()).isEmpty();
         assertThat(h.address()).isEmpty();
         assertThat(h.phone()).isEmpty();
         assertThat(h.email()).isEmpty();

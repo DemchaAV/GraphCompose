@@ -308,6 +308,7 @@ public final class ExampleDataFactory {
     public static CvHeader sampleCvHeaderV2() {
         return CvHeader.builder()
                 .name("Artem Demchyshyn")
+                .jobTitle("Backend Java Developer")
                 .address("London, UK")
                 .phone("+44 20 5555 1000")
                 .email("artem@demo.dev")

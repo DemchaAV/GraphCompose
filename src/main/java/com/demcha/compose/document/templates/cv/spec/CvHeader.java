@@ -13,15 +13,19 @@ import java.util.Objects;
  * may be empty (rendered as absent rows); {@code links} may be empty
  * but never null after construction.</p>
  *
- * @param name    document subject's name (required, non-blank)
- * @param address optional address line; empty string when absent
- * @param phone   optional phone number; empty string when absent
- * @param email   optional email address; empty string when absent
- * @param links   ordered list of {@link Link} entries (typically
- *                LinkedIn, GitHub); never null, may be empty
+ * @param name     document subject's name (required, non-blank)
+ * @param jobTitle optional job title rendered as a subline under the
+ *                 name (e.g. "Backend Java Developer"); empty string
+ *                 when absent
+ * @param address  optional address line; empty string when absent
+ * @param phone    optional phone number; empty string when absent
+ * @param email    optional email address; empty string when absent
+ * @param links    ordered list of {@link Link} entries (typically
+ *                 LinkedIn, GitHub); never null, may be empty
  */
 public record CvHeader(
         String name,
+        String jobTitle,
         String address,
         String phone,
         String email,
@@ -39,6 +43,7 @@ public record CvHeader(
         if (name.isBlank()) {
             throw new IllegalArgumentException("name must not be blank");
         }
+        jobTitle = jobTitle == null ? "" : jobTitle;
         address = address == null ? "" : address;
         phone = phone == null ? "" : phone;
         email = email == null ? "" : email;
@@ -118,6 +123,7 @@ public record CvHeader(
      */
     public static final class Builder {
         private String name;
+        private String jobTitle = "";
         private String address = "";
         private String phone = "";
         private String email = "";
@@ -134,6 +140,18 @@ public record CvHeader(
          */
         public Builder name(String value) {
             this.name = value;
+            return this;
+        }
+
+        /**
+         * Sets the optional job title (e.g. "Backend Java Developer")
+         * rendered under the subject's name by presets that surface it.
+         *
+         * @param value job title; null treated as empty
+         * @return this builder
+         */
+        public Builder jobTitle(String value) {
+            this.jobTitle = value == null ? "" : value;
             return this;
         }
 
@@ -188,7 +206,7 @@ public record CvHeader(
          * @return new CV header
          */
         public CvHeader build() {
-            return new CvHeader(name, address, phone, email, links);
+            return new CvHeader(name, jobTitle, address, phone, email, links);
         }
     }
 }

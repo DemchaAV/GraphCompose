@@ -31,7 +31,7 @@ Most Java PDF libraries hand you low-level drawing commands. GraphCompose gives 
 - **Atomic pagination, no manual paging.** Tables split row-by-row, rows are atomic, layer stacks are atomic.
 - **Designer-grade output.** Page backgrounds, section bands, soft panels, accent strips, column spans, layered hero blocks, fluent rich text, and a tokenised `BusinessTheme` are all first-class &mdash; not workarounds.
 - **PDFBox rendering, isolated.** PDF backend lives behind a single backend interface. The DOCX backend (Apache POI) is ready for callers who need an editable file.
-- **Tested at every layer.** 765 green tests on `develop` (525 → 672 across v1.5; +93 in the v1.6 line for Templates v2), including cinematic-feature tests, shape-as-container clip-path invariants, transform CTM checks, table row-span / zebra / repeated-header tests, public-API leak guards, layout-snapshot baselines for every CV / cover-letter preset, and a `PdfVisualRegression` harness.
+- **Tested at every layer.** 819 green tests on `develop` (525 → 672 across v1.5; +147 across the v1.6 line for Templates v2, nested lists, composed table cells, free-canvas placement, and architecture hardening), including cinematic-feature tests, shape-as-container clip-path invariants, transform CTM checks, table row-span / zebra / repeated-header tests, public-API leak guards, layout-snapshot baselines for every CV / cover-letter preset, and a `PdfVisualRegression` harness.
 
 The current release is **v1.5.1** &mdash; the "intuitive" release. v1.5 turns the surface intuitive: shape-as-container with clip path, rotate / scale + per-layer z-index, advanced tables (row span, zebra, totals, repeating header), and two new theme-driven cinematic templates (`InvoiceTemplateV2`, `ProposalTemplateV2`). v1.5 is fully source-compatible with v1.4 &mdash; every public record gained back-compat constructors that default the new fields. See [`docs/migration-v1-4-to-v1-5.md`](docs/migration-v1-4-to-v1-5.md).
 
@@ -53,7 +53,7 @@ Reaching for **iText** for low-level page primitives or **JasperReports** for XM
   <img src="./assets/readme/repository_showcase_render.png" alt="GraphCompose repository showcase render" width="850"/>
 </p>
 
-The proposal screenshot above is built by [`CinematicProposalFileExample`](./examples/src/main/java/com/demcha/examples/CinematicProposalFileExample.java) in the runnable `examples/` module &mdash; a single Java file, no XML, no template engine.
+The proposal screenshot above is built by [`CinematicProposalFileExample`](./examples/src/main/java/com/demcha/examples/templates/proposal/CinematicProposalFileExample.java) in the runnable `examples/` module &mdash; a single Java file, no XML, no template engine.
 
 > 📚 **[Browse the full examples gallery →](./examples/README.md)** — every one of the 22 examples with description, key DSL snippet, committed PDF preview, and source link.
 
@@ -116,7 +116,7 @@ public class QuickStart {
 }
 ```
 
-For an HTTP response, S3 upload, or in-memory generation, use the `writePdf(OutputStream)` overload &mdash; it streams directly and does **not** close the caller's stream. See [`HttpStreamingExample`](./examples/src/main/java/com/demcha/examples/HttpStreamingExample.java) for the Spring Boot `@RestController` pattern.
+For an HTTP response, S3 upload, or in-memory generation, use the `writePdf(OutputStream)` overload &mdash; it streams directly and does **not** close the caller's stream. See [`HttpStreamingExample`](./examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java) for the Spring Boot `@RestController` pattern.
 
 For built-in templates (`InvoiceTemplateV2`, `ProposalTemplateV2`) and the canonical authoring patterns (builder hierarchy, theme tokens, golden patterns, anti-patterns, 40-line new-template skeleton), read the **[Template authoring cheatsheet](./docs/template-authoring.md)** once before writing your own.
 

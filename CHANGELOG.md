@@ -919,7 +919,7 @@ v1.4 closes the visual-design gap that the previous releases left open. Tables c
 
 - the current canonical API cleanup is being released as **v1.2.0** to match the project's early maturity while still making `GraphCompose.document(...) -> DocumentSession -> DocumentDsl` the preferred authoring path
 - Maven coordinates are `io.github.demchaav:graphcompose:1.2.0`; JitPack consumers continue to use `com.github.demchaav:GraphCompose:v1.2.0`
-- consumers on `v1.1.x` should follow the [migration guide](./docs/migration-v1-1-to-v1-2.md) before adopting the canonical API path
+- consumers on `v1.1.x` should adopt the canonical `GraphCompose.document(...)` session-first path; the planned `docs/migration-v1-1-to-v1-2.md` was never written and the canonical surface has stabilised since
 
 ### Public API
 

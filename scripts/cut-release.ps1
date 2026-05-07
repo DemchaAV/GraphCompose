@@ -276,7 +276,7 @@ try {
     }
 
     Step 3 "Switch ShowcaseMetadata GH_BASE to /blob/$tag"
-    Update-ShowcaseGhBase $tag
+    Update-ShowcaseGhBase $tag | Out-Null
 
     Step 4 "Regenerate docs/examples.json with $tag links"
     Run-ShowcaseSync

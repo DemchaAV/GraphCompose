@@ -1,6 +1,7 @@
 package com.demcha.compose.document.templates.coverletter.presets;
 
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.components.Header;
@@ -13,7 +14,10 @@ import com.demcha.compose.font.FontName;
 
 /**
  * Templates v2 cover-letter pair for {@code EditorialBlue} CV preset.
- * Helvetica body in dark navy ink with comfortable spacing.
+ *
+ * <p>Helvetica throughout, deep navy ink with bright editorial blue
+ * accent — matches
+ * {@link com.demcha.compose.document.templates.cv.presets.EditorialBlue}.</p>
  */
 public final class EditorialBlueLetter {
 
@@ -23,27 +27,45 @@ public final class EditorialBlueLetter {
     /** Human-readable display name. */
     public static final String DISPLAY_NAME = "Editorial Blue Letter";
 
+    private static final DocumentColor INK = DocumentColor.rgb(18, 31, 72);
+    private static final DocumentColor BODY = DocumentColor.rgb(60, 72, 106);
+    private static final DocumentColor ACCENT = DocumentColor.rgb(86, 136, 255);
+
     private EditorialBlueLetter() {
     }
 
-    /**
-     * Builds a fresh cover-letter template paired with the
-     * Editorial Blue CV style.
-     *
-     * @param theme active business theme
-     * @return ready-to-use template
-     * @throws NullPointerException if {@code theme} is null
-     */
     public static DocumentTemplate<CoverLetterSpec> create(BusinessTheme theme) {
         Spacing spacing = Spacing.comfortable();
+
+        DocumentTextStyle nameStyle = DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA_BOLD)
+                .size(22.0)
+                .decoration(DocumentTextDecoration.BOLD)
+                .color(INK)
+                .build();
+        DocumentTextStyle contactStyle = DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA)
+                .size(9.0)
+                .color(BODY)
+                .build();
+        DocumentTextStyle linkStyle = DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA)
+                .size(9.0)
+                .decoration(DocumentTextDecoration.UNDERLINE)
+                .color(ACCENT)
+                .build();
         DocumentTextStyle bodyStyle = DocumentTextStyle.builder()
                 .fontName(FontName.HELVETICA)
                 .size(10.0)
-                .color(DocumentColor.rgb(40, 50, 70))
+                .color(BODY)
                 .build();
+
         return CoverLetterBuilder.builder()
                 .id(ID).displayName(DISPLAY_NAME)
-                .header(Header.rightAligned(theme, spacing))
+                .header(Header.rightAligned(theme, spacing)
+                        .withNameStyle(nameStyle)
+                        .withContactStyle(contactStyle)
+                        .withLinkStyle(linkStyle))
                 .layout(LetterFormat.layout().moduleGap(spacing.moduleGap()))
                 .bodyStyle(bodyStyle).spacing(spacing).build();
     }

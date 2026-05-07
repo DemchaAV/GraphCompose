@@ -1,6 +1,7 @@
 package com.demcha.compose.document.templates.coverletter.presets;
 
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.components.Header;
@@ -13,7 +14,9 @@ import com.demcha.compose.font.FontName;
 
 /**
  * Templates v2 cover-letter pair for {@code Panel} CV preset.
- * Helvetica body in deep navy ink with compact spacing.
+ *
+ * <p>Deep-slate primary, teal accent, Poppins headline + Lato body —
+ * matches {@link com.demcha.compose.document.templates.cv.presets.Panel}.</p>
  */
 public final class PanelLetter {
 
@@ -23,27 +26,45 @@ public final class PanelLetter {
     /** Human-readable display name. */
     public static final String DISPLAY_NAME = "Panel Letter";
 
+    private static final DocumentColor HEADER_TEXT = DocumentColor.rgb(20, 44, 66);
+    private static final DocumentColor BODY = DocumentColor.rgb(54, 68, 84);
+    private static final DocumentColor ACCENT = DocumentColor.rgb(0, 128, 128);
+
     private PanelLetter() {
     }
 
-    /**
-     * Builds a fresh cover-letter template paired with the Panel CV
-     * style. The CV is two-column; the letter is single-column.
-     *
-     * @param theme active business theme
-     * @return ready-to-use template
-     * @throws NullPointerException if {@code theme} is null
-     */
     public static DocumentTemplate<CoverLetterSpec> create(BusinessTheme theme) {
-        Spacing spacing = Spacing.compact();
-        DocumentTextStyle bodyStyle = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA)
-                .size(10.0)
-                .color(DocumentColor.rgb(20, 44, 66))
+        Spacing spacing = Spacing.comfortable();
+
+        DocumentTextStyle nameStyle = DocumentTextStyle.builder()
+                .fontName(FontName.POPPINS)
+                .size(22.0)
+                .decoration(DocumentTextDecoration.BOLD)
+                .color(HEADER_TEXT)
                 .build();
+        DocumentTextStyle contactStyle = DocumentTextStyle.builder()
+                .fontName(FontName.LATO)
+                .size(8.9)
+                .color(BODY)
+                .build();
+        DocumentTextStyle linkStyle = DocumentTextStyle.builder()
+                .fontName(FontName.LATO)
+                .size(8.9)
+                .decoration(DocumentTextDecoration.UNDERLINE)
+                .color(ACCENT)
+                .build();
+        DocumentTextStyle bodyStyle = DocumentTextStyle.builder()
+                .fontName(FontName.LATO)
+                .size(9.4)
+                .color(BODY)
+                .build();
+
         return CoverLetterBuilder.builder()
                 .id(ID).displayName(DISPLAY_NAME)
-                .header(Header.rightAligned(theme, spacing))
+                .header(Header.rightAligned(theme, spacing)
+                        .withNameStyle(nameStyle)
+                        .withContactStyle(contactStyle)
+                        .withLinkStyle(linkStyle))
                 .layout(LetterFormat.layout().moduleGap(spacing.moduleGap()))
                 .bodyStyle(bodyStyle).spacing(spacing).build();
     }

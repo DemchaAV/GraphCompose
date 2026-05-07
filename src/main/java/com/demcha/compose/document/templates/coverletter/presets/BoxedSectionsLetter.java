@@ -1,6 +1,7 @@
 package com.demcha.compose.document.templates.coverletter.presets;
 
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.components.Header;
@@ -13,7 +14,9 @@ import com.demcha.compose.font.FontName;
 
 /**
  * Templates v2 cover-letter pair for {@code BoxedSections} CV preset.
- * Times Roman serif body in dark grey ink with comfortable spacing.
+ *
+ * <p>PT Serif throughout, dark grey ink — matches
+ * {@link com.demcha.compose.document.templates.cv.presets.BoxedSections}.</p>
  */
 public final class BoxedSectionsLetter {
 
@@ -23,27 +26,45 @@ public final class BoxedSectionsLetter {
     /** Human-readable display name. */
     public static final String DISPLAY_NAME = "Boxed Sections Letter";
 
+    private static final DocumentColor INK = DocumentColor.rgb(34, 34, 34);
+    private static final DocumentColor MUTED = DocumentColor.rgb(120, 120, 120);
+    private static final DocumentColor RULE = DocumentColor.rgb(170, 170, 170);
+
     private BoxedSectionsLetter() {
     }
 
-    /**
-     * Builds a fresh cover-letter template paired with the
-     * Boxed Sections CV style.
-     *
-     * @param theme active business theme
-     * @return ready-to-use template
-     * @throws NullPointerException if {@code theme} is null
-     */
     public static DocumentTemplate<CoverLetterSpec> create(BusinessTheme theme) {
         Spacing spacing = Spacing.comfortable();
-        DocumentTextStyle bodyStyle = DocumentTextStyle.builder()
-                .fontName(FontName.TIMES_ROMAN)
-                .size(10.5)
-                .color(DocumentColor.rgb(34, 34, 34))
+
+        DocumentTextStyle nameStyle = DocumentTextStyle.builder()
+                .fontName(FontName.PT_SERIF)
+                .size(22.0)
+                .decoration(DocumentTextDecoration.DEFAULT)
+                .color(INK)
                 .build();
+        DocumentTextStyle contactStyle = DocumentTextStyle.builder()
+                .fontName(FontName.PT_SERIF)
+                .size(8.5)
+                .color(MUTED)
+                .build();
+        DocumentTextStyle linkStyle = DocumentTextStyle.builder()
+                .fontName(FontName.PT_SERIF)
+                .size(8.5)
+                .decoration(DocumentTextDecoration.UNDERLINE)
+                .color(RULE)
+                .build();
+        DocumentTextStyle bodyStyle = DocumentTextStyle.builder()
+                .fontName(FontName.PT_SERIF)
+                .size(10.0)
+                .color(INK)
+                .build();
+
         return CoverLetterBuilder.builder()
                 .id(ID).displayName(DISPLAY_NAME)
-                .header(Header.rightAligned(theme, spacing))
+                .header(Header.rightAligned(theme, spacing)
+                        .withNameStyle(nameStyle)
+                        .withContactStyle(contactStyle)
+                        .withLinkStyle(linkStyle))
                 .layout(LetterFormat.layout().moduleGap(spacing.moduleGap()))
                 .bodyStyle(bodyStyle).spacing(spacing).build();
     }

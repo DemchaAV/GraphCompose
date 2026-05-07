@@ -1,6 +1,7 @@
 package com.demcha.compose.document.templates.coverletter.presets;
 
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.components.Header;
@@ -13,7 +14,12 @@ import com.demcha.compose.font.FontName;
 
 /**
  * Templates v2 cover-letter pair for {@code SidebarPortrait} CV preset.
- * Times Roman serif body in dark grey ink with compact spacing.
+ *
+ * <p>Crimson Text serif headline + Lato body in the restrained grey
+ * palette of
+ * {@link com.demcha.compose.document.templates.cv.presets.SidebarPortrait}.
+ * The cover letter is a simple single-column letter — the CV's
+ * portrait sidebar is intentionally not replicated.</p>
  */
 public final class SidebarPortraitLetter {
 
@@ -23,28 +29,45 @@ public final class SidebarPortraitLetter {
     /** Human-readable display name. */
     public static final String DISPLAY_NAME = "Sidebar Portrait Letter";
 
+    private static final DocumentColor INK = DocumentColor.rgb(34, 34, 34);
+    private static final DocumentColor SOFT = DocumentColor.rgb(85, 85, 85);
+    private static final DocumentColor ACCENT = DocumentColor.rgb(106, 106, 106);
+
     private SidebarPortraitLetter() {
     }
 
-    /**
-     * Builds a fresh cover-letter template paired with the
-     * Sidebar Portrait CV style. The CV is two-column; the letter
-     * is single-column.
-     *
-     * @param theme active business theme
-     * @return ready-to-use template
-     * @throws NullPointerException if {@code theme} is null
-     */
     public static DocumentTemplate<CoverLetterSpec> create(BusinessTheme theme) {
-        Spacing spacing = Spacing.compact();
-        DocumentTextStyle bodyStyle = DocumentTextStyle.builder()
-                .fontName(FontName.TIMES_ROMAN)
-                .size(10.0)
-                .color(DocumentColor.rgb(34, 34, 34))
+        Spacing spacing = Spacing.comfortable();
+
+        DocumentTextStyle nameStyle = DocumentTextStyle.builder()
+                .fontName(FontName.CRIMSON_TEXT)
+                .size(28.0)
+                .decoration(DocumentTextDecoration.BOLD)
+                .color(INK)
                 .build();
+        DocumentTextStyle contactStyle = DocumentTextStyle.builder()
+                .fontName(FontName.LATO)
+                .size(8.3)
+                .color(SOFT)
+                .build();
+        DocumentTextStyle linkStyle = DocumentTextStyle.builder()
+                .fontName(FontName.LATO)
+                .size(8.3)
+                .decoration(DocumentTextDecoration.UNDERLINE)
+                .color(ACCENT)
+                .build();
+        DocumentTextStyle bodyStyle = DocumentTextStyle.builder()
+                .fontName(FontName.LATO)
+                .size(10.0)
+                .color(INK)
+                .build();
+
         return CoverLetterBuilder.builder()
                 .id(ID).displayName(DISPLAY_NAME)
-                .header(Header.rightAligned(theme, spacing))
+                .header(Header.rightAligned(theme, spacing)
+                        .withNameStyle(nameStyle)
+                        .withContactStyle(contactStyle)
+                        .withLinkStyle(linkStyle))
                 .layout(LetterFormat.layout().moduleGap(spacing.moduleGap()))
                 .bodyStyle(bodyStyle).spacing(spacing).build();
     }

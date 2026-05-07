@@ -1,6 +1,7 @@
 package com.demcha.compose.document.templates.coverletter.presets;
 
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.components.Header;
@@ -13,7 +14,11 @@ import com.demcha.compose.font.FontName;
 
 /**
  * Templates v2 cover-letter pair for {@code NordicClean} CV preset.
- * Helvetica body in dark teal-ink with comfortable spacing.
+ *
+ * <p>Same INK / ACCENT palette and Barlow + Lato typography as the
+ * {@link com.demcha.compose.document.templates.cv.presets.NordicClean}
+ * CV. Single-column letter format — header on top, greeting, body
+ * paragraphs, closing.</p>
  */
 public final class NordicCleanLetter {
 
@@ -22,6 +27,10 @@ public final class NordicCleanLetter {
 
     /** Human-readable display name. */
     public static final String DISPLAY_NAME = "Nordic Clean Letter";
+
+    private static final DocumentColor INK = DocumentColor.rgb(18, 39, 52);
+    private static final DocumentColor MUTED = DocumentColor.rgb(82, 104, 116);
+    private static final DocumentColor ACCENT = DocumentColor.rgb(28, 128, 135);
 
     private NordicCleanLetter() {
     }
@@ -36,14 +45,36 @@ public final class NordicCleanLetter {
      */
     public static DocumentTemplate<CoverLetterSpec> create(BusinessTheme theme) {
         Spacing spacing = Spacing.comfortable();
-        DocumentTextStyle bodyStyle = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA)
-                .size(10.0)
-                .color(DocumentColor.rgb(18, 39, 52))
+
+        DocumentTextStyle nameStyle = DocumentTextStyle.builder()
+                .fontName(FontName.BARLOW)
+                .size(24.0)
+                .decoration(DocumentTextDecoration.BOLD)
+                .color(INK)
                 .build();
+        DocumentTextStyle contactStyle = DocumentTextStyle.builder()
+                .fontName(FontName.LATO)
+                .size(8.5)
+                .color(MUTED)
+                .build();
+        DocumentTextStyle linkStyle = DocumentTextStyle.builder()
+                .fontName(FontName.LATO)
+                .size(9.0)
+                .decoration(DocumentTextDecoration.UNDERLINE)
+                .color(ACCENT)
+                .build();
+        DocumentTextStyle bodyStyle = DocumentTextStyle.builder()
+                .fontName(FontName.LATO)
+                .size(10.0)
+                .color(INK)
+                .build();
+
         return CoverLetterBuilder.builder()
                 .id(ID).displayName(DISPLAY_NAME)
-                .header(Header.rightAligned(theme, spacing))
+                .header(Header.rightAligned(theme, spacing)
+                        .withNameStyle(nameStyle)
+                        .withContactStyle(contactStyle)
+                        .withLinkStyle(linkStyle))
                 .layout(LetterFormat.layout().moduleGap(spacing.moduleGap()))
                 .bodyStyle(bodyStyle).spacing(spacing).build();
     }

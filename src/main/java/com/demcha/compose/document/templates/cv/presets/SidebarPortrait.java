@@ -188,11 +188,12 @@ public final class SidebarPortrait {
             // reaches the bottom edge of the page. Sized adaptively
             // from the canvas innerHeight so the row honours page
             // capacity on whatever page size is active (A4 / Letter /
-            // smaller test fixtures). The constant 786pt corresponds
+            // smaller test fixtures). The constant 787pt corresponds
             // to the natural sidebar outer height (photo + contact +
             // Education + Skills + Languages with the current sample
-            // data) plus a small safety margin.
-            double maxStretch = Math.max(0.0, pageHeight - 786.0);
+            // data) plus a 1pt safety margin against floating-point
+            // rounding in the layout's row-capacity check.
+            double maxStretch = Math.max(0.0, pageHeight - 787.0);
             if (maxStretch > 0.0) {
                 section.spacer(0, maxStretch);
             }

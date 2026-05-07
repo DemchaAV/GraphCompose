@@ -181,7 +181,7 @@ public final class MonogramSidebar {
             // font drift. On A4 this gives ~72pt of stretch; on the
             // smaller pages used by visual-test fixtures we still
             // honour page capacity instead of overflowing the row.
-            double maxStretch = Math.max(0.0, pageHeight - 770.0);
+            double maxStretch = Math.max(0.0, pageHeight - 790.0);
             if (maxStretch > 0.0) {
                 section.spacer(0, maxStretch);
             }

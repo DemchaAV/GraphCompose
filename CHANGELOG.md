@@ -3,7 +3,7 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v1.6.0 — Planned
+## v1.6.0 — 2026-05-07
 
 The "expressive" release. Closes the remaining canonical-vs-legacy
 parity gaps for advanced authoring without architectural rollback.

@@ -4,6 +4,7 @@ import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
 import com.demcha.compose.document.layout.payloads.SideBorders;
 import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
+import com.demcha.compose.engine.components.content.table.TableResolvedCell;
 import com.demcha.compose.document.layout.payloads.TransformBeginPayload;
 import com.demcha.compose.document.layout.payloads.TransformEndPayload;
 import com.demcha.compose.document.node.DocumentBarcodeOptions;
@@ -391,13 +392,17 @@ public final class NodeDefinitionSupport {
     public static PreparedNode<TableNode> prepareTable(TableNode node,
                                                        PrepareContext ctx,
                                                        BoxConstraints constraints) {
-        TableLayoutSupport.ResolvedTableLayout layout = TableLayoutSupport.resolveTableLayout(
-                node, ctx.textMeasurement(), constraints.availableWidth());
+        TableLayoutSupport.ResolvedTableLayoutWithContents resolved = TableLayoutSupport.resolveTableLayout(
+                node, ctx, ctx.textMeasurement(), constraints.availableWidth());
+        TableLayoutSupport.ResolvedTableLayout layout = resolved.layout();
         MeasureResult measure = new MeasureResult(
                 layout.finalWidth() + node.padding().horizontal(),
                 layout.totalHeight() + node.padding().vertical());
         return PreparedNode.leaf(node, measure,
-                new TableLayoutSupport.PreparedTableLayout(layout, node.bookmarkOptions() != null));
+                new TableLayoutSupport.PreparedTableLayout(
+                        layout,
+                        node.bookmarkOptions() != null,
+                        resolved.preparedContents()));
     }
 
     /**
@@ -409,9 +414,9 @@ public final class NodeDefinitionSupport {
      */
     public static PreparedSplitResult<TableNode> splitTable(PreparedNode<TableNode> prepared, SplitRequest request) {
         TableNode node = prepared.node();
-        TableLayoutSupport.ResolvedTableLayout layout = prepared
-                .requirePreparedLayout(TableLayoutSupport.PreparedTableLayout.class)
-                .resolvedLayout();
+        TableLayoutSupport.PreparedTableLayout preparedTable = prepared
+                .requirePreparedLayout(TableLayoutSupport.PreparedTableLayout.class);
+        TableLayoutSupport.ResolvedTableLayout layout = preparedTable.resolvedLayout();
         double innerAvailableHeight = Math.max(0.0, request.remainingHeight() - node.padding().vertical());
 
         int totalRows = node.rows().size();
@@ -442,9 +447,10 @@ public final class NodeDefinitionSupport {
         }
 
         PreparedNode<TableNode> head = TableLayoutSupport.sliceTablePreparedNode(
-                node, layout, 0, rowCount, true, false);
+                node, layout, preparedTable.preparedContents(), 0, rowCount, true, false, 0);
         PreparedNode<TableNode> tail = TableLayoutSupport.sliceTablePreparedNode(
-                node, layout, rowCount, totalRows, false, true, headerCount);
+                node, layout, preparedTable.preparedContents(),
+                rowCount, totalRows, false, true, headerCount);
         return new PreparedSplitResult<>(head, tail);
     }
 
@@ -456,6 +462,7 @@ public final class NodeDefinitionSupport {
      * @return renderer-facing table row fragments
      */
     public static List<LayoutFragment> emitTableFragments(PreparedNode<TableNode> prepared,
+                                                          FragmentContext ctx,
                                                           FragmentPlacement placement) {
         TableNode node = prepared.node();
         TableLayoutSupport.PreparedTableLayout preparedLayout = prepared
@@ -483,10 +490,132 @@ public final class NodeDefinitionSupport {
                             rowIndex == 0 && preparedLayout.emitBookmark()
                                     ? node.bookmarkOptions()
                                     : null)));
+            // Composed cells: dispatch each prepared child's fragments
+            // at the cell's absolute table-local position. The child's
+            // FragmentPlacement is constructed from the cell's width,
+            // height, and position relative to the placement path.
+            List<TableResolvedCell> rowCells = layout.rows().get(rowIndex);
+            for (TableResolvedCell cell : rowCells) {
+                int columnIndex = locateCellColumn(layout, rowIndex, cell);
+                TableLayoutSupport.CellKey key = new TableLayoutSupport.CellKey(rowIndex, columnIndex);
+                PreparedNode<?> child = preparedLayout.preparedContents().get(key);
+                if (child == null) {
+                    continue;
+                }
+                fragments.addAll(emitComposedCellFragments(
+                        child, ctx, placement,
+                        node.padding().left() + cell.x(),
+                        localY + cell.yOffset(),
+                        cell.width(),
+                        cell.height(),
+                        cell.style()));
+            }
             rowTopOffset += rowHeight;
         }
 
         return List.copyOf(fragments);
+    }
+
+    /**
+     * Computes the column index of a resolved cell by summing the
+     * column widths to the left of {@code cell.x()}. Used to recover
+     * the cell's logical column from its placed-fragment data so the
+     * preparedContents map (keyed by {@code (row, column)}) can be
+     * looked up.
+     */
+    private static int locateCellColumn(TableLayoutSupport.ResolvedTableLayout layout,
+                                        int rowIndex,
+                                        TableResolvedCell cell) {
+        double cumulative = 0.0;
+        List<Double> widths = layout.columnWidths();
+        for (int col = 0; col < widths.size(); col++) {
+            if (Math.abs(cumulative - cell.x()) < 1e-6) {
+                return col;
+            }
+            cumulative += widths.get(col);
+        }
+        // Fallback when arithmetic drift accumulates: pick the column
+        // whose left edge is closest to the cell's x.
+        double bestDelta = Double.POSITIVE_INFINITY;
+        int bestCol = 0;
+        cumulative = 0.0;
+        for (int col = 0; col < widths.size(); col++) {
+            double delta = Math.abs(cumulative - cell.x());
+            if (delta < bestDelta) {
+                bestDelta = delta;
+                bestCol = col;
+            }
+            cumulative += widths.get(col);
+        }
+        return bestCol;
+    }
+
+    /**
+     * Emits fragments for a composed cell's prepared child by
+     * dispatching to the child's {@code NodeDefinition.emitFragments}
+     * via {@link FragmentContext#emitChildFragments}. Positions the
+     * child at the cell's content area (inside cell padding).
+     */
+    private static List<LayoutFragment> emitComposedCellFragments(
+            PreparedNode<?> child,
+            FragmentContext ctx,
+            FragmentPlacement parentPlacement,
+            double cellLocalX,
+            double cellLocalY,
+            double cellWidth,
+            double cellHeight,
+            com.demcha.compose.engine.components.content.table.TableCellLayoutStyle style) {
+        com.demcha.compose.engine.components.style.Padding padding =
+                style.padding() == null
+                        ? com.demcha.compose.engine.components.style.Padding.zero()
+                        : style.padding();
+        double childWidth = Math.max(0.0, cellWidth - padding.horizontal());
+        double childHeight = Math.max(0.0, child.measureResult().height());
+        // The cell paints its content area at (cellLocalX + padding.left,
+        // cellLocalY + padding.bottom). Build a placement at that
+        // absolute location so the child node's emitFragments lays
+        // its content out as if it were a top-level placement of the
+        // cell's content area.
+        double childAbsoluteX = parentPlacement.x() + cellLocalX + padding.left();
+        double childAbsoluteY = parentPlacement.y() + cellLocalY + padding.bottom();
+        String childPath = parentPlacement.path() + ".cell" + cellLocalX + "x" + cellLocalY;
+        FragmentPlacement childPlacement = new FragmentPlacement(
+                childPath,
+                parentPlacement.path(),
+                0,
+                parentPlacement.depth() + 1,
+                parentPlacement.pageIndex(),
+                childAbsoluteX,
+                childAbsoluteY,
+                childWidth,
+                childHeight,
+                parentPlacement.startPage(),
+                parentPlacement.endPage(),
+                com.demcha.compose.engine.components.style.Margin.zero(),
+                com.demcha.compose.engine.components.style.Padding.zero());
+        // The child emits fragments with localX/localY relative to its
+        // own placement. Translate those into the parent table fragment's
+        // local coordinate system (relative to parentPlacement) so the
+        // LayoutCompiler converts them to the correct absolute position
+        // when placing the table's emitted fragments.
+        List<LayoutFragment> childFragments = ctx.emitChildFragments(child, childPlacement);
+        if (childFragments.isEmpty()) {
+            return List.of();
+        }
+        double offsetX = cellLocalX + padding.left();
+        double offsetY = cellLocalY + padding.bottom();
+        List<LayoutFragment> translated = new ArrayList<>(childFragments.size());
+        for (LayoutFragment cf : childFragments) {
+            translated.add(new LayoutFragment(
+                    childPath,
+                    cf.fragmentIndex(),
+                    cf.localX() + offsetX,
+                    cf.localY() + offsetY,
+                    cf.width(),
+                    cf.height(),
+                    cf.payload()));
+        }
+        return translated;
     }
 
     private static List<LayoutFragment> emitDecorationFragment(Color fillColor,

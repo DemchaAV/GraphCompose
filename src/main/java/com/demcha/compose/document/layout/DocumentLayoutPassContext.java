@@ -5,6 +5,7 @@ import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 import com.demcha.compose.font.FontLibrary;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -84,6 +85,17 @@ public final class DocumentLayoutPassContext implements PrepareContext, Fragment
     @Override
     public boolean markdownEnabled() {
         return markdown;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <E extends DocumentNode> List<LayoutFragment> emitChildFragments(
+            PreparedNode<E> child,
+            FragmentPlacement placement) {
+        Objects.requireNonNull(child, "child");
+        Objects.requireNonNull(placement, "placement");
+        NodeDefinition<E> definition = (NodeDefinition<E>) registry.definitionFor(child.node());
+        return definition.emitFragments(child, this, placement);
     }
 
     private long normalizeWidth(double value) {

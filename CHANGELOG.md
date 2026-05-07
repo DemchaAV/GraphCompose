@@ -315,12 +315,34 @@ component library extension + preset refactor is tracked in
   Snapshot baseline:
   `src/test/resources/layout-snapshots/document/nested_list_three_levels.json`.
   `mvnw verify` → 804 / 0 / 0 / 0.
-- **Composed table cell content.** New
-  `TableCellContent.NodeContent(DocumentNode child)` variant plus
-  `DocumentTableCell.node(DocumentNode)` factory. Two-pass cell
-  measurement when the cell holds composite content; pagination
-  preserves row-by-row behaviour. ADR 0006 will record the
-  composite-cell semantic boundary.
+- **Composed table cell content (Phase B — landed).**
+  `DocumentTableCell.node(DocumentNode)` factory accepts any
+  composable canonical node as cell content; `DocumentTableCell`
+  gains a 5th component `DocumentNode content` with explicit
+  4-arg / 3-arg / 2-arg back-compat constructors so v1.5
+  plain-text callers compile unchanged. `TableLayoutSupport`
+  threads `PrepareContext` through `resolveTableLayout` and
+  prepares each composed cell's child against the cell's
+  resolved inner width before row-height resolution; the
+  prepared height feeds the existing two-pass row-height pass.
+  `FragmentContext` gains a default
+  `emitChildFragments(PreparedNode, FragmentPlacement)` method
+  that `DocumentLayoutPassContext` overrides to dispatch through
+  the registered `NodeDefinition` — so any node type works
+  inside a cell automatically (paragraph, list, layer-stack,
+  sub-table). Pagination preserves row-by-row behaviour: a
+  composed cell stays atomic on its row, and
+  `sliceTablePreparedNode` subsets the prepared-content map to
+  the slice's row range while keeping repeat-header keys
+  intact. The PDF table render handler is unchanged: it still
+  iterates `cell.lines()` (empty for composed cells) and the
+  child fragments render through their own already-registered
+  handlers. ADR
+  [0013](docs/adr/0013-composed-table-cell.md) records the
+  extend-vs-new-hierarchy and recursion-vs-special-case
+  decisions. Snapshot baseline:
+  `src/test/resources/layout-snapshots/document/table_cell_with_paragraph.json`.
+  `mvnw verify` → 810 / 0 / 0 / 0.
 
 ### Stretch goals (v1.6 if time allows; otherwise v1.7)
 

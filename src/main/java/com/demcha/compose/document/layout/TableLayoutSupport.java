@@ -14,6 +14,8 @@ import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,11 +40,37 @@ final class TableLayoutSupport {
 
     /**
      * Prepared layout payload attached to {@code TableNode} prepared nodes.
+     *
+     * <p>{@code preparedContents} carries the prepared sub-tree for any
+     * {@code DocumentTableCell} authored via {@link DocumentTableCell#node(DocumentNode)};
+     * keyed by the cell's logical {@code (startRow, startColumn)} and
+     * empty for tables that contain only plain-text cells.</p>
      */
     record PreparedTableLayout(
             ResolvedTableLayout resolvedLayout,
-            boolean emitBookmark
+            boolean emitBookmark,
+            Map<CellKey, PreparedNode<?>> preparedContents
     ) implements PreparedNodeLayout {
+        PreparedTableLayout {
+            preparedContents = preparedContents == null ? Map.of() : Map.copyOf(preparedContents);
+        }
+
+        /**
+         * Back-compat 2-arg constructor for callers that don't carry
+         * composed cell content. Defaults {@code preparedContents} to
+         * an empty map.
+         */
+        PreparedTableLayout(ResolvedTableLayout resolvedLayout, boolean emitBookmark) {
+            this(resolvedLayout, emitBookmark, Map.of());
+        }
+    }
+
+    /**
+     * Logical (row, column) coordinate identifying a cell's starting
+     * position. Used as the key for the {@code preparedContents} map
+     * on {@link PreparedTableLayout}.
+     */
+    record CellKey(int row, int column) {
     }
 
     /**
@@ -64,14 +92,27 @@ final class TableLayoutSupport {
      * spanning cell appears once at its starting (row, column); the
      * positions it occupies in subsequent rows are tracked by the
      * occupancy grid built in {@link #buildLogicalRows(TableNode, int)} and
-     * are skipped when iterating later source rows.
+     * are skipped when iterating later source rows. {@code source} is the
+     * original public {@link DocumentTableCell}, retained so the layout
+     * can detect composed-content cells via
+     * {@link DocumentTableCell#hasComposedContent()}.
      */
-    private record LogicalCell(int startRow, int startColumn, int colSpan, int rowSpan, TableCellContent content) {
+    private record LogicalCell(int startRow, int startColumn, int colSpan, int rowSpan,
+                               TableCellContent content, DocumentTableCell source) {
     }
 
-    static ResolvedTableLayout resolveTableLayout(TableNode node,
-                                                  TextMeasurementSystem measurement,
-                                                  double availableWidth) {
+    /**
+     * Resolves the table layout. Composed-content cells (those authored
+     * via {@link DocumentTableCell#node(DocumentNode)}) require a
+     * {@link PrepareContext} so their child sub-tree can be prepared
+     * against the cell's resolved inner width — pass {@code null} when
+     * the table is known to contain only plain-text cells (the helper
+     * will still throw if it encounters a composed cell).
+     */
+    static ResolvedTableLayoutWithContents resolveTableLayout(TableNode node,
+                                                               PrepareContext prepareContext,
+                                                               TextMeasurementSystem measurement,
+                                                               double availableWidth) {
         validateRowsExist(node);
         int columnCount = resolveColumnCount(node);
         List<List<LogicalCell>> logicalRows = buildLogicalRows(node, columnCount);
@@ -88,6 +129,15 @@ final class TableLayoutSupport {
                     + " exceeds available width " + innerAvailableWidth + ".");
         }
 
+        // Prepare composed cell content (cells authored via
+        // DocumentTableCell.node(...)) before row-height resolution so
+        // the prepared child's measured height feeds the row-height
+        // pass. The prepared map is keyed by the cell's logical
+        // (startRow, startColumn) and is returned alongside the
+        // resolved layout so emit can dispatch the child fragments.
+        Map<CellKey, PreparedNode<?>> preparedContents = prepareComposedCellContents(
+                node, logicalRows, stylesGrid, finalWidths, prepareContext);
+
         // Two-pass row height resolution. First pass: row height = max of
         // natural heights of the single-row cells starting in that row.
         // Second pass: for every spanning cell, ensure the SUM of its
@@ -102,8 +152,8 @@ final class TableLayoutSupport {
                     continue;
                 }
                 TableCellLayoutStyle style = stylesGrid[rowIndex][logical.startColumn()];
-                rowHeightsArr[rowIndex] = Math.max(rowHeightsArr[rowIndex],
-                        cellNaturalHeight(logical.content(), style, measurement));
+                double height = naturalCellHeight(logical, style, measurement, preparedContents);
+                rowHeightsArr[rowIndex] = Math.max(rowHeightsArr[rowIndex], height);
             }
         }
         for (int rowIndex = 0; rowIndex < logicalRows.size(); rowIndex++) {
@@ -112,7 +162,7 @@ final class TableLayoutSupport {
                     continue;
                 }
                 TableCellLayoutStyle style = stylesGrid[rowIndex][logical.startColumn()];
-                double need = cellNaturalHeight(logical.content(), style, measurement);
+                double need = naturalCellHeight(logical, style, measurement, preparedContents);
                 double have = sumRange(rowHeightsArr, logical.startRow(),
                         logical.startRow() + logical.rowSpan());
                 if (need <= have + EPS) {
@@ -165,13 +215,90 @@ final class TableLayoutSupport {
             rows.add(List.copyOf(resolved));
         }
 
-        return new ResolvedTableLayout(
+        ResolvedTableLayout resolved = new ResolvedTableLayout(
                 toList(finalWidths),
                 List.copyOf(rowHeights),
                 List.copyOf(rows),
                 naturalWidth,
                 finalWidth,
                 rowHeights.stream().mapToDouble(Double::doubleValue).sum());
+        return new ResolvedTableLayoutWithContents(resolved, preparedContents);
+    }
+
+    /**
+     * Bundles the resolved table layout with the prepared composed-cell
+     * content map so {@link com.demcha.compose.document.layout.NodeDefinitionSupport#prepareTable}
+     * can attach the map to the {@link PreparedTableLayout}.
+     */
+    record ResolvedTableLayoutWithContents(
+            ResolvedTableLayout layout,
+            Map<CellKey, PreparedNode<?>> preparedContents) {
+        ResolvedTableLayoutWithContents {
+            preparedContents = preparedContents == null ? Map.of() : Map.copyOf(preparedContents);
+        }
+    }
+
+    /**
+     * Walks every logical cell, prepares composed children
+     * ({@link DocumentTableCell#hasComposedContent()} == true) against
+     * the cell's resolved inner width, and returns the prepared map.
+     * Plain-text cells are skipped. When a composed cell is encountered
+     * but {@code prepareContext} is {@code null} (e.g. a unit test that
+     * called the helper directly without a context), the helper throws.
+     */
+    private static Map<CellKey, PreparedNode<?>> prepareComposedCellContents(
+            TableNode node,
+            List<List<LogicalCell>> logicalRows,
+            TableCellLayoutStyle[][] stylesGrid,
+            double[] finalWidths,
+            PrepareContext prepareContext) {
+        Map<CellKey, PreparedNode<?>> prepared = new LinkedHashMap<>();
+        for (int rowIndex = 0; rowIndex < logicalRows.size(); rowIndex++) {
+            for (LogicalCell logical : logicalRows.get(rowIndex)) {
+                DocumentTableCell src = logical.source();
+                if (src == null || !src.hasComposedContent()) {
+                    continue;
+                }
+                if (prepareContext == null) {
+                    throw new IllegalStateException(
+                            "Table '" + displayName(node) + "' has a composed cell at ("
+                                    + rowIndex + ", " + logical.startColumn() + ") but no PrepareContext was supplied.");
+                }
+                double cellOuterWidth = sumRange(finalWidths, logical.startColumn(),
+                        logical.startColumn() + logical.colSpan());
+                TableCellLayoutStyle style = stylesGrid[rowIndex][logical.startColumn()];
+                Padding padding = style.padding() == null ? Padding.zero() : style.padding();
+                double cellInnerWidth = Math.max(0.0, cellOuterWidth - padding.horizontal());
+                PreparedNode<?> child = prepareContext.prepare(src.content(),
+                        BoxConstraints.unboundedHeight(cellInnerWidth));
+                prepared.put(new CellKey(rowIndex, logical.startColumn()), child);
+            }
+        }
+        return prepared;
+    }
+
+    /**
+     * Returns the natural height of a logical cell. Composed cells use
+     * their prepared child's measured height (plus the cell's own
+     * padding, mirroring the text-cell formula). Plain-text cells fall
+     * through to the existing line-based formula.
+     */
+    private static double naturalCellHeight(LogicalCell logical,
+                                            TableCellLayoutStyle style,
+                                            TextMeasurementSystem measurement,
+                                            Map<CellKey, PreparedNode<?>> preparedContents) {
+        if (logical.source() != null && logical.source().hasComposedContent()) {
+            PreparedNode<?> prepared = preparedContents.get(
+                    new CellKey(logical.startRow(), logical.startColumn()));
+            if (prepared == null) {
+                throw new IllegalStateException(
+                        "Composed cell at (" + logical.startRow() + ", " + logical.startColumn()
+                                + ") was not prepared.");
+            }
+            Padding padding = style.padding() == null ? Padding.zero() : style.padding();
+            return prepared.measureResult().height() + padding.vertical();
+        }
+        return cellNaturalHeight(logical.content(), style, measurement);
     }
 
     static PreparedNode<TableNode> sliceTablePreparedNode(TableNode source,
@@ -180,8 +307,24 @@ final class TableLayoutSupport {
                                                           int toExclusive,
                                                           boolean keepTopInsets,
                                                           boolean keepBottomInsets) {
-        return sliceTablePreparedNode(source, layout, fromInclusive, toExclusive,
+        return sliceTablePreparedNode(source, layout, Map.of(), fromInclusive, toExclusive,
                 keepTopInsets, keepBottomInsets, 0);
+    }
+
+    /**
+     * Backward-compat overload that defaults the prepared-content map
+     * to empty. Used by call sites that pre-date Phase B and only
+     * handle plain-text cells.
+     */
+    static PreparedNode<TableNode> sliceTablePreparedNode(TableNode source,
+                                                          ResolvedTableLayout layout,
+                                                          int fromInclusive,
+                                                          int toExclusive,
+                                                          boolean keepTopInsets,
+                                                          boolean keepBottomInsets,
+                                                          int prependHeaderRowCount) {
+        return sliceTablePreparedNode(source, layout, Map.of(), fromInclusive, toExclusive,
+                keepTopInsets, keepBottomInsets, prependHeaderRowCount);
     }
 
     /**
@@ -197,6 +340,7 @@ final class TableLayoutSupport {
      */
     static PreparedNode<TableNode> sliceTablePreparedNode(TableNode source,
                                                           ResolvedTableLayout layout,
+                                                          Map<CellKey, PreparedNode<?>> preparedContents,
                                                           int fromInclusive,
                                                           int toExclusive,
                                                           boolean keepTopInsets,
@@ -274,7 +418,40 @@ final class TableLayoutSupport {
         MeasureResult measure = new MeasureResult(
                 layout.finalWidth() + fragmentNode.padding().horizontal(),
                 totalHeight + fragmentNode.padding().vertical());
-        return PreparedNode.leaf(fragmentNode, measure, new PreparedTableLayout(fragmentLayout, keepTopInsets));
+        Map<CellKey, PreparedNode<?>> sliceContents = sliceComposedCellContents(
+                preparedContents, fromInclusive, toExclusive, prependHeaderRowCount);
+        return PreparedNode.leaf(fragmentNode, measure,
+                new PreparedTableLayout(fragmentLayout, keepTopInsets, sliceContents));
+    }
+
+    /**
+     * Subsets the composed-content map to the slice's row range and
+     * remaps the keys to the fragment's local row indices. The prepended
+     * header rows (if any) keep their original keys at [0,
+     * prependHeaderRowCount); body rows shift by
+     * (prependHeaderRowCount - fromInclusive).
+     */
+    private static Map<CellKey, PreparedNode<?>> sliceComposedCellContents(
+            Map<CellKey, PreparedNode<?>> source,
+            int fromInclusive,
+            int toExclusive,
+            int prependHeaderRowCount) {
+        if (source.isEmpty()) {
+            return Map.of();
+        }
+        Map<CellKey, PreparedNode<?>> result = new LinkedHashMap<>();
+        for (Map.Entry<CellKey, PreparedNode<?>> entry : source.entrySet()) {
+            CellKey key = entry.getKey();
+            int row = key.row();
+            if (row < prependHeaderRowCount) {
+                // Header rows kept at their original (0-based) positions.
+                result.put(key, entry.getValue());
+            } else if (row >= fromInclusive && row < toExclusive) {
+                int localRow = prependHeaderRowCount + (row - fromInclusive);
+                result.put(new CellKey(localRow, key.column()), entry.getValue());
+            }
+        }
+        return result;
     }
 
     /**
@@ -333,7 +510,8 @@ final class TableLayoutSupport {
                         occupied[r][c] = true;
                     }
                 }
-                logical.add(new LogicalCell(rowIndex, col, cell.colSpan(), cell.rowSpan(), toTableCell(cell)));
+                logical.add(new LogicalCell(rowIndex, col, cell.colSpan(), cell.rowSpan(),
+                        toTableCell(cell), cell));
                 col += cell.colSpan();
             }
             if (sourceIdx < source.size()) {

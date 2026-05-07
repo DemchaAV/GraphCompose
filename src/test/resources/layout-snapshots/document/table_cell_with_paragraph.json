@@ -1,0 +1,47 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 400.0,
+    "pageHeight" : 200.0,
+    "innerWidth" : 360.0,
+    "innerHeight" : 160.0,
+    "margin" : {
+      "top" : 20.0,
+      "right" : 20.0,
+      "bottom" : 20.0,
+      "left" : 20.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "SnapshotTable[0]",
+    "entityName" : "SnapshotTable",
+    "entityKind" : "TableNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 20.0,
+    "computedY" : 146.1,
+    "placementX" : 20.0,
+    "placementY" : 146.1,
+    "placementWidth" : 360.0,
+    "placementHeight" : 33.9,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 360.0,
+    "contentHeight" : 33.9,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

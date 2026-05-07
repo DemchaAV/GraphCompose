@@ -49,6 +49,6 @@ public final class TableDefinition implements NodeDefinition<TableNode> {
     public List<LayoutFragment> emitFragments(PreparedNode<TableNode> prepared,
                                               FragmentContext ctx,
                                               FragmentPlacement placement) {
-        return emitTableFragments(prepared, placement);
+        return emitTableFragments(prepared, ctx, placement);
     }
 }

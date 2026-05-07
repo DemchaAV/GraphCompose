@@ -265,7 +265,20 @@ changed.
   under
   `src/test/resources/layout-snapshots/canonical-templates/cv-v2/`
   and `coverletter-v2/` updated to lock the V1-parity render
-  in place. `mvnw verify` → 765 / 0 / 0 / 0.
+  in place.
+- **Pixel-diff visual parity gate landed.**
+  `PresetVisualParityTest` (one for CV, one for cover letters)
+  rasterises each preset's PDF page 0 (and `classic_serif`'s
+  page 1) via PDFBox `PDFRenderer` and asserts per-pixel diff
+  against a checked-in baseline PNG with budget 2500 mismatched
+  pixels at per-channel tolerance 8 (per
+  `templates-restructure-plan.md` sec 6.2). 29 baselines under
+  `src/test/resources/visual-baselines/{cv-v2,coverletter-v2}/`.
+  Re-bless with `-Dgraphcompose.visual.approve=true`. The
+  `PdfVisualRegression` harness was already built; the reopen
+  plugged the 28 presets into it. The placeholder
+  `ModernProfessionalVisualParityTest` smoke test is deleted.
+  `mvnw verify` → 792 / 0 / 0 / 0.
 
 **Tech debt** (deferred to v1.7 as Phase E.4): 13 of the 14
 v2 CV presets are implemented as hand-coded

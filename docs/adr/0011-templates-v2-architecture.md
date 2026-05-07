@@ -189,9 +189,18 @@ references. The reopen made an explicit trade-off:
 
 ### Other consequences
 
-- **Visual parity gate is still missing.** The reopen replaced it
-  with manual glance review through the project owner. A real
-  pixel-diff test is on the v1.7 backlog.
+- **Visual parity gate is now in place.** `PresetVisualParityTest`
+  (one for CV, one for cover letters) renders each preset to PDF,
+  rasterises page 0 (and `classic_serif`'s page 1) via PDFBox
+  `PDFRenderer`, and asserts the per-pixel diff against a
+  checked-in baseline PNG stays within budget 2500 mismatched
+  pixels at per-channel tolerance 8. Baselines live under
+  `src/test/resources/visual-baselines/{cv-v2,coverletter-v2}/`.
+  Re-bless after a deliberate visual change with
+  `-Dgraphcompose.visual.approve=true`. The harness
+  (`PdfVisualRegression`) was already built but never wired into
+  the templates layer; Phase E.1 reopen plugged the 28 presets
+  into it.
 - **Migration is breaking.** Anyone on
   `new CvTemplateV1()` / `new NordicCleanCvTemplate()` etc. must
   switch to the new factory (see migration table in `CHANGELOG.md`
@@ -211,6 +220,7 @@ references. The reopen made an explicit trade-off:
 
 - Implemented through Phase A → Phase G in May 2026.
 - Phase E.1 reopened May 2026 to recover V1 visual fidelity. Tech
-  debt acknowledged; refactor scheduled for v1.7 (Phase E.4).
-- Visual parity gate remains a deferred item. Manual glance review
-  is the current process.
+  debt acknowledged; preset refactor (hand-coded subclasses → thin
+  `CvBuilder` recipes) scheduled for v1.7 (Phase E.4).
+- Visual parity gate landed as part of the reopen
+  (`PresetVisualParityTest` + 28 baseline PNGs).

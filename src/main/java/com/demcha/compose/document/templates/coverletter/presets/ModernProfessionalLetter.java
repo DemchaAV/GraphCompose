@@ -1,6 +1,7 @@
 package com.demcha.compose.document.templates.coverletter.presets;
 
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.components.Header;
@@ -16,13 +17,10 @@ import com.demcha.compose.font.FontName;
  *
  * <p>Visual pair of
  * {@link com.demcha.compose.document.templates.cv.presets.ModernProfessional}.
- * Same right-aligned header, same body typography (Helvetica 10 pt,
- * V1 secondary blue), same compact spacing rhythm. The cover letter
- * itself is a single-column letter format — header on top, greeting,
- * body paragraphs separated by paragraph spacing, closing.</p>
- *
- * <p>To customise: copy the body of {@link #create(BusinessTheme)}
- * into your own class and tweak any of the styles or spacing tokens.</p>
+ * Same right-aligned header (slate-blue name, royal-blue underlined
+ * contact links), same Helvetica body type. The cover letter itself
+ * is a single-column letter — header on top, greeting, body
+ * paragraphs separated by paragraph spacing, closing.</p>
  */
 public final class ModernProfessionalLetter {
 
@@ -31,6 +29,12 @@ public final class ModernProfessionalLetter {
 
     /** Human-readable display name. */
     public static final String DISPLAY_NAME = "Modern Professional Letter";
+
+    /** V1 {@code CvTheme} primary slate-blue used by the display name. */
+    private static final DocumentColor NAME_COLOR = DocumentColor.rgb(44, 62, 80);
+
+    /** V1 link accent (royal blue) used by the contact link row. */
+    private static final DocumentColor LINK_COLOR = DocumentColor.rgb(65, 105, 225);
 
     private ModernProfessionalLetter() {
     }
@@ -46,16 +50,39 @@ public final class ModernProfessionalLetter {
     public static DocumentTemplate<CoverLetterSpec> create(BusinessTheme theme) {
         Spacing spacing = Spacing.compact();
 
+        DocumentTextStyle nameStyle = DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA_BOLD)
+                .size(28.0)
+                .decoration(DocumentTextDecoration.BOLD)
+                .color(NAME_COLOR)
+                .build();
+
+        DocumentTextStyle contactStyle = DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA)
+                .size(9.0)
+                .color(theme.text().body().color())
+                .build();
+
+        DocumentTextStyle linkStyle = DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA)
+                .size(10.0)
+                .decoration(DocumentTextDecoration.UNDERLINE)
+                .color(LINK_COLOR)
+                .build();
+
         DocumentTextStyle bodyStyle = DocumentTextStyle.builder()
                 .fontName(FontName.HELVETICA)
                 .size(10.0)
-                .color(DocumentColor.rgb(44, 62, 80))       // V1 primary slate
+                .color(theme.text().body().color())
                 .build();
 
         return CoverLetterBuilder.builder()
                 .id(ID)
                 .displayName(DISPLAY_NAME)
-                .header(Header.rightAligned(theme, spacing))
+                .header(Header.rightAligned(theme, spacing)
+                        .withNameStyle(nameStyle)
+                        .withContactStyle(contactStyle)
+                        .withLinkStyle(linkStyle))
                 .layout(LetterFormat.layout()
                         .moduleGap(spacing.moduleGap()))
                 .bodyStyle(bodyStyle)

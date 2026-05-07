@@ -43,7 +43,11 @@ class CanonicalSurfaceGuardTest {
     // i.e. an audit / migration / parity log. Internal planning docs
     // should live outside the public docs surface (see .gitignore →
     // docs/private/).
-    private static final Set<String> PUBLIC_MARKDOWN_ALLOWLIST = Set.of();
+    private static final Set<String> PUBLIC_MARKDOWN_ALLOWLIST = Set.of(
+            // Lists every retired V1 CV / cover-letter class so callers
+            // can find the v2 replacement. Naming the legacy surface is
+            // the explicit purpose of a migration log.
+            "docs/migration-v1-5-to-v1-6.md");
     private static final List<String> FORBIDDEN_PUBLIC_AUTHORING_IMPORTS = List.of(
             "import com.demcha.compose.engine.");
 

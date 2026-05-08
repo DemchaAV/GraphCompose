@@ -38,6 +38,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -51,20 +53,16 @@ public final class GraphComposeDevTool extends Application {
     private static final long FILE_DEBOUNCE_MILLIS = 250;
     private static final List<String> CHILD_FIRST_PREFIXES = List.of("com.demcha.");
     private static final List<String> PARENT_FIRST_PREFIXES = List.of("com.demcha.compose.devtool.");
+    private static final AtomicInteger REFRESH_THREAD_SEQUENCE = new AtomicInteger();
+    private static final AtomicInteger DEBOUNCE_THREAD_SEQUENCE = new AtomicInteger();
 
     private final DevToolWorkspace workspace = DevToolWorkspace.currentProject();
     private final PreviewCompiler compiler = new PreviewCompiler();
     private final float previewScale = PreviewScaleResolver.fromSystemProperties();
     private final ExecutorService refreshExecutor = Executors.newSingleThreadExecutor(
-            Thread.ofPlatform()
-                    .daemon()
-                    .name("graphcompose-devtool-refresh-", 0)
-                    .factory());
+            daemonThreadFactory("graphcompose-devtool-refresh-", REFRESH_THREAD_SEQUENCE));
     private final ScheduledExecutorService debounceExecutor = Executors.newSingleThreadScheduledExecutor(
-            Thread.ofPlatform()
-                    .daemon()
-                    .name("graphcompose-devtool-debounce-", 0)
-                    .factory());
+            daemonThreadFactory("graphcompose-devtool-debounce-", DEBOUNCE_THREAD_SEQUENCE));
     private final AtomicReference<RefreshRequest> pendingRequest = new AtomicReference<>();
     private final AtomicReference<ScheduledFuture<?>> pendingDebounce = new AtomicReference<>();
     private final AtomicReference<LoadedPreview> currentPreview = new AtomicReference<>();
@@ -88,6 +86,15 @@ public final class GraphComposeDevTool extends Application {
 
     public static void main(String[] args) {
         Application.launch(GraphComposeDevTool.class, args);
+    }
+
+    private static ThreadFactory daemonThreadFactory(String prefix, AtomicInteger sequence) {
+        return runnable -> {
+            Thread thread = new Thread(runnable);
+            thread.setDaemon(true);
+            thread.setName(prefix + sequence.getAndIncrement());
+            return thread;
+        };
     }
 
     @Override

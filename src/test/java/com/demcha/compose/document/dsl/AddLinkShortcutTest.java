@@ -34,8 +34,8 @@ class AddLinkShortcutTest {
 
         try (PDDocument document = Loader.loadPDF(pdfBytes)) {
             assertThat(document.getPage(0).getAnnotations()).isNotEmpty();
-            assertThat(document.getPage(0).getAnnotations().getFirst()).isInstanceOf(PDAnnotationLink.class);
-            PDAnnotationLink link = (PDAnnotationLink) document.getPage(0).getAnnotations().getFirst();
+            assertThat(document.getPage(0).getAnnotations().get(0)).isInstanceOf(PDAnnotationLink.class);
+            PDAnnotationLink link = (PDAnnotationLink) document.getPage(0).getAnnotations().get(0);
             assertThat(link.getAction()).isInstanceOf(PDActionURI.class);
             assertThat(((PDActionURI) link.getAction()).getURI()).isEqualTo("https://example.com/docs");
             assertThat(new PDFTextStripper().getText(document)).contains("Documentation");
@@ -60,7 +60,7 @@ class AddLinkShortcutTest {
         }
 
         try (PDDocument document = Loader.loadPDF(pdfBytes)) {
-            PDAnnotationLink link = (PDAnnotationLink) document.getPage(0).getAnnotations().getFirst();
+            PDAnnotationLink link = (PDAnnotationLink) document.getPage(0).getAnnotations().get(0);
             assertThat(((PDActionURI) link.getAction()).getURI()).isEqualTo("mailto:author@example.dev");
         }
     }

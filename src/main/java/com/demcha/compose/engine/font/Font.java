@@ -20,13 +20,16 @@ public interface Font<T> {
     T strikethrough();
 
     default T fontType(TextDecoration textDecoration) {
+        if (textDecoration == null) {
+            return defaultFont();
+        }
         return switch (textDecoration) {
             case BOLD -> bold();
             case ITALIC -> italic();
             case UNDERLINE -> underline();
             case BOLD_ITALIC -> boldItalic();
             case STRIKETHROUGH -> strikethrough();
-            case null, default -> defaultFont();
+            default -> defaultFont();
         };
     }
 
@@ -47,4 +50,3 @@ public interface Font<T> {
 
     ContentSize getTightBounds(String text, TextStyle style);
 }
-

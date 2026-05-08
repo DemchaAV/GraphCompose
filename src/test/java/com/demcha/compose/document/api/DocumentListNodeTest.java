@@ -38,7 +38,7 @@ class DocumentListNodeTest {
                     .build();
 
             assertThat(root.children()).hasSize(1);
-            assertThat(root.children().getFirst()).isInstanceOf(ListNode.class);
+            assertThat(root.children().get(0)).isInstanceOf(ListNode.class);
 
             List<ParagraphFragmentPayload> payloads = paragraphPayloads(session.layoutGraph());
             assertThat(payloads).hasSize(3);
@@ -108,13 +108,13 @@ class DocumentListNodeTest {
                     .build();
 
             List<ParagraphFragmentPayload> payloads = paragraphPayloads(session.layoutGraph());
-            List<String> firstItemLines = payloads.getFirst().lines().stream()
+            List<String> firstItemLines = payloads.get(0).lines().stream()
                     .map(ParagraphLine::text)
                     .toList();
 
             assertThat(firstItemLines).hasSizeGreaterThan(1);
             assertThat(countOccurrences(String.join("\n", firstItemLines), "\u2022")).isEqualTo(1);
-            assertThat(payloads.get(1).lines().getFirst().text()).isEqualTo("\u2022 Tail");
+            assertThat(payloads.get(1).lines().get(0).text()).isEqualTo("\u2022 Tail");
         }
     }
 
@@ -137,15 +137,15 @@ class DocumentListNodeTest {
                     .build();
 
             List<ParagraphFragmentPayload> payloads = paragraphPayloads(session.layoutGraph());
-            List<String> firstItemLines = payloads.getFirst().lines().stream()
+            List<String> firstItemLines = payloads.get(0).lines().stream()
                     .map(ParagraphLine::text)
                     .toList();
 
             assertThat(payloads).hasSize(2);
             assertThat(firstItemLines).hasSizeGreaterThan(1);
-            assertThat(firstItemLines.getFirst()).startsWith("Alpha");
+            assertThat(firstItemLines.get(0)).startsWith("Alpha");
             assertThat(firstItemLines.get(1)).startsWith("  ");
-            assertThat(payloads.get(1).lines().getFirst().text()).startsWith("Beta");
+            assertThat(payloads.get(1).lines().get(0).text()).startsWith("Beta");
         }
     }
 
@@ -238,9 +238,9 @@ class DocumentListNodeTest {
                 assertThat(fragment.width()).isCloseTo(listNode.placementWidth(), within(0.01));
             });
 
-            ParagraphFragmentPayload first = paragraphPayload(fragments.getFirst());
+            ParagraphFragmentPayload first = paragraphPayload(fragments.get(0));
             ParagraphFragmentPayload middle = paragraphPayload(fragments.get(1));
-            ParagraphFragmentPayload last = paragraphPayload(fragments.getLast());
+            ParagraphFragmentPayload last = paragraphPayload(fragments.get(fragments.size() - 1));
 
             assertPadding(first.padding(), 3, 5, 0, 11);
             assertPadding(middle.padding(), 0, 5, 0, 11);
@@ -270,7 +270,7 @@ class DocumentListNodeTest {
 
     private static List<String> firstLineTexts(List<ParagraphFragmentPayload> payloads) {
         return payloads.stream()
-                .map(payload -> payload.lines().getFirst().text())
+                .map(payload -> payload.lines().get(0).text())
                 .toList();
     }
 

@@ -43,7 +43,7 @@
     <properties>
         <!-- Toolchain -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.release>17</maven.compiler.release>
 
         <!-- Runtime / library dependencies -->
         <flexmark.version>0.64.8</flexmark.version>

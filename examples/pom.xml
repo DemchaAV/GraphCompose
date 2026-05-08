@@ -11,7 +11,7 @@
     <description>Runnable file-render examples for GraphCompose templates.</description>
 
     <properties>
-        <graphcompose.version>1.6.0-beta.1</graphcompose.version>
+        <graphcompose.version>1.6.0</graphcompose.version>
         <logback.version>1.5.18</logback.version>
         <maven.compiler.release>21</maven.compiler.release>
 

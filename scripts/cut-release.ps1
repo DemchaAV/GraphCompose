@@ -108,21 +108,45 @@ function Update-PomVersion($pomPath, $newVersion) {
         return
     }
     $content = Get-Content $pomPath -Raw
-    # Match the FIRST <version> tag in the file — that's the project's
-    # own version, before <parent> or any dependency entries.
-    $regex = [regex]'<version>[\w\.\-]+</version>'
-    $newLine = "<version>$newVersion</version>"
-    $newContent = $regex.Replace($content, $newLine, 1)
-    if ($content -eq $newContent) {
+    $changed = $false
+
+    # 1. Project's own <version> tag (the FIRST <version> in the file,
+    #    before <parent> or any dependency entries).
+    $projectRegex = [regex]'<version>[\w\.\-]+</version>'
+    $projectNew = "<version>$newVersion</version>"
+    $afterProject = $projectRegex.Replace($content, $projectNew, 1)
+    if ($content -ne $afterProject) {
+        $content = $afterProject
+        $changed = $true
+        Note "bumped <version>: $pomPath -> $projectNew"
+    }
+
+    # 2. <graphcompose.version> property (if present). Subordinate POMs
+    #    (examples/, benchmarks/) declare this property and depend on
+    #    "io.github.demchaav:graphcompose:${graphcompose.version}". The
+    #    property must track the project version so the published tag
+    #    actually resolves on a fresh CI agent without a populated
+    #    local m2. Bug surfaced in v1.6.0 release CI: the property
+    #    stayed at 1.6.0-beta.1 while the project version flipped to
+    #    1.6.0 and CI failed at "Could not find artifact ...:1.6.0-beta.1".
+    $propertyRegex = [regex]'<graphcompose\.version>[\w\.\-]+</graphcompose\.version>'
+    $propertyNew = "<graphcompose.version>$newVersion</graphcompose.version>"
+    $afterProperty = $propertyRegex.Replace($content, $propertyNew, 1)
+    if ($content -ne $afterProperty) {
+        $content = $afterProperty
+        $changed = $true
+        Note "bumped <graphcompose.version>: $pomPath -> $propertyNew"
+    }
+
+    if (-not $changed) {
         Note "no change: $pomPath (version already $newVersion?)"
         return
     }
+
     if ($DryRun) {
-        Write-Host "    [DRY RUN] Bump $pomPath -> $newLine" -ForegroundColor Yellow
+        Write-Host "    [DRY RUN] Bump $pomPath -> $newVersion" -ForegroundColor Yellow
     } else {
-        # Write without trailing newline change; preserve original ending.
-        [System.IO.File]::WriteAllText($pomPath, $newContent)
-        Note "bumped: $pomPath -> $newLine"
+        [System.IO.File]::WriteAllText($pomPath, $content)
     }
 }
 

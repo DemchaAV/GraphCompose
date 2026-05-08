@@ -238,7 +238,7 @@ public final class TextFlowSupport {
             return new PreparedSplitResult<>(head, tail);
         }
 
-        PreparedListItemLayout firstItem = layout.items().getFirst();
+        PreparedListItemLayout firstItem = layout.items().get(0);
         PreparedParagraphLayout itemLayout = firstItem.paragraphLayout();
         int maxLines = maxLinesThatFit(
                 itemLayout.visualLines(),
@@ -796,7 +796,7 @@ public final class TextFlowSupport {
                     result.add(currentPrefix + chunks.get(index));
                     currentPrefix = continuationPrefix;
                 }
-                currentLine = currentPrefix + chunks.getLast();
+                currentLine = currentPrefix + chunks.get(chunks.size() - 1);
                 hasContent = true;
             }
 
@@ -1451,7 +1451,7 @@ public final class TextFlowSupport {
         if (lines.isEmpty()) {
             return 0;
         }
-        if (availableHeight + EPS < lines.getFirst().lineHeight()) {
+        if (availableHeight + EPS < lines.get(0).lineHeight()) {
             return 0;
         }
 

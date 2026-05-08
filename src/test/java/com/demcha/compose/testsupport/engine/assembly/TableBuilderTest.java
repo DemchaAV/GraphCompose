@@ -41,8 +41,8 @@ class TableBuilderTest {
             TableRowData rowData = firstRow.getComponent(TableRowData.class).orElseThrow();
 
             assertThat(layoutData.columnWidths()).hasSize(2);
-            assertThat(layoutData.columnWidths().getFirst()).isEqualTo(120.0);
-            assertThat(rowData.cells().getFirst().width()).isEqualTo(120.0);
+            assertThat(layoutData.columnWidths().get(0)).isEqualTo(120.0);
+            assertThat(rowData.cells().get(0).width()).isEqualTo(120.0);
             assertThat(rowData.cells().get(1).width()).isEqualTo(layoutData.columnWidths().get(1));
             assertThat(layoutData.finalWidth()).isEqualTo(layoutData.columnWidths().stream().mapToDouble(Double::doubleValue).sum());
         }
@@ -119,13 +119,13 @@ class TableBuilderTest {
                     .getComponent(TableRowData.class)
                     .orElseThrow()
                     .cells()
-                    .getFirst();
+                    .get(0);
 
             TableResolvedCell secondRowFirstCell = child(table, 1)
                     .getComponent(TableRowData.class)
                     .orElseThrow()
                     .cells()
-                    .getFirst();
+                    .get(0);
 
             assertThat(firstRowFirstCell.style().fillColor()).isEqualTo(ComponentColor.RED);
             assertThat(firstRowFirstCell.style().padding()).isEqualTo(Padding.of(8));
@@ -181,7 +181,7 @@ class TableBuilderTest {
                     .getComponent(TableRowData.class)
                     .orElseThrow()
                     .cells()
-                    .getFirst();
+                    .get(0);
 
             assertThat(firstCell.style().fillColor()).isEqualTo(ComponentColor.GREEN);
             assertThat(firstCell.style().padding()).isEqualTo(Padding.of(8));
@@ -203,7 +203,7 @@ class TableBuilderTest {
                     .getComponent(TableRowData.class)
                     .orElseThrow()
                     .cells()
-                    .getFirst();
+                    .get(0);
 
             assertThat(firstCell.lines()).containsExactly("Alpha");
         }
@@ -228,13 +228,13 @@ class TableBuilderTest {
                     .getComponent(TableRowData.class)
                     .orElseThrow()
                     .cells()
-                    .getFirst();
+                    .get(0);
 
             TableResolvedCell singleLineCell = child(longestLineTable, 0)
                     .getComponent(TableRowData.class)
                     .orElseThrow()
                     .cells()
-                    .getFirst();
+                    .get(0);
 
             double paddingVertical = TableCellLayoutStyle.DEFAULT.padding().vertical();
             double expectedMultilineHeight = (2 * (singleLineCell.height() - paddingVertical)) + paddingVertical;
@@ -271,12 +271,12 @@ class TableBuilderTest {
                     .getComponent(TableRowData.class)
                     .orElseThrow()
                     .cells()
-                    .getFirst();
+                    .get(0);
             TableResolvedCell singleLineCell = child(singleLineTable, 0)
                     .getComponent(TableRowData.class)
                     .orElseThrow()
                     .cells()
-                    .getFirst();
+                    .get(0);
 
             assertThat(multilineCell.height()).isEqualTo((2 * singleLineCell.height()) + 2.5);
         }
@@ -332,7 +332,7 @@ class TableBuilderTest {
                     .build();
 
             Entity row = child(table, 0);
-            TableResolvedCell cell = row.getComponent(TableRowData.class).orElseThrow().cells().getFirst();
+            TableResolvedCell cell = row.getComponent(TableRowData.class).orElseThrow().cells().get(0);
 
             assertThat(row.getComponent(EntityName.class)).hasValue(new EntityName("Orders__row_0"));
             assertThat(cell.name()).isEqualTo("Orders__row_0__cell_0");
@@ -353,7 +353,7 @@ class TableBuilderTest {
                     .getComponent(TableRowData.class)
                     .orElseThrow()
                     .cells()
-                    .getFirst();
+                    .get(0);
 
             TableResolvedCell firstRowSecondCell = child(table, 0)
                     .getComponent(TableRowData.class)
@@ -419,7 +419,7 @@ class TableBuilderTest {
                     .getComponent(TableRowData.class)
                     .orElseThrow()
                     .cells()
-                    .getFirst();
+                    .get(0);
 
             assertThat(secondRowCell.borderSides()).containsExactlyInAnyOrder(Side.TOP, Side.LEFT, Side.RIGHT, Side.BOTTOM);
             assertThat(secondRowCell.fillInsets().top()).isEqualTo(1.0);

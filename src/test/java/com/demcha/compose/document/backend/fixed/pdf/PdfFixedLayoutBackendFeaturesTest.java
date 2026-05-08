@@ -128,8 +128,8 @@ class PdfFixedLayoutBackendFeaturesTest {
             assertThat(firstChild.getTitle()).isEqualTo("Overview");
 
             assertThat(document.getPage(0).getAnnotations()).isNotEmpty();
-            assertThat(document.getPage(0).getAnnotations().getFirst()).isInstanceOf(PDAnnotationLink.class);
-            PDAnnotationLink annotation = (PDAnnotationLink) document.getPage(0).getAnnotations().getFirst();
+            assertThat(document.getPage(0).getAnnotations().get(0)).isInstanceOf(PDAnnotationLink.class);
+            PDAnnotationLink annotation = (PDAnnotationLink) document.getPage(0).getAnnotations().get(0);
             assertThat(annotation.getAction()).isInstanceOf(PDActionURI.class);
             assertThat(((PDActionURI) annotation.getAction()).getURI()).isEqualTo("https://example.com/docs");
 

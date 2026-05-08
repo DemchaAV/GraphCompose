@@ -155,7 +155,7 @@ class EngineComposerHarnessLayoutSnapshotTest {
         BlockTextData textData = blockEntity.getComponent(BlockTextData.class)
                 .orElseThrow(() -> new AssertionError("Missing BlockTextData for " + entityName));
 
-        return textData.lines().getFirst();
+        return textData.lines().get(0);
     }
 
     private EntityManager entityManager(EngineComposerHarness composer) throws Exception {

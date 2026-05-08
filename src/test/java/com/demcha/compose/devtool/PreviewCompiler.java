@@ -27,6 +27,8 @@ import java.util.regex.Pattern;
 public final class PreviewCompiler {
     private static final Pattern LOMBOK_VERSION_PATTERN =
             Pattern.compile("<lombok\\.version>([^<]+)</lombok\\.version>");
+    private static final Pattern MAVEN_COMPILER_RELEASE_PATTERN =
+            Pattern.compile("<maven\\.compiler\\.release>([^<]+)</maven\\.compiler\\.release>");
     private volatile List<String> cachedCompilerClasspath;
     private volatile Optional<Path> cachedLombokJar;
 
@@ -53,6 +55,13 @@ public final class PreviewCompiler {
 
         if (sourceFiles.isEmpty()) {
             return CompilationResult.failure("No Java sources found in watched source roots.", 0, 0);
+        }
+
+        int compilerRelease;
+        try {
+            compilerRelease = compilerRelease(workspace);
+        } catch (IllegalStateException ex) {
+            return CompilationResult.failure(ex.getMessage(), 0, sourceFiles.size());
         }
 
         Path outputDir = workspace.compiledOutputRoot().resolve("rev-" + revision);
@@ -84,8 +93,10 @@ public final class PreviewCompiler {
             var compilerClasspath = compilerClasspath(workspace);
 
             var options = new ArrayList<String>();
+            // Keep preview compilation aligned with the Maven project's declared
+            // target release instead of whatever newer JDK happens to run tests.
             options.add("--release");
-            options.add("21");
+            options.add(Integer.toString(compilerRelease));
             options.add("-encoding");
             options.add("UTF-8");
             options.add("-classpath");
@@ -138,6 +149,20 @@ public final class PreviewCompiler {
         }
     }
 
+    private int compilerRelease(DevToolWorkspace workspace) {
+        int runtimeRelease = Runtime.version().feature();
+        int configuredRelease = readCompilerReleaseFromPom(workspace.projectRoot())
+                .or(this::readCompilerReleaseFromCurrentProjectPom)
+                .orElse(runtimeRelease);
+
+        if (configuredRelease > runtimeRelease) {
+            throw new IllegalStateException(
+                    "Preview compiler requires JDK %d or newer, but tests are running on JDK %d."
+                            .formatted(configuredRelease, runtimeRelease));
+        }
+        return configuredRelease;
+    }
+
     private List<String> compilerClasspath(DevToolWorkspace workspace) {
         List<String> existing = cachedCompilerClasspath;
         if (existing != null) {
@@ -187,7 +212,20 @@ public final class PreviewCompiler {
                 .or(() -> findLatestInstalledLombokJar());
     }
 
+    private Optional<Integer> readCompilerReleaseFromCurrentProjectPom() {
+        return readCompilerReleaseFromPom(Path.of("").toAbsolutePath().normalize());
+    }
+
+    private Optional<Integer> readCompilerReleaseFromPom(Path projectRoot) {
+        return readPomProperty(projectRoot, MAVEN_COMPILER_RELEASE_PATTERN)
+                .flatMap(this::parseReleaseValue);
+    }
+
     private Optional<String> readLombokVersionFromPom(Path projectRoot) {
+        return readPomProperty(projectRoot, LOMBOK_VERSION_PATTERN);
+    }
+
+    private Optional<String> readPomProperty(Path projectRoot, Pattern pattern) {
         Path pom = projectRoot.resolve("pom.xml");
         if (Files.notExists(pom)) {
             return Optional.empty();
@@ -195,7 +233,7 @@ public final class PreviewCompiler {
 
         try {
             String content = Files.readString(pom, StandardCharsets.UTF_8);
-            Matcher matcher = LOMBOK_VERSION_PATTERN.matcher(content);
+            Matcher matcher = pattern.matcher(content);
             if (matcher.find()) {
                 return Optional.of(matcher.group(1).trim());
             }
@@ -204,6 +242,14 @@ public final class PreviewCompiler {
         }
 
         return Optional.empty();
+    }
+
+    private Optional<Integer> parseReleaseValue(String value) {
+        try {
+            return Optional.of(Integer.parseInt(value));
+        } catch (NumberFormatException ignored) {
+            return Optional.empty();
+        }
     }
 
     private Optional<Path> resolveLombokJar(String version) {

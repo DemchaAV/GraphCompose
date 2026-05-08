@@ -67,6 +67,7 @@ public final class PdfTextRenderHandler implements RenderHandler<TextComponent, 
         TextComponent.ValidatedTextData data = TextComponent.validatedTextData(entity);
         Font<PDFont> font = manager.getFonts().getFont(data.style().fontName(), PdfFont.class).orElseThrow();
         PDFont pdfFont = font.fontType(data.style().decoration());
+        String renderedText = resolveRenderText(font, data.style(), data.textValue().value());
         Padding padding = entity.getComponent(Padding.class).orElse(Padding.zero());
         PdfFont.VerticalMetrics metrics = resolveVerticalMetrics(font, data.style());
 
@@ -81,7 +82,7 @@ public final class PdfTextRenderHandler implements RenderHandler<TextComponent, 
             contentStream.setNonStrokingColor(data.style().color());
             contentStream.beginText();
             contentStream.newLineAtOffset(baselineX, baselineY);
-            contentStream.showText(data.textValue().value());
+            contentStream.showText(renderedText);
             contentStream.endText();
         } finally {
             contentStream.restoreGraphicsState();
@@ -107,5 +108,14 @@ public final class PdfTextRenderHandler implements RenderHandler<TextComponent, 
             return pdfFont.verticalMetrics(style);
         }
         throw new IllegalStateException("Expected PdfFont for PDF text rendering but got " + font.getClass().getName());
+    }
+
+    private String resolveRenderText(Font<PDFont> font,
+                                     com.demcha.compose.engine.components.content.text.TextStyle style,
+                                     String text) {
+        if (font instanceof PdfFont pdfFont) {
+            return pdfFont.sanitizeForRender(style, text);
+        }
+        return text == null ? "" : text;
     }
 }

@@ -89,7 +89,8 @@ public final class PdfParagraphFragmentRenderHandler
         try {
             for (ParagraphSpan span : spans) {
                 if (span instanceof ParagraphTextSpan textSpan) {
-                    String text = sanitize(textSpan.text());
+                    PdfFont font = fonts.getFont(textSpan.textStyle().fontName(), PdfFont.class).orElseThrow();
+                    String text = font.sanitizeForRender(textSpan.textStyle(), sanitize(textSpan.text()));
                     if (text.isEmpty()) {
                         cursorX += textSpan.width();
                         continue;
@@ -99,7 +100,6 @@ public final class PdfParagraphFragmentRenderHandler
                         stream.newLineAtOffset((float) cursorX, (float) baselineY);
                         inTextBlock = true;
                     }
-                    PdfFont font = fonts.getFont(textSpan.textStyle().fontName(), PdfFont.class).orElseThrow();
                     stream.setFont(font.fontType(textSpan.textStyle().decoration()), (float) textSpan.textStyle().size());
                     stream.setNonStrokingColor(textSpan.textStyle().color());
                     stream.showText(text);

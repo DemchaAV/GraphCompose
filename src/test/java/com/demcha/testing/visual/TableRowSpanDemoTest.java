@@ -138,7 +138,7 @@ class TableRowSpanDemoTest {
             BufferedImage image = PdfVisualRegression.standard()
                     .renderScale(1.0f)
                     .renderPages(pdf)
-                    .getFirst();
+                    .get(0);
 
             List<PlacedFragment> rowFragments = graph.fragments().stream()
                     .filter(fragment -> fragment.payload() instanceof TableRowFragmentPayload)
@@ -146,7 +146,7 @@ class TableRowSpanDemoTest {
             PlacedFragment secondRow = rowFragments.get(1);
             TableRowFragmentPayload secondRowPayload =
                     (TableRowFragmentPayload) secondRow.payload();
-            TableResolvedCell leftCell = secondRowPayload.cells().getFirst();
+            TableResolvedCell leftCell = secondRowPayload.cells().get(0);
 
             double rowTop = secondRow.y() + secondRow.height();
             double leftCellRight = secondRow.x() + leftCell.x() + leftCell.width();
@@ -189,7 +189,7 @@ class TableRowSpanDemoTest {
             BufferedImage image = PdfVisualRegression.standard()
                     .renderScale(1.0f)
                     .renderPages(pdf)
-                    .getFirst();
+                    .get(0);
 
             List<PlacedFragment> rowFragments = graph.fragments().stream()
                     .filter(fragment -> fragment.payload() instanceof TableRowFragmentPayload)

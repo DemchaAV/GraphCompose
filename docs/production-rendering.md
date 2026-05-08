@@ -40,6 +40,16 @@ the session.
 
 `buildPdf(Path)` also uses the streaming path internally.
 
+## Glyph Fallback
+
+When a PDF render uses a Standard 14 font such as Helvetica, some Unicode
+glyphs are not encodable through PDFBox's WinAnsi path. GraphCompose now
+degrades unsupported glyphs to `?` during both width measurement and PDF text
+emission so rendering does not fail mid-document.
+
+If preserving the original glyph matters, register an embedded/custom font
+family that contains the character instead of relying on the Standard 14 fonts.
+
 ## Debug Output
 
 Use `GraphCompose.document(path).guideLines(true)` or

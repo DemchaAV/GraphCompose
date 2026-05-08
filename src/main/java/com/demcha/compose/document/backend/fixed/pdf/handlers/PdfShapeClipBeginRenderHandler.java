@@ -69,12 +69,16 @@ public final class PdfShapeClipBeginRenderHandler
         if (policy == ClipPolicy.CLIP_BOUNDS) {
             stream.addRect(x, y, width, height);
         } else { // CLIP_PATH
-            switch (outline) {
-                case ShapeOutline.Ellipse ignored -> addEllipsePath(stream, x, y, width, height);
-                case ShapeOutline.RoundedRectangle r -> addRoundedRectanglePath(
+            if (outline instanceof ShapeOutline.Ellipse) {
+                addEllipsePath(stream, x, y, width, height);
+            } else if (outline instanceof ShapeOutline.RoundedRectangle r) {
+                addRoundedRectanglePath(
                         stream, x, y, width, height,
                         (float) Math.min(r.cornerRadius(), Math.min(width, height) / 2.0f));
-                case ShapeOutline.Rectangle ignored -> stream.addRect(x, y, width, height);
+            } else if (outline instanceof ShapeOutline.Rectangle) {
+                stream.addRect(x, y, width, height);
+            } else {
+                throw new IllegalStateException("Unsupported shape outline: " + outline);
             }
         }
         // clip() pushes the current path onto the clipping path; the path

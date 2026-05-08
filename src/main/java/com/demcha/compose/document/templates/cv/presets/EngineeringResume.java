@@ -17,6 +17,7 @@ import com.demcha.compose.document.templates.blocks.BulletListBlock;
 import com.demcha.compose.document.templates.blocks.IndentedBlock;
 import com.demcha.compose.document.templates.blocks.KeyValueBlock;
 import com.demcha.compose.document.templates.blocks.MultiParagraphBlock;
+import com.demcha.compose.document.templates.blocks.NumberedListBlock;
 import com.demcha.compose.document.templates.blocks.ParagraphBlock;
 import com.demcha.compose.document.templates.cv.spec.CvHeader;
 import com.demcha.compose.document.templates.cv.spec.CvModule;
@@ -444,11 +445,16 @@ public final class EngineeringResume {
         }
         List<String> lines = new ArrayList<>();
         Block body = module.body();
-        switch (body) {
-            case ParagraphBlock p -> addLines(lines, p.text());
-            case MultiParagraphBlock m -> m.paragraphs().forEach(line -> addLines(lines, line));
-            case BulletListBlock b -> b.items().forEach(item -> addLines(lines, item));
-            case IndentedBlock i -> i.items().forEach(item -> {
+        if (body instanceof ParagraphBlock p) {
+            addLines(lines, p.text());
+        } else if (body instanceof MultiParagraphBlock m) {
+            m.paragraphs().forEach(line -> addLines(lines, line));
+        } else if (body instanceof BulletListBlock b) {
+            b.items().forEach(item -> addLines(lines, item));
+        } else if (body instanceof NumberedListBlock n) {
+            n.items().forEach(item -> addLines(lines, item));
+        } else if (body instanceof IndentedBlock i) {
+            i.items().forEach(item -> {
                 String title = safe(item.title());
                 String bodyText = safe(item.body());
                 if (title.isBlank() && bodyText.isBlank()) {
@@ -462,11 +468,8 @@ public final class EngineeringResume {
                     lines.add(title + " | " + bodyText);
                 }
             });
-            case KeyValueBlock kv -> kv.entries().forEach(entry ->
-                    addLines(lines, entry.key() + ": " + entry.value()));
-            default -> {
-                // ignore other block kinds
-            }
+        } else if (body instanceof KeyValueBlock kv) {
+            kv.entries().forEach(entry -> addLines(lines, entry.key() + ": " + entry.value()));
         }
         return List.copyOf(lines);
     }

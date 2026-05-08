@@ -178,12 +178,13 @@ public final class PdfTableRowFragmentRenderHandler
             stream.setFont(font.fontType(cell.style().textStyle().decoration()), (float) cell.style().textStyle().size());
             stream.setNonStrokingColor(cell.style().textStyle().color());
             for (ResolvedTextLine line : lines) {
-                if (line.text().isEmpty()) {
+                String rendered = font.sanitizeForRender(cell.style().textStyle(), line.text());
+                if (rendered.isEmpty()) {
                     continue;
                 }
                 stream.beginText();
                 stream.newLineAtOffset((float) line.x(), (float) line.baselineY());
-                stream.showText(line.text());
+                stream.showText(rendered);
                 stream.endText();
             }
         } finally {

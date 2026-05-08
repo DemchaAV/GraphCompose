@@ -56,15 +56,9 @@ public final class GraphComposeDevTool extends Application {
     private final PreviewCompiler compiler = new PreviewCompiler();
     private final float previewScale = PreviewScaleResolver.fromSystemProperties();
     private final ExecutorService refreshExecutor = Executors.newSingleThreadExecutor(
-            Thread.ofPlatform()
-                    .daemon()
-                    .name("graphcompose-devtool-refresh-", 0)
-                    .factory());
+            runnable -> newDaemonThread(runnable, "graphcompose-devtool-refresh-0"));
     private final ScheduledExecutorService debounceExecutor = Executors.newSingleThreadScheduledExecutor(
-            Thread.ofPlatform()
-                    .daemon()
-                    .name("graphcompose-devtool-debounce-", 0)
-                    .factory());
+            runnable -> newDaemonThread(runnable, "graphcompose-devtool-debounce-0"));
     private final AtomicReference<RefreshRequest> pendingRequest = new AtomicReference<>();
     private final AtomicReference<ScheduledFuture<?>> pendingDebounce = new AtomicReference<>();
     private final AtomicReference<LoadedPreview> currentPreview = new AtomicReference<>();
@@ -88,6 +82,12 @@ public final class GraphComposeDevTool extends Application {
 
     public static void main(String[] args) {
         Application.launch(GraphComposeDevTool.class, args);
+    }
+
+    private static Thread newDaemonThread(Runnable runnable, String name) {
+        Thread thread = new Thread(runnable, name);
+        thread.setDaemon(true);
+        return thread;
     }
 
     @Override

@@ -607,16 +607,19 @@ public final class WeeklyScheduleRenderer {
         if (dayShift == null) {
             return List.of(emptyDayCell(theme));
         }
-        return switch (dayShift) {
-            case DayShift.EmptyDay e ->
-                    List.of(emptyDayCell(theme));
-            case DayShift.FullStatus(ShiftStatus s) ->
-                    List.of(fullStatusCell(s, theme));
-            case DayShift.CrossMeal(Shift shift) ->
-                    shiftAcrossDay(shift, theme);
-            case DayShift.Halves(Half lunch, Half dinner) ->
-                    mergedHalfCells(lunch, dinner, theme);
-        };
+        if (dayShift instanceof DayShift.EmptyDay) {
+            return List.of(emptyDayCell(theme));
+        }
+        if (dayShift instanceof DayShift.FullStatus fullStatus) {
+            return List.of(fullStatusCell(fullStatus.status(), theme));
+        }
+        if (dayShift instanceof DayShift.CrossMeal crossMeal) {
+            return shiftAcrossDay(crossMeal.shift(), theme);
+        }
+        if (dayShift instanceof DayShift.Halves halves) {
+            return mergedHalfCells(halves.lunch(), halves.dinner(), theme);
+        }
+        throw new IllegalStateException("Unsupported day shift: " + dayShift);
     }
 
     private static List<DocumentTableCell> mergedHalfCells(Half lunch, Half dinner, Theme theme) {
@@ -633,11 +636,16 @@ public final class WeeklyScheduleRenderer {
     }
 
     private static List<DocumentTableCell> halfCells(Half half, Theme theme) {
-        return switch (half) {
-            case Half.Empty e -> List.of(emptyHalfCell(theme));
-            case Half.StatusFill(ShiftStatus s) -> List.of(statusHalfCell(s, theme));
-            case Half.Working(Shift shift) -> shiftHalfCells(shift, theme);
-        };
+        if (half instanceof Half.Empty) {
+            return List.of(emptyHalfCell(theme));
+        }
+        if (half instanceof Half.StatusFill statusFill) {
+            return List.of(statusHalfCell(statusFill.status(), theme));
+        }
+        if (half instanceof Half.Working working) {
+            return shiftHalfCells(working.shift(), theme);
+        }
+        throw new IllegalStateException("Unsupported half shift: " + half);
     }
 
     private static DocumentTableCell emptyDayCell(Theme theme) {

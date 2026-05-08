@@ -85,7 +85,7 @@ public final class PreviewCompiler {
 
             var options = new ArrayList<String>();
             options.add("--release");
-            options.add("21");
+            options.add("17");
             options.add("-encoding");
             options.add("UTF-8");
             options.add("-classpath");

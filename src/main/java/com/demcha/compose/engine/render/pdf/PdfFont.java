@@ -96,7 +96,7 @@ public class PdfFont extends FontBase<PDFont> {
         try {
             // ✅ IMPORTANT: preserve whitespace runs exactly
             boolean whitespaceOnly = text.chars().allMatch(Character::isWhitespace);
-            String measured = whitespaceOnly ? text : textSanitizer(text); // sanitizer must not strip trailing spaces ideally
+            String measured = whitespaceOnly ? text : sanitizeForFont(fontType(style.decoration()), textSanitizer(text));
 
             double width = fontType(style.decoration()).getStringWidth(measured) / 1000d * size;
             return width;
@@ -107,16 +107,26 @@ public class PdfFont extends FontBase<PDFont> {
     }
 
 
-    private String prepareForRender(String text) {
-        return textSanitizer(text);
+    public String sanitizeForRender(TextStyle style, String text) {
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
+        return sanitizeForFont(fontType(style.decoration()), textSanitizer(text));
     }
 
-    /** Keeps spaces, only replaces characters the font can't encode. */
-    private String sanitizeByFont(PDFont font, String s) {
-        StringBuilder sb = new StringBuilder(s.length());
-        s.codePoints().forEach(cp -> {
-            // keep spaces/newlines logic correct for wrapping
-            if (cp == '\n' || cp == '\r') return;
+    /**
+     * Normalizes text for one concrete PDF font, preserving layout-safe whitespace
+     * while degrading unsupported glyphs to a printable fallback.
+     */
+    public static String sanitizeForFont(PDFont font, String text) {
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder(text.length());
+        text.codePoints().forEach(cp -> {
+            if (cp == '\n' || cp == '\r') {
+                return;
+            }
 
             String ch = new String(Character.toChars(cp));
             if (canEncode(font, ch)) sb.append(ch);
@@ -125,7 +135,7 @@ public class PdfFont extends FontBase<PDFont> {
         return sb.toString();
     }
 
-    private boolean canEncode(PDFont font, String ch) {
+    private static boolean canEncode(PDFont font, String ch) {
         try {
             font.encode(ch);
             return true;

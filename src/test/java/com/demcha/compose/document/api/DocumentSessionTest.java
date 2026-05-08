@@ -129,8 +129,8 @@ class DocumentSessionTest {
 
             assertThat(session.roots()).containsExactly(root);
             assertThat(root.children()).hasSize(1);
-            assertThat(root.children().getFirst()).isInstanceOf(ParagraphNode.class);
-            assertThat(((ParagraphNode) root.children().getFirst()).text()).isEqualTo("Shortcut paragraph");
+            assertThat(root.children().get(0)).isInstanceOf(ParagraphNode.class);
+            assertThat(((ParagraphNode) root.children().get(0)).text()).isEqualTo("Shortcut paragraph");
             assertThat(session.layoutGraph().totalPages()).isEqualTo(1);
         }
     }
@@ -148,13 +148,13 @@ class DocumentSessionTest {
                     .addText("Composed paragraph")));
 
             assertThat(session.roots()).hasSize(1);
-            assertThat(session.roots().getFirst()).isInstanceOf(ContainerNode.class);
+            assertThat(session.roots().get(0)).isInstanceOf(ContainerNode.class);
 
-            ContainerNode root = (ContainerNode) session.roots().getFirst();
+            ContainerNode root = (ContainerNode) session.roots().get(0);
             assertThat(root.name()).isEqualTo("ComposeShortcut");
             assertThat(root.children()).hasSize(1);
-            assertThat(root.children().getFirst()).isInstanceOf(ParagraphNode.class);
-            assertThat(((ParagraphNode) root.children().getFirst()).text()).isEqualTo("Composed paragraph");
+            assertThat(root.children().get(0)).isInstanceOf(ParagraphNode.class);
+            assertThat(((ParagraphNode) root.children().get(0)).text()).isEqualTo("Composed paragraph");
             assertThat(session.layoutGraph().totalPages()).isEqualTo(1);
         }
     }
@@ -175,13 +175,13 @@ class DocumentSessionTest {
                     .build();
 
             assertThat(root.children()).hasSize(1);
-            assertThat(root.children().getFirst()).isInstanceOf(SectionNode.class);
+            assertThat(root.children().get(0)).isInstanceOf(SectionNode.class);
 
-            SectionNode section = (SectionNode) root.children().getFirst();
+            SectionNode section = (SectionNode) root.children().get(0);
             assertThat(section.name()).isEqualTo("Profile");
             assertThat(section.children()).hasSize(1);
-            assertThat(section.children().getFirst()).isInstanceOf(ParagraphNode.class);
-            assertThat(((ParagraphNode) section.children().getFirst()).text()).isEqualTo("Senior platform engineer");
+            assertThat(section.children().get(0)).isInstanceOf(ParagraphNode.class);
+            assertThat(((ParagraphNode) section.children().get(0)).text()).isEqualTo("Senior platform engineer");
             assertThat(session.layoutGraph().totalPages()).isEqualTo(1);
         }
     }
@@ -210,14 +210,14 @@ class DocumentSessionTest {
             LayoutGraph graph = session.layoutGraph();
 
             assertThat(graph.fragments()).hasSize(2);
-            assertThat(graph.fragments().getFirst().path()).contains("InfoCard[0]");
-            assertThat(graph.fragments().getFirst().payload())
+            assertThat(graph.fragments().get(0).path()).contains("InfoCard[0]");
+            assertThat(graph.fragments().get(0).payload())
                     .isInstanceOf(ShapeFragmentPayload.class);
             assertThat(graph.fragments().get(1).payload())
                     .isInstanceOf(ParagraphFragmentPayload.class);
 
             ShapeFragmentPayload payload =
-                    (ShapeFragmentPayload) graph.fragments().getFirst().payload();
+                    (ShapeFragmentPayload) graph.fragments().get(0).payload();
             assertThat(payload.fillColor()).isEqualTo(fill.color());
             assertThat(payload.stroke().strokeColor().color()).isEqualTo(DocumentColor.ROYAL_BLUE.color());
             assertThat(payload.stroke().width()).isEqualTo(0.8);
@@ -338,13 +338,13 @@ class DocumentSessionTest {
                     .build();
 
             assertThat(root.children()).hasSize(1);
-            assertThat(root.children().getFirst()).isInstanceOf(SectionNode.class);
+            assertThat(root.children().get(0)).isInstanceOf(SectionNode.class);
 
-            SectionNode module = (SectionNode) root.children().getFirst();
+            SectionNode module = (SectionNode) root.children().get(0);
             assertThat(module.name()).isEqualTo("TechnicalSkills");
             assertThat(module.children()).hasSize(5);
-            assertThat(module.children().getFirst()).isInstanceOf(ParagraphNode.class);
-            assertThat(((ParagraphNode) module.children().getFirst()).text()).isEqualTo("Technical Skills");
+            assertThat(module.children().get(0)).isInstanceOf(ParagraphNode.class);
+            assertThat(((ParagraphNode) module.children().get(0)).text()).isEqualTo("Technical Skills");
             assertThat(module.children().get(1)).isInstanceOf(ParagraphNode.class);
             assertThat(module.children().get(2)).isInstanceOf(ListNode.class);
             assertThat(module.children().get(3)).isInstanceOf(ListNode.class);
@@ -416,11 +416,11 @@ class DocumentSessionTest {
                     .build();
 
             assertThat(root.children()).hasSize(1);
-            assertThat(root.children().getFirst()).isInstanceOf(TableNode.class);
+            assertThat(root.children().get(0)).isInstanceOf(TableNode.class);
 
-            TableNode table = (TableNode) root.children().getFirst();
+            TableNode table = (TableNode) root.children().get(0);
             assertThat(table.rows()).hasSize(3);
-            assertThat(table.rows().getFirst())
+            assertThat(table.rows().get(0))
                     .extracting(DocumentTableCell::lines)
                     .containsExactly(List.of("Role"), List.of("Owner"), List.of("Status"));
             assertThat(table.rows().get(1))
@@ -467,16 +467,16 @@ class DocumentSessionTest {
             LayoutGraph graph = session.layoutGraph();
             assertThat(graph.totalPages()).isGreaterThan(1);
             assertThat(graph.nodes()).hasSize(1);
-            assertThat(graph.nodes().getFirst().startPage()).isEqualTo(0);
-            assertThat(graph.nodes().getFirst().endPage()).isGreaterThan(0);
+            assertThat(graph.nodes().get(0).startPage()).isEqualTo(0);
+            assertThat(graph.nodes().get(0).endPage()).isGreaterThan(0);
             assertThat(graph.fragments()).extracting(PlacedFragment::pageIndex).doesNotHaveDuplicates();
             assertThat(graph.fragments()).allSatisfy(fragment ->
                     assertThat(fragment.payload()).isInstanceOf(ParagraphFragmentPayload.class));
 
             ParagraphFragmentPayload firstPayload =
-                    (ParagraphFragmentPayload) graph.fragments().getFirst().payload();
+                    (ParagraphFragmentPayload) graph.fragments().get(0).payload();
             ParagraphFragmentPayload lastPayload =
-                    (ParagraphFragmentPayload) graph.fragments().getLast().payload();
+                    (ParagraphFragmentPayload) graph.fragments().get(graph.fragments().size() - 1).payload();
             assertThat(firstPayload.padding().top()).isEqualTo(4.0);
             assertThat(firstPayload.padding().bottom()).isEqualTo(0.0);
             assertThat(lastPayload.padding().top()).isEqualTo(0.0);
@@ -558,7 +558,7 @@ class DocumentSessionTest {
             assertThat(graph.fragments()).hasSize(1);
 
             ParagraphFragmentPayload payload =
-                    (ParagraphFragmentPayload) graph.fragments().getFirst().payload();
+                    (ParagraphFragmentPayload) graph.fragments().get(0).payload();
             assertThat(payload.lines())
                     .extracting(ParagraphLine::text)
                     .containsExactly("First line", "", "Second line");
@@ -832,7 +832,7 @@ class DocumentSessionTest {
 
             try (PDDocument document = Loader.loadPDF(pdfBytes)) {
                 BufferedImage image = new PDFRenderer(document).renderImageWithDPI(0, RENDER_DPI);
-                PlacedFragment fragment = graph.fragments().getFirst();
+                PlacedFragment fragment = graph.fragments().get(0);
 
                 assertThat(hasColorNear(
                         image,
@@ -884,7 +884,7 @@ class DocumentSessionTest {
 
             try (PDDocument document = Loader.loadPDF(pdfBytes)) {
                 BufferedImage image = new PDFRenderer(document).renderImageWithDPI(0, RENDER_DPI);
-                PlacedFragment fragment = graph.fragments().getFirst();
+                PlacedFragment fragment = graph.fragments().get(0);
 
                 assertThat(hasColorNear(
                         image,
@@ -1113,4 +1113,3 @@ class DocumentSessionTest {
                 && Math.abs(actual.getBlue() - expected.getBlue()) <= tolerancePerChannel;
     }
 }
-

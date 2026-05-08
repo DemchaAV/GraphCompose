@@ -215,39 +215,33 @@ public final class BlueBanner {
         }
 
         private void renderBody(SectionBuilder section, Block body) {
-            switch (body) {
-                case ParagraphBlock p -> renderParagraph(section, p.text());
-                case MultiParagraphBlock m -> {
-                    for (String line : m.paragraphs()) {
-                        WorkEntry entry = parseWorkEntry(line);
-                        if (entry != null) {
-                            renderWorkEntry(section, entry);
-                        } else {
-                            renderParagraph(section, line);
-                        }
+            if (body instanceof ParagraphBlock p) {
+                renderParagraph(section, p.text());
+            } else if (body instanceof MultiParagraphBlock m) {
+                for (String line : m.paragraphs()) {
+                    WorkEntry entry = parseWorkEntry(line);
+                    if (entry != null) {
+                        renderWorkEntry(section, entry);
+                    } else {
+                        renderParagraph(section, line);
                     }
                 }
-                case BulletListBlock b -> renderBulletList(section, b.items());
-                case NumberedListBlock n -> {
-                    for (String item : n.items()) {
-                        renderParagraph(section, item);
-                    }
+            } else if (body instanceof BulletListBlock b) {
+                renderBulletList(section, b.items());
+            } else if (body instanceof NumberedListBlock n) {
+                for (String item : n.items()) {
+                    renderParagraph(section, item);
                 }
-                case IndentedBlock i -> {
-                    for (IndentedBlock.Item item : i.items()) {
-                        String inline = (item.title().isBlank() ? "" : item.title())
-                                + (item.title().isBlank() || item.body().isBlank() ? "" : " - ")
-                                + (item.body().isBlank() ? "" : item.body());
-                        renderParagraph(section, inline);
-                    }
+            } else if (body instanceof IndentedBlock i) {
+                for (IndentedBlock.Item item : i.items()) {
+                    String inline = (item.title().isBlank() ? "" : item.title())
+                            + (item.title().isBlank() || item.body().isBlank() ? "" : " - ")
+                            + (item.body().isBlank() ? "" : item.body());
+                    renderParagraph(section, inline);
                 }
-                case KeyValueBlock kv -> {
-                    for (KeyValueBlock.Entry entry : kv.entries()) {
-                        renderKeyValueEntry(section, entry);
-                    }
-                }
-                default -> {
-                    // ignore other block kinds
+            } else if (body instanceof KeyValueBlock kv) {
+                for (KeyValueBlock.Entry entry : kv.entries()) {
+                    renderKeyValueEntry(section, entry);
                 }
             }
         }

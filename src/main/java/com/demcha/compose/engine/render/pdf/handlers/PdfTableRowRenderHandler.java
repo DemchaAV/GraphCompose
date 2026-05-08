@@ -202,12 +202,13 @@ public final class PdfTableRowRenderHandler implements RenderHandler<TableRow, P
             stream.setFont(font.fontType(style.textStyle().decoration()), (float) style.textStyle().size());
             stream.setNonStrokingColor(style.textStyle().color());
             for (ResolvedTextLine line : lines) {
-                if (line.text().isEmpty()) {
+                String rendered = font.sanitizeForRender(style.textStyle(), line.text());
+                if (rendered.isEmpty()) {
                     continue;
                 }
                 stream.beginText();
                 stream.newLineAtOffset((float) line.x(), (float) line.baselineY());
-                stream.showText(line.text());
+                stream.showText(rendered);
                 stream.endText();
             }
         } finally {

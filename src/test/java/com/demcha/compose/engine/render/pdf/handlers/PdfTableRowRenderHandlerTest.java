@@ -141,9 +141,9 @@ class PdfTableRowRenderHandlerTest {
 
         assertThat(topLines).hasSize(2);
         assertThat(middleLines).hasSize(2);
-        assertThat(topLines.getFirst().baselineY()).isGreaterThan(middleLines.getFirst().baselineY());
-        assertThat(topLines.getFirst().baselineY() - topLines.get(1).baselineY()).isEqualTo(lineHeight);
-        assertThat(middleLines.getFirst().baselineY() - middleLines.get(1).baselineY()).isEqualTo(lineHeight);
+        assertThat(topLines.get(0).baselineY()).isGreaterThan(middleLines.get(0).baselineY());
+        assertThat(topLines.get(0).baselineY() - topLines.get(1).baselineY()).isEqualTo(lineHeight);
+        assertThat(middleLines.get(0).baselineY() - middleLines.get(1).baselineY()).isEqualTo(lineHeight);
     }
 
     @Test
@@ -171,6 +171,6 @@ class PdfTableRowRenderHandlerTest {
         double lineHeight = font.getLineHeight(cell.style().textStyle());
 
         assertThat(lines).hasSize(2);
-        assertThat(lines.getFirst().baselineY() - lines.get(1).baselineY()).isEqualTo(lineHeight + lineSpacing);
+        assertThat(lines.get(0).baselineY() - lines.get(1).baselineY()).isEqualTo(lineHeight + lineSpacing);
     }
 }

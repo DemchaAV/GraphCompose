@@ -91,9 +91,9 @@ public final class PdfBlockTextRenderHandler implements RenderHandler<BlockText,
 
                 contentStream.setTextMatrix(new Matrix(1, 0, 0, 1, (float) line.x(), (float) line.y()));
                 for (TextDataBody body : line.bodies()) {
-                    setFont(entityManager, body, contentStream);
+                    PdfFont pdfFont = setFont(entityManager, body, contentStream);
                     try {
-                        String text = BlockText.sanitizeText(body.text());
+                        String text = pdfFont.sanitizeForRender(body.textStyle(), BlockText.sanitizeText(body.text()));
                         if (!text.isEmpty()) {
                             contentStream.showText(text);
                         }
@@ -119,10 +119,11 @@ public final class PdfBlockTextRenderHandler implements RenderHandler<BlockText,
         return true;
     }
 
-    private void setFont(EntityManager entityManager, TextDataBody body, PDPageContentStream contentStream) throws IOException {
+    private PdfFont setFont(EntityManager entityManager, TextDataBody body, PDPageContentStream contentStream) throws IOException {
         var style = body.textStyle();
         PdfFont pdfFont = entityManager.getFonts().getFont(style.fontName(), PdfFont.class).orElseThrow();
         contentStream.setFont(pdfFont.fontType(style.decoration()), (float) style.size());
+        return pdfFont;
     }
 
     /**

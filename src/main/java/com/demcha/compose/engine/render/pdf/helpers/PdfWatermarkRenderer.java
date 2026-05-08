@@ -2,6 +2,7 @@ package com.demcha.compose.engine.render.pdf.helpers;
 
 import com.demcha.compose.engine.components.content.watermark.WatermarkConfig;
 import com.demcha.compose.engine.components.content.watermark.WatermarkPosition;
+import com.demcha.compose.engine.render.pdf.PdfFont;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -73,7 +74,7 @@ public final class PdfWatermarkRenderer {
                                             PDRectangle mediaBox) throws IOException {
         PDFont font = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
         float fontSize = config.getFontSize();
-        String text = config.getText();
+        String text = PdfFont.sanitizeForFont(font, config.getText());
 
         float textWidth = font.getStringWidth(text) / 1000f * fontSize;
         float textHeight = fontSize;

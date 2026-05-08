@@ -2,6 +2,7 @@ package com.demcha.compose.font;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.testsupport.EngineComposerHarness;
+import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.engine.render.word.WordFont;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -59,5 +60,17 @@ class FontLibraryIntegrationTest {
             assertThat(fonts.getFont(customFamily, PdfFont.class)).isPresent();
             assertThat(fonts.getFont(customFamily, WordFont.class)).isPresent();
         }
+    }
+
+    @Test
+    void shouldDegradeUnsupportedGlyphsForStandard14PdfFonts() {
+        PdfFont helvetica = (PdfFont) DefaultFonts.standardLibrary()
+                .getFont(FontName.HELVETICA, PdfFont.class)
+                .orElseThrow();
+
+        String sanitized = helvetica.sanitizeForRender(TextStyle.DEFAULT_STYLE, "Alpha ▪ Beta");
+
+        assertThat(sanitized).isEqualTo("Alpha ? Beta");
+        assertThat(helvetica.getTextWidth(TextStyle.DEFAULT_STYLE, "Alpha ▪ Beta")).isGreaterThan(0.0);
     }
 }

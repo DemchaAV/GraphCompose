@@ -42,9 +42,9 @@ class PdfLinkRenderHandlerTest {
             assertThat(rendered).isTrue();
             assertThat(document.getNumberOfPages()).isEqualTo(1);
             assertThat(document.getPage(0).getAnnotations()).hasSize(1);
-            assertThat(document.getPage(0).getAnnotations().getFirst()).isInstanceOf(PDAnnotationLink.class);
+            assertThat(document.getPage(0).getAnnotations().get(0)).isInstanceOf(PDAnnotationLink.class);
 
-            PDAnnotationLink annotation = (PDAnnotationLink) document.getPage(0).getAnnotations().getFirst();
+            PDAnnotationLink annotation = (PDAnnotationLink) document.getPage(0).getAnnotations().get(0);
             assertThat(annotation.getAction()).isInstanceOf(PDActionURI.class);
             assertThat(((PDActionURI) annotation.getAction()).getURI()).isEqualTo("https://example.com/profile");
             assertThat(annotation.getRectangle().getWidth()).isEqualTo(128.0f);

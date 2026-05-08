@@ -74,7 +74,7 @@ class TableCellComposedContentTest {
             assertThat(paragraphFragments).hasSize(1);
 
             ParagraphFragmentPayload childPayload = (ParagraphFragmentPayload)
-                    paragraphFragments.getFirst().payload();
+                    paragraphFragments.get(0).payload();
             // The paragraph wraps within the cell's inner width, so the
             // full sentence is split across two visual lines. Combine
             // them before checking the rendered text.

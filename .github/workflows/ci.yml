@@ -121,12 +121,17 @@ jobs:
           java-version: '21'
           cache: maven
 
+      - name: Install root artifact
+        run: ./mvnw -B -ntp -DskipTests install -pl .
+
+      - name: Compile benchmarks module
+        run: ./mvnw -B -ntp -f benchmarks/pom.xml clean compile
+
       - name: Run coarse performance smoke benchmark
         run: |
-          ./mvnw -B -ntp -DskipTests test-compile \
+          ./mvnw -B -ntp -f benchmarks/pom.xml -DskipTests \
             "org.codehaus.mojo:exec-maven-plugin:3.5.0:java" \
             "-Dexec.mainClass=com.demcha.compose.CurrentSpeedBenchmark" \
-            "-Dexec.classpathScope=test" \
             "-Dgraphcompose.benchmark.profile=smoke"
 
       - name: Upload smoke benchmark artifacts
@@ -134,7 +139,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-smoke-${{ github.run_id }}
-          path: target/benchmarks/current-speed/**
+          path: benchmarks/target/benchmarks/current-speed/**
           if-no-files-found: ignore
 
   benchmark-diff:
@@ -158,18 +163,23 @@ jobs:
       - name: Restore benchmark history cache
         uses: actions/cache@v4
         with:
-          path: target/benchmarks/current-speed
+          path: benchmarks/target/benchmarks/current-speed
           key: benchmark-current-speed-${{ github.ref_name }}-${{ github.run_id }}
           restore-keys: |
             benchmark-current-speed-${{ github.ref_name }}-
             benchmark-current-speed-
 
+      - name: Install root artifact
+        run: ./mvnw -B -ntp -DskipTests install -pl .
+
+      - name: Compile benchmarks module
+        run: ./mvnw -B -ntp -f benchmarks/pom.xml clean compile
+
       - name: Run full benchmark suite
         run: |
-          ./mvnw -B -ntp -DskipTests test-compile \
+          ./mvnw -B -ntp -f benchmarks/pom.xml -DskipTests \
             "org.codehaus.mojo:exec-maven-plugin:3.5.0:java" \
             "-Dexec.mainClass=com.demcha.compose.CurrentSpeedBenchmark" \
-            "-Dexec.classpathScope=test" \
             "-Dgraphcompose.benchmark.profile=full" \
             "-Dgraphcompose.benchmark.enforceGate=false"
 
@@ -177,18 +187,17 @@ jobs:
         id: benchmark-runs
         run: |
           count=0
-          if [ -d target/benchmarks/current-speed ]; then
-            count=$(find target/benchmarks/current-speed -maxdepth 1 -name 'run-*.json' | wc -l | tr -d ' ')
+          if [ -d benchmarks/target/benchmarks/current-speed ]; then
+            count=$(find benchmarks/target/benchmarks/current-speed -maxdepth 1 -name 'run-*.json' | wc -l | tr -d ' ')
           fi
           echo "count=$count" >> "$GITHUB_OUTPUT"
 
       - name: Diff newest benchmark reports
         if: steps.benchmark-runs.outputs.count != '0' && steps.benchmark-runs.outputs.count != '1'
         run: |
-          ./mvnw -B -ntp -DskipTests test-compile \
+          ./mvnw -B -ntp -f benchmarks/pom.xml -DskipTests \
             "org.codehaus.mojo:exec-maven-plugin:3.5.0:java" \
             "-Dexec.mainClass=com.demcha.compose.BenchmarkDiffTool" \
-            "-Dexec.classpathScope=test" \
             "-Dexec.args=current-speed"
 
       - name: Upload benchmark artifacts
@@ -197,6 +206,6 @@ jobs:
         with:
           name: benchmark-full-${{ github.run_id }}
           path: |
-            target/benchmarks/current-speed/**
-            target/benchmarks/diffs/current-speed/**
+            benchmarks/target/benchmarks/current-speed/**
+            benchmarks/target/benchmarks/diffs/current-speed/**
           if-no-files-found: ignore

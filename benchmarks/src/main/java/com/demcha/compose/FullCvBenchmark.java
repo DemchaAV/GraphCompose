@@ -1,8 +1,10 @@
 package com.demcha.compose;
 
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.builtins.CvTemplateV1;
-import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
+import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.cv.presets.ModernProfessional;
+import com.demcha.compose.document.templates.cv.spec.CvSpec;
+import com.demcha.compose.document.theme.BusinessTheme;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.util.Arrays;
@@ -16,8 +18,8 @@ public class FullCvBenchmark {
         BenchmarkSupport.configureQuietLogging();
         System.out.println("Starting FullCvBenchmark...");
 
-        CvDocumentSpec cv = CanonicalBenchmarkSupport.canonicalCv();
-        CvTemplateV1 template = new CvTemplateV1();
+        CvSpec cv = CanonicalBenchmarkSupport.canonicalCv();
+        DocumentTemplate<CvSpec> template = ModernProfessional.create(BusinessTheme.modern());
 
         System.out.println("Warming up JVM (JIT compilation, font cache warmup)...");
         for (int i = 0; i < WARMUP_ITERATIONS; i++) {
@@ -37,7 +39,7 @@ public class FullCvBenchmark {
         printStatistics(durationsNs);
     }
 
-    private static void generateCvInMemory(CvTemplateV1 template, CvDocumentSpec cv) {
+    private static void generateCvInMemory(DocumentTemplate<CvSpec> template, CvSpec cv) {
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(com.demcha.compose.document.api.DocumentPageSize.A4)
                 .margin(15, 10, 15, 15)

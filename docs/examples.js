@@ -275,6 +275,7 @@
   function renderHighlight(ex, categoryId) {
     const screenshot = ex.screenshot || '';
     const pdf = ex.pdf || '';
+    const code = ex.code || '#';
     const badge = CATEGORY_BADGE[categoryId] || '';
     return [
       '<article class="highlight-tile" data-id="' + escAttr(ex.id || '') + '" role="listitem">',
@@ -282,6 +283,7 @@
       '          data-action="lightbox"',
       '          data-screenshot="' + escAttr(screenshot) + '"',
       '          data-pdf="' + escAttr(pdf) + '"',
+      '          data-code="' + escAttr(code) + '"',
       '          data-title="' + escAttr(ex.title || ex.id || '') + '"',
       '          aria-label="Open preview for ' + escAttr(ex.title || ex.id || '') + '">',
       screenshot
@@ -359,6 +361,7 @@
       '          data-action="lightbox"',
       '          data-screenshot="' + escAttr(screenshot) + '"',
       '          data-pdf="' + escAttr(pdf) + '"',
+      '          data-code="' + escAttr(code) + '"',
       '          data-title="' + escAttr(ex.title || ex.id || '') + '"',
       '          aria-label="Open preview for ' + escAttr(ex.title || ex.id || '') + '">',
       screenshot
@@ -412,7 +415,8 @@
       '  <header class="lightbox-header">',
       '    <h4 class="lightbox-title"></h4>',
       '    <div class="lightbox-actions">',
-      '      <a class="example-action lightbox-pdf-link" target="_blank" rel="noopener">Open PDF</a>',
+      '      <a class="example-action lightbox-pdf-link" target="_blank" rel="noopener" aria-label="Open PDF">Open PDF</a>',
+      '      <a class="example-action example-action-ghost lightbox-code-link" target="_blank" rel="noopener" aria-label="Open source on GitHub">View Code</a>',
       '      <button class="lightbox-close" type="button" aria-label="Close" data-close>&times;</button>',
       '    </div>',
       '  </header>',
@@ -434,12 +438,19 @@
     });
     return lightbox;
   }
-  function openLightbox(screenshot, pdf, title) {
+  function openLightbox(screenshot, pdf, code, title) {
     const lb = ensureLightbox();
     lb.querySelector('.lightbox-image').src = screenshot;
     lb.querySelector('.lightbox-image').alt = title + ' preview';
     lb.querySelector('.lightbox-title').textContent = title;
     lb.querySelector('.lightbox-pdf-link').href = pdf;
+    const codeLink = lb.querySelector('.lightbox-code-link');
+    if (code && code !== '#') {
+      codeLink.href = code;
+      codeLink.style.display = '';
+    } else {
+      codeLink.style.display = 'none';
+    }
     lb.classList.add('is-open');
     lb.setAttribute('aria-hidden', 'false');
     document.body.classList.add('lightbox-open');
@@ -470,9 +481,10 @@
     e.preventDefault();
     const screenshot = trigger.dataset.screenshot;
     const pdf = trigger.dataset.pdf;
+    const code = trigger.dataset.code;
     const title = trigger.dataset.title;
     if (screenshot) {
-      openLightbox(screenshot, pdf, title);
+      openLightbox(screenshot, pdf, code, title);
     } else if (pdf) {
       window.open(pdf, '_blank');
     }

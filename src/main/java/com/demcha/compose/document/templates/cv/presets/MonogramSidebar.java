@@ -497,32 +497,34 @@ public final class MonogramSidebar {
         }
         List<String> result = new ArrayList<>();
         Block body = module.body();
-        switch (body) {
-            case ParagraphBlock p -> {
-                String t = safe(p.text()).trim();
-                if (!t.isBlank()) {
-                    result.add(t);
-                }
+        if (body instanceof ParagraphBlock p) {
+            String t = safe(p.text()).trim();
+            if (!t.isBlank()) {
+                result.add(t);
             }
-            case MultiParagraphBlock m -> m.paragraphs().forEach(line -> {
+        } else if (body instanceof MultiParagraphBlock m) {
+            m.paragraphs().forEach(line -> {
                 String t = safe(line).trim();
                 if (!t.isBlank()) {
                     result.add(t);
                 }
             });
-            case BulletListBlock b -> b.items().forEach(item -> {
+        } else if (body instanceof BulletListBlock b) {
+            b.items().forEach(item -> {
                 String t = safe(item).trim();
                 if (!t.isBlank()) {
                     result.add(t);
                 }
             });
-            case NumberedListBlock n -> n.items().forEach(item -> {
+        } else if (body instanceof NumberedListBlock n) {
+            n.items().forEach(item -> {
                 String t = safe(item).trim();
                 if (!t.isBlank()) {
                     result.add(t);
                 }
             });
-            case IndentedBlock i -> i.items().forEach(item -> {
+        } else if (body instanceof IndentedBlock i) {
+            i.items().forEach(item -> {
                 String title = safe(item.title());
                 String bodyText = safe(item.body());
                 if (title.isBlank() && bodyText.isBlank()) {
@@ -536,11 +538,8 @@ public final class MonogramSidebar {
                     result.add(title + " | " + bodyText);
                 }
             });
-            case KeyValueBlock kv -> kv.entries().forEach(entry ->
-                    result.add(entry.key() + ": " + entry.value()));
-            default -> {
-                // ignore other block kinds
-            }
+        } else if (body instanceof KeyValueBlock kv) {
+            kv.entries().forEach(entry -> result.add(entry.key() + ": " + entry.value()));
         }
         return result;
     }

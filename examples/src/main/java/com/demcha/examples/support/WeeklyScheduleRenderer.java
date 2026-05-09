@@ -604,27 +604,27 @@ public final class WeeklyScheduleRenderer {
      * cells is always 4.
      */
     private static List<DocumentTableCell> dayCells(DayShift dayShift, Theme theme) {
-        if (dayShift == null) {
+        if (dayShift == null || dayShift instanceof DayShift.EmptyDay) {
             return List.of(emptyDayCell(theme));
         }
-        return switch (dayShift) {
-            case DayShift.EmptyDay e ->
-                    List.of(emptyDayCell(theme));
-            case DayShift.FullStatus(ShiftStatus s) ->
-                    List.of(fullStatusCell(s, theme));
-            case DayShift.CrossMeal(Shift shift) ->
-                    shiftAcrossDay(shift, theme);
-            case DayShift.Halves(Half lunch, Half dinner) ->
-                    mergedHalfCells(lunch, dinner, theme);
-        };
+        if (dayShift instanceof DayShift.FullStatus fs) {
+            return List.of(fullStatusCell(fs.status(), theme));
+        }
+        if (dayShift instanceof DayShift.CrossMeal cm) {
+            return shiftAcrossDay(cm.shift(), theme);
+        }
+        if (dayShift instanceof DayShift.Halves h) {
+            return mergedHalfCells(h.lunch(), h.dinner(), theme);
+        }
+        throw new IllegalStateException("Unhandled DayShift variant: " + dayShift);
     }
 
     private static List<DocumentTableCell> mergedHalfCells(Half lunch, Half dinner, Theme theme) {
         // Both halves on the same status fill → merge to colSpan(4).
-        if (lunch instanceof Half.StatusFill(ShiftStatus ls)
-                && dinner instanceof Half.StatusFill(ShiftStatus ds)
-                && ls == ds) {
-            return List.of(fullStatusCell(ls, theme));
+        if (lunch instanceof Half.StatusFill ls
+                && dinner instanceof Half.StatusFill ds
+                && ls.status() == ds.status()) {
+            return List.of(fullStatusCell(ls.status(), theme));
         }
         List<DocumentTableCell> cells = new ArrayList<>();
         cells.addAll(halfCells(lunch, theme));
@@ -633,11 +633,16 @@ public final class WeeklyScheduleRenderer {
     }
 
     private static List<DocumentTableCell> halfCells(Half half, Theme theme) {
-        return switch (half) {
-            case Half.Empty e -> List.of(emptyHalfCell(theme));
-            case Half.StatusFill(ShiftStatus s) -> List.of(statusHalfCell(s, theme));
-            case Half.Working(Shift shift) -> shiftHalfCells(shift, theme);
-        };
+        if (half instanceof Half.Empty) {
+            return List.of(emptyHalfCell(theme));
+        }
+        if (half instanceof Half.StatusFill sf) {
+            return List.of(statusHalfCell(sf.status(), theme));
+        }
+        if (half instanceof Half.Working w) {
+            return shiftHalfCells(w.shift(), theme);
+        }
+        throw new IllegalStateException("Unhandled Half variant: " + half);
     }
 
     private static DocumentTableCell emptyDayCell(Theme theme) {

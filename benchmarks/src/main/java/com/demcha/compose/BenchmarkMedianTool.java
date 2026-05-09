@@ -42,7 +42,7 @@ public final class BenchmarkMedianTool {
             reportFiles.add(new ReportFile(reportPath, JSON.readTree(Files.readAllBytes(reportPath))));
         }
 
-        SuiteType suiteType = detectSuiteType(reportFiles.getFirst().report());
+        SuiteType suiteType = detectSuiteType(reportFiles.get(0).report());
         for (ReportFile reportFile : reportFiles) {
             SuiteType currentType = detectSuiteType(reportFile.report());
             if (currentType != suiteType) {
@@ -58,7 +58,7 @@ public final class BenchmarkMedianTool {
     }
 
     private void aggregateCurrentSpeed(List<ReportFile> reportFiles) throws Exception {
-        JsonNode firstReport = reportFiles.getFirst().report();
+        JsonNode firstReport = reportFiles.get(0).report();
         String profile = firstReport.path("profile").asText("full");
         for (ReportFile reportFile : reportFiles) {
             String currentProfile = reportFile.report().path("profile").asText("full");
@@ -135,7 +135,7 @@ public final class BenchmarkMedianTool {
     }
 
     private List<CurrentSpeedLatencyMedianRow> aggregateCurrentSpeedLatency(List<ReportFile> reportFiles) {
-        List<JsonNode> firstRows = iterable(reportFiles.getFirst().report().path("latency"));
+        List<JsonNode> firstRows = iterable(reportFiles.get(0).report().path("latency"));
         Map<String, JsonNode> firstByScenario = indexBy(firstRows, "scenario");
 
         for (ReportFile reportFile : reportFiles) {
@@ -150,7 +150,7 @@ public final class BenchmarkMedianTool {
                     List<JsonNode> rows = reportFiles.stream()
                             .map(reportFile -> indexBy(iterable(reportFile.report().path("latency")), "scenario").get(scenario))
                             .toList();
-                    JsonNode exemplar = rows.getFirst();
+                    JsonNode exemplar = rows.get(0);
                     return new CurrentSpeedLatencyMedianRow(
                             scenario,
                             exemplar.path("description").asText(""),
@@ -166,7 +166,7 @@ public final class BenchmarkMedianTool {
     }
 
     private List<CurrentSpeedThroughputMedianRow> aggregateCurrentSpeedThroughput(List<ReportFile> reportFiles) {
-        List<JsonNode> firstRows = iterable(reportFiles.getFirst().report().path("throughput"));
+        List<JsonNode> firstRows = iterable(reportFiles.get(0).report().path("throughput"));
         Map<String, JsonNode> firstByScenario = indexThroughput(firstRows);
 
         for (ReportFile reportFile : reportFiles) {
@@ -181,7 +181,7 @@ public final class BenchmarkMedianTool {
                     List<JsonNode> rows = reportFiles.stream()
                             .map(reportFile -> indexThroughput(iterable(reportFile.report().path("throughput"))).get(key))
                             .toList();
-                    JsonNode exemplar = rows.getFirst();
+                    JsonNode exemplar = rows.get(0);
                     return new CurrentSpeedThroughputMedianRow(
                             exemplar.path("scenario").asText(),
                             exemplar.path("threads").asInt(),
@@ -196,7 +196,7 @@ public final class BenchmarkMedianTool {
         int warmupIterations = requireIntConsistency(reportFiles, "warmupIterations");
         int measurementIterations = requireIntConsistency(reportFiles, "measurementIterations");
 
-        List<JsonNode> firstRows = iterable(reportFiles.getFirst().report().path("libraries"));
+        List<JsonNode> firstRows = iterable(reportFiles.get(0).report().path("libraries"));
         Map<String, JsonNode> firstByLibrary = indexBy(firstRows, "library");
         for (ReportFile reportFile : reportFiles) {
             Map<String, JsonNode> currentByLibrary = indexBy(iterable(reportFile.report().path("libraries")), "library");
@@ -246,7 +246,7 @@ public final class BenchmarkMedianTool {
     }
 
     private static int requireIntConsistency(List<ReportFile> reportFiles, String fieldName) {
-        int expected = reportFiles.getFirst().report().path(fieldName).asInt();
+        int expected = reportFiles.get(0).report().path(fieldName).asInt();
         for (ReportFile reportFile : reportFiles) {
             int current = reportFile.report().path(fieldName).asInt();
             if (current != expected) {
@@ -259,7 +259,7 @@ public final class BenchmarkMedianTool {
     }
 
     private static List<Integer> requireIntegerArrayConsistency(List<ReportFile> reportFiles, String fieldName) {
-        List<Integer> expected = iterable(reportFiles.getFirst().report().path(fieldName)).stream()
+        List<Integer> expected = iterable(reportFiles.get(0).report().path(fieldName)).stream()
                 .map(JsonNode::asInt)
                 .toList();
         for (ReportFile reportFile : reportFiles) {

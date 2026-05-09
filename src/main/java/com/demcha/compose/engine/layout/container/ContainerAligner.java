@@ -17,6 +17,7 @@ import com.demcha.compose.engine.components.style.Padding;
 import com.demcha.compose.engine.core.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -113,9 +114,11 @@ public class ContainerAligner {
          * The reverse logic is handled by the ReverseLayoutStrategy.
          */
         protected List<Entity> getOrderedChildren(Entity parent, EntityManager entityManager) {
-            return parent.getChildren().stream()
+            List<Entity> children = parent.getChildren().stream()
                     .map(id -> entityManager.getEntity(id).orElseThrow())
-                    .collect(Collectors.toList()).reversed();
+                    .collect(Collectors.toCollection(ArrayList::new));
+            java.util.Collections.reverse(children);
+            return children;
         }
 
         protected abstract void updateChildPosition(Entity child, Axes axes);
@@ -242,7 +245,8 @@ public class ContainerAligner {
             Align align = parent.getComponent(Align.class).orElseThrow();
             List<Entity> children = parent.getChildren().stream()
                     .map(id -> entityManager.getEntity(id).orElseThrow())
-                    .collect(Collectors.toList()).reversed();
+                    .collect(Collectors.toCollection(ArrayList::new));
+            java.util.Collections.reverse(children);
 
             double main = 0;
             double resolvedWidth = parent.getComponent(ContentSize.class)

@@ -158,16 +158,25 @@ public final class Module {
     }
 
     private DocumentNode renderBody(BusinessTheme theme, Spacing spacing) {
-        return switch (body) {
-            case ParagraphBlock p -> renderParagraph(p, theme, spacing);
-            case BulletListBlock b -> renderList(b.items(), ListMarker.bullet(),
-                    "bullet", theme, spacing);
-            case NumberedListBlock n -> renderList(n.items(), ListMarker.custom("1."),
-                    "numbered", theme, spacing);
-            case MultiParagraphBlock m -> renderMultiParagraph(m, theme, spacing);
-            case IndentedBlock i -> renderIndented(i, theme, spacing);
-            case KeyValueBlock k -> renderKeyValue(k, theme, spacing);
-        };
+        if (body instanceof ParagraphBlock p) {
+            return renderParagraph(p, theme, spacing);
+        }
+        if (body instanceof BulletListBlock b) {
+            return renderList(b.items(), ListMarker.bullet(), "bullet", theme, spacing);
+        }
+        if (body instanceof NumberedListBlock n) {
+            return renderList(n.items(), ListMarker.custom("1."), "numbered", theme, spacing);
+        }
+        if (body instanceof MultiParagraphBlock m) {
+            return renderMultiParagraph(m, theme, spacing);
+        }
+        if (body instanceof IndentedBlock i) {
+            return renderIndented(i, theme, spacing);
+        }
+        if (body instanceof KeyValueBlock k) {
+            return renderKeyValue(k, theme, spacing);
+        }
+        throw new IllegalStateException("Unsupported module body: " + body);
     }
 
     private ParagraphNode renderParagraph(ParagraphBlock block, BusinessTheme theme, Spacing spacing) {

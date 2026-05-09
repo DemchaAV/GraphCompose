@@ -162,8 +162,8 @@ class LayoutSnapshotExtractorTest {
 
         assertThat(snapshot.totalPages()).isEqualTo(3);
         assertThat(snapshot.nodes()).hasSize(1);
-        assertThat(snapshot.nodes().getFirst().startPage()).isEqualTo(2);
-        assertThat(snapshot.nodes().getFirst().endPage()).isEqualTo(0);
+        assertThat(snapshot.nodes().get(0).startPage()).isEqualTo(2);
+        assertThat(snapshot.nodes().get(0).endPage()).isEqualTo(0);
     }
 
     @Test

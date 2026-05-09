@@ -63,7 +63,7 @@ class ListBuilderNestedTest {
 
         assertThat(node.items()).isEmpty();
         assertThat(node.nestedItems()).hasSize(1);
-        ListItem parent = node.nestedItems().getFirst();
+        ListItem parent = node.nestedItems().get(0);
         assertThat(parent.label()).isEqualTo("Parent");
         assertThat(parent.children()).extracting(ListItem::label)
                 .containsExactly("Child A", "Child B");
@@ -200,11 +200,11 @@ class ListBuilderNestedTest {
                 .build();
 
         assertThat(node.nestedItems()).hasSize(1);
-        ListItem top = node.nestedItems().getFirst();
+        ListItem top = node.nestedItems().get(0);
         assertThat(top.marker()).isNotNull();
         assertThat(top.marker().value()).isEqualTo("- ");
         assertThat(top.children()).hasSize(1);
-        assertThat(top.children().getFirst().marker().value()).isEqualTo("→ ");
+        assertThat(top.children().get(0).marker().value()).isEqualTo("→ ");
     }
 
     @Test
@@ -251,10 +251,10 @@ class ListBuilderNestedTest {
                     .build();
 
             assertThat(root.children()).hasSize(1);
-            assertThat(root.children().getFirst()).isInstanceOf(ListNode.class);
-            ListNode listNode = (ListNode) root.children().getFirst();
+            assertThat(root.children().get(0)).isInstanceOf(ListNode.class);
+            ListNode listNode = (ListNode) root.children().get(0);
             assertThat(listNode.nestedItems()).hasSize(1);
-            assertThat(listNode.nestedItems().getFirst().children())
+            assertThat(listNode.nestedItems().get(0).children())
                     .extracting(ListItem::label)
                     .containsExactly("a1");
         }
@@ -285,7 +285,7 @@ class ListBuilderNestedTest {
                 .map(PlacedFragment::payload)
                 .filter(ParagraphFragmentPayload.class::isInstance)
                 .map(ParagraphFragmentPayload.class::cast)
-                .map(payload -> payload.lines().getFirst().text())
+                .map(payload -> payload.lines().get(0).text())
                 .toList();
     }
 }

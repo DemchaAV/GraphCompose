@@ -63,14 +63,14 @@ class SessionTemplateComposeTargetTest {
             target.finishDocument();
 
             assertThat(session.roots()).hasSize(1);
-            DocumentNode rootNode = session.roots().getFirst();
+            DocumentNode rootNode = session.roots().get(0);
             assertThat(rootNode).isInstanceOf(ContainerNode.class);
 
             ContainerNode root = (ContainerNode) rootNode;
             assertThat(root.children()).hasSize(1);
-            assertThat(root.children().getFirst()).isInstanceOf(SectionNode.class);
+            assertThat(root.children().get(0)).isInstanceOf(SectionNode.class);
 
-            SectionNode module = (SectionNode) root.children().getFirst();
+            SectionNode module = (SectionNode) root.children().get(0);
             assertThat(module.name()).isEqualTo("TechnicalSkills");
             assertThat(module.children()).hasSize(3);
             assertThat(module.children().get(0)).isInstanceOf(ParagraphNode.class);
@@ -111,8 +111,8 @@ class SessionTemplateComposeTargetTest {
                                             Margin.zero()))))));
             target.finishDocument();
 
-            ContainerNode root = (ContainerNode) session.roots().getFirst();
-            SectionNode module = (SectionNode) root.children().getFirst();
+            ContainerNode root = (ContainerNode) session.roots().get(0);
+            SectionNode module = (SectionNode) root.children().get(0);
 
             assertThat(module.children()).hasSize(2);
             assertThat(module.children().get(1)).isInstanceOf(ParagraphNode.class);

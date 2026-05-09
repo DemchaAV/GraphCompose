@@ -3,6 +3,45 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v1.6.1 — Planned
+
+Maintenance + compatibility patch. Drops the Java 21 source/target
+baseline to **Java 17+** so the library can ship into older
+enterprise stacks without a fork, and refreshes test/build
+dependencies. **No public API change** — engine, DSL, themes,
+templates, and backend records all stay source-compatible with
+v1.6.0; existing v1.6.0 callers compile and behave unchanged.
+
+Co-developed with external contributor
+[@jottinger](https://github.com/jottinger)
+([#8](https://github.com/DemchaAV/GraphCompose/issues/8),
+[#10](https://github.com/DemchaAV/GraphCompose/issues/10)).
+
+### Toolchain
+
+- **Java 17 baseline.** `<maven.compiler.release>` flips from `21`
+  to `17` across `pom.xml`, `examples/pom.xml`, and `benchmarks/pom.xml`.
+  Engine source loses the Java 21–only constructs
+  (switch-with-type-patterns, switch-with-deconstruction,
+  `List.getFirst()`, `Thread.threadId()`) in favour of Java 17
+  –compatible forms. CI runs against Temurin JDK 17.
+- **Dependency refresh + CVE pass.** Bumps Jackson `2.20.1 → 2.21.3`,
+  Logback `1.5.18 → 1.5.32`, Lombok `1.18.38 → 1.18.46`, POI
+  `5.4.0 → 5.5.1`, SnakeYAML `2.4 → 2.6`, AssertJ `3.27.3 → 3.27.6`,
+  JUnit `5.12.2 → 5.14.4`, Mockito `5.20.0 → 5.23.0`. Adds explicit
+  ByteBuddy `1.18.7` so Mockito works on the Java 25+ access rules.
+  Maven plugin bumps: `maven-compiler-plugin 3.13 → 3.15`,
+  `maven-surefire-plugin 3.2.5 → 3.5.5`, `exec-maven-plugin 3.5 → 3.6.2`.
+
+### Looking ahead
+
+Maven Central distribution
+([#7](https://github.com/DemchaAV/GraphCompose/issues/7)) remains
+on the **v1.7.0** roadmap alongside the JMH benchmark migration;
+v1.6.1 stays on JitPack as a maintenance release.
+
+---
+
 ## v1.6.0 — 2026-05-07
 
 The "expressive" release. Closes the remaining canonical-vs-legacy

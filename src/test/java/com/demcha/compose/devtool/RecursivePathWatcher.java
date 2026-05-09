@@ -43,10 +43,8 @@ public final class RecursivePathWatcher implements AutoCloseable {
         }
 
         running = true;
-        thread = Thread.ofPlatform()
-                .daemon()
-                .name("graphcompose-devtool-watch", 0)
-                .unstarted(this::processLoop);
+        thread = new Thread(this::processLoop, "graphcompose-devtool-watch");
+        thread.setDaemon(true);
         thread.start();
     }
 

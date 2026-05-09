@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - develop
   pull_request:
-    branches:
-      - main
+    # Run CI for any incoming PR regardless of the base branch so
+    # feature branches targeting `develop` (e.g. v1.7 prep) also
+    # exercise the full pipeline.
   workflow_dispatch:
   schedule:
     - cron: '0 5 * * 1'
@@ -26,11 +28,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Temurin JDK 21
+      - name: Set up Temurin JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '17'
           cache: maven
 
       - name: Run guards
@@ -40,10 +42,20 @@ jobs:
             test
 
   build-and-test:
-    name: Build and run tests
+    name: Build and run tests (JDK ${{ matrix.java }})
     if: github.event_name != 'schedule'
     needs: architecture-and-documentation-guards
     runs-on: ubuntu-latest
+    strategy:
+      # Don't cancel sibling matrix jobs on the first failure — a
+      # regression on one JDK is informative even if other JDKs are
+      # still running.
+      fail-fast: false
+      matrix:
+        # 17 = baseline, 21 = previous baseline still supported,
+        # 25 = current LTS, validates the byte-buddy / Mockito 5.23
+        # bumps that #10 motivated.
+        java: ['17', '21', '25']
     env:
       JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
 
@@ -51,17 +63,21 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Temurin JDK 21
+      - name: Set up Temurin JDK ${{ matrix.java }}
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: ${{ matrix.java }}
           cache: maven
 
       - name: Build and run tests
         run: ./mvnw -B -ntp clean verify
 
       - name: Generate Javadoc
+        # Run only on the baseline JDK — Javadoc output is identical
+        # across JVMs and one pass is enough to catch broken @link
+        # references.
+        if: matrix.java == '17'
         run: ./mvnw -B -ntp javadoc:javadoc
 
   examples-generation:
@@ -76,11 +92,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Temurin JDK 21
+      - name: Set up Temurin JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '17'
           cache: maven
 
       - name: Install root artifact
@@ -114,11 +130,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Temurin JDK 21
+      - name: Set up Temurin JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '17'
           cache: maven
 
       - name: Install root artifact
@@ -153,11 +169,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Temurin JDK 21
+      - name: Set up Temurin JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '17'
           cache: maven
 
       - name: Restore benchmark history cache

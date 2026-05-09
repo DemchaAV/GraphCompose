@@ -549,38 +549,30 @@ public final class EditorialBlue {
         }
 
         private void renderBody(SectionBuilder section, Block body) {
-            switch (body) {
-                case ParagraphBlock p -> renderParagraph(section, p.text());
-                case MultiParagraphBlock m -> {
-                    for (String line : m.paragraphs()) {
-                        renderParagraph(section, line);
-                    }
+            if (body instanceof ParagraphBlock p) {
+                renderParagraph(section, p.text());
+            } else if (body instanceof MultiParagraphBlock m) {
+                for (String line : m.paragraphs()) {
+                    renderParagraph(section, line);
                 }
-                case BulletListBlock b -> {
-                    for (String item : b.items()) {
-                        renderParagraph(section, item);
-                    }
+            } else if (body instanceof BulletListBlock b) {
+                for (String item : b.items()) {
+                    renderParagraph(section, item);
                 }
-                case NumberedListBlock n -> {
-                    for (String item : n.items()) {
-                        renderParagraph(section, item);
-                    }
+            } else if (body instanceof NumberedListBlock n) {
+                for (String item : n.items()) {
+                    renderParagraph(section, item);
                 }
-                case IndentedBlock i -> {
-                    for (IndentedBlock.Item item : i.items()) {
-                        String inline = (item.title().isBlank() ? "" : item.title())
-                                + (item.title().isBlank() || item.body().isBlank() ? "" : " - ")
-                                + (item.body().isBlank() ? "" : item.body());
-                        renderParagraph(section, inline);
-                    }
+            } else if (body instanceof IndentedBlock i) {
+                for (IndentedBlock.Item item : i.items()) {
+                    String inline = (item.title().isBlank() ? "" : item.title())
+                            + (item.title().isBlank() || item.body().isBlank() ? "" : " - ")
+                            + (item.body().isBlank() ? "" : item.body());
+                    renderParagraph(section, inline);
                 }
-                case KeyValueBlock kv -> {
-                    for (KeyValueBlock.Entry entry : kv.entries()) {
-                        renderKeyValueEntry(section, entry);
-                    }
-                }
-                default -> {
-                    // ignore other block kinds
+            } else if (body instanceof KeyValueBlock kv) {
+                for (KeyValueBlock.Entry entry : kv.entries()) {
+                    renderKeyValueEntry(section, entry);
                 }
             }
         }
@@ -668,12 +660,16 @@ public final class EditorialBlue {
         }
         List<String> lines = new ArrayList<>();
         Block body = module.body();
-        switch (body) {
-            case ParagraphBlock p -> addLines(lines, p.text());
-            case MultiParagraphBlock m -> m.paragraphs().forEach(line -> addLines(lines, line));
-            case BulletListBlock b -> b.items().forEach(item -> addLines(lines, item));
-            case NumberedListBlock n -> n.items().forEach(item -> addLines(lines, item));
-            case IndentedBlock i -> i.items().forEach(item -> {
+        if (body instanceof ParagraphBlock p) {
+            addLines(lines, p.text());
+        } else if (body instanceof MultiParagraphBlock m) {
+            m.paragraphs().forEach(line -> addLines(lines, line));
+        } else if (body instanceof BulletListBlock b) {
+            b.items().forEach(item -> addLines(lines, item));
+        } else if (body instanceof NumberedListBlock n) {
+            n.items().forEach(item -> addLines(lines, item));
+        } else if (body instanceof IndentedBlock i) {
+            i.items().forEach(item -> {
                 String title = safe(item.title());
                 String bodyText = safe(item.body());
                 if (title.isBlank() && bodyText.isBlank()) {
@@ -687,11 +683,8 @@ public final class EditorialBlue {
                     lines.add(title + " | " + bodyText);
                 }
             });
-            case KeyValueBlock kv -> kv.entries().forEach(entry ->
-                    addLines(lines, entry.key() + ": " + entry.value()));
-            default -> {
-                // ignore other block kinds
-            }
+        } else if (body instanceof KeyValueBlock kv) {
+            kv.entries().forEach(entry -> addLines(lines, entry.key() + ": " + entry.value()));
         }
         return List.copyOf(lines);
     }

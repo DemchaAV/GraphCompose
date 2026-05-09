@@ -105,8 +105,9 @@ public final class ShapeContainerDefinition implements NodeDefinition<ShapeConta
         }
         Color awtFill = node.fillColor() == null ? null : node.fillColor().color();
         Stroke stroke = toStroke(node.stroke());
-        LayoutFragment outlineFragment = switch (outline) {
-            case ShapeOutline.Ellipse ignored -> new LayoutFragment(
+        LayoutFragment outlineFragment;
+        if (outline instanceof ShapeOutline.Ellipse) {
+            outlineFragment = new LayoutFragment(
                     placement.path(),
                     0,
                     padLeft,
@@ -114,7 +115,8 @@ public final class ShapeContainerDefinition implements NodeDefinition<ShapeConta
                     width,
                     height,
                     new EllipseFragmentPayload(awtFill, stroke, null, null));
-            case ShapeOutline.Rectangle ignored -> new LayoutFragment(
+        } else if (outline instanceof ShapeOutline.Rectangle) {
+            outlineFragment = new LayoutFragment(
                     placement.path(),
                     0,
                     padLeft,
@@ -122,7 +124,8 @@ public final class ShapeContainerDefinition implements NodeDefinition<ShapeConta
                     width,
                     height,
                     new ShapeFragmentPayload(awtFill, stroke, 0.0, null, null, null));
-            case ShapeOutline.RoundedRectangle r -> new LayoutFragment(
+        } else if (outline instanceof ShapeOutline.RoundedRectangle r) {
+            outlineFragment = new LayoutFragment(
                     placement.path(),
                     0,
                     padLeft,
@@ -130,7 +133,9 @@ public final class ShapeContainerDefinition implements NodeDefinition<ShapeConta
                     width,
                     height,
                     new ShapeFragmentPayload(awtFill, stroke, r.cornerRadius(), null, null, null));
-        };
+        } else {
+            throw new IllegalStateException("Unsupported shape outline: " + outline);
+        }
 
         List<LayoutFragment> opening = new ArrayList<>(4);
         boolean hasTransform = !node.transform().isIdentity();

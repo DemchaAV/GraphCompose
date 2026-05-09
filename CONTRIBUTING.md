@@ -13,6 +13,19 @@ Read these files first:
 
 They explain the current public surface, the engine/template split, and the recommended extension points.
 
+## Java 17 baseline
+
+GraphCompose targets **Java 17+** as of v1.6.1. CI runs the full test suite against Temurin JDK 17 / 21 / 25 in parallel matrix, so JDK-incompatibility regressions fail the PR immediately.
+
+When writing new code, avoid Java 21+ APIs and language constructs that don't exist in 17:
+
+- `List.getFirst()` / `List.getLast()` &rarr; `list.get(0)` / `list.get(list.size() - 1)`
+- `Thread.threadId()` &rarr; `Thread.getId()`
+- `switch` with type patterns (`case Foo f -> …`) &rarr; `instanceof` if-else chains
+- `switch` with deconstruction patterns (`case Foo(Bar b) -> …`) &rarr; `instanceof Foo f` + `f.bar()`
+- `case null, default ->` &rarr; explicit `if (x == null) return …;` early return
+- `List.reversed()` &rarr; `Collections.reverse(new ArrayList<>(list))`
+
 ## Build and test
 
 - The blocking validation gate for repository work is `./mvnw -B -ntp clean verify`.
@@ -33,7 +46,7 @@ GraphCompose follows a fork &rarr; feature branch &rarr; pull request flow. Exte
    git pull --ff-only origin develop
    git checkout -b feature/short-description
    ```
-   Use `feature/...` for new functionality, `fix/...` for bug fixes, and `docs/...` for documentation-only changes.
+   Use `feature/...` for new functionality, `fix/...` for bug fixes, and `docs/...` for documentation-only changes. Issue-prefixed names (`42/fix/short-description`) are also welcome &mdash; convenient when the branch closes a specific issue.
 3. **Commit small, focused changes.** Each commit message should describe the *why*, not just the *what*. Recent commits on `develop` (`Prepare v1.5.0 release`, `Align public docs with the canonical surface`) are reasonable length and structure templates.
 4. **Run the validation gate locally** before opening a PR:
    ```bash
@@ -41,7 +54,13 @@ GraphCompose follows a fork &rarr; feature branch &rarr; pull request flow. Exte
    ```
    This runs the architecture-and-documentation guards plus the full test suite. The same gate runs in CI on every PR.
 5. **Push** your feature branch to your fork and open a pull request against `develop` on `DemchaAV/GraphCompose`. Reference any related issue and describe the user-visible change in the PR body.
-6. **CI runs automatically.** The required status checks are `Architecture and Documentation Guards` and `Build and run tests`. The PR cannot merge into a protected branch until both are green.
+6. **CI runs automatically.** Active jobs:
+   - `Architecture and Documentation Guards` &mdash; fast canonical / engine-boundary guard tests, fail-first gate
+   - `Build and run tests (JDK 17)`, `(JDK 21)`, `(JDK 25)` &mdash; full `mvnw verify` in parallel matrix across the supported JVMs
+   - `Examples Generation Smoke Test` &mdash; regenerates all 26 runnable examples and uploads the PDFs as a CI artifact
+   - `Performance Smoke Check` &mdash; PR-only coarse benchmark to catch performance regressions
+
+   The PR cannot merge into a protected branch until all required checks are green.
 7. **Address review comments**, then squash any fixup commits before merge. The maintainer merges through GitHub once review is complete.
 
 ### Branch protection
@@ -57,12 +76,12 @@ GraphCompose follows a fork &rarr; feature branch &rarr; pull request flow. Exte
 
 ### Release flow
 
-1. Release prep lands on `develop` &mdash; version bump in `pom.xml` + `examples/pom.xml`, fresh CHANGELOG entry, README install snippets refreshed, migration guide updated when needed.
-2. The maintainer merges `develop` into `main` via pull request &mdash; this is the only path a commit takes to reach `main`.
-3. The maintainer tags the release on `main` (`vX.Y.Z`) and creates the GitHub release with notes copied from the matching `CHANGELOG.md` section.
-4. JitPack picks up the new tag automatically; the `Installation` block in the README is the consumer-facing source of truth.
+1. **Release prep** lands on `develop` &mdash; version bumps in `pom.xml`, `examples/pom.xml`, and `benchmarks/pom.xml`; fresh CHANGELOG entry; migration guide for minor releases. **README install snippets stay pinned to the previously published tag** (e.g. `v1.6.0`) until JitPack confirms the new build, otherwise consumers copying the snippet during the publish window hit a 404.
+2. **`scripts/cut-release.ps1 -Version <X.Y.Z>`** automates the bump + CHANGELOG date + commit + tag + push from `develop`. The maintainer fast-forwards `main` from `develop` after the tag lands (`git push origin develop:main`).
+3. **JitPack** picks up the new tag automatically. After JitPack reports `BUILD SUCCESS`, a separate post-release commit on `develop` flips the README install snippets to the new version.
+4. **GitHub Release** is created with notes from the matching `CHANGELOG.md` section.
 
-See [docs/release-process.md](./docs/release-process.md) for the full checklist.
+See [docs/release-process.md](./docs/release-process.md) for the full checklist (audit gates, hotfix protocol, lessons learned).
 
 ## Repository map
 
@@ -95,7 +114,7 @@ See [docs/release-process.md](./docs/release-process.md) for the full checklist.
 2. Keep structural cleanup separate from behavior changes whenever possible.
 3. If you touch public examples or screenshots, update the related docs in the same change.
 4. Run the smallest relevant tests while iterating, then run `./mvnw -B -ntp clean verify` before opening a pull request.
-5. For quick visual iteration on a template, you can use the experimental live preview tool in test scope by running [GraphComposeDevTool.java](./src/test/java/com/demcha/compose/devtool/GraphComposeDevTool.java) and editing [LivePreviewProvider.java](./src/test/java/com/demcha/preview/LivePreviewProvider.java).
+5. For quick visual iteration on a template, run [GraphComposeDevTool.java](./src/test/java/com/demcha/compose/devtool/GraphComposeDevTool.java) in test scope &mdash; it hot-reloads the rendered PDF as you edit your template source.
 
 ## Contributor architecture rules
 
@@ -286,9 +305,10 @@ Choose the smallest tests that match the change:
   [ComputedPositionTest.java](./src/test/java/com/demcha/compose/engine/components/layout/ComputedPositionTest.java)
 - For pagination and multi-page behavior:
   [PageBreakerIntegrationTest.java](./src/test/java/com/demcha/compose/engine/integration/PageBreakerIntegrationTest.java)
-- For concrete templates:
-  [BuiltInTemplateRenderTest.java](./src/test/java/com/demcha/compose/document/templates/builtins/BuiltInTemplateRenderTest.java)
-  [CvTemplateV1LayoutSnapshotTest.java](./src/test/java/com/demcha/compose/document/templates/builtins/CvTemplateV1LayoutSnapshotTest.java)
+- For Templates v2 CV / cover-letter presets:
+  [PresetVisualParityTest.java (CV)](./src/test/java/com/demcha/compose/document/templates/cv/presets/PresetVisualParityTest.java)
+  [PresetVisualParityTest.java (cover letter)](./src/test/java/com/demcha/compose/document/templates/coverletter/presets/PresetVisualParityTest.java)
+  [PresetLayoutSnapshotTest.java](./src/test/java/com/demcha/compose/document/templates/cv/presets/PresetLayoutSnapshotTest.java)
 
 If a change affects public docs, examples, or screenshots, update those assets in the same PR so the repository stays internally consistent.
 

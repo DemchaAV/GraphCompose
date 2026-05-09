@@ -3,6 +3,44 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v1.7.0 — Planned
+
+The "broad reach" release. Drops the Java 21 baseline in favour of
+Java 17+ to widen enterprise adoption without losing any author-
+facing surface. Co-developed with external contributor
+[@jottinger](https://github.com/jottinger) ([#8](https://github.com/DemchaAV/GraphCompose/issues/8),
+[#10](https://github.com/DemchaAV/GraphCompose/issues/10)).
+
+### Toolchain
+
+- **Java 17 baseline** — `<maven.compiler.release>` flips from `21`
+  to `17` across `pom.xml`, `examples/pom.xml`, and `benchmarks/pom.xml`.
+  Author-facing API is unchanged; the engine source drops
+  Java 21–only constructs (switch-with-type-patterns, `List.getFirst()`)
+  in favour of Java 17–compatible forms. CI runs against
+  Temurin JDK 17.
+- **Dependency refresh + CVE pass.** Bumps Jackson `2.20.1 → 2.21.3`,
+  Logback `1.5.18 → 1.5.32`, Lombok `1.18.38 → 1.18.46`, POI
+  `5.4.0 → 5.5.1`, SnakeYAML `2.4 → 2.6`, AssertJ `3.27.3 → 3.27.6`,
+  JUnit `5.12.2 → 5.14.4`, Mockito `5.20.0 → 5.23.0`. Adds explicit
+  ByteBuddy `1.18.7` so Mockito works on the Java 25+ access rules.
+  Maven plugin bumps: `maven-compiler-plugin 3.13 → 3.15`,
+  `maven-surefire-plugin 3.2.5 → 3.5.5`, `exec-maven-plugin 3.5 → 3.6.2`.
+
+### Distribution
+
+- **Maven Central** is the planned primary distribution channel
+  ([#7](https://github.com/DemchaAV/GraphCompose/issues/7)). JitPack
+  stays as a documented fallback.
+
+### Non-goals
+
+- No public-API breakage on the engine surface.
+- No Templates v3 work — Templates v2 remains the canonical author
+  surface.
+
+---
+
 ## v1.6.0 — 2026-05-07
 
 The "expressive" release. Closes the remaining canonical-vs-legacy

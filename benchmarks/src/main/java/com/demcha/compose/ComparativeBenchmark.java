@@ -95,14 +95,14 @@ public class ComparativeBenchmark {
         for (int i = 0; i < MEASUREMENT_ITERATIONS; i++) {
             System.gc(); // Форсируем сборку мусора перед каждым замером для чистоты аллокации
 
-            long startBytes = bean.getThreadAllocatedBytes(Thread.currentThread().threadId());
+            long startBytes = bean.getThreadAllocatedBytes(Thread.currentThread().getId());
             long startTime = System.nanoTime();
 
             // Выполняем задачу и получаем байты PDF
             byte[] pdfBytes = task.runAndGetBytes();
 
             long endTime = System.nanoTime();
-            long endBytes = bean.getThreadAllocatedBytes(Thread.currentThread().threadId());
+            long endBytes = bean.getThreadAllocatedBytes(Thread.currentThread().getId());
 
             totalTimeNs += (endTime - startTime);
             totalAllocatedBytes += (endBytes - startBytes);

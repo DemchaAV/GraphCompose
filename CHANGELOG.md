@@ -3,7 +3,7 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v1.6.1 — Planned
+## v1.6.1 — 2026-05-09
 
 Maintenance + compatibility patch. Drops the Java 21 source/target
 baseline to **Java 17+** so the library can ship into older

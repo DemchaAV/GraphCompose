@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - develop
   pull_request:
-    branches:
-      - main
+    # Run CI for any incoming PR regardless of the base branch so
+    # feature branches targeting `develop` (e.g. v1.7 prep) also
+    # exercise the full pipeline.
   workflow_dispatch:
   schedule:
     - cron: '0 5 * * 1'

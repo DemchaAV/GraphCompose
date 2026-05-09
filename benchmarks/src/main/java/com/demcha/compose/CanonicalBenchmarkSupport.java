@@ -50,13 +50,13 @@ final class CanonicalBenchmarkSupport {
     static CvSpec canonicalCv() {
         return CvSpec.builder()
                 .header(CvHeader.builder()
-                        .name("Artem Demchyshyn")
+                        .name("Jordan Rivera")
                         .jobTitle("Backend Java Developer")
                         .address("London, UK")
                         .phone("+44 20 5555 1000")
-                        .email("artem@demo.dev")
-                        .link("LinkedIn", "https://linkedin.com/in/graphcompose")
-                        .link("GitHub", "https://github.com/DemchaAV")
+                        .email("jordan@demo.dev")
+                        .link("LinkedIn", "https://linkedin.com/in/jordan-rivera-demo")
+                        .link("GitHub", "https://github.com/jordan-rivera-demo")
                         .build())
                 .module(CvModule.of("Professional Summary",
                         new ParagraphBlock(

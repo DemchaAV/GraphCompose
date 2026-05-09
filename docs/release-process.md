@@ -1,6 +1,6 @@
 # GraphCompose release process
 
-This is the canonical release runbook for GraphCompose 1.x.
+This is the canonical release runbook for GraphCompose 1.x releases.
 
 - JitPack — `com.github.DemchaAV:GraphCompose:v<version>` (current)
 - Maven Central — `io.github.demchaav:graphcompose:<version>` (planned, v1.7+)

@@ -49,13 +49,13 @@ Sits between **iText** (low-level page primitives) and **JasperReports** (XML-te
 <dependency>
     <groupId>com.github.DemchaAV</groupId>
     <artifactId>GraphCompose</artifactId>
-    <version>v1.6.0</version>
+    <version>v1.6.1</version>
 </dependency>
 ```
 
 ```kotlin
 repositories { maven("https://jitpack.io") }
-dependencies { implementation("com.github.demchaav:GraphCompose:v1.6.0") }
+dependencies { implementation("com.github.demchaav:GraphCompose:v1.6.1") }
 ```
 
 > **Distribution status** &mdash; currently **JitPack**. Maven Central is planned for v1.7 ([tracking issue](https://github.com/DemchaAV/GraphCompose/issues/7)).

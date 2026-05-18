@@ -24,7 +24,7 @@
         <logback.version>1.5.32</logback.version>
 
         <openhtmltopdf.version>1.0.10</openhtmltopdf.version>
-        <itextpdf.version>5.5.13.3</itextpdf.version>
+        <itextpdf.version>5.5.13.5</itextpdf.version>
         <jasperreports.version>6.21.3</jasperreports.version>
     </properties>
 

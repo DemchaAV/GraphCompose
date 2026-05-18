@@ -1,0 +1,7 @@
+# CODEOWNERS — GraphCompose
+#
+# Solo-maintained. Every change is reviewed by the maintainer.
+# When co-maintainers join, add lane-specific globs above the wildcard.
+# Lane structure: docs/package-map.md
+
+*  @DemchaAV

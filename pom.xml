@@ -54,7 +54,7 @@
         <pdfbox.version>3.0.7</pdfbox.version>
         <poi.version>5.5.1</poi.version>
         <javafx.version>21.0.2</javafx.version>
-        <slf4j.version>2.0.17</slf4j.version>
+        <slf4j.version>2.0.18</slf4j.version>
         <snakeyaml.version>2.6</snakeyaml.version>
         <zxing.version>3.5.3</zxing.version>
 

@@ -56,7 +56,7 @@
         <javafx.version>21.0.2</javafx.version>
         <slf4j.version>2.0.17</slf4j.version>
         <snakeyaml.version>2.6</snakeyaml.version>
-        <zxing.version>3.5.3</zxing.version>
+        <zxing.version>3.5.4</zxing.version>
 
         <!-- Test dependencies -->
         <assertj.version>3.27.6</assertj.version>

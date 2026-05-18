@@ -39,6 +39,44 @@
 
 Sits between **iText** (low-level page primitives) and **JasperReports** (XML-template-driven layout): a Java DSL describes the document semantically, the engine renders.
 
+## Scope and comparison
+
+### Output support
+
+| Format | Status | Notes |
+|---|---|---|
+| PDF | Production | Fixed-layout backend on PDFBox 3.0. Full DSL coverage. |
+| DOCX | Partial | Semantic export via Apache POI. Unsupported nodes (`shape`, `line`, `ellipse`, `barcode`) are dropped silently &mdash; layout fidelity is best-effort for paragraph / list / table content. |
+| PPTX | Skeleton | Validates supported node types and emits a manifest. **Not a real PowerPoint export yet** &mdash; planned only if there is demand. |
+
+### What GraphCompose is not
+
+- Not a hosted PDF rendering service &mdash; it is a library you embed.
+- Not a WYSIWYG editor &mdash; the DSL is code, not drag-and-drop.
+- Not a reporting engine like JasperReports &mdash; no datasource bindings, no XML templates, no compiled `.jasper` files.
+- Not a browser / HTML-to-PDF renderer &mdash; the engine has its own layout pipeline; HTML/CSS input is not supported.
+
+### Compared with similar Java libraries
+
+| Library | API style | Layout | License | Best for |
+|---|---|---|---|---|
+| **GraphCompose** | Java DSL, semantic nodes | Two-pass, deterministic, snapshot-testable | MIT | Code-first business documents with layout regression tests |
+| **PDFBox** | Low-level text / path primitives | Manual coordinates | Apache 2.0 | Direct PDF manipulation, parsing, extraction |
+| **iText 7** | Low-level page primitives + high-level helpers | Manual + helpers | AGPL / commercial | When AGPL is acceptable or you have a commercial licence |
+| **OpenPDF** | iText 4 fork | Manual + helpers | LGPL / MPL | Legacy iText 4 codebases |
+| **JasperReports** | XML templates compiled to `.jasper` | Template-driven | LGPL | Tabular reports with datasource bindings |
+
+GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the comparison is about authoring surface, not the renderer.
+
+### Which API should I use?
+
+| You want to&hellip; | Surface | Entry point |
+|---|---|---|
+| Generate a one-off PDF programmatically | DSL | `GraphCompose.document(...).pageFlow(...)` &mdash; see [Hello world](#hello-world) below |
+| Generate a CV / cover letter / invoice / proposal from data | Templates v2 | `ModernProfessional.create(BusinessTheme.modern()).compose(session, spec)` &mdash; see [templates v2](./docs/templates-v2.md) |
+| Add a custom visual primitive | Engine extension | `NodeDefinition` + `PdfFragmentRenderHandler` &mdash; see [extension guide](./docs/extension-guide.md) |
+| Regression-test generated layouts | Layout snapshots | `DocumentSession#layoutSnapshot()` &mdash; see [snapshot testing](./docs/layout-snapshot-testing.md) |
+
 ## Installation
 
 ```xml

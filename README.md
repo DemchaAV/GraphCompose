@@ -5,8 +5,8 @@
 </p>
 
 <p align="center">
-  <b>Java-first declarative document layout engine for cinematic PDFs.</b><br/>
-  Describe what the document <i>says</i>; the engine resolves layout, pagination, and PDFBox rendering.
+  <b>Declarative Java DSL for structured business PDFs.</b><br/>
+  Describe what the document <i>says</i>; the engine resolves layout, pagination, themes, and PDFBox rendering. <b>Cinematic by default.</b>
 </p>
 
 <p align="center">
@@ -35,7 +35,7 @@
 - **Author intent, not coordinates.** Fluent DSL for sections, paragraphs, tables, lists, layer stacks, themes &mdash; the engine handles measurement, pagination, and rendering.
 - **Deterministic by design.** Two-pass layout. Snapshots are stable across machines, so layout regressions are catchable in tests before any byte ships.
 - **Cinematic-by-default.** `BusinessTheme` + soft panels + accent strips + transforms + advanced tables are first-class primitives, not workarounds.
-- **PDFBox isolated, DOCX optional.** Single backend interface. Apache POI&ndash;backed DOCX export is one method call away.
+- **PDFBox isolated, DOCX optional.** Single backend interface. Apache POI&ndash;backed DOCX export is available for compatible semantic content &mdash; see [support matrix](#output-support) for limitations.
 
 Sits between **iText** (low-level page primitives) and **JasperReports** (XML-template-driven layout): a Java DSL describes the document semantically, the engine renders.
 
@@ -48,6 +48,14 @@ Sits between **iText** (low-level page primitives) and **JasperReports** (XML-te
 | PDF | Production | Fixed-layout backend on PDFBox 3.0. Full DSL coverage. |
 | DOCX | Partial | Semantic export via Apache POI. Unsupported nodes (`shape`, `line`, `ellipse`, `barcode`) are dropped silently &mdash; layout fidelity is best-effort for paragraph / list / table content. |
 | PPTX | Skeleton | Validates supported node types and emits a manifest. **Not a real PowerPoint export yet** &mdash; planned only if there is demand. |
+
+### When to use GraphCompose
+
+- **Server-side PDF generation in Java** &mdash; invoices, CVs, reports, proposals, statements, schedules.
+- **Templated documents from data** &mdash; themed presets (`ModernProfessional`, `InvoiceTemplateV2`, &hellip;) you parameterise instead of re-styling every time.
+- **Regression-tested layouts** &mdash; `DocumentSession#layoutSnapshot()` makes layout changes visible in PRs before any byte ships.
+- **Streaming PDFs from web backends** &mdash; Spring Boot `@RestController` writing straight to the response ([`HttpStreamingExample`](./examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java)).
+- **Higher-level than PDFBox, lighter than JasperReports** &mdash; Java DSL describes semantics; no XML templates, no manual coordinates.
 
 ### What GraphCompose is not
 

@@ -48,7 +48,7 @@
         <!-- Runtime / library dependencies -->
         <flexmark.version>0.64.8</flexmark.version>
         <jackson.bom.version>2.21.3</jackson.bom.version>
-        <kotlin.version>2.2.20</kotlin.version>
+        <kotlin.version>2.3.21</kotlin.version>
         <logback.version>1.5.32</logback.version>
         <lombok.version>1.18.46</lombok.version>
         <pdfbox.version>3.0.7</pdfbox.version>

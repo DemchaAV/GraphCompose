@@ -112,7 +112,7 @@ jobs:
 
       - name: Upload generated PDFs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: examples-pdfs-${{ github.run_id }}
           path: examples/target/generated-pdfs/**
@@ -152,7 +152,7 @@ jobs:
 
       - name: Upload smoke benchmark artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark-smoke-${{ github.run_id }}
           path: benchmarks/target/benchmarks/current-speed/**
@@ -218,7 +218,7 @@ jobs:
 
       - name: Upload benchmark artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark-full-${{ github.run_id }}
           path: |

@@ -17,7 +17,7 @@
         <maven.compiler.release>17</maven.compiler.release>
 
         <junit.bom.version>5.12.2</junit.bom.version>
-        <assertj.version>3.27.3</assertj.version>
+        <assertj.version>3.27.7</assertj.version>
     </properties>
 
     <dependencyManagement>

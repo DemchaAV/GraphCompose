@@ -17,6 +17,10 @@ updates:
     commit-message:
       prefix: deps
       include: scope
+    groups:
+      maven-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: github-actions
     directory: "/"
@@ -29,3 +33,6 @@ updates:
       - github-actions
     commit-message:
       prefix: ci
+    groups:
+      github-actions:
+        patterns: ["*"]

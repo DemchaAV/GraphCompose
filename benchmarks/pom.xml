@@ -19,7 +19,7 @@
         <graphcompose.version>1.6.1</graphcompose.version>
         <maven.compiler.release>17</maven.compiler.release>
 
-        <junit.bom.version>5.14.4</junit.bom.version>
+        <junit.bom.version>6.0.3</junit.bom.version>
         <assertj.version>3.27.7</assertj.version>
         <logback.version>1.5.32</logback.version>
 

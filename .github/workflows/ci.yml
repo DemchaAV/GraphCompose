@@ -177,7 +177,7 @@ jobs:
           cache: maven
 
       - name: Restore benchmark history cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: benchmarks/target/benchmarks/current-speed
           key: benchmark-current-speed-${{ github.ref_name }}-${{ github.run_id }}

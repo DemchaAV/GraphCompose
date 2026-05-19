@@ -41,6 +41,25 @@ public final class LayoutCompiler {
      */
     private static final double CAPACITY_TOLERANCE = 0.5;
 
+    /**
+     * Identifies the kind of fixed slot a child is being compiled into,
+     * so the validator can distinguish "child of a horizontal row band"
+     * (where a nested {@code Row} would create real composition conflict)
+     * from "child of a {@link com.demcha.compose.document.node.LayerStackNode}
+     * layer" (where a nested {@code Row} is a normal column-row inside an
+     * already-fixed layer rectangle).
+     *
+     * <p>{@link #compileNodeInFixedSlot} takes the kind as a parameter
+     * and propagates it down recursive calls so the validator can
+     * relax just for STACK layer parents.</p>
+     */
+    private enum FixedSlotKind {
+        /** Child sits inside a horizontal row band (column of a row). */
+        ROW_SLOT,
+        /** Child sits inside a {@link LayerStackNode} layer rectangle. */
+        STACK_LAYER_SLOT
+    }
+
     private final NodeRegistry registry;
 
     /**
@@ -386,6 +405,9 @@ public final class LayoutCompiler {
                 if (childPrepared.isComposite()) {
                     PlacementContext slotCtx = new FixedSlotPlacementContext(
                             state.pageIndex, state.canvas, prepareContext, fragmentContext, nodes, fragments);
+                    // Column of a horizontal row band — keep the strict
+                    // ROW_SLOT validator so a nested horizontal row is
+                    // rejected (would compete with the parent row band).
                     compileNodeInFixedSlot(
                             childPrepared,
                             path,
@@ -394,6 +416,7 @@ public final class LayoutCompiler {
                             cursorX,
                             rowInnerY,
                             slotWidth,
+                            FixedSlotKind.ROW_SLOT,
                             slotCtx);
                     cursorX += slotWidth + layoutSpec.spacing();
                     continue;
@@ -891,6 +914,9 @@ public final class LayoutCompiler {
                         ctx.nodes(),
                         ctx.fragments());
 
+        // Child sits inside a LayerStack layer rectangle — the validator
+        // can relax for STACK_LAYER_SLOT because there is no competing
+        // horizontal row band, only the layer's own fixed area.
         compileNodeInFixedSlot(
                 childPrepared,
                 parentPath,
@@ -899,6 +925,7 @@ public final class LayoutCompiler {
                 alignedSlotX,
                 alignedSlotTopY,
                 childOuterWidth,
+                FixedSlotKind.STACK_LAYER_SLOT,
                 layerCtx);
     }
 
@@ -1066,12 +1093,21 @@ public final class LayoutCompiler {
     }
 
     /**
-     * Compiles a composite or leaf node inside a fixed horizontal row slot.
+     * Compiles a composite or leaf node inside a fixed slot.
      *
-     * <p>The slot is constrained to a single page: composite row children are
-     * laid out as columns inside the row's atomic band, with a local
-     * top-down y-cursor. No global pagination state is mutated; the row's
-     * outer height check guarantees the column fits.</p>
+     * <p>The slot is constrained to a single page: composite children are
+     * laid out with a local top-down y-cursor. No global pagination state
+     * is mutated; the parent's outer height check guarantees the column
+     * fits.</p>
+     *
+     * <p>{@code kind} identifies whether the slot is a horizontal row
+     * band ({@link FixedSlotKind#ROW_SLOT}) or a
+     * {@link com.demcha.compose.document.node.LayerStackNode} layer
+     * rectangle ({@link FixedSlotKind#STACK_LAYER_SLOT}). The validator
+     * uses it to relax the "no nested horizontal row" rule for stack
+     * layers, where a {@code Row} is a normal column-row inside an
+     * already-fixed layer rectangle rather than a competing horizontal
+     * band.</p>
      *
      * @return outer height (measured height + vertical margin) consumed by the
      *         node, used by the caller's local y-cursor
@@ -1083,6 +1119,7 @@ public final class LayoutCompiler {
                                           double slotX,
                                           double slotTopY,
                                           double slotWidth,
+                                          FixedSlotKind kind,
                                           PlacementContext ctx) {
         // Alias locals so the body keeps the same names it had before the
         // PlacementContext refactor; the context is the only authoritative
@@ -1228,6 +1265,9 @@ public final class LayoutCompiler {
                 DocumentNode child = children.get(i);
                 PreparedNode<DocumentNode> childPrepared =
                         prepareForRegionWidth(prepareContext, child, childRegionWidth);
+                // Propagate the parent's slot kind so a STACK layer
+                // descendant (column → row → ...) keeps the relaxed
+                // validation policy all the way down.
                 double consumed = compileNodeInFixedSlot(
                         childPrepared,
                         path,
@@ -1236,6 +1276,7 @@ public final class LayoutCompiler {
                         childRegionX,
                         childTopY,
                         childRegionWidth,
+                        kind,
                         ctx);
                 childTopY -= consumed;
                 if (i < children.size() - 1) {

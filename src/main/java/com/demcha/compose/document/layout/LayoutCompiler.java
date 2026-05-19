@@ -156,13 +156,16 @@ public final class LayoutCompiler {
         }
 
         if (availableWidth <= EPS) {
-            throw new IllegalStateException("Node '" + path + "' has no horizontal layout space.");
+            throw new IllegalStateException("Node '" + path
+                    + "' has no horizontal layout space. "
+                    + "Reduce padding or margin on the parent, or increase the page width.");
         }
 
         MeasureResult naturalMeasure = prepared.measureResult();
         if (naturalMeasure.width() > availableWidth + EPS) {
             throw new IllegalStateException("Node '" + path + "' measured width " + naturalMeasure.width()
-                    + " exceeds available width " + availableWidth + ".");
+                    + " exceeds available width " + availableWidth + ". "
+                    + "Reduce the node width, shorten inline content, or wrap content in a smaller container.");
         }
 
         if (prepared.isComposite()) {
@@ -399,7 +402,8 @@ public final class LayoutCompiler {
                         (NodeDefinition<DocumentNode>) registry.definitionFor(child);
                 if (childMeasure.height() > naturalMeasure.height() - padding.vertical() + EPS) {
                     throw new IllegalStateException("Row '" + path + "' child '" + child.nodeKind()
-                            + "' measured height " + childMeasure.height() + " exceeds row inner height.");
+                            + "' measured height " + childMeasure.height() + " exceeds row inner height. "
+                            + "Reduce the child height, shorten its content, or increase the row height.");
                 }
 
                 if (childPrepared.isComposite()) {
@@ -1016,7 +1020,9 @@ public final class LayoutCompiler {
                 throw atomicTooLarge(path, pieceOuterHeight, fullPageOuterHeight);
             }
             if (tail != null && tail.equals(current)) {
-                throw new IllegalStateException("Split did not make progress for node '" + path + "'.");
+                throw new IllegalStateException("Split did not make progress for node '" + path
+                        + "'. The node's NodeDefinition.split() returned the original input as the tail — "
+                        + "check the definition for an infinite split loop and ensure each split advances.");
             }
 
             DocumentNode headNode = head.node();
@@ -1508,7 +1514,11 @@ public final class LayoutCompiler {
 
     private AtomicNodeTooLargeException atomicTooLarge(String path, double outerHeight, double pageHeight) {
         return new AtomicNodeTooLargeException(
-                "Node '" + path + "' requires outer height " + outerHeight + " but page capacity is " + pageHeight + ".");
+                "Node '" + path + "' requires outer height " + outerHeight
+                        + " but page capacity is " + pageHeight + ". "
+                        + "Reduce the node height, split content into multiple atomic blocks, "
+                        + "or increase the page size. Differences under 0.5 pt are tolerated as "
+                        + "rounding noise (v1.6.2+).");
     }
 
 }

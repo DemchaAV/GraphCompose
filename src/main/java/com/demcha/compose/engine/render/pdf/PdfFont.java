@@ -84,8 +84,18 @@ public class PdfFont extends FontBase<PDFont> {
     }
 
     /**
-     * @param style
-     * @return
+     * Measures the rendered width of {@code text} in {@code style}'s font.
+     *
+     * <p>Width is measured against the same string the PDF render path will
+     * actually emit — that is, after {@link #sanitizeForRender(TextStyle, String)}
+     * replaces any glyph the selected font cannot encode. Keeping width
+     * measurement and render in lockstep prevents wrap geometry from
+     * drifting when input contains characters outside the font's coverage
+     * (arrows, dots, emoji, custom unicode).</p>
+     *
+     * @param style style selecting the concrete font variant
+     * @param text raw text from the document model
+     * @return rendered width in points
      */
     @Override
     public double getTextWidth(TextStyle style, String text) {
@@ -94,9 +104,11 @@ public class PdfFont extends FontBase<PDFont> {
         double size = style.size();
 
         try {
-            // ✅ IMPORTANT: preserve whitespace runs exactly
+            // Preserve all-whitespace runs exactly (used by wrapping for
+            // leading/trailing space accounting); sanitize the rest so
+            // width matches the bytes actually shown by the renderer.
             boolean whitespaceOnly = text.chars().allMatch(Character::isWhitespace);
-            String measured = whitespaceOnly ? text : textSanitizer(text); // sanitizer must not strip trailing spaces ideally
+            String measured = whitespaceOnly ? text : sanitizeForRender(style, text);
 
             double width = fontType(style.decoration()).getStringWidth(measured) / 1000d * size;
             return width;
@@ -106,13 +118,52 @@ public class PdfFont extends FontBase<PDFont> {
         }
     }
 
-
-    private String prepareForRender(String text) {
-        return textSanitizer(text);
+    /**
+     * Sanitises {@code text} for safe rendering with the font selected by
+     * {@code style}. Applies the standard control-character cleanup that
+     * {@code getTextWidth} has always done, then substitutes any code point
+     * the resolved font cannot encode with {@code '?'}.
+     *
+     * <p>This is the single entry point shared by the PDF render path
+     * (paragraphs, tables, watermarks, header/footer) and the width
+     * measurement path. Calling it everywhere keeps wrap geometry
+     * consistent with the bytes that are actually drawn on the page,
+     * and prevents {@link PDFont#encode(String)} from throwing on
+     * characters outside the font's coverage (arrows ↦ U+2192, bullets
+     * ↦ U+25CF, emoji, custom unicode).</p>
+     *
+     * @param style style selecting the concrete font variant
+     * @param text  raw text from the document model; {@code null} or empty
+     *              is returned unchanged
+     * @return text safe to pass to
+     *         {@code PDPageContentStream.showText(...)}
+     */
+    public String sanitizeForRender(TextStyle style, String text) {
+        if (text == null || text.isEmpty()) {
+            return text == null ? "" : text;
+        }
+        String cleaned = textSanitizer(text);
+        PDFont font = fontType(style.decoration());
+        return sanitizeByFont(font, cleaned);
     }
 
-    /** Keeps spaces, only replaces characters the font can't encode. */
-    private String sanitizeByFont(PDFont font, String s) {
+    /**
+     * Replaces every code point in {@code s} that {@code font} cannot
+     * encode with {@code '?'}. Newlines are dropped (the renderer handles
+     * line breaks at a higher layer); spaces are preserved.
+     *
+     * <p>Public so render handlers in sibling packages can sanitise text
+     * against a specific {@link PDFont} when the active text style is
+     * already known. Most callers should prefer
+     * {@link #sanitizeForRender(TextStyle, String)} which resolves the
+     * font from a {@link TextStyle} and applies the standard control
+     * cleanup first.</p>
+     *
+     * @param font font to validate glyph coverage against
+     * @param s    text to sanitise
+     * @return text containing only code points the font can encode
+     */
+    public String sanitizeByFont(PDFont font, String s) {
         StringBuilder sb = new StringBuilder(s.length());
         s.codePoints().forEach(cp -> {
             // keep spaces/newlines logic correct for wrapping
@@ -120,7 +171,7 @@ public class PdfFont extends FontBase<PDFont> {
 
             String ch = new String(Character.toChars(cp));
             if (canEncode(font, ch)) sb.append(ch);
-            else sb.append('?'); // or " " if you prefer
+            else sb.append('?');
         });
         return sb.toString();
     }

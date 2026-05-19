@@ -1146,14 +1146,21 @@ public final class LayoutCompiler {
 
         if (prepared.isComposite()) {
             CompositeLayoutSpec layoutSpec = prepared.requireCompositeLayout();
-            // Horizontal rows and splittable tables remain forbidden inside a
-            // row slot — they would compete with the parent row's horizontal
-            // band or break atomic pagination. STACK overlays (e.g.
-            // LayerStackNode) are allowed because they are atomic and place
-            // their layers at the same point with explicit alignment.
-            if (layoutSpec.axis() == CompositeLayoutSpec.Axis.HORIZONTAL) {
+            // Horizontal rows remain forbidden inside a ROW_SLOT (column
+            // of a row band) because they would compete with the parent
+            // row's horizontal band. Inside a STACK_LAYER_SLOT, however,
+            // the surrounding rectangle is already fixed by the layer's
+            // alignment — a "horizontal row" there is just a normal
+            // column-row inside the layer area, not a competing band.
+            // STACK composites (e.g. LayerStackNode) are always allowed
+            // because they are atomic and anchor their children inside
+            // the existing slot.
+            if (layoutSpec.axis() == CompositeLayoutSpec.Axis.HORIZONTAL
+                    && kind == FixedSlotKind.ROW_SLOT) {
                 throw new IllegalStateException("Row '" + path
-                        + "' cannot contain a nested horizontal row; use a section column instead.");
+                        + "' cannot contain a nested horizontal row. "
+                        + "Wrap the inner row in a LayerStack layer (allowed since v1.6.2), "
+                        + "or stack horizontal content as sections inside a vertical column.");
             }
 
             int decorationInsertIndex = fragments.size();

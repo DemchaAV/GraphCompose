@@ -62,6 +62,50 @@ public final class GlyphFallbackLogger {
     }
 
     /**
+     * Sanitises {@code text} against {@code font}, substituting every
+     * code point the font cannot encode with {@code '?'} and reporting
+     * each substitution through {@link #report(PDFont, int)}. Newlines
+     * are dropped (the renderer handles line breaks at a higher layer);
+     * spaces are preserved.
+     *
+     * <p>Static convenience for render helpers that hold a raw
+     * {@link PDFont} (watermarks, header/footer chrome) and have no
+     * {@code PdfFont} wrapper handy. {@link PdfFont#sanitizeByFont(PDFont, String)}
+     * delegates here so both paths use the exact same substitution
+     * policy and produce identical bytes.</p>
+     *
+     * @param font font to validate glyph coverage against
+     * @param text raw text to sanitise; {@code null} returns empty
+     * @return text containing only code points the font can encode
+     */
+    public static String sanitize(PDFont font, String text) {
+        if (text == null || text.isEmpty()) {
+            return text == null ? "" : text;
+        }
+        StringBuilder sb = new StringBuilder(text.length());
+        text.codePoints().forEach(cp -> {
+            if (cp == '\n' || cp == '\r') return;
+            String ch = new String(Character.toChars(cp));
+            if (canEncode(font, ch)) {
+                sb.append(ch);
+            } else {
+                report(font, cp);
+                sb.append('?');
+            }
+        });
+        return sb.toString();
+    }
+
+    private static boolean canEncode(PDFont font, String ch) {
+        try {
+            font.encode(ch);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
      * Visible for tests. Clears the deduplication cache so a fresh test
      * can assert on the warn sequence without process restart.
      */

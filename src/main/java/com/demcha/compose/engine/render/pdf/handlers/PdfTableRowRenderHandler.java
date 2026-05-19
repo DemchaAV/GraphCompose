@@ -205,9 +205,12 @@ public final class PdfTableRowRenderHandler implements RenderHandler<TableRow, P
                 if (line.text().isEmpty()) {
                     continue;
                 }
+                // Sanitise per-line so any unsupported glyph in a single
+                // cell does not crash the entire table render.
+                String safeText = font.sanitizeForRender(style.textStyle(), line.text());
                 stream.beginText();
                 stream.newLineAtOffset((float) line.x(), (float) line.baselineY());
-                stream.showText(line.text());
+                stream.showText(safeText);
                 stream.endText();
             }
         } finally {

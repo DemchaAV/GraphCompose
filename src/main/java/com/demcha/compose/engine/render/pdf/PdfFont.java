@@ -164,29 +164,7 @@ public class PdfFont extends FontBase<PDFont> {
      * @return text containing only code points the font can encode
      */
     public String sanitizeByFont(PDFont font, String s) {
-        StringBuilder sb = new StringBuilder(s.length());
-        s.codePoints().forEach(cp -> {
-            // keep spaces/newlines logic correct for wrapping
-            if (cp == '\n' || cp == '\r') return;
-
-            String ch = new String(Character.toChars(cp));
-            if (canEncode(font, ch)) {
-                sb.append(ch);
-            } else {
-                GlyphFallbackLogger.report(font, cp);
-                sb.append('?');
-            }
-        });
-        return sb.toString();
-    }
-
-    private boolean canEncode(PDFont font, String ch) {
-        try {
-            font.encode(ch);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+        return GlyphFallbackLogger.sanitize(font, s);
     }
     public double getTextWidthNoSanitize(TextStyle style, String text) {
         double size = style.size();

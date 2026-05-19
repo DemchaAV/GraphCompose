@@ -6,6 +6,7 @@ import com.demcha.compose.engine.components.core.Entity;
 import com.demcha.compose.engine.components.layout.coordinator.Placement;
 import com.demcha.compose.engine.components.renderable.BlockText;
 import com.demcha.compose.engine.core.EntityManager;
+import com.demcha.compose.engine.render.pdf.GlyphFallbackLogger;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.engine.render.pdf.PdfRenderingSystemECS;
 import com.demcha.compose.engine.render.guides.GuidesRenderer;
@@ -91,14 +92,14 @@ public final class PdfBlockTextRenderHandler implements RenderHandler<BlockText,
 
                 contentStream.setTextMatrix(new Matrix(1, 0, 0, 1, (float) line.x(), (float) line.y()));
                 for (TextDataBody body : line.bodies()) {
-                    setFont(entityManager, body, contentStream);
-                    try {
-                        String text = BlockText.sanitizeText(body.text());
-                        if (!text.isEmpty()) {
-                            contentStream.showText(text);
-                        }
-                    } catch (IllegalArgumentException ex) {
-                        throw new IllegalCharsetNameException("Exception in rendering char " + body.text() + "\n " + line.bodies() + "\n" + ex);
+                    PDFont activeFont = setFont(entityManager, body, contentStream);
+                    // BlockText.sanitizeText handles control-character cleanup;
+                    // GlyphFallbackLogger.sanitize then substitutes any code
+                    // point the resolved font cannot encode so showText cannot
+                    // throw on unsupported glyphs.
+                    String text = GlyphFallbackLogger.sanitize(activeFont, BlockText.sanitizeText(body.text()));
+                    if (!text.isEmpty()) {
+                        contentStream.showText(text);
                     }
                 }
             }
@@ -119,10 +120,12 @@ public final class PdfBlockTextRenderHandler implements RenderHandler<BlockText,
         return true;
     }
 
-    private void setFont(EntityManager entityManager, TextDataBody body, PDPageContentStream contentStream) throws IOException {
+    private PDFont setFont(EntityManager entityManager, TextDataBody body, PDPageContentStream contentStream) throws IOException {
         var style = body.textStyle();
         PdfFont pdfFont = entityManager.getFonts().getFont(style.fontName(), PdfFont.class).orElseThrow();
-        contentStream.setFont(pdfFont.fontType(style.decoration()), (float) style.size());
+        PDFont activeFont = pdfFont.fontType(style.decoration());
+        contentStream.setFont(activeFont, (float) style.size());
+        return activeFont;
     }
 
     /**

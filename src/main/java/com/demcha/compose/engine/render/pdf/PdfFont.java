@@ -170,8 +170,12 @@ public class PdfFont extends FontBase<PDFont> {
             if (cp == '\n' || cp == '\r') return;
 
             String ch = new String(Character.toChars(cp));
-            if (canEncode(font, ch)) sb.append(ch);
-            else sb.append('?');
+            if (canEncode(font, ch)) {
+                sb.append(ch);
+            } else {
+                GlyphFallbackLogger.report(font, cp);
+                sb.append('?');
+            }
         });
         return sb.toString();
     }

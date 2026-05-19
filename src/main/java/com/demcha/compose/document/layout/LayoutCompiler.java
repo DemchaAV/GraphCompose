@@ -26,6 +26,21 @@ public final class LayoutCompiler {
     private static final Logger PAGINATION_LOG = LoggerFactory.getLogger("com.demcha.compose.engine.pagination");
     private static final double EPS = 1e-6;
 
+    /**
+     * Tolerance applied when comparing a node's required outer height
+     * against the full page capacity. EPS (1e-6) is floating-point noise
+     * tolerance; CAPACITY_TOLERANCE absorbs the discrepancy between
+     * rounded human input (e.g. {@code 842.0} for an A4 height) and the
+     * exact PDF point value ({@code DocumentPageSize.A4.height() ==
+     * 841.88977}). 0.5 pt ≈ 0.18 mm — visually indistinguishable, while
+     * a > 1 pt overflow still throws {@link AtomicNodeTooLargeException}.
+     *
+     * <p>Use EPS for floating-point noise inside split / remaining-height
+     * decisions; reserve CAPACITY_TOLERANCE for the "does this fit on a
+     * full page at all?" check.</p>
+     */
+    private static final double CAPACITY_TOLERANCE = 0.5;
+
     private final NodeRegistry registry;
 
     /**
@@ -325,7 +340,7 @@ public final class LayoutCompiler {
         DocumentNode node = prepared.node();
         double rowOuterHeight = naturalMeasure.height() + margin.vertical();
         double fullPageHeight = state.canvas.innerHeight();
-        if (rowOuterHeight > fullPageHeight + EPS) {
+        if (rowOuterHeight > fullPageHeight + CAPACITY_TOLERANCE) {
             throw atomicTooLarge(path, rowOuterHeight, fullPageHeight);
         }
         if (rowOuterHeight > state.remainingHeight() + EPS && state.usedHeight > EPS) {
@@ -499,7 +514,7 @@ public final class LayoutCompiler {
         DocumentNode node = prepared.node();
         double stackOuterHeight = naturalMeasure.height() + margin.vertical();
         double fullPageHeight = state.canvas.innerHeight();
-        if (stackOuterHeight > fullPageHeight + EPS) {
+        if (stackOuterHeight > fullPageHeight + CAPACITY_TOLERANCE) {
             throw atomicTooLarge(path, stackOuterHeight, fullPageHeight);
         }
         if (stackOuterHeight > state.remainingHeight() + EPS && state.usedHeight > EPS) {
@@ -742,7 +757,7 @@ public final class LayoutCompiler {
         double outerHeight = naturalMeasure.height() + margin.vertical();
         double fullPageHeight = state.canvas.innerHeight();
 
-        if (outerHeight > fullPageHeight + EPS) {
+        if (outerHeight > fullPageHeight + CAPACITY_TOLERANCE) {
             throw atomicTooLarge(path, outerHeight, fullPageHeight);
         }
         if (outerHeight > state.remainingHeight() + EPS && state.usedHeight > EPS) {

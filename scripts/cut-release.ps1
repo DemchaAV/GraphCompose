@@ -172,13 +172,18 @@ function Update-ShowcaseGhBase($newRef) {
 }
 
 function Run-ShowcaseSync {
+    # Quote the -D argument: PowerShell's call operator drops the leading
+    # '-D' on the way to mvnw.cmd, so Maven sees ".mainClass=..." as a
+    # lifecycle phase. Wrapping the whole token in quotes preserves it
+    # as a single literal argument.
+    $execProp = '"-Dexec.mainClass=com.demcha.examples.support.ShowcaseSync"'
     if ($DryRun) {
-        Write-Host "    [DRY RUN] $mvnw -f examples/pom.xml exec:java -Dexec.mainClass=com.demcha.examples.support.ShowcaseSync" -ForegroundColor Yellow
+        Write-Host "    [DRY RUN] $mvnw -f examples/pom.xml exec:java $execProp" -ForegroundColor Yellow
         return
     }
     Push-Location $repoRoot
     try {
-        & $mvnw -f examples/pom.xml exec:java -Dexec.mainClass=com.demcha.examples.support.ShowcaseSync 2>&1 | ForEach-Object {
+        & $mvnw -f examples/pom.xml exec:java $execProp 2>&1 | ForEach-Object {
             if ($_ -match 'Synced|Wrote manifest|BUILD SUCCESS|BUILD FAILURE|ERROR') {
                 Write-Host "    $_" -ForegroundColor DarkGray
             }

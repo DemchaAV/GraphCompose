@@ -2,6 +2,7 @@ package com.demcha.compose.engine.render.pdf.helpers;
 
 import com.demcha.compose.engine.components.content.header_footer.HeaderFooterConfig;
 import com.demcha.compose.engine.components.content.header_footer.HeaderFooterZone;
+import com.demcha.compose.engine.render.pdf.GlyphFallbackLogger;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -83,9 +84,14 @@ public final class PdfHeaderFooterRenderer {
 
         cs.setNonStrokingColor(config.getTextColor());
 
-        // Left text
-        String leftText = HeaderFooterConfig.resolvePlaceholders(config.getLeftText(), currentPage, totalPages);
-        if (leftText != null && !leftText.isEmpty()) {
+        // Header/footer text frequently includes page-number glyphs,
+        // copyright marks, or user branding outside Helvetica's WinAnsi
+        // coverage. Sanitise each zone through GlyphFallbackLogger so
+        // unsupported code points become '?' instead of crashing the
+        // whole document render.
+        String leftText = GlyphFallbackLogger.sanitize(font,
+                HeaderFooterConfig.resolvePlaceholders(config.getLeftText(), currentPage, totalPages));
+        if (!leftText.isEmpty()) {
             cs.beginText();
             cs.setFont(font, fontSize);
             cs.newLineAtOffset(marginLeft, baseY);
@@ -93,9 +99,9 @@ public final class PdfHeaderFooterRenderer {
             cs.endText();
         }
 
-        // Center text
-        String centerText = HeaderFooterConfig.resolvePlaceholders(config.getCenterText(), currentPage, totalPages);
-        if (centerText != null && !centerText.isEmpty()) {
+        String centerText = GlyphFallbackLogger.sanitize(font,
+                HeaderFooterConfig.resolvePlaceholders(config.getCenterText(), currentPage, totalPages));
+        if (!centerText.isEmpty()) {
             float textWidth = font.getStringWidth(centerText) / 1000f * fontSize;
             float centerX = marginLeft + (usableWidth - textWidth) / 2f;
             cs.beginText();
@@ -105,9 +111,9 @@ public final class PdfHeaderFooterRenderer {
             cs.endText();
         }
 
-        // Right text
-        String rightText = HeaderFooterConfig.resolvePlaceholders(config.getRightText(), currentPage, totalPages);
-        if (rightText != null && !rightText.isEmpty()) {
+        String rightText = GlyphFallbackLogger.sanitize(font,
+                HeaderFooterConfig.resolvePlaceholders(config.getRightText(), currentPage, totalPages));
+        if (!rightText.isEmpty()) {
             float textWidth = font.getStringWidth(rightText) / 1000f * fontSize;
             float rightX = pageWidth - marginRight - textWidth;
             cs.beginText();

@@ -298,6 +298,59 @@ class PaginationEdgeCaseTest {
     }
 
     @Test
+    void atomicNodeHalfPointOverCapacityShouldFitWithinTolerance() throws Exception {
+        // Inner area = 180 - 2*12 = 156 pt. CAPACITY_TOLERANCE is 0.5
+        // pt, so an image authored at 156.4 pt is within tolerance and
+        // must render rather than throw. Mirrors the real-world case
+        // where a user supplies a height rounded from the exact PDF
+        // point value of a page size (e.g. 842.0 vs the true
+        // 841.88977 for A4).
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(180, 180)
+                .margin(DocumentInsets.of(12))
+                .create()) {
+
+            session.add(new ImageNode(
+                    "BarelyOverImage",
+                    DocumentImageData.fromBytes(onePixelPng()),
+                    96.0,
+                    156.4,
+                    DocumentInsets.zero(),
+                    DocumentInsets.zero()));
+
+            // Should not throw — fits within the 0.5 pt human-input
+            // rounding tolerance.
+            LayoutGraph graph = session.layoutGraph();
+            assertThat(graph.totalPages()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void atomicNodeClearlyOverCapacityShouldStillThrow() throws Exception {
+        // Inner area = 156 pt; image at 158 pt overflows by 2 pt which
+        // is well above CAPACITY_TOLERANCE (0.5 pt). The atomic-too-
+        // large exception must still fire so real overflows are caught.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(180, 180)
+                .margin(DocumentInsets.of(12))
+                .create()) {
+
+            session.add(new ImageNode(
+                    "GenuinelyTooTallImage",
+                    DocumentImageData.fromBytes(onePixelPng()),
+                    96.0,
+                    158.0,
+                    DocumentInsets.zero(),
+                    DocumentInsets.zero()));
+
+            assertThatThrownBy(session::layoutGraph)
+                    .isInstanceOf(AtomicNodeTooLargeException.class)
+                    .hasMessageContaining("GenuinelyTooTallImage")
+                    .hasMessageContaining("requires outer height");
+        }
+    }
+
+    @Test
     void tableRowTooTallForAnEmptyPageShouldThrowDomainSpecificError() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(220, 180)

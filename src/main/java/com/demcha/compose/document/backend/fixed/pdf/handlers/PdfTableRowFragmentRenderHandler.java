@@ -181,9 +181,12 @@ public final class PdfTableRowFragmentRenderHandler
                 if (line.text().isEmpty()) {
                     continue;
                 }
+                // Sanitise per-line so a single unsupported glyph in a
+                // cell does not crash the whole table render.
+                String safeText = font.sanitizeForRender(cell.style().textStyle(), line.text());
                 stream.beginText();
                 stream.newLineAtOffset((float) line.x(), (float) line.baselineY());
-                stream.showText(line.text());
+                stream.showText(safeText);
                 stream.endText();
             }
         } finally {

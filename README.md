@@ -196,6 +196,10 @@ document.pageFlow().addCanvas(523, 360, canvas -> canvas
 - Recipes: [shape-as-container](./docs/recipes/shape-as-container.md) · [transforms](./docs/recipes/transforms.md) · [tables](./docs/recipes/tables.md) · [themes](./docs/recipes/themes.md) · [streaming](./docs/recipes/streaming.md) · [extending](./docs/recipes/extending.md)
 - [Migration v1.5 → v1.6](./docs/migration-v1-5-to-v1-6.md) · [Release process](./docs/release-process.md) · [Contributing](./CONTRIBUTING.md)
 
+## Companion projects
+
+- [**graphcompose-ai-flow**](https://github.com/DemchaAV/graphcompose-ai-flow) &mdash; experimental sister project exploring an AI-assisted authoring flow on top of GraphCompose. Independent codebase, separate lifecycle &mdash; nothing in this repo depends on it. Track it if you are interested in agentic document composition driven by the same semantic node model.
+
 ## License
 
 MIT &mdash; see [`LICENSE`](./LICENSE).

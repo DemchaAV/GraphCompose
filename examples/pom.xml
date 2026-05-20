@@ -6,7 +6,7 @@
 
     <groupId>io.github.demchaav</groupId>
     <artifactId>graphcompose-examples</artifactId>
-    <version>1.6.1</version>
+    <version>1.6.2</version>
 
     <name>GraphCompose Examples</name>
     <description>Runnable file-render examples for GraphCompose templates.</description>

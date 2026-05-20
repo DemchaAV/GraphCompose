@@ -11,7 +11,6 @@ import com.demcha.compose.document.layout.payloads.ParagraphTextSpan;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.engine.render.pdf.PdfFont;
-import com.demcha.compose.engine.text.TextControlSanitizer;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
@@ -89,7 +88,14 @@ public final class PdfParagraphFragmentRenderHandler
         try {
             for (ParagraphSpan span : spans) {
                 if (span instanceof ParagraphTextSpan textSpan) {
-                    String text = sanitize(textSpan.text());
+                    PdfFont font = fonts.getFont(textSpan.textStyle().fontName(), PdfFont.class).orElseThrow();
+                    // Font-aware sanitization keeps width measurement
+                    // (PdfFont.getTextWidth) and the bytes emitted here
+                    // in lockstep. PdfFont.sanitizeForRender substitutes
+                    // any code point the resolved font cannot encode
+                    // with '?', preventing PDFBox from throwing on
+                    // arrows / bullets / emoji / unsupported unicode.
+                    String text = font.sanitizeForRender(textSpan.textStyle(), textSpan.text());
                     if (text.isEmpty()) {
                         cursorX += textSpan.width();
                         continue;
@@ -99,7 +105,6 @@ public final class PdfParagraphFragmentRenderHandler
                         stream.newLineAtOffset((float) cursorX, (float) baselineY);
                         inTextBlock = true;
                     }
-                    PdfFont font = fonts.getFont(textSpan.textStyle().fontName(), PdfFont.class).orElseThrow();
                     stream.setFont(font.fontType(textSpan.textStyle().decoration()), (float) textSpan.textStyle().size());
                     stream.setNonStrokingColor(textSpan.textStyle().color());
                     stream.showText(text);
@@ -150,7 +155,4 @@ public final class PdfParagraphFragmentRenderHandler
         return base + imageSpan.baselineOffset();
     }
 
-    private String sanitize(String text) {
-        return TextControlSanitizer.remove(text);
-    }
 }

@@ -6,7 +6,7 @@
 
     <groupId>io.github.demchaav</groupId>
     <artifactId>graphcompose</artifactId>
-    <version>1.6.1</version>
+    <version>1.6.2</version>
 
     <name>GraphCompose</name>
     <description>A declarative layout engine for programmatic document generation, implemented primarily in Java.</description>
@@ -24,7 +24,7 @@
         <developer>
             <id>DemchaAV</id>
             <name>Artem Demchyshyn</name>
-            <email>demchyshyn.artem@gmail.com</email>
+            <email>demchishynartem@gmail.com</email>
             <url>https://github.com/DemchaAV</url>
             <roles>
                 <role>Lead Developer</role>

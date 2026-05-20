@@ -3,6 +3,104 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v1.6.2 — Planned
+
+Robustness patch. Closes four engine defects surfaced while building
+the Noir corporate CV example: any Unicode glyph that the active PDF
+font cannot encode used to crash the whole render, rounded human
+input for page sizes hit a 1e-6 capacity check, a `Row` inside a
+`LayerStack` content layer was rejected by the validator, and the
+existing exceptions did not point at a fix. **No public API change**
+— engine, DSL, themes, templates, and backend records all stay
+source-compatible with v1.6.1.
+
+### Engine
+
+- **Glyph sanitizer on every PDF text render path.** Any code point
+  the resolved font cannot encode (arrows `U+2192`, bullets `U+25CF`,
+  emoji, custom unicode) is now substituted with `?` instead of
+  throwing `IllegalArgumentException` deep inside PDFBox `showText`.
+  New `PdfFont.sanitizeForRender(TextStyle, String)` is the single
+  entry point the paragraph / watermark / header-footer / table /
+  block-text handlers route through; width measurement
+  (`PdfFont.getTextWidth`) uses the same string so wrap geometry
+  stays in lockstep with the bytes drawn. First substitution per
+  unique `(font, codePoint)` emits a one-shot WARN through the new
+  `GlyphFallbackLogger` (category
+  `com.demcha.compose.engine.render.pdf.glyph-fallback`); subsequent
+  substitutions are silent.
+- **Page capacity rounding tolerance.** The full-page check in
+  `LayoutCompiler` now uses a dedicated `CAPACITY_TOLERANCE = 0.5pt`
+  (≤ 0.18 mm — visually indistinguishable) instead of the
+  floating-point `EPS = 1e-6`. Authors who size content at the
+  rounded `842.0pt` against the true A4 inner height `841.88977pt`
+  no longer hit `AtomicNodeTooLargeException`; overflows of more
+  than 1pt still throw. `EPS` stays as is for split / remaining-
+  height decisions inside the splittable-leaf path.
+- **`Row` allowed inside `LayerStack` content layer.** New private
+  `FixedSlotKind { ROW_SLOT, STACK_LAYER_SLOT }` is threaded through
+  `compileNodeInFixedSlot` and propagated down recursive calls.
+  Validator at the row-in-fixed-slot guard now rejects nested
+  horizontal rows only when the parent slot is a real row band; a
+  `Row` directly inside a `LayerStack` layer rectangle (or any
+  vertical descendant thereof) is now a normal column-row and
+  compiles cleanly. Row-in-row still throws — the relaxation does
+  not leak into the `ROW_SLOT` path.
+- **Exception messages now include action verbs.** The five
+  engine-thrown exception messages
+  (`AtomicNodeTooLargeException` plus four `IllegalStateException`s
+  in `LayoutCompiler`) now say what to try, not just which rule
+  fired: "Reduce the node height, split content into multiple atomic
+  blocks, or increase the page size"; "Wrap the inner row in a
+  LayerStack layer (allowed since v1.6.2), or stack horizontal
+  content as sections inside a vertical column"; etc. Existing
+  substring-based test assertions stay green.
+
+### Tests
+
+- New `PdfFontSanitizerTest` pins the sanitizer contract: substitution
+  policy for unsupported glyphs, ASCII pass-through, single + collapsed
+  spaces, empty / null input, width consistency between bullet input
+  and `?` substitute, and the direct `sanitizeByFont` escape hatch
+  used by raw-`PDFont` helpers.
+- New `LayerStackRowCompositionTest` pins both ends of the R3
+  contract: three positive cases (row directly inside a layer, the
+  Noir-CV shape with a dark band + sidebar/main row, row deep inside
+  a layer through vertical sections) and one negative guard
+  (row-inside-row still throws).
+- `PaginationEdgeCaseTest` gains
+  `atomicNodeHalfPointOverCapacityShouldFitWithinTolerance` and
+  `atomicNodeClearlyOverCapacityShouldStillThrow` boundary cases for
+  the new capacity tolerance.
+- Three new visual regression demos write real PDFs under
+  `target/visual-tests/` for manual review:
+  `glyph-fallback/UnicodeFallback*.pdf` (paragraph + table +
+  watermark + header/footer all with unsupported glyphs),
+  `page-capacity/PageCapacityToleranceDemo.pdf` (842pt shape on A4),
+  `layer-stack/LayerStackRowDemo.pdf` (full Noir-CV shape).
+- New `DevelopTest` scratch test class under
+  `src/test/java/com/demcha/testing/visual/` renders a minimal
+  document for manual API experimentation; output lives at
+  `target/visual-tests/develop/Develop.pdf`.
+- One layout snapshot baseline
+  (`document/nested_list_three_levels.json`) updated as a deliberate
+  consequence of the new font-aware width measurement: `ListBuilder`
+  default markers for deep nesting (`◦ U+25E6`, `▪ U+25AA`) are
+  outside Helvetica's WinAnsi coverage, so they now substitute to
+  `?` and widen the list rectangle. Follow-up tracked: ship safer
+  ASCII / font-aware list marker defaults in v1.7.
+
+### Documentation
+
+- `README.md` gains a **Companion projects** section linking the
+  experimental [`graphcompose-ai-flow`](https://github.com/DemchaAV/graphcompose-ai-flow)
+  sister repo (independent codebase, separate lifecycle, no
+  dependency from this repo).
+- Maintainer email in `pom.xml` and `CODE_OF_CONDUCT.md` corrected
+  from the non-existent `demchyshyn.artem@gmail.com` to the real
+  inbox `demchishynartem@gmail.com`, so JitPack artifact metadata
+  and CoC enforcement contact resolve.
+
 ## v1.6.1 — 2026-05-09
 
 Maintenance + compatibility patch. Drops the Java 21 source/target

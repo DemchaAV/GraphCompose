@@ -3,7 +3,7 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v1.6.2 — Planned
+## v1.6.2 — 2026-05-20
 
 Robustness patch. Closes four engine defects surfaced while building
 the Noir corporate CV example: any Unicode glyph that the active PDF

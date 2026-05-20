@@ -2,6 +2,7 @@ package com.demcha.compose.engine.render.pdf.helpers;
 
 import com.demcha.compose.engine.components.content.watermark.WatermarkConfig;
 import com.demcha.compose.engine.components.content.watermark.WatermarkPosition;
+import com.demcha.compose.engine.render.pdf.GlyphFallbackLogger;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -73,7 +74,11 @@ public final class PdfWatermarkRenderer {
                                             PDRectangle mediaBox) throws IOException {
         PDFont font = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
         float fontSize = config.getFontSize();
-        String text = config.getText();
+        // Sanitise once: watermark text may carry user copyright / brand
+        // symbols outside WinAnsi coverage. R1.b paragraph path is wired
+        // separately; watermarks render via raw PDFont so we delegate
+        // straight to GlyphFallbackLogger.sanitize for the same policy.
+        String text = GlyphFallbackLogger.sanitize(font, config.getText());
 
         float textWidth = font.getStringWidth(text) / 1000f * fontSize;
         float textHeight = fontSize;

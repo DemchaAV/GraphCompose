@@ -75,13 +75,18 @@ public final class PdfTextRenderHandler implements RenderHandler<TextComponent, 
                 + (float) padding.bottom()
                 + (float) metrics.baselineOffsetFromBottom();
 
+        // Font-aware sanitisation routes through the same seam as the
+        // paragraph render handler (PdfFont.sanitizeForRender) so width
+        // measurement and render stay in lockstep on unsupported glyphs.
+        String safeText = ((PdfFont) font).sanitizeForRender(data.style(), data.textValue().value());
+
         contentStream.saveGraphicsState();
         try {
             contentStream.setFont(pdfFont, (float) data.style().size());
             contentStream.setNonStrokingColor(data.style().color());
             contentStream.beginText();
             contentStream.newLineAtOffset(baselineX, baselineY);
-            contentStream.showText(data.textValue().value());
+            contentStream.showText(safeText);
             contentStream.endText();
         } finally {
             contentStream.restoreGraphicsState();

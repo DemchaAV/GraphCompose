@@ -26,6 +26,40 @@ public final class LayoutCompiler {
     private static final Logger PAGINATION_LOG = LoggerFactory.getLogger("com.demcha.compose.engine.pagination");
     private static final double EPS = 1e-6;
 
+    /**
+     * Tolerance applied when comparing a node's required outer height
+     * against the full page capacity. EPS (1e-6) is floating-point noise
+     * tolerance; CAPACITY_TOLERANCE absorbs the discrepancy between
+     * rounded human input (e.g. {@code 842.0} for an A4 height) and the
+     * exact PDF point value ({@code DocumentPageSize.A4.height() ==
+     * 841.88977}). 0.5 pt ≈ 0.18 mm — visually indistinguishable, while
+     * a > 1 pt overflow still throws {@link AtomicNodeTooLargeException}.
+     *
+     * <p>Use EPS for floating-point noise inside split / remaining-height
+     * decisions; reserve CAPACITY_TOLERANCE for the "does this fit on a
+     * full page at all?" check.</p>
+     */
+    private static final double CAPACITY_TOLERANCE = 0.5;
+
+    /**
+     * Identifies the kind of fixed slot a child is being compiled into,
+     * so the validator can distinguish "child of a horizontal row band"
+     * (where a nested {@code Row} would create real composition conflict)
+     * from "child of a {@link com.demcha.compose.document.node.LayerStackNode}
+     * layer" (where a nested {@code Row} is a normal column-row inside an
+     * already-fixed layer rectangle).
+     *
+     * <p>{@link #compileNodeInFixedSlot} takes the kind as a parameter
+     * and propagates it down recursive calls so the validator can
+     * relax just for STACK layer parents.</p>
+     */
+    private enum FixedSlotKind {
+        /** Child sits inside a horizontal row band (column of a row). */
+        ROW_SLOT,
+        /** Child sits inside a {@link LayerStackNode} layer rectangle. */
+        STACK_LAYER_SLOT
+    }
+
     private final NodeRegistry registry;
 
     /**
@@ -122,13 +156,16 @@ public final class LayoutCompiler {
         }
 
         if (availableWidth <= EPS) {
-            throw new IllegalStateException("Node '" + path + "' has no horizontal layout space.");
+            throw new IllegalStateException("Node '" + path
+                    + "' has no horizontal layout space. "
+                    + "Reduce padding or margin on the parent, or increase the page width.");
         }
 
         MeasureResult naturalMeasure = prepared.measureResult();
         if (naturalMeasure.width() > availableWidth + EPS) {
             throw new IllegalStateException("Node '" + path + "' measured width " + naturalMeasure.width()
-                    + " exceeds available width " + availableWidth + ".");
+                    + " exceeds available width " + availableWidth + ". "
+                    + "Reduce the node width, shorten inline content, or wrap content in a smaller container.");
         }
 
         if (prepared.isComposite()) {
@@ -325,7 +362,7 @@ public final class LayoutCompiler {
         DocumentNode node = prepared.node();
         double rowOuterHeight = naturalMeasure.height() + margin.vertical();
         double fullPageHeight = state.canvas.innerHeight();
-        if (rowOuterHeight > fullPageHeight + EPS) {
+        if (rowOuterHeight > fullPageHeight + CAPACITY_TOLERANCE) {
             throw atomicTooLarge(path, rowOuterHeight, fullPageHeight);
         }
         if (rowOuterHeight > state.remainingHeight() + EPS && state.usedHeight > EPS) {
@@ -365,12 +402,16 @@ public final class LayoutCompiler {
                         (NodeDefinition<DocumentNode>) registry.definitionFor(child);
                 if (childMeasure.height() > naturalMeasure.height() - padding.vertical() + EPS) {
                     throw new IllegalStateException("Row '" + path + "' child '" + child.nodeKind()
-                            + "' measured height " + childMeasure.height() + " exceeds row inner height.");
+                            + "' measured height " + childMeasure.height() + " exceeds row inner height. "
+                            + "Reduce the child height, shorten its content, or increase the row height.");
                 }
 
                 if (childPrepared.isComposite()) {
                     PlacementContext slotCtx = new FixedSlotPlacementContext(
                             state.pageIndex, state.canvas, prepareContext, fragmentContext, nodes, fragments);
+                    // Column of a horizontal row band — keep the strict
+                    // ROW_SLOT validator so a nested horizontal row is
+                    // rejected (would compete with the parent row band).
                     compileNodeInFixedSlot(
                             childPrepared,
                             path,
@@ -379,6 +420,7 @@ public final class LayoutCompiler {
                             cursorX,
                             rowInnerY,
                             slotWidth,
+                            FixedSlotKind.ROW_SLOT,
                             slotCtx);
                     cursorX += slotWidth + layoutSpec.spacing();
                     continue;
@@ -499,7 +541,7 @@ public final class LayoutCompiler {
         DocumentNode node = prepared.node();
         double stackOuterHeight = naturalMeasure.height() + margin.vertical();
         double fullPageHeight = state.canvas.innerHeight();
-        if (stackOuterHeight > fullPageHeight + EPS) {
+        if (stackOuterHeight > fullPageHeight + CAPACITY_TOLERANCE) {
             throw atomicTooLarge(path, stackOuterHeight, fullPageHeight);
         }
         if (stackOuterHeight > state.remainingHeight() + EPS && state.usedHeight > EPS) {
@@ -742,7 +784,7 @@ public final class LayoutCompiler {
         double outerHeight = naturalMeasure.height() + margin.vertical();
         double fullPageHeight = state.canvas.innerHeight();
 
-        if (outerHeight > fullPageHeight + EPS) {
+        if (outerHeight > fullPageHeight + CAPACITY_TOLERANCE) {
             throw atomicTooLarge(path, outerHeight, fullPageHeight);
         }
         if (outerHeight > state.remainingHeight() + EPS && state.usedHeight > EPS) {
@@ -876,6 +918,9 @@ public final class LayoutCompiler {
                         ctx.nodes(),
                         ctx.fragments());
 
+        // Child sits inside a LayerStack layer rectangle — the validator
+        // can relax for STACK_LAYER_SLOT because there is no competing
+        // horizontal row band, only the layer's own fixed area.
         compileNodeInFixedSlot(
                 childPrepared,
                 parentPath,
@@ -884,6 +929,7 @@ public final class LayoutCompiler {
                 alignedSlotX,
                 alignedSlotTopY,
                 childOuterWidth,
+                FixedSlotKind.STACK_LAYER_SLOT,
                 layerCtx);
     }
 
@@ -974,7 +1020,9 @@ public final class LayoutCompiler {
                 throw atomicTooLarge(path, pieceOuterHeight, fullPageOuterHeight);
             }
             if (tail != null && tail.equals(current)) {
-                throw new IllegalStateException("Split did not make progress for node '" + path + "'.");
+                throw new IllegalStateException("Split did not make progress for node '" + path
+                        + "'. The node's NodeDefinition.split() returned the original input as the tail — "
+                        + "check the definition for an infinite split loop and ensure each split advances.");
             }
 
             DocumentNode headNode = head.node();
@@ -1051,12 +1099,21 @@ public final class LayoutCompiler {
     }
 
     /**
-     * Compiles a composite or leaf node inside a fixed horizontal row slot.
+     * Compiles a composite or leaf node inside a fixed slot.
      *
-     * <p>The slot is constrained to a single page: composite row children are
-     * laid out as columns inside the row's atomic band, with a local
-     * top-down y-cursor. No global pagination state is mutated; the row's
-     * outer height check guarantees the column fits.</p>
+     * <p>The slot is constrained to a single page: composite children are
+     * laid out with a local top-down y-cursor. No global pagination state
+     * is mutated; the parent's outer height check guarantees the column
+     * fits.</p>
+     *
+     * <p>{@code kind} identifies whether the slot is a horizontal row
+     * band ({@link FixedSlotKind#ROW_SLOT}) or a
+     * {@link com.demcha.compose.document.node.LayerStackNode} layer
+     * rectangle ({@link FixedSlotKind#STACK_LAYER_SLOT}). The validator
+     * uses it to relax the "no nested horizontal row" rule for stack
+     * layers, where a {@code Row} is a normal column-row inside an
+     * already-fixed layer rectangle rather than a competing horizontal
+     * band.</p>
      *
      * @return outer height (measured height + vertical margin) consumed by the
      *         node, used by the caller's local y-cursor
@@ -1068,6 +1125,7 @@ public final class LayoutCompiler {
                                           double slotX,
                                           double slotTopY,
                                           double slotWidth,
+                                          FixedSlotKind kind,
                                           PlacementContext ctx) {
         // Alias locals so the body keeps the same names it had before the
         // PlacementContext refactor; the context is the only authoritative
@@ -1094,14 +1152,21 @@ public final class LayoutCompiler {
 
         if (prepared.isComposite()) {
             CompositeLayoutSpec layoutSpec = prepared.requireCompositeLayout();
-            // Horizontal rows and splittable tables remain forbidden inside a
-            // row slot — they would compete with the parent row's horizontal
-            // band or break atomic pagination. STACK overlays (e.g.
-            // LayerStackNode) are allowed because they are atomic and place
-            // their layers at the same point with explicit alignment.
-            if (layoutSpec.axis() == CompositeLayoutSpec.Axis.HORIZONTAL) {
+            // Horizontal rows remain forbidden inside a ROW_SLOT (column
+            // of a row band) because they would compete with the parent
+            // row's horizontal band. Inside a STACK_LAYER_SLOT, however,
+            // the surrounding rectangle is already fixed by the layer's
+            // alignment — a "horizontal row" there is just a normal
+            // column-row inside the layer area, not a competing band.
+            // STACK composites (e.g. LayerStackNode) are always allowed
+            // because they are atomic and anchor their children inside
+            // the existing slot.
+            if (layoutSpec.axis() == CompositeLayoutSpec.Axis.HORIZONTAL
+                    && kind == FixedSlotKind.ROW_SLOT) {
                 throw new IllegalStateException("Row '" + path
-                        + "' cannot contain a nested horizontal row; use a section column instead.");
+                        + "' cannot contain a nested horizontal row. "
+                        + "Wrap the inner row in a LayerStack layer (allowed since v1.6.2), "
+                        + "or stack horizontal content as sections inside a vertical column.");
             }
 
             int decorationInsertIndex = fragments.size();
@@ -1213,6 +1278,9 @@ public final class LayoutCompiler {
                 DocumentNode child = children.get(i);
                 PreparedNode<DocumentNode> childPrepared =
                         prepareForRegionWidth(prepareContext, child, childRegionWidth);
+                // Propagate the parent's slot kind so a STACK layer
+                // descendant (column → row → ...) keeps the relaxed
+                // validation policy all the way down.
                 double consumed = compileNodeInFixedSlot(
                         childPrepared,
                         path,
@@ -1221,6 +1289,7 @@ public final class LayoutCompiler {
                         childRegionX,
                         childTopY,
                         childRegionWidth,
+                        kind,
                         ctx);
                 childTopY -= consumed;
                 if (i < children.size() - 1) {
@@ -1445,7 +1514,11 @@ public final class LayoutCompiler {
 
     private AtomicNodeTooLargeException atomicTooLarge(String path, double outerHeight, double pageHeight) {
         return new AtomicNodeTooLargeException(
-                "Node '" + path + "' requires outer height " + outerHeight + " but page capacity is " + pageHeight + ".");
+                "Node '" + path + "' requires outer height " + outerHeight
+                        + " but page capacity is " + pageHeight + ". "
+                        + "Reduce the node height, split content into multiple atomic blocks, "
+                        + "or increase the page size. Differences under 0.5 pt are tolerated as "
+                        + "rounding noise (v1.6.2+).");
     }
 
 }

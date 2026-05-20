@@ -95,13 +95,13 @@ GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the com
 <dependency>
     <groupId>com.github.DemchaAV</groupId>
     <artifactId>GraphCompose</artifactId>
-    <version>v1.6.1</version>
+    <version>v1.6.2</version>
 </dependency>
 ```
 
 ```kotlin
 repositories { maven("https://jitpack.io") }
-dependencies { implementation("com.github.demchaav:GraphCompose:v1.6.1") }
+dependencies { implementation("com.github.demchaav:GraphCompose:v1.6.2") }
 ```
 
 > **Distribution status** &mdash; currently **JitPack**. Maven Central is planned for v1.7 ([tracking issue](https://github.com/DemchaAV/GraphCompose/issues/7)).

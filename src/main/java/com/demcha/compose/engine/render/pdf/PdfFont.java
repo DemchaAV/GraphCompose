@@ -180,8 +180,19 @@ public class PdfFont extends FontBase<PDFont> {
     }
 
     private @NotNull String textSanitizer(String text) {
+        // v1.6.3: preserve author-supplied whitespace verbatim. The
+        // previous implementation collapsed any run of resulting spaces
+        // (original + converted) into one, but downstream geometry
+        // (`PdfFont.getTextWidth`, paragraph layout, link-rect emission)
+        // measures against the input as written. The collapse therefore
+        // shrank the rendered string under measurement, drifting
+        // link annotations away from their glyphs and visually merging
+        // author-spaced strings like `spacedUpper("ARTEM DEMCHYSHYN")`
+        // (which inserts deliberate triple-spaces between words).
+        // Newlines / NBSP / non-tab control chars still resolve to a
+        // single space each \u2014 they no longer collapse adjacent author
+        // spaces.
         StringBuilder sanitized = new StringBuilder(text.length());
-        boolean previousSpace = false;
         for (int offset = 0; offset < text.length(); ) {
             int codePoint = text.codePointAt(offset);
             offset += Character.charCount(codePoint);
@@ -191,16 +202,7 @@ public class PdfFont extends FontBase<PDFont> {
                 default -> Character.isISOControl(codePoint) && codePoint != '\t' ? ' ' : codePoint;
             };
 
-            if (resolved == ' ') {
-                if (!previousSpace) {
-                    sanitized.append(' ');
-                    previousSpace = true;
-                }
-                continue;
-            }
-
             sanitized.appendCodePoint(resolved);
-            previousSpace = false;
         }
 
         return sanitized.toString();

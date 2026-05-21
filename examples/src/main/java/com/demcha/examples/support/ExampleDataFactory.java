@@ -298,19 +298,23 @@ public final class ExampleDataFactory {
                                         + "pattern matching, virtual threads."))))
                 .module(CvModule.of("Projects",
                         new BulletListBlock(List.of(
-                                "**GraphCompose** - Declarative Java PDF layout engine. "
-                                        + "Semantic DSL, slot-based templates, snapshot testing. "
-                                        + "Powers production CV / invoice / proposal pipelines "
-                                        + "for hiring tools and billing systems. *(Open source)*",
-                                "**Template Studio** - Internal tool for evaluating CV, proposal, "
-                                        + "and invoice output across 14 design presets. PNG "
+                                "**GraphCompose (Java 21, PDFBox, Maven, JMH)** - "
+                                        + "Declarative Java PDF layout engine. Semantic DSL, "
+                                        + "slot-based templates, snapshot testing. Powers "
+                                        + "production CV / invoice / proposal pipelines for "
+                                        + "hiring tools and billing systems. *(Open source)*",
+                                "**Template Studio (Kotlin, Compose Desktop, PDFBox PNG diff)** - "
+                                        + "Internal tool for evaluating CV, proposal, and "
+                                        + "invoice output across 14 design presets. PNG "
                                         + "diffing, side-by-side layout, baseline freezing.",
-                                "**LayoutLint** - Static analyser that flags fragile authoring "
-                                        + "patterns (deeply nested rows, untyped offsets, "
-                                        + "implicit page breaks) before they ship to production.",
-                                "**ChromeForge** - Editorial-magazine document toolkit built on "
-                                        + "GraphCompose: cinematic covers, pull quotes, multi-"
-                                        + "column flow, sidebar callouts."))))
+                                "**LayoutLint (Java 21, JavaParser, Spoon)** - Static analyser "
+                                        + "that flags fragile authoring patterns (deeply "
+                                        + "nested rows, untyped offsets, implicit page "
+                                        + "breaks) before they ship to production.",
+                                "**ChromeForge (Java, GraphCompose, Pandoc bridge)** - "
+                                        + "Editorial-magazine document toolkit built on "
+                                        + "GraphCompose: cinematic covers, pull quotes, "
+                                        + "multi-column flow, sidebar callouts."))))
                 .module(CvModule.of("Professional Experience",
                         new MultiParagraphBlock(List.of(
                                 "**Senior Platform Engineer**, Northwind Systems | "

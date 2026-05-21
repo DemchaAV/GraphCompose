@@ -59,14 +59,40 @@ class PdfFontSanitizerTest {
     }
 
     @Test
-    void sanitizeForRender_collapsesConsecutiveSpaces() {
-        // Pins existing textSanitizer behaviour: multiple spaces collapse
-        // to a single space. If this contract ever changes, wrap geometry
-        // assumptions across the engine must be revisited.
+    void sanitizeForRender_preservesConsecutiveSpaces() {
+        // v1.6.3: textSanitizer no longer collapses author whitespace.
+        // The previous collapse (multi-space → one space) shrank the
+        // rendered string under measurement and broke spaced-upper
+        // titles ("A R T E M  D E M C H Y S H Y N" rendered without
+        // its inter-word gap) and "   |   " contact-row separators.
+        // Newlines / NBSP / control chars still resolve to a single
+        // space each, but adjacent author spaces are kept verbatim so
+        // wrap geometry, link-rect emission, and showText all see the
+        // same string.
         String input = "spaced     out";
         String output = helvetica.sanitizeForRender(TextStyle.DEFAULT_STYLE, input);
 
-        assertThat(output).isEqualTo("spaced out");
+        assertThat(output).isEqualTo("spaced     out");
+        assertThat(helvetica.getTextWidth(TextStyle.DEFAULT_STYLE, input))
+                .isEqualTo(helvetica.getTextWidth(TextStyle.DEFAULT_STYLE, output));
+    }
+
+    @Test
+    void sanitizeForRender_preservesWhitespaceOnlyTokensVerbatim() {
+        // v1.6.3 regression: paragraph tokenisation produces standalone
+        // whitespace-only tokens (e.g. the "   " halves of a "   |   "
+        // contact-line separator). Their render width must match what
+        // getTextWidth measured so the PDF text matrix advances by the
+        // same amount — otherwise link annotation rectangles drift to the
+        // right of the glyphs actually drawn (visible on right-/center-
+        // aligned contact rows where LinkedIn / GitHub clickable areas
+        // ended up past their visible text).
+        String triple = "   ";
+        String output = helvetica.sanitizeForRender(TextStyle.DEFAULT_STYLE, triple);
+
+        assertThat(output).isEqualTo("   ");
+        assertThat(helvetica.getTextWidth(TextStyle.DEFAULT_STYLE, triple))
+                .isEqualTo(helvetica.getTextWidth(TextStyle.DEFAULT_STYLE, output));
     }
 
     @Test

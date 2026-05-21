@@ -16,6 +16,7 @@ import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.ShapeNode;
+import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
@@ -170,6 +171,160 @@ class PdfFixedLayoutBackendFeaturesTest {
 
             String extractedText = new PDFTextStripper().getText(document);
             assertThat(extractedText).contains("Email | Docs");
+        }
+    }
+
+    @Test
+    void shouldTightlyHugRightAlignedParagraphLinkRectangles() throws Exception {
+        // v1.6.3 regression: paragraph-level link annotations used to inherit
+        // the full fragment rectangle, so right-aligned contact rows (LinkedIn
+        // / GitHub icon paragraphs in CV presets like TimelineMinimal) leaked
+        // clickable area across the entire left-side alignment gap and
+        // hijacked the row above's click. Each line's link rect must hug the
+        // rendered text so neighbouring rows stay independent.
+        byte[] pdfBytes;
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(400, 200)
+                .margin(20, 20, 20, 20)
+                .create()) {
+            document.dsl()
+                    .pageFlow()
+                    .name("RightLinkFlow")
+                    .addParagraph(paragraph -> paragraph
+                            .name("EmailRow")
+                            .text("jordan@example.dev")
+                            .textStyle(DocumentTextStyle.DEFAULT)
+                            .align(TextAlign.RIGHT)
+                            .link(new DocumentLinkOptions("mailto:jordan@example.dev")))
+                    .addParagraph(paragraph -> paragraph
+                            .name("LinkedInRow")
+                            .text("LinkedIn")
+                            .textStyle(DocumentTextStyle.DEFAULT)
+                            .align(TextAlign.RIGHT)
+                            .link(new DocumentLinkOptions("https://linkedin.com/in/jordan")))
+                    .addParagraph(paragraph -> paragraph
+                            .name("GitHubRow")
+                            .text("GitHub")
+                            .textStyle(DocumentTextStyle.DEFAULT)
+                            .align(TextAlign.RIGHT)
+                            .link(new DocumentLinkOptions("https://github.com/jordan")))
+                    .build();
+
+            pdfBytes = document.toPdfBytes();
+        }
+
+        try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+            List<PDAnnotationLink> links = new ArrayList<>();
+            for (var page : document.getPages()) {
+                for (var annotation : page.getAnnotations()) {
+                    if (annotation instanceof PDAnnotationLink link) {
+                        links.add(link);
+                    }
+                }
+            }
+            assertThat(links).hasSize(3);
+
+            float innerLeft = 20.0f;
+            float pageRight = 380.0f;
+            for (PDAnnotationLink link : links) {
+                var rect = link.getRectangle();
+                // The link must hug the rendered text near the right margin
+                // (page width 400 - margin 20 = inner right edge 380) and
+                // must not stretch back across the whole inner width.
+                assertThat(rect.getUpperRightX())
+                        .as("right edge close to inner right margin for %s",
+                                ((PDActionURI) link.getAction()).getURI())
+                        .isBetween(pageRight - 1.0f, pageRight + 0.5f);
+                assertThat(rect.getLowerLeftX())
+                        .as("left edge does not extend back across the alignment gap for %s",
+                                ((PDActionURI) link.getAction()).getURI())
+                        .isGreaterThan(innerLeft + 100.0f);
+                // The clickable width must approximately match the rendered
+                // label width — short labels (LinkedIn ≈ 39pt) should produce
+                // narrow rects, not 360pt full-fragment ones.
+                float width = rect.getUpperRightX() - rect.getLowerLeftX();
+                assertThat(width).isLessThan(150.0f);
+            }
+
+            // Neighbouring rows must not overlap vertically — the v1.6.2 bug
+            // surfaced because the wide rects of LinkedIn / GitHub rows sat
+            // close enough that PDF readers prioritised the upper rect even
+            // when the cursor hovered the lower text. With per-line rects
+            // each row stays in its own Y band.
+            links.sort((a, b) -> Float.compare(b.getRectangle().getLowerLeftY(),
+                    a.getRectangle().getLowerLeftY()));
+            for (int i = 1; i < links.size(); i++) {
+                float lowerTop = links.get(i).getRectangle().getUpperRightY();
+                float upperBottom = links.get(i - 1).getRectangle().getLowerLeftY();
+                assertThat(upperBottom)
+                        .as("row %d (upper) bottom must sit above row %d (lower) top", i - 1, i)
+                        .isGreaterThanOrEqualTo(lowerTop);
+            }
+        }
+    }
+
+    @Test
+    void shouldKeepCenteredInlineLinkRectanglesAlignedAcrossMultiSpaceSeparators() throws Exception {
+        // v1.6.3 regression: when a centered contact line stitches inline
+        // links with author-supplied multi-space separators (the "   |   "
+        // pattern used by BoxedSections / CenteredHeadline / etc.), the
+        // PDF render path used to collapse "   " to " " while measurement
+        // kept the original width. That drift pushed each subsequent link
+        // rectangle to the right of its visible glyphs — the second link
+        // hovered over the third link's text, and the third sat on empty
+        // space past the line end.
+        byte[] pdfBytes;
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(595, 200)
+                .margin(36, 36, 36, 36)
+                .create()) {
+            document.dsl()
+                    .pageFlow()
+                    .name("CenteredContactFlow")
+                    .addParagraph(paragraph -> paragraph
+                            .name("ContactLine")
+                            .textStyle(DocumentTextStyle.DEFAULT)
+                            .align(TextAlign.CENTER)
+                            .rich(rich -> rich
+                                    .link("Email", new DocumentLinkOptions("mailto:a@example.dev"))
+                                    .plain("   |   ")
+                                    .link("LinkedIn", new DocumentLinkOptions("https://linkedin.com/in/a"))
+                                    .plain("   |   ")
+                                    .link("GitHub", new DocumentLinkOptions("https://github.com/a"))))
+                    .build();
+
+            pdfBytes = document.toPdfBytes();
+        }
+
+        try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+            // Three inline links — order is preserved by the renderer.
+            List<PDAnnotationLink> links = new ArrayList<>();
+            for (var page : document.getPages()) {
+                for (var annotation : page.getAnnotations()) {
+                    if (annotation instanceof PDAnnotationLink l) {
+                        links.add(l);
+                    }
+                }
+            }
+            assertThat(links).hasSize(3);
+            // Rects must appear left-to-right with non-overlapping X
+            // ranges; the buggy collapsing pushed later rects past the
+            // line so neighbours overlapped or sat on empty whitespace.
+            links.sort((a, b) -> Float.compare(a.getRectangle().getLowerLeftX(),
+                    b.getRectangle().getLowerLeftX()));
+            for (int i = 1; i < links.size(); i++) {
+                float previousRight = links.get(i - 1).getRectangle().getUpperRightX();
+                float currentLeft = links.get(i).getRectangle().getLowerLeftX();
+                assertThat(currentLeft)
+                        .as("link %d left edge must sit after link %d right edge", i, i - 1)
+                        .isGreaterThan(previousRight);
+                float gap = currentLeft - previousRight;
+                // The author wrote "   |   " — the gap must be wide enough
+                // to clear the separator and tight enough not to span half
+                // the page (the collapsed-whitespace bug produced 30pt+
+                // overlap, not a gap).
+                assertThat(gap).isBetween(5.0f, 40.0f);
+            }
         }
     }
 

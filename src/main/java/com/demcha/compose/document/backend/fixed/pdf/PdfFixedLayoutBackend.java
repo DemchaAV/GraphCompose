@@ -327,10 +327,14 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                                         boolean guideLines,
                                         Map<String, Map<Integer, PdfGuideLinesRenderer.Bounds>> ownerBounds) throws Exception {
         if (payload instanceof ParagraphFragmentPayload paragraphPayload) {
-            addParagraphSpanLinks(fragment, paragraphPayload, environment);
+            addParagraphLinks(fragment, paragraphPayload, environment);
         }
         if (payload instanceof PdfSemanticFragmentPayload semanticPayload) {
-            if (semanticPayload.linkOptions() != null) {
+            // Paragraph-level link emission is handled above with per-line
+            // rects tight to the rendered text (alignment-aware). Other
+            // semantic payloads (shapes, table rows) still use the full
+            // fragment rect as their clickable area.
+            if (semanticPayload.linkOptions() != null && !(payload instanceof ParagraphFragmentPayload)) {
                 PdfLinkAnnotationWriter.addUriLink(
                         environment.document().getPage(fragment.pageIndex()),
                         new PdfLinkAnnotationWriter.PlacedPdfRect(fragment.x(), fragment.y(), fragment.width(), fragment.height()),
@@ -345,9 +349,10 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         }
     }
 
-    private void addParagraphSpanLinks(PlacedFragment fragment,
-                                       ParagraphFragmentPayload payload,
-                                       PdfRenderEnvironment environment) throws Exception {
+    private void addParagraphLinks(PlacedFragment fragment,
+                                   ParagraphFragmentPayload payload,
+                                   PdfRenderEnvironment environment) throws Exception {
+        var paragraphLink = payload.linkOptions();
         double innerX = fragment.x() + payload.padding().left();
         double innerWidth = Math.max(0.0, fragment.width() - payload.padding().horizontal());
         double contentTop = fragment.y() + fragment.height() - payload.padding().top();
@@ -362,6 +367,23 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                 case CENTER -> innerX + (innerWidth - line.width()) / 2.0;
                 case LEFT -> innerX;
             };
+
+            // Paragraph-level link covers each rendered line tightly. Without
+            // this, right- or center-aligned paragraphs leaked clickable area
+            // across the empty alignment gap, so neighbouring contact rows
+            // (LinkedIn / GitHub icon paragraphs) hijacked each other's
+            // clicks.
+            if (paragraphLink != null && line.width() > 0.0) {
+                PdfLinkAnnotationWriter.addUriLink(
+                        environment.document().getPage(fragment.pageIndex()),
+                        new PdfLinkAnnotationWriter.PlacedPdfRect(
+                                lineX,
+                                lineTop - resolvedLineHeight,
+                                line.width(),
+                                resolvedLineHeight),
+                        paragraphLink);
+            }
+
             double spanX = lineX;
             for (ParagraphSpan span : line.spans()) {
                 if (span.linkOptions() != null && span.width() > 0.0) {

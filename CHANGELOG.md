@@ -3,6 +3,86 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v1.6.3 — in progress
+
+Bug fix patch. Closes two independent hyperlink clickable-area
+defects that surfaced on CV gallery presets and made the LinkedIn /
+GitHub contact rows hijack each other's clicks (paragraph-level
+link path) or drift past their visible text (span-level link path
+through multi-space separators). **No public API change** — engine,
+DSL, themes, templates, and backend records all stay
+source-compatible with v1.6.2.
+
+### Engine
+
+- **Paragraph-level link annotations now hug rendered text.**
+  `PdfFixedLayoutBackend` used to emit a paragraph's `linkOptions`
+  as a single rectangle covering the entire fragment box
+  (`fragment.x()` + `fragment.width()`), ignoring `TextAlign.RIGHT`
+  / `TextAlign.CENTER`. Stacked right-aligned contact paragraphs
+  (e.g. one per LinkedIn / GitHub icon row in Timeline Minimal /
+  Sidebar Portrait / Monogram Sidebar) therefore produced
+  full-column-wide rects that overlapped the empty alignment gap of
+  neighbouring rows — hovering over GitHub clicked the LinkedIn row.
+  The backend now emits one per-line rect tight to `line.width()`
+  positioned at the alignment-aware `lineX`, matching how
+  inline-span links already worked. Span-level link emission, table
+  / shape / barcode payload links, and bookmark anchoring are
+  unchanged.
+- **Glyph sanitizer preserves all author whitespace.**
+  `PdfFont.sanitizeForRender` used to collapse any run of consecutive
+  spaces into a single space, both for whitespace-only tokens (the
+  `"   "` halves of a `"   |   "` separator) and for inter-word gaps
+  in spaced-caps strings (`spacedUpper("ARTEM DEMCHYSHYN")` produces
+  `"A R T E M   D E M C H Y S H Y N"` with deliberate triple-spaces
+  between words). The collapse shrank the rendered glyph stream
+  under measurement, drifting inline-link rectangles ~8pt per
+  `"   |   "` separator past their visible labels and visually
+  merging spaced-caps titles back into a single run (`"A R T E M D E
+  M C H Y S H Y N"` — no word boundary). The sanitizer no longer
+  collapses adjacent spaces; newlines / NBSP / non-tab control
+  characters still resolve to a single space each, but author
+  whitespace is now preserved verbatim so wrap geometry,
+  link-rectangle emission, and `showText(...)` all see the same
+  string. Layout snapshot baselines for five CV presets and one
+  nested-list document widened to reflect the recovered whitespace —
+  the deliberate visual change is the bug fix.
+
+### Templates
+
+- **Boxed Sections projects render as title + indented description.**
+  The "Projects" module now renders each bullet-list or
+  `IndentedBlock` item as two stacked paragraphs — bullet plus bold
+  project name (with an optional tech-stack chunk in parentheses) on
+  the first line, then a hanging-indented description below aligned
+  to the project name (not the bullet). The previous single-line
+  rendering ran the project name and description together. Bullet
+  marker, hanging-indent, and surrounding modules are unchanged.
+  Example data in `ExampleDataFactory.sampleCvSpecV2` and
+  `PresetVisualGalleryTest` now ships tech-stack chunks (`"Java 21,
+  PDFBox, Maven, JMH"`) so the gallery PDFs reflect the new layout.
+
+### Tests
+
+- New regression in `PdfFixedLayoutBackendFeaturesTest` —
+  `shouldTightlyHugRightAlignedParagraphLinkRectangles` — stacks
+  three right-aligned link paragraphs and asserts each clickable
+  rect hugs its rendered label width (≤ 150pt), sits flush against
+  the inner right margin, and does not overlap the Y-band of
+  neighbouring rows.
+- New regression in `PdfFixedLayoutBackendFeaturesTest` —
+  `shouldKeepCenteredInlineLinkRectanglesAlignedAcrossMultiSpaceSeparators`
+  — renders a centered contact line built with `"   |   "` separators
+  and asserts the three resulting link rectangles preserve
+  left-to-right order with non-overlapping X ranges and a sane
+  per-separator gap (5..40pt), pinning the bug where collapsed
+  whitespace pushed later rects past the line.
+- New regression in `PdfFontSanitizerTest` —
+  `sanitizeForRender_preservesWhitespaceOnlyTokensVerbatim` — pins
+  the whitespace-only short-circuit so render width stays in
+  lockstep with `getTextWidth` for tokenised contact-line
+  separators.
+
 ## v1.6.2 — 2026-05-20
 
 Robustness patch. Closes four engine defects surfaced while building

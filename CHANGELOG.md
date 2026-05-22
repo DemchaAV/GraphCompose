@@ -3,7 +3,7 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v1.6.3 — in progress
+## v1.6.3 — Planned
 
 Bug fix patch. Closes two independent hyperlink clickable-area
 defects that surfaced on CV gallery presets and made the LinkedIn /

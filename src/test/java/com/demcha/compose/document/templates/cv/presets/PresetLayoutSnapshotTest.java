@@ -73,6 +73,14 @@ class PresetLayoutSnapshotTest {
                                         + "*2024-Present* — Led reusable document flows.",
                                 "**Software Engineer**, BrightLeaf Labs | *2021-2024* "
                                         + "— Built backend services and rendering pipelines."))))
+                /* Note: this snapshot test intentionally exercises the
+                 * legacy MultiParagraphBlock pipe-separated string path
+                 * to pin the parser's em-dash / en-dash / ASCII-hyphen
+                 * separator handling. The structurally equivalent
+                 * preferred path uses WorkHistoryBlock — see
+                 * PresetVisualGalleryTest#sampleSpec for the canonical
+                 * example. Both paths converge on renderWorkEntry and
+                 * produce the same LayoutGraph for equivalent data. */
                 .module(CvModule.of("Additional Information",
                         new KeyValueBlock(List.of(
                                 new KeyValueBlock.Entry("Location",

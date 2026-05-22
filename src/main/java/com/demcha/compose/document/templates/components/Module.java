@@ -14,8 +14,10 @@ import com.demcha.compose.document.templates.blocks.BulletListBlock;
 import com.demcha.compose.document.templates.blocks.IndentedBlock;
 import com.demcha.compose.document.templates.blocks.KeyValueBlock;
 import com.demcha.compose.document.templates.blocks.MultiParagraphBlock;
+import com.demcha.compose.document.templates.blocks.EducationBlock;
 import com.demcha.compose.document.templates.blocks.NumberedListBlock;
 import com.demcha.compose.document.templates.blocks.ParagraphBlock;
+import com.demcha.compose.document.templates.blocks.WorkHistoryBlock;
 import com.demcha.compose.document.templates.themes.Spacing;
 import com.demcha.compose.document.theme.BusinessTheme;
 
@@ -176,7 +178,150 @@ public final class Module {
         if (body instanceof KeyValueBlock k) {
             return renderKeyValue(k, theme, spacing);
         }
+        if (body instanceof WorkHistoryBlock w) {
+            return renderWorkHistory(w, theme, spacing);
+        }
+        if (body instanceof EducationBlock e) {
+            return renderEducation(e, theme, spacing);
+        }
         throw new IllegalStateException("Unsupported module body: " + body);
+    }
+
+    /**
+     * Default rendering for {@link WorkHistoryBlock} when the active
+     * preset has not overridden the dispatch (e.g. {@code BoxedSections}
+     * renders this block as a structured title/date row + company
+     * subtitle + description paragraph). Generic presets degrade to a
+     * single concatenated paragraph per item, mirroring the legacy
+     * {@code MultiParagraphBlock} format
+     * ({@code "**Title**, Organisation | *Date* — Description"}) so
+     * the data still renders sensibly without requiring every preset
+     * to special-case the new block type.
+     */
+    private DocumentNode renderWorkHistory(WorkHistoryBlock block, BusinessTheme theme, Spacing spacing) {
+        List<String> sources = new ArrayList<>(block.items().size());
+        for (WorkHistoryBlock.Item item : block.items()) {
+            sources.add(concatStructuredFields(
+                    item.title(), item.organisation(), item.date(), item.description(),
+                    ", ", " | ", " — ",
+                    /* italicizeDate */ true));
+        }
+        return renderConcatenatedParagraphs(sources, "workEntry", theme, spacing);
+    }
+
+    /**
+     * Default rendering for {@link EducationBlock} when the active
+     * preset has not overridden the dispatch (e.g. {@code BoxedSections}
+     * renders this block with the same structured layout as a work
+     * entry — degree bold left, year right, institution italic below,
+     * details paragraph beneath). Generic presets degrade to a single
+     * concatenated paragraph per item so the data still renders
+     * sensibly without requiring every preset to special-case the new
+     * block type.
+     */
+    private DocumentNode renderEducation(EducationBlock block, BusinessTheme theme, Spacing spacing) {
+        List<String> sources = new ArrayList<>(block.items().size());
+        for (EducationBlock.Item item : block.items()) {
+            sources.add(concatStructuredFields(
+                    item.degree(), item.institution(), item.year(), item.details(),
+                    " - ", " | ", ". ",
+                    /* italicizeDate */ false));
+        }
+        return renderConcatenatedParagraphs(sources, "educationEntry", theme, spacing);
+    }
+
+    /**
+     * Concatenates the four fields of a structured entry (work history
+     * or education) into a single markdown source line, using the
+     * supplied separators. The first field is rendered bold, the third
+     * is optionally italicized, and the others stay in regular weight.
+     * Empty fields are skipped along with their preceding separator so
+     * a missing organisation / date / description does not leave a
+     * dangling {@code " | "} or {@code " — "} on screen.
+     *
+     * <p>Extracted from {@link #renderWorkHistory} and
+     * {@link #renderEducation} so adding a future 4-field structured
+     * block (publications, projects, etc.) does not require another
+     * copy of the same string-building loop.</p>
+     */
+    private static String concatStructuredFields(
+            String main, String secondary, String date, String detail,
+            String secondarySep, String dateSep, String detailSep,
+            boolean italicizeDate) {
+        StringBuilder source = new StringBuilder();
+        if (main != null && !main.isBlank()) {
+            source.append("**").append(main).append("**");
+        }
+        if (secondary != null && !secondary.isBlank()) {
+            if (source.length() > 0) {
+                source.append(secondarySep);
+            }
+            source.append(secondary);
+        }
+        if (date != null && !date.isBlank()) {
+            if (source.length() > 0) {
+                source.append(dateSep);
+            }
+            if (italicizeDate) {
+                source.append('*').append(date).append('*');
+            } else {
+                source.append(date);
+            }
+        }
+        if (detail != null && !detail.isBlank()) {
+            if (source.length() > 0) {
+                source.append(detailSep);
+            }
+            source.append(detail);
+        }
+        return source.toString();
+    }
+
+    /**
+     * Wraps a list of pre-built markdown source strings into a
+     * {@link ContainerNode} of {@link ParagraphNode}s using the active
+     * body style and paragraph spacing. Extracted from
+     * {@link #renderWorkHistory} and {@link #renderEducation} so the
+     * boilerplate around constructing ParagraphNode + ContainerNode
+     * lives in one place — any future 4-field structured block can
+     * call this directly after building its own per-item source via
+     * {@link #concatStructuredFields}.
+     *
+     * @param sources           per-item markdown source lines
+     * @param entryNameSuffix   name suffix appended to {@code name}
+     *                          for each paragraph (e.g.
+     *                          {@code "workEntry"} → {@code "<name>.workEntry[0]"})
+     */
+    private DocumentNode renderConcatenatedParagraphs(List<String> sources, String entryNameSuffix,
+                                                     BusinessTheme theme, Spacing spacing) {
+        DocumentTextStyle bodyStyle = bodyStyle(theme);
+        List<DocumentNode> paragraphs = new ArrayList<>(sources.size());
+        for (int i = 0; i < sources.size(); i++) {
+            paragraphs.add(new ParagraphNode(
+                    name + "." + entryNameSuffix + "[" + i + "]",
+                    "",
+                    MarkdownText.parse(sources.get(i), bodyStyle),
+                    bodyStyle,
+                    TextAlign.LEFT,
+                    spacing.lineSpacing(),
+                    "",
+                    null,
+                    null,
+                    null,
+                    DocumentInsets.zero(),
+                    DocumentInsets.zero(),
+                    null));
+        }
+        return new ContainerNode(
+                name + ".body",
+                paragraphs,
+                /* spacing */ spacing.paragraphSpacing(),
+                /* padding */ leftIndent(spacing),
+                DocumentInsets.zero(),
+                null,
+                null,
+                null,
+                null);
     }
 
     private ParagraphNode renderParagraph(ParagraphBlock block, BusinessTheme theme, Spacing spacing) {

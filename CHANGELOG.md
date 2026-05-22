@@ -3,6 +3,80 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v1.6.4 — Planned
+
+Bug fix + structured-block patch. Adds two new public Block types —
+`WorkHistoryBlock` and `EducationBlock` — that let template authors
+declare work-history and education entries with explicit (title,
+organisation, date, description) / (degree, institution, year,
+details) fields instead of relying on the legacy
+`MultiParagraphBlock` pipe-separated string parser. Also closes a
+Boxed Sections layout defect that bundled the date and description
+into the right-aligned date column for any author-supplied line that
+used an em-dash (`" — "`), en-dash (`" – "`), or contained
+prose-shaped content the parser misread as a date. **No public API
+break** — the sealed `Block` permit list grows from six to eight,
+existing `MultiParagraphBlock` work-history strings continue to
+parse, and the deprecated parser path stays in place for backward
+compatibility.
+
+### Templates — new structured blocks
+
+- **`WorkHistoryBlock`.** New public record block carrying a list of
+  `Item(title, organisation, date, description)` entries. The
+  `BoxedSections` preset renders each item as a structured row:
+  title bold on the left, date right-aligned on the same row,
+  organisation italic on the next line under the title, and
+  description as a full-width paragraph beneath. Other presets fall
+  back to a single concatenated paragraph per item. Authors who use
+  `WorkHistoryBlock` bypass the legacy
+  `BoxedSections#parseWorkEntry` heuristic parser entirely.
+- **`EducationBlock`.** New public record block carrying a list of
+  `Item(degree, institution, year, details)` entries. Renders with
+  the same structured layout as `WorkHistoryBlock` (degree bold
+  left, year right, institution italic, details paragraph) so
+  Education & Certifications sections visually match Professional
+  Experience.
+- **Sample data migrated.** `ExampleDataFactory.sampleCvSpecV2` now
+  uses `WorkHistoryBlock` for Professional Experience and
+  `EducationBlock` for Education & Certifications. The legacy
+  `MultiParagraphBlock` pattern remains supported and is exercised
+  by `PresetLayoutSnapshotTest` / `PresetVisualParityTest` to lock
+  the backward-compat path.
+
+### Templates — parser robustness (legacy path)
+
+- **`parseWorkEntry` accepts em-dash and en-dash.** Used to split
+  the post-pipe segment on ASCII `" - "` only; now tries `" — "`,
+  `" – "`, and `" - "` in order, mirroring `splitHeading`. Authors
+  who typed `"*2024-Present* — Led reusable document flows."` saw
+  the whole tail collapse into the date column — this no longer
+  happens.
+- **`parseWorkEntry` rejects prose dressed up as a date.** The
+  loose `looksLikeDate` check accepted any string containing a
+  year and a hyphen anywhere, which caused education lines like
+  `"... | 2019. First-class honours. Specialisation ..."` to
+  parse as work entries (the hyphen inside `"First-class"` was
+  enough to satisfy the heuristic). Parser now rejects post-pipe
+  segments that contain sentence-ending punctuation (`.`, `:`,
+  `;`) when no explicit date / description separator was found,
+  letting these lines fall back to plain paragraph rendering.
+  Marked `@Deprecated` with a `@deprecated` Javadoc pointing
+  callers to `WorkHistoryBlock` / `EducationBlock`.
+- **`parseProjectItem`** picks up the same em-dash / en-dash /
+  ASCII separator set so future Project items typed with em-dash
+  don't regress into "title only" rendering.
+
+### Tests
+
+- `BlockTest.blockSealingPermitsAllEightVariants` updated for the
+  two new permitted block types.
+- `PresetVisualGalleryTest.sampleSpec` migrated to
+  `WorkHistoryBlock` so the visible "primary example" exercises the
+  new structured shape.
+- `PresetLayoutSnapshotTest` intentionally retained on
+  `MultiParagraphBlock` to lock the legacy parser's behaviour.
+
 ## v1.6.3 — 2026-05-22
 
 Bug fix patch. Closes two independent hyperlink clickable-area

@@ -8,7 +8,7 @@ import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.blocks.BulletListBlock;
 import com.demcha.compose.document.templates.blocks.IndentedBlock;
 import com.demcha.compose.document.templates.blocks.KeyValueBlock;
-import com.demcha.compose.document.templates.blocks.MultiParagraphBlock;
+import com.demcha.compose.document.templates.blocks.WorkHistoryBlock;
 import com.demcha.compose.document.templates.blocks.ParagraphBlock;
 import com.demcha.compose.document.templates.cv.spec.CvHeader;
 import com.demcha.compose.document.templates.cv.spec.CvModule;
@@ -76,11 +76,22 @@ class PresetVisualGalleryTest {
                                         "Template Studio (Kotlin, Compose Desktop)",
                                         "Internal tool for evaluating CV, proposal, and invoice output")))))
                 .module(CvModule.of("Professional Experience",
-                        new MultiParagraphBlock(List.of(
-                                "**Senior Platform Engineer**, Northwind Systems | "
-                                        + "*2024-Present* — Led reusable document flows.",
-                                "**Software Engineer**, BrightLeaf Labs | *2021-2024* "
-                                        + "— Built backend services and rendering pipelines."))))
+                        // Preferred: structured WorkHistoryBlock with
+                        // separate title / organisation / date /
+                        // description fields. BoxedSections routes this
+                        // straight to renderWorkEntry, bypassing the
+                        // legacy pipe-separated string parser.
+                        new WorkHistoryBlock(List.of(
+                                new WorkHistoryBlock.Item(
+                                        "Senior Platform Engineer",
+                                        "Northwind Systems",
+                                        "2024-Present",
+                                        "Led reusable document flows."),
+                                new WorkHistoryBlock.Item(
+                                        "Software Engineer",
+                                        "BrightLeaf Labs",
+                                        "2021-2024",
+                                        "Built backend services and rendering pipelines.")))))
                 .module(CvModule.of("Additional Information",
                         new KeyValueBlock(List.of(
                                 new KeyValueBlock.Entry("Location",

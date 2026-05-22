@@ -1,10 +1,12 @@
 package com.demcha.examples.support;
 
 import com.demcha.compose.document.templates.blocks.BulletListBlock;
+import com.demcha.compose.document.templates.blocks.EducationBlock;
 import com.demcha.compose.document.templates.blocks.IndentedBlock;
 import com.demcha.compose.document.templates.blocks.KeyValueBlock;
 import com.demcha.compose.document.templates.blocks.MultiParagraphBlock;
 import com.demcha.compose.document.templates.blocks.ParagraphBlock;
+import com.demcha.compose.document.templates.blocks.WorkHistoryBlock;
 import com.demcha.compose.document.templates.coverletter.spec.CoverLetterHeader;
 import com.demcha.compose.document.templates.coverletter.spec.CoverLetterSpec;
 import com.demcha.compose.document.templates.cv.spec.CvHeader;
@@ -286,16 +288,32 @@ public final class ExampleDataFactory {
                                 "**Distribution:** Maven Central, Sonatype OSSRH, GPG signing, "
                                         + "JitPack, semantic versioning discipline"))))
                 .module(CvModule.of("Education & Certifications",
-                        new MultiParagraphBlock(List.of(
-                                "**MSc Computer Science** - University of Manchester | 2021. "
-                                        + "Distinction. Thesis: *Composable layout primitives for "
-                                        + "deterministic document rendering*.",
-                                "**BSc Software Engineering** - Imperial College London | 2019. "
-                                        + "First-class honours. Specialisation in compilers and "
-                                        + "static analysis.",
-                                "**Oracle Java Certification** - Professional track | 2023. "
-                                        + "Java 17 platform deep-dive: records, sealed types, "
-                                        + "pattern matching, virtual threads."))))
+                        // Preferred: structured EducationBlock with
+                        // explicit (degree, institution, year, details)
+                        // fields. BoxedSections renders each item with
+                        // the same structured layout as Professional
+                        // Experience — degree bold left, year right,
+                        // institution italic on the next line, and
+                        // details as a full-width paragraph below.
+                        new EducationBlock(List.of(
+                                new EducationBlock.Item(
+                                        "MSc Computer Science",
+                                        "University of Manchester",
+                                        "2021",
+                                        "Distinction. Thesis: *Composable layout primitives "
+                                                + "for deterministic document rendering*."),
+                                new EducationBlock.Item(
+                                        "BSc Software Engineering",
+                                        "Imperial College London",
+                                        "2019",
+                                        "First-class honours. Specialisation in compilers and "
+                                                + "static analysis."),
+                                new EducationBlock.Item(
+                                        "Oracle Java Certification",
+                                        "Professional track",
+                                        "2023",
+                                        "Java 17 platform deep-dive: records, sealed types, "
+                                                + "pattern matching, virtual threads.")))))
                 .module(CvModule.of("Projects",
                         new BulletListBlock(List.of(
                                 "**GraphCompose (Java 21, PDFBox, Maven, JMH)** - "
@@ -316,23 +334,40 @@ public final class ExampleDataFactory {
                                         + "GraphCompose: cinematic covers, pull quotes, "
                                         + "multi-column flow, sidebar callouts."))))
                 .module(CvModule.of("Professional Experience",
-                        new MultiParagraphBlock(List.of(
-                                "**Senior Platform Engineer**, Northwind Systems | "
-                                        + "*2024-Present* - Led the reusable document-generation "
-                                        + "platform serving billing, hiring, and reporting flows "
-                                        + "across **8 product teams**. Reduced template "
-                                        + "maintenance time by **70%** by retiring per-team "
-                                        + "PDF scripts in favour of one canonical engine.",
-                                "**Software Engineer**, BrightLeaf Labs | *2021-2024* - Built "
-                                        + "backend services and production document rendering "
-                                        + "pipelines processing **2M+ documents per month**. "
-                                        + "Drove the migration from iText to a custom layout "
-                                        + "engine, eliminating licensing risk and cutting "
-                                        + "p99 render latency from 1.4s to 380ms.",
-                                "**Backend Engineer**, Helix Print Co | *2019-2021* - "
-                                        + "Maintained a high-volume invoice-printing service "
-                                        + "(15M PDFs/year) and authored the compliance test "
-                                        + "harness that gated every template change."))))
+                        // Preferred: structured WorkHistoryBlock with
+                        // explicit (title, organisation, date,
+                        // description) fields. BoxedSections renders
+                        // each item as a structured row (title bold
+                        // left, date right, organisation italic on the
+                        // next line, description full-width below)
+                        // without falling back to the legacy
+                        // pipe-separated string parser.
+                        new WorkHistoryBlock(List.of(
+                                new WorkHistoryBlock.Item(
+                                        "Senior Platform Engineer",
+                                        "Northwind Systems",
+                                        "2024-Present",
+                                        "Led the reusable document-generation platform serving "
+                                                + "billing, hiring, and reporting flows across "
+                                                + "**8 product teams**. Reduced template maintenance "
+                                                + "time by **70%** by retiring per-team PDF scripts "
+                                                + "in favour of one canonical engine."),
+                                new WorkHistoryBlock.Item(
+                                        "Software Engineer",
+                                        "BrightLeaf Labs",
+                                        "2021-2024",
+                                        "Built backend services and production document rendering "
+                                                + "pipelines processing **2M+ documents per month**. "
+                                                + "Drove the migration from iText to a custom layout "
+                                                + "engine, eliminating licensing risk and cutting "
+                                                + "p99 render latency from 1.4s to 380ms."),
+                                new WorkHistoryBlock.Item(
+                                        "Backend Engineer",
+                                        "Helix Print Co",
+                                        "2019-2021",
+                                        "Maintained a high-volume invoice-printing service "
+                                                + "(15M PDFs/year) and authored the compliance test "
+                                                + "harness that gated every template change.")))))
                 .module(CvModule.of("Additional Information",
                         new KeyValueBlock(List.of(
                                 new KeyValueBlock.Entry("Languages",

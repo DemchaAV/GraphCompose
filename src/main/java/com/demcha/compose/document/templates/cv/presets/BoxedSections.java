@@ -20,8 +20,10 @@ import com.demcha.compose.document.templates.blocks.BulletListBlock;
 import com.demcha.compose.document.templates.blocks.IndentedBlock;
 import com.demcha.compose.document.templates.blocks.KeyValueBlock;
 import com.demcha.compose.document.templates.blocks.MultiParagraphBlock;
+import com.demcha.compose.document.templates.blocks.EducationBlock;
 import com.demcha.compose.document.templates.blocks.NumberedListBlock;
 import com.demcha.compose.document.templates.blocks.ParagraphBlock;
+import com.demcha.compose.document.templates.blocks.WorkHistoryBlock;
 import com.demcha.compose.document.templates.cv.spec.CvHeader;
 import com.demcha.compose.document.templates.cv.spec.CvModule;
 import com.demcha.compose.document.templates.cv.spec.CvSpec;
@@ -217,6 +219,30 @@ public final class BoxedSections {
         private void renderBody(SectionBuilder section, Block body) {
             if (body instanceof ParagraphBlock p) {
                 renderParagraph(section, p.text());
+            } else if (body instanceof WorkHistoryBlock w) {
+                // Preferred structured shape — render each item directly
+                // via renderWorkEntry, bypassing the separator-heuristic
+                // parser that the MultiParagraphBlock legacy path uses.
+                for (WorkHistoryBlock.Item item : w.items()) {
+                    renderWorkEntry(section, new WorkEntry(
+                            safe(item.title()).trim(),
+                            safe(item.organisation()).trim(),
+                            safe(item.date()).trim(),
+                            safe(item.description()).trim()));
+                }
+            } else if (body instanceof EducationBlock e) {
+                // Preferred structured shape for education / certs —
+                // maps onto the same WorkEntry render so the visual
+                // layout (degree bold left, year right, institution
+                // italic below, details paragraph beneath) stays
+                // consistent with Professional Experience.
+                for (EducationBlock.Item item : e.items()) {
+                    renderWorkEntry(section, new WorkEntry(
+                            safe(item.degree()).trim(),
+                            safe(item.institution()).trim(),
+                            safe(item.year()).trim(),
+                            safe(item.details()).trim()));
+                }
             } else if (body instanceof MultiParagraphBlock m) {
                 for (String line : m.paragraphs()) {
                     WorkEntry entry = parseWorkEntry(line);
@@ -248,9 +274,49 @@ public final class BoxedSections {
                 }
             } else if (body instanceof KeyValueBlock kv) {
                 for (KeyValueBlock.Entry entry : kv.entries()) {
-                    renderParagraph(section, entry.key() + ": " + entry.value());
+                    renderKeyValueEntry(section, entry);
                 }
             }
+        }
+
+        /**
+         * Renders a {@link KeyValueBlock} entry as "<b>Key:</b> value"
+         * — the label rendered bold, the colon attached, then the
+         * value in regular weight. Improves readability over the
+         * legacy {@code key + ": " + value} flat-text path that
+         * rendered the entire line in body weight and left "Languages",
+         * "Open Source", and other labels visually indistinguishable
+         * from the prose that followed.
+         */
+        private void renderKeyValueEntry(SectionBuilder section, KeyValueBlock.Entry entry) {
+            String key = safe(entry.key()).trim();
+            String value = safe(entry.value()).trim();
+            if (key.isBlank() && value.isBlank()) {
+                return;
+            }
+            DocumentTextStyle base = style(BODY_FONT, 8.6,
+                    DocumentTextDecoration.DEFAULT, INK);
+            // Wrap the key in **markdown bold** markers so the existing
+            // appendMarkdown parser emits a bold inline run for it and
+            // the value continues with the base body style. Authors who
+            // already typed markdown inside key or value keep their
+            // emphasis runs.
+            StringBuilder source = new StringBuilder();
+            if (!key.isBlank()) {
+                source.append("**").append(key).append(":**");
+            }
+            if (!value.isBlank()) {
+                if (source.length() > 0) {
+                    source.append(' ');
+                }
+                source.append(value);
+            }
+            section.addParagraph(paragraph -> paragraph
+                    .textStyle(base)
+                    .lineSpacing(1.4)
+                    .align(TextAlign.LEFT)
+                    .margin(DocumentInsets.top(2))
+                    .rich(rich -> appendMarkdown(rich, source.toString(), base)));
         }
 
         private void renderParagraph(SectionBuilder section, String rawLine) {
@@ -455,6 +521,26 @@ public final class BoxedSections {
         }
     }
 
+    /**
+     * Parses a single pipe-separated work-history line in the legacy
+     * format
+     * {@code "**Title**, Organisation | *Date* — Description"}. Accepts
+     * em-dash, en-dash, and ASCII hyphen as the date / description
+     * separator, mirroring {@link #splitHeading}. Returns {@code null}
+     * when the input does not look like a work-history line (no pipe,
+     * no recognisable date) so callers can fall back to plain paragraph
+     * rendering.
+     *
+     * @deprecated Backward-compatibility path for callers who feed
+     *             work history via {@link MultiParagraphBlock}.
+     *             New code should declare work entries via
+     *             {@link WorkHistoryBlock} with explicit
+     *             {@code (title, organisation, date, description)}
+     *             fields — that route bypasses this heuristic parser
+     *             entirely and renders directly via
+     *             {@link #renderWorkEntry}.
+     */
+    @Deprecated
     private static WorkEntry parseWorkEntry(String item) {
         String clean = stripBasicMarkdown(safe(item).trim());
         int pipeIndex = clean.indexOf('|');
@@ -468,18 +554,66 @@ public final class BoxedSections {
         }
         String date;
         String description = "";
-        int dashIdx = afterPipe.indexOf(" - ");
-        if (dashIdx > 0) {
+        // Date/description separator: accept em-dash " — ", en-dash " – ",
+        // and ASCII " - " (matching splitHeading). Without this, authors
+        // who type " — " in the data file get the whole date+description
+        // collapsed into the date column and an empty description
+        // paragraph beneath — the right-aligned date column then wraps
+        // the description text and the work entry's description never
+        // renders on its own full-width line under the company subtitle.
+        String separator = null;
+        int dashIdx = -1;
+        for (String candidate : new String[]{" — ", " – ", " - "}) {
+            int idx = afterPipe.indexOf(candidate);
+            if (idx > 0) {
+                dashIdx = idx;
+                separator = candidate;
+                break;
+            }
+        }
+        if (separator != null) {
             date = afterPipe.substring(0, dashIdx).trim();
-            description = afterPipe.substring(dashIdx + 3).trim();
+            description = afterPipe.substring(dashIdx + separator.length()).trim();
         } else {
             date = afterPipe;
         }
         if (!looksLikeDate(date)) {
             return null;
         }
+        // Reject lines whose post-pipe segment is prose dressed up as a
+        // date. Education entries like
+        // {@code "**BSc** - Uni | 2019. First-class honours. ..."} used
+        // to satisfy looksLikeDate via the hyphen inside "First-class"
+        // and would collapse the whole sentence into the right-aligned
+        // date column, hiding the description text. A genuine date is
+        // either a year, year range, or short month-year token without
+        // sentence-ending punctuation; if no explicit date/description
+        // separator was found AND the candidate date contains a period
+        // (or any character that signals prose) the line is treated as
+        // a non-work entry and the caller falls back to plain paragraph
+        // rendering.
+        if (separator == null && containsProseSignals(date)) {
+            return null;
+        }
         HeadingParts heading = splitHeading(headingText);
         return new WorkEntry(heading.main(), heading.sub(), date, description);
+    }
+
+    /**
+     * Detects characters that signal the candidate string is prose
+     * rather than a date or date range. Used by {@link #parseWorkEntry}
+     * as a defensive second pass when the loose {@link #looksLikeDate}
+     * heuristic accepts a sentence containing a stray hyphen / em-dash
+     * (e.g. {@code "2019. First-class honours."} would otherwise count
+     * as a date because of the hyphen inside {@code "First-class"}).
+     */
+    private static boolean containsProseSignals(String value) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        return value.contains(".")
+                || value.contains(":")
+                || value.contains(";");
     }
 
     private static HeadingParts splitHeading(String heading) {
@@ -531,15 +665,25 @@ public final class BoxedSections {
     }
 
     private static ProjectParts parseProjectItem(String item) {
-        // Split on " - " (space-hyphen-space, mirroring WorkEntry parsing)
-        // so an em-dash or hyphen inside the description is not eaten.
-        // Falls back to "title only" when no separator is present.
-        int sepIndex = item.indexOf(" - ");
-        if (sepIndex <= 0) {
+        // Split on " — " (em-dash), " – " (en-dash), or " - " (ASCII),
+        // mirroring WorkEntry parsing so an em-dash inside the source
+        // line doesn't eat the description into the name. Falls back
+        // to "title only" when no separator is present.
+        String separator = null;
+        int sepIndex = -1;
+        for (String candidate : new String[]{" — ", " – ", " - "}) {
+            int idx = item.indexOf(candidate);
+            if (idx > 0) {
+                sepIndex = idx;
+                separator = candidate;
+                break;
+            }
+        }
+        if (separator == null) {
             return new ProjectParts(item.trim(), "");
         }
         String name = item.substring(0, sepIndex).trim();
-        String description = item.substring(sepIndex + 3).trim();
+        String description = item.substring(sepIndex + separator.length()).trim();
         return new ProjectParts(name, description);
     }
 

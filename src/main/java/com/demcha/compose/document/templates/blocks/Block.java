@@ -11,8 +11,8 @@ package com.demcha.compose.document.templates.blocks;
  *
  * <p>The sealed permit list is intentionally exhaustive: every body
  * shape that a CV / cover-letter / invoice / proposal preset can
- * declare today is one of the six concrete records. To add a new body
- * shape, extend the {@code permits} list and update the Module
+ * declare today is one of the eight concrete records. To add a new
+ * body shape, extend the {@code permits} list and update the Module
  * composer to handle the new variant.</p>
  *
  * <p>Block records are immutable and safe to reuse across documents.</p>
@@ -23,5 +23,7 @@ public sealed interface Block
                 NumberedListBlock,
                 IndentedBlock,
                 KeyValueBlock,
-                MultiParagraphBlock {
+                MultiParagraphBlock,
+                WorkHistoryBlock,
+                EducationBlock {
 }

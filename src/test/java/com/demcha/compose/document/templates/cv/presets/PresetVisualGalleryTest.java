@@ -69,9 +69,11 @@ class PresetVisualGalleryTest {
                                         "Professional track | 2023")))))
                 .module(CvModule.of("Projects",
                         new IndentedBlock(List.of(
-                                new IndentedBlock.Item("GraphCompose",
+                                new IndentedBlock.Item(
+                                        "GraphCompose (Java 21, PDFBox, Maven)",
                                         "Declarative PDF layout engine for reusable document generation"),
-                                new IndentedBlock.Item("Template Studio",
+                                new IndentedBlock.Item(
+                                        "Template Studio (Kotlin, Compose Desktop)",
                                         "Internal tool for evaluating CV, proposal, and invoice output")))))
                 .module(CvModule.of("Professional Experience",
                         new MultiParagraphBlock(List.of(

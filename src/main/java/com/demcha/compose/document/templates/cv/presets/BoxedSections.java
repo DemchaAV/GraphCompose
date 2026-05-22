@@ -185,6 +185,32 @@ public final class BoxedSections {
         private void addModuleBody(SectionBuilder section, CvModule module) {
             section.spacing(4)
                     .padding(new DocumentInsets(4, 4, 0, 4));
+            // Projects render with a dedicated two-line layout — bold
+            // project name (with optional tech stack in parens) on the
+            // first line behind a bullet, then a hanging-indented
+            // description below — instead of the flat single-line bullet
+            // used for general bullet lists. Matches the canonical CV
+            // visual where "what the project is" stands apart from "what
+            // it did". Honours both shapes the data layer ships: a
+            // {@link BulletListBlock} with "**Name (tech)** - Description"
+            // strings and an {@link IndentedBlock} with separate title /
+            // body fields.
+            if (isProjectsModule(module.title())) {
+                if (module.body() instanceof BulletListBlock projects) {
+                    for (String item : projects.items()) {
+                        renderProjectItem(section, parseProjectItem(safe(item).trim()));
+                    }
+                    return;
+                }
+                if (module.body() instanceof IndentedBlock indented) {
+                    for (IndentedBlock.Item item : indented.items()) {
+                        renderProjectItem(section,
+                                new ProjectParts(safe(item.title()).trim(),
+                                        safe(item.body()).trim()));
+                    }
+                    return;
+                }
+            }
             renderBody(section, module.body());
         }
 
@@ -264,6 +290,54 @@ public final class BoxedSections {
                     .bulletOffset("• ")
                     .indentStrategy(DocumentTextIndent.ALL_LINES)
                     .rich(rich -> appendMarkdown(rich, text, base)));
+        }
+
+        /**
+         * Renders one project entry as two stacked paragraphs:
+         *
+         * <pre>
+         * • <b>Name</b> (tech stack)
+         *   Description text wrapped under the title, hanging-indented
+         *   so it lines up with the project name (not the bullet).
+         * </pre>
+         *
+         * <p>Input format: {@code "**Name (tech)** - Description"}.
+         * Both halves are optional — a project without a description
+         * renders only the title line; a project without bold markers
+         * around the name is treated as plain title text.</p>
+         */
+        private void renderProjectItem(SectionBuilder section, ProjectParts parts) {
+            if (parts.name().isBlank() && parts.description().isBlank()) {
+                return;
+            }
+            DocumentTextStyle base = style(BODY_FONT, 8.6,
+                    DocumentTextDecoration.DEFAULT, INK);
+            DocumentTextStyle nameStyle = style(BODY_FONT, 8.6,
+                    DocumentTextDecoration.BOLD, INK);
+
+            section.addParagraph(paragraph -> paragraph
+                    .textStyle(base)
+                    .lineSpacing(1.4)
+                    .align(TextAlign.LEFT)
+                    .margin(DocumentInsets.top(2))
+                    .bulletOffset("• ")
+                    .indentStrategy(DocumentTextIndent.ALL_LINES)
+                    .rich(rich -> appendMarkdown(rich, parts.name(), nameStyle)));
+
+            if (parts.description().isBlank()) {
+                return;
+            }
+            // Two-space prefix matches the bullet+space width inside the
+            // hanging-indent computation, so the description's first
+            // glyph sits under the project name rather than the bullet.
+            section.addParagraph(paragraph -> paragraph
+                    .textStyle(base)
+                    .lineSpacing(1.4)
+                    .align(TextAlign.LEFT)
+                    .margin(DocumentInsets.zero())
+                    .bulletOffset("  ")
+                    .indentStrategy(DocumentTextIndent.ALL_LINES)
+                    .rich(rich -> appendMarkdown(rich, parts.description(), base)));
         }
 
         private void renderWorkEntry(SectionBuilder section, WorkEntry entry) {
@@ -446,6 +520,30 @@ public final class BoxedSections {
                 .replace("`", "")
                 .replace("*", "")
                 .replace("_", "");
+    }
+
+    private static boolean isProjectsModule(String title) {
+        if (title == null) {
+            return false;
+        }
+        String normalized = title.toLowerCase(Locale.ROOT).trim();
+        return normalized.equals("projects") || normalized.startsWith("projects ");
+    }
+
+    private static ProjectParts parseProjectItem(String item) {
+        // Split on " - " (space-hyphen-space, mirroring WorkEntry parsing)
+        // so an em-dash or hyphen inside the description is not eaten.
+        // Falls back to "title only" when no separator is present.
+        int sepIndex = item.indexOf(" - ");
+        if (sepIndex <= 0) {
+            return new ProjectParts(item.trim(), "");
+        }
+        String name = item.substring(0, sepIndex).trim();
+        String description = item.substring(sepIndex + 3).trim();
+        return new ProjectParts(name, description);
+    }
+
+    private record ProjectParts(String name, String description) {
     }
 
     private static String spacedUpper(String value) {

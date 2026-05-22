@@ -221,11 +221,11 @@ class BlockTest {
     // Sealing ---------------------------------------------------------
 
     @Test
-    void blockSealingPermitsAllSixVariants() {
-        // The sealed permit list of Block must include all six concrete
-        // block kinds. This is essentially a compile-time guarantee, but
-        // the test fails fast if the permit list ever drifts from the
-        // record set in this package.
+    void blockSealingPermitsAllEightVariants() {
+        // The sealed permit list of Block must include all eight
+        // concrete block kinds. This is essentially a compile-time
+        // guarantee, but the test fails fast if the permit list ever
+        // drifts from the record set in this package.
         Class<?>[] permitted = Block.class.getPermittedSubclasses();
         assertThat(permitted)
                 .containsExactlyInAnyOrder(
@@ -234,6 +234,8 @@ class BlockTest {
                         NumberedListBlock.class,
                         IndentedBlock.class,
                         KeyValueBlock.class,
-                        MultiParagraphBlock.class);
+                        MultiParagraphBlock.class,
+                        WorkHistoryBlock.class,
+                        EducationBlock.class);
     }
 }

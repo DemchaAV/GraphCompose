@@ -1,0 +1,347 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 595.276,
+    "pageHeight" : 841.89,
+    "innerWidth" : 570.276,
+    "innerHeight" : 811.89,
+    "margin" : {
+      "top" : 15.0,
+      "right" : 10.0,
+      "bottom" : 15.0,
+      "left" : 15.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "BoxedSectionsRoot[0]",
+    "entityName" : "BoxedSectionsRoot",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 15.0,
+    "computedY" : 675.235,
+    "placementX" : 15.0,
+    "placementY" : 675.235,
+    "placementWidth" : 570.276,
+    "placementHeight" : 151.655,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 570.276,
+    "contentHeight" : 151.655,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BoxedSectionsRoot[0]/BoxedSectionsHeader[0]",
+    "entityName" : "BoxedSectionsHeader",
+    "entityKind" : "SectionNode",
+    "parentPath" : "BoxedSectionsRoot[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 15.0,
+    "computedY" : 794.402,
+    "placementX" : 15.0,
+    "placementY" : 794.402,
+    "placementWidth" : 570.276,
+    "placementHeight" : 32.488,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 570.276,
+    "contentHeight" : 32.488,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 4.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BoxedSectionsRoot[0]/BoxedSectionsHeader[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "BoxedSectionsRoot[0]/BoxedSectionsHeader[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 15.0,
+    "computedY" : 798.402,
+    "placementX" : 15.0,
+    "placementY" : 798.402,
+    "placementWidth" : 570.276,
+    "placementHeight" : 28.488,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 570.276,
+    "contentHeight" : 28.488,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BoxedSectionsRoot[0]/BoxedSectionsContact[1]",
+    "entityName" : "BoxedSectionsContact",
+    "entityKind" : "SectionNode",
+    "parentPath" : "BoxedSectionsRoot[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 15.0,
+    "computedY" : 768.14,
+    "placementX" : 15.0,
+    "placementY" : 768.14,
+    "placementWidth" : 570.276,
+    "placementHeight" : 19.263,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 570.276,
+    "contentHeight" : 19.263,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 4.0,
+      "right" : 0.0,
+      "bottom" : 4.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BoxedSectionsRoot[0]/BoxedSectionsContact[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "BoxedSectionsRoot[0]/BoxedSectionsContact[1]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 15.0,
+    "computedY" : 772.14,
+    "placementX" : 15.0,
+    "placementY" : 772.14,
+    "placementWidth" : 570.276,
+    "placementHeight" : 11.263,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 570.276,
+    "contentHeight" : 11.263,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BoxedSectionsRoot[0]/BoxedSectionsBanner_0[2]",
+    "entityName" : "BoxedSectionsBanner_0",
+    "entityKind" : "SectionNode",
+    "parentPath" : "BoxedSectionsRoot[0]",
+    "childIndex" : 2,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 15.0,
+    "computedY" : 734.42,
+    "placementX" : 15.0,
+    "placementY" : 734.42,
+    "placementWidth" : 570.276,
+    "placementHeight" : 22.72,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 570.276,
+    "contentHeight" : 22.72,
+    "margin" : {
+      "top" : 4.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 5.0,
+      "right" : 5.0,
+      "bottom" : 5.0,
+      "left" : 5.0
+    }
+  }, {
+    "path" : "BoxedSectionsRoot[0]/BoxedSectionsBanner_0[2]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "BoxedSectionsRoot[0]/BoxedSectionsBanner_0[2]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 20.0,
+    "computedY" : 739.42,
+    "placementX" : 20.0,
+    "placementY" : 739.42,
+    "placementWidth" : 560.276,
+    "placementHeight" : 12.72,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 560.276,
+    "contentHeight" : 12.72,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BoxedSectionsRoot[0]/BoxedSectionsBody_0[3]",
+    "entityName" : "BoxedSectionsBody_0",
+    "entityKind" : "SectionNode",
+    "parentPath" : "BoxedSectionsRoot[0]",
+    "childIndex" : 3,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 15.0,
+    "computedY" : 675.235,
+    "placementX" : 15.0,
+    "placementY" : 675.235,
+    "placementWidth" : 219.766,
+    "placementHeight" : 52.185,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 219.766,
+    "contentHeight" : 52.185,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 4.0,
+      "right" : 4.0,
+      "bottom" : 0.0,
+      "left" : 4.0
+    }
+  }, {
+    "path" : "BoxedSectionsRoot[0]/BoxedSectionsBody_0[3]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "BoxedSectionsRoot[0]/BoxedSectionsBody_0[3]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 19.0,
+    "computedY" : 710.025,
+    "placementX" : 19.0,
+    "placementY" : 710.025,
+    "placementWidth" : 202.986,
+    "placementHeight" : 11.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 202.986,
+    "contentHeight" : 11.395,
+    "margin" : {
+      "top" : 2.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BoxedSectionsRoot[0]/BoxedSectionsBody_0[3]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "BoxedSectionsRoot[0]/BoxedSectionsBody_0[3]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 19.0,
+    "computedY" : 692.63,
+    "placementX" : 19.0,
+    "placementY" : 692.63,
+    "placementWidth" : 211.766,
+    "placementHeight" : 11.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 211.766,
+    "contentHeight" : 11.395,
+    "margin" : {
+      "top" : 2.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "BoxedSectionsRoot[0]/BoxedSectionsBody_0[3]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "BoxedSectionsRoot[0]/BoxedSectionsBody_0[3]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 19.0,
+    "computedY" : 675.235,
+    "placementX" : 19.0,
+    "placementY" : 675.235,
+    "placementWidth" : 172.482,
+    "placementHeight" : 11.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 172.482,
+    "contentHeight" : 11.395,
+    "margin" : {
+      "top" : 2.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

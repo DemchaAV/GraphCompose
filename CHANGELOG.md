@@ -3,7 +3,7 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v1.6.4 — Planned
+## v1.6.4 — 2026-05-22
 
 Bug fix + structured-block patch. Adds two new public Block types —
 `WorkHistoryBlock` and `EducationBlock` — that let template authors

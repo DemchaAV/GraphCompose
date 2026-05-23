@@ -39,6 +39,17 @@
  *       and Professional Experience interchangeably.</li>
  * </ul>
  *
+ * <h3>Placement</h3>
+ *
+ * <p>Sections live inside a {@link com.demcha.compose.document.templates.cv.v2.data.CvDocument}
+ * as ordered {@link com.demcha.compose.document.templates.cv.v2.data.CvDocument.Placement}
+ * entries. Each placement pairs a section with a
+ * {@link com.demcha.compose.document.templates.cv.v2.data.Slot}
+ * ({@code MAIN}, {@code SIDEBAR}, {@code FOOTER}). Single-column
+ * presets read only {@code MAIN}; multi-column presets read multiple
+ * slots. Sections built without an explicit slot default to
+ * {@code MAIN}, so existing call sites stay valid.</p>
+ *
  * <h3>Adding a new section type</h3>
  *
  * <ol>

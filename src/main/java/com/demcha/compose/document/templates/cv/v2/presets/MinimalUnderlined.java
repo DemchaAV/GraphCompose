@@ -12,6 +12,7 @@ import com.demcha.compose.document.templates.cv.v2.components.SectionDispatcher;
 import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
 import com.demcha.compose.document.templates.cv.v2.data.CvSection;
+import com.demcha.compose.document.templates.cv.v2.data.Slot;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
 
 import java.util.List;
@@ -108,7 +109,9 @@ public final class MinimalUnderlined {
                         ContactRenderer.render(section, doc.identity(), theme);
                     });
 
-            List<CvSection> sections = doc.sections();
+            // Single-column preset — only renders MAIN-slot sections.
+            // Sidebar / footer placements are intentionally dropped here.
+            List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
             for (int i = 0; i < sections.size(); i++) {
                 final CvSection sec = sections.get(i);
                 final int idx = i;

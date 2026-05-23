@@ -26,26 +26,46 @@ import java.util.Objects;
  */
 public record CvTheme(CvPalette palette,
                       CvTypography typography,
-                      CvSpacing spacing) {
+                      CvSpacing spacing,
+                      CvDecoration decoration) {
 
     public CvTheme {
         Objects.requireNonNull(palette, "palette");
         Objects.requireNonNull(typography, "typography");
         Objects.requireNonNull(spacing, "spacing");
+        Objects.requireNonNull(decoration, "decoration");
+    }
+
+    /**
+     * Backward-compatible 3-arg constructor that fills the
+     * {@link CvDecoration} slot with {@link CvDecoration#classic()}.
+     * Retained so callers built before the decoration token landed
+     * keep compiling and behaving identically.
+     *
+     * @deprecated since the introduction of {@link CvDecoration} —
+     *             pass an explicit decoration so callers can choose
+     *             a different bullet glyph or contact separator
+     *             without forking the renderer.
+     */
+    @Deprecated
+    public CvTheme(CvPalette palette, CvTypography typography, CvSpacing spacing) {
+        this(palette, typography, spacing, CvDecoration.classic());
     }
 
     // -- canonical factories ---------------------------------------------
 
     /**
      * The "Boxed Sections" classic look — PT-Serif, near-black ink,
-     * pale-grey section banners. Visual signature of the original
+     * pale-grey section banners, round bullets, pipe contact
+     * separators. Visual signature of the original
      * {@code cv-boxed-sections.pdf} reference output.
      */
     public static CvTheme boxedClassic() {
         return new CvTheme(
                 CvPalette.classic(),
                 CvTypography.classic(),
-                CvSpacing.classic());
+                CvSpacing.classic(),
+                CvDecoration.classic());
     }
 
     // -- pre-built text-style helpers ------------------------------------

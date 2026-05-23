@@ -1,15 +1,16 @@
 package com.demcha.compose.document.templates.cv.v2.components;
 
 import com.demcha.compose.document.dsl.SectionBuilder;
-import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
 
 /**
  * Draws one prose paragraph (markdown-aware) in body style. Used by
- * {@code ParagraphSection} bodies and as a shared primitive by other
- * renderers (e.g. the description line under an entry).
+ * {@code ParagraphSection} bodies.
+ *
+ * <p>Implementation is a one-liner delegation to
+ * {@link ParagraphPrimitive} — the actual addParagraph DSL plumbing
+ * lives there so every body / row / entry renderer agrees on
+ * alignment, margin, line spacing, and markdown handling.</p>
  */
 public final class ParagraphRenderer {
 
@@ -25,12 +26,6 @@ public final class ParagraphRenderer {
         if (text == null || text.isBlank()) {
             return;
         }
-        DocumentTextStyle base = theme.bodyStyle();
-        section.addParagraph(p -> p
-                .textStyle(base)
-                .lineSpacing(theme.typography().bodyLineSpacing())
-                .align(TextAlign.LEFT)
-                .margin(DocumentInsets.top((float) theme.spacing().paragraphMarginTop()))
-                .rich(rich -> MarkdownInline.append(rich, text.trim(), base)));
+        ParagraphPrimitive.writeBody(section, text.trim(), theme.bodyStyle(), theme);
     }
 }

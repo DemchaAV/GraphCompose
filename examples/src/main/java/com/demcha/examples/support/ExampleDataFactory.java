@@ -12,6 +12,12 @@ import com.demcha.compose.document.templates.coverletter.spec.CoverLetterSpec;
 import com.demcha.compose.document.templates.cv.spec.CvHeader;
 import com.demcha.compose.document.templates.cv.spec.CvModule;
 import com.demcha.compose.document.templates.cv.spec.CvSpec;
+import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
+import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
+import com.demcha.compose.document.templates.cv.v2.data.EntriesSection;
+import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
+import com.demcha.compose.document.templates.cv.v2.data.RowStyle;
+import com.demcha.compose.document.templates.cv.v2.data.RowsSection;
 import com.demcha.compose.document.templates.data.common.EmailYaml;
 import com.demcha.compose.document.templates.data.common.Header;
 import com.demcha.compose.document.templates.data.coverletter.CoverLetterDocumentSpec;
@@ -439,6 +445,144 @@ public final class ExampleDataFactory {
                 .email("jordan.rivera@example.com")
                 .link("LinkedIn", "https://linkedin.com/in/jordan-rivera-demo")
                 .link("GitHub", "https://github.com/jrivera-demo")
+                .build();
+    }
+
+    // -- Templates v2 (cv/v2) sample data ------------------------------
+
+    /**
+     * Returns a sample {@code CvDocument} for the v2 CV pipeline —
+     * the canonical Jordan Rivera content expressed in the new
+     * 3-section sealed hierarchy
+     * ({@link com.demcha.compose.document.templates.cv.v2.data.ParagraphSection},
+     * {@link RowsSection},
+     * {@link EntriesSection}).
+     *
+     * <p>Each section explicitly picks its visual decoration —
+     * Technical Skills uses {@link RowStyle#BULLETED}, Projects uses
+     * {@link RowStyle#BULLETED_STACKED}, Additional Information uses
+     * {@link RowStyle#PLAIN}. Education and Experience are the same
+     * {@link EntriesSection} record, distinguished only by title.</p>
+     *
+     * @return sample v2 CV document
+     */
+    public static CvDocument sampleCvDocumentV2() {
+        CvIdentity identity = CvIdentity.builder()
+                .name("Jordan", "Rivera")
+                .contact("+44 20 5555 1000",
+                        "jordan.rivera@example.com",
+                        "London, UK")
+                .link("LinkedIn", "https://linkedin.com/in/jordan-rivera-demo")
+                .link("GitHub", "https://github.com/jrivera-demo")
+                .build();
+
+        ParagraphSection summary = new ParagraphSection(
+                "Professional Summary",
+                "Platform engineer with **10+ years** building resilient "
+                        + "document-generation pipelines, layout engines, and "
+                        + "developer-facing template systems. Specialised in "
+                        + "high-throughput PDF rendering, semantic authoring "
+                        + "DSLs, and turning brittle production-ops scripts "
+                        + "into typed, snapshot-tested libraries that scale.");
+
+        RowsSection skills = RowsSection
+                .builder("Technical Skills", RowStyle.BULLETED)
+                .row("Languages", "Java 21, Kotlin, Groovy, Python, SQL")
+                .row("Document & Print", "PDFBox, Apache POI (DOCX/XLSX), iText, "
+                        + "PostScript, ICC colour profiles, font metrics")
+                .row("Layout engines", "Custom DSL design, semantic layout trees, "
+                        + "pagination, snapshot testing, visual regression")
+                .row("Build & infrastructure", "Maven, Gradle, GitHub Actions, "
+                        + "JitPack, Docker, JMH benchmarking")
+                .row("Testing", "JUnit 5, AssertJ, PDFBox-based PNG diff, "
+                        + "layout-graph snapshots, mutation testing (Pitest)")
+                .row("Distribution", "Maven Central, Sonatype OSSRH, GPG signing, "
+                        + "JitPack, semantic versioning discipline")
+                .build();
+
+        EntriesSection education = EntriesSection
+                .builder("Education & Certifications")
+                .entry("MSc Computer Science",
+                        "University of Manchester",
+                        "2021",
+                        "Distinction. Thesis: *Composable layout primitives "
+                                + "for deterministic document rendering*.")
+                .entry("BSc Software Engineering",
+                        "Imperial College London",
+                        "2019",
+                        "First-class honours. Specialisation in compilers and "
+                                + "static analysis.")
+                .entry("Oracle Java Certification",
+                        "Professional track",
+                        "2023",
+                        "Java 17 platform deep-dive: records, sealed types, "
+                                + "pattern matching, virtual threads.")
+                .build();
+
+        RowsSection projects = RowsSection
+                .builder("Projects", RowStyle.BULLETED_STACKED)
+                .row("GraphCompose (Java 21, PDFBox, Maven, JMH)",
+                        "Declarative Java PDF layout engine. Semantic DSL, "
+                                + "slot-based templates, snapshot testing. Powers "
+                                + "production CV / invoice / proposal pipelines for "
+                                + "hiring tools and billing systems. *(Open source)*")
+                .row("Template Studio (Kotlin, Compose Desktop, PDFBox PNG diff)",
+                        "Internal tool for evaluating CV, proposal, and "
+                                + "invoice output across 14 design presets. PNG "
+                                + "diffing, side-by-side layout, baseline freezing.")
+                .row("LayoutLint (Java 21, JavaParser, Spoon)",
+                        "Static analyser that flags fragile authoring patterns "
+                                + "(deeply nested rows, untyped offsets, implicit "
+                                + "page breaks) before they ship to production.")
+                .row("ChromeForge (Java, GraphCompose, Pandoc bridge)",
+                        "Editorial-magazine document toolkit built on "
+                                + "GraphCompose: cinematic covers, pull quotes, "
+                                + "multi-column flow, sidebar callouts.")
+                .build();
+
+        EntriesSection experience = EntriesSection
+                .builder("Professional Experience")
+                .entry("Senior Platform Engineer",
+                        "Northwind Systems",
+                        "2024-Present",
+                        "Led the reusable document-generation platform serving "
+                                + "billing, hiring, and reporting flows across "
+                                + "**8 product teams**. Reduced template maintenance "
+                                + "time by **70%** by retiring per-team PDF scripts "
+                                + "in favour of one canonical engine.")
+                .entry("Software Engineer",
+                        "BrightLeaf Labs",
+                        "2021-2024",
+                        "Built backend services and production document rendering "
+                                + "pipelines processing **2M+ documents per month**. "
+                                + "Drove the migration from iText to a custom layout "
+                                + "engine, eliminating licensing risk and cutting "
+                                + "p99 render latency from 1.4s to 380ms.")
+                .entry("Backend Engineer",
+                        "Helix Print Co",
+                        "2019-2021",
+                        "Maintained a high-volume invoice-printing service "
+                                + "(15M PDFs/year) and authored the compliance test "
+                                + "harness that gated every template change.")
+                .build();
+
+        RowsSection additional = RowsSection
+                .builder("Additional Information", RowStyle.PLAIN)
+                .row("Languages",
+                        "English (Fluent), German (Intermediate), Spanish (Basic)")
+                .row("Work Eligibility",
+                        "Eligible to work in the UK and the EU")
+                .row("Open Source",
+                        "Maintainer of GraphCompose. Regular contributor to "
+                                + "PDFBox issue triage.")
+                .row("Speaking",
+                        "JVM Summit 2024, Devoxx UK 2025 — both on declarative "
+                                + "document layout.")
+                .build();
+
+        return CvDocument.builder()
+                .identity(identity)
+                .sections(summary, skills, education, projects, experience, additional)
                 .build();
     }
 }

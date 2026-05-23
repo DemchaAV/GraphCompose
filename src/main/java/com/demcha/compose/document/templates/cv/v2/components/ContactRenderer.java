@@ -49,7 +49,8 @@ public final class ContactRenderer {
                                     rich.style(part.text(), textStyle);
                                 }
                                 if (i < parts.size() - 1) {
-                                    rich.style("   |   ", separatorStyle);
+                                    rich.style(theme.decoration().contactSeparator(),
+                                            separatorStyle);
                                 }
                             }
                         }));

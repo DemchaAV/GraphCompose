@@ -1,9 +1,7 @@
 package com.demcha.compose.document.templates.cv.v2.components;
 
 import com.demcha.compose.document.dsl.SectionBuilder;
-import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.cv.v2.data.CvRow;
 import com.demcha.compose.document.templates.cv.v2.data.RowStyle;
@@ -12,19 +10,14 @@ import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
 /**
  * Unified renderer for a {@link CvRow} under any {@link RowStyle}.
  *
- * <p>One entry point — {@link #render(SectionBuilder, CvRow, RowStyle, CvTheme)} —
- * branches by style into three private helpers that share their
- * paragraph configuration. There is no copy-paste of {@code
- * .textStyle(...).lineSpacing(...).align(...)} across four near-identical
- * methods like the first v2 iteration had — the only thing that varies
- * per style is the bullet glyph and whether the row stacks onto a
- * second line.</p>
+ * <p>One public entry point dispatches on the style enum. All actual
+ * paragraph drawing is delegated to {@link ParagraphPrimitive} so no
+ * paragraph configuration is duplicated between this class and the
+ * other renderers. Bullet glyphs and stacked-indent strings come
+ * from {@code theme.decoration()} — changing them is a theme-level
+ * decision, not a code change.</p>
  */
 public final class RowRenderer {
-
-    private static final String BULLET_GLYPH = "• ";
-    /** Two-space prefix so wrapped stacked-body text sits under the name. */
-    private static final String STACK_INDENT = "  ";
 
     private RowRenderer() {
     }
@@ -35,13 +28,14 @@ public final class RowRenderer {
      * @param section host
      * @param row     content (label + body)
      * @param style   decoration toggle
-     * @param theme   active theme
+     * @param theme   active theme — supplies typography, palette,
+     *                bullet glyph, and stacked indent
      */
     public static void render(SectionBuilder section, CvRow row,
                               RowStyle style, CvTheme theme) {
         switch (style) {
             case PLAIN -> inline(section, row, null, theme);
-            case BULLETED -> inline(section, row, BULLET_GLYPH, theme);
+            case BULLETED -> inline(section, row, theme.decoration().bulletGlyph(), theme);
             case BULLETED_STACKED -> stacked(section, row, theme);
         }
     }
@@ -56,57 +50,44 @@ public final class RowRenderer {
                                String bulletGlyph, CvTheme theme) {
         DocumentTextStyle base = theme.bodyStyle();
         String source = labelColonValue(row);
-        section.addParagraph(p -> {
-            p.textStyle(base)
-                    .lineSpacing(theme.typography().bodyLineSpacing())
-                    .align(TextAlign.LEFT)
-                    .margin(DocumentInsets.top((float) theme.spacing().paragraphMarginTop()))
-                    .rich(rich -> MarkdownInline.append(rich, source, base));
-            if (bulletGlyph != null) {
-                p.bulletOffset(bulletGlyph)
-                        .indentStrategy(DocumentTextIndent.ALL_LINES);
-            }
-        });
+        DocumentInsets margin = DocumentInsets.top(
+                (float) theme.spacing().paragraphMarginTop());
+        if (bulletGlyph == null) {
+            ParagraphPrimitive.writeBody(section, source, base, theme);
+        } else {
+            ParagraphPrimitive.writeBulleted(section, source, base,
+                    bulletGlyph, margin, theme);
+        }
     }
 
     /**
-     * Renders the row as two stacked paragraphs:
-     * {@code • <b>label</b>} on line 1, body indented under the label
-     * on line 2.
+     * Renders the row as two stacked paragraphs: bullet + bold label
+     * on line 1, body indented under the label on line 2. Both
+     * paragraphs draw through {@link ParagraphPrimitive#writeBulleted}
+     * so only the bullet glyph / margin differs.
      */
     private static void stacked(SectionBuilder section, CvRow row, CvTheme theme) {
         DocumentTextStyle base = theme.bodyStyle();
         DocumentTextStyle nameStyle = theme.bodyBoldStyle();
+        DocumentInsets topMargin = DocumentInsets.top(
+                (float) theme.spacing().paragraphMarginTop());
 
-        // Line 1 — bullet + bold name (markdown still honoured).
-        section.addParagraph(p -> p
-                .textStyle(base)
-                .lineSpacing(theme.typography().bodyLineSpacing())
-                .align(TextAlign.LEFT)
-                .margin(DocumentInsets.top((float) theme.spacing().paragraphMarginTop()))
-                .bulletOffset(BULLET_GLYPH)
-                .indentStrategy(DocumentTextIndent.ALL_LINES)
-                .rich(rich -> MarkdownInline.append(rich, row.label(), nameStyle)));
+        // Line 1 — bullet + bold name.
+        ParagraphPrimitive.writeBulleted(section, row.label(), nameStyle,
+                theme.decoration().bulletGlyph(), topMargin, theme);
 
         if (row.body().isBlank()) {
             return;
         }
         // Line 2 — body indented under name (not under bullet).
-        section.addParagraph(p -> p
-                .textStyle(base)
-                .lineSpacing(theme.typography().bodyLineSpacing())
-                .align(TextAlign.LEFT)
-                .margin(DocumentInsets.zero())
-                .bulletOffset(STACK_INDENT)
-                .indentStrategy(DocumentTextIndent.ALL_LINES)
-                .rich(rich -> MarkdownInline.append(rich, row.body(), base)));
+        ParagraphPrimitive.writeBulleted(section, row.body(), base,
+                theme.decoration().stackedIndent(), DocumentInsets.zero(), theme);
     }
 
     /**
      * Wraps the label in markdown bold markers + trailing colon so the
-     * existing inline-markdown parser emits one bold run for the label
-     * and a regular run for the body without any extra typography
-     * plumbing.
+     * shared markdown helper emits one bold run for the label and a
+     * regular run for the body without any extra typography plumbing.
      */
     private static String labelColonValue(CvRow row) {
         StringBuilder source = new StringBuilder(

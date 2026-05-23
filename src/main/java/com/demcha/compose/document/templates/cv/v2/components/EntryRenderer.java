@@ -19,10 +19,11 @@ import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
  *
  * <p>Blank fields collapse — a blank date drops the right column,
  * a blank subtitle drops the italic line, a blank body drops the
- * paragraph beneath. The same renderer fits both flavours because
- * the visual is identical; if a preset wants to style Education
- * differently it does so by passing a different theme, not by
- * forking this code.</p>
+ * paragraph beneath.</p>
+ *
+ * <p>The subtitle and body paragraphs go through
+ * {@link ParagraphPrimitive} so they share alignment, margin, and
+ * markdown handling with every other renderer in this package.</p>
  */
 public final class EntryRenderer {
 
@@ -36,6 +37,9 @@ public final class EntryRenderer {
         DocumentTextStyle bodyStyle = theme.bodyStyle();
 
         // -- title + date row -------------------------------------------
+        // The two-column header is a row layout, not a paragraph, so it
+        // does not go through ParagraphPrimitive — its DSL shape is
+        // genuinely different.
         section.addRow("CvV2EntryHeader", row -> row
                 .spacing(theme.spacing().entryHeaderRowSpacing())
                 .weights(theme.spacing().entryTitleWeight(),
@@ -57,23 +61,12 @@ public final class EntryRenderer {
 
         // -- italic subtitle --------------------------------------------
         if (!entry.subtitle().isBlank()) {
-            section.addParagraph(p -> p
-                    .textStyle(subtitleStyle)
-                    .align(TextAlign.LEFT)
-                    .margin(DocumentInsets.zero())
-                    .rich(rich -> MarkdownInline.append(rich,
-                            entry.subtitle(), subtitleStyle)));
+            ParagraphPrimitive.writeSubtitle(section, entry.subtitle(), subtitleStyle);
         }
 
         // -- body paragraph ---------------------------------------------
         if (!entry.body().isBlank()) {
-            section.addParagraph(p -> p
-                    .textStyle(bodyStyle)
-                    .lineSpacing(theme.typography().bodyLineSpacing())
-                    .align(TextAlign.LEFT)
-                    .margin(DocumentInsets.top((float) theme.spacing().paragraphMarginTop()))
-                    .rich(rich -> MarkdownInline.append(rich,
-                            entry.body(), bodyStyle)));
+            ParagraphPrimitive.writeBody(section, entry.body(), bodyStyle, theme);
         }
     }
 }

@@ -65,3 +65,8 @@ build/
 docs/private/
 
 .llm-wiki/
+
+# Visual regression test diagnostic artifacts — produced when a parity
+# test fails, useful for review locally, not part of repo state.
+**/visual-baselines/**/*.actual.png
+**/visual-baselines/**/*.diff.png

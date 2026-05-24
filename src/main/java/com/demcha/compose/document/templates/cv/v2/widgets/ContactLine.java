@@ -50,11 +50,77 @@ public final class ContactLine {
     /**
      * Right-aligned pipe-separated contact row. Order: address →
      * phone → email → links — address-first reads as the location
-     * label authors usually put first in this style. Visual
-     * signature of {@code ModernProfessional}.
+     * label authors usually put first in this style.
      */
     public static void rightAligned(SectionBuilder host, CvIdentity identity, CvTheme theme) {
         render(host, identity, theme, TextAlign.RIGHT, Order.ADDRESS_FIRST);
+    }
+
+    /**
+     * Right-aligned contact split across <strong>two stacked
+     * lines</strong> with explicit text-style overrides. Used by
+     * {@code ModernProfessional} for its 2-row contact header where
+     * email + links sit on a dedicated second row and use a custom
+     * link colour the theme doesn't carry.
+     *
+     * <p>Row layout:</p>
+     * <ul>
+     *   <li><strong>Row 1</strong> — address {@code |} phone</li>
+     *   <li><strong>Row 2</strong> — email {@code |} link₁ {@code |} link₂ … (all clickable)</li>
+     * </ul>
+     *
+     * <p>Email and every {@link CvLink} are rendered as proper PDF
+     * hyperlinks (mailto: for the email, the link's URL for each
+     * label) — not just styled text.</p>
+     *
+     * @param bodyStyleOverride      style for the non-link items
+     *                               (address, phone); {@code null} →
+     *                               {@code theme.contactStyle()}
+     * @param linkStyleOverride      style for email + every link;
+     *                               {@code null} →
+     *                               {@code theme.contactStyle()}
+     * @param separatorStyleOverride style for the {@code " | "} pipe
+     *                               separator; {@code null} →
+     *                               {@code theme.contactSeparatorStyle()}
+     */
+    public static void twoRowRightAligned(SectionBuilder host, CvIdentity identity,
+                                          CvTheme theme,
+                                          DocumentTextStyle bodyStyleOverride,
+                                          DocumentTextStyle linkStyleOverride,
+                                          DocumentTextStyle separatorStyleOverride) {
+        DocumentTextStyle bodyStyle = bodyStyleOverride != null
+                ? bodyStyleOverride : theme.contactStyle();
+        DocumentTextStyle linkStyle = linkStyleOverride != null
+                ? linkStyleOverride : theme.contactStyle();
+        DocumentTextStyle separatorStyle = separatorStyleOverride != null
+                ? separatorStyleOverride : theme.contactSeparatorStyle();
+
+        CvContact c = identity.contact();
+        host.spacing(0).padding(theme.spacing().contactPadding())
+                // Row 1 — address + phone.
+                .addParagraph(p -> p
+                        .textStyle(bodyStyle)
+                        .align(TextAlign.RIGHT)
+                        .margin(DocumentInsets.zero())
+                        .rich(rich -> {
+                            rich.style(c.address(), bodyStyle);
+                            rich.style(" | ", separatorStyle);
+                            rich.style(c.phone(), bodyStyle);
+                        }))
+                // Row 2 — email + every link, all clickable.
+                .addParagraph(p -> p
+                        .textStyle(bodyStyle)
+                        .align(TextAlign.RIGHT)
+                        .margin(DocumentInsets.zero())
+                        .rich(rich -> {
+                            rich.with(c.email(), linkStyle,
+                                    new DocumentLinkOptions("mailto:" + c.email()));
+                            for (CvLink l : identity.links()) {
+                                rich.style(" | ", separatorStyle);
+                                rich.with(l.label(), linkStyle,
+                                        new DocumentLinkOptions(l.url()));
+                            }
+                        }));
     }
 
     /**

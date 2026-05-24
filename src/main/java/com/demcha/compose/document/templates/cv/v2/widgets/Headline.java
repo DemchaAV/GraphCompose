@@ -49,11 +49,27 @@ public final class Headline {
     }
 
     /**
-     * Right-aligned plain bold headline. Visual signature of
-     * {@code ModernProfessional}.
+     * Right-aligned plain headline using the theme's default
+     * {@link CvTheme#headlineStyle() headline style}. Visual
+     * signature of corporate / modern presets that don't need a
+     * custom display colour.
      */
     public static void rightAligned(SectionBuilder host, CvName name, CvTheme theme) {
-        render(host, name, theme, TextAlign.RIGHT, false);
+        rightAligned(host, name, theme, null);
+    }
+
+    /**
+     * Right-aligned headline with an explicit {@link DocumentTextStyle}
+     * override — the preset hands the widget exactly the font / size
+     * / colour it wants. Used by {@code ModernProfessional} to apply
+     * its preset-specific slate-blue display colour.
+     *
+     * @param styleOverride text style for the headline; pass {@code null}
+     *                      to fall back to {@code theme.headlineStyle()}
+     */
+    public static void rightAligned(SectionBuilder host, CvName name, CvTheme theme,
+                                    DocumentTextStyle styleOverride) {
+        render(host, name, theme, TextAlign.RIGHT, false, styleOverride);
     }
 
     /**
@@ -71,7 +87,23 @@ public final class Headline {
      */
     public static void render(SectionBuilder host, CvName name, CvTheme theme,
                               TextAlign alignment, boolean spacedCaps) {
-        DocumentTextStyle style = theme.headlineStyle();
+        render(host, name, theme, alignment, spacedCaps, null);
+    }
+
+    /**
+     * Lower-level entry with explicit style override. Same shape as
+     * the 5-arg {@link #render(SectionBuilder, CvName, CvTheme, TextAlign, boolean)}
+     * but lets the caller supply a custom {@link DocumentTextStyle}.
+     *
+     * @param styleOverride explicit style; pass {@code null} to fall
+     *                      back to {@code theme.headlineStyle()}
+     */
+    public static void render(SectionBuilder host, CvName name, CvTheme theme,
+                              TextAlign alignment, boolean spacedCaps,
+                              DocumentTextStyle styleOverride) {
+        DocumentTextStyle style = styleOverride != null
+                ? styleOverride
+                : theme.headlineStyle();
         String text = spacedCaps
                 ? TextOrnaments.spacedUpper(name.full())
                 : name.full();

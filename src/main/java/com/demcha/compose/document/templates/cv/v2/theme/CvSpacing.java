@@ -30,6 +30,15 @@ import java.util.Objects;
  *                              title column and date column
  * @param entryTitleWeight      flex weight of the entry title column
  * @param entryDateWeight       flex weight of the entry date column
+ * @param entrySeparation       vertical spacer (in points) inserted
+ *                              <strong>between</strong> consecutive
+ *                              entries in an {@code EntriesSection}
+ *                              and between consecutive rows of a
+ *                              {@code RowsSection} in
+ *                              {@code BULLETED_STACKED} style — so
+ *                              the reader can tell where one entry
+ *                              ends and the next begins. Not applied
+ *                              before the first entry in a section.
  */
 public record CvSpacing(
         double pageFlowSpacing,
@@ -44,13 +53,47 @@ public record CvSpacing(
         double paragraphMarginTop,
         double entryHeaderRowSpacing,
         double entryTitleWeight,
-        double entryDateWeight) {
+        double entryDateWeight,
+        double entrySeparation) {
 
     public CvSpacing {
         Objects.requireNonNull(sectionBodyPadding, "sectionBodyPadding");
         Objects.requireNonNull(headlinePadding, "headlinePadding");
         Objects.requireNonNull(contactPadding, "contactPadding");
         Objects.requireNonNull(bannerMargin, "bannerMargin");
+    }
+
+    /**
+     * Backward-compatible 13-arg constructor — fills
+     * {@link #entrySeparation} with the canonical default
+     * ({@code 6.0}) so callers built before this field was added keep
+     * compiling and rendering the same density as before, plus an
+     * automatic improvement: a small gap between consecutive entries.
+     *
+     * @deprecated since {@code entrySeparation} was introduced.
+     *             Supply it explicitly via the 14-arg canonical
+     *             constructor or via {@link #classic()} /
+     *             {@link #modernProfessional()}.
+     */
+    @Deprecated
+    public CvSpacing(double pageFlowSpacing,
+                     double sectionBodySpacing,
+                     DocumentInsets sectionBodyPadding,
+                     DocumentInsets headlinePadding,
+                     DocumentInsets contactPadding,
+                     double bannerCornerRadius,
+                     double bannerInnerPadding,
+                     DocumentInsets bannerMargin,
+                     double accentRuleWidth,
+                     double paragraphMarginTop,
+                     double entryHeaderRowSpacing,
+                     double entryTitleWeight,
+                     double entryDateWeight) {
+        this(pageFlowSpacing, sectionBodySpacing, sectionBodyPadding,
+                headlinePadding, contactPadding, bannerCornerRadius,
+                bannerInnerPadding, bannerMargin, accentRuleWidth,
+                paragraphMarginTop, entryHeaderRowSpacing,
+                entryTitleWeight, entryDateWeight, 3.0);
     }
 
     /**
@@ -70,7 +113,8 @@ public record CvSpacing(
                 2.0,                                     // paragraphMarginTop
                 8.0,                                     // entryHeaderRowSpacing
                 1.0,                                     // entryTitleWeight
-                0.45);                                   // entryDateWeight
+                0.45,                                    // entryDateWeight
+                3.0);                                    // entrySeparation
     }
 
     /**
@@ -84,7 +128,7 @@ public record CvSpacing(
         return new CvSpacing(
                 4,                                       // pageFlowSpacing
                 3,                                       // sectionBodySpacing
-                new DocumentInsets(2, 0, 0, 0),          // sectionBodyPadding
+                new DocumentInsets(2, 0, 0, 12),         // sectionBodyPadding (left=12 → body indents from blue section title)
                 new DocumentInsets(0, 0, 0, 0),          // headlinePadding
                 new DocumentInsets(0, 0, 6, 0),          // contactPadding
                 0.0,                                     // bannerCornerRadius (unused)
@@ -94,6 +138,7 @@ public record CvSpacing(
                 2.0,                                     // paragraphMarginTop
                 10.0,                                    // entryHeaderRowSpacing
                 1.0,                                     // entryTitleWeight
-                0.45);                                   // entryDateWeight
+                0.45,                                    // entryDateWeight
+                2.5);                                    // entrySeparation
     }
 }

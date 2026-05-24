@@ -2,22 +2,17 @@ package com.demcha.compose.document.templates.cv.v2.presets;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
-import com.demcha.compose.document.dsl.SectionBuilder;
-import com.demcha.compose.document.node.DocumentLinkOptions;
-import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.v2.components.SectionDispatcher;
-import com.demcha.compose.document.templates.cv.v2.data.CvContact;
 import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
-import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
-import com.demcha.compose.document.templates.cv.v2.data.CvLink;
 import com.demcha.compose.document.templates.cv.v2.data.CvSection;
 import com.demcha.compose.document.templates.cv.v2.data.Slot;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
+import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
 import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
 import com.demcha.compose.font.FontName;
 
@@ -120,14 +115,47 @@ public final class ModernProfessional {
             Objects.requireNonNull(document, "document");
             Objects.requireNonNull(doc, "doc");
 
+            // Preset-specific styles — built once, fed to widgets.
+            // These cannot live in the theme because their colours are
+            // unique to this preset (no other preset uses slate-blue
+            // for the name or royal-blue for links).
+            DocumentTextStyle nameStyle = DocumentTextStyle.builder()
+                    .fontName(FontName.HELVETICA_BOLD)
+                    .size(theme.typography().sizeHeadline())
+                    .decoration(DocumentTextDecoration.BOLD)
+                    .color(NAME_COLOR)
+                    .build();
+            DocumentTextStyle contactBodyStyle = DocumentTextStyle.builder()
+                    .fontName(FontName.HELVETICA)
+                    .size(theme.typography().sizeContact())
+                    .color(theme.palette().ink())
+                    .build();
+            DocumentTextStyle contactLinkStyle = DocumentTextStyle.builder()
+                    .fontName(FontName.HELVETICA)
+                    .size(theme.typography().sizeContact())
+                    .decoration(DocumentTextDecoration.UNDERLINE)
+                    .color(LINK_COLOR)
+                    .build();
+            DocumentTextStyle contactSeparatorStyle = DocumentTextStyle.builder()
+                    .fontName(FontName.HELVETICA)
+                    .size(theme.typography().sizeContact())
+                    .color(theme.palette().rule())
+                    .build();
+
             PageFlowBuilder pageFlow = document.dsl()
                     .pageFlow()
                     .name("CvV2ModernRoot")
                     .spacing(theme.spacing().pageFlowSpacing())
                     .addSection("Header", section ->
-                            renderHeader(section, doc.identity()))
-                    .addSection("Contact", section ->
-                            renderContact(section, doc.identity()));
+                            Headline.rightAligned(section, doc.identity().name(),
+                                    theme, nameStyle))
+                    .addSection("Contact", section -> {
+                        section.accentBottom(theme.palette().rule(),
+                                theme.spacing().accentRuleWidth());
+                        ContactLine.twoRowRightAligned(section, doc.identity(),
+                                theme, contactBodyStyle, contactLinkStyle,
+                                contactSeparatorStyle);
+                    });
 
             // Single-column preset — only MAIN slot.
             List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
@@ -142,69 +170,5 @@ public final class ModernProfessional {
 
             pageFlow.build();
         }
-
-        /**
-         * Big slate-blue display name, right-aligned. No spaced caps.
-         */
-        private void renderHeader(SectionBuilder section, CvIdentity identity) {
-            DocumentTextStyle nameStyle = DocumentTextStyle.builder()
-                    .fontName(FontName.HELVETICA_BOLD)
-                    .size(theme.typography().sizeHeadline())
-                    .decoration(DocumentTextDecoration.BOLD)
-                    .color(NAME_COLOR)
-                    .build();
-
-            section.padding(DocumentInsets.zero())
-                    .addParagraph(p -> p
-                            .text(identity.name().full())
-                            .textStyle(nameStyle)
-                            .align(TextAlign.RIGHT)
-                            .margin(DocumentInsets.zero()));
-        }
-
-        /**
-         * Right-aligned pipe-separated contact + links. Links rendered
-         * underlined in royal blue; contact strings in body grey.
-         */
-        private void renderContact(SectionBuilder section, CvIdentity identity) {
-            DocumentTextStyle bodyStyle = DocumentTextStyle.builder()
-                    .fontName(FontName.HELVETICA)
-                    .size(theme.typography().sizeContact())
-                    .color(theme.palette().ink())
-                    .build();
-            DocumentTextStyle linkStyle = DocumentTextStyle.builder()
-                    .fontName(FontName.HELVETICA)
-                    .size(theme.typography().sizeContact())
-                    .decoration(DocumentTextDecoration.UNDERLINE)
-                    .color(LINK_COLOR)
-                    .build();
-            DocumentTextStyle separatorStyle = DocumentTextStyle.builder()
-                    .fontName(FontName.HELVETICA)
-                    .size(theme.typography().sizeContact())
-                    .color(theme.palette().rule())
-                    .build();
-
-            CvContact c = identity.contact();
-            section.padding(theme.spacing().contactPadding())
-                    .accentBottom(theme.palette().rule(),
-                            theme.spacing().accentRuleWidth())
-                    .addParagraph(p -> p
-                            .textStyle(bodyStyle)
-                            .align(TextAlign.RIGHT)
-                            .margin(DocumentInsets.zero())
-                            .rich(rich -> {
-                                rich.style(c.address(), bodyStyle);
-                                rich.style(" | ", separatorStyle);
-                                rich.style(c.phone(), bodyStyle);
-                                rich.style(" | ", separatorStyle);
-                                rich.link(c.email(),
-                                        new DocumentLinkOptions("mailto:" + c.email()));
-                                for (CvLink l : identity.links()) {
-                                    rich.style(" | ", separatorStyle);
-                                    rich.style(l.label(), linkStyle);
-                                }
-                            }));
-        }
-
     }
 }

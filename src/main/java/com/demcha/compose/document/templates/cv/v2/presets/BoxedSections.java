@@ -3,10 +3,10 @@ package com.demcha.compose.document.templates.cv.v2.presets;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.cv.v2.components.BannerRenderer;
-import com.demcha.compose.document.templates.cv.v2.components.ContactRenderer;
-import com.demcha.compose.document.templates.cv.v2.components.HeadlineRenderer;
 import com.demcha.compose.document.templates.cv.v2.components.SectionDispatcher;
+import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
+import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
+import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
 import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
 import com.demcha.compose.document.templates.cv.v2.data.CvSection;
 import com.demcha.compose.document.templates.cv.v2.data.Slot;
@@ -107,12 +107,12 @@ public final class BoxedSections {
                     .addSection("CvV2Headline", section -> {
                         section.accentBottom(theme.palette().rule(),
                                 theme.spacing().accentRuleWidth());
-                        HeadlineRenderer.render(section, doc.identity().name(), theme);
+                        Headline.spacedCentered(section, doc.identity().name(), theme);
                     })
                     .addSection("CvV2Contact", section -> {
                         section.accentBottom(theme.palette().rule(),
                                 theme.spacing().accentRuleWidth());
-                        ContactRenderer.render(section, doc.identity(), theme);
+                        ContactLine.centered(section, doc.identity(), theme);
                     });
 
             // Single-column preset — only renders MAIN-slot sections.
@@ -123,7 +123,7 @@ public final class BoxedSections {
                 final CvSection sec = sections.get(i);
                 final int idx = i;
                 pageFlow.addSection("CvV2Banner_" + idx,
-                        host -> BannerRenderer.render(host, sec.title(), theme));
+                        host -> SectionHeader.banner(host, sec.title(), theme));
                 pageFlow.addSection("CvV2Body_" + idx,
                         host -> SectionDispatcher.renderBody(host, sec, theme));
             }

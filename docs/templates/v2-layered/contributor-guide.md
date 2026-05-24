@@ -274,9 +274,65 @@ Minimum test coverage matching CV v2:
 | `<Preset>SmokeTest` | `id()`, `displayName()`, default-factory render, custom-theme render |
 | `SectionDispatcherTest` *(optional)* | Each sealed subtype routes correctly |
 | `WidgetSmokeTest` | Each public widget variant renders without throwing |
+| `<Family>V2VisualParityTest` | **Per-pixel diff** against a checked-in baseline PNG for each preset |
 
-CI must be green before merge. Visual regression (PNG diff against
-a reference render) is encouraged but optional today.
+CI must be green before merge.
+
+### Visual regression — pixel-diff parity gate
+
+Each preset's visual signature is **frozen** in a checked-in
+baseline PNG. A parameterised test renders the preset on A4 against
+a canonical sample document, rasterises each page via PDFBox, and
+asserts the per-pixel diff stays within a budget. Catches silent
+visual breakage from theme / widget / renderer refactors.
+
+**Workflow:**
+
+```bash
+# 1. After a deliberate visual change — refresh baselines:
+./mvnw test -Dtest='<Family>V2VisualParityTest' -Dgraphcompose.visual.approve=true
+
+# 2. Commit the updated PNGs in the same change:
+git add src/test/resources/visual-baselines/<family>-v2-layered/*.png
+git commit -m "test: refresh visual baselines after <reason>"
+
+# 3. Normal run (defends against unintended drift):
+./mvnw test -Dtest='<Family>V2VisualParityTest'
+```
+
+**Where baselines live:**
+`src/test/resources/visual-baselines/<family>-v2-layered/<slug>-page-N.png`
+
+One PNG per page per preset. Pages overflow naturally — a 2-page
+preset gets `<slug>-page-0.png` and `<slug>-page-1.png`.
+
+**Budget calibration** — mirror the CV v2 settings until you have
+evidence your family needs different limits:
+
+```java
+private static final long PIXEL_DIFF_BUDGET = 50_000L;   // max mismatched pixels per page
+private static final int  PER_PIXEL_TOLERANCE = 8;        // per-channel tolerance
+```
+
+These are calibrated for cross-platform PDFBox font + colour
+rendering drift between Windows-recorded baselines and Linux CI.
+**Helvetica-based presets** (e.g. ModernProfessional) hit ~40k
+mismatched pixels on the Linux CI; **PT-Serif-based presets**
+(BoxedSections, MinimalUnderlined) stay under 10k. The 50k budget
+covers both with margin.
+
+If CI flakes on a specific preset above 50k, widen the budget for
+that preset specifically (e.g. via a per-test `Map<String, Long>`
+of overrides) rather than relaxing the global setting.
+
+**Failure mode:** when the diff exceeds budget, the harness writes
+`<slug>-page-N.actual.png` and `<slug>-page-N.diff.png` next to the
+baseline so a reviewer can see exactly what changed before deciding
+to re-bless or fix.
+
+**Reference**: see
+`src/test/java/com/demcha/compose/document/templates/cv/v2/presets/CvV2VisualParityTest.java`
+— a 200-line drop-in template you can copy for a new family.
 
 ---
 

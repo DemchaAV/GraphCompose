@@ -87,6 +87,21 @@ public record CvTheme(CvPalette palette,
                 CvDecoration.classic());
     }
 
+    /**
+     * The "Centered Headline" classic look ported from the v1 preset
+     * of the same name — Poppins headline, Lato body, soft greyscale
+     * palette, thin full-width rules separating headline / contact /
+     * each module. Pipe contact separator matches the classic
+     * decoration.
+     */
+    public static CvTheme centeredHeadline() {
+        return new CvTheme(
+                CvPalette.centeredHeadline(),
+                CvTypography.centeredHeadline(),
+                CvSpacing.centeredHeadline(),
+                CvDecoration.classic());
+    }
+
     // -- pre-built text-style helpers ------------------------------------
     // Renderers ask the theme for an already-composed DocumentTextStyle
     // instead of re-assembling font + size + decoration + colour every

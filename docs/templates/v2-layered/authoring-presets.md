@@ -1,10 +1,10 @@
 # Authoring Presets — write your own visual style
 
-You like the layered architecture, but the three shipped presets
-(`BoxedSections`, `MinimalUnderlined`, `ModernProfessional`) don't
-match the design you want. This doc walks you through writing a
-new preset from scratch — **without subclassing, without duplicating
-rendering code**.
+You like the layered architecture, but the shipped presets
+(`BoxedSections`, `MinimalUnderlined`, `ModernProfessional`,
+`CenteredHeadline`) don't match the design you want. This doc walks
+you through writing a new preset from scratch — **without subclassing,
+without duplicating rendering code**.
 
 If you haven't read [quickstart.md](quickstart.md) and
 [using-templates.md](using-templates.md), do those first.
@@ -59,9 +59,9 @@ visual decision you can read like a recipe.
 <a id="the-widget-catalog"></a>
 ## The widget catalog
 
-Today, three widget classes live in
-`com.demcha.compose.document.templates.cv.v2.widgets`. Each has 2-3
-named variants.
+Today, four widget classes live in
+`com.demcha.compose.document.templates.cv.v2.widgets`. Each has a
+small set of named variants.
 
 ### `Headline` — top-of-document name
 
@@ -71,12 +71,19 @@ named variants.
 | `Headline.rightAligned(host, name, theme)` | Right-aligned plain bold (`Jane Doe`) |
 | `Headline.render(host, name, theme, align, spacedCaps)` | Low-level — any (alignment, transform) combo |
 
+### `Subheadline` — secondary tagline under the name
+
+| Variant | Visual |
+|---|---|
+| `Subheadline.centeredSpacedCaps(host, text, style)` | Centred letter-spaced uppercase tagline (`P R O F E S S I O N A L   T I T L E`) |
+
 ### `ContactLine` — phone / email / address / links row
 
 | Variant | Visual |
 |---|---|
 | `ContactLine.centered(host, identity, theme)` | Centred, phone → email → address → links |
 | `ContactLine.rightAligned(host, identity, theme)` | Right-aligned, address → phone → email → links |
+| `ContactLine.twoRowRightAligned(host, identity, theme, bodyStyle, linkStyle, separatorStyle)` | Right-aligned address/phone row plus email/link row |
 | `ContactLine.render(host, identity, theme, align, order)` | Low-level — any alignment + field-order combo |
 
 ### `SectionHeader` — title above each section body
@@ -86,6 +93,7 @@ named variants.
 | `SectionHeader.banner(host, title, theme)` | Pale-grey panel + centred spaced-caps inside |
 | `SectionHeader.underlined(host, title, theme)` | Small left spaced-caps + thin rule below |
 | `SectionHeader.flat(host, title, color, theme)` | Large bold title in a given colour, no panel |
+| `SectionHeader.flatSpacedCaps(host, title, color, theme, titleStyle)` | Small left spaced-caps title in a soft colour, no panel |
 
 The separator glyph used by `ContactLine`, the bullet glyph used by
 `RowRenderer`, and other character-level choices come from
@@ -303,9 +311,10 @@ When you do add a new widget:
 
 1. **One file per widget** in `cv/v2/widgets/`.
 2. **`public final class`** with a private constructor.
-3. **2-3 named factories** + a lower-level `.render(...)`.
+3. **1-3 named factories** + a lower-level `.render(...)` when useful.
 4. **First parameter is always `SectionBuilder host`**.
-5. **Last parameter is always `CvTheme theme`**.
+5. **Pass `CvTheme theme` when the widget reads shared tokens**;
+   pass an explicit style only when the preset owns that unique style.
 6. **No instance state** — all static, all stateless.
 7. **JavaDoc the visual** — what does this look like? Who uses it?
 8. **Add to `WidgetSmokeTest`** with a basic "renders without

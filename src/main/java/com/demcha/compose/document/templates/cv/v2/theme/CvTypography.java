@@ -78,4 +78,28 @@ public record CvTypography(
                 10.0,    // body
                 1.35);   // line spacing
     }
+
+    /**
+     * Poppins headline + Lato body scale ported from the original
+     * {@code CenteredHeadline} v1 preset. The headline is the page's
+     * loudest element (24pt spaced caps); everything else is at
+     * 8-9pt for a classic-resume density.
+     *
+     * <p>{@code sizeBanner} feeds the
+     * {@link com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader#flatSpacedCaps}
+     * variant — small bold spaced-caps title in the soft palette
+     * tone.</p>
+     */
+    public static CvTypography centeredHeadline() {
+        return new CvTypography(
+                FontName.POPPINS, FontName.LATO,
+                24.0,    // headline (spaced-caps name)
+                8.3,     // contact
+                9.5,     // banner (used as small spaced-caps section title)
+                8.8,     // entry title
+                8.6,     // entry date
+                8.4,     // entry subtitle
+                8.7,     // body
+                1.45);   // line spacing
+    }
 }

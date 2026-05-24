@@ -36,4 +36,24 @@ public record CvPalette(DocumentColor ink,
                 DocumentColor.rgb(170, 170, 170),
                 DocumentColor.rgb(220, 226, 230));
     }
+
+    /**
+     * Soft greyscale palette ported from the original
+     * {@code CenteredHeadline} v1 preset — slightly warmer than
+     * {@link #classic()} with a higher-contrast headline tone and a
+     * paler rule colour suited to thin full-width separators.
+     *
+     * <p>The {@code banner} slot is required by the record but unused
+     * by the Centered Headline visual signature (no banner panels);
+     * we reuse the classic banner colour so themes can swap the body
+     * style without leaving an obvious gap if a future preset reuses
+     * this palette with a banner-style section header.</p>
+     */
+    public static CvPalette centeredHeadline() {
+        return new CvPalette(
+                DocumentColor.rgb(54, 54, 54),     // ink (#363636)
+                DocumentColor.rgb(105, 105, 105),  // muted / soft (#696969)
+                DocumentColor.rgb(188, 188, 188),  // rule (#BCBCBC)
+                DocumentColor.rgb(220, 226, 230)); // banner (inherits classic)
+    }
 }

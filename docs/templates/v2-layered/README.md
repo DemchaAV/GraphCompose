@@ -71,7 +71,7 @@ template family from empty folder to merged PR.
 presets/      composition: data + theme + widgets → DocumentTemplate
    │ compose from
    ▼
-widgets/      LEGO bricks: Headline, ContactLine, SectionHeader, …
+widgets/      LEGO bricks: Headline, Subheadline, ContactLine, SectionHeader, …
    │ delegate to                                  read tokens from
    ▼                                              ▼
 components/   internal renderers + primitives    theme/    palette

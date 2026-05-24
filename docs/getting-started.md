@@ -201,10 +201,10 @@ try (DocumentSession document = GraphCompose.document(Path.of("invoice.pdf")).cr
   per-layer z-index for overlays.
 - [Advanced tables](./recipes/tables.md) — row span, zebra rows,
   totals row, repeating header on page break.
-- [Canonical Legacy-Parity Matrix](./canonical-legacy-parity.md) — what
+- [Canonical Legacy-Parity Matrix](./architecture/canonical-legacy-parity.md) — what
   works today, what is `Partial`, what is `Planned`.
-- [Lifecycle](./lifecycle.md) — the session, layout, and render flow.
-- [Production Rendering](./production-rendering.md) — server-side
+- [Lifecycle](./architecture/lifecycle.md) — the session, layout, and render flow.
+- [Production Rendering](./operations/production-rendering.md) — server-side
   lifecycle, privacy, and load guidance.
-- [Package Map](./package-map.md) — read this before adding new public
+- [Package Map](./architecture/package-map.md) — read this before adding new public
   APIs or engine internals.

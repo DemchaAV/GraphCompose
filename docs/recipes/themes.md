@@ -132,6 +132,6 @@ for the mapping table and the rationale.
 - [Tables](tables.md) — the table style overrides used by
   `headerStyle(...)`, `totalRow(...)`, and `zebra(...)` accept full
   `DocumentTableStyle` values, so they pick up theme palettes.
-- [`docs/canonical-legacy-parity.md`](../canonical-legacy-parity.md) —
+- [`docs/architecture/canonical-legacy-parity.md`](../architecture/canonical-legacy-parity.md) —
   the parity matrix lists every theme-aware style override that
   v1.5 supports.

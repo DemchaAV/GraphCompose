@@ -47,7 +47,7 @@ class CanonicalSurfaceGuardTest {
             // Lists every retired V1 CV / cover-letter class so callers
             // can find the v2 replacement. Naming the legacy surface is
             // the explicit purpose of a migration log.
-            "docs/migration-v1-5-to-v1-6.md");
+            "docs/roadmaps/migration-v1-5-to-v1-6.md");
     private static final List<String> FORBIDDEN_PUBLIC_AUTHORING_IMPORTS = List.of(
             "import com.demcha.compose.engine.");
 
@@ -110,7 +110,7 @@ class CanonicalSurfaceGuardTest {
                         PROJECT_ROOT.resolve("README.md"),
                         PROJECT_ROOT.resolve("docs/getting-started.md"),
                         PROJECT_ROOT.resolve("docs/recipes.md"),
-                        PROJECT_ROOT.resolve("docs/layout-snapshot-testing.md"),
+                        PROJECT_ROOT.resolve("docs/operations/layout-snapshot-testing.md"),
                         PROJECT_ROOT.resolve("examples/src/main/java/com/demcha/examples"),
                         PROJECT_ROOT.resolve("src/test/java/com/demcha/documentation/DocumentationExamplesTest.java")));
     }

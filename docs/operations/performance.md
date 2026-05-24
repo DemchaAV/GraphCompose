@@ -7,7 +7,7 @@ and `stress` suites in sequence. They were captured on a developer
 laptop; CI machines are typically 1.5–2× slower. The benchmark
 methodology, profiles, GC stabilisation, percentile rule, and how to
 compare two runs locally are documented in
-[docs/benchmarks.md](./benchmarks.md).
+[docs/operations/benchmarks.md](./benchmarks.md).
 
 ## End-to-end latency
 

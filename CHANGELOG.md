@@ -299,7 +299,7 @@ v1.6.1 stays on JitPack as a maintenance release.
 The "expressive" release. Closes the remaining canonical-vs-legacy
 parity gaps for advanced authoring without architectural rollback.
 Every new primitive ships through `DocumentNode + NodeDefinition +
-render handler`. See [`docs/v1.6-roadmap.md`](docs/v1.6-roadmap.md)
+render handler`. See [`docs/roadmaps/v1.6-roadmap.md`](docs/roadmaps/v1.6-roadmap.md)
 for the phased plan, verification gates, and ADRs.
 
 ### Headline — "expressive"
@@ -336,7 +336,7 @@ The architecture lane closes the highest-severity findings from the
 post-1.5 audit. None of these change author-facing behaviour for
 unmodified v1.5 code; they sharpen the public-vs-internal boundary,
 open extension points, and split the load-bearing files. See
-[`docs/migration-v1-5-to-v1-6.md`](docs/migration-v1-5-to-v1-6.md)
+[`docs/roadmaps/migration-v1-5-to-v1-6.md`](docs/roadmaps/migration-v1-5-to-v1-6.md)
 for the user-facing summary.
 
 - **`@Internal` API stability marker.** New
@@ -774,7 +774,7 @@ streaming, snapshot, CV-render, and Transformable-leaf-builder surfaces.
 v1.5 is **fully source-compatible with v1.4**. Every public record
 that grew a new field ships back-compat constructors that default the
 new value, so v1.4 callers compile and behave unchanged. See
-[`docs/migration-v1-4-to-v1-5.md`](docs/migration-v1-4-to-v1-5.md).
+[`docs/roadmaps/migration-v1-4-to-v1-5.md`](docs/roadmaps/migration-v1-4-to-v1-5.md).
 
 ### Public API — visual primitives
 
@@ -1024,7 +1024,7 @@ The runnable `examples/` module gains six new showcases hooked into
   [`assets/readme/examples/`](assets/readme/examples/) (whitelisted in
   `.gitignore`) so users can browse renders straight from GitHub
   without running anything.
-- New [`docs/template-authoring.md`](docs/template-authoring.md) (~620
+- New [`docs/templates/v1-classic/authoring.md`](docs/templates/v1-classic/authoring.md) (~620
   lines) — the canonical cheatsheet covering builder hierarchy, a
   per-builder one-liner cheatsheet, a style-types reference, the
   theme system in 60 seconds, six golden patterns, ten anti-patterns,
@@ -1041,10 +1041,10 @@ The runnable `examples/` module gains six new showcases hooked into
 - [`docs/recipes.md`](docs/recipes.md) is now a pure index linking
   every topic-focused recipe page plus four 5-line "common DSL
   primitives" starter snippets.
-- [`docs/canonical-legacy-parity.md`](docs/canonical-legacy-parity.md)
+- [`docs/architecture/canonical-legacy-parity.md`](docs/architecture/canonical-legacy-parity.md)
   gains a "Shape-as-container (clipped)" row recording the DOCX
   fallback rule.
-- New [`docs/migration-v1-4-to-v1-5.md`](docs/migration-v1-4-to-v1-5.md)
+- New [`docs/roadmaps/migration-v1-4-to-v1-5.md`](docs/roadmaps/migration-v1-4-to-v1-5.md)
   — fresh migration guide for v1.4 consumers.
 
 ### Performance — v1.5 baseline
@@ -1128,7 +1128,7 @@ baseline and the next snapshot.
   `ProposalTemplateV1` ship side-by-side with the V2 templates;
   callers who want the cinematic look opt in by switching the type.
 
-See [`docs/migration-v1-4-to-v1-5.md`](docs/migration-v1-4-to-v1-5.md)
+See [`docs/roadmaps/migration-v1-4-to-v1-5.md`](docs/roadmaps/migration-v1-4-to-v1-5.md)
 for the full guide.
 
 ---
@@ -1232,8 +1232,8 @@ v1.4 closes the visual-design gap that the previous releases left open. Tables c
 
 ### Documentation
 
-- `docs/canonical-legacy-parity.md` is updated to reflect the v1.3 capabilities (rows, per-side borders, auto-size text, DOCX export)
-- `docs/benchmarks.md` documents the new smoke profile defaults, the GC stabilization point, the linear-interpolation percentile rule, and the stage-breakdown table
+- `docs/architecture/canonical-legacy-parity.md` is updated to reflect the v1.3 capabilities (rows, per-side borders, auto-size text, DOCX export)
+- `docs/operations/benchmarks.md` documents the new smoke profile defaults, the GC stabilization point, the linear-interpolation percentile rule, and the stage-breakdown table
 - `CONTRIBUTING.md` repository map and package list now describe the canonical functional layout (`document.layout`, `document.backend`, `document.output`) alongside the legacy ECS engine
 
 ---
@@ -1272,7 +1272,7 @@ v1.4 closes the visual-design gap that the previous releases left open. Tables c
 
 - new `docs/migration-v1-1-to-v1-2.md` outlines the move from older v1.1 usage patterns to the canonical session-first API
 - new `docs/v1.2-roadmap.md` tracks the remaining stabilization work for the v1.2 release polish window
-- `docs/release-process.md` now describes the current JitPack-first 1.x release flow and runnable examples verification
+- `docs/contributing/release-process.md` now describes the current JitPack-first 1.x release flow and runnable examples verification
 - user-facing docs now describe debug guide-line overlays through `GraphCompose.document(...).guideLines(true)` / `DocumentSession.guideLines(true)` and call out JitPack tag-cache handling during release verification
 
 ---

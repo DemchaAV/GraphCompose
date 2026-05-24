@@ -11,11 +11,11 @@ The current docs live under [`docs/`](../) at the repository root:
 - [`docs/recipes.md`](../recipes.md) and the
   [`docs/recipes/`](../recipes/) folder — copy-paste catalogues per
   feature area.
-- [`docs/canonical-legacy-parity.md`](../canonical-legacy-parity.md) —
+- [`docs/architecture/canonical-legacy-parity.md`](../architecture/canonical-legacy-parity.md) —
   living parity matrix.
-- [`docs/architecture.md`](../architecture.md),
-  [`docs/lifecycle.md`](../lifecycle.md),
-  [`docs/package-map.md`](../package-map.md) — internal architecture
+- [`docs/architecture/overview.md`](../architecture/overview.md),
+  [`docs/architecture/lifecycle.md`](../architecture/lifecycle.md),
+  [`docs/architecture/package-map.md`](../architecture/package-map.md) — internal architecture
   references.
 
 ## What's archived
@@ -23,4 +23,4 @@ The current docs live under [`docs/`](../) at the repository root:
 | File | Why archived |
 | --- | --- |
 | `v1.2-roadmap.md` | Roadmap planning notes for the v1.2 release. Superseded by `CHANGELOG.md` for shipped features and by the Phase A–F execution plan for in-flight work. |
-| `migration-v1-1-to-v1-2.md` | Migration guide from v1.1 to v1.2. Both versions are out of support; v1.4 → v1.5 callers should follow the migration doc at `docs/migration-v1-4-to-v1-5.md`. |
+| `migration-v1-1-to-v1-2.md` | Migration guide from v1.1 to v1.2. Both versions are out of support; v1.4 → v1.5 callers should follow the migration doc at `docs/roadmaps/migration-v1-4-to-v1-5.md`. |

@@ -653,7 +653,7 @@ same bytes (verified by `LayoutSnapshotRegressionExample`).
 For the canonical authoring patterns — builder hierarchy, theme
 tokens, table presets, golden / anti-patterns, and a 40-line skeleton
 for new templates — read
-[**`docs/template-authoring.md`**](../docs/template-authoring.md)
+[**`docs/templates/v1-classic/authoring.md`**](../docs/templates/v1-classic/authoring.md)
 once before writing your own.
 
 ## Where things live
@@ -664,5 +664,5 @@ once before writing your own.
 | `examples/src/main/java/com/demcha/examples/support/` | Reusable helpers (`ExampleOutputPaths`, `WeeklyScheduleRenderer`) |
 | `examples/target/generated-pdfs/` | Output of running the examples (gitignored) |
 | `assets/readme/examples/` | Committed PDF previews linked from this gallery |
-| `docs/template-authoring.md` | Template authoring cheatsheet |
+| `docs/templates/v1-classic/authoring.md` | Template authoring cheatsheet |
 | `CHANGELOG.md` | Per-version surface changes (every example link is current to v1.6) |

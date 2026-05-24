@@ -1,51 +1,104 @@
-# GraphCompose GitHub Pages Showcase
+# GraphCompose Documentation
 
-This folder contains the lightweight static showcase site for GraphCompose. It is intentionally plain HTML, CSS, JavaScript, and JSON so GitHub Pages can publish it directly from the main repository without a build step.
+Comprehensive docs for the engine, the templates, and the
+contribution workflow. Below is the map — pick your path.
 
-## Files
+If you're new to GraphCompose entirely, start at the
+[**root README**](../README.md) for the project overview, then come
+back here.
 
-- `index.html` is the single-page showcase.
-- `styles.css` contains the visual system and responsive layout.
-- `examples.json` is the gallery data source.
-- `assets/logo/` contains the showcase logo asset.
-- `assets/screenshots/` contains PNG previews for generated PDFs.
-- `assets/pdf/` contains the generated PDF examples linked from the gallery.
+---
 
-## Add A New Showcase Item
+## 🧭 By persona — start here
 
-1. Generate the PDF from the examples module.
-2. Copy the PDF into `docs/assets/pdf/`.
-3. Add a PNG screenshot into `docs/assets/screenshots/`.
-4. Add a new object to `docs/examples.json`.
-5. Commit and push.
+| You are… | Read |
+|---|---|
+| **New to GraphCompose** — what is it, how do I render my first PDF | [Getting started](getting-started.md) → [Hello world in root README](../README.md#hello-world) |
+| **Author rendering a CV** with your own data | [Templates v2 (layered) — quickstart](templates/v2-layered/quickstart.md) |
+| **Designer / author** wanting a custom visual style for CVs | [Templates v2 (layered) — authoring presets](templates/v2-layered/authoring-presets.md) |
+| **Author using legacy v1.6 templates** (CV / cover-letter / invoice / proposal still using `*Spec` + builders) | [Templates v1-classic — landing](templates/v1-classic/README.md) |
+| **Contributor adding a new template family** to the library | [Templates v2 (layered) — contributor guide](templates/v2-layered/contributor-guide.md) |
+| **Contributor extending the engine** (new node type, new backend handler) | [Extension guide](contributing/extension-guide.md) → [Implementation guide](contributing/implementation-guide.md) |
+| **Operator** running GraphCompose in production | [Production rendering](operations/production-rendering.md) → [Performance](operations/performance.md) → [Logging](operations/logging.md) |
 
-Each `examples.json` object uses this shape:
+---
 
-```json
-{
-  "title": "Cinematic Invoice",
-  "description": "A short description of the generated document.",
-  "tags": ["Template", "Tables", "Theme"],
-  "image": "assets/screenshots/invoice-v2.png",
-  "pdf": "assets/pdf/invoice-v2.pdf",
-  "code": "https://github.com/DemchaAV/GraphCompose/blob/main/examples/src/main/java/com/demcha/examples/InvoiceCinematicFileExample.java"
-}
-```
+## 📁 By category
 
-## Local Preview
+### Getting started
+- **[getting-started.md](getting-started.md)** — DSL vs templates, first-render walk-through, decision tree.
 
-Open `docs/index.html` directly in a browser for a quick visual check. If your browser blocks `fetch("examples.json")` for local `file://` pages, run any tiny static server from the repository root and open the `/docs/` path. No build step is required.
+### Templates
+- **[templates/v2-layered/](templates/v2-layered/)** — 🆕 canonical going-forward pattern (CV is the reference implementation): `data` / `theme` / `components` / `widgets` / `presets`.
+- **[templates/v1-classic/](templates/v1-classic/)** — the spec/builder/presets surface used by v1.6 CV, cover-letter, invoice, proposal templates. Still ships, still supported.
 
-## GitHub Pages
+### Architecture
+- **[architecture/overview.md](architecture/overview.md)** — high-level system architecture (engine + DSL + templates + backends).
+- **[architecture/lifecycle.md](architecture/lifecycle.md)** — the document lifecycle from `GraphCompose.document(...)` through `buildPdf()`.
+- **[architecture/pagination-ordering.md](architecture/pagination-ordering.md)** — how nodes are paginated and ordered.
+- **[architecture/package-map.md](architecture/package-map.md)** — what's in which package.
+- **[architecture/canonical-legacy-parity.md](architecture/canonical-legacy-parity.md)** — canonical (v1.5+) vs legacy compatibility matrix.
 
-To publish this site with GitHub Pages:
+### Operations
+- **[operations/production-rendering.md](operations/production-rendering.md)** — server-side rendering, streaming, thread safety.
+- **[operations/performance.md](operations/performance.md)** — perf characteristics + tuning.
+- **[operations/benchmarks.md](operations/benchmarks.md)** — how to run benchmarks; reference numbers.
+- **[operations/logging.md](operations/logging.md)** — logger configuration, what each logger emits.
+- **[operations/layout-snapshot-testing.md](operations/layout-snapshot-testing.md)** — snapshot-based layout regression testing.
 
-1. Open repository Settings.
-2. Go to Pages.
-3. Set Source to "Deploy from a branch".
-4. Select the main branch and `/docs` folder.
-5. Save.
+### Contributing
+- **[contributing/extension-guide.md](contributing/extension-guide.md)** — add a new node type, backend handler, or theme primitive.
+- **[contributing/implementation-guide.md](contributing/implementation-guide.md)** — internal engine notes for contributors hacking on layout / measurement / pagination.
+- **[contributing/release-process.md](contributing/release-process.md)** — versioning, tag procedure, JitPack publication.
 
-The site should become available at:
+### Roadmaps & migrations
+- **[roadmaps/v1.6-roadmap.md](roadmaps/v1.6-roadmap.md)** — current development roadmap.
+- **[roadmaps/migration-v1-5-to-v1-6.md](roadmaps/migration-v1-5-to-v1-6.md)** — upgrade guide for v1.5 → v1.6.
+- **[roadmaps/migration-v1-4-to-v1-5.md](roadmaps/migration-v1-4-to-v1-5.md)** — upgrade guide for v1.4 → v1.5.
 
-https://demchaav.github.io/GraphCompose/
+### Recipes (cookbook-style howtos)
+- **[recipes.md](recipes.md)** — index of all recipes.
+- **[recipes/shape-as-container.md](recipes/shape-as-container.md)** — shapes that hold child content.
+- **[recipes/transforms.md](recipes/transforms.md)** — rotation, scaling, skewing.
+- **[recipes/tables.md](recipes/tables.md)** — tabular layouts.
+- **[recipes/themes.md](recipes/themes.md)** — custom themes.
+- **[recipes/streaming.md](recipes/streaming.md)** — streaming PDFs to HTTP responses.
+- **[recipes/extending.md](recipes/extending.md)** — extension patterns by example.
+
+### Architecture Decision Records (ADRs)
+Numbered, dated decisions about non-trivial design choices. Read these
+when you need to understand *why* a piece of the system looks the way
+it does.
+
+- **[adr/0001-shape-as-container.md](adr/0001-shape-as-container.md)** — shape nodes as content containers.
+- **[adr/0002-theme-unification.md](adr/0002-theme-unification.md)** — single canonical theme model.
+- **[adr/0003-api-stability-and-internal-marker.md](adr/0003-api-stability-and-internal-marker.md)** — public-API guarantees + `@Internal` marker.
+- **[adr/0004-pdf-handler-spi-extension.md](adr/0004-pdf-handler-spi-extension.md)** — PDF render handler SPI.
+- **[adr/0011-templates-v2-architecture.md](adr/0011-templates-v2-architecture.md)** — the v1.6 templates restructure (spec/builder/presets/themes).
+- **[adr/0012-nested-list-evolution.md](adr/0012-nested-list-evolution.md)** — nested list rendering evolution.
+- **[adr/0013-composed-table-cell.md](adr/0013-composed-table-cell.md)** — composed table cell model.
+- **[adr/0014-controlled-absolute-placement.md](adr/0014-controlled-absolute-placement.md)** — controlled absolute placement strategy.
+
+> **ADR numbering gap (0005–0010)** is intentional — those numbers
+> were reserved during a v1.5 restructure that landed under ADR 0011
+> instead of multiple smaller records. No deleted ADRs.
+
+### Showcase site
+- **[SHOWCASE.md](SHOWCASE.md)** — how the GitHub Pages showcase is
+  built and how to add new examples to it. (Not documentation about
+  GraphCompose itself — this is meta-doc about the website at
+  https://demchaav.github.io/GraphCompose/.)
+
+### Archive
+- **[archive/](archive/)** — old migration guides and roadmaps kept
+  for historical reference. Not part of the live doc set.
+
+---
+
+## 🔗 Quick links
+
+- [Project root README](../README.md)
+- [CONTRIBUTING.md](../CONTRIBUTING.md)
+- [CHANGELOG.md](../CHANGELOG.md)
+- [Examples gallery](../examples/README.md)
+- [Live showcase site](https://demchaav.github.io/GraphCompose/)

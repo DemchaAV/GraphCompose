@@ -1,6 +1,6 @@
 # Roadmap
 
-GraphCompose is solo-maintained. This roadmap is a direction, not a contract. Dates are intentionally omitted. Concrete work is tracked in [issues](https://github.com/DemchaAV/GraphCompose/issues) and shipped work is recorded in [CHANGELOG.md](CHANGELOG.md). For v1.6 phase-level detail, see [docs/v1.6-roadmap.md](docs/v1.6-roadmap.md).
+GraphCompose is solo-maintained. This roadmap is a direction, not a contract. Dates are intentionally omitted. Concrete work is tracked in [issues](https://github.com/DemchaAV/GraphCompose/issues) and shipped work is recorded in [CHANGELOG.md](CHANGELOG.md). For v1.6 phase-level detail, see [docs/roadmaps/v1.6-roadmap.md](docs/roadmaps/v1.6-roadmap.md).
 
 ## Now (v1.6.x)
 

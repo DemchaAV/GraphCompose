@@ -9,7 +9,7 @@ The short version is:
 - current-speed diffs are only valid between reports from the same profile
 - repeated local runs should be compared via median aggregation, not by eyeballing one lucky run
 
-If you are changing layout, pagination, render ordering, PDF session lifetime, or benchmark tooling, read this file together with [README.md](./../README.md), [architecture.md](./architecture.md), and [CONTRIBUTING.md](./../CONTRIBUTING.md).
+If you are changing layout, pagination, render ordering, PDF session lifetime, or benchmark tooling, read this file together with [README.md](../../README.md), [architecture.md](../architecture/overview.md), and [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
 ## Core terms
 

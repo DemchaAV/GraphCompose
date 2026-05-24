@@ -124,7 +124,7 @@ Key design contracts:
    templates), `templates/support/cv` (15 composers),
    `templates/theme/CvTheme`, the `CvTemplate` interface — all
    removed. Migration table in `CHANGELOG.md` and
-   `docs/migration-v1-5-to-v1-6.md`. Cinematic V2 templates
+   `docs/roadmaps/migration-v1-5-to-v1-6.md`. Cinematic V2 templates
    (`InvoiceTemplateV2` / `ProposalTemplateV2`) are kept until the
    minimal v2 surface (`ModernInvoice` / `ModernProposal`) closes
    feature parity in a follow-up release.
@@ -204,7 +204,7 @@ references. The reopen made an explicit trade-off:
 - **Migration is breaking.** Anyone on
   `new CvTemplateV1()` / `new NordicCleanCvTemplate()` etc. must
   switch to the new factory (see migration table in `CHANGELOG.md`
-  and `docs/migration-v1-5-to-v1-6.md`).
+  and `docs/roadmaps/migration-v1-5-to-v1-6.md`).
 - **Cinematic V2 templates remain.** `InvoiceTemplateV2` /
   `ProposalTemplateV2` / `WeeklyScheduleTemplateV1` /
   `BuiltInCvTemplateSupport` stay in `templates/builtins/`. The

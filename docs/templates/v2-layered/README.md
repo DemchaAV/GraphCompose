@@ -1,5 +1,15 @@
 # Templates — Layered Architecture
 
+> ⚠️ **Naming clarification.** This is the **layered** template
+> architecture (data / theme / components / widgets / presets), the
+> going-forward canonical pattern. Package:
+> `com.demcha.compose.document.templates.cv.v2`.
+>
+> **Not to be confused with** the older v1.6 "Templates v2" surface
+> (`CvSpec`, `CvBuilder`, presets with `BusinessTheme`) — that lives
+> in [templates/v1-classic/](../v1-classic/README.md) and still ships
+> alongside this one.
+
 The **canonical going-forward pattern** for building business documents
 on GraphCompose. CV is the reference implementation today
 (`com.demcha.compose.document.templates.cv.v2`); invoice, cover-letter,
@@ -103,16 +113,16 @@ The detailed contract for each layer is in
 ## See also
 
 - **Per-package JavaDocs**:
-  [`cv/v2/package-info.java`](../../src/main/java/com/demcha/compose/document/templates/cv/v2/package-info.java)
+  [`cv/v2/package-info.java`](../../../src/main/java/com/demcha/compose/document/templates/cv/v2/package-info.java)
   has the ASCII diagram and 4-step author walkthrough.
 - **AUTHORS.md**:
-  [`cv/v2/AUTHORS.md`](../../src/main/java/com/demcha/compose/document/templates/cv/v2/AUTHORS.md)
+  [`cv/v2/AUTHORS.md`](../../../src/main/java/com/demcha/compose/document/templates/cv/v2/AUTHORS.md)
   is the recipe cookbook — 7 hands-on recipes from "change a bullet
   glyph" to "add a new section subtype".
 - **Examples**:
   [`examples/cv/v2/`](../../examples/src/main/java/com/demcha/examples/templates/cv/v2)
   has three runnable rendering examples — one per shipped preset.
 - **Legacy v1 surface**:
-  [`docs/templates-v2.md`](../templates-v2.md) describes the older
+  [`docs/templates/v1-classic/README.md`](../v1-classic/README.md) describes the older
   spec / preset / theme split used by the v1 templates. Still valid
   for the v1 packages; superseded by this guide for v2 work.

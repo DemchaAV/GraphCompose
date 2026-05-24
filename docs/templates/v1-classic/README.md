@@ -1,4 +1,18 @@
-# Templates v2 &mdash; CV, cover letter, invoice, proposal
+# Templates v1-classic &mdash; CV, cover letter, invoice, proposal
+
+> ⚠️ **Naming clarification.** This page describes the **v1.6
+> "Templates v2"** surface — the rebuilt canonical templates that
+> shipped in v1.6 with `*Spec` records + `*Builder` + presets. The
+> codebase still calls this layer "Templates v2" internally (see
+> [ADR 0011](../../adr/0011-templates-v2-architecture.md)).
+>
+> The **newer layered architecture** for v2 templates (data /
+> theme / components / widgets / presets, with `CvDocument` rather
+> than `CvSpec`) lives at
+> **[templates/v2-layered/](../v2-layered/README.md)** and is the
+> recommended path for new template families going forward.
+>
+> Both surfaces coexist today; neither is deprecated yet.
 
 GraphCompose v1.6 ships a rebuilt canonical template surface for the four
 business document shapes: **CV, cover letter, invoice, proposal**. Every
@@ -9,9 +23,9 @@ caller learns it once and reuses it everywhere.
 This page is a landing reference. For a full conceptual walk-through
 (four-layer architecture, when to extend a preset vs. write your own,
 how rendering decisions cascade through theme tokens), read
-[`docs/template-authoring.md`](./template-authoring.md). For the v1 → v2
-upgrade table (every old class → its v2 replacement, with before/after
-code), read [`docs/migration-v1-5-to-v1-6.md`](./migration-v1-5-to-v1-6.md).
+[`./authoring.md`](./authoring.md). For the v1 → v2 upgrade table
+(every old class → its v2 replacement, with before/after code), read
+[`../../roadmaps/migration-v1-5-to-v1-6.md`](../../roadmaps/migration-v1-5-to-v1-6.md).
 
 ---
 
@@ -130,4 +144,4 @@ Legacy CV / cover-letter classes (`CvTemplateV1`, `NordicCleanCvTemplate`,
 v1.6. Any code constructing those classes must switch to the matching v2
 preset's `create(BusinessTheme)` factory. The full mapping (every old
 class → its v2 replacement, with side-by-side code) is documented in
-[`docs/migration-v1-5-to-v1-6.md`](./migration-v1-5-to-v1-6.md).
+[`docs/roadmaps/migration-v1-5-to-v1-6.md`](../../roadmaps/migration-v1-5-to-v1-6.md).

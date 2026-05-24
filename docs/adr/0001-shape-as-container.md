@@ -123,7 +123,7 @@ We considered two alternatives.
   must continue to show empty allowlists. The pre-pass that resolves the
   outline geometry lives in `LayoutCompiler`, not in the public surface.
 - The DOCX backend gains documented limitations around `CLIP_PATH`. They are
-  recorded in `docs/canonical-legacy-parity.md` as part of B.6.
+  recorded in `docs/architecture/canonical-legacy-parity.md` as part of B.6.
 
 ## Implementation order (executed in B.2 → B.10)
 

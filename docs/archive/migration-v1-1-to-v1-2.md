@@ -115,7 +115,7 @@ After switching, run:
 
 ## Where to go next
 
-- [Getting Started](./getting-started.md)
-- [Recipes](./recipes.md)
-- [Lifecycle](./lifecycle.md)
+- [Getting Started](../getting-started.md)
+- [Recipes](../recipes.md)
+- [Lifecycle](../architecture/lifecycle.md)
 - [v1.2 Roadmap](./v1.2-roadmap.md)

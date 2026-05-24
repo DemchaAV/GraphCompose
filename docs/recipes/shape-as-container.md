@@ -133,7 +133,7 @@ outline frame and without clipping, and logs a one-time
 `docx.export.shape-container-fallback` capability warning per export
 pass. Authors who need the outline must export to PDF.
 
-This is documented in [canonical-legacy-parity.md](../canonical-legacy-parity.md)
+This is documented in [canonical-legacy-parity.md](../architecture/canonical-legacy-parity.md)
 under the "Surfaces and structure" section.
 
 ## How the rendering pipeline emits a clipped container

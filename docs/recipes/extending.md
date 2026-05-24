@@ -2,15 +2,15 @@
 
 Short cheatsheets for the four most common extension paths. Each
 section gives you a 30-second mental model plus a pointer to the deep
-walkthrough in [`docs/extension-guide.md`](../extension-guide.md),
+walkthrough in [`docs/contributing/extension-guide.md`](../contributing/extension-guide.md),
 which uses the v1.5 `ShapeContainerNode` work as a worked example.
 
 | You want to... | Touch | Read |
 | --- | --- | --- |
-| Add a new semantic node | `DocumentNode` record + `NodeDefinition` + render handler | [Extension guide § 1](../extension-guide.md#1-add-a-semantic-node) |
-| Add a fluent setter | One `*Builder` only | [Extension guide § 2](../extension-guide.md#2-add-a-fluent-setter-to-a-builder) |
-| Add a render backend | Implement `FixedLayoutBackend` or `SemanticBackend` | [Extension guide § 3](../extension-guide.md#3-add-a-render-backend) |
-| Pin layout in a snapshot test | Use `LayoutSnapshotAssertions.assertMatches` | [Extension guide § 4](../extension-guide.md#4-validate-a-custom-nodes-layout-via-snapshots) |
+| Add a new semantic node | `DocumentNode` record + `NodeDefinition` + render handler | [Extension guide § 1](../contributing/extension-guide.md#1-add-a-semantic-node) |
+| Add a fluent setter | One `*Builder` only | [Extension guide § 2](../contributing/extension-guide.md#2-add-a-fluent-setter-to-a-builder) |
+| Add a render backend | Implement `FixedLayoutBackend` or `SemanticBackend` | [Extension guide § 3](../contributing/extension-guide.md#3-add-a-render-backend) |
+| Pin layout in a snapshot test | Use `LayoutSnapshotAssertions.assertMatches` | [Extension guide § 4](../contributing/extension-guide.md#4-validate-a-custom-nodes-layout-via-snapshots) |
 
 ## 1. Add a semantic node — five-step skeleton
 
@@ -25,7 +25,7 @@ which uses the v1.5 `ShapeContainerNode` work as a worked example.
 The Phase B `ShapeContainerNode`, `ShapeContainerDefinition`,
 `ShapeFragmentPayload`, and `PdfShape*RenderHandler` files are the
 canonical worked example. Walk
-[`docs/extension-guide.md`](../extension-guide.md) for the full
+[`docs/contributing/extension-guide.md`](../contributing/extension-guide.md) for the full
 narrative.
 
 ## 2. Add a fluent setter — single-builder change
@@ -94,7 +94,7 @@ for a runnable end-to-end demonstration.
 
 ## See also
 
-- [Extension guide](../extension-guide.md) — long-form walkthrough
+- [Extension guide](../contributing/extension-guide.md) — long-form walkthrough
   with the `ShapeContainerNode` worked example.
 - [Streaming and output](streaming.md) — how custom backends slot
   into the existing `writePdf` / `toPdfBytes` / `export(...)` paths.

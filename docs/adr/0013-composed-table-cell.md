@@ -19,7 +19,7 @@ Authors who needed that today either:
 2. Composed the table fragment manually with the engine API
    (which v1.5 retired from the public surface).
 
-The v1.6 roadmap (`docs/v1.6-roadmap.md` Phase B) opens the cell
+The v1.6 roadmap (`docs/roadmaps/v1.6-roadmap.md` Phase B) opens the cell
 to any composable `DocumentNode`, with two-pass cell measurement
 and pagination preserving row-by-row behaviour.
 
@@ -190,7 +190,7 @@ etc.).
 ## References
 
 - v1.6 roadmap, Phase B:
-  [`docs/v1.6-roadmap.md`](../v1.6-roadmap.md).
+  [`docs/roadmaps/v1.6-roadmap.md`](../roadmaps/v1.6-roadmap.md).
 - ADR 0011 — Templates v2 architecture (consumer of composed
   cells in v1.7+):
   [`0011-templates-v2-architecture.md`](0011-templates-v2-architecture.md).

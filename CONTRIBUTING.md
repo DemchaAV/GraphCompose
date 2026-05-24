@@ -7,9 +7,9 @@ Thanks for helping improve GraphCompose.
 Read these files first:
 
 - [README.md](./README.md)
-- [docs/architecture.md](./docs/architecture.md)
-- [docs/implementation-guide.md](./docs/implementation-guide.md)
-- [docs/benchmarks.md](./docs/benchmarks.md) when you touch benchmark tooling, render hot paths, layout hot paths, or performance-facing docs
+- [docs/architecture/overview.md](./docs/architecture/overview.md)
+- [docs/contributing/implementation-guide.md](./docs/contributing/implementation-guide.md)
+- [docs/operations/benchmarks.md](./docs/operations/benchmarks.md) when you touch benchmark tooling, render hot paths, layout hot paths, or performance-facing docs
 
 They explain the current public surface, the engine/template split, and the recommended extension points.
 
@@ -81,7 +81,7 @@ GraphCompose follows a fork &rarr; feature branch &rarr; pull request flow. Exte
 3. **JitPack** picks up the new tag automatically. After JitPack reports `BUILD SUCCESS`, a separate post-release commit on `develop` flips the README install snippets to the new version.
 4. **GitHub Release** is created with notes from the matching `CHANGELOG.md` section.
 
-See [docs/release-process.md](./docs/release-process.md) for the full checklist (audit gates, hotfix protocol, lessons learned).
+See [docs/contributing/release-process.md](./docs/contributing/release-process.md) for the full checklist (audit gates, hotfix protocol, lessons learned).
 
 ## Repository map
 
@@ -251,14 +251,36 @@ Reference templates to copy:
 
 ### New built-in template
 
+GraphCompose supports two template authoring patterns. Pick based
+on whether you're extending an existing template family or building
+a new one.
+
+**For a NEW template family from scratch** (invoice-v2,
+cover-letter-v2, report-v2, anything not yet in `cv/v2/`) — follow
+the canonical layered architecture documented in
+[**docs/templates/v2-layered/contributor-guide.md**](./docs/templates/v2-layered/contributor-guide.md).
+Five sub-packages (`data/` / `theme/` / `components/` / `widgets/`
+/ `presets/`), each with a clear contract. CV v2
+(`com.demcha.compose.document.templates.cv.v2`) is the reference
+implementation; read it before starting yours.
+
+**For a new preset inside an existing v1-classic family** (a new CV
+variant alongside `ModernProfessional`, a new invoice preset
+alongside `InvoiceTemplateV2`):
+
 - Constructor takes a `BusinessTheme` (or `CvTheme` for CV
   templates). Provide a no-arg overload that picks a default theme.
 - Compose against `DocumentDsl` — no PDF-specific imports.
 - Route every visible token through `theme.palette()` /
   `theme.text()` / `theme.spacing()` / `theme.table()`.
 - Reference: `InvoiceTemplateV2`, `ProposalTemplateV2`. Read
-  [docs/template-authoring.md](./docs/template-authoring.md) before
+  [docs/templates/v1-classic/authoring.md](./docs/templates/v1-classic/authoring.md) before
   starting.
+
+> 📚 **Map of template docs**:
+> [docs/README.md](./docs/README.md#templates) lists every template
+> guide with a one-line description so you can pick the right one
+> fast.
 
 ### New engine internal primitive
 
@@ -281,8 +303,8 @@ marker, a new layout system, a new render-pass session):
 For text-heavy primitives, also read:
 
 - [TextMeasurementSystem.java](./src/main/java/com/demcha/compose/engine/measurement/TextMeasurementSystem.java)
-- [docs/architecture.md](./docs/architecture.md)
-- [docs/implementation-guide.md](./docs/implementation-guide.md)
+- [docs/architecture/overview.md](./docs/architecture/overview.md)
+- [docs/contributing/implementation-guide.md](./docs/contributing/implementation-guide.md)
 
 If the primitive should be available to application developers,
 expose it through `DocumentDsl` and a public `DocumentNode`, not a
@@ -328,8 +350,8 @@ If a change affects resolved geometry, pagination, or ordering, prefer adding or
 - Keep [README.md](./README.md) aligned with the tested examples.
 - Keep benchmark values clearly dated when they are refreshed.
 - Keep `assets/readme/*` screenshots consistent with the current render outputs.
-- If you add a new extension point or contribution pattern, update [README.md](./README.md), [docs/architecture.md](./docs/architecture.md), and [docs/implementation-guide.md](./docs/implementation-guide.md) as part of the same change.
-- If you change benchmark flow, benchmark artifact layout, or diff selection rules, update [README.md](./README.md) and [docs/benchmarks.md](./docs/benchmarks.md) in the same change.
+- If you add a new extension point or contribution pattern, update [README.md](./README.md), [docs/architecture/overview.md](./docs/architecture/overview.md), and [docs/contributing/implementation-guide.md](./docs/contributing/implementation-guide.md) as part of the same change.
+- If you change benchmark flow, benchmark artifact layout, or diff selection rules, update [README.md](./README.md) and [docs/operations/benchmarks.md](./docs/operations/benchmarks.md) in the same change.
 - Visual PDF artifacts are grouped under `target/visual-tests/clean/*` and `target/visual-tests/guides/*` so guide-line renders are easy to find separately from clean outputs.
 
 ## Package naming

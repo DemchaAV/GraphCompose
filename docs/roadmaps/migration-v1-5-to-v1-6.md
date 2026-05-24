@@ -332,7 +332,7 @@ try (DocumentSession session = GraphCompose.document(out).create()) {
 ```
 
 The full builder fluent surface and module / block taxonomy are
-documented in [`docs/template-authoring.md`](template-authoring.md).
+documented in [`docs/templates/v1-classic/authoring.md`](template-authoring.md).
 The full gallery of v2 CV / cover-letter renders lives under
 [`assets/readme/examples/`](../assets/readme/examples/) and is
 regenerable via

@@ -95,7 +95,7 @@ try (DocumentSession document = GraphCompose.document().create()) {
 The DOCX path is semantic — it preserves paragraphs, tables, images,
 and module structure but ignores fixed-layout concerns (page
 backgrounds, exact placement, graphics-state clip paths). See the
-[parity matrix](../canonical-legacy-parity.md) for the per-feature
+[parity matrix](../architecture/canonical-legacy-parity.md) for the per-feature
 mapping.
 
 ## Header / footer chrome
@@ -142,9 +142,9 @@ try (DocumentSession document = GraphCompose.document(Path.of("debug.pdf"))
 
 - [`docs/getting-started.md`](../getting-started.md) — covers the
   three convenience output flows in the quick-start section.
-- [`docs/production-rendering.md`](../production-rendering.md) —
+- [`docs/operations/production-rendering.md`](../operations/production-rendering.md) —
   server-side lifecycle, privacy, and load guidance for production
   HTTP / queue paths.
-- [`docs/canonical-legacy-parity.md`](../canonical-legacy-parity.md) —
+- [`docs/architecture/canonical-legacy-parity.md`](../architecture/canonical-legacy-parity.md) —
   PDF Output section lists every chrome / metadata / protection /
   watermark / header / footer option.

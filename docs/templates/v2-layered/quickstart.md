@@ -138,5 +138,5 @@ touch a renderer. A new widget doesn't touch the data model.
 | Render your own CV with your data | [using-templates.md](using-templates.md) |
 | Make a new visual style | [authoring-presets.md](authoring-presets.md) |
 | Add a new template family to the library (invoice, cover-letter) | [contributor-guide.md](contributor-guide.md) |
-| See hands-on recipes (change a bullet, swap colours, …) | [`cv/v2/AUTHORS.md`](../../src/main/java/com/demcha/compose/document/templates/cv/v2/AUTHORS.md) |
+| See hands-on recipes (change a bullet, swap colours, …) | [`cv/v2/AUTHORS.md`](../../../src/main/java/com/demcha/compose/document/templates/cv/v2/AUTHORS.md) |
 | Run the shipped examples | [`examples/cv/v2/`](../../examples/src/main/java/com/demcha/examples/templates/cv/v2) |

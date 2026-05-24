@@ -81,9 +81,9 @@ GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the com
 | You want to&hellip; | Surface | Entry point |
 |---|---|---|
 | Generate a one-off PDF programmatically | DSL | `GraphCompose.document(...).pageFlow(...)` &mdash; see [Hello world](#hello-world) below |
-| Generate a CV / cover letter / invoice / proposal from data | Templates v2 | `ModernProfessional.create(BusinessTheme.modern()).compose(session, spec)` &mdash; see [templates v2](./docs/templates-v2.md) |
-| Add a custom visual primitive | Engine extension | `NodeDefinition` + `PdfFragmentRenderHandler` &mdash; see [extension guide](./docs/extension-guide.md) |
-| Regression-test generated layouts | Layout snapshots | `DocumentSession#layoutSnapshot()` &mdash; see [snapshot testing](./docs/layout-snapshot-testing.md) |
+| Generate a CV / cover letter / invoice / proposal from data | Templates v2 | `ModernProfessional.create(BusinessTheme.modern()).compose(session, spec)` &mdash; see [templates v2](./docs/templates/v1-classic/README.md) |
+| Add a custom visual primitive | Engine extension | `NodeDefinition` + `PdfFragmentRenderHandler` &mdash; see [extension guide](./docs/contributing/extension-guide.md) |
+| Regression-test generated layouts | Layout snapshots | `DocumentSession#layoutSnapshot()` &mdash; see [snapshot testing](./docs/operations/layout-snapshot-testing.md) |
 
 ## Installation
 
@@ -106,7 +106,7 @@ dependencies { implementation("com.github.demchaav:GraphCompose:v1.6.4") }
 
 > **Distribution status** &mdash; currently **JitPack**. Maven Central is planned for v1.7 ([tracking issue](https://github.com/DemchaAV/GraphCompose/issues/7)).
 
-> **Upgrading from v1.5?** Core document authoring stays source-compatible &mdash; engine, DSL, themes, and backend-neutral records carry v1.5 callers unchanged. **Templates v2** replaces the legacy CV / cover-letter template classes; legacy classes were **deleted**, not deprecated. Read the [migration guide](./docs/migration-v1-5-to-v1-6.md) before upgrading template-heavy code.
+> **Upgrading from v1.5?** Core document authoring stays source-compatible &mdash; engine, DSL, themes, and backend-neutral records carry v1.5 callers unchanged. **Templates v2** replaces the legacy CV / cover-letter template classes; legacy classes were **deleted**, not deprecated. Read the [migration guide](./docs/roadmaps/migration-v1-5-to-v1-6.md) before upgrading template-heavy code.
 
 ## Hello world
 
@@ -146,11 +146,11 @@ For a Spring Boot `@RestController` streaming the PDF straight to the response, 
 
 ## What's in v1.6 &mdash; "expressive"
 
-- **Templates v2** &mdash; 14 CV and 14 paired cover-letter presets, theme-driven via `BusinessTheme`, one-liner `create(theme)` factories. Inline markdown, slot-based multi-column layouts. See [`docs/templates-v2.md`](./docs/templates-v2.md).
+- **Templates v2** &mdash; 14 CV and 14 paired cover-letter presets, theme-driven via `BusinessTheme`, one-liner `create(theme)` factories. Inline markdown, slot-based multi-column layouts. See [`docs/templates/v1-classic/README.md`](./docs/templates/v1-classic/README.md).
 - **Composed primitives** &mdash; `ListBuilder.addItem(label, Consumer)` (nested lists), `DocumentTableCell.node(...)` (any node inside a cell), `CanvasLayerNode` (pixel-precise free-canvas placement).
 - **Architecture hardening** &mdash; `@Internal` API stability marker, public `PdfFragmentRenderHandler` SPI, `DocumentRenderingException` on the convenience render path, documented thread-safety contract.
 
-Full notes in [`CHANGELOG.md`](./CHANGELOG.md). Upgrade guide: [`docs/migration-v1-5-to-v1-6.md`](./docs/migration-v1-5-to-v1-6.md).
+Full notes in [`CHANGELOG.md`](./CHANGELOG.md). Upgrade guide: [`docs/roadmaps/migration-v1-5-to-v1-6.md`](./docs/roadmaps/migration-v1-5-to-v1-6.md).
 
 ## v1.6 primitives in 30 lines
 
@@ -189,13 +189,21 @@ document.pageFlow().addCanvas(523, 360, canvas -> canvas
 
 ## Documentation
 
-- 🆕 [**Templates — layered architecture**](./docs/templates-layered/README.md) &mdash; the canonical going-forward pattern for new template families (CV v2 is the reference implementation). Personas: [quickstart](./docs/templates-layered/quickstart.md) · [using templates](./docs/templates-layered/using-templates.md) · [authoring presets](./docs/templates-layered/authoring-presets.md) · [contributing a new family](./docs/templates-layered/contributor-guide.md).
-- [Template authoring cheatsheet](./docs/template-authoring.md) &mdash; read this once before writing your own template (covers v1 template surface)
-- [Templates v2 landing](./docs/templates-v2.md) &mdash; CV / cover-letter / invoice / proposal preset library (v1 surface, still shipped)
+📚 **[Full docs index](./docs/README.md)** &mdash; categorised map of every doc, ADR, and recipe. Start there to navigate the documentation.
+
+### Templates
+- 🆕 [**Templates — v2 layered architecture**](./docs/templates/v2-layered/README.md) &mdash; the canonical going-forward pattern for new template families (CV v2 is the reference implementation). Personas: [quickstart](./docs/templates/v2-layered/quickstart.md) · [using templates](./docs/templates/v2-layered/using-templates.md) · [authoring presets](./docs/templates/v2-layered/authoring-presets.md) · [contributing a new family](./docs/templates/v2-layered/contributor-guide.md).
+- [Templates v1-classic landing](./docs/templates/v1-classic/README.md) &mdash; CV / cover-letter / invoice / proposal preset library (v1.6 surface, still shipped). Cheat sheet: [authoring](./docs/templates/v1-classic/authoring.md).
+
+### Architecture & operations
+- [Architecture overview](./docs/architecture/overview.md) · [Lifecycle](./docs/architecture/lifecycle.md) · [Production rendering](./docs/operations/production-rendering.md) · [Layout snapshot testing](./docs/operations/layout-snapshot-testing.md)
+
+### Recipes & examples
+- [Recipes index](./docs/recipes.md) &mdash; [shape-as-container](./docs/recipes/shape-as-container.md) · [shapes](./docs/recipes/shapes.md) · [transforms](./docs/recipes/transforms.md) · [tables](./docs/recipes/tables.md) · [themes](./docs/recipes/themes.md) · [streaming](./docs/recipes/streaming.md) · [extending](./docs/recipes/extending.md)
 - [Examples gallery](./examples/README.md) &mdash; every runnable example with PDF preview
-- [Architecture](./docs/architecture.md) · [Lifecycle](./docs/lifecycle.md) · [Production rendering](./docs/production-rendering.md)
-- Recipes: [shape-as-container](./docs/recipes/shape-as-container.md) · [transforms](./docs/recipes/transforms.md) · [tables](./docs/recipes/tables.md) · [themes](./docs/recipes/themes.md) · [streaming](./docs/recipes/streaming.md) · [extending](./docs/recipes/extending.md)
-- [Migration v1.5 → v1.6](./docs/migration-v1-5-to-v1-6.md) · [Release process](./docs/release-process.md) · [Contributing](./CONTRIBUTING.md)
+
+### Contributing & releases
+- [Migration v1.5 → v1.6](./docs/roadmaps/migration-v1-5-to-v1-6.md) · [Release process](./docs/contributing/release-process.md) · [Contributing](./CONTRIBUTING.md)
 
 ## Companion projects
 

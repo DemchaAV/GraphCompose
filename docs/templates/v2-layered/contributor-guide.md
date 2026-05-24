@@ -291,7 +291,7 @@ a reference render) is encouraged but optional today.
       conditional sections.
 - [ ] `<family>/v2/<sub-package>/package-info.java` — each
       sub-package gets a paragraph explaining its role.
-- [ ] **Update [`docs/templates-layered/README.md`](README.md)** to
+- [ ] **Update [`docs/templates/v2-layered/README.md`](README.md)** to
       list the new family in the "implementations" section.
 
 ---

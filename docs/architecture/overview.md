@@ -299,7 +299,7 @@ GraphCompose uses a practical three-layer regression strategy:
 3. PDF render tests for visual smoke coverage and artifact
    inspection (`PdfVisualRegression`, `target/visual-tests/`)
 
-See [layout-snapshot-testing.md](./layout-snapshot-testing.md) for the
+See [layout-snapshot-testing.md](../operations/layout-snapshot-testing.md) for the
 snapshot workflow and developer conventions.
 
 ## Maintenance references
@@ -308,7 +308,7 @@ snapshot workflow and developer conventions.
   package ownership and extension rules.
 - [lifecycle.md](./lifecycle.md) describes the document session,
   layout, pagination, and render lifecycle.
-- [logging.md](./logging.md) documents the quiet-by-default lifecycle
+- [logging.md](../operations/logging.md) documents the quiet-by-default lifecycle
   logger categories.
 - [canonical-legacy-parity.md](./canonical-legacy-parity.md) tracks
   feature parity between the canonical authoring surface and older

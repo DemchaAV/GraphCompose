@@ -347,4 +347,4 @@ cover-letter-v2) following the same layered shape?
 
 → The full recipe cookbook (with code for every customisation
 combo):
-[`cv/v2/AUTHORS.md`](../../src/main/java/com/demcha/compose/document/templates/cv/v2/AUTHORS.md)
+[`cv/v2/AUTHORS.md`](../../../src/main/java/com/demcha/compose/document/templates/cv/v2/AUTHORS.md)

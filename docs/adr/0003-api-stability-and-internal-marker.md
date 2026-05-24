@@ -85,7 +85,7 @@ right next to `DocumentSession`, so it is discoverable.
   in quick-doc and Javadoc). Existing call sites continue to compile
   and run; the annotation is a documentation signal, not a hard break.
   Migration guidance is published in
-  [`docs/migration-v1-5-to-v1-6.md`](../migration-v1-5-to-v1-6.md).
+  [`docs/roadmaps/migration-v1-5-to-v1-6.md`](../roadmaps/migration-v1-5-to-v1-6.md).
 - **For us:** Phase E.1 / E.2 (split `BuiltInNodeDefinitions`,
   relocate payload records) and Phase E.4 (extract `PlacementContext`)
   can now ship as internal refactors without semver implications. If a

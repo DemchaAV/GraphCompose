@@ -9,7 +9,7 @@ Security fixes are issued for the latest minor release. Older minors do not rece
 | Version | Supported |
 |---------|-----------|
 | 1.6.x   | Yes — actively patched |
-| < 1.6   | No — upgrade required (see [migration guide](docs/migration-v1-5-to-v1-6.md)) |
+| < 1.6   | No — upgrade required (see [migration guide](docs/roadmaps/migration-v1-5-to-v1-6.md)) |
 
 ## Reporting a vulnerability
 
@@ -58,5 +58,5 @@ Out of scope:
 ## Hardening notes for consumers
 
 - Treat user-supplied input as untrusted before injecting it into the DSL. Long strings, control characters, oversize tables, and pathological pagination inputs can affect render time and memory.
-- For server-side rendering, scope `DocumentSession` to a single request and close it via try-with-resources. See [docs/lifecycle.md](docs/lifecycle.md).
-- Production rendering guidance: [docs/production-rendering.md](docs/production-rendering.md).
+- For server-side rendering, scope `DocumentSession` to a single request and close it via try-with-resources. See [docs/architecture/lifecycle.md](docs/architecture/lifecycle.md).
+- Production rendering guidance: [docs/operations/production-rendering.md](docs/operations/production-rendering.md).

@@ -13,7 +13,7 @@ semantics (no per-depth bullet glyph), break pagination on
 splitting, and force the caller to re-implement a depth indent
 that any reasonable list primitive should provide.
 
-The v1.6 roadmap (`docs/v1.6-roadmap.md` Phase A) lands real
+The v1.6 roadmap (`docs/roadmaps/v1.6-roadmap.md` Phase A) lands real
 nested-list authoring with the public API:
 
 - `ListBuilder.addItem(String label, Consumer<ListBuilder> body)`
@@ -169,7 +169,7 @@ across mixed flat / nested entries.
 ## References
 
 - v1.6 roadmap, Phase A:
-  [`docs/v1.6-roadmap.md`](../v1.6-roadmap.md).
+  [`docs/roadmaps/v1.6-roadmap.md`](../roadmaps/v1.6-roadmap.md).
 - ADR 0003 — API stability and `@Internal` marker:
   [`0003-api-stability-and-internal-marker.md`](0003-api-stability-and-internal-marker.md)
   (gate that allows new components on existing records).

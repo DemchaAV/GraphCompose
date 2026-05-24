@@ -371,7 +371,7 @@ Recommended rule:
 
 Prefer pairing a snapshot assertion with an existing render test when the document is complex or business-critical.
 
-See [layout-snapshot-testing.md](./layout-snapshot-testing.md) for the baseline locations, update flow, and concrete examples.
+See [layout-snapshot-testing.md](../operations/layout-snapshot-testing.md) for the baseline locations, update flow, and concrete examples.
 
 So if your new object needs custom drawing, it is not enough to add a builder. You also need a renderable component with the correct renderer implementation.
 
@@ -402,7 +402,7 @@ Use the helpers directly when that intent is what you need:
 - read bounds and edges through `EntityBounds` instead of adding more bound helpers to `Entity`
 - update parent container size or shifted positions through `ParentContainerUpdater` instead of growing the `Entity` API further
 
-See [pagination-ordering.md](./pagination-ordering.md) for a focused explanation of this rule, including why a `Circle` case can fail while an `Image` case appears to work.
+See [pagination-ordering.md](../architecture/pagination-ordering.md) for a focused explanation of this rule, including why a `Circle` case can fail while an `Image` case appears to work.
 
 If those components are missing or inconsistent, the renderer cannot save you later.
 

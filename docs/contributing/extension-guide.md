@@ -230,16 +230,16 @@ locate the responsible file:
 | Engine ECS internals | `com.demcha.compose.engine.*` (don't reach in from canonical code) |
 
 Detailed ownership lives in
-[`docs/package-map.md`](package-map.md).
+[`docs/architecture/package-map.md`](package-map.md).
 
 ## See also
 
-- [`docs/architecture.md`](architecture.md) — high-level architecture
+- [`docs/architecture/overview.md`](architecture.md) — high-level architecture
   and the canonical-vs-engine boundary.
-- [`docs/implementation-guide.md`](implementation-guide.md) —
+- [`docs/contributing/implementation-guide.md`](implementation-guide.md) —
   engine-side ECS extension patterns (component records, system
   registration, low-level harness builders).
-- [`docs/lifecycle.md`](lifecycle.md) — the session, layout, and
+- [`docs/architecture/lifecycle.md`](lifecycle.md) — the session, layout, and
   render flow end-to-end.
 - [ADR 0001 — Shape-as-container](adr/0001-shape-as-container.md) —
   the design rationale that shaped the v1.5 `ShapeContainerNode`,

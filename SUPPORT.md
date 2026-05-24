@@ -20,8 +20,8 @@ Self-serve, ordered by likelihood of containing the answer:
 2. [docs/getting-started.md](docs/getting-started.md) — first runnable example.
 3. [examples/README.md](examples/README.md) — runnable examples with PDF previews.
 4. [docs/recipes.md](docs/recipes.md) — patterns for common layouts.
-5. [docs/architecture.md](docs/architecture.md) and [docs/package-map.md](docs/package-map.md) — when extending the engine.
-6. [docs/migration-v1-5-to-v1-6.md](docs/migration-v1-5-to-v1-6.md) — upgrades from previous minor.
+5. [docs/architecture/overview.md](docs/architecture/overview.md) and [docs/architecture/package-map.md](docs/architecture/package-map.md) — when extending the engine.
+6. [docs/roadmaps/migration-v1-5-to-v1-6.md](docs/roadmaps/migration-v1-5-to-v1-6.md) — upgrades from previous minor.
 
 ## Response expectations
 
@@ -36,4 +36,4 @@ Best-effort. Triage typically within a week. Reports with minimal reproductions 
 
 ## Contributing
 
-If you want to contribute rather than ask for help, see [CONTRIBUTING.md](CONTRIBUTING.md). Lane structure and architecture rules: [docs/architecture.md](docs/architecture.md).
+If you want to contribute rather than ask for help, see [CONTRIBUTING.md](CONTRIBUTING.md). Lane structure and architecture rules: [docs/architecture/overview.md](docs/architecture/overview.md).

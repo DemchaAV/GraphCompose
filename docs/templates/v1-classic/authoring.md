@@ -1,14 +1,25 @@
-# Template authoring — canonical cheatsheet
+# Template authoring — v1-classic cheatsheet
+
+> ⚠️ **For the v1.6 "Templates v2" surface** (`CvSpec`, `CvBuilder`,
+> `*Presets` with `BusinessTheme`). Still shipped and maintained.
+>
+> **Writing a new template family from scratch?** The newer layered
+> architecture is the canonical going-forward path —
+> [templates/v2-layered/authoring-presets.md](../v2-layered/authoring-presets.md)
+> shows the widget-composition pattern (much shorter presets, fewer
+> classes to maintain).
+>
+> **Authoring against existing v1-classic templates?** Keep reading.
 
 This page is the single reference for writing new templates and DSL
 code without boilerplate. Read it once before starting a template;
 keep it open while you're writing one.
 
 The companion long-form docs are
-[`getting-started.md`](getting-started.md) (concepts) and
-[`extension-guide.md`](extension-guide.md) (engine internals). When
-the cheatsheet says "see X recipe", the file lives under
-[`recipes/`](recipes/).
+[`../../getting-started.md`](../../getting-started.md) (concepts) and
+[`../../contributing/extension-guide.md`](../../contributing/extension-guide.md)
+(engine internals). When the cheatsheet says "see X recipe", the
+file lives under [`../../recipes/`](../../recipes/).
 
 ---
 

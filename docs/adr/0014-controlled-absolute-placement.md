@@ -30,7 +30,7 @@ specific coordinates — currently reach for either:
 - The retired low-level `EntityManager` engine API that v1.5
   removed from the public surface.
 
-The v1.6 roadmap (`docs/v1.6-roadmap.md` Phase C) lands an
+The v1.6 roadmap (`docs/roadmaps/v1.6-roadmap.md` Phase C) lands an
 explicit "I want absolute placement" opt-in that is still a
 canonical node — not an engine bypass.
 
@@ -204,7 +204,7 @@ diagram authors who want overflow can opt into
 ## References
 
 - v1.6 roadmap, Phase C:
-  [`docs/v1.6-roadmap.md`](../v1.6-roadmap.md).
+  [`docs/roadmaps/v1.6-roadmap.md`](../roadmaps/v1.6-roadmap.md).
 - ADR 0001 — Shape-as-container (consumer of the same
   `ClipPolicy`):
   [`0001-shape-as-container.md`](0001-shape-as-container.md).

@@ -98,4 +98,4 @@ The canonical PDF backend:
 
 Always close the session, normally with try-with-resources. Closing releases measurement resources and clears request-local text measurement caches. It does not require consumers to manage PDFBox objects directly.
 
-For production server guidance, see [Production Rendering](./production-rendering.md).
+For production server guidance, see [Production Rendering](../operations/production-rendering.md).

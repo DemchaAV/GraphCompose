@@ -72,4 +72,28 @@ public record CvSpacing(
                 1.0,                                     // entryTitleWeight
                 0.45);                                   // entryDateWeight
     }
+
+    /**
+     * Tighter spacing for the Modern Professional preset — no banner
+     * panels, denser body, single-page-friendly proportions.
+     * Banner-related fields (corner radius, inner padding, margin)
+     * are left non-zero so a future preset that wants to draw an MP
+     * banner can read them; the canonical MP preset ignores them.
+     */
+    public static CvSpacing modernProfessional() {
+        return new CvSpacing(
+                4,                                       // pageFlowSpacing
+                3,                                       // sectionBodySpacing
+                new DocumentInsets(2, 0, 0, 0),          // sectionBodyPadding
+                new DocumentInsets(0, 0, 0, 0),          // headlinePadding
+                new DocumentInsets(0, 0, 6, 0),          // contactPadding
+                0.0,                                     // bannerCornerRadius (unused)
+                5.0,                                     // bannerInnerPadding (unused)
+                DocumentInsets.top(6),                   // bannerMargin (unused — section title margin)
+                0.7,                                     // accentRuleWidth
+                2.0,                                     // paragraphMarginTop
+                10.0,                                    // entryHeaderRowSpacing
+                1.0,                                     // entryTitleWeight
+                0.45);                                   // entryDateWeight
+    }
 }

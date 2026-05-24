@@ -1,0 +1,228 @@
+package com.demcha.compose.document.templates.cv.v2.presets;
+
+import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.dsl.PageFlowBuilder;
+import com.demcha.compose.document.dsl.SectionBuilder;
+import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTextDecoration;
+import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.cv.v2.components.SectionDispatcher;
+import com.demcha.compose.document.templates.cv.v2.data.CvContact;
+import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
+import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
+import com.demcha.compose.document.templates.cv.v2.data.CvLink;
+import com.demcha.compose.document.templates.cv.v2.data.CvSection;
+import com.demcha.compose.document.templates.cv.v2.data.Slot;
+import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.font.FontName;
+
+import java.util.List;
+import java.util.Objects;
+
+/**
+ * v2 port of the canonical "Modern Professional" CV preset.
+ *
+ * <p>Visual signature ported from the legacy v1 preset:</p>
+ * <ul>
+ *   <li>Right-aligned <strong>big slate-blue display name</strong>
+ *       (no spaced caps, no centring) at the top.</li>
+ *   <li>Right-aligned pipe-separated contact + link row beneath.</li>
+ *   <li>Large <strong>bright-blue bold section titles</strong> —
+ *       flat, left-aligned, no banner panel.</li>
+ *   <li>Body text in Helvetica 10pt — denser than Boxed Sections.</li>
+ *   <li>Single-page-friendly proportions on A4 with 18pt margins.</li>
+ * </ul>
+ *
+ * <p><strong>Why some colours live inside this preset and not in
+ * {@link CvTheme}:</strong> the slate-blue display name and the
+ * bright-blue accent for section titles are unique to this preset —
+ * no other v2 preset shares them today. Putting them in
+ * {@link com.demcha.compose.document.templates.cv.v2.theme.CvPalette}
+ * would pollute the palette with single-use fields. When (or if) a
+ * second preset reaches for the same colours, extract them to
+ * {@code CvPalette} and update both presets.</p>
+ *
+ * <p><strong>Architectural lesson learned in Phase 2:</strong>
+ * single-column presets that don't fit the boxed-banner visual
+ * (e.g. flat titles, underlined titles, coloured titles) currently
+ * inline their own {@code renderSectionTitle} helper. Once 3+ presets
+ * share this need, factor out a {@code SectionTitleRenderer}
+ * component with style variants. Until then, the per-preset inline
+ * helper keeps each preset readable end-to-end.</p>
+ */
+public final class ModernProfessional {
+
+    /** Stable template identifier. */
+    public static final String ID = "modern-professional";
+
+    /** Human-readable display name. */
+    public static final String DISPLAY_NAME = "Modern Professional";
+
+    /** Recommended page margin (in points) — matches the legacy v1 preset. */
+    public static final double RECOMMENDED_MARGIN = 18.0;
+
+    /** Slate-blue used by the display name. Preset-specific. */
+    private static final DocumentColor NAME_COLOR = DocumentColor.rgb(44, 62, 80);
+
+    /** Bright-blue used by section titles. Preset-specific. */
+    private static final DocumentColor SECTION_TITLE_COLOR =
+            DocumentColor.rgb(41, 128, 185);
+
+    /** Royal-blue used by contact links. Preset-specific. */
+    private static final DocumentColor LINK_COLOR = DocumentColor.rgb(65, 105, 225);
+
+    private ModernProfessional() {
+    }
+
+    /**
+     * Builds the preset with the Modern Professional theme
+     * ({@link CvTheme#modernProfessional()}).
+     */
+    public static DocumentTemplate<CvDocument> create() {
+        return create(CvTheme.modernProfessional());
+    }
+
+    /**
+     * Builds the preset with a caller-supplied theme. Allows
+     * variations on the Modern Professional theme (different
+     * typography scale, custom spacing) without forking this class.
+     */
+    public static DocumentTemplate<CvDocument> create(CvTheme theme) {
+        Objects.requireNonNull(theme, "theme");
+        return new Template(theme);
+    }
+
+    private static final class Template implements DocumentTemplate<CvDocument> {
+
+        private final CvTheme theme;
+
+        Template(CvTheme theme) {
+            this.theme = theme;
+        }
+
+        @Override
+        public String id() {
+            return ID;
+        }
+
+        @Override
+        public String displayName() {
+            return DISPLAY_NAME;
+        }
+
+        @Override
+        public void compose(DocumentSession document, CvDocument doc) {
+            Objects.requireNonNull(document, "document");
+            Objects.requireNonNull(doc, "doc");
+
+            PageFlowBuilder pageFlow = document.dsl()
+                    .pageFlow()
+                    .name("CvV2ModernRoot")
+                    .spacing(theme.spacing().pageFlowSpacing())
+                    .addSection("Header", section ->
+                            renderHeader(section, doc.identity()))
+                    .addSection("Contact", section ->
+                            renderContact(section, doc.identity()));
+
+            // Single-column preset — only MAIN slot.
+            List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
+            for (int i = 0; i < sections.size(); i++) {
+                final CvSection sec = sections.get(i);
+                final int idx = i;
+                pageFlow.addSection("Title_" + idx, host ->
+                        renderSectionTitle(host, sec.title()));
+                pageFlow.addSection("Body_" + idx, host ->
+                        SectionDispatcher.renderBody(host, sec, theme));
+            }
+
+            pageFlow.build();
+        }
+
+        /**
+         * Big slate-blue display name, right-aligned. No spaced caps.
+         */
+        private void renderHeader(SectionBuilder section, CvIdentity identity) {
+            DocumentTextStyle nameStyle = DocumentTextStyle.builder()
+                    .fontName(FontName.HELVETICA_BOLD)
+                    .size(theme.typography().sizeHeadline())
+                    .decoration(DocumentTextDecoration.BOLD)
+                    .color(NAME_COLOR)
+                    .build();
+
+            section.padding(DocumentInsets.zero())
+                    .addParagraph(p -> p
+                            .text(identity.name().full())
+                            .textStyle(nameStyle)
+                            .align(TextAlign.RIGHT)
+                            .margin(DocumentInsets.zero()));
+        }
+
+        /**
+         * Right-aligned pipe-separated contact + links. Links rendered
+         * underlined in royal blue; contact strings in body grey.
+         */
+        private void renderContact(SectionBuilder section, CvIdentity identity) {
+            DocumentTextStyle bodyStyle = DocumentTextStyle.builder()
+                    .fontName(FontName.HELVETICA)
+                    .size(theme.typography().sizeContact())
+                    .color(theme.palette().ink())
+                    .build();
+            DocumentTextStyle linkStyle = DocumentTextStyle.builder()
+                    .fontName(FontName.HELVETICA)
+                    .size(theme.typography().sizeContact())
+                    .decoration(DocumentTextDecoration.UNDERLINE)
+                    .color(LINK_COLOR)
+                    .build();
+            DocumentTextStyle separatorStyle = DocumentTextStyle.builder()
+                    .fontName(FontName.HELVETICA)
+                    .size(theme.typography().sizeContact())
+                    .color(theme.palette().rule())
+                    .build();
+
+            CvContact c = identity.contact();
+            section.padding(theme.spacing().contactPadding())
+                    .accentBottom(theme.palette().rule(),
+                            theme.spacing().accentRuleWidth())
+                    .addParagraph(p -> p
+                            .textStyle(bodyStyle)
+                            .align(TextAlign.RIGHT)
+                            .margin(DocumentInsets.zero())
+                            .rich(rich -> {
+                                rich.style(c.address(), bodyStyle);
+                                rich.style(" | ", separatorStyle);
+                                rich.style(c.phone(), bodyStyle);
+                                rich.style(" | ", separatorStyle);
+                                rich.link(c.email(),
+                                        new DocumentLinkOptions("mailto:" + c.email()));
+                                for (CvLink l : identity.links()) {
+                                    rich.style(" | ", separatorStyle);
+                                    rich.style(l.label(), linkStyle);
+                                }
+                            }));
+        }
+
+        /**
+         * Flat bright-blue bold section title, left-aligned, no panel.
+         * This is the visual hallmark of the Modern Professional look.
+         */
+        private void renderSectionTitle(SectionBuilder section, String title) {
+            DocumentTextStyle titleStyle = DocumentTextStyle.builder()
+                    .fontName(FontName.HELVETICA_BOLD)
+                    .size(theme.typography().sizeBanner())
+                    .decoration(DocumentTextDecoration.BOLD)
+                    .color(SECTION_TITLE_COLOR)
+                    .build();
+
+            section.padding(new DocumentInsets(8, 0, 2, 0))
+                    .addParagraph(p -> p
+                            .text(title)
+                            .textStyle(titleStyle)
+                            .align(TextAlign.LEFT)
+                            .margin(DocumentInsets.zero()));
+        }
+    }
+}

@@ -68,6 +68,25 @@ public record CvTheme(CvPalette palette,
                 CvDecoration.classic());
     }
 
+    /**
+     * The "Modern Professional" look — Helvetica throughout, larger
+     * scale, tighter spacing. Body palette is the classic ink/muted
+     * pair; the preset itself adds the slate-blue name and
+     * bright-blue section title accents because those colours are not
+     * shared with any other v2 preset today.
+     *
+     * <p>When (or if) a second preset wants the same accent palette,
+     * extract those colours into a new field on {@link CvPalette} and
+     * point both presets at it.</p>
+     */
+    public static CvTheme modernProfessional() {
+        return new CvTheme(
+                CvPalette.classic(),
+                CvTypography.modernProfessional(),
+                CvSpacing.modernProfessional(),
+                CvDecoration.classic());
+    }
+
     // -- pre-built text-style helpers ------------------------------------
     // Renderers ask the theme for an already-composed DocumentTextStyle
     // instead of re-assembling font + size + decoration + colour every

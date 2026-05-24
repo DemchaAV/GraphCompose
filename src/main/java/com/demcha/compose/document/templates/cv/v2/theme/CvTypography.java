@@ -61,4 +61,21 @@ public record CvTypography(
                 8.6,     // body
                 1.4);    // line spacing
     }
+
+    /**
+     * Helvetica scale for the Modern Professional preset — larger
+     * display name, larger section titles, comfortable body size.
+     */
+    public static CvTypography modernProfessional() {
+        return new CvTypography(
+                FontName.HELVETICA_BOLD, FontName.HELVETICA,
+                28.0,    // headline (display name)
+                9.0,     // contact
+                17.4,    // banner (used as section title here)
+                10.5,    // entry title
+                10.0,    // entry date
+                9.5,     // entry subtitle
+                10.0,    // body
+                1.35);   // line spacing
+    }
 }

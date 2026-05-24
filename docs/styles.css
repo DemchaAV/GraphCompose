@@ -799,6 +799,63 @@ h2 {
   font-size: 0.94em;
 }
 
+/* Layered architecture callout */
+.layered-callout {
+  padding-top: 32px;
+  padding-bottom: 32px;
+}
+
+.layered-card {
+  position: relative;
+  padding: 28px 32px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.10), rgba(99, 102, 241, 0.10));
+  border: 1px solid rgba(129, 140, 248, 0.35);
+}
+
+.layered-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #0f172a;
+  background: linear-gradient(135deg, #38bdf8, #818cf8);
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.layered-card h2 {
+  margin: 0 0 8px 0;
+  font-size: 22px;
+  color: #f8fafc;
+}
+
+.layered-card p {
+  margin: 0 0 18px 0;
+  max-width: 720px;
+  color: #cbd5e1;
+  line-height: 1.55;
+}
+
+.layered-card strong {
+  color: #e2e8f0;
+}
+
+.layered-card code {
+  background: rgba(148, 163, 184, 0.18);
+  color: #f1f5f9;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.layered-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 /* Value prop strip */
 .value-prop {
   padding-top: 56px;

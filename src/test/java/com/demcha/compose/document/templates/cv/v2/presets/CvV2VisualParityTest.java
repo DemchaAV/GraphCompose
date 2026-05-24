@@ -92,7 +92,10 @@ class CvV2VisualParityTest {
                         (Supplier<DocumentTemplate<CvDocument>>) MinimalUnderlined::create),
                 Arguments.of("modern_professional",
                         ModernProfessional.RECOMMENDED_MARGIN,
-                        (Supplier<DocumentTemplate<CvDocument>>) ModernProfessional::create));
+                        (Supplier<DocumentTemplate<CvDocument>>) ModernProfessional::create),
+                Arguments.of("centered_headline",
+                        CenteredHeadline.RECOMMENDED_MARGIN,
+                        (Supplier<DocumentTemplate<CvDocument>>) CenteredHeadline::create));
     }
 
     /**
@@ -136,17 +139,17 @@ class CvV2VisualParityTest {
                 .section(EntriesSection.builder("Education & Certifications")
                         .entry("MSc Computer Science",
                                 "University of Manchester",
-                                "2021",
+                                "2020-2021",
                                 "Distinction. Thesis: *Composable layout primitives "
                                         + "for deterministic document rendering*.")
                         .entry("BSc Software Engineering",
                                 "Imperial College London",
-                                "2019",
+                                "2016-2019",
                                 "First-class honours. Specialisation in compilers and "
                                         + "static analysis.")
                         .entry("Oracle Java Certification",
                                 "Professional track",
-                                "2023",
+                                "2023-2024",
                                 "Java 17 platform deep-dive: records, sealed types, "
                                         + "pattern matching, virtual threads.")
                         .build())

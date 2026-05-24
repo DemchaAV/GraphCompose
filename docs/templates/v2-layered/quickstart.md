@@ -14,12 +14,13 @@ GraphCompose's templates v2 (layered) gives you:
 - **Themes describing visuals** — `CvTheme` (palette + typography +
   spacing + decoration). Swap a theme to change colours, fonts,
   bullet glyphs without touching renderers.
-- **Widgets as visual LEGO bricks** — `Headline`, `ContactLine`,
-  `SectionHeader`. Each one is a named visual decision you can drop
-  into a preset.
+- **Widgets as visual LEGO bricks** — `Headline`, `Subheadline`,
+  `ContactLine`, `SectionHeader`. Each one is a named visual decision
+  you can drop into a preset.
 - **Presets as compositions** — a preset orchestrates widgets in a
-  page flow. `BoxedSections`, `MinimalUnderlined`, `ModernProfessional`
-  ship today; writing your own is ~150 lines.
+  page flow. `BoxedSections`, `MinimalUnderlined`,
+  `ModernProfessional`, `CenteredHeadline` ship today; writing your
+  own is ~150 lines.
 
 You hand a `CvDocument` to a preset, you get a PDF. The preset
 internally composes widgets that read theme tokens that ultimately
@@ -87,13 +88,14 @@ Same data, different visual. That's the layering.
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  presets/   BoxedSections, MinimalUnderlined,               │
-│             ModernProfessional                              │
+│             ModernProfessional, CenteredHeadline            │
 │             — composition of widgets in a page flow         │
 └─────────────────────────────────────────────────────────────┘
         │ compose from widgets
         ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  widgets/   Headline, ContactLine, SectionHeader            │
+│  widgets/   Headline, Subheadline, ContactLine,             │
+│             SectionHeader                                   │
 │             — named visual LEGO bricks                      │
 └─────────────────────────────────────────────────────────────┘
         │ delegate to ↓    │ read tokens from ↓

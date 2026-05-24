@@ -20,15 +20,19 @@
  *   │  presets/                                                   │
  *   │    BoxedSections      ← composition: data + theme + render  │
  *   │    MinimalUnderlined  ← another composition, same pieces    │
- *   │    ModernProfessional ← third preset, partial widget use    │
+ *   │    ModernProfessional ← corporate composition variant       │
+ *   │    CenteredHeadline   ← classic centred headline variant    │
  *   └─────────────────────────────────────────────────────────────┘
  *           │ compose from
  *           ▼
  *   ┌─────────────────────────────────────────────────────────────┐
  *   │  widgets/  ← named visual building blocks (LEGO bricks)    │
  *   │    Headline       .spacedCentered | .rightAligned           │
- *   │    ContactLine    .centered       | .rightAligned           │
+ *   │    Subheadline    .centeredSpacedCaps                       │
+ *   │    ContactLine    .centered | .rightAligned                 │
+ *   │                   .twoRowRightAligned                       │
  *   │    SectionHeader  .banner | .underlined | .flat             │
+ *   │                   .flatSpacedCaps                           │
  *   └─────────────────────────────────────────────────────────────┘
  *           │ delegate to                       │ read tokens from
  *           ▼                                   ▼
@@ -70,8 +74,9 @@
  *   <dt><b>{@code widgets/}</b></dt>
  *   <dd>The LEGO bricks. <em>"Which visual building block do I
  *       want here — a banner, an underlined title, a right-aligned
- *       headline?"</em> Each widget has 2-3 named variants and a
- *       lower-level entry for ad-hoc parameter combinations. This
+ *       headline?"</em> Each widget has a small set of named
+ *       variants and, where useful, a lower-level entry for ad-hoc
+ *       parameter combinations. This
  *       is where most preset code lives — picking widgets and
  *       composing them.</dd>
  *

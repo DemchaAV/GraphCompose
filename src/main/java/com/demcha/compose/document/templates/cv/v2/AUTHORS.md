@@ -324,16 +324,23 @@ as DSL plumbing. Below is the current catalog.
 
 | Variant | Visual | Used in |
 |---|---|---|
-| `Headline.spacedCentered(host, name, theme)` | centred letter-spaced uppercase (`J A N E   D O E`) | BoxedSections, MinimalUnderlined |
+| `Headline.spacedCentered(host, name, theme)` | centred letter-spaced uppercase (`J A N E   D O E`) | BoxedSections, MinimalUnderlined, CenteredHeadline |
 | `Headline.rightAligned(host, name, theme)` | right-aligned plain bold (`Jane Doe`) | ModernProfessional |
 | `Headline.render(host, name, theme, align, spacedCaps)` | low-level: pick any alignment + transform | — |
+
+### `Subheadline` — secondary tagline under the name
+
+| Variant | Visual | Used in |
+|---|---|---|
+| `Subheadline.centeredSpacedCaps(host, text, style)` | centred letter-spaced uppercase tagline | CenteredHeadline |
 
 ### `ContactLine` — phone / email / address / links row
 
 | Variant | Visual | Used in |
 |---|---|---|
-| `ContactLine.centered(host, identity, theme)` | centred, phone → email → address → links | BoxedSections, MinimalUnderlined |
+| `ContactLine.centered(host, identity, theme)` | centred, phone → email → address → links | BoxedSections, MinimalUnderlined, CenteredHeadline |
 | `ContactLine.rightAligned(host, identity, theme)` | right-aligned, address → phone → email → links | ModernProfessional |
+| `ContactLine.twoRowRightAligned(host, identity, theme, bodyStyle, linkStyle, separatorStyle)` | right-aligned address/phone row plus email/link row | ModernProfessional |
 | `ContactLine.render(host, identity, theme, align, order)` | low-level: pick alignment + field order | — |
 
 The separator glyph comes from
@@ -347,11 +354,12 @@ change `   |   ` to `  ·  ` or anything else.
 | `SectionHeader.banner(host, title, theme)` | pale-grey panel with centred spaced-caps inside | BoxedSections |
 | `SectionHeader.underlined(host, title, theme)` | small spaced-caps left-aligned, thin rule below | MinimalUnderlined |
 | `SectionHeader.flat(host, title, color, theme)` | large bold title in a given colour, no panel | ModernProfessional |
+| `SectionHeader.flatSpacedCaps(host, title, color, theme, titleStyle)` | small spaced-caps title in a soft colour, no panel | CenteredHeadline |
 
-Note that `flat` takes a `DocumentColor` argument — the section
-title colour is the preset's signature accent, and the widget
-deliberately surfaces it as a parameter rather than burying it in
-the theme.
+Note that `flat` and `flatSpacedCaps` take a `DocumentColor`
+argument — the section title colour is the preset's signature
+accent, and the widget deliberately surfaces it as a parameter
+rather than burying it in the theme.
 
 ### Composing a preset from widgets
 

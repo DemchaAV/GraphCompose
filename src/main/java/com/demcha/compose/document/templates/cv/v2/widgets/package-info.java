@@ -5,7 +5,7 @@
  * (addParagraph / softPanel / accentBottom) and CV-specific
  * renderers in {@code components/}. Each widget captures one
  * <em>visual idea</em> (a headline, a contact line, a section
- * header) with two or three named variants, so a preset author
+ * header) with a small set of named variants, so a preset author
  * composes a page by <strong>picking widgets</strong> instead of
  * writing rendering DSL by hand.</p>
  *
@@ -44,12 +44,16 @@
  *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.Headline}
  *       — top-of-document name in 2 variants
  *       ({@code spacedCentered}, {@code rightAligned}).</li>
+ *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.Subheadline}
+ *       — secondary tagline under the name in 1 variant
+ *       ({@code centeredSpacedCaps}).</li>
  *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.ContactLine}
- *       — pipe-separated contact + links row in 2 variants
- *       ({@code centered}, {@code rightAligned}).</li>
+ *       — pipe-separated contact + links row in 3 variants
+ *       ({@code centered}, {@code rightAligned},
+ *       {@code twoRowRightAligned}).</li>
  *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader}
- *       — section title in 3 variants ({@code banner},
- *       {@code underlined}, {@code flat}).</li>
+ *       — section title in 4 variants ({@code banner},
+ *       {@code underlined}, {@code flat}, {@code flatSpacedCaps}).</li>
  * </ul>
  *
  * <p>Each widget delegates internally to the lower-level renderers

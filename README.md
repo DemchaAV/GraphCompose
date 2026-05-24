@@ -189,8 +189,9 @@ document.pageFlow().addCanvas(523, 360, canvas -> canvas
 
 ## Documentation
 
-- [Template authoring cheatsheet](./docs/template-authoring.md) &mdash; read this once before writing your own template
-- [Templates v2 landing](./docs/templates-v2.md) &mdash; CV / cover-letter / invoice / proposal preset library
+- 🆕 [**Templates — layered architecture**](./docs/templates-layered/README.md) &mdash; the canonical going-forward pattern for new template families (CV v2 is the reference implementation). Personas: [quickstart](./docs/templates-layered/quickstart.md) · [using templates](./docs/templates-layered/using-templates.md) · [authoring presets](./docs/templates-layered/authoring-presets.md) · [contributing a new family](./docs/templates-layered/contributor-guide.md).
+- [Template authoring cheatsheet](./docs/template-authoring.md) &mdash; read this once before writing your own template (covers v1 template surface)
+- [Templates v2 landing](./docs/templates-v2.md) &mdash; CV / cover-letter / invoice / proposal preset library (v1 surface, still shipped)
 - [Examples gallery](./examples/README.md) &mdash; every runnable example with PDF preview
 - [Architecture](./docs/architecture.md) · [Lifecycle](./docs/lifecycle.md) · [Production rendering](./docs/production-rendering.md)
 - Recipes: [shape-as-container](./docs/recipes/shape-as-container.md) · [transforms](./docs/recipes/transforms.md) · [tables](./docs/recipes/tables.md) · [themes](./docs/recipes/themes.md) · [streaming](./docs/recipes/streaming.md) · [extending](./docs/recipes/extending.md)

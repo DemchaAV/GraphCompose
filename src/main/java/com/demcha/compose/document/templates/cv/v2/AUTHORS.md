@@ -310,6 +310,126 @@ sidebar content to flow inline with main.
 
 ---
 
+## Widget cookbook — the LEGO bricks
+
+When you build a preset, you compose your `compose()` method from
+**widgets** that live in
+`com.demcha.compose.document.templates.cv.v2.widgets`. Each widget
+captures one visual idea, with named variants per visual style.
+
+This means your preset reads as a sequence of visual decisions, not
+as DSL plumbing. Below is the current catalog.
+
+### `Headline` — top-of-document name
+
+| Variant | Visual | Used in |
+|---|---|---|
+| `Headline.spacedCentered(host, name, theme)` | centred letter-spaced uppercase (`J A N E   D O E`) | BoxedSections, MinimalUnderlined |
+| `Headline.rightAligned(host, name, theme)` | right-aligned plain bold (`Jane Doe`) | ModernProfessional |
+| `Headline.render(host, name, theme, align, spacedCaps)` | low-level: pick any alignment + transform | — |
+
+### `ContactLine` — phone / email / address / links row
+
+| Variant | Visual | Used in |
+|---|---|---|
+| `ContactLine.centered(host, identity, theme)` | centred, phone → email → address → links | BoxedSections, MinimalUnderlined |
+| `ContactLine.rightAligned(host, identity, theme)` | right-aligned, address → phone → email → links | ModernProfessional |
+| `ContactLine.render(host, identity, theme, align, order)` | low-level: pick alignment + field order | — |
+
+The separator glyph comes from
+`theme.decoration().contactSeparator()` — swap `CvDecoration` to
+change `   |   ` to `  ·  ` or anything else.
+
+### `SectionHeader` — title above a section body
+
+| Variant | Visual | Used in |
+|---|---|---|
+| `SectionHeader.banner(host, title, theme)` | pale-grey panel with centred spaced-caps inside | BoxedSections |
+| `SectionHeader.underlined(host, title, theme)` | small spaced-caps left-aligned, thin rule below | MinimalUnderlined |
+| `SectionHeader.flat(host, title, color, theme)` | large bold title in a given colour, no panel | ModernProfessional |
+
+Note that `flat` takes a `DocumentColor` argument — the section
+title colour is the preset's signature accent, and the widget
+deliberately surfaces it as a parameter rather than burying it in
+the theme.
+
+### Composing a preset from widgets
+
+A typical preset's `compose()` becomes a sequence of widget calls:
+
+```java
+@Override
+public void compose(DocumentSession document, CvDocument doc) {
+    PageFlowBuilder pageFlow = document.dsl().pageFlow()
+            .name("MyPresetRoot")
+            .spacing(theme.spacing().pageFlowSpacing())
+            .addSection("Headline", s ->
+                    Headline.spacedCentered(s, doc.identity().name(), theme))
+            .addSection("Contact", s ->
+                    ContactLine.centered(s, doc.identity(), theme));
+
+    for (CvSection sec : doc.sectionsIn(Slot.MAIN)) {
+        pageFlow
+            .addSection("Title", s -> SectionHeader.banner(s, sec.title(), theme))
+            .addSection("Body",  s -> SectionDispatcher.renderBody(s, sec, theme));
+    }
+    pageFlow.build();
+}
+```
+
+That's **the whole preset.** Twelve lines. No paragraph DSL, no
+custom rendering helpers.
+
+### When the widget doesn't fit
+
+Widgets are optional, not mandatory. When a preset needs something
+no widget covers (e.g. unusual link colours, special separator,
+custom alignment combo), **inline it**:
+
+```java
+.addSection("Contact", section -> {
+    DocumentTextStyle myStyle = DocumentTextStyle.builder()
+        .fontName(FontName.HELVETICA)
+        .color(DocumentColor.rgb(65, 105, 225))
+        .build();
+
+    section.addParagraph(p -> p
+        .text(doc.identity().contact().email())
+        .textStyle(myStyle)
+        .align(TextAlign.RIGHT));
+})
+```
+
+Inline is fine for one-off needs. If the same inline pattern shows
+up in **2+ presets**, that's the signal to extract a new widget
+variant or add a parameter to an existing one. Don't pre-extract.
+
+### Adding a new widget — the test of when
+
+| Pattern repetition | Action |
+|---|---|
+| 1 preset only | Inline. Leave it alone. |
+| 2 presets | Add a new factory method to an existing widget, OR add a parameter. |
+| 3+ presets | It's its own widget. New class in `cv/v2/widgets/`. |
+
+### Examples of widgets we could add (not done yet)
+
+These don't exist today but illustrate where the catalog could
+grow. **Don't write them until a real preset needs them** —
+premature widgets are noise.
+
+- `Badge.pill(host, label, fillColor, textColor)` — labelled pill
+  for tags, awards, certifications.
+- `IconLabel.render(host, icon, text, theme)` — small icon next
+  to a text label, useful for contact rows that show icons.
+- `Divider.thin(host, theme)` / `.thick(...)` — horizontal rule
+  with configurable weight + colour.
+- `TwoColumnRow.render(host, leftBuilder, rightBuilder, weights, theme)` —
+  generic split with weights, useful for entry headers across
+  presets.
+
+---
+
 ## Recipe 7 — conditional sections (data-driven)
 
 Real CVs often hide a section when there's nothing to put in it:

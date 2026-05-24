@@ -1,32 +1,29 @@
 package com.demcha.compose.document.templates.cv.v2.components;
 
 import com.demcha.compose.document.dsl.SectionBuilder;
-import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
 
 /**
- * Draws the pale-grey banner row holding a centred, letter-spaced
- * uppercase section title (e.g. {@code P R O J E C T S}).
- *
- * <p>The host {@link SectionBuilder} becomes the banner panel —
- * theme tokens drive the fill colour, corner radius, inner padding,
- * and surrounding margin.</p>
+ * @deprecated Use
+ * {@link com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader#banner}
+ * instead — the widget groups the banner alongside its sibling
+ * variants ({@code underlined}, {@code flat}) so picking a section-
+ * title style becomes one choice in one place. Kept as a thin
+ * delegating shim so v2 code written before the widgets layer keeps
+ * compiling unchanged.
  */
+@Deprecated
 public final class BannerRenderer {
 
     private BannerRenderer() {
     }
 
+    /**
+     * @deprecated delegates to {@link SectionHeader#banner}.
+     */
+    @Deprecated
     public static void render(SectionBuilder section, String title, CvTheme theme) {
-        section.softPanel(theme.palette().banner(),
-                        theme.spacing().bannerCornerRadius(),
-                        theme.spacing().bannerInnerPadding())
-                .margin(theme.spacing().bannerMargin())
-                .addParagraph(p -> p
-                        .text(TextOrnaments.spacedUpper(title))
-                        .textStyle(theme.bannerStyle())
-                        .align(TextAlign.CENTER)
-                        .margin(DocumentInsets.zero()));
+        SectionHeader.banner(section, title, theme);
     }
 }

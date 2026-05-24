@@ -18,6 +18,7 @@ import com.demcha.compose.document.templates.cv.v2.data.CvLink;
 import com.demcha.compose.document.templates.cv.v2.data.CvSection;
 import com.demcha.compose.document.templates.cv.v2.data.Slot;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
 import com.demcha.compose.font.FontName;
 
 import java.util.List;
@@ -134,7 +135,7 @@ public final class ModernProfessional {
                 final CvSection sec = sections.get(i);
                 final int idx = i;
                 pageFlow.addSection("Title_" + idx, host ->
-                        renderSectionTitle(host, sec.title()));
+                        SectionHeader.flat(host, sec.title(), SECTION_TITLE_COLOR, theme));
                 pageFlow.addSection("Body_" + idx, host ->
                         SectionDispatcher.renderBody(host, sec, theme));
             }
@@ -205,24 +206,5 @@ public final class ModernProfessional {
                             }));
         }
 
-        /**
-         * Flat bright-blue bold section title, left-aligned, no panel.
-         * This is the visual hallmark of the Modern Professional look.
-         */
-        private void renderSectionTitle(SectionBuilder section, String title) {
-            DocumentTextStyle titleStyle = DocumentTextStyle.builder()
-                    .fontName(FontName.HELVETICA_BOLD)
-                    .size(theme.typography().sizeBanner())
-                    .decoration(DocumentTextDecoration.BOLD)
-                    .color(SECTION_TITLE_COLOR)
-                    .build();
-
-            section.padding(new DocumentInsets(8, 0, 2, 0))
-                    .addParagraph(p -> p
-                            .text(title)
-                            .textStyle(titleStyle)
-                            .align(TextAlign.LEFT)
-                            .margin(DocumentInsets.zero()));
-        }
     }
 }

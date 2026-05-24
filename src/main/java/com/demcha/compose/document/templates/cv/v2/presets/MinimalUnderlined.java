@@ -2,18 +2,15 @@ package com.demcha.compose.document.templates.cv.v2.presets;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
-import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.cv.v2.components.ContactRenderer;
-import com.demcha.compose.document.templates.cv.v2.components.HeadlineRenderer;
 import com.demcha.compose.document.templates.cv.v2.components.SectionDispatcher;
-import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
 import com.demcha.compose.document.templates.cv.v2.data.CvSection;
 import com.demcha.compose.document.templates.cv.v2.data.Slot;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
+import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
+import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
 
 import java.util.List;
 import java.util.Objects;
@@ -102,11 +99,11 @@ public final class MinimalUnderlined {
                     .name("CvV2MinimalRoot")
                     .spacing(theme.spacing().pageFlowSpacing())
                     .addSection("Headline", section ->
-                            HeadlineRenderer.render(section, doc.identity().name(), theme))
+                            Headline.spacedCentered(section, doc.identity().name(), theme))
                     .addSection("Contact", section -> {
                         section.accentBottom(theme.palette().rule(),
                                 theme.spacing().accentRuleWidth());
-                        ContactRenderer.render(section, doc.identity(), theme);
+                        ContactLine.centered(section, doc.identity(), theme);
                     });
 
             // Single-column preset — only renders MAIN-slot sections.
@@ -116,31 +113,12 @@ public final class MinimalUnderlined {
                 final CvSection sec = sections.get(i);
                 final int idx = i;
                 pageFlow.addSection("Title_" + idx, host ->
-                        renderUnderlinedTitle(host, sec.title()));
+                        SectionHeader.underlined(host, sec.title(), theme));
                 pageFlow.addSection("Body_" + idx, host ->
                         SectionDispatcher.renderBody(host, sec, theme));
             }
 
             pageFlow.build();
-        }
-
-        /**
-         * The one piece that differs from {@link BoxedSections}: a
-         * small left-aligned uppercase title with a thin underline,
-         * in place of the centred banner panel.
-         */
-        private void renderUnderlinedTitle(
-                com.demcha.compose.document.dsl.SectionBuilder host,
-                String title) {
-            DocumentTextStyle titleStyle = theme.entryTitleStyle();
-            host.accentBottom(theme.palette().rule(),
-                            theme.spacing().accentRuleWidth())
-                    .padding(new DocumentInsets(8, 0, 2, 0))
-                    .addParagraph(p -> p
-                            .text(TextOrnaments.spacedUpper(title))
-                            .textStyle(titleStyle)
-                            .align(TextAlign.LEFT)
-                            .margin(DocumentInsets.zero()));
         }
     }
 }

@@ -20,17 +20,27 @@
  *   │  presets/                                                   │
  *   │    BoxedSections      ← composition: data + theme + render  │
  *   │    MinimalUnderlined  ← another composition, same pieces    │
+ *   │    ModernProfessional ← third preset, partial widget use    │
  *   └─────────────────────────────────────────────────────────────┘
- *           │ uses                              │ uses
+ *           │ compose from
+ *           ▼
+ *   ┌─────────────────────────────────────────────────────────────┐
+ *   │  widgets/  ← named visual building blocks (LEGO bricks)    │
+ *   │    Headline       .spacedCentered | .rightAligned           │
+ *   │    ContactLine    .centered       | .rightAligned           │
+ *   │    SectionHeader  .banner | .underlined | .flat             │
+ *   └─────────────────────────────────────────────────────────────┘
+ *           │ delegate to                       │ read tokens from
  *           ▼                                   ▼
  *   ┌──────────────────────┐         ┌──────────────────────────┐
  *   │  components/         │         │  theme/                  │
- *   │    HeadlineRenderer  │ reads   │    CvPalette  (colours)  │
- *   │    ContactRenderer   │◀────────│    CvTypography (fonts)  │
- *   │    BannerRenderer    │         │    CvSpacing  (margins)  │
- *   │    RowRenderer       │         │    CvDecoration (glyphs) │
- *   │    EntryRenderer     │         │    CvTheme    (bundle)   │
- *   │    SectionDispatcher │         └──────────────────────────┘
+ *   │    RowRenderer       │ reads   │    CvPalette  (colours)  │
+ *   │    EntryRenderer     │◀────────│    CvTypography (fonts)  │
+ *   │    ParagraphRenderer │         │    CvSpacing  (margins)  │
+ *   │    SectionDispatcher │         │    CvDecoration (glyphs) │
+ *   │    ParagraphPrimitive│         │    CvTheme    (bundle)   │
+ *   │    MarkdownInline    │         └──────────────────────────┘
+ *   │    TextOrnaments     │
  *   └──────────────────────┘
  *           │ renders
  *           ▼
@@ -38,7 +48,8 @@
  *   │  data/                                                      │
  *   │    CvIdentity   ← name, contact, optional links             │
  *   │    CvSection    ← sealed: Paragraph | Rows | Entries        │
- *   │    CvDocument   ← identity + ordered sections               │
+ *   │    CvDocument   ← identity + Placement(slot, section)       │
+ *   │    Slot         ← MAIN | SIDEBAR | FOOTER                   │
  *   └─────────────────────────────────────────────────────────────┘
  * </pre>
  *
@@ -55,6 +66,14 @@
  *       Colours, fonts, sizes, margins, glyphs. Swap-able without
  *       touching renderers. If you want a navy theme or a different
  *       bullet character, this is where you live.</dd>
+ *
+ *   <dt><b>{@code widgets/}</b></dt>
+ *   <dd>The LEGO bricks. <em>"Which visual building block do I
+ *       want here — a banner, an underlined title, a right-aligned
+ *       headline?"</em> Each widget has 2-3 named variants and a
+ *       lower-level entry for ad-hoc parameter combinations. This
+ *       is where most preset code lives — picking widgets and
+ *       composing them.</dd>
  *
  *   <dt><b>{@code components/}</b></dt>
  *   <dd>The reusable drawing primitives. <em>"How is a section

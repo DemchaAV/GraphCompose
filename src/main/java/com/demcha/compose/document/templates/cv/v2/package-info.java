@@ -5,6 +5,14 @@
  * documents on top of GraphCompose. Below is the conceptual model
  * every author should hold in their head before writing a template.</p>
  *
+ * <p><strong>Persona-neutral.</strong> Nothing here assumes a
+ * software-developer audience. The shipped sample data is a
+ * developer CV because we needed a fixture for visual regression,
+ * but the same builders fit a teacher, a chef, a nurse, an
+ * artist — anyone. Skip the link / section types you don't need;
+ * section titles are free strings and links are optional. See
+ * {@code AUTHORS.md} for a non-IT example.</p>
+ *
  * <h2>Four layers, one responsibility each</h2>
  *
  * <pre>
@@ -119,6 +127,31 @@
  * }
  * }</pre>
  *
+ * <h2>Slots — placing sections in columns</h2>
+ *
+ * <p>Every section is placed into a
+ * {@link com.demcha.compose.document.templates.cv.v2.data.Slot} —
+ * {@code MAIN}, {@code SIDEBAR}, or {@code FOOTER}. Single-column
+ * presets read only {@code MAIN} sections; multi-column presets
+ * read whichever slots they support, leaving the data model
+ * unchanged.</p>
+ *
+ * <pre>{@code
+ * CvDocument doc = CvDocument.builder()
+ *     .identity(identity)
+ *     .section(summary)                     // implicit MAIN
+ *     .section(Slot.SIDEBAR, languages)     // sidebar column
+ *     .build();
+ * }</pre>
+ *
+ * <p>Inside a preset:</p>
+ *
+ * <pre>{@code
+ * for (CvSection s : doc.sectionsIn(Slot.MAIN)) {
+ *     // render s into the main flow
+ * }
+ * }</pre>
+ *
  * <h2>Going further — extension recipes</h2>
  *
  * <p>See {@code AUTHORS.md} alongside this package for longer
@@ -128,6 +161,7 @@
  *   <li>Build a new theme variant (navy / compact / serif)</li>
  *   <li>Write a brand-new preset that reuses existing renderers</li>
  *   <li>Add a brand-new section subtype (compile-checked dispatch)</li>
+ *   <li>Place sections in slots (sidebar / footer)</li>
  * </ul>
  *
  * <h2>What this package is <em>not</em></h2>

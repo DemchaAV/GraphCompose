@@ -13,6 +13,60 @@ This guide answers the **"how do I…"** questions.
 
 ---
 
+## The scaffold is persona-neutral
+
+Nothing in the v2 API assumes a software-developer audience. The
+sample data shipped with the package happens to be a developer CV
+(Jordan Rivera, "Platform Engineer", GitHub, Projects, Tech Skills),
+but that's only because we needed *some* fixture for visual
+regression. The same builders fit any persona — skip the link / section
+types you don't need.
+
+```java
+// A primary school teacher's CV — no GitHub, no Projects, no Tech Skills
+CvDocument.builder()
+    .identity(CvIdentity.builder()
+        .name("Maria", "Lopez")
+        .contact("+34 600 000 000", "maria@example.com", "Madrid, Spain")
+        // no .link(...) calls — she has no public profiles, and that is fine
+        .build())
+    .section(new ParagraphSection("About Me",
+        "Primary school teacher with 12 years' experience in literacy " +
+        "and inclusive education."))
+    .section(EntriesSection.builder("Teaching Experience")
+        .entry("Lead Teacher Y3", "Colegio Santa Ana", "2018-Present",
+               "Year-3 lead teacher; designed the school's reading-rota " +
+               "and mentored two newly-qualified teachers.")
+        .entry("Year Teacher", "Escuela Primaria Goya", "2013-2018",
+               "Y1-Y2 generalist; led the SEN reading-club after hours.")
+        .build())
+    .section(RowsSection.builder("Languages", RowStyle.PLAIN)
+        .row("Spanish",   "Native")
+        .row("English",   "Fluent (CEFR C1)")
+        .row("Catalan",   "Conversational")
+        .build())
+    .section(RowsSection.builder("Certifications", RowStyle.PLAIN)
+        .row("Inclusive Education",     "Universidad Complutense, 2020")
+        .row("Children's First Aid",    "Cruz Roja, 2022")
+        .build())
+    .build();
+```
+
+Notice what's absent:
+
+- **No `link(...)` calls.** Optional, simply omitted.
+- **No Projects, no Skills.** The three section types
+  (`ParagraphSection`, `RowsSection`, `EntriesSection`) work for any
+  content shape — you choose what to put in them and what to call
+  them.
+- **No required IT vocabulary anywhere.** Section titles are free
+  strings (`"About Me"`, `"Teaching Experience"`, `"Certifications"`).
+
+The rest of this guide leans on dev-style examples for continuity,
+but every recipe below works the same way for any persona.
+
+---
+
 ## Recipe 1 — change a bullet glyph
 
 You want `▶` instead of `•`, or numbered bullets, or em-dashes.
@@ -211,7 +265,52 @@ guard.)
 
 ---
 
-## Recipe 6 — conditional sections (data-driven)
+## Recipe 6 — place sections in slots (sidebar / footer)
+
+A `CvDocument` is not just a flat list of sections — every section is
+**placed** into a `Slot` (one of `MAIN`, `SIDEBAR`, `FOOTER`).
+Single-column presets like `BoxedSections` read only `Slot.MAIN`
+sections; multi-column presets read whichever slots they support.
+
+**Placing a section into a slot** (builder API):
+
+```java
+CvDocument doc = CvDocument.builder()
+    .identity(identity)
+    .section(summary)                              // defaults to MAIN
+    .section(Slot.MAIN, technicalSkills)           // explicit, same as above
+    .section(Slot.SIDEBAR, languagesSpoken)        // sidebar column
+    .section(Slot.SIDEBAR, certifications)         // sidebar column
+    .sections(Slot.MAIN, experience, projects)     // varargs in a slot
+    .build();
+```
+
+**Reading by slot** (in a preset's `compose()`):
+
+```java
+// Single-column preset — render only MAIN, drop the rest
+List<CvSection> mainSections = doc.sectionsIn(Slot.MAIN);
+
+// Two-column preset
+List<CvSection> mainSections    = doc.sectionsIn(Slot.MAIN);
+List<CvSection> sidebarSections = doc.sectionsIn(Slot.SIDEBAR);
+```
+
+**Why this matters:** when the user feeds your document to a
+single-column preset, sidebar sections are silently dropped (they
+have no place to render). When the same document goes through a
+two-column preset, sidebar sections show up in the sidebar column.
+The data model is the same — only the preset's interpretation
+differs.
+
+**Tip:** `doc.sections()` returns *every* section in source order
+regardless of slot. Use it for debug printing or unfiltered
+iteration — not in a preset's render loop unless you really want
+sidebar content to flow inline with main.
+
+---
+
+## Recipe 7 — conditional sections (data-driven)
 
 Real CVs often hide a section when there's nothing to put in it:
 

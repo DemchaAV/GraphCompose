@@ -62,6 +62,9 @@ class WidgetSmokeTest {
         renderWithSection(section ->
                 SectionHeader.banner(section, "Professional Summary", theme));
         renderWithSection(section ->
+                SectionHeader.fullWidthBanner(section, "Professional Summary",
+                        CvTheme.blueBanner()));
+        renderWithSection(section ->
                 SectionHeader.underlined(section, "Skills", theme));
         renderWithSection(section ->
                 SectionHeader.flat(section, "Experience",

@@ -324,7 +324,7 @@ as DSL plumbing. Below is the current catalog.
 
 | Variant | Visual | Used in |
 |---|---|---|
-| `Headline.spacedCentered(host, name, theme)` | centred letter-spaced uppercase (`J A N E   D O E`) | BoxedSections, MinimalUnderlined, CenteredHeadline |
+| `Headline.spacedCentered(host, name, theme)` | centred letter-spaced uppercase (`J A N E   D O E`) | BoxedSections, MinimalUnderlined, CenteredHeadline, BlueBanner |
 | `Headline.rightAligned(host, name, theme)` | right-aligned plain bold (`Jane Doe`) | ModernProfessional |
 | `Headline.render(host, name, theme, align, spacedCaps)` | low-level: pick any alignment + transform | — |
 
@@ -338,7 +338,7 @@ as DSL plumbing. Below is the current catalog.
 
 | Variant | Visual | Used in |
 |---|---|---|
-| `ContactLine.centered(host, identity, theme)` | centred, phone → email → address → links | BoxedSections, MinimalUnderlined, CenteredHeadline |
+| `ContactLine.centered(host, identity, theme)` | centred, phone → email → address → links | BoxedSections, MinimalUnderlined, CenteredHeadline, BlueBanner |
 | `ContactLine.rightAligned(host, identity, theme)` | right-aligned, address → phone → email → links | ModernProfessional |
 | `ContactLine.twoRowRightAligned(host, identity, theme, bodyStyle, linkStyle, separatorStyle)` | right-aligned address/phone row plus email/link row | ModernProfessional |
 | `ContactLine.render(host, identity, theme, align, order)` | low-level: pick alignment + field order | — |
@@ -352,6 +352,7 @@ change `   |   ` to `  ·  ` or anything else.
 | Variant | Visual | Used in |
 |---|---|---|
 | `SectionHeader.banner(host, title, theme)` | pale-grey panel with centred spaced-caps inside | BoxedSections |
+| `SectionHeader.fullWidthBanner(host, title, theme[, style])` | full-width fill banner with centred spaced-caps inside; rules around it stay in the preset page flow | BlueBanner |
 | `SectionHeader.underlined(host, title, theme)` | small spaced-caps left-aligned, thin rule below | MinimalUnderlined |
 | `SectionHeader.flat(host, title, color, theme)` | large bold title in a given colour, no panel | ModernProfessional |
 | `SectionHeader.flatSpacedCaps(host, title, color, theme, titleStyle)` | small spaced-caps title in a soft colour, no panel | CenteredHeadline |

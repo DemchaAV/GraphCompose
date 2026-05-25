@@ -2,9 +2,9 @@
 
 You like the layered architecture, but the shipped presets
 (`BoxedSections`, `MinimalUnderlined`, `ModernProfessional`,
-`CenteredHeadline`) don't match the design you want. This doc walks
-you through writing a new preset from scratch — **without subclassing,
-without duplicating rendering code**.
+`CenteredHeadline`, `BlueBanner`) don't match the design you want.
+This doc walks you through writing a new preset from scratch —
+**without subclassing, without duplicating rendering code**.
 
 If you haven't read [quickstart.md](quickstart.md) and
 [using-templates.md](using-templates.md), do those first.
@@ -91,6 +91,7 @@ small set of named variants.
 | Variant | Visual |
 |---|---|
 | `SectionHeader.banner(host, title, theme)` | Pale-grey panel + centred spaced-caps inside |
+| `SectionHeader.fullWidthBanner(host, title, theme[, style])` | Full-width fill banner + centred spaced-caps inside; surrounding rules stay in preset page flow |
 | `SectionHeader.underlined(host, title, theme)` | Small left spaced-caps + thin rule below |
 | `SectionHeader.flat(host, title, color, theme)` | Large bold title in a given colour, no panel |
 | `SectionHeader.flatSpacedCaps(host, title, color, theme, titleStyle)` | Small left spaced-caps title in a soft colour, no panel |

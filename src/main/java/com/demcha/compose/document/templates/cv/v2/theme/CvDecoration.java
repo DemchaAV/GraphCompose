@@ -47,4 +47,12 @@ public record CvDecoration(String bulletGlyph,
     public static CvDecoration classic() {
         return new CvDecoration("• ", "  ", "   |   ");
     }
+
+    /**
+     * Blue Banner keeps classic bullets but uses the tighter contact
+     * separator spacing from the legacy preset.
+     */
+    public static CvDecoration blueBanner() {
+        return new CvDecoration("• ", "  ", "  |  ");
+    }
 }

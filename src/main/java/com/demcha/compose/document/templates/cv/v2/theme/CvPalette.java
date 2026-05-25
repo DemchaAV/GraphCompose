@@ -56,4 +56,16 @@ public record CvPalette(DocumentColor ink,
                 DocumentColor.rgb(188, 188, 188),  // rule (#BCBCBC)
                 DocumentColor.rgb(220, 226, 230)); // banner (inherits classic)
     }
+
+    /**
+     * Blue Banner palette: compact dark ink, blue section fills, and
+     * darker blue separator rules.
+     */
+    public static CvPalette blueBanner() {
+        return new CvPalette(
+                DocumentColor.rgb(20, 25, 35),
+                DocumentColor.rgb(85, 85, 85),
+                DocumentColor.rgb(58, 82, 118),
+                DocumentColor.rgb(112, 146, 190));
+    }
 }

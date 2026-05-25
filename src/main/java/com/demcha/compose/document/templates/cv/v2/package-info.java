@@ -22,6 +22,7 @@
  *   │    MinimalUnderlined  ← another composition, same pieces    │
  *   │    ModernProfessional ← corporate composition variant       │
  *   │    CenteredHeadline   ← classic centred headline variant    │
+ *   │    BlueBanner         ← full-width banner composition       │
  *   └─────────────────────────────────────────────────────────────┘
  *           │ compose from
  *           ▼
@@ -31,8 +32,8 @@
  *   │    Subheadline    .centeredSpacedCaps                       │
  *   │    ContactLine    .centered | .rightAligned                 │
  *   │                   .twoRowRightAligned                       │
- *   │    SectionHeader  .banner | .underlined | .flat             │
- *   │                   .flatSpacedCaps                           │
+ *   │    SectionHeader  .banner | .fullWidthBanner | .underlined  │
+ *   │                   .flat | .flatSpacedCaps                   │
  *   └─────────────────────────────────────────────────────────────┘
  *           │ delegate to                       │ read tokens from
  *           ▼                                   ▼

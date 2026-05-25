@@ -102,6 +102,19 @@ public record CvTheme(CvPalette palette,
                 CvDecoration.classic());
     }
 
+    /**
+     * The "Blue Banner" look — PT Serif display name, Lato body,
+     * compact spacing, blue full-width section banners, and tighter
+     * pipe separators.
+     */
+    public static CvTheme blueBanner() {
+        return new CvTheme(
+                CvPalette.blueBanner(),
+                CvTypography.blueBanner(),
+                CvSpacing.blueBanner(),
+                CvDecoration.blueBanner());
+    }
+
     // -- pre-built text-style helpers ------------------------------------
     // Renderers ask the theme for an already-composed DocumentTextStyle
     // instead of re-assembling font + size + decoration + colour every

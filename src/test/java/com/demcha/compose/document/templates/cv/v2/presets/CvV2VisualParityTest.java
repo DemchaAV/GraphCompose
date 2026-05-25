@@ -95,7 +95,10 @@ class CvV2VisualParityTest {
                         (Supplier<DocumentTemplate<CvDocument>>) ModernProfessional::create),
                 Arguments.of("centered_headline",
                         CenteredHeadline.RECOMMENDED_MARGIN,
-                        (Supplier<DocumentTemplate<CvDocument>>) CenteredHeadline::create));
+                        (Supplier<DocumentTemplate<CvDocument>>) CenteredHeadline::create),
+                Arguments.of("blue_banner",
+                        BlueBanner.RECOMMENDED_MARGIN,
+                        (Supplier<DocumentTemplate<CvDocument>>) BlueBanner::create));
     }
 
     /**

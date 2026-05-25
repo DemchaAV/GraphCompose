@@ -167,4 +167,26 @@ public record CvSpacing(
                 0.45,                                    // entryDateWeight
                 2.5);                                    // entrySeparation
     }
+
+    /**
+     * Compact spacing for Blue Banner: tight body blocks, full-width
+     * title banners, and no extra artificial gap between entries.
+     */
+    public static CvSpacing blueBanner() {
+        return new CvSpacing(
+                4,                                       // pageFlowSpacing
+                3,                                       // sectionBodySpacing
+                new DocumentInsets(3, 4, 0, 4),          // sectionBodyPadding
+                new DocumentInsets(8, 0, 8, 0),          // headlinePadding
+                new DocumentInsets(1.5, 0, 1.5, 0),      // contactPadding
+                0.0,                                     // bannerCornerRadius
+                3.2,                                     // bannerInnerPadding
+                DocumentInsets.zero(),                   // bannerMargin
+                0.55,                                    // accentRuleWidth
+                1.2,                                     // paragraphMarginTop
+                8.0,                                     // entryHeaderRowSpacing
+                1.0,                                     // entryTitleWeight
+                0.4,                                     // entryDateWeight
+                0.0);                                    // entrySeparation
+    }
 }

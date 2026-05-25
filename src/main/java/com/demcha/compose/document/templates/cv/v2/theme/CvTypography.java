@@ -102,4 +102,21 @@ public record CvTypography(
                 8.7,     // body
                 1.45);   // line spacing
     }
+
+    /**
+     * Compact PT-Serif headline + Lato body scale used by the Blue
+     * Banner preset.
+     */
+    public static CvTypography blueBanner() {
+        return new CvTypography(
+                FontName.PT_SERIF, FontName.LATO,
+                20.0,    // headline
+                7.5,     // contact
+                7.3,     // banner
+                8.0,     // entry title
+                7.7,     // entry date
+                7.45,    // entry subtitle
+                7.7,     // body
+                1.3);    // line spacing
+    }
 }

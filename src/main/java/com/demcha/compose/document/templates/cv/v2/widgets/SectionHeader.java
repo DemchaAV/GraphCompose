@@ -17,6 +17,10 @@ import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
  * <ul>
  *   <li>{@link #banner} — pale-grey panel with centred spaced-caps
  *       title inside. Visual signature of {@code BoxedSections}.</li>
+ *   <li>{@link #fullWidthBanner} — full-width fill banner with
+ *       centred spaced-caps title. Used by compact editorial presets
+ *       such as {@code BlueBanner}; surrounding rules stay in the
+ *       preset's page-flow composition.</li>
  *   <li>{@link #underlined} — small left-aligned spaced-caps title
  *       with a thin accent rule beneath. Visual signature of
  *       {@code MinimalUnderlined}.</li>
@@ -58,6 +62,41 @@ public final class SectionHeader {
                 .addParagraph(p -> p
                         .text(TextOrnaments.spacedUpper(title))
                         .textStyle(theme.bannerStyle())
+                        .align(TextAlign.CENTER)
+                        .margin(DocumentInsets.zero()));
+    }
+
+    /**
+     * Full-width filled banner with centred spaced-caps title. This
+     * variant is for presets where the section title is a solid band
+     * in the main page flow (for example {@code BlueBanner}), not a
+     * soft inset panel. Any rules above or below the band are
+     * page-flow ornaments and should be composed by the preset.
+     */
+    public static void fullWidthBanner(SectionBuilder host, String title, CvTheme theme) {
+        fullWidthBanner(host, title, theme, null);
+    }
+
+    /**
+     * Full-width filled banner with an explicit title style override.
+     *
+     * @param titleStyleOverride text style for the banner label; pass
+     *                           {@code null} to use
+     *                           {@link CvTheme#bannerStyle()}
+     */
+    public static void fullWidthBanner(SectionBuilder host, String title,
+                                       CvTheme theme,
+                                       DocumentTextStyle titleStyleOverride) {
+        DocumentTextStyle titleStyle = titleStyleOverride != null
+                ? titleStyleOverride
+                : theme.bannerStyle();
+        host.fillColor(theme.palette().banner())
+                .padding(new DocumentInsets(theme.spacing().bannerInnerPadding(),
+                        0, theme.spacing().bannerInnerPadding(), 0))
+                .margin(theme.spacing().bannerMargin())
+                .addParagraph(p -> p
+                        .text(TextOrnaments.spacedUpper(title))
+                        .textStyle(titleStyle)
                         .align(TextAlign.CENTER)
                         .margin(DocumentInsets.zero()));
     }

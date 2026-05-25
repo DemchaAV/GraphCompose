@@ -159,9 +159,9 @@ CvDocument doc = CvDocument.builder()
 ```
 
 **Single-column presets** (`BoxedSections`, `MinimalUnderlined`,
-`ModernProfessional`, `CenteredHeadline`) render only `Slot.MAIN`.
-Sidebar content is silently dropped — switch to a multi-column preset
-to render it.
+`ModernProfessional`, `CenteredHeadline`, `BlueBanner`) render only
+`Slot.MAIN`. Sidebar content is silently dropped — switch to a
+multi-column preset to render it.
 
 If you don't use slots at all, your sections go to `MAIN` and every
 preset renders them. The slot model is opt-in.
@@ -171,7 +171,7 @@ preset renders them. The slot model is opt-in.
 <a id="picking-a-preset"></a>
 ## Picking a preset
 
-Four shipped today:
+Five shipped today:
 
 | Preset | Visual signature |
 |---|---|
@@ -179,6 +179,7 @@ Four shipped today:
 | `MinimalUnderlined.create()` | Centred name with thin rule, small spaced-caps section titles with accent rule, single page |
 | `ModernProfessional.create()` | Right-aligned big slate-blue name, flat bright-blue bold section titles, dense single page |
 | `CenteredHeadline.create()` | Centred spaced-caps name, small subheadline, full-width rules around contact and modules |
+| `BlueBanner.create()` | Centred PT-Serif name, compact Lato body, blue full-width section banners between thin rules |
 
 Each factory has a no-arg form (uses a sensible default theme) and
 a `create(CvTheme)` form (custom theme).

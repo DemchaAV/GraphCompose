@@ -13,10 +13,10 @@
 
     <properties>
         <graphcompose.version>${project.version}</graphcompose.version>
-        <logback.version>1.5.18</logback.version>
+        <logback.version>1.5.32</logback.version>
         <maven.compiler.release>17</maven.compiler.release>
 
-        <junit.bom.version>6.0.3</junit.bom.version>
+        <junit.bom.version>6.1.0</junit.bom.version>
         <assertj.version>3.27.7</assertj.version>
     </properties>
 
@@ -65,7 +65,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
+                <version>3.15.0</version>
                 <configuration>
                     <release>${maven.compiler.release}</release>
                 </configuration>
@@ -74,13 +74,13 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
+                <version>3.5.5</version>
             </plugin>
 
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.6.3</version>
             </plugin>
         </plugins>
     </build>

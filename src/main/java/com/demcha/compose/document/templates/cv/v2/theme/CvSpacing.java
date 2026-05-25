@@ -189,6 +189,28 @@ public record CvSpacing(
     }
 
     /**
+     * Spacing for Compact Mono: command-bar header, dense rail
+     * modules, and same-width cards in the right column.
+     */
+    public static CvSpacing compactMono() {
+        return new CvSpacing(
+                9,                                       // pageFlowSpacing
+                3.5,                                     // sectionBodySpacing
+                DocumentInsets.zero(),                   // sectionBodyPadding
+                DocumentInsets.zero(),                   // headlinePadding
+                DocumentInsets.zero(),                   // contactPadding
+                3.0,                                     // bannerCornerRadius
+                0.0,                                     // bannerInnerPadding
+                DocumentInsets.zero(),                   // bannerMargin
+                2.2,                                     // accentRuleWidth
+                1.0,                                     // paragraphMarginTop
+                7.0,                                     // entryHeaderRowSpacing
+                1.0,                                     // entryTitleWeight
+                0.4,                                     // entryDateWeight
+                3.0);                                    // entrySeparation
+    }
+
+    /**
      * Tighter spacing for the Modern Professional preset — no banner
      * panels, denser body, single-page-friendly proportions.
      * Banner-related fields (corner radius, inner padding, margin)

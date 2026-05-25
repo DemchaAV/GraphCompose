@@ -55,4 +55,13 @@ public record CvDecoration(String bulletGlyph,
     public static CvDecoration blueBanner() {
         return new CvDecoration("• ", "  ", "  |  ");
     }
+
+    /**
+     * Compact Mono uses slash-separated contact metadata in its dark
+     * command-bar header. Row bullets keep the classic glyph for
+     * callers that reuse shared row renderers with this theme.
+     */
+    public static CvDecoration compactMono() {
+        return new CvDecoration("• ", "  ", "  /  ");
+    }
 }

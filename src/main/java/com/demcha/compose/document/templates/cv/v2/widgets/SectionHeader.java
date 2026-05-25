@@ -9,6 +9,8 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
 
+import java.util.Locale;
+
 /**
  * Section-header widget — the title drawn above each section's body.
  *
@@ -32,6 +34,9 @@ import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
  *       {@link #flat}; visual signature of {@code CenteredHeadline}
  *       (and likely {@code NordicClean} / {@code ClassicSerif} when
  *       ported).</li>
+ *   <li>{@link #tickLabel} — a short accent tick above a compact
+ *       uppercase label. Used by command-card presets such as
+ *       {@code CompactMono}.</li>
  * </ul>
  *
  * <p>Unlike {@link Headline} (one rendering shape, two text
@@ -177,6 +182,58 @@ public final class SectionHeader {
         host.padding(new DocumentInsets(0, 0, 0, 0))
                 .addParagraph(p -> p
                         .text(TextOrnaments.spacedUpper(title))
+                        .textStyle(resolved)
+                        .align(TextAlign.LEFT)
+                        .margin(DocumentInsets.zero()));
+    }
+
+    /**
+     * Short accent tick above a compact uppercase label. This is the
+     * section-header shape used by terminal/card presets: the tick
+     * supplies the accent, while the label stays small and readable.
+     *
+     * @param host      host section
+     * @param title     label text, transformed to uppercase
+     * @param theme     active theme; supplies the default mono label
+     *                  font and size
+     * @param color     accent/tick and label colour
+     * @param tickWidth width of the short rule above the label
+     */
+    public static void tickLabel(SectionBuilder host, String title,
+                                 CvTheme theme, DocumentColor color,
+                                 double tickWidth) {
+        tickLabel(host, title, theme, color, tickWidth, null);
+    }
+
+    /**
+     * Short accent tick above a compact uppercase label with an
+     * explicit label style override.
+     *
+     * @param titleStyle explicit style override; pass {@code null} to
+     *                   derive a bold style from the theme headline
+     *                   font and banner size
+     */
+    public static void tickLabel(SectionBuilder host, String title,
+                                 CvTheme theme, DocumentColor color,
+                                 double tickWidth,
+                                 DocumentTextStyle titleStyle) {
+        DocumentTextStyle resolved = titleStyle != null
+                ? titleStyle
+                : DocumentTextStyle.builder()
+                        .fontName(theme.typography().headlineFont())
+                        .size(theme.typography().sizeBanner())
+                        .decoration(DocumentTextDecoration.BOLD)
+                        .color(color)
+                        .build();
+        host.spacing(3)
+                .addShape(shape -> shape
+                        .name("CvV2SectionHeaderTick")
+                        .size(tickWidth, theme.spacing().accentRuleWidth())
+                        .fillColor(color)
+                        .cornerRadius(theme.spacing().accentRuleWidth() / 2.0)
+                        .margin(DocumentInsets.zero()))
+                .addParagraph(p -> p
+                        .text(title.toUpperCase(Locale.ROOT))
                         .textStyle(resolved)
                         .align(TextAlign.LEFT)
                         .margin(DocumentInsets.zero()));

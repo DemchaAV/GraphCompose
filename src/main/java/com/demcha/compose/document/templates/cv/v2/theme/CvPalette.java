@@ -86,6 +86,19 @@ public record CvPalette(DocumentColor ink,
     }
 
     /**
+     * Compact Mono palette: near-black body ink, blue-grey metadata,
+     * quiet card rules, and the pale rail fill used by the compact
+     * left column.
+     */
+    public static CvPalette compactMono() {
+        return new CvPalette(
+                DocumentColor.rgb(28, 34, 42),
+                DocumentColor.rgb(102, 117, 132),
+                DocumentColor.rgb(188, 204, 215),
+                DocumentColor.rgb(236, 244, 242));
+    }
+
+    /**
      * Blue Banner palette: compact dark ink, blue section fills, and
      * darker blue separator rules.
      */

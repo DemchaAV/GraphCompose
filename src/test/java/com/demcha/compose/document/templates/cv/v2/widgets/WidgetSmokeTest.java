@@ -56,6 +56,10 @@ class WidgetSmokeTest {
             ContactLine.rightAligned(section, identity(), CvTheme.boxedClassic());
         });
         renderWithSection(section -> {
+            ContactLine.leftAligned(section, identity(), CvTheme.compactMono(),
+                    null, underlinedLinkStyle(), null);
+        });
+        renderWithSection(section -> {
             ContactLine.rightAlignedStacked(section, identity(),
                     CvTheme.nordicClean(), null, underlinedLinkStyle());
         });
@@ -89,6 +93,10 @@ class WidgetSmokeTest {
         renderWithSection(section ->
                 SectionHeader.flatSpacedCaps(section, "Projects",
                         theme.palette().muted(), theme, null));
+        renderWithSection(section ->
+                SectionHeader.tickLabel(section, "Projects",
+                        CvTheme.compactMono(),
+                        DocumentColor.rgb(0, 126, 151), 22));
     }
 
     @Test

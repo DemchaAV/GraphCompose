@@ -29,6 +29,8 @@ import java.util.List;
  *   <li>{@link #rightAlignedStacked} — right-aligned vertical stack,
  *       one contact item per line. Used by clean / sidebar presets
  *       where contact metadata forms a quiet top-right rail.</li>
+ *   <li>{@link #leftAligned} — left-aligned slash/pipe-separated
+ *       command-bar row. Used by compact presets with dark headers.</li>
  * </ul>
  *
  * <p>Email is always rendered as a clickable {@code mailto:} link;
@@ -83,6 +85,39 @@ public final class ContactLine {
      */
     public static void rightAligned(SectionBuilder host, CvIdentity identity, CvTheme theme) {
         render(host, identity, theme, TextAlign.RIGHT, Order.ADDRESS_FIRST);
+    }
+
+    /**
+     * Left-aligned contact row. Order: address -> phone -> email ->
+     * links. Useful for command-bar headers where the name and
+     * contact metadata both anchor to the left edge.
+     */
+    public static void leftAligned(SectionBuilder host, CvIdentity identity,
+                                   CvTheme theme) {
+        render(host, identity, theme, TextAlign.LEFT, Order.ADDRESS_FIRST);
+    }
+
+    /**
+     * Left-aligned contact row with explicit text-style overrides for
+     * non-link text, clickable links, and separators.
+     *
+     * @param bodyStyleOverride      style for address and phone;
+     *                               {@code null} ->
+     *                               {@code theme.contactStyle()}
+     * @param linkStyleOverride      style for email + every link;
+     *                               {@code null} -> resolved body
+     *                               style
+     * @param separatorStyleOverride style for the separator glyph;
+     *                               {@code null} ->
+     *                               {@code theme.contactSeparatorStyle()}
+     */
+    public static void leftAligned(SectionBuilder host, CvIdentity identity,
+                                   CvTheme theme,
+                                   DocumentTextStyle bodyStyleOverride,
+                                   DocumentTextStyle linkStyleOverride,
+                                   DocumentTextStyle separatorStyleOverride) {
+        renderStyled(host, identity, theme, TextAlign.LEFT, Order.ADDRESS_FIRST,
+                bodyStyleOverride, linkStyleOverride, separatorStyleOverride);
     }
 
     /**

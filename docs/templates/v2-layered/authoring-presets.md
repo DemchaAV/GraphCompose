@@ -3,9 +3,9 @@
 You like the layered architecture, but the shipped presets
 (`BoxedSections`, `MinimalUnderlined`, `ModernProfessional`,
 `CenteredHeadline`, `BlueBanner`, `EditorialBlue`, `ClassicSerif`,
-`NordicClean`) don't match the design you want. This doc walks you
-through writing a new preset from scratch — **without subclassing, without duplicating
-rendering code**.
+`NordicClean`, `CompactMono`) don't match the design you want. This
+doc walks you through writing a new preset from scratch — **without
+subclassing, without duplicating rendering code**.
 
 If you haven't read [quickstart.md](quickstart.md) and
 [using-templates.md](using-templates.md), do those first.
@@ -87,6 +87,7 @@ small set of named variants.
 | `ContactLine.centered(host, identity, theme)` | Centred, phone → email → address → links |
 | `ContactLine.centered(host, identity, theme, bodyStyle, linkStyle, separatorStyle)` | Centred contact row with explicit style overrides |
 | `ContactLine.rightAligned(host, identity, theme)` | Right-aligned, address → phone → email → links |
+| `ContactLine.leftAligned(host, identity, theme[, bodyStyle, linkStyle, separatorStyle])` | Left-aligned command-bar row with explicit style overrides when needed |
 | `ContactLine.rightAlignedStacked(host, identity, theme, bodyStyle, linkStyle)` | Right-aligned vertical stack, one contact item per line |
 | `ContactLine.twoRowRightAligned(host, identity, theme, bodyStyle, linkStyle, separatorStyle)` | Right-aligned address/phone row plus email/link row |
 | `ContactLine.render(host, identity, theme, align, order)` | Low-level — any alignment + field-order combo |
@@ -100,6 +101,7 @@ small set of named variants.
 | `SectionHeader.underlined(host, title, theme)` | Small left spaced-caps + thin rule below |
 | `SectionHeader.flat(host, title, color, theme)` | Large bold title in a given colour, no panel |
 | `SectionHeader.flatSpacedCaps(host, title, color, theme, titleStyle)` | Small left spaced-caps title in a soft colour, no panel |
+| `SectionHeader.tickLabel(host, title, theme, color, tickWidth[, titleStyle])` | Short accent tick above compact uppercase label |
 
 The separator glyph used by `ContactLine`, the bullet glyph used by
 `RowRenderer`, and other character-level choices come from

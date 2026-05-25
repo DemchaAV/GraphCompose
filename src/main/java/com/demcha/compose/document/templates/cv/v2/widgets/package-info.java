@@ -49,12 +49,14 @@
  *       — secondary tagline under the name in 1 variant
  *       ({@code centeredSpacedCaps}).</li>
  *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.ContactLine}
- *       — contact + links row/stack in 4 variants
+ *       — contact + links row/stack in 5 variants
  *       ({@code centered}, {@code rightAligned},
- *       {@code rightAlignedStacked}, {@code twoRowRightAligned}).</li>
+ *       {@code leftAligned}, {@code rightAlignedStacked},
+ *       {@code twoRowRightAligned}).</li>
  *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader}
- *       — section title in 4 variants ({@code banner},
- *       {@code underlined}, {@code flat}, {@code flatSpacedCaps}).</li>
+ *       — section title in 6 variants ({@code banner},
+ *       {@code fullWidthBanner}, {@code underlined}, {@code flat},
+ *       {@code flatSpacedCaps}, {@code tickLabel}).</li>
  * </ul>
  *
  * <p>Generic widgets that are useful beyond CVs live in

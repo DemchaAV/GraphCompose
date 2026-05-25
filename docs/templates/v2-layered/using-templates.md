@@ -176,9 +176,9 @@ CvDocument doc = CvDocument.builder()
 **Single-column presets** (`BoxedSections`, `MinimalUnderlined`,
 `ModernProfessional`, `CenteredHeadline`, `BlueBanner`,
 `EditorialBlue`, `ClassicSerif`) render only `Slot.MAIN`. `NordicClean`
-also reads `Slot.MAIN`, but lays it out as its own two-column rail/body
-composition. Sidebar content is silently dropped — switch to a
-multi-column preset to render it.
+and `CompactMono` also read `Slot.MAIN`, but lay it out as their own
+two-column rail/body compositions. Sidebar content is silently dropped
+— switch to a multi-column preset to render it.
 
 If you don't use slots at all, your sections go to `MAIN` and every
 preset renders them. The slot model is opt-in.
@@ -188,7 +188,7 @@ preset renders them. The slot model is opt-in.
 <a id="picking-a-preset"></a>
 ## Picking a preset
 
-Eight shipped today:
+Nine shipped today:
 
 | Preset | Visual signature |
 |---|---|
@@ -200,6 +200,7 @@ Eight shipped today:
 | `EditorialBlue.create()` | Centred uppercase masthead, optional job-title subtitle, blue editorial rules, compact skills table |
 | `ClassicSerif.create()` | PT-Serif cover/detail layout, cream profile band, tan rules |
 | `NordicClean.create()` | Barlow uppercase identity, teal profile band, tinted sidebar rail, compact main column |
+| `CompactMono.create()` | Dark command-bar header, pale left rail, same-width right-column cards |
 
 Each factory has a no-arg form (uses a sensible default theme) and
 a `create(CvTheme)` form (custom theme).

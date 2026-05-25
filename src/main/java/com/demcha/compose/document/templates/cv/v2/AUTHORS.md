@@ -344,6 +344,7 @@ as DSL plumbing. Below is the current catalog.
 | `ContactLine.centered(host, identity, theme)` | centred, phone → email → address → links | BoxedSections, MinimalUnderlined, CenteredHeadline, BlueBanner |
 | `ContactLine.centered(host, identity, theme, bodyStyle, linkStyle, separatorStyle)` | centred contact row with explicit style overrides | ClassicSerif |
 | `ContactLine.rightAligned(host, identity, theme)` | right-aligned, address → phone → email → links | ModernProfessional |
+| `ContactLine.leftAligned(host, identity, theme[, bodyStyle, linkStyle, separatorStyle])` | left-aligned command-bar row with style overrides | CompactMono |
 | `ContactLine.rightAlignedStacked(host, identity, theme, bodyStyle, linkStyle)` | right-aligned vertical stack, one contact item per line | NordicClean |
 | `ContactLine.twoRowRightAligned(host, identity, theme, bodyStyle, linkStyle, separatorStyle)` | right-aligned address/phone row plus email/link row | ModernProfessional |
 | `ContactLine.render(host, identity, theme, align, order)` | low-level: pick alignment + field order | — |
@@ -361,6 +362,7 @@ change `   |   ` to `  ·  ` or anything else.
 | `SectionHeader.underlined(host, title, theme)` | small spaced-caps left-aligned, thin rule below | MinimalUnderlined |
 | `SectionHeader.flat(host, title, color, theme)` | large bold title in a given colour, no panel | ModernProfessional |
 | `SectionHeader.flatSpacedCaps(host, title, color, theme, titleStyle)` | small spaced-caps title in a soft colour, no panel | CenteredHeadline, ClassicSerif |
+| `SectionHeader.tickLabel(host, title, theme, color, tickWidth[, titleStyle])` | short accent tick above compact uppercase label | CompactMono |
 
 Note that `flat` and `flatSpacedCaps` take a `DocumentColor`
 argument — the section title colour is the preset's signature

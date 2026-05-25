@@ -141,6 +141,24 @@ public record CvTypography(
     }
 
     /**
+     * IBM Plex Mono headline + Lato body scale for the Compact Mono
+     * preset. The section-title slot also uses the mono headline font
+     * so tick labels keep the terminal/card visual signature.
+     */
+    public static CvTypography compactMono() {
+        return new CvTypography(
+                FontName.IBM_PLEX_MONO, FontName.LATO,
+                23.5,    // headline
+                8.3,     // contact
+                8.0,     // section tick label
+                8.45,    // entry title
+                7.8,     // entry date
+                7.65,    // entry subtitle
+                8.1,     // body
+                1.16);   // line spacing
+    }
+
+    /**
      * Compact PT-Serif headline + Lato body scale used by the Blue
      * Banner preset.
      */

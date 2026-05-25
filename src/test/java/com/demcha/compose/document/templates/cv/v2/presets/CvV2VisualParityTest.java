@@ -108,7 +108,10 @@ class CvV2VisualParityTest {
                         (Supplier<DocumentTemplate<CvDocument>>) EditorialBlue::create),
                 Arguments.of("classic_serif",
                         ClassicSerif.RECOMMENDED_MARGIN,
-                        (Supplier<DocumentTemplate<CvDocument>>) ClassicSerif::create));
+                        (Supplier<DocumentTemplate<CvDocument>>) ClassicSerif::create),
+                Arguments.of("compact_mono",
+                        CompactMono.RECOMMENDED_MARGIN,
+                        (Supplier<DocumentTemplate<CvDocument>>) CompactMono::create));
     }
 
     /**

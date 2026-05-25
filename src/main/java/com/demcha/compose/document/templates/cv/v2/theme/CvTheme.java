@@ -129,6 +129,19 @@ public record CvTheme(CvPalette palette,
     }
 
     /**
+     * The "Compact Mono" look — dark command-bar header, IBM Plex
+     * Mono labels, teal accents, pale left rail, and compact card
+     * spacing.
+     */
+    public static CvTheme compactMono() {
+        return new CvTheme(
+                CvPalette.compactMono(),
+                CvTypography.compactMono(),
+                CvSpacing.compactMono(),
+                CvDecoration.compactMono());
+    }
+
+    /**
      * The "Blue Banner" look — PT Serif display name, Lato body,
      * compact spacing, blue full-width section banners, and tighter
      * pipe separators.

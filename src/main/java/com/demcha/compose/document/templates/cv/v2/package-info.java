@@ -26,6 +26,7 @@
  *   │    EditorialBlue      ← compact editorial composition       │
  *   │    ClassicSerif       ← serif cover/detail preset           │
  *   │    NordicClean        ← teal two-column rail preset         │
+ *   │    CompactMono        ← dark header + rail/card preset      │
  *   └─────────────────────────────────────────────────────────────┘
  *           │ compose from
  *           ▼
@@ -35,10 +36,11 @@
  *   │                   | .uppercaseLeftAligned | .rightAligned  │
  *   │    Subheadline    .centeredSpacedCaps                       │
  *   │    ContactLine    .centered | .centered(...styles)          │
- *   │                   .rightAligned | .rightAlignedStacked      │
+ *   │                   .rightAligned | .leftAligned              │
+ *   │                   .rightAlignedStacked                      │
  *   │                   .twoRowRightAligned                       │
  *   │    SectionHeader  .banner | .fullWidthBanner | .underlined  │
- *   │                   .flat | .flatSpacedCaps                   │
+ *   │                   .flat | .flatSpacedCaps | .tickLabel      │
  *   └─────────────────────────────────────────────────────────────┘
  *           │ delegate to                       │ read tokens from
  *           ▼                                   ▼

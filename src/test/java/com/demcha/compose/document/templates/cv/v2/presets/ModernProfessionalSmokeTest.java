@@ -8,8 +8,7 @@ import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.v2.data.EntriesSection;
 import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
-import com.demcha.compose.document.templates.cv.v2.data.RowStyle;
-import com.demcha.compose.document.templates.cv.v2.data.RowsSection;
+import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
 import org.junit.jupiter.api.Test;
 
@@ -72,8 +71,8 @@ class ModernProfessionalSmokeTest {
                         .build())
                 .sections(
                         new ParagraphSection("Summary", "body"),
-                        RowsSection.builder("Skills", RowStyle.BULLETED)
-                                .row("Languages", "Java").build(),
+                        SkillsSection.builder("Skills")
+                                .group("Languages", "Java").build(),
                         EntriesSection.builder("Experience")
                                 .entry("Engineer", "Acme", "2020", "did stuff").build())
                 .build();

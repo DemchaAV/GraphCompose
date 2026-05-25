@@ -189,4 +189,26 @@ public record CvSpacing(
                 0.4,                                     // entryDateWeight
                 0.0);                                    // entrySeparation
     }
+
+    /**
+     * Compact spacing for Editorial Blue: section headers own their
+     * rule/title rhythm, while bodies start close to the lower rule.
+     */
+    public static CvSpacing editorialBlue() {
+        return new CvSpacing(
+                0,                                       // pageFlowSpacing
+                2,                                       // sectionBodySpacing
+                new DocumentInsets(8, 0, 0, 0),          // sectionBodyPadding
+                new DocumentInsets(2, 0, 2, 0),          // headlinePadding
+                new DocumentInsets(1, 0, 0, 0),          // contactPadding
+                0.0,                                     // bannerCornerRadius
+                0.0,                                     // bannerInnerPadding
+                DocumentInsets.zero(),                   // bannerMargin
+                0.6,                                     // accentRuleWidth
+                1.0,                                     // paragraphMarginTop
+                8.0,                                     // entryHeaderRowSpacing
+                1.0,                                     // entryTitleWeight
+                0.45,                                    // entryDateWeight
+                3.0);                                    // entrySeparation
+    }
 }

@@ -23,12 +23,14 @@
  *   │    ModernProfessional ← corporate composition variant       │
  *   │    CenteredHeadline   ← classic centred headline variant    │
  *   │    BlueBanner         ← full-width banner composition       │
+ *   │    EditorialBlue      ← compact editorial composition       │
  *   └─────────────────────────────────────────────────────────────┘
  *           │ compose from
  *           ▼
  *   ┌─────────────────────────────────────────────────────────────┐
  *   │  widgets/  ← named visual building blocks (LEGO bricks)    │
- *   │    Headline       .spacedCentered | .rightAligned           │
+ *   │    Headline       .spacedCentered | .uppercaseCentered      │
+ *   │                   | .rightAligned                          │
  *   │    Subheadline    .centeredSpacedCaps                       │
  *   │    ContactLine    .centered | .rightAligned                 │
  *   │                   .twoRowRightAligned                       │
@@ -51,8 +53,8 @@
  *           ▼
  *   ┌─────────────────────────────────────────────────────────────┐
  *   │  data/                                                      │
- *   │    CvIdentity   ← name, contact, optional links             │
- *   │    CvSection    ← sealed: Paragraph | Rows | Entries        │
+ *   │    CvIdentity   ← name, optional job title, contact, links  │
+ *   │    CvSection    ← sealed: Paragraph | Rows | Entries | Skills│
  *   │    CvDocument   ← identity + Placement(slot, section)       │
  *   │    Slot         ← MAIN | SIDEBAR | FOOTER                   │
  *   └─────────────────────────────────────────────────────────────┘
@@ -104,15 +106,16 @@
  *     .identity(CvIdentity.builder()
  *         .name("Jane", "Doe")                       // required: first + last
  *         // .name("Jane", "Quinn", "Doe")            // optional middle
+ *         .jobTitle("Backend Engineer")              // optional
  *         .contact("+44 0", "j@d.com", "London, UK") // required triple
  *         .link("LinkedIn", "https://...")            // optional
  *         .link("GitHub",   "https://...")            // optional
  *         .build())
  *     .section(new ParagraphSection("Professional Summary",
  *         "Backend engineer with **5 years** of..."))
- *     .section(RowsSection.builder("Technical Skills", RowStyle.BULLETED)
- *         .row("Languages", "Java 21, Kotlin")
- *         .row("Testing",   "JUnit 5, AssertJ")
+ *     .section(SkillsSection.builder("Technical Skills")
+ *         .group("Languages", "Java 21", "Kotlin")
+ *         .group("Testing",   "JUnit 5", "AssertJ")
  *         .build())
  *     .section(EntriesSection.builder("Experience")
  *         .entry("Senior Engineer", "Acme Inc", "2022-Present", "Built ...")

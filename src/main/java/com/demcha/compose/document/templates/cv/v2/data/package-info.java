@@ -19,7 +19,7 @@
  * <h3>Section catalog</h3>
  *
  * <p>The sealed {@link com.demcha.compose.document.templates.cv.v2.data.CvSection}
- * hierarchy intentionally has <strong>only three</strong> concrete
+ * hierarchy intentionally has a small set of concrete
  * shapes — one per genuinely-different structural pattern, not one
  * per visual flavour:</p>
  *
@@ -30,13 +30,16 @@
  *       — list of two-field {@link com.demcha.compose.document.templates.cv.v2.data.CvRow}
  *       items. Visual decoration is picked via the
  *       {@link com.demcha.compose.document.templates.cv.v2.data.RowStyle}
- *       enum so Technical Skills (bulleted), Additional Information
- *       (plain), and Projects (bulleted, two-line) share one
- *       record.</li>
+ *       enum so Additional Information (plain) and Projects
+ *       (bulleted, two-line) share one record.</li>
  *   <li>{@link com.demcha.compose.document.templates.cv.v2.data.EntriesSection}
  *       — list of timeline {@link com.demcha.compose.document.templates.cv.v2.data.CvEntry}
  *       items with title / subtitle / date / body. Used for Education
  *       and Professional Experience interchangeably.</li>
+ *   <li>{@link com.demcha.compose.document.templates.cv.v2.data.SkillsSection}
+ *       — grouped skills: category plus ordered skill labels. This
+ *       keeps skills semantic so presets can render them as tables,
+ *       sidebar chips, or inline rows without reparsing text.</li>
  * </ul>
  *
  * <h3>Placement</h3>

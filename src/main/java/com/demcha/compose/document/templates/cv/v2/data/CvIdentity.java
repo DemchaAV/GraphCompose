@@ -5,8 +5,9 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Top-of-document identity block — name, required contact triple, and
- * an optional ordered list of labelled outbound links.
+ * Top-of-document identity block — name, optional professional title,
+ * required contact triple, and an optional ordered list of labelled
+ * outbound links.
  *
  * <p>Required pieces have their own types ({@link CvName},
  * {@link CvContact}); optional links are accumulated through the
@@ -15,15 +16,27 @@ import java.util.Objects;
  *
  * @param name    structured name with first / last required and an
  *                optional middle component
- * @param contact phone / email / address — all three required
- * @param links   ordered list of optional outbound links; never null
+ * @param jobTitle optional professional title rendered by presets
+ *                 that have a subtitle line; blank when absent
+ * @param contact  phone / email / address — all three required
+ * @param links    ordered list of optional outbound links; never null
  */
-public record CvIdentity(CvName name, CvContact contact, List<CvLink> links) {
+public record CvIdentity(CvName name, String jobTitle,
+                         CvContact contact, List<CvLink> links) {
 
     public CvIdentity {
         Objects.requireNonNull(name, "name");
+        jobTitle = jobTitle == null ? "" : jobTitle.trim();
         Objects.requireNonNull(contact, "contact");
         links = links == null ? List.of() : List.copyOf(links);
+    }
+
+    /**
+     * Backward-compatible constructor for callers that predate the
+     * optional job-title field. The title simply stays blank.
+     */
+    public CvIdentity(CvName name, CvContact contact, List<CvLink> links) {
+        this(name, "", contact, links);
     }
 
     /**
@@ -38,6 +51,7 @@ public record CvIdentity(CvName name, CvContact contact, List<CvLink> links) {
      */
     public static final class Builder {
         private CvName name;
+        private String jobTitle = "";
         private CvContact contact;
         private final List<CvLink> links = new ArrayList<>();
 
@@ -56,6 +70,15 @@ public record CvIdentity(CvName name, CvContact contact, List<CvLink> links) {
 
         public Builder name(String first, String middle, String last) {
             this.name = new CvName(first, middle, last);
+            return this;
+        }
+
+        /**
+         * Sets the optional professional title shown only by presets
+         * with a dedicated subtitle/header line.
+         */
+        public Builder jobTitle(String value) {
+            this.jobTitle = value == null ? "" : value;
             return this;
         }
 
@@ -80,7 +103,7 @@ public record CvIdentity(CvName name, CvContact contact, List<CvLink> links) {
         }
 
         public CvIdentity build() {
-            return new CvIdentity(name, contact, links);
+            return new CvIdentity(name, jobTitle, contact, links);
         }
     }
 }

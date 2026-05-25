@@ -10,6 +10,7 @@ import com.demcha.compose.document.templates.cv.v2.data.EntriesSection;
 import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
 import com.demcha.compose.document.templates.cv.v2.data.RowStyle;
 import com.demcha.compose.document.templates.cv.v2.data.RowsSection;
+import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
 import com.demcha.testing.visual.PdfVisualRegression;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -98,13 +99,16 @@ class CvV2VisualParityTest {
                         (Supplier<DocumentTemplate<CvDocument>>) CenteredHeadline::create),
                 Arguments.of("blue_banner",
                         BlueBanner.RECOMMENDED_MARGIN,
-                        (Supplier<DocumentTemplate<CvDocument>>) BlueBanner::create));
+                        (Supplier<DocumentTemplate<CvDocument>>) BlueBanner::create),
+                Arguments.of("editorial_blue",
+                        EditorialBlue.RECOMMENDED_MARGIN,
+                        (Supplier<DocumentTemplate<CvDocument>>) EditorialBlue::create));
     }
 
     /**
      * Canonical sample document — Jordan Rivera with every v2 section
-     * subtype exercised so the gate covers paragraph, all three
-     * row-styles, and timeline entries.
+     * subtype exercised so the gate covers paragraph, grouped
+     * skills, row styles, and timeline entries.
      *
      * <p>Kept inline (not pulled from the examples module) so the
      * test depends only on main + main-test code.</p>
@@ -113,6 +117,7 @@ class CvV2VisualParityTest {
         return CvDocument.builder()
                 .identity(CvIdentity.builder()
                         .name("Jordan", "Rivera")
+                        .jobTitle("Platform Engineer")
                         .contact("+44 20 5555 1000",
                                 "jordan.rivera@example.com",
                                 "London, UK")
@@ -126,28 +131,36 @@ class CvV2VisualParityTest {
                                 + "high-throughput PDF rendering, semantic authoring "
                                 + "DSLs, and turning brittle production-ops scripts "
                                 + "into typed, snapshot-tested libraries that scale."))
-                .section(RowsSection.builder("Technical Skills", RowStyle.BULLETED)
-                        .row("Languages", "Java 21, Kotlin, Groovy, Python, SQL")
-                        .row("Document & Print", "PDFBox, Apache POI (DOCX/XLSX), iText, "
-                                + "PostScript, ICC colour profiles, font metrics")
-                        .row("Layout engines", "Custom DSL design, semantic layout trees, "
-                                + "pagination, snapshot testing, visual regression")
-                        .row("Build & infrastructure", "Maven, Gradle, GitHub Actions, "
-                                + "JitPack, Docker, JMH benchmarking")
-                        .row("Testing", "JUnit 5, AssertJ, PDFBox-based PNG diff, "
-                                + "layout-graph snapshots, mutation testing (Pitest)")
-                        .row("Distribution", "Maven Central, Sonatype OSSRH, GPG signing, "
-                                + "JitPack, semantic versioning discipline")
+                .section(SkillsSection.builder("Technical Skills")
+                        .group("Languages", "Java 21", "Kotlin", "Groovy",
+                                "Python", "SQL")
+                        .group("Document & Print", "PDFBox",
+                                "Apache POI (DOCX/XLSX)", "iText",
+                                "PostScript", "ICC colour profiles",
+                                "font metrics")
+                        .group("Layout engines", "Custom DSL design",
+                                "semantic layout trees", "pagination",
+                                "snapshot testing", "visual regression")
+                        .group("Build & infrastructure", "Maven", "Gradle",
+                                "GitHub Actions", "JitPack", "Docker",
+                                "JMH benchmarking")
+                        .group("Testing", "JUnit 5", "AssertJ",
+                                "PDFBox-based PNG diff",
+                                "layout-graph snapshots",
+                                "mutation testing (Pitest)")
+                        .group("Distribution", "Maven Central",
+                                "Sonatype OSSRH", "GPG signing", "JitPack",
+                                "semantic versioning discipline")
                         .build())
                 .section(EntriesSection.builder("Education & Certifications")
                         .entry("MSc Computer Science",
                                 "University of Manchester",
-                                "2020-2021",
+                                "2019-2021",
                                 "Distinction. Thesis: *Composable layout primitives "
                                         + "for deterministic document rendering*.")
                         .entry("BSc Software Engineering",
                                 "Imperial College London",
-                                "2016-2019",
+                                "2015-2019",
                                 "First-class honours. Specialisation in compilers and "
                                         + "static analysis.")
                         .entry("Oracle Java Certification",

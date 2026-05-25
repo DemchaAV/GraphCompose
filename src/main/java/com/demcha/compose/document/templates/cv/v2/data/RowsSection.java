@@ -8,12 +8,12 @@ import java.util.Objects;
  * Section whose body is a list of {@link CvRow}s rendered with a
  * uniform {@link RowStyle} decoration.
  *
- * <p>One record covers three common shapes:</p>
+ * <p>One record covers common two-field row shapes:</p>
  *
  * <ul>
- *   <li>Technical Skills: {@code style = BULLETED}.</li>
  *   <li>Projects: {@code style = BULLETED_STACKED}.</li>
  *   <li>Additional Information: {@code style = PLAIN}.</li>
+ *   <li>Ad-hoc label/value lists: {@code style = BULLETED}.</li>
  * </ul>
  *
  * <p>If a future shape needs a different decoration (numbered list,

@@ -55,10 +55,10 @@ CvDocument.builder()
 Notice what's absent:
 
 - **No `link(...)` calls.** Optional, simply omitted.
-- **No Projects, no Skills.** The three section types
-  (`ParagraphSection`, `RowsSection`, `EntriesSection`) work for any
-  content shape — you choose what to put in them and what to call
-  them.
+- **No Projects, no Skills.** The built-in section types
+  (`ParagraphSection`, `RowsSection`, `EntriesSection`, `SkillsSection`)
+  work for common CV shapes — you choose what to put in them and what
+  to call them.
 - **No required IT vocabulary anywhere.** Section titles are free
   strings (`"About Me"`, `"Teaching Experience"`, `"Certifications"`).
 
@@ -210,7 +210,7 @@ calls them. No inheritance, no instance state to manage.
 
 ## Recipe 5 — add a brand-new section subtype
 
-You need something the existing three section types can't express —
+You need something the existing section types can't express —
 say, a skill-bar chart, a quote block, or a contact-references list.
 
 Three places to touch (compile-checked path):
@@ -233,7 +233,8 @@ public record QuoteSection(String title, String quote, String attribution)
 
 ```java
 public sealed interface CvSection
-        permits ParagraphSection, RowsSection, EntriesSection, QuoteSection {
+        permits ParagraphSection, RowsSection, EntriesSection,
+                SkillsSection, QuoteSection {
     String title();
 }
 ```
@@ -325,6 +326,7 @@ as DSL plumbing. Below is the current catalog.
 | Variant | Visual | Used in |
 |---|---|---|
 | `Headline.spacedCentered(host, name, theme)` | centred letter-spaced uppercase (`J A N E   D O E`) | BoxedSections, MinimalUnderlined, CenteredHeadline, BlueBanner |
+| `Headline.uppercaseCentered(host, name, theme)` | centred uppercase without extra spacing (`JANE DOE`) | EditorialBlue |
 | `Headline.rightAligned(host, name, theme)` | right-aligned plain bold (`Jane Doe`) | ModernProfessional |
 | `Headline.render(host, name, theme, align, spacedCaps)` | low-level: pick any alignment + transform | — |
 

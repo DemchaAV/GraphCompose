@@ -11,6 +11,7 @@ import com.demcha.compose.document.templates.cv.v2.data.EntriesSection;
 import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
 import com.demcha.compose.document.templates.cv.v2.data.RowStyle;
 import com.demcha.compose.document.templates.cv.v2.data.RowsSection;
+import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
 import org.junit.jupiter.api.Test;
 
@@ -56,8 +57,8 @@ class BoxedSectionsSmokeTest {
         renderAndAssertNonEmpty(template, documentWith(
                 new ParagraphSection("Summary", "body text")));
         renderAndAssertNonEmpty(template, documentWith(
-                RowsSection.builder("Skills", RowStyle.BULLETED)
-                        .row("Languages", "Java, Kotlin")
+                SkillsSection.builder("Skills")
+                        .group("Languages", "Java", "Kotlin")
                         .build()));
         renderAndAssertNonEmpty(template, documentWith(
                 RowsSection.builder("Info", RowStyle.PLAIN)
@@ -100,8 +101,8 @@ class BoxedSectionsSmokeTest {
                 .identity(identity())
                 .sections(
                         new ParagraphSection("Summary", "body"),
-                        RowsSection.builder("Skills", RowStyle.BULLETED)
-                                .row("Languages", "Java").build(),
+                        SkillsSection.builder("Skills")
+                                .group("Languages", "Java").build(),
                         EntriesSection.builder("Experience")
                                 .entry("Engineer", "Acme", "2020", "did stuff").build(),
                         RowsSection.builder("Projects", RowStyle.BULLETED_STACKED)

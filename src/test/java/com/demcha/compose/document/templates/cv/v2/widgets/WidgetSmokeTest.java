@@ -26,6 +26,9 @@ class WidgetSmokeTest {
             Headline.spacedCentered(section, name(), CvTheme.boxedClassic());
         });
         renderWithSection(section -> {
+            Headline.uppercaseCentered(section, name(), CvTheme.editorialBlue());
+        });
+        renderWithSection(section -> {
             Headline.rightAligned(section, name(), CvTheme.boxedClassic());
         });
         renderWithSection(section -> {

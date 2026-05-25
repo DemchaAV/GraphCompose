@@ -18,6 +18,7 @@ import com.demcha.compose.document.templates.cv.v2.data.EntriesSection;
 import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
 import com.demcha.compose.document.templates.cv.v2.data.RowStyle;
 import com.demcha.compose.document.templates.cv.v2.data.RowsSection;
+import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
 import com.demcha.compose.document.templates.data.common.EmailYaml;
 import com.demcha.compose.document.templates.data.common.Header;
 import com.demcha.compose.document.templates.data.coverletter.CoverLetterDocumentSpec;
@@ -452,14 +453,16 @@ public final class ExampleDataFactory {
 
     /**
      * Returns a sample {@code CvDocument} for the v2 CV pipeline —
-     * the canonical Jordan Rivera content expressed in the new
-     * 3-section sealed hierarchy
+     * the canonical Jordan Rivera content expressed in the v2
+     * sealed section hierarchy
      * ({@link com.demcha.compose.document.templates.cv.v2.data.ParagraphSection},
+     * {@link SkillsSection},
      * {@link RowsSection},
      * {@link EntriesSection}).
      *
-     * <p>Each section explicitly picks its visual decoration —
-     * Technical Skills uses {@link RowStyle#BULLETED}, Projects uses
+     * <p>Technical Skills is grouped semantically via
+     * {@link SkillsSection}; row-style sections still explicitly pick
+     * their visual decoration. Projects uses
      * {@link RowStyle#BULLETED_STACKED}, Additional Information uses
      * {@link RowStyle#PLAIN}. Education and Experience are the same
      * {@link EntriesSection} record, distinguished only by title.</p>
@@ -469,6 +472,7 @@ public final class ExampleDataFactory {
     public static CvDocument sampleCvDocumentV2() {
         CvIdentity identity = CvIdentity.builder()
                 .name("Jordan", "Rivera")
+                .jobTitle("Platform Engineer")
                 .contact("+44 20 5555 1000",
                         "jordan.rivera@example.com",
                         "London, UK")
@@ -485,31 +489,37 @@ public final class ExampleDataFactory {
                         + "DSLs, and turning brittle production-ops scripts "
                         + "into typed, snapshot-tested libraries that scale.");
 
-        RowsSection skills = RowsSection
-                .builder("Technical Skills", RowStyle.BULLETED)
-                .row("Languages", "Java 21, Kotlin, Groovy, Python, SQL")
-                .row("Document & Print", "PDFBox, Apache POI (DOCX/XLSX), iText, "
-                        + "PostScript, ICC colour profiles, font metrics")
-                .row("Layout engines", "Custom DSL design, semantic layout trees, "
-                        + "pagination, snapshot testing, visual regression")
-                .row("Build & infrastructure", "Maven, Gradle, GitHub Actions, "
-                        + "JitPack, Docker, JMH benchmarking")
-                .row("Testing", "JUnit 5, AssertJ, PDFBox-based PNG diff, "
-                        + "layout-graph snapshots, mutation testing (Pitest)")
-                .row("Distribution", "Maven Central, Sonatype OSSRH, GPG signing, "
-                        + "JitPack, semantic versioning discipline")
+        SkillsSection skills = SkillsSection
+                .builder("Technical Skills")
+                .group("Languages", "Java 21", "Kotlin", "Groovy",
+                        "Python", "SQL")
+                .group("Document & Print", "PDFBox",
+                        "Apache POI (DOCX/XLSX)", "iText", "PostScript",
+                        "ICC colour profiles", "font metrics")
+                .group("Layout engines", "Custom DSL design",
+                        "semantic layout trees", "pagination",
+                        "snapshot testing", "visual regression")
+                .group("Build & infrastructure", "Maven", "Gradle",
+                        "GitHub Actions", "JitPack", "Docker",
+                        "JMH benchmarking")
+                .group("Testing", "JUnit 5", "AssertJ",
+                        "PDFBox-based PNG diff", "layout-graph snapshots",
+                        "mutation testing (Pitest)")
+                .group("Distribution", "Maven Central", "Sonatype OSSRH",
+                        "GPG signing", "JitPack",
+                        "semantic versioning discipline")
                 .build();
 
         EntriesSection education = EntriesSection
                 .builder("Education & Certifications")
                 .entry("MSc Computer Science",
                         "University of Manchester",
-                        "2020-2021",
+                        "2019-2021",
                         "Distinction. Thesis: *Composable layout primitives "
                                 + "for deterministic document rendering*.")
                 .entry("BSc Software Engineering",
                         "Imperial College London",
-                        "2016-2019",
+                        "2015-2019",
                         "First-class honours. Specialisation in compilers and "
                                 + "static analysis.")
                 .entry("Oracle Java Certification",

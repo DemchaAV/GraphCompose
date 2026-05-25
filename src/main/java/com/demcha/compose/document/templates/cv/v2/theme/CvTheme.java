@@ -115,6 +115,18 @@ public record CvTheme(CvPalette palette,
                 CvDecoration.blueBanner());
     }
 
+    /**
+     * The "Editorial Blue" look — compact Helvetica, vivid blue
+     * section rules, centred editorial header, and dense body
+     * spacing.
+     */
+    public static CvTheme editorialBlue() {
+        return new CvTheme(
+                CvPalette.editorialBlue(),
+                CvTypography.editorialBlue(),
+                CvSpacing.editorialBlue(),
+                CvDecoration.classic());
+    }
     // -- pre-built text-style helpers ------------------------------------
     // Renderers ask the theme for an already-composed DocumentTextStyle
     // instead of re-assembling font + size + decoration + colour every

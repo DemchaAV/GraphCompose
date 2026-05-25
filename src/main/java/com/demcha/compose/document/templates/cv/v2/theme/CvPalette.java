@@ -72,6 +72,20 @@ public record CvPalette(DocumentColor ink,
     }
 
     /**
+     * Nordic Clean palette: deep blue-green ink, muted blue-grey
+     * metadata, pale teal rules, and the soft profile band fill. The
+     * stronger teal accent and rail fill are preset-local fifth/sixth
+     * colours because no other preset shares those tokens yet.
+     */
+    public static CvPalette nordicClean() {
+        return new CvPalette(
+                DocumentColor.rgb(18, 39, 52),
+                DocumentColor.rgb(82, 104, 116),
+                DocumentColor.rgb(188, 219, 222),
+                DocumentColor.rgb(226, 244, 245));
+    }
+
+    /**
      * Blue Banner palette: compact dark ink, blue section fills, and
      * darker blue separator rules.
      */

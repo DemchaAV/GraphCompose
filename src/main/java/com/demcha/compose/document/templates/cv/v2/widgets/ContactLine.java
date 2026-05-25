@@ -26,6 +26,9 @@ import java.util.List;
  *   <li>{@link #rightAligned} — right-aligned line, address → phone
  *       → email → links. Used by modern presets where the header
  *       sits flush right next to the name.</li>
+ *   <li>{@link #rightAlignedStacked} — right-aligned vertical stack,
+ *       one contact item per line. Used by clean / sidebar presets
+ *       where contact metadata forms a quiet top-right rail.</li>
  * </ul>
  *
  * <p>Email is always rendered as a clickable {@code mailto:} link;
@@ -147,6 +150,55 @@ public final class ContactLine {
                                         new DocumentLinkOptions(l.url()));
                             }
                         }));
+    }
+
+    /**
+     * Right-aligned contact stack, one item per line. Order:
+     * address → phone → email → links. This is useful for two-column
+     * headers where a pipe-separated row would become too wide.
+     */
+    public static void rightAlignedStacked(SectionBuilder host,
+                                           CvIdentity identity,
+                                           CvTheme theme) {
+        rightAlignedStacked(host, identity, theme, null, null);
+    }
+
+    /**
+     * Right-aligned contact stack with explicit text-style overrides
+     * for non-link text and clickable links.
+     *
+     * @param bodyStyleOverride style for address / phone; {@code null}
+     *                          → {@code theme.contactStyle()}
+     * @param linkStyleOverride style for email + links; {@code null}
+     *                          → resolved body style
+     */
+    public static void rightAlignedStacked(SectionBuilder host,
+                                           CvIdentity identity,
+                                           CvTheme theme,
+                                           DocumentTextStyle bodyStyleOverride,
+                                           DocumentTextStyle linkStyleOverride) {
+        DocumentTextStyle bodyStyle = bodyStyleOverride != null
+                ? bodyStyleOverride : theme.contactStyle();
+        DocumentTextStyle linkStyle = linkStyleOverride != null
+                ? linkStyleOverride : bodyStyle;
+
+        host.spacing(1.5).padding(theme.spacing().contactPadding());
+        for (Part part : parts(identity, Order.ADDRESS_FIRST)) {
+            if (part.text().isBlank()) {
+                continue;
+            }
+            host.addParagraph(p -> p
+                    .textStyle(part.link() == null ? bodyStyle : linkStyle)
+                    .align(TextAlign.RIGHT)
+                    .margin(DocumentInsets.zero())
+                    .rich(rich -> {
+                        if (part.link() == null) {
+                            rich.style(part.text(), bodyStyle);
+                        } else {
+                            rich.with(part.text(), linkStyle, part.link());
+                        }
+                    }));
+        }
     }
 
     /**

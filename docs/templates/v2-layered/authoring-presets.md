@@ -2,9 +2,9 @@
 
 You like the layered architecture, but the shipped presets
 (`BoxedSections`, `MinimalUnderlined`, `ModernProfessional`,
-`CenteredHeadline`, `BlueBanner`, `EditorialBlue`, `ClassicSerif`)
-don't match the design you want. This doc walks you through writing a
-new preset from scratch — **without subclassing, without duplicating
+`CenteredHeadline`, `BlueBanner`, `EditorialBlue`, `ClassicSerif`,
+`NordicClean`) don't match the design you want. This doc walks you
+through writing a new preset from scratch — **without subclassing, without duplicating
 rendering code**.
 
 If you haven't read [quickstart.md](quickstart.md) and
@@ -70,6 +70,7 @@ small set of named variants.
 |---|---|
 | `Headline.spacedCentered(host, name, theme)` | Centred letter-spaced uppercase (`J A N E   D O E`) |
 | `Headline.uppercaseCentered(host, name, theme)` | Centred uppercase without extra spacing (`JANE DOE`) |
+| `Headline.uppercaseLeftAligned(host, name, theme)` | Left-aligned uppercase without extra spacing (`JANE DOE`) |
 | `Headline.rightAligned(host, name, theme)` | Right-aligned plain bold (`Jane Doe`) |
 | `Headline.render(host, name, theme, align, spacedCaps)` | Low-level — any (alignment, transform) combo |
 
@@ -86,6 +87,7 @@ small set of named variants.
 | `ContactLine.centered(host, identity, theme)` | Centred, phone → email → address → links |
 | `ContactLine.centered(host, identity, theme, bodyStyle, linkStyle, separatorStyle)` | Centred contact row with explicit style overrides |
 | `ContactLine.rightAligned(host, identity, theme)` | Right-aligned, address → phone → email → links |
+| `ContactLine.rightAlignedStacked(host, identity, theme, bodyStyle, linkStyle)` | Right-aligned vertical stack, one contact item per line |
 | `ContactLine.twoRowRightAligned(host, identity, theme, bodyStyle, linkStyle, separatorStyle)` | Right-aligned address/phone row plus email/link row |
 | `ContactLine.render(host, identity, theme, align, order)` | Low-level — any alignment + field-order combo |
 
@@ -103,6 +105,12 @@ The separator glyph used by `ContactLine`, the bullet glyph used by
 `RowRenderer`, and other character-level choices come from
 `theme.decoration()` — swap a `CvDecoration` to change them
 globally.
+
+Some presets also expose narrow preset-specific options when the
+visual decision is structural rather than a reusable widget. Example:
+`NordicClean.Options` lets authors move the skills rail to the right
+and override the accent colour, rail fill, or profile-band fill
+without mutating shared `CvTheme` defaults or changing other presets.
 
 ---
 

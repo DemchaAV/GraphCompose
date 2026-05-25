@@ -25,16 +25,18 @@
  *   │    BlueBanner         ← full-width banner composition       │
  *   │    EditorialBlue      ← compact editorial composition       │
  *   │    ClassicSerif       ← serif cover/detail preset           │
+ *   │    NordicClean        ← teal two-column rail preset         │
  *   └─────────────────────────────────────────────────────────────┘
  *           │ compose from
  *           ▼
  *   ┌─────────────────────────────────────────────────────────────┐
  *   │  widgets/  ← named visual building blocks (LEGO bricks)    │
  *   │    Headline       .spacedCentered | .uppercaseCentered      │
- *   │                   | .rightAligned                          │
+ *   │                   | .uppercaseLeftAligned | .rightAligned  │
  *   │    Subheadline    .centeredSpacedCaps                       │
  *   │    ContactLine    .centered | .centered(...styles)          │
- *   │                   .rightAligned | .twoRowRightAligned       │
+ *   │                   .rightAligned | .rightAlignedStacked      │
+ *   │                   .twoRowRightAligned                       │
  *   │    SectionHeader  .banner | .fullWidthBanner | .underlined  │
  *   │                   .flat | .flatSpacedCaps                   │
  *   └─────────────────────────────────────────────────────────────┘

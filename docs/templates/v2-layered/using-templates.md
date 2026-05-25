@@ -175,9 +175,10 @@ CvDocument doc = CvDocument.builder()
 
 **Single-column presets** (`BoxedSections`, `MinimalUnderlined`,
 `ModernProfessional`, `CenteredHeadline`, `BlueBanner`,
-`EditorialBlue`, `ClassicSerif`) render only `Slot.MAIN`. Sidebar
-content is silently dropped — switch to a multi-column preset to
-render it.
+`EditorialBlue`, `ClassicSerif`) render only `Slot.MAIN`. `NordicClean`
+also reads `Slot.MAIN`, but lays it out as its own two-column rail/body
+composition. Sidebar content is silently dropped — switch to a
+multi-column preset to render it.
 
 If you don't use slots at all, your sections go to `MAIN` and every
 preset renders them. The slot model is opt-in.
@@ -187,7 +188,7 @@ preset renders them. The slot model is opt-in.
 <a id="picking-a-preset"></a>
 ## Picking a preset
 
-Seven shipped today:
+Eight shipped today:
 
 | Preset | Visual signature |
 |---|---|
@@ -198,6 +199,7 @@ Seven shipped today:
 | `BlueBanner.create()` | Centred PT-Serif name, compact Lato body, blue full-width section banners between thin rules |
 | `EditorialBlue.create()` | Centred uppercase masthead, optional job-title subtitle, blue editorial rules, compact skills table |
 | `ClassicSerif.create()` | PT-Serif cover/detail layout, cream profile band, tan rules |
+| `NordicClean.create()` | Barlow uppercase identity, teal profile band, tinted sidebar rail, compact main column |
 
 Each factory has a no-arg form (uses a sensible default theme) and
 a `create(CvTheme)` form (custom theme).
@@ -206,6 +208,22 @@ a `create(CvTheme)` form (custom theme).
 BoxedSections.create()                          // default theme
 BoxedSections.create(CvTheme.boxedClassic())    // explicit
 BoxedSections.create(myCustomTheme)             // your own
+```
+
+`NordicClean` also exposes preset-specific options because its
+signature has a structural rail and three editable colour surfaces:
+the accent rules/links/name underline, the rail fill, and the profile
+band fill.
+
+```java
+NordicClean.create(
+    CvTheme.nordicClean(),
+    NordicClean.Options.builder()
+        .railSide(NordicClean.RailSide.RIGHT)   // skills rail on the right
+        .accentColor(DocumentColor.rgb(40, 110, 120))
+        .railFillColor(DocumentColor.rgb(244, 249, 249))
+        .profileFillColor(DocumentColor.rgb(226, 244, 245))
+        .build());
 ```
 
 ---

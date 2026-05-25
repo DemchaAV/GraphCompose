@@ -42,16 +42,16 @@
  *
  * <ul>
  *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.Headline}
- *       — top-of-document name in 3 variants
+ *       — top-of-document name in 4 variants
  *       ({@code spacedCentered}, {@code uppercaseCentered},
- *       {@code rightAligned}).</li>
+ *       {@code uppercaseLeftAligned}, {@code rightAligned}).</li>
  *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.Subheadline}
  *       — secondary tagline under the name in 1 variant
  *       ({@code centeredSpacedCaps}).</li>
  *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.ContactLine}
- *       — pipe-separated contact + links row in 3 variants
+ *       — contact + links row/stack in 4 variants
  *       ({@code centered}, {@code rightAligned},
- *       {@code twoRowRightAligned}).</li>
+ *       {@code rightAlignedStacked}, {@code twoRowRightAligned}).</li>
  *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader}
  *       — section title in 4 variants ({@code banner},
  *       {@code underlined}, {@code flat}, {@code flatSpacedCaps}).</li>

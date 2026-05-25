@@ -327,6 +327,7 @@ as DSL plumbing. Below is the current catalog.
 |---|---|---|
 | `Headline.spacedCentered(host, name, theme)` | centred letter-spaced uppercase (`J A N E   D O E`) | BoxedSections, MinimalUnderlined, CenteredHeadline, BlueBanner, ClassicSerif |
 | `Headline.uppercaseCentered(host, name, theme)` | centred uppercase without extra spacing (`JANE DOE`) | EditorialBlue |
+| `Headline.uppercaseLeftAligned(host, name, theme)` | left-aligned uppercase without extra spacing (`JANE DOE`) | NordicClean |
 | `Headline.rightAligned(host, name, theme)` | right-aligned plain bold (`Jane Doe`) | ModernProfessional |
 | `Headline.render(host, name, theme, align, spacedCaps)` | low-level: pick any alignment + transform | — |
 
@@ -343,6 +344,7 @@ as DSL plumbing. Below is the current catalog.
 | `ContactLine.centered(host, identity, theme)` | centred, phone → email → address → links | BoxedSections, MinimalUnderlined, CenteredHeadline, BlueBanner |
 | `ContactLine.centered(host, identity, theme, bodyStyle, linkStyle, separatorStyle)` | centred contact row with explicit style overrides | ClassicSerif |
 | `ContactLine.rightAligned(host, identity, theme)` | right-aligned, address → phone → email → links | ModernProfessional |
+| `ContactLine.rightAlignedStacked(host, identity, theme, bodyStyle, linkStyle)` | right-aligned vertical stack, one contact item per line | NordicClean |
 | `ContactLine.twoRowRightAligned(host, identity, theme, bodyStyle, linkStyle, separatorStyle)` | right-aligned address/phone row plus email/link row | ModernProfessional |
 | `ContactLine.render(host, identity, theme, align, order)` | low-level: pick alignment + field order | — |
 
@@ -364,6 +366,26 @@ Note that `flat` and `flatSpacedCaps` take a `DocumentColor`
 argument — the section title colour is the preset's signature
 accent, and the widget deliberately surfaces it as a parameter
 rather than burying it in the theme.
+
+### Preset-specific options
+
+Most presets need only `create()` or `create(CvTheme)`. When a visual
+choice is structural, keep it scoped to that preset. `NordicClean`
+does this with `NordicClean.Options`: authors can move the
+skills/education rail to the right and override the accent colour,
+rail fill, or profile band fill without changing shared theme defaults
+or affecting other presets.
+
+```java
+NordicClean.create(
+        CvTheme.nordicClean(),
+        NordicClean.Options.builder()
+                .railSide(NordicClean.RailSide.RIGHT)
+                .accentColor(DocumentColor.rgb(40, 110, 120))
+                .railFillColor(DocumentColor.rgb(244, 249, 249))
+                .profileFillColor(DocumentColor.rgb(226, 244, 245))
+                .build());
+```
 
 ### Composing a preset from widgets
 

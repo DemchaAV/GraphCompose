@@ -32,6 +32,9 @@ class WidgetSmokeTest {
             Headline.uppercaseCentered(section, name(), CvTheme.editorialBlue());
         });
         renderWithSection(section -> {
+            Headline.uppercaseLeftAligned(section, name(), CvTheme.nordicClean());
+        });
+        renderWithSection(section -> {
             Headline.rightAligned(section, name(), CvTheme.boxedClassic());
         });
         renderWithSection(section -> {
@@ -51,6 +54,10 @@ class WidgetSmokeTest {
         });
         renderWithSection(section -> {
             ContactLine.rightAligned(section, identity(), CvTheme.boxedClassic());
+        });
+        renderWithSection(section -> {
+            ContactLine.rightAlignedStacked(section, identity(),
+                    CvTheme.nordicClean(), null, underlinedLinkStyle());
         });
         renderWithSection(section -> {
             ContactLine.render(section, identity(), CvTheme.boxedClassic(),

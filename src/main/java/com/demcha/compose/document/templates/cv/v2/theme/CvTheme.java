@@ -116,6 +116,19 @@ public record CvTheme(CvPalette palette,
     }
 
     /**
+     * The "Nordic Clean" look — Barlow display typography, Lato body,
+     * deep blue-green ink, pale teal profile band/rules, and compact
+     * two-column spacing.
+     */
+    public static CvTheme nordicClean() {
+        return new CvTheme(
+                CvPalette.nordicClean(),
+                CvTypography.nordicClean(),
+                CvSpacing.nordicClean(),
+                CvDecoration.classic());
+    }
+
+    /**
      * The "Blue Banner" look — PT Serif display name, Lato body,
      * compact spacing, blue full-width section banners, and tighter
      * pipe separators.

@@ -167,6 +167,28 @@ public record CvSpacing(
     }
 
     /**
+     * Spacing for Nordic Clean: compact top header, soft profile band,
+     * and a dense two-column body with a tinted sidebar rail.
+     */
+    public static CvSpacing nordicClean() {
+        return new CvSpacing(
+                7,                                       // pageFlowSpacing
+                3,                                       // sectionBodySpacing
+                DocumentInsets.zero(),                   // sectionBodyPadding
+                new DocumentInsets(1, 0, 2, 0),          // headlinePadding
+                new DocumentInsets(3, 0, 0, 0),          // contactPadding
+                4.0,                                     // bannerCornerRadius
+                5.0,                                     // bannerInnerPadding
+                DocumentInsets.zero(),                   // bannerMargin
+                1.1,                                     // accentRuleWidth
+                1.5,                                     // paragraphMarginTop
+                8.0,                                     // entryHeaderRowSpacing
+                1.0,                                     // entryTitleWeight
+                0.45,                                    // entryDateWeight
+                3.0);                                    // entrySeparation
+    }
+
+    /**
      * Tighter spacing for the Modern Professional preset — no banner
      * panels, denser body, single-page-friendly proportions.
      * Banner-related fields (corner radius, inner padding, margin)

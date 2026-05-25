@@ -123,6 +123,24 @@ public record CvTypography(
     }
 
     /**
+     * Barlow headline + Lato body scale for the {@code NordicClean}
+     * preset. Compact sizes keep the two-column rail/body layout
+     * single-page friendly while preserving the crisp editorial feel.
+     */
+    public static CvTypography nordicClean() {
+        return new CvTypography(
+                FontName.BARLOW, FontName.LATO,
+                27.0,    // headline
+                7.4,     // contact stack
+                7.6,     // section title
+                8.0,     // entry title
+                7.35,    // entry date
+                7.2,     // entry subtitle
+                7.45,    // body
+                1.12);   // line spacing
+    }
+
+    /**
      * Compact PT-Serif headline + Lato body scale used by the Blue
      * Banner preset.
      */

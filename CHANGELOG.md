@@ -3,6 +3,15 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v1.6.5 — Planned
+
+### Templates v2
+
+- Added the `CenteredHeadline` CV preset to the `cv/v2` layered
+  template surface, including its isolated theme tokens, visual
+  regression baselines, and reusable `Subheadline` /
+  `SectionHeader.flatSpacedCaps` widget support.
+
 ## v1.6.4 — 2026-05-22
 
 Bug fix + structured-block patch. Adds two new public Block types —

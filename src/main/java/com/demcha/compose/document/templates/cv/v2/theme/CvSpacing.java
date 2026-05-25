@@ -118,6 +118,32 @@ public record CvSpacing(
     }
 
     /**
+     * Spacing for the {@code CenteredHeadline} preset — designed for a
+     * classic single-column resume with thin full-width rules above
+     * and below the contact line, and small inter-module rules between
+     * sections. Banner-panel fields are left at sensible defaults but
+     * unused (the preset uses {@code flatSpacedCaps} section headers,
+     * not banners).
+     */
+    public static CvSpacing centeredHeadline() {
+        return new CvSpacing(
+                0,                                       // pageFlowSpacing (zero — rules supply visual gaps)
+                1.5,                                     // sectionBodySpacing
+                DocumentInsets.zero(),                   // sectionBodyPadding
+                new DocumentInsets(8, 0, 0, 0),          // headlinePadding (small top breathing room)
+                new DocumentInsets(7, 0, 7, 0),          // contactPadding
+                0.0,                                     // bannerCornerRadius (unused)
+                5.0,                                     // bannerInnerPadding (unused)
+                DocumentInsets.top(0),                   // bannerMargin (unused)
+                0.55,                                    // accentRuleWidth (thin v1 rule)
+                1.2,                                     // paragraphMarginTop
+                8.0,                                     // entryHeaderRowSpacing
+                1.0,                                     // entryTitleWeight
+                0.45,                                    // entryDateWeight
+                3.0);                                    // entrySeparation
+    }
+
+    /**
      * Tighter spacing for the Modern Professional preset — no banner
      * panels, denser body, single-page-friendly proportions.
      * Banner-related fields (corner radius, inner padding, margin)

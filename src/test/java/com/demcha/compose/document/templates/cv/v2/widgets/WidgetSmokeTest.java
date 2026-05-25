@@ -49,6 +49,14 @@ class WidgetSmokeTest {
     }
 
     @Test
+    void subheadline_variants_render_without_throwing() throws Exception {
+        CvTheme theme = CvTheme.centeredHeadline();
+        renderWithSection(section ->
+                Subheadline.centeredSpacedCaps(section, "Professional Title",
+                        theme.bodyStyle()));
+    }
+
+    @Test
     void sectionHeader_variants_render_without_throwing() throws Exception {
         CvTheme theme = CvTheme.boxedClassic();
         renderWithSection(section ->
@@ -58,6 +66,9 @@ class WidgetSmokeTest {
         renderWithSection(section ->
                 SectionHeader.flat(section, "Experience",
                         DocumentColor.rgb(41, 128, 185), theme));
+        renderWithSection(section ->
+                SectionHeader.flatSpacedCaps(section, "Projects",
+                        theme.palette().muted(), theme, null));
     }
 
     @Test

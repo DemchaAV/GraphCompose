@@ -2,9 +2,9 @@
 
 You like the layered architecture, but the shipped presets
 (`BoxedSections`, `MinimalUnderlined`, `ModernProfessional`,
-`CenteredHeadline`, `BlueBanner`) don't match the design you want.
-This doc walks you through writing a new preset from scratch —
-**without subclassing, without duplicating rendering code**.
+`CenteredHeadline`, `BlueBanner`, `EditorialBlue`) don't match the
+design you want. This doc walks you through writing a new preset from
+scratch — **without subclassing, without duplicating rendering code**.
 
 If you haven't read [quickstart.md](quickstart.md) and
 [using-templates.md](using-templates.md), do those first.
@@ -68,6 +68,7 @@ small set of named variants.
 | Variant | Visual |
 |---|---|
 | `Headline.spacedCentered(host, name, theme)` | Centred letter-spaced uppercase (`J A N E   D O E`) |
+| `Headline.uppercaseCentered(host, name, theme)` | Centred uppercase without extra spacing (`JANE DOE`) |
 | `Headline.rightAligned(host, name, theme)` | Right-aligned plain bold (`Jane Doe`) |
 | `Headline.render(host, name, theme, align, spacedCaps)` | Low-level — any (alignment, transform) combo |
 

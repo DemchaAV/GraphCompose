@@ -34,10 +34,10 @@ experience, your skills.
 
 → **[using-templates.md](using-templates.md)**
 
-You'll learn the `CvDocument` builder API, the three section types
-(paragraph / rows / entries), how slots place sections into columns,
-and how to swap a theme (colours / fonts / glyphs) without forking a
-preset.
+You'll learn the `CvDocument` builder API, the built-in section types
+(paragraph / grouped skills / rows / entries), how slots place
+sections into columns, and how to swap a theme (colours / fonts /
+glyphs) without forking a preset.
 
 ### 🎨 You want a custom visual style on top of v2
 Existing presets aren't quite your design. You want a new look —
@@ -121,7 +121,7 @@ The detailed contract for each layer is in
   glyph" to "add a new section subtype".
 - **Examples**:
   [`examples/cv/v2/`](../../examples/src/main/java/com/demcha/examples/templates/cv/v2)
-  has three runnable rendering examples — one per shipped preset.
+  has runnable rendering examples for the shipped presets.
 - **Legacy v1 surface**:
   [`docs/templates/v1-classic/README.md`](../v1-classic/README.md) describes the older
   spec / preset / theme split used by the v1 templates. Still valid

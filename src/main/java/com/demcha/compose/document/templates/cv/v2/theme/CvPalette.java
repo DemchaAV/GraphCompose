@@ -68,4 +68,17 @@ public record CvPalette(DocumentColor ink,
                 DocumentColor.rgb(58, 82, 118),
                 DocumentColor.rgb(112, 146, 190));
     }
+
+    /**
+     * Editorial Blue palette: deep blue-grey body text, muted
+     * subtitles, vivid blue rules, and a neutral border token reused
+     * by compact skill grids.
+     */
+    public static CvPalette editorialBlue() {
+        return new CvPalette(
+                DocumentColor.rgb(60, 72, 106),
+                DocumentColor.rgb(150, 158, 178),
+                DocumentColor.rgb(86, 136, 255),
+                DocumentColor.rgb(193, 201, 211));
+    }
 }

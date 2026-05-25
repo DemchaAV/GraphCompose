@@ -119,4 +119,20 @@ public record CvTypography(
                 7.7,     // body
                 1.3);    // line spacing
     }
+
+    /**
+     * Compact Helvetica scale for the Editorial Blue preset.
+     */
+    public static CvTypography editorialBlue() {
+        return new CvTypography(
+                FontName.HELVETICA_BOLD, FontName.HELVETICA,
+                22.0,    // headline
+                9.0,     // contact
+                11.0,    // section title
+                10.6,    // entry title
+                10.0,    // entry date
+                9.2,     // entry subtitle
+                9.4,     // body
+                1.45);   // line spacing
+    }
 }

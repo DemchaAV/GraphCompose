@@ -12,9 +12,9 @@ it sets up the conceptual model in 5 minutes.
 
 ## Table of contents
 
-1. [The three pieces you assemble](#the-three-pieces-you-assemble)
+1. [The pieces you assemble](#the-pieces-you-assemble)
 2. [Identity — name, contact, optional links](#identity)
-3. [Section types — three shapes cover every case](#section-types)
+3. [Section types](#section-types)
 4. [Slots — main vs sidebar](#slots)
 5. [Picking a preset](#picking-a-preset)
 6. [Customising a theme](#customising-a-theme)
@@ -23,7 +23,7 @@ it sets up the conceptual model in 5 minutes.
 
 ---
 
-## The three pieces you assemble
+## The Pieces You Assemble
 
 ```java
 CvDocument  doc      = …;                  // your content
@@ -76,9 +76,9 @@ The widget renders the label; the URL is the click target.
 ---
 
 <a id="section-types"></a>
-## Section types — three shapes cover every case
+## Section Types
 
-The `CvSection` sealed hierarchy has exactly **three** concrete
+The `CvSection` sealed hierarchy has a small set of concrete
 shapes. Each captures a structurally different content pattern, not
 a visual flavour.
 
@@ -93,15 +93,31 @@ new ParagraphSection("Professional Summary",
 
 Inline markdown (`**bold**`, `*italic*`, `_italic_`) is honoured.
 
-### 2. `RowsSection` — list of label/body rows with a decoration style
+### 2. `SkillsSection` — grouped skills
 
-For Technical Skills, Languages, Awards, Additional Information,
-Projects, anything with "label: value" entries.
+For Technical Skills and similar capability groups where the content
+is naturally `category -> skills[]`.
 
 ```java
-RowsSection.builder("Technical Skills", RowStyle.BULLETED)
-    .row("Languages", "Java 21, Kotlin, SQL")
-    .row("Tools",     "Maven, Docker, GitHub Actions")
+SkillsSection.builder("Technical Skills")
+    .group("Languages", "Java 21", "Kotlin", "SQL")
+    .group("Tools", "Maven", "Docker", "GitHub Actions")
+    .build();
+```
+
+Keeping skills grouped means the same CV data can render as bullets,
+a grid/table, sidebar chips, or compact inline rows depending on the
+preset.
+
+### 3. `RowsSection` — list of label/body rows with a decoration style
+
+For Languages, Awards, Additional Information, Projects, anything
+with "label: value" entries that is not a skill taxonomy.
+
+```java
+RowsSection.builder("Additional Information", RowStyle.PLAIN)
+    .row("Languages", "English (Fluent), German (Intermediate)")
+    .row("Work Eligibility", "Eligible to work in the UK and the EU")
     .build();
 ```
 
@@ -114,11 +130,10 @@ RowStyle.BULLETED_STACKED   // • <b>Label</b>
                             //   body (on second line, indented)
 ```
 
-The same `RowsSection` type covers Technical Skills, Additional
-Information, Projects — pick the style that matches the visual
-density you want.
+The same `RowsSection` type covers Additional Information and
+Projects — pick the style that matches the visual density you want.
 
-### 3. `EntriesSection` — timeline entries (title / subtitle / date / body)
+### 4. `EntriesSection` — timeline entries (title / subtitle / date / body)
 
 For Education, Professional Experience — anything where you have a
 list of items each with a title, subtitle, date, and description.
@@ -159,9 +174,9 @@ CvDocument doc = CvDocument.builder()
 ```
 
 **Single-column presets** (`BoxedSections`, `MinimalUnderlined`,
-`ModernProfessional`, `CenteredHeadline`, `BlueBanner`) render only
-`Slot.MAIN`. Sidebar content is silently dropped — switch to a
-multi-column preset to render it.
+`ModernProfessional`, `CenteredHeadline`, `BlueBanner`,
+`EditorialBlue`) render only `Slot.MAIN`. Sidebar content is silently
+dropped — switch to a multi-column preset to render it.
 
 If you don't use slots at all, your sections go to `MAIN` and every
 preset renders them. The slot model is opt-in.
@@ -171,7 +186,7 @@ preset renders them. The slot model is opt-in.
 <a id="picking-a-preset"></a>
 ## Picking a preset
 
-Five shipped today:
+Six shipped today:
 
 | Preset | Visual signature |
 |---|---|
@@ -180,6 +195,7 @@ Five shipped today:
 | `ModernProfessional.create()` | Right-aligned big slate-blue name, flat bright-blue bold section titles, dense single page |
 | `CenteredHeadline.create()` | Centred spaced-caps name, small subheadline, full-width rules around contact and modules |
 | `BlueBanner.create()` | Centred PT-Serif name, compact Lato body, blue full-width section banners between thin rules |
+| `EditorialBlue.create()` | Centred uppercase masthead, optional job-title subtitle, blue editorial rules, compact skills table |
 
 Each factory has a no-arg form (uses a sensible default theme) and
 a `create(CvTheme)` form (custom theme).

@@ -42,8 +42,9 @@
  *
  * <ul>
  *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.Headline}
- *       — top-of-document name in 2 variants
- *       ({@code spacedCentered}, {@code rightAligned}).</li>
+ *       — top-of-document name in 3 variants
+ *       ({@code spacedCentered}, {@code uppercaseCentered},
+ *       {@code rightAligned}).</li>
  *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.Subheadline}
  *       — secondary tagline under the name in 1 variant
  *       ({@code centeredSpacedCaps}).</li>
@@ -55,6 +56,12 @@
  *       — section title in 4 variants ({@code banner},
  *       {@code underlined}, {@code flat}, {@code flatSpacedCaps}).</li>
  * </ul>
+ *
+ * <p>Generic widgets that are useful beyond CVs live in
+ * {@link com.demcha.compose.document.templates.widgets}; for example
+ * {@link com.demcha.compose.document.templates.widgets.TableWidget}
+ * provides configurable fixed-column and grid tables with border,
+ * fill, zebra, padding, and typography options.</p>
  *
  * <p>Each widget delegates internally to the lower-level renderers
  * in {@code cv/v2/components/} where helpful, but its public face

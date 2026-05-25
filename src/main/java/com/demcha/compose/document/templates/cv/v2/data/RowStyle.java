@@ -5,9 +5,9 @@ package com.demcha.compose.document.templates.cv.v2.data;
  * each {@link CvRow} is laid out — bullet on/off, inline vs stacked.
  *
  * <p>This is the orthogonal "decoration" axis the v2 model factors
- * out of section types so that bulleted-skills, plain Additional
- * Information, and stacked Projects all share one {@link RowsSection}
- * record.</p>
+ * out of section types so that plain Additional Information,
+ * ad-hoc bulleted rows, and stacked Projects all share one
+ * {@link RowsSection} record.</p>
  */
 public enum RowStyle {
 
@@ -22,7 +22,7 @@ public enum RowStyle {
     /**
      * Bullet glyph + bold label + colon + body, inline: <br>
      * {@code • <b>Languages:</b> Java 21, Kotlin}.
-     * Used by Technical Skills.
+     * Used by ad-hoc bulleted label/value lists.
      */
     BULLETED,
 

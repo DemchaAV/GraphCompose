@@ -7,6 +7,7 @@ import com.demcha.compose.document.templates.cv.v2.data.CvSection;
 import com.demcha.compose.document.templates.cv.v2.data.EntriesSection;
 import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
 import com.demcha.compose.document.templates.cv.v2.data.RowsSection;
+import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
 
 /**
@@ -35,6 +36,8 @@ public final class SectionDispatcher {
 
         if (section instanceof ParagraphSection p) {
             ParagraphRenderer.render(host, p.body(), theme);
+        } else if (section instanceof SkillsSection s) {
+            SkillsRenderer.render(host, s, theme);
         } else if (section instanceof RowsSection r) {
             // Multi-line stacked rows (Projects-style) get a spacer
             // between items so consecutive entries don't visually

@@ -19,6 +19,9 @@ import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
  *       (e.g. {@code J A N E   D O E}). Used by classic /
  *       editorial presets where the name is the page's visual
  *       focal point.</li>
+ *   <li>{@link #uppercaseCentered} — centred uppercase without
+ *       extra letter spacing (e.g. {@code JANE DOE}). Used by
+ *       compact editorial presets.</li>
  *   <li>{@link #rightAligned} — right-aligned plain bold (e.g.
  *       {@code Jane Doe}). Used by modern / corporate presets
  *       where the name sits in a header bar next to contacts.</li>
@@ -46,6 +49,30 @@ public final class Headline {
      */
     public static void spacedCentered(SectionBuilder host, CvName name, CvTheme theme) {
         render(host, name, theme, TextAlign.CENTER, true);
+    }
+
+    /**
+     * Centred uppercase headline without letter spacing. Visual
+     * signature of compact editorial presets that want a strong
+     * masthead but not the wider classic spaced-caps treatment.
+     */
+    public static void uppercaseCentered(SectionBuilder host, CvName name,
+                                         CvTheme theme) {
+        uppercaseCentered(host, name, theme, null);
+    }
+
+    /**
+     * Centred uppercase headline without letter spacing and with an
+     * explicit style override.
+     *
+     * @param styleOverride explicit style; pass {@code null} to fall
+     *                      back to {@code theme.headlineStyle()}
+     */
+    public static void uppercaseCentered(SectionBuilder host, CvName name,
+                                         CvTheme theme,
+                                         DocumentTextStyle styleOverride) {
+        renderText(host, name.full().toUpperCase(java.util.Locale.ROOT),
+                theme, TextAlign.CENTER, styleOverride);
     }
 
     /**
@@ -108,6 +135,15 @@ public final class Headline {
                 ? TextOrnaments.spacedUpper(name.full())
                 : name.full();
 
+        renderText(host, text, theme, alignment, style);
+    }
+
+    private static void renderText(SectionBuilder host, String text, CvTheme theme,
+                                   TextAlign alignment,
+                                   DocumentTextStyle styleOverride) {
+        DocumentTextStyle style = styleOverride != null
+                ? styleOverride
+                : theme.headlineStyle();
         host.spacing(2)
                 .padding(theme.spacing().headlinePadding())
                 .addParagraph(p -> p

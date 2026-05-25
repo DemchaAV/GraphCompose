@@ -19,8 +19,8 @@ GraphCompose's templates v2 (layered) gives you:
   you can drop into a preset.
 - **Presets as compositions** — a preset orchestrates widgets in a
   page flow. `BoxedSections`, `MinimalUnderlined`,
-  `ModernProfessional`, `CenteredHeadline`, `BlueBanner` ship today;
-  writing your own is ~150 lines.
+  `ModernProfessional`, `CenteredHeadline`, `BlueBanner`, and
+  `EditorialBlue` ship today; writing your own is ~150 lines.
 
 You hand a `CvDocument` to a preset, you get a PDF. The preset
 internally composes widgets that read theme tokens that ultimately
@@ -49,9 +49,9 @@ CvDocument doc = CvDocument.builder()
     .section(new ParagraphSection("Professional Summary",
         "Backend engineer with **5 years** of experience building "
         + "high-throughput payment systems."))
-    .section(RowsSection.builder("Technical Skills", RowStyle.BULLETED)
-        .row("Languages", "Java 21, Kotlin, SQL")
-        .row("Frameworks", "Spring Boot, Quarkus")
+    .section(SkillsSection.builder("Technical Skills")
+        .group("Languages", "Java 21", "Kotlin", "SQL")
+        .group("Frameworks", "Spring Boot", "Quarkus")
         .build())
     .section(EntriesSection.builder("Experience")
         .entry("Senior Engineer", "Acme Payments", "2022-Present",
@@ -89,7 +89,7 @@ Same data, different visual. That's the layering.
 ┌─────────────────────────────────────────────────────────────┐
 │  presets/   BoxedSections, MinimalUnderlined,               │
 │             ModernProfessional, CenteredHeadline,           │
-│             BlueBanner                                      │
+│             BlueBanner, EditorialBlue                       │
 │             — composition of widgets in a page flow         │
 └─────────────────────────────────────────────────────────────┘
         │ compose from widgets
@@ -113,7 +113,8 @@ Same data, different visual. That's the layering.
         ▼
 ┌─────────────────────────────────────────────────────────────┐
 │  data/      CvDocument, CvIdentity, CvSection (sealed),     │
-│             ParagraphSection / RowsSection / EntriesSection,│
+│             ParagraphSection / SkillsSection / RowsSection  │
+│             / EntriesSection,                               │
 │             CvRow, CvEntry, Slot                            │
 │             — pure records, zero rendering deps             │
 └─────────────────────────────────────────────────────────────┘

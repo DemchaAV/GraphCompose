@@ -103,6 +103,19 @@ public record CvTheme(CvPalette palette,
     }
 
     /**
+     * The "Classic Serif" look — PT Serif throughout, warm dark ink,
+     * tan rules, cream profile band, and the roomy pipe separator
+     * from the classic decoration.
+     */
+    public static CvTheme classicSerif() {
+        return new CvTheme(
+                CvPalette.classicSerif(),
+                CvTypography.classicSerif(),
+                CvSpacing.classicSerif(),
+                CvDecoration.classic());
+    }
+
+    /**
      * The "Blue Banner" look — PT Serif display name, Lato body,
      * compact spacing, blue full-width section banners, and tighter
      * pipe separators.

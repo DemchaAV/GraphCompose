@@ -144,6 +144,29 @@ public record CvSpacing(
     }
 
     /**
+     * Spacing for Classic Serif: a measured editorial flow with a
+     * framed profile band, quiet cover skills module, and compact
+     * detail modules.
+     */
+    public static CvSpacing classicSerif() {
+        return new CvSpacing(
+                8,                                       // pageFlowSpacing
+                4,                                       // sectionBodySpacing
+                DocumentInsets.zero(),                   // sectionBodyPadding
+                new DocumentInsets(8, 0, 7, 0),          // headlinePadding
+                DocumentInsets.zero(),                   // contactPadding
+                0.0,                                     // bannerCornerRadius (unused)
+                5.0,                                     // bannerInnerPadding (unused)
+                DocumentInsets.zero(),                   // bannerMargin (unused)
+                0.65,                                    // accentRuleWidth
+                1.0,                                     // paragraphMarginTop
+                12.0,                                    // entryHeaderRowSpacing
+                1.0,                                     // entryTitleWeight
+                0.36,                                    // entryDateWeight
+                3.0);                                    // entrySeparation
+    }
+
+    /**
      * Tighter spacing for the Modern Professional preset — no banner
      * panels, denser body, single-page-friendly proportions.
      * Banner-related fields (corner radius, inner padding, margin)

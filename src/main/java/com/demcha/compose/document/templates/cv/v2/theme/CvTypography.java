@@ -104,6 +104,25 @@ public record CvTypography(
     }
 
     /**
+     * PT-Serif scale for the {@code ClassicSerif} preset: large
+     * editorial masthead, quiet metadata, and compact detail entries.
+     * Preset-local body variants still override this when the visual
+     * needs a distinct summary size.
+     */
+    public static CvTypography classicSerif() {
+        return new CvTypography(
+                FontName.PT_SERIF, FontName.PT_SERIF,
+                27.0,    // headline
+                8.7,     // contact
+                9.2,     // section title
+                9.2,     // entry title
+                8.7,     // entry date
+                8.7,     // entry subtitle
+                9.0,     // body
+                1.35);   // line spacing
+    }
+
+    /**
      * Compact PT-Serif headline + Lato body scale used by the Blue
      * Banner preset.
      */

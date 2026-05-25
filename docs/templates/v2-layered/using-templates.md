@@ -175,8 +175,9 @@ CvDocument doc = CvDocument.builder()
 
 **Single-column presets** (`BoxedSections`, `MinimalUnderlined`,
 `ModernProfessional`, `CenteredHeadline`, `BlueBanner`,
-`EditorialBlue`) render only `Slot.MAIN`. Sidebar content is silently
-dropped — switch to a multi-column preset to render it.
+`EditorialBlue`, `ClassicSerif`) render only `Slot.MAIN`. Sidebar
+content is silently dropped — switch to a multi-column preset to
+render it.
 
 If you don't use slots at all, your sections go to `MAIN` and every
 preset renders them. The slot model is opt-in.
@@ -186,7 +187,7 @@ preset renders them. The slot model is opt-in.
 <a id="picking-a-preset"></a>
 ## Picking a preset
 
-Six shipped today:
+Seven shipped today:
 
 | Preset | Visual signature |
 |---|---|
@@ -196,6 +197,7 @@ Six shipped today:
 | `CenteredHeadline.create()` | Centred spaced-caps name, small subheadline, full-width rules around contact and modules |
 | `BlueBanner.create()` | Centred PT-Serif name, compact Lato body, blue full-width section banners between thin rules |
 | `EditorialBlue.create()` | Centred uppercase masthead, optional job-title subtitle, blue editorial rules, compact skills table |
+| `ClassicSerif.create()` | PT-Serif cover/detail layout, cream profile band, tan rules |
 
 Each factory has a no-arg form (uses a sensible default theme) and
 a `create(CvTheme)` form (custom theme).

@@ -24,6 +24,7 @@
  *   │    CenteredHeadline   ← classic centred headline variant    │
  *   │    BlueBanner         ← full-width banner composition       │
  *   │    EditorialBlue      ← compact editorial composition       │
+ *   │    ClassicSerif       ← serif cover/detail preset           │
  *   └─────────────────────────────────────────────────────────────┘
  *           │ compose from
  *           ▼
@@ -32,8 +33,8 @@
  *   │    Headline       .spacedCentered | .uppercaseCentered      │
  *   │                   | .rightAligned                          │
  *   │    Subheadline    .centeredSpacedCaps                       │
- *   │    ContactLine    .centered | .rightAligned                 │
- *   │                   .twoRowRightAligned                       │
+ *   │    ContactLine    .centered | .centered(...styles)          │
+ *   │                   .rightAligned | .twoRowRightAligned       │
  *   │    SectionHeader  .banner | .fullWidthBanner | .underlined  │
  *   │                   .flat | .flatSpacedCaps                   │
  *   └─────────────────────────────────────────────────────────────┘

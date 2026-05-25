@@ -102,7 +102,10 @@ class CvV2VisualParityTest {
                         (Supplier<DocumentTemplate<CvDocument>>) BlueBanner::create),
                 Arguments.of("editorial_blue",
                         EditorialBlue.RECOMMENDED_MARGIN,
-                        (Supplier<DocumentTemplate<CvDocument>>) EditorialBlue::create));
+                        (Supplier<DocumentTemplate<CvDocument>>) EditorialBlue::create),
+                Arguments.of("classic_serif",
+                        ClassicSerif.RECOMMENDED_MARGIN,
+                        (Supplier<DocumentTemplate<CvDocument>>) ClassicSerif::create));
     }
 
     /**

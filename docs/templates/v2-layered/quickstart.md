@@ -19,8 +19,9 @@ GraphCompose's templates v2 (layered) gives you:
   you can drop into a preset.
 - **Presets as compositions** — a preset orchestrates widgets in a
   page flow. `BoxedSections`, `MinimalUnderlined`,
-  `ModernProfessional`, `CenteredHeadline`, `BlueBanner`, and
-  `EditorialBlue` ship today; writing your own is ~150 lines.
+  `ModernProfessional`, `CenteredHeadline`, `BlueBanner`,
+  `EditorialBlue`, and `ClassicSerif` ship today; writing your own
+  is ~150 lines.
 
 You hand a `CvDocument` to a preset, you get a PDF. The preset
 internally composes widgets that read theme tokens that ultimately
@@ -89,7 +90,7 @@ Same data, different visual. That's the layering.
 ┌─────────────────────────────────────────────────────────────┐
 │  presets/   BoxedSections, MinimalUnderlined,               │
 │             ModernProfessional, CenteredHeadline,           │
-│             BlueBanner, EditorialBlue                       │
+│             BlueBanner, EditorialBlue, ClassicSerif          │
 │             — composition of widgets in a page flow         │
 └─────────────────────────────────────────────────────────────┘
         │ compose from widgets

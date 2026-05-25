@@ -5,9 +5,12 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTextDecoration;
+import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.v2.data.CvName;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.font.FontName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,6 +44,10 @@ class WidgetSmokeTest {
     void contactLine_variants_render_without_throwing() throws Exception {
         renderWithSection(section -> {
             ContactLine.centered(section, identity(), CvTheme.boxedClassic());
+        });
+        renderWithSection(section -> {
+            ContactLine.centered(section, identity(), CvTheme.boxedClassic(),
+                    null, underlinedLinkStyle(), null);
         });
         renderWithSection(section -> {
             ContactLine.rightAligned(section, identity(), CvTheme.boxedClassic());
@@ -108,6 +115,15 @@ class WidgetSmokeTest {
                 .name("Jane", "Doe")
                 .contact("+44 0", "j@d.com", "London")
                 .link("LinkedIn", "https://linkedin.com/in/jane-doe")
+                .build();
+    }
+
+    private static DocumentTextStyle underlinedLinkStyle() {
+        return DocumentTextStyle.builder()
+                .fontName(FontName.PT_SERIF)
+                .size(8.5)
+                .decoration(DocumentTextDecoration.UNDERLINE)
+                .color(DocumentColor.rgb(126, 93, 52))
                 .build();
     }
 

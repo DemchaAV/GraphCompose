@@ -2,9 +2,10 @@
 
 You like the layered architecture, but the shipped presets
 (`BoxedSections`, `MinimalUnderlined`, `ModernProfessional`,
-`CenteredHeadline`, `BlueBanner`, `EditorialBlue`) don't match the
-design you want. This doc walks you through writing a new preset from
-scratch — **without subclassing, without duplicating rendering code**.
+`CenteredHeadline`, `BlueBanner`, `EditorialBlue`, `ClassicSerif`)
+don't match the design you want. This doc walks you through writing a
+new preset from scratch — **without subclassing, without duplicating
+rendering code**.
 
 If you haven't read [quickstart.md](quickstart.md) and
 [using-templates.md](using-templates.md), do those first.
@@ -83,6 +84,7 @@ small set of named variants.
 | Variant | Visual |
 |---|---|
 | `ContactLine.centered(host, identity, theme)` | Centred, phone → email → address → links |
+| `ContactLine.centered(host, identity, theme, bodyStyle, linkStyle, separatorStyle)` | Centred contact row with explicit style overrides |
 | `ContactLine.rightAligned(host, identity, theme)` | Right-aligned, address → phone → email → links |
 | `ContactLine.twoRowRightAligned(host, identity, theme, bodyStyle, linkStyle, separatorStyle)` | Right-aligned address/phone row plus email/link row |
 | `ContactLine.render(host, identity, theme, align, order)` | Low-level — any alignment + field-order combo |

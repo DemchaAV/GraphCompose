@@ -58,6 +58,20 @@ public record CvPalette(DocumentColor ink,
     }
 
     /**
+     * Warm serif palette ported from the original {@code ClassicSerif}
+     * v1 preset. The banner slot carries the soft cream fill used by
+     * its profile band; the bronze accent is preset-local because no
+     * other preset shares that fifth colour token today.
+     */
+    public static CvPalette classicSerif() {
+        return new CvPalette(
+                DocumentColor.rgb(45, 43, 40),
+                DocumentColor.rgb(105, 101, 94),
+                DocumentColor.rgb(187, 177, 160),
+                DocumentColor.rgb(250, 247, 241));
+    }
+
+    /**
      * Blue Banner palette: compact dark ink, blue section fills, and
      * darker blue separator rules.
      */

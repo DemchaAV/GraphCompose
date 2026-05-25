@@ -48,6 +48,32 @@ public final class ContactLine {
     }
 
     /**
+     * Centred contact row with explicit text-style overrides for
+     * non-link text, clickable links, and separators. Same ordering as
+     * {@link #centered(SectionBuilder, CvIdentity, CvTheme)}, but lets
+     * editorial presets tint / underline the links without forking the
+     * contact assembly logic.
+     *
+     * @param bodyStyleOverride      style for phone and address;
+     *                               {@code null} →
+     *                               {@code theme.contactStyle()}
+     * @param linkStyleOverride      style for email + every link;
+     *                               {@code null} →
+     *                               {@code theme.contactStyle()}
+     * @param separatorStyleOverride style for the separator glyph;
+     *                               {@code null} →
+     *                               {@code theme.contactSeparatorStyle()}
+     */
+    public static void centered(SectionBuilder host, CvIdentity identity,
+                                CvTheme theme,
+                                DocumentTextStyle bodyStyleOverride,
+                                DocumentTextStyle linkStyleOverride,
+                                DocumentTextStyle separatorStyleOverride) {
+        renderStyled(host, identity, theme, TextAlign.CENTER, Order.PHONE_FIRST,
+                bodyStyleOverride, linkStyleOverride, separatorStyleOverride);
+    }
+
+    /**
      * Right-aligned pipe-separated contact row. Order: address →
      * phone → email → links — address-first reads as the location
      * label authors usually put first in this style.
@@ -147,6 +173,42 @@ public final class ContactLine {
                                     rich.link(part.text(), part.link());
                                 } else {
                                     rich.style(part.text(), textStyle);
+                                }
+                                if (i < parts.size() - 1) {
+                                    rich.style(separator, separatorStyle);
+                                }
+                            }
+                        }));
+    }
+
+    private static void renderStyled(SectionBuilder host, CvIdentity identity,
+                                     CvTheme theme, TextAlign alignment,
+                                     Order order,
+                                     DocumentTextStyle bodyStyleOverride,
+                                     DocumentTextStyle linkStyleOverride,
+                                     DocumentTextStyle separatorStyleOverride) {
+        List<Part> parts = parts(identity, order);
+        DocumentTextStyle bodyStyle = bodyStyleOverride != null
+                ? bodyStyleOverride : theme.contactStyle();
+        DocumentTextStyle linkStyle = linkStyleOverride != null
+                ? linkStyleOverride : bodyStyle;
+        DocumentTextStyle separatorStyle = separatorStyleOverride != null
+                ? separatorStyleOverride : theme.contactSeparatorStyle();
+        String separator = theme.decoration().contactSeparator();
+
+        host.spacing(0)
+                .padding(theme.spacing().contactPadding())
+                .addParagraph(p -> p
+                        .textStyle(bodyStyle)
+                        .align(alignment)
+                        .margin(DocumentInsets.zero())
+                        .rich(rich -> {
+                            for (int i = 0; i < parts.size(); i++) {
+                                Part part = parts.get(i);
+                                if (part.link() != null) {
+                                    rich.with(part.text(), linkStyle, part.link());
+                                } else {
+                                    rich.style(part.text(), bodyStyle);
                                 }
                                 if (i < parts.size() - 1) {
                                     rich.style(separator, separatorStyle);

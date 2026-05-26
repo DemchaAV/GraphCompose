@@ -97,6 +97,60 @@ class WidgetSmokeTest {
                 SectionHeader.tickLabel(section, "Projects",
                         CvTheme.compactMono(),
                         DocumentColor.rgb(0, 126, 151), 22));
+        renderWithSection(section ->
+                SectionHeader.upperRule(section, "Skills",
+                        CvTheme.nordicClean(), bodyStyle(),
+                        DocumentColor.rgb(28, 128, 135), 64));
+        renderWithSection(section ->
+                SectionHeader.spacedCapsRule(section, "Experience", theme,
+                        bodyStyle(), DocumentColor.rgb(126, 93, 52),
+                        72, 1.0, DocumentInsets.zero()));
+    }
+
+    @Test
+    void flowSectionHeader_variants_render_without_throwing() throws Exception {
+        CvTheme theme = CvTheme.blueBanner();
+        renderWithFlow(flow -> FlowSectionHeader.banner(flow, "FlowBanner",
+                "Experience", 240, theme, bodyStyle(),
+                DocumentInsets.top(2), DocumentInsets.bottom(2)));
+        renderWithFlow(flow -> FlowSectionHeader.label(flow, "FlowLabel",
+                "PROJECTS", 240, CvTheme.editorialBlue(), bodyStyle(),
+                DocumentInsets.top(2), DocumentInsets.of(2),
+                DocumentInsets.zero(), true));
+    }
+
+    @Test
+    void moduleAndBand_widgets_render_without_throwing() throws Exception {
+        CvTheme theme = CvTheme.nordicClean();
+        renderWithSection(section -> ProfileBand.render(section, "Profile",
+                "**Markdown** body", ProfileBand.Style.builder()
+                        .titleStyle(bodyStyle())
+                        .bodyStyle(bodyStyle())
+                        .accentLeft(DocumentColor.rgb(28, 128, 135), 2)
+                        .build()));
+        renderWithSection(section -> SectionModule.tick(section, "Tick",
+                "Skills", CvTheme.compactMono(),
+                DocumentColor.rgb(0, 126, 151), 24, bodyStyle(),
+                body -> body.addParagraph(p -> p.text("Java").textStyle(bodyStyle()))));
+        renderWithSection(section -> SectionModule.upperRule(section, "Rule",
+                "Experience", theme, bodyStyle(),
+                DocumentColor.rgb(28, 128, 135), 72,
+                body -> body.addParagraph(p -> p.text("Senior Engineer")
+                        .textStyle(bodyStyle()))));
+    }
+
+    @Test
+    void masthead_renders_without_throwing() throws Exception {
+        CvTheme theme = CvTheme.editorialBlue();
+        renderWithSection(section -> Masthead.centered(section, identity(),
+                theme, Masthead.Style.builder()
+                        .nameStyle(bodyStyle())
+                        .titleStyle(bodyStyle())
+                        .metaStyle(bodyStyle())
+                        .linkStyle(underlinedLinkStyle())
+                        .separatorStyle(bodyStyle())
+                        .lineMargin(DocumentInsets.top(1))
+                        .build()));
     }
 
     @Test
@@ -117,6 +171,18 @@ class WidgetSmokeTest {
                     .name("WidgetTestRoot")
                     .addSection("WidgetSlot", action::run)
                     .build();
+            assertThat(session.roots()).isNotEmpty();
+        }
+    }
+
+    private static void renderWithFlow(FlowAction action) throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(420, 595)
+                .margin(DocumentInsets.of(24))
+                .create()) {
+            var flow = session.dsl().pageFlow().name("FlowWidgetTestRoot");
+            action.run(flow);
+            flow.build();
             assertThat(session.roots()).isNotEmpty();
         }
     }
@@ -142,8 +208,22 @@ class WidgetSmokeTest {
                 .build();
     }
 
+    private static DocumentTextStyle bodyStyle() {
+        return DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA)
+                .size(9)
+                .decoration(DocumentTextDecoration.DEFAULT)
+                .color(DocumentColor.rgb(30, 40, 55))
+                .build();
+    }
+
     @FunctionalInterface
     private interface SectionAction {
         void run(com.demcha.compose.document.dsl.SectionBuilder section);
+    }
+
+    @FunctionalInterface
+    private interface FlowAction {
+        void run(com.demcha.compose.document.dsl.PageFlowBuilder flow);
     }
 }

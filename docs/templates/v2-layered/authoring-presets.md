@@ -60,9 +60,11 @@ visual decision you can read like a recipe.
 <a id="the-widget-catalog"></a>
 ## The widget catalog
 
-Today, four widget classes live in
+The CV widget classes live in
 `com.demcha.compose.document.templates.cv.v2.widgets`. Each has a
-small set of named variants.
+small set of named variants. Generic widgets that can be reused by
+CVs, proposals, invoices, and cover letters live one package higher
+in `com.demcha.compose.document.templates.widgets`.
 
 ### `Headline` — top-of-document name
 
@@ -102,6 +104,24 @@ small set of named variants.
 | `SectionHeader.flat(host, title, color, theme)` | Large bold title in a given colour, no panel |
 | `SectionHeader.flatSpacedCaps(host, title, color, theme, titleStyle)` | Small left spaced-caps title in a soft colour, no panel |
 | `SectionHeader.tickLabel(host, title, theme, color, tickWidth[, titleStyle])` | Short accent tick above compact uppercase label |
+| `SectionHeader.upperRule(host, title, theme, titleStyle, ruleColor, ruleWidth)` | Uppercase label with short rule below |
+| `SectionHeader.spacedCapsRule(host, title, theme, titleStyle, ruleColor, ruleWidth, ruleThickness, ruleMargin)` | Spaced-caps label with short rule below |
+
+### Higher-order CV widgets
+
+| Widget | Visual |
+|---|---|
+| `Masthead.centered(host, identity, theme, style)` | Centred editorial identity block: name, optional title, metadata, link row |
+| `FlowSectionHeader.banner(...)` / `FlowSectionHeader.label(...)` | Page-flow-level headers where the surrounding rules are outside the body section |
+| `ProfileBand.render(...)` | Tinted/ruled summary block with markdown-aware body text |
+| `SectionModule.tick(...)` / `SectionModule.upperRule(...)` | Named rail/card module that combines a section-header variant with caller-supplied body content |
+
+### Shared document widgets
+
+| Widget | Visual |
+|---|---|
+| `TableWidget.fixed(...)` / `TableWidget.grid(...)` | Configurable tables/grids with borders, fills, zebra rows, padding, typography, and column count |
+| `CardWidget.render(...)` | Reusable card/container shell with spacing, padding, fill, stroke, and corner radius |
 
 The separator glyph used by `ContactLine`, the bullet glyph used by
 `RowRenderer`, and other character-level choices come from

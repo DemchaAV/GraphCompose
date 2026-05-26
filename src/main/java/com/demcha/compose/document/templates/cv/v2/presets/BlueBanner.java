@@ -3,15 +3,17 @@ package com.demcha.compose.document.templates.cv.v2.presets;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
-import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.cv.v2.components.MarkdownInline;
+import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
+import com.demcha.compose.document.templates.cv.v2.components.EntryCompactRenderer;
 import com.demcha.compose.document.templates.cv.v2.components.ParagraphRenderer;
+import com.demcha.compose.document.templates.cv.v2.components.ProjectRenderer;
 import com.demcha.compose.document.templates.cv.v2.components.RowRenderer;
+import com.demcha.compose.document.templates.cv.v2.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.v2.components.SkillsRenderer;
 import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
 import com.demcha.compose.document.templates.cv.v2.data.CvEntry;
@@ -25,13 +27,11 @@ import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
 import com.demcha.compose.document.templates.cv.v2.data.Slot;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
+import com.demcha.compose.document.templates.cv.v2.widgets.FlowSectionHeader;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
-import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
-import com.demcha.compose.font.FontName;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -118,12 +118,11 @@ public final class BlueBanner {
             Objects.requireNonNull(document, "document");
             Objects.requireNonNull(doc, "doc");
 
-            DocumentTextStyle bannerTitleStyle = DocumentTextStyle.builder()
-                    .fontName(theme.typography().bodyFont())
-                    .size(theme.typography().sizeBanner())
-                    .decoration(DocumentTextDecoration.BOLD)
-                    .color(BANNER_TEXT)
-                    .build();
+            DocumentTextStyle bannerTitleStyle = CvTextStyles.of(
+                    theme.typography().bodyFont(),
+                    theme.typography().sizeBanner(),
+                    DocumentTextDecoration.BOLD,
+                    BANNER_TEXT);
 
             PageFlowBuilder pageFlow = document.dsl()
                     .pageFlow()
@@ -139,32 +138,17 @@ public final class BlueBanner {
             for (int i = 0; i < sections.size(); i++) {
                 final CvSection sec = sections.get(i);
                 final int idx = i;
-                addBannerRule(pageFlow, "BlueBannerRuleTop_" + idx, theme, 3, 1);
-                pageFlow.addSection("BlueBannerTitle_" + idx, host ->
-                        SectionHeader.fullWidthBanner(host, sec.title(),
-                                theme, bannerTitleStyle));
-                addBannerRule(pageFlow, "BlueBannerRuleBottom_" + idx, theme, 1, 1);
+                FlowSectionHeader.banner(pageFlow, "BlueBannerTitle_" + idx,
+                        sec.title(), BANNER_RULE_WIDTH, theme, bannerTitleStyle,
+                        new DocumentInsets(3, BANNER_RULE_HORIZONTAL_INSET,
+                                1, BANNER_RULE_HORIZONTAL_INSET),
+                        new DocumentInsets(1, BANNER_RULE_HORIZONTAL_INSET,
+                                1, BANNER_RULE_HORIZONTAL_INSET));
                 pageFlow.addSection("BlueBannerBody_" + idx, host ->
                         renderBody(host, sec, theme));
             }
 
             pageFlow.build();
-        }
-
-        private static void addBannerRule(PageFlowBuilder pageFlow, String name,
-                                          CvTheme theme,
-                                          double topMargin,
-                                          double bottomMargin) {
-            pageFlow.addLine(line -> line
-                    .name(name)
-                    .horizontal(BANNER_RULE_WIDTH)
-                    .color(theme.palette().rule())
-                    .thickness(theme.spacing().accentRuleWidth())
-                    .margin(new DocumentInsets(
-                            topMargin,
-                            BANNER_RULE_HORIZONTAL_INSET,
-                            bottomMargin,
-                            BANNER_RULE_HORIZONTAL_INSET)));
         }
     }
 
@@ -207,110 +191,42 @@ public final class BlueBanner {
     private static void renderPlainProjectRow(SectionBuilder host,
                                               CvRow row,
                                               CvTheme theme) {
-        String label = row.label().trim();
-        String body = row.body().trim();
-        DocumentTextStyle labelStyle = theme.entryTitleStyle();
-        DocumentTextStyle bodyStyle = theme.bodyStyle();
-
-        host.addParagraph(p -> p
-                .textStyle(bodyStyle)
-                .lineSpacing(theme.typography().bodyLineSpacing())
-                .align(TextAlign.LEFT)
-                .margin(DocumentInsets.top((float) theme.spacing().paragraphMarginTop()))
-                .rich(rich -> {
-                    rich.style(stripBasicMarkdown(label), labelStyle);
-                    if (!body.isBlank()) {
-                        rich.style(" - ", bodyStyle);
-                        MarkdownInline.append(rich, body, bodyStyle);
-                    }
-                }));
+        ProjectRenderer.plainInline(host, row, theme.entryTitleStyle(),
+                theme.bodyStyle(), theme.typography().bodyLineSpacing(),
+                DocumentInsets.top((float) theme.spacing().paragraphMarginTop()),
+                " - ");
     }
 
     private static void renderEntry(SectionBuilder section,
                                     CvEntry entry,
                                     CvTheme theme) {
         DocumentTextStyle titleStyle = theme.entryTitleStyle();
-        DocumentTextStyle dateStyle = style(theme.typography().bodyFont(),
+        DocumentTextStyle dateStyle = CvTextStyles.of(theme.typography().bodyFont(),
                 theme.typography().sizeEntryDate(),
                 DocumentTextDecoration.BOLD,
                 theme.palette().ink());
-        DocumentTextStyle subtitleStyle = style(theme.typography().bodyFont(),
+        DocumentTextStyle subtitleStyle = CvTextStyles.of(theme.typography().bodyFont(),
                 theme.typography().sizeEntrySubtitle(),
                 DocumentTextDecoration.DEFAULT,
                 theme.palette().ink());
-        DocumentTextStyle bodyStyle = theme.bodyStyle();
 
-        section.addRow("BlueBannerEntryHeader", row -> row
-                .spacing(theme.spacing().entryHeaderRowSpacing())
-                .weights(theme.spacing().entryTitleWeight(),
-                        theme.spacing().entryDateWeight())
-                .addSection("Title", titleColumn -> titleColumn
-                        .padding(DocumentInsets.zero())
-                        .addParagraph(p -> p
-                                .text(stripBasicMarkdown(entry.title())
-                                        .toUpperCase(Locale.ROOT))
-                                .textStyle(titleStyle)
-                                .align(TextAlign.LEFT)
-                                .margin(DocumentInsets.zero())))
-                .addSection("Date", dateColumn -> dateColumn
-                        .padding(DocumentInsets.zero())
-                        .addParagraph(p -> p
-                                .text(stripBasicMarkdown(entry.date()))
-                                .textStyle(dateStyle)
-                                .align(TextAlign.RIGHT)
-                                .margin(DocumentInsets.zero()))));
-
-        if (!entry.subtitle().isBlank()) {
-            section.addParagraph(p -> p
-                    .text(stripBasicMarkdown(entry.subtitle()))
-                    .textStyle(subtitleStyle)
-                    .align(TextAlign.LEFT)
-                    .margin(DocumentInsets.zero()));
-        }
-
-        if (!entry.body().isBlank()) {
-            renderBodyParagraph(section, entry.body(), bodyStyle,
-                    theme.typography().bodyLineSpacing(),
-                    DocumentInsets.top((float) theme.spacing().paragraphMarginTop()));
-        }
-    }
-
-    private static void renderBodyParagraph(SectionBuilder host,
-                                            String text,
-                                            DocumentTextStyle style,
-                                            double lineSpacing,
-                                            DocumentInsets margin) {
-        if (text == null || text.isBlank()) {
-            return;
-        }
-        host.addParagraph(p -> p
-                .textStyle(style)
-                .lineSpacing(lineSpacing)
-                .align(TextAlign.LEFT)
-                .margin(margin)
-                .rich(rich -> MarkdownInline.append(rich, text.trim(), style)));
-    }
-
-    private static DocumentTextStyle style(FontName font,
-                                           double size,
-                                           DocumentTextDecoration decoration,
-                                           DocumentColor color) {
-        return DocumentTextStyle.builder()
-                .fontName(font)
-                .size(size)
-                .decoration(decoration)
-                .color(color)
-                .build();
+        EntryCompactRenderer.twoColumnTitleDateBody(section, entry,
+                "BlueBannerEntryHeader", titleStyle, dateStyle, subtitleStyle,
+                theme.bodyStyle(), theme.spacing().entryHeaderRowSpacing(),
+                theme.spacing().entryTitleWeight(),
+                theme.spacing().entryDateWeight(), DocumentInsets.zero(),
+                DocumentInsets.top((float) theme.spacing().paragraphMarginTop()),
+                theme.typography().bodyLineSpacing(), true);
     }
 
     private static List<CvSection> orderedSections(CvDocument doc) {
         List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
         List<CvSection> ordered = new ArrayList<>();
-        addIfPresent(ordered, findSection(sections, SUMMARY_KEYS));
-        addIfPresent(ordered, findSection(sections, EXPERIENCE_KEYS));
-        addIfPresent(ordered, findSection(sections, EDUCATION_KEYS));
-        addIfPresent(ordered, findSection(sections, SKILL_KEYS));
-        addIfPresent(ordered, findSection(sections, ADDITIONAL_KEYS));
+        addIfPresent(ordered, SectionLookup.firstMatching(sections, SUMMARY_KEYS));
+        addIfPresent(ordered, SectionLookup.firstMatching(sections, EXPERIENCE_KEYS));
+        addIfPresent(ordered, SectionLookup.firstMatching(sections, EDUCATION_KEYS));
+        addIfPresent(ordered, SectionLookup.firstMatching(sections, SKILL_KEYS));
+        addIfPresent(ordered, SectionLookup.firstMatching(sections, ADDITIONAL_KEYS));
         for (CvSection section : sections) {
             addIfPresent(ordered, section);
         }
@@ -321,42 +237,5 @@ public final class BlueBanner {
         if (section != null && !sections.contains(section)) {
             sections.add(section);
         }
-    }
-
-    private static CvSection findSection(List<CvSection> sections,
-                                         List<String> keys) {
-        for (CvSection section : sections) {
-            String normalizedTitle = normalize(section.title());
-            for (String key : keys) {
-                if (normalizedTitle.contains(normalize(key))) {
-                    return section;
-                }
-            }
-        }
-        return null;
-    }
-
-    private static String stripBasicMarkdown(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value
-                .replace("**", "")
-                .replace("__", "")
-                .replace("`", "")
-                .replace("*", "")
-                .replace("_", "");
-    }
-
-    private static String normalize(String value) {
-        String safe = value == null ? "" : value;
-        StringBuilder builder = new StringBuilder(safe.length());
-        for (int i = 0; i < safe.length(); i++) {
-            char current = Character.toLowerCase(safe.charAt(i));
-            if (Character.isLetterOrDigit(current)) {
-                builder.append(current);
-            }
-        }
-        return builder.toString();
     }
 }

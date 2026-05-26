@@ -4,6 +4,7 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
@@ -46,6 +47,22 @@ class TableWidgetTest {
                         .textStyle(bodyStyle())
                         .widthAdjustment(1.0)
                         .build()));
+    }
+
+    @Test
+    void card_widget_renders_with_custom_shell() throws Exception {
+        render(section -> CardWidget.render(section, "SharedWidgetCard",
+                CardWidget.Style.builder()
+                        .spacing(4)
+                        .padding(new DocumentInsets(6, 8, 6, 8))
+                        .fillColor(DocumentColor.rgb(250, 252, 255))
+                        .stroke(DocumentStroke.of(
+                                DocumentColor.rgb(180, 190, 205), 0.5))
+                        .cornerRadius(3)
+                        .build(),
+                card -> card.addParagraph(paragraph -> paragraph
+                        .text("Reusable card")
+                        .textStyle(bodyStyle()))));
     }
 
     private static void render(SectionAction action) throws Exception {

@@ -278,4 +278,27 @@ public record CvSpacing(
                 0.45,                                    // entryDateWeight
                 3.0);                                    // entrySeparation
     }
+
+    /**
+     * Spacing for the Executive preset: generous executive feel with
+     * an 8pt page-flow rhythm, compact module bodies, and a 1.1pt
+     * full-width rule under the masthead.
+     */
+    public static CvSpacing executive() {
+        return new CvSpacing(
+                8,                                       // pageFlowSpacing
+                3,                                       // sectionBodySpacing
+                DocumentInsets.zero(),                   // sectionBodyPadding
+                DocumentInsets.zero(),                   // headlinePadding
+                DocumentInsets.top(2),                   // contactPadding (unused — preset composes header inline)
+                0.0,                                     // bannerCornerRadius (unused)
+                5.0,                                     // bannerInnerPadding (unused)
+                DocumentInsets.zero(),                   // bannerMargin (unused)
+                1.1,                                     // accentRuleWidth (V1 header rule)
+                2.0,                                     // paragraphMarginTop
+                8.0,                                     // entryHeaderRowSpacing
+                1.0,                                     // entryTitleWeight
+                0.45,                                    // entryDateWeight
+                3.0);                                    // entrySeparation
+    }
 }

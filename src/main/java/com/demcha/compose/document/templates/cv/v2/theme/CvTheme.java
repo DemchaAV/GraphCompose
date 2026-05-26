@@ -166,6 +166,21 @@ public record CvTheme(CvPalette palette,
                 CvSpacing.editorialBlue(),
                 CvDecoration.classic());
     }
+
+    /**
+     * The "Executive" look — Poppins masthead + Lato body, deep slate
+     * primary, warm bronze accent on module headings and contact
+     * links, and a thin full-width muted rule under the header.
+     * Visual signature ported from the legacy
+     * {@code ExecutiveSlateCvTemplate}.
+     */
+    public static CvTheme executive() {
+        return new CvTheme(
+                CvPalette.executive(),
+                CvTypography.executive(),
+                CvSpacing.executive(),
+                CvDecoration.classic());
+    }
     // -- pre-built text-style helpers ------------------------------------
     // Renderers ask the theme for an already-composed DocumentTextStyle
     // instead of re-assembling font + size + decoration + colour every

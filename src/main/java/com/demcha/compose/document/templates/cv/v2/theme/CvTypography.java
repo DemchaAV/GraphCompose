@@ -190,4 +190,24 @@ public record CvTypography(
                 9.4,     // body
                 1.45);   // line spacing
     }
+
+    /**
+     * Poppins headline + Lato body scale ported from the v1
+     * {@code ExecutiveSlateCvTemplate}: a 24pt uppercase masthead, a
+     * 10.8pt section-title slot driving the bronze module headings,
+     * and a 9.5pt body with 1.25 line-spacing tuned for an executive
+     * single-column resume density.
+     */
+    public static CvTypography executive() {
+        return new CvTypography(
+                FontName.POPPINS, FontName.LATO,
+                24.0,    // headline (uppercase masthead)
+                9.1,     // contact meta (V1 META_SIZE = body - 0.4)
+                10.8,    // banner / section title (V1 SECTION_SIZE)
+                9.5,     // entry title
+                9.5,     // entry date
+                9.0,     // entry subtitle (italic)
+                9.5,     // body (V1 BODY_SIZE)
+                1.25);   // line spacing
+    }
 }

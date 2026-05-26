@@ -122,4 +122,22 @@ public record CvPalette(DocumentColor ink,
                 DocumentColor.rgb(86, 136, 255),
                 DocumentColor.rgb(193, 201, 211));
     }
+
+    /**
+     * Executive palette ported from the v1 {@code ExecutiveSlateCvTemplate}:
+     * mid-slate body ink, soft muted slate for italic subtitles, the
+     * V1 muted-rule grey for thin separators, and a fallback banner
+     * tone inherited from the classic palette (the preset does not
+     * draw banner panels). The display name colour (deeper slate
+     * rgb(24,35,51)) and bronze accent (rgb(172,112,55)) are
+     * preset-local because they are the fifth and sixth tokens —
+     * other v2 presets do not share them today.
+     */
+    public static CvPalette executive() {
+        return new CvPalette(
+                DocumentColor.rgb(49, 58, 72),     // ink — V1 BODY slate
+                DocumentColor.rgb(105, 115, 130),  // muted — slightly lighter slate
+                DocumentColor.rgb(193, 201, 211),  // rule — V1 MUTED_RULE
+                DocumentColor.rgb(220, 226, 230)); // banner — unused, inherits classic
+    }
 }

@@ -1,5 +1,6 @@
 package com.demcha.compose.document.templates.widgets;
 
+import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentCornerRadius;
@@ -31,19 +32,45 @@ public final class CardWidget {
         Style safeStyle = style == null ? Style.builder().build() : style;
 
         parent.addSection(name, card -> {
-            card.spacing(safeStyle.spacing())
-                    .padding(safeStyle.padding());
-            if (safeStyle.fillColor() != null) {
-                card.fillColor(safeStyle.fillColor());
-            }
-            if (safeStyle.stroke() != null) {
-                card.stroke(safeStyle.stroke());
-            }
-            if (safeStyle.cornerRadius() != null) {
-                card.cornerRadius(safeStyle.cornerRadius());
-            }
+            applyStyle(card, safeStyle);
             content.accept(card);
         });
+    }
+
+    /**
+     * Top-level overload — renders the card as a page-flow section so
+     * presets can place full-width cards directly under
+     * {@link PageFlowBuilder} without wrapping them in a parent
+     * section. Visual shell behaves identically to the
+     * {@link #render(SectionBuilder, String, Style, Consumer)}
+     * variant.
+     */
+    public static void render(PageFlowBuilder flow,
+                              String name,
+                              Style style,
+                              Consumer<SectionBuilder> content) {
+        Objects.requireNonNull(flow, "flow");
+        Objects.requireNonNull(content, "content");
+        Style safeStyle = style == null ? Style.builder().build() : style;
+
+        flow.addSection(name, card -> {
+            applyStyle(card, safeStyle);
+            content.accept(card);
+        });
+    }
+
+    private static void applyStyle(SectionBuilder card, Style style) {
+        card.spacing(style.spacing())
+                .padding(style.padding());
+        if (style.fillColor() != null) {
+            card.fillColor(style.fillColor());
+        }
+        if (style.stroke() != null) {
+            card.stroke(style.stroke());
+        }
+        if (style.cornerRadius() != null) {
+            card.cornerRadius(style.cornerRadius());
+        }
     }
 
     /**

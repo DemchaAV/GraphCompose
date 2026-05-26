@@ -168,6 +168,21 @@ public record CvTheme(CvPalette palette,
     }
 
     /**
+     * The "Panel" look — Poppins headlines + Lato body, pale teal
+     * header card and module panels with thin teal stroke, deep navy
+     * masthead text, and teal section headings with a small accent
+     * strip beneath each title. Visual signature ported from the v1
+     * {@code PanelCvTemplateComposer} (ProductLeader tokens).
+     */
+    public static CvTheme panel() {
+        return new CvTheme(
+                CvPalette.panel(),
+                CvTypography.panel(),
+                CvSpacing.panel(),
+                CvDecoration.classic());
+    }
+
+    /**
      * The "Executive" look — Poppins masthead + Lato body, deep slate
      * primary, warm bronze accent on module headings and contact
      * links, and a thin full-width muted rule under the header.

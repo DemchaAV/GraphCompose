@@ -280,6 +280,30 @@ public record CvSpacing(
     }
 
     /**
+     * Spacing for the Panel preset: card-led layout that has to fit
+     * Header / Profile / two-column row / Additional on one A4 page,
+     * so paddings and inter-card gaps are tight by design. Corner
+     * radius and accent rule width match the V1 ProductLeader tokens.
+     */
+    public static CvSpacing panel() {
+        return new CvSpacing(
+                6,                                       // pageFlowSpacing (tight inter-card gap)
+                3,                                       // sectionBodySpacing (inside a card)
+                DocumentInsets.zero(),                   // sectionBodyPadding (the card supplies its own padding)
+                DocumentInsets.zero(),                   // headlinePadding
+                DocumentInsets.zero(),                   // contactPadding
+                7.0,                                     // bannerCornerRadius (V1 CORNER_RADIUS)
+                8.0,                                     // bannerInnerPadding (compact card padding)
+                DocumentInsets.zero(),                   // bannerMargin
+                2.2,                                     // accentRuleWidth (V1 ACCENT_HEIGHT)
+                1.0,                                     // paragraphMarginTop
+                8.0,                                     // entryHeaderRowSpacing
+                1.0,                                     // entryTitleWeight
+                0.45,                                    // entryDateWeight
+                2.0);                                    // entrySeparation
+    }
+
+    /**
      * Spacing for the Executive preset: generous executive feel with
      * an 8pt page-flow rhythm, compact module bodies, and a 1.1pt
      * full-width rule under the masthead.

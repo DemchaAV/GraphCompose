@@ -124,6 +124,23 @@ public record CvPalette(DocumentColor ink,
     }
 
     /**
+     * Panel palette ported from the v1 {@code PanelCvTemplateComposer}
+     * (ProductLeader tokens): body slate ink, slightly lighter slate
+     * for italic subtitles, the pale teal stroke used by every panel
+     * border, and the pale teal header card fill. The deeper header
+     * navy (rgb(20,44,66)), teal accent (rgb(0,128,128)), and white
+     * panel fill are preset-local because they are the fifth/sixth/
+     * seventh tokens — other v2 presets do not share them today.
+     */
+    public static CvPalette panel() {
+        return new CvPalette(
+                DocumentColor.rgb(54, 68, 84),     // ink — V1 BODY_TEXT/HEADER_META slate
+                DocumentColor.rgb(105, 117, 132),  // muted — slightly lighter slate
+                DocumentColor.rgb(179, 214, 211),  // rule — V1 PANEL_STROKE pale teal
+                DocumentColor.rgb(231, 246, 244)); // banner — V1 HEADER_FILL pale teal
+    }
+
+    /**
      * Executive palette ported from the v1 {@code ExecutiveSlateCvTemplate}:
      * mid-slate body ink, soft muted slate for italic subtitles, the
      * V1 muted-rule grey for thin separators, and a fallback banner

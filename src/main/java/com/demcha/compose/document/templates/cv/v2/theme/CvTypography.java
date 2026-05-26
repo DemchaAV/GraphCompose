@@ -193,6 +193,26 @@ public record CvTypography(
 
     /**
      * Poppins headline + Lato body scale ported from the v1
+     * {@code PanelCvTemplateComposer} (ProductLeader tokens): a 22pt
+     * uppercase name in the tinted header card, a 10.4pt section-title
+     * slot for the teal module headings, and a 9.4pt body with 1.2
+     * line spacing tuned for the dense card layout.
+     */
+    public static CvTypography panel() {
+        return new CvTypography(
+                FontName.POPPINS, FontName.LATO,
+                22.0,    // headline (centered uppercase name)
+                8.9,     // contact (V1 META_SIZE = body - 0.5)
+                10.4,    // banner / module title (V1 SECTION_SIZE)
+                9.4,     // entry title
+                9.4,     // entry date
+                9.0,     // entry subtitle (italic)
+                9.4,     // body (V1 BODY_SIZE)
+                1.2);    // line spacing
+    }
+
+    /**
+     * Poppins headline + Lato body scale ported from the v1
      * {@code ExecutiveSlateCvTemplate}: a 24pt uppercase masthead, a
      * 10.8pt section-title slot driving the bronze module headings,
      * and a 9.5pt body with 1.25 line-spacing tuned for an executive

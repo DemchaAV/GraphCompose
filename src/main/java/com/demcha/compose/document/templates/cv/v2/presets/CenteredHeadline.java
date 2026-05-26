@@ -3,12 +3,11 @@ package com.demcha.compose.document.templates.cv.v2.presets;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
-import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.cv.v2.components.MarkdownInline;
+import com.demcha.compose.document.templates.cv.v2.components.ProjectRenderer;
 import com.demcha.compose.document.templates.cv.v2.components.SectionDispatcher;
 import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
 import com.demcha.compose.document.templates.cv.v2.data.CvRow;
@@ -182,22 +181,11 @@ public final class CenteredHeadline {
         }
 
         private void renderStackedProject(SectionBuilder host, CvRow row) {
-            DocumentTextStyle titleStyle = theme.bodyBoldStyle();
-            DocumentTextStyle bodyStyle = theme.bodyStyle();
-            host.addParagraph(p -> p
-                    .text(row.label())
-                    .textStyle(titleStyle)
-                    .align(TextAlign.LEFT)
-                    .lineSpacing(theme.typography().bodyLineSpacing())
-                    .margin(DocumentInsets.top((float) theme.spacing().paragraphMarginTop())));
-            if (!row.body().isBlank()) {
-                host.addParagraph(p -> p
-                        .textStyle(bodyStyle)
-                        .align(TextAlign.LEFT)
-                        .lineSpacing(theme.typography().bodyLineSpacing())
-                        .margin(DocumentInsets.zero())
-                        .rich(rich -> MarkdownInline.append(rich, row.body(), bodyStyle)));
-            }
+            ProjectRenderer.titleThenBody(host, row, theme.bodyBoldStyle(),
+                    theme.bodyBoldStyle(), theme.bodyStyle(),
+                    theme.typography().bodyLineSpacing(),
+                    DocumentInsets.top((float) theme.spacing().paragraphMarginTop()),
+                    DocumentInsets.zero());
         }
 
         /**

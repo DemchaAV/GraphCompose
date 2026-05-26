@@ -53,17 +53,31 @@
  *       ({@code centered}, {@code rightAligned},
  *       {@code leftAligned}, {@code rightAlignedStacked},
  *       {@code twoRowRightAligned}).</li>
+ *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.Masthead}
+ *       — centred editorial identity block: name, optional title,
+ *       compact metadata, and link row.</li>
  *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader}
- *       — section title in 6 variants ({@code banner},
+ *       — section title in 8 variants ({@code banner},
  *       {@code fullWidthBanner}, {@code underlined}, {@code flat},
- *       {@code flatSpacedCaps}, {@code tickLabel}).</li>
+ *       {@code flatSpacedCaps}, {@code tickLabel},
+ *       {@code upperRule}, {@code spacedCapsRule}).</li>
+ *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.FlowSectionHeader}
+ *       — page-flow-level section headers where rules live outside
+ *       the section body.</li>
+ *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.ProfileBand}
+ *       — tinted/ruled summary block with markdown-aware body text.</li>
+ *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.SectionModule}
+ *       — named module wrapper that pairs a {@code SectionHeader}
+ *       variant with caller-supplied body content.</li>
  * </ul>
  *
  * <p>Generic widgets that are useful beyond CVs live in
  * {@link com.demcha.compose.document.templates.widgets}; for example
  * {@link com.demcha.compose.document.templates.widgets.TableWidget}
  * provides configurable fixed-column and grid tables with border,
- * fill, zebra, padding, and typography options.</p>
+ * fill, zebra, padding, and typography options, while
+ * {@link com.demcha.compose.document.templates.widgets.CardWidget}
+ * provides a reusable styled card/container shell.</p>
  *
  * <p>Each widget delegates internally to the lower-level renderers
  * in {@code cv/v2/components/} where helpful, but its public face

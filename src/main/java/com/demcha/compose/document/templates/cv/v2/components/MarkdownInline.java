@@ -42,4 +42,30 @@ public final class MarkdownInline {
             rich.style(textRun.text(), runStyle);
         }
     }
+
+    public static void appendTrimmed(RichText rich, String text,
+                                     DocumentTextStyle baseStyle) {
+        append(rich, text == null ? "" : text.trim(), baseStyle);
+    }
+
+    public static void appendPlainIfPresent(RichText rich, String prefix,
+                                            String value,
+                                            DocumentTextStyle style) {
+        String clean = plainText(value);
+        if (!clean.isBlank()) {
+            rich.style(prefix + clean, style);
+        }
+    }
+
+    public static String plainText(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value
+                .replace("**", "")
+                .replace("__", "")
+                .replace("`", "")
+                .replace("*", "")
+                .replace("_", "");
+    }
 }

@@ -37,6 +37,12 @@ import java.util.Locale;
  *   <li>{@link #tickLabel} — a short accent tick above a compact
  *       uppercase label. Used by command-card presets such as
  *       {@code CompactMono}.</li>
+ *   <li>{@link #upperRule} — uppercase label followed by a short
+ *       rule. Used by side-rail presets such as
+ *       {@code NordicClean}.</li>
+ *   <li>{@link #spacedCapsRule} — spaced-caps label followed by a
+ *       short rule. Used by quiet classic modules such as
+ *       {@code ClassicSerif}.</li>
  * </ul>
  *
  * <p>Unlike {@link Headline} (one rendering shape, two text
@@ -237,5 +243,46 @@ public final class SectionHeader {
                         .textStyle(resolved)
                         .align(TextAlign.LEFT)
                         .margin(DocumentInsets.zero()));
+    }
+
+    /**
+     * Uppercase label followed by a short rule. Used by side-rail
+     * presets where a section title is a compact block heading rather
+     * than a full-width page-flow banner.
+     */
+    public static void upperRule(SectionBuilder host, String title,
+                                 CvTheme theme, DocumentTextStyle titleStyle,
+                                 DocumentColor ruleColor, double ruleWidth) {
+        host.spacing(3)
+                .addParagraph(paragraph -> paragraph
+                        .text(title.toUpperCase(Locale.ROOT))
+                        .textStyle(titleStyle)
+                        .align(TextAlign.LEFT)
+                        .margin(DocumentInsets.zero()))
+                .addLine(line -> line
+                        .horizontal(ruleWidth)
+                        .color(ruleColor)
+                        .thickness(theme.spacing().accentRuleWidth())
+                        .margin(DocumentInsets.bottom(2)));
+    }
+
+    /**
+     * Left-aligned spaced-caps label followed by a short rule. Used by
+     * classic/editorial CV modules that need a quiet title plus a
+     * small accent underline.
+     */
+    public static void spacedCapsRule(SectionBuilder host, String title,
+                                      CvTheme theme, DocumentTextStyle titleStyle,
+                                      DocumentColor ruleColor,
+                                      double ruleWidth,
+                                      double ruleThickness,
+                                      DocumentInsets ruleMargin) {
+        flatSpacedCaps(host, title, ruleColor, theme, titleStyle);
+        host.addLine(line -> line
+                .name("CvV2SectionHeaderSpacedCapsRule")
+                .horizontal(ruleWidth)
+                .color(ruleColor)
+                .thickness(ruleThickness)
+                .margin(ruleMargin));
     }
 }

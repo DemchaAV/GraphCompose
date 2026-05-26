@@ -12,7 +12,10 @@
  *   <li>store theme as a static field — theme is always an argument,
  *       so the same component renders any theme without reflection
  *       or singletons;</li>
- *   <li>parse data — that is the spec's job;</li>
+ *   <li>own business parsing — specs own the semantic model; shared
+ *       adapters may normalize legacy free-form labels or bridge
+ *       markdown into rich text, but presets should not duplicate
+ *       local parsers;</li>
  *   <li>read magic numbers — every value reads from the theme.</li>
  * </ul>
  *

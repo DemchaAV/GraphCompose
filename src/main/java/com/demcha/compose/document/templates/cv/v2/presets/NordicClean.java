@@ -2,9 +2,7 @@ package com.demcha.compose.document.templates.cv.v2.presets;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
-import com.demcha.compose.document.dsl.RichText;
 import com.demcha.compose.document.dsl.SectionBuilder;
-import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -12,7 +10,12 @@ import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
+import com.demcha.compose.document.templates.cv.v2.components.EntryCompactRenderer;
+import com.demcha.compose.document.templates.cv.v2.components.LabelValueRenderer;
 import com.demcha.compose.document.templates.cv.v2.components.MarkdownInline;
+import com.demcha.compose.document.templates.cv.v2.components.ProjectRenderer;
+import com.demcha.compose.document.templates.cv.v2.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
 import com.demcha.compose.document.templates.cv.v2.data.CvEntry;
 import com.demcha.compose.document.templates.cv.v2.data.CvRow;
@@ -26,7 +29,8 @@ import com.demcha.compose.document.templates.cv.v2.data.Slot;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
-import com.demcha.compose.font.FontName;
+import com.demcha.compose.document.templates.cv.v2.widgets.ProfileBand;
+import com.demcha.compose.document.templates.cv.v2.widgets.SectionModule;
 
 import java.util.List;
 import java.util.Objects;
@@ -248,7 +252,7 @@ public final class NordicClean {
                     .spacing(theme.spacing().pageFlowSpacing());
 
             addHeader(flow, doc);
-            addProfile(flow, findSection(sections, SUMMARY_KEYS));
+            addProfile(flow, SectionLookup.firstMatching(sections, SUMMARY_KEYS));
             addBody(flow, sections);
             flow.build();
         }
@@ -271,10 +275,10 @@ public final class NordicClean {
                                 .margin(DocumentInsets.zero()));
                         if (!doc.identity().jobTitle().isBlank()) {
                             identity.addParagraph(paragraph -> paragraph
-                                    .text(stripBasicMarkdown(
+                                    .text(MarkdownInline.plainText(
                                             doc.identity().jobTitle())
                                             .toUpperCase(java.util.Locale.ROOT))
-                                    .textStyle(style(theme.typography().bodyFont(),
+                                    .textStyle(CvTextStyles.of(theme.typography().bodyFont(),
                                             7.7,
                                             DocumentTextDecoration.BOLD,
                                             theme.palette().muted()))
@@ -293,23 +297,17 @@ public final class NordicClean {
                 return;
             }
 
-            flow.addSection("CvV2NordicCleanProfile", host -> host
-                    .spacing(4)
-                    .padding(new DocumentInsets(8, 10, 8, 10))
-                    .fillColor(options.resolvedProfileFill(theme))
-                    .accentLeft(options.accentColor(), 3.0)
-                    .cornerRadius(DocumentCornerRadius.right(4))
-                    .addParagraph(paragraph -> paragraph
-                            .text("PROFILE")
-                            .textStyle(sectionTitleStyle())
-                            .margin(DocumentInsets.zero()))
-                    .addParagraph(paragraph -> paragraph
-                            .textStyle(bodyStyle(7.85, theme.palette().ink()))
-                            .lineSpacing(1.25)
-                            .margin(DocumentInsets.zero())
-                            .rich(rich -> appendMarkdown(rich,
-                                    profile.body(),
-                                    bodyStyle(7.85, theme.palette().ink())))));
+            ProfileBand.render(flow, "CvV2NordicCleanProfile", "PROFILE",
+                    profile.body(), ProfileBand.Style.builder()
+                            .spacing(4)
+                            .padding(new DocumentInsets(8, 10, 8, 10))
+                            .fillColor(options.resolvedProfileFill(theme))
+                            .accentLeft(options.accentColor(), 3.0)
+                            .cornerRadius(DocumentCornerRadius.right(4))
+                            .titleStyle(sectionTitleStyle())
+                            .bodyStyle(bodyStyle(7.85, theme.palette().ink()))
+                            .bodyLineSpacing(1.25)
+                            .build());
         }
 
         private void addBody(PageFlowBuilder flow, List<CvSection> sections) {
@@ -337,15 +335,15 @@ public final class NordicClean {
                     .fillColor(options.railFillColor())
                     .stroke(DocumentStroke.of(theme.palette().rule(), 0.35))
                     .cornerRadius(4);
-            addSkills(rail, findSection(sections, SKILL_KEYS));
-            addEducation(rail, findSection(sections, EDUCATION_KEYS));
-            addAdditional(rail, findSection(sections, ADDITIONAL_KEYS));
+            addSkills(rail, SectionLookup.firstMatching(sections, SKILL_KEYS));
+            addEducation(rail, SectionLookup.firstMatching(sections, EDUCATION_KEYS));
+            addAdditional(rail, SectionLookup.firstMatching(sections, ADDITIONAL_KEYS));
         }
 
         private void addMain(SectionBuilder main, List<CvSection> sections) {
             main.spacing(9);
-            addExperience(main, findSection(sections, EXPERIENCE_KEYS));
-            addProjects(main, findSection(sections, PROJECT_KEYS));
+            addExperience(main, SectionLookup.firstMatching(sections, EXPERIENCE_KEYS));
+            addProjects(main, SectionLookup.firstMatching(sections, PROJECT_KEYS));
         }
 
         private void addSkills(SectionBuilder parent, CvSection section) {
@@ -354,8 +352,9 @@ public final class NordicClean {
                 return;
             }
 
-            parent.addSection("CvV2NordicCleanSkills", host -> {
-                addHeading(host, "Skills", 82);
+            SectionModule.upperRule(parent, "CvV2NordicCleanSkills", "Skills",
+                    theme, sectionTitleStyle(), options.accentColor(), 82,
+                    host -> {
                 for (SkillGroup group : skills.groups()) {
                     addLabelValueLine(host, group.category(),
                             group.skillsInline(), 7.15, 1.05);
@@ -369,34 +368,17 @@ public final class NordicClean {
                 return;
             }
 
-            parent.addSection("CvV2NordicCleanEducation", host -> {
-                addHeading(host, "Education", 82);
+            SectionModule.upperRule(parent, "CvV2NordicCleanEducation",
+                    "Education", theme, sectionTitleStyle(),
+                    options.accentColor(), 82, host -> {
                 for (CvEntry entry : education.entries()) {
-                    host.addParagraph(paragraph -> paragraph
-                            .textStyle(bodyStyle(7.05, theme.palette().ink()))
-                            .lineSpacing(1.05)
-                            .margin(DocumentInsets.bottom(2))
-                            .rich(rich -> {
-                                rich.style(stripBasicMarkdown(entry.title()),
-                                        style(theme.typography().bodyFont(),
-                                                7.05,
-                                                DocumentTextDecoration.BOLD,
-                                                theme.palette().ink()));
-                                if (!entry.subtitle().isBlank()) {
-                                    rich.style(" / "
-                                                    + stripBasicMarkdown(
-                                                            entry.subtitle()),
-                                            bodyStyle(7.05,
-                                                    theme.palette().muted()));
-                                }
-                                if (!entry.date().isBlank()) {
-                                    rich.style(" / "
-                                                    + stripBasicMarkdown(
-                                                            entry.date()),
-                                            bodyStyle(6.85,
-                                                    theme.palette().muted()));
-                                }
-                            }));
+                    EntryCompactRenderer.slashSubtitleDate(host, entry,
+                            CvTextStyles.of(theme.typography().bodyFont(), 7.05,
+                                    DocumentTextDecoration.BOLD,
+                                    theme.palette().ink()),
+                            bodyStyle(7.05, theme.palette().muted()),
+                            bodyStyle(6.85, theme.palette().muted()),
+                            1.05, DocumentInsets.bottom(2));
                 }
             });
         }
@@ -406,8 +388,9 @@ public final class NordicClean {
                 return;
             }
 
-            parent.addSection("CvV2NordicCleanAdditional", host -> {
-                addHeading(host, "Additional", 82);
+            SectionModule.upperRule(parent, "CvV2NordicCleanAdditional",
+                    "Additional", theme, sectionTitleStyle(),
+                    options.accentColor(), 82, host -> {
                 for (CvRow row : rows.rows()) {
                     addLabelValueLine(host, row.label(), row.body(),
                             7.1, 1.05);
@@ -421,8 +404,9 @@ public final class NordicClean {
                 return;
             }
 
-            parent.addSection("CvV2NordicCleanExperience", host -> {
-                addHeading(host, "Experience", 130);
+            SectionModule.upperRule(parent, "CvV2NordicCleanExperience",
+                    "Experience", theme, sectionTitleStyle(),
+                    options.accentColor(), 130, host -> {
                 for (CvEntry entry : entries.entries()) {
                     addWorkEntry(host, entry);
                 }
@@ -435,8 +419,9 @@ public final class NordicClean {
                 return;
             }
 
-            parent.addSection("CvV2NordicCleanProjects", host -> {
-                addHeading(host, "Selected Projects", 130);
+            SectionModule.upperRule(parent, "CvV2NordicCleanProjects",
+                    "Selected Projects", theme, sectionTitleStyle(),
+                    options.accentColor(), 130, host -> {
                 for (CvRow row : projects.rows()) {
                     addProject(host, row);
                 }
@@ -444,196 +429,75 @@ public final class NordicClean {
         }
 
         private void addWorkEntry(SectionBuilder host, CvEntry entry) {
-            host.addParagraph(paragraph -> paragraph
-                    .textStyle(theme.entryTitleStyle())
-                    .margin(DocumentInsets.zero())
-                    .rich(rich -> {
-                        rich.style(stripBasicMarkdown(entry.title()),
-                                theme.entryTitleStyle());
-                        if (!entry.date().isBlank()) {
-                            rich.style(" / " + stripBasicMarkdown(entry.date()),
-                                    style(theme.typography().bodyFont(),
-                                            theme.typography().sizeEntryDate(),
-                                            DocumentTextDecoration.BOLD,
-                                            options.accentColor()));
-                        }
-                    }));
-            if (!entry.subtitle().isBlank()) {
-                host.addParagraph(paragraph -> paragraph
-                        .text(stripBasicMarkdown(entry.subtitle()))
-                        .textStyle(theme.entrySubtitleStyle())
-                        .margin(DocumentInsets.zero()));
-            }
-            if (!entry.body().isBlank()) {
-                host.addParagraph(paragraph -> paragraph
-                        .textStyle(theme.bodyStyle())
-                        .lineSpacing(theme.typography().bodyLineSpacing())
-                        .margin(DocumentInsets.bottom(5))
-                        .rich(rich -> appendMarkdown(rich, entry.body(),
-                                theme.bodyStyle())));
-            }
+            EntryCompactRenderer.titleDateBody(host, entry,
+                    theme.entryTitleStyle(),
+                    CvTextStyles.of(theme.typography().bodyFont(),
+                            theme.typography().sizeEntryDate(),
+                            DocumentTextDecoration.BOLD,
+                            options.accentColor()),
+                    theme.entrySubtitleStyle(),
+                    theme.bodyStyle(),
+                    " / ",
+                    1.0,
+                    DocumentInsets.zero(),
+                    DocumentInsets.zero(),
+                    DocumentInsets.bottom(5),
+                    theme.typography().bodyLineSpacing(),
+                    false);
         }
 
         private void addProject(SectionBuilder host, CvRow row) {
-            TitleAndStack title = splitTitleAndStack(row.label());
-            DocumentTextStyle projectTitle = style(theme.typography().bodyFont(),
-                    7.35, DocumentTextDecoration.BOLD, theme.palette().ink());
-            DocumentTextStyle context = bodyStyle(6.95, theme.palette().muted());
-            DocumentTextStyle body = bodyStyle(7.2, theme.palette().ink());
-
-            host.addParagraph(paragraph -> paragraph
-                    .textStyle(body)
-                    .lineSpacing(1.08)
-                    .margin(DocumentInsets.bottom(3))
-                    .rich(rich -> {
-                        rich.style(stripBasicMarkdown(title.title()),
-                                projectTitle);
-                        if (!title.stack().isBlank()) {
-                            rich.style(" (" + stripBasicMarkdown(title.stack())
-                                    + ")", context);
-                        }
-                        if (!row.body().isBlank()) {
-                            rich.style(" - ", body);
-                            appendMarkdown(rich, row.body(), body);
-                        }
-                    }));
-        }
-
-        private void addHeading(SectionBuilder host, String title,
-                                double ruleWidth) {
-            host.spacing(3)
-                    .addParagraph(paragraph -> paragraph
-                            .text(title.toUpperCase(java.util.Locale.ROOT))
-                            .textStyle(sectionTitleStyle())
-                            .margin(DocumentInsets.zero()))
-                    .addLine(line -> line
-                            .horizontal(ruleWidth)
-                            .color(options.accentColor())
-                            .thickness(theme.spacing().accentRuleWidth())
-                            .margin(DocumentInsets.bottom(2)));
+            ProjectRenderer.inline(host, row,
+                    CvTextStyles.of(theme.typography().bodyFont(), 7.35,
+                            DocumentTextDecoration.BOLD, theme.palette().ink()),
+                    bodyStyle(6.95, theme.palette().muted()),
+                    bodyStyle(7.2, theme.palette().ink()),
+                    1.08, DocumentInsets.bottom(3));
         }
 
         private void addLabelValueLine(SectionBuilder host, String label,
                                        String value, double size,
                                        double lineSpacing) {
-            DocumentTextStyle labelStyle = style(theme.typography().bodyFont(),
+            DocumentTextStyle labelStyle = CvTextStyles.of(theme.typography().bodyFont(),
                     size, DocumentTextDecoration.BOLD, theme.palette().ink());
             DocumentTextStyle valueStyle = bodyStyle(size,
                     theme.palette().muted());
 
-            host.addParagraph(paragraph -> paragraph
-                    .textStyle(valueStyle)
-                    .lineSpacing(lineSpacing)
-                    .margin(DocumentInsets.bottom(1.5))
-                    .rich(rich -> {
-                        rich.style(stripBasicMarkdown(label) + ":",
-                                labelStyle);
-                        if (value != null && !value.isBlank()) {
-                            rich.style(" ", valueStyle);
-                            appendMarkdown(rich, value, valueStyle);
-                        }
-                    }));
+            LabelValueRenderer.render(host, label, value, labelStyle,
+                    valueStyle, lineSpacing, DocumentInsets.bottom(1.5));
         }
 
         private DocumentTextStyle headlineStyle() {
-            return style(theme.typography().headlineFont(),
+            return CvTextStyles.of(theme.typography().headlineFont(),
                     theme.typography().sizeHeadline(),
                     DocumentTextDecoration.BOLD,
                     theme.palette().ink());
         }
 
         private DocumentTextStyle sectionTitleStyle() {
-            return style(theme.typography().headlineFont(),
+            return CvTextStyles.of(theme.typography().headlineFont(),
                     theme.typography().sizeBanner(),
                     DocumentTextDecoration.BOLD,
                     options.accentColor());
         }
 
         private DocumentTextStyle contactMetaStyle() {
-            return style(theme.typography().bodyFont(),
+            return CvTextStyles.of(theme.typography().bodyFont(),
                     theme.typography().sizeContact(),
                     DocumentTextDecoration.DEFAULT,
                     theme.palette().muted());
         }
 
         private DocumentTextStyle contactLinkStyle() {
-            return style(theme.typography().bodyFont(),
+            return CvTextStyles.of(theme.typography().bodyFont(),
                     theme.typography().sizeContact(),
                     DocumentTextDecoration.UNDERLINE,
                     options.accentColor());
         }
 
         private DocumentTextStyle bodyStyle(double size, DocumentColor color) {
-            return style(theme.typography().bodyFont(), size,
+            return CvTextStyles.of(theme.typography().bodyFont(), size,
                     DocumentTextDecoration.DEFAULT, color);
         }
-    }
-
-    private static void appendMarkdown(RichText rich, String text,
-                                       DocumentTextStyle baseStyle) {
-        MarkdownInline.append(rich, text == null ? "" : text.trim(), baseStyle);
-    }
-
-    private static CvSection findSection(List<CvSection> sections,
-                                         List<String> keys) {
-        for (CvSection section : sections) {
-            String normalizedTitle = normalize(section.title());
-            for (String key : keys) {
-                if (normalizedTitle.contains(normalize(key))) {
-                    return section;
-                }
-            }
-        }
-        return null;
-    }
-
-    private static DocumentTextStyle style(FontName font, double size,
-                                           DocumentTextDecoration decoration,
-                                           DocumentColor color) {
-        return DocumentTextStyle.builder()
-                .fontName(font)
-                .size(size)
-                .decoration(decoration)
-                .color(color)
-                .build();
-    }
-
-    private static TitleAndStack splitTitleAndStack(String value) {
-        String title = value == null ? "" : value.trim();
-        String stack = "";
-        int open = title.indexOf('(');
-        int close = title.lastIndexOf(')');
-        if (open > 0 && close > open) {
-            stack = title.substring(open + 1, close).trim();
-            title = title.substring(0, open).trim();
-        }
-        return new TitleAndStack(title, stack);
-    }
-
-    private static String stripBasicMarkdown(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value
-                .replace("**", "")
-                .replace("__", "")
-                .replace("`", "")
-                .replace("*", "")
-                .replace("_", "");
-    }
-
-    private static String normalize(String value) {
-        String safe = value == null ? "" : value;
-        StringBuilder builder = new StringBuilder(safe.length());
-        for (int i = 0; i < safe.length(); i++) {
-            char current = Character.toLowerCase(safe.charAt(i));
-            if (Character.isLetterOrDigit(current)) {
-                builder.append(current);
-            }
-        }
-        return builder.toString();
-    }
-
-    private record TitleAndStack(String title, String stack) {
     }
 }

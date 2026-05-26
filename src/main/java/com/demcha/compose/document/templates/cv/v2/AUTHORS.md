@@ -363,6 +363,14 @@ change `   |   ` to `  ·  ` or anything else.
 | `SectionHeader.flat(host, title, color, theme)` | large bold title in a given colour, no panel | ModernProfessional |
 | `SectionHeader.flatSpacedCaps(host, title, color, theme, titleStyle)` | small spaced-caps title in a soft colour, no panel | CenteredHeadline, ClassicSerif |
 | `SectionHeader.tickLabel(host, title, theme, color, tickWidth[, titleStyle])` | short accent tick above compact uppercase label | CompactMono |
+| `SectionHeader.upperRule(host, title, theme, titleStyle, ruleColor, ruleWidth)` | uppercase label with short rule below | NordicClean |
+| `SectionHeader.spacedCapsRule(host, title, theme, titleStyle, ruleColor, ruleWidth, ruleThickness, ruleMargin)` | spaced-caps label with short rule below | ClassicSerif |
+
+Use `FlowSectionHeader` when the rule/title treatment belongs to the
+page flow rather than inside an existing body section. `BlueBanner`
+uses its filled-banner variant; `EditorialBlue` uses its ruled-label
+variant. Use `SectionModule` when a rail/card module is simply
+`SectionHeader` plus caller-supplied content.
 
 Note that `flat` and `flatSpacedCaps` take a `DocumentColor`
 argument — the section title colour is the preset's signature

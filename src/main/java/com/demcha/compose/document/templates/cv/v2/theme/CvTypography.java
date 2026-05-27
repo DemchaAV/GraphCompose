@@ -192,6 +192,25 @@ public record CvTypography(
     }
 
     /**
+     * Barlow headline + Lato body scale ported from the v1
+     * {@code TechLeadCvTemplateComposer}: 24.5pt UPPERCASE masthead,
+     * 7.8pt main section headings, 7.25pt body, and a 1.08 line
+     * spacing tuned for dense engineering-resume cards.
+     */
+    public static CvTypography engineeringResume() {
+        return new CvTypography(
+                FontName.BARLOW, FontName.LATO,
+                24.5,    // headline (UPPERCASE name in navy header)
+                7.2,     // contact (right-aligned navy header stack)
+                7.8,     // banner / main section heading
+                8.0,     // entry title (role title in experience cards)
+                7.1,     // entry date
+                7.0,     // entry subtitle (employer)
+                7.25,    // body
+                1.08);   // line spacing
+    }
+
+    /**
      * Barlow Condensed headline + Lato body scale ported from the v1
      * {@code TimelineMinimalCvTemplateComposer}: 28pt spaced-caps
      * masthead, 12.5pt sidebar module titles, 13.5pt main module

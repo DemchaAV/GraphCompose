@@ -124,6 +124,23 @@ public record CvPalette(DocumentColor ink,
     }
 
     /**
+     * Engineering Resume palette ported from the v1
+     * {@code TechLeadCvTemplateComposer}: body-slate ink, muted slate
+     * for subtitles, pale teal-green rule that matches the white
+     * evidence cards, and the soft pale-green profile band fill. Deep
+     * navy header, brighter green accent, navy-rail variants and the
+     * cyan-green contact link colour stay preset-local as they are the
+     * fifth+ tokens — no other v2 preset shares them today.
+     */
+    public static CvPalette engineeringResume() {
+        return new CvPalette(
+                DocumentColor.rgb(32, 42, 55),     // ink — V1 INK body slate
+                DocumentColor.rgb(91, 105, 119),   // muted — V1 MUTED subtitles
+                DocumentColor.rgb(190, 212, 204),  // rule — V1 RULE pale teal-green
+                DocumentColor.rgb(232, 246, 239)); // banner — V1 GREEN_SOFT profile fill
+    }
+
+    /**
      * Timeline Minimal palette: an all-grey scale ported from the v1
      * {@code TimelineMinimalCvTemplateComposer} — medium-grey ink,
      * softer grey for metadata + body bullets, pale rule for the

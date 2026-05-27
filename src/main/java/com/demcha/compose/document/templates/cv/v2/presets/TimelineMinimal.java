@@ -509,18 +509,18 @@ public final class TimelineMinimal {
                     line.append(header);
                 }
                 if (!subtitle.isBlank()) {
-                    if (line.length() > 0) {
+                    if (!line.isEmpty()) {
                         line.append(" | ");
                     }
                     line.append(subtitle);
                 }
                 if (!dates.isBlank()) {
-                    if (line.length() > 0) {
+                    if (!line.isEmpty()) {
                         line.append(" - ");
                     }
                     line.append(dates);
                 }
-                if (line.length() > 0) {
+                if (!line.isEmpty()) {
                     lines.add(line.toString());
                 }
                 if (!body.isBlank()) {

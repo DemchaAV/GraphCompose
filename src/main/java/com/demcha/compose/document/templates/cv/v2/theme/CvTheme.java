@@ -168,6 +168,22 @@ public record CvTheme(CvPalette palette,
     }
 
     /**
+     * The "Engineering Resume" look — Barlow display + Lato body, deep
+     * navy command header with cyan-green contact links, dark navy
+     * skill rail with green accent labels, and white evidence cards
+     * for Leadership Experience + Technical Evidence on the right.
+     * Visual signature ported from the v1
+     * {@code TechLeadCvTemplateComposer}.
+     */
+    public static CvTheme engineeringResume() {
+        return new CvTheme(
+                CvPalette.engineeringResume(),
+                CvTypography.engineeringResume(),
+                CvSpacing.engineeringResume(),
+                CvDecoration.classic());
+    }
+
+    /**
      * The "Timeline Minimal" look — Barlow Condensed display + Lato
      * body, all-grey palette, spaced uppercase name, right-aligned
      * contact stack with PNG icons, and a thin vertical timeline axis

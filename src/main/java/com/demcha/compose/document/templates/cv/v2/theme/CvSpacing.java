@@ -280,6 +280,30 @@ public record CvSpacing(
     }
 
     /**
+     * Spacing for the Engineering Resume preset: navy command header
+     * + 2-column body (navy skill rail / white evidence cards), with
+     * a 2.5pt accent rule under the header and tight 1pt paragraph
+     * top so the dense rail + card content reads as a single page.
+     */
+    public static CvSpacing engineeringResume() {
+        return new CvSpacing(
+                8,                                       // pageFlowSpacing
+                4,                                       // sectionBodySpacing
+                DocumentInsets.zero(),                   // sectionBodyPadding
+                DocumentInsets.zero(),                   // headlinePadding
+                DocumentInsets.zero(),                   // contactPadding
+                4.0,                                     // bannerCornerRadius (card top/bottom radius)
+                10.0,                                    // bannerInnerPadding (card padding token)
+                DocumentInsets.zero(),                   // bannerMargin
+                2.5,                                     // accentRuleWidth (header bottom accent strip)
+                1.0,                                     // paragraphMarginTop
+                8.0,                                     // entryHeaderRowSpacing
+                1.0,                                     // entryTitleWeight
+                0.45,                                    // entryDateWeight
+                2.0);                                    // entrySeparation
+    }
+
+    /**
      * Spacing for the Timeline Minimal preset: tight 3-column layout
      * with a fixed-width axis between the sidebar and main column.
      * Body content is text-only (no cards / banners), so banner

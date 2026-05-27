@@ -124,6 +124,21 @@ public record CvPalette(DocumentColor ink,
     }
 
     /**
+     * Timeline Minimal palette: an all-grey scale ported from the v1
+     * {@code TimelineMinimalCvTemplateComposer} — medium-grey ink,
+     * softer grey for metadata + body bullets, pale rule for the
+     * timeline axis and module underlines, and the dot token reused
+     * for the three circles of the central timeline axis.
+     */
+    public static CvPalette timelineMinimal() {
+        return new CvPalette(
+                DocumentColor.rgb(74, 74, 74),     // ink — V1 INK
+                DocumentColor.rgb(122, 122, 122),  // muted — V1 SOFT
+                DocumentColor.rgb(195, 195, 195),  // rule — V1 RULE
+                DocumentColor.rgb(170, 170, 170)); // banner — V1 DOT (reused as "timeline accent")
+    }
+
+    /**
      * Panel palette ported from the v1 {@code PanelCvTemplateComposer}
      * (ProductLeader tokens): body slate ink, slightly lighter slate
      * for italic subtitles, the pale teal stroke used by every panel

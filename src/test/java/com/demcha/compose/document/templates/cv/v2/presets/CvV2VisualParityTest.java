@@ -117,7 +117,10 @@ class CvV2VisualParityTest {
                         (Supplier<DocumentTemplate<CvDocument>>) Executive::create),
                 Arguments.of("panel",
                         Panel.RECOMMENDED_MARGIN,
-                        (Supplier<DocumentTemplate<CvDocument>>) Panel::create));
+                        (Supplier<DocumentTemplate<CvDocument>>) Panel::create),
+                Arguments.of("timeline_minimal",
+                        TimelineMinimal.RECOMMENDED_MARGIN,
+                        (Supplier<DocumentTemplate<CvDocument>>) TimelineMinimal::create));
     }
 
     /**

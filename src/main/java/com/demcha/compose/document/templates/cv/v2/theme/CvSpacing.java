@@ -280,6 +280,30 @@ public record CvSpacing(
     }
 
     /**
+     * Spacing for the Timeline Minimal preset: tight 3-column layout
+     * with a fixed-width axis between the sidebar and main column.
+     * Body content is text-only (no cards / banners), so banner
+     * tokens are unused but kept at neutral defaults.
+     */
+    public static CvSpacing timelineMinimal() {
+        return new CvSpacing(
+                12,                                      // pageFlowSpacing (gap between header row + rule + body row)
+                5,                                       // sectionBodySpacing
+                DocumentInsets.zero(),                   // sectionBodyPadding
+                DocumentInsets.zero(),                   // headlinePadding
+                DocumentInsets.zero(),                   // contactPadding
+                0.0,                                     // bannerCornerRadius (unused)
+                0.0,                                     // bannerInnerPadding (unused)
+                DocumentInsets.zero(),                   // bannerMargin (unused)
+                0.8,                                     // accentRuleWidth (header underline)
+                1.0,                                     // paragraphMarginTop
+                8.0,                                     // entryHeaderRowSpacing
+                1.0,                                     // entryTitleWeight
+                0.45,                                    // entryDateWeight
+                2.0);                                    // entrySeparation
+    }
+
+    /**
      * Spacing for the Panel preset: card-led layout that has to fit
      * Header / Profile / two-column row / Additional on one A4 page,
      * so paddings and inter-card gaps are tight by design. Corner

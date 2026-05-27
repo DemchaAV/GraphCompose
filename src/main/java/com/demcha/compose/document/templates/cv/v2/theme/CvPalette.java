@@ -7,22 +7,43 @@ import java.util.Objects;
 /**
  * Colour tokens for a {@link CvTheme}.
  *
- * @param ink    primary text colour — headlines, body, entry titles
- * @param muted  secondary text colour — italic subtitles (employer,
- *               institution)
- * @param rule   thin horizontal rules + the contact-line pipe glyph
- * @param banner pale fill behind section title banners
+ * @param ink      primary text colour — headlines, body, entry titles
+ * @param muted    secondary text colour — italic subtitles (employer,
+ *                 institution)
+ * @param rule     thin horizontal rules + the contact-line pipe glyph
+ * @param banner   pale fill behind section title banners
+ * @param mainFill main content area background fill — used by presets
+ *                 with a two-column layout (sidebar + main) to paint
+ *                 the right column on every page. Defaults to
+ *                 {@link DocumentColor#WHITE} for palettes that do not
+ *                 need a custom main-area fill.
  */
 public record CvPalette(DocumentColor ink,
                         DocumentColor muted,
                         DocumentColor rule,
-                        DocumentColor banner) {
+                        DocumentColor banner,
+                        DocumentColor mainFill) {
 
     public CvPalette {
         Objects.requireNonNull(ink, "ink");
         Objects.requireNonNull(muted, "muted");
         Objects.requireNonNull(rule, "rule");
         Objects.requireNonNull(banner, "banner");
+        Objects.requireNonNull(mainFill, "mainFill");
+    }
+
+    /**
+     * Backward-compatible 4-arg constructor that defaults
+     * {@code mainFill} to {@link DocumentColor#WHITE}. Retained so
+     * factories defined before the {@code mainFill} token landed keep
+     * compiling and behaving identically (none of them rendered a
+     * coloured main area).
+     */
+    public CvPalette(DocumentColor ink,
+                     DocumentColor muted,
+                     DocumentColor rule,
+                     DocumentColor banner) {
+        this(ink, muted, rule, banner, DocumentColor.WHITE);
     }
 
     /**
@@ -121,6 +142,22 @@ public record CvPalette(DocumentColor ink,
                 DocumentColor.rgb(150, 158, 178),
                 DocumentColor.rgb(86, 136, 255),
                 DocumentColor.rgb(193, 201, 211));
+    }
+
+    /**
+     * Monogram Sidebar palette ported from the v1
+     * {@code MonogramSidebarCvTemplateComposer}: navy-slate body ink,
+     * soft grey for sidebar metadata, mid-grey sidebar rule, and the
+     * pale teal-grey sidebar background fill. The dark monogram ring
+     * and muted-gold accent stay preset-local because no other v2
+     * preset shares them today.
+     */
+    public static CvPalette monogramSidebar() {
+        return new CvPalette(
+                DocumentColor.rgb(37, 45, 58),     // ink — V1 INK
+                DocumentColor.rgb(112, 119, 125),  // muted — V1 SOFT
+                DocumentColor.rgb(138, 146, 148),  // rule — V1 SIDEBAR_RULE
+                DocumentColor.rgb(226, 235, 235)); // banner — V1 SIDEBAR_BG
     }
 
     /**

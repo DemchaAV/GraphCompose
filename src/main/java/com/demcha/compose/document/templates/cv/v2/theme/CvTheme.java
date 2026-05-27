@@ -168,6 +168,23 @@ public record CvTheme(CvPalette palette,
     }
 
     /**
+     * The "Monogram Sidebar" look — Crimson Text display + Lato body,
+     * pale teal-grey sidebar with a dark monogram ring badge holding
+     * the subject's initials, centered icon-driven contact stack,
+     * education and expertise blocks, plus a two-line spaced-caps
+     * headline and main career narrative on the right. Visual
+     * signature ported from the v1
+     * {@code MonogramSidebarCvTemplateComposer}.
+     */
+    public static CvTheme monogramSidebar() {
+        return new CvTheme(
+                CvPalette.monogramSidebar(),
+                CvTypography.monogramSidebar(),
+                CvSpacing.monogramSidebar(),
+                CvDecoration.classic());
+    }
+
+    /**
      * The "Engineering Resume" look — Barlow display + Lato body, deep
      * navy command header with cyan-green contact links, dark navy
      * skill rail with green accent labels, and white evidence cards

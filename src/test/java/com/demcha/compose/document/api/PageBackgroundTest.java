@@ -137,6 +137,125 @@ class PageBackgroundTest {
         }
     }
 
+    // -- New multi-rect pageBackgrounds(List) API ------------------------
+
+    @Test
+    void pageBackgroundsListEmitsOneFragmentPerFillPerPage() {
+        DocumentColor sidebar = DocumentColor.of(Color.LIGHT_GRAY);
+        DocumentColor main = DocumentColor.WHITE;
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.zero())
+                .pageBackgrounds(List.of(
+                        PageBackgroundFill.leftColumn(0.33, sidebar),
+                        PageBackgroundFill.rightColumn(0.67, main)))
+                .create()) {
+
+            session.add(new SpacerNode("Block", 200, 80,
+                    DocumentInsets.zero(), DocumentInsets.zero()));
+            LayoutGraph graph = session.layoutGraph();
+
+            assertThat(graph.totalPages()).isEqualTo(1);
+            List<PlacedFragment> bg = graph.fragments().stream()
+                    .filter(this::isPageBackgroundFragment)
+                    .toList();
+            assertThat(bg).hasSize(2);
+            // Painted in list order at z=0
+            assertThat(bg.get(0).x()).isCloseTo(0.0, within(EPS));
+            assertThat(bg.get(0).width()).isCloseTo(400.0 * 0.33, within(EPS));
+            assertThat(bg.get(1).x()).isCloseTo(400.0 * 0.33, within(EPS));
+            assertThat(bg.get(1).width()).isCloseTo(400.0 * 0.67, within(EPS));
+            for (PlacedFragment f : bg) {
+                assertThat(f.y()).isCloseTo(0.0, within(EPS));
+                assertThat(f.height()).isCloseTo(300.0, within(EPS));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void pageBackgroundFullPageMatchesLegacySingleColor() {
+        DocumentColor cream = DocumentColor.of(new Color(250, 245, 235));
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.zero())
+                .pageBackgrounds(List.of(PageBackgroundFill.fullPage(cream)))
+                .create()) {
+
+            session.add(new SpacerNode("Block", 200, 80,
+                    DocumentInsets.zero(), DocumentInsets.zero()));
+            LayoutGraph graph = session.layoutGraph();
+
+            List<PlacedFragment> bg = graph.fragments().stream()
+                    .filter(this::isPageBackgroundFragment)
+                    .toList();
+            assertThat(bg).hasSize(1);
+            assertThat(bg.get(0).x()).isCloseTo(0.0, within(EPS));
+            assertThat(bg.get(0).y()).isCloseTo(0.0, within(EPS));
+            assertThat(bg.get(0).width()).isCloseTo(400.0, within(EPS));
+            assertThat(bg.get(0).height()).isCloseTo(300.0, within(EPS));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void pageBackgroundsEmptyListClearsBackground() {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.zero())
+                .pageBackground(DocumentColor.of(Color.RED))
+                .pageBackgrounds(List.of())
+                .create()) {
+
+            session.add(new SpacerNode("Block", 200, 80,
+                    DocumentInsets.zero(), DocumentInsets.zero()));
+            LayoutGraph graph = session.layoutGraph();
+
+            assertThat(graph.fragments())
+                    .noneMatch(this::isPageBackgroundFragment);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void pageBackgroundFillRejectsOutOfRangeRatios() {
+        DocumentColor c = DocumentColor.WHITE;
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> new PageBackgroundFill(-0.1, 0, 0.5, 1, c));
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> new PageBackgroundFill(0, 1.1, 0.5, 1, c));
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> new PageBackgroundFill(0, 0, 0, 1, c));
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> new PageBackgroundFill(0, 0, 1.1, 1, c));
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> new PageBackgroundFill(0, 0, 0.5, 0, c));
+        org.junit.jupiter.api.Assertions.assertThrows(
+                NullPointerException.class,
+                () -> new PageBackgroundFill(0, 0, 0.5, 1, null));
+    }
+
+    @Test
+    void pageBackgroundFillFactoryHelpersComputeRectsCorrectly() {
+        DocumentColor c = DocumentColor.WHITE;
+        assertThat(PageBackgroundFill.fullPage(c))
+                .isEqualTo(new PageBackgroundFill(0.0, 0.0, 1.0, 1.0, c));
+        assertThat(PageBackgroundFill.leftColumn(0.3, c))
+                .isEqualTo(new PageBackgroundFill(0.0, 0.0, 0.3, 1.0, c));
+        assertThat(PageBackgroundFill.rightColumn(0.4, c))
+                .isEqualTo(new PageBackgroundFill(0.6, 0.0, 0.4, 1.0, c));
+        assertThat(PageBackgroundFill.column(0.25, 0.5, c))
+                .isEqualTo(new PageBackgroundFill(0.25, 0.0, 0.5, 1.0, c));
+    }
+
     private boolean isPageBackgroundFragment(PlacedFragment fragment) {
         return fragment.payload() instanceof ShapeFragmentPayload payload
                 && payload.fillColor() != null

@@ -3,53 +3,64 @@ package com.demcha.compose.document.api;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
-import com.demcha.compose.document.style.DocumentColor;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Splices a session-wide page background fill into a compiled
- * {@link LayoutGraph}. Extracted from {@link DocumentSession} as part
- * of the Phase E.3 slim.
+ * Splices session-wide page background fills into a compiled
+ * {@link LayoutGraph}. Supports any number of partial-page rectangular
+ * fills per page (multi-column backgrounds, accent stripes, etc.).
  *
- * <p>Pages get one extra {@link PlacedFragment} at the bottom of their
- * z-order so every other fragment paints on top of the background fill.
- * If the session has no page background or the layout has no pages,
- * the original graph is returned unchanged.</p>
+ * <p>Background fragments are placed at the very bottom of the page
+ * z-order (z=0), so every other fragment paints on top of them. Within
+ * a single page, fills are emitted in list order — later entries paint
+ * over earlier entries where they overlap. If the layout has no pages
+ * or no fills were configured, the original graph is returned
+ * unchanged.</p>
  */
 final class DocumentPageBackgrounds {
     private DocumentPageBackgrounds() {
     }
 
     /**
-     * Returns a copy of {@code base} with a page-background fragment
-     * spliced into every page, or {@code base} unchanged when there is
-     * nothing to do.
+     * Multi-rect form. Emits one fragment per fill per page, with
+     * coordinates computed from the fill's ratios and the canvas size.
      *
-     * @param base   freshly compiled layout graph
-     * @param color  session-wide background color, or {@code null}
+     * @param base  freshly compiled layout graph
+     * @param fills ordered list of page-background fills (each painted
+     *              on every page); {@code null}/empty leaves {@code base}
+     *              unchanged
      * @return a layout graph with background fragments, or {@code base}
      */
-    static LayoutGraph apply(LayoutGraph base, DocumentColor color) {
-        if (color == null || base.totalPages() == 0) {
+    static LayoutGraph apply(LayoutGraph base, List<PageBackgroundFill> fills) {
+        if (fills == null || fills.isEmpty() || base.totalPages() == 0) {
             return base;
         }
-        List<PlacedFragment> combined = new ArrayList<>(base.fragments().size() + base.totalPages());
+        double pageWidth = base.canvas().width();
+        double pageHeight = base.canvas().height();
+        int extra = base.totalPages() * fills.size();
+        List<PlacedFragment> combined =
+                new ArrayList<>(base.fragments().size() + extra);
         for (int page = 0; page < base.totalPages(); page++) {
-            combined.add(new PlacedFragment(
-                    "@page-background[" + page + "]",
-                    0,
-                    page,
-                    0.0,
-                    0.0,
-                    base.canvas().width(),
-                    base.canvas().height(),
-                    com.demcha.compose.engine.components.style.Margin.zero(),
-                    com.demcha.compose.engine.components.style.Padding.zero(),
-                    new ShapeFragmentPayload(color.color(), null, 0.0, null, null, null)));
+            for (int i = 0; i < fills.size(); i++) {
+                PageBackgroundFill fill = fills.get(i);
+                combined.add(new PlacedFragment(
+                        "@page-background[" + page + "][" + i + "]",
+                        0,
+                        page,
+                        fill.xRatio() * pageWidth,
+                        fill.yRatio() * pageHeight,
+                        fill.widthRatio() * pageWidth,
+                        fill.heightRatio() * pageHeight,
+                        com.demcha.compose.engine.components.style.Margin.zero(),
+                        com.demcha.compose.engine.components.style.Padding.zero(),
+                        new ShapeFragmentPayload(fill.color().color(),
+                                null, 0.0, null, null, null)));
+            }
         }
         combined.addAll(base.fragments());
-        return new LayoutGraph(base.canvas(), base.totalPages(), base.nodes(), combined);
+        return new LayoutGraph(base.canvas(), base.totalPages(),
+                base.nodes(), combined);
     }
 }

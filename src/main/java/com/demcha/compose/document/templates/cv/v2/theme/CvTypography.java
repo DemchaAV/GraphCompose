@@ -192,6 +192,26 @@ public record CvTypography(
     }
 
     /**
+     * Barlow Condensed headline + Lato body scale ported from the v1
+     * {@code TimelineMinimalCvTemplateComposer}: 28pt spaced-caps
+     * masthead, 12.5pt sidebar module titles, 13.5pt main module
+     * titles, 7.5-7.9pt body. Compact sizes squeeze the 3-column
+     * sidebar / axis / main layout onto one page.
+     */
+    public static CvTypography timelineMinimal() {
+        return new CvTypography(
+                FontName.BARLOW_CONDENSED, FontName.LATO,
+                28.0,    // headline (spaced uppercase masthead)
+                7.8,     // contact (right-aligned contact stack)
+                13.5,    // banner / main module title
+                12.5,    // entry title (reused as sidebar module title size)
+                7.9,     // entry date (body size in main)
+                7.5,     // entry subtitle (sidebar body size)
+                7.8,     // body
+                1.2);    // line spacing
+    }
+
+    /**
      * Poppins headline + Lato body scale ported from the v1
      * {@code PanelCvTemplateComposer} (ProductLeader tokens): a 22pt
      * uppercase name in the tinted header card, a 10.4pt section-title

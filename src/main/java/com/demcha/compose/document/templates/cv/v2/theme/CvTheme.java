@@ -168,6 +168,22 @@ public record CvTheme(CvPalette palette,
     }
 
     /**
+     * The "Timeline Minimal" look — Barlow Condensed display + Lato
+     * body, all-grey palette, spaced uppercase name, right-aligned
+     * contact stack with PNG icons, and a thin vertical timeline axis
+     * with three circles separating the sidebar from the main column.
+     * Visual signature ported from the v1
+     * {@code TimelineMinimalCvTemplateComposer}.
+     */
+    public static CvTheme timelineMinimal() {
+        return new CvTheme(
+                CvPalette.timelineMinimal(),
+                CvTypography.timelineMinimal(),
+                CvSpacing.timelineMinimal(),
+                CvDecoration.classic());
+    }
+
+    /**
      * The "Panel" look — Poppins headlines + Lato body, pale teal
      * header card and module panels with thin teal stroke, deep navy
      * masthead text, and teal section headings with a small accent

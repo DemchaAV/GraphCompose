@@ -135,6 +135,7 @@ public final class GraphCompose {
         private boolean markdown = true;
         private boolean guideLines;
         private com.demcha.compose.document.style.DocumentColor pageBackground;
+        private java.util.List<com.demcha.compose.document.api.PageBackgroundFill> pageBackgrounds;
         private final List<FontFamilyDefinition> customFontFamilies = new ArrayList<>();
 
         private DocumentBuilder(Path outputFile) {
@@ -241,6 +242,22 @@ public final class GraphCompose {
             return pageBackground(color == null
                     ? null
                     : com.demcha.compose.document.style.DocumentColor.of(color));
+        }
+
+        /**
+         * Configures one or more rectangular page background fills applied
+         * behind every fragment on every page. See
+         * {@link com.demcha.compose.document.api.PageBackgroundFill} and
+         * {@link com.demcha.compose.document.api.DocumentSession#pageBackgrounds}
+         * for the full semantics.
+         *
+         * @param fills ordered fills, or {@code null}/empty to clear
+         * @return this builder
+         */
+        public DocumentBuilder pageBackgrounds(
+                java.util.List<com.demcha.compose.document.api.PageBackgroundFill> fills) {
+            this.pageBackgrounds = fills;
+            return this;
         }
 
         /**
@@ -363,7 +380,14 @@ public final class GraphCompose {
                     List.copyOf(customFontFamilies),
                     markdown,
                     guideLines);
-            if (pageBackground != null) {
+            if (pageBackgrounds != null) {
+                // Explicit pageBackgrounds() call wins — even an empty
+                // list is an intentional clear that should override any
+                // earlier pageBackground(color) on the same builder.
+                if (!pageBackgrounds.isEmpty()) {
+                    session.pageBackgrounds(pageBackgrounds);
+                }
+            } else if (pageBackground != null) {
                 session.pageBackground(pageBackground);
             }
             return session;

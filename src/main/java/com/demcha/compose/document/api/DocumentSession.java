@@ -75,7 +75,7 @@ public final class DocumentSession implements AutoCloseable {
     private LayoutCanvas canvas;
     private boolean markdown;
     private boolean guideLines;
-    private DocumentColor pageBackground;
+    private List<PageBackgroundFill> pageBackgrounds = List.of();
 
     private final DocumentChromeOptions chromeOptions = new DocumentChromeOptions();
 
@@ -321,7 +321,9 @@ public final class DocumentSession implements AutoCloseable {
      */
     public DocumentSession pageBackground(DocumentColor color) {
         ensureOpen();
-        this.pageBackground = color;
+        this.pageBackgrounds = color == null
+                ? List.of()
+                : List.of(PageBackgroundFill.fullPage(color));
         invalidate();
         return this;
     }
@@ -334,6 +336,30 @@ public final class DocumentSession implements AutoCloseable {
      */
     public DocumentSession pageBackground(Color color) {
         return pageBackground(color == null ? null : DocumentColor.of(color));
+    }
+
+    /**
+     * Configures one or more rectangular background fills applied behind
+     * every fragment on every page. Each fill is defined as a fraction of
+     * the canvas (see {@link PageBackgroundFill}), so the layout works
+     * across page sizes. Use this for multi-column page chrome — a pale
+     * sidebar column plus a white main column, accent stripes, etc. —
+     * that should repeat automatically when content paginates onto a new
+     * page.
+     *
+     * <p>Pass {@code null} or an empty list to clear. Fills paint in list
+     * order; later entries paint on top of earlier ones where they
+     * overlap.</p>
+     *
+     * @param fills ordered list of fills, or {@code null}/empty to clear
+     * @return this session
+     * @throws IllegalStateException if this session has already been closed
+     */
+    public DocumentSession pageBackgrounds(List<PageBackgroundFill> fills) {
+        ensureOpen();
+        this.pageBackgrounds = fills == null ? List.of() : List.copyOf(fills);
+        invalidate();
+        return this;
     }
 
     /**
@@ -617,7 +643,7 @@ public final class DocumentSession implements AutoCloseable {
         LIFECYCLE_LOG.debug("document.layout.start sessionId={} revision={} roots={}", sessionId, revision, roots.size());
         try {
             DocumentLayoutPassContext context = new DocumentLayoutPassContext(registry, canvas, measurementResources.fontLibrary(), measurementResources.textMeasurementSystem(), markdown);
-            LayoutGraph computed = layoutCache.layout(() -> DocumentPageBackgrounds.apply(compiler.compile(documentGraph(), context, context), pageBackground));
+            LayoutGraph computed = layoutCache.layout(() -> DocumentPageBackgrounds.apply(compiler.compile(documentGraph(), context, context), pageBackgrounds));
             LIFECYCLE_LOG.debug("document.layout.end sessionId={} revision={} roots={} pages={} nodes={} fragments={} durationMs={}", sessionId, revision, roots.size(), computed.totalPages(), computed.nodes().size(), computed.fragments().size(), elapsedMillis(startNanos));
             return computed;
         } catch (RuntimeException ex) {

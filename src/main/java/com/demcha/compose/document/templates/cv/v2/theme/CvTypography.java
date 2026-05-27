@@ -192,6 +192,27 @@ public record CvTypography(
     }
 
     /**
+     * Crimson Text headline + Lato body scale ported from the v1
+     * {@code MonogramSidebarCvTemplateComposer}: 30pt spaced-caps
+     * name in the main column, 9pt section title rule, and 7.2-7.8pt
+     * body sizes across the pale-teal sidebar and the right column.
+     * The PT-Serif monogram font is preset-local because no other v2
+     * preset uses it for a circle-ring badge.
+     */
+    public static CvTypography monogramSidebar() {
+        return new CvTypography(
+                FontName.CRIMSON_TEXT, FontName.LATO,
+                30.0,    // headline (spaced-caps name lines)
+                7.4,     // contact (sidebar contact stack)
+                9.0,     // banner / main section title
+                7.8,     // entry title (experience position)
+                7.4,     // entry date (accent gold)
+                7.4,     // entry subtitle
+                7.5,     // body (profile + experience description)
+                1.35);   // line spacing
+    }
+
+    /**
      * Barlow headline + Lato body scale ported from the v1
      * {@code TechLeadCvTemplateComposer}: 24.5pt UPPERCASE masthead,
      * 7.8pt main section headings, 7.25pt body, and a 1.08 line

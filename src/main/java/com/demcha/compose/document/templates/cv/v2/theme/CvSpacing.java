@@ -306,10 +306,11 @@ public record CvSpacing(
 
     /**
      * Spacing for the Monogram Sidebar preset: zero page-flow gap so
-     * the pale sidebar fill bleeds edge-to-edge against the
-     * RECOMMENDED_MARGIN=0 page bounds. Banner tokens are unused —
-     * the preset draws its visual chrome inline (monogram badge, rules,
-     * filler shape).
+     * the content sits flush against the RECOMMENDED_MARGIN=0 page
+     * bounds. The pale sidebar fill is painted edge-to-edge on every
+     * page by {@code DocumentSession.pageBackgrounds(...)}, not by this
+     * spacing; banner tokens are unused — the preset only draws the
+     * monogram badge and sidebar heading rules inline.
      */
     public static CvSpacing monogramSidebar() {
         return new CvSpacing(

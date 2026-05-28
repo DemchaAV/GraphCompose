@@ -17,7 +17,14 @@ import java.util.Objects;
  * @param email   optional email address; empty string when absent
  * @param links   ordered list of {@link Link} entries (typically
  *                LinkedIn, GitHub); never null after construction
+ * @deprecated Superseded by the layered <code>…v2…</code> surface (the current
+ *             standard) — the layered model
+ *             {@link com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument}
+ *             plus the {@code coverletter.v2} presets. Kept for backward
+ *             compatibility; scheduled for removal in a future major. See
+ *             {@code docs/templates/v2-layered/}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public record CoverLetterHeader(
         String name,
         String address,

@@ -214,8 +214,8 @@ Generates every v2 CV preset in one orchestrated run — 14 presets
 covering single-column, two-column-sidebar, and three-column-magazine
 layouts. Use this as the side-by-side catalogue when picking a base
 preset for your own CV product. Each preset is a one-liner factory
-(`ModernProfessional.create(theme)`, `NordicClean.create(theme)`,
-…); see `templates/cv/presets/` for the full list.
+(`ModernProfessional.create()`, `NordicClean.create()`,
+…); see `cv/v2/presets/` for the full list.
 
 | Variant | PDF |
 |---|---|
@@ -224,8 +224,8 @@ preset for your own CV product. Each preset is a one-liner factory
 | Classic serif | [PDF](../assets/readme/examples/cv-classic-serif.pdf) |
 | Compact mono | [PDF](../assets/readme/examples/cv-compact-mono.pdf) |
 | Timeline minimal | [PDF](../assets/readme/examples/cv-timeline-minimal.pdf) |
-| Engineering resume (was "Tech lead") | [PDF](../assets/readme/examples/cv-tech-lead.pdf) |
-| Panel (was "Product leader") | [PDF](../assets/readme/examples/cv-product-leader.pdf) |
+| Engineering resume | [PDF](../assets/readme/examples/cv-engineering-resume.pdf) |
+| Panel | [PDF](../assets/readme/examples/cv-panel.pdf) |
 | Executive · BoxedSections · CenteredHeadline · BlueBanner · EditorialBlue · SidebarPortrait · MonogramSidebar | run the gallery to render |
 
 [📜 Full source](src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java)
@@ -235,9 +235,9 @@ preset for your own CV product. Each preset is a one-liner factory
 Generates all 14 paired v2 cover-letter presets in one run — one
 letter style per CV preset so a candidate's CV and cover letter
 share the same visual language end-to-end. Each preset is a
-one-liner factory (`ModernProfessionalLetter.create(theme)`,
-`NordicCleanLetter.create(theme)`, …) under
-`templates/coverletter/presets/`.
+one-liner factory (`ModernProfessionalLetter.create()`,
+`NordicCleanLetter.create()`, …) under
+`coverletter/v2/presets/`.
 
 [📜 Full source](src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java)
 

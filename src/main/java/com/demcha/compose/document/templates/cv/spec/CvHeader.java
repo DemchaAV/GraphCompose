@@ -22,7 +22,14 @@ import java.util.Objects;
  * @param email    optional email address; empty string when absent
  * @param links    ordered list of {@link Link} entries (typically
  *                 LinkedIn, GitHub); never null, may be empty
+ * @deprecated Superseded by the layered <code>…v2…</code> surface (the current
+ *             standard) — the layered model
+ *             {@link com.demcha.compose.document.templates.cv.v2.data.CvDocument}
+ *             plus the {@code cv.v2} presets. Kept for backward compatibility;
+ *             scheduled for removal in a future major. See
+ *             {@code docs/templates/v2-layered/}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public record CvHeader(
         String name,
         String jobTitle,

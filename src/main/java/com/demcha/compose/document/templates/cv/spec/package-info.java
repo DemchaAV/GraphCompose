@@ -1,8 +1,16 @@
 /**
- * Templates v2 CV specification records — user-facing data types.
+ * Superseded Gen-2 CV specification records — user-facing data types.
+ *
+ * <p><strong>Deprecated surface.</strong> These are the older Gen-2 CV spec
+ * records. They are <em>not</em> the current standard. The current standard
+ * is the layered model
+ * {@link com.demcha.compose.document.templates.cv.v2.data.CvDocument} in the
+ * {@code com.demcha.compose.document.templates.cv.v2} surface. This package
+ * is kept only for backward compatibility and is scheduled for removal in a
+ * future major.</p>
  *
  * <p>This package holds the immutable records a user fills with their
- * CV content before passing the spec to a preset for rendering:</p>
+ * CV content before passing the spec to a Gen-2 preset for rendering:</p>
  *
  * <ul>
  *   <li>{@link com.demcha.compose.document.templates.cv.spec.CvHeader}
@@ -16,11 +24,15 @@
  *       lookups.</li>
  * </ul>
  *
- * <p>This is the v2 replacement for the legacy
- * {@code com.demcha.compose.document.templates.data.cv.*} mutable
- * Lombok beans. The legacy package remains during the migration
- * window and will be removed in Phase G.</p>
+ * <p>New code should target the layered {@code cv.v2} data model instead. See
+ * {@code docs/templates/v2-layered/}.</p>
  *
  * @since 1.6.0
+ * @deprecated Superseded by the layered
+ *             {@code com.demcha.compose.document.templates.cv.v2} surface (the
+ *             current standard). This Gen-2 package is kept for backward
+ *             compatibility and will be removed in a future major. See
+ *             {@code docs/templates/v2-layered/}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 package com.demcha.compose.document.templates.cv.spec;

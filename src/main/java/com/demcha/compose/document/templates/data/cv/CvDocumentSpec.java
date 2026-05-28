@@ -19,7 +19,13 @@ import java.util.function.Consumer;
  * @param header optional header block rendered at the top of the document
  * @param modules ordered content modules rendered after the header
  * @author Artem Demchyshyn
+ * @deprecated Test-only dead code; the live CV/cover-letter model is
+ *             {@code cv.v2} / {@code coverletter.v2}. Kept for backward
+ *             compatibility; scheduled for removal in a future major. See
+ *             {@code docs/templates/v2-layered/} and
+ *             {@link com.demcha.compose.document.templates.cv.v2.data.CvDocument}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public record CvDocumentSpec(
         Header header,
         List<CvModule> modules

@@ -4,51 +4,49 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.coverletter.presets.BlueBannerLetter;
-import com.demcha.compose.document.templates.coverletter.presets.BoxedSectionsLetter;
-import com.demcha.compose.document.templates.coverletter.presets.CenteredHeadlineLetter;
-import com.demcha.compose.document.templates.coverletter.presets.ClassicSerifLetter;
-import com.demcha.compose.document.templates.coverletter.presets.CompactMonoLetter;
-import com.demcha.compose.document.templates.coverletter.presets.EditorialBlueLetter;
-import com.demcha.compose.document.templates.coverletter.presets.EngineeringResumeLetter;
-import com.demcha.compose.document.templates.coverletter.presets.ExecutiveLetter;
-import com.demcha.compose.document.templates.coverletter.presets.ModernProfessionalLetter;
-import com.demcha.compose.document.templates.coverletter.presets.MonogramSidebarLetter;
-import com.demcha.compose.document.templates.coverletter.presets.NordicCleanLetter;
-import com.demcha.compose.document.templates.coverletter.presets.PanelLetter;
-import com.demcha.compose.document.templates.coverletter.presets.SidebarPortraitLetter;
-import com.demcha.compose.document.templates.coverletter.presets.TimelineMinimalLetter;
-import com.demcha.compose.document.templates.coverletter.spec.CoverLetterSpec;
-import com.demcha.compose.document.theme.BusinessTheme;
+import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
+import com.demcha.compose.document.templates.coverletter.v2.presets.BlueBannerLetter;
+import com.demcha.compose.document.templates.coverletter.v2.presets.BoxedSectionsLetter;
+import com.demcha.compose.document.templates.coverletter.v2.presets.CenteredHeadlineLetter;
+import com.demcha.compose.document.templates.coverletter.v2.presets.ClassicSerifLetter;
+import com.demcha.compose.document.templates.coverletter.v2.presets.CompactMonoLetter;
+import com.demcha.compose.document.templates.coverletter.v2.presets.EditorialBlueLetter;
+import com.demcha.compose.document.templates.coverletter.v2.presets.EngineeringResumeLetter;
+import com.demcha.compose.document.templates.coverletter.v2.presets.ExecutiveLetter;
+import com.demcha.compose.document.templates.coverletter.v2.presets.ModernProfessionalLetter;
+import com.demcha.compose.document.templates.coverletter.v2.presets.MonogramSidebarLetter;
+import com.demcha.compose.document.templates.coverletter.v2.presets.NordicCleanLetter;
+import com.demcha.compose.document.templates.coverletter.v2.presets.PanelLetter;
+import com.demcha.compose.document.templates.coverletter.v2.presets.SidebarPortraitLetter;
+import com.demcha.compose.document.templates.coverletter.v2.presets.TimelineMinimalLetter;
 import com.demcha.examples.support.ExampleDataFactory;
 import com.demcha.examples.support.ExampleOutputPaths;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
- * Renders all 14 Templates v2 cover-letter presets against the same
- * shared sample data. Each PDF lands in
- * {@code examples/target/generated-pdfs/cover-letter-<id>.pdf}
- * where {@code <id>} is the paired CV preset's stable identifier
- * (e.g. {@code cover-letter-modern-professional.pdf}).
+ * Renders all 14 layered cover-letter presets ({@code
+ * coverletter.v2.presets.*} — the polished current standard) against
+ * the same shared sample {@link CoverLetterDocument}. Each PDF lands in
+ * {@code examples/target/generated-pdfs/templates/coverletter/cover-letter-<id>.pdf}
+ * where {@code <id>} is the paired CV preset's stable identifier (e.g.
+ * {@code cover-letter-modern-professional.pdf}).
  *
  * <p>The 14 letter renders match the 14 CV renders in
- * {@link CvTemplateGalleryFileExample} — a writer can render both
- * galleries and pick a CV / cover-letter pair sharing the same
- * visual signature.</p>
+ * {@link com.demcha.examples.templates.cv.CvTemplateGalleryFileExample}
+ * — a writer can render both galleries and pick a CV / cover-letter
+ * pair sharing the same visual signature.</p>
  */
 public final class CoverLetterTemplateGalleryFileExample {
-
-    private static final BusinessTheme THEME = BusinessTheme.modern();
 
     private CoverLetterTemplateGalleryFileExample() {
     }
 
     /**
-     * Renders all 14 v2 cover-letter preset gallery PDFs.
+     * Renders all 14 layered cover-letter preset gallery PDFs.
      *
      * @return list of absolute paths of the rendered PDFs in source
      *         order
@@ -59,51 +57,49 @@ public final class CoverLetterTemplateGalleryFileExample {
     }
 
     /**
-     * Renders one preset (when {@code presetId} matches its stable id)
-     * or all presets when {@code presetId} is null.
+     * Renders one preset (when {@code presetId} matches its slug) or all
+     * presets when {@code presetId} is null.
      *
-     * @param presetId stable preset id to render exclusively, or null
-     *                 to render all presets
+     * @param presetId slug to render exclusively, or null to render all
      * @return list of absolute paths of the rendered PDFs
      * @throws Exception if any rendering fails
      */
     public static List<Path> generate(String presetId) throws Exception {
+        // The slug strips the "-letter" suffix so the example file name
+        // matches the paired CV (cover-letter-modern-professional.pdf
+        // pairs with cv-modern-professional.pdf).
         List<Run> runs = List.of(
-                // Stable id stripped of the "-letter" suffix so the
-                // example file name matches the paired CV (e.g.
-                // cover-letter-modern-professional.pdf pairs with
-                // cv-modern-professional.pdf).
-                run("modern-professional", ModernProfessionalLetter::create),
-                run("nordic-clean", NordicCleanLetter::create),
-                run("classic-serif", ClassicSerifLetter::create),
-                run("compact-mono", CompactMonoLetter::create),
-                run("executive", ExecutiveLetter::create),
-                run("engineering-resume", EngineeringResumeLetter::create),
-                run("timeline-minimal", TimelineMinimalLetter::create),
-                run("boxed-sections", BoxedSectionsLetter::create),
-                run("centered-headline", CenteredHeadlineLetter::create),
-                run("blue-banner", BlueBannerLetter::create),
-                run("editorial-blue", EditorialBlueLetter::create),
-                run("panel", PanelLetter::create),
-                run("sidebar-portrait", SidebarPortraitLetter::create),
-                run("monogram-sidebar", MonogramSidebarLetter::create));
+                run("modern-professional", ModernProfessionalLetter.RECOMMENDED_MARGIN, ModernProfessionalLetter::create),
+                run("nordic-clean", NordicCleanLetter.RECOMMENDED_MARGIN, NordicCleanLetter::create),
+                run("classic-serif", ClassicSerifLetter.RECOMMENDED_MARGIN, ClassicSerifLetter::create),
+                run("compact-mono", CompactMonoLetter.RECOMMENDED_MARGIN, CompactMonoLetter::create),
+                run("executive", ExecutiveLetter.RECOMMENDED_MARGIN, ExecutiveLetter::create),
+                run("engineering-resume", EngineeringResumeLetter.RECOMMENDED_MARGIN, EngineeringResumeLetter::create),
+                run("timeline-minimal", TimelineMinimalLetter.RECOMMENDED_MARGIN, TimelineMinimalLetter::create),
+                run("boxed-sections", BoxedSectionsLetter.RECOMMENDED_MARGIN, BoxedSectionsLetter::create),
+                run("centered-headline", CenteredHeadlineLetter.RECOMMENDED_MARGIN, CenteredHeadlineLetter::create),
+                run("blue-banner", BlueBannerLetter.RECOMMENDED_MARGIN, BlueBannerLetter::create),
+                run("editorial-blue", EditorialBlueLetter.RECOMMENDED_MARGIN, EditorialBlueLetter::create),
+                run("panel", PanelLetter.RECOMMENDED_MARGIN, PanelLetter::create),
+                run("sidebar-portrait", SidebarPortraitLetter.RECOMMENDED_MARGIN, SidebarPortraitLetter::create),
+                run("monogram-sidebar", MonogramSidebarLetter.RECOMMENDED_MARGIN, MonogramSidebarLetter::create));
 
-        CoverLetterSpec spec = ExampleDataFactory.sampleCoverLetterSpecV2();
+        CoverLetterDocument doc = ExampleDataFactory.sampleCoverLetterDocumentV2();
         List<Path> generated = new ArrayList<>();
         for (Run letter : runs) {
-            if (presetId != null && !letter.id.equals(presetId)) {
+            if (presetId != null && !letter.id().equals(presetId)) {
                 continue;
             }
-            generated.add(renderOne(spec, letter));
+            generated.add(renderOne(doc, letter));
         }
         return List.copyOf(generated);
     }
 
     /**
-     * Renders all v2 cover-letter preset gallery PDFs and prints each
-     * path.
+     * Renders all layered cover-letter preset gallery PDFs and prints
+     * each path.
      *
-     * @param args optional first arg = preset id filter
+     * @param args optional first arg = slug filter
      * @throws Exception if any rendering fails
      */
     public static void main(String[] args) throws Exception {
@@ -113,24 +109,28 @@ public final class CoverLetterTemplateGalleryFileExample {
         }
     }
 
-    private static Path renderOne(CoverLetterSpec spec, Run letter) throws Exception {
-        Path outputFile = ExampleOutputPaths.prepare("templates/coverletter", "cover-letter-" + letter.id + ".pdf");
-        DocumentTemplate<CoverLetterSpec> template = letter.factory.apply(THEME);
+    private static Path renderOne(CoverLetterDocument doc, Run letter) throws Exception {
+        Path outputFile = ExampleOutputPaths.prepare(
+                "templates/coverletter", "cover-letter-" + letter.id() + ".pdf");
+        DocumentTemplate<CoverLetterDocument> template = letter.factory().get();
 
+        float m = (float) letter.margin();
         try (DocumentSession document = GraphCompose.document(outputFile)
                 .pageSize(DocumentPageSize.A4)
-                .margin(48, 48, 48, 48)
+                .margin(m, m, m, m)
                 .create()) {
-            template.compose(document, spec);
+            template.compose(document, doc);
             document.buildPdf();
         }
         return outputFile;
     }
 
-    private static Run run(String id, Function<BusinessTheme, DocumentTemplate<CoverLetterSpec>> factory) {
-        return new Run(id, factory);
+    private static Run run(String id, double margin,
+                           Supplier<DocumentTemplate<CoverLetterDocument>> factory) {
+        return new Run(id, margin, factory);
     }
 
-    private record Run(String id, Function<BusinessTheme, DocumentTemplate<CoverLetterSpec>> factory) {
+    private record Run(String id, double margin,
+                       Supplier<DocumentTemplate<CoverLetterDocument>> factory) {
     }
 }

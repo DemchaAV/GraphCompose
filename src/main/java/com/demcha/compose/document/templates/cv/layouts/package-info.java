@@ -1,6 +1,13 @@
 /**
- * Templates v2 CV layouts — slot caркасы that arrange a header plus
+ * Superseded Gen-2 CV layouts — slot frames that arrange a header plus
  * named slot content into a final document tree.
+ *
+ * <p><strong>Deprecated surface.</strong> These are the older Gen-2 CV
+ * layouts. They are <em>not</em> the current standard. The current standard
+ * is the layered surface
+ * {@code com.demcha.compose.document.templates.cv.v2} (data / theme /
+ * components / widgets / presets). This package is kept only for backward
+ * compatibility and is scheduled for removal in a future major.</p>
  *
  * <p>Layouts are pure structural composers. They expose a fixed set of
  * named slots ({@code "main"}, {@code "sidebar"}, {@code "col-1"} etc.)
@@ -19,10 +26,15 @@
  *       — col-1 / col-2 / col-3 slots, weighted row beneath the header.</li>
  * </ul>
  *
- * <p>Additional layouts ({@code HeroAndTwoColumn}, etc.) will land
- * alongside the presets that need them in Phase E of the Templates v2
- * migration.</p>
+ * <p>New code should target the layered {@code cv.v2} surface instead. See
+ * {@code docs/templates/v2-layered/}.</p>
  *
  * @since 1.6.0
+ * @deprecated Superseded by the layered
+ *             {@code com.demcha.compose.document.templates.cv.v2} surface (the
+ *             current standard). This Gen-2 package is kept for backward
+ *             compatibility and will be removed in a future major. See
+ *             {@code docs/templates/v2-layered/}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 package com.demcha.compose.document.templates.cv.layouts;

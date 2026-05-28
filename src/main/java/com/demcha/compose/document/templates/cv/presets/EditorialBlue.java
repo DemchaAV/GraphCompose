@@ -43,7 +43,13 @@ import java.util.Objects;
  * Skills render as a four-column table; Education / Projects /
  * Employment History render structured entries with bold leading
  * titles, bold accent dates, and italic muted subtitles.</p>
+ *
+ * @deprecated Superseded by the layered <code>…v2…</code> surface (the current
+ *             standard). Kept for backward compatibility; scheduled for removal
+ *             in a future major. See {@code docs/templates/v2-layered/} and
+ *             {@link com.demcha.compose.document.templates.cv.v2.presets.EditorialBlue}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public final class EditorialBlue {
 
     /** Stable template identifier. */

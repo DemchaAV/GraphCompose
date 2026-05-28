@@ -205,9 +205,11 @@
  *   <li>A free-form layout engine. The engine lives in
  *       {@code com.demcha.compose.document.engine.*}; this package
  *       is a thin author-facing layer on top of its public DSL.</li>
- *   <li>A replacement for v1 yet. The legacy
- *       {@code com.demcha.compose.document.templates.cv.*} surface is
- *       untouched; both pipelines coexist while v2 stabilises.</li>
  * </ul>
+ *
+ * <p>This layered surface is the current standard for CV documents. The
+ * older Gen-2 stack at
+ * {@code com.demcha.compose.document.templates.cv.*} is deprecated and
+ * kept only for backward compatibility.</p>
  */
 package com.demcha.compose.document.templates.cv.v2;

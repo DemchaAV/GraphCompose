@@ -39,7 +39,13 @@ import java.util.Objects;
  * Leadership Experience plus Technical Evidence on the right. Visual
  * signature ported from the legacy {@code TechLeadCvTemplateComposer}:
  * Barlow headings, Lato body, navy primary, green accent.</p>
+ *
+ * @deprecated Superseded by the layered <code>…v2…</code> surface (the current
+ *             standard). Kept for backward compatibility; scheduled for removal
+ *             in a future major. See {@code docs/templates/v2-layered/} and
+ *             {@link com.demcha.compose.document.templates.cv.v2.presets.EngineeringResume}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public final class EngineeringResume {
 
     /** Stable template identifier. */

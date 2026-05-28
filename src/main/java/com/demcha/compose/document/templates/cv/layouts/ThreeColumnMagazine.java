@@ -25,7 +25,15 @@ import java.util.Objects;
  * <p>Column weights default to equal thirds and are configurable via
  * {@link #weights(double, double, double)}. Inter-column gap and
  * inter-module gap are also tunable.</p>
+ *
+ * @deprecated Superseded by the layered <code>…v2…</code> surface (the current
+ *             standard) — the layered model
+ *             {@link com.demcha.compose.document.templates.cv.v2.data.CvDocument}
+ *             plus the {@code cv.v2} presets. Kept for backward compatibility;
+ *             scheduled for removal in a future major. See
+ *             {@code docs/templates/v2-layered/}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public final class ThreeColumnMagazine implements CvLayout {
 
     /** Stable slot name for the first column. */

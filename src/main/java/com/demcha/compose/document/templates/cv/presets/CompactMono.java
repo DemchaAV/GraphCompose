@@ -46,7 +46,13 @@ import java.util.Objects;
  * structure is richer than what the slot-based
  * {@link com.demcha.compose.document.templates.cv.builder.CvBuilder}
  * abstraction exposes.</p>
+ *
+ * @deprecated Superseded by the layered <code>…v2…</code> surface (the current
+ *             standard). Kept for backward compatibility; scheduled for removal
+ *             in a future major. See {@code docs/templates/v2-layered/} and
+ *             {@link com.demcha.compose.document.templates.cv.v2.presets.CompactMono}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public final class CompactMono {
 
     /** Stable template identifier. */

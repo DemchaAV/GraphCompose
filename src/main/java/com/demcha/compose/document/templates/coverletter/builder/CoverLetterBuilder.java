@@ -34,7 +34,15 @@ import java.util.Objects;
  * {@code header}, {@code layout}, {@code bodyStyle}, {@code spacing},
  * and at least implicit alignment via the layout / body style) must
  * be configured before calling {@link #build()}.</p>
+ *
+ * @deprecated Superseded by the layered <code>…v2…</code> surface (the current
+ *             standard) — the layered model
+ *             {@link com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument}
+ *             plus the {@code coverletter.v2} presets. Kept for backward
+ *             compatibility; scheduled for removal in a future major. See
+ *             {@code docs/templates/v2-layered/}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public final class CoverLetterBuilder {
 
     private String id;

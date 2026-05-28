@@ -17,7 +17,15 @@ import java.util.Objects;
  * letter is structurally simpler than a CV (one continuous reading
  * flow), so the layout takes the rendered nodes in source order and
  * emits one container.</p>
+ *
+ * @deprecated Superseded by the layered <code>…v2…</code> surface (the current
+ *             standard) — the layered model
+ *             {@link com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument}
+ *             plus the {@code coverletter.v2} presets. Kept for backward
+ *             compatibility; scheduled for removal in a future major. See
+ *             {@code docs/templates/v2-layered/}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public final class LetterFormat {
 
     private static final String LAYOUT_NAME = "layout.letterFormat";

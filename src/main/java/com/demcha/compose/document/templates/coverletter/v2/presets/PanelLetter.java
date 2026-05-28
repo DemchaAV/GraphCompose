@@ -39,7 +39,7 @@ import java.util.Objects;
  * <p>The two masthead colours (deep-navy header text, teal accent) are
  * mirrored from the CV, where they are preset-local. The header card is
  * pinned to the full content width with a zero-height spacer
- * ({@link #widthAnchor}) so it spans the page rather than shrinking to
+ * ({@code widthAnchor}) so it spans the page rather than shrinking to
  * fit the name — the same trick the CV uses to keep its panels aligned.</p>
  */
 public final class PanelLetter {

@@ -1,15 +1,22 @@
 /**
- * Templates v2 CV domain — layouts, presets, builder, and spec data types.
+ * Superseded Gen-2 CV domain — slot-based layouts, presets, builder, and
+ * spec data types.
  *
- * <p>This package is the home of all CV (résumé) templates in the v2
- * architecture. Sub-packages partition the domain by concern:</p>
+ * <p><strong>Deprecated surface.</strong> This package is the older Gen-2
+ * CV (résumé) template stack. It is <em>not</em> the current standard. The
+ * current standard is the layered surface
+ * {@code com.demcha.compose.document.templates.cv.v2} (data / theme /
+ * components / widgets / presets). This package is kept only for backward
+ * compatibility and is scheduled for removal in a future major.</p>
+ *
+ * <p>Sub-packages partition the (deprecated) domain by concern:</p>
  *
  * <ul>
- *   <li>{@code cv.layouts} — slot caркасы (single-column, two-column-sidebar,
- *       three-column-magazine, hero-and-two-column).</li>
+ *   <li>{@code cv.layouts} — slot frames (single-column, two-column-sidebar,
+ *       three-column-magazine).</li>
  *   <li>{@code cv.presets} — flat copy-and-tweak preset classes
  *       (ModernProfessional, NordicClean, ClassicSerif, CompactMono,
- *       Executive, EngineeringResume, Panel, Sidebar, MonogramSidebar,
+ *       Executive, EngineeringResume, Panel, SidebarPortrait, MonogramSidebar,
  *       TimelineMinimal, BoxedSections, CenteredHeadline, BlueBanner,
  *       EditorialBlue).</li>
  *   <li>{@code cv.builder} — {@code CvBuilder} for users composing
@@ -18,10 +25,15 @@
  *       {@code CvModule}) describing the user's CV content.</li>
  * </ul>
  *
- * <p>Sub-packages will be populated during Phases B–E of the Templates v2
- * migration. Top-level marker file lives here to register the package
- * with the build.</p>
+ * <p>New code should target the layered {@code cv.v2} surface instead. See
+ * {@code docs/templates/v2-layered/}.</p>
  *
  * @since 1.6.0
+ * @deprecated Superseded by the layered
+ *             {@code com.demcha.compose.document.templates.cv.v2} surface (the
+ *             current standard). This Gen-2 package is kept for backward
+ *             compatibility and will be removed in a future major. See
+ *             {@code docs/templates/v2-layered/}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 package com.demcha.compose.document.templates.cv;

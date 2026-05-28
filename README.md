@@ -81,7 +81,7 @@ GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the com
 | You want to&hellip; | Surface | Entry point |
 |---|---|---|
 | Generate a one-off PDF programmatically | DSL | `GraphCompose.document(...).pageFlow(...)` &mdash; see [Hello world](#hello-world) below |
-| Generate a CV / cover letter / invoice / proposal from data | Templates v2 | `ModernProfessional.create(BusinessTheme.modern()).compose(session, spec)` &mdash; see [templates v2](./docs/templates/v1-classic/README.md) |
+| Generate a CV / cover letter from data | Layered templates | `ModernProfessional.create().compose(session, cvDocument)` &mdash; see [layered templates](./docs/templates/v2-layered/README.md) |
 | Add a custom visual primitive | Engine extension | `NodeDefinition` + `PdfFragmentRenderHandler` &mdash; see [extension guide](./docs/contributing/extension-guide.md) |
 | Regression-test generated layouts | Layout snapshots | `DocumentSession#layoutSnapshot()` &mdash; see [snapshot testing](./docs/operations/layout-snapshot-testing.md) |
 
@@ -146,7 +146,7 @@ For a Spring Boot `@RestController` streaming the PDF straight to the response, 
 
 ## What's in v1.6 &mdash; "expressive"
 
-- **Templates v2** &mdash; 14 CV and 14 paired cover-letter presets, theme-driven via `BusinessTheme`, one-liner `create(theme)` factories. Inline markdown, slot-based multi-column layouts. See [`docs/templates/v1-classic/README.md`](./docs/templates/v1-classic/README.md).
+- **Layered templates** &mdash; 14 CV and 14 paired cover-letter presets on the layered `cv.v2` / `coverletter.v2` architecture (data → theme → components → widgets → presets), one-liner `create()` factories over a typed `CvDocument` / `CoverLetterDocument`. Inline markdown, multi-column layouts. The going-forward standard for new template families. See [`docs/templates/v2-layered/README.md`](./docs/templates/v2-layered/README.md). (The earlier `BusinessTheme`-based preset surface is now deprecated.)
 - **Composed primitives** &mdash; `ListBuilder.addItem(label, Consumer)` (nested lists), `DocumentTableCell.node(...)` (any node inside a cell), `CanvasLayerNode` (pixel-precise free-canvas placement).
 - **Architecture hardening** &mdash; `@Internal` API stability marker, public `PdfFragmentRenderHandler` SPI, `DocumentRenderingException` on the convenience render path, documented thread-safety contract.
 
@@ -193,7 +193,7 @@ document.pageFlow().addCanvas(523, 360, canvas -> canvas
 
 ### Templates
 - 🆕 [**Templates — v2 layered architecture**](./docs/templates/v2-layered/README.md) &mdash; the canonical going-forward pattern for new template families (CV v2 is the reference implementation). Personas: [quickstart](./docs/templates/v2-layered/quickstart.md) · [using templates](./docs/templates/v2-layered/using-templates.md) · [authoring presets](./docs/templates/v2-layered/authoring-presets.md) · [contributing a new family](./docs/templates/v2-layered/contributor-guide.md).
-- [Templates v1-classic landing](./docs/templates/v1-classic/README.md) &mdash; CV / cover-letter / invoice / proposal preset library (v1.6 surface, still shipped). Cheat sheet: [authoring](./docs/templates/v1-classic/authoring.md).
+- [Templates v1-classic landing](./docs/templates/v1-classic/README.md) &mdash; the older `BusinessTheme` / `CvSpec` CV / cover-letter / invoice / proposal preset library (**deprecated** — CV + cover letter are superseded by [v2-layered](./docs/templates/v2-layered/README.md); invoice / proposal / schedule are not yet ported). Cheat sheet: [authoring](./docs/templates/v1-classic/authoring.md).
 
 ### Architecture & operations
 - [Architecture overview](./docs/architecture/overview.md) · [Lifecycle](./docs/architecture/lifecycle.md) · [Production rendering](./docs/operations/production-rendering.md) · [Layout snapshot testing](./docs/operations/layout-snapshot-testing.md)

@@ -74,10 +74,11 @@ it does.
 - **[adr/0002-theme-unification.md](adr/0002-theme-unification.md)** — single canonical theme model.
 - **[adr/0003-api-stability-and-internal-marker.md](adr/0003-api-stability-and-internal-marker.md)** — public-API guarantees + `@Internal` marker.
 - **[adr/0004-pdf-handler-spi-extension.md](adr/0004-pdf-handler-spi-extension.md)** — PDF render handler SPI.
-- **[adr/0011-templates-v2-architecture.md](adr/0011-templates-v2-architecture.md)** — the v1.6 templates restructure (spec/builder/presets/themes).
+- **[adr/0011-templates-v2-architecture.md](adr/0011-templates-v2-architecture.md)** — the v1.6 templates restructure (spec/builder/presets/themes); **superseded** for CV + cover letter by [0015](adr/0015-layered-template-architecture.md).
 - **[adr/0012-nested-list-evolution.md](adr/0012-nested-list-evolution.md)** — nested list rendering evolution.
 - **[adr/0013-composed-table-cell.md](adr/0013-composed-table-cell.md)** — composed table cell model.
 - **[adr/0014-controlled-absolute-placement.md](adr/0014-controlled-absolute-placement.md)** — controlled absolute placement strategy.
+- **[adr/0015-layered-template-architecture.md](adr/0015-layered-template-architecture.md)** — the layered `cv.v2` / `coverletter.v2` authoring model (current standard); supersedes the preset/builder portion of 0011.
 
 > **ADR numbering gap (0005–0010)** is intentional — those numbers
 > were reserved during a v1.5 restructure that landed under ADR 0011

@@ -17,7 +17,13 @@ import com.demcha.compose.font.FontName;
  *
  * <p>Deep-slate primary, teal accent, Poppins headline + Lato body —
  * matches {@link com.demcha.compose.document.templates.cv.presets.Panel}.</p>
+ *
+ * @deprecated Superseded by the layered <code>…v2…</code> surface (the current
+ *             standard). Kept for backward compatibility; scheduled for removal
+ *             in a future major. See {@code docs/templates/v2-layered/} and
+ *             {@link com.demcha.compose.document.templates.coverletter.v2.presets.PanelLetter}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public final class PanelLetter {
 
     /** Stable template identifier. */

@@ -18,7 +18,15 @@ import java.util.Objects;
  *
  * <p>Used by presets such as Modern Professional and Classic Serif
  * where a tight, focused single-page layout is the goal.</p>
+ *
+ * @deprecated Superseded by the layered <code>…v2…</code> surface (the current
+ *             standard) — the layered model
+ *             {@link com.demcha.compose.document.templates.cv.v2.data.CvDocument}
+ *             plus the {@code cv.v2} presets. Kept for backward compatibility;
+ *             scheduled for removal in a future major. See
+ *             {@code docs/templates/v2-layered/}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public final class SingleColumn implements CvLayout {
 
     /** Stable slot name that holds all module content. */

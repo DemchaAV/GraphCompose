@@ -19,7 +19,13 @@ import com.demcha.compose.font.FontName;
  * BANNER_BG used by
  * {@link com.demcha.compose.document.templates.cv.presets.BlueBanner}
  * for accent runs.</p>
+ *
+ * @deprecated Superseded by the layered <code>…v2…</code> surface (the current
+ *             standard). Kept for backward compatibility; scheduled for removal
+ *             in a future major. See {@code docs/templates/v2-layered/} and
+ *             {@link com.demcha.compose.document.templates.coverletter.v2.presets.BlueBannerLetter}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public final class BlueBannerLetter {
 
     /** Stable template identifier. */

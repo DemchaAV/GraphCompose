@@ -18,7 +18,13 @@ import com.demcha.compose.font.FontName;
  * <p>Helvetica throughout, deep navy ink with bright editorial blue
  * accent — matches
  * {@link com.demcha.compose.document.templates.cv.presets.EditorialBlue}.</p>
+ *
+ * @deprecated Superseded by the layered <code>…v2…</code> surface (the current
+ *             standard). Kept for backward compatibility; scheduled for removal
+ *             in a future major. See {@code docs/templates/v2-layered/} and
+ *             {@link com.demcha.compose.document.templates.coverletter.v2.presets.EditorialBlueLetter}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public final class EditorialBlueLetter {
 
     /** Stable template identifier. */

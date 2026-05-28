@@ -332,13 +332,13 @@ try (DocumentSession session = GraphCompose.document(out).create()) {
 ```
 
 The full builder fluent surface and module / block taxonomy are
-documented in [`docs/templates/v1-classic/authoring.md`](template-authoring.md).
-The full gallery of v2 CV / cover-letter renders lives under
-[`assets/readme/examples/`](../assets/readme/examples/) and is
+documented in [`docs/templates/v1-classic/authoring.md`](../templates/v1-classic/authoring.md).
+The full gallery of CV / cover-letter renders lives under
+[`assets/readme/examples/`](../../assets/readme/examples/) and is
 regenerable via
-[`examples/CvTemplateGalleryFileExample`](../examples/src/main/java/com/demcha/examples/CvTemplateGalleryFileExample.java)
+[`CvTemplateGalleryFileExample`](../../examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java)
 and
-[`CoverLetterTemplateGalleryFileExample`](../examples/src/main/java/com/demcha/examples/CoverLetterTemplateGalleryFileExample.java).
+[`CoverLetterTemplateGalleryFileExample`](../../examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java).
 
 ### What v2 gives you for free
 

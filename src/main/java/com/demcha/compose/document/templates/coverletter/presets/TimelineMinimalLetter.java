@@ -18,7 +18,13 @@ import com.demcha.compose.font.FontName;
  * <p>All-grey palette with Barlow Condensed for the headline and Lato
  * body — matches
  * {@link com.demcha.compose.document.templates.cv.presets.TimelineMinimal}.</p>
+ *
+ * @deprecated Superseded by the layered <code>…v2…</code> surface (the current
+ *             standard). Kept for backward compatibility; scheduled for removal
+ *             in a future major. See {@code docs/templates/v2-layered/} and
+ *             {@link com.demcha.compose.document.templates.coverletter.v2.presets.TimelineMinimalLetter}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public final class TimelineMinimalLetter {
 
     /** Stable template identifier. */

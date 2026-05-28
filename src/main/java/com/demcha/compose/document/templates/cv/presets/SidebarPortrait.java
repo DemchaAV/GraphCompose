@@ -49,7 +49,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * ported from the legacy {@code SidebarPortraitCvTemplateComposer}:
  * Crimson Text serif for the hero name, Lato body, restrained grey
  * palette.</p>
+ *
+ * @deprecated Superseded by the layered <code>…v2…</code> surface (the current
+ *             standard). Kept for backward compatibility; scheduled for removal
+ *             in a future major. See {@code docs/templates/v2-layered/} and
+ *             {@link com.demcha.compose.document.templates.cv.v2.presets.SidebarPortrait}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public final class SidebarPortrait {
 
     /** Stable template identifier. */

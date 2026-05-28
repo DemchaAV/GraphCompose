@@ -21,7 +21,13 @@ import com.demcha.compose.font.FontName;
  * contact links), same Helvetica body type. The cover letter itself
  * is a single-column letter — header on top, greeting, body
  * paragraphs separated by paragraph spacing, closing.</p>
+ *
+ * @deprecated Superseded by the layered <code>…v2…</code> surface (the current
+ *             standard). Kept for backward compatibility; scheduled for removal
+ *             in a future major. See {@code docs/templates/v2-layered/} and
+ *             {@link com.demcha.compose.document.templates.coverletter.v2.presets.ModernProfessionalLetter}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public final class ModernProfessionalLetter {
 
     /** Stable template identifier. */

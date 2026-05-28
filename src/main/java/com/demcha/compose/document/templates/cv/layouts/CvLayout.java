@@ -29,7 +29,15 @@ import java.util.List;
  * construction time. Theming and spacing live with the components and
  * theme tokens; layouts only decide where blocks of pre-rendered
  * content sit on the page.</p>
+ *
+ * @deprecated Superseded by the layered <code>…v2…</code> surface (the current
+ *             standard) — the layered model
+ *             {@link com.demcha.compose.document.templates.cv.v2.data.CvDocument}
+ *             plus the {@code cv.v2} presets. Kept for backward compatibility;
+ *             scheduled for removal in a future major. See
+ *             {@code docs/templates/v2-layered/}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public interface CvLayout {
 
     /**

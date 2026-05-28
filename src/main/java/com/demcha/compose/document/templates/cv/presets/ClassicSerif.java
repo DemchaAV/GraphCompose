@@ -47,7 +47,13 @@ import java.util.Objects;
  * {@link com.demcha.compose.document.templates.cv.builder.CvBuilder}
  * abstraction exposes. To customise, copy this class and rewrite the
  * row / section calls.</p>
+ *
+ * @deprecated Superseded by the layered <code>…v2…</code> surface (the current
+ *             standard). Kept for backward compatibility; scheduled for removal
+ *             in a future major. See {@code docs/templates/v2-layered/} and
+ *             {@link com.demcha.compose.document.templates.cv.v2.presets.ClassicSerif}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public final class ClassicSerif {
 
     /** Stable template identifier. */

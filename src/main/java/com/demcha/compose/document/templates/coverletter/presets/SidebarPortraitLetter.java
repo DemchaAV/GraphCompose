@@ -20,7 +20,13 @@ import com.demcha.compose.font.FontName;
  * {@link com.demcha.compose.document.templates.cv.presets.SidebarPortrait}.
  * The cover letter is a simple single-column letter — the CV's
  * portrait sidebar is intentionally not replicated.</p>
+ *
+ * @deprecated Superseded by the layered <code>…v2…</code> surface (the current
+ *             standard). Kept for backward compatibility; scheduled for removal
+ *             in a future major. See {@code docs/templates/v2-layered/} and
+ *             {@link com.demcha.compose.document.templates.coverletter.v2.presets.SidebarPortraitLetter}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public final class SidebarPortraitLetter {
 
     /** Stable template identifier. */

@@ -17,7 +17,14 @@ import java.util.Optional;
  * @param header  identity block (required)
  * @param modules ordered list of named modules; insertion order
  *                preserved
+ * @deprecated Superseded by the layered <code>…v2…</code> surface (the current
+ *             standard) — the layered model
+ *             {@link com.demcha.compose.document.templates.cv.v2.data.CvDocument}
+ *             plus the {@code cv.v2} presets. Kept for backward compatibility;
+ *             scheduled for removal in a future major. See
+ *             {@code docs/templates/v2-layered/}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public record CvSpec(CvHeader header, List<CvModule> modules) {
 
     /**

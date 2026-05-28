@@ -4,50 +4,48 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.cv.presets.BlueBanner;
-import com.demcha.compose.document.templates.cv.presets.BoxedSections;
-import com.demcha.compose.document.templates.cv.presets.CenteredHeadline;
-import com.demcha.compose.document.templates.cv.presets.ClassicSerif;
-import com.demcha.compose.document.templates.cv.presets.CompactMono;
-import com.demcha.compose.document.templates.cv.presets.EditorialBlue;
-import com.demcha.compose.document.templates.cv.presets.EngineeringResume;
-import com.demcha.compose.document.templates.cv.presets.Executive;
-import com.demcha.compose.document.templates.cv.presets.ModernProfessional;
-import com.demcha.compose.document.templates.cv.presets.MonogramSidebar;
-import com.demcha.compose.document.templates.cv.presets.NordicClean;
-import com.demcha.compose.document.templates.cv.presets.Panel;
-import com.demcha.compose.document.templates.cv.presets.SidebarPortrait;
-import com.demcha.compose.document.templates.cv.presets.TimelineMinimal;
-import com.demcha.compose.document.templates.cv.spec.CvSpec;
-import com.demcha.compose.document.theme.BusinessTheme;
+import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
+import com.demcha.compose.document.templates.cv.v2.presets.BlueBanner;
+import com.demcha.compose.document.templates.cv.v2.presets.BoxedSections;
+import com.demcha.compose.document.templates.cv.v2.presets.CenteredHeadline;
+import com.demcha.compose.document.templates.cv.v2.presets.ClassicSerif;
+import com.demcha.compose.document.templates.cv.v2.presets.CompactMono;
+import com.demcha.compose.document.templates.cv.v2.presets.EditorialBlue;
+import com.demcha.compose.document.templates.cv.v2.presets.EngineeringResume;
+import com.demcha.compose.document.templates.cv.v2.presets.Executive;
+import com.demcha.compose.document.templates.cv.v2.presets.ModernProfessional;
+import com.demcha.compose.document.templates.cv.v2.presets.MonogramSidebar;
+import com.demcha.compose.document.templates.cv.v2.presets.NordicClean;
+import com.demcha.compose.document.templates.cv.v2.presets.Panel;
+import com.demcha.compose.document.templates.cv.v2.presets.SidebarPortrait;
+import com.demcha.compose.document.templates.cv.v2.presets.TimelineMinimal;
 import com.demcha.examples.support.ExampleDataFactory;
 import com.demcha.examples.support.ExampleOutputPaths;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
- * Renders all 14 Templates v2 CV presets against the same shared
- * sample data. Each PDF lands in
- * {@code examples/target/generated-pdfs/cv-<id>.pdf} where
- * {@code <id>} is the preset's stable identifier (e.g.
+ * Renders all 14 layered CV presets ({@code cv.v2.presets.*} — the
+ * polished current standard) against the same shared sample
+ * {@link CvDocument}. Each PDF lands in
+ * {@code examples/target/generated-pdfs/templates/cv/cv-<id>.pdf}
+ * where {@code <id>} is the preset's stable identifier (e.g.
  * {@code cv-modern-professional.pdf}).
  *
- * <p>This is the single source of truth for the example CV gallery
- * in v2. The matching cover-letter gallery lives in
- * {@link CoverLetterTemplateGalleryFileExample}.</p>
+ * <p>This is the single source of truth for the CV showcase gallery.
+ * The matching cover-letter gallery lives in
+ * {@link com.demcha.examples.templates.coverletter.CoverLetterTemplateGalleryFileExample}.</p>
  */
 public final class CvTemplateGalleryFileExample {
-
-    private static final BusinessTheme THEME = BusinessTheme.modern();
 
     private CvTemplateGalleryFileExample() {
     }
 
     /**
-     * Renders all 14 v2 CV preset gallery PDFs.
+     * Renders all 14 layered CV preset gallery PDFs.
      *
      * @return list of absolute paths of the rendered PDFs in source
      *         order
@@ -83,19 +81,19 @@ public final class CvTemplateGalleryFileExample {
                 run(SidebarPortrait.ID, SidebarPortrait.RECOMMENDED_MARGIN, SidebarPortrait::create),
                 run(MonogramSidebar.ID, MonogramSidebar.RECOMMENDED_MARGIN, MonogramSidebar::create));
 
-        CvSpec spec = ExampleDataFactory.sampleCvSpecV2();
+        CvDocument doc = ExampleDataFactory.sampleCvDocumentV2();
         List<Path> generated = new ArrayList<>();
         for (Run cv : runs) {
-            if (presetId != null && !cv.id.equals(presetId)) {
+            if (presetId != null && !cv.id().equals(presetId)) {
                 continue;
             }
-            generated.add(renderOne(spec, cv));
+            generated.add(renderOne(doc, cv));
         }
         return List.copyOf(generated);
     }
 
     /**
-     * Renders all v2 CV preset gallery PDFs and prints each path.
+     * Renders all layered CV preset gallery PDFs and prints each path.
      *
      * @param args optional first arg = preset id filter
      * @throws Exception if any rendering fails
@@ -107,25 +105,27 @@ public final class CvTemplateGalleryFileExample {
         }
     }
 
-    private static Path renderOne(CvSpec spec, Run cv) throws Exception {
-        Path outputFile = ExampleOutputPaths.prepare("templates/cv", "cv-" + cv.id + ".pdf");
-        DocumentTemplate<CvSpec> template = cv.factory.apply(THEME);
+    private static Path renderOne(CvDocument doc, Run cv) throws Exception {
+        Path outputFile = ExampleOutputPaths.prepare("templates/cv", "cv-" + cv.id() + ".pdf");
+        DocumentTemplate<CvDocument> template = cv.factory().get();
 
-        float m = (float) cv.margin;
+        float m = (float) cv.margin();
         try (DocumentSession document = GraphCompose.document(outputFile)
                 .pageSize(DocumentPageSize.A4)
                 .margin(m, m, m, m)
                 .create()) {
-            template.compose(document, spec);
+            template.compose(document, doc);
             document.buildPdf();
         }
         return outputFile;
     }
 
-    private static Run run(String id, double margin, Function<BusinessTheme, DocumentTemplate<CvSpec>> factory) {
+    private static Run run(String id, double margin,
+                           Supplier<DocumentTemplate<CvDocument>> factory) {
         return new Run(id, margin, factory);
     }
 
-    private record Run(String id, double margin, Function<BusinessTheme, DocumentTemplate<CvSpec>> factory) {
+    private record Run(String id, double margin,
+                       Supplier<DocumentTemplate<CvDocument>> factory) {
     }
 }

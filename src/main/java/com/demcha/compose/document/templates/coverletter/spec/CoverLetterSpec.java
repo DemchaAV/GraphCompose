@@ -25,7 +25,14 @@ import java.util.Objects;
  *                        {@code *italic*})
  * @param closing         last body line (required, may be blank);
  *                        typically {@code "Sincerely, Alex"}
+ * @deprecated Superseded by the layered <code>…v2…</code> surface (the current
+ *             standard) — the layered model
+ *             {@link com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument}
+ *             plus the {@code coverletter.v2} presets. Kept for backward
+ *             compatibility; scheduled for removal in a future major. See
+ *             {@code docs/templates/v2-layered/}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public record CoverLetterSpec(
         CoverLetterHeader header,
         String greeting,

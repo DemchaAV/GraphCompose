@@ -15,7 +15,13 @@ import java.util.function.Consumer;
  * @param body cover-letter body text
  * @param jobDetails target role metadata used by templates
  * @author Artem Demchyshyn
+ * @deprecated Test-only dead code; the live CV/cover-letter model is
+ *             {@code cv.v2} / {@code coverletter.v2}. Kept for backward
+ *             compatibility; scheduled for removal in a future major. See
+ *             {@code docs/templates/v2-layered/} and
+ *             {@link com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 public record CoverLetterDocumentSpec(
         Header header,
         String body,

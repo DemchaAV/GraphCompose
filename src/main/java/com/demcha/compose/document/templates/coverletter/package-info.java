@@ -1,16 +1,18 @@
 /**
- * Templates v2 cover-letter domain — layouts, presets, builder, and spec data types.
+ * Superseded Gen-2 cover-letter domain — layout, presets, builder, and spec
+ * data types.
  *
- * <p>This package is the home of all cover-letter templates in the v2
- * architecture. The user requirement is one cover-letter preset paired
- * with each CV preset (same Header / Typography / Palette), so writers
- * can ship a CV and a matching cover letter with consistent visual
- * identity.</p>
+ * <p><strong>Deprecated surface.</strong> This package is the older Gen-2
+ * cover-letter template stack. It is <em>not</em> the current standard. The
+ * current standard is the layered surface
+ * {@code com.demcha.compose.document.templates.coverletter.v2} (data / theme /
+ * components / widgets / presets). This package is kept only for backward
+ * compatibility and is scheduled for removal in a future major.</p>
  *
- * <p>Sub-packages partition the domain by concern:</p>
+ * <p>Sub-packages partition the (deprecated) domain by concern:</p>
  *
  * <ul>
- *   <li>{@code coverletter.layouts} — slot каркасы (LetterFormat — a
+ *   <li>{@code coverletter.layouts} — slot frames (LetterFormat — a
  *       single-column layout with generous side margins for letter body
  *       text).</li>
  *   <li>{@code coverletter.presets} — flat copy-and-tweak preset classes,
@@ -25,8 +27,8 @@
  *       with header, greeting, body paragraphs, closing).</li>
  * </ul>
  *
- * <p>Sub-packages will be populated during Phase E of the Templates v2
- * migration.</p>
+ * <p>New code should target the layered {@code coverletter.v2} surface
+ * instead. See {@code docs/templates/v2-layered/}.</p>
  *
  * <p><strong>Naming note:</strong> the user-facing concept is
  * "cover-letter" with a hyphen, but Java packages cannot contain hyphens.
@@ -35,5 +37,11 @@
  * (e.g. {@code cover-letter-modern-professional.pdf}).</p>
  *
  * @since 1.6.0
+ * @deprecated Superseded by the layered
+ *             {@code com.demcha.compose.document.templates.coverletter.v2}
+ *             surface (the current standard). This Gen-2 package is kept for
+ *             backward compatibility and will be removed in a future major.
+ *             See {@code docs/templates/v2-layered/}.
  */
+@Deprecated(since = "1.7.0", forRemoval = true)
 package com.demcha.compose.document.templates.coverletter;

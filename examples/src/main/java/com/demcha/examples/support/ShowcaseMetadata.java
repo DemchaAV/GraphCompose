@@ -57,7 +57,6 @@ final class ShowcaseMetadata {
         cv("cv-panel", "Panel", "Soft-tinted panels per section, Product-Leader feel — was ProductLeader in v1.5.", "panel");
         cv("cv-sidebar-portrait", "Sidebar Portrait", "Edge-to-edge grey sidebar with portrait photo, contact stack, and skills.", "sidebar", "portrait");
         cv("cv-monogram-sidebar", "Monogram Sidebar", "Sidebar with monogram badge, accent rule, and structured contact + skills column.", "sidebar", "monogram");
-        cv("cv-modern-professional", "Modern Professional CV", "Same data, ModernProfessional preset — single-file CvFileExample for canonical authoring.", "minimal");
 
         // ===== Templates / Cover Letter =====
         letter("cover-letter", "Cover Letter (canonical)", "Single-file canonical cover letter authored via CoverLetterFileExample.", "letter");

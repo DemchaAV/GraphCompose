@@ -20,7 +20,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Smoke test for the v2 Panel preset. Covers the header card with
  * optional job title + link row, plus the two-column row composition
  * fed through {@link com.demcha.compose.document.templates.cv.v2.components.SectionLookup}
- * and {@link com.demcha.compose.document.templates.cv.v2.components.SectionDispatcher}.
+ * and the preset-local body dispatcher (Panel renders its own
+ * row-free dispatch because each card sits inside {@code flow.addRow},
+ * which the engine forbids from containing nested rows — so it cannot
+ * delegate to the shared {@code SectionDispatcher}).
  */
 class PanelSmokeTest {
 

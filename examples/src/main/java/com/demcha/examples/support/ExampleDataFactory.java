@@ -9,6 +9,7 @@ import com.demcha.compose.document.templates.blocks.ParagraphBlock;
 import com.demcha.compose.document.templates.blocks.WorkHistoryBlock;
 import com.demcha.compose.document.templates.coverletter.spec.CoverLetterHeader;
 import com.demcha.compose.document.templates.coverletter.spec.CoverLetterSpec;
+import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
 import com.demcha.compose.document.templates.cv.spec.CvHeader;
 import com.demcha.compose.document.templates.cv.spec.CvModule;
 import com.demcha.compose.document.templates.cv.spec.CvSpec;
@@ -452,6 +453,53 @@ public final class ExampleDataFactory {
     // -- Templates v2 (cv/v2) sample data ------------------------------
 
     /**
+     * Returns the canonical Jordan Rivera identity shared by the v2 CV
+     * sample and the v2 cover-letter sample, so a CV and its paired
+     * letter render an identical masthead.
+     *
+     * @return sample v2 identity block
+     */
+    public static CvIdentity sampleCvIdentityV2() {
+        return CvIdentity.builder()
+                .name("Jordan", "Rivera")
+                .jobTitle("Platform Engineer")
+                .contact("+44 20 5555 1000",
+                        "jordan.rivera@example.com",
+                        "London, UK")
+                .link("LinkedIn", "https://linkedin.com/in/jordan-rivera-demo")
+                .link("GitHub", "https://github.com/jrivera-demo")
+                .build();
+    }
+
+    /**
+     * Returns a sample {@code CoverLetterDocument} for the v2
+     * cover-letter pipeline. Reuses {@link #sampleCvIdentityV2()} so the
+     * letter masthead matches the paired CV exactly; the greeting / body
+     * / closing reuse the canonical v2 cover-letter sample content.
+     *
+     * @return sample v2 cover letter document
+     */
+    public static CoverLetterDocument sampleCoverLetterDocumentV2() {
+        return CoverLetterDocument.builder()
+                .identity(sampleCvIdentityV2())
+                .greeting("Dear Hiring Team at **Northwind Systems**,")
+                .paragraph("I am excited to share my interest in the Senior "
+                        + "Platform Engineer role. My recent work has focused "
+                        + "on building **reusable document-generation systems** "
+                        + "that balance public API design, render quality, and "
+                        + "maintainability.")
+                .paragraph("I enjoy translating fuzzy workflow requirements into "
+                        + "clear template abstractions, reliable test coverage, "
+                        + "and examples that make adoption easier for the rest "
+                        + "of the team.")
+                .paragraph("I would welcome the opportunity to bring that same "
+                        + "mix of engineering rigor and product thinking to your "
+                        + "platform group.")
+                .closing("Sincerely,")
+                .build();
+    }
+
+    /**
      * Returns a sample {@code CvDocument} for the v2 CV pipeline —
      * the canonical Jordan Rivera content expressed in the v2
      * sealed section hierarchy
@@ -470,15 +518,7 @@ public final class ExampleDataFactory {
      * @return sample v2 CV document
      */
     public static CvDocument sampleCvDocumentV2() {
-        CvIdentity identity = CvIdentity.builder()
-                .name("Jordan", "Rivera")
-                .jobTitle("Platform Engineer")
-                .contact("+44 20 5555 1000",
-                        "jordan.rivera@example.com",
-                        "London, UK")
-                .link("LinkedIn", "https://linkedin.com/in/jordan-rivera-demo")
-                .link("GitHub", "https://github.com/jrivera-demo")
-                .build();
+        CvIdentity identity = sampleCvIdentityV2();
 
         ParagraphSection summary = new ParagraphSection(
                 "Professional Summary",

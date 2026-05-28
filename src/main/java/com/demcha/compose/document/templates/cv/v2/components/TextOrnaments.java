@@ -43,4 +43,27 @@ public final class TextOrnaments {
         }
         return out.toString();
     }
+
+    /**
+     * Joins the non-blank parts with a {@code " | "} pipe separator
+     * (e.g. {@code joinPipe("London", "", "+44") -> "London | +44"}).
+     * Null / blank parts are skipped; each kept part is trimmed. Used to
+     * build single-line contact/meta strings in headers.
+     *
+     * @param parts ordered parts (null / blank entries ignored)
+     * @return pipe-joined string, empty when no non-blank parts
+     */
+    public static String joinPipe(String... parts) {
+        StringBuilder sb = new StringBuilder();
+        for (String part : parts) {
+            if (part == null || part.isBlank()) {
+                continue;
+            }
+            if (sb.length() > 0) {
+                sb.append(" | ");
+            }
+            sb.append(part.trim());
+        }
+        return sb.toString();
+    }
 }

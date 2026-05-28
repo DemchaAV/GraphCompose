@@ -77,7 +77,19 @@ public final class SidebarPortrait {
     private static final DocumentColor DEFAULT_ACCENT =
             DocumentColor.rgb(106, 106, 106);
 
+    /**
+     * Inner content width of the sidebar column. Derived from the V1
+     * SidebarPortrait token set (sidebar outer width minus 13pt left +
+     * 13pt right padding); preserves the half-on-sidebar /
+     * half-on-hero portrait geometry against the canonical A4 page.
+     */
     private static final double SIDEBAR_INNER_WIDTH = 156.4;
+
+    /**
+     * Diameter of the circular portrait photo. V1 SidebarPortrait
+     * token — chosen so the photo's horizontal extent fits inside
+     * {@link #SIDEBAR_INNER_WIDTH} with breathing room either side.
+     */
     private static final double PHOTO_DIAMETER = 98.0;
 
     /**
@@ -85,11 +97,36 @@ public final class SidebarPortrait {
      * column. Tuned so the hero strip's vertical centre lines up with
      * the photo's centre, producing the half-on-sidebar / half-on-hero
      * portrait effect.
+     *
+     * <p>Paired with {@link #HERO_PADDING_TOP} / {@link #HERO_PADDING_BOTTOM}
+     * — the offset is adjusted whenever the padding changes so the
+     * strip's vertical centre stays on the same axis as the photo.</p>
      */
-    private static final double HERO_TOP_OFFSET = 70.0;
+    private static final double HERO_TOP_OFFSET = 59.0;
 
-    /** Width of the divider rule above each sidebar heading. */
+    /**
+     * Top / bottom padding inside the hero strip. The original V1
+     * design used 8 / 6; the strip now renders 1.4× taller while
+     * keeping the same on-page centre line via the adjusted
+     * {@link #HERO_TOP_OFFSET}.
+     */
+    private static final double HERO_PADDING_TOP = 19.0;
+    private static final double HERO_PADDING_BOTTOM = 17.0;
+
+    /**
+     * Width of the accent divider rule drawn above each sidebar
+     * heading. V1 SidebarPortrait token — kept short so the rule
+     * reads as a tick mark, not a separator line.
+     */
     private static final double SIDEBAR_HEADER_RULE_WIDTH = 50.0;
+
+    /**
+     * Width of the divider rule under each main-column section title
+     * (Professional Profile / Experience / Projects). V1 token —
+     * sized to match the natural main-column inner width once the 34pt
+     * left + right padding is subtracted from the column's allocated
+     * outer width.
+     */
     private static final double MAIN_SECTION_RULE_WIDTH = 346.0;
 
     private static final int EDUCATION_LIMIT = 2;
@@ -334,6 +371,18 @@ public final class SidebarPortrait {
                     .margin(new DocumentInsets(0, sideInset, 17, sideInset)));
         }
 
+        /**
+         * Renders the icon + label contact stack in the sidebar.
+         *
+         * <p>Inlined instead of delegating to a shared
+         * {@code ContactLine} variant because none of the existing
+         * widgets carry an inline PNG icon followed by the text label
+         * on the same baseline — every shared variant assumes either
+         * pipe-separated text or a stacked link list with no glyph.
+         * If a second preset ever needs the same icon-driven contact
+         * stack, extract this into
+         * {@code cv/v2/widgets/IconContactLine}.</p>
+         */
         private void addContactBlock(SectionBuilder section, CvIdentity identity) {
             List<ContactItem> items = contactItems(identity);
             if (items.isEmpty()) {
@@ -477,9 +526,16 @@ public final class SidebarPortrait {
                     : jobTitle;
             section.addSection("CvV2SidebarPortraitHero", hero -> hero
                     .fillColor(sidebarFill)
-                    .padding(new DocumentInsets(8, 34, 6, 34))
+                    .padding(new DocumentInsets(HERO_PADDING_TOP, 34,
+                            HERO_PADDING_BOTTOM, 34))
                     .spacing(3)
                     .margin(DocumentInsets.top(HERO_TOP_OFFSET))
+                    // Name is rendered inline rather than via
+                    // Headline.uppercaseCentered because that widget
+                    // calls host.padding(theme.spacing().headlinePadding())
+                    // which would overwrite the hero strip's
+                    // carefully-tuned HERO_PADDING_TOP / BOTTOM and
+                    // break the on-axis alignment with the photo.
                     .addParagraph(paragraph -> paragraph
                             .text(displayName)
                             .textStyle(nameStyle())

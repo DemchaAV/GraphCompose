@@ -145,6 +145,23 @@ public record CvPalette(DocumentColor ink,
     }
 
     /**
+     * Sidebar Portrait palette ported from the v1
+     * {@code SidebarPortraitCvTemplateComposer}: near-black ink for
+     * body text, mid-grey for soft metadata, mid-grey rule lines, and
+     * the pale-beige sidebar background fill. The mid-grey divider
+     * accent and rule colour are reused; main and sidebar tones share
+     * the same {@code ink}/{@code muted} pair because the preset uses
+     * a restrained grey palette throughout.
+     */
+    public static CvPalette sidebarPortrait() {
+        return new CvPalette(
+                DocumentColor.rgb(34, 34, 34),     // ink — V1 INK
+                DocumentColor.rgb(85, 85, 85),     // muted — V1 SOFT
+                DocumentColor.rgb(178, 178, 178),  // rule — V1 RULE
+                DocumentColor.rgb(241, 240, 237)); // banner — V1 SIDEBAR_BG
+    }
+
+    /**
      * Monogram Sidebar palette ported from the v1
      * {@code MonogramSidebarCvTemplateComposer}: navy-slate body ink,
      * soft grey for sidebar metadata, mid-grey sidebar rule, and the

@@ -14,6 +14,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
 import com.demcha.compose.document.templates.cv.v2.components.MarkdownInline;
+import com.demcha.compose.document.templates.cv.v2.components.ProjectLabel;
 import com.demcha.compose.document.templates.cv.v2.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
 import com.demcha.compose.document.templates.cv.v2.data.CvEntry;
@@ -116,6 +117,24 @@ public final class SidebarPortrait {
     private static final List<String> EXPERIENCE_KEYS =
             List.of("experience", "employment", "professional experience",
                     "work");
+    private static final List<String> PROJECT_KEYS =
+            List.of("projects", "project", "selected projects");
+
+    /**
+     * Maximum number of project rows rendered in the main column.
+     *
+     * <p>The side-by-side body is wrapped in a {@code flow.addRow},
+     * which is atomic by engine contract (see {@code RowBuilder}'s
+     * error message: <em>"tables are splittable and would conflict
+     * with the row's atomic pagination"</em>). That means the whole
+     * sidebar + main row has to fit on a single page — content
+     * overflow raises {@code AtomicNodeTooLargeException} instead of
+     * page-breaking. Capping projects keeps the dense canonical
+     * sample data inside the page bound; richer CVs that genuinely
+     * need page-breaking sidebar layouts will need a separate
+     * preset wired against a future splittable-row engine primitive.</p>
+     */
+    private static final int PROJECT_LIMIT = 2;
 
     private SidebarPortrait() {
     }
@@ -492,6 +511,13 @@ public final class SidebarPortrait {
                     addMainSectionHeader(content, "Experience");
                     addExperienceEntries(content, experience);
                 }
+
+                CvSection projects = SectionLookup.firstMatching(sections,
+                        PROJECT_KEYS);
+                if (hasContent(projects)) {
+                    addMainSectionHeader(content, "Projects");
+                    addProjectsList(content, projects);
+                }
             });
         }
 
@@ -579,6 +605,57 @@ public final class SidebarPortrait {
                 return sub;
             }
             return sub + " | " + date;
+        }
+
+        /**
+         * Renders the Projects section in the main column. Same visual
+         * grammar as Profile / Experience — section heading + rule
+         * via {@link #addMainSectionHeader}, then a stacked row per
+         * project where each row carries a bold title, optional
+         * italic stack context parsed by {@link ProjectLabel}, and a
+         * body paragraph. Each project lives as separate paragraphs
+         * inside the same flow, so the engine page-breaks naturally
+         * between projects on multi-page CVs and the pageBackgrounds
+         * keep the sidebar fill repeating on every continuation page.
+         */
+        private void addProjectsList(SectionBuilder section,
+                                     CvSection projectSection) {
+            if (!(projectSection instanceof RowsSection rows)) {
+                return;
+            }
+            DocumentTextStyle titleStyle = mainProjectTitleStyle();
+            DocumentTextStyle contextStyle = mainProjectContextStyle();
+            DocumentTextStyle bodyStyle = mainBodyStyle();
+
+            List<CvRow> list = rows.rows();
+            for (int i = 0; i < Math.min(list.size(), PROJECT_LIMIT); i++) {
+                CvRow row = list.get(i);
+                ProjectLabel label = ProjectLabel.parse(row.label());
+                String body = MarkdownInline.plainText(row.body());
+                double topMargin = i == 0 ? 4.0 : 8.0;
+
+                section.addParagraph(paragraph -> paragraph
+                        .textStyle(titleStyle)
+                        .align(TextAlign.LEFT)
+                        .lineSpacing(1.2)
+                        .margin(DocumentInsets.top(topMargin))
+                        .rich(rich -> {
+                            rich.style(label.title(), titleStyle);
+                            if (!label.stack().isBlank()) {
+                                rich.style(" (" + label.stack() + ")",
+                                        contextStyle);
+                            }
+                        }));
+                if (!body.isBlank()) {
+                    section.addParagraph(paragraph -> paragraph
+                            .textStyle(bodyStyle)
+                            .lineSpacing(1.35)
+                            .align(TextAlign.LEFT)
+                            .margin(DocumentInsets.top(2))
+                            .rich(rich -> MarkdownInline.appendTrimmed(rich,
+                                    body, bodyStyle)));
+                }
+            }
         }
 
         // -- Style factories ------------------------------------------------
@@ -672,6 +749,20 @@ public final class SidebarPortrait {
                     9.2,
                     DocumentTextDecoration.DEFAULT,
                     theme.palette().ink());
+        }
+
+        private DocumentTextStyle mainProjectTitleStyle() {
+            return CvTextStyles.of(theme.typography().bodyFont(),
+                    theme.typography().sizeEntryTitle(),
+                    DocumentTextDecoration.BOLD,
+                    theme.palette().ink());
+        }
+
+        private DocumentTextStyle mainProjectContextStyle() {
+            return CvTextStyles.of(theme.typography().bodyFont(),
+                    theme.typography().sizeEntryDate(),
+                    DocumentTextDecoration.ITALIC,
+                    theme.palette().muted());
         }
     }
 

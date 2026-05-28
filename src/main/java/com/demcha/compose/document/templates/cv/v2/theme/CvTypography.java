@@ -193,6 +193,26 @@ public record CvTypography(
 
     /**
      * Crimson Text headline + Lato body scale ported from the v1
+     * {@code SidebarPortraitCvTemplateComposer}: 28pt serif hero name,
+     * 12pt main section title, 10pt body, and 8-9pt sidebar metadata.
+     * The sample data is information-dense, so the body sizes are
+     * compact and the line spacing trends to 1.35 for readability.
+     */
+    public static CvTypography sidebarPortrait() {
+        return new CvTypography(
+                FontName.CRIMSON_TEXT, FontName.LATO,
+                28.0,    // headline (hero name)
+                8.3,     // contact (sidebar contact stack)
+                12.0,    // banner / main section title
+                10.0,    // entry title (experience position)
+                8.4,     // entry date (subtitle slot also)
+                8.0,     // entry subtitle
+                9.4,     // body (profile / experience body)
+                1.35);   // line spacing
+    }
+
+    /**
+     * Crimson Text headline + Lato body scale ported from the v1
      * {@code MonogramSidebarCvTemplateComposer}: 30pt spaced-caps
      * name in the main column, 9pt section title rule, and 7.2-7.8pt
      * body sizes across the pale-teal sidebar and the right column.

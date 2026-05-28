@@ -168,6 +168,24 @@ public record CvTheme(CvPalette palette,
     }
 
     /**
+     * The "Sidebar Portrait" look — Crimson Text serif hero, Lato
+     * body, restrained grey palette. Pale-beige left sidebar carries
+     * a circular portrait photo, contact stack, education + key
+     * skills + languages summary; the right column carries a large
+     * serif name (positioned to straddle the sidebar/main boundary
+     * via a hero strip), professional profile, and experience
+     * timeline. Visual signature ported from the v1
+     * {@code SidebarPortraitCvTemplateComposer}.
+     */
+    public static CvTheme sidebarPortrait() {
+        return new CvTheme(
+                CvPalette.sidebarPortrait(),
+                CvTypography.sidebarPortrait(),
+                CvSpacing.sidebarPortrait(),
+                CvDecoration.classic());
+    }
+
+    /**
      * The "Monogram Sidebar" look — Crimson Text display + Lato body,
      * pale teal-grey sidebar with a dark monogram ring badge holding
      * the subject's initials, centered icon-driven contact stack,

@@ -126,7 +126,10 @@ class CvV2VisualParityTest {
                         (Supplier<DocumentTemplate<CvDocument>>) EngineeringResume::create),
                 Arguments.of("monogram_sidebar",
                         MonogramSidebar.RECOMMENDED_MARGIN,
-                        (Supplier<DocumentTemplate<CvDocument>>) MonogramSidebar::create));
+                        (Supplier<DocumentTemplate<CvDocument>>) MonogramSidebar::create),
+                Arguments.of("sidebar_portrait",
+                        SidebarPortrait.RECOMMENDED_MARGIN,
+                        (Supplier<DocumentTemplate<CvDocument>>) SidebarPortrait::create));
     }
 
     /**

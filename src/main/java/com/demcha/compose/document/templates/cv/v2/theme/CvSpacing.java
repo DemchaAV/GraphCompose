@@ -280,6 +280,31 @@ public record CvSpacing(
     }
 
     /**
+     * Spacing for the Sidebar Portrait preset: zero page-flow gap so
+     * the sidebar fill bleeds edge-to-edge against the
+     * RECOMMENDED_MARGIN=0 page bounds. Banner tokens are unused —
+     * the preset draws its chrome inline (portrait photo, hero strip,
+     * rules).
+     */
+    public static CvSpacing sidebarPortrait() {
+        return new CvSpacing(
+                0,                                       // pageFlowSpacing
+                5,                                       // sectionBodySpacing
+                DocumentInsets.zero(),                   // sectionBodyPadding
+                DocumentInsets.zero(),                   // headlinePadding
+                DocumentInsets.zero(),                   // contactPadding
+                0.0,                                     // bannerCornerRadius (unused)
+                0.0,                                     // bannerInnerPadding (unused)
+                DocumentInsets.zero(),                   // bannerMargin (unused)
+                0.55,                                    // accentRuleWidth (main section rule)
+                1.0,                                     // paragraphMarginTop
+                8.0,                                     // entryHeaderRowSpacing
+                1.0,                                     // entryTitleWeight
+                0.45,                                    // entryDateWeight
+                2.0);                                    // entrySeparation
+    }
+
+    /**
      * Spacing for the Monogram Sidebar preset: zero page-flow gap so
      * the pale sidebar fill bleeds edge-to-edge against the
      * RECOMMENDED_MARGIN=0 page bounds. Banner tokens are unused —

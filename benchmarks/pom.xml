@@ -4,9 +4,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.github.demchaav</groupId>
+    <parent>
+        <groupId>io.github.demchaav</groupId>
+        <artifactId>graphcompose-build</artifactId>
+        <version>1.6.4</version>
+        <relativePath>../aggregator/pom.xml</relativePath>
+    </parent>
+
     <artifactId>graphcompose-benchmarks</artifactId>
-    <version>1.6.4</version>
     <name>GraphCompose Benchmarks</name>
     <description>
         Performance benchmarks, stress tests, and endurance harnesses for
@@ -16,7 +21,7 @@
     </description>
 
     <properties>
-        <graphcompose.version>1.6.4</graphcompose.version>
+        <graphcompose.version>${project.version}</graphcompose.version>
         <maven.compiler.release>17</maven.compiler.release>
 
         <junit.bom.version>6.1.0</junit.bom.version>

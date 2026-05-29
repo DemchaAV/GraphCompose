@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.github.demchaav</groupId>
+    <artifactId>graphcompose-build</artifactId>
+    <version>1.6.4</version>
+    <packaging>pom</packaging>
+
+    <name>GraphCompose Build Aggregator</name>
+    <description>
+        Non-published reactor aggregator. Builds the library plus the examples
+        and benchmarks modules in one pass and gives a single entry point for
+        `versions:set`, so a version bump propagates to every module at once.
+        This is NOT a Maven parent and is NOT published to JitPack: the library
+        root pom.xml stays standalone so consumer coordinates never change.
+
+        Usage:
+          mvn -f aggregator/pom.xml -DskipTests install        # build everything
+          mvn -f aggregator/pom.xml versions:set -DnewVersion=X # bump all modules
+    </description>
+
+    <modules>
+        <module>..</module>
+        <module>../examples</module>
+        <module>../benchmarks</module>
+    </modules>
+</project>

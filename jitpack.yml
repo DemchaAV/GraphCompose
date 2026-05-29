@@ -1,4 +1,14 @@
+# JitPack builds the published library artifact
+# (com.github.DemchaAV:GraphCompose) from the standalone root pom.xml.
+#
+# JDK is pinned to 17 — the project's compile baseline
+# (maven.compiler.release=17) and the JDK the release verify/javadoc gate
+# runs on — so the jar consumers download is built on the same JDK CI
+# validates, not a drifting newer one.
+#
+# install is scoped to the root module (-pl .) so JitPack builds only the
+# library, never the examples/benchmarks reactor siblings.
 jdk:
-  - openjdk21
+  - openjdk17
 install:
-  - ./mvnw -DskipTests install
+  - ./mvnw -DskipTests install -pl .

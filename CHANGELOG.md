@@ -12,6 +12,14 @@ follow semantic versioning; release dates are ISO 8601.
   regression baselines, and reusable `Subheadline` /
   `SectionHeader.flatSpacedCaps` widget support.
 
+### Public API
+
+- **`PageBackgroundFill` band helpers.** Added `topBand`, `bottomBand`,
+  `band`, `topBandPoints`, and `bandPoints` factory methods for full-width
+  horizontal background bands (top, bottom, or arbitrary vertical offset;
+  ratio- or point-based), complementing the existing column helpers and
+  building on the v1.6.5 y-coordinate fix below.
+
 ### Bug fixes
 
 - **`PageBackgroundFill` y-coordinate.** A partial-height page-background

@@ -110,8 +110,11 @@ function Update-PomVersion($pomPath, $newVersion) {
     $content = Get-Content $pomPath -Raw
     $changed = $false
 
-    # 1. Project's own <version> tag (the FIRST <version> in the file,
-    #    before <parent> or any dependency entries).
+    # 1. The FIRST <version> in the file. For the library root and the
+    #    aggregator this is the project's own <version>; for the reactor
+    #    children (examples/, benchmarks/) it is the inherited <parent>
+    #    <version>, which must track the aggregator. Either way it sits
+    #    before any dependency entries, so a single-shot replace is safe.
     $projectRegex = [regex]'<version>[\w\.\-]+</version>'
     $projectNew = "<version>$newVersion</version>"
     $afterProject = $projectRegex.Replace($content, $projectNew, 1)
@@ -147,6 +150,51 @@ function Update-PomVersion($pomPath, $newVersion) {
         Write-Host "    [DRY RUN] Bump $pomPath -> $newVersion" -ForegroundColor Yellow
     } else {
         [System.IO.File]::WriteAllText($pomPath, $content)
+    }
+}
+
+function Update-ReadmeInstallVersion($readmePath, $newVersion) {
+    if (-not (Test-Path $readmePath)) {
+        Note "skip (no file): $readmePath"
+        return
+    }
+    $content = Get-Content $readmePath -Raw
+    $tag = "v$newVersion"
+    $changed = $false
+
+    # The README JitPack install snippets pin the git tag (vX.Y.Z). They must
+    # flip in the SAME commit the release tag is cut from, so a new user who
+    # copy-pastes the README resolves the version this release actually
+    # publishes (Phase 2.3 of the release skill: README version flips at
+    # release-execution time, never earlier). Two snippets carry it:
+    #   Maven:  <artifactId>GraphCompose</artifactId><version>vX.Y.Z</version>
+    #   Gradle: implementation("...:GraphCompose:vX.Y.Z")
+    # Lookbehind/lookahead so only the version token is rewritten.
+    $mavenRegex = [regex]'(?<=<artifactId>GraphCompose</artifactId>\s*<version>)v?[\w\.\-]+(?=</version>)'
+    $afterMaven = $mavenRegex.Replace($content, $tag, 1)
+    if ($content -ne $afterMaven) {
+        $content = $afterMaven
+        $changed = $true
+        Note "bumped README Maven snippet -> $tag"
+    }
+
+    $gradleRegex = [regex]'(?<=:GraphCompose:)v?[\w\.\-]+(?=")'
+    $afterGradle = $gradleRegex.Replace($content, $tag, 1)
+    if ($content -ne $afterGradle) {
+        $content = $afterGradle
+        $changed = $true
+        Note "bumped README Gradle snippet -> $tag"
+    }
+
+    if (-not $changed) {
+        Note "no change: README install snippets (already $tag?)"
+        return
+    }
+
+    if ($DryRun) {
+        Write-Host "    [DRY RUN] README install snippets -> $tag" -ForegroundColor Yellow
+    } else {
+        [System.IO.File]::WriteAllText($readmePath, $content)
     }
 }
 
@@ -279,10 +327,16 @@ try {
     }
     Note ("tag {0}: available OK" -f $tag)
 
-    Step 1 "Bump pom versions to $Version"
+    Step 1 "Bump versions to $Version (poms + README install snippets)"
+    # All four version sites must move together or VersionConsistencyGuardTest
+    # fails the verify gate below: the standalone library pom.xml (the published
+    # JitPack artifact), the reactor aggregator, and the examples/benchmarks
+    # children whose inherited <parent> version tracks the aggregator.
     Update-PomVersion (Join-Path $repoRoot 'pom.xml') $Version
+    Update-PomVersion (Join-Path $repoRoot 'aggregator/pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'examples/pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'benchmarks/pom.xml') $Version
+    Update-ReadmeInstallVersion (Join-Path $repoRoot 'README.md') $Version
 
     Step 2 "Update CHANGELOG date for v$Version"
     $changelog = Join-Path $repoRoot 'CHANGELOG.md'
@@ -332,13 +386,15 @@ try {
     Step 6 "Commit release"
     $commitMsg = "Release v$Version"
     if ($DryRun) {
-        Write-Host "    [DRY RUN] git add pom.xml examples/pom.xml benchmarks/pom.xml CHANGELOG.md examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java docs/examples.json" -ForegroundColor Yellow
+        Write-Host "    [DRY RUN] git add pom.xml aggregator/pom.xml examples/pom.xml benchmarks/pom.xml README.md CHANGELOG.md examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java docs/examples.json" -ForegroundColor Yellow
         Write-Host "    [DRY RUN] git commit -m `"$commitMsg`"" -ForegroundColor Yellow
     } else {
         git add `
             pom.xml `
+            aggregator/pom.xml `
             examples/pom.xml `
             benchmarks/pom.xml `
+            README.md `
             CHANGELOG.md `
             examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java `
             docs/examples.json

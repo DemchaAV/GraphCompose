@@ -256,6 +256,91 @@ class PageBackgroundTest {
                 .isEqualTo(new PageBackgroundFill(0.25, 0.0, 0.5, 1.0, c));
     }
 
+    // -- Partial-height band placement (y-coordinate regression) ---------
+    // yRatio is top-down (0.0 = page top) but PlacedFragment.y is PDF
+    // bottom-up, so a partial band must convert via
+    // (1 - yRatio - heightRatio) * pageHeight. Pre-fix these collapsed to
+    // y == 0 because every factory used heightRatio == 1; these assert real
+    // partial bands land at the correct vertical position.
+
+    @Test
+    void topBandAppearsAtTopOfPage() {
+        DocumentColor band = DocumentColor.of(Color.DARK_GRAY);
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.zero())
+                .pageBackgrounds(List.of(
+                        new PageBackgroundFill(0.0, 0.0, 1.0, 0.16, band)))
+                .create()) {
+
+            session.add(new SpacerNode("Block", 200, 80,
+                    DocumentInsets.zero(), DocumentInsets.zero()));
+            List<PlacedFragment> bg = session.layoutGraph().fragments().stream()
+                    .filter(this::isPageBackgroundFragment)
+                    .toList();
+
+            assertThat(bg).hasSize(1);
+            // yRatio 0 = page top → bottom-left at (1 - 0 - 0.16) * 300 = 252,
+            // NOT 0 (the bottom, which was the pre-fix behaviour).
+            assertThat(bg.get(0).y()).isCloseTo(252.0, within(EPS));
+            assertThat(bg.get(0).height()).isCloseTo(48.0, within(EPS));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void bottomBandAppearsAtBottomOfPage() {
+        DocumentColor band = DocumentColor.of(Color.DARK_GRAY);
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.zero())
+                .pageBackgrounds(List.of(
+                        new PageBackgroundFill(0.0, 0.84, 1.0, 0.16, band)))
+                .create()) {
+
+            session.add(new SpacerNode("Block", 200, 80,
+                    DocumentInsets.zero(), DocumentInsets.zero()));
+            List<PlacedFragment> bg = session.layoutGraph().fragments().stream()
+                    .filter(this::isPageBackgroundFragment)
+                    .toList();
+
+            assertThat(bg).hasSize(1);
+            // yRatio 0.84 + heightRatio 0.16 = 1.0 → bottom edge flush with
+            // the page bottom: (1 - 0.84 - 0.16) * 300 = 0.
+            assertThat(bg.get(0).y()).isCloseTo(0.0, within(EPS));
+            assertThat(bg.get(0).height()).isCloseTo(48.0, within(EPS));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void midPageBandLandsAtCorrectVerticalPosition() {
+        DocumentColor band = DocumentColor.of(Color.DARK_GRAY);
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.zero())
+                .pageBackgrounds(List.of(
+                        new PageBackgroundFill(0.0, 0.4, 1.0, 0.2, band)))
+                .create()) {
+
+            session.add(new SpacerNode("Block", 200, 80,
+                    DocumentInsets.zero(), DocumentInsets.zero()));
+            List<PlacedFragment> bg = session.layoutGraph().fragments().stream()
+                    .filter(this::isPageBackgroundFragment)
+                    .toList();
+
+            assertThat(bg).hasSize(1);
+            // Band spanning 40%..60% from the top → bottom-left at
+            // (1 - 0.4 - 0.2) * 300 = 120, height 0.2 * 300 = 60.
+            assertThat(bg.get(0).y()).isCloseTo(120.0, within(EPS));
+            assertThat(bg.get(0).height()).isCloseTo(60.0, within(EPS));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private boolean isPageBackgroundFragment(PlacedFragment fragment) {
         return fragment.payload() instanceof ShapeFragmentPayload payload
                 && payload.fillColor() != null

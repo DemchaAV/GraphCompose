@@ -12,6 +12,17 @@ follow semantic versioning; release dates are ISO 8601.
   regression baselines, and reusable `Subheadline` /
   `SectionHeader.flatSpacedCaps` widget support.
 
+### Bug fixes
+
+- **`PageBackgroundFill` y-coordinate.** A partial-height page-background
+  fill (`heightRatio < 1.0`) was painted from the page **bottom** upward
+  instead of from the `yRatio` top edge the API documents, so a band with
+  `yRatio = 0` rendered at the bottom of the page. Fills now convert the
+  top-down ratios to the PDF bottom-up origin correctly
+  (`y = (1 - yRatio - heightRatio) * pageHeight`); full-page and
+  full-height column fills are unchanged. Adds top-/bottom-/mid-band
+  regression tests.
+
 ## v1.6.4 — 2026-05-22
 
 Bug fix + structured-block patch. Adds two new public Block types —

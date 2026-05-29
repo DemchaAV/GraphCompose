@@ -29,9 +29,13 @@ import java.util.Objects;
  * narrow accent column over a full-page tint.</p>
  *
  * @param xRatio      0.0 = left edge, 1.0 = right edge
- * @param yRatio      0.0 = top edge, 1.0 = bottom edge
+ * @param yRatio      top edge of the fill: 0.0 = page top, 1.0 = page
+ *                    bottom. The fill extends downward from here by
+ *                    {@code heightRatio}.
  * @param widthRatio  width as a fraction of the canvas width (0..1]
- * @param heightRatio height as a fraction of the canvas height (0..1]
+ * @param heightRatio height as a fraction of the canvas height (0..1].
+ *                    Keep {@code yRatio + heightRatio <= 1.0} so the fill
+ *                    stays within the page.
  * @param color       fill color (required)
  */
 public record PageBackgroundFill(double xRatio,

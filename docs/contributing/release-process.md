@@ -29,14 +29,14 @@ The shell setup and exact PowerShell commands live in the `graphcompose-release-
 - [ ] `./mvnw -B -ntp -q clean verify -pl .` exits 0. Every test must pass — no skips, no flake retries. Confirm `Tests run: <N>, Failures: 0, Errors: 0, Skipped: 0` from `target/surefire-reports/*.txt`.
 - [ ] Examples module compiles cleanly: `./mvnw -B -ntp -q -f examples/pom.xml clean compile` exits 0. Catches `double → float` lossy narrowing and similar bugs that don't surface in the root module.
 - [ ] All examples regenerate: `./mvnw -B -ntp -q -f examples/pom.xml exec:java -Dexec.mainClass=com.demcha.examples.GenerateAllExamples` produces 26+ `Generated:` lines, exits 0, and emits no `Fixed column ... is smaller than required natural width` or `Spanned cell ... requires extra width` errors. (Requires `./mvnw install -DskipTests -pl .` once first so the local `~/.m2` resolves the current SNAPSHOT/beta version.)
-- [ ] Architecture-guard suite explicitly green: `./mvnw -B -ntp test -pl . -Dtest='CanonicalSurfaceGuardTest,DocumentationCoverageTest,DocumentationExamplesTest,InternalAnnotationCoverageTest,PublicApiNoEngineLeakTest,SemanticLayerNoPdfBoxDependencyTest'` exits 0. These guard against legacy-API leakage in docs and engine internals leaking into the public surface — they fail loudly when README/CHANGELOG drift from the canonical authoring surface.
+- [ ] Architecture-guard suite explicitly green: `./mvnw -B -ntp test -pl . -Dtest='CanonicalSurfaceGuardTest,DocumentationCoverageTest,DocumentationExamplesTest,InternalAnnotationCoverageTest,PublicApiNoEngineLeakTest,SemanticLayerNoPdfBoxDependencyTest,VersionConsistencyGuardTest'` exits 0. These guard against legacy-API leakage in docs and engine internals leaking into the public surface, and — via `VersionConsistencyGuardTest` — against version drift between the library pom, the aggregator, the inherited examples/benchmarks modules, and the README install snippets. They fail loudly when README/CHANGELOG drift from the canonical authoring surface.
 
 ### C. Documentation freeze (matches target version)
 
 - [ ] `CHANGELOG.md` has a `## v<target> — Planned` header at the top. The script flips `Planned` → today's date during release execution; if the header is missing or already dated, the script silently skips and the release ships with the wrong header.
 - [ ] CHANGELOG `v<target>` section: every linked file resolves on disk. Common offenders: new `docs/adr/00XX-*.md`, `docs/migration-v1-N-to-v1-M.md`, recipe pages.
 - [ ] `README.md` test-count claim matches the actual surefire total (`grep -E '[0-9]+ green tests' README.md` vs the surefire aggregate).
-- [ ] `README.md` install snippets stay pinned to **the previously published tag** (e.g. `v1.5.1`) with explanatory prose like "stay pinned to `v1.X.Y` until `v<target>` ships on JitPack". This is intentional — flipping to `v<target>` before the tag exists breaks JitPack for any user copying the snippet in the publish window. The README install flip happens **post-release**, after JitPack `BUILD SUCCESS` confirms the new version resolves (see section 4.B).
+- [ ] `README.md` install snippets match the **current** `pom.xml` version (on `develop` between releases that is the last published tag). `VersionConsistencyGuardTest` enforces README == pom, so the two move together: `cut-release.ps1` rewrites the README Maven + Gradle JitPack snippets to `v<target>` in the *same* release commit it bumps the POMs (section 1, Step 2/6). The README therefore flips to `v<target>` at release-execution time, never on `develop` ahead of the tag — a snippet pointing at a tag that does not exist yet would break JitPack for any user who copies it. Do **not** hand-flip the README ahead of the script: that desyncs README from the still-unbumped pom and fails the guard at the verify gate.
 - [ ] `README.md` and `examples/README.md` link audits resolve: every `(./...)` and `(../...)` link must exist on disk. Use `grep -oE '\(\.?\.?/[^)]+\.(md|java|png|pdf|jpg)\)' README.md examples/README.md | sed 's/^(//;s/)$//' | sort -u | xargs -I{} test -e {} || echo MISSING: {}`.
 - [ ] `examples/README.md` gallery row count matches the file count: `find examples/src/main/java -name '*Example.java' | wc -l` equals `grep -c '^| \[' examples/README.md`.
 - [ ] For minor releases (`vX.Y.0`): `docs/migration-v1-<Y-1>-to-v1-<Y>.md` exists. Patch releases skip this.
@@ -45,7 +45,7 @@ The shell setup and exact PowerShell commands live in the `graphcompose-release-
 
 The script's Step 1–4 mutates these. The agent only confirms the *current state is one the script can transition from*:
 
-- [ ] Root `pom.xml`, `examples/pom.xml`, `benchmarks/pom.xml` `<version>` is the in-flight value (e.g. `1.6.0-beta.1`) or already at the target. Anything else (e.g. a stale `1.5.1-SNAPSHOT`) means the develop line never bumped — fix manually before running the script.
+- [ ] The version lives in four sites that must stay in lockstep: the standalone library `pom.xml`, the reactor `aggregator/pom.xml`, and the inherited `<parent>` version of `examples/pom.xml` and `benchmarks/pom.xml` (the children no longer pin their own `<version>` — they inherit from `graphcompose-build`, and declare `<graphcompose.version>${project.version}</graphcompose.version>` rather than a literal). All four read the same value: either the in-flight develop value or already the target. `VersionConsistencyGuardTest` asserts they agree; `cut-release.ps1` Step 1 moves all four (plus the README) together. Bumping by hand outside the script — or `mvn versions:set` on a single pom — is what previously left benchmarks on the prior release; if you must bump outside the script, use `mvn -f aggregator/pom.xml versions:set -DnewVersion=<X>`.
 - [ ] `examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java` `GH_BASE` points to `/blob/develop`. The script flips it to `/blob/v<target>` and regenerates `docs/examples.json`.
 
 ### E. Tag must not exist
@@ -59,11 +59,11 @@ The script's Step 1–4 mutates these. The agent only confirms the *current stat
 Running `pwsh ./scripts/cut-release.ps1 -Version <X.Y.Z>` performs:
 
 1. **Pre-flight** — re-checks all of A above (branch, clean tree, in-sync, no existing tag).
-2. **Bump POM versions** in `pom.xml`, `examples/pom.xml`, `benchmarks/pom.xml` to `<X.Y.Z>`.
+2. **Bump versions** to `<X.Y.Z>` across the library `pom.xml`, the `aggregator/pom.xml`, the inherited `<parent>` refs in `examples/pom.xml` and `benchmarks/pom.xml`, **and** the README Maven + Gradle JitPack install snippets — all in one pass, so `VersionConsistencyGuardTest` stays green at Step 5.
 3. **Date the CHANGELOG** — flips `## v<X.Y.Z> — Planned` to `## v<X.Y.Z> — <today-ISO>`.
 4. **Switch ShowcaseMetadata GH_BASE** from `/blob/develop` to `/blob/v<X.Y.Z>` and regenerate `docs/examples.json`.
 5. **`mvnw verify -pl .`** — full sanity build (skip with `-SkipVerify` only if you just ran it).
-6. **Commit** as `Release v<X.Y.Z>`. Files committed: 3 POMs + CHANGELOG + ShowcaseMetadata.java + docs/examples.json. **Nothing else.** README install snippets, examples/README.md, and any other docs are NOT touched by the script.
+6. **Commit** as `Release v<X.Y.Z>`. Files committed: the library `pom.xml`, `aggregator/pom.xml`, `examples/pom.xml`, `benchmarks/pom.xml`, `README.md` (install snippets), `CHANGELOG.md`, `ShowcaseMetadata.java`, and `docs/examples.json`. `examples/README.md` and any other docs are NOT touched by the script — fix those pre-release.
 7. **Annotated tag** `v<X.Y.Z>` (`git tag -a -m "Release v<X.Y.Z>"`).
 8. **Push** `develop` and the tag to `origin` (skip with `-SkipPush`).
 
@@ -87,13 +87,13 @@ The script does **not** handle these. They are either pre-release or post-releas
 Run within 1 hour of the tag push. Independent steps can run in parallel.
 
 1. **Wait for JitPack `BUILD SUCCESS`** — `https://jitpack.io/com/github/DemchaAV/GraphCompose/v<target>/build.log` ends in `BUILD SUCCESS`. Then:
-2. **Flip README install snippets** to `v<target>` in a separate commit. The same commit removes the "stay pinned to `v<prev>` until `v<target>` ships on JitPack" defensive prose. Suggested commit message: `docs: README install snippets — v<target> is now on JitPack`.
+2. **README install snippets** — already flipped to `v<target>` by `cut-release.ps1` in the release commit (section 1, Step 2/6) and enforced by `VersionConsistencyGuardTest`. No separate post-release commit is needed; just confirm the JitPack `BUILD SUCCESS` above means the version the README now advertises actually resolves.
 3. **Merge `develop` → `main`** on GitHub so GitHub Pages picks up the new docs. Fast-forward only — never force-push `main`. If the push is rejected with `non-fast-forward`, a hotfix landed on `main` after the audit and the merge has to be redone after merging `origin/main` back into `develop`.
 4. **Verify CI green on main** — `gh run list --branch main --limit 1` shows `success` for the tag commit.
 5. **Smoke-test the JitPack snippet** — minimal POM in `$env:TEMP`, `mvn dependency:resolve` against the snippet copy-pasted from README, expect 0 exit.
 6. **Re-run all examples against the published artifact** — `./mvnw -f examples/pom.xml clean package` followed by `exec:java -Dexec.mainClass=com.demcha.examples.GenerateAllExamples`. Expect 26+ `Generated:` lines.
 7. **Flip ShowcaseMetadata back to develop** — `pwsh ./scripts/cut-release.ps1 -PostReleaseOnly`. This restores linkable "View Code" buttons for ongoing v1.x.y dev work.
-8. **Create the GitHub Release** — `gh release create v<target> --title "GraphCompose v<target> — <codename> release" --notes-file <CHANGELOG section>`. Codename pattern: `v1.4`=cinematic, `v1.5`=intuitive, `v1.6`=expressive. Patch releases drop the codename. Disable "Generated release notes" — we author the body by hand from CHANGELOG.
+8. **GitHub Release — automated.** Pushing the `v<target>` tag triggers [`.github/workflows/release.yml`](../../.github/workflows/release.yml): it re-runs `./mvnw clean verify -pl .` against the tagged commit, then creates the Release with that version's CHANGELOG section as the body (hyphenated tags like `v1.7.0-rc.1` ship as pre-releases; the step is idempotent — it edits the notes if the Release already exists). The workflow titles it `GraphCompose v<target>`; for a **minor** release, edit the title to add the codename (`v1.4`=cinematic, `v1.5`=intuitive, `v1.6`=expressive; patches drop it). Create the Release by hand (`gh release create v<target> --notes-file <CHANGELOG section>`) only if the workflow is unavailable.
 9. **Optional**: GitHub Discussions announcement (mirror the prior release's style; close with *"author intent, not coordinates"*), LinkedIn post, r/java post.
 
 The release is **done** only when steps 1–7 are all green.
@@ -135,6 +135,7 @@ Each learning maps to a check above.
 - **v1.5.0** — 8 zero-byte junk files (`examples/p,`, `{,`, `[Help`, etc.) crept into the working tree from accidental shell-output expansions. *Mitigation*: section A hard-gates on `git status --short` cleanliness, not just on the script's pre-flight.
 - **v1.6.0 prep** — slimming the README to a marketing landing renamed the canonical `DocumentSession document = …` example variable to `doc`, which silently broke `DocumentationCoverageTest.readmeShouldUseCanonicalDslAndAvoidLegacyApis` because the test asserts the literal string `document.pageFlow(` is present. *Mitigation*: any rewrite of the README "Hello world" snippet must keep `DocumentSession document` as the variable name and `document.pageFlow(`, `document.buildPdf()`, `GraphCompose.document(` as the literal canonical fingerprints the guard scans for. Renaming the variable is a guard-test break, not a stylistic preference.
 - **v1.6.0 post-release** — the `examples-generation` CI job introduced after v1.6.0 went red on the first run because `examples/pom.xml` and `benchmarks/pom.xml` declare a `<graphcompose.version>` property used by their `graphcompose` dependency, and `cut-release.ps1` was only flipping the project's own `<version>` tag (the first `<version>` in each file). The subordinate POMs kept `<graphcompose.version>1.6.0-beta.1</graphcompose.version>` after the release commit; CI couldn't resolve a `1.6.0-beta.1` artifact (it never existed on any registry), so `mvnw -f examples/pom.xml clean compile` failed at dependency resolution. *Mitigation*: `Update-PomVersion` in `cut-release.ps1` now flips both the first `<version>` tag *and* a `<graphcompose.version>...</graphcompose.version>` property if present, in the same call. Future agents need not touch this — running the script handles both.
+- **v1.6.5 prep** — the subordinate-POM `<graphcompose.version>` property flip from the v1.6.0 lesson above is now **superseded**: `examples/` and `benchmarks/` were converted to a reactor under a non-published `aggregator/pom.xml`, so they inherit their version from `graphcompose-build` and declare `<graphcompose.version>${project.version}</graphcompose.version>` instead of a literal. The library `pom.xml` stays standalone, so JitPack coordinates never change. Version drift is now structurally impossible *and* caught by `VersionConsistencyGuardTest` (wired into CI's guard job and the section 0.B gate). `cut-release.ps1` bumps the library pom, the aggregator, both inherited parent refs, and the README install snippets in one commit; `.github/workflows/release.yml` then gates the tag on `verify` and publishes the GitHub Release automatically. *Mitigation*: section 0.D verifies all four version sites agree; the guard fails the verify gate if any hand-edit leaves them out of sync.
 
 ---
 
@@ -159,7 +160,7 @@ The release is **done** when all of these are true:
 - [ ] CI green on `main` for the tag commit
 - [ ] JitPack `build.log` ends in `BUILD SUCCESS`
 - [ ] `mvn dependency:resolve` succeeds against the README JitPack snippet
-- [ ] README install snippets flipped to `v<version>` and the defensive "pinned until …" prose removed
+- [ ] README install snippets read `v<version>` (flipped by the release commit; `VersionConsistencyGuardTest` green)
 - [ ] `develop` and `main` synced at the same SHA
 - [ ] Working tree clean on develop (`git status --short` empty)
 - [ ] `ShowcaseMetadata.GH_BASE` flipped back to `/blob/develop` (run `cut-release.ps1 -PostReleaseOnly`)

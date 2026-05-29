@@ -1,0 +1,87 @@
+name: Release
+
+# Cut a GitHub Release whenever a vX.Y.Z tag is pushed. The tag is the
+# trigger and the contract: the workflow re-runs the verify gate against
+# the exact tagged commit, then publishes a Release whose body is that
+# version's CHANGELOG section. A tag only ships if the build is green.
+#
+# Tags are pushed by scripts/cut-release.ps1 after it bumps every version
+# site (library pom, aggregator, examples/benchmarks parents, README
+# install snippets) in the release commit, so the version guard in the
+# verify step below passes by construction.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Verify and publish GitHub Release
+    runs-on: ubuntu-latest
+    env:
+      JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Temurin JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Verify (gate the release on a green build)
+        run: ./mvnw -B -ntp clean verify -pl .
+
+      - name: Extract CHANGELOG section for the tag
+        id: notes
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          NOTES_FILE="${RUNNER_TEMP}/release-notes.md"
+          # Print the "## <tag> — ..." heading and every line up to the
+          # next "## v" heading. index()==1 is a literal prefix match, so
+          # the dots in the version are not treated as regex wildcards and
+          # the trailing space stops "## v1.6.5 " from matching "v1.6.50".
+          awk -v hdr="## ${TAG} " '
+            index($0, hdr) == 1 { flag = 1; print; next }
+            /^## v/ && flag { flag = 0 }
+            flag { print }
+          ' CHANGELOG.md > "${NOTES_FILE}"
+          if [ ! -s "${NOTES_FILE}" ]; then
+            echo "::warning::No CHANGELOG section found for ${TAG}; using a generic note."
+            printf '%s\n' "Release ${TAG}. See [CHANGELOG.md](CHANGELOG.md) for details." > "${NOTES_FILE}"
+          fi
+          echo "notes_file=${NOTES_FILE}" >> "${GITHUB_OUTPUT}"
+          # Tags carrying a pre-release suffix (e.g. v1.7.0-rc.1) ship as
+          # GitHub pre-releases so they never become "Latest".
+          if printf '%s' "${TAG}" | grep -q '-'; then
+            echo "prerelease=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "prerelease=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          PRERELEASE_FLAG=""
+          if [ "${{ steps.notes.outputs.prerelease }}" = "true" ]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            echo "Release ${TAG} already exists — updating its notes."
+            gh release edit "${TAG}" --notes-file "${{ steps.notes.outputs.notes_file }}"
+          else
+            gh release create "${TAG}" \
+              --title "GraphCompose ${TAG}" \
+              --notes-file "${{ steps.notes.outputs.notes_file }}" \
+              --verify-tag \
+              ${PRERELEASE_FLAG}
+          fi

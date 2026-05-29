@@ -45,12 +45,24 @@ final class DocumentPageBackgrounds {
         for (int page = 0; page < base.totalPages(); page++) {
             for (int i = 0; i < fills.size(); i++) {
                 PageBackgroundFill fill = fills.get(i);
+                // Fill ratios are top-down (yRatio 0.0 = top edge) but
+                // PlacedFragment.y is the PDF-native bottom-left origin
+                // (y grows up — see PdfShapeFragmentRenderHandler, which
+                // calls addRect(x, y, w, h) with (x, y) as the bottom-left).
+                // A band occupies [yRatio, yRatio + heightRatio] measured
+                // from the top, so its bottom edge measured from the page
+                // bottom is (1 - yRatio - heightRatio) * pageHeight. For a
+                // full-height fill (heightRatio 1.0) this is 0.0 — identical
+                // to the previous behaviour, so existing full-page/column
+                // fills are unaffected.
+                double fragmentY =
+                        (1.0 - fill.yRatio() - fill.heightRatio()) * pageHeight;
                 combined.add(new PlacedFragment(
                         "@page-background[" + page + "][" + i + "]",
                         0,
                         page,
                         fill.xRatio() * pageWidth,
-                        fill.yRatio() * pageHeight,
+                        fragmentY,
                         fill.widthRatio() * pageWidth,
                         fill.heightRatio() * pageHeight,
                         com.demcha.compose.engine.components.style.Margin.zero(),

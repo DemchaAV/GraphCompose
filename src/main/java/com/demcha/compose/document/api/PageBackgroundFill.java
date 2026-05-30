@@ -21,6 +21,13 @@ import java.util.Objects;
  *       column aligned to the right edge.</li>
  *   <li>{@link #column(double, double, DocumentColor)} — arbitrary
  *       horizontal slice spanning the full page height.</li>
+ *   <li>{@link #topBand(double, DocumentColor)} /
+ *       {@link #bottomBand(double, DocumentColor)} /
+ *       {@link #band(double, double, DocumentColor)} — full-width
+ *       horizontal bands at the top, bottom, or an arbitrary vertical
+ *       offset (also available in absolute points via
+ *       {@link #topBandPoints(double, double, DocumentColor)} and
+ *       {@link #bandPoints(double, double, double, DocumentColor)}).</li>
  * </ul>
  *
  * <p>Fills supplied to a session are painted at z=0 (below every other
@@ -87,5 +94,42 @@ public record PageBackgroundFill(double xRatio,
                                             double widthRatio,
                                             DocumentColor color) {
         return new PageBackgroundFill(xRatio, 0.0, widthRatio, 1.0, color);
+    }
+
+    /** Full-width band flush with the top of the page (height = ratio of page height). */
+    public static PageBackgroundFill topBand(double heightRatio,
+                                             DocumentColor color) {
+        return new PageBackgroundFill(0.0, 0.0, 1.0, heightRatio, color);
+    }
+
+    /** Full-width band flush with the bottom of the page (height = ratio of page height). */
+    public static PageBackgroundFill bottomBand(double heightRatio,
+                                                DocumentColor color) {
+        return new PageBackgroundFill(0.0, 1.0 - heightRatio, 1.0,
+                heightRatio, color);
+    }
+
+    /** Full-width band whose top edge sits {@code yRatioFromTop} down the page (0.0 = page top). */
+    public static PageBackgroundFill band(double yRatioFromTop,
+                                          double heightRatio,
+                                          DocumentColor color) {
+        return new PageBackgroundFill(0.0, yRatioFromTop, 1.0,
+                heightRatio, color);
+    }
+
+    /** Top-aligned band sized in absolute points, converted against {@code pageHeight}. */
+    public static PageBackgroundFill topBandPoints(double heightPoints,
+                                                   double pageHeight,
+                                                   DocumentColor color) {
+        return topBand(heightPoints / pageHeight, color);
+    }
+
+    /** Band positioned and sized in absolute points from the page top, converted against {@code pageHeight}. */
+    public static PageBackgroundFill bandPoints(double yFromTopPoints,
+                                                double heightPoints,
+                                                double pageHeight,
+                                                DocumentColor color) {
+        return band(yFromTopPoints / pageHeight, heightPoints / pageHeight,
+                color);
     }
 }

@@ -341,6 +341,51 @@ class PageBackgroundTest {
         }
     }
 
+    // -- Band factory helpers (build on the corrected coordinate model) --
+
+    @Test
+    void bandFactoryHelpersComputeRatiosCorrectly() {
+        DocumentColor c = DocumentColor.WHITE;
+        assertThat(PageBackgroundFill.topBand(0.16, c))
+                .isEqualTo(new PageBackgroundFill(0.0, 0.0, 1.0, 0.16, c));
+        assertThat(PageBackgroundFill.bottomBand(0.16, c))
+                .isEqualTo(new PageBackgroundFill(0.0, 0.84, 1.0, 0.16, c));
+        assertThat(PageBackgroundFill.band(0.4, 0.2, c))
+                .isEqualTo(new PageBackgroundFill(0.0, 0.4, 1.0, 0.2, c));
+        assertThat(PageBackgroundFill.topBandPoints(48, 300, c))
+                .isEqualTo(new PageBackgroundFill(0.0, 0.0, 1.0, 48.0 / 300.0, c));
+        assertThat(PageBackgroundFill.bandPoints(120, 60, 300, c))
+                .isEqualTo(new PageBackgroundFill(0.0, 120.0 / 300.0, 1.0, 60.0 / 300.0, c));
+    }
+
+    @Test
+    void topBandAndBottomBandHelpersRenderAtCorrectEdges() {
+        DocumentColor fill = DocumentColor.of(Color.DARK_GRAY);
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.zero())
+                .pageBackgrounds(List.of(
+                        PageBackgroundFill.topBand(0.16, fill),
+                        PageBackgroundFill.bottomBand(0.16, fill)))
+                .create()) {
+
+            session.add(new SpacerNode("Block", 200, 80,
+                    DocumentInsets.zero(), DocumentInsets.zero()));
+            List<PlacedFragment> bg = session.layoutGraph().fragments().stream()
+                    .filter(this::isPageBackgroundFragment)
+                    .toList();
+
+            assertThat(bg).hasSize(2);
+            // List order: topBand first, bottomBand second.
+            assertThat(bg.get(0).y()).isCloseTo(252.0, within(EPS));   // top band
+            assertThat(bg.get(0).height()).isCloseTo(48.0, within(EPS));
+            assertThat(bg.get(1).y()).isCloseTo(0.0, within(EPS));     // bottom band
+            assertThat(bg.get(1).height()).isCloseTo(48.0, within(EPS));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private boolean isPageBackgroundFragment(PlacedFragment fragment) {
         return fragment.payload() instanceof ShapeFragmentPayload payload
                 && payload.fillColor() != null

@@ -49,6 +49,16 @@ follow semantic versioning; release dates are ISO 8601.
   full-height column fills are unchanged. Adds top-/bottom-/mid-band
   regression tests.
 
+### Build
+
+- **`byte-buddy` is now `<scope>test</scope>`.** Mockito already excludes
+  its transitive `byte-buddy` and the project pins a single version in a
+  standalone dependency; that dependency was missing a scope, so the
+  published POM advertised `byte-buddy` as a compile dependency even
+  though no production code references it. Setting `<scope>test</scope>`
+  keeps the version pin but keeps `byte-buddy` out of consumers' runtime
+  classpath (`mvn dependency:tree` shows it only as `:test`).
+
 ## v1.6.4 — 2026-05-22
 
 Bug fix + structured-block patch. Adds two new public Block types —

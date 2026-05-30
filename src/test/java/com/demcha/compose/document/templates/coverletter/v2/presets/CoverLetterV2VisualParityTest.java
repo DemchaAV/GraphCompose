@@ -114,7 +114,10 @@ class CoverLetterV2VisualParityTest {
                         (Supplier<DocumentTemplate<CoverLetterDocument>>) MonogramSidebarLetter::create),
                 Arguments.of("timeline_minimal",
                         TimelineMinimalLetter.RECOMMENDED_MARGIN,
-                        (Supplier<DocumentTemplate<CoverLetterDocument>>) TimelineMinimalLetter::create));
+                        (Supplier<DocumentTemplate<CoverLetterDocument>>) TimelineMinimalLetter::create),
+                Arguments.of("mint-editorial-letter",
+                        MintEditorialLetter.RECOMMENDED_MARGIN,
+                        (Supplier<DocumentTemplate<CoverLetterDocument>>) MintEditorialLetter::create));
     }
 
     /**

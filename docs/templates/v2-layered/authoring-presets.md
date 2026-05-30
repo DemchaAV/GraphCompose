@@ -107,6 +107,24 @@ in `com.demcha.compose.document.templates.widgets`.
 | `SectionHeader.upperRule(host, title, theme, titleStyle, ruleColor, ruleWidth)` | Uppercase label with short rule below |
 | `SectionHeader.spacedCapsRule(host, title, theme, titleStyle, ruleColor, ruleWidth, ruleThickness, ruleMargin)` | Spaced-caps label with short rule below |
 
+### `SkillBar` — data-driven proficiency bar
+
+| Variant | Visual |
+|---|---|
+| `SkillBar.render(host, skill, trackWidth, theme)` | Spaced-caps skill label above a thin track with a level-positioned marker; renders the label with **no bar** when `skill.level()` is absent |
+
+Reads the level from `CvSkill.level()` (`[0, 1]`); used by the Mint
+Editorial skills sidebar.
+
+### `IconTextRow` — inline icon + text row
+
+| Variant | Visual |
+|---|---|
+| `IconTextRow.render(host, icon, iconSize, text, style, link, margin)` | A glyph image followed by a label on one baseline; the whole row is a single click target when a `link` is supplied |
+
+Used for the icon-led contact and social rows in sidebar CV layouts
+(Mint Editorial).
+
 ### Higher-order CV widgets
 
 | Widget | Visual |

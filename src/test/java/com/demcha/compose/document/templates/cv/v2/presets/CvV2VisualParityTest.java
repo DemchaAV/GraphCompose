@@ -131,7 +131,10 @@ class CvV2VisualParityTest {
                         (Supplier<DocumentTemplate<CvDocument>>) MonogramSidebar::create),
                 Arguments.of("sidebar_portrait",
                         SidebarPortrait.RECOMMENDED_MARGIN,
-                        (Supplier<DocumentTemplate<CvDocument>>) SidebarPortrait::create));
+                        (Supplier<DocumentTemplate<CvDocument>>) SidebarPortrait::create),
+                Arguments.of("mint_editorial",
+                        MintEditorial.RECOMMENDED_MARGIN,
+                        (Supplier<DocumentTemplate<CvDocument>>) MintEditorial::create));
     }
 
     /**

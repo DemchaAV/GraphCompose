@@ -384,9 +384,7 @@ public final class GraphCompose {
                 // Explicit pageBackgrounds() call wins — even an empty
                 // list is an intentional clear that should override any
                 // earlier pageBackground(color) on the same builder.
-                if (!pageBackgrounds.isEmpty()) {
-                    session.pageBackgrounds(pageBackgrounds);
-                }
+                session.pageBackgrounds(pageBackgrounds);
             } else if (pageBackground != null) {
                 session.pageBackground(pageBackground);
             }

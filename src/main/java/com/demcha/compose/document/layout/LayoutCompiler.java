@@ -746,6 +746,11 @@ public final class LayoutCompiler {
             }
             return slots;
         }
+        if (weights.size() != n) {
+            throw new IllegalArgumentException(
+                    "Row weights size (" + weights.size() + ") must match children size (" + n
+                            + "). Pass exactly " + n + " weight(s) or leave weights empty for an even split.");
+        }
         double total = 0.0;
         for (double w : weights) {
             total += w;

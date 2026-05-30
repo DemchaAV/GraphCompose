@@ -382,6 +382,46 @@ class RowBuilderTest {
         assertThat(viaSpacing.gap()).isEqualTo(viaGap.gap());
     }
 
+    @Test
+    void rowBuilderWeightsMismatchAtBuildFailsWithDescriptiveMessage() {
+        // Two weights paired with three children must be rejected at the
+        // build() call rather than turning into an IOOBE downstream.
+        assertThatThrownBy(() -> new RowBuilder()
+                .name("Row")
+                .weights(1.0, 2.0)
+                .addParagraph(p -> p.name("A").text("A").textStyle(DocumentTextStyle.DEFAULT))
+                .addParagraph(p -> p.name("B").text("B").textStyle(DocumentTextStyle.DEFAULT))
+                .addParagraph(p -> p.name("C").text("C").textStyle(DocumentTextStyle.DEFAULT))
+                .build())
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("weights")
+                .hasMessageContaining("children");
+    }
+
+    @Test
+    void rowNodeConstructorRejectsWeightsThatDoNotMatchChildren() {
+        // Bypassing RowBuilder.validate() by constructing RowNode directly
+        // must still surface a domain-level IllegalArgumentException — no
+        // raw IndexOutOfBoundsException from the engine's distribution code.
+        SpacerNode a = new SpacerNode("A", 10, 10, DocumentInsets.zero(), DocumentInsets.zero());
+        SpacerNode b = new SpacerNode("B", 10, 10, DocumentInsets.zero(), DocumentInsets.zero());
+
+        assertThatThrownBy(() -> new RowNode(
+                "Row",
+                List.of(a, b),
+                List.of(1.0, 2.0, 3.0),
+                0.0,
+                DocumentInsets.zero(),
+                DocumentInsets.zero(),
+                null,
+                null,
+                null,
+                null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("weights size")
+                .hasMessageContaining("children size");
+    }
+
     private static PlacedNode findNodeBySemanticName(List<PlacedNode> nodes, String name) {
         for (PlacedNode node : nodes) {
             if (name.equals(node.semanticName())) {

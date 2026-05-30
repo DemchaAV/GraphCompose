@@ -48,6 +48,26 @@ follow semantic versioning; release dates are ISO 8601.
   (`y = (1 - yRatio - heightRatio) * pageHeight`); full-page and
   full-height column fills are unchanged. Adds top-/bottom-/mid-band
   regression tests.
+- **`GraphCompose.document().pageBackgrounds(emptyList())` now actually
+  clears.** The builder's Javadoc promised that an explicit empty list
+  overrides any earlier `pageBackground(color)` on the same builder, but
+  the implementation skipped empty lists, so `pageBackground(LIGHT_GRAY)`
+  followed by `pageBackgrounds(List.of())` still emitted the grey
+  background. The guard is removed; the empty list is now the documented
+  clear. Adds a regression test.
+- **`distributeRowSlotWidths` weights / children mismatch.** When a row
+  was constructed with a `weights` list whose size did not match the
+  number of children (only reachable by bypassing `RowBuilder` and
+  building a `RowNode` directly), the engine's row distribution code
+  walked off the end of the `weights` list with a raw
+  `IndexOutOfBoundsException`. Both row-distribution call sites
+  (`LayoutCompiler#distributeRowSlotWidths`, `NodeDefinitionSupport#measureRow`)
+  now reject the mismatch with an `IllegalArgumentException` whose
+  message names both sizes and the expected fix. `RowNode`'s canonical
+  constructor already validated this at construction time; the new
+  engine guards are defence-in-depth for any path that bypasses it
+  (e.g. reflection-based deserialization). Adds regression tests for
+  the canonical-constructor IAE and the `RowBuilder.build()` ISE.
 
 ### Build
 

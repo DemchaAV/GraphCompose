@@ -42,38 +42,40 @@ final class ShowcaseMetadata {
     private static final Map<String, Entry> ENTRIES = new LinkedHashMap<>();
 
     static {
-        // ===== Templates / CV =====
-        cv("cv-modern-professional", "Modern Professional", "Clean two-column resume with right-aligned header, tinted profile panel, and uppercase section headings.", "minimal");
-        cv("cv-nordic-clean", "Nordic Clean", "Sidebar layout with soft-tinted PROFILE panel, Nordic palette, and bullet skill list.", "sidebar");
-        cv("cv-classic-serif", "Classic Serif", "Two-page editorial CV with Times-style serif headings and conservative grey rules.", "serif", "two-page");
-        cv("cv-compact-mono", "Compact Mono", "Single-column dense layout with monospace contact line — favourite for engineering roles.", "compact", "mono");
-        cv("cv-executive", "Executive", "Slate palette with prominent name banner, formal tone, and weighted section dividers.", "executive");
-        cv("cv-engineering-resume", "Engineering Resume", "Tech-lead style layout with prominent skill matrix and stack tagging — was TechLead in v1.5.", "tech");
-        cv("cv-timeline-minimal", "Timeline Minimal", "Vertical timeline of roles with bullet markers and tight whitespace.", "timeline");
-        cv("cv-boxed-sections", "Boxed Sections", "Each section wrapped in a grey banner header — bold, structured feel.", "structured");
-        cv("cv-centered-headline", "Centered Headline", "Centered name + role with full-width accent rules between sections.", "centered");
-        cv("cv-blue-banner", "Blue Banner", "Light-blue full-width section bands with high-contrast headings.", "banner", "blue");
-        cv("cv-editorial-blue", "Editorial Blue", "Magazine-style editorial layout with two-column body and tinted skills table.", "editorial", "blue");
-        cv("cv-panel", "Panel", "Soft-tinted panels per section, Product-Leader feel — was ProductLeader in v1.5.", "panel");
-        cv("cv-sidebar-portrait", "Sidebar Portrait", "Edge-to-edge grey sidebar with portrait photo, contact stack, and skills.", "sidebar", "portrait");
-        cv("cv-monogram-sidebar", "Monogram Sidebar", "Sidebar with monogram badge, accent rule, and structured contact + skills column.", "sidebar", "monogram");
+        // ===== Templates / CV (v2 layered) =====
+        cv("cv-modern-professional-v2", "CvModernV2Example", "Modern Professional", "Clean two-column resume with right-aligned header, tinted profile panel, and uppercase section headings.", "minimal");
+        cv("cv-nordic-clean-v2", "CvNordicCleanExample", "Nordic Clean", "Sidebar layout with soft-tinted PROFILE panel, Nordic palette, and bullet skill list.", "sidebar");
+        cv("cv-classic-serif-v2", "CvClassicSerifExample", "Classic Serif", "Two-page editorial CV with Times-style serif headings and conservative grey rules.", "serif", "two-page");
+        cv("cv-compact-mono-v2", "CvCompactMonoExample", "Compact Mono", "Single-column dense layout with monospace contact line — favourite for engineering roles.", "compact", "mono");
+        cv("cv-executive-v2", "CvExecutiveExample", "Executive", "Slate palette with prominent name banner, formal tone, and weighted section dividers.", "executive");
+        cv("cv-engineering-resume-v2", "CvEngineeringResumeExample", "Engineering Resume", "Tech-lead style layout with prominent skill matrix and stack tagging — was TechLead in v1.5.", "tech");
+        cv("cv-timeline-minimal-v2", "CvTimelineMinimalExample", "Timeline Minimal", "Vertical timeline of roles with bullet markers and tight whitespace.", "timeline");
+        cv("cv-boxed-sections-v2", "CvBoxedV2Example", "Boxed Sections", "Each section wrapped in a grey banner header — bold, structured feel.", "structured");
+        cv("cv-centered-headline-v2", "CvCenteredHeadlineExample", "Centered Headline", "Centered name + role with full-width accent rules between sections.", "centered");
+        cv("cv-blue-banner-v2", "CvBlueBannerExample", "Blue Banner", "Light-blue full-width section bands with high-contrast headings.", "banner", "blue");
+        cv("cv-editorial-blue-v2", "CvEditorialBlueExample", "Editorial Blue", "Magazine-style editorial layout with two-column body and tinted skills table.", "editorial", "blue");
+        cv("cv-panel-v2", "CvPanelExample", "Panel", "Soft-tinted panels per section, Product-Leader feel — was ProductLeader in v1.5.", "panel");
+        cv("cv-sidebar-portrait-v2", "CvSidebarPortraitExample", "Sidebar Portrait", "Edge-to-edge grey sidebar with portrait photo, contact stack, and skills.", "sidebar", "portrait");
+        cv("cv-monogram-sidebar-v2", "CvMonogramSidebarExample", "Monogram Sidebar", "Sidebar with monogram badge, accent rule, and structured contact + skills column.", "sidebar", "monogram");
+        cv("cv-minimal-underlined-v2", "CvMinimalUnderlinedExample", "Minimal Underlined", "Single-column layout with underlined section titles and tight whitespace — minimalist reference shape.", "minimal");
+        cv("cv-mint-editorial-v2", "CvMintEditorialExample", "Mint Editorial", "Magazine-style editorial CV with mint accent palette and two-column body.", "editorial", "mint");
 
-        // ===== Templates / Cover Letter =====
-        letter("cover-letter", "Cover Letter (canonical)", "Single-file canonical cover letter authored via CoverLetterFileExample.", "letter");
-        letter("cover-letter-modern-professional", "Modern Professional letter", "Letter paired with the Modern Professional CV palette.");
-        letter("cover-letter-nordic-clean", "Nordic Clean letter", "Letter paired with the Nordic Clean CV palette.");
-        letter("cover-letter-classic-serif", "Classic Serif letter", "Letter with Times-style serif typography.");
-        letter("cover-letter-compact-mono", "Compact Mono letter", "Letter with mono accent and compact spacing.");
-        letter("cover-letter-executive", "Executive letter", "Slate-palette executive letter.");
-        letter("cover-letter-engineering-resume", "Engineering letter", "Letter paired with EngineeringResume palette.");
-        letter("cover-letter-timeline-minimal", "Timeline Minimal letter", "Letter with timeline-style minimal accents.");
-        letter("cover-letter-boxed-sections", "Boxed Sections letter", "Letter with grey-banner section headings.");
-        letter("cover-letter-centered-headline", "Centered Headline letter", "Letter with centered name + accent rules.");
-        letter("cover-letter-blue-banner", "Blue Banner letter", "Letter paired with Blue Banner CV.");
-        letter("cover-letter-editorial-blue", "Editorial Blue letter", "Editorial-magazine letter paired with Editorial Blue CV.");
-        letter("cover-letter-panel", "Panel letter", "Letter paired with Panel CV soft-tinted panels.");
-        letter("cover-letter-sidebar-portrait", "Sidebar Portrait letter", "Letter paired with Sidebar Portrait CV.");
-        letter("cover-letter-monogram-sidebar", "Monogram Sidebar letter", "Letter paired with Monogram Sidebar CV.");
+        // ===== Templates / Cover Letter (v2 layered, paired 1:1 with CV) =====
+        letter("cover-letter-modern-professional-v2", "CvModernProfessionalLetterV2Example", "Modern Professional letter", "Letter paired with the Modern Professional CV palette.");
+        letter("cover-letter-nordic-clean-v2", "CvNordicCleanLetterV2Example", "Nordic Clean letter", "Letter paired with the Nordic Clean CV palette.");
+        letter("cover-letter-classic-serif-v2", "CvClassicSerifLetterV2Example", "Classic Serif letter", "Letter with Times-style serif typography.");
+        letter("cover-letter-compact-mono-v2", "CvCompactMonoLetterV2Example", "Compact Mono letter", "Letter with mono accent and compact spacing.");
+        letter("cover-letter-executive-v2", "CvExecutiveLetterV2Example", "Executive letter", "Slate-palette executive letter.");
+        letter("cover-letter-engineering-resume-v2", "CvEngineeringResumeLetterV2Example", "Engineering letter", "Letter paired with EngineeringResume palette.");
+        letter("cover-letter-timeline-minimal-v2", "CvTimelineMinimalLetterV2Example", "Timeline Minimal letter", "Letter with timeline-style minimal accents.");
+        letter("cover-letter-boxed-sections-v2", "CvBoxedSectionsLetterV2Example", "Boxed Sections letter", "Letter with grey-banner section headings.");
+        letter("cover-letter-centered-headline-v2", "CvCenteredHeadlineLetterV2Example", "Centered Headline letter", "Letter with centered name + accent rules.");
+        letter("cover-letter-blue-banner-v2", "CvBlueBannerLetterV2Example", "Blue Banner letter", "Letter paired with Blue Banner CV.");
+        letter("cover-letter-editorial-blue-v2", "CvEditorialBlueLetterV2Example", "Editorial Blue letter", "Editorial-magazine letter paired with Editorial Blue CV.");
+        letter("cover-letter-panel-v2", "CvPanelLetterV2Example", "Panel letter", "Letter paired with Panel CV soft-tinted panels.");
+        letter("cover-letter-sidebar-portrait-v2", "CvSidebarPortraitLetterV2Example", "Sidebar Portrait letter", "Letter paired with Sidebar Portrait CV.");
+        letter("cover-letter-monogram-sidebar-v2", "CvMonogramSidebarLetterV2Example", "Monogram Sidebar letter", "Letter paired with Monogram Sidebar CV.");
+        letter("cover-letter-mint-editorial-v2", "CvMintEditorialLetterV2Example", "Mint Editorial letter", "Letter paired with Mint Editorial CV — magazine-style mint accent.");
 
         // ===== Templates / Invoice =====
         invoice("invoice", "Invoice (canonical)", "Single-page invoice with line items, totals, and structured chrome — InvoiceTemplateV1.", "invoice");
@@ -161,14 +163,14 @@ final class ShowcaseMetadata {
         return sb.toString();
     }
 
-    private static void cv(String id, String title, String desc, String... tags) {
+    private static void cv(String id, String exampleClass, String title, String desc, String... tags) {
         ENTRIES.put(id, entry(title, desc, withCategory("cv", tags),
-                EX_BASE + "/templates/cv/CvTemplateGalleryFileExample.java"));
+                EX_BASE + "/templates/cv/v2/" + exampleClass + ".java"));
     }
 
-    private static void letter(String id, String title, String desc, String... tags) {
+    private static void letter(String id, String exampleClass, String title, String desc, String... tags) {
         ENTRIES.put(id, entry(title, desc, withCategory("letter", tags),
-                EX_BASE + "/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"));
+                EX_BASE + "/templates/coverletter/v2/" + exampleClass + ".java"));
     }
 
     private static void invoice(String id, String title, String desc, String... tags) {

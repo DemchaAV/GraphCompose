@@ -9,130 +9,148 @@
           "label": "CV / Resume",
           "examples": [
             {
-              "id": "cv-blue-banner",
+              "id": "cv-blue-banner-v2",
               "title": "Blue Banner",
               "description": "Light-blue full-width section bands with high-contrast headings.",
               "tags": ["cv", "banner", "blue"],
-              "pdf": "showcase/pdf/templates/cv/cv-blue-banner.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-blue-banner.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/cv/cv-blue-banner-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-blue-banner-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvBlueBannerExample.java"
             },
             {
-              "id": "cv-boxed-sections",
+              "id": "cv-boxed-sections-v2",
               "title": "Boxed Sections",
               "description": "Each section wrapped in a grey banner header — bold, structured feel.",
               "tags": ["cv", "structured"],
-              "pdf": "showcase/pdf/templates/cv/cv-boxed-sections.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-boxed-sections.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/cv/cv-boxed-sections-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-boxed-sections-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvBoxedV2Example.java"
             },
             {
-              "id": "cv-centered-headline",
+              "id": "cv-centered-headline-v2",
               "title": "Centered Headline",
               "description": "Centered name + role with full-width accent rules between sections.",
               "tags": ["cv", "centered"],
-              "pdf": "showcase/pdf/templates/cv/cv-centered-headline.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-centered-headline.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/cv/cv-centered-headline-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-centered-headline-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvCenteredHeadlineExample.java"
             },
             {
-              "id": "cv-classic-serif",
+              "id": "cv-classic-serif-v2",
               "title": "Classic Serif",
               "description": "Two-page editorial CV with Times-style serif headings and conservative grey rules.",
               "tags": ["cv", "serif", "two-page"],
-              "pdf": "showcase/pdf/templates/cv/cv-classic-serif.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-classic-serif.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/cv/cv-classic-serif-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-classic-serif-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvClassicSerifExample.java"
             },
             {
-              "id": "cv-compact-mono",
+              "id": "cv-compact-mono-v2",
               "title": "Compact Mono",
               "description": "Single-column dense layout with monospace contact line — favourite for engineering roles.",
               "tags": ["cv", "compact", "mono"],
-              "pdf": "showcase/pdf/templates/cv/cv-compact-mono.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-compact-mono.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/cv/cv-compact-mono-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-compact-mono-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvCompactMonoExample.java"
             },
             {
-              "id": "cv-editorial-blue",
+              "id": "cv-editorial-blue-v2",
               "title": "Editorial Blue",
               "description": "Magazine-style editorial layout with two-column body and tinted skills table.",
               "tags": ["cv", "editorial", "blue"],
-              "pdf": "showcase/pdf/templates/cv/cv-editorial-blue.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-editorial-blue.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/cv/cv-editorial-blue-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-editorial-blue-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvEditorialBlueExample.java"
             },
             {
-              "id": "cv-engineering-resume",
+              "id": "cv-engineering-resume-v2",
               "title": "Engineering Resume",
               "description": "Tech-lead style layout with prominent skill matrix and stack tagging — was TechLead in v1.5.",
               "tags": ["cv", "tech"],
-              "pdf": "showcase/pdf/templates/cv/cv-engineering-resume.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-engineering-resume.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/cv/cv-engineering-resume-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-engineering-resume-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvEngineeringResumeExample.java"
             },
             {
-              "id": "cv-executive",
+              "id": "cv-executive-v2",
               "title": "Executive",
               "description": "Slate palette with prominent name banner, formal tone, and weighted section dividers.",
               "tags": ["cv", "executive"],
-              "pdf": "showcase/pdf/templates/cv/cv-executive.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-executive.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/cv/cv-executive-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-executive-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvExecutiveExample.java"
             },
             {
-              "id": "cv-modern-professional",
-              "title": "Modern Professional CV",
-              "description": "Same data, ModernProfessional preset — single-file CvFileExample for canonical authoring.",
+              "id": "cv-minimal-underlined-v2",
+              "title": "Minimal Underlined",
+              "description": "Single-column layout with underlined section titles and tight whitespace — minimalist reference shape.",
               "tags": ["cv", "minimal"],
-              "pdf": "showcase/pdf/templates/cv/cv-modern-professional.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-modern-professional.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/cv/cv-minimal-underlined-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-minimal-underlined-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvMinimalUnderlinedExample.java"
             },
             {
-              "id": "cv-monogram-sidebar",
+              "id": "cv-mint-editorial-v2",
+              "title": "Mint Editorial",
+              "description": "Magazine-style editorial CV with mint accent palette and two-column body.",
+              "tags": ["cv", "editorial", "mint"],
+              "pdf": "showcase/pdf/templates/cv/cv-mint-editorial-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-mint-editorial-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvMintEditorialExample.java"
+            },
+            {
+              "id": "cv-modern-professional-v2",
+              "title": "Modern Professional",
+              "description": "Clean two-column resume with right-aligned header, tinted profile panel, and uppercase section headings.",
+              "tags": ["cv", "minimal"],
+              "pdf": "showcase/pdf/templates/cv/cv-modern-professional-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-modern-professional-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvModernV2Example.java"
+            },
+            {
+              "id": "cv-monogram-sidebar-v2",
               "title": "Monogram Sidebar",
               "description": "Sidebar with monogram badge, accent rule, and structured contact + skills column.",
               "tags": ["cv", "sidebar", "monogram"],
-              "pdf": "showcase/pdf/templates/cv/cv-monogram-sidebar.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-monogram-sidebar.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/cv/cv-monogram-sidebar-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-monogram-sidebar-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvMonogramSidebarExample.java"
             },
             {
-              "id": "cv-nordic-clean",
+              "id": "cv-nordic-clean-v2",
               "title": "Nordic Clean",
               "description": "Sidebar layout with soft-tinted PROFILE panel, Nordic palette, and bullet skill list.",
               "tags": ["cv", "sidebar"],
-              "pdf": "showcase/pdf/templates/cv/cv-nordic-clean.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-nordic-clean.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/cv/cv-nordic-clean-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-nordic-clean-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvNordicCleanExample.java"
             },
             {
-              "id": "cv-panel",
+              "id": "cv-panel-v2",
               "title": "Panel",
               "description": "Soft-tinted panels per section, Product-Leader feel — was ProductLeader in v1.5.",
               "tags": ["cv", "panel"],
-              "pdf": "showcase/pdf/templates/cv/cv-panel.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-panel.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/cv/cv-panel-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-panel-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvPanelExample.java"
             },
             {
-              "id": "cv-sidebar-portrait",
+              "id": "cv-sidebar-portrait-v2",
               "title": "Sidebar Portrait",
               "description": "Edge-to-edge grey sidebar with portrait photo, contact stack, and skills.",
               "tags": ["cv", "sidebar", "portrait"],
-              "pdf": "showcase/pdf/templates/cv/cv-sidebar-portrait.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-sidebar-portrait.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/cv/cv-sidebar-portrait-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-sidebar-portrait-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvSidebarPortraitExample.java"
             },
             {
-              "id": "cv-timeline-minimal",
+              "id": "cv-timeline-minimal-v2",
               "title": "Timeline Minimal",
               "description": "Vertical timeline of roles with bullet markers and tight whitespace.",
               "tags": ["cv", "timeline"],
-              "pdf": "showcase/pdf/templates/cv/cv-timeline-minimal.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-timeline-minimal.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/cv/cv-timeline-minimal-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/cv/cv-timeline-minimal-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvTimelineMinimalExample.java"
             }
           ]
         },
@@ -213,139 +231,139 @@
           "label": "Cover Letter",
           "examples": [
             {
-              "id": "cover-letter",
-              "title": "Cover Letter (canonical)",
-              "description": "Single-file canonical cover letter authored via CoverLetterFileExample.",
-              "tags": ["letter", "letter"],
-              "pdf": "showcase/pdf/templates/coverletter/cover-letter.pdf",
-              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
-            },
-            {
-              "id": "cover-letter-blue-banner",
+              "id": "cover-letter-blue-banner-v2",
               "title": "Blue Banner letter",
               "description": "Letter paired with Blue Banner CV.",
               "tags": ["letter"],
-              "pdf": "showcase/pdf/templates/coverletter/cover-letter-blue-banner.pdf",
-              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-blue-banner.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-blue-banner-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-blue-banner-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvBlueBannerLetterV2Example.java"
             },
             {
-              "id": "cover-letter-boxed-sections",
+              "id": "cover-letter-boxed-sections-v2",
               "title": "Boxed Sections letter",
               "description": "Letter with grey-banner section headings.",
               "tags": ["letter"],
-              "pdf": "showcase/pdf/templates/coverletter/cover-letter-boxed-sections.pdf",
-              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-boxed-sections.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-boxed-sections-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-boxed-sections-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvBoxedSectionsLetterV2Example.java"
             },
             {
-              "id": "cover-letter-centered-headline",
+              "id": "cover-letter-centered-headline-v2",
               "title": "Centered Headline letter",
               "description": "Letter with centered name + accent rules.",
               "tags": ["letter"],
-              "pdf": "showcase/pdf/templates/coverletter/cover-letter-centered-headline.pdf",
-              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-centered-headline.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-centered-headline-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-centered-headline-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvCenteredHeadlineLetterV2Example.java"
             },
             {
-              "id": "cover-letter-classic-serif",
+              "id": "cover-letter-classic-serif-v2",
               "title": "Classic Serif letter",
               "description": "Letter with Times-style serif typography.",
               "tags": ["letter"],
-              "pdf": "showcase/pdf/templates/coverletter/cover-letter-classic-serif.pdf",
-              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-classic-serif.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-classic-serif-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-classic-serif-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvClassicSerifLetterV2Example.java"
             },
             {
-              "id": "cover-letter-compact-mono",
+              "id": "cover-letter-compact-mono-v2",
               "title": "Compact Mono letter",
               "description": "Letter with mono accent and compact spacing.",
               "tags": ["letter"],
-              "pdf": "showcase/pdf/templates/coverletter/cover-letter-compact-mono.pdf",
-              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-compact-mono.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-compact-mono-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-compact-mono-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvCompactMonoLetterV2Example.java"
             },
             {
-              "id": "cover-letter-editorial-blue",
+              "id": "cover-letter-editorial-blue-v2",
               "title": "Editorial Blue letter",
               "description": "Editorial-magazine letter paired with Editorial Blue CV.",
               "tags": ["letter"],
-              "pdf": "showcase/pdf/templates/coverletter/cover-letter-editorial-blue.pdf",
-              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-editorial-blue.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-editorial-blue-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-editorial-blue-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvEditorialBlueLetterV2Example.java"
             },
             {
-              "id": "cover-letter-engineering-resume",
+              "id": "cover-letter-engineering-resume-v2",
               "title": "Engineering letter",
               "description": "Letter paired with EngineeringResume palette.",
               "tags": ["letter"],
-              "pdf": "showcase/pdf/templates/coverletter/cover-letter-engineering-resume.pdf",
-              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-engineering-resume.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-engineering-resume-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-engineering-resume-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvEngineeringResumeLetterV2Example.java"
             },
             {
-              "id": "cover-letter-executive",
+              "id": "cover-letter-executive-v2",
               "title": "Executive letter",
               "description": "Slate-palette executive letter.",
               "tags": ["letter"],
-              "pdf": "showcase/pdf/templates/coverletter/cover-letter-executive.pdf",
-              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-executive.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-executive-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-executive-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvExecutiveLetterV2Example.java"
             },
             {
-              "id": "cover-letter-modern-professional",
+              "id": "cover-letter-mint-editorial-v2",
+              "title": "Mint Editorial letter",
+              "description": "Letter paired with Mint Editorial CV — magazine-style mint accent.",
+              "tags": ["letter"],
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-mint-editorial-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-mint-editorial-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvMintEditorialLetterV2Example.java"
+            },
+            {
+              "id": "cover-letter-modern-professional-v2",
               "title": "Modern Professional letter",
               "description": "Letter paired with the Modern Professional CV palette.",
               "tags": ["letter"],
-              "pdf": "showcase/pdf/templates/coverletter/cover-letter-modern-professional.pdf",
-              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-modern-professional.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-modern-professional-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-modern-professional-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvModernProfessionalLetterV2Example.java"
             },
             {
-              "id": "cover-letter-monogram-sidebar",
+              "id": "cover-letter-monogram-sidebar-v2",
               "title": "Monogram Sidebar letter",
               "description": "Letter paired with Monogram Sidebar CV.",
               "tags": ["letter"],
-              "pdf": "showcase/pdf/templates/coverletter/cover-letter-monogram-sidebar.pdf",
-              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-monogram-sidebar.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-monogram-sidebar-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-monogram-sidebar-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvMonogramSidebarLetterV2Example.java"
             },
             {
-              "id": "cover-letter-nordic-clean",
+              "id": "cover-letter-nordic-clean-v2",
               "title": "Nordic Clean letter",
               "description": "Letter paired with the Nordic Clean CV palette.",
               "tags": ["letter"],
-              "pdf": "showcase/pdf/templates/coverletter/cover-letter-nordic-clean.pdf",
-              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-nordic-clean.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-nordic-clean-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-nordic-clean-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvNordicCleanLetterV2Example.java"
             },
             {
-              "id": "cover-letter-panel",
+              "id": "cover-letter-panel-v2",
               "title": "Panel letter",
               "description": "Letter paired with Panel CV soft-tinted panels.",
               "tags": ["letter"],
-              "pdf": "showcase/pdf/templates/coverletter/cover-letter-panel.pdf",
-              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-panel.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-panel-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-panel-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvPanelLetterV2Example.java"
             },
             {
-              "id": "cover-letter-sidebar-portrait",
+              "id": "cover-letter-sidebar-portrait-v2",
               "title": "Sidebar Portrait letter",
               "description": "Letter paired with Sidebar Portrait CV.",
               "tags": ["letter"],
-              "pdf": "showcase/pdf/templates/coverletter/cover-letter-sidebar-portrait.pdf",
-              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-sidebar-portrait.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-sidebar-portrait-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-sidebar-portrait-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvSidebarPortraitLetterV2Example.java"
             },
             {
-              "id": "cover-letter-timeline-minimal",
+              "id": "cover-letter-timeline-minimal-v2",
               "title": "Timeline Minimal letter",
               "description": "Letter with timeline-style minimal accents.",
               "tags": ["letter"],
-              "pdf": "showcase/pdf/templates/coverletter/cover-letter-timeline-minimal.pdf",
-              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-timeline-minimal.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java"
+              "pdf": "showcase/pdf/templates/coverletter/cover-letter-timeline-minimal-v2.pdf",
+              "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-timeline-minimal-v2.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvTimelineMinimalLetterV2Example.java"
             }
           ]
         }

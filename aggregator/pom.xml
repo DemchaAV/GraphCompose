@@ -6,7 +6,7 @@
 
     <groupId>io.github.demchaav</groupId>
     <artifactId>graphcompose-build</artifactId>
-    <version>1.6.4</version>
+    <version>1.6.5</version>
     <packaging>pom</packaging>
 
     <name>GraphCompose Build Aggregator</name>

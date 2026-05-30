@@ -27,7 +27,7 @@ public final class CvMinimalUnderlinedExample {
 
     public static Path generate() throws Exception {
         Path outputFile = ExampleOutputPaths.prepare(
-                "templates/cv", "cv-minimal-underlined.pdf");
+                "templates/cv", "cv-minimal-underlined-v2.pdf");
         CvDocument doc = ExampleDataFactory.sampleCvDocumentV2();
         DocumentTemplate<CvDocument> template = MinimalUnderlined.create();
 

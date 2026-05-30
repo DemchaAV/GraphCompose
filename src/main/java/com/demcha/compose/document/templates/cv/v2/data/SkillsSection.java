@@ -65,12 +65,26 @@ public record SkillsSection(String title, List<SkillGroup> groups)
         }
 
         public Builder group(String category, List<String> skills) {
-            this.groups.add(new SkillGroup(category, skills));
+            this.groups.add(SkillGroup.ofNames(category, skills));
             return this;
         }
 
         public Builder group(String category, String... skills) {
             this.groups.add(SkillGroup.of(category, skills));
+            return this;
+        }
+
+        /**
+         * Add a group whose entries carry optional proficiency levels.
+         * Use this for presets that render data-driven skill bars/meters;
+         * name-only presets render the same entries as plain labels.
+         *
+         * @param category group category label, non-blank
+         * @param entries  ordered leveled skill entries
+         * @return this builder
+         */
+        public Builder leveledGroup(String category, List<CvSkill> entries) {
+            this.groups.add(new SkillGroup(category, entries));
             return this;
         }
 

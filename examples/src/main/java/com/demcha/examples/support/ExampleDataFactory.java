@@ -15,6 +15,7 @@ import com.demcha.compose.document.templates.cv.spec.CvModule;
 import com.demcha.compose.document.templates.cv.spec.CvSpec;
 import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
+import com.demcha.compose.document.templates.cv.v2.data.CvSkill;
 import com.demcha.compose.document.templates.cv.v2.data.EntriesSection;
 import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
 import com.demcha.compose.document.templates.cv.v2.data.RowStyle;
@@ -529,25 +530,50 @@ public final class ExampleDataFactory {
                         + "DSLs, and turning brittle production-ops scripts "
                         + "into typed, snapshot-tested libraries that scale.");
 
+        // Skill names are unchanged from the name-only form; only optional
+        // proficiency levels are added so data-driven presets (e.g. Mint
+        // Editorial's SkillBar) can render meters. Name-only presets read
+        // SkillGroup.skills() and are unaffected by the added levels.
         SkillsSection skills = SkillsSection
                 .builder("Technical Skills")
-                .group("Languages", "Java 21", "Kotlin", "Groovy",
-                        "Python", "SQL")
-                .group("Document & Print", "PDFBox",
-                        "Apache POI (DOCX/XLSX)", "iText", "PostScript",
-                        "ICC colour profiles", "font metrics")
-                .group("Layout engines", "Custom DSL design",
-                        "semantic layout trees", "pagination",
-                        "snapshot testing", "visual regression")
-                .group("Build & infrastructure", "Maven", "Gradle",
-                        "GitHub Actions", "JitPack", "Docker",
-                        "JMH benchmarking")
-                .group("Testing", "JUnit 5", "AssertJ",
-                        "PDFBox-based PNG diff", "layout-graph snapshots",
-                        "mutation testing (Pitest)")
-                .group("Distribution", "Maven Central", "Sonatype OSSRH",
-                        "GPG signing", "JitPack",
-                        "semantic versioning discipline")
+                .leveledGroup("Languages", List.of(
+                        CvSkill.of("Java 21", 0.95),
+                        CvSkill.of("Kotlin", 0.85),
+                        CvSkill.of("Groovy", 0.7),
+                        CvSkill.of("Python", 0.75),
+                        CvSkill.of("SQL", 0.8)))
+                .leveledGroup("Document & Print", List.of(
+                        CvSkill.of("PDFBox", 0.9),
+                        CvSkill.of("Apache POI (DOCX/XLSX)", 0.7),
+                        CvSkill.of("iText", 0.65),
+                        CvSkill.of("PostScript", 0.6),
+                        CvSkill.of("ICC colour profiles", 0.55),
+                        CvSkill.of("font metrics", 0.7)))
+                .leveledGroup("Layout engines", List.of(
+                        CvSkill.of("Custom DSL design", 0.9),
+                        CvSkill.of("semantic layout trees", 0.85),
+                        CvSkill.of("pagination", 0.85),
+                        CvSkill.of("snapshot testing", 0.8),
+                        CvSkill.of("visual regression", 0.8)))
+                .leveledGroup("Build & infrastructure", List.of(
+                        CvSkill.of("Maven", 0.9),
+                        CvSkill.of("Gradle", 0.75),
+                        CvSkill.of("GitHub Actions", 0.85),
+                        CvSkill.of("JitPack", 0.8),
+                        CvSkill.of("Docker", 0.7),
+                        CvSkill.of("JMH benchmarking", 0.65)))
+                .leveledGroup("Testing", List.of(
+                        CvSkill.of("JUnit 5", 0.9),
+                        CvSkill.of("AssertJ", 0.85),
+                        CvSkill.of("PDFBox-based PNG diff", 0.8),
+                        CvSkill.of("layout-graph snapshots", 0.8),
+                        CvSkill.of("mutation testing (Pitest)", 0.6)))
+                .leveledGroup("Distribution", List.of(
+                        CvSkill.of("Maven Central", 0.8),
+                        CvSkill.of("Sonatype OSSRH", 0.75),
+                        CvSkill.of("GPG signing", 0.7),
+                        CvSkill.of("JitPack", 0.8),
+                        CvSkill.of("semantic versioning discipline", 0.85)))
                 .build();
 
         EntriesSection education = EntriesSection
@@ -633,6 +659,126 @@ public final class ExampleDataFactory {
         return CvDocument.builder()
                 .identity(identity)
                 .sections(summary, skills, education, projects, experience, additional)
+                .build();
+    }
+
+    /**
+     * Rich "Rose Harris" CV document used <strong>only</strong> by
+     * {@code CvMintEditorialExample} to reproduce the Mint Editorial visual
+     * reference 1:1. Kept separate from {@link #sampleCvDocumentV2()} so the
+     * shared canonical sample — and therefore every other preset's visual
+     * baseline — stays untouched.
+     *
+     * <p>All sections live in {@code Slot.MAIN}; the Mint preset routes each
+     * to its sidebar/main region by title keyword. Section titles are chosen
+     * to match the preset's lookup constants: "Interests" → Interests,
+     * "Education" → Education, "Technical Skills" → both Expertise (group
+     * categories) and Skills (leveled entries), "Profile" → Profile,
+     * "Experience" → Experience, "Awards" → Awards, "References" →
+     * References.</p>
+     *
+     * <p>Expertise and Skills are both derived from the single
+     * {@code Technical Skills} section: the preset reads the group
+     * <em>categories</em> as the Expertise label list and the flattened
+     * leveled <em>entries</em> as the proficiency bars. Each Expertise
+     * category therefore carries one leveled skill so both lists render as in
+     * the reference.</p>
+     *
+     * @return rich Rose Harris CV document for the Mint Editorial showcase
+     */
+    public static CvDocument mintEditorialShowcaseCv() {
+        CvIdentity identity = CvIdentity.builder()
+                .name("Rose", "Harris")
+                .jobTitle("Graphic Designer")
+                .contact("+61 409 298 398", "hello@email.com", "Sydney, AUS")
+                .link("www.website.com", "https://www.website.com")
+                .link("Twitter", "https://twitter.com/roseharris")
+                .link("Facebook", "https://facebook.com/roseharris")
+                .link("Pinterest", "https://pinterest.com/roseharris")
+                .link("LinkedIn", "https://linkedin.com/in/roseharris")
+                .build();
+
+        ParagraphSection profile = new ParagraphSection("Profile",
+                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. "
+                        + "Donec vulputate, lectus a tincidunt molestie, justo "
+                        + "lectus posuere magnum, sed pretium nisi metus a "
+                        + "risus. Vivamus tincidunt ligula in lacus euismod, "
+                        + "ut tincidunt velit vestibulum. Suspendisse potenti. "
+                        + "Praesent placerat lectus vitae ipsum pellentesque "
+                        + "molestie.");
+
+        RowsSection interests = RowsSection
+                .builder("Interests", RowStyle.PLAIN)
+                .row("Politics", "")
+                .row("Travelling", "")
+                .row("Arts & Entertainment", "")
+                .row("Illustration", "")
+                .build();
+
+        EntriesSection education = EntriesSection
+                .builder("Education")
+                .entry("Degree/Bachelor", "University of Sydney", "2010 - 2011", "")
+                .entry("Degree/Bachelor", "University of Sydney", "2010 - 2011", "")
+                .entry("Degree/Bachelor", "University of Sydney", "2010 - 2011", "")
+                .build();
+
+        // Single skills section feeds BOTH Expertise (group categories) and
+        // Skills (flattened leveled entries). Each Expertise category carries
+        // one leveled skill so the two reference lists render independently.
+        SkillsSection skills = SkillsSection
+                .builder("Technical Skills")
+                .leveledGroup("Illustration",
+                        List.of(CvSkill.of("Social Media", 0.45)))
+                .leveledGroup("Print Design",
+                        List.of(CvSkill.of("Adobe Suite", 0.58)))
+                .leveledGroup("Branding",
+                        List.of(CvSkill.of("Microsoft Word", 0.5)))
+                .leveledGroup("Animation",
+                        List.of(CvSkill.of("HTML/CSS", 0.42)))
+                .leveledGroup("Web Design",
+                        List.of(CvSkill.of("Wordpress", 0.6)))
+                .build();
+
+        String experienceBody =
+                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. "
+                        + "Donec vulputate, lectus a tincidunt molestie, justo "
+                        + "lectus posuere magnum, sed pretium nisi metus a risus.\n"
+                        + "- Praesent placerat lectus vitae ipsum pellentesque\n"
+                        + "- Vivamus tincidunt ligula in lacus euismod\n"
+                        + "- Suspendisse potenti nullam ac tortor vitae";
+        // Three entries so the Mint preset's 2-on-page-1 / rest-on-page-2
+        // split renders two jobs under EXPERIENCE on page 1 and one
+        // continued job atop the page-2 main column, matching the reference.
+        EntriesSection experience = EntriesSection
+                .builder("Experience")
+                .entry("Job Title", "Company | Location", "2010 - Present",
+                        experienceBody)
+                .entry("Job Title", "Company | Location", "2010 - Present",
+                        experienceBody)
+                .entry("Job Title", "Company | Location", "2010 - Present",
+                        experienceBody)
+                .build();
+
+        RowsSection awards = RowsSection
+                .builder("Awards", RowStyle.PLAIN)
+                .row("Award Name Here", "Company | 2012")
+                .row("Award Name Here", "Company | 2012")
+                .row("Award Name Here", "Company | 2012")
+                .row("Award Name Here", "Company | 2012")
+                .build();
+
+        RowsSection references = RowsSection
+                .builder("References", RowStyle.PLAIN)
+                .row("John Smith", "Company\nP: +61 402 938 209\nhello@email.com")
+                .row("John Smith", "Company\nP: +61 402 938 209\nhello@email.com")
+                .row("John Smith", "Company\nP: +61 402 938 209\nhello@email.com")
+                .row("John Smith", "Company\nP: +61 402 938 209\nhello@email.com")
+                .build();
+
+        return CvDocument.builder()
+                .identity(identity)
+                .sections(profile, interests, education, skills, experience,
+                        awards, references)
                 .build();
     }
 }

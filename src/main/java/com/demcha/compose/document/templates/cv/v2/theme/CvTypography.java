@@ -310,4 +310,23 @@ public record CvTypography(
                 9.5,     // body (V1 BODY_SIZE)
                 1.25);   // line spacing
     }
+
+    /**
+     * Poppins headline + body scale for the Mint Editorial preset: a
+     * 26pt spaced-caps centered name, an 11pt spaced-caps accent section
+     * heading, and compact 7.4-8pt metadata/body tuned for the dense
+     * two-column editorial layout.
+     */
+    public static CvTypography mintEditorial() {
+        return new CvTypography(
+                FontName.POPPINS, FontName.POPPINS,
+                26.0,    // headline (spaced-caps centered name)
+                7.4,     // contact (icon line text)
+                11.0,    // banner (spaced-caps accent section heading)
+                8.0,     // entry title (job title / degree label)
+                7.4,     // entry date (meta)
+                7.4,     // entry subtitle (school / company)
+                8.0,     // body (profile / experience)
+                1.3);    // line spacing
+    }
 }

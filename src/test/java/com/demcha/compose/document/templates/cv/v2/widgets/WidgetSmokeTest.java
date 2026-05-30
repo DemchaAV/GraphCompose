@@ -2,6 +2,7 @@ package com.demcha.compose.document.templates.cv.v2.widgets;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -9,6 +10,7 @@ import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.v2.data.CvName;
+import com.demcha.compose.document.templates.cv.v2.data.CvSkill;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
 import com.demcha.compose.font.FontName;
 import org.junit.jupiter.api.Test;
@@ -75,6 +77,31 @@ class WidgetSmokeTest {
         renderWithSection(section ->
                 Subheadline.centeredSpacedCaps(section, "Professional Title",
                         theme.bodyStyle()));
+    }
+
+    @Test
+    void skillBar_renders_with_and_without_level() throws Exception {
+        CvTheme theme = CvTheme.mintEditorial();
+        // Levelled skill → label + proficiency bar.
+        renderWithSection(section ->
+                SkillBar.render(section, CvSkill.of("Java 21", 0.9), 120, theme));
+        // Name-only skill → label, no bar (graceful degrade).
+        renderWithSection(section ->
+                SkillBar.render(section, CvSkill.of("Kotlin"), 120, theme));
+    }
+
+    @Test
+    void iconTextRow_renders_with_and_without_link() throws Exception {
+        CvTheme theme = CvTheme.mintEditorial();
+        DocumentImageData icon = DocumentImageData.fromBytes(readMintIcon("phone.png"));
+        // Linked row (whole row clickable) and plain row.
+        renderWithSection(section -> IconTextRow.render(section, icon, 9.0,
+                "hello@example.com", theme.bodyStyle(),
+                new com.demcha.compose.document.node.DocumentLinkOptions(
+                        "mailto:hello@example.com"),
+                DocumentInsets.bottom(12)));
+        renderWithSection(section -> IconTextRow.render(section, icon, 9.0,
+                "London, UK", theme.bodyStyle(), null, DocumentInsets.bottom(12)));
     }
 
     @Test
@@ -184,6 +211,14 @@ class WidgetSmokeTest {
             action.run(flow);
             flow.build();
             assertThat(session.roots()).isNotEmpty();
+        }
+    }
+
+    private static byte[] readMintIcon(String fileName) throws Exception {
+        try (var input = WidgetSmokeTest.class.getResourceAsStream(
+                "/templates/cv/mint-editorial/icons/" + fileName)) {
+            assertThat(input).as("mint editorial icon %s", fileName).isNotNull();
+            return input.readAllBytes();
         }
     }
 

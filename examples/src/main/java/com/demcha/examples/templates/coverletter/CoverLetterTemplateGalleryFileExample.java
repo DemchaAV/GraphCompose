@@ -13,6 +13,7 @@ import com.demcha.compose.document.templates.coverletter.v2.presets.CompactMonoL
 import com.demcha.compose.document.templates.coverletter.v2.presets.EditorialBlueLetter;
 import com.demcha.compose.document.templates.coverletter.v2.presets.EngineeringResumeLetter;
 import com.demcha.compose.document.templates.coverletter.v2.presets.ExecutiveLetter;
+import com.demcha.compose.document.templates.coverletter.v2.presets.MintEditorialLetter;
 import com.demcha.compose.document.templates.coverletter.v2.presets.ModernProfessionalLetter;
 import com.demcha.compose.document.templates.coverletter.v2.presets.MonogramSidebarLetter;
 import com.demcha.compose.document.templates.coverletter.v2.presets.NordicCleanLetter;
@@ -28,14 +29,14 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * Renders all 14 layered cover-letter presets ({@code
+ * Renders all 15 layered cover-letter presets ({@code
  * coverletter.v2.presets.*} — the polished current standard) against
  * the same shared sample {@link CoverLetterDocument}. Each PDF lands in
  * {@code examples/target/generated-pdfs/templates/coverletter/cover-letter-<id>.pdf}
  * where {@code <id>} is the paired CV preset's stable identifier (e.g.
  * {@code cover-letter-modern-professional.pdf}).
  *
- * <p>The 14 letter renders match the 14 CV renders in
+ * <p>The 15 letter renders match the 15 CV renders in
  * {@link com.demcha.examples.templates.cv.CvTemplateGalleryFileExample}
  * — a writer can render both galleries and pick a CV / cover-letter
  * pair sharing the same visual signature.</p>
@@ -46,7 +47,7 @@ public final class CoverLetterTemplateGalleryFileExample {
     }
 
     /**
-     * Renders all 14 layered cover-letter preset gallery PDFs.
+     * Renders all 15 layered cover-letter preset gallery PDFs.
      *
      * @return list of absolute paths of the rendered PDFs in source
      *         order
@@ -82,7 +83,8 @@ public final class CoverLetterTemplateGalleryFileExample {
                 run("editorial-blue", EditorialBlueLetter.RECOMMENDED_MARGIN, EditorialBlueLetter::create),
                 run("panel", PanelLetter.RECOMMENDED_MARGIN, PanelLetter::create),
                 run("sidebar-portrait", SidebarPortraitLetter.RECOMMENDED_MARGIN, SidebarPortraitLetter::create),
-                run("monogram-sidebar", MonogramSidebarLetter.RECOMMENDED_MARGIN, MonogramSidebarLetter::create));
+                run("monogram-sidebar", MonogramSidebarLetter.RECOMMENDED_MARGIN, MonogramSidebarLetter::create),
+                run("mint-editorial", MintEditorialLetter.RECOMMENDED_MARGIN, MintEditorialLetter::create));
 
         CoverLetterDocument doc = ExampleDataFactory.sampleCoverLetterDocumentV2();
         List<Path> generated = new ArrayList<>();

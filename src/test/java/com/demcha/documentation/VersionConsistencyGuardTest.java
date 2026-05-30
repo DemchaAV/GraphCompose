@@ -88,10 +88,40 @@ class VersionConsistencyGuardTest {
                 .isEqualTo(root);
     }
 
+    /**
+     * The GitHub Pages showcase ({@code docs/index.html}) hardcodes the version
+     * in five spots — JSON-LD {@code softwareVersion}, the JitPack download URL,
+     * the hero badge, and the Maven + Gradle install snippets. None of these
+     * inherit from the pom, so without this guard they silently drift (they sat
+     * at v1.6.1 while the library shipped v1.6.4). {@code cut-release.ps1} flips
+     * them on release; this fails the verify gate if any spot lags behind.
+     */
+    @Test
+    void showcaseSiteVersionMatchesTheProjectVersion() throws Exception {
+        String root = effectiveVersion(PROJECT_ROOT.resolve("pom.xml"));
+        String site = Files.readString(PROJECT_ROOT.resolve("docs/index.html"));
+
+        assertThat(firstGroup(site, "\"softwareVersion\":\\s*\"v?([0-9][^\"]*)\""))
+                .describedAs("docs/index.html JSON-LD softwareVersion must equal the project version (%s)", root)
+                .isEqualTo(root);
+        assertThat(firstGroup(site, "jitpack\\.io/#DemchaAV/GraphCompose/v?([0-9][^\"]*)"))
+                .describedAs("docs/index.html JitPack downloadUrl must equal the project version (%s)", root)
+                .isEqualTo(root);
+        assertThat(firstGroup(site, "v([0-9][0-9.]*)\\s*&middot;\\s*MIT"))
+                .describedAs("docs/index.html hero version badge must equal the project version (%s)", root)
+                .isEqualTo(root);
+        assertThat(firstGroup(site, "&lt;version&gt;v?([0-9][^&]*)&lt;/version&gt;"))
+                .describedAs("docs/index.html Maven install snippet must equal the project version (%s)", root)
+                .isEqualTo(root);
+        assertThat(firstGroup(site, "GraphCompose:v?([0-9][^')]*)"))
+                .describedAs("docs/index.html Gradle install snippet must equal the project version (%s)", root)
+                .isEqualTo(root);
+    }
+
     private static String firstGroup(String text, String regex) {
         Matcher matcher = Pattern.compile(regex).matcher(text);
         assertThat(matcher.find())
-                .describedAs("Expected a GraphCompose install-snippet version matching /%s/ in README.md", regex)
+                .describedAs("Expected a GraphCompose version token matching /%s/ in the scanned file", regex)
                 .isTrue();
         return matcher.group(1);
     }

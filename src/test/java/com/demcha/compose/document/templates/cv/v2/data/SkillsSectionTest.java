@@ -11,7 +11,7 @@ class SkillsSectionTest {
 
     @Test
     void skillGroup_trims_category_and_skips_blank_skills() {
-        SkillGroup group = new SkillGroup(" Languages ",
+        SkillGroup group = SkillGroup.ofNames(" Languages ",
                 List.of(" Java 21 ", "", "Kotlin"));
 
         assertThat(group.category()).isEqualTo("Languages");
@@ -20,10 +20,33 @@ class SkillsSectionTest {
     }
 
     @Test
+    void skillGroup_carries_optional_levels_without_affecting_names() {
+        SkillGroup group = new SkillGroup("Design", List.of(
+                CvSkill.of("Illustration", 0.9),
+                CvSkill.of("Typography")));
+
+        // Name-only view is unchanged whether or not levels are present.
+        assertThat(group.skills()).containsExactly("Illustration", "Typography");
+        // Levels are readable by data-driven renderers.
+        assertThat(group.entries()).hasSize(2);
+        assertThat(group.entries().get(0).level().getAsDouble()).isEqualTo(0.9);
+        assertThat(group.entries().get(1).level()).isEmpty();
+    }
+
+    @Test
+    void cvSkill_clamps_level_via_factory_and_rejects_blank_name() {
+        assertThat(CvSkill.of("X", 1.5).level().getAsDouble()).isEqualTo(1.0);
+        assertThat(CvSkill.of("X", -0.2).level().getAsDouble()).isEqualTo(0.0);
+        assertThatThrownBy(() -> CvSkill.of(" "))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("name");
+    }
+
+    @Test
     void skillsSection_keeps_non_empty_groups_only() {
         SkillsSection section = SkillsSection.builder("Technical Skills")
                 .group("Languages", "Java 21", "Kotlin")
-                .group(new SkillGroup("Empty", List.of()))
+                .group(SkillGroup.ofNames("Empty", List.of()))
                 .group("Testing", "JUnit 5")
                 .build();
 

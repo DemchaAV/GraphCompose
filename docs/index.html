@@ -11,6 +11,19 @@
   <link rel="icon" href="assets/logo/graphcompose-logo.png">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap">
+  <!-- Apply the saved theme before first paint to avoid a flash. Dark is the default. -->
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem('gc-theme') === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      } catch (e) {}
+    })();
+  </script>
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
@@ -44,9 +57,9 @@
         "applicationSubCategory": "Library",
         "operatingSystem": "Cross-platform (JVM 21+)",
         "programmingLanguage": "Java",
-        "softwareVersion": "1.6.1",
+        "softwareVersion": "1.6.4",
         "url": "https://demchaav.github.io/GraphCompose/",
-        "downloadUrl": "https://jitpack.io/#DemchaAV/GraphCompose/v1.6.1",
+        "downloadUrl": "https://jitpack.io/#DemchaAV/GraphCompose/v1.6.4",
         "image": "https://demchaav.github.io/GraphCompose/assets/logo/graphcompose-logo.png",
         "license": "https://github.com/DemchaAV/GraphCompose/blob/main/LICENSE",
         "author": {
@@ -145,13 +158,17 @@
       <a href="#flagships-section">Flagships</a>
       <a href="#install">Install</a>
       <a href="https://github.com/DemchaAV/GraphCompose">GitHub</a>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark theme" title="Toggle theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>
+      </button>
     </nav>
   </header>
 
   <main id="top">
     <section class="hero section-shell" aria-labelledby="hero-title">
       <div class="hero-copy">
-        <p class="eyebrow">Java &middot; v1.6.1 &middot; MIT</p>
+        <p class="eyebrow">Java &middot; v1.6.4 &middot; MIT</p>
         <h1 id="hero-title">Java PDF layout engine for structured business documents.</h1>
         <p class="hero-lead">Describe documents. Render polished PDFs. A semantic layout engine for Java services that need <b>structured, paginated, theme-driven</b> output &mdash; CVs, invoices, proposals, reports.</p>
         <p class="hero-text">No drawing API. No pixel arithmetic. You compose <code>ParagraphNode</code>, <code>TableNode</code>, <code>SectionNode</code>; GraphCompose handles measurement, pagination, fonts, and PDFBox rendering.</p>
@@ -221,7 +238,7 @@
 &lt;dependency&gt;
   &lt;groupId&gt;com.github.DemchaAV&lt;/groupId&gt;
   &lt;artifactId&gt;GraphCompose&lt;/artifactId&gt;
-  &lt;version&gt;v1.6.1&lt;/version&gt;
+  &lt;version&gt;v1.6.4&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
         </div>
         <div class="install-block">
@@ -232,7 +249,7 @@
 
 dependencies {
   implementation(
-    'com.github.DemchaAV:GraphCompose:v1.6.1'
+    'com.github.DemchaAV:GraphCompose:v1.6.4'
   )
 }</code></pre>
         </div>
@@ -386,7 +403,7 @@ dependencies {
     <p>
       <a href="https://github.com/DemchaAV/GraphCompose">GitHub</a> &middot;
       <a href="https://github.com/DemchaAV/GraphCompose/blob/main/CHANGELOG.md">Changelog</a> &middot;
-      <a href="https://github.com/DemchaAV/GraphCompose/blob/main/docs/migration-v1-5-to-v1-6.md">v1.5 &rarr; v1.6 migration</a>
+      <a href="https://github.com/DemchaAV/GraphCompose/blob/main/docs/roadmaps/migration-v1-5-to-v1-6.md">v1.5 &rarr; v1.6 migration</a>
     </p>
   </footer>
 
@@ -395,6 +412,22 @@ dependencies {
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-clike.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-java.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-groovy.min.js"></script>
+  <script>
+    (function () {
+      var btn = document.getElementById('theme-toggle');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        var light = document.documentElement.getAttribute('data-theme') === 'light';
+        if (light) {
+          document.documentElement.removeAttribute('data-theme');
+          try { localStorage.setItem('gc-theme', 'dark'); } catch (e) {}
+        } else {
+          document.documentElement.setAttribute('data-theme', 'light');
+          try { localStorage.setItem('gc-theme', 'light'); } catch (e) {}
+        }
+      });
+    })();
+  </script>
   <script src="examples.js"></script>
 </body>
 </html>

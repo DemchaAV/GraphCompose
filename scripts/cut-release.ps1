@@ -198,6 +198,51 @@ function Update-ReadmeInstallVersion($readmePath, $newVersion) {
     }
 }
 
+function Update-IndexHtmlVersion($indexHtmlPath, $newVersion) {
+    if (-not (Test-Path $indexHtmlPath)) {
+        Note "skip (no file): $indexHtmlPath"
+        return
+    }
+    $content = Get-Content $indexHtmlPath -Raw
+    $tag = "v$newVersion"
+    $changed = $false
+
+    # The GitHub Pages showcase (docs/index.html) hardcodes the version in five
+    # spots that do NOT inherit from the pom — they previously sat at v1.6.1
+    # while the library shipped v1.6.4. VersionConsistencyGuardTest fails the
+    # verify gate if any lags, so flip all five in lockstep with README + poms:
+    # JSON-LD softwareVersion (bare), JitPack downloadUrl, hero badge, and the
+    # Maven + Gradle install snippets (all v-prefixed). Lookbehind/lookahead so
+    # only the version token is rewritten.
+    $replacements = @(
+        @{ Regex = [regex]'(?<="softwareVersion": ")v?[\w\.\-]+(?=")';               Value = $newVersion; Label = 'JSON-LD softwareVersion' },
+        @{ Regex = [regex]'(?<=jitpack\.io/#DemchaAV/GraphCompose/)v?[\w\.\-]+(?=")'; Value = $tag;        Label = 'JitPack downloadUrl' },
+        @{ Regex = [regex]'(?<=Java &middot; )v?[\w\.\-]+(?= &middot; MIT)';          Value = $tag;        Label = 'hero badge' },
+        @{ Regex = [regex]'(?<=&lt;version&gt;)v?[\w\.\-]+(?=&lt;/version&gt;)';      Value = $tag;        Label = 'Maven snippet' },
+        @{ Regex = [regex]"(?<=:GraphCompose:)v?[\w\.\-]+(?=')";                      Value = $tag;        Label = 'Gradle snippet' }
+    )
+
+    foreach ($r in $replacements) {
+        $after = $r.Regex.Replace($content, $r.Value, 1)
+        if ($content -ne $after) {
+            $content = $after
+            $changed = $true
+            Note "bumped index.html $($r.Label) -> $($r.Value)"
+        }
+    }
+
+    if (-not $changed) {
+        Note "no change: docs/index.html version (already $tag?)"
+        return
+    }
+
+    if ($DryRun) {
+        Write-Host "    [DRY RUN] docs/index.html version -> $tag" -ForegroundColor Yellow
+    } else {
+        [System.IO.File]::WriteAllText($indexHtmlPath, $content)
+    }
+}
+
 function Update-ShowcaseGhBase($newRef) {
     if (-not (Test-Path $showcaseMetadata)) {
         throw "ShowcaseMetadata.java not found: $showcaseMetadata"
@@ -337,6 +382,7 @@ try {
     Update-PomVersion (Join-Path $repoRoot 'examples/pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'benchmarks/pom.xml') $Version
     Update-ReadmeInstallVersion (Join-Path $repoRoot 'README.md') $Version
+    Update-IndexHtmlVersion (Join-Path $repoRoot 'docs/index.html') $Version
 
     Step 2 "Update CHANGELOG date for v$Version"
     $changelog = Join-Path $repoRoot 'CHANGELOG.md'
@@ -386,7 +432,7 @@ try {
     Step 6 "Commit release"
     $commitMsg = "Release v$Version"
     if ($DryRun) {
-        Write-Host "    [DRY RUN] git add pom.xml aggregator/pom.xml examples/pom.xml benchmarks/pom.xml README.md CHANGELOG.md examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java docs/examples.json" -ForegroundColor Yellow
+        Write-Host "    [DRY RUN] git add pom.xml aggregator/pom.xml examples/pom.xml benchmarks/pom.xml README.md CHANGELOG.md examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java docs/examples.json docs/index.html" -ForegroundColor Yellow
         Write-Host "    [DRY RUN] git commit -m `"$commitMsg`"" -ForegroundColor Yellow
     } else {
         git add `
@@ -397,7 +443,8 @@ try {
             README.md `
             CHANGELOG.md `
             examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java `
-            docs/examples.json
+            docs/examples.json `
+            docs/index.html
         git commit -m $commitMsg
         Note "commit: $commitMsg"
     }

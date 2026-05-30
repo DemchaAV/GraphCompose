@@ -424,4 +424,30 @@ public record CvSpacing(
                 0.45,                                    // entryDateWeight
                 3.0);                                    // entrySeparation
     }
+
+    /**
+     * Spacing for the Mint Editorial preset: a measured editorial flow
+     * with a thick (6pt) full-width mint accent rule under the centered
+     * masthead, generous separation between experience entries, and
+     * tight section bodies. The two-column sidebar/main split and its
+     * column gap are page-composition concerns owned by the preset, not
+     * spacing tokens.
+     */
+    public static CvSpacing mintEditorial() {
+        return new CvSpacing(
+                18,                                      // pageFlowSpacing (header / rule / grid rhythm)
+                5,                                       // sectionBodySpacing
+                DocumentInsets.zero(),                   // sectionBodyPadding
+                DocumentInsets.zero(),                   // headlinePadding (header section owns its spacing)
+                DocumentInsets.zero(),                   // contactPadding
+                0.0,                                     // bannerCornerRadius (unused — no banners)
+                0.0,                                     // bannerInnerPadding (unused)
+                DocumentInsets.zero(),                   // bannerMargin (unused)
+                6.0,                                     // accentRuleWidth (thick mint masthead rule)
+                2.0,                                     // paragraphMarginTop
+                8.0,                                     // entryHeaderRowSpacing
+                1.0,                                     // entryTitleWeight
+                0.45,                                    // entryDateWeight
+                12.0);                                   // entrySeparation (roomy editorial gap)
+    }
 }

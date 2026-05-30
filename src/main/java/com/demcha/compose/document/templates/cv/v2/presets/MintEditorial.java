@@ -1,12 +1,17 @@
 package com.demcha.compose.document.templates.cv.v2.presets;
 
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
+import com.demcha.compose.document.dsl.ShapeBuilder;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ParagraphNode;
+import com.demcha.compose.document.node.ShapeNode;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
@@ -172,6 +177,35 @@ public final class MintEditorial {
     /** Expertise badge edge length (points). */
     private static final double BADGE_SIZE = 36.0;
 
+    // Banded-masthead canvas geometry. These values reproduce the DEFAULT
+    // (bandless) masthead flow positions exactly — name baseline, tagline
+    // baseline, and rule y — measured from the stock render at the canonical
+    // 48pt page margin. The canvas top is bled to the page top edge (y=0) via a
+    // negative margin, so a canvas-local y equals the page-absolute top edge in
+    // points; the constants therefore equal the default page-absolute tops. The
+    // band fills the canvas from y=0 down to the rule's bottom, and the masthead
+    // (name/tagline/rule) renders at the same positions whether or not a band is
+    // present — the band only adds a tan fill behind it.
+    //
+    // These are package-private (not private) so MintEditorialSmokeTest can
+    // assert them against the live default masthead positions — see its
+    // band_constants_match_default_masthead guard, which fails if a future
+    // typography / spacing / margin change moves the masthead and silently
+    // invalidates these hand-measured coordinates.
+
+    /** Canvas flow footprint (points) — sized so the page-1 row starts at the
+     *  same y as the default render. */
+    static final double MASTHEAD_CANVAS_HEIGHT = 143.76;
+
+    /** Canvas-local y (points) of the masthead name — matches the default top. */
+    static final double MASTHEAD_NAME_Y = 48.0;
+
+    /** Canvas-local y (points) of the masthead tagline — matches the default top. */
+    static final double MASTHEAD_TAGLINE_Y = 87.4;
+
+    /** Canvas-local y (points) of the masthead rule — matches the default top. */
+    static final double MASTHEAD_RULE_Y = 123.76;
+
     private static final String ICON_ROOT = "/templates/cv/mint-editorial/icons/";
     private static final Map<String, byte[]> ICON_CACHE = new ConcurrentHashMap<>();
 
@@ -195,30 +229,133 @@ public final class MintEditorial {
     private MintEditorial() {
     }
 
-    /** Builds the preset with its Mint Editorial theme. */
+    /** Builds the preset with its Mint Editorial theme and default colours. */
     public static DocumentTemplate<CvDocument> create() {
-        return create(CvTheme.mintEditorial());
+        return create(CvTheme.mintEditorial(), Options.defaults());
     }
 
     /**
-     * Builds the preset with a caller-supplied theme (share the paired
-     * cover letter's theme instance for a guaranteed visual match).
+     * Builds the preset with a caller-supplied theme and default colours
+     * (share the paired cover letter's theme instance for a guaranteed
+     * visual match).
      */
     public static DocumentTemplate<CvDocument> create(CvTheme theme) {
+        return create(theme, Options.defaults());
+    }
+
+    /**
+     * Builds the preset with its Mint Editorial theme and explicit colour
+     * {@link Options}.
+     */
+    public static DocumentTemplate<CvDocument> create(Options options) {
+        return create(CvTheme.mintEditorial(), options);
+    }
+
+    /**
+     * Builds the preset with a caller-supplied theme and explicit colour
+     * {@link Options}. Use this to recolour the masthead (accent, rule,
+     * name, optional header band) without forking the theme.
+     */
+    public static DocumentTemplate<CvDocument> create(CvTheme theme,
+                                                      Options options) {
         Objects.requireNonNull(theme, "theme");
-        return new Template(theme);
+        Objects.requireNonNull(options, "options");
+        return new Template(theme, options);
+    }
+
+    /**
+     * Mint Editorial masthead colour knobs. Every {@code null} field falls
+     * back to a default that reproduces the stock render exactly, so an
+     * {@link #defaults()} instance leaves the committed look unchanged.
+     *
+     * @param accentColor     mint accent used for the centred tagline and
+     *                        every spaced-caps section heading; {@code null}
+     *                        → {@code theme.palette().banner()}
+     * @param ruleColor       full-width masthead rule colour, independent of
+     *                        the accent; {@code null} → the resolved
+     *                        {@code accentColor} (so unset = today's look)
+     * @param nameColor       masthead name text colour; {@code null} →
+     *                        {@code theme.palette().ink()}
+     * @param headerBandColor optional full-page-width colour band painted
+     *                        behind the masthead on page 1 only;
+     *                        {@code null} → no band (white header)
+     */
+    public record Options(DocumentColor accentColor,
+                          DocumentColor ruleColor,
+                          DocumentColor nameColor,
+                          DocumentColor headerBandColor) {
+
+        public static Options defaults() {
+            return new Options(null, null, null, null);
+        }
+
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        public static final class Builder {
+            private DocumentColor accentColor;
+            private DocumentColor ruleColor;
+            private DocumentColor nameColor;
+            private DocumentColor headerBandColor;
+
+            private Builder() {
+            }
+
+            public Builder accentColor(DocumentColor value) {
+                this.accentColor = value;
+                return this;
+            }
+
+            public Builder ruleColor(DocumentColor value) {
+                this.ruleColor = value;
+                return this;
+            }
+
+            public Builder nameColor(DocumentColor value) {
+                this.nameColor = value;
+                return this;
+            }
+
+            public Builder headerBandColor(DocumentColor value) {
+                this.headerBandColor = value;
+                return this;
+            }
+
+            public Options build() {
+                return new Options(accentColor, ruleColor, nameColor,
+                        headerBandColor);
+            }
+        }
     }
 
     private static final class Template implements DocumentTemplate<CvDocument> {
 
         private final CvTheme theme;
+        /** Accent for the tagline + section headings (defaults to mint). */
         private final DocumentColor accent;
+        /** Masthead rule colour (defaults to the accent). */
+        private final DocumentColor ruleColor;
+        /** Masthead name colour (defaults to ink). */
+        private final DocumentColor nameColor;
+        /** Optional page-1 header band; null = no band (white header). */
+        private final DocumentColor headerBandColor;
 
-        Template(CvTheme theme) {
+        Template(CvTheme theme, Options options) {
             this.theme = theme;
             // Mint carries its accent in the palette banner slot — single
-            // source shared with the paired cover letter.
-            this.accent = theme.palette().banner();
+            // source shared with the paired cover letter. Each Options knob
+            // defaults to the value that reproduces the stock render.
+            this.accent = options.accentColor() != null
+                    ? options.accentColor()
+                    : theme.palette().banner();
+            this.ruleColor = options.ruleColor() != null
+                    ? options.ruleColor()
+                    : this.accent;
+            this.nameColor = options.nameColor() != null
+                    ? options.nameColor()
+                    : theme.palette().ink();
+            this.headerBandColor = options.headerBandColor();
         }
 
         @Override
@@ -268,18 +405,25 @@ public final class MintEditorial {
             List<CvEntry> experiencePage2 = experienceEntries.stream()
                     .skip(EXPERIENCE_PAGE_ONE).toList();
 
-            document.dsl()
+            PageFlowBuilder flow = document.dsl()
                     .pageFlow()
                     .name("CvV2MintEditorialRoot")
                     .spacing(theme.spacing().pageFlowSpacing())
                     .addSection("CvV2MintEditorialHeader",
-                            section -> addHeader(section, identity))
-                    .addLine(line -> line
-                            .name("CvV2MintEditorialHeaderRule")
-                            .horizontal(pageWidth)
-                            .color(accent)
-                            .thickness(theme.spacing().accentRuleWidth())
-                            .margin(new DocumentInsets(8, -ruleBleed, 14, -ruleBleed)))
+                            section -> addHeader(section, identity, pageWidth, ruleBleed));
+            if (headerBandColor == null) {
+                // Stock masthead rule, full page width. When a band is present
+                // the rule is drawn flush at the band's bottom edge inside the
+                // header canvas instead (see addBandedHeader), so the separate
+                // flow rule is suppressed to avoid a doubled line.
+                flow.addLine(line -> line
+                        .name("CvV2MintEditorialHeaderRule")
+                        .horizontal(pageWidth)
+                        .color(ruleColor)
+                        .thickness(theme.spacing().accentRuleWidth())
+                        .margin(new DocumentInsets(8, -ruleBleed, 14, -ruleBleed)));
+            }
+            flow
                     .addRow("CvV2MintEditorialPageOne", row -> {
                         row.spacing(COLUMN_GAP).weights(SIDEBAR_WEIGHT, MAIN_WEIGHT);
                         row.addSection("CvV2MintEditorialPageOneSidebar", sidebar -> {
@@ -314,15 +458,119 @@ public final class MintEditorial {
 
         // -- Header --------------------------------------------------------
 
-        private void addHeader(SectionBuilder section, CvIdentity identity) {
-            // Headline.spacedCentered sets the section's spacing + padding;
-            // it renders the centred spaced-caps name as the page's loudest
-            // element. The tagline follows in the mint accent.
-            Headline.spacedCentered(section, identity.name(), theme);
+        private void addHeader(SectionBuilder section, CvIdentity identity,
+                               double pageWidth, double ruleBleed) {
+            if (headerBandColor != null) {
+                addBandedHeader(section, identity, pageWidth, ruleBleed);
+            } else {
+                addPlainHeader(section, identity);
+            }
+        }
+
+        /**
+         * Stock masthead: centred spaced-caps name (in {@code nameColor}) over
+         * a centred accent tagline, no background band. When
+         * {@code nameColor == theme.palette().ink()} the explicit style equals
+         * {@code theme.headlineStyle()}, so the default render is byte-identical
+         * to the pre-Options output.
+         */
+        private void addPlainHeader(SectionBuilder section, CvIdentity identity) {
+            // Render the name through Headline's style-override variant so only
+            // the colour can change — alignment, spaced-caps transform, font and
+            // size all stay exactly as Headline.spacedCentered produced them.
+            Headline.render(section, identity.name(), theme,
+                    TextAlign.CENTER, true, mastheadNameStyle());
             String jobTitle = identity.jobTitle();
             if (jobTitle != null && !jobTitle.isBlank()) {
                 Subheadline.centeredSpacedCaps(section, jobTitle, taglineStyle());
             }
+        }
+
+        /**
+         * Banded masthead (page 1 only): the whole masthead zone is one
+         * {@code CanvasLayerNode} (controlled absolute placement, the v1.6
+         * free-canvas primitive) with {@link ClipPolicy#OVERFLOW_VISIBLE}. The
+         * canvas reserves only {@value #MASTHEAD_CANVAS_HEIGHT}pt in the flow —
+         * its declared height — so the masthead footprint stays small and the
+         * dense page-1 row still fits, keeping the document at two pages.
+         *
+         * <p>Inside the canvas (origin top-left, y down):</p>
+         * <ul>
+         *   <li>the band rectangle is positioned at {@code (-ruleBleed,
+         *       -ruleBleed)} and sized {@code pageWidth × (ruleBleed +
+         *       canvasHeight)}, so — because overflow is visible — it bleeds up
+         *       to the top page edge, out to both side edges (full width), and
+         *       down to the canvas bottom;</li>
+         *   <li>a thin rule sits flush at the band's bottom edge, reading as the
+         *       band's underline (the separate flow rule is suppressed in this
+         *       mode, see {@code compose});</li>
+         *   <li>the centred name (in {@code nameColor}) and tagline (in
+         *       {@code accentColor}) render on top.</li>
+         * </ul>
+         *
+         * <p>The band consumes no extra flow height because the canvas footprint
+         * is fixed and the overflow draws outside it. Page 2 is untouched: the
+         * header canvas is the first page-flow child, so it lives on page 1
+         * only — no {@code pageBackgrounds} (which would repeat on page 2).</p>
+         */
+        private void addBandedHeader(SectionBuilder section, CvIdentity identity,
+                                     double pageWidth, double ruleBleed) {
+            double canvasH = MASTHEAD_CANVAS_HEIGHT;
+            double ruleThickness = theme.spacing().accentRuleWidth();
+            // Band runs from the top page edge down to the rule's bottom edge.
+            double bandHeight = MASTHEAD_RULE_Y + ruleThickness;
+
+            // The masthead (name / tagline / rule) is positioned at the EXACT
+            // default flow coordinates, so the banded and bandless renders share
+            // identical masthead geometry — only the tan fill behind it is new.
+            // The band fills the canvas from y=0 to the rule bottom; no child
+            // overflows the canvas upward (which would overdraw the row beneath
+            // on the PDF backend) — instead the canvas itself is bled to the page
+            // edges via negative margins.
+            DocumentNode band = new ShapeBuilder()
+                    .name("CvV2MintEditorialHeaderBand")
+                    .size(pageWidth, bandHeight)
+                    .fillColor(headerBandColor)
+                    .build();
+            DocumentNode rule = new ShapeBuilder()
+                    .name("CvV2MintEditorialHeaderRule")
+                    .size(pageWidth, ruleThickness)
+                    .fillColor(ruleColor)
+                    .build();
+            ParagraphNode name = new ParagraphBuilder()
+                    .name("CvV2MintEditorialHeaderName")
+                    .text(TextOrnaments.spacedUpper(identity.name().full()))
+                    .textStyle(mastheadNameStyle())
+                    .align(TextAlign.CENTER)
+                    .build();
+            String jobTitle = identity.jobTitle();
+            boolean hasTagline = jobTitle != null && !jobTitle.isBlank();
+            ParagraphNode tagline = hasTagline
+                    ? new ParagraphBuilder()
+                            .name("CvV2MintEditorialHeaderTagline")
+                            .text(TextOrnaments.spacedUpper(jobTitle))
+                            .textStyle(taglineStyle())
+                            .align(TextAlign.CENTER)
+                            .build()
+                    : null;
+
+            section.addCanvas(pageWidth, canvasH, canvas -> {
+                canvas.name("CvV2MintEditorialHeaderCanvas")
+                        .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                        // Bleed the whole canvas to the top + side page edges so
+                        // the band reaches y=0 and both side edges.
+                        .margin(new DocumentInsets(-ruleBleed, -ruleBleed, 0,
+                                -ruleBleed))
+                        // Band fills the masthead zone from the page top edge to
+                        // the rule's bottom; rule + name + tagline sit at their
+                        // default flow positions on top.
+                        .position(band, 0.0, 0.0)
+                        .position(rule, 0.0, MASTHEAD_RULE_Y)
+                        .position(name, 0.0, MASTHEAD_NAME_Y);
+                if (tagline != null) {
+                    canvas.position(tagline, 0.0, MASTHEAD_TAGLINE_Y);
+                }
+            });
         }
 
         // -- Sidebar: Contact ---------------------------------------------
@@ -513,6 +761,23 @@ public final class MintEditorial {
 
         // -- Main: Experience ---------------------------------------------
 
+        /**
+         * Renders the Experience block with Mint's bespoke entry layout:
+         * a spaced-caps job title, a single {@code subtitle | date} meta line,
+         * a prose paragraph, and — uniquely for this preset — any trailing
+         * markdown bullet lines as a real bullet list.
+         *
+         * <p>This is rendered locally rather than through the shared
+         * {@code EntryCompactRenderer} / {@code RichParagraphRenderer} because
+         * Mint's entry shape does not match those renderers: the title is
+         * transformed to letter-spaced uppercase, the subtitle and date are
+         * fused into one {@code "Company | Location | 2010 - Present"} meta line
+         * (the shared renderers keep them as separate title-row columns), and
+         * the body is split into prose + highlight bullets via
+         * {@link #splitBody(String)} — a transform no shared renderer performs.
+         * Bodies with no bullet lines (the canonical sample) take the plain
+         * single-paragraph path and are unaffected.</p>
+         */
         private void addExperience(SectionBuilder section, String title,
                                    List<CvEntry> entries) {
             if (entries.isEmpty()) {
@@ -750,6 +1015,18 @@ public final class MintEditorial {
 
         // -- Style factories ----------------------------------------------
 
+        /**
+         * Masthead name style. With the default {@code nameColor} (ink) this is
+         * identical to {@code theme.headlineStyle()} — headline font, headline
+         * size, default decoration — so the stock render is unchanged; only the
+         * colour differs when a caller overrides {@code nameColor}.
+         */
+        private DocumentTextStyle mastheadNameStyle() {
+            return CvTextStyles.of(theme.typography().headlineFont(),
+                    theme.typography().sizeHeadline(),
+                    DocumentTextDecoration.DEFAULT, nameColor);
+        }
+
         private DocumentTextStyle taglineStyle() {
             return CvTextStyles.of(theme.typography().headlineFont(),
                     theme.typography().sizeContact(),
@@ -837,6 +1114,12 @@ public final class MintEditorial {
      * {@code "* "}). Bodies with no bullet lines yield the whole text as
      * prose and an empty bullet list, so the canonical sample renders
      * exactly as before.
+     *
+     * <p>Preset-local because the shared CV body renderers
+     * ({@code RichParagraphRenderer}, {@code EntryCompactRenderer}) treat the
+     * entry body as one rich paragraph and never break trailing bullet lines
+     * out into a list. This split is what lets a Mint experience entry show a
+     * paragraph followed by highlight bullets (see {@link Template#addExperience}).</p>
      */
     private static BodyParts splitBody(String body) {
         if (body == null || body.isBlank()) {

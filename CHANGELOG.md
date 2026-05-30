@@ -11,6 +11,24 @@ follow semantic versioning; release dates are ISO 8601.
   template surface, including its isolated theme tokens, visual
   regression baselines, and reusable `Subheadline` /
   `SectionHeader.flatSpacedCaps` widget support.
+- Added the **Mint Editorial** template set: a two-page, two-column
+  editorial CV preset `MintEditorial` (centred spaced-caps masthead with
+  a full-width mint accent rule; sidebar contact / interests / education /
+  expertise / skill-bars / social beside a profile / experience / awards /
+  references main column) and its paired `MintEditorialLetter`, both on
+  `CvTheme.mintEditorial()` and with visual regression baselines.
+- Added two reusable `cv/v2/widgets`: `SkillBar` (data-driven proficiency
+  bar — spaced-caps label above a track with a level-positioned marker;
+  no bar when the level is absent) and `IconTextRow` (inline icon + text
+  row, optionally a single click target), with `WidgetSmokeTest` coverage.
+- Added optional proficiency levels to `SkillGroup` via the new
+  `CvSkill` record and `SkillsSection.Builder.leveledGroup(...)`. Fully
+  backward-compatible: name-only skills carry no level and every existing
+  name-based renderer is unaffected.
+- Added `MintEditorial.Options` (and a matching `MintEditorialLetter.Options`)
+  — an additive masthead colour API (accent, rule, name, and an optional
+  full-width page-1 header band) whose defaults reproduce the stock render
+  exactly, so the committed look and the parity baselines are unchanged.
 
 ### Public API
 

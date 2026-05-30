@@ -75,7 +75,9 @@ class CoverLetterV2SmokeTest {
                 Arguments.of((Supplier<DocumentTemplate<CoverLetterDocument>>) MonogramSidebarLetter::create,
                         "monogram-sidebar-letter", "Monogram Sidebar Letter"),
                 Arguments.of((Supplier<DocumentTemplate<CoverLetterDocument>>) TimelineMinimalLetter::create,
-                        "timeline-minimal-letter", "Timeline Minimal Letter"));
+                        "timeline-minimal-letter", "Timeline Minimal Letter"),
+                Arguments.of((Supplier<DocumentTemplate<CoverLetterDocument>>) MintEditorialLetter::create,
+                        "mint-editorial-letter", "Mint Editorial Letter"));
     }
 
     private static CoverLetterDocument sampleDocument() {

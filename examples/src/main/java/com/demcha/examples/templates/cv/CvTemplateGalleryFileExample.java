@@ -13,6 +13,7 @@ import com.demcha.compose.document.templates.cv.v2.presets.CompactMono;
 import com.demcha.compose.document.templates.cv.v2.presets.EditorialBlue;
 import com.demcha.compose.document.templates.cv.v2.presets.EngineeringResume;
 import com.demcha.compose.document.templates.cv.v2.presets.Executive;
+import com.demcha.compose.document.templates.cv.v2.presets.MintEditorial;
 import com.demcha.compose.document.templates.cv.v2.presets.ModernProfessional;
 import com.demcha.compose.document.templates.cv.v2.presets.MonogramSidebar;
 import com.demcha.compose.document.templates.cv.v2.presets.NordicClean;
@@ -28,7 +29,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * Renders all 14 layered CV presets ({@code cv.v2.presets.*} — the
+ * Renders all 15 layered CV presets ({@code cv.v2.presets.*} — the
  * polished current standard) against the same shared sample
  * {@link CvDocument}. Each PDF lands in
  * {@code examples/target/generated-pdfs/templates/cv/cv-<id>.pdf}
@@ -45,7 +46,7 @@ public final class CvTemplateGalleryFileExample {
     }
 
     /**
-     * Renders all 14 layered CV preset gallery PDFs.
+     * Renders all 15 layered CV preset gallery PDFs.
      *
      * @return list of absolute paths of the rendered PDFs in source
      *         order
@@ -79,7 +80,8 @@ public final class CvTemplateGalleryFileExample {
                 run(EditorialBlue.ID, EditorialBlue.RECOMMENDED_MARGIN, EditorialBlue::create),
                 run(Panel.ID, Panel.RECOMMENDED_MARGIN, Panel::create),
                 run(SidebarPortrait.ID, SidebarPortrait.RECOMMENDED_MARGIN, SidebarPortrait::create),
-                run(MonogramSidebar.ID, MonogramSidebar.RECOMMENDED_MARGIN, MonogramSidebar::create));
+                run(MonogramSidebar.ID, MonogramSidebar.RECOMMENDED_MARGIN, MonogramSidebar::create),
+                run(MintEditorial.ID, MintEditorial.RECOMMENDED_MARGIN, MintEditorial::create));
 
         CvDocument doc = ExampleDataFactory.sampleCvDocumentV2();
         List<Path> generated = new ArrayList<>();

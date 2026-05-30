@@ -6,6 +6,7 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
+import com.demcha.compose.document.templates.cv.v2.data.CvSkill;
 import com.demcha.compose.document.templates.cv.v2.data.EntriesSection;
 import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
 import com.demcha.compose.document.templates.cv.v2.data.RowStyle;
@@ -17,6 +18,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -158,26 +160,50 @@ class CvV2VisualParityTest {
                                 + "high-throughput PDF rendering, semantic authoring "
                                 + "DSLs, and turning brittle production-ops scripts "
                                 + "into typed, snapshot-tested libraries that scale."))
+                // Skill names match the name-only form exactly; only
+                // optional proficiency levels are added so data-driven
+                // presets (Mint Editorial) can render meters. Name-only
+                // presets read SkillGroup.skills() and render identically,
+                // so the existing baselines are unaffected.
                 .section(SkillsSection.builder("Technical Skills")
-                        .group("Languages", "Java 21", "Kotlin", "Groovy",
-                                "Python", "SQL")
-                        .group("Document & Print", "PDFBox",
-                                "Apache POI (DOCX/XLSX)", "iText",
-                                "PostScript", "ICC colour profiles",
-                                "font metrics")
-                        .group("Layout engines", "Custom DSL design",
-                                "semantic layout trees", "pagination",
-                                "snapshot testing", "visual regression")
-                        .group("Build & infrastructure", "Maven", "Gradle",
-                                "GitHub Actions", "JitPack", "Docker",
-                                "JMH benchmarking")
-                        .group("Testing", "JUnit 5", "AssertJ",
-                                "PDFBox-based PNG diff",
-                                "layout-graph snapshots",
-                                "mutation testing (Pitest)")
-                        .group("Distribution", "Maven Central",
-                                "Sonatype OSSRH", "GPG signing", "JitPack",
-                                "semantic versioning discipline")
+                        .leveledGroup("Languages", List.of(
+                                CvSkill.of("Java 21", 0.95),
+                                CvSkill.of("Kotlin", 0.85),
+                                CvSkill.of("Groovy", 0.7),
+                                CvSkill.of("Python", 0.75),
+                                CvSkill.of("SQL", 0.8)))
+                        .leveledGroup("Document & Print", List.of(
+                                CvSkill.of("PDFBox", 0.9),
+                                CvSkill.of("Apache POI (DOCX/XLSX)", 0.7),
+                                CvSkill.of("iText", 0.65),
+                                CvSkill.of("PostScript", 0.6),
+                                CvSkill.of("ICC colour profiles", 0.55),
+                                CvSkill.of("font metrics", 0.7)))
+                        .leveledGroup("Layout engines", List.of(
+                                CvSkill.of("Custom DSL design", 0.9),
+                                CvSkill.of("semantic layout trees", 0.85),
+                                CvSkill.of("pagination", 0.85),
+                                CvSkill.of("snapshot testing", 0.8),
+                                CvSkill.of("visual regression", 0.8)))
+                        .leveledGroup("Build & infrastructure", List.of(
+                                CvSkill.of("Maven", 0.9),
+                                CvSkill.of("Gradle", 0.75),
+                                CvSkill.of("GitHub Actions", 0.85),
+                                CvSkill.of("JitPack", 0.8),
+                                CvSkill.of("Docker", 0.7),
+                                CvSkill.of("JMH benchmarking", 0.65)))
+                        .leveledGroup("Testing", List.of(
+                                CvSkill.of("JUnit 5", 0.9),
+                                CvSkill.of("AssertJ", 0.85),
+                                CvSkill.of("PDFBox-based PNG diff", 0.8),
+                                CvSkill.of("layout-graph snapshots", 0.8),
+                                CvSkill.of("mutation testing (Pitest)", 0.6)))
+                        .leveledGroup("Distribution", List.of(
+                                CvSkill.of("Maven Central", 0.8),
+                                CvSkill.of("Sonatype OSSRH", 0.75),
+                                CvSkill.of("GPG signing", 0.7),
+                                CvSkill.of("JitPack", 0.8),
+                                CvSkill.of("semantic versioning discipline", 0.85)))
                         .build())
                 .section(EntriesSection.builder("Education & Certifications")
                         .entry("MSc Computer Science",

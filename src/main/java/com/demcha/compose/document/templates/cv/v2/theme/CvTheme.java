@@ -263,6 +263,24 @@ public record CvTheme(CvPalette palette,
                 CvSpacing.executive(),
                 CvDecoration.classic());
     }
+
+    /**
+     * The "Mint Editorial" look — Poppins throughout, near-black ink, a
+     * soft mint accent (carried in the palette {@code banner} slot) used
+     * for the full-width masthead rule, the spaced-caps section
+     * headings, and the centered tagline. Two-page two-column editorial
+     * CV: a left sidebar (contact, interests, education, expertise,
+     * skill bars, social) beside a main column (profile, experience,
+     * awards, references). Paired 1:1 with the Mint Editorial cover
+     * letter, which reuses this exact theme.
+     */
+    public static CvTheme mintEditorial() {
+        return new CvTheme(
+                CvPalette.mintEditorial(),
+                CvTypography.mintEditorial(),
+                CvSpacing.mintEditorial(),
+                CvDecoration.classic());
+    }
     // -- pre-built text-style helpers ------------------------------------
     // Renderers ask the theme for an already-composed DocumentTextStyle
     // instead of re-assembling font + size + decoration + colour every

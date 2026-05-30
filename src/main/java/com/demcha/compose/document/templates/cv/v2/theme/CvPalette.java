@@ -243,4 +243,22 @@ public record CvPalette(DocumentColor ink,
                 DocumentColor.rgb(193, 201, 211),  // rule — V1 MUTED_RULE
                 DocumentColor.rgb(220, 226, 230)); // banner — unused, inherits classic
     }
+
+    /**
+     * Mint Editorial palette: near-black ink, mid-grey metadata,
+     * dark-grey skill-bar rules, and a soft mint accent. The
+     * {@code banner} slot carries the mint accent (rgb(139,207,190)) —
+     * Mint draws no banner panels, so it reuses the slot for the accent
+     * the way the sidebar presets reuse it for the sidebar fill. Both
+     * the CV preset and its paired cover letter read
+     * {@code palette.banner()} as the single accent source, so the
+     * matched set never forks the colour.
+     */
+    public static CvPalette mintEditorial() {
+        return new CvPalette(
+                DocumentColor.rgb(24, 24, 24),     // ink (black)
+                DocumentColor.rgb(82, 82, 82),     // muted
+                DocumentColor.rgb(70, 70, 70),     // rule (skill-bar track)
+                DocumentColor.rgb(139, 207, 190)); // banner — reused as mint accent
+    }
 }

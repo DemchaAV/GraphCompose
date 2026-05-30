@@ -386,6 +386,29 @@ class PageBackgroundTest {
         }
     }
 
+    @Test
+    void pageBackgroundsWithEmptyListClearsEarlierPageBackgroundColor() {
+        // Calling pageBackgrounds(emptyList()) on the builder must override
+        // an earlier pageBackground(color) on the same builder. The empty
+        // list is an intentional clear, not a "leave the earlier value
+        // unchanged" signal — the Javadoc on the builder promises that.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.of(20))
+                .pageBackground(DocumentColor.of(Color.LIGHT_GRAY))
+                .pageBackgrounds(List.of())
+                .create()) {
+
+            session.add(new SpacerNode("Block", 200, 80,
+                    DocumentInsets.zero(), DocumentInsets.zero()));
+            LayoutGraph graph = session.layoutGraph();
+
+            assertThat(graph.fragments()).noneMatch(this::isPageBackgroundFragment);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private boolean isPageBackgroundFragment(PlacedFragment fragment) {
         return fragment.payload() instanceof ShapeFragmentPayload payload
                 && payload.fillColor() != null

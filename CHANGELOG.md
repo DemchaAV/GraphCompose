@@ -58,6 +58,15 @@ follow semantic versioning; release dates are ISO 8601.
   though no production code references it. Setting `<scope>test</scope>`
   keeps the version pin but keeps `byte-buddy` out of consumers' runtime
   classpath (`mvn dependency:tree` shows it only as `:test`).
+- **CI `exec-maven-plugin` version drift removed.** The CI workflow's
+  three benchmark steps invoked
+  `org.codehaus.mojo:exec-maven-plugin:3.5.0:java` directly, while
+  `benchmarks/pom.xml` already declared `exec-maven-plugin` at `3.6.3`
+  for local runs — a silent version split between CI and local invocations
+  that grew the surface area to keep aligned. CI now calls the configured
+  plugin via `exec:java`, picking up the pinned `3.6.3` from
+  `benchmarks/pom.xml`. No behaviour change; one fewer hardcoded version
+  to bump.
 
 ## v1.6.4 — 2026-05-22
 

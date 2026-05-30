@@ -146,7 +146,7 @@ jobs:
       - name: Run coarse performance smoke benchmark
         run: |
           ./mvnw -B -ntp -f benchmarks/pom.xml -DskipTests \
-            "org.codehaus.mojo:exec-maven-plugin:3.5.0:java" \
+            exec:java \
             "-Dexec.mainClass=com.demcha.compose.CurrentSpeedBenchmark" \
             "-Dgraphcompose.benchmark.profile=smoke"
 
@@ -194,7 +194,7 @@ jobs:
       - name: Run full benchmark suite
         run: |
           ./mvnw -B -ntp -f benchmarks/pom.xml -DskipTests \
-            "org.codehaus.mojo:exec-maven-plugin:3.5.0:java" \
+            exec:java \
             "-Dexec.mainClass=com.demcha.compose.CurrentSpeedBenchmark" \
             "-Dgraphcompose.benchmark.profile=full" \
             "-Dgraphcompose.benchmark.enforceGate=false"
@@ -212,7 +212,7 @@ jobs:
         if: steps.benchmark-runs.outputs.count != '0' && steps.benchmark-runs.outputs.count != '1'
         run: |
           ./mvnw -B -ntp -f benchmarks/pom.xml -DskipTests \
-            "org.codehaus.mojo:exec-maven-plugin:3.5.0:java" \
+            exec:java \
             "-Dexec.mainClass=com.demcha.compose.BenchmarkDiffTool" \
             "-Dexec.args=current-speed"
 

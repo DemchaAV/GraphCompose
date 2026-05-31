@@ -104,7 +104,10 @@ repositories { maven("https://jitpack.io") }
 dependencies { implementation("com.github.demchaav:GraphCompose:v1.6.5") }
 ```
 
-> **Distribution status** &mdash; currently **JitPack**. Maven Central is planned for v1.7 ([tracking issue](https://github.com/DemchaAV/GraphCompose/issues/7)).
+> **Distribution status** &mdash; currently **JitPack**. **Maven Central**
+> ships from **v1.6.6** under coordinates `io.github.demchaav:graphcompose:<version>`;
+> hosted Javadocs auto-publish to [javadoc.io/doc/io.github.demchaav/graphcompose](https://javadoc.io/doc/io.github.demchaav/graphcompose) shortly after each Central release.
+> JitPack stays available alongside Central for existing callers.
 
 > **Upgrading from v1.5?** Core document authoring stays source-compatible &mdash; engine, DSL, themes, and backend-neutral records carry v1.5 callers unchanged. **Templates v2** replaces the legacy CV / cover-letter template classes; legacy classes were **deleted**, not deprecated. Read the [migration guide](./docs/roadmaps/migration-v1-5-to-v1-6.md) before upgrading template-heavy code.
 

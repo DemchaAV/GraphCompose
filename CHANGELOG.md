@@ -46,6 +46,16 @@ JitPack continue to resolve through the existing coordinates.
   secrets, and the release-candidate dry-run strategy. § 2.B
   post-release checklist gains a new step 9 for the Central publish
   alongside the existing JitPack step.
+- **Hosted Javadocs via `javadoc.io`** (Track H3). README's
+  distribution-status note now points callers at
+  [javadoc.io/doc/io.github.demchaav/graphcompose](https://javadoc.io/doc/io.github.demchaav/graphcompose),
+  which auto-mirrors any artefact published to Maven Central within
+  minutes — no separate hosting infrastructure required. The note
+  also pins Maven Central as the going-forward primary distribution
+  starting v1.6.6 (JitPack stays available alongside for existing
+  callers). The full Central install snippet ("Central as primary,
+  JitPack as fallback") lands in the v1.6.6 release-prep PR after the
+  first Central publish proves the pipeline end-to-end.
 - **`central-publishing-maven-plugin` in the `release` profile**
   (Track D3). Adds Sonatype's `central-publishing-maven-plugin` 0.7.0
   to the existing `release` profile as a packaging extension. Replaces

@@ -47,7 +47,15 @@ class CanonicalSurfaceGuardTest {
             // Lists every retired V1 CV / cover-letter class so callers
             // can find the v2 replacement. Naming the legacy surface is
             // the explicit purpose of a migration log.
-            "docs/roadmaps/migration-v1-5-to-v1-6.md");
+            "docs/roadmaps/migration-v1-5-to-v1-6.md",
+            // Decision guide for "classic vs layered template surface".
+            // The deprecation-inventory section names GraphCompose.pdf(...),
+            // PdfComposer, MainPageCV, MainPageCvDTO, ModuleYml,
+            // TemplateBuilder, and com.demcha.compose.v2.* / com.demcha.templates.*
+            // so callers can identify legacy imports in their own code and
+            // see the canonical-DSL replacement. Same purpose as the
+            // migration log above.
+            "docs/templates/which-template-system.md");
     private static final List<String> FORBIDDEN_PUBLIC_AUTHORING_IMPORTS = List.of(
             "import com.demcha.compose.engine.");
 

@@ -57,9 +57,9 @@
         "applicationSubCategory": "Library",
         "operatingSystem": "Cross-platform (JVM 21+)",
         "programmingLanguage": "Java",
-        "softwareVersion": "1.6.5",
+        "softwareVersion": "1.6.6",
         "url": "https://demchaav.github.io/GraphCompose/",
-        "downloadUrl": "https://jitpack.io/#DemchaAV/GraphCompose/v1.6.5",
+        "downloadUrl": "https://central.sonatype.com/artifact/io.github.demchaav/graphcompose/1.6.6",
         "image": "https://demchaav.github.io/GraphCompose/assets/logo/graphcompose-logo.png",
         "license": "https://github.com/DemchaAV/GraphCompose/blob/main/LICENSE",
         "author": {
@@ -225,31 +225,22 @@
     <section class="section-shell" id="install" aria-labelledby="install-title">
       <div class="section-heading">
         <p class="section-label">Install</p>
-        <h2 id="install-title">JitPack, no extra setup.</h2>
+        <h2 id="install-title">Maven Central. One dependency.</h2>
       </div>
       <div class="install-blocks">
         <div class="install-block">
           <h4>Maven</h4>
-<pre class="language-xml"><code class="language-xml">&lt;repository&gt;
-  &lt;id&gt;jitpack.io&lt;/id&gt;
-  &lt;url&gt;https://jitpack.io&lt;/url&gt;
-&lt;/repository&gt;
-
-&lt;dependency&gt;
-  &lt;groupId&gt;com.github.DemchaAV&lt;/groupId&gt;
-  &lt;artifactId&gt;GraphCompose&lt;/artifactId&gt;
-  &lt;version&gt;v1.6.5&lt;/version&gt;
+<pre class="language-xml"><code class="language-xml">&lt;dependency&gt;
+  &lt;groupId&gt;io.github.demchaav&lt;/groupId&gt;
+  &lt;artifactId&gt;graphcompose&lt;/artifactId&gt;
+  &lt;version&gt;1.6.6&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
         </div>
         <div class="install-block">
           <h4>Gradle</h4>
-<pre class="language-groovy"><code class="language-groovy">repositories {
-  maven { url 'https://jitpack.io' }
-}
-
-dependencies {
+<pre class="language-groovy"><code class="language-groovy">dependencies {
   implementation(
-    'com.github.DemchaAV:GraphCompose:v1.6.5'
+    'io.github.demchaav:graphcompose:1.6.6'
   )
 }</code></pre>
         </div>

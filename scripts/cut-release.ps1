@@ -162,28 +162,49 @@ function Update-ReadmeInstallVersion($readmePath, $newVersion) {
     $tag = "v$newVersion"
     $changed = $false
 
-    # The README JitPack install snippets pin the git tag (vX.Y.Z). They must
-    # flip in the SAME commit the release tag is cut from, so a new user who
-    # copy-pastes the README resolves the version this release actually
-    # publishes (Phase 2.3 of the release skill: README version flips at
-    # release-execution time, never earlier). Two snippets carry it:
-    #   Maven:  <artifactId>GraphCompose</artifactId><version>vX.Y.Z</version>
-    #   Gradle: implementation("...:GraphCompose:vX.Y.Z")
-    # Lookbehind/lookahead so only the version token is rewritten.
-    $mavenRegex = [regex]'(?<=<artifactId>GraphCompose</artifactId>\s*<version>)v?[\w\.\-]+(?=</version>)'
-    $afterMaven = $mavenRegex.Replace($content, $tag, 1)
+    # The README Maven Central install snippets pin the published version
+    # (X.Y.Z, no `v` prefix). They must flip in the SAME commit the release
+    # tag is cut from, so a new user who copy-pastes the README resolves
+    # the version this release actually publishes (Phase 2.3 of the
+    # release skill: README version flips at release-execution time,
+    # never earlier). Two snippets carry it:
+    #   Maven:  <artifactId>graphcompose</artifactId><version>X.Y.Z</version>
+    #   Gradle: implementation("io.github.demchaav:graphcompose:X.Y.Z")
+    # Lookbehind/lookahead so only the version token is rewritten. A
+    # secondary fallback handles the legacy JitPack format
+    # (<artifactId>GraphCompose</artifactId> / GraphCompose:vX.Y.Z) so
+    # the script still works if a future change re-introduces a JitPack
+    # snippet for documentation purposes.
+    $mavenCentralRegex = [regex]'(?<=<artifactId>graphcompose</artifactId>\s*<version>)v?[\w\.\-]+(?=</version>)'
+    $afterMaven = $mavenCentralRegex.Replace($content, $newVersion, 1)
     if ($content -ne $afterMaven) {
         $content = $afterMaven
         $changed = $true
-        Note "bumped README Maven snippet -> $tag"
+        Note "bumped README Maven Central snippet -> $newVersion"
+    } else {
+        $mavenLegacyRegex = [regex]'(?<=<artifactId>GraphCompose</artifactId>\s*<version>)v?[\w\.\-]+(?=</version>)'
+        $afterMavenLegacy = $mavenLegacyRegex.Replace($content, $tag, 1)
+        if ($content -ne $afterMavenLegacy) {
+            $content = $afterMavenLegacy
+            $changed = $true
+            Note "bumped README legacy JitPack Maven snippet -> $tag"
+        }
     }
 
-    $gradleRegex = [regex]'(?<=:GraphCompose:)v?[\w\.\-]+(?=")'
-    $afterGradle = $gradleRegex.Replace($content, $tag, 1)
+    $gradleCentralRegex = [regex]'(?<=io\.github\.demchaav:graphcompose:)v?[\w\.\-]+(?=")'
+    $afterGradle = $gradleCentralRegex.Replace($content, $newVersion, 1)
     if ($content -ne $afterGradle) {
         $content = $afterGradle
         $changed = $true
-        Note "bumped README Gradle snippet -> $tag"
+        Note "bumped README Maven Central Gradle snippet -> $newVersion"
+    } else {
+        $gradleLegacyRegex = [regex]'(?<=:GraphCompose:)v?[\w\.\-]+(?=")'
+        $afterGradleLegacy = $gradleLegacyRegex.Replace($content, $tag, 1)
+        if ($content -ne $afterGradleLegacy) {
+            $content = $afterGradleLegacy
+            $changed = $true
+            Note "bumped README legacy JitPack Gradle snippet -> $tag"
+        }
     }
 
     if (-not $changed) {
@@ -207,19 +228,20 @@ function Update-IndexHtmlVersion($indexHtmlPath, $newVersion) {
     $tag = "v$newVersion"
     $changed = $false
 
-    # The GitHub Pages showcase (docs/index.html) hardcodes the version in five
-    # spots that do NOT inherit from the pom — they previously sat at v1.6.1
-    # while the library shipped v1.6.4. VersionConsistencyGuardTest fails the
-    # verify gate if any lags, so flip all five in lockstep with README + poms:
-    # JSON-LD softwareVersion (bare), JitPack downloadUrl, hero badge, and the
-    # Maven + Gradle install snippets (all v-prefixed). Lookbehind/lookahead so
-    # only the version token is rewritten.
+    # The GitHub Pages showcase (docs/index.html) hardcodes the version in
+    # several spots that do NOT inherit from the pom — they previously sat at
+    # v1.6.1 while the library shipped v1.6.4. VersionConsistencyGuardTest
+    # fails the verify gate if any lags, so flip them all in lockstep with the
+    # README + poms. The Maven Central format coordinates use bare semver
+    # ($newVersion), the hero badge keeps the v-prefix ($tag), and the
+    # downloadUrl points at the Central artefact page. Lookbehind/lookahead
+    # so only the version token is rewritten.
     $replacements = @(
-        @{ Regex = [regex]'(?<="softwareVersion": ")v?[\w\.\-]+(?=")';               Value = $newVersion; Label = 'JSON-LD softwareVersion' },
-        @{ Regex = [regex]'(?<=jitpack\.io/#DemchaAV/GraphCompose/)v?[\w\.\-]+(?=")'; Value = $tag;        Label = 'JitPack downloadUrl' },
-        @{ Regex = [regex]'(?<=Java &middot; )v?[\w\.\-]+(?= &middot; MIT)';          Value = $tag;        Label = 'hero badge' },
-        @{ Regex = [regex]'(?<=&lt;version&gt;)v?[\w\.\-]+(?=&lt;/version&gt;)';      Value = $tag;        Label = 'Maven snippet' },
-        @{ Regex = [regex]"(?<=:GraphCompose:)v?[\w\.\-]+(?=')";                      Value = $tag;        Label = 'Gradle snippet' }
+        @{ Regex = [regex]'(?<="softwareVersion": ")v?[\w\.\-]+(?=")';                                                     Value = $newVersion; Label = 'JSON-LD softwareVersion' },
+        @{ Regex = [regex]'(?<=https://central\.sonatype\.com/artifact/io\.github\.demchaav/graphcompose/)v?[\w\.\-]+(?=")'; Value = $newVersion; Label = 'Central downloadUrl' },
+        @{ Regex = [regex]'(?<=Java &middot; )v?[\w\.\-]+(?= &middot; MIT)';                                                Value = $tag;        Label = 'hero badge' },
+        @{ Regex = [regex]'(?<=&lt;artifactId&gt;graphcompose&lt;/artifactId&gt;\s*&lt;version&gt;)v?[\w\.\-]+(?=&lt;/version&gt;)'; Value = $newVersion; Label = 'Maven Central snippet' },
+        @{ Regex = [regex]"(?<=io\.github\.demchaav:graphcompose:)v?[\w\.\-]+(?=')";                                        Value = $newVersion; Label = 'Gradle Central snippet' }
     )
 
     foreach ($r in $replacements) {

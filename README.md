@@ -13,14 +13,13 @@
   <a href="https://github.com/DemchaAV/GraphCompose/actions/workflows/ci.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/DemchaAV/GraphCompose/ci.yml?branch=main&style=for-the-badge&label=CI" alt="CI"/></a>
   <a href="https://github.com/DemchaAV/GraphCompose/releases/latest"><img src="https://img.shields.io/github/v/release/DemchaAV/GraphCompose?style=for-the-badge&label=Release" alt="Latest release"/></a>
   <a href="https://central.sonatype.com/artifact/io.github.demchaav/graphcompose"><img src="https://img.shields.io/maven-central/v/io.github.demchaav/graphcompose?style=for-the-badge&label=Maven%20Central" alt="Maven Central"/></a>
-  <a href="https://jitpack.io/#DemchaAV/GraphCompose"><img src="https://img.shields.io/jitpack/v/github/DemchaAV/GraphCompose?style=for-the-badge&label=JitPack" alt="JitPack"/></a>
   <img src="https://img.shields.io/badge/Java-17%2B-orange?style=for-the-badge&logo=openjdk" alt="Java 17+"/>
   <img src="https://img.shields.io/badge/PDFBox-3.0-red?style=for-the-badge" alt="PDFBox 3.0"/>
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License"/>
 </p>
 
 > **Release status** &mdash;
-> 🟢 **Latest stable**: [v1.6.5](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.6.5) (JitPack)
+> 🟢 **Latest stable**: [v1.6.5](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.6.5)
 > &nbsp;·&nbsp; 🟡 **In develop**: v1.6.6 (Maven Central debut; zero breaking from v1.6.5)
 > &nbsp;·&nbsp; ⚪ **Planned next**: v1.6.7 (dependency cleanup), v1.7.0 (new canonical DSL primitives)
 > &nbsp;·&nbsp; See [API stability policy](./docs/api-stability.md) for tier definitions.
@@ -94,8 +93,6 @@ GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the com
 
 ## Installation
 
-### Maven Central (primary, from v1.6.6)
-
 ```xml
 <dependency>
     <groupId>io.github.demchaav</groupId>
@@ -108,29 +105,12 @@ GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the com
 dependencies { implementation("io.github.demchaav:graphcompose:1.6.6") }
 ```
 
-### JitPack (fallback / pre-v1.6.6)
-
-```xml
-<repositories>
-    <repository><id>jitpack.io</id><url>https://jitpack.io</url></repository>
-</repositories>
-
-<dependency>
-    <groupId>com.github.DemchaAV</groupId>
-    <artifactId>GraphCompose</artifactId>
-    <version>v1.6.5</version>
-</dependency>
-```
-
-```kotlin
-repositories { maven("https://jitpack.io") }
-dependencies { implementation("com.github.demchaav:GraphCompose:v1.6.5") }
-```
-
-> **Distribution status** &mdash; currently **JitPack**. **Maven Central**
-> ships from **v1.6.6** under coordinates `io.github.demchaav:graphcompose:<version>`;
-> hosted Javadocs auto-publish to [javadoc.io/doc/io.github.demchaav/graphcompose](https://javadoc.io/doc/io.github.demchaav/graphcompose) shortly after each Central release.
-> JitPack stays available alongside Central for existing callers.
+> **Distribution** &mdash; Maven Central is the canonical channel from **v1.6.6** onwards
+> (`io.github.demchaav:graphcompose:<version>`). Hosted Javadocs auto-publish to
+> [javadoc.io/doc/io.github.demchaav/graphcompose](https://javadoc.io/doc/io.github.demchaav/graphcompose)
+> shortly after each Central release. The legacy JitPack URL
+> (`com.github.DemchaAV:GraphCompose:v<version>`) remains resolvable for callers
+> pinned to v1.6.5 and earlier but is no longer the documented install option.
 
 > **Upgrading from v1.5?** Core document authoring stays source-compatible &mdash; engine, DSL, themes, and backend-neutral records carry v1.5 callers unchanged. **Templates v2** replaces the legacy CV / cover-letter template classes; legacy classes were **deleted**, not deprecated. Read the [migration guide](./docs/roadmaps/migration-v1-5-to-v1-6.md) before upgrading template-heavy code.
 

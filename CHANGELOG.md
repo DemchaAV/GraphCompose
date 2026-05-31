@@ -35,6 +35,39 @@ JitPack continue to resolve through the existing coordinates.
   Method-level `@since` backfill for the ~380 public methods in these
   packages is intentionally out of scope here and tracked separately.
 
+### Public API
+
+- **New `@Beta` annotation** (Track H2). Companion to the existing
+  [`@Internal`](src/main/java/com/demcha/compose/document/api/Internal.java)
+  marker:
+  [`com.demcha.compose.document.api.Beta`](src/main/java/com/demcha/compose/document/api/Beta.java)
+  signals an **Extension SPI** or **Experimental** surface — a
+  deliberately-exposed seam library users can implement or call, but
+  whose shape may still evolve between minor releases per the
+  [API stability policy](docs/api-stability.md) § 1. First application:
+  [`com.demcha.compose.document.layout.NodeDefinition`](src/main/java/com/demcha/compose/document/layout/NodeDefinition.java)
+  — the canonical custom-node-type seam, carved out of the otherwise
+  `@Internal` `document.layout` package. New
+  `BetaAnnotationDocumentationTest` pins the annotation's retention /
+  target / `@Documented`-ness / source-Javadoc contract in the same
+  shape `InternalAnnotationDocumentationTest` already pins for
+  `@Internal`. Additional Extension SPI surfaces (render-handler
+  interfaces, fragment-payload interfaces) will gain the marker
+  incrementally as their contract solidifies.
+
+### Documentation
+
+- **`docs/architecture/package-map.md` updated** alongside H2. A new
+  intro paragraph documents the stability-marker convention (Stable
+  default; engine packages are package-level `@Internal`; individual
+  Extension SPI seams carved out of `@Internal` packages carry
+  `@Beta`), and the `document.layout` row calls out `NodeDefinition`
+  as the current `@Beta` seam.
+- **`docs/api-stability.md` revised** alongside H2 — `@Beta` annotation
+  reference cells in §1 are no longer hedged as "pending"; the
+  associated quote block lists both annotations side-by-side with the
+  guard tests that pin them.
+
 ### Engine internals (no behaviour change)
 
 - **`RowSlots` helper extracted** from `LayoutCompiler` and

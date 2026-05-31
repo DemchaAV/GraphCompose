@@ -47,7 +47,7 @@ In scope:
 - DOCX / PPTX semantic backends (`com.demcha.compose.document.backend.semantic`).
 - Templates shipped in `com.demcha.compose.document.templates`.
 - Public authoring API (`GraphCompose`, `DocumentSession`, DSL).
-- Build and release artifacts on Maven Central (`io.github.demchaav:graphcompose`). The legacy JitPack URL remains available for consumers pinned to v1.6.5 and earlier but is no longer the documented install channel.
+- Build and release artifacts on Maven Central (`io.github.demchaav:graph-compose`). The legacy JitPack URL remains available for consumers pinned to v1.6.5 and earlier but is no longer the documented install channel.
 
 Out of scope:
 

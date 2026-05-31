@@ -2,7 +2,7 @@
 
 This is the canonical release runbook for GraphCompose 1.x.
 
-- Maven Central — `io.github.demchaav:graphcompose:<version>` (canonical, from v1.6.6)
+- Maven Central — `io.github.demchaav:graph-compose:<version>` (canonical, from v1.6.6)
 - JitPack — `com.github.DemchaAV:GraphCompose:v<version>` (legacy; resolves for callers pinned to v1.6.5 and earlier, no longer the documented install channel)
 
 The release workflow is automated by [`scripts/cut-release.ps1`](../scripts/cut-release.ps1). The script must run from the `develop` branch with a clean working tree. The agent (Claude / Codex) **must complete every audit gate below before a release tag is cut**, and **must wait for explicit human approval** ("yes, cut the tag" / "делаем тег") before invoking the script.
@@ -45,7 +45,7 @@ The shell setup and exact PowerShell commands live in the `graphcompose-release-
 
 The script's Step 1–4 mutates these. The agent only confirms the *current state is one the script can transition from*:
 
-- [ ] The version lives in four sites that must stay in lockstep: the standalone library `pom.xml`, the reactor `aggregator/pom.xml`, and the inherited `<parent>` version of `examples/pom.xml` and `benchmarks/pom.xml` (the children no longer pin their own `<version>` — they inherit from `graphcompose-build`, and declare `<graphcompose.version>${project.version}</graphcompose.version>` rather than a literal). All four read the same value: either the in-flight develop value or already the target. `VersionConsistencyGuardTest` asserts they agree; `cut-release.ps1` Step 1 moves all four (plus the README) together. Bumping by hand outside the script — or `mvn versions:set` on a single pom — is what previously left benchmarks on the prior release; if you must bump outside the script, use `mvn -f aggregator/pom.xml versions:set -DnewVersion=<X>`.
+- [ ] The version lives in four sites that must stay in lockstep: the standalone library `pom.xml`, the reactor `aggregator/pom.xml`, and the inherited `<parent>` version of `examples/pom.xml` and `benchmarks/pom.xml` (the children no longer pin their own `<version>` — they inherit from `graph-compose-build`, and declare `<graphcompose.version>${project.version}</graphcompose.version>` rather than a literal). All four read the same value: either the in-flight develop value or already the target. `VersionConsistencyGuardTest` asserts they agree; `cut-release.ps1` Step 1 moves all four (plus the README) together. Bumping by hand outside the script — or `mvn versions:set` on a single pom — is what previously left benchmarks on the prior release; if you must bump outside the script, use `mvn -f aggregator/pom.xml versions:set -DnewVersion=<X>`.
 - [ ] `examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java` `GH_BASE` points to `/blob/develop`. The script flips it to `/blob/v<target>` and regenerates `docs/examples.json`.
 
 ### E. Tag must not exist
@@ -86,7 +86,7 @@ The script does **not** handle these. They are either pre-release or post-releas
 
 Run within 1 hour of the tag push. Independent steps can run in parallel.
 
-1. **Wait for Maven Central artefact** — once `.github/workflows/publish.yml` turns green (see step 9 below), poll `mvn dependency:get -DgroupId=io.github.demchaav -DartifactId=graphcompose -Dversion=<target>` until it resolves (usually 5–15 minutes after the workflow finishes). Then:
+1. **Wait for Maven Central artefact** — once `.github/workflows/publish.yml` turns green (see step 9 below), poll `mvn dependency:get -DgroupId=io.github.demchaav -DartifactId=graph-compose -Dversion=<target>` until it resolves (usually 5–15 minutes after the workflow finishes). Then:
 2. **README install snippets** — already flipped to `<target>` by `cut-release.ps1` in the release commit (section 1, Step 2/6) and enforced by `VersionConsistencyGuardTest`. No separate post-release commit is needed; just confirm the Central artefact resolves (step 1 above) means the version the README now advertises actually exists.
 3. **Merge `develop` → `main`** on GitHub so GitHub Pages picks up the new docs. Fast-forward only — never force-push `main`. If the push is rejected with `non-fast-forward`, a hotfix landed on `main` after the audit and the merge has to be redone after merging `origin/main` back into `develop`.
 4. **Verify CI green on main** — `gh run list --branch main --limit 1` shows `success` for the tag commit.
@@ -94,7 +94,7 @@ Run within 1 hour of the tag push. Independent steps can run in parallel.
 6. **Re-run all examples against the published artifact** — `./mvnw -f examples/pom.xml clean package` followed by `exec:java -Dexec.mainClass=com.demcha.examples.GenerateAllExamples`. Expect 26+ `Generated:` lines.
 7. **Flip ShowcaseMetadata back to develop** — `pwsh ./scripts/cut-release.ps1 -PostReleaseOnly`. This restores linkable "View Code" buttons for ongoing v1.x.y dev work.
 8. **GitHub Release — automated.** Pushing the `v<target>` tag triggers [`.github/workflows/release.yml`](../../.github/workflows/release.yml): it re-runs `./mvnw clean verify -pl .` against the tagged commit, then creates the Release with that version's CHANGELOG section as the body (hyphenated tags like `v1.7.0-rc.1` ship as pre-releases; the step is idempotent — it edits the notes if the Release already exists). The workflow titles it `GraphCompose v<target>`; for a **minor** release, edit the title to add the codename (`v1.4`=cinematic, `v1.5`=intuitive, `v1.6`=expressive; patches drop it). Create the Release by hand (`gh release create v<target> --notes-file <CHANGELOG section>`) only if the workflow is unavailable.
-9. **Maven Central publish — automated (from v1.6.6).** The same `v<target>` tag push triggers [`.github/workflows/publish.yml`](../../.github/workflows/publish.yml): it re-runs `mvnw verify` at the tagged commit, signs the four artefacts (main / sources / javadoc / pom) with the repo's GPG key, and uploads to Maven Central via the `central-publishing-maven-plugin`. Hyphenated tags (`-rc`, `-alpha`, `-beta`, `-snapshot`) are skipped — those go only to the GitHub Release pre-release surface. `autoPublish=false` in the plugin config means the artefact lands in the Central validation queue; the maintainer flips the switch on [central.sonatype.com](https://central.sonatype.com) for the first publish, then can opt into auto-release in a follow-up. Verify via `mvn dependency:get -DgroupId=io.github.demchaav -DartifactId=graphcompose -Dversion=<target>` once the artifact appears (usually 5–15 minutes after the workflow turns green).
+9. **Maven Central publish — automated (from v1.6.6).** The same `v<target>` tag push triggers [`.github/workflows/publish.yml`](../../.github/workflows/publish.yml): it re-runs `mvnw verify` at the tagged commit, signs the four artefacts (main / sources / javadoc / pom) with the repo's GPG key, and uploads to Maven Central via the `central-publishing-maven-plugin`. Hyphenated tags (`-rc`, `-alpha`, `-beta`, `-snapshot`) are skipped — those go only to the GitHub Release pre-release surface. `autoPublish=false` in the plugin config means the artefact lands in the Central validation queue; the maintainer flips the switch on [central.sonatype.com](https://central.sonatype.com) for the first publish, then can opt into auto-release in a follow-up. Verify via `mvn dependency:get -DgroupId=io.github.demchaav -DartifactId=graph-compose -Dversion=<target>` once the artifact appears (usually 5–15 minutes after the workflow turns green).
 10. **Optional**: GitHub Discussions announcement (mirror the prior release's style; close with *"author intent, not coordinates"*), LinkedIn post, r/java post.
 
 The release is **done** only when steps 1–7 are all green; step 9 adds Maven Central availability once the D-track of v1.6.6 has shipped.
@@ -190,7 +190,7 @@ The release is **done** when all of these are true:
 - [ ] GitHub Release created with the CHANGELOG `v<version>` body
 - [ ] CI green on `main` for the tag commit
 - [ ] `.github/workflows/publish.yml` succeeded for the tag
-- [ ] Maven Central artefact resolves: `mvn dependency:get -DgroupId=io.github.demchaav -DartifactId=graphcompose -Dversion=<version>` exit 0
+- [ ] Maven Central artefact resolves: `mvn dependency:get -DgroupId=io.github.demchaav -DartifactId=graph-compose -Dversion=<version>` exit 0
 - [ ] `mvn dependency:resolve` succeeds against the README install snippet
 - [ ] README install snippets read `<version>` (flipped by the release commit; `VersionConsistencyGuardTest` green)
 - [ ] `develop` and `main` synced at the same SHA

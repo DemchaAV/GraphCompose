@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.demchaav</groupId>
-    <artifactId>graphcompose</artifactId>
+    <artifactId>graph-compose</artifactId>
     <version>1.6.5</version>
 
     <name>GraphCompose</name>
@@ -430,7 +430,7 @@
                 Publish a tests-classifier jar so the sibling `benchmarks/`
                 module can reuse the test-only fixtures (com.demcha.mock.*,
                 etc.) without duplicating them. The artifact is
-                graphcompose-${version}-tests.jar in the local repository
+                graph-compose-${version}-tests.jar in the local repository
                 after `mvn install`.
             -->
             <plugin>

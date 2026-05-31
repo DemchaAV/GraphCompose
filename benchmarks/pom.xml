@@ -6,12 +6,12 @@
 
     <parent>
         <groupId>io.github.demchaav</groupId>
-        <artifactId>graphcompose-build</artifactId>
+        <artifactId>graph-compose-build</artifactId>
         <version>1.6.5</version>
         <relativePath>../aggregator/pom.xml</relativePath>
     </parent>
 
-    <artifactId>graphcompose-benchmarks</artifactId>
+    <artifactId>graph-compose-benchmarks</artifactId>
     <name>GraphCompose Benchmarks</name>
     <description>
         Performance benchmarks, stress tests, and endurance harnesses for
@@ -49,19 +49,19 @@
         <!-- The library under benchmark. -->
         <dependency>
             <groupId>io.github.demchaav</groupId>
-            <artifactId>graphcompose</artifactId>
+            <artifactId>graph-compose</artifactId>
             <version>${graphcompose.version}</version>
         </dependency>
 
         <!--
-            graphcompose's test-only fixtures (com.demcha.mock.*) used by
+            graph-compose's test-only fixtures (com.demcha.mock.*) used by
             CanonicalBenchmarkSupport for CV / invoice / proposal sample
             data. Pulled in via the tests-classifier jar published by
             the main module's maven-jar-plugin test-jar execution.
         -->
         <dependency>
             <groupId>io.github.demchaav</groupId>
-            <artifactId>graphcompose</artifactId>
+            <artifactId>graph-compose</artifactId>
             <version>${graphcompose.version}</version>
             <type>test-jar</type>
             <classifier>tests</classifier>

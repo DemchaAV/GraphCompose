@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.demchaav</groupId>
-    <artifactId>graphcompose-build</artifactId>
+    <artifactId>graph-compose-build</artifactId>
     <version>1.6.5</version>
     <packaging>pom</packaging>
 

@@ -207,8 +207,8 @@ private taskboard.
 
 ### Maven coordinates do **not** change in 2.0
 
-The library `pom.xml` artifact id stays `graphcompose`. The Maven Central
-coordinates introduced in 1.6.6 (`io.github.demchaav:graphcompose:<X>`)
+The library `pom.xml` artifact id stays `graph-compose`. The Maven Central
+coordinates introduced in 1.6.6 (`io.github.demchaav:graph-compose:<X>`)
 carry through to 2.0 unchanged. The legacy JitPack URL
 (`com.github.DemchaAV:GraphCompose:v<X>`) remains resolvable for callers
 pinned to v1.6.5 and earlier but is not the documented install channel.

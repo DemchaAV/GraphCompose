@@ -175,7 +175,7 @@ function Update-ReadmeInstallVersion($readmePath, $newVersion) {
     # (<artifactId>GraphCompose</artifactId> / GraphCompose:vX.Y.Z) so
     # the script still works if a future change re-introduces a JitPack
     # snippet for documentation purposes.
-    $mavenCentralRegex = [regex]'(?<=<artifactId>graphcompose</artifactId>\s*<version>)v?[\w\.\-]+(?=</version>)'
+    $mavenCentralRegex = [regex]'(?<=<artifactId>graph-compose</artifactId>\s*<version>)v?[\w\.\-]+(?=</version>)'
     $afterMaven = $mavenCentralRegex.Replace($content, $newVersion, 1)
     if ($content -ne $afterMaven) {
         $content = $afterMaven
@@ -191,7 +191,7 @@ function Update-ReadmeInstallVersion($readmePath, $newVersion) {
         }
     }
 
-    $gradleCentralRegex = [regex]'(?<=io\.github\.demchaav:graphcompose:)v?[\w\.\-]+(?=")'
+    $gradleCentralRegex = [regex]'(?<=io\.github\.demchaav:graph-compose:)v?[\w\.\-]+(?=")'
     $afterGradle = $gradleCentralRegex.Replace($content, $newVersion, 1)
     if ($content -ne $afterGradle) {
         $content = $afterGradle
@@ -238,10 +238,10 @@ function Update-IndexHtmlVersion($indexHtmlPath, $newVersion) {
     # so only the version token is rewritten.
     $replacements = @(
         @{ Regex = [regex]'(?<="softwareVersion": ")v?[\w\.\-]+(?=")';                                                     Value = $newVersion; Label = 'JSON-LD softwareVersion' },
-        @{ Regex = [regex]'(?<=https://central\.sonatype\.com/artifact/io\.github\.demchaav/graphcompose/)v?[\w\.\-]+(?=")'; Value = $newVersion; Label = 'Central downloadUrl' },
+        @{ Regex = [regex]'(?<=https://central\.sonatype\.com/artifact/io\.github\.demchaav/graph-compose/)v?[\w\.\-]+(?=")'; Value = $newVersion; Label = 'Central downloadUrl' },
         @{ Regex = [regex]'(?<=Java &middot; )v?[\w\.\-]+(?= &middot; MIT)';                                                Value = $tag;        Label = 'hero badge' },
-        @{ Regex = [regex]'(?<=&lt;artifactId&gt;graphcompose&lt;/artifactId&gt;\s*&lt;version&gt;)v?[\w\.\-]+(?=&lt;/version&gt;)'; Value = $newVersion; Label = 'Maven Central snippet' },
-        @{ Regex = [regex]"(?<=io\.github\.demchaav:graphcompose:)v?[\w\.\-]+(?=')";                                        Value = $newVersion; Label = 'Gradle Central snippet' }
+        @{ Regex = [regex]'(?<=&lt;artifactId&gt;graph-compose&lt;/artifactId&gt;\s*&lt;version&gt;)v?[\w\.\-]+(?=&lt;/version&gt;)'; Value = $newVersion; Label = 'Maven Central snippet' },
+        @{ Regex = [regex]"(?<=io\.github\.demchaav:graph-compose:)v?[\w\.\-]+(?=')";                                        Value = $newVersion; Label = 'Gradle Central snippet' }
     )
 
     foreach ($r in $replacements) {

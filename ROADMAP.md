@@ -8,7 +8,7 @@ In flight on `main` / `develop`.
 
 - v1.6 polish &mdash; documentation, examples, visual baselines, fixes.
 - Open-source hygiene &mdash; security policy, support guidance, dependency automation, security scanning.
-- **Maven Central distribution** &mdash; debut shipping in v1.6.6 under `io.github.demchaav:graphcompose`. Replaces JitPack as the primary install channel; the JitPack URL stays alive for existing pinned consumers but is no longer documented as a primary option. Tracked in [#7](https://github.com/DemchaAV/GraphCompose/issues/7).
+- **Maven Central distribution** &mdash; debut shipping in v1.6.6 under `io.github.demchaav:graph-compose`. Replaces JitPack as the primary install channel; the JitPack URL stays alive for existing pinned consumers but is no longer documented as a primary option. Tracked in [#7](https://github.com/DemchaAV/GraphCompose/issues/7).
 
 ## Next (v1.7)
 
@@ -23,7 +23,7 @@ Not committed. Reflects current thinking; priorities may shift based on user fee
 
 - **DOCX visibility for unsupported nodes.** Make currently-silent skips (`shape`, `line`, `ellipse`, `barcode`) loud &mdash; minimum a warn log, ideally a strict-mode flag that fails instead of dropping content silently.
 - **Backend-neutral layout measurement.** Decouple measurement from PDFBox-specific resources so non-PDF backends do not pull PDFBox into the dependency graph.
-- **Multi-module Maven layout.** Split the artifact into `graphcompose-core` / `graphcompose-pdf` / `graphcompose-docx` / `graphcompose-templates` / `graphcompose-testing` if there is clear demand. Adds release complexity, so requires a real adoption signal first.
+- **Multi-module Maven layout.** Split the artifact into `graph-compose-core` / `graph-compose-pdf` / `graph-compose-docx` / `graph-compose-templates` / `graph-compose-testing` if there is clear demand. Adds release complexity, so requires a real adoption signal first.
 - **DOCX maturity.** Either expand DOCX coverage toward PDF parity, or move DOCX behind an explicitly experimental flag.
 - **Property-based testing.** Random table spans, pagination edge cases, deeply nested layouts.
 - **Real PPTX export.** Current state is a manifest skeleton. Will only be built out if there is concrete user demand.

@@ -6,24 +6,26 @@ follow semantic versioning; release dates are ISO 8601.
 ## v1.6.6 — Planned
 
 **First Maven Central release.** GraphCompose now ships under
-`io.github.demchaav:graphcompose:1.6.6` alongside the existing
-JitPack distribution. The release adds publishable sources/javadoc
-jars, GPG-signed artefacts, a binary-compatibility gate against
-v1.6.5, the metadata Maven Central requires, and a substantial
-documentation polish for the maturity / stability / migration story.
+`io.github.demchaav:graph-compose:1.6.6` — note the **hyphenated**
+artifactId, chosen for readability ahead of the Central debut. The
+release adds publishable sources/javadoc jars, GPG-signed artefacts,
+a binary-compatibility gate against v1.6.5, the metadata Maven
+Central requires, and a substantial documentation polish for the
+maturity / stability / migration story.
 
 **Zero breaking changes from v1.6.5.** Existing JitPack callers continue
-to resolve through the same coordinates; existing API surface compiles
-and runs unchanged (validated by the new `japicmp` gate against the
-v1.6.5 baseline). New: the `@Beta` annotation marker, the `@since 1.0.0`
-class-level Javadoc on entry-point packages, and a curated docs pass
-(decision guide for the two template surfaces, examples maturity index,
-explicit API stability policy).
+to resolve through the same coordinates (`com.github.DemchaAV:GraphCompose:v1.6.5`);
+existing API surface compiles and runs unchanged (validated by the new
+`japicmp` gate against the v1.6.5 baseline). New: the `@Beta`
+annotation marker, the `@since 1.0.0` class-level Javadoc on
+entry-point packages, and a curated docs pass (decision guide for
+the two template surfaces, examples maturity index, explicit API
+stability policy).
 
-**Migration from v1.6.5:** no code changes required. Optionally swap
-the JitPack `<dependency>` for the Maven Central equivalent
-(`io.github.demchaav:graphcompose:1.6.6`); both publish paths continue
-to ship the same artefact.
+**Migration from v1.6.5:** no code changes required. Swap the
+JitPack `<dependency>` for the Maven Central form
+(`io.github.demchaav:graph-compose:1.6.6`). The legacy JitPack URL
+keeps resolving for callers pinned to v1.6.5 and earlier.
 
 ### Build
 
@@ -63,7 +65,7 @@ to ship the same artefact.
   alongside the existing JitPack step.
 - **Hosted Javadocs via `javadoc.io`** (Track H3). README's
   distribution-status note now points callers at
-  [javadoc.io/doc/io.github.demchaav/graphcompose](https://javadoc.io/doc/io.github.demchaav/graphcompose),
+  [javadoc.io/doc/io.github.demchaav/graph-compose](https://javadoc.io/doc/io.github.demchaav/graph-compose),
   which auto-mirrors any artefact published to Maven Central within
   minutes — no separate hosting infrastructure required. The note
   also pins Maven Central as the going-forward primary distribution

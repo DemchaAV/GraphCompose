@@ -132,18 +132,22 @@ class VersionConsistencyGuardTest {
     // window). The first regex with a match wins.
 
     private static final String[] INSTALL_SNIPPET_PATTERNS_README_MAVEN = {
+            "<artifactId>graph-compose</artifactId>\\s*<version>v?([0-9][^<]*)</version>",
             "<artifactId>graphcompose</artifactId>\\s*<version>v?([0-9][^<]*)</version>",
             "<artifactId>GraphCompose</artifactId>\\s*<version>v?([0-9][^<]*)</version>"
     };
     private static final String[] INSTALL_SNIPPET_PATTERNS_README_GRADLE = {
+            "io\\.github\\.demchaav:graph-compose:v?([0-9][^\")]*)",
             "io\\.github\\.demchaav:graphcompose:v?([0-9][^\")]*)",
             "GraphCompose:v?([0-9][^\")]*)"
     };
     private static final String[] INSTALL_SNIPPET_PATTERNS_SHOWCASE_MAVEN = {
+            "&lt;artifactId&gt;graph-compose&lt;/artifactId&gt;\\s*&lt;version&gt;v?([0-9][^&]*)&lt;/version&gt;",
             "&lt;artifactId&gt;graphcompose&lt;/artifactId&gt;\\s*&lt;version&gt;v?([0-9][^&]*)&lt;/version&gt;",
             "&lt;version&gt;v?([0-9][^&]*)&lt;/version&gt;"
     };
     private static final String[] INSTALL_SNIPPET_PATTERNS_SHOWCASE_GRADLE = {
+            "io\\.github\\.demchaav:graph-compose:v?([0-9][^')]*)",
             "io\\.github\\.demchaav:graphcompose:v?([0-9][^')]*)",
             "GraphCompose:v?([0-9][^')]*)"
     };

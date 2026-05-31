@@ -3,7 +3,7 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v1.6.6 — Planned
+## v1.6.6 — 2026-05-31
 
 **First Maven Central release.** GraphCompose now ships under
 `io.github.demchaav:graph-compose:1.6.6` — note the **hyphenated**

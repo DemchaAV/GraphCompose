@@ -32,68 +32,69 @@ Then run all 26 examples in one shot:
 Generated PDFs land in `examples/target/generated-pdfs/`. The same
 `mvnw.cmd` form works on Windows PowerShell with backslash paths.
 
-## Gallery
+## Gallery — pick by your goal
 
-### Built-in document templates
+Examples are categorised by **maturity / intent**, not by the GraphCompose
+release that introduced them. Pick the row that matches how far along you
+are with the canonical DSL, then jump to its detailed section below.
+
+> **Maturity legend.**
+> 🚀 **Start here** — minimum-friction entry points; pick one if you've never used the canonical DSL before.
+> 🧱 **Core DSL** — features you'll author against every day once the basics click.
+> 📋 **Templates recommended** — the v2 / layered template surfaces and how to drive them; pick when you want a one-line CV / invoice / proposal / cover-letter.
+> 🔧 **Advanced SPI** — production-deployment patterns, specialty SPIs (shapes, transforms, barcodes), engine-level tools (snapshots).
+> 🗄️ **Legacy** — pre-rebuild examples kept for downstream callers still on V1; do not start new code here. See [`docs/templates/which-template-system.md`](../docs/templates/which-template-system.md) for the V1 → V2 migration path.
+
+### 🚀 Start here
 
 | Example | What it shows | Preview · Source |
 |---|---|---|
-| [Cover Letter](#cover-letter) | One-page `BusinessTheme.modern()` cover letter with section presets | [PDF](../assets/readme/examples/cover-letter.pdf) · [Source](src/main/java/com/demcha/examples/templates/coverletter/CoverLetterFileExample.java) |
-| [Invoice (V1)](#invoice-v1) | `InvoiceTemplateV1` driven from `InvoiceDocumentSpec` | [PDF](../assets/readme/examples/invoice.pdf) · [Source](src/main/java/com/demcha/examples/templates/invoice/InvoiceFileExample.java) |
-| [Proposal (V1)](#proposal-v1) | `ProposalTemplateV1` driven from `ProposalDocumentSpec` | [PDF](../assets/readme/examples/proposal.pdf) · [Source](src/main/java/com/demcha/examples/templates/proposal/ProposalFileExample.java) |
-| [Module-first Profile](#module-first-profile) | Authoring directly against `DocumentSession.module(...).paragraph(...)` | [PDF](../assets/readme/examples/module-first-profile.pdf) · [Source](src/main/java/com/demcha/examples/flagships/ModuleFirstFileExample.java) |
 | [CV — single template](#cv-single-template) | One CV via `ModernProfessional.create(BusinessTheme.modern())` (Templates v2) | [PDF](../assets/readme/examples/cv-modern-professional.pdf) · [Source](src/main/java/com/demcha/examples/templates/cv/CvFileExample.java) |
+| [Invoice — cinematic V2](#invoice-cinematic-v2) | `InvoiceTemplateV2 + BusinessTheme.modern()` — the recommended invoice path | [PDF](../assets/readme/examples/invoice-cinematic.pdf) · [Source](src/main/java/com/demcha/examples/templates/invoice/InvoiceCinematicFileExample.java) |
+| [Cover Letter](#cover-letter) | One-page `BusinessTheme.modern()` cover letter with section presets | [PDF](../assets/readme/examples/cover-letter.pdf) · [Source](src/main/java/com/demcha/examples/templates/coverletter/CoverLetterFileExample.java) |
+| [Module-first Profile](#module-first-profile) | Authoring directly against `DocumentSession.module(...).paragraph(...)` — DSL-direct, no template | [PDF](../assets/readme/examples/module-first-profile.pdf) · [Source](src/main/java/com/demcha/examples/flagships/ModuleFirstFileExample.java) |
+
+### 🧱 Core DSL
+
+| Example | What it shows | Preview · Source |
+|---|---|---|
+| [Rich text](#rich-text) | Every `RichText` method (bold / italic / underline / link / colour / accent / size / append) | [PDF](../assets/readme/examples/rich-text-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/text/RichTextShowcaseExample.java) |
+| [Section presets](#section-presets) | `pageBackground`, `band`, `softPanel`, `accentLeft / Right / Top / Bottom`, per-corner `DocumentCornerRadius` | [PDF](../assets/readme/examples/section-presets.pdf) · [Source](src/main/java/com/demcha/examples/features/text/SectionPresetsExample.java) |
+| [Nested lists](#nested-lists-v16) | `ListBuilder.addItem(label, Consumer)` — depth cascade, per-depth markers, mixed flat / nested authoring | [PDF](../assets/readme/examples/nested-list-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/lists/NestedListExample.java) |
+| [Composed table cells](#composed-table-cells-v16) | `DocumentTableCell.node(DocumentNode)` — paragraphs, lists, sub-tables inside cells with two-pass measurement | [PDF](../assets/readme/examples/composed-table-cell-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/tables/ComposedTableCellExample.java) |
+| [Canvas layer (free placement)](#canvas-layer-v16) | `CanvasLayerNode` — pixel-precise `(x, y)` placement of children inside a fixed bounding box, with `ClipPolicy` clipping | [PDF](../assets/readme/examples/canvas-layer-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/canvas/CanvasLayerExample.java) |
+| [Transforms](#transforms) | `rotate`, `scale`, and per-layer `zIndex` swap | [PDF](../assets/readme/examples/transforms.pdf) · [Source](src/main/java/com/demcha/examples/features/transforms/TransformsExample.java) |
+
+### 📋 Templates recommended
+
+| Example | What it shows | Preview · Source |
+|---|---|---|
 | [CV — template gallery](#cv-template-gallery) | All 14 v2 CV presets in one orchestrated run | [Source](src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java) |
 | [Cover letter — template gallery](#cover-letter-template-gallery) | All 14 paired v2 cover-letter presets in one orchestrated run | [Source](src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java) |
-
-### Cinematic templates (v1.5)
-
-| Example | What it shows | Preview · Source |
-|---|---|---|
-| [Invoice — cinematic V2](#invoice-cinematic-v2) | `InvoiceTemplateV2 + BusinessTheme.modern()` | [PDF](../assets/readme/examples/invoice-cinematic.pdf) · [Source](src/main/java/com/demcha/examples/templates/invoice/InvoiceCinematicFileExample.java) |
 | [Proposal — cinematic V2](#proposal-cinematic-v2) | `ProposalTemplateV2 + BusinessTheme.modern()` | [PDF](../assets/readme/examples/proposal-cinematic.pdf) · [Source](src/main/java/com/demcha/examples/templates/proposal/ProposalCinematicFileExample.java) |
-| [Handcrafted Proposal](#handcrafted-proposal) | v1.4-style cinematic proposal composed by hand | [PDF](../assets/readme/examples/project-proposal-cinematic.pdf) · [Source](src/main/java/com/demcha/examples/templates/proposal/CinematicProposalFileExample.java) |
+| [Custom Business Theme](#custom-business-theme) | Hand-built `BusinessTheme` driving `InvoiceTemplateV2` — theme-token customisation entry point | [PDF](../assets/readme/examples/invoice-custom-theme.pdf) · [Source](src/main/java/com/demcha/examples/features/themes/CustomBusinessThemeExample.java) |
 
-### v1.5 feature showcases
+### 🔧 Advanced SPI
 
 | Example | What it shows | Preview · Source |
 |---|---|---|
 | [Shape containers](#shape-containers) | Circles, ellipses, rounded cards with `ClipPolicy.CLIP_PATH` | [PDF](../assets/readme/examples/shape-container.pdf) · [Source](src/main/java/com/demcha/examples/features/shapes/ShapeContainerExample.java) |
-| [Transforms](#transforms) | `rotate`, `scale`, and per-layer `zIndex` swap | [PDF](../assets/readme/examples/transforms.pdf) · [Source](src/main/java/com/demcha/examples/features/transforms/TransformsExample.java) |
 | [Advanced tables](#advanced-tables) | Row span, zebra rows, totals, repeating header on page break | [PDF](../assets/readme/examples/table-advanced.pdf) · [Source](src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java) |
-| [Custom Business Theme](#custom-business-theme) | Hand-built `BusinessTheme` driving `InvoiceTemplateV2` | [PDF](../assets/readme/examples/invoice-custom-theme.pdf) · [Source](src/main/java/com/demcha/examples/features/themes/CustomBusinessThemeExample.java) |
-
-### v1.6 feature showcases
-
-| Example | What it shows | Preview · Source |
-|---|---|---|
-| [Nested lists](#nested-lists-v16) | `ListBuilder.addItem(label, Consumer)` — depth cascade, per-depth markers, mixed flat / nested authoring | [PDF](../assets/readme/examples/nested-list-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/lists/NestedListExample.java) |
-| [Composed table cells](#composed-table-cells-v16) | `DocumentTableCell.node(DocumentNode)` — paragraphs, lists, sub-tables inside cells with two-pass measurement | [PDF](../assets/readme/examples/composed-table-cell-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/tables/ComposedTableCellExample.java) |
-| [Canvas layer (free placement)](#canvas-layer-v16) | `CanvasLayerNode` — pixel-precise `(x, y)` placement of children inside a fixed bounding box, with `ClipPolicy` clipping | [PDF](../assets/readme/examples/canvas-layer-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/canvas/CanvasLayerExample.java) |
-
-### Public-API surface
-
-| Example | What it shows | Preview · Source |
-|---|---|---|
-| [Rich text](#rich-text) | Every `RichText` method (bold / italic / underline / link / colour / accent / size / link / append) | [PDF](../assets/readme/examples/rich-text-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/text/RichTextShowcaseExample.java) |
-| [Section presets](#section-presets) | `pageBackground`, `band`, `softPanel`, `accentLeft / Right / Top / Bottom`, per-corner `DocumentCornerRadius` | [PDF](../assets/readme/examples/section-presets.pdf) · [Source](src/main/java/com/demcha/examples/features/text/SectionPresetsExample.java) |
 | [Barcodes](#barcodes) | QR, Code 128, Code 39, EAN-13, EAN-8, branded QR with theme colours | [PDF](../assets/readme/examples/barcode-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/barcodes/BarcodeShowcaseExample.java) |
 | [PDF chrome](#pdf-chrome) | `DocumentMetadata`, `DocumentWatermark`, `DocumentHeaderFooter`, `DocumentBookmarkOptions` | [PDF](../assets/readme/examples/pdf-chrome.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PdfChromeExample.java) |
-
-### Production patterns
-
-| Example | What it shows | Preview · Source |
-|---|---|---|
 | [HTTP streaming](#http-streaming) | `writePdf(OutputStream)` for Servlet / S3 / GCS — caller's stream is not closed | [PDF](../assets/readme/examples/invoice-http-stream.pdf) · [Source](src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java) |
-| [Layout snapshot regression](#layout-snapshot-regression) | Deterministic `layoutSnapshot()` workflow with baseline + drift report | [PDF](../assets/readme/examples/invoice-snapshot-regression.pdf) · [Source](src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java) |
-
-### Operational documents
-
-| Example | What it shows | Preview · Source |
-|---|---|---|
-| [Weekly schedule](#weekly-schedule) | Bar / restaurant shift schedule via reusable `WeeklyScheduleRenderer` with typed `DayShift` API | [PDF](../assets/readme/examples/weekly-schedule.pdf) · [Source](src/main/java/com/demcha/examples/templates/schedule/WeeklyScheduleFileExample.java) |
+| [Layout snapshot regression](#layout-snapshot-regression) | Deterministic `layoutSnapshot()` workflow with baseline + drift report — production regression-testing pattern | [PDF](../assets/readme/examples/invoice-snapshot-regression.pdf) · [Source](src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java) |
 | [Business report cover](#business-report-cover) | Single-page Q1 investor brief — hero image, KPI cards, bar chart, metrics table | [PDF](../assets/readme/examples/business-report.pdf) · [Source](src/main/java/com/demcha/examples/flagships/BusinessReportExample.java) |
 | [Master showcase](#master-showcase) | Kitchen-sink "Q2 sample report" combining the canonical surface end-to-end | [PDF](../assets/readme/examples/master-showcase.pdf) · [Source](src/main/java/com/demcha/examples/flagships/MasterShowcaseExample.java) |
+
+### 🗄️ Legacy
+
+| Example | What it shows | Preview · Source |
+|---|---|---|
+| [Invoice (V1)](#invoice-v1) | `InvoiceTemplateV1` driven from `InvoiceDocumentSpec` — pre-rebuild surface, supported only | [PDF](../assets/readme/examples/invoice.pdf) · [Source](src/main/java/com/demcha/examples/templates/invoice/InvoiceFileExample.java) |
+| [Proposal (V1)](#proposal-v1) | `ProposalTemplateV1` driven from `ProposalDocumentSpec` — pre-rebuild surface, supported only | [PDF](../assets/readme/examples/proposal.pdf) · [Source](src/main/java/com/demcha/examples/templates/proposal/ProposalFileExample.java) |
+| [Handcrafted Proposal](#handcrafted-proposal) | v1.4-style cinematic proposal composed by hand — pre-template authoring; kept for parity reference | [PDF](../assets/readme/examples/project-proposal-cinematic.pdf) · [Source](src/main/java/com/demcha/examples/templates/proposal/CinematicProposalFileExample.java) |
+| [Weekly schedule](#weekly-schedule) | Bar / restaurant shift schedule via `WeeklyScheduleRenderer` (`WeeklyScheduleTemplateV1` — no V2 yet; will be re-shaped before 2.0) | [PDF](../assets/readme/examples/weekly-schedule.pdf) · [Source](src/main/java/com/demcha/examples/templates/schedule/WeeklyScheduleFileExample.java) |
 
 ---
 

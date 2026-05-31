@@ -6,12 +6,12 @@
 
     <parent>
         <groupId>io.github.demchaav</groupId>
-        <artifactId>graphcompose-build</artifactId>
+        <artifactId>graph-compose-build</artifactId>
         <version>1.6.5</version>
         <relativePath>../aggregator/pom.xml</relativePath>
     </parent>
 
-    <artifactId>graphcompose-examples</artifactId>
+    <artifactId>graph-compose-examples</artifactId>
 
     <name>GraphCompose Examples</name>
     <description>Runnable file-render examples for GraphCompose templates.</description>
@@ -40,7 +40,7 @@
     <dependencies>
         <dependency>
             <groupId>io.github.demchaav</groupId>
-            <artifactId>graphcompose</artifactId>
+            <artifactId>graph-compose</artifactId>
             <version>${graphcompose.version}</version>
         </dependency>
 

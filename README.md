@@ -12,7 +12,7 @@
 <p align="center">
   <a href="https://github.com/DemchaAV/GraphCompose/actions/workflows/ci.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/DemchaAV/GraphCompose/ci.yml?branch=main&style=for-the-badge&label=CI" alt="CI"/></a>
   <a href="https://github.com/DemchaAV/GraphCompose/releases/latest"><img src="https://img.shields.io/github/v/release/DemchaAV/GraphCompose?style=for-the-badge&label=Release" alt="Latest release"/></a>
-  <a href="https://central.sonatype.com/artifact/io.github.demchaav/graphcompose"><img src="https://img.shields.io/maven-central/v/io.github.demchaav/graphcompose?style=for-the-badge&label=Maven%20Central" alt="Maven Central"/></a>
+  <a href="https://central.sonatype.com/artifact/io.github.demchaav/graph-compose"><img src="https://img.shields.io/maven-central/v/io.github.demchaav/graph-compose?style=for-the-badge&label=Maven%20Central" alt="Maven Central"/></a>
   <img src="https://img.shields.io/badge/Java-17%2B-orange?style=for-the-badge&logo=openjdk" alt="Java 17+"/>
   <img src="https://img.shields.io/badge/PDFBox-3.0-red?style=for-the-badge" alt="PDFBox 3.0"/>
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License"/>
@@ -96,18 +96,18 @@ GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the com
 ```xml
 <dependency>
     <groupId>io.github.demchaav</groupId>
-    <artifactId>graphcompose</artifactId>
+    <artifactId>graph-compose</artifactId>
     <version>1.6.6</version>
 </dependency>
 ```
 
 ```kotlin
-dependencies { implementation("io.github.demchaav:graphcompose:1.6.6") }
+dependencies { implementation("io.github.demchaav:graph-compose:1.6.6") }
 ```
 
 > **Distribution** &mdash; Maven Central is the canonical channel from **v1.6.6** onwards
-> (`io.github.demchaav:graphcompose:<version>`). Hosted Javadocs auto-publish to
-> [javadoc.io/doc/io.github.demchaav/graphcompose](https://javadoc.io/doc/io.github.demchaav/graphcompose)
+> (`io.github.demchaav:graph-compose:<version>`). Hosted Javadocs auto-publish to
+> [javadoc.io/doc/io.github.demchaav/graph-compose](https://javadoc.io/doc/io.github.demchaav/graph-compose)
 > shortly after each Central release. The legacy JitPack URL
 > (`com.github.DemchaAV:GraphCompose:v<version>`) remains resolvable for callers
 > pinned to v1.6.5 and earlier but is no longer the documented install option.

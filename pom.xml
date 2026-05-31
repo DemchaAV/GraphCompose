@@ -362,6 +362,39 @@
 
     <profiles>
         <!--
+            Optional-deps regression: runs the canonical suite with
+            `poi-ooxml` (and its transitives) excluded from the test
+            classpath, so callers that don't render DOCX validate that
+            our DocxSemanticBackend is genuinely optional. Tests that
+            require POI carry @DisabledIfSystemProperty(named = "no.poi",
+            matches = "true") and skip cleanly under this profile.
+            Activate with `-P no-poi`. Tracked in v1.6.6 stabilization
+            (Track I1).
+        -->
+        <profile>
+            <id>no-poi</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>${maven.surefire.plugin.version}</version>
+                        <configuration>
+                            <classpathDependencyExcludes>
+                                <classpathDependencyExclude>org.apache.poi:poi-ooxml</classpathDependencyExclude>
+                                <classpathDependencyExclude>org.apache.poi:poi</classpathDependencyExclude>
+                                <classpathDependencyExclude>org.apache.poi:poi-ooxml-lite</classpathDependencyExclude>
+                            </classpathDependencyExcludes>
+                            <systemPropertyVariables>
+                                <no.poi>true</no.poi>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!--
             Binary-compatibility baseline against the last published
             release. Activated with `-P japicmp`. Resolves the baseline
             artifact from JitPack (kept profile-local so consumers do

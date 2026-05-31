@@ -34,6 +34,18 @@ JitPack continue to resolve through the existing coordinates.
   excluded by convention (`InternalAnnotationCoverageTest` covers those).
   Method-level `@since` backfill for the ~380 public methods in these
   packages is intentionally out of scope here and tracked separately.
+- **`no-poi` Maven profile + CI job** (Track I1). The `poi-ooxml`
+  dependency is declared `<optional>true</optional>` so callers that
+  render only PDFs don't pay the ~10 MB POI footprint; this PR adds a
+  regression gate that proves it. Running `./mvnw -P no-poi test -pl .`
+  excludes `poi-ooxml` (and its `poi` / `poi-ooxml-lite` transitives)
+  from the surefire test classpath and sets the system property
+  `no.poi=true`. DOCX-specific tests (`DocxSemanticBackendTest` and the
+  one DOCX export in `DocumentSessionTest`) now carry
+  `@DisabledIfSystemProperty(named = "no.poi", matches = "true")` and
+  skip cleanly. The rest of the canonical suite (1029 tests, 4 skipped
+  under `-P no-poi`) runs green without POI on the classpath. A new
+  `no-poi-suite` CI job exercises the profile on every pull request.
 
 ### Public API
 

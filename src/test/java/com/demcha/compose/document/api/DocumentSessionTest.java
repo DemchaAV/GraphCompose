@@ -73,6 +73,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.text.PDFTextStripper;
 
@@ -681,6 +682,8 @@ class DocumentSessionTest {
     }
 
     @Test
+    @DisabledIfSystemProperty(named = "no.poi", matches = "true",
+            disabledReason = "Exercises DocxSemanticBackend; skipped under the no-poi profile that excludes poi-ooxml from the test classpath")
     void semanticBackendsShouldExportManifestsFromDocumentGraph() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(200, 200)

@@ -21,6 +21,24 @@ JitPack continue to resolve through the existing coordinates.
   `./mvnw -DskipTests -P japicmp verify -pl .`; HTML/MD/XML reports
   land in `target/japicmp/`. JitPack repository is scoped to the
   `japicmp` profile, so downstream consumers do not inherit it.
+- **`release` Maven profile with sources + javadoc jars** (Track D1).
+  Activated with `-P release`, attaches `*-sources.jar` and
+  `*-javadoc.jar` to the `package` phase via the standard
+  `maven-source-plugin` (3.3.1) and `maven-javadoc-plugin` (3.12.0)
+  configurations Maven Central requires. The Javadoc plugin runs with
+  `doclint=none` and `failOnError=false` so Lombok-generated members
+  and `@Internal` engine surface don't block a publish; warnings are
+  surfaced quietly. Default `mvnw verify` still does not pay the
+  ~30 s of extra packaging — the profile is off by default and turned
+  on by `cut-release.ps1` (once Track D3's central-publishing plugin
+  lands) and the publish workflow (Track D4).
+- **SCM block canonicalised** in `pom.xml` (Track D1 polish). The
+  Central metadata validator is strict about the `<scm>` block:
+  `<connection>` now uses `scm:git:https://…` (HTTPS, not the legacy
+  `git://` transport) and `<developerConnection>` now uses
+  `scm:git:ssh://git@github.com/…` (the canonical SSH URL with the
+  `git@` user, not the older `ssh://github.com:…` form). Matches the
+  shape every Central artefact's POM carries.
 - **New `benchmarks/README.md`** (Track B1). Honest framing for the
   manual benchmark layer ahead of the Maven Central debut: explicitly
   positions the harness as a smoke / diff / endurance tool — not a

@@ -35,8 +35,8 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/DemchaAV/GraphCompose.git</connection>
-        <developerConnection>scm:git:ssh://github.com:DemchaAV/GraphCompose.git</developerConnection>
+        <connection>scm:git:https://github.com/DemchaAV/GraphCompose.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/DemchaAV/GraphCompose.git</developerConnection>
         <url>https://github.com/DemchaAV/GraphCompose/tree/main</url>
     </scm>
 
@@ -68,6 +68,7 @@
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
         <maven.enforcer.plugin.version>3.5.0</maven.enforcer.plugin.version>
         <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
+        <maven.source.plugin.version>3.3.1</maven.source.plugin.version>
         <maven.surefire.plugin.version>3.5.5</maven.surefire.plugin.version>
 
         <!-- Minimum toolchain (enforced by maven-enforcer-plugin) -->
@@ -452,6 +453,65 @@
     </build>
 
     <profiles>
+        <!--
+            Maven Central / release-publishing artefacts. Activated
+            with `-P release`. Produces the `*-sources.jar` and
+            `*-javadoc.jar` Maven Central requires alongside the main
+            `.jar`. Activated by `cut-release.ps1` (when the
+            central-publishing plugin lands in Track D3) and by the
+            publish workflow (Track D4); never activated by the default
+            local build so a maintainer's everyday `mvnw verify` does
+            not pay the extra ~30 s of source / javadoc packaging.
+            Tracked in v1.6.6 stabilization (Track D1).
+        -->
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>${maven.source.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>${maven.javadoc.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                                <configuration>
+                                    <!--
+                                        Lombok-generated members and the
+                                        `@Internal` engine surface are not
+                                        part of the public Javadoc; skip
+                                        anything that would fail to resolve
+                                        rather than blocking the publish.
+                                    -->
+                                    <doclint>none</doclint>
+                                    <failOnError>false</failOnError>
+                                    <quiet>true</quiet>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
         <!--
             Optional-deps regression: runs the canonical suite with
             `poi-ooxml` (and its transitives) excluded from the test

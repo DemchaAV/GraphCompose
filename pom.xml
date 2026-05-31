@@ -66,8 +66,13 @@
 
         <!-- Build plugins -->
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
+        <maven.enforcer.plugin.version>3.5.0</maven.enforcer.plugin.version>
         <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
         <maven.surefire.plugin.version>3.5.5</maven.surefire.plugin.version>
+
+        <!-- Minimum toolchain (enforced by maven-enforcer-plugin) -->
+        <enforcer.requireMavenVersion>3.8.0</enforcer.requireMavenVersion>
+        <enforcer.requireJavaVersion>17</enforcer.requireJavaVersion>
 
         <!-- Binary compatibility baseline (japicmp profile) -->
         <japicmp.version>0.23.1</japicmp.version>
@@ -262,6 +267,44 @@
     </dependencies>
 
     <build>
+        <!--
+            Pin the default-lifecycle plugins (clean / install / site /
+            resources / deploy) so requirePluginVersions in the enforcer
+            block below has nothing to flag. Versions match what Maven
+            3.9.x currently resolves out-of-the-box; the explicit pin
+            stops a future Maven upgrade from silently shifting the
+            plugin set we build against.
+        -->
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>3.4.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>3.1.4</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>3.21.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.3.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>3.1.4</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
             <!-- Kotlin compatibility / mixed-source support -->
             <plugin>
@@ -295,6 +338,54 @@
                 <configuration>
                     <jvmTarget>${maven.compiler.release}</jvmTarget>
                 </configuration>
+            </plugin>
+
+            <!--
+                Build-time precondition enforcement. Three rules:
+                * requireJavaVersion: blocks builds on JDK < 17 (the
+                  declared baseline). Catches "works on my Java 21,
+                  silently breaks on the JDK 17 CI matrix" drift.
+                * requireMavenVersion: blocks Maven < 3.8.0 — the
+                  oldest version that fully supports the resolver
+                  features the central-publishing plugin (Track D3)
+                  needs to ship Maven Central artefacts.
+                * requirePluginVersions: every plugin must declare an
+                  explicit <version>. Stops the inherited "latest" or
+                  reactor-default drift that broke the v1.6.0 release
+                  (cf. PR-7.1 exec-plugin lesson). Tracked as 1.6.6 E2.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${maven.enforcer.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>enforce-toolchain-and-plugin-versions</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>[${enforcer.requireMavenVersion},)</version>
+                                    <message>GraphCompose requires Maven ${enforcer.requireMavenVersion} or newer.</message>
+                                </requireMavenVersion>
+                                <requireJavaVersion>
+                                    <version>[${enforcer.requireJavaVersion},)</version>
+                                    <message>GraphCompose requires JDK ${enforcer.requireJavaVersion} or newer.</message>
+                                </requireJavaVersion>
+                                <requirePluginVersions>
+                                    <banLatest>true</banLatest>
+                                    <banRelease>true</banRelease>
+                                    <banSnapshots>true</banSnapshots>
+                                    <message>Every plugin must declare an explicit non-LATEST/RELEASE version. See PR-7.1 (exec-plugin drift) for the lesson.</message>
+                                </requirePluginVersions>
+                            </rules>
+                            <fail>true</fail>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- Java compilation -->

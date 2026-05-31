@@ -34,6 +34,19 @@ JitPack continue to resolve through the existing coordinates.
   excluded by convention (`InternalAnnotationCoverageTest` covers those).
   Method-level `@since` backfill for the ~380 public methods in these
   packages is intentionally out of scope here and tracked separately.
+- **`maven-enforcer-plugin` gate** (Track E2). Binds three rules to the
+  `validate` phase so the build refuses to start when a precondition is
+  broken: `requireJavaVersion` (≥ 17 — the declared baseline, catches
+  accidental JDK 11 / 15 attempts), `requireMavenVersion` (≥ 3.8.0 —
+  the oldest version the planned central-publishing pipeline supports),
+  and `requirePluginVersions` (every plugin must declare an explicit
+  non-`LATEST` / non-`RELEASE` / non-`SNAPSHOT` version — the
+  generalisation of the PR-7.1 exec-plugin drift lesson).
+  Default-lifecycle plugins (`clean` / `install` / `site` / `resources` /
+  `deploy`) are now pinned in a new `<pluginManagement>` block so
+  `requirePluginVersions` has nothing to flag. Minimums and versions
+  live in `<properties>` (`enforcer.requireMavenVersion`,
+  `enforcer.requireJavaVersion`, `maven.enforcer.plugin.version`).
 - **Parallel-session stress test** (Track I2). New
   `DocumentSessionParallelStressTest` drives 32 independent
   `DocumentSession` instances on a fixed-size thread pool through 4

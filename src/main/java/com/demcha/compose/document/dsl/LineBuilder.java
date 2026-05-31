@@ -12,6 +12,7 @@ import com.demcha.compose.document.style.DocumentTransform;
  * Builder for fixed-size semantic line nodes.
  *
  * @author Artem Demchyshyn
+ * @since 1.0.0
  */
 public final class LineBuilder implements Transformable<LineBuilder> {
     private String name = "";

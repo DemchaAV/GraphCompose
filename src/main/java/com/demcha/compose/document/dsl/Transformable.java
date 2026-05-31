@@ -22,6 +22,7 @@ import com.demcha.compose.document.style.DocumentTransform;
  *            can chain naturally
  *
  * @author Artem Demchyshyn
+ * @since 1.0.0
  */
 public interface Transformable<T extends Transformable<T>> {
 

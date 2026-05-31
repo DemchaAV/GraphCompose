@@ -42,6 +42,7 @@ import java.util.function.Consumer;
 
 /**
  * Builder for semantic barcode and QR-code nodes.
+ * @since 1.0.0
  */
 public final class BarcodeBuilder implements Transformable<BarcodeBuilder> {
     private String name = "";

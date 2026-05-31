@@ -59,6 +59,7 @@ import java.util.function.Consumer;
  * <p><b>Thread-safety:</b> this type is mutable and not thread-safe.</p>
  *
  * @author Artem Demchyshyn
+ * @since 1.0.0
  */
 public final class DocumentSession implements AutoCloseable {
     private static final Logger LIFECYCLE_LOG = LoggerFactory.getLogger("com.demcha.compose.document.lifecycle");

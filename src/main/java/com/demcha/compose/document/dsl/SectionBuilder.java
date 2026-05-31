@@ -43,6 +43,7 @@ import java.util.function.Consumer;
  * Builder for semantic sections inside document flows.
  *
  * @author Artem Demchyshyn
+ * @since 1.0.0
  */
 public final class SectionBuilder extends AbstractFlowBuilder<SectionBuilder, SectionNode> {
     /**

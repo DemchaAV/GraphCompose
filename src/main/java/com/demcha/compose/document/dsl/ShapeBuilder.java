@@ -45,6 +45,7 @@ import java.util.function.Consumer;
  * Builder for rectangle-like semantic shape nodes.
  *
  * @author Artem Demchyshyn
+ * @since 1.0.0
  */
 public class ShapeBuilder implements Transformable<ShapeBuilder> {
     protected String name = "";

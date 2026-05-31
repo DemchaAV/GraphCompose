@@ -27,6 +27,7 @@ import java.util.Objects;
  * nine {@link LayerAlign} anchors plus optional on-screen offset.</p>
  *
  * @author Artem Demchyshyn
+ * @since 1.0.0
  */
 public final class ShapeContainerBuilder implements Transformable<ShapeContainerBuilder> {
     private String name = "";

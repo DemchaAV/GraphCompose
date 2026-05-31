@@ -43,6 +43,7 @@ import java.util.function.Consumer;
  * Builder for named semantic modules with optional title content.
  *
  * @author Artem Demchyshyn
+ * @since 1.0.0
  */
 public final class ModuleBuilder extends AbstractFlowBuilder<ModuleBuilder, SectionNode> {
     private String title = "";

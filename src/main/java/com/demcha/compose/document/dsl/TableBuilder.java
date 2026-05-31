@@ -24,6 +24,7 @@ import java.util.function.Consumer;
 
 /**
  * Builder for semantic table nodes.
+ * @since 1.0.0
  */
 public final class TableBuilder {
     private String name = "";

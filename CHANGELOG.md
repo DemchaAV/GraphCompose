@@ -52,6 +52,20 @@ JitPack continue to resolve through the existing coordinates.
   `GraphCompose.pdf(...)`, `PdfComposer`, etc. don't trip the
   legacy-token scan (same allowlist class as the v1.5 → v1.6 migration
   log already in there).
+- **`examples/README.md` reorganised by maturity** (Track G2). The
+  gallery section was grouped by the GraphCompose release that
+  introduced each example (Built-in templates / Cinematic v1.5 /
+  v1.5 feature showcases / v1.6 feature showcases / Public-API
+  surface / Production patterns / Operational documents) — useful
+  history for maintainers, less useful for someone landing on the
+  examples folder for the first time. The gallery now categorises
+  by maturity / intent: **🚀 Start here**, **🧱 Core DSL**,
+  **📋 Templates recommended**, **🔧 Advanced SPI**, **🗄️ Legacy**.
+  All 26 examples retained their anchor IDs, so existing deep links
+  continue to resolve; only the gallery index is restructured. A
+  maturity legend introduces the five tiers and links to
+  `docs/templates/which-template-system.md` for the V1 → V2 path that
+  the **Legacy** tier points at.
 
 ## v1.6.5 — 2026-05-30
 

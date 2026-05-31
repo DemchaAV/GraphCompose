@@ -44,6 +44,7 @@ import java.util.Objects;
  *                    Keep {@code yRatio + heightRatio <= 1.0} so the fill
  *                    stays within the page.
  * @param color       fill color (required)
+ * @since 1.0.0
  */
 public record PageBackgroundFill(double xRatio,
                                  double yRatio,

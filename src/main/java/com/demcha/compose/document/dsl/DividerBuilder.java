@@ -41,6 +41,7 @@ import java.util.function.Consumer;
 
 /**
  * Builder for thin horizontal divider nodes.
+ * @since 1.0.0
  */
 public final class DividerBuilder extends ShapeBuilder {
     DividerBuilder() {

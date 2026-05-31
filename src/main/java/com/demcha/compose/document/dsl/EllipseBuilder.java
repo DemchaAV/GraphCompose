@@ -14,6 +14,7 @@ import java.awt.Color;
  * Builder for semantic circle and ellipse nodes.
  *
  * @author Artem Demchyshyn
+ * @since 1.0.0
  */
 public final class EllipseBuilder implements Transformable<EllipseBuilder> {
     private String name = "";

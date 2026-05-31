@@ -21,6 +21,19 @@ JitPack continue to resolve through the existing coordinates.
   `./mvnw -DskipTests -P japicmp verify -pl .`; HTML/MD/XML reports
   land in `target/japicmp/`. JitPack repository is scoped to the
   `japicmp` profile, so downstream consumers do not inherit it.
+- **Class-level `@since 1.0.0` Javadoc on the public entry-point
+  surface** (Track H1). 26 public types in the canonical user-reached
+  packages (`com.demcha.compose.GraphCompose`, `com.demcha.compose.document.api.{DocumentSession, DocumentPageSize, PageBackgroundFill}`,
+  `com.demcha.compose.document.dsl.{DocumentDsl, RichText, Transformable}` plus all 19 DSL builders)
+  now carry class-level `@since 1.0.0` Javadoc tags so callers can see
+  the introduction version at IDE quick-doc / generated Javadoc time
+  without trawling CHANGELOG history. New guard test
+  `PublicApiSinceTagCoverageTest` source-scans the three entry-point
+  roots and fails the build if a new public top-level type lands
+  without a class-level `@since` tag; `internal/` sub-packages are
+  excluded by convention (`InternalAnnotationCoverageTest` covers those).
+  Method-level `@since` backfill for the ~380 public methods in these
+  packages is intentionally out of scope here and tracked separately.
 
 ### Engine internals (no behaviour change)
 

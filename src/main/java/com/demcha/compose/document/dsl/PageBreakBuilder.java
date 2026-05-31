@@ -41,6 +41,7 @@ import java.util.function.Consumer;
 
 /**
  * Builder for explicit page-break control nodes.
+ * @since 1.0.0
  */
 public final class PageBreakBuilder {
     private String name = "";

@@ -21,6 +21,7 @@ import java.util.function.Consumer;
 
 /**
  * Builder for semantic paragraph nodes and inline text runs.
+ * @since 1.0.0
  */
 public final class ParagraphBuilder {
     private String name = "";

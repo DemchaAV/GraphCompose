@@ -19,6 +19,7 @@ import java.util.Objects;
  * block by the canonical paginator.</p>
  *
  * @author Artem Demchyshyn
+ * @since 1.0.0
  */
 public final class LayerStackBuilder {
     private String name = "";

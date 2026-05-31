@@ -7,6 +7,7 @@ import com.demcha.compose.document.style.DocumentInsets;
  * Builder for invisible fixed-size spacer nodes.
  *
  * @author Artem Demchyshyn
+ * @since 1.0.0
  */
 public final class SpacerBuilder {
     private String name = "";

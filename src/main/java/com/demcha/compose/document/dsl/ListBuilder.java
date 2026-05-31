@@ -42,6 +42,7 @@ import java.util.function.Consumer;
 
 /**
  * Builder for semantic list nodes with marker and spacing controls.
+ * @since 1.0.0
  */
 public final class ListBuilder {
     private String name = "";

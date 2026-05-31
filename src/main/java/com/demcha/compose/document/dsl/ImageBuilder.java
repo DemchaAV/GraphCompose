@@ -15,6 +15,7 @@ import java.util.Objects;
  * Builder for semantic image nodes.
  *
  * @author Artem Demchyshyn
+ * @since 1.0.0
  */
 public final class ImageBuilder implements Transformable<ImageBuilder> {
     private String name = "";

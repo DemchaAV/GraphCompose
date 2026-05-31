@@ -35,6 +35,7 @@ import java.util.Objects;
  * }</pre>
  *
  * @author Artem Demchyshyn
+ * @since 1.0.0
  */
 public final class RichText {
     private final List<InlineRun> runs = new ArrayList<>();

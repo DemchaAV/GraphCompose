@@ -24,6 +24,7 @@ import java.util.function.Consumer;
  * }</pre>
  *
  * @author Artem Demchyshyn
+ * @since 1.0.0
  */
 public final class DocumentDsl {
     private final DocumentSession session;

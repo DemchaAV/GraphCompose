@@ -31,6 +31,7 @@ import java.util.Objects;
  * </ol>
  *
  * @author Artem Demchyshyn
+ * @since 1.0.0
  *
  * <h3>Build a PDF file with the canonical DSL</h3>
  * <pre>

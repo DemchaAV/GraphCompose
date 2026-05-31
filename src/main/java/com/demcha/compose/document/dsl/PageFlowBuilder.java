@@ -43,6 +43,7 @@ import java.util.function.Consumer;
  * Builder for root page-flow containers that attach to a document session.
  *
  * @author Artem Demchyshyn
+ * @since 1.0.0
  */
 public final class PageFlowBuilder extends AbstractFlowBuilder<PageFlowBuilder, ContainerNode> {
     private final DocumentSession session;

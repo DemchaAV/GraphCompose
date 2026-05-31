@@ -44,6 +44,7 @@ import java.util.function.Consumer;
  * atomic pagination.</p>
  *
  * @author Artem Demchyshyn
+ * @since 1.0.0
  */
 public final class RowBuilder {
     private String name = "";

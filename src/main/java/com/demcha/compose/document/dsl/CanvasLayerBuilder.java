@@ -20,6 +20,7 @@ import java.util.Objects;
  * positive {@code y} is down.</p>
  *
  * @author Artem Demchyshyn
+ * @since 1.0.0
  */
 public final class CanvasLayerBuilder {
 

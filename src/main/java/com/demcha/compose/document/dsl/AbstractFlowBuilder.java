@@ -23,6 +23,7 @@ import java.util.function.Consumer;
  *
  * @param <T> concrete builder type
  * @param <N> concrete node type
+ * @since 1.0.0
  */
 public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N extends DocumentNode> {
     private String name = "";

@@ -8,6 +8,7 @@ package com.demcha.compose.document.api;
  *
  * @param width page width in points
  * @param height page height in points
+ * @since 1.0.0
  */
 public record DocumentPageSize(double width, double height) {
     /**

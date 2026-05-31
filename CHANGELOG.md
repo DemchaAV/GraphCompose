@@ -3,6 +3,25 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v1.6.6 — Planned
+
+First Maven Central release. Adds publishable sources/javadoc jars,
+GPG-signed artifacts, a binary-compatibility gate against v1.6.5, and
+the metadata Maven Central requires. Zero breaking changes; users on
+JitPack continue to resolve through the existing coordinates.
+
+### Build
+
+- **Binary-compatibility gate against v1.6.5** (`japicmp` profile,
+  Track E1). The new `binary-compat` CI job builds the artifact on every
+  pull request and diffs it against `com.github.DemchaAV:GraphCompose:v1.6.5`
+  pulled from JitPack. Binary-incompatible modifications to the public
+  surface fail the build; source-incompatible changes are reported only
+  (phased policy, will tighten after the 1.6.6 cut). Run locally with
+  `./mvnw -DskipTests -P japicmp verify -pl .`; HTML/MD/XML reports
+  land in `target/japicmp/`. JitPack repository is scoped to the
+  `japicmp` profile, so downstream consumers do not inherit it.
+
 ## v1.6.5 — 2026-05-30
 
 ### Templates v2

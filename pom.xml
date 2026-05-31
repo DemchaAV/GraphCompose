@@ -68,6 +68,10 @@
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
         <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
         <maven.surefire.plugin.version>3.5.5</maven.surefire.plugin.version>
+
+        <!-- Binary compatibility baseline (japicmp profile) -->
+        <japicmp.version>0.23.1</japicmp.version>
+        <japicmp.baseline>v1.6.5</japicmp.baseline>
     </properties>
 
     <dependencyManagement>
@@ -355,4 +359,66 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!--
+            Binary-compatibility baseline against the last published
+            release. Activated with `-P japicmp`. Resolves the baseline
+            artifact from JitPack (kept profile-local so consumers do
+            NOT inherit a JitPack repository). Fails the build on any
+            binary-incompatible modification to the public surface;
+            source-incompatible changes are reported but do not fail
+            (yet) so the team can phase the policy in. Tracked in the
+            v1.6.6 stabilization (Track E1).
+        -->
+        <profile>
+            <id>japicmp</id>
+            <repositories>
+                <repository>
+                    <id>jitpack.io</id>
+                    <url>https://jitpack.io</url>
+                </repository>
+            </repositories>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.siom79.japicmp</groupId>
+                        <artifactId>japicmp-maven-plugin</artifactId>
+                        <version>${japicmp.version}</version>
+                        <executions>
+                            <execution>
+                                <id>japicmp-against-baseline</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>cmp</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <oldVersion>
+                                <dependency>
+                                    <groupId>com.github.DemchaAV</groupId>
+                                    <artifactId>GraphCompose</artifactId>
+                                    <version>${japicmp.baseline}</version>
+                                </dependency>
+                            </oldVersion>
+                            <newVersion>
+                                <file>
+                                    <path>${project.build.directory}/${project.build.finalName}.jar</path>
+                                </file>
+                            </newVersion>
+                            <parameter>
+                                <onlyModified>true</onlyModified>
+                                <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
+                                <breakBuildOnSourceIncompatibleModifications>false</breakBuildOnSourceIncompatibleModifications>
+                                <includeSynthetic>false</includeSynthetic>
+                                <reportOnlyFilename>true</reportOnlyFilename>
+                                <skipPomModules>true</skipPomModules>
+                            </parameter>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

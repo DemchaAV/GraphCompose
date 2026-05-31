@@ -19,9 +19,9 @@
 </p>
 
 > **Release status** &mdash;
-> 🟢 **Latest stable**: [v1.6.5](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.6.5)
-> &nbsp;·&nbsp; 🟡 **In develop**: v1.6.6 (Maven Central debut; zero breaking from v1.6.5)
-> &nbsp;·&nbsp; ⚪ **Planned next**: v1.6.7 (dependency cleanup), v1.7.0 (new canonical DSL primitives)
+> 🟢 **Latest stable**: [v1.6.6](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.6.6) (Maven Central debut; zero breaking from v1.6.5)
+> &nbsp;·&nbsp; 🟡 **In develop**: v1.6.7 (dependency cleanup)
+> &nbsp;·&nbsp; ⚪ **Planned next**: v1.7.0 (new canonical DSL primitives)
 > &nbsp;·&nbsp; See [API stability policy](./docs/api-stability.md) for tier definitions.
 
 <p align="center">

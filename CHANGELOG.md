@@ -22,6 +22,20 @@ JitPack continue to resolve through the existing coordinates.
   land in `target/japicmp/`. JitPack repository is scoped to the
   `japicmp` profile, so downstream consumers do not inherit it.
 
+### Engine internals (no behaviour change)
+
+- **`RowSlots` helper extracted** from `LayoutCompiler` and
+  `NodeDefinitionSupport`. The defence-in-depth `IllegalArgumentException`
+  guard added in v1.6.5 (PR-7.3) for the row weights / children size
+  mismatch lived as duplicated inline code at both engine call sites
+  with no direct test — a future refactor could have silently deleted
+  either copy. The validation now lives in
+  `com.demcha.compose.document.layout.RowSlots#validateWeightsMatchChildren`
+  (package-private), with `RowSlotsTest` driving it directly. Error
+  message is unchanged. `GraphCompose.DocumentBuilder#pageBackgrounds(...)`
+  Javadoc now spells out the empty-list-clears semantics in prose, not
+  only in the `@param` line.
+
 ## v1.6.5 — 2026-05-30
 
 ### Templates v2

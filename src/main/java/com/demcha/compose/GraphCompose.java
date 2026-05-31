@@ -251,6 +251,11 @@ public final class GraphCompose {
          * {@link com.demcha.compose.document.api.DocumentSession#pageBackgrounds}
          * for the full semantics.
          *
+         * <p>Calling this method with an empty list is an <b>explicit clear</b>:
+         * it overrides any earlier {@link #pageBackground(com.demcha.compose.document.style.DocumentColor)}
+         * call on the same builder and emits no page-background fragments.
+         * Passing {@code null} has the same effect.</p>
+         *
          * @param fills ordered fills, or {@code null}/empty to clear
          * @return this builder
          */
@@ -381,9 +386,8 @@ public final class GraphCompose {
                     markdown,
                     guideLines);
             if (pageBackgrounds != null) {
-                // Explicit pageBackgrounds() call wins — even an empty
-                // list is an intentional clear that should override any
-                // earlier pageBackground(color) on the same builder.
+                // Explicit pageBackgrounds() call wins over a prior
+                // pageBackground(color). Empty list = clear; see builder Javadoc.
                 session.pageBackgrounds(pageBackgrounds);
             } else if (pageBackground != null) {
                 session.pageBackground(pageBackground);

@@ -118,6 +118,41 @@ jobs:
           path: examples/target/generated-pdfs/**
           if-no-files-found: error
 
+  binary-compat:
+    name: Binary Compatibility (japicmp vs v1.6.5)
+    if: github.event_name == 'pull_request'
+    needs: architecture-and-documentation-guards
+    runs-on: ubuntu-latest
+    env:
+      JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Temurin JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Compare public API against baseline
+        # The `japicmp` profile pulls the v1.6.5 jar from JitPack and
+        # diffs it against the freshly-built artifact. Fails the job on
+        # any binary-incompatible modification to the public surface.
+        # Source-incompatible changes are reported only (phased policy).
+        # See Track E1 in the v1.6.5→1.7 readiness taskboard.
+        run: ./mvnw -B -ntp -DskipTests -P japicmp verify -pl .
+
+      - name: Upload japicmp report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: japicmp-report-${{ github.run_id }}
+          path: target/japicmp/**
+          if-no-files-found: ignore
+
   perf-smoke:
     name: Performance Smoke Check
     if: github.event_name == 'pull_request'

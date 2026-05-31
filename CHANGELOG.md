@@ -202,6 +202,31 @@ to ship the same artefact.
 
 ### Documentation
 
+- **New flagship example: `EngineShowcase`** + **regenerated
+  `assets/readme/repository_showcase_render.png` hero image** ahead of
+  the Maven Central debut. A presentation audit before v1.6.6 flagged
+  that the existing hero PDF was a dated single-page render and the
+  GitHub Pages showcase had 20 broken asset paths (CV v2 migration
+  added `-v2` suffixes that `docs/index.html` never picked up). Fixed
+  in three commits: (a) `docs/index.html` path repair so every CV /
+  cover-letter preview resolves; (b) new flagship
+  `examples/.../flagships/EngineShowcase.java` renders a single-page
+  cinematic brand promo — a navy + electric-orange composition with a
+  rounded clip-frame hero (semantic-graph → polished-PDFs visual
+  metaphor), a magazine-headline lockup ("Documents as code. /
+  Cinematic by default."), three KPI cards (Templates v2 · 1,033
+  tests · v1.6.6 Maven Central), a three-column capability grid
+  (Semantic DSL · Deterministic Layout · Cinematic Themes), and a
+  footer brand stripe — exercising `ShapeContainerNode` +
+  `ClipPolicy.CLIP_PATH` for the hero frame, classpath-loaded image
+  embedding (`examples/src/main/resources/engine-hero.png`),
+  `softPanel(...)` + `accentLeft(...)` decorators on V2 sections, and
+  mixed serif/sans typography; (c) page 1 rasterised to
+  `assets/readme/repository_showcase_render.png` via the new persistent
+  helper `com.demcha.examples.support.PdfPageRasterizer` (PDFBox-based,
+  no external Ghostscript / ImageMagick dependency). The hero now
+  reads as the engine's brand register rather than a Lorem-ipsum
+  template render.
 - **`docs/architecture/package-map.md` updated** alongside H2. A new
   intro paragraph documents the stability-marker convention (Stable
   default; engine packages are package-level `@Internal`; individual

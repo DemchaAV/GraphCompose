@@ -51,8 +51,8 @@ The gallery is driven by code, not by hand-editing JSON. Source of truth:
 ## Version and source links
 
 - The displayed version lives **only** in `index.html` (JSON-LD
-  `softwareVersion`, the JitPack download URL, the hero badge, and the Maven +
-  Gradle install snippets). It does not inherit from the pom.
+  `softwareVersion`, the Maven Central artefact URL, the hero badge, and the
+  Maven + Gradle install snippets). It does not inherit from the pom.
 - `scripts/cut-release.ps1` flips all of those — plus the README and poms — to
   the release tag in the release commit, and `VersionConsistencyGuardTest`
   fails the `verify` gate if any of them drift out of sync with the library

@@ -49,7 +49,7 @@ back here.
 ### Contributing
 - **[contributing/extension-guide.md](contributing/extension-guide.md)** — add a new node type, backend handler, or theme primitive.
 - **[contributing/implementation-guide.md](contributing/implementation-guide.md)** — internal engine notes for contributors hacking on layout / measurement / pagination.
-- **[contributing/release-process.md](contributing/release-process.md)** — versioning, tag procedure, JitPack publication.
+- **[contributing/release-process.md](contributing/release-process.md)** — versioning, tag procedure, Maven Central publication.
 
 ### Roadmaps & migrations
 - **[roadmaps/v1.6-roadmap.md](roadmaps/v1.6-roadmap.md)** — current development roadmap.

@@ -8,12 +8,12 @@ In flight on `main` / `develop`.
 
 - v1.6 polish &mdash; documentation, examples, visual baselines, fixes.
 - Open-source hygiene &mdash; security policy, support guidance, dependency automation, security scanning.
+- **Maven Central distribution** &mdash; debut shipping in v1.6.6 under `io.github.demchaav:graphcompose`. Replaces JitPack as the primary install channel; the JitPack URL stays alive for existing pinned consumers but is no longer documented as a primary option. Tracked in [#7](https://github.com/DemchaAV/GraphCompose/issues/7).
 
 ## Next (v1.7)
 
 Committed direction. Tracked in CHANGELOG (Phase E) and issues.
 
-- **Maven Central distribution** &mdash; replace JitPack as the primary install channel. Tracked in [#7](https://github.com/DemchaAV/GraphCompose/issues/7).
 - **JMH benchmark migration** &mdash; replace the current custom benchmark harness with `org.openjdk.jmh` so the published numbers are credible and machine-comparable.
 - **Templates v2 component refactor** &mdash; 13 of the 14 v2 CV presets are currently hand-coded `DocumentTemplate` subclasses. Route more visual decisions through `CvBuilder` and equivalent component recipes so each preset becomes a thin composition rather than a 400&ndash;700-line class.
 

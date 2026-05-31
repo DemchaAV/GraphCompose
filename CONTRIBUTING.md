@@ -76,9 +76,9 @@ GraphCompose follows a fork &rarr; feature branch &rarr; pull request flow. Exte
 
 ### Release flow
 
-1. **Release prep** lands on `develop` &mdash; version bumps in `pom.xml`, `examples/pom.xml`, and `benchmarks/pom.xml`; fresh CHANGELOG entry; migration guide for minor releases. **README install snippets stay pinned to the previously published tag** (e.g. `v1.6.0`) until JitPack confirms the new build, otherwise consumers copying the snippet during the publish window hit a 404.
+1. **Release prep** lands on `develop` &mdash; version bumps propagate via `aggregator/pom.xml` to all modules in one pass; fresh CHANGELOG entry; migration guide for minor releases. **README install snippet stays pinned to the previously published version** until Maven Central confirms the new artifact, otherwise consumers copying the snippet during the publish window hit a 404.
 2. **`scripts/cut-release.ps1 -Version <X.Y.Z>`** automates the bump + CHANGELOG date + commit + tag + push from `develop`. The maintainer fast-forwards `main` from `develop` after the tag lands (`git push origin develop:main`).
-3. **JitPack** picks up the new tag automatically. After JitPack reports `BUILD SUCCESS`, a separate post-release commit on `develop` flips the README install snippets to the new version.
+3. **Maven Central** picks up the new tag automatically via [`.github/workflows/publish.yml`](./.github/workflows/publish.yml) &mdash; the workflow re-runs `mvnw verify` at the tagged commit, signs the four artefacts (main / sources / javadoc / pom) with the repo's GPG key, and uploads via the `central-publishing-maven-plugin`. Hyphenated tags (`-rc`, `-alpha`, `-beta`) are skipped on Central; they ship only to the GitHub Release pre-release surface. Javadocs auto-publish to [javadoc.io/doc/io.github.demchaav/graphcompose](https://javadoc.io/doc/io.github.demchaav/graphcompose) shortly after each Central release.
 4. **GitHub Release** is created with notes from the matching `CHANGELOG.md` section.
 
 See [docs/contributing/release-process.md](./docs/contributing/release-process.md) for the full checklist (audit gates, hotfix protocol, lessons learned).

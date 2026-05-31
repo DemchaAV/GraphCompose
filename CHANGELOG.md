@@ -34,6 +34,20 @@ JitPack continue to resolve through the existing coordinates.
   excluded by convention (`InternalAnnotationCoverageTest` covers those).
   Method-level `@since` backfill for the ~380 public methods in these
   packages is intentionally out of scope here and tracked separately.
+- **Parallel-session stress test** (Track I2). New
+  `DocumentSessionParallelStressTest` drives 32 independent
+  `DocumentSession` instances on a fixed-size thread pool through 4
+  iterations and asserts (a) all parallel renders produce a layout-graph
+  signature byte-equal to the sequential baseline — exercising the
+  shared font registry, glyph cache, built-in node definitions, and
+  shape-outline cache for race conditions; (b) every PDF output starts
+  with the `%PDF` magic, is at least 256 bytes, and has size variance
+  under 256 bytes across threads (catching corruption or rare
+  non-determinism without locking exact byte counts that timestamps
+  could drift). 128 + 128 = 256 renders complete in ~1.6 s locally, so
+  the test does not bloat CI. The contract is that each
+  `DocumentSession` is single-threaded but the process-wide machinery
+  handles concurrent _independent_ sessions safely; this test pins that.
 - **`no-poi` Maven profile + CI job** (Track I1). The `poi-ooxml`
   dependency is declared `<optional>true</optional>` so callers that
   render only PDFs don't pay the ~10 MB POI footprint; this PR adds a

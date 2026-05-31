@@ -21,6 +21,21 @@ JitPack continue to resolve through the existing coordinates.
   `./mvnw -DskipTests -P japicmp verify -pl .`; HTML/MD/XML reports
   land in `target/japicmp/`. JitPack repository is scoped to the
   `japicmp` profile, so downstream consumers do not inherit it.
+- **`central-publishing-maven-plugin` in the `release` profile**
+  (Track D3). Adds Sonatype's `central-publishing-maven-plugin` 0.7.0
+  to the existing `release` profile as a packaging extension. Replaces
+  the legacy `nexus-staging-maven-plugin` + manual staging-repository
+  workflow with a single `deploy` call. Configuration:
+  `publishingServerId=central` (matches the `<server id="central">`
+  entry the publish workflow writes from `CENTRAL_USERNAME` /
+  `CENTRAL_TOKEN` secrets), `autoPublish=false` (validation gate before
+  the artefact goes live — flips to `true` once we're confident
+  post-D4), `waitUntil=validated` (the build waits for Sonatype's
+  validator so any rejection surfaces in the workflow run, not a
+  silent stuck upload). Requires the `io.github.demchaav` namespace to
+  be verified on `central.sonatype.com` (one-time human step via
+  GitHub auth or DNS TXT record). The plugin loads inert until D4's
+  workflow provides the credentials.
 - **GPG signing in the `release` profile** (Track D2). Adds
   `maven-gpg-plugin` 3.2.7 to the existing `release` profile, binding
   to the `verify` phase to sign main / sources / javadoc / pom

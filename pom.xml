@@ -65,6 +65,7 @@
         <byteBuddy.version>1.18.8</byteBuddy.version>
 
         <!-- Build plugins -->
+        <central.publishing.plugin.version>0.7.0</central.publishing.plugin.version>
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
         <maven.enforcer.plugin.version>3.5.0</maven.enforcer.plugin.version>
         <maven.gpg.plugin.version>3.2.7</maven.gpg.plugin.version>
@@ -554,6 +555,54 @@
                                 </configuration>
                             </execution>
                         </executions>
+                    </plugin>
+                    <!--
+                        Sonatype central-publishing-maven-plugin: the
+                        modern replacement for the old `nexus-staging-maven-plugin`
+                        + manual staging-repository flow. Uploads the
+                        signed artefacts (main + sources + javadoc + pom)
+                        to the namespace verified at central.sonatype.com.
+
+                        Configuration:
+                          publishingServerId=central — matches the
+                            <server id="central"> entry the publish
+                            workflow (Track D4) writes into
+                            ~/.m2/settings.xml from the CENTRAL_USERNAME
+                            / CENTRAL_TOKEN repo secrets.
+                          autoPublish=false — uploads to the validation
+                            queue but does NOT auto-release. The
+                            maintainer flips the switch on
+                            central.sonatype.com after a sanity check
+                            on the first publish; subsequent releases
+                            can flip this to true in the workflow when
+                            we are confident.
+                          waitUntil=validated — block the Maven build
+                            until Sonatype's validator confirms the
+                            upload meets the Central requirements
+                            (signed artefacts, sources/javadoc jars,
+                            valid POM metadata, etc.). Surfaces errors
+                            inside the workflow run rather than
+                            silently leaving a stuck upload.
+                          <extensions>true</extensions> — required so
+                            the plugin participates in the build
+                            lifecycle as a packaging extension.
+
+                        Requires (configured by Track D4 workflow):
+                          - CENTRAL_USERNAME / CENTRAL_TOKEN secrets
+                          - namespace `io.github.demchaav` verified on
+                            central.sonatype.com (one-time, via GitHub
+                            auth or DNS TXT record).
+                    -->
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>${central.publishing.plugin.version}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>false</autoPublish>
+                            <waitUntil>validated</waitUntil>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>

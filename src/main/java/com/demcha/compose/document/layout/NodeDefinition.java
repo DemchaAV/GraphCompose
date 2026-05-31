@@ -1,5 +1,6 @@
 package com.demcha.compose.document.layout;
 
+import com.demcha.compose.document.api.Beta;
 import com.demcha.compose.document.node.DocumentNode;
 
 import java.util.List;
@@ -7,8 +8,21 @@ import java.util.List;
 /**
  * Prepare, split, and fragment emission contract for a semantic node type.
  *
+ * <p><b>Extension SPI seam.</b> This interface is the deliberately-public
+ * extension point inside the otherwise {@link com.demcha.compose.document.api.Internal
+ * &#64;Internal} {@code document.layout} package: library users implementing
+ * custom node types reach for it. The implementation contract — the
+ * shape of {@link PrepareContext}, {@link FragmentContext},
+ * {@link BoxConstraints}, {@link MeasureResult}, and friends — may
+ * evolve in a minor release, with a one-minor deprecation window where
+ * possible. See the
+ * <a href="https://github.com/DemchaAV/GraphCompose/blob/develop/docs/api-stability.md">API stability policy</a>
+ * § 1 (<em>Extension SPI</em> row) for the full contract.</p>
+ *
  * @param <E> semantic node type
+ * @since 1.0.0
  */
+@Beta
 public interface NodeDefinition<E extends DocumentNode> {
 
     /**

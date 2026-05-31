@@ -30,18 +30,22 @@ matrix.
 |---|---|---|---|
 | **Stable** | _(default — no annotation)_ | The canonical authoring surface that user code is meant to call: `GraphCompose.document(...)`, `DocumentSession`, `DocumentDsl`, `RowBuilder` / `SectionBuilder` / `ParagraphBuilder` and friends, `DocumentInsets` / `DocumentColor` / `DocumentTextStyle`, the `BusinessTheme` and `CvTheme` factories, the recommended template presets in `cv.v2.*` and `coverletter.v2.*`. | **Major releases only.** |
 | **Supported** | _(no annotation; called out in the page's Javadoc)_ | A canonical surface that ships through 1.x but won't be in 2.0 — its replacement is already the Stable path. The `cv.presets.*` "classic" CV preset surface is the only Supported tier in 1.x today (replaced by `cv.v2.*` per [`which-template-system.md`](templates/which-template-system.md)). Bug fixes + behaviour-preserving refactors only. | **Minor releases for behaviour-preserving refactors; removed wholesale in 2.0.** |
-| **Extension SPI** | `@Beta` _(annotation arriving in a near-term 1.6.x release; this row already describes the policy that will apply)_ | Public extension points that authors are expected to **implement**, not only call: render-handler interfaces, `NodeDefinition`, custom `Theme` subtype contracts, fragment payload interfaces designed for extension. | Minor releases, with a one-minor deprecation window where possible. |
-| **Experimental** | `@Beta` _(same annotation as Extension SPI; the distinction lives in the docstring)_ | A brand-new public type shipping in its first minor release before its contract has stabilised. The contract is in active flux. | Any minor release, including removal. No deprecation window. |
+| **Extension SPI** | [`@Beta`](../src/main/java/com/demcha/compose/document/api/Beta.java) | Public extension points that authors are expected to **implement**, not only call: render-handler interfaces, [`NodeDefinition`](../src/main/java/com/demcha/compose/document/layout/NodeDefinition.java), custom `Theme` subtype contracts, fragment payload interfaces designed for extension. | Minor releases, with a one-minor deprecation window where possible. |
+| **Experimental** | [`@Beta`](../src/main/java/com/demcha/compose/document/api/Beta.java) _(same annotation as Extension SPI; the distinction lives in the docstring on the annotated element)_ | A brand-new public type shipping in its first minor release before its contract has stabilised. The contract is in active flux. | Any minor release, including removal. No deprecation window. |
 | **Internal** | [`@Internal`](../src/main/java/com/demcha/compose/document/api/Internal.java) (per-element or per-package) | Engine surface: everything in `com.demcha.compose.document.layout.*`, `com.demcha.compose.engine.*`, render-pipeline payload records, `LayoutCompiler`, `NodeDefinitionSupport`, the placement / measure / split contracts. Technically `public` for cross-package collaboration; not part of the contract. Canonical list lives in [ADR-0003](adr/0003-api-stability-and-internal-marker.md) § *Coverage*. | **Any release.** No deprecation window, no CHANGELOG entry required. |
 | **Legacy** | _(no annotation today; flagged in [`which-template-system.md`](templates/which-template-system.md) § 4 and in CHANGELOG `### Deprecations`)_ | Pre-rebuild surface kept only so downstream callers from before the v1.6 rebuild keep compiling: `com.demcha.templates.*` (the original `MainPageCV` / `MainPageCvDTO` / `ModuleYml` / `TemplateBuilder` family), `com.demcha.compose.v2.*` (the original engine-direct builders). Frozen — bug fixes only. | **Removed in 2.0**; no patch / minor changes other than security fixes. |
 
-> The repo's [`@Internal`](../src/main/java/com/demcha/compose/document/api/Internal.java)
-> annotation already exists and is enforced by
-> [`InternalAnnotationCoverageTest`](../src/test/java/com/demcha/documentation/InternalAnnotationCoverageTest.java)
-> and `InternalAnnotationDocumentationTest`. The `@Beta` annotation is
-> still pending — until it lands, Extension SPI and Experimental tiers
-> are signalled in Javadoc prose only; this page describes the policy
-> the annotation will encode once it ships.
+> Both marker annotations
+> ([`@Internal`](../src/main/java/com/demcha/compose/document/api/Internal.java)
+> and [`@Beta`](../src/main/java/com/demcha/compose/document/api/Beta.java))
+> live in the public `document.api` package and are pinned by
+> [`InternalAnnotationCoverageTest`](../src/test/java/com/demcha/documentation/InternalAnnotationCoverageTest.java),
+> `InternalAnnotationDocumentationTest`, and `BetaAnnotationDocumentationTest`.
+> The Extension SPI seam currently carrying `@Beta` is
+> [`NodeDefinition`](../src/main/java/com/demcha/compose/document/layout/NodeDefinition.java);
+> additional Extension SPI surfaces (render-handler interfaces,
+> fragment-payload interfaces designed for extension) will gain the
+> marker incrementally as their contract solidifies.
 
 ### What each tier promises
 

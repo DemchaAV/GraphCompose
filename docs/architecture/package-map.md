@@ -2,6 +2,17 @@
 
 This document is the source of truth for production package ownership in the canonical engine branch.
 
+**Stability markers.** Public packages default to the **Stable** tier of the
+[API stability policy](../api-stability.md). Engine packages (`com.demcha.compose.engine.*`,
+`com.demcha.compose.document.layout`, render-pipeline internals) carry the
+[`@Internal`](../../src/main/java/com/demcha/compose/document/api/Internal.java)
+marker at the package level; individual types deliberately exposed as
+Extension SPI inside an `@Internal` package carry
+[`@Beta`](../../src/main/java/com/demcha/compose/document/api/Beta.java)
+on the type itself (`NodeDefinition` is the current example). The
+"Extension rule" column below names the extension seam where one is
+intended.
+
 ## Public Authoring Surface
 
 | Package | Responsibility | Extension rule |
@@ -20,7 +31,7 @@ This document is the source of truth for production package ownership in the can
 
 | Package | Responsibility | Extension rule |
 | --- | --- | --- |
-| `com.demcha.compose.document.layout` | Semantic layout compiler, node definitions, fragments, split/measure contracts, and layout graph. | New node behavior must be deterministic and covered by layout or render tests. |
+| `com.demcha.compose.document.layout` (`@Internal` at package level) | Semantic layout compiler, node definitions, fragments, split/measure contracts, and layout graph. | `NodeDefinition` is `@Beta` — Extension SPI for custom node types. New node behavior must be deterministic and covered by layout or render tests. |
 | `com.demcha.compose.document.backend.fixed` | Backend-neutral fixed-layout rendering contract. | Keep it independent from PDFBox and semantic template data. |
 | `com.demcha.compose.document.backend.fixed.pdf` | Canonical fixed-layout PDF backend, fragment handlers, PDF-specific options, and PDF-backed measurement resources. | Keep PDFBox lifecycle internal; normal callers should use `DocumentSession` and default PDF convenience methods. |
 | `com.demcha.compose.document.dsl.internal` | Internal helpers for public DSL builders such as semantic name normalization and builder callback application. | Do not expose these helpers in examples; move reusable authoring concepts to public builder classes instead. |

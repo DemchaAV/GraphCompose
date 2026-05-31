@@ -36,6 +36,23 @@ JitPack continue to resolve through the existing coordinates.
   Javadoc now spells out the empty-list-clears semantics in prose, not
   only in the `@param` line.
 
+### Documentation
+
+- **New decision guide: [`docs/templates/which-template-system.md`](docs/templates/which-template-system.md)**
+  (Track G1). The repo ships two parallel canonical template surfaces —
+  `cv.presets.*` (the "classic" v1.6 rebuild) and `cv.v2.presets.*` (the
+  layered architecture, recommended) — under confusingly similar names.
+  The new page pins the terminology once, gives a status matrix
+  (Recommended / Supported / Legacy / Internal) for every template
+  surface and the canonical DSL, walks a decision tree for new code, and
+  provides a preset-by-preset migration table from `classic` to
+  `layered` plus a 1.x → 2.0 deprecation inventory naming every type
+  scheduled for removal. `CanonicalSurfaceGuardTest` allowlist updated
+  so the deprecation-inventory section's literal mentions of
+  `GraphCompose.pdf(...)`, `PdfComposer`, etc. don't trip the
+  legacy-token scan (same allowlist class as the v1.5 → v1.6 migration
+  log already in there).
+
 ## v1.6.5 — 2026-05-30
 
 ### Templates v2

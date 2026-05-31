@@ -271,11 +271,30 @@ function Run-ShowcaseSync {
     # as a single literal argument.
     $execProp = '"-Dexec.mainClass=com.demcha.examples.support.ShowcaseSync"'
     if ($DryRun) {
+        Write-Host "    [DRY RUN] $mvnw -B -ntp -DskipTests install -pl ." -ForegroundColor Yellow
         Write-Host "    [DRY RUN] $mvnw -f examples/pom.xml exec:java $execProp" -ForegroundColor Yellow
         return
     }
     Push-Location $repoRoot
     try {
+        # ShowcaseSync runs from the examples module, which depends on
+        # io.github.demchaav:graphcompose:${project.version}. After Step 1
+        # bumps the four pom.xml files to the new release version, that
+        # artifact is not yet in the local m2 cache — only the previous
+        # release is — so exec:java fails dependency resolution with
+        # "Could not find artifact ...:graphcompose:jar:<new-version>".
+        # Install the root artifact first so the examples module can
+        # resolve it. Bug surfaced during v1.6.5 cut: Step 4 aborted with
+        # exit 1; we had to install by hand and resume manually.
+        Write-Host "    > $mvnw -B -ntp -DskipTests install -pl ." -ForegroundColor DarkGray
+        & $mvnw -B -ntp -DskipTests install -pl . 2>&1 | ForEach-Object {
+            if ($_ -match 'BUILD SUCCESS|BUILD FAILURE|ERROR') {
+                Write-Host "    $_" -ForegroundColor DarkGray
+            }
+        }
+        if ($LASTEXITCODE -ne 0) {
+            throw "Install root artifact failed (exit $LASTEXITCODE)"
+        }
         & $mvnw -f examples/pom.xml exec:java $execProp 2>&1 | ForEach-Object {
             if ($_ -match 'Synced|Wrote manifest|BUILD SUCCESS|BUILD FAILURE|ERROR') {
                 Write-Host "    $_" -ForegroundColor DarkGray
@@ -337,28 +356,37 @@ try {
 
     Step 0 "Pre-flight checks"
 
-    # 1. On develop branch?
+    # In -DryRun mode the script never mutates anything, so the branch /
+    # working-tree / origin-sync gates are relaxed: a maintainer can preview
+    # what a release cut would do from a feature branch (e.g. while iterating
+    # on the script itself) without having to switch to develop and back.
+    # Live cuts still fail these gates loudly.
     $branch = (git rev-parse --abbrev-ref HEAD).Trim()
-    if ($branch -ne 'develop') {
-        throw "Not on develop branch (currently on $branch). Switch to develop first."
-    }
-    Note "branch: develop OK"
+    if ($DryRun) {
+        Note "branch: $branch (gate relaxed for -DryRun)"
+    } else {
+        # 1. On develop branch?
+        if ($branch -ne 'develop') {
+            throw "Not on develop branch (currently on $branch). Switch to develop first."
+        }
+        Note "branch: develop OK"
 
-    # 2. Working tree clean?
-    $status = git status --porcelain
-    if ($status) {
-        throw "Working tree has uncommitted changes. Commit or stash first."
-    }
-    Note "working tree: clean OK"
+        # 2. Working tree clean?
+        $status = git status --porcelain
+        if ($status) {
+            throw "Working tree has uncommitted changes. Commit or stash first."
+        }
+        Note "working tree: clean OK"
 
-    # 3. In sync with origin?
-    git fetch origin develop --quiet
-    $local = (git rev-parse develop).Trim()
-    $remote = (git rev-parse origin/develop).Trim()
-    if ($local -ne $remote) {
-        throw "Local develop ($local) is not in sync with origin/develop ($remote). Pull/push first."
+        # 3. In sync with origin?
+        git fetch origin develop --quiet
+        $local = (git rev-parse develop).Trim()
+        $remote = (git rev-parse origin/develop).Trim()
+        if ($local -ne $remote) {
+            throw "Local develop ($local) is not in sync with origin/develop ($remote). Pull/push first."
+        }
+        Note "in sync with origin/develop OK"
     }
-    Note "in sync with origin/develop OK"
 
     # 4. Tag doesn't already exist?
     $existingTag = git tag -l $tag

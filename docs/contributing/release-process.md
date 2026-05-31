@@ -94,9 +94,39 @@ Run within 1 hour of the tag push. Independent steps can run in parallel.
 6. **Re-run all examples against the published artifact** — `./mvnw -f examples/pom.xml clean package` followed by `exec:java -Dexec.mainClass=com.demcha.examples.GenerateAllExamples`. Expect 26+ `Generated:` lines.
 7. **Flip ShowcaseMetadata back to develop** — `pwsh ./scripts/cut-release.ps1 -PostReleaseOnly`. This restores linkable "View Code" buttons for ongoing v1.x.y dev work.
 8. **GitHub Release — automated.** Pushing the `v<target>` tag triggers [`.github/workflows/release.yml`](../../.github/workflows/release.yml): it re-runs `./mvnw clean verify -pl .` against the tagged commit, then creates the Release with that version's CHANGELOG section as the body (hyphenated tags like `v1.7.0-rc.1` ship as pre-releases; the step is idempotent — it edits the notes if the Release already exists). The workflow titles it `GraphCompose v<target>`; for a **minor** release, edit the title to add the codename (`v1.4`=cinematic, `v1.5`=intuitive, `v1.6`=expressive; patches drop it). Create the Release by hand (`gh release create v<target> --notes-file <CHANGELOG section>`) only if the workflow is unavailable.
-9. **Optional**: GitHub Discussions announcement (mirror the prior release's style; close with *"author intent, not coordinates"*), LinkedIn post, r/java post.
+9. **Maven Central publish — automated (from v1.6.6).** The same `v<target>` tag push triggers [`.github/workflows/publish.yml`](../../.github/workflows/publish.yml): it re-runs `mvnw verify` at the tagged commit, signs the four artefacts (main / sources / javadoc / pom) with the repo's GPG key, and uploads to Maven Central via the `central-publishing-maven-plugin`. Hyphenated tags (`-rc`, `-alpha`, `-beta`, `-snapshot`) are skipped — those go only to JitPack + the GitHub Release pre-release surface. `autoPublish=false` in the plugin config means the artefact lands in the Central validation queue; the maintainer flips the switch on [central.sonatype.com](https://central.sonatype.com) for the first publish, then can opt into auto-release in a follow-up. Verify via `mvn dependency:get -DgroupId=io.github.demchaav -DartifactId=graphcompose -Dversion=<target>` once the artifact appears (usually 5–15 minutes after the workflow turns green).
+10. **Optional**: GitHub Discussions announcement (mirror the prior release's style; close with *"author intent, not coordinates"*), LinkedIn post, r/java post.
 
-The release is **done** only when steps 1–7 are all green.
+The release is **done** only when steps 1–7 are all green; step 9 adds Maven Central availability once the D-track of v1.6.6 has shipped.
+
+---
+
+## 2.C One-time Maven Central setup (maintainer)
+
+These steps are done **once per repo** before the publish workflow can succeed; they are *not* part of every release. Listed here so a future maintainer (or a future me) can reproduce the setup without spelunking through commit history.
+
+1. **Generate a GPG key.**
+   ```bash
+   gpg --full-generate-key            # RSA 4096, no expiry, real-name / email of maintainer
+   gpg --list-secret-keys --keyid-format=long
+   gpg --armor --export-secret-keys <KEYID> > private-key.asc   # never commit this file
+   ```
+2. **Publish the public key to a keyserver pool.** Central validates the signature against one of these. Two redundant pools is the conventional minimum:
+   ```bash
+   gpg --keyserver keys.openpgp.org   --send-keys <KEYID>
+   gpg --keyserver keyserver.ubuntu.com --send-keys <KEYID>
+   ```
+   `keys.openpgp.org` requires a one-time email-verification round-trip on the address attached to the key.
+3. **Register a Sonatype Central account.** At [central.sonatype.com](https://central.sonatype.com) — sign in with GitHub for the auto-verified `io.github.<gh-handle>` namespace (the `io.github.demchaav` namespace this repo claims). Verify the namespace via GitHub-account check or DNS TXT record on the published domain.
+4. **Generate a Central user token.** Account → Generate User Token → copy the `username` and `password` halves. These are credentials, not the GitHub login.
+5. **Wire four GitHub repo secrets.** Repo Settings → Secrets and variables → Actions → New repository secret:
+   - `MAVEN_GPG_PRIVATE_KEY` — full ASCII-armored private key (the contents of `private-key.asc` from step 1).
+   - `MAVEN_GPG_PASSPHRASE` — the passphrase guarding the key.
+   - `CENTRAL_USERNAME` — token username from step 4.
+   - `CENTRAL_TOKEN` — token password from step 4.
+6. **Test the wiring on a release-candidate tag** *before* the first real release. `v1.6.6-rc.1` (hyphenated) skips Central per `publish.yml`'s `if:` guard, so it's safe — alternatively, cut `v1.6.6` for real and observe the workflow; `autoPublish=false` means a failed validation does not pollute Central, the artefact just sits in the validation queue until manually released or deleted.
+
+If any of these stop working between releases (key expired, token rotated), the publish workflow surfaces the failure inside the workflow run — the GitHub Release and the JitPack artefact are still cut by the other workflows.
 
 ---
 

@@ -21,6 +21,31 @@ JitPack continue to resolve through the existing coordinates.
   `./mvnw -DskipTests -P japicmp verify -pl .`; HTML/MD/XML reports
   land in `target/japicmp/`. JitPack repository is scoped to the
   `japicmp` profile, so downstream consumers do not inherit it.
+- **Maven Central publish workflow** (Track D4). New
+  [`.github/workflows/publish.yml`](.github/workflows/publish.yml) fires
+  on the same `v*` tag push that triggers the existing
+  `release.yml`. It re-runs `mvnw verify` at the tagged commit, imports
+  the GPG key (Track D2) into the runner keyring, writes the
+  `<server id="central">` credentials block into `~/.m2/settings.xml`
+  via `actions/setup-java@v5`, then invokes
+  `./mvnw -P release -Dgpg.skip=false deploy` — the
+  `central-publishing-maven-plugin` (Track D3) uploads to Central and
+  blocks until Sonatype's validator responds. Hyphenated tags
+  (`-rc`, `-alpha`, `-beta`, `-snapshot`) are explicitly skipped — those
+  ship only to JitPack and the GitHub Release pre-release surface.
+  A `workflow_dispatch` input lets the maintainer re-publish an
+  existing tag without re-cutting it if Central had a transient
+  validator hiccup. The workflow is dormant until four GitHub repo
+  secrets are wired: `MAVEN_GPG_PRIVATE_KEY`, `MAVEN_GPG_PASSPHRASE`,
+  `CENTRAL_USERNAME`, `CENTRAL_TOKEN`.
+- **`docs/contributing/release-process.md` updated** with the
+  end-to-end Maven Central runbook (Track D4 docs). New § 2.C
+  "One-time Maven Central setup (maintainer)" walks through GPG key
+  generation, keyserver upload, Sonatype account / namespace
+  verification, Central user-token generation, the four GitHub
+  secrets, and the release-candidate dry-run strategy. § 2.B
+  post-release checklist gains a new step 9 for the Central publish
+  alongside the existing JitPack step.
 - **`central-publishing-maven-plugin` in the `release` profile**
   (Track D3). Adds Sonatype's `central-publishing-maven-plugin` 0.7.0
   to the existing `release` profile as a packaging extension. Replaces

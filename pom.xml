@@ -67,6 +67,7 @@
         <!-- Build plugins -->
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
         <maven.enforcer.plugin.version>3.5.0</maven.enforcer.plugin.version>
+        <maven.gpg.plugin.version>3.2.7</maven.gpg.plugin.version>
         <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
         <maven.source.plugin.version>3.3.1</maven.source.plugin.version>
         <maven.surefire.plugin.version>3.5.5</maven.surefire.plugin.version>
@@ -78,6 +79,14 @@
         <!-- Binary compatibility baseline (japicmp profile) -->
         <japicmp.version>0.23.1</japicmp.version>
         <japicmp.baseline>v1.6.5</japicmp.baseline>
+
+        <!--
+            GPG signing — opted in via -Dgpg.skip=false (the publish
+            workflow does this on tag pushes). Default true so a
+            maintainer running `mvn -P release package` locally does
+            not need a configured GPG key.
+        -->
+        <gpg.skip>true</gpg.skip>
     </properties>
 
     <dependencyManagement>
@@ -504,6 +513,44 @@
                                     <doclint>none</doclint>
                                     <failOnError>false</failOnError>
                                     <quiet>true</quiet>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!--
+                        GPG signing of the four published artefacts
+                        (main jar + sources + javadoc + pom). Maven
+                        Central rejects unsigned uploads.
+
+                        Local default: `<gpg.skip>true</gpg.skip>` (set
+                        in <properties>) so `mvn -P release package`
+                        works without a configured GPG key. The publish
+                        workflow (Track D4) flips it with
+                        -Dgpg.skip=false.
+
+                        The `gpgArguments` pinentry-mode=loopback is
+                        required for non-interactive runs (CI), where
+                        the passphrase arrives via
+                        MAVEN_GPG_PASSPHRASE / -Dgpg.passphrase and
+                        there is no TTY for gpg-agent to prompt on.
+                    -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>${maven.gpg.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${gpg.skip}</skip>
+                                    <gpgArguments>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
                                 </configuration>
                             </execution>
                         </executions>

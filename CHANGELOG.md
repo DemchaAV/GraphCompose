@@ -21,6 +21,18 @@ JitPack continue to resolve through the existing coordinates.
   `./mvnw -DskipTests -P japicmp verify -pl .`; HTML/MD/XML reports
   land in `target/japicmp/`. JitPack repository is scoped to the
   `japicmp` profile, so downstream consumers do not inherit it.
+- **GPG signing in the `release` profile** (Track D2). Adds
+  `maven-gpg-plugin` 3.2.7 to the existing `release` profile, binding
+  to the `verify` phase to sign main / sources / javadoc / pom
+  artefacts — Maven Central rejects unsigned uploads. **Off by
+  default**: a new property `<gpg.skip>true</gpg.skip>` keeps local
+  `mvn -P release package` runs working without a configured GPG key.
+  The publish workflow (Track D4) flips it explicitly with
+  `-Dgpg.skip=false` once the `MAVEN_GPG_PRIVATE_KEY` and
+  `MAVEN_GPG_PASSPHRASE` secrets are wired. `gpgArguments` declares
+  `--pinentry-mode loopback` so non-interactive CI runs accept the
+  passphrase from `-Dgpg.passphrase` / `MAVEN_GPG_PASSPHRASE` without
+  needing a TTY for `gpg-agent`.
 - **`release` Maven profile with sources + javadoc jars** (Track D1).
   Activated with `-P release`, attaches `*-sources.jar` and
   `*-javadoc.jar` to the `package` phase via the standard

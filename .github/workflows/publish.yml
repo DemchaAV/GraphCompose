@@ -9,8 +9,8 @@ name: Publish to Maven Central
 # workflow alone via workflow_dispatch if Central had a transient
 # validator hiccup without re-cutting the tag.
 #
-# Hyphenated tags (rc / alpha / beta / SNAPSHOT) are skipped: those go
-# only to JitPack and the GitHub Release pre-release, never to Central
+# Hyphenated tags (rc / alpha / beta / SNAPSHOT) are skipped: those
+# ship only to the GitHub Release pre-release surface, never to Central
 # (Central's validator rejects SNAPSHOT-style coordinates anyway).
 #
 # Human prerequisites (one-time per repo):
@@ -46,8 +46,7 @@ jobs:
     name: Publish ${{ github.ref_name }} to Maven Central
     runs-on: ubuntu-latest
     # Only ship plain semver tags (vX.Y.Z) to Central. Pre-release tags
-    # like v1.7.0-rc.1 ship to JitPack + the GitHub Release pre-release
-    # surface only.
+    # like v1.7.0-rc.1 ship to the GitHub Release pre-release surface only.
     if: |
       github.event_name == 'workflow_dispatch' ||
       (!contains(github.ref, '-rc') && !contains(github.ref, '-alpha') && !contains(github.ref, '-beta') && !contains(github.ref, '-snapshot'))

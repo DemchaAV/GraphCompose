@@ -166,7 +166,8 @@ jobs:
           cache: maven
 
       - name: Compare public API against baseline
-        # The `japicmp` profile pulls the v1.6.5 jar from JitPack and
+        # The `japicmp` profile resolves the prior published jar (currently
+        # v1.6.5 from JitPack; v1.6.6 and later from Maven Central) and
         # diffs it against the freshly-built artifact. Fails the job on
         # any binary-incompatible modification to the public surface.
         # Source-incompatible changes are reported only (phased policy).

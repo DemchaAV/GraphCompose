@@ -2,8 +2,8 @@
 
 This is the canonical release runbook for GraphCompose 1.x.
 
-- JitPack — `com.github.DemchaAV:GraphCompose:v<version>` (current)
-- Maven Central — `io.github.demchaav:graphcompose:<version>` (planned, v1.7+)
+- Maven Central — `io.github.demchaav:graphcompose:<version>` (canonical, from v1.6.6)
+- JitPack — `com.github.DemchaAV:GraphCompose:v<version>` (legacy; resolves for callers pinned to v1.6.5 and earlier, no longer the documented install channel)
 
 The release workflow is automated by [`scripts/cut-release.ps1`](../scripts/cut-release.ps1). The script must run from the `develop` branch with a clean working tree. The agent (Claude / Codex) **must complete every audit gate below before a release tag is cut**, and **must wait for explicit human approval** ("yes, cut the tag" / "делаем тег") before invoking the script.
 
@@ -36,7 +36,7 @@ The shell setup and exact PowerShell commands live in the `graphcompose-release-
 - [ ] `CHANGELOG.md` has a `## v<target> — Planned` header at the top. The script flips `Planned` → today's date during release execution; if the header is missing or already dated, the script silently skips and the release ships with the wrong header.
 - [ ] CHANGELOG `v<target>` section: every linked file resolves on disk. Common offenders: new `docs/adr/00XX-*.md`, `docs/migration-v1-N-to-v1-M.md`, recipe pages.
 - [ ] `README.md` test-count claim matches the actual surefire total (`grep -E '[0-9]+ green tests' README.md` vs the surefire aggregate).
-- [ ] `README.md` install snippets match the **current** `pom.xml` version (on `develop` between releases that is the last published tag). `VersionConsistencyGuardTest` enforces README == pom, so the two move together: `cut-release.ps1` rewrites the README Maven + Gradle JitPack snippets to `v<target>` in the *same* release commit it bumps the POMs (section 1, Step 2/6). The README therefore flips to `v<target>` at release-execution time, never on `develop` ahead of the tag — a snippet pointing at a tag that does not exist yet would break JitPack for any user who copies it. Do **not** hand-flip the README ahead of the script: that desyncs README from the still-unbumped pom and fails the guard at the verify gate.
+- [ ] `README.md` install snippets match the **current** `pom.xml` version (on `develop` between releases that is the last published version). `VersionConsistencyGuardTest` enforces README == pom, so the two move together: `cut-release.ps1` rewrites the README Maven + Gradle install snippets to the new version in the *same* release commit it bumps the POMs (section 1, Step 2/6). The README therefore flips to the new version at release-execution time, never on `develop` ahead of the tag — a snippet pointing at a version that has not been published yet would 404 for any user who copies it. Do **not** hand-flip the README ahead of the script: that desyncs README from the still-unbumped pom and fails the guard at the verify gate.
 - [ ] `README.md` and `examples/README.md` link audits resolve: every `(./...)` and `(../...)` link must exist on disk. Use `grep -oE '\(\.?\.?/[^)]+\.(md|java|png|pdf|jpg)\)' README.md examples/README.md | sed 's/^(//;s/)$//' | sort -u | xargs -I{} test -e {} || echo MISSING: {}`.
 - [ ] `examples/README.md` gallery row count matches the file count: `find examples/src/main/java -name '*Example.java' | wc -l` equals `grep -c '^| \[' examples/README.md`.
 - [ ] For minor releases (`vX.Y.0`): `docs/migration-v1-<Y-1>-to-v1-<Y>.md` exists. Patch releases skip this.
@@ -59,7 +59,7 @@ The script's Step 1–4 mutates these. The agent only confirms the *current stat
 Running `pwsh ./scripts/cut-release.ps1 -Version <X.Y.Z>` performs:
 
 1. **Pre-flight** — re-checks all of A above (branch, clean tree, in-sync, no existing tag).
-2. **Bump versions** to `<X.Y.Z>` across the library `pom.xml`, the `aggregator/pom.xml`, the inherited `<parent>` refs in `examples/pom.xml` and `benchmarks/pom.xml`, **and** the README Maven + Gradle JitPack install snippets — all in one pass, so `VersionConsistencyGuardTest` stays green at Step 5.
+2. **Bump versions** to `<X.Y.Z>` across the library `pom.xml`, the `aggregator/pom.xml`, the inherited `<parent>` refs in `examples/pom.xml` and `benchmarks/pom.xml`, **and** the README Maven + Gradle install snippets — all in one pass, so `VersionConsistencyGuardTest` stays green at Step 5.
 3. **Date the CHANGELOG** — flips `## v<X.Y.Z> — Planned` to `## v<X.Y.Z> — <today-ISO>`.
 4. **Switch ShowcaseMetadata GH_BASE** from `/blob/develop` to `/blob/v<X.Y.Z>` and regenerate `docs/examples.json`.
 5. **`mvnw verify -pl .`** — full sanity build (skip with `-SkipVerify` only if you just ran it).
@@ -86,15 +86,15 @@ The script does **not** handle these. They are either pre-release or post-releas
 
 Run within 1 hour of the tag push. Independent steps can run in parallel.
 
-1. **Wait for JitPack `BUILD SUCCESS`** — `https://jitpack.io/com/github/DemchaAV/GraphCompose/v<target>/build.log` ends in `BUILD SUCCESS`. Then:
-2. **README install snippets** — already flipped to `v<target>` by `cut-release.ps1` in the release commit (section 1, Step 2/6) and enforced by `VersionConsistencyGuardTest`. No separate post-release commit is needed; just confirm the JitPack `BUILD SUCCESS` above means the version the README now advertises actually resolves.
+1. **Wait for Maven Central artefact** — once `.github/workflows/publish.yml` turns green (see step 9 below), poll `mvn dependency:get -DgroupId=io.github.demchaav -DartifactId=graphcompose -Dversion=<target>` until it resolves (usually 5–15 minutes after the workflow finishes). Then:
+2. **README install snippets** — already flipped to `<target>` by `cut-release.ps1` in the release commit (section 1, Step 2/6) and enforced by `VersionConsistencyGuardTest`. No separate post-release commit is needed; just confirm the Central artefact resolves (step 1 above) means the version the README now advertises actually exists.
 3. **Merge `develop` → `main`** on GitHub so GitHub Pages picks up the new docs. Fast-forward only — never force-push `main`. If the push is rejected with `non-fast-forward`, a hotfix landed on `main` after the audit and the merge has to be redone after merging `origin/main` back into `develop`.
 4. **Verify CI green on main** — `gh run list --branch main --limit 1` shows `success` for the tag commit.
-5. **Smoke-test the JitPack snippet** — minimal POM in `$env:TEMP`, `mvn dependency:resolve` against the snippet copy-pasted from README, expect 0 exit.
+5. **Smoke-test the install snippet** — minimal POM in `$env:TEMP`, `mvn dependency:resolve` against the snippet copy-pasted from README, expect 0 exit.
 6. **Re-run all examples against the published artifact** — `./mvnw -f examples/pom.xml clean package` followed by `exec:java -Dexec.mainClass=com.demcha.examples.GenerateAllExamples`. Expect 26+ `Generated:` lines.
 7. **Flip ShowcaseMetadata back to develop** — `pwsh ./scripts/cut-release.ps1 -PostReleaseOnly`. This restores linkable "View Code" buttons for ongoing v1.x.y dev work.
 8. **GitHub Release — automated.** Pushing the `v<target>` tag triggers [`.github/workflows/release.yml`](../../.github/workflows/release.yml): it re-runs `./mvnw clean verify -pl .` against the tagged commit, then creates the Release with that version's CHANGELOG section as the body (hyphenated tags like `v1.7.0-rc.1` ship as pre-releases; the step is idempotent — it edits the notes if the Release already exists). The workflow titles it `GraphCompose v<target>`; for a **minor** release, edit the title to add the codename (`v1.4`=cinematic, `v1.5`=intuitive, `v1.6`=expressive; patches drop it). Create the Release by hand (`gh release create v<target> --notes-file <CHANGELOG section>`) only if the workflow is unavailable.
-9. **Maven Central publish — automated (from v1.6.6).** The same `v<target>` tag push triggers [`.github/workflows/publish.yml`](../../.github/workflows/publish.yml): it re-runs `mvnw verify` at the tagged commit, signs the four artefacts (main / sources / javadoc / pom) with the repo's GPG key, and uploads to Maven Central via the `central-publishing-maven-plugin`. Hyphenated tags (`-rc`, `-alpha`, `-beta`, `-snapshot`) are skipped — those go only to JitPack + the GitHub Release pre-release surface. `autoPublish=false` in the plugin config means the artefact lands in the Central validation queue; the maintainer flips the switch on [central.sonatype.com](https://central.sonatype.com) for the first publish, then can opt into auto-release in a follow-up. Verify via `mvn dependency:get -DgroupId=io.github.demchaav -DartifactId=graphcompose -Dversion=<target>` once the artifact appears (usually 5–15 minutes after the workflow turns green).
+9. **Maven Central publish — automated (from v1.6.6).** The same `v<target>` tag push triggers [`.github/workflows/publish.yml`](../../.github/workflows/publish.yml): it re-runs `mvnw verify` at the tagged commit, signs the four artefacts (main / sources / javadoc / pom) with the repo's GPG key, and uploads to Maven Central via the `central-publishing-maven-plugin`. Hyphenated tags (`-rc`, `-alpha`, `-beta`, `-snapshot`) are skipped — those go only to the GitHub Release pre-release surface. `autoPublish=false` in the plugin config means the artefact lands in the Central validation queue; the maintainer flips the switch on [central.sonatype.com](https://central.sonatype.com) for the first publish, then can opt into auto-release in a follow-up. Verify via `mvn dependency:get -DgroupId=io.github.demchaav -DartifactId=graphcompose -Dversion=<target>` once the artifact appears (usually 5–15 minutes after the workflow turns green).
 10. **Optional**: GitHub Discussions announcement (mirror the prior release's style; close with *"author intent, not coordinates"*), LinkedIn post, r/java post.
 
 The release is **done** only when steps 1–7 are all green; step 9 adds Maven Central availability once the D-track of v1.6.6 has shipped.
@@ -126,13 +126,13 @@ These steps are done **once per repo** before the publish workflow can succeed; 
    - `CENTRAL_TOKEN` — token password from step 4.
 6. **Test the wiring on a release-candidate tag** *before* the first real release. `v1.6.6-rc.1` (hyphenated) skips Central per `publish.yml`'s `if:` guard, so it's safe — alternatively, cut `v1.6.6` for real and observe the workflow; `autoPublish=false` means a failed validation does not pollute Central, the artefact just sits in the validation queue until manually released or deleted.
 
-If any of these stop working between releases (key expired, token rotated), the publish workflow surfaces the failure inside the workflow run — the GitHub Release and the JitPack artefact are still cut by the other workflows.
+If any of these stop working between releases (key expired, token rotated), the publish workflow surfaces the failure inside the workflow run — the GitHub Release is still cut by the other workflow, and the legacy JitPack URL keeps resolving for callers pinned to earlier versions.
 
 ---
 
-## 3. Hotfix protocol (CI red after tag, or JitPack didn't pick up)
+## 3. Hotfix protocol (CI red after tag, or Central didn't pick up)
 
-The published jar is final. **Never force-move a tag** that JitPack has already built — JitPack caches by tag SHA and won't rebuild. Always fix forward with a `vX.Y.Z+1` patch tag.
+The published jar is final. **Never force-move a tag** that Maven Central has already validated — Central rejects re-uploading the same coordinates, and JitPack (still building legacy v1.6.5 and earlier) caches by tag SHA and won't rebuild either. Always fix forward with a `vX.Y.Z+1` patch tag.
 
 - Diagnose: `gh run view <run-id> --log-failed`. The `Tests run: <N>, Failures: <F>` line is the source of truth, not the trace excerpt in the Actions UI annotation.
 - Fix the test or doc, not the published artifact.
@@ -172,7 +172,7 @@ Each learning maps to a check above.
 
 ## 5. Never do (during release)
 
-- Force-move a tag JitPack has already built — publish a new patch tag instead.
+- Force-move a tag that Maven Central has already validated or that JitPack has already built — Central rejects re-upload of the same coordinates, JitPack caches by tag SHA. Publish a new patch tag instead.
 - Skip the `origin/main → develop` merge before tagging.
 - Use `git add .` or `git add -A` — the develop tree often has accidental untracked junk. Stage by exact filename.
 - Skip the full `GenerateAllExamples` regen — `mvn test` does not catch runtime layout exceptions in fixed-column tables.
@@ -189,9 +189,10 @@ The release is **done** when all of these are true:
 - [ ] Tag visible at `https://github.com/DemchaAV/GraphCompose/releases/tag/v<version>`
 - [ ] GitHub Release created with the CHANGELOG `v<version>` body
 - [ ] CI green on `main` for the tag commit
-- [ ] JitPack `build.log` ends in `BUILD SUCCESS`
-- [ ] `mvn dependency:resolve` succeeds against the README JitPack snippet
-- [ ] README install snippets read `v<version>` (flipped by the release commit; `VersionConsistencyGuardTest` green)
+- [ ] `.github/workflows/publish.yml` succeeded for the tag
+- [ ] Maven Central artefact resolves: `mvn dependency:get -DgroupId=io.github.demchaav -DartifactId=graphcompose -Dversion=<version>` exit 0
+- [ ] `mvn dependency:resolve` succeeds against the README install snippet
+- [ ] README install snippets read `<version>` (flipped by the release commit; `VersionConsistencyGuardTest` green)
 - [ ] `develop` and `main` synced at the same SHA
 - [ ] Working tree clean on develop (`git status --short` empty)
 - [ ] `ShowcaseMetadata.GH_BASE` flipped back to `/blob/develop` (run `cut-release.ps1 -PostReleaseOnly`)

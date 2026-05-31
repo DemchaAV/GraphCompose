@@ -21,6 +21,17 @@ JitPack continue to resolve through the existing coordinates.
   `./mvnw -DskipTests -P japicmp verify -pl .`; HTML/MD/XML reports
   land in `target/japicmp/`. JitPack repository is scoped to the
   `japicmp` profile, so downstream consumers do not inherit it.
+- **New `benchmarks/README.md`** (Track B1). Honest framing for the
+  manual benchmark layer ahead of the Maven Central debut: explicitly
+  positions the harness as a smoke / diff / endurance tool — not a
+  JMH-grade benchmark — and tells callers when *not* to use it
+  (publishable performance claims, architectural decisions,
+  cross-library comparisons that read too much into a single number).
+  Documents the file-by-file role of each runner / report tool, the
+  exact CI smoke invocation, and a "How to read a report" cheat sheet.
+  Cross-links the planned JMH chain (Track C, B3 → B6 in 1.7.0) so a
+  reader knows what's coming and how to identify "rigorous"
+  measurements when they arrive.
 - **Class-level `@since 1.0.0` Javadoc on the public entry-point
   surface** (Track H1). 26 public types in the canonical user-reached
   packages (`com.demcha.compose.GraphCompose`, `com.demcha.compose.document.api.{DocumentSession, DocumentPageSize, PageBackgroundFill}`,

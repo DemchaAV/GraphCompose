@@ -8,7 +8,7 @@ In flight on `main` / `develop`.
 
 - v1.6 polish &mdash; documentation, examples, visual baselines, fixes.
 - Open-source hygiene &mdash; security policy, support guidance, dependency automation, security scanning.
-- **Maven Central distribution** &mdash; debut shipping in v1.6.6 under `io.github.demchaav:graph-compose`. Replaces JitPack as the primary install channel; the JitPack URL stays alive for existing pinned consumers but is no longer documented as a primary option. Tracked in [#7](https://github.com/DemchaAV/GraphCompose/issues/7).
+- **Maven Central distribution** &mdash; debuted in v1.6.6 under `io.github.demchaav:graph-compose`. Replaces JitPack as the primary install channel; the JitPack URL stays alive for existing pinned consumers but is no longer documented as a primary option. Shipped per [#7](https://github.com/DemchaAV/GraphCompose/issues/7).
 
 ## Next (v1.7)
 

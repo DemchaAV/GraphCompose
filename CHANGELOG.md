@@ -3,6 +3,13 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v1.6.7 — Planned
+
+**Dependency cleanup cycle.** Scope being assembled — entries are
+filled in as work lands on `develop`. No breaking changes are
+planned; the next minor with new canonical DSL primitives is
+**v1.7.0** (see [ROADMAP.md](ROADMAP.md)).
+
 ## v1.6.6 — 2026-05-31
 
 **First Maven Central release.** GraphCompose now ships under

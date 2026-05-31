@@ -1,0 +1,99 @@
+name: Publish to Maven Central
+
+# Publishes the v*-tagged artefact set to Maven Central via the
+# central-publishing-maven-plugin in the `release` profile (Track D3).
+# Triggered by the same `v*` tag push that fires release.yml (Track D4).
+# The two workflows are independent — release.yml creates the GitHub
+# Release; this one publishes the Maven Central artefacts. They can
+# succeed or fail independently, and a maintainer can re-run this
+# workflow alone via workflow_dispatch if Central had a transient
+# validator hiccup without re-cutting the tag.
+#
+# Hyphenated tags (rc / alpha / beta / SNAPSHOT) are skipped: those go
+# only to JitPack and the GitHub Release pre-release, never to Central
+# (Central's validator rejects SNAPSHOT-style coordinates anyway).
+#
+# Human prerequisites (one-time per repo):
+#   1. Generate a GPG key locally; upload the public key to a
+#      keyserver pool (keys.openpgp.org, keyserver.ubuntu.com).
+#   2. Register at https://central.sonatype.com — verify the
+#      `io.github.demchaav` namespace via GitHub OAuth or DNS TXT.
+#   3. Generate a Central user token at Account -> Generate User Token.
+#   4. Add four GitHub repo secrets at Settings -> Secrets and
+#      variables -> Actions:
+#         MAVEN_GPG_PRIVATE_KEY   — full ASCII-armored private key
+#         MAVEN_GPG_PASSPHRASE    — passphrase for the key above
+#         CENTRAL_USERNAME        — Central user-token username half
+#         CENTRAL_TOKEN           — Central user-token password half
+# See docs/contributing/release-process.md for the full runbook.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing v*-prefixed tag to (re-)publish'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish ${{ github.ref_name }} to Maven Central
+    runs-on: ubuntu-latest
+    # Only ship plain semver tags (vX.Y.Z) to Central. Pre-release tags
+    # like v1.7.0-rc.1 ship to JitPack + the GitHub Release pre-release
+    # surface only.
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (!contains(github.ref, '-rc') && !contains(github.ref, '-alpha') && !contains(github.ref, '-beta') && !contains(github.ref, '-snapshot'))
+    env:
+      JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
+
+    steps:
+      - name: Check out repository at tag
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Set up Temurin JDK 17 with Central credentials and GPG key
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          # `setup-java@v5` writes <server id="central"> into
+          # ~/.m2/settings.xml mapping these two env-var names to
+          # <username> and <password>. The plugin's
+          # publishingServerId=central in pom.xml's release profile
+          # (Track D3) wires up to this entry.
+          server-id: central
+          server-username: CENTRAL_USERNAME
+          server-password: CENTRAL_TOKEN
+          # Imports the GPG key into the runner's keyring so the
+          # maven-gpg-plugin (Track D2) can sign without an
+          # interactive prompt.
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: Verify (full canonical suite green at tagged commit)
+        # Re-verify the tagged commit before publishing — defence in
+        # depth against a tag pushed from a broken branch by mistake.
+        # The publish step below would also fail at signing/upload,
+        # but failing here surfaces a clearer error.
+        run: ./mvnw -B -ntp clean verify -pl .
+
+      - name: Publish to Maven Central
+        # Activates the release profile (sources + javadoc + gpg sign +
+        # central-publishing) and flips gpg.skip=false. The deploy
+        # phase invokes central-publishing-maven-plugin's upload goal
+        # which blocks until Sonatype's validator confirms validation.
+        run: ./mvnw -B -ntp -P release -DskipTests -Dgpg.skip=false deploy
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}

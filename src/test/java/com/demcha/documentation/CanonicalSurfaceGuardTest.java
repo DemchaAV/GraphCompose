@@ -55,7 +55,14 @@ class CanonicalSurfaceGuardTest {
             // so callers can identify legacy imports in their own code and
             // see the canonical-DSL replacement. Same purpose as the
             // migration log above.
-            "docs/templates/which-template-system.md");
+            "docs/templates/which-template-system.md",
+            // User-facing API stability policy. The package-tier lookup
+            // table names com.demcha.templates.* and com.demcha.compose.v2.*
+            // explicitly so callers can classify any import as Stable /
+            // Extension SPI / Internal / Legacy. The deprecation example
+            // also shows the legacy `pdf(Path)` factory paired with its
+            // canonical-DSL replacement. Same audit-log rationale.
+            "docs/api-stability.md");
     private static final List<String> FORBIDDEN_PUBLIC_AUTHORING_IMPORTS = List.of(
             "import com.demcha.compose.engine.");
 

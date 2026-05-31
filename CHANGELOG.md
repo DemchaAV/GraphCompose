@@ -66,6 +66,22 @@ JitPack continue to resolve through the existing coordinates.
   maturity legend introduces the five tiers and links to
   `docs/templates/which-template-system.md` for the V1 → V2 path that
   the **Legacy** tier points at.
+- **New API stability policy: [`docs/api-stability.md`](docs/api-stability.md)**
+  (Track G3). User-facing companion to
+  [ADR-0003](docs/adr/0003-api-stability-and-internal-marker.md): pins
+  the four stability tiers (**Stable**, **Extension SPI**, **Internal**,
+  **Experimental**) with what each one promises in patch / minor /
+  major releases, the sealed-hierarchy permit-list policy (additive
+  variants must degrade gracefully without `default`-branch failures),
+  the deprecation window (≥ 1 minor release with `@Deprecated`, removed
+  in next major), a per-package tier-lookup table for the canonical
+  surface plus the legacy packages headed for 2.0 removal, and an
+  "anti-policy" section (no pixel-stable PDFs, no bit-stable artefact
+  bytes, no sealed-permit exhaustiveness across minor releases for
+  Stable hierarchies). `CanonicalSurfaceGuardTest` allowlist extended
+  so the page can name `com.demcha.templates.*` / `com.demcha.compose.v2.*`
+  and the legacy `pdf(Path)` factory in the package-tier and
+  deprecation-example sections.
 
 ## v1.6.5 — 2026-05-30
 

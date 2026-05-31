@@ -324,11 +324,7 @@ public final class NodeDefinitionSupport {
                 slotWidths[i] = share;
             }
         } else {
-            if (node.weights().size() != n) {
-                throw new IllegalArgumentException(
-                        "Row weights size (" + node.weights().size() + ") must match children size (" + n
-                                + "). Pass exactly " + n + " weight(s) or leave weights empty for an even split.");
-            }
+            RowSlots.validateWeightsMatchChildren(node.weights(), n);
             double total = 0.0;
             for (Double w : node.weights()) {
                 total += w;

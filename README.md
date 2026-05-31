@@ -12,11 +12,18 @@
 <p align="center">
   <a href="https://github.com/DemchaAV/GraphCompose/actions/workflows/ci.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/DemchaAV/GraphCompose/ci.yml?branch=main&style=for-the-badge&label=CI" alt="CI"/></a>
   <a href="https://github.com/DemchaAV/GraphCompose/releases/latest"><img src="https://img.shields.io/github/v/release/DemchaAV/GraphCompose?style=for-the-badge&label=Release" alt="Latest release"/></a>
+  <a href="https://central.sonatype.com/artifact/io.github.demchaav/graphcompose"><img src="https://img.shields.io/maven-central/v/io.github.demchaav/graphcompose?style=for-the-badge&label=Maven%20Central" alt="Maven Central"/></a>
   <a href="https://jitpack.io/#DemchaAV/GraphCompose"><img src="https://img.shields.io/jitpack/v/github/DemchaAV/GraphCompose?style=for-the-badge&label=JitPack" alt="JitPack"/></a>
   <img src="https://img.shields.io/badge/Java-17%2B-orange?style=for-the-badge&logo=openjdk" alt="Java 17+"/>
   <img src="https://img.shields.io/badge/PDFBox-3.0-red?style=for-the-badge" alt="PDFBox 3.0"/>
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License"/>
 </p>
+
+> **Release status** &mdash;
+> 🟢 **Latest stable**: [v1.6.5](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.6.5) (JitPack)
+> &nbsp;·&nbsp; 🟡 **In develop**: v1.6.6 (Maven Central debut; zero breaking from v1.6.5)
+> &nbsp;·&nbsp; ⚪ **Planned next**: v1.6.7 (dependency cleanup), v1.7.0 (new canonical DSL primitives)
+> &nbsp;·&nbsp; See [API stability policy](./docs/api-stability.md) for tier definitions.
 
 <p align="center">
   <a href="https://demchaav.github.io/GraphCompose/"><b>Live Showcase</b></a>
@@ -86,6 +93,22 @@ GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the com
 | Regression-test generated layouts | Layout snapshots | `DocumentSession#layoutSnapshot()` &mdash; see [snapshot testing](./docs/operations/layout-snapshot-testing.md) |
 
 ## Installation
+
+### Maven Central (primary, from v1.6.6)
+
+```xml
+<dependency>
+    <groupId>io.github.demchaav</groupId>
+    <artifactId>graphcompose</artifactId>
+    <version>1.6.6</version>
+</dependency>
+```
+
+```kotlin
+dependencies { implementation("io.github.demchaav:graphcompose:1.6.6") }
+```
+
+### JitPack (fallback / pre-v1.6.6)
 
 ```xml
 <repositories>
@@ -206,7 +229,8 @@ document.pageFlow().addCanvas(523, 360, canvas -> canvas
 - [Examples gallery](./examples/README.md) &mdash; every runnable example with PDF preview
 
 ### Contributing & releases
-- [Migration v1.5 → v1.6](./docs/roadmaps/migration-v1-5-to-v1-6.md) · [Release process](./docs/contributing/release-process.md) · [Contributing](./CONTRIBUTING.md)
+- [Contributing](./CONTRIBUTING.md) · [Code of conduct](./CODE_OF_CONDUCT.md) · [Security policy](./SECURITY.md) · [Release process](./docs/contributing/release-process.md)
+- [API stability policy](./docs/api-stability.md) · [Which template system?](./docs/templates/which-template-system.md) · [Migration v1.5 → v1.6](./docs/roadmaps/migration-v1-5-to-v1-6.md)
 
 ## Companion projects
 

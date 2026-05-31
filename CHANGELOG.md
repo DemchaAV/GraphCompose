@@ -5,10 +5,25 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v1.6.6 — Planned
 
-First Maven Central release. Adds publishable sources/javadoc jars,
-GPG-signed artifacts, a binary-compatibility gate against v1.6.5, and
-the metadata Maven Central requires. Zero breaking changes; users on
-JitPack continue to resolve through the existing coordinates.
+**First Maven Central release.** GraphCompose now ships under
+`io.github.demchaav:graphcompose:1.6.6` alongside the existing
+JitPack distribution. The release adds publishable sources/javadoc
+jars, GPG-signed artefacts, a binary-compatibility gate against
+v1.6.5, the metadata Maven Central requires, and a substantial
+documentation polish for the maturity / stability / migration story.
+
+**Zero breaking changes from v1.6.5.** Existing JitPack callers continue
+to resolve through the same coordinates; existing API surface compiles
+and runs unchanged (validated by the new `japicmp` gate against the
+v1.6.5 baseline). New: the `@Beta` annotation marker, the `@since 1.0.0`
+class-level Javadoc on entry-point packages, and a curated docs pass
+(decision guide for the two template surfaces, examples maturity index,
+explicit API stability policy).
+
+**Migration from v1.6.5:** no code changes required. Optionally swap
+the JitPack `<dependency>` for the Maven Central equivalent
+(`io.github.demchaav:graphcompose:1.6.6`); both publish paths continue
+to ship the same artefact.
 
 ### Build
 

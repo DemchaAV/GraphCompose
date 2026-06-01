@@ -126,21 +126,31 @@ changes are planned.
 
 ### Web
 
-- New **Next.js showcase site** under `site/` — a fully static
-  one-page marketing / playground for GraphCompose, built with
-  Next.js 14 App Router + TypeScript + Tailwind, deployable to
-  GitHub Pages via `next build` (emits `./out`). Replaces the
-  legacy `docs/index.html` showcase incrementally; both sites
-  coexist for now while we validate the Next.js variant against
-  the existing screenshot pipeline. Live code snippets in the
-  Hero / Playground sections are mirrored from the canonical
-  README hello-world + `examples/.../InvoiceFileExample.java` +
-  `ModernProfessional.create()` paths, so a visitor copying any
-  snippet into a fresh Maven project pulled at
+- **New Next.js showcase site** under `site/` is now the official
+  GitHub Pages deploy target for v1.6.8 onwards. Fully static
+  one-page marketing / playground built with Next.js 14 App
+  Router + TypeScript + Tailwind. `next build` emits `./out` (4
+  static pages, 99.7 kB first-load JS) and the new
+  [`.github/workflows/deploy-site.yml`](.github/workflows/deploy-site.yml)
+  uploads it to Pages on every push to `main` that touches
+  `site/**`. **Repo Settings → Pages source must be flipped to
+  "GitHub Actions"** for the workflow to take over from the
+  legacy branch-based deploy of `docs/index.html`; both files
+  coexist in the tree for one more cycle as a rollback.
+- Live code snippets in the Hero / Playground sections mirror
+  the canonical README hello-world, `examples/.../InvoiceFileExample`,
+  and `ModernProfessional.create()` paths, so a visitor copying
+  any snippet into a fresh Maven project pulled at
   `io.github.demchaav:graph-compose:1.6.8` gets compiling code.
-  Gallery enumerates the full 16-preset cv/v2 lineup (15 paired
-  cover letters; `MinimalUnderlined` ships without a paired
-  letter by design).
+  Gallery enumerates the full **16-preset cv/v2 lineup** (15
+  paired cover letters; `MinimalUnderlined` ships without a
+  paired letter by design).
+- `scripts/cut-release.ps1` learns a new `Update-SiteDepsVersion`
+  step so the Maven / Gradle install snippets in
+  `site/lib/deps.ts` flip in lockstep with the README + pom
+  versions at cut time — no more silent drift between the site
+  and the real released coordinates. The same release commit
+  now also stages `site/lib/deps.ts`.
 
 ## v1.6.7 — 2026-06-01
 

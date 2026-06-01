@@ -219,6 +219,41 @@ function Update-ReadmeInstallVersion($readmePath, $newVersion) {
     }
 }
 
+function Update-SiteDepsVersion($depsPath, $newVersion) {
+    # The Next.js showcase site (site/) embeds the Maven Central
+    # coordinates in `site/lib/deps.ts`. The pom-bump pipeline never
+    # touched this file before v1.6.8 (legacy site lives under docs/),
+    # so without this helper the next release would silently ship the
+    # site with an outdated <version> in the install snippet.
+    if (-not (Test-Path $depsPath)) {
+        Note "skip (no file): $depsPath"
+        return
+    }
+    $content = Get-Content $depsPath -Raw
+    $changed = $false
+    $replacements = @(
+        @{ Regex = [regex]'(?<=<version>)v?[\w\.\-]+(?=</version>)';                                    Value = $newVersion; Label = 'site Maven snippet' },
+        @{ Regex = [regex]"(?<=io\.github\.demchaav:graph-compose:)v?[\w\.\-]+(?=`")";                  Value = $newVersion; Label = 'site Gradle snippet' }
+    )
+    foreach ($r in $replacements) {
+        $after = $r.Regex.Replace($content, $r.Value, 1)
+        if ($content -ne $after) {
+            $content = $after
+            $changed = $true
+            Note "bumped site/lib/deps.ts $($r.Label) -> $($r.Value)"
+        }
+    }
+    if (-not $changed) {
+        Note "no change: site/lib/deps.ts (already $newVersion?)"
+        return
+    }
+    if ($DryRun) {
+        Write-Host "    [DRY RUN] site/lib/deps.ts -> $newVersion" -ForegroundColor Yellow
+    } else {
+        [System.IO.File]::WriteAllText($depsPath, $content)
+    }
+}
+
 function Update-IndexHtmlVersion($indexHtmlPath, $newVersion) {
     if (-not (Test-Path $indexHtmlPath)) {
         Note "skip (no file): $indexHtmlPath"
@@ -433,6 +468,7 @@ try {
     Update-PomVersion (Join-Path $repoRoot 'benchmarks/pom.xml') $Version
     Update-ReadmeInstallVersion (Join-Path $repoRoot 'README.md') $Version
     Update-IndexHtmlVersion (Join-Path $repoRoot 'docs/index.html') $Version
+    Update-SiteDepsVersion (Join-Path $repoRoot 'site/lib/deps.ts') $Version
 
     Step 2 "Update CHANGELOG date for v$Version"
     $changelog = Join-Path $repoRoot 'CHANGELOG.md'
@@ -482,7 +518,7 @@ try {
     Step 6 "Commit release"
     $commitMsg = "Release v$Version"
     if ($DryRun) {
-        Write-Host "    [DRY RUN] git add pom.xml aggregator/pom.xml examples/pom.xml benchmarks/pom.xml README.md CHANGELOG.md examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java docs/examples.json docs/index.html" -ForegroundColor Yellow
+        Write-Host "    [DRY RUN] git add pom.xml aggregator/pom.xml examples/pom.xml benchmarks/pom.xml README.md CHANGELOG.md examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java docs/examples.json docs/index.html site/lib/deps.ts" -ForegroundColor Yellow
         Write-Host "    [DRY RUN] git commit -m `"$commitMsg`"" -ForegroundColor Yellow
     } else {
         git add `
@@ -494,7 +530,8 @@ try {
             CHANGELOG.md `
             examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java `
             docs/examples.json `
-            docs/index.html
+            docs/index.html `
+            site/lib/deps.ts
         git commit -m $commitMsg
         Note "commit: $commitMsg"
     }

@@ -15,6 +15,20 @@ follow-ups carried over from the v1.6.7 senior review (see
 [ROADMAP.md](ROADMAP.md) and the private taskboard). No breaking
 changes are planned.
 
+### Documentation
+
+- New quickstart guide
+  [Testing your document](docs/operations/test-your-document.md) —
+  end-to-end recipe (author the document &rarr; add a layout
+  snapshot test &rarr; bless the baseline &rarr; CI guards the
+  shape on every PR), with a "when to use which layer" table for
+  the three protection tiers (smoke / layout snapshot / pixel-level
+  visual). Complements the existing
+  [layout-snapshot-testing.md](docs/operations/layout-snapshot-testing.md)
+  reference: that one is reference-style, the new one is
+  tutorial-style. README's "What can I do with this?" table row
+  now links to both.
+
 ## v1.6.7 — 2026-06-01
 
 **Transitive dependency cleanup.** v1.6.7 narrows the runtime

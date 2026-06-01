@@ -19,8 +19,8 @@
 </p>
 
 > **Release status** &mdash;
-> 🟢 **Latest stable**: [v1.6.6](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.6.6) (Maven Central debut; zero breaking from v1.6.5)
-> &nbsp;·&nbsp; 🟡 **In develop**: v1.6.7 (dependency cleanup)
+> 🟢 **Latest stable**: [v1.6.7](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.6.7) (transitive dependency cleanup; zero breaking from v1.6.6)
+> &nbsp;·&nbsp; 🟡 **In develop**: v1.6.8 (CV v2 migration completion + senior-review polish)
 > &nbsp;·&nbsp; ⚪ **Planned next**: v1.7.0 (new canonical DSL primitives)
 > &nbsp;·&nbsp; See [API stability policy](./docs/api-stability.md) for tier definitions.
 
@@ -89,7 +89,8 @@ GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the com
 | Generate a one-off PDF programmatically | DSL | `GraphCompose.document(...).pageFlow(...)` &mdash; see [Hello world](#hello-world) below |
 | Generate a CV / cover letter from data | Layered templates | `ModernProfessional.create().compose(session, cvDocument)` &mdash; see [layered templates](./docs/templates/v2-layered/README.md) |
 | Add a custom visual primitive | Engine extension | `NodeDefinition` + `PdfFragmentRenderHandler` &mdash; see [extension guide](./docs/contributing/extension-guide.md) |
-| Regression-test generated layouts | Layout snapshots | `DocumentSession#layoutSnapshot()` &mdash; see [snapshot testing](./docs/operations/layout-snapshot-testing.md) |
+| Regression-test generated layouts | Layout snapshots | `DocumentSession#layoutSnapshot()` &mdash; quickstart at [Testing your document](./docs/operations/test-your-document.md); full reference at [snapshot testing](./docs/operations/layout-snapshot-testing.md) |
+| See the live playground / gallery | Next.js showcase site | [Showcase](https://DemchaAV.github.io/GraphCompose/) &mdash; source under [`site/`](./site), built with `next build` and deployed via the [Pages workflow](./.github/workflows/deploy-site.yml) |
 
 ## Installation
 
@@ -97,12 +98,12 @@ GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the com
 <dependency>
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose</artifactId>
-    <version>1.6.7</version>
+    <version>1.6.8</version>
 </dependency>
 ```
 
 ```kotlin
-dependencies { implementation("io.github.demchaav:graph-compose:1.6.7") }
+dependencies { implementation("io.github.demchaav:graph-compose:1.6.8") }
 ```
 
 > **Distribution** &mdash; Maven Central is the canonical channel from **v1.6.6** onwards

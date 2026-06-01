@@ -7,6 +7,12 @@ updates:
       - "/"
       - "/examples"
       - "/benchmarks"
+    # Send Maven update PRs to the integration branch, not the
+    # default branch. Releases are cut from `develop` then merged
+    # to `main`; targeting `main` (the default) made every Dependabot
+    # PR land alongside the latest release and force-diverge from
+    # ongoing dev work — fixed in v1.6.8 after the #111 / #115 episodes.
+    target-branch: develop
     schedule:
       interval: weekly
       day: monday
@@ -37,6 +43,9 @@ updates:
 
   - package-ecosystem: github-actions
     directory: "/"
+    # Same reasoning as the maven block above — workflow updates
+    # ride the integration branch.
+    target-branch: develop
     schedule:
       interval: weekly
       day: monday

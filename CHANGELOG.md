@@ -3,6 +3,201 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v1.6.8 — 2026-06-01
+
+**CV v2 migration completion + design-token expansion.** v1.6.8
+finishes the CV v2 migration with hyperlink-aware project / entry
+titles: a row authored as `"[GraphCompose](https://github.com/x/y)
+(Java, PDFBox)"` now renders the title as a clickable link in the
+final PDF, with the technology stack remaining a plain
+` (Java, PDFBox)` tail. The mechanism is a small extension to
+the inline-Markdown parser used by every CV / cover-letter body
+row — the `[label](url)` syntax produces a `RichText.link(...)`
+run; bare brackets stay literal; everything else (`**bold**`,
+`*italic*`, `_italic_`) keeps working as before. The release also
+ships four contemporary `BusinessTheme` factory presets
+(`nordic()`, `editorial()`, `cinematic()`, `monochrome()`)
+alongside the classic / modern / executive trio, expanding the
+built-in design-token range to seven presets. Senior-review
+follow-ups from v1.6.7 round out the release: the two registry
+mutation entry points on `DocumentSession` are now fully
+interchangeable (both refuse to mutate a closed session and both
+invalidate the layout cache), `target-branch: develop` is pinned
+in Dependabot config so future bumps land on the integration
+branch, and `logback-classic` rolls forward to 1.5.34 which
+fixes [CVE-2026-9828](https://www.cve.org/cverecord?id=CVE-2026-9828)
+(deserialisation whitelist bypass).
+
+**Zero breaking public API changes.** The `japicmp` gate against
+the v1.6.7 baseline reports `semver PATCH, compatible bug fix`
+across every PR in the cycle. New `BusinessTheme` factories are
+pure additions; `MarkdownInline.append` and `plainText` extend
+their behaviour without changing their signatures; `ProjectLabel.
+parse` keeps its two-field record shape (the `title()` field now
+preserves Markdown rather than returning a pre-flattened
+projection, but the type contract is unchanged and the visible
+text projection is one call away via `MarkdownInline.plainText(
+title)`). 1058 tests pass at the release-prep tip.
+
+**Migration from v1.6.7.** No code changes required for typical
+usage. If you build a custom renderer on top of
+`ProjectLabel.parse`:
+
+- Old `title()` was already the visible plain text (emphasis +
+  link syntax stripped). New `title()` preserves the original
+  inline-Markdown. Wrap with `MarkdownInline.plainText(...)` to
+  recover the old behaviour, or route through
+  `MarkdownInline.append(rich, title, style)` to get
+  emphasis / link rendering for free (the same path
+  `ProjectRenderer` now uses).
+- `MarkdownInline.append` consumers automatically pick up link
+  rendering for `[label](url)` syntax. If any CV / cover-letter
+  fixture in your codebase contained a literal `[...](...) `
+  string that previously rendered as text, it will now render
+  as a hyperlink. Escape with HTML entities or restructure the
+  string if you need to keep it literal.
+
+The next release is **v1.7.0** — the additive canonical-DSL
+feature minor (LineBuilder.dashed, inline shapes, TimelineBuilder,
+dx shortcuts, recipes docs). See [ROADMAP.md](ROADMAP.md).
+
+### Fixes
+
+- The two `DocumentSession` registration entry points are now
+  **fully** interchangeable, not just cache-equivalent.
+  `session.registry().register(...)` now calls `ensureOpen()`
+  before mutating, matching the behaviour of
+  `session.registerNodeDefinition(...)`. Previously
+  `registry().register(...)` on a closed session silently mutated
+  the registry and invalidated a closed-session cache (harmless
+  but semantically odd). After this change both paths throw
+  `IllegalStateException` on a closed session. (Track J2 — carry-
+  over polish from the v1.6.7 senior review.)
+
+### Internal
+
+- `NodeRegistry` Javadoc updated to call out the v1.6.7 non-final
+  relaxation explicitly (Track J4). The class became non-final
+  in v1.6.7 (Track I3) so `DocumentSession` could install the
+  auto-invalidating subclass; the change was already binary-
+  compatible (japicmp classified it as `semver PATCH`). The
+  Javadoc just makes the rationale discoverable without reading
+  the CHANGELOG.
+
+### Public API
+
+- `MarkdownInline.append(...)` (the inline-markdown adapter used by
+  every CV / cover-letter body / row / entry renderer) now
+  recognises standard Markdown link syntax `[label](url)` and emits
+  a clickable hyperlink run via `RichText.link(label, url)`. Pure
+  parser extension — no `CvRow` data-shape change required.
+  `MarkdownInline.plainText(...)` is updated in lockstep to strip
+  link syntax cleanly so callers that pull a plain-text projection
+  (e.g. `ProjectLabel.parse`) keep getting just the visible label.
+- `ProjectRenderer.inline(...)` and `ProjectRenderer.titleThenBody(...)`
+  now route the project-row title segment through
+  `MarkdownInline.append(...)` instead of emitting it as a flat
+  `RichText.style(...)` run. End-to-end consequence: a CV row with
+  `label = "[GraphCompose](https://gc) (Java, PDFBox)"` renders the
+  title as a clickable hyperlink and the stack as plain
+  `" (Java, PDFBox)"`. Labels without inline Markdown render
+  identically to before. `ProjectRenderer.plainInline(...)` (the
+  one-line listing variant) intentionally continues to drop link
+  syntax via `MarkdownInline.plainText(...)` because a clickable
+  link would not survive the compact formatting context.
+- `ProjectLabel.parse(...)` now preserves inline Markdown syntax
+  inside the returned `title` (the legacy implementation eagerly
+  flattened `**emphasis**` and `[links](url)` via `plainText` and
+  then split on the last `(`). The split heuristic now targets a
+  trailing `\s+\([^()]*\)\s*$` pattern so a leading
+  `[name](https://...)` URL's `(...)` segment is not mistaken for
+  the technology-stack delimiter. Callers that only need the
+  visible-text projection should pass `title()` back through
+  `MarkdownInline.plainText(...)`.
+- Four new `BusinessTheme` factory presets `@since 1.6.8`:
+  `BusinessTheme.nordic()` (Scandinavian minimal — cool whites +
+  slate-blue accent + generous whitespace, for design-studio
+  reports and product launch decks),
+  `BusinessTheme.editorial()` (warm cream surface + deep ink +
+  brick-red accent on a serif body, for long-form proposals and
+  annual reports),
+  `BusinessTheme.cinematic()` (inverted dark navy surface with
+  light text + bright copper accent, for investor pitch decks and
+  product launch one-pagers), and
+  `BusinessTheme.monochrome()` (pure black-on-white with a single
+  bold yellow accent, for brutalist editorial layouts where
+  typographic contrast carries the identity). Pure additions —
+  no change to the existing `classic()` / `modern()` /
+  `executive()` presets. japicmp gate against v1.6.7 reports
+  `semver PATCH` (compatible additions only).
+
+### Build
+
+- Bumped `jackson-bom` 2.21.3 &rarr; 2.21.4 (broken 2.22.0 skipped via
+  the `.github/dependabot.yml` ignore entry added in v1.6.7),
+  `logback-classic` 1.5.32 &rarr; 1.5.34 (fixes
+  [CVE-2026-9828](https://www.cve.org/cverecord?id=CVE-2026-9828) —
+  deserialization whitelist bypass in `HardenedModelInputStream`),
+  `central-publishing-maven-plugin` 0.7.0 &rarr; 0.9.0 (0.10.0
+  blocked by the existing ignore entry; revisit after a focused
+  release-profile evaluation), `japicmp-maven-plugin` 0.23.1 &rarr;
+  0.26.1, and a handful of `maven-*-plugin` minor/patch bumps
+  (clean / site / resources / enforcer 3.5.0 &rarr; 3.6.3 / surefire
+  3.5.5 &rarr; 3.5.6 / source 3.3.1 &rarr; 3.4.0 / gpg 3.2.7 &rarr;
+  3.2.8) ([#115](https://github.com/DemchaAV/GraphCompose/pull/115),
+  cherry-picked from `main` to align `develop`).
+
+### CI
+
+- `.github/dependabot.yml` now pins both ecosystems
+  (`maven`, `github-actions`) to `target-branch: develop` so future
+  grouped PRs land on the integration branch instead of `main`.
+  Closes the divergence root cause behind the v1.6.7-era #111 /
+  #115 episodes where every Dependabot PR force-split history
+  between branches and required a cherry-pick to align.
+
+### Documentation
+
+- New quickstart guide
+  [Testing your document](docs/operations/test-your-document.md) —
+  end-to-end recipe (author the document &rarr; add a layout
+  snapshot test &rarr; bless the baseline &rarr; CI guards the
+  shape on every PR), with a "when to use which layer" table for
+  the three protection tiers (smoke / layout snapshot / pixel-level
+  visual). Complements the existing
+  [layout-snapshot-testing.md](docs/operations/layout-snapshot-testing.md)
+  reference: that one is reference-style, the new one is
+  tutorial-style. README's "What can I do with this?" table row
+  now links to both.
+
+### Web
+
+- **New Next.js showcase site** under `site/` is now the official
+  GitHub Pages deploy target for v1.6.8 onwards. Fully static
+  one-page marketing / playground built with Next.js 14 App
+  Router + TypeScript + Tailwind. `next build` emits `./out` (4
+  static pages, 99.7 kB first-load JS) and the new
+  [`.github/workflows/deploy-site.yml`](.github/workflows/deploy-site.yml)
+  uploads it to Pages on every push to `main` that touches
+  `site/**`. **Repo Settings → Pages source must be flipped to
+  "GitHub Actions"** for the workflow to take over from the
+  legacy branch-based deploy of `docs/index.html`; both files
+  coexist in the tree for one more cycle as a rollback.
+- Live code snippets in the Hero / Playground sections mirror
+  the canonical README hello-world, `examples/.../InvoiceFileExample`,
+  and `ModernProfessional.create()` paths, so a visitor copying
+  any snippet into a fresh Maven project pulled at
+  `io.github.demchaav:graph-compose:1.6.8` gets compiling code.
+  Gallery enumerates the full **16-preset cv/v2 lineup** (15
+  paired cover letters; `MinimalUnderlined` ships without a
+  paired letter by design).
+- `scripts/cut-release.ps1` learns a new `Update-SiteDepsVersion`
+  step so the Maven / Gradle install snippets in
+  `site/lib/deps.ts` flip in lockstep with the README + pom
+  versions at cut time — no more silent drift between the site
+  and the real released coordinates. The same release commit
+  now also stages `site/lib/deps.ts`.
+
 ## v1.6.7 — 2026-06-01
 
 **Transitive dependency cleanup.** v1.6.7 narrows the runtime

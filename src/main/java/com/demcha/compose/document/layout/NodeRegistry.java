@@ -19,6 +19,12 @@ import java.util.Objects;
  * get the same caching semantics as
  * {@code session.registerNodeDefinition(...)}.</p>
  *
+ * <p><strong>Non-final since v1.6.7.</strong> The class lost its
+ * {@code final} modifier in v1.6.7 (Track I3) so {@code DocumentSession}
+ * could install the auto-invalidating subclass described above. The
+ * change is binary-compatible (japicmp classifies it as {@code semver
+ * PATCH}); standalone-registry callers see no behavioural change.</p>
+ *
  * @since 1.6.0
  */
 public class NodeRegistry {

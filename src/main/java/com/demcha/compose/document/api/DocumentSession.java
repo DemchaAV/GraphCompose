@@ -913,18 +913,23 @@ public final class DocumentSession implements AutoCloseable {
 
     /**
      * Session-owned {@link NodeRegistry} subclass that funnels every
-     * {@link #register(NodeDefinition)} call through
-     * {@link DocumentSession#invalidate()}. Without this wrapper, callers
-     * that mutated the registry directly via {@code session.registry().
-     * register(...)} would leave the layout cache pointing at a stale
-     * compile result — the cache invalidation only happened on the
-     * dedicated {@link DocumentSession#registerNodeDefinition(NodeDefinition)}
-     * path. Added in v1.6.7 (Track I3) so the two registration entry points
-     * have identical caching semantics.
+     * {@link #register(NodeDefinition)} call through both
+     * {@link DocumentSession#ensureOpen()} and
+     * {@link DocumentSession#invalidate()}. The two registration entry
+     * points — {@code session.registry().register(...)} and
+     * {@link DocumentSession#registerNodeDefinition(NodeDefinition)} —
+     * are now fully interchangeable: both refuse to mutate a closed
+     * session and both invalidate the cached compile.
+     *
+     * <p>Added in v1.6.7 (Track I3) as cache-invalidation only; the
+     * {@code ensureOpen()} symmetry landed in v1.6.8 (Track J2) after
+     * the senior review noted that the two entry points still
+     * disagreed on closed-session behaviour.</p>
      */
     private final class InvalidatingNodeRegistry extends NodeRegistry {
         @Override
         public <E extends DocumentNode> NodeRegistry register(NodeDefinition<E> definition) {
+            ensureOpen();
             super.register(definition);
             invalidate();
             return this;

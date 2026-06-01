@@ -760,6 +760,32 @@ class DocumentSessionTest {
         }
     }
 
+    /**
+     * Negative-path companion to the I3 positive test above. After
+     * closing the session, mutating the registry through
+     * {@code session.registry().register(...)} must throw
+     * {@link IllegalStateException} — symmetric with
+     * {@link DocumentSession#registerNodeDefinition(NodeDefinition)},
+     * which has always thrown on a closed session. Added in v1.6.8
+     * (Track J2/J3) after the v1.6.7 senior review flagged that the
+     * two entry points still disagreed on closed-session behaviour.
+     */
+    @Test
+    void registryRegisterOnClosedSessionThrowsIllegalStateException() {
+        DocumentSession session = GraphCompose.document()
+                .pageSize(200, 160)
+                .margin(DocumentInsets.of(10))
+                .create();
+        // Close via try-with-resources is the canonical path; close
+        // explicitly here so the assertion runs against a closed
+        // session.
+        session.close();
+
+        assertThatThrownBy(() -> session.registry()
+                .register(new BadgeNodeDefinition()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     @Test
     @DisabledIfSystemProperty(named = "no.poi", matches = "true",
             disabledReason = "Exercises DocxSemanticBackend; skipped under the no-poi profile that excludes poi-ooxml from the test classpath")

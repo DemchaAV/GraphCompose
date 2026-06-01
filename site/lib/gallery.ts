@@ -29,6 +29,8 @@ export interface TemplateSpec {
   letterSource: string | null;
 }
 
+import { withBasePath } from "./base-path";
+
 const GH = "https://github.com/DemchaAV/GraphCompose/blob/main/src/main/java/com/demcha/compose/document/templates";
 
 /*
@@ -80,8 +82,8 @@ export const GALLERY: TemplateSpec[] = SPECS.map(({ name, slug, hasLetter = true
   variant,
   desc,
   pair: hasLetter ? `${name}Letter` : null,
-  image: `/previews/cv-v2/cv-${slug}-v2.png`,
-  letterImage: hasLetter ? `/previews/coverletter-v2/cover-letter-${slug}-v2.png` : null,
+  image: withBasePath(`/previews/cv-v2/cv-${slug}-v2.png`),
+  letterImage: hasLetter ? withBasePath(`/previews/coverletter-v2/cover-letter-${slug}-v2.png`) : null,
   source: `${GH}/cv/v2/presets/${name}.java`,
   letterSource: hasLetter ? `${GH}/coverletter/v2/presets/${name}Letter.java` : null,
   code: `CvDocument cv = loadProfile();

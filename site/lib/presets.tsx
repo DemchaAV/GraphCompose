@@ -1,4 +1,5 @@
 import { PaperHello, PaperInvoice, PaperCv } from "@/components/PaperPage";
+import { withBasePath } from "./base-path";
 import type { ReactNode } from "react";
 
 export type PresetId = "hello" | "invoice" | "cv";
@@ -38,8 +39,8 @@ export const PRESETS: Record<PresetId, Preset> = {
   hello: {
     id: "hello",
     label: "Hello world",
-    pdf: "/previews/hello.pdf",
-    poster: "/previews/hello.png",
+    pdf: withBasePath("/previews/hello.pdf"),
+    poster: withBasePath("/previews/hello.png"),
     code: `import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
@@ -83,8 +84,8 @@ class Hello {
   invoice: {
     id: "invoice",
     label: "Invoice",
-    pdf: "/previews/invoice.pdf",
-    poster: "/previews/invoice.png",
+    pdf: withBasePath("/previews/invoice.pdf"),
+    poster: withBasePath("/previews/invoice.png"),
     code: `import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
@@ -127,8 +128,8 @@ try (DocumentSession doc = GraphCompose.document(Path.of("invoice.pdf"))
   cv: {
     id: "cv",
     label: "CV · ModernProfessional",
-    pdf: "/previews/cv.pdf",
-    poster: "/previews/cv.png",
+    pdf: withBasePath("/previews/cv.pdf"),
+    poster: withBasePath("/previews/cv.png"),
     code: `import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;

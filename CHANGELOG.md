@@ -17,6 +17,19 @@ changes are planned.
 
 ### Public API
 
+- `MarkdownInline.append(...)` (the inline-markdown adapter used by
+  every CV / cover-letter body / row / entry renderer) now
+  recognises standard Markdown link syntax `[label](url)` and emits
+  a clickable hyperlink run via `RichText.link(label, url)`. Pure
+  parser extension — no `CvRow` data-shape change required. Each
+  consumer of `MarkdownInline.append` (body renderers, entry
+  renderers, etc.) automatically picks up link rendering. The
+  follow-up Track M3 will explicitly wire `ProjectRenderer` and a
+  few other renderers that currently bypass `append` for the title
+  segment. `MarkdownInline.plainText(...)` is updated in lockstep
+  to strip link syntax cleanly so callers that pull a plain-text
+  projection (e.g. `ProjectLabel.parse`) keep getting just the
+  visible label.
 - Four new `BusinessTheme` factory presets `@since 1.6.8`:
   `BusinessTheme.nordic()` (Scandinavian minimal — cool whites +
   slate-blue accent + generous whitespace, for design-studio

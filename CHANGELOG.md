@@ -21,15 +21,30 @@ changes are planned.
   every CV / cover-letter body / row / entry renderer) now
   recognises standard Markdown link syntax `[label](url)` and emits
   a clickable hyperlink run via `RichText.link(label, url)`. Pure
-  parser extension — no `CvRow` data-shape change required. Each
-  consumer of `MarkdownInline.append` (body renderers, entry
-  renderers, etc.) automatically picks up link rendering. The
-  follow-up Track M3 will explicitly wire `ProjectRenderer` and a
-  few other renderers that currently bypass `append` for the title
-  segment. `MarkdownInline.plainText(...)` is updated in lockstep
-  to strip link syntax cleanly so callers that pull a plain-text
-  projection (e.g. `ProjectLabel.parse`) keep getting just the
-  visible label.
+  parser extension — no `CvRow` data-shape change required.
+  `MarkdownInline.plainText(...)` is updated in lockstep to strip
+  link syntax cleanly so callers that pull a plain-text projection
+  (e.g. `ProjectLabel.parse`) keep getting just the visible label.
+- `ProjectRenderer.inline(...)` and `ProjectRenderer.titleThenBody(...)`
+  now route the project-row title segment through
+  `MarkdownInline.append(...)` instead of emitting it as a flat
+  `RichText.style(...)` run. End-to-end consequence: a CV row with
+  `label = "[GraphCompose](https://gc) (Java, PDFBox)"` renders the
+  title as a clickable hyperlink and the stack as plain
+  `" (Java, PDFBox)"`. Labels without inline Markdown render
+  identically to before. `ProjectRenderer.plainInline(...)` (the
+  one-line listing variant) intentionally continues to drop link
+  syntax via `MarkdownInline.plainText(...)` because a clickable
+  link would not survive the compact formatting context.
+- `ProjectLabel.parse(...)` now preserves inline Markdown syntax
+  inside the returned `title` (the legacy implementation eagerly
+  flattened `**emphasis**` and `[links](url)` via `plainText` and
+  then split on the last `(`). The split heuristic now targets a
+  trailing `\s+\([^()]*\)\s*$` pattern so a leading
+  `[name](https://...)` URL's `(...)` segment is not mistaken for
+  the technology-stack delimiter. Callers that only need the
+  visible-text projection should pass `title()` back through
+  `MarkdownInline.plainText(...)`.
 - Four new `BusinessTheme` factory presets `@since 1.6.8`:
   `BusinessTheme.nordic()` (Scandinavian minimal — cool whites +
   slate-blue accent + generous whitespace, for design-studio

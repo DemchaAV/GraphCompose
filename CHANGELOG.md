@@ -87,6 +87,10 @@ The next minor with new canonical DSL primitives is **v1.7.0**
   `snakeyaml.version` property. SnakeYAML is now resolved
   transitively (and `optional`) through `jackson-dataformat-yaml`,
   which version-aligns it with Jackson's BOM.
+- Bumped `net.sf.jasperreports:jasperreports` 6.21.3 &rarr; 7.0.7
+  in the benchmarks module. Benchmarks are a sibling Maven module
+  consumed only by the manual performance harness — no impact on
+  library consumers ([#111](https://github.com/DemchaAV/GraphCompose/pull/111)).
 
 ### Documentation
 

@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.fontbox.util.BoundingBox;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDFontDescriptor;
-import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -179,7 +178,7 @@ public class PdfFont extends FontBase<PDFont> {
         }
     }
 
-    private @NotNull String textSanitizer(String text) {
+    private String textSanitizer(String text) {
         // v1.6.3: preserve author-supplied whitespace verbatim. The
         // previous implementation collapsed any run of resulting spaces
         // (original + converted) into one, but downstream geometry

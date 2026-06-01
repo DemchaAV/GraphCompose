@@ -16,7 +16,6 @@ import lombok.NonNull;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 
 import java.awt.Color;
 import java.io.IOException;
@@ -48,7 +47,6 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
     @ToString.Exclude
     protected final PaddingRender<S> padding;
 
-    @NotNull
     private static RenderCoordinateContext update(RenderCoordinateContext source, double y, double height, int page) {
         return new RenderCoordinateContext(
                 source.x(),
@@ -262,7 +260,6 @@ public abstract class GuidesRenderer<S extends AutoCloseable> {
         }
     }
 
-    @NotNull
     private RenderCoordinateContext boxCoordinate(Entity entity) {
         Stroke stroke = renderingSystem().guidLineSettings().BOX_STROKE();
         Color color = renderingSystem().guidLineSettings().BOX_COLOR();

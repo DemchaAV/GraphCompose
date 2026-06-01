@@ -18,7 +18,6 @@ import com.demcha.compose.engine.exceptions.BigSizeElementException;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -164,7 +163,7 @@ public class TextBlockProcessor {
 
     private void finalizePageBreakingAndDefinition(Entity entity,
                                                    BlockTextData blockTextData,
-                                                   @NotNull Offset yOffset,
+                                                   Offset yOffset,
                                                    List<LineTextData> assignPositionTextData,
                                                    Offset entityYOffset) {
         BlockTextData newBlockTextData = blockTextData.withLines(assignPositionTextData);

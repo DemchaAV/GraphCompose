@@ -28,7 +28,6 @@ import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
 import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -51,16 +50,11 @@ public final class EngineComposerHarness implements Closeable {
     private final Canvas canvas;
     private final LayoutSystem<PdfRenderingSystemECS> layoutSystem;
     private final PdfRenderingSystemECS renderingSystem;
-    @Nullable
     private final Path outputFile;
-    @Nullable
     private final PdfFileManagerSystem fileManagerSystem;
     private final List<HeaderFooterConfig> headerFooterConfigs = new ArrayList<>();
-    @Nullable
     private WatermarkConfig watermarkConfig;
-    @Nullable
     private DocumentMetadata documentMetadata;
-    @Nullable
     private PdfProtectionConfig protectionConfig;
     private boolean postProcessed;
     private boolean layoutResolved;

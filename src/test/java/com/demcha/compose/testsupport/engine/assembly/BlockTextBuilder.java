@@ -25,7 +25,6 @@ import com.demcha.compose.engine.text.markdown.MarkDownParser;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -583,13 +582,13 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
         return "([{".indexOf(last) >= 0;
     }
 
-    private @NotNull TextMeasurementSystem textMeasurementSystem() {
+    private TextMeasurementSystem textMeasurementSystem() {
         return entityManager.getSystems()
                 .getSystem(TextMeasurementSystem.class)
                 .orElseThrow(() -> new IllegalStateException("TextMeasurementSystem is required to build block text."));
     }
 
-    private @NotNull TextStyle measurementStyle() {
+    private TextStyle measurementStyle() {
         if (baseComponents != null) {
             TextStyle style = (TextStyle) baseComponents.get(TextStyle.class);
             if (style != null) {

@@ -681,6 +681,85 @@ class DocumentSessionTest {
         }
     }
 
+    /**
+     * Regression for v1.6.7 Track I3: {@code session.registry().register(...)}
+     * must invalidate the layout cache the same way
+     * {@link DocumentSession#registerNodeDefinition(NodeDefinition)} does.
+     * Before the fix the registry was mutated in place but the cached
+     * {@link LayoutGraph} stayed pinned to the previous compile, so a
+     * follow-up call to {@code render(...)} or {@code layoutGraph()} would
+     * silently return the stale graph that still routed through the old
+     * definition.
+     */
+    @Test
+    void registryRegisterInvalidatesCachedLayoutFromPreviousCompile() throws Exception {
+        FixedLayoutBackend<List<String>> backend = new FixedLayoutBackend<>() {
+            @Override
+            public String name() {
+                return "badge-backend";
+            }
+
+            @Override
+            public List<String> render(LayoutGraph graph, FixedLayoutRenderContext context) {
+                return graph.fragments().stream()
+                        .map(fragment -> (String) fragment.payload())
+                        .toList();
+            }
+        };
+
+        // Replacement definition that prefixes the badge label so the
+        // before / after snapshots are trivially distinguishable.
+        NodeDefinition<BadgeNode> uppercaseDef = new NodeDefinition<>() {
+            @Override
+            public Class<BadgeNode> nodeType() {
+                return BadgeNode.class;
+            }
+
+            @Override
+            public PreparedNode<BadgeNode> prepare(BadgeNode node, PrepareContext ctx, BoxConstraints constraints) {
+                return PreparedNode.leaf(node, new MeasureResult(40, 18));
+            }
+
+            @Override
+            public PaginationPolicy paginationPolicy(BadgeNode node) {
+                return PaginationPolicy.ATOMIC;
+            }
+
+            @Override
+            public List<LayoutFragment> emitFragments(PreparedNode<BadgeNode> prepared, FragmentContext ctx, FragmentPlacement placement) {
+                return List.of(new LayoutFragment(
+                        placement.path(),
+                        0,
+                        0,
+                        0,
+                        placement.width(),
+                        placement.height(),
+                        "UPPER-" + prepared.node().label()));
+            }
+        };
+
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(200, 160)
+                .margin(DocumentInsets.of(10))
+                .create()) {
+
+            session.registerNodeDefinition(new BadgeNodeDefinition());
+            session.add(new BadgeNode("Badge", "alpha", DocumentInsets.zero(), DocumentInsets.zero()));
+
+            // First render warms the layout cache against the original definition.
+            assertThat(session.render(backend)).containsExactly("alpha");
+
+            // Swap the definition through the registry() path (not the
+            // dedicated session.registerNodeDefinition path). Without the
+            // I3 invalidate-on-mutate guard the cache would still point at
+            // the previously compiled layout and the next render would
+            // return "alpha".
+            session.registry().register(uppercaseDef);
+
+            assertThat(session.render(backend)).containsExactly("UPPER-alpha");
+        }
+    }
+
     @Test
     @DisabledIfSystemProperty(named = "no.poi", matches = "true",
             disabledReason = "Exercises DocxSemanticBackend; skipped under the no-poi profile that excludes poi-ooxml from the test classpath")

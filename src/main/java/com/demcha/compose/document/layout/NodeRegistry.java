@@ -8,8 +8,20 @@ import java.util.Objects;
 
 /**
  * Registry of semantic node definitions.
+ *
+ * <p>Standalone {@code NodeRegistry} instances are safe to mutate
+ * directly via {@link #register(NodeDefinition)}. When a registry is
+ * owned by a {@link com.demcha.compose.document.api.DocumentSession},
+ * however, the session wraps it with an internal subclass that calls
+ * {@code invalidate()} on every {@code register(...)} call so the
+ * layout cache cannot go stale behind the caller's back. Callers
+ * working through {@code session.registry().register(...)} therefore
+ * get the same caching semantics as
+ * {@code session.registerNodeDefinition(...)}.</p>
+ *
+ * @since 1.6.0
  */
-public final class NodeRegistry {
+public class NodeRegistry {
     private final Map<Class<?>, NodeDefinition<?>> definitions = new LinkedHashMap<>();
 
     /**

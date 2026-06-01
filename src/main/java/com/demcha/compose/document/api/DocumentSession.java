@@ -109,7 +109,7 @@ public final class DocumentSession implements AutoCloseable {
         this.canvas = LayoutCanvas.from(pageSize.width(), pageSize.height(), toEngineMargin(this.margin));
         this.markdown = markdown;
         this.guideLines = guideLines;
-        this.registry = BuiltInNodeDefinitions.registerDefaults(new NodeRegistry());
+        this.registry = BuiltInNodeDefinitions.registerDefaults(new InvalidatingNodeRegistry());
         this.compiler = new LayoutCompiler(registry);
         this.customFontFamilies.addAll(List.copyOf(customFontFamilies));
         refreshMeasurementServices();
@@ -540,16 +540,20 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
-     * Registers a custom semantic node definition.
+     * Registers a custom semantic node definition. Equivalent to
+     * {@code session.registry().register(definition)} — the layout
+     * cache is invalidated either way (the registry returned by
+     * {@link #registry()} is a session-owned wrapper that funnels
+     * mutations through {@code invalidate()} since v1.6.7).
      *
      * @param definition node definition implementation
      * @param <E> semantic node type handled by the definition
      * @return this session
+     * @throws IllegalStateException if this session has already been closed
      */
     public <E extends DocumentNode> DocumentSession registerNodeDefinition(NodeDefinition<E> definition) {
         ensureOpen();
         registry.register(Objects.requireNonNull(definition, "definition"));
-        invalidate();
         return this;
     }
 
@@ -590,9 +594,15 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
-     * Returns the mutable node registry used by this session.
+     * Returns the live node registry backing this session. The returned
+     * instance is a session-owned subclass of {@link NodeRegistry} (since
+     * v1.6.7); calling {@link NodeRegistry#register(NodeDefinition)} on it
+     * mutates the registry <em>and</em> invalidates the layout cache, so it
+     * is interchangeable with {@link #registerNodeDefinition(NodeDefinition)}.
+     * Read-only access via {@link NodeRegistry#definitionFor(DocumentNode)}
+     * is unaffected.
      *
-     * @return active node registry
+     * @return live node registry (invalidates layout cache on mutation)
      */
     public NodeRegistry registry() {
         return registry;
@@ -899,6 +909,26 @@ public final class DocumentSession implements AutoCloseable {
     @FunctionalInterface
     private interface PdfRenderingBody<R> {
         R run() throws Exception;
+    }
+
+    /**
+     * Session-owned {@link NodeRegistry} subclass that funnels every
+     * {@link #register(NodeDefinition)} call through
+     * {@link DocumentSession#invalidate()}. Without this wrapper, callers
+     * that mutated the registry directly via {@code session.registry().
+     * register(...)} would leave the layout cache pointing at a stale
+     * compile result — the cache invalidation only happened on the
+     * dedicated {@link DocumentSession#registerNodeDefinition(NodeDefinition)}
+     * path. Added in v1.6.7 (Track I3) so the two registration entry points
+     * have identical caching semantics.
+     */
+    private final class InvalidatingNodeRegistry extends NodeRegistry {
+        @Override
+        public <E extends DocumentNode> NodeRegistry register(NodeDefinition<E> definition) {
+            super.register(definition);
+            invalidate();
+            return this;
+        }
     }
 
     /**

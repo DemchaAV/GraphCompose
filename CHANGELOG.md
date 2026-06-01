@@ -54,9 +54,32 @@ planned; the next minor with new canonical DSL primitives is
 - `ConfigLoader.loadConfigWithEnv` Javadoc now states the YAML
   path requires `jackson-dataformat-yaml` on the classpath and
   throws `NoClassDefFoundError` when the optional dep is absent.
+- `DocumentSession.registry()` Javadoc now explains that the
+  returned registry is a session-owned wrapper whose
+  `register(...)` mutates the registry *and* invalidates the
+  layout cache, making the two registration entry points
+  (`session.registry().register(...)` and
+  `session.registerNodeDefinition(...)`) interchangeable.
+
+### Fixes
+
+- `DocumentSession.registry().register(...)` now invalidates the
+  layout cache the same way
+  `DocumentSession.registerNodeDefinition(...)` does. Previously,
+  registering a node definition through `registry()` mutated the
+  registry in place but left the cached `LayoutGraph` pinned to
+  the previous compile, so a follow-up call to `render(...)` or
+  `layoutGraph()` silently returned the stale graph routed through
+  the old definition. Implemented by wrapping the session's
+  `NodeRegistry` in a private session-owned subclass that funnels
+  every `register(...)` call through `invalidate()`. (Track I3.)
 
 ### Internal
 
+- `NodeRegistry` is no longer `final` so `DocumentSession` can
+  install a session-owned subclass that auto-invalidates the
+  layout cache on mutation (see Fixes above). Standalone
+  `NodeRegistry` instances retain their previous behaviour.
 - Replaced eight residual `org.jetbrains.annotations.NotNull` /
   `@Nullable` usages with `lombok.NonNull` (where the surrounding
   file already used Lombok) or removed them entirely (private

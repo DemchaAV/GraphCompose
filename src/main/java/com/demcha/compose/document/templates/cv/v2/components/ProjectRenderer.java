@@ -9,6 +9,14 @@ import com.demcha.compose.document.templates.cv.v2.data.CvRow;
 /**
  * Renders project rows that carry a title and optional technology
  * stack in the legacy "Project (Stack)" label shape.
+ *
+ * <p>Since v1.6.8 the title segment is routed through
+ * {@link MarkdownInline#append(com.demcha.compose.document.dsl.RichText,
+ * String, DocumentTextStyle)} rather than emitted as a flat styled
+ * run, so {@code [name](url)} inside a {@link CvRow#label()} renders
+ * as a clickable hyperlink. Labels without inline Markdown render
+ * identically to before — the only visible change is that link
+ * syntax now actually produces links.</p>
  */
 public final class ProjectRenderer {
     private ProjectRenderer() {
@@ -28,7 +36,7 @@ public final class ProjectRenderer {
                 .align(TextAlign.LEFT)
                 .margin(margin)
                 .rich(rich -> {
-                    rich.style(label.title(), titleStyle);
+                    MarkdownInline.append(rich, label.title(), titleStyle);
                     if (!label.stack().isBlank()) {
                         rich.style(" (" + label.stack() + ")", stackStyle);
                     }
@@ -52,6 +60,10 @@ public final class ProjectRenderer {
                 .align(TextAlign.LEFT)
                 .margin(margin)
                 .rich(rich -> {
+                    // plainInline intentionally drops link syntax — it is
+                    // for one-line listings where a clickable link would
+                    // not survive the formatting context. Continue to use
+                    // plainText so [name](url) appears as just "name".
                     rich.style(MarkdownInline.plainText(row.label()),
                             labelStyle);
                     if (!row.body().isBlank()) {
@@ -75,7 +87,7 @@ public final class ProjectRenderer {
                 .align(TextAlign.LEFT)
                 .margin(titleMargin)
                 .rich(rich -> {
-                    rich.style(label.title(), titleStyle);
+                    MarkdownInline.append(rich, label.title(), titleStyle);
                     if (!label.stack().isBlank()) {
                         rich.style(" (" + label.stack() + ")", stackStyle);
                     }

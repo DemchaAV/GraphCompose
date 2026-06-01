@@ -32,7 +32,13 @@ class CvV2ComponentUtilityTest {
         ProjectLabel label = ProjectLabel.parse(
                 "**GraphCompose** (Java 21, PDFBox, Maven)");
 
-        assertThat(label.title()).isEqualTo("GraphCompose");
+        // Since v1.6.8 the title segment preserves inline Markdown
+        // syntax — the emphasis-stripping that the old parser did
+        // up-front now happens at render time inside
+        // MarkdownInline.append, where it can co-exist with the
+        // new [label](url) link path. ProjectLabelTest pins both
+        // the legacy and the link-aware shapes.
+        assertThat(label.title()).isEqualTo("**GraphCompose**");
         assertThat(label.stack()).isEqualTo("Java 21, PDFBox, Maven");
     }
 

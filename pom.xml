@@ -54,7 +54,6 @@
         <poi.version>5.5.1</poi.version>
         <javafx.version>21.0.2</javafx.version>
         <slf4j.version>2.0.18</slf4j.version>
-        <snakeyaml.version>2.6</snakeyaml.version>
         <zxing.version>3.5.4</zxing.version>
 
         <!-- Test dependencies -->
@@ -204,20 +203,22 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
 
+        <!--
+            jackson-dataformat-yaml is consumed only by `ConfigLoader.
+            loadConfigWithEnv(...)` when the caller passes a *.yaml /
+            *.yml resource. Library consumers that load JSON configs
+            (or do not use ConfigLoader at all) should not pay the
+            ~1.7MB SnakeYAML transitive cost. Marked optional in
+            v1.6.7 (F4), mirroring the existing `poi-ooxml` pattern.
+            Apps that load YAML configs must add this dependency to
+            their own classpath; without it `ConfigLoader` throws
+            `NoClassDefFoundError` when it tries to construct
+            `YAMLFactory`.
+        -->
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.module</groupId>
-            <artifactId>jackson-module-jsonSchema</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-            <version>${snakeyaml.version}</version>
+            <optional>true</optional>
         </dependency>
 
         <dependency>

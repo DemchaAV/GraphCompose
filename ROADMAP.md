@@ -9,6 +9,7 @@ In flight on `main` / `develop`.
 - v1.6 polish &mdash; documentation, examples, visual baselines, fixes.
 - Open-source hygiene &mdash; security policy, support guidance, dependency automation, security scanning.
 - **Maven Central distribution** &mdash; debuted in v1.6.6 under `io.github.demchaav:graph-compose`. Replaces JitPack as the primary install channel; the JitPack URL stays alive for existing pinned consumers but is no longer documented as a primary option. Shipped per [#7](https://github.com/DemchaAV/GraphCompose/issues/7).
+- **Transitive dependency cleanup** &mdash; shipped in v1.6.7. Kotlin stdlib gone (the library is Java-first), `flexmark-all` aggregator narrowed to the three modules actually consumed by `MarkDownParser`, `jackson-dataformat-yaml` marked optional, unused `jackson-module-jsonSchema` + direct `snakeyaml` dropped, `jcl-over-slf4j` made explicit so PDFBox's commons-logging routes through SLF4J without `flexmark-all`'s transitive bridge. Also fixes a layout-cache staleness bug on `DocumentSession.registry().register(...)`. Zero breaking public API changes (japicmp `semver PATCH`).
 
 ## Next (v1.7)
 

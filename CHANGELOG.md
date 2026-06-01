@@ -3,6 +3,18 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v1.6.8 — Planned
+
+**CV v2 migration completion + senior-review polish.** Scope being
+assembled — entries are filled in as work lands on `develop`. The
+headline addition is parser-level support for inline markdown links
+(`[label](url)`) so CV/cover-letter authors can render project /
+education entry titles as hyperlinks without changing the existing
+`CvRow` data shape; the rest is small build and code-hygiene
+follow-ups carried over from the v1.6.7 senior review (see
+[ROADMAP.md](ROADMAP.md) and the private taskboard). No breaking
+changes are planned.
+
 ## v1.6.7 — 2026-06-01
 
 **Transitive dependency cleanup.** v1.6.7 narrows the runtime

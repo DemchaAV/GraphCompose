@@ -90,6 +90,7 @@ GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the com
 | Generate a CV / cover letter from data | Layered templates | `ModernProfessional.create().compose(session, cvDocument)` &mdash; see [layered templates](./docs/templates/v2-layered/README.md) |
 | Add a custom visual primitive | Engine extension | `NodeDefinition` + `PdfFragmentRenderHandler` &mdash; see [extension guide](./docs/contributing/extension-guide.md) |
 | Regression-test generated layouts | Layout snapshots | `DocumentSession#layoutSnapshot()` &mdash; quickstart at [Testing your document](./docs/operations/test-your-document.md); full reference at [snapshot testing](./docs/operations/layout-snapshot-testing.md) |
+| See the live playground / gallery | Next.js showcase site | [Showcase](https://DemchaAV.github.io/GraphCompose/) &mdash; source under [`site/`](./site), built with `next build` and deployed via the [Pages workflow](./.github/workflows/deploy-site.yml) |
 
 ## Installation
 

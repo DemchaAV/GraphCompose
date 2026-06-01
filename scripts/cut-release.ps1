@@ -219,6 +219,100 @@ function Update-ReadmeInstallVersion($readmePath, $newVersion) {
     }
 }
 
+function Update-SiteDepsVersion($depsPath, $newVersion) {
+    # The Next.js showcase site (site/) embeds the Maven Central
+    # coordinates in `site/lib/deps.ts`. The pom-bump pipeline never
+    # touched this file before v1.6.8 (legacy site lives under docs/),
+    # so without this helper the next release would silently ship the
+    # site with an outdated <version> in the install snippet.
+    if (-not (Test-Path $depsPath)) {
+        Note "skip (no file): $depsPath"
+        return
+    }
+    $content = Get-Content $depsPath -Raw
+    $changed = $false
+    $replacements = @(
+        @{ Regex = [regex]'(?<=<version>)v?[\w\.\-]+(?=</version>)';                                    Value = $newVersion; Label = 'site Maven snippet' },
+        @{ Regex = [regex]"(?<=io\.github\.demchaav:graph-compose:)v?[\w\.\-]+(?=`")";                  Value = $newVersion; Label = 'site Gradle snippet' }
+    )
+    foreach ($r in $replacements) {
+        $after = $r.Regex.Replace($content, $r.Value, 1)
+        if ($content -ne $after) {
+            $content = $after
+            $changed = $true
+            Note "bumped site/lib/deps.ts $($r.Label) -> $($r.Value)"
+        }
+    }
+    if (-not $changed) {
+        Note "no change: site/lib/deps.ts (already $newVersion?)"
+        return
+    }
+    if ($DryRun) {
+        Write-Host "    [DRY RUN] site/lib/deps.ts -> $newVersion" -ForegroundColor Yellow
+    } else {
+        [System.IO.File]::WriteAllText($depsPath, $content)
+    }
+}
+
+function Update-SiteHeroVersion($heroPath, $newVersion) {
+    # site/components/Hero.tsx shows the Maven Central coordinates in
+    # the right-hand card. Without this bump the hero would lag the
+    # actual install snippet for one release cycle.
+    if (-not (Test-Path $heroPath)) { Note "skip (no file): $heroPath"; return }
+    $content = Get-Content $heroPath -Raw
+    $regex = [regex]'(?<=io\.github\.demchaav:graph-compose:)v?[\w\.\-]+(?=</b>)'
+    $after = $regex.Replace($content, $newVersion, 1)
+    if ($content -eq $after) {
+        Note "no change: site/components/Hero.tsx (already $newVersion?)"
+        return
+    }
+    if ($DryRun) {
+        Write-Host "    [DRY RUN] site/components/Hero.tsx -> $newVersion" -ForegroundColor Yellow
+    } else {
+        [System.IO.File]::WriteAllText($heroPath, $after)
+        Note "bumped site/components/Hero.tsx -> $newVersion"
+    }
+}
+
+function Update-SitePresetsVersion($presetsPath, $newVersion) {
+    # site/lib/presets.tsx mentions the coordinates in the file's
+    # leading docstring so copy-pasters land on the right artifact.
+    if (-not (Test-Path $presetsPath)) { Note "skip (no file): $presetsPath"; return }
+    $content = Get-Content $presetsPath -Raw
+    $regex = [regex]'(?<=io\.github\.demchaav:graph-compose:)v?[\w\.\-]+(?=`)'
+    $after = $regex.Replace($content, $newVersion, 1)
+    if ($content -eq $after) {
+        Note "no change: site/lib/presets.tsx (already $newVersion?)"
+        return
+    }
+    if ($DryRun) {
+        Write-Host "    [DRY RUN] site/lib/presets.tsx -> $newVersion" -ForegroundColor Yellow
+    } else {
+        [System.IO.File]::WriteAllText($presetsPath, $after)
+        Note "bumped site/lib/presets.tsx -> $newVersion"
+    }
+}
+
+function Update-SiteExamplesJsonTag($jsonPath, $tag) {
+    # `site/public/examples.json` is a copy of `docs/examples.json` used
+    # by the Gallery. Re-pin its source links from `/blob/develop/...`
+    # to `/blob/<tag>/...` so deep links survive future develop drift.
+    if (-not (Test-Path $jsonPath)) { Note "skip (no file): $jsonPath"; return }
+    $content = Get-Content $jsonPath -Raw
+    $regex = [regex]'(?<=https://github\.com/DemchaAV/GraphCompose/blob/)develop(?=/)'
+    $after = $regex.Replace($content, $tag)
+    if ($content -eq $after) {
+        Note "no change: site/public/examples.json (no /blob/develop/ links to pin?)"
+        return
+    }
+    if ($DryRun) {
+        Write-Host "    [DRY RUN] site/public/examples.json: blob/develop -> blob/$tag" -ForegroundColor Yellow
+    } else {
+        [System.IO.File]::WriteAllText($jsonPath, $after)
+        Note "pinned site/public/examples.json /blob/develop -> /blob/$tag"
+    }
+}
+
 function Update-IndexHtmlVersion($indexHtmlPath, $newVersion) {
     if (-not (Test-Path $indexHtmlPath)) {
         Note "skip (no file): $indexHtmlPath"
@@ -284,6 +378,75 @@ function Update-ShowcaseGhBase($newRef) {
         Note "GH_BASE -> /blob/$newRef"
     }
     return $true
+}
+
+function Sync-SiteShowcase {
+    # Mirrors freshly-regenerated showcase artefacts from docs/ into
+    # site/public/ so the Next.js site doesn't drift from the legacy
+    # docs/ catalogue. Run AFTER Run-ShowcaseSync so the freshly-built
+    # PDFs / screenshots / manifest are picked up.
+    #
+    # What gets mirrored:
+    #   docs/showcase/pdf/**           → site/public/showcase/pdf/**
+    #   docs/showcase/screenshots/**   → site/public/showcase/screenshots/**
+    #   docs/examples.json             → site/public/examples.json
+    #   docs/showcase/screenshots/templates/cv/cv-*-v2.png
+    #                                  → site/public/previews/cv-v2/
+    #   docs/showcase/screenshots/templates/coverletter/cover-letter-*-v2.png
+    #                                  → site/public/previews/coverletter-v2/
+    #
+    # Doesn't touch the 3 Playground PDFs (hello/invoice/cv) — those have
+    # no generator yet, see future-work note in site/public/previews/README.md.
+    $docsShowcase = Join-Path $repoRoot 'docs/showcase'
+    $siteShowcase = Join-Path $repoRoot 'site/public/showcase'
+    $docsJson     = Join-Path $repoRoot 'docs/examples.json'
+    $siteJson     = Join-Path $repoRoot 'site/public/examples.json'
+    $cvSrcDir     = Join-Path $docsShowcase 'screenshots/templates/cv'
+    $letterSrcDir = Join-Path $docsShowcase 'screenshots/templates/coverletter'
+    $cvDstDir     = Join-Path $repoRoot 'site/public/previews/cv-v2'
+    $letterDstDir = Join-Path $repoRoot 'site/public/previews/coverletter-v2'
+
+    if (-not (Test-Path $docsShowcase)) {
+        Note "skip Sync-SiteShowcase: no docs/showcase yet"
+        return
+    }
+
+    if ($DryRun) {
+        Write-Host "    [DRY RUN] mirror docs/showcase/{pdf,screenshots} -> site/public/showcase/" -ForegroundColor Yellow
+        Write-Host "    [DRY RUN] copy docs/examples.json -> site/public/examples.json" -ForegroundColor Yellow
+        Write-Host "    [DRY RUN] copy cv/v2 + coverletter/v2 PNGs -> site/public/previews/{cv-v2,coverletter-v2}/" -ForegroundColor Yellow
+        return
+    }
+
+    # Mirror showcase tree (deletes orphans on the site side to keep parity)
+    New-Item -ItemType Directory -Force -Path $siteShowcase | Out-Null
+    Copy-Item -Recurse -Force "$docsShowcase/pdf" $siteShowcase
+    Copy-Item -Recurse -Force "$docsShowcase/screenshots" $siteShowcase
+    Note "synced docs/showcase -> site/public/showcase"
+
+    # Manifest
+    if (Test-Path $docsJson) {
+        Copy-Item -Force $docsJson $siteJson
+        Note "synced docs/examples.json -> site/public/examples.json"
+        # Re-apply the /blob/develop -> /blob/<tag> pin in case
+        # docs/examples.json itself still points at develop (ShowcaseSync
+        # writes whatever GH_BASE Step 3 set in ShowcaseMetadata.java).
+        if ($script:tag) {
+            Update-SiteExamplesJsonTag $siteJson $script:tag
+        }
+    }
+
+    # Per-preset CV + cover-letter PNGs used by the Gallery hover overlay
+    if (Test-Path $cvSrcDir) {
+        New-Item -ItemType Directory -Force -Path $cvDstDir | Out-Null
+        Copy-Item -Force "$cvSrcDir/cv-*-v2.png" $cvDstDir
+        Note "synced cv-v2 preset previews -> site/public/previews/cv-v2/"
+    }
+    if (Test-Path $letterSrcDir) {
+        New-Item -ItemType Directory -Force -Path $letterDstDir | Out-Null
+        Copy-Item -Force "$letterSrcDir/cover-letter-*-v2.png" $letterDstDir
+        Note "synced coverletter-v2 preset previews -> site/public/previews/coverletter-v2/"
+    }
 }
 
 function Run-ShowcaseSync {
@@ -433,6 +596,10 @@ try {
     Update-PomVersion (Join-Path $repoRoot 'benchmarks/pom.xml') $Version
     Update-ReadmeInstallVersion (Join-Path $repoRoot 'README.md') $Version
     Update-IndexHtmlVersion (Join-Path $repoRoot 'docs/index.html') $Version
+    Update-SiteDepsVersion (Join-Path $repoRoot 'site/lib/deps.ts') $Version
+    Update-SiteHeroVersion (Join-Path $repoRoot 'site/components/Hero.tsx') $Version
+    Update-SitePresetsVersion (Join-Path $repoRoot 'site/lib/presets.tsx') $Version
+    Update-SiteExamplesJsonTag (Join-Path $repoRoot 'site/public/examples.json') $tag
 
     Step 2 "Update CHANGELOG date for v$Version"
     $changelog = Join-Path $repoRoot 'CHANGELOG.md'
@@ -459,6 +626,7 @@ try {
 
     Step 4 "Regenerate docs/examples.json with $tag links"
     Run-ShowcaseSync
+    Sync-SiteShowcase
 
     if (-not $SkipVerify) {
         Step 5 "Run mvnw verify (sanity check)"
@@ -482,7 +650,7 @@ try {
     Step 6 "Commit release"
     $commitMsg = "Release v$Version"
     if ($DryRun) {
-        Write-Host "    [DRY RUN] git add pom.xml aggregator/pom.xml examples/pom.xml benchmarks/pom.xml README.md CHANGELOG.md examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java docs/examples.json docs/index.html" -ForegroundColor Yellow
+        Write-Host "    [DRY RUN] git add pom.xml aggregator/pom.xml examples/pom.xml benchmarks/pom.xml README.md CHANGELOG.md examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java docs/examples.json docs/index.html docs/showcase site/lib/deps.ts site/components/Hero.tsx site/lib/presets.tsx site/public/examples.json site/public/showcase site/public/previews/cv-v2 site/public/previews/coverletter-v2" -ForegroundColor Yellow
         Write-Host "    [DRY RUN] git commit -m `"$commitMsg`"" -ForegroundColor Yellow
     } else {
         git add `
@@ -494,7 +662,15 @@ try {
             CHANGELOG.md `
             examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java `
             docs/examples.json `
-            docs/index.html
+            docs/index.html `
+            docs/showcase `
+            site/lib/deps.ts `
+            site/components/Hero.tsx `
+            site/lib/presets.tsx `
+            site/public/examples.json `
+            site/public/showcase `
+            site/public/previews/cv-v2 `
+            site/public/previews/coverletter-v2
         git commit -m $commitMsg
         Note "commit: $commitMsg"
     }

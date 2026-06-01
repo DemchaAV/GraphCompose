@@ -1,11 +1,11 @@
 import Reveal from "./Reveal";
 
 const CHANGELOG: [string, string][] = [
-  ["1.6.6", "Cover-letter preset spacing fixes"],
-  ["1.6.4", "14 paired cover letters added"],
-  ["1.6.0", "Layered templates: data→theme→widgets"],
-  ["1.5.2", "DOCX semantic subset (Apache POI)"],
-  ["1.5.0", "Two-pass layout snapshot harness"],
+  ["1.6.8", "Markdown links in project titles · 4 contemporary BusinessTheme presets · logback CVE-2026-9828 fix"],
+  ["1.6.7", "Transitive dependency cleanup (Kotlin/flexmark/jackson narrowed) · registry-cache fix"],
+  ["1.6.6", "Maven Central debut as io.github.demchaav:graph-compose · signed jars · API stability policy"],
+  ["1.6.0", "Layered templates: data → theme → components → widgets → presets"],
+  ["1.5.0", "Two-pass layout snapshot harness · semantic backend SPI"],
 ];
 
 export default function Engineering() {

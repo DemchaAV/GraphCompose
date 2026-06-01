@@ -12,9 +12,9 @@ const Editor = dynamic(() => import("@monaco-editor/react").then((m) => m.Editor
 
 type Chip = "soft" | "accent" | "theme";
 const CHIPS: { key: Chip; title: string; desc: string; token: string }[] = [
-  { key: "soft", title: "Soft panel", desc: "A tinted container with internal padding the engine measures around.", token: ".softPanel()" },
-  { key: "accent", title: "Accent strip", desc: "The theme's accent bar — a single declaration, positioned by layout.", token: ".accentStrip()" },
-  { key: "theme", title: "BusinessTheme", desc: "Typography, colour and spacing tokens. Swap it; the tree is untouched.", token: ".theme(BusinessTheme.create())" },
+  { key: "soft", title: "Soft panel", desc: "A tinted container with internal padding the engine measures around.", token: ".softPanel(color, radius, padding)" },
+  { key: "accent", title: "Accent rule", desc: "A coloured left rule — a single declaration, positioned by layout.", token: ".accentLeft(color, width)" },
+  { key: "theme", title: "BusinessTheme", desc: "Typography, colour and spacing tokens. Swap modern() for classic() / cinematic() / nordic() — the tree is untouched.", token: "BusinessTheme.modern()" },
 ];
 
 export default function Playground() {

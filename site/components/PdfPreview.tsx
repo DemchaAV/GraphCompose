@@ -37,12 +37,15 @@ export default function PdfPreview({
         if (!head.ok) return; // no PDF — keep poster
 
         const pdfjs = await import("pdfjs-dist");
-        pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-          "pdfjs-dist/build/pdf.worker.min.mjs",
-          import.meta.url
-        ).toString();
-
+        // Load the worker from the same CDN as cmaps / standard_fonts.
+        // Pinned to the version `package.json` declares so the worker
+        // never drifts from the API surface we compiled against. Using
+        // `new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url)`
+        // causes Next.js's webpack pipeline to push the ESM worker
+        // through Terser, which chokes on the bare top-level
+        // `import` / `export`; a CDN string bypasses bundling entirely.
         const PDF_CDN = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168";
+        pdfjs.GlobalWorkerOptions.workerSrc = `${PDF_CDN}/build/pdf.worker.min.mjs`;
         const doc = await pdfjs.getDocument({
           url: src,
           cMapUrl: `${PDF_CDN}/cmaps/`,

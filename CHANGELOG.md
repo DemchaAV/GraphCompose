@@ -124,6 +124,24 @@ changes are planned.
   tutorial-style. README's "What can I do with this?" table row
   now links to both.
 
+### Web
+
+- New **Next.js showcase site** under `site/` — a fully static
+  one-page marketing / playground for GraphCompose, built with
+  Next.js 14 App Router + TypeScript + Tailwind, deployable to
+  GitHub Pages via `next build` (emits `./out`). Replaces the
+  legacy `docs/index.html` showcase incrementally; both sites
+  coexist for now while we validate the Next.js variant against
+  the existing screenshot pipeline. Live code snippets in the
+  Hero / Playground sections are mirrored from the canonical
+  README hello-world + `examples/.../InvoiceFileExample.java` +
+  `ModernProfessional.create()` paths, so a visitor copying any
+  snippet into a fresh Maven project pulled at
+  `io.github.demchaav:graph-compose:1.6.8` gets compiling code.
+  Gallery enumerates the full 16-preset cv/v2 lineup (15 paired
+  cover letters; `MinimalUnderlined` ships without a paired
+  letter by design).
+
 ## v1.6.7 — 2026-06-01
 
 **Transitive dependency cleanup.** v1.6.7 narrows the runtime

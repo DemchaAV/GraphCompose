@@ -4,10 +4,10 @@ export default function Footer() {
       <div className="wrap">
         <span>© 2026 GraphCompose · MIT License</span>
         <nav className="footer-links" aria-label="Project links">
-          <a href="https://github.com/demchaav/graph-compose/blob/main/CHANGELOG.md" target="_blank" rel="noopener">CHANGELOG</a>
-          <a href="https://github.com/demchaav/graph-compose/tree/main/docs/adr" target="_blank" rel="noopener">ADR</a>
-          <a href="https://github.com/demchaav/graph-compose/blob/main/SECURITY.md" target="_blank" rel="noopener">Security policy</a>
-          <a href="https://github.com/demchaav/graph-compose/blob/main/LICENSE" target="_blank" rel="noopener">MIT</a>
+          <a href="https://github.com/DemchaAV/GraphCompose/blob/main/CHANGELOG.md" target="_blank" rel="noopener">CHANGELOG</a>
+          <a href="https://github.com/DemchaAV/GraphCompose/tree/main/docs/adr" target="_blank" rel="noopener">ADR</a>
+          <a href="https://github.com/DemchaAV/GraphCompose/blob/main/SECURITY.md" target="_blank" rel="noopener">Security policy</a>
+          <a href="https://github.com/DemchaAV/GraphCompose/blob/main/LICENSE" target="_blank" rel="noopener">MIT</a>
         </nav>
       </div>
     </footer>

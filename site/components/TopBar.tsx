@@ -49,7 +49,7 @@ export default function TopBar() {
               </svg>
             )}
           </button>
-          <a className="iconbtn" href="https://github.com/demchaav/graph-compose" target="_blank" rel="noopener" aria-label="GitHub repository" title="GitHub">
+          <a className="iconbtn" href="https://github.com/DemchaAV/GraphCompose" target="_blank" rel="noopener" aria-label="GitHub repository" title="GitHub">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 1.5A10.5 10.5 0 0 0 8.68 22c.52.1.71-.23.71-.5v-1.9c-2.9.63-3.52-1.24-3.52-1.24-.48-1.2-1.16-1.53-1.16-1.53-.95-.65.07-.64.07-.64 1.05.08 1.6 1.08 1.6 1.08.94 1.6 2.46 1.14 3.06.87.1-.68.37-1.14.66-1.4-2.31-.26-4.74-1.16-4.74-5.14 0-1.13.4-2.06 1.07-2.79-.11-.26-.46-1.32.1-2.75 0 0 .87-.28 2.85 1.06a9.9 9.9 0 0 1 5.18 0c1.98-1.34 2.85-1.06 2.85-1.06.56 1.43.21 2.49.1 2.75.67.73 1.07 1.66 1.07 2.79 0 3.99-2.43 4.87-4.75 5.13.38.32.71.95.71 1.92v2.85c0 .27.19.61.72.5A10.5 10.5 0 0 0 12 1.5Z" />
             </svg>

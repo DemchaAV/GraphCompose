@@ -21,20 +21,29 @@ changes (any PDF→PNG tool, or screenshot page 1).
 Run the examples on the JVM with GraphCompose itself and write the PDFs:
 
 ```java
-PdfRenderingSession session = PdfRenderingSession.create();
-
 // hello.pdf
-GraphCompose.document()
-    .pageFlow(flow -> flow.addSection(s -> s.addParagraph("Hello, GraphCompose.")))
-    .theme(BusinessTheme.create())
-    .compose(session)
-    .writeTo(Path.of("public/previews/hello.pdf"));
+try (DocumentSession doc = GraphCompose.document(Path.of("site/public/previews/hello.pdf"))
+        .pageSize(DocumentPageSize.A4)
+        .margin(28, 28, 28, 28)
+        .create()) {
+    doc.pageFlow(page -> page
+            .addSection("Hero", s -> s
+                    .addParagraph(p -> p.text("Hello, GraphCompose."))));
+    doc.buildPdf();
+}
 
-// cv.pdf
-ModernProfessional.create()
-    .compose(session, cv)
-    .writeTo(Path.of("public/previews/cv.pdf"));
+// cv.pdf — uses the ModernProfessional layered-template preset
+try (DocumentSession doc = GraphCompose.document(Path.of("site/public/previews/cv.pdf"))
+        .pageSize(DocumentPageSize.A4)
+        .create()) {
+    ModernProfessional.create().compose(doc, cv);
+    doc.buildPdf();
+}
 ```
+
+The canonical reference examples live under
+`examples/src/main/java/com/demcha/examples/templates/`. For a runnable
+all-in-one, see `examples/src/main/java/com/demcha/examples/GenerateAllExamples.java`.
 
 Then commit the PDFs. No code change needed — the filenames are already wired.
 

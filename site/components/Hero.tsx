@@ -2,15 +2,20 @@
 import { useEffect, useRef } from "react";
 import { highlightJava } from "@/lib/highlight";
 
-const HERO_CODE = `GraphCompose.document()
-  .pageFlow(flow -> flow
-    .addSection(s -> s
-      .softPanel()
-      .accentStrip()
-      .addParagraph("Q3 Engineering Review")
-      .addTable(metrics)))
-  .theme(BusinessTheme.create())
-  .compose(session);`;
+// Compact teaser of the canonical DSL — mirrors the README hello
+// snippet but trimmed to keep the hero card under 10 lines. Real
+// imports + DocumentSession lifecycle live in the Playground sample.
+const HERO_CODE = `BusinessTheme theme = BusinessTheme.modern();
+
+doc.pageFlow(page -> page
+    .addSection("Q3 review", s -> s
+        .softPanel(theme.palette().surfaceMuted(), 10, 14)
+        .accentLeft(theme.palette().accent(), 4)
+        .addParagraph(p -> p
+            .text("Q3 Engineering Review")
+            .textStyle(theme.text().h1()))));
+
+doc.buildPdf();`;
 
 export default function Hero() {
   const dashRef = useRef<SVGLineElement>(null);
@@ -47,13 +52,13 @@ export default function Hero() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M5 4 19 12 5 20Z" strokeLinejoin="round" /></svg>
               Try the live playground
             </a>
-            <a className="btn ghost" href="https://github.com/demchaav/graph-compose" target="_blank" rel="noopener">
+            <a className="btn ghost" href="https://github.com/DemchaAV/GraphCompose" target="_blank" rel="noopener">
               View on GitHub
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M7 17 17 7M9 7h8v8" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </a>
           </div>
           <div className="hero-meta">
-            <span><b>io.github.demchaav:graph-compose:1.6.6</b></span>
+            <span><b>io.github.demchaav:graph-compose:1.6.8</b></span>
             <span>Two-pass layout</span>
             <span>Snapshot-tested</span>
           </div>

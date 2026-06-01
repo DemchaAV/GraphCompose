@@ -31,11 +31,12 @@ export default function Gallery() {
       <div className="wrap">
         <Reveal>
           <div className="eyebrow">§04 · Templates gallery</div>
-          <h2>14 CV presets. 14 paired cover letters. One line each.</h2>
+          <h2>16 CV presets. 15 paired cover letters. One line each.</h2>
           <p className="lead" style={{ marginTop: 16 }}>
             Typed <span className="mono" style={{ fontSize: 15 }}>CvDocument</span> /{" "}
             <span className="mono" style={{ fontSize: 15 }}>CoverLetterDocument</span> in; a styled page out.
             Hover a card to see its paired letter; click for the full page and the code.
+            One preset (<span className="mono" style={{ fontSize: 15 }}>MinimalUnderlined</span>) ships without a paired letter — by design.
           </p>
         </Reveal>
 
@@ -47,7 +48,7 @@ export default function Gallery() {
                 <div className="gal-cl"><PaperLetter name={g.name} accent={g.accent} variant={g.variant} /></div>
                 <div className="gal-cv"><PaperCv accent={g.accent} variant={g.variant} /></div>
               </div>
-              <div className="gal-name"><span>{g.name}</span><span className="pair">+ letter</span></div>
+              <div className="gal-name"><span>{g.name}</span><span className="pair">{g.pair ? "+ letter" : "no letter"}</span></div>
             </button>
           ))}
         </Reveal>
@@ -66,7 +67,7 @@ export default function Gallery() {
               </div>
             </div>
             <div className="modal-info">
-              <div className="eyebrow">CV preset · paired with {open.pair}</div>
+              <div className="eyebrow">CV preset{open.pair ? ` · paired with ${open.pair}` : " · no paired letter"}</div>
               <h3 id="modalTitle">{open.name}</h3>
               <p className="desc">{open.desc}</p>
               <div className="modal-codeblock">

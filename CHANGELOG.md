@@ -15,6 +15,31 @@ follow-ups carried over from the v1.6.7 senior review (see
 [ROADMAP.md](ROADMAP.md) and the private taskboard). No breaking
 changes are planned.
 
+### Build
+
+- Bumped `jackson-bom` 2.21.3 &rarr; 2.21.4 (broken 2.22.0 skipped via
+  the `.github/dependabot.yml` ignore entry added in v1.6.7),
+  `logback-classic` 1.5.32 &rarr; 1.5.34 (fixes
+  [CVE-2026-9828](https://www.cve.org/cverecord?id=CVE-2026-9828) —
+  deserialization whitelist bypass in `HardenedModelInputStream`),
+  `central-publishing-maven-plugin` 0.7.0 &rarr; 0.9.0 (0.10.0
+  blocked by the existing ignore entry; revisit after a focused
+  release-profile evaluation), `japicmp-maven-plugin` 0.23.1 &rarr;
+  0.26.1, and a handful of `maven-*-plugin` minor/patch bumps
+  (clean / site / resources / enforcer 3.5.0 &rarr; 3.6.3 / surefire
+  3.5.5 &rarr; 3.5.6 / source 3.3.1 &rarr; 3.4.0 / gpg 3.2.7 &rarr;
+  3.2.8) ([#115](https://github.com/DemchaAV/GraphCompose/pull/115),
+  cherry-picked from `main` to align `develop`).
+
+### CI
+
+- `.github/dependabot.yml` now pins both ecosystems
+  (`maven`, `github-actions`) to `target-branch: develop` so future
+  grouped PRs land on the integration branch instead of `main`.
+  Closes the divergence root cause behind the v1.6.7-era #111 /
+  #115 episodes where every Dependabot PR force-split history
+  between branches and required a cherry-pick to align.
+
 ### Documentation
 
 - New quickstart guide

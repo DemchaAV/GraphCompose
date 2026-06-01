@@ -47,9 +47,9 @@
 
         <!-- Runtime / library dependencies -->
         <flexmark.version>0.64.8</flexmark.version>
-        <jackson.bom.version>2.21.3</jackson.bom.version>
+        <jackson.bom.version>2.22.0</jackson.bom.version>
         <kotlin.version>2.3.21</kotlin.version>
-        <logback.version>1.5.32</logback.version>
+        <logback.version>1.5.34</logback.version>
         <lombok.version>1.18.46</lombok.version>
         <pdfbox.version>3.0.7</pdfbox.version>
         <poi.version>5.5.1</poi.version>
@@ -65,20 +65,20 @@
         <byteBuddy.version>1.18.8</byteBuddy.version>
 
         <!-- Build plugins -->
-        <central.publishing.plugin.version>0.7.0</central.publishing.plugin.version>
+        <central.publishing.plugin.version>0.10.0</central.publishing.plugin.version>
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
-        <maven.enforcer.plugin.version>3.5.0</maven.enforcer.plugin.version>
-        <maven.gpg.plugin.version>3.2.7</maven.gpg.plugin.version>
+        <maven.enforcer.plugin.version>3.6.3</maven.enforcer.plugin.version>
+        <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
         <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
-        <maven.source.plugin.version>3.3.1</maven.source.plugin.version>
-        <maven.surefire.plugin.version>3.5.5</maven.surefire.plugin.version>
+        <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
+        <maven.surefire.plugin.version>3.5.6</maven.surefire.plugin.version>
 
         <!-- Minimum toolchain (enforced by maven-enforcer-plugin) -->
         <enforcer.requireMavenVersion>3.8.0</enforcer.requireMavenVersion>
         <enforcer.requireJavaVersion>17</enforcer.requireJavaVersion>
 
         <!-- Binary compatibility baseline (japicmp profile) -->
-        <japicmp.version>0.23.1</japicmp.version>
+        <japicmp.version>0.26.1</japicmp.version>
         <japicmp.baseline>v1.6.6</japicmp.baseline>
 
         <!--
@@ -291,7 +291,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-clean-plugin</artifactId>
-                    <version>3.4.0</version>
+                    <version>3.5.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -301,12 +301,12 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
-                    <version>3.21.0</version>
+                    <version>3.22.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.3.1</version>
+                    <version>3.5.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>

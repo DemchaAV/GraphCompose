@@ -15,6 +15,29 @@ follow-ups carried over from the v1.6.7 senior review (see
 [ROADMAP.md](ROADMAP.md) and the private taskboard). No breaking
 changes are planned.
 
+### Fixes
+
+- The two `DocumentSession` registration entry points are now
+  **fully** interchangeable, not just cache-equivalent.
+  `session.registry().register(...)` now calls `ensureOpen()`
+  before mutating, matching the behaviour of
+  `session.registerNodeDefinition(...)`. Previously
+  `registry().register(...)` on a closed session silently mutated
+  the registry and invalidated a closed-session cache (harmless
+  but semantically odd). After this change both paths throw
+  `IllegalStateException` on a closed session. (Track J2 — carry-
+  over polish from the v1.6.7 senior review.)
+
+### Internal
+
+- `NodeRegistry` Javadoc updated to call out the v1.6.7 non-final
+  relaxation explicitly (Track J4). The class became non-final
+  in v1.6.7 (Track I3) so `DocumentSession` could install the
+  auto-invalidating subclass; the change was already binary-
+  compatible (japicmp classified it as `semver PATCH`). The
+  Javadoc just makes the rationale discoverable without reading
+  the CHANGELOG.
+
 ### Public API
 
 - `MarkdownInline.append(...)` (the inline-markdown adapter used by

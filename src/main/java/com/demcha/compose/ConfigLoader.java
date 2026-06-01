@@ -21,9 +21,21 @@ public final class ConfigLoader {
     }
 
     /**
-     * Load YAML from classpath resource into the given class.
+     * Load YAML or JSON from a classpath resource into the given class.
      * Supports running from IDE and from a fat JAR.
-     * Optionally resolves ${ENV} or ${ENV:default} placeholders from environment variables.
+     * Optionally resolves {@code ${ENV}} or {@code ${ENV:default}} placeholders
+     * from environment variables.
+     *
+     * <p><strong>Optional dependency:</strong> the YAML path requires
+     * {@code com.fasterxml.jackson.dataformat:jackson-dataformat-yaml} on
+     * the classpath. GraphCompose declares it as an optional Maven
+     * dependency since {@code v1.6.7}; applications that load YAML
+     * configs through this helper must add the artifact to their own
+     * build. JSON configs work without it.
+     *
+     * @throws java.lang.NoClassDefFoundError if {@code fileName} ends with
+     *         {@code .yaml} / {@code .yml} and
+     *         {@code jackson-dataformat-yaml} is not on the classpath.
      */
     public static <T> T loadConfigWithEnv(String fileName, Class<T> clazz, boolean resolveEnv) {
         log.info("Initializing variables from '{}'", fileName);

@@ -34,6 +34,26 @@ planned; the next minor with new canonical DSL primitives is
   calls through SLF4J. Previously the bridge was provided
   transitively via `flexmark-all`; making it explicit keeps the
   classpath reproducible after the flexmark narrowing above.
+- Marked `jackson-dataformat-yaml` as `<optional>true</optional>`,
+  mirroring the existing `poi-ooxml` pattern. The only consumer is
+  `ConfigLoader.loadConfigWithEnv(...)` when the caller passes a
+  `.yaml` / `.yml` resource; library consumers that load JSON
+  configs (or skip `ConfigLoader` altogether) no longer pull in the
+  ~1.7 MB SnakeYAML transitive footprint. Applications that load
+  YAML configs through this helper must now declare
+  `jackson-dataformat-yaml` in their own build.
+- Removed the unused `jackson-module-jsonSchema` dependency — no
+  code path references it.
+- Removed the explicit `snakeyaml` dependency declaration and the
+  `snakeyaml.version` property. SnakeYAML is now resolved
+  transitively (and `optional`) through `jackson-dataformat-yaml`,
+  which version-aligns it with Jackson's BOM.
+
+### Documentation
+
+- `ConfigLoader.loadConfigWithEnv` Javadoc now states the YAML
+  path requires `jackson-dataformat-yaml` on the classpath and
+  throws `NoClassDefFoundError` when the optional dep is absent.
 
 ### Internal
 

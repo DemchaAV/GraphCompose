@@ -25,7 +25,7 @@ export default function Cta() {
     <section className="section cta" id="use">
       <div className="wrap">
         <Reveal style={{ textAlign: "center", marginBottom: 50 }}>
-          <div className="eyebrow" style={{ justifyContent: "center" }}>§07 · Get started</div>
+          <div className="eyebrow" style={{ justifyContent: "center" }}>§02 · Get started</div>
           <h2>Add it, or build it with me.</h2>
         </Reveal>
         <Reveal className="cta-grid">
@@ -46,7 +46,7 @@ export default function Cta() {
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M5 4h14v16H5zM9 8h6M9 12h6M9 16h4" strokeLinecap="round" /></svg>
                 Examples gallery
               </a>
-              <a href="https://github.com/DemchaAV/GraphCompose/blob/main/docs/operations/test-your-document.md" target="_blank" rel="noopener">
+              <a href="https://github.com/DemchaAV/GraphCompose/blob/develop/docs/operations/test-your-document.md" target="_blank" rel="noopener">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M5 4 19 12 5 20Z" strokeLinejoin="round" /></svg>
                 Testing quickstart
               </a>

@@ -115,10 +115,17 @@ code,kbd,pre,.mono{font-family:var(--mono);}
   transition:border-color .3s ease, background .3s ease;
 }
 .topbar.scrolled{border-bottom-color:var(--line);}
-.topbar .wrap{display:flex; align-items:center; height:62px; gap:28px;}
-.brand{font-family:var(--mono); font-weight:700; font-size:16px; letter-spacing:-.02em; color:var(--ink); display:flex; align-items:center; gap:9px;}
-.brand .mark{width:18px; height:18px; border:2px solid var(--ink); position:relative; border-radius:2px;}
-.brand .mark::after{content:""; position:absolute; inset:3px 3px auto 3px; height:2px; background:var(--ink);}
+.topbar .wrap{display:flex; align-items:center; height:78px; gap:28px;}
+.brand{display:flex; align-items:center; gap:9px;}
+.brand .brand-logo{height:54px; width:auto; display:block;}
+/* Light mode: the logo's pale-grey "Graph" letters are very low-contrast on
+   the warm-cream topbar bg. Heavy contrast + brightness drop + a touch of a
+   drop-shadow give the wordmark a visible outline against the page. */
+.brand .brand-logo{filter:contrast(1.7) saturate(1.25) brightness(0.78) drop-shadow(0 1px 0 rgba(31,42,68,0.15));}
+/* Dark mode: opposite problem — boost brightness so the light-grey "Graph"
+   stays readable on the near-black bg, drop the contrast bump that would
+   crush the dark icon outline. */
+[data-theme="dark"] .brand .brand-logo{filter:brightness(1.18) contrast(1.05);}
 .navlinks{display:flex; gap:22px; margin-left:auto; font-size:14px; color:var(--muted);}
 .navlinks a{position:relative; padding:4px 0; transition:color .2s ease;}
 .navlinks a:hover{color:var(--ink);}
@@ -234,6 +241,10 @@ code,kbd,pre,.mono{font-family:var(--mono);}
    =========================================================== */
 .pg-head{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; flex-wrap:wrap; margin-bottom:26px;}
 .pg-grid{display:grid; grid-template-columns:1.1fr 1fr; gap:18px; align-items:stretch;}
+/* Grid children default to `min-width: auto` which lets Monaco-editor's
+   intrinsic 592px width balloon the track past the viewport on mobile.
+   `min-width: 0` lets the wrap shrink with the grid track. */
+.pg-grid > *{min-width:0;}
 .pg-editor-wrap{border:1px solid var(--line); border-radius:4px; overflow:hidden; background:var(--code-bg); display:flex; flex-direction:column;}
 .pg-tabs{display:flex; gap:2px; padding:8px 8px 0; border-bottom:1px solid var(--line); background:var(--bg-2);}
 .pg-tab{
@@ -338,7 +349,13 @@ code,kbd,pre,.mono{font-family:var(--mono);}
 /* ===========================================================
    §5 POSITIONING TABLE
    =========================================================== */
-.cmp{width:100%; border-collapse:collapse; font-size:14.5px; margin-top:34px; border:1px solid var(--line);}
+/* Outer wrap that enables horizontal scrolling on narrow viewports (mobile).
+   `cmp` itself keeps its natural min-width so thead cells don't wrap or
+   crush below the long text in the body rows. */
+.cmp-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+.cmp-scroll::-webkit-scrollbar{height:6px;}
+.cmp-scroll::-webkit-scrollbar-thumb{background:var(--line-2); border-radius:3px;}
+.cmp{width:100%; min-width:760px; border-collapse:collapse; font-size:14.5px; margin-top:34px; border:1px solid var(--line);}
 .cmp th,.cmp td{padding:15px 18px; text-align:left; border-bottom:1px solid var(--line); vertical-align:top;}
 .cmp thead th{font-family:var(--mono); font-size:12.5px; letter-spacing:.04em; color:var(--muted); font-weight:500; background:var(--bg-2); white-space:nowrap;}
 .cmp tbody th{font-family:var(--mono); font-size:12.5px; color:var(--faint); font-weight:500; text-transform:uppercase; letter-spacing:.06em; width:120px;}

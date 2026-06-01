@@ -13,13 +13,13 @@ export default function Page() {
     <>
       <TopBar />
       <main id="top">
-        <Hero />
-        <Playground />
-        <Pipeline />
-        <Gallery />
-        <Positioning />
-        <Engineering />
-        <Cta />
+        <Hero />          {/* §01 */}
+        <Cta />           {/* §02 — install snippet right after the hero so visitors can copy deps without scrolling past 6 sections */}
+        <Playground />    {/* §03 */}
+        <Pipeline />      {/* §04 */}
+        <Gallery />       {/* §05 — unified showcase: 16 CV pairs + 15 letters + 5 templates + 13 features + 3 flagships */}
+        <Positioning />   {/* §06 */}
+        <Engineering />   {/* §07 */}
       </main>
       <Footer />
     </>

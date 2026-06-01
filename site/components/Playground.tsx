@@ -73,6 +73,32 @@ export default function Playground() {
     monacoRef.current = monaco;
     defineThemes(monaco);
     monaco.editor.setTheme(currentMonacoTheme());
+    // Monaco's first mount can race the Reveal opacity transition and
+    // get pinned at a degenerate 5×5 internal size if its container is
+    // still hidden during measurement. Defer one explicit layout pass
+    // after the DOM settles so the editor picks up its real dimensions.
+    if (typeof window !== "undefined") {
+      requestAnimationFrame(() => requestAnimationFrame(() => editor.layout()));
+      // Re-layout when the Playground section first scrolls into view,
+      // in case the user lands on the page already past it (anchor link)
+      // or the Reveal IntersectionObserver fires after Monaco's mount.
+      if ("IntersectionObserver" in window) {
+        const section = document.getElementById("playground");
+        if (section) {
+          const io = new IntersectionObserver(
+            (entries) => {
+              entries.forEach((e) => {
+                if (e.isIntersecting) {
+                  editor.layout();
+                }
+              });
+            },
+            { threshold: 0.05 }
+          );
+          io.observe(section);
+        }
+      }
+    }
   };
 
   // react to global theme toggle
@@ -113,7 +139,7 @@ export default function Playground() {
       <div className="wrap">
         <Reveal className="pg-head">
           <div>
-            <div className="eyebrow">§02 · Live playground</div>
+            <div className="eyebrow">§03 · Live playground</div>
             <h2>Write the DSL. Read the page.</h2>
           </div>
           <p className="lead" style={{ fontSize: 16, maxWidth: "42ch" }}>
@@ -140,6 +166,15 @@ export default function Playground() {
                 onMount={onMount}
                 loading={<div style={{ padding: 18, fontFamily: "var(--mono)", fontSize: 13, color: "var(--faint)" }}>loading editor…</div>}
                 options={{
+                  // Monaco mounts inside a <Reveal> wrapper that starts at
+                  // opacity:0; when its container's intersection observer
+                  // flips to .in, Monaco's internal layout was previously
+                  // pinned at the mount-time size (5×5 in the degenerate
+                  // case). `automaticLayout: true` enables Monaco's own
+                  // ResizeObserver so it re-lays out when its container
+                  // gains its real dimensions — fixes the empty-editor
+                  // bug at first view.
+                  automaticLayout: true,
                   minimap: { enabled: false },
                   fontFamily: "var(--font-mono), monospace",
                   fontSize: 13.5,
@@ -163,7 +198,10 @@ export default function Playground() {
                 <b style={{ color: "var(--ink)", fontWeight: 600, marginLeft: 3 }}>~80&nbsp;ms</b>
               </span>
               <span className="pageno">page 1 / 1</span>
-              <PdfPreview key={active} src={preset.pdf} poster={preset.poster} fallback={preset.fallback} maxWidth={300} />
+              {/* No `key={active}` — keep the same <img> element across tab
+                  switches so the browser cross-fades the cached posters
+                  instead of unmount/mount flashing through the fallback. */}
+              <PdfPreview poster={preset.poster} fallback={preset.fallback} maxWidth={300} />
             </div>
           </div>
         </Reveal>

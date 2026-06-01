@@ -26,13 +26,19 @@ export default function TopBar() {
     <header className={"topbar" + (scrolled ? " scrolled" : "")}>
       <div className="wrap">
         <a className="brand" href="#top" aria-label="GraphCompose home">
-          <span className="mark" aria-hidden="true" />
-          GraphCompose
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/graphcompose-logo.png"
+            alt="GraphCompose"
+            className="brand-logo"
+            width={172}
+            height={28}
+          />
         </a>
         <nav className="navlinks" aria-label="Sections">
           <a href="#playground">Playground</a>
           <a href="#how">How it works</a>
-          <a href="#templates">Templates</a>
+          <a href="#templates">Showcase</a>
           <a href="#positioning">Positioning</a>
           <a href="#engineering">Engineering</a>
         </nav>

@@ -11,11 +11,14 @@ function TreeNode({ x, y, w, label }: { x: number; y: number; w: number; label: 
   );
 }
 
+// Kept short enough to fit the §01 card at fontSize 11.5 without
+// horizontal overflow. The .pipe-viz pre also gets `overflow-x:
+// auto` in globals.css as a safety net for translated locales.
 const STEP1 = `page.addSection("Summary", s -> s
-    .addParagraph(p -> p.text("Q3 review"))
-    .addTable(t -> t
-        .header("Item", "Q1", "Q2")
-        .row("Render p50", "78 ms", "74 ms")));`;
+  .addParagraph(p -> p.text("Q3 review"))
+  .addTable(t -> t
+    .header("Item", "Q1")
+    .row("p50", "78 ms")));`;
 
 export default function Pipeline() {
   const trackRef = useRef<HTMLDivElement>(null);
@@ -60,7 +63,7 @@ export default function Pipeline() {
         <div className="pipe-sticky" style={reduce ? { position: "static", height: "auto" } : undefined}>
           <div className="wrap" style={{ width: "100%" }}>
             <div className="pipe-head rv in">
-              <div className="eyebrow" style={{ justifyContent: "center" }}>§03 · How it works</div>
+              <div className="eyebrow" style={{ justifyContent: "center" }}>§04 · How it works</div>
               <h2>From DSL to page, in four deterministic steps.</h2>
             </div>
             <div className="pipe-progress" aria-hidden="true">
@@ -73,7 +76,8 @@ export default function Pipeline() {
                 <h3>You write DSL</h3>
                 <p>Semantic nodes — not coordinates. You say <em>section</em>, <em>paragraph</em>, <em>table</em>.</p>
                 <div className="pipe-viz">
-                  <pre className="code" style={{ border: "none", background: "transparent", fontSize: 11.5, padding: 0 }}
+                  <pre className="code"
+                       style={{ border: "none", background: "transparent", fontSize: 11, padding: 0, margin: 0, overflowX: "auto", maxWidth: "100%" }}
                        dangerouslySetInnerHTML={{ __html: highlightJava(STEP1) }} />
                 </div>
               </div>

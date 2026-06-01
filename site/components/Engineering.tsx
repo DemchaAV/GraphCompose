@@ -13,7 +13,7 @@ export default function Engineering() {
     <section className="section" id="engineering" style={{ background: "var(--bg-2)", borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)" }}>
       <div className="wrap">
         <Reveal>
-          <div className="eyebrow">§06 · Engineering culture</div>
+          <div className="eyebrow">§07 · Engineering culture</div>
           <h2 style={{ maxWidth: "20ch" }}>Built like infrastructure, not a demo.</h2>
         </Reveal>
         <Reveal className="eng-grid">

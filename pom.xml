@@ -6,7 +6,7 @@
 
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose</artifactId>
-    <version>1.6.6</version>
+    <version>1.6.7</version>
 
     <name>GraphCompose</name>
     <description>A declarative layout engine for programmatic document generation, implemented primarily in Java.</description>
@@ -48,14 +48,12 @@
         <!-- Runtime / library dependencies -->
         <flexmark.version>0.64.8</flexmark.version>
         <jackson.bom.version>2.21.3</jackson.bom.version>
-        <kotlin.version>2.3.21</kotlin.version>
         <logback.version>1.5.32</logback.version>
         <lombok.version>1.18.46</lombok.version>
         <pdfbox.version>3.0.7</pdfbox.version>
         <poi.version>5.5.1</poi.version>
         <javafx.version>21.0.2</javafx.version>
         <slf4j.version>2.0.18</slf4j.version>
-        <snakeyaml.version>2.6</snakeyaml.version>
         <zxing.version>3.5.4</zxing.version>
 
         <!-- Test dependencies -->
@@ -123,6 +121,21 @@
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
         </dependency>
+        <!--
+            commons-logging → SLF4J bridge. PDFBox's static initializer
+            (`PDDocument.<clinit>`) still calls `org.apache.commons.logging.
+            LogFactory` directly. We exclude PDFBox's own `commons-logging`
+            artefact to keep a single logging facade and route those calls
+            through SLF4J via this drop-in replacement. Previously this
+            class was on the classpath transitively via `flexmark-all` —
+            F3 (v1.6.7) narrowed flexmark to its core modules and made
+            the bridge explicit so the build is reproducible.
+        -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
@@ -136,9 +149,29 @@
             </exclusions>
         </dependency>
 
+        <!--
+            Flexmark markdown parser. F3 (v1.6.7) narrowed `flexmark-all`
+            down to the modules actually referenced by
+            `com.demcha.compose.engine.text.markdown.MarkDownParser`:
+            - `flexmark`           — Parser + `com.vladsch.flexmark.ast.*`
+                                     (Heading, ListItem, Emphasis, etc.)
+            - `flexmark-util-ast`  — Node, NodeVisitor, VisitHandler
+            - `flexmark-util-data` — MutableDataSet
+            No extension modules (tables, footnotes, gfm) are used.
+        -->
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
-            <artifactId>flexmark-all</artifactId>
+            <artifactId>flexmark</artifactId>
+            <version>${flexmark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-util-ast</artifactId>
+            <version>${flexmark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-util-data</artifactId>
             <version>${flexmark.version}</version>
         </dependency>
 
@@ -170,20 +203,22 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
 
+        <!--
+            jackson-dataformat-yaml is consumed only by `ConfigLoader.
+            loadConfigWithEnv(...)` when the caller passes a *.yaml /
+            *.yml resource. Library consumers that load JSON configs
+            (or do not use ConfigLoader at all) should not pay the
+            ~1.7MB SnakeYAML transitive cost. Marked optional in
+            v1.6.7 (F4), mirroring the existing `poi-ooxml` pattern.
+            Apps that load YAML configs must add this dependency to
+            their own classpath; without it `ConfigLoader` throws
+            `NoClassDefFoundError` when it tries to construct
+            `YAMLFactory`.
+        -->
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.module</groupId>
-            <artifactId>jackson-module-jsonSchema</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-            <version>${snakeyaml.version}</version>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
@@ -196,13 +231,6 @@
             <groupId>com.google.zxing</groupId>
             <artifactId>javase</artifactId>
             <version>${zxing.version}</version>
-        </dependency>
-
-        <!-- Kotlin compatibility -->
-        <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-stdlib-jdk8</artifactId>
-            <version>${kotlin.version}</version>
         </dependency>
 
         <!-- Test dependencies -->
@@ -246,12 +274,6 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
             <version>${mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-test</artifactId>
-            <version>${kotlin.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -317,40 +339,6 @@
         </pluginManagement>
 
         <plugins>
-            <!-- Kotlin compatibility / mixed-source support -->
-            <plugin>
-                <groupId>org.jetbrains.kotlin</groupId>
-                <artifactId>kotlin-maven-plugin</artifactId>
-                <version>${kotlin.version}</version>
-                <executions>
-                    <execution>
-                        <id>compile</id>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                        <configuration>
-                            <sourceDirs>
-                                <sourceDir>${project.basedir}/src/main/java</sourceDir>
-                            </sourceDirs>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>test-compile</id>
-                        <goals>
-                            <goal>test-compile</goal>
-                        </goals>
-                        <configuration>
-                            <sourceDirs>
-                                <sourceDir>${project.basedir}/src/test/java</sourceDir>
-                            </sourceDirs>
-                        </configuration>
-                    </execution>
-                </executions>
-                <configuration>
-                    <jvmTarget>${maven.compiler.release}</jvmTarget>
-                </configuration>
-            </plugin>
-
             <!--
                 Build-time precondition enforcement. Three rules:
                 * requireJavaVersion: blocks builds on JDK < 17 (the

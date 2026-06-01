@@ -3,12 +3,131 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v1.6.7 — Planned
+## v1.6.7 — 2026-06-01
 
-**Dependency cleanup cycle.** Scope being assembled — entries are
-filled in as work lands on `develop`. No breaking changes are
-planned; the next minor with new canonical DSL primitives is
-**v1.7.0** (see [ROADMAP.md](ROADMAP.md)).
+**Transitive dependency cleanup.** v1.6.7 narrows the runtime
+classpath GraphCompose imposes on consumers. The Kotlin standard
+library is gone (the codebase is Java-first; no production
+`.kt` sources exist), the `flexmark-all` aggregator is replaced
+with the three modules `MarkDownParser` actually references,
+`jackson-dataformat-yaml` is marked `<optional>true</optional>`
+(mirroring the existing `poi-ooxml` pattern — only consumers that
+load YAML configs through `ConfigLoader` need to pull it in),
+`jackson-module-jsonSchema` and the explicit `snakeyaml`
+declaration are dropped as unused, and `jcl-over-slf4j` is added
+explicitly so PDFBox's `commons-logging` call sites keep routing
+through SLF4J after the flexmark narrowing (the bridge was
+previously provided transitively via `flexmark-all`). The cycle
+also fixes a latent layout-cache staleness bug on
+`DocumentSession.registry().register(...)` (Track I3): the
+registry returned by `registry()` is now a session-owned wrapper
+that invalidates the layout cache on every mutation, matching the
+semantics of `DocumentSession.registerNodeDefinition(...)`.
+
+**Zero breaking public API changes.** The `japicmp` gate against
+the v1.6.6 baseline reports `semver PATCH, compatible bug fix` —
+the one surface delta is `NodeRegistry` becoming non-`final` so
+`DocumentSession` can install the auto-invalidating subclass
+described above. All existing call sites compile and run
+unchanged. The transitive cleanup is a runtime-classpath change,
+not a compile-surface change.
+
+**Migration from v1.6.6.** Consumers that relied on dependencies
+flowing transitively through GraphCompose must now declare them
+explicitly:
+
+| If you transitively depended on… | Add to your build |
+|---|---|
+| Kotlin stdlib via GraphCompose | `org.jetbrains.kotlin:kotlin-stdlib-jdk8` |
+| Flexmark extensions (tables, footnotes, gfm-strikethrough, …) | the relevant `com.vladsch.flexmark:flexmark-ext-*` modules |
+| YAML config loading through `ConfigLoader` | `com.fasterxml.jackson.dataformat:jackson-dataformat-yaml` |
+| `jackson-module-jsonSchema` | `com.fasterxml.jackson.module:jackson-module-jsonSchema` |
+| The `commons-logging` API beyond SLF4J routing | declare `commons-logging:commons-logging` explicitly (GraphCompose intentionally excludes it from PDFBox and bridges via `jcl-over-slf4j`) |
+
+No code changes are required for typical usage — pure-PDF
+consumers and JSON-only `ConfigLoader` callers carry on as before.
+The next minor with new canonical DSL primitives is **v1.7.0**
+(see [ROADMAP.md](ROADMAP.md)).
+
+### Build
+
+- Dropped the `kotlin-stdlib-jdk8` compile dependency, the
+  `kotlin-test` test dependency, and the `kotlin-maven-plugin`
+  build extension. GraphCompose is Java-first; no production
+  Kotlin sources exist, and the runtime now no longer carries
+  the Kotlin standard library transitively. Consumers that
+  relied on `kotlin-stdlib` flowing through GraphCompose must
+  declare it explicitly.
+- Replaced the `flexmark-all` aggregator dependency with the three
+  modules actually referenced by `MarkDownParser`: `flexmark`
+  (core parser + AST), `flexmark-util-ast` (Node / NodeVisitor /
+  VisitHandler), and `flexmark-util-data` (MutableDataSet). No
+  extension modules (tables, footnotes, gfm-strikethrough, etc.)
+  are used by GraphCompose. Consumers that relied on extensions
+  flowing through GraphCompose must depend on the relevant
+  `flexmark-ext-*` modules explicitly.
+- Added `jcl-over-slf4j` as an explicit compile dependency. PDFBox
+  3.0.7's `PDDocument.<clinit>` calls `org.apache.commons.logging.
+  LogFactory` directly; we exclude PDFBox's own `commons-logging`
+  artifact to keep one logging facade, and the bridge routes those
+  calls through SLF4J. Previously the bridge was provided
+  transitively via `flexmark-all`; making it explicit keeps the
+  classpath reproducible after the flexmark narrowing above.
+- Marked `jackson-dataformat-yaml` as `<optional>true</optional>`,
+  mirroring the existing `poi-ooxml` pattern. The only consumer is
+  `ConfigLoader.loadConfigWithEnv(...)` when the caller passes a
+  `.yaml` / `.yml` resource; library consumers that load JSON
+  configs (or skip `ConfigLoader` altogether) no longer pull in the
+  ~1.7 MB SnakeYAML transitive footprint. Applications that load
+  YAML configs through this helper must now declare
+  `jackson-dataformat-yaml` in their own build.
+- Removed the unused `jackson-module-jsonSchema` dependency — no
+  code path references it.
+- Removed the explicit `snakeyaml` dependency declaration and the
+  `snakeyaml.version` property. SnakeYAML is now resolved
+  transitively (and `optional`) through `jackson-dataformat-yaml`,
+  which version-aligns it with Jackson's BOM.
+- Bumped `net.sf.jasperreports:jasperreports` 6.21.3 &rarr; 7.0.7
+  in the benchmarks module. Benchmarks are a sibling Maven module
+  consumed only by the manual performance harness — no impact on
+  library consumers ([#111](https://github.com/DemchaAV/GraphCompose/pull/111)).
+
+### Documentation
+
+- `ConfigLoader.loadConfigWithEnv` Javadoc now states the YAML
+  path requires `jackson-dataformat-yaml` on the classpath and
+  throws `NoClassDefFoundError` when the optional dep is absent.
+- `DocumentSession.registry()` Javadoc now explains that the
+  returned registry is a session-owned wrapper whose
+  `register(...)` mutates the registry *and* invalidates the
+  layout cache, making the two registration entry points
+  (`session.registry().register(...)` and
+  `session.registerNodeDefinition(...)`) interchangeable.
+
+### Fixes
+
+- `DocumentSession.registry().register(...)` now invalidates the
+  layout cache the same way
+  `DocumentSession.registerNodeDefinition(...)` does. Previously,
+  registering a node definition through `registry()` mutated the
+  registry in place but left the cached `LayoutGraph` pinned to
+  the previous compile, so a follow-up call to `render(...)` or
+  `layoutGraph()` silently returned the stale graph routed through
+  the old definition. Implemented by wrapping the session's
+  `NodeRegistry` in a private session-owned subclass that funnels
+  every `register(...)` call through `invalidate()`. (Track I3.)
+
+### Internal
+
+- `NodeRegistry` is no longer `final` so `DocumentSession` can
+  install a session-owned subclass that auto-invalidates the
+  layout cache on mutation (see Fixes above). Standalone
+  `NodeRegistry` instances retain their previous behaviour.
+- Replaced eight residual `org.jetbrains.annotations.NotNull` /
+  `@Nullable` usages with `lombok.NonNull` (where the surrounding
+  file already used Lombok) or removed them entirely (private
+  methods and test fixtures). `org.jetbrains:annotations` is no
+  longer on the runtime classpath after the Kotlin removal.
 
 ## v1.6.6 — 2026-05-31
 

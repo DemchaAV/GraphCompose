@@ -7,7 +7,6 @@ import com.demcha.compose.engine.exceptions.RenderGuideLinesException;
 import com.demcha.compose.engine.render.RenderPassSession;
 import com.demcha.compose.engine.render.RenderingSystemECS;
 import lombok.NonNull;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Set;
@@ -81,7 +80,7 @@ public interface GuideCoordinate<T extends AutoCloseable> {
         return renderingSystem().renderBorder(stream, coordinateContext, lineDash, sides);
     }
 
-    default void startMarkers(@NotNull RenderCoordinateContext context, @NotNull T stream) throws IOException {
+    default void startMarkers(@NonNull RenderCoordinateContext context, @NonNull T stream) throws IOException {
         final float radius = renderingSystem().guidLineSettings().MARKER_RADIUS();
         float cx = (float) context.x();
         float cy = (float) context.y();
@@ -116,7 +115,7 @@ public interface GuideCoordinate<T extends AutoCloseable> {
         return true;
     }
 
-    default void endMarkers(@NotNull RenderCoordinateContext context, @NotNull T stream) throws IOException {
+    default void endMarkers(@NonNull RenderCoordinateContext context, @NonNull T stream) throws IOException {
         final float radius = renderingSystem().guidLineSettings().MARKER_RADIUS();
         float cx = (float) context.x();
         float cy = (float) context.y();

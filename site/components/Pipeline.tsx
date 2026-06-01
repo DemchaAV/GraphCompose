@@ -11,9 +11,11 @@ function TreeNode({ x, y, w, label }: { x: number; y: number; w: number; label: 
   );
 }
 
-const STEP1 = `flow.addSection(s -> s
-  .addParagraph("Summary")
-  .addTable(rows));`;
+const STEP1 = `page.addSection("Summary", s -> s
+    .addParagraph(p -> p.text("Q3 review"))
+    .addTable(t -> t
+        .header("Item", "Q1", "Q2")
+        .row("Render p50", "78 ms", "74 ms")));`;
 
 export default function Pipeline() {
   const trackRef = useRef<HTMLDivElement>(null);

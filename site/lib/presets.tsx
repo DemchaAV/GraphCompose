@@ -144,7 +144,7 @@ import java.util.List;
 
 CvDocument cv = CvDocument.builder()
         .identity(CvIdentity.builder()
-                .name("Avetik", "Demchaav")
+                .name("Artem", "Demchyshyn")
                 .jobTitle("Backend Engineer · JVM / PDF")
                 .build())
         .section(new ParagraphSection("Summary",

@@ -58,7 +58,7 @@ export function PaperCv({ accent, variant }: { accent: string; variant: Variant 
   if (variant === "center") {
     head = (
       <div style={{ textAlign: "center" }}>
-        <div className="pp-h1" style={{ color: A }}>Avetik Demchaav</div>
+        <div className="pp-h1" style={{ color: A }}>Artem Demchyshyn</div>
         <div className="pp-sub">Backend Engineer · JVM / PDF</div>
         <div className="pp-accent" style={{ background: A, width: "30%", margin: "8px auto 0" }} />
       </div>
@@ -66,7 +66,7 @@ export function PaperCv({ accent, variant }: { accent: string; variant: Variant 
   } else if (variant === "slab") {
     head = (
       <div style={{ background: A, margin: "-2px -2px 12px", padding: "12px 10px" }}>
-        <div className="pp-h1" style={{ color: "#fff" }}>Avetik Demchaav</div>
+        <div className="pp-h1" style={{ color: "#fff" }}>Artem Demchyshyn</div>
         <div className="pp-sub" style={{ color: "rgba(255,255,255,.7)" }}>Backend Engineer · JVM / PDF</div>
       </div>
     );
@@ -74,7 +74,7 @@ export function PaperCv({ accent, variant }: { accent: string; variant: Variant 
     head = (
       <>
         <div className="pp-accent" style={{ background: A, width: "42%" }} />
-        <div className="pp-h1" style={{ color: A }}>Avetik Demchaav</div>
+        <div className="pp-h1" style={{ color: A }}>Artem Demchyshyn</div>
         <div className="pp-sub">Backend Engineer · JVM / PDF</div>
       </>
     );

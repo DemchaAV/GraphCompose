@@ -19,8 +19,14 @@ import java.util.Objects;
  * an invoice, a proposal, and a status report rendered through the same theme
  * look like a single product instead of three independently styled documents.</p>
  *
- * <p>Use one of the built-in presets for an immediate style:
- * {@link #classic()}, {@link #modern()}, {@link #executive()}.</p>
+ * <p>Use one of the built-in presets for an immediate style. The
+ * original three are tuned for formal documents:
+ * {@link #classic()}, {@link #modern()}, {@link #executive()}.
+ * Four contemporary additions cover the modern document-design
+ * spectrum: {@link #nordic()} (Scandinavian minimal),
+ * {@link #editorial()} (warm magazine), {@link #cinematic()}
+ * (dark moody surface), and {@link #monochrome()} (brutalist
+ * black-and-white with one accent).</p>
  *
  * @param name human-readable theme identifier (used for diagnostics)
  * @param palette color tokens
@@ -117,6 +123,110 @@ public record BusinessTheme(
                 24, 15, 12, 11, 9);
         TablePreset table = tablePreset(palette, spacing);
         return new BusinessTheme("executive", palette, spacing, text, table, null);
+    }
+
+    /**
+     * "Nordic" theme — cool near-white surface, deep slate-blue
+     * primary, dusty slate accent, generous spacing. Tuned for
+     * design studios, product reports, and clean startup decks
+     * where whitespace is the dominant visual element.
+     *
+     * @return nordic theme
+     * @since 1.6.8
+     */
+    public static BusinessTheme nordic() {
+        DocumentPalette palette = DocumentPalette.builder()
+                .primary(new Color(36, 50, 64))      // deep slate-blue
+                .accent(new Color(96, 118, 142))     // dusty slate
+                .surface(new Color(252, 253, 254))   // cool near-white
+                .surfaceMuted(new Color(240, 243, 246))
+                .textPrimary(new Color(36, 50, 64))
+                .textMuted(new Color(108, 120, 134))
+                .rule(new Color(220, 226, 232))      // very subtle cool line
+                .build();
+        SpacingScale spacing = new SpacingScale(6.0, 12.0, 18.0, 28.0, 44.0);
+        TextScale text = textScale(palette, FontName.HELVETICA, FontName.HELVETICA_BOLD,
+                26, 16, 12, 10, 9);
+        TablePreset table = tablePreset(palette, spacing);
+        return new BusinessTheme("nordic", palette, spacing, text, table, null);
+    }
+
+    /**
+     * "Editorial" theme — warm cream surface, deep ink primary,
+     * brick-red accent on a serif body. Tuned for long-form
+     * proposals, annual reports, and brand decks that want a
+     * magazine feel.
+     *
+     * @return editorial theme
+     * @since 1.6.8
+     */
+    public static BusinessTheme editorial() {
+        DocumentPalette palette = DocumentPalette.builder()
+                .primary(new Color(22, 22, 22))      // deep ink
+                .accent(new Color(160, 60, 50))      // brick red
+                .surface(new Color(250, 245, 235))   // warm cream
+                .surfaceMuted(new Color(240, 232, 218))
+                .textPrimary(new Color(22, 22, 22))
+                .textMuted(new Color(95, 90, 85))    // warm grey
+                .rule(new Color(200, 190, 175))
+                .build();
+        SpacingScale spacing = SpacingScale.defaultScale();
+        TextScale text = textScale(palette, FontName.TIMES_ROMAN, FontName.TIMES_ROMAN,
+                30, 18, 14, 11, 9);
+        TablePreset table = tablePreset(palette, spacing);
+        return new BusinessTheme("editorial", palette, spacing, text, table, palette.surface());
+    }
+
+    /**
+     * "Cinematic" theme — deep navy surface with light text and a
+     * bright copper accent. Inverts the usual dark-on-light document
+     * convention; tuned for investor pitch decks, product launch
+     * one-pagers, and presentations that need a moody premium feel.
+     *
+     * @return cinematic theme
+     * @since 1.6.8
+     */
+    public static BusinessTheme cinematic() {
+        DocumentPalette palette = DocumentPalette.builder()
+                .primary(new Color(245, 248, 252))   // near-white (text on dark)
+                .accent(new Color(220, 130, 50))     // bright copper
+                .surface(new Color(16, 24, 36))      // deep navy SURFACE
+                .surfaceMuted(new Color(28, 36, 48)) // slightly lighter navy panel
+                .textPrimary(new Color(245, 248, 252))
+                .textMuted(new Color(160, 170, 188)) // muted light blue-grey
+                .rule(new Color(54, 64, 78))         // subtle on-dark rule
+                .build();
+        SpacingScale spacing = new SpacingScale(4.0, 8.0, 14.0, 24.0, 40.0);
+        TextScale text = textScale(palette, FontName.HELVETICA, FontName.HELVETICA_BOLD,
+                30, 18, 14, 11, 9);
+        TablePreset table = tablePreset(palette, spacing);
+        return new BusinessTheme("cinematic", palette, spacing, text, table, palette.surface());
+    }
+
+    /**
+     * "Monochrome" theme — pure black on white with a single bold
+     * yellow accent. Tuned for design-studio one-pagers, fashion-
+     * magazine-style covers, and brutalist editorial layouts where
+     * typographic contrast is the entire identity.
+     *
+     * @return monochrome theme
+     * @since 1.6.8
+     */
+    public static BusinessTheme monochrome() {
+        DocumentPalette palette = DocumentPalette.builder()
+                .primary(new Color(0, 0, 0))         // pure black
+                .accent(new Color(240, 196, 25))     // bold yellow
+                .surface(new Color(255, 255, 255))   // pure white
+                .surfaceMuted(new Color(244, 244, 244))
+                .textPrimary(new Color(0, 0, 0))
+                .textMuted(new Color(115, 115, 115)) // medium grey
+                .rule(new Color(0, 0, 0))            // bold rules
+                .build();
+        SpacingScale spacing = new SpacingScale(4.0, 8.0, 12.0, 20.0, 36.0);
+        TextScale text = textScale(palette, FontName.HELVETICA, FontName.HELVETICA_BOLD,
+                32, 20, 14, 11, 9);
+        TablePreset table = tablePreset(palette, spacing);
+        return new BusinessTheme("monochrome", palette, spacing, text, table, null);
     }
 
     /**

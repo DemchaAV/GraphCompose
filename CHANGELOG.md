@@ -15,6 +15,25 @@ follow-ups carried over from the v1.6.7 senior review (see
 [ROADMAP.md](ROADMAP.md) and the private taskboard). No breaking
 changes are planned.
 
+### Public API
+
+- Four new `BusinessTheme` factory presets `@since 1.6.8`:
+  `BusinessTheme.nordic()` (Scandinavian minimal — cool whites +
+  slate-blue accent + generous whitespace, for design-studio
+  reports and product launch decks),
+  `BusinessTheme.editorial()` (warm cream surface + deep ink +
+  brick-red accent on a serif body, for long-form proposals and
+  annual reports),
+  `BusinessTheme.cinematic()` (inverted dark navy surface with
+  light text + bright copper accent, for investor pitch decks and
+  product launch one-pagers), and
+  `BusinessTheme.monochrome()` (pure black-on-white with a single
+  bold yellow accent, for brutalist editorial layouts where
+  typographic contrast carries the identity). Pure additions —
+  no change to the existing `classic()` / `modern()` /
+  `executive()` presets. japicmp gate against v1.6.7 reports
+  `semver PATCH` (compatible additions only).
+
 ### Build
 
 - Bumped `jackson-bom` 2.21.3 &rarr; 2.21.4 (broken 2.22.0 skipped via

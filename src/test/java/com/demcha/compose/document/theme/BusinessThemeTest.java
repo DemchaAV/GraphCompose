@@ -149,4 +149,87 @@ class BusinessThemeTest {
         assertThat(modern.palette()).isNotEqualTo(executive.palette());
         assertThat(classic.text().h1()).isNotEqualTo(modern.text().h1());
     }
+
+    // --- Contemporary themes added in v1.6.8 -------------------------------
+
+    @Test
+    void nordicThemeHasAllTokensNonNullAndUsesGenerousSpacing() {
+        BusinessTheme theme = BusinessTheme.nordic();
+        assertThat(theme.name()).isEqualTo("nordic");
+        assertThat(theme.palette()).isNotNull();
+        assertThat(theme.spacing()).isNotNull();
+        assertThat(theme.text()).isNotNull();
+        assertThat(theme.table()).isNotNull();
+        assertThat(theme.pageBackground()).isNull();
+        // Nordic is tuned for whitespace — every step is at least as wide
+        // as the default scale, and md is strictly wider.
+        SpacingScale standard = SpacingScale.defaultScale();
+        assertThat(theme.spacing().md()).isGreaterThan(standard.md());
+        assertThat(theme.spacing().xl()).isGreaterThan(standard.xl());
+    }
+
+    @Test
+    void editorialThemeUsesTimesRomanBodyAndCreamPageBackground() {
+        BusinessTheme theme = BusinessTheme.editorial();
+        assertThat(theme.name()).isEqualTo("editorial");
+        assertThat(theme.text().body().fontName().name()).isEqualTo("Times-Roman");
+        assertThat(theme.text().h1().fontName().name()).isEqualTo("Times-Roman");
+        // Cream page background distinguishes editorial from the
+        // strictly-white classic theme.
+        assertThat(theme.pageBackground()).isNotNull();
+        assertThat(theme.pageBackground()).isEqualTo(theme.palette().surface());
+    }
+
+    @Test
+    void cinematicThemeInvertsPaletteToLightTextOnDarkSurface() {
+        BusinessTheme theme = BusinessTheme.cinematic();
+        assertThat(theme.name()).isEqualTo("cinematic");
+        // The defining trait: surface is dark, primary/text is light.
+        Color surface = theme.palette().surface().color();
+        Color textPrimary = theme.palette().textPrimary().color();
+        int surfaceLuminance = (surface.getRed() + surface.getGreen() + surface.getBlue()) / 3;
+        int textLuminance = (textPrimary.getRed() + textPrimary.getGreen() + textPrimary.getBlue()) / 3;
+        assertThat(surfaceLuminance).isLessThan(64);   // genuinely dark surface
+        assertThat(textLuminance).isGreaterThan(192);  // genuinely light text
+        // And the surface doubles as the page background so the moody
+        // look fills the page edges too.
+        assertThat(theme.pageBackground()).isEqualTo(theme.palette().surface());
+    }
+
+    @Test
+    void monochromeThemeIsPureBlackOnWhiteWithBoldYellowAccent() {
+        BusinessTheme theme = BusinessTheme.monochrome();
+        assertThat(theme.name()).isEqualTo("monochrome");
+        assertThat(theme.palette().primary().color()).isEqualTo(Color.BLACK);
+        assertThat(theme.palette().surface().color()).isEqualTo(Color.WHITE);
+        // The single accent is the entire identity of the theme — assert
+        // it leans yellow (R and G high, B low) rather than pinning the
+        // exact RGB, so a future shade tweak does not break the test.
+        Color accent = theme.palette().accent().color();
+        assertThat(accent.getRed()).isGreaterThan(200);
+        assertThat(accent.getGreen()).isGreaterThan(150);
+        assertThat(accent.getBlue()).isLessThan(80);
+    }
+
+    @Test
+    void allSevenBuiltInThemesArePairwiseDistinctByPalette() {
+        BusinessTheme[] all = {
+                BusinessTheme.classic(),
+                BusinessTheme.modern(),
+                BusinessTheme.executive(),
+                BusinessTheme.nordic(),
+                BusinessTheme.editorial(),
+                BusinessTheme.cinematic(),
+                BusinessTheme.monochrome()
+        };
+        for (int i = 0; i < all.length; i++) {
+            for (int j = i + 1; j < all.length; j++) {
+                assertThat(all[i].palette())
+                        .as("Themes '%s' and '%s' must have distinct palettes",
+                                all[i].name(), all[j].name())
+                        .isNotEqualTo(all[j].palette());
+                assertThat(all[i].name()).isNotEqualTo(all[j].name());
+            }
+        }
+    }
 }

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { withBasePath } from "@/lib/base-path";
 
 export default function TopBar() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -28,7 +29,7 @@ export default function TopBar() {
         <a className="brand" href="#top" aria-label="GraphCompose home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/brand/graphcompose-logo.png"
+            src={withBasePath("/brand/graphcompose-logo.png")}
             alt="GraphCompose"
             className="brand-logo"
             width={172}

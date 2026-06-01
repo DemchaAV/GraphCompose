@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GALLERY, type TemplateSpec } from "@/lib/gallery";
 import { PaperLetter } from "./PaperPage";
 import { highlightJava } from "@/lib/highlight";
+import { withBasePath } from "@/lib/base-path";
 import Reveal from "./Reveal";
 
 /*
@@ -81,7 +82,7 @@ interface Card {
 }
 
 const showcaseUrl = (relative: string) =>
-  `/showcase/${relative.replace(/^showcase\//, "")}`;
+  withBasePath(`/showcase/${relative.replace(/^showcase\//, "")}`);
 
 function buildCards(manifest: Manifest | null): Card[] {
   if (!manifest) return [];
@@ -135,7 +136,7 @@ export default function Gallery() {
   const lastFocus = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    fetch("/examples.json", { cache: "force-cache" })
+    fetch(withBasePath("/examples.json"), { cache: "force-cache" })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json() as Promise<Manifest>;

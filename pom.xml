@@ -60,7 +60,7 @@
         <assertj.version>3.27.7</assertj.version>
         <junit.bom.version>6.1.0</junit.bom.version>
         <mockito.version>5.23.0</mockito.version>
-        <byteBuddy.version>1.18.8</byteBuddy.version>
+        <byteBuddy.version>1.18.9</byteBuddy.version>
 
         <!-- Build plugins -->
         <central.publishing.plugin.version>0.9.0</central.publishing.plugin.version>

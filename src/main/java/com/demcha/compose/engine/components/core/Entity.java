@@ -10,7 +10,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -146,7 +145,7 @@ public final class Entity {
         return this;
     }
 
-    private <T extends Component> void debugPutMethod(@NotNull T c, Component prev, String methodName) {
+    private <T extends Component> void debugPutMethod(T c, Component prev, String methodName) {
         if (log.isDebugEnabled()) {
             if (prev == null) {
                 log.debug("Added component {} to {} through method {}", c, this, methodName);

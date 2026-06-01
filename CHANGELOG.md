@@ -10,6 +10,24 @@ filled in as work lands on `develop`. No breaking changes are
 planned; the next minor with new canonical DSL primitives is
 **v1.7.0** (see [ROADMAP.md](ROADMAP.md)).
 
+### Build
+
+- Dropped the `kotlin-stdlib-jdk8` compile dependency, the
+  `kotlin-test` test dependency, and the `kotlin-maven-plugin`
+  build extension. GraphCompose is Java-first; no production
+  Kotlin sources exist, and the runtime now no longer carries
+  the Kotlin standard library transitively. Consumers that
+  relied on `kotlin-stdlib` flowing through GraphCompose must
+  declare it explicitly.
+
+### Internal
+
+- Replaced eight residual `org.jetbrains.annotations.NotNull` /
+  `@Nullable` usages with `lombok.NonNull` (where the surrounding
+  file already used Lombok) or removed them entirely (private
+  methods and test fixtures). `org.jetbrains:annotations` is no
+  longer on the runtime classpath after the Kotlin removal.
+
 ## v1.6.6 — 2026-05-31
 
 **First Maven Central release.** GraphCompose now ships under

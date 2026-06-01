@@ -19,6 +19,21 @@ planned; the next minor with new canonical DSL primitives is
   the Kotlin standard library transitively. Consumers that
   relied on `kotlin-stdlib` flowing through GraphCompose must
   declare it explicitly.
+- Replaced the `flexmark-all` aggregator dependency with the three
+  modules actually referenced by `MarkDownParser`: `flexmark`
+  (core parser + AST), `flexmark-util-ast` (Node / NodeVisitor /
+  VisitHandler), and `flexmark-util-data` (MutableDataSet). No
+  extension modules (tables, footnotes, gfm-strikethrough, etc.)
+  are used by GraphCompose. Consumers that relied on extensions
+  flowing through GraphCompose must depend on the relevant
+  `flexmark-ext-*` modules explicitly.
+- Added `jcl-over-slf4j` as an explicit compile dependency. PDFBox
+  3.0.7's `PDDocument.<clinit>` calls `org.apache.commons.logging.
+  LogFactory` directly; we exclude PDFBox's own `commons-logging`
+  artifact to keep one logging facade, and the bridge routes those
+  calls through SLF4J. Previously the bridge was provided
+  transitively via `flexmark-all`; making it explicit keeps the
+  classpath reproducible after the flexmark narrowing above.
 
 ### Internal
 

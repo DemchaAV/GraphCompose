@@ -122,6 +122,21 @@
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
         </dependency>
+        <!--
+            commons-logging → SLF4J bridge. PDFBox's static initializer
+            (`PDDocument.<clinit>`) still calls `org.apache.commons.logging.
+            LogFactory` directly. We exclude PDFBox's own `commons-logging`
+            artefact to keep a single logging facade and route those calls
+            through SLF4J via this drop-in replacement. Previously this
+            class was on the classpath transitively via `flexmark-all` —
+            F3 (v1.6.7) narrowed flexmark to its core modules and made
+            the bridge explicit so the build is reproducible.
+        -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
@@ -135,9 +150,29 @@
             </exclusions>
         </dependency>
 
+        <!--
+            Flexmark markdown parser. F3 (v1.6.7) narrowed `flexmark-all`
+            down to the modules actually referenced by
+            `com.demcha.compose.engine.text.markdown.MarkDownParser`:
+            - `flexmark`           — Parser + `com.vladsch.flexmark.ast.*`
+                                     (Heading, ListItem, Emphasis, etc.)
+            - `flexmark-util-ast`  — Node, NodeVisitor, VisitHandler
+            - `flexmark-util-data` — MutableDataSet
+            No extension modules (tables, footnotes, gfm) are used.
+        -->
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
-            <artifactId>flexmark-all</artifactId>
+            <artifactId>flexmark</artifactId>
+            <version>${flexmark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-util-ast</artifactId>
+            <version>${flexmark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-util-data</artifactId>
             <version>${flexmark.version}</version>
         </dependency>
 

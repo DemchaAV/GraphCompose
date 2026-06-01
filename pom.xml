@@ -77,7 +77,7 @@
 
         <!-- Binary compatibility baseline (japicmp profile) -->
         <japicmp.version>0.26.1</japicmp.version>
-        <japicmp.baseline>v1.6.7</japicmp.baseline>
+        <japicmp.baseline>v1.6.8</japicmp.baseline>
 
         <!--
             GPG signing — opted in via -Dgpg.skip=false (the publish

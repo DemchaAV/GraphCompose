@@ -3,7 +3,7 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v1.6.8 — Planned
+## v1.6.8 — 2026-06-01
 
 **CV v2 migration completion + design-token expansion.** v1.6.8
 finishes the CV v2 migration with hyperlink-aware project / entry

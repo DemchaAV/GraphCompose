@@ -44,6 +44,11 @@ build/
 # Allow PDF previews that ship with the GitHub Pages showcase site.
 !docs/assets/**/*.pdf
 !docs/showcase/**/*.pdf
+# Same whitelist for the Next.js showcase site under site/ — 53 PDFs
+# mirrored from docs/showcase by Sync-SiteShowcase, plus 3 Playground
+# preview PDFs (hello/invoice/cv) bundled with site/public/previews/.
+!site/public/showcase/**/*.pdf
+!site/public/previews/*.pdf
 /patch-root-position.diff
 /rectangle.pdf
 /Test.pdf

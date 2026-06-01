@@ -5,15 +5,61 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v1.6.8 — Planned
 
-**CV v2 migration completion + senior-review polish.** Scope being
-assembled — entries are filled in as work lands on `develop`. The
-headline addition is parser-level support for inline markdown links
-(`[label](url)`) so CV/cover-letter authors can render project /
-education entry titles as hyperlinks without changing the existing
-`CvRow` data shape; the rest is small build and code-hygiene
-follow-ups carried over from the v1.6.7 senior review (see
-[ROADMAP.md](ROADMAP.md) and the private taskboard). No breaking
-changes are planned.
+**CV v2 migration completion + design-token expansion.** v1.6.8
+finishes the CV v2 migration with hyperlink-aware project / entry
+titles: a row authored as `"[GraphCompose](https://github.com/x/y)
+(Java, PDFBox)"` now renders the title as a clickable link in the
+final PDF, with the technology stack remaining a plain
+` (Java, PDFBox)` tail. The mechanism is a small extension to
+the inline-Markdown parser used by every CV / cover-letter body
+row — the `[label](url)` syntax produces a `RichText.link(...)`
+run; bare brackets stay literal; everything else (`**bold**`,
+`*italic*`, `_italic_`) keeps working as before. The release also
+ships four contemporary `BusinessTheme` factory presets
+(`nordic()`, `editorial()`, `cinematic()`, `monochrome()`)
+alongside the classic / modern / executive trio, expanding the
+built-in design-token range to seven presets. Senior-review
+follow-ups from v1.6.7 round out the release: the two registry
+mutation entry points on `DocumentSession` are now fully
+interchangeable (both refuse to mutate a closed session and both
+invalidate the layout cache), `target-branch: develop` is pinned
+in Dependabot config so future bumps land on the integration
+branch, and `logback-classic` rolls forward to 1.5.34 which
+fixes [CVE-2026-9828](https://www.cve.org/cverecord?id=CVE-2026-9828)
+(deserialisation whitelist bypass).
+
+**Zero breaking public API changes.** The `japicmp` gate against
+the v1.6.7 baseline reports `semver PATCH, compatible bug fix`
+across every PR in the cycle. New `BusinessTheme` factories are
+pure additions; `MarkdownInline.append` and `plainText` extend
+their behaviour without changing their signatures; `ProjectLabel.
+parse` keeps its two-field record shape (the `title()` field now
+preserves Markdown rather than returning a pre-flattened
+projection, but the type contract is unchanged and the visible
+text projection is one call away via `MarkdownInline.plainText(
+title)`). 1058 tests pass at the release-prep tip.
+
+**Migration from v1.6.7.** No code changes required for typical
+usage. If you build a custom renderer on top of
+`ProjectLabel.parse`:
+
+- Old `title()` was already the visible plain text (emphasis +
+  link syntax stripped). New `title()` preserves the original
+  inline-Markdown. Wrap with `MarkdownInline.plainText(...)` to
+  recover the old behaviour, or route through
+  `MarkdownInline.append(rich, title, style)` to get
+  emphasis / link rendering for free (the same path
+  `ProjectRenderer` now uses).
+- `MarkdownInline.append` consumers automatically pick up link
+  rendering for `[label](url)` syntax. If any CV / cover-letter
+  fixture in your codebase contained a literal `[...](...) `
+  string that previously rendered as text, it will now render
+  as a hyperlink. Escape with HTML entities or restructure the
+  string if you need to keep it literal.
+
+The next release is **v1.7.0** — the additive canonical-DSL
+feature minor (LineBuilder.dashed, inline shapes, TimelineBuilder,
+dx shortcuts, recipes docs). See [ROADMAP.md](ROADMAP.md).
 
 ### Fixes
 

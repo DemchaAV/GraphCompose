@@ -97,12 +97,12 @@ GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the com
 <dependency>
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose</artifactId>
-    <version>1.6.6</version>
+    <version>1.6.7</version>
 </dependency>
 ```
 
 ```kotlin
-dependencies { implementation("io.github.demchaav:graph-compose:1.6.6") }
+dependencies { implementation("io.github.demchaav:graph-compose:1.6.7") }
 ```
 
 > **Distribution** &mdash; Maven Central is the canonical channel from **v1.6.6** onwards

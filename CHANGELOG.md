@@ -3,7 +3,7 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v1.6.7 — Planned
+## v1.6.7 — 2026-06-01
 
 **Transitive dependency cleanup.** v1.6.7 narrows the runtime
 classpath GraphCompose imposes on consumers. The Kotlin standard

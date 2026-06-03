@@ -3,7 +3,7 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v1.6.9 — Planned
+## v1.6.9 — 2026-06-03
 
 Housekeeping cycle plus the public pixel-level visual-regression API (Track N).
 

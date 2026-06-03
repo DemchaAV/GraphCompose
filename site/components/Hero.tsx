@@ -58,7 +58,7 @@ export default function Hero() {
             </a>
           </div>
           <div className="hero-meta">
-            <span><b>io.github.demchaav:graph-compose:1.6.8</b></span>
+            <span><b>io.github.demchaav:graph-compose:1.6.9</b></span>
             <span>Two-pass layout</span>
             <span>Snapshot-tested</span>
           </div>

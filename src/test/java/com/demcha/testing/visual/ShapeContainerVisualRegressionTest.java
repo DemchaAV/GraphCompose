@@ -13,6 +13,7 @@ import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
+import com.demcha.compose.testing.visual.PdfVisualRegression;
 import org.junit.jupiter.api.Test;
 
 class ShapeContainerVisualRegressionTest {

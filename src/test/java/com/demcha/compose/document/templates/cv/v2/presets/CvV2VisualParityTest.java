@@ -12,7 +12,7 @@ import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
 import com.demcha.compose.document.templates.cv.v2.data.RowStyle;
 import com.demcha.compose.document.templates.cv.v2.data.RowsSection;
 import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
-import com.demcha.testing.visual.PdfVisualRegression;
+import com.demcha.compose.testing.visual.PdfVisualRegression;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;

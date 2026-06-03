@@ -14,6 +14,7 @@ import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.engine.components.content.table.TableResolvedCell;
+import com.demcha.compose.testing.visual.PdfVisualRegression;
 import com.demcha.testing.VisualTestOutputs;
 import org.junit.jupiter.api.Test;
 

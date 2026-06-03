@@ -40,6 +40,12 @@ public final class CompactMonoLetter {
     private CompactMonoLetter() {
     }
 
+    /**
+     * Builds the cover-letter template paired with the {@code CompactMono} CV preset.
+     *
+     * @param theme the active theme supplying palette, typography, and spacing
+     * @return a {@code DocumentTemplate} for the "Compact Mono Letter"
+     */
     public static DocumentTemplate<CoverLetterSpec> create(BusinessTheme theme) {
         Spacing spacing = Spacing.compact();
 

@@ -137,6 +137,8 @@ public record DocumentCornerRadius(double topLeft, double topRight, double botto
     }
 
     /**
+     * Reports whether every corner radius equals zero.
+     *
      * @return whether every corner radius equals zero
      */
     public boolean isZero() {
@@ -144,6 +146,8 @@ public record DocumentCornerRadius(double topLeft, double topRight, double botto
     }
 
     /**
+     * Reports whether every corner has the same radius value.
+     *
      * @return whether every corner has the same radius value
      */
     public boolean isUniform() {

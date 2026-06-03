@@ -123,6 +123,8 @@ public final class Panel {
 
     /**
      * Builds the preset with its Panel theme.
+     *
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
         return create(CvTheme.panel());
@@ -130,6 +132,9 @@ public final class Panel {
 
     /**
      * Builds the preset with a caller-supplied theme.
+     *
+     * @param theme active theme
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create(CvTheme theme) {
         Objects.requireNonNull(theme, "theme");

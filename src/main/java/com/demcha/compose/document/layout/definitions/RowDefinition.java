@@ -27,6 +27,13 @@ import static com.demcha.compose.document.layout.NodeDefinitionSupport.toStroke;
  * @author Artem Demchyshyn
  */
 public final class RowDefinition implements NodeDefinition<RowNode> {
+
+    /**
+     * Creates the row layout definition.
+     */
+    public RowDefinition() {
+    }
+
     @Override
     public Class<RowNode> nodeType() {
         return RowNode.class;

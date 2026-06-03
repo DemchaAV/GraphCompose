@@ -21,7 +21,7 @@ export interface Preset {
 /*
  * Code samples are mirrored from real GraphCompose code paths so a
  * visitor can copy-paste them into a project that already pulled
- * `io.github.demchaav:graph-compose:1.6.8` and have the snippet
+ * `io.github.demchaav:graph-compose:1.6.9` and have the snippet
  * compile without surprises:
  *   - Hello world      → README.md "Hello world" snippet (verified)
  *   - Invoice          → examples/.../InvoiceFileExample.java

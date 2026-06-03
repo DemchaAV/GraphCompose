@@ -21,6 +21,11 @@ import java.util.OptionalDouble;
  */
 public record CvSkill(String name, OptionalDouble level) {
 
+    /**
+     * Validates that both fields are non-null, trims {@code name} and
+     * rejects a blank result, and bounds any present {@code level} to
+     * {@code [0, 1]}.
+     */
     public CvSkill {
         Objects.requireNonNull(name, "name");
         Objects.requireNonNull(level, "level");
@@ -37,12 +42,23 @@ public record CvSkill(String name, OptionalDouble level) {
         }
     }
 
-    /** Skill with no proficiency level. */
+    /**
+     * Skill with no proficiency level.
+     *
+     * @param name non-blank skill label
+     * @return a {@code CvSkill} carrying an empty level
+     */
     public static CvSkill of(String name) {
         return new CvSkill(name, OptionalDouble.empty());
     }
 
-    /** Skill with a proficiency level, clamped to {@code [0, 1]}. */
+    /**
+     * Skill with a proficiency level, clamped to {@code [0, 1]}.
+     *
+     * @param name  non-blank skill label
+     * @param level proficiency, clamped into {@code [0, 1]}
+     * @return a {@code CvSkill} carrying the clamped level
+     */
     public static CvSkill of(String name, double level) {
         return new CvSkill(name,
                 OptionalDouble.of(Math.max(0.0, Math.min(1.0, level))));

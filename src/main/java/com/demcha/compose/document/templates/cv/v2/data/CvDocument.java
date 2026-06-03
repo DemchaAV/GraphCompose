@@ -24,6 +24,10 @@ import java.util.Objects;
  */
 public record CvDocument(CvIdentity identity, List<Placement> placements) {
 
+    /**
+     * Validates that {@code identity} and {@code placements} are
+     * non-null and defensively copies the placement list.
+     */
     public CvDocument {
         Objects.requireNonNull(identity, "identity");
         Objects.requireNonNull(placements, "placements");
@@ -43,6 +47,11 @@ public record CvDocument(CvIdentity identity, List<Placement> placements) {
      * multi-column presets need explicit slot placement that the
      * builder makes obvious at the call site.</p>
      *
+     * @param identity required identity / contact block
+     * @param sections sections to wrap, each in a {@link Slot#MAIN}
+     *                 placement, in source order
+     * @return a {@code CvDocument} with every section placed in
+     *         {@link Slot#MAIN}
      * @deprecated since the slot model — prefer the {@link Builder}
      *             so non-MAIN slots are visible at the call site.
      */
@@ -60,6 +69,7 @@ public record CvDocument(CvIdentity identity, List<Placement> placements) {
      */
     public record Placement(Slot slot, CvSection section) {
 
+        /** Validates that both fields are non-null. */
         public Placement {
             Objects.requireNonNull(slot, "slot");
             Objects.requireNonNull(section, "section");
@@ -128,6 +138,8 @@ public record CvDocument(CvIdentity identity, List<Placement> placements) {
     // -- builder ---------------------------------------------------------
 
     /**
+     * Creates a fluent builder for {@code CvDocument}.
+     *
      * @return new fluent builder
      */
     public static Builder builder() {
@@ -149,6 +161,12 @@ public record CvDocument(CvIdentity identity, List<Placement> placements) {
         private Builder() {
         }
 
+        /**
+         * Sets the required identity block.
+         *
+         * @param value the identity block to use
+         * @return this builder for chaining
+         */
         public Builder identity(CvIdentity value) {
             this.identity = value;
             return this;
@@ -156,6 +174,9 @@ public record CvDocument(CvIdentity identity, List<Placement> placements) {
 
         /**
          * Appends one section into {@link Slot#MAIN}.
+         *
+         * @param section section to append
+         * @return this builder for chaining
          */
         public Builder section(CvSection section) {
             return section(Slot.MAIN, section);
@@ -163,6 +184,10 @@ public record CvDocument(CvIdentity identity, List<Placement> placements) {
 
         /**
          * Appends one section into a chosen slot.
+         *
+         * @param slot    placement region
+         * @param section section to append
+         * @return this builder for chaining
          */
         public Builder section(Slot slot, CvSection section) {
             this.placements.add(new Placement(slot, section));
@@ -172,6 +197,9 @@ public record CvDocument(CvIdentity identity, List<Placement> placements) {
         /**
          * Varargs convenience — all sections placed in
          * {@link Slot#MAIN}.
+         *
+         * @param values sections to append, in source order
+         * @return this builder for chaining
          */
         public Builder sections(CvSection... values) {
             Objects.requireNonNull(values, "values");
@@ -184,6 +212,10 @@ public record CvDocument(CvIdentity identity, List<Placement> placements) {
         /**
          * Varargs convenience — all supplied sections placed in
          * {@code slot}.
+         *
+         * @param slot   placement region for every supplied section
+         * @param values sections to append, in source order
+         * @return this builder for chaining
          */
         public Builder sections(Slot slot, CvSection... values) {
             Objects.requireNonNull(slot, "slot");
@@ -196,6 +228,9 @@ public record CvDocument(CvIdentity identity, List<Placement> placements) {
 
         /**
          * List variant — all sections placed in {@link Slot#MAIN}.
+         *
+         * @param values sections to append, in source order
+         * @return this builder for chaining
          */
         public Builder sections(List<CvSection> values) {
             Objects.requireNonNull(values, "values");
@@ -207,12 +242,20 @@ public record CvDocument(CvIdentity identity, List<Placement> placements) {
 
         /**
          * Appends a pre-built {@link Placement}.
+         *
+         * @param placement the placement to append (non-null)
+         * @return this builder for chaining
          */
         public Builder placement(Placement placement) {
             this.placements.add(Objects.requireNonNull(placement, "placement"));
             return this;
         }
 
+        /**
+         * Builds the immutable {@link CvDocument}.
+         *
+         * @return the assembled document
+         */
         public CvDocument build() {
             return new CvDocument(identity, placements);
         }

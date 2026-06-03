@@ -40,6 +40,12 @@ public final class EditorialBlueLetter {
     private EditorialBlueLetter() {
     }
 
+    /**
+     * Builds the cover-letter template paired with the {@code EditorialBlue} CV preset.
+     *
+     * @param theme the active theme supplying palette, typography, and spacing
+     * @return a {@code DocumentTemplate} for the "Editorial Blue Letter"
+     */
     public static DocumentTemplate<CoverLetterSpec> create(BusinessTheme theme) {
         Spacing spacing = Spacing.comfortable();
 

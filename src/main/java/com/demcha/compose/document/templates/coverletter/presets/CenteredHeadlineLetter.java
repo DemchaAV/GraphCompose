@@ -40,6 +40,12 @@ public final class CenteredHeadlineLetter {
     private CenteredHeadlineLetter() {
     }
 
+    /**
+     * Builds the cover-letter template paired with the {@code CenteredHeadline} CV preset.
+     *
+     * @param theme the active theme supplying palette, typography, and spacing
+     * @return a {@code DocumentTemplate} for the "Centered Headline Letter"
+     */
     public static DocumentTemplate<CoverLetterSpec> create(BusinessTheme theme) {
         Spacing spacing = Spacing.comfortable();
 

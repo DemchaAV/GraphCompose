@@ -25,6 +25,13 @@ import static com.demcha.compose.document.layout.NodeDefinitionSupport.wrapAtomi
  * @author Artem Demchyshyn
  */
 public final class LineDefinition implements NodeDefinition<LineNode> {
+
+    /**
+     * Creates the line layout definition.
+     */
+    public LineDefinition() {
+    }
+
     @Override
     public Class<LineNode> nodeType() {
         return LineNode.class;

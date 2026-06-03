@@ -1,4 +1,4 @@
-package com.demcha.testing.visual;
+package com.demcha.compose.testing.visual;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -21,6 +21,7 @@ import java.util.Objects;
  * can write the diff to disk for inspection.</p>
  *
  * @author Artem Demchyshyn
+ * @since 1.6.9
  */
 public final class ImageDiff {
 
@@ -105,6 +106,7 @@ public final class ImageDiff {
      * @param maxChannelDelta largest single-channel delta observed
      * @param summary human-readable summary line for failure messages
      * @param diffImage optional visualisation; {@code null} when sizes differed
+     * @since 1.6.9
      */
     public record Result(
             boolean differs,

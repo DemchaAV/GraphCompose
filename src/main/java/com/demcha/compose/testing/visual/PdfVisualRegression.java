@@ -1,8 +1,9 @@
-package com.demcha.testing.visual;
+package com.demcha.compose.testing.visual;
 
-import com.demcha.compose.devtool.PdfRenderBridge;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.ImageType;
+import org.apache.pdfbox.rendering.PDFRenderer;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -14,13 +15,19 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Test harness for "render PDF → diff PNG" visual regression checks.
+ * Pixel-level visual-regression harness: renders a PDF and diffs each page
+ * against a stored PNG baseline. Public companion to the semantic
+ * {@code com.demcha.compose.testing.layout} snapshot layer — reach for this
+ * when byte-for-byte pixel fidelity matters, and for the snapshot layer when
+ * structural geometry is enough.
  *
- * <p>Each baseline lives at {@code src/test/resources/visual-baselines/&lt;name&gt;-page-N.png}.
- * In the default mode the harness renders the supplied PDF, converts each page
- * to a {@link BufferedImage} via {@link PdfRenderBridge}, and compares against
- * the baseline using {@link ImageDiff}. A failing comparison writes the actual
- * render and the diff image next to the baseline for inspection.</p>
+ * <p>The default baseline directory is {@code src/test/resources/visual-baselines}
+ * (override with {@link #baselineRoot(Path)}); each page is stored as
+ * {@code &lt;name&gt;-page-N.png}. In the default mode the harness renders the
+ * supplied PDF, converts each page to a {@link BufferedImage} with PDFBox's
+ * {@link PDFRenderer}, and compares against the baseline using {@link ImageDiff}.
+ * A failing comparison writes the actual render and the diff image next to the
+ * baseline for inspection.</p>
  *
  * <p>To re-bless baselines, run the test with the system property
  * {@code -Dgraphcompose.visual.approve=true} (or environment variable
@@ -29,10 +36,20 @@ import java.util.Objects;
  * assertion.</p>
  *
  * @author Artem Demchyshyn
+ * @since 1.6.9
  */
 public final class PdfVisualRegression {
 
-    private static final String APPROVE_SYS_PROP = "graphcompose.visual.approve";
+    /**
+     * System property that switches the harness into approve mode
+     * ({@code -Dgraphcompose.visual.approve=true}): instead of asserting, it
+     * (re)writes the current renders to the baseline location and skips the
+     * diff. The environment variable {@code GRAPHCOMPOSE_VISUAL_APPROVE=true}
+     * works as a fallback.
+     *
+     * @since 1.6.9
+     */
+    public static final String APPROVE_PROPERTY = "graphcompose.visual.approve";
     private static final String APPROVE_ENV_VAR = "GRAPHCOMPOSE_VISUAL_APPROVE";
 
     private final Path baselineRoot;
@@ -94,8 +111,12 @@ public final class PdfVisualRegression {
      *
      * @param perPixelTolerance tolerance per channel
      * @return updated harness
+     * @throws IllegalArgumentException if {@code perPixelTolerance} is outside {@code 0..255}
      */
     public PdfVisualRegression perPixelTolerance(int perPixelTolerance) {
+        if (perPixelTolerance < 0 || perPixelTolerance > 255) {
+            throw new IllegalArgumentException("perPixelTolerance must be 0..255, got " + perPixelTolerance);
+        }
         return new PdfVisualRegression(baselineRoot, renderScale, perPixelTolerance, mismatchedPixelBudget);
     }
 
@@ -143,7 +164,7 @@ public final class PdfVisualRegression {
                 Path actualOut = sidecarPath(baselineName, page, "actual");
                 ImageIO.write(rendered.get(page), "png", actualOut.toFile());
                 failures.add("Missing baseline " + baseline + " — wrote rendered output to " + actualOut
-                        + ". Re-run with -D" + APPROVE_SYS_PROP + "=true to approve.");
+                        + ". Re-run with -D" + APPROVE_PROPERTY + "=true to approve.");
                 continue;
             }
             BufferedImage expected = ImageIO.read(baseline.toFile());
@@ -176,9 +197,10 @@ public final class PdfVisualRegression {
     public List<BufferedImage> renderPages(byte[] pdfBytes) throws IOException {
         Objects.requireNonNull(pdfBytes, "pdfBytes");
         try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+            PDFRenderer renderer = new PDFRenderer(document);
             List<BufferedImage> pages = new ArrayList<>(document.getNumberOfPages());
             for (int i = 0; i < document.getNumberOfPages(); i++) {
-                pages.add(PdfRenderBridge.renderToImage(document, i, renderScale));
+                pages.add(renderer.renderImage(i, renderScale, ImageType.RGB));
             }
             return pages;
         }
@@ -193,7 +215,7 @@ public final class PdfVisualRegression {
     }
 
     private static boolean approveMode() {
-        String prop = System.getProperty(APPROVE_SYS_PROP);
+        String prop = System.getProperty(APPROVE_PROPERTY);
         if (prop != null) {
             return Boolean.parseBoolean(prop);
         }

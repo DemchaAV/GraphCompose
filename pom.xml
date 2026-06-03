@@ -6,7 +6,7 @@
 
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose</artifactId>
-    <version>1.6.8</version>
+    <version>1.6.9</version>
 
     <name>GraphCompose</name>
     <description>A declarative layout engine for programmatic document generation, implemented primarily in Java.</description>
@@ -60,10 +60,10 @@
         <assertj.version>3.27.7</assertj.version>
         <junit.bom.version>6.1.0</junit.bom.version>
         <mockito.version>5.23.0</mockito.version>
-        <byteBuddy.version>1.18.8</byteBuddy.version>
+        <byteBuddy.version>1.18.9</byteBuddy.version>
 
         <!-- Build plugins -->
-        <central.publishing.plugin.version>0.9.0</central.publishing.plugin.version>
+        <central.publishing.plugin.version>0.10.0</central.publishing.plugin.version>
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
         <maven.enforcer.plugin.version>3.6.3</maven.enforcer.plugin.version>
         <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
@@ -77,7 +77,7 @@
 
         <!-- Binary compatibility baseline (japicmp profile) -->
         <japicmp.version>0.26.1</japicmp.version>
-        <japicmp.baseline>v1.6.7</japicmp.baseline>
+        <japicmp.baseline>v1.6.8</japicmp.baseline>
 
         <!--
             GPG signing — opted in via -Dgpg.skip=false (the publish
@@ -434,7 +434,7 @@
                 </executions>
             </plugin>
 
-            <!-- Canonical API Javadoc validation -->
+            <!-- Public API Javadoc validation: canonical document API + public testing-support helpers (testing.layout / testing.visual) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -444,7 +444,7 @@
                     <failOnError>true</failOnError>
                     <show>public</show>
                     <quiet>true</quiet>
-                    <subpackages>com.demcha.compose.document</subpackages>
+                    <subpackages>com.demcha.compose.document:com.demcha.compose.testing</subpackages>
                 </configuration>
             </plugin>
         </plugins>

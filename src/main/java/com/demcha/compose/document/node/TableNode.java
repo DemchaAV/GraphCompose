@@ -97,6 +97,18 @@ public record TableNode(
     /**
      * Backward-compatible 11-arg constructor (pre-Phase D.3) that defaults
      * {@code repeatedHeaderRowCount} to {@code 0}.
+     *
+     * @param name table node name used in snapshots and layout graph paths
+     * @param columns negotiated table columns
+     * @param rows table rows in source order
+     * @param defaultCellStyle default cell style applied to every cell
+     * @param rowStyles row-specific style overrides
+     * @param columnStyles column-specific style overrides
+     * @param width optional explicit table width
+     * @param linkOptions optional node-level link metadata
+     * @param bookmarkOptions optional node-level bookmark metadata
+     * @param padding outer table padding
+     * @param margin outer table margin
      */
     public TableNode(String name,
                      List<DocumentTableColumn> columns,

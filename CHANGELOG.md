@@ -3,6 +3,54 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v1.6.9 — 2026-06-03
+
+Housekeeping cycle plus the public pixel-level visual-regression API (Track N).
+
+### Public API
+
+- **Promoted the pixel-level visual-regression harness to public API.**
+  `com.demcha.compose.testing.visual.PdfVisualRegression` and
+  `com.demcha.compose.testing.visual.ImageDiff` (`@since 1.6.9`) move from the
+  test source set into `src/main/java`, alongside the existing
+  `com.demcha.compose.testing.layout.*` semantic snapshot helpers. Library
+  consumers can now run the same render-PDF → diff-PNG baseline gate against
+  their own presets and templates instead of copying the harness. Behaviour is
+  unchanged; the PDF→image step is inlined on PDFBox's `PDFRenderer`.
+- Exposed `PdfVisualRegression.APPROVE_PROPERTY` (`@since 1.6.9`) — the
+  `graphcompose.visual.approve` system-property name — so consumers can toggle
+  baseline-approve mode without hard-coding the string (mirrors
+  `LayoutSnapshotAssertions.UPDATE_PROPERTY`).
+
+### Documentation
+
+- Added [`docs/operations/visual-regression-testing.md`](docs/operations/visual-regression-testing.md):
+  pixel-vs-semantic guidance, the `PdfVisualRegression` API, approve mode,
+  baseline layout, and cross-platform tolerance calibration.
+- README "Which API should I use?" gains a pixel-level visual-regression row.
+- **Made the entire `com.demcha.compose.document.*` public API Javadoc
+  doclint-clean.** Added the missing `@param` / `@return` / `@throws` tags and
+  element descriptions across 142 files so `mvn javadoc:javadoc`
+  (`doclint=all`) runs warning-free. Java's default `-Xmaxwarns=100` cap had
+  masked ~90% of the gaps (true count: 929 warnings, not the ~100 first
+  visible). Additive Javadoc only — no behaviour change; the only code
+  additions are 16 behaviour-neutral no-arg constructors in
+  `layout/definitions/*` (documenting the otherwise-synthesised public default
+  constructor) and removal of the `@deprecated` block-tags `doclint` forbids in
+  `package-info.java` (the `@Deprecated` annotation + prose body already carry
+  the notice).
+
+### Build
+
+- CI Javadoc validation (`maven-javadoc-plugin`, `doclint=all`) now covers the
+  public `com.demcha.compose.testing.*` helpers (`testing.layout` + `testing.visual`)
+  in addition to the canonical `document` API, so Javadoc regressions on the
+  testing surface fail fast in CI. No artifact or behaviour change.
+- Bumped `central-publishing-maven-plugin` 0.9.0 → 0.10.0 (the Maven Central
+  publishing plugin) and removed the Dependabot block on 0.10.0; the
+  release-profile build is verified locally and the Central upload is exercised
+  at the next publish.
+
 ## v1.6.8 — 2026-06-01
 
 **CV v2 migration completion + design-token expansion.** v1.6.8

@@ -27,6 +27,13 @@ import static com.demcha.compose.document.layout.NodeDefinitionSupport.toStroke;
  * @author Artem Demchyshyn
  */
 public final class ContainerDefinition implements NodeDefinition<ContainerNode> {
+
+    /**
+     * Creates the container layout definition.
+     */
+    public ContainerDefinition() {
+    }
+
     @Override
     public Class<ContainerNode> nodeType() {
         return ContainerNode.class;

@@ -16,6 +16,16 @@ public final class SkillTableRenderer {
     private SkillTableRenderer() {
     }
 
+    /**
+     * Renders all skills across the groups as a flat grid, optionally
+     * prefixing each cell with a bullet.
+     *
+     * @param host         host section receiving the grid
+     * @param groups       the skill groups whose skills are flattened
+     * @param width        available grid width in points
+     * @param style        visual table options
+     * @param bulletPrefix text prepended to each skill cell; null means none
+     */
     public static void grid(SectionBuilder host,
                             List<SkillGroup> groups,
                             double width,

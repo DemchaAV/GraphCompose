@@ -26,6 +26,8 @@ public sealed interface CvSection
         permits ParagraphSection, RowsSection, EntriesSection, SkillsSection {
 
     /**
+     * Banner heading shown above this section's body.
+     *
      * @return banner heading shown above the body (non-blank by
      *         construction)
      */

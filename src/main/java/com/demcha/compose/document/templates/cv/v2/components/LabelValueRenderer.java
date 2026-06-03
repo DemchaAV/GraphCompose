@@ -12,6 +12,18 @@ public final class LabelValueRenderer {
     private LabelValueRenderer() {
     }
 
+    /**
+     * Renders one {@code "Label: value"} row, with the value parsed as
+     * inline markdown.
+     *
+     * @param host        host section receiving the row
+     * @param label       the label text; a trailing colon is normalised away
+     * @param value       the value text; blank values render the label alone
+     * @param labelStyle  text style for the label
+     * @param valueStyle  text style for the value
+     * @param lineSpacing extra space between wrapped lines
+     * @param margin      outer margin of the paragraph
+     */
     public static void render(SectionBuilder host,
                               String label,
                               String value,

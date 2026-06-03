@@ -19,6 +19,11 @@ import java.util.Objects;
 public record SkillsSection(String title, List<SkillGroup> groups)
         implements CvSection {
 
+    /**
+     * Validates that {@code title} and {@code groups} are non-null,
+     * rejects a blank title, and drops any null or empty groups before
+     * copying the list.
+     */
     public SkillsSection {
         Objects.requireNonNull(title, "title");
         Objects.requireNonNull(groups, "groups");
@@ -36,11 +41,21 @@ public record SkillsSection(String title, List<SkillGroup> groups)
 
     /**
      * Fluent builder for callers that assemble skills one by one.
+     *
+     * @param title non-blank section heading
+     * @return new builder
      */
     public static Builder builder(String title) {
         return new Builder(title);
     }
 
+    /**
+     * Section assembled from a fixed set of skill groups.
+     *
+     * @param title  non-blank section heading
+     * @param groups skill groups, in source order; null becomes empty
+     * @return a {@code SkillsSection} carrying the supplied groups
+     */
     public static SkillsSection of(String title, SkillGroup... groups) {
         if (groups == null) {
             return new SkillsSection(title, List.of());
@@ -59,16 +74,37 @@ public record SkillsSection(String title, List<SkillGroup> groups)
             this.title = title;
         }
 
+        /**
+         * Appends one pre-built skill group.
+         *
+         * @param group the group to append (non-null)
+         * @return this builder for chaining
+         */
         public Builder group(SkillGroup group) {
             this.groups.add(Objects.requireNonNull(group, "group"));
             return this;
         }
 
+        /**
+         * Appends a group from a category label and a list of plain
+         * skill labels.
+         *
+         * @param category group category label, non-blank
+         * @param skills   plain skill labels; null or blank labels are ignored
+         * @return this builder for chaining
+         */
         public Builder group(String category, List<String> skills) {
             this.groups.add(SkillGroup.ofNames(category, skills));
             return this;
         }
 
+        /**
+         * Appends a group from a category label and plain skill labels.
+         *
+         * @param category group category label, non-blank
+         * @param skills   plain skill labels; null or blank labels are ignored
+         * @return this builder for chaining
+         */
         public Builder group(String category, String... skills) {
             this.groups.add(SkillGroup.of(category, skills));
             return this;
@@ -88,6 +124,11 @@ public record SkillsSection(String title, List<SkillGroup> groups)
             return this;
         }
 
+        /**
+         * Builds the immutable {@link SkillsSection}.
+         *
+         * @return the assembled section
+         */
         public SkillsSection build() {
             return new SkillsSection(title, groups);
         }

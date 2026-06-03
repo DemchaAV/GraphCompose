@@ -6,6 +6,8 @@ package com.demcha.compose.document.output;
  * @author Artem Demchyshyn
  */
 public enum DocumentHeaderFooterZone {
+    /** Top-of-page header zone. */
     HEADER,
+    /** Bottom-of-page footer zone. */
     FOOTER
 }

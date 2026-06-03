@@ -26,6 +26,11 @@ import java.util.Objects;
  */
 public record SkillGroup(String category, List<CvSkill> entries) {
 
+    /**
+     * Validates that {@code category} and {@code entries} are
+     * non-null, trims and rejects a blank category, and drops any
+     * null or blank-named entries before copying the list.
+     */
     public SkillGroup {
         Objects.requireNonNull(category, "category");
         Objects.requireNonNull(entries, "entries");
@@ -42,13 +47,25 @@ public record SkillGroup(String category, List<CvSkill> entries) {
         entries = List.copyOf(cleaned);
     }
 
-    /** Skill group from plain labels (no proficiency levels). */
+    /**
+     * Skill group from plain labels (no proficiency levels).
+     *
+     * @param category category label, non-blank
+     * @param skills   plain skill labels; null or blank labels are ignored
+     * @return a {@code SkillGroup} whose entries carry no level
+     */
     public static SkillGroup of(String category, String... skills) {
         return ofNames(category,
                 skills == null ? List.of() : Arrays.asList(skills));
     }
 
-    /** Skill group from a list of plain labels (no proficiency levels). */
+    /**
+     * Skill group from a list of plain labels (no proficiency levels).
+     *
+     * @param category category label, non-blank
+     * @param skills   plain skill labels; null or blank labels are ignored
+     * @return a {@code SkillGroup} whose entries carry no level
+     */
     public static SkillGroup ofNames(String category, List<String> skills) {
         List<CvSkill> out = new ArrayList<>(skills == null ? 0 : skills.size());
         if (skills != null) {
@@ -79,6 +96,8 @@ public record SkillGroup(String category, List<CvSkill> entries) {
     }
 
     /**
+     * Joins the skill labels into one comma-separated string.
+     *
      * @return comma-separated skill labels, useful for compact renderers
      */
     public String skillsInline() {

@@ -16,6 +16,19 @@ public final class SkillLineRenderer {
     private SkillLineRenderer() {
     }
 
+    /**
+     * Renders one skill category as a single line, listing up to
+     * {@code limit} skills after the bolded category label.
+     *
+     * @param host        host section receiving the line
+     * @param group       the skill group supplying the category and skills
+     * @param limit       maximum number of skills to list
+     * @param labelStyle  text style for the category label
+     * @param valueStyle  text style for the joined skills
+     * @param lineSpacing extra space between wrapped lines
+     * @param margin      outer margin of the paragraph
+     * @param labelSuffix text appended after the category label
+     */
     public static void limitedInline(SectionBuilder host,
                                      SkillGroup group,
                                      int limit,

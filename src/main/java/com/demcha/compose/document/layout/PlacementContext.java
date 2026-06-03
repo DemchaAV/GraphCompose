@@ -27,25 +27,53 @@ import java.util.List;
 public sealed interface PlacementContext
         permits MutatingPlacementContext, FixedSlotPlacementContext {
 
-    /** Active page index for placements scheduled through this context. */
+    /**
+     * Active page index for placements scheduled through this context.
+     *
+     * @return the active page index
+     */
     int pageIndex();
 
-    /** Canvas the placement is happening on. */
+    /**
+     * Canvas the placement is happening on.
+     *
+     * @return the layout canvas
+     */
     LayoutCanvas canvas();
 
-    /** Prepare-phase context used to (re)measure children. */
+    /**
+     * Prepare-phase context used to (re)measure children.
+     *
+     * @return the prepare context
+     */
     PrepareContext prepareContext();
 
-    /** Fragment-emission context forwarded to {@code emitFragments}. */
+    /**
+     * Fragment-emission context forwarded to {@code emitFragments}.
+     *
+     * @return the fragment context
+     */
     FragmentContext fragmentContext();
 
-    /** Mutable list of placed semantic nodes; helpers append to this. */
+    /**
+     * Mutable list of placed semantic nodes; helpers append to this.
+     *
+     * @return the mutable list of placed semantic nodes
+     */
     List<PlacedNode> nodes();
 
-    /** Mutable list of placed render fragments; helpers append to this. */
+    /**
+     * Mutable list of placed render fragments; helpers append to this.
+     *
+     * @return the mutable list of placed render fragments
+     */
     List<PlacedFragment> fragments();
 
-    /** Whether this context can move on to a fresh page. */
+    /**
+     * Whether this context can move on to a fresh page.
+     *
+     * @return {@code true} if this context can advance to a fresh page
+     */
     boolean canAdvancePage();
 
     /**

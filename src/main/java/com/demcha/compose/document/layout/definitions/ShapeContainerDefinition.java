@@ -41,6 +41,13 @@ import static com.demcha.compose.document.layout.NodeDefinitionSupport.toStroke;
  * @author Artem Demchyshyn
  */
 public final class ShapeContainerDefinition implements NodeDefinition<ShapeContainerNode> {
+
+    /**
+     * Creates the shape-container layout definition.
+     */
+    public ShapeContainerDefinition() {
+    }
+
     @Override
     public Class<ShapeContainerNode> nodeType() {
         return ShapeContainerNode.class;

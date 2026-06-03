@@ -36,6 +36,8 @@ public interface Transformable<T extends Transformable<T>> {
     T transform(DocumentTransform transform);
 
     /**
+     * Returns the transform currently configured on the builder.
+     *
      * @return the transform currently configured on the builder; never
      *         {@code null} (defaults to {@link DocumentTransform#NONE})
      */

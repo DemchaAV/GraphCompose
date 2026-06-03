@@ -181,21 +181,61 @@ public record InvoiceSpec(
         private Builder() {
         }
 
-        /** @param value invoice number @return this builder */
+        /**
+         * Sets the invoice number.
+         *
+         * @param value invoice number
+         * @return this builder
+         */
         public Builder invoiceNumber(String value) { this.invoiceNumber = value; return this; }
-        /** @param value issue date @return this builder */
+        /**
+         * Sets the issue date.
+         *
+         * @param value issue date
+         * @return this builder
+         */
         public Builder issueDate(String value) { this.issueDate = value; return this; }
-        /** @param value due date @return this builder */
+        /**
+         * Sets the due date.
+         *
+         * @param value due date
+         * @return this builder
+         */
         public Builder dueDate(String value) { this.dueDate = value == null ? "" : value; return this; }
-        /** @param value sender party @return this builder */
+        /**
+         * Sets the sender party.
+         *
+         * @param value sender party
+         * @return this builder
+         */
         public Builder fromParty(Party value) { this.fromParty = value; return this; }
-        /** @param value recipient party @return this builder */
+        /**
+         * Sets the recipient party.
+         *
+         * @param value recipient party
+         * @return this builder
+         */
         public Builder billToParty(Party value) { this.billToParty = value; return this; }
-        /** @param item line item @return this builder */
+        /**
+         * Adds a line item.
+         *
+         * @param item line item
+         * @return this builder
+         */
         public Builder lineItem(LineItem item) { this.lineItems.add(item); return this; }
-        /** @param row summary row @return this builder */
+        /**
+         * Adds a summary row.
+         *
+         * @param row summary row
+         * @return this builder
+         */
         public Builder summaryRow(SummaryRow row) { this.summaryRows.add(row); return this; }
-        /** @param note footer note @return this builder */
+        /**
+         * Adds a footer note.
+         *
+         * @param note footer note
+         * @return this builder
+         */
         public Builder note(String note) { if (note != null) this.notes.add(note); return this; }
 
         /**

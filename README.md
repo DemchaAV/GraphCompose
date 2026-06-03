@@ -19,8 +19,8 @@
 </p>
 
 > **Release status** &mdash;
-> 🟢 **Latest stable**: [v1.6.7](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.6.7) (transitive dependency cleanup; zero breaking from v1.6.6)
-> &nbsp;·&nbsp; 🟡 **In develop**: v1.6.8 (CV v2 migration completion + senior-review polish)
+> 🟢 **Latest stable**: [v1.6.8](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.6.8) (CV v2 hyperlink-aware project titles + 4 contemporary BusinessTheme presets + logback CVE-2026-9828 fix; zero breaking from v1.6.7)
+> &nbsp;·&nbsp; 🟡 **In develop**: v1.6.9 (next bug-fix / housekeeping cycle)
 > &nbsp;·&nbsp; ⚪ **Planned next**: v1.7.0 (new canonical DSL primitives)
 > &nbsp;·&nbsp; See [API stability policy](./docs/api-stability.md) for tier definitions.
 
@@ -59,7 +59,7 @@ Sits between **iText** (low-level page primitives) and **JasperReports** (XML-te
 
 - **Server-side PDF generation in Java** &mdash; invoices, CVs, reports, proposals, statements, schedules.
 - **Templated documents from data** &mdash; themed presets (`ModernProfessional`, `InvoiceTemplateV2`, &hellip;) you parameterise instead of re-styling every time.
-- **Regression-tested layouts** &mdash; `DocumentSession#layoutSnapshot()` makes layout changes visible in PRs before any byte ships.
+- **Regression-tested layouts** &mdash; `DocumentSession#layoutSnapshot()` makes layout changes visible in PRs before any byte ships; `PdfVisualRegression` adds a pixel-level gate for font and colour fidelity.
 - **Streaming PDFs from web backends** &mdash; Spring Boot `@RestController` writing straight to the response ([`HttpStreamingExample`](./examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java)).
 - **Higher-level than PDFBox, lighter than JasperReports** &mdash; Java DSL describes semantics; no XML templates, no manual coordinates.
 
@@ -90,6 +90,7 @@ GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the com
 | Generate a CV / cover letter from data | Layered templates | `ModernProfessional.create().compose(session, cvDocument)` &mdash; see [layered templates](./docs/templates/v2-layered/README.md) |
 | Add a custom visual primitive | Engine extension | `NodeDefinition` + `PdfFragmentRenderHandler` &mdash; see [extension guide](./docs/contributing/extension-guide.md) |
 | Regression-test generated layouts | Layout snapshots | `DocumentSession#layoutSnapshot()` &mdash; quickstart at [Testing your document](./docs/operations/test-your-document.md); full reference at [snapshot testing](./docs/operations/layout-snapshot-testing.md) |
+| Pixel-test the rendered PDF (fonts, colours, anti-aliasing) | Visual regression | `PdfVisualRegression.standard()&hellip;assertMatchesBaseline(...)` &mdash; see [visual regression testing](./docs/operations/visual-regression-testing.md) |
 | See the live playground / gallery | Next.js showcase site | [Showcase](https://DemchaAV.github.io/GraphCompose/) &mdash; source under [`site/`](./site), built with `next build` and deployed via the [Pages workflow](./.github/workflows/deploy-site.yml) |
 
 ## Installation
@@ -98,12 +99,12 @@ GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the com
 <dependency>
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose</artifactId>
-    <version>1.6.8</version>
+    <version>1.6.9</version>
 </dependency>
 ```
 
 ```kotlin
-dependencies { implementation("io.github.demchaav:graph-compose:1.6.8") }
+dependencies { implementation("io.github.demchaav:graph-compose:1.6.9") }
 ```
 
 > **Distribution** &mdash; Maven Central is the canonical channel from **v1.6.6** onwards

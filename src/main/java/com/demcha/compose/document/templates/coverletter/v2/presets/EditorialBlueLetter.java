@@ -50,6 +50,8 @@ public final class EditorialBlueLetter {
 
     /**
      * Builds the letter with its Editorial Blue theme.
+     *
+     * @return a {@code DocumentTemplate} for the "Editorial Blue Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create() {
         return create(CvTheme.editorialBlue());
@@ -58,6 +60,9 @@ public final class EditorialBlueLetter {
     /**
      * Builds the letter with a caller-supplied theme (share the paired
      * CV's theme instance for a guaranteed visual match).
+     *
+     * @param theme the active theme supplying palette, typography, and spacing
+     * @return a {@code DocumentTemplate} for the "Editorial Blue Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create(CvTheme theme) {
         Objects.requireNonNull(theme, "theme");

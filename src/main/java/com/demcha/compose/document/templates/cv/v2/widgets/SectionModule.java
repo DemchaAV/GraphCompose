@@ -21,6 +21,15 @@ public final class SectionModule {
     /**
      * Module headed by {@link SectionHeader#tickLabel}; useful for
      * compact card/terminal layouts.
+     *
+     * @param parent     the section builder the module is appended to
+     * @param name       node name used in snapshots and layout graph paths
+     * @param title      the section title text
+     * @param theme      the active theme supplying palette, typography, and spacing
+     * @param color      accent/tick and label colour
+     * @param tickWidth  width of the short tick above the label
+     * @param titleStyle text style for the label
+     * @param body       callback drawing the section body
      */
     public static void tick(SectionBuilder parent,
                             String name,
@@ -37,6 +46,15 @@ public final class SectionModule {
     /**
      * Module headed by {@link SectionHeader#upperRule}; useful for
      * clean side-rail layouts.
+     *
+     * @param parent     the section builder the module is appended to
+     * @param name       node name used in snapshots and layout graph paths
+     * @param title      the section title text
+     * @param theme      the active theme supplying palette, typography, and spacing
+     * @param titleStyle text style for the label
+     * @param ruleColor  colour of the rule beneath the label
+     * @param ruleWidth  width in points of the rule beneath the label
+     * @param body       callback drawing the section body
      */
     public static void upperRule(SectionBuilder parent,
                                  String name,

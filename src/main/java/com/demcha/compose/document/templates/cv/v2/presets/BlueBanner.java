@@ -80,6 +80,8 @@ public final class BlueBanner {
 
     /**
      * Builds the preset with the Blue Banner theme.
+     *
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
         return create(CvTheme.blueBanner());
@@ -89,6 +91,9 @@ public final class BlueBanner {
      * Builds the preset with a caller-supplied theme. The caller can
      * adjust palette, typography, spacing, or separator tokens without
      * changing the page-flow composition.
+     *
+     * @param theme active theme
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create(CvTheme theme) {
         Objects.requireNonNull(theme, "theme");

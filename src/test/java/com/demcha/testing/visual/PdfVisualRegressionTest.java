@@ -3,6 +3,8 @@ package com.demcha.testing.visual;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.testing.visual.ImageDiff;
+import com.demcha.compose.testing.visual.PdfVisualRegression;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -69,6 +71,16 @@ class PdfVisualRegressionTest {
         assertThat(diff.mismatchedPixelCount()).isEqualTo(Long.MAX_VALUE);
         assertThat(diff.maxChannelDelta()).isEqualTo(255);
         assertThat(diff.diffImage()).isNull();
+    }
+
+    @Test
+    void perPixelToleranceOutsideChannelRangeIsRejected() {
+        assertThatThrownBy(() -> PdfVisualRegression.standard().perPixelTolerance(-1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("perPixelTolerance");
+        assertThatThrownBy(() -> PdfVisualRegression.standard().perPixelTolerance(256))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("perPixelTolerance");
     }
 
     @Test

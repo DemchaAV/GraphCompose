@@ -24,6 +24,7 @@ public record CvPalette(DocumentColor ink,
                         DocumentColor banner,
                         DocumentColor mainFill) {
 
+    /** Validates that no colour token is null. */
     public CvPalette {
         Objects.requireNonNull(ink, "ink");
         Objects.requireNonNull(muted, "muted");
@@ -38,6 +39,12 @@ public record CvPalette(DocumentColor ink,
      * factories defined before the {@code mainFill} token landed keep
      * compiling and behaving identically (none of them rendered a
      * coloured main area).
+     *
+     * @param ink    primary text colour — headlines, body, entry titles
+     * @param muted  secondary text colour — italic subtitles (employer,
+     *               institution)
+     * @param rule   thin horizontal rules + the contact-line pipe glyph
+     * @param banner pale fill behind section title banners
      */
     public CvPalette(DocumentColor ink,
                      DocumentColor muted,
@@ -49,6 +56,8 @@ public record CvPalette(DocumentColor ink,
     /**
      * The classic dark-grey / pale-grey palette used by the original
      * Boxed Sections preset.
+     *
+     * @return a {@code CvPalette} for the classic flavour
      */
     public static CvPalette classic() {
         return new CvPalette(
@@ -69,6 +78,8 @@ public record CvPalette(DocumentColor ink,
      * we reuse the classic banner colour so themes can swap the body
      * style without leaving an obvious gap if a future preset reuses
      * this palette with a banner-style section header.</p>
+     *
+     * @return a {@code CvPalette} for the Centered Headline flavour
      */
     public static CvPalette centeredHeadline() {
         return new CvPalette(
@@ -83,6 +94,8 @@ public record CvPalette(DocumentColor ink,
      * v1 preset. The banner slot carries the soft cream fill used by
      * its profile band; the bronze accent is preset-local because no
      * other preset shares that fifth colour token today.
+     *
+     * @return a {@code CvPalette} for the Classic Serif flavour
      */
     public static CvPalette classicSerif() {
         return new CvPalette(
@@ -97,6 +110,8 @@ public record CvPalette(DocumentColor ink,
      * metadata, pale teal rules, and the soft profile band fill. The
      * stronger teal accent and rail fill are preset-local fifth/sixth
      * colours because no other preset shares those tokens yet.
+     *
+     * @return a {@code CvPalette} for the Nordic Clean flavour
      */
     public static CvPalette nordicClean() {
         return new CvPalette(
@@ -110,6 +125,8 @@ public record CvPalette(DocumentColor ink,
      * Compact Mono palette: near-black body ink, blue-grey metadata,
      * quiet card rules, and the pale rail fill used by the compact
      * left column.
+     *
+     * @return a {@code CvPalette} for the Compact Mono flavour
      */
     public static CvPalette compactMono() {
         return new CvPalette(
@@ -122,6 +139,8 @@ public record CvPalette(DocumentColor ink,
     /**
      * Blue Banner palette: compact dark ink, blue section fills, and
      * darker blue separator rules.
+     *
+     * @return a {@code CvPalette} for the Blue Banner flavour
      */
     public static CvPalette blueBanner() {
         return new CvPalette(
@@ -135,6 +154,8 @@ public record CvPalette(DocumentColor ink,
      * Editorial Blue palette: deep blue-grey body text, muted
      * subtitles, vivid blue rules, and a neutral border token reused
      * by compact skill grids.
+     *
+     * @return a {@code CvPalette} for the Editorial Blue flavour
      */
     public static CvPalette editorialBlue() {
         return new CvPalette(
@@ -152,6 +173,8 @@ public record CvPalette(DocumentColor ink,
      * accent and rule colour are reused; main and sidebar tones share
      * the same {@code ink}/{@code muted} pair because the preset uses
      * a restrained grey palette throughout.
+     *
+     * @return a {@code CvPalette} for the Sidebar Portrait flavour
      */
     public static CvPalette sidebarPortrait() {
         return new CvPalette(
@@ -168,6 +191,8 @@ public record CvPalette(DocumentColor ink,
      * pale teal-grey sidebar background fill. The dark monogram ring
      * and muted-gold accent stay preset-local because no other v2
      * preset shares them today.
+     *
+     * @return a {@code CvPalette} for the Monogram Sidebar flavour
      */
     public static CvPalette monogramSidebar() {
         return new CvPalette(
@@ -185,6 +210,8 @@ public record CvPalette(DocumentColor ink,
      * navy header, brighter green accent, navy-rail variants and the
      * cyan-green contact link colour stay preset-local as they are the
      * fifth+ tokens — no other v2 preset shares them today.
+     *
+     * @return a {@code CvPalette} for the Engineering Resume flavour
      */
     public static CvPalette engineeringResume() {
         return new CvPalette(
@@ -200,6 +227,8 @@ public record CvPalette(DocumentColor ink,
      * softer grey for metadata + body bullets, pale rule for the
      * timeline axis and module underlines, and the dot token reused
      * for the three circles of the central timeline axis.
+     *
+     * @return a {@code CvPalette} for the Timeline Minimal flavour
      */
     public static CvPalette timelineMinimal() {
         return new CvPalette(
@@ -217,6 +246,8 @@ public record CvPalette(DocumentColor ink,
      * navy (rgb(20,44,66)), teal accent (rgb(0,128,128)), and white
      * panel fill are preset-local because they are the fifth/sixth/
      * seventh tokens — other v2 presets do not share them today.
+     *
+     * @return a {@code CvPalette} for the Panel flavour
      */
     public static CvPalette panel() {
         return new CvPalette(
@@ -235,6 +266,8 @@ public record CvPalette(DocumentColor ink,
      * rgb(24,35,51)) and bronze accent (rgb(172,112,55)) are
      * preset-local because they are the fifth and sixth tokens —
      * other v2 presets do not share them today.
+     *
+     * @return a {@code CvPalette} for the Executive flavour
      */
     public static CvPalette executive() {
         return new CvPalette(
@@ -253,6 +286,8 @@ public record CvPalette(DocumentColor ink,
      * the CV preset and its paired cover letter read
      * {@code palette.banner()} as the single accent source, so the
      * matched set never forks the colour.
+     *
+     * @return a {@code CvPalette} for the Mint Editorial flavour
      */
     public static CvPalette mintEditorial() {
         return new CvPalette(

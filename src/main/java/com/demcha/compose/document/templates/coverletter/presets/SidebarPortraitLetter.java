@@ -42,6 +42,12 @@ public final class SidebarPortraitLetter {
     private SidebarPortraitLetter() {
     }
 
+    /**
+     * Builds the cover-letter template paired with the {@code SidebarPortrait} CV preset.
+     *
+     * @param theme the active theme supplying palette, typography, and spacing
+     * @return a {@code DocumentTemplate} for the "Sidebar Portrait Letter"
+     */
     public static DocumentTemplate<CoverLetterSpec> create(BusinessTheme theme) {
         Spacing spacing = Spacing.comfortable();
 

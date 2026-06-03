@@ -58,6 +58,8 @@ public final class MinimalUnderlined {
 
     /**
      * Builds the preset with the classic theme.
+     *
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
         return create(CvTheme.boxedClassic());
@@ -65,6 +67,9 @@ public final class MinimalUnderlined {
 
     /**
      * Builds the preset with a caller-supplied theme.
+     *
+     * @param theme active theme
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create(CvTheme theme) {
         Objects.requireNonNull(theme, "theme");

@@ -405,6 +405,8 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
+     * @param options legacy PDF metadata options, or {@code null} to clear
+     * @return this session
      * @deprecated since 1.6.0, removal in v2.0; prefer the canonical
      *             {@link #metadata(DocumentMetadata)}.
      */
@@ -430,6 +432,8 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
+     * @param options legacy PDF watermark options, or {@code null} to clear
+     * @return this session
      * @deprecated since 1.6.0, removal in v2.0; prefer the canonical
      *             {@link #watermark(DocumentWatermark)}.
      */
@@ -455,6 +459,8 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
+     * @param options legacy PDF protection options, or {@code null} to clear
+     * @return this session
      * @deprecated since 1.6.0, removal in v2.0; prefer the canonical
      *             {@link #protect(DocumentProtection)}.
      */
@@ -479,6 +485,8 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
+     * @param options legacy PDF header/footer options
+     * @return this session
      * @deprecated since 1.6.0, removal in v2.0; prefer the canonical
      *             {@link #header(DocumentHeaderFooter)}.
      */
@@ -503,6 +511,8 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
+     * @param options legacy PDF header/footer options
+     * @return this session
      * @deprecated since 1.6.0, removal in v2.0; prefer the canonical
      *             {@link #footer(DocumentHeaderFooter)}.
      */

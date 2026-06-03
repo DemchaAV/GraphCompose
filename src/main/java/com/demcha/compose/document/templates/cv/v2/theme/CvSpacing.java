@@ -56,6 +56,7 @@ public record CvSpacing(
         double entryDateWeight,
         double entrySeparation) {
 
+    /** Validates that no inset token is null. */
     public CvSpacing {
         Objects.requireNonNull(sectionBodyPadding, "sectionBodyPadding");
         Objects.requireNonNull(headlinePadding, "headlinePadding");
@@ -70,6 +71,24 @@ public record CvSpacing(
      * compiling and rendering the same density as before, plus an
      * automatic improvement: a small gap between consecutive entries.
      *
+     * @param pageFlowSpacing       gap between top-level page-flow rows
+     * @param sectionBodySpacing    gap between paragraphs inside a
+     *                              section body
+     * @param sectionBodyPadding    inset around section body content
+     * @param headlinePadding       inset around the top headline
+     * @param contactPadding        inset around the contact line
+     * @param bannerCornerRadius    corner radius of the section-title
+     *                              banner panel
+     * @param bannerInnerPadding    padding inside the banner panel
+     * @param bannerMargin          margin around the banner panel
+     * @param accentRuleWidth       stroke width of the thin horizontal
+     *                              rules under headline / contact
+     * @param paragraphMarginTop    top margin applied to body paragraphs
+     *                              and rows so consecutive items breathe
+     * @param entryHeaderRowSpacing horizontal gap between an entry's
+     *                              title column and date column
+     * @param entryTitleWeight      flex weight of the entry title column
+     * @param entryDateWeight       flex weight of the entry date column
      * @deprecated since {@code entrySeparation} was introduced.
      *             Supply it explicitly via the 14-arg canonical
      *             constructor or via {@link #classic()} /
@@ -98,6 +117,8 @@ public record CvSpacing(
 
     /**
      * The classic spacing used by the original Boxed Sections preset.
+     *
+     * @return a {@code CvSpacing} for the classic preset
      */
     public static CvSpacing classic() {
         return new CvSpacing(
@@ -124,6 +145,8 @@ public record CvSpacing(
      * sections. Banner-panel fields are left at sensible defaults but
      * unused (the preset uses {@code flatSpacedCaps} section headers,
      * not banners).
+     *
+     * @return a {@code CvSpacing} for the Centered Headline preset
      */
     public static CvSpacing centeredHeadline() {
         return new CvSpacing(
@@ -147,6 +170,8 @@ public record CvSpacing(
      * Spacing for Classic Serif: a measured editorial flow with a
      * framed profile band, quiet cover skills module, and compact
      * detail modules.
+     *
+     * @return a {@code CvSpacing} for the Classic Serif preset
      */
     public static CvSpacing classicSerif() {
         return new CvSpacing(
@@ -169,6 +194,8 @@ public record CvSpacing(
     /**
      * Spacing for Nordic Clean: compact top header, soft profile band,
      * and a dense two-column body with a tinted sidebar rail.
+     *
+     * @return a {@code CvSpacing} for the Nordic Clean preset
      */
     public static CvSpacing nordicClean() {
         return new CvSpacing(
@@ -191,6 +218,8 @@ public record CvSpacing(
     /**
      * Spacing for Compact Mono: command-bar header, dense rail
      * modules, and same-width cards in the right column.
+     *
+     * @return a {@code CvSpacing} for the Compact Mono preset
      */
     public static CvSpacing compactMono() {
         return new CvSpacing(
@@ -216,6 +245,8 @@ public record CvSpacing(
      * Banner-related fields (corner radius, inner padding, margin)
      * are left non-zero so a future preset that wants to draw an MP
      * banner can read them; the canonical MP preset ignores them.
+     *
+     * @return a {@code CvSpacing} for the Modern Professional preset
      */
     public static CvSpacing modernProfessional() {
         return new CvSpacing(
@@ -238,6 +269,8 @@ public record CvSpacing(
     /**
      * Compact spacing for Blue Banner: tight body blocks, full-width
      * title banners, and no extra artificial gap between entries.
+     *
+     * @return a {@code CvSpacing} for the Blue Banner preset
      */
     public static CvSpacing blueBanner() {
         return new CvSpacing(
@@ -260,6 +293,8 @@ public record CvSpacing(
     /**
      * Compact spacing for Editorial Blue: section headers own their
      * rule/title rhythm, while bodies start close to the lower rule.
+     *
+     * @return a {@code CvSpacing} for the Editorial Blue preset
      */
     public static CvSpacing editorialBlue() {
         return new CvSpacing(
@@ -285,6 +320,8 @@ public record CvSpacing(
      * RECOMMENDED_MARGIN=0 page bounds. Banner tokens are unused —
      * the preset draws its chrome inline (portrait photo, hero strip,
      * rules).
+     *
+     * @return a {@code CvSpacing} for the Sidebar Portrait preset
      */
     public static CvSpacing sidebarPortrait() {
         return new CvSpacing(
@@ -311,6 +348,8 @@ public record CvSpacing(
      * page by {@code DocumentSession.pageBackgrounds(...)}, not by this
      * spacing; banner tokens are unused — the preset only draws the
      * monogram badge and sidebar heading rules inline.
+     *
+     * @return a {@code CvSpacing} for the Monogram Sidebar preset
      */
     public static CvSpacing monogramSidebar() {
         return new CvSpacing(
@@ -335,6 +374,8 @@ public record CvSpacing(
      * + 2-column body (navy skill rail / white evidence cards), with
      * a 2.5pt accent rule under the header and tight 1pt paragraph
      * top so the dense rail + card content reads as a single page.
+     *
+     * @return a {@code CvSpacing} for the Engineering Resume preset
      */
     public static CvSpacing engineeringResume() {
         return new CvSpacing(
@@ -359,6 +400,8 @@ public record CvSpacing(
      * with a fixed-width axis between the sidebar and main column.
      * Body content is text-only (no cards / banners), so banner
      * tokens are unused but kept at neutral defaults.
+     *
+     * @return a {@code CvSpacing} for the Timeline Minimal preset
      */
     public static CvSpacing timelineMinimal() {
         return new CvSpacing(
@@ -383,6 +426,8 @@ public record CvSpacing(
      * Header / Profile / two-column row / Additional on one A4 page,
      * so paddings and inter-card gaps are tight by design. Corner
      * radius and accent rule width match the V1 ProductLeader tokens.
+     *
+     * @return a {@code CvSpacing} for the Panel preset
      */
     public static CvSpacing panel() {
         return new CvSpacing(
@@ -406,6 +451,8 @@ public record CvSpacing(
      * Spacing for the Executive preset: generous executive feel with
      * an 8pt page-flow rhythm, compact module bodies, and a 1.1pt
      * full-width rule under the masthead.
+     *
+     * @return a {@code CvSpacing} for the Executive preset
      */
     public static CvSpacing executive() {
         return new CvSpacing(
@@ -432,6 +479,8 @@ public record CvSpacing(
      * tight section bodies. The two-column sidebar/main split and its
      * column gap are page-composition concerns owned by the preset, not
      * spacing tokens.
+     *
+     * @return a {@code CvSpacing} for the Mint Editorial preset
      */
     public static CvSpacing mintEditorial() {
         return new CvSpacing(

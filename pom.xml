@@ -434,7 +434,7 @@
                 </executions>
             </plugin>
 
-            <!-- Canonical API Javadoc validation -->
+            <!-- Public API Javadoc validation: canonical document API + public testing-support helpers (testing.layout / testing.visual) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -444,7 +444,7 @@
                     <failOnError>true</failOnError>
                     <show>public</show>
                     <quiet>true</quiet>
-                    <subpackages>com.demcha.compose.document</subpackages>
+                    <subpackages>com.demcha.compose.document:com.demcha.compose.testing</subpackages>
                 </configuration>
             </plugin>
         </plugins>

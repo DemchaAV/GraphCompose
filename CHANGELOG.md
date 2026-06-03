@@ -29,6 +29,13 @@ Housekeeping cycle plus the public pixel-level visual-regression API (Track N).
   baseline layout, and cross-platform tolerance calibration.
 - README "Which API should I use?" gains a pixel-level visual-regression row.
 
+### Build
+
+- CI Javadoc validation (`maven-javadoc-plugin`, `doclint=all`) now covers the
+  public `com.demcha.compose.testing.*` helpers (`testing.layout` + `testing.visual`)
+  in addition to the canonical `document` API, so Javadoc regressions on the
+  testing surface fail fast in CI. No artifact or behaviour change.
+
 ## v1.6.8 — 2026-06-01
 
 **CV v2 migration completion + design-token expansion.** v1.6.8

@@ -40,7 +40,16 @@ import java.util.Objects;
  */
 public final class PdfVisualRegression {
 
-    private static final String APPROVE_SYS_PROP = "graphcompose.visual.approve";
+    /**
+     * System property that switches the harness into approve mode
+     * ({@code -Dgraphcompose.visual.approve=true}): instead of asserting, it
+     * (re)writes the current renders to the baseline location and skips the
+     * diff. The environment variable {@code GRAPHCOMPOSE_VISUAL_APPROVE=true}
+     * works as a fallback.
+     *
+     * @since 1.6.9
+     */
+    public static final String APPROVE_PROPERTY = "graphcompose.visual.approve";
     private static final String APPROVE_ENV_VAR = "GRAPHCOMPOSE_VISUAL_APPROVE";
 
     private final Path baselineRoot;
@@ -155,7 +164,7 @@ public final class PdfVisualRegression {
                 Path actualOut = sidecarPath(baselineName, page, "actual");
                 ImageIO.write(rendered.get(page), "png", actualOut.toFile());
                 failures.add("Missing baseline " + baseline + " — wrote rendered output to " + actualOut
-                        + ". Re-run with -D" + APPROVE_SYS_PROP + "=true to approve.");
+                        + ". Re-run with -D" + APPROVE_PROPERTY + "=true to approve.");
                 continue;
             }
             BufferedImage expected = ImageIO.read(baseline.toFile());
@@ -206,7 +215,7 @@ public final class PdfVisualRegression {
     }
 
     private static boolean approveMode() {
-        String prop = System.getProperty(APPROVE_SYS_PROP);
+        String prop = System.getProperty(APPROVE_PROPERTY);
         if (prop != null) {
             return Boolean.parseBoolean(prop);
         }

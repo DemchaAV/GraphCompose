@@ -17,6 +17,17 @@ Housekeeping cycle plus the public pixel-level visual-regression API (Track N).
   consumers can now run the same render-PDF → diff-PNG baseline gate against
   their own presets and templates instead of copying the harness. Behaviour is
   unchanged; the PDF→image step is inlined on PDFBox's `PDFRenderer`.
+- Exposed `PdfVisualRegression.APPROVE_PROPERTY` (`@since 1.6.9`) — the
+  `graphcompose.visual.approve` system-property name — so consumers can toggle
+  baseline-approve mode without hard-coding the string (mirrors
+  `LayoutSnapshotAssertions.UPDATE_PROPERTY`).
+
+### Documentation
+
+- Added [`docs/operations/visual-regression-testing.md`](docs/operations/visual-regression-testing.md):
+  pixel-vs-semantic guidance, the `PdfVisualRegression` API, approve mode,
+  baseline layout, and cross-platform tolerance calibration.
+- README "Which API should I use?" gains a pixel-level visual-regression row.
 
 ## v1.6.8 — 2026-06-01
 

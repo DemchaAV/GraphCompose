@@ -63,7 +63,7 @@
         <byteBuddy.version>1.18.9</byteBuddy.version>
 
         <!-- Build plugins -->
-        <central.publishing.plugin.version>0.9.0</central.publishing.plugin.version>
+        <central.publishing.plugin.version>0.10.0</central.publishing.plugin.version>
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
         <maven.enforcer.plugin.version>3.6.3</maven.enforcer.plugin.version>
         <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>

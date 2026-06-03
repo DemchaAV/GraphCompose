@@ -35,6 +35,10 @@ Housekeeping cycle plus the public pixel-level visual-regression API (Track N).
   public `com.demcha.compose.testing.*` helpers (`testing.layout` + `testing.visual`)
   in addition to the canonical `document` API, so Javadoc regressions on the
   testing surface fail fast in CI. No artifact or behaviour change.
+- Bumped `central-publishing-maven-plugin` 0.9.0 → 0.10.0 (the Maven Central
+  publishing plugin) and removed the Dependabot block on 0.10.0; the
+  release-profile build is verified locally and the Central upload is exercised
+  at the next publish.
 
 ## v1.6.8 — 2026-06-01
 

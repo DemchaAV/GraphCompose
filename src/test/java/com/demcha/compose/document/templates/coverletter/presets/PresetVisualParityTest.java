@@ -7,7 +7,7 @@ import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.coverletter.spec.CoverLetterHeader;
 import com.demcha.compose.document.templates.coverletter.spec.CoverLetterSpec;
 import com.demcha.compose.document.theme.BusinessTheme;
-import com.demcha.testing.visual.PdfVisualRegression;
+import com.demcha.compose.testing.visual.PdfVisualRegression;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;

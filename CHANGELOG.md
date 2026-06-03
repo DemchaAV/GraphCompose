@@ -5,7 +5,18 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v1.6.9 — Planned
 
-Next bug-fix / housekeeping cycle. Track open in `docs/private/` taskboard.
+Housekeeping cycle plus the public pixel-level visual-regression API (Track N).
+
+### Public API
+
+- **Promoted the pixel-level visual-regression harness to public API.**
+  `com.demcha.compose.testing.visual.PdfVisualRegression` and
+  `com.demcha.compose.testing.visual.ImageDiff` (`@since 1.6.9`) move from the
+  test source set into `src/main/java`, alongside the existing
+  `com.demcha.compose.testing.layout.*` semantic snapshot helpers. Library
+  consumers can now run the same render-PDF → diff-PNG baseline gate against
+  their own presets and templates instead of copying the harness. Behaviour is
+  unchanged; the PDF→image step is inlined on PDFBox's `PDFRenderer`.
 
 ## v1.6.8 — 2026-06-01
 

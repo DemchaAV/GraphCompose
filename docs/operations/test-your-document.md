@@ -221,17 +221,15 @@ shipped CV / cover-letter preset and for the engine showcase tests
 (see `CvV2VisualParityTest`, `CoverLetterV2VisualParityTest`,
 `TableRowSpanDemoTest` and friends).
 
-The harness behind those tests
-(`com.demcha.testing.visual.PdfVisualRegression` +
-`ImageDiff`) is currently **test-only** inside the GraphCompose
-build. Promoting it to a public `com.demcha.compose.testing.visual.*`
-API so library consumers can adopt the same pixel-level gate against
-their own presets is queued as **v1.6.8 / v1.7.0 Track N** — see the
-release-readiness taskboard. Until that ships, the recommended
-public path is layout snapshot above; for pixel-level work, copy
-the pattern from `PdfVisualRegression` (it builds on the public
-`com.demcha.compose.devtool.PdfRenderBridge` for PDF page → image
-conversion).
+The harness behind those tests is the public
+`com.demcha.compose.testing.visual.PdfVisualRegression` +
+`ImageDiff` API (`@since 1.6.9`), a sibling to the
+`com.demcha.compose.testing.layout.*` snapshot helpers — library
+consumers can adopt the same pixel-level gate against their own
+presets. Start from `PdfVisualRegression.standard()`, point
+`baselineRoot(...)` at your own baseline directory, and call
+`assertMatchesBaseline(name, pdfBytes)`; run with
+`-Dgraphcompose.visual.approve=true` to (re)bless baselines.
 
 ---
 
@@ -241,7 +239,7 @@ conversion).
 |---|---|
 | The document compiles + renders at all | smoke (just call `buildPdf()` in a test) |
 | The semantic graph and resolved coordinates are stable across engine refactors | **layout snapshot** |
-| The PDF visually looks identical, fonts/colours and all | pixel-level visual (Track N) |
+| The PDF visually looks identical, fonts/colours and all | **pixel-level visual** (`PdfVisualRegression`) |
 | A specific layout math rule holds | a focused unit test |
 
 The advice scales: a flagship template or a preset you publish to

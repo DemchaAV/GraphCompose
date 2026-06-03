@@ -59,6 +59,15 @@ public final class TextFlowSupport {
     // Paragraph entry points
     // ------------------------------------------------------------------
 
+    /**
+     * Measures a paragraph node and wraps it into a prepared leaf carrying its
+     * visual line layout.
+     *
+     * @param node paragraph node to prepare
+     * @param ctx prepare-phase context
+     * @param constraints box constraints for measurement
+     * @return prepared paragraph node with its line layout
+     */
     public static PreparedNode<ParagraphNode> prepareParagraph(ParagraphNode node,
                                                                PrepareContext ctx,
                                                                BoxConstraints constraints) {
@@ -74,6 +83,14 @@ public final class TextFlowSupport {
         return PreparedNode.leaf(node, measure, layout);
     }
 
+    /**
+     * Splits a prepared paragraph at the largest line count that fits the
+     * remaining height.
+     *
+     * @param prepared prepared paragraph node
+     * @param request split request carrying the remaining height
+     * @return the head/tail split result
+     */
     public static PreparedSplitResult<ParagraphNode> splitParagraph(PreparedNode<ParagraphNode> prepared,
                                                                     SplitRequest request) {
         ParagraphNode node = prepared.node();
@@ -97,6 +114,13 @@ public final class TextFlowSupport {
         return new PreparedSplitResult<>(head, tail);
     }
 
+    /**
+     * Emits the render fragment for a prepared paragraph.
+     *
+     * @param prepared prepared paragraph node
+     * @param placement resolved fragment placement
+     * @return renderer-facing paragraph fragments
+     */
     public static List<LayoutFragment> emitParagraphFragments(PreparedNode<ParagraphNode> prepared,
                                                               FragmentPlacement placement) {
         ParagraphNode node = prepared.node();
@@ -126,6 +150,15 @@ public final class TextFlowSupport {
     // List entry points
     // ------------------------------------------------------------------
 
+    /**
+     * Measures a list node and wraps it into a prepared leaf carrying its
+     * per-item paragraph layout, flattening nested items first when present.
+     *
+     * @param node list node to prepare
+     * @param ctx prepare-phase context
+     * @param constraints box constraints for measurement
+     * @return prepared list node with its item layout
+     */
     public static PreparedNode<ListNode> prepareList(ListNode node,
                                                      PrepareContext ctx,
                                                      BoxConstraints constraints) {
@@ -209,6 +242,14 @@ public final class TextFlowSupport {
         };
     }
 
+    /**
+     * Splits a prepared list at whole-item boundaries, falling back to
+     * splitting the first item's lines when no whole item fits.
+     *
+     * @param prepared prepared list node
+     * @param request split request carrying the remaining height
+     * @return the head/tail split result
+     */
     public static PreparedSplitResult<ListNode> splitList(PreparedNode<ListNode> prepared,
                                                           SplitRequest request) {
         ListNode node = prepared.node();
@@ -266,6 +307,14 @@ public final class TextFlowSupport {
         return new PreparedSplitResult<>(head, tail);
     }
 
+    /**
+     * Emits one paragraph fragment per list item so items paginate
+     * independently.
+     *
+     * @param prepared prepared list node
+     * @param placement resolved fragment placement
+     * @return renderer-facing per-item fragments
+     */
     public static List<LayoutFragment> emitListFragments(PreparedNode<ListNode> prepared,
                                                          FragmentPlacement placement) {
         ListNode node = prepared.node();

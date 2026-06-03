@@ -23,6 +23,15 @@ public final class CardWidget {
     private CardWidget() {
     }
 
+    /**
+     * Renders the card as a nested section under {@code parent},
+     * applying the visual shell and then the supplied body.
+     *
+     * @param parent  parent section receiving the card
+     * @param name    node name used in snapshots and layout graph paths
+     * @param style   visual shell options; null falls back to defaults
+     * @param content callback that populates the card body
+     */
     public static void render(SectionBuilder parent,
                               String name,
                               Style style,
@@ -44,6 +53,11 @@ public final class CardWidget {
      * section. Visual shell behaves identically to the
      * {@link #render(SectionBuilder, String, Style, Consumer)}
      * variant.
+     *
+     * @param flow    page flow receiving the card
+     * @param name    node name used in snapshots and layout graph paths
+     * @param style   visual shell options; null falls back to defaults
+     * @param content callback that populates the card body
      */
     public static void render(PageFlowBuilder flow,
                               String name,
@@ -75,6 +89,12 @@ public final class CardWidget {
 
     /**
      * Visual shell options for {@link CardWidget}.
+     *
+     * @param spacing      vertical spacing between children
+     * @param padding      inner padding
+     * @param fillColor    optional background fill
+     * @param stroke       optional uniform border stroke
+     * @param cornerRadius optional render-only corner radius
      */
     public record Style(double spacing,
                         DocumentInsets padding,
@@ -82,6 +102,10 @@ public final class CardWidget {
                         DocumentStroke stroke,
                         DocumentCornerRadius cornerRadius) {
 
+        /**
+         * Validates that spacing is finite and non-negative and
+         * normalises a null padding to zero insets.
+         */
         public Style {
             if (Double.isNaN(spacing) || Double.isInfinite(spacing)
                     || spacing < 0) {
@@ -91,10 +115,18 @@ public final class CardWidget {
             padding = padding == null ? DocumentInsets.zero() : padding;
         }
 
+        /**
+         * Creates a builder seeded with conservative defaults.
+         *
+         * @return a mutable builder seeded with conservative defaults
+         */
         public static Builder builder() {
             return new Builder();
         }
 
+        /**
+         * Fluent builder for {@link Style}.
+         */
         public static final class Builder {
             private double spacing;
             private DocumentInsets padding = DocumentInsets.zero();
@@ -105,36 +137,77 @@ public final class CardWidget {
             private Builder() {
             }
 
+            /**
+             * Sets the vertical spacing between children.
+             *
+             * @param value vertical spacing between children
+             * @return this builder for chaining
+             */
             public Builder spacing(double value) {
                 this.spacing = value;
                 return this;
             }
 
+            /**
+             * Sets the inner padding.
+             *
+             * @param value inner padding
+             * @return this builder for chaining
+             */
             public Builder padding(DocumentInsets value) {
                 this.padding = value;
                 return this;
             }
 
+            /**
+             * Sets the optional background fill.
+             *
+             * @param value optional background fill
+             * @return this builder for chaining
+             */
             public Builder fillColor(DocumentColor value) {
                 this.fillColor = value;
                 return this;
             }
 
+            /**
+             * Sets the optional uniform border stroke.
+             *
+             * @param value optional uniform border stroke
+             * @return this builder for chaining
+             */
             public Builder stroke(DocumentStroke value) {
                 this.stroke = value;
                 return this;
             }
 
+            /**
+             * Sets the optional render-only corner radius from a raw value.
+             *
+             * @param value corner radius in points
+             * @return this builder for chaining
+             */
             public Builder cornerRadius(double value) {
                 this.cornerRadius = DocumentCornerRadius.of(value);
                 return this;
             }
 
+            /**
+             * Sets the optional render-only corner radius.
+             *
+             * @param value optional render-only corner radius
+             * @return this builder for chaining
+             */
             public Builder cornerRadius(DocumentCornerRadius value) {
                 this.cornerRadius = value;
                 return this;
             }
 
+            /**
+             * Builds the configured {@link Style}.
+             *
+             * @return a new {@code Style} carrying the configured shell options
+             */
             public Style build() {
                 return new Style(spacing, padding, fillColor, stroke,
                         cornerRadius);

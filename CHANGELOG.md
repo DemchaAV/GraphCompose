@@ -28,6 +28,17 @@ Housekeeping cycle plus the public pixel-level visual-regression API (Track N).
   pixel-vs-semantic guidance, the `PdfVisualRegression` API, approve mode,
   baseline layout, and cross-platform tolerance calibration.
 - README "Which API should I use?" gains a pixel-level visual-regression row.
+- **Made the entire `com.demcha.compose.document.*` public API Javadoc
+  doclint-clean.** Added the missing `@param` / `@return` / `@throws` tags and
+  element descriptions across 142 files so `mvn javadoc:javadoc`
+  (`doclint=all`) runs warning-free. Java's default `-Xmaxwarns=100` cap had
+  masked ~90% of the gaps (true count: 929 warnings, not the ~100 first
+  visible). Additive Javadoc only — no behaviour change; the only code
+  additions are 16 behaviour-neutral no-arg constructors in
+  `layout/definitions/*` (documenting the otherwise-synthesised public default
+  constructor) and removal of the `@deprecated` block-tags `doclint` forbids in
+  `package-info.java` (the `@Deprecated` annotation + prose body already carry
+  the notice).
 
 ### Build
 

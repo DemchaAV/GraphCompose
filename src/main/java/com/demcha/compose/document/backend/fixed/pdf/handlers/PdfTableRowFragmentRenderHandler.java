@@ -53,6 +53,11 @@ public final class PdfTableRowFragmentRenderHandler
      * fragments of a table before rendering borders. Painting fills under the
      * eventual stroke avoids sub-pixel page-background seams around row-span
      * joins.</p>
+     *
+     * @param fragment placed row fragment to render
+     * @param payload table-row payload carrying the resolved cells
+     * @param environment active PDF render environment
+     * @throws java.io.IOException if writing to the PDF content stream fails
      */
     public void renderFills(PlacedFragment fragment,
                             TableRowFragmentPayload payload,
@@ -68,6 +73,11 @@ public final class PdfTableRowFragmentRenderHandler
 
     /**
      * Paints table cell borders and text for one row fragment.
+     *
+     * @param fragment placed row fragment to render
+     * @param payload table-row payload carrying the resolved cells
+     * @param environment active PDF render environment
+     * @throws java.io.IOException if writing to the PDF content stream fails
      */
     public void renderBordersAndText(PlacedFragment fragment,
                                      TableRowFragmentPayload payload,

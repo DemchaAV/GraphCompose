@@ -57,6 +57,19 @@ public record LineNode(
     /**
      * Backward-compatible convenience constructor without transform — defaults
      * to {@link DocumentTransform#NONE}.
+     *
+     * @param name node name used in snapshots and layout graph paths
+     * @param width resolved line box width
+     * @param height resolved line box height
+     * @param startX line start x offset inside the box
+     * @param startY line start y offset inside the box
+     * @param endX line end x offset inside the box
+     * @param endY line end y offset inside the box
+     * @param stroke line stroke descriptor
+     * @param linkOptions optional node-level link metadata
+     * @param bookmarkOptions optional node-level bookmark metadata
+     * @param padding inner padding
+     * @param margin outer margin
      */
     public LineNode(String name,
                     double width,

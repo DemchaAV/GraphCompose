@@ -229,7 +229,11 @@ public final class MintEditorial {
     private MintEditorial() {
     }
 
-    /** Builds the preset with its Mint Editorial theme and default colours. */
+    /**
+     * Builds the preset with its Mint Editorial theme and default colours.
+     *
+     * @return ready-to-use template
+     */
     public static DocumentTemplate<CvDocument> create() {
         return create(CvTheme.mintEditorial(), Options.defaults());
     }
@@ -238,6 +242,9 @@ public final class MintEditorial {
      * Builds the preset with a caller-supplied theme and default colours
      * (share the paired cover letter's theme instance for a guaranteed
      * visual match).
+     *
+     * @param theme active theme
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create(CvTheme theme) {
         return create(theme, Options.defaults());
@@ -246,6 +253,9 @@ public final class MintEditorial {
     /**
      * Builds the preset with its Mint Editorial theme and explicit colour
      * {@link Options}.
+     *
+     * @param options masthead colour options
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create(Options options) {
         return create(CvTheme.mintEditorial(), options);
@@ -255,6 +265,10 @@ public final class MintEditorial {
      * Builds the preset with a caller-supplied theme and explicit colour
      * {@link Options}. Use this to recolour the masthead (accent, rule,
      * name, optional header band) without forking the theme.
+     *
+     * @param theme   active theme
+     * @param options masthead colour options
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create(CvTheme theme,
                                                       Options options) {
@@ -285,14 +299,27 @@ public final class MintEditorial {
                           DocumentColor nameColor,
                           DocumentColor headerBandColor) {
 
+        /**
+         * Default options: every knob unset, reproducing the stock render.
+         *
+         * @return options that leave the committed look unchanged
+         */
         public static Options defaults() {
             return new Options(null, null, null, null);
         }
 
+        /**
+         * Starts a mutable builder for the masthead colour knobs.
+         *
+         * @return new builder
+         */
         public static Builder builder() {
             return new Builder();
         }
 
+        /**
+         * Builder for {@link Options}.
+         */
         public static final class Builder {
             private DocumentColor accentColor;
             private DocumentColor ruleColor;
@@ -302,26 +329,55 @@ public final class MintEditorial {
             private Builder() {
             }
 
+            /**
+             * Sets the mint accent for the tagline and section headings.
+             *
+             * @param value accent colour
+             * @return this builder
+             */
             public Builder accentColor(DocumentColor value) {
                 this.accentColor = value;
                 return this;
             }
 
+            /**
+             * Sets the full-width masthead rule colour.
+             *
+             * @param value rule colour
+             * @return this builder
+             */
             public Builder ruleColor(DocumentColor value) {
                 this.ruleColor = value;
                 return this;
             }
 
+            /**
+             * Sets the masthead name text colour.
+             *
+             * @param value name colour
+             * @return this builder
+             */
             public Builder nameColor(DocumentColor value) {
                 this.nameColor = value;
                 return this;
             }
 
+            /**
+             * Sets the optional page-1 header band colour.
+             *
+             * @param value header band colour
+             * @return this builder
+             */
             public Builder headerBandColor(DocumentColor value) {
                 this.headerBandColor = value;
                 return this;
             }
 
+            /**
+             * Builds the configured options.
+             *
+             * @return a new {@link Options} with the configured colours
+             */
             public Options build() {
                 return new Options(accentColor, ruleColor, nameColor,
                         headerBandColor);

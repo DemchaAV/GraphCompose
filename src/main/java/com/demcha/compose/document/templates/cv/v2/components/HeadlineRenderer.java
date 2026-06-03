@@ -20,6 +20,9 @@ public final class HeadlineRenderer {
     }
 
     /**
+     * @param section the section builder being populated
+     * @param name    the candidate name to render as the headline
+     * @param theme   the active theme supplying palette, typography, and spacing
      * @deprecated delegates to {@link Headline#spacedCentered}.
      */
     @Deprecated

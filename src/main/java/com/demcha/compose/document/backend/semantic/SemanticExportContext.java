@@ -36,6 +36,10 @@ public record SemanticExportContext(
 
     /**
      * Backwards-compatible constructor without explicit output options.
+     *
+     * @param canvas physical page canvas for semantic export
+     * @param customFontFamilies document-local font families available to the backend
+     * @param outputFile optional export output file
      */
     public SemanticExportContext(LayoutCanvas canvas,
                                  Collection<FontFamilyDefinition> customFontFamilies,

@@ -42,6 +42,12 @@ import java.util.List;
  */
 public final class CanvasLayerDefinition implements NodeDefinition<CanvasLayerNode> {
 
+    /**
+     * Creates the canvas-layer layout definition.
+     */
+    public CanvasLayerDefinition() {
+    }
+
     @Override
     public Class<CanvasLayerNode> nodeType() {
         return CanvasLayerNode.class;

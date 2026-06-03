@@ -61,6 +61,14 @@ public record ShapeNode(
 
     /**
      * Backward-compatible convenience constructor without link/bookmark metadata.
+     *
+     * @param name node name used in snapshots and layout graph paths
+     * @param width resolved shape width
+     * @param height resolved shape height
+     * @param fillColor optional fill color
+     * @param stroke optional stroke descriptor
+     * @param padding inner padding
+     * @param margin outer margin
      */
     public ShapeNode(String name,
                      double width,
@@ -75,6 +83,16 @@ public record ShapeNode(
 
     /**
      * Backward-compatible convenience constructor without corner radius.
+     *
+     * @param name node name used in snapshots and layout graph paths
+     * @param width resolved shape width
+     * @param height resolved shape height
+     * @param fillColor optional fill color
+     * @param stroke optional stroke descriptor
+     * @param linkOptions optional node-level link metadata
+     * @param bookmarkOptions optional node-level bookmark metadata
+     * @param padding inner padding
+     * @param margin outer margin
      */
     public ShapeNode(String name,
                      double width,
@@ -91,6 +109,17 @@ public record ShapeNode(
     /**
      * Backward-compatible convenience constructor without transform — defaults
      * to {@link DocumentTransform#NONE}.
+     *
+     * @param name node name used in snapshots and layout graph paths
+     * @param width resolved shape width
+     * @param height resolved shape height
+     * @param fillColor optional fill color
+     * @param stroke optional stroke descriptor
+     * @param cornerRadius optional render-only corner radius
+     * @param linkOptions optional node-level link metadata
+     * @param bookmarkOptions optional node-level bookmark metadata
+     * @param padding inner padding
+     * @param margin outer margin
      */
     public ShapeNode(String name,
                      double width,

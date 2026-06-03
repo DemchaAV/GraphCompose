@@ -74,6 +74,8 @@ public final class Executive {
 
     /**
      * Builds the preset with its Executive theme.
+     *
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
         return create(CvTheme.executive());
@@ -81,6 +83,9 @@ public final class Executive {
 
     /**
      * Builds the preset with a caller-supplied theme.
+     *
+     * @param theme active theme
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create(CvTheme theme) {
         Objects.requireNonNull(theme, "theme");

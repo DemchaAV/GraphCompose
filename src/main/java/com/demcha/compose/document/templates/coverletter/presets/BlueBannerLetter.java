@@ -41,6 +41,12 @@ public final class BlueBannerLetter {
     private BlueBannerLetter() {
     }
 
+    /**
+     * Builds the cover-letter template paired with the {@code BlueBanner} CV preset.
+     *
+     * @param theme the active theme supplying palette, typography, and spacing
+     * @return a {@code DocumentTemplate} for the "Blue Banner Letter"
+     */
     public static DocumentTemplate<CoverLetterSpec> create(BusinessTheme theme) {
         Spacing spacing = Spacing.comfortable();
 

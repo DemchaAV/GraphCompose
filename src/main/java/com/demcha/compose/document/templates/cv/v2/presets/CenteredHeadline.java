@@ -86,6 +86,8 @@ public final class CenteredHeadline {
     /**
      * Builds the preset with the classic Centered Headline theme
      * ({@link CvTheme#centeredHeadline()}).
+     *
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
         return create(CvTheme.centeredHeadline());
@@ -96,6 +98,9 @@ public final class CenteredHeadline {
      * variations on the Centered Headline theme (alternate
      * typography, slightly different palette) without forking this
      * class.
+     *
+     * @param theme active theme
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create(CvTheme theme) {
         Objects.requireNonNull(theme, "theme");

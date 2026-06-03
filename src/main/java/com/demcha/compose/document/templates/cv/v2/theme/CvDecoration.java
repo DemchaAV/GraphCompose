@@ -34,6 +34,7 @@ public record CvDecoration(String bulletGlyph,
                            String stackedIndent,
                            String contactSeparator) {
 
+    /** Validates that no token is null. */
     public CvDecoration {
         Objects.requireNonNull(bulletGlyph, "bulletGlyph");
         Objects.requireNonNull(stackedIndent, "stackedIndent");
@@ -43,6 +44,8 @@ public record CvDecoration(String bulletGlyph,
     /**
      * The classic decoration: round bullet, two-space stacked indent,
      * pipe contact separator. Used by {@link CvTheme#boxedClassic()}.
+     *
+     * @return a {@code CvDecoration} for the classic look
      */
     public static CvDecoration classic() {
         return new CvDecoration("• ", "  ", "   |   ");
@@ -51,6 +54,8 @@ public record CvDecoration(String bulletGlyph,
     /**
      * Blue Banner keeps classic bullets but uses the tighter contact
      * separator spacing from the legacy preset.
+     *
+     * @return a {@code CvDecoration} for the Blue Banner look
      */
     public static CvDecoration blueBanner() {
         return new CvDecoration("• ", "  ", "  |  ");
@@ -60,6 +65,8 @@ public record CvDecoration(String bulletGlyph,
      * Compact Mono uses slash-separated contact metadata in its dark
      * command-bar header. Row bullets keep the classic glyph for
      * callers that reuse shared row renderers with this theme.
+     *
+     * @return a {@code CvDecoration} for the Compact Mono look
      */
     public static CvDecoration compactMono() {
         return new CvDecoration("• ", "  ", "  /  ");

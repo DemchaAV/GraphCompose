@@ -40,6 +40,12 @@ public final class EngineeringResumeLetter {
     private EngineeringResumeLetter() {
     }
 
+    /**
+     * Builds the cover-letter template paired with the {@code EngineeringResume} CV preset.
+     *
+     * @param theme the active theme supplying palette, typography, and spacing
+     * @return a {@code DocumentTemplate} for the "Engineering Resume Letter"
+     */
     public static DocumentTemplate<CoverLetterSpec> create(BusinessTheme theme) {
         Spacing spacing = Spacing.compact();
 

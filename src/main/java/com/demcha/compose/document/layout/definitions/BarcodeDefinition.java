@@ -25,6 +25,13 @@ import static com.demcha.compose.document.layout.NodeDefinitionSupport.wrapAtomi
  * @author Artem Demchyshyn
  */
 public final class BarcodeDefinition implements NodeDefinition<BarcodeNode> {
+
+    /**
+     * Creates the barcode layout definition.
+     */
+    public BarcodeDefinition() {
+    }
+
     @Override
     public Class<BarcodeNode> nodeType() {
         return BarcodeNode.class;

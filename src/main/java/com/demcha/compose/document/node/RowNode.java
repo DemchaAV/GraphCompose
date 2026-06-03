@@ -32,6 +32,7 @@ import java.util.Objects;
  * @param fillColor optional background fill
  * @param stroke optional border stroke
  * @param cornerRadius optional render-only corner radius
+ * @param borders optional per-side border strokes overriding the uniform stroke
  *
  * @author Artem Demchyshyn
  */
@@ -75,6 +76,16 @@ public record RowNode(
 
     /**
      * Backwards-compatible constructor without per-side borders.
+     *
+     * @param name node name used in snapshots and layout graph paths
+     * @param children child semantic nodes in source order
+     * @param weights optional per-child weights (length must match children, or be empty)
+     * @param gap horizontal gap between children
+     * @param padding inner padding
+     * @param margin outer margin
+     * @param fillColor optional background fill
+     * @param stroke optional border stroke
+     * @param cornerRadius optional render-only corner radius
      */
     public RowNode(String name,
                    List<DocumentNode> children,

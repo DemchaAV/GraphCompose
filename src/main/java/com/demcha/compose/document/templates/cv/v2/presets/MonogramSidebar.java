@@ -139,6 +139,8 @@ public final class MonogramSidebar {
      * Builds the preset with its Monogram Sidebar theme and default
      * options (theme's banner fill for the sidebar, muted-gold accent,
      * dark slate monogram ring).
+     *
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
         return create(CvTheme.monogramSidebar(), Options.defaults());
@@ -147,6 +149,9 @@ public final class MonogramSidebar {
     /**
      * Builds the preset with a caller-supplied theme and default
      * options.
+     *
+     * @param theme active theme
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create(CvTheme theme) {
         return create(theme, Options.defaults());
@@ -156,6 +161,10 @@ public final class MonogramSidebar {
      * Builds the preset with explicit colour options. Use this to
      * override the sidebar fill, accent colour, or monogram ring
      * without forking the theme.
+     *
+     * @param theme   active theme
+     * @param options sidebar colour options
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create(CvTheme theme,
                                                       Options options) {
@@ -185,14 +194,28 @@ public final class MonogramSidebar {
                           DocumentColor accentColor,
                           DocumentColor monogramRingColor) {
 
+        /**
+         * Default options: every field unset, falling back to the theme
+         * palette / V1 defaults.
+         *
+         * @return options that leave the committed look unchanged
+         */
         public static Options defaults() {
             return new Options(null, null, null, null);
         }
 
+        /**
+         * Starts a mutable builder for the sidebar colour knobs.
+         *
+         * @return new builder
+         */
         public static Builder builder() {
             return new Builder();
         }
 
+        /**
+         * Builder for {@link Options}.
+         */
         public static final class Builder {
             private DocumentColor sidebarFillColor;
             private DocumentColor mainFillColor;
@@ -202,26 +225,55 @@ public final class MonogramSidebar {
             private Builder() {
             }
 
+            /**
+             * Sets the sidebar (left column) background fill.
+             *
+             * @param value sidebar fill colour
+             * @return this builder
+             */
             public Builder sidebarFillColor(DocumentColor value) {
                 this.sidebarFillColor = value;
                 return this;
             }
 
+            /**
+             * Sets the main (right column) background fill.
+             *
+             * @param value main fill colour
+             * @return this builder
+             */
             public Builder mainFillColor(DocumentColor value) {
                 this.mainFillColor = value;
                 return this;
             }
 
+            /**
+             * Sets the muted-gold accent for the subtitle and dates.
+             *
+             * @param value accent colour
+             * @return this builder
+             */
             public Builder accentColor(DocumentColor value) {
                 this.accentColor = value;
                 return this;
             }
 
+            /**
+             * Sets the monogram ring stroke and initials colour.
+             *
+             * @param value monogram ring colour
+             * @return this builder
+             */
             public Builder monogramRingColor(DocumentColor value) {
                 this.monogramRingColor = value;
                 return this;
             }
 
+            /**
+             * Builds the configured options.
+             *
+             * @return a new {@link Options} with the configured colours
+             */
             public Options build() {
                 return new Options(sidebarFillColor, mainFillColor,
                         accentColor, monogramRingColor);

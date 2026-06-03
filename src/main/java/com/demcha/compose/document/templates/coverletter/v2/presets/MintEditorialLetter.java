@@ -74,7 +74,11 @@ public final class MintEditorialLetter {
     private MintEditorialLetter() {
     }
 
-    /** Builds the letter with its Mint Editorial theme and default colours. */
+    /**
+     * Builds the letter with its Mint Editorial theme and default colours.
+     *
+     * @return a {@code DocumentTemplate} for the "Mint Editorial Letter"
+     */
     public static DocumentTemplate<CoverLetterDocument> create() {
         return create(CvTheme.mintEditorial(), Options.defaults());
     }
@@ -82,12 +86,20 @@ public final class MintEditorialLetter {
     /**
      * Builds the letter with a caller-supplied theme and default colours
      * (share the paired CV's theme instance for a guaranteed visual match).
+     *
+     * @param theme the active theme supplying palette, typography, and spacing
+     * @return a {@code DocumentTemplate} for the "Mint Editorial Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create(CvTheme theme) {
         return create(theme, Options.defaults());
     }
 
-    /** Builds the letter with its Mint Editorial theme and explicit colours. */
+    /**
+     * Builds the letter with its Mint Editorial theme and explicit colours.
+     *
+     * @param options masthead colour knobs (accent, rule, name, header band)
+     * @return a {@code DocumentTemplate} for the "Mint Editorial Letter"
+     */
     public static DocumentTemplate<CoverLetterDocument> create(Options options) {
         return create(CvTheme.mintEditorial(), options);
     }
@@ -96,6 +108,10 @@ public final class MintEditorialLetter {
      * Builds the letter with a caller-supplied theme and explicit colour
      * {@link Options}. Pass the same {@code Options} as the paired CV preset
      * so the recoloured masthead matches.
+     *
+     * @param theme   the active theme supplying palette, typography, and spacing
+     * @param options masthead colour knobs (accent, rule, name, header band)
+     * @return a {@code DocumentTemplate} for the "Mint Editorial Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create(CvTheme theme,
                                                                Options options) {
@@ -123,14 +139,27 @@ public final class MintEditorialLetter {
                           DocumentColor nameColor,
                           DocumentColor headerBandColor) {
 
+        /**
+         * Returns options with every field {@code null} (stock render).
+         *
+         * @return default options reproducing the stock masthead
+         */
         public static Options defaults() {
             return new Options(null, null, null, null);
         }
 
+        /**
+         * Creates a new options builder.
+         *
+         * @return new options builder
+         */
         public static Builder builder() {
             return new Builder();
         }
 
+        /**
+         * Mutable builder for {@link Options}.
+         */
         public static final class Builder {
             private DocumentColor accentColor;
             private DocumentColor ruleColor;
@@ -140,26 +169,55 @@ public final class MintEditorialLetter {
             private Builder() {
             }
 
+            /**
+             * Sets the mint accent colour for the tagline.
+             *
+             * @param value accent colour; {@code null} restores the theme default
+             * @return this builder
+             */
             public Builder accentColor(DocumentColor value) {
                 this.accentColor = value;
                 return this;
             }
 
+            /**
+             * Sets the masthead rule colour.
+             *
+             * @param value rule colour; {@code null} reuses the resolved accent
+             * @return this builder
+             */
             public Builder ruleColor(DocumentColor value) {
                 this.ruleColor = value;
                 return this;
             }
 
+            /**
+             * Sets the masthead name colour.
+             *
+             * @param value name colour; {@code null} restores the theme default
+             * @return this builder
+             */
             public Builder nameColor(DocumentColor value) {
                 this.nameColor = value;
                 return this;
             }
 
+            /**
+             * Sets the optional full-width band colour behind the masthead.
+             *
+             * @param value header band colour; {@code null} renders no band
+             * @return this builder
+             */
             public Builder headerBandColor(DocumentColor value) {
                 this.headerBandColor = value;
                 return this;
             }
 
+            /**
+             * Builds an immutable {@link Options}.
+             *
+             * @return new options
+             */
             public Options build() {
                 return new Options(accentColor, ruleColor, nameColor,
                         headerBandColor);

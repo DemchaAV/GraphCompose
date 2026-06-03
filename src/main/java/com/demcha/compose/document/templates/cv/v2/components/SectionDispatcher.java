@@ -30,6 +30,15 @@ public final class SectionDispatcher {
     private SectionDispatcher() {
     }
 
+    /**
+     * Renders the section body into the host, dispatching on the
+     * sealed {@link CvSection} subtype.
+     *
+     * @param host    host section receiving the body
+     * @param section the section whose subtype selects the renderer
+     * @param theme   the active theme supplying palette, typography, and spacing
+     * @throws IllegalStateException if the section subtype is unhandled
+     */
     public static void renderBody(SectionBuilder host, CvSection section, CvTheme theme) {
         host.spacing(theme.spacing().sectionBodySpacing())
                 .padding(theme.spacing().sectionBodyPadding());

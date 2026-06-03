@@ -26,6 +26,7 @@ import java.util.Objects;
  * @param bookmarkOptions optional node-level bookmark metadata
  * @param padding inner padding
  * @param margin outer margin
+ * @param autoSize optional automatic font down-scaling policy
  * @author Artem Demchyshyn
  */
 public record ParagraphNode(
@@ -73,6 +74,20 @@ public record ParagraphNode(
 
     /**
      * Backwards-compatible 12-arg canonical constructor without auto-size.
+     *
+     * @param name node name used in snapshots and layout graph paths
+     * @param text paragraph text when inline runs are not supplied
+     * @param inlineRuns optional inline runs in source order; may mix text and
+     *                   image runs and is wrapped on a single baseline
+     * @param textStyle base paragraph text style
+     * @param align horizontal text alignment
+     * @param lineSpacing extra space between wrapped lines
+     * @param bulletOffset first-line prefix used by list-style paragraph paths
+     * @param indentStrategy hanging/first-line indent strategy
+     * @param linkOptions optional node-level link metadata
+     * @param bookmarkOptions optional node-level bookmark metadata
+     * @param padding inner padding
+     * @param margin outer margin
      */
     public ParagraphNode(String name,
                          String text,

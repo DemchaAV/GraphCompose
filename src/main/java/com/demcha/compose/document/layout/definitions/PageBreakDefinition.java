@@ -24,6 +24,12 @@ import java.util.List;
  */
 public final class PageBreakDefinition implements NodeDefinition<PageBreakNode> {
 
+    /**
+     * Creates the page-break layout definition.
+     */
+    public PageBreakDefinition() {
+    }
+
     @Override
     public Class<PageBreakNode> nodeType() {
         return PageBreakNode.class;

@@ -53,6 +53,15 @@ public record SectionNode(
 
     /**
      * Creates a vertical semantic section without per-side borders.
+     *
+     * @param name node name used in snapshots and layout graph paths
+     * @param children child semantic nodes in source order
+     * @param spacing vertical spacing between children
+     * @param padding inner padding
+     * @param margin outer margin
+     * @param fillColor optional background fill
+     * @param stroke optional uniform border stroke
+     * @param cornerRadius optional render-only corner radius
      */
     public SectionNode(String name,
                        List<DocumentNode> children,
@@ -67,6 +76,14 @@ public record SectionNode(
 
     /**
      * Creates a vertical semantic section with square corners and no per-side borders.
+     *
+     * @param name node name used in snapshots and layout graph paths
+     * @param children child semantic nodes in source order
+     * @param spacing vertical spacing between children
+     * @param padding inner padding
+     * @param margin outer margin
+     * @param fillColor optional background fill
+     * @param stroke optional uniform border stroke
      */
     public SectionNode(String name,
                        List<DocumentNode> children,

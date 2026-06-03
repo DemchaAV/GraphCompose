@@ -20,6 +20,9 @@ public final class ContactRenderer {
     }
 
     /**
+     * @param section  the section builder being populated
+     * @param identity the contact identity supplying the field values
+     * @param theme    the active theme supplying palette, typography, and spacing
      * @deprecated delegates to {@link ContactLine#centered}.
      */
     @Deprecated

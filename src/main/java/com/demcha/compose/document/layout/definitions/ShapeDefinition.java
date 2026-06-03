@@ -26,6 +26,13 @@ import static com.demcha.compose.document.layout.NodeDefinitionSupport.wrapAtomi
  * @author Artem Demchyshyn
  */
 public final class ShapeDefinition implements NodeDefinition<ShapeNode> {
+
+    /**
+     * Creates the shape layout definition.
+     */
+    public ShapeDefinition() {
+    }
+
     @Override
     public Class<ShapeNode> nodeType() {
         return ShapeNode.class;

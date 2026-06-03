@@ -18,11 +18,6 @@
  * instead. See {@code docs/templates/v2-layered/}.</p>
  *
  * @since 1.6.0
- * @deprecated Superseded by the layered
- *             {@code com.demcha.compose.document.templates.coverletter.v2}
- *             surface (the current standard). This Gen-2 package is kept for
- *             backward compatibility and will be removed in a future major.
- *             See {@code docs/templates/v2-layered/}.
  */
 @Deprecated(since = "1.7.0", forRemoval = true)
 package com.demcha.compose.document.templates.coverletter.layouts;

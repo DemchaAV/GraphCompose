@@ -62,6 +62,9 @@ public final class TimelineAxisWidget {
      * Renders the timeline axis using the supplied {@link Style}. The
      * total height is implied by {@code segmentCount * segmentLength
      * + (segmentCount - 1) * markerSize}.
+     *
+     * @param host  host section receiving the axis
+     * @param style configured style; null falls back to defaults
      */
     public static void render(SectionBuilder host, Style style) {
         Objects.requireNonNull(host, "host");
@@ -171,6 +174,10 @@ public final class TimelineAxisWidget {
                         double lineThickness,
                         DocumentInsets padding) {
 
+        /**
+         * Normalises the marker and clamps sizes, counts, and thickness
+         * to their valid ranges.
+         */
         public Style {
             marker = marker == null ? Marker.CIRCLE : marker;
             markerSize = Math.max(0.0, markerSize);
@@ -180,10 +187,20 @@ public final class TimelineAxisWidget {
             padding = padding == null ? DocumentInsets.zero() : padding;
         }
 
+        /**
+         * Creates a builder seeded with conservative defaults.
+         *
+         * @return a mutable builder seeded with conservative defaults
+         */
         public static Builder builder() {
             return new Builder();
         }
 
+        /**
+         * Creates a builder pre-populated with this style's values.
+         *
+         * @return a mutable builder seeded from this style
+         */
         public Builder toBuilder() {
             return new Builder()
                     .marker(marker)
@@ -197,6 +214,9 @@ public final class TimelineAxisWidget {
                     .padding(padding);
         }
 
+        /**
+         * Fluent builder for {@link Style}.
+         */
         public static final class Builder {
             private Marker marker = Marker.CIRCLE;
             private double markerSize = 7.0;
@@ -211,51 +231,110 @@ public final class TimelineAxisWidget {
             private Builder() {
             }
 
+            /**
+             * Sets the marker shape drawn between segments.
+             *
+             * @param value shape drawn between segments
+             * @return this builder for chaining
+             */
             public Builder marker(Marker value) {
                 this.marker = value;
                 return this;
             }
 
+            /**
+             * Sets the marker size.
+             *
+             * @param value diameter (CIRCLE) or side length (SQUARE)
+             * @return this builder for chaining
+             */
             public Builder markerSize(double value) {
                 this.markerSize = value;
                 return this;
             }
 
+            /**
+             * Sets the marker fill colour.
+             *
+             * @param value fill colour of the marker
+             * @return this builder for chaining
+             */
             public Builder markerFillColor(DocumentColor value) {
                 this.markerFillColor = value;
                 return this;
             }
 
+            /**
+             * Sets the marker stroke.
+             *
+             * @param value stroke around the marker
+             * @return this builder for chaining
+             */
             public Builder markerStroke(DocumentStroke value) {
                 this.markerStroke = value;
                 return this;
             }
 
+            /**
+             * Sets the length of each vertical line segment.
+             *
+             * @param value length of each vertical line segment
+             * @return this builder for chaining
+             */
             public Builder segmentLength(double value) {
                 this.segmentLength = value;
                 return this;
             }
 
+            /**
+             * Sets the number of segments.
+             *
+             * @param value number of segments (at least 1)
+             * @return this builder for chaining
+             */
             public Builder segmentCount(int value) {
                 this.segmentCount = value;
                 return this;
             }
 
+            /**
+             * Sets the colour of every line segment.
+             *
+             * @param value colour of every line segment
+             * @return this builder for chaining
+             */
             public Builder lineColor(DocumentColor value) {
                 this.lineColor = value;
                 return this;
             }
 
+            /**
+             * Sets the thickness of every line segment.
+             *
+             * @param value thickness of every line segment
+             * @return this builder for chaining
+             */
             public Builder lineThickness(double value) {
                 this.lineThickness = value;
                 return this;
             }
 
+            /**
+             * Sets the inset applied to the host section before drawing.
+             *
+             * @param value inset applied to the host section before any drawing
+             * @return this builder for chaining
+             */
             public Builder padding(DocumentInsets value) {
                 this.padding = value;
                 return this;
             }
 
+            /**
+             * Builds the configured {@link Style}.
+             *
+             * @return a new {@code Style} carrying the configured axis options
+             */
             public Style build() {
                 return new Style(marker, markerSize, markerFillColor,
                         markerStroke, segmentLength, segmentCount,

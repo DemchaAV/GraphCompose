@@ -39,6 +39,12 @@ public final class BoxedSectionsLetter {
     private BoxedSectionsLetter() {
     }
 
+    /**
+     * Builds the cover-letter template paired with the {@code BoxedSections} CV preset.
+     *
+     * @param theme the active theme supplying palette, typography, and spacing
+     * @return a {@code DocumentTemplate} for the "Boxed Sections Letter"
+     */
     public static DocumentTemplate<CoverLetterSpec> create(BusinessTheme theme) {
         Spacing spacing = Spacing.comfortable();
 

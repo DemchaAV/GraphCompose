@@ -26,6 +26,13 @@ import static com.demcha.compose.document.layout.NodeDefinitionSupport.splitTabl
  * @author Artem Demchyshyn
  */
 public final class TableDefinition implements NodeDefinition<TableNode> {
+
+    /**
+     * Creates the table layout definition.
+     */
+    public TableDefinition() {
+    }
+
     @Override
     public Class<TableNode> nodeType() {
         return TableNode.class;

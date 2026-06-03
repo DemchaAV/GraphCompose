@@ -50,6 +50,10 @@ public final class Headline {
     /**
      * Centred letter-spaced uppercase headline. Visual signature of
      * {@code BoxedSections} and {@code MinimalUnderlined}.
+     *
+     * @param host  host section the headline is appended to
+     * @param name  name to render
+     * @param theme the active theme supplying palette, typography, and spacing
      */
     public static void spacedCentered(SectionBuilder host, CvName name, CvTheme theme) {
         render(host, name, theme, TextAlign.CENTER, true);
@@ -59,6 +63,10 @@ public final class Headline {
      * Centred uppercase headline without letter spacing. Visual
      * signature of compact editorial presets that want a strong
      * masthead but not the wider classic spaced-caps treatment.
+     *
+     * @param host  host section the headline is appended to
+     * @param name  name to render
+     * @param theme the active theme supplying palette, typography, and spacing
      */
     public static void uppercaseCentered(SectionBuilder host, CvName name,
                                          CvTheme theme) {
@@ -69,6 +77,9 @@ public final class Headline {
      * Centred uppercase headline without letter spacing and with an
      * explicit style override.
      *
+     * @param host          host section the headline is appended to
+     * @param name          name to render
+     * @param theme         the active theme supplying palette, typography, and spacing
      * @param styleOverride explicit style; pass {@code null} to fall
      *                      back to {@code theme.headlineStyle()}
      */
@@ -83,6 +94,10 @@ public final class Headline {
      * Left-aligned uppercase headline without letter spacing. Visual
      * signature of clean two-column presets where the name sits in the
      * top-left identity block rather than centred on the page.
+     *
+     * @param host  host section the headline is appended to
+     * @param name  name to render
+     * @param theme the active theme supplying palette, typography, and spacing
      */
     public static void uppercaseLeftAligned(SectionBuilder host, CvName name,
                                             CvTheme theme) {
@@ -93,6 +108,9 @@ public final class Headline {
      * Left-aligned uppercase headline without letter spacing and with
      * an explicit style override.
      *
+     * @param host          host section the headline is appended to
+     * @param name          name to render
+     * @param theme         the active theme supplying palette, typography, and spacing
      * @param styleOverride explicit style; pass {@code null} to fall
      *                      back to {@code theme.headlineStyle()}
      */
@@ -108,6 +126,10 @@ public final class Headline {
      * {@link CvTheme#headlineStyle() headline style}. Visual
      * signature of corporate / modern presets that don't need a
      * custom display colour.
+     *
+     * @param host  host section the headline is appended to
+     * @param name  name to render
+     * @param theme the active theme supplying palette, typography, and spacing
      */
     public static void rightAligned(SectionBuilder host, CvName name, CvTheme theme) {
         rightAligned(host, name, theme, null);
@@ -119,6 +141,9 @@ public final class Headline {
      * / colour it wants. Used by {@code ModernProfessional} to apply
      * its preset-specific slate-blue display colour.
      *
+     * @param host          host section the headline is appended to
+     * @param name          name to render
+     * @param theme         the active theme supplying palette, typography, and spacing
      * @param styleOverride text style for the headline; pass {@code null}
      *                      to fall back to {@code theme.headlineStyle()}
      */
@@ -150,6 +175,12 @@ public final class Headline {
      * the 5-arg {@link #render(SectionBuilder, CvName, CvTheme, TextAlign, boolean)}
      * but lets the caller supply a custom {@link DocumentTextStyle}.
      *
+     * @param host          host section
+     * @param name          name to render
+     * @param theme         active theme
+     * @param alignment     paragraph alignment
+     * @param spacedCaps    if true, transforms to letter-spaced
+     *                      uppercase; if false, renders verbatim
      * @param styleOverride explicit style; pass {@code null} to fall
      *                      back to {@code theme.headlineStyle()}
      */

@@ -152,17 +152,47 @@ public record ProposalSpec(
         private Builder() {
         }
 
-        /** @param value title @return this builder */
+        /**
+         * Sets the proposal title.
+         *
+         * @param value title
+         * @return this builder
+         */
         public Builder title(String value) { this.title = value; return this; }
-        /** @param value sender party @return this builder */
+        /**
+         * Sets the sender party.
+         *
+         * @param value sender party
+         * @return this builder
+         */
         public Builder fromParty(Party value) { this.fromParty = value; return this; }
-        /** @param value receiving party @return this builder */
+        /**
+         * Sets the receiving party.
+         *
+         * @param value receiving party
+         * @return this builder
+         */
         public Builder toParty(Party value) { this.toParty = value; return this; }
-        /** @param section content section @return this builder */
+        /**
+         * Adds a content section.
+         *
+         * @param section content section
+         * @return this builder
+         */
         public Builder section(Section section) { this.sections.add(section); return this; }
-        /** @param row pricing row @return this builder */
+        /**
+         * Adds a pricing row.
+         *
+         * @param row pricing row
+         * @return this builder
+         */
         public Builder pricingRow(PricingRow row) { this.pricingRows.add(row); return this; }
-        /** @param note footer note @return this builder */
+        /**
+         * Sets the footer note.
+         *
+         * @param note footer note
+         * @return this builder
+         */
         public Builder footerNote(String note) { this.footerNote = note == null ? "" : note; return this; }
 
         /**

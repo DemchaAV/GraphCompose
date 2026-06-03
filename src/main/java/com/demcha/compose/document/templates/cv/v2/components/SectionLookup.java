@@ -15,6 +15,14 @@ public final class SectionLookup {
     private SectionLookup() {
     }
 
+    /**
+     * Returns the first section whose normalised title contains any of
+     * the normalised keys.
+     *
+     * @param sections the sections to scan; null yields {@code null}
+     * @param keys     the candidate title fragments; null yields {@code null}
+     * @return the first matching section, or {@code null} if none match
+     */
     public static CvSection firstMatching(List<CvSection> sections,
                                           List<String> keys) {
         if (sections == null || keys == null) {
@@ -35,6 +43,13 @@ public final class SectionLookup {
         return null;
     }
 
+    /**
+     * Reports whether the section carries any renderable content.
+     *
+     * @param section the section to inspect
+     * @return {@code true} if the section has non-empty body, entries,
+     *         rows, or skill groups
+     */
     public static boolean hasContent(CvSection section) {
         if (section instanceof ParagraphSection paragraph) {
             return paragraph.body() != null && !paragraph.body().isBlank();
@@ -51,10 +66,23 @@ public final class SectionLookup {
         return false;
     }
 
+    /**
+     * Reports whether the normalised title contains the normalised key.
+     *
+     * @param title the title to test
+     * @param key   the fragment to look for
+     * @return {@code true} if the normalised title contains the normalised key
+     */
     public static boolean titleContains(String title, String key) {
         return normalize(title).contains(normalize(key));
     }
 
+    /**
+     * Normalises a value to lower-case alphanumerics for loose matching.
+     *
+     * @param value the value to normalise; null yields an empty string
+     * @return the lower-cased value with non-alphanumeric characters removed
+     */
     public static String normalize(String value) {
         return value == null ? "" : value.toLowerCase().replaceAll("[^a-z0-9]+", "");
     }

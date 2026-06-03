@@ -96,6 +96,8 @@ public final class CompactMono {
 
     /**
      * Builds the preset with its Compact Mono theme.
+     *
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
         return create(CvTheme.compactMono());
@@ -105,6 +107,9 @@ public final class CompactMono {
      * Builds the preset with a caller-supplied theme. Use this for
      * controlled typography/spacing/palette variants without changing
      * the shipped preset.
+     *
+     * @param theme active theme
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create(CvTheme theme) {
         Objects.requireNonNull(theme, "theme");

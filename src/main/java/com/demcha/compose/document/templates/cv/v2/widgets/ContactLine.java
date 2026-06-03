@@ -47,6 +47,10 @@ public final class ContactLine {
      * Centred pipe-separated contact row. Order: phone → email →
      * address → links. Visual signature of {@code BoxedSections},
      * {@code MinimalUnderlined}.
+     *
+     * @param host     the section builder the contact row is appended to
+     * @param identity the CV identity supplying contact fields and links
+     * @param theme    the active theme supplying palette, typography, and spacing
      */
     public static void centered(SectionBuilder host, CvIdentity identity, CvTheme theme) {
         render(host, identity, theme, TextAlign.CENTER, Order.PHONE_FIRST);
@@ -59,6 +63,9 @@ public final class ContactLine {
      * editorial presets tint / underline the links without forking the
      * contact assembly logic.
      *
+     * @param host                   the section builder the contact row is appended to
+     * @param identity               the CV identity supplying contact fields and links
+     * @param theme                  the active theme supplying palette, typography, and spacing
      * @param bodyStyleOverride      style for phone and address;
      *                               {@code null} →
      *                               {@code theme.contactStyle()}
@@ -82,6 +89,10 @@ public final class ContactLine {
      * Right-aligned pipe-separated contact row. Order: address →
      * phone → email → links — address-first reads as the location
      * label authors usually put first in this style.
+     *
+     * @param host     the section builder the contact row is appended to
+     * @param identity the CV identity supplying contact fields and links
+     * @param theme    the active theme supplying palette, typography, and spacing
      */
     public static void rightAligned(SectionBuilder host, CvIdentity identity, CvTheme theme) {
         render(host, identity, theme, TextAlign.RIGHT, Order.ADDRESS_FIRST);
@@ -91,6 +102,10 @@ public final class ContactLine {
      * Left-aligned contact row. Order: address -> phone -> email ->
      * links. Useful for command-bar headers where the name and
      * contact metadata both anchor to the left edge.
+     *
+     * @param host     the section builder the contact row is appended to
+     * @param identity the CV identity supplying contact fields and links
+     * @param theme    the active theme supplying palette, typography, and spacing
      */
     public static void leftAligned(SectionBuilder host, CvIdentity identity,
                                    CvTheme theme) {
@@ -101,6 +116,9 @@ public final class ContactLine {
      * Left-aligned contact row with explicit text-style overrides for
      * non-link text, clickable links, and separators.
      *
+     * @param host                   the section builder the contact row is appended to
+     * @param identity               the CV identity supplying contact fields and links
+     * @param theme                  the active theme supplying palette, typography, and spacing
      * @param bodyStyleOverride      style for address and phone;
      *                               {@code null} ->
      *                               {@code theme.contactStyle()}
@@ -137,6 +155,9 @@ public final class ContactLine {
      * hyperlinks (mailto: for the email, the link's URL for each
      * label) — not just styled text.</p>
      *
+     * @param host                   the section builder the contact rows are appended to
+     * @param identity               the CV identity supplying contact fields and links
+     * @param theme                  the active theme supplying palette, typography, and spacing
      * @param bodyStyleOverride      style for the non-link items
      *                               (address, phone); {@code null} →
      *                               {@code theme.contactStyle()}
@@ -191,6 +212,10 @@ public final class ContactLine {
      * Right-aligned contact stack, one item per line. Order:
      * address → phone → email → links. This is useful for two-column
      * headers where a pipe-separated row would become too wide.
+     *
+     * @param host     the section builder the contact stack is appended to
+     * @param identity the CV identity supplying contact fields and links
+     * @param theme    the active theme supplying palette, typography, and spacing
      */
     public static void rightAlignedStacked(SectionBuilder host,
                                            CvIdentity identity,
@@ -202,6 +227,9 @@ public final class ContactLine {
      * Right-aligned contact stack with explicit text-style overrides
      * for non-link text and clickable links.
      *
+     * @param host              the section builder the contact stack is appended to
+     * @param identity          the CV identity supplying contact fields and links
+     * @param theme             the active theme supplying palette, typography, and spacing
      * @param bodyStyleOverride style for address / phone; {@code null}
      *                          → {@code theme.contactStyle()}
      * @param linkStyleOverride style for email + links; {@code null}
@@ -239,6 +267,12 @@ public final class ContactLine {
     /**
      * Lower-level entry. Pick the alignment and the field order
      * explicitly.
+     *
+     * @param host      the section builder the contact row is appended to
+     * @param identity  the CV identity supplying contact fields and links
+     * @param theme     the active theme supplying palette, typography, and spacing
+     * @param alignment horizontal text alignment for the row
+     * @param order     the field order in the rendered line
      */
     public static void render(SectionBuilder host, CvIdentity identity, CvTheme theme,
                               TextAlign alignment, Order order) {

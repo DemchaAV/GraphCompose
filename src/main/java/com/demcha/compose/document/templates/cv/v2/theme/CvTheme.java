@@ -23,12 +23,14 @@ import java.util.Objects;
  * @param palette    colour tokens
  * @param typography font + size scale
  * @param spacing    paddings / margins / weights
+ * @param decoration glyph / separator tokens
  */
 public record CvTheme(CvPalette palette,
                       CvTypography typography,
                       CvSpacing spacing,
                       CvDecoration decoration) {
 
+    /** Validates that no sub-record is null. */
     public CvTheme {
         Objects.requireNonNull(palette, "palette");
         Objects.requireNonNull(typography, "typography");
@@ -42,6 +44,9 @@ public record CvTheme(CvPalette palette,
      * Retained so callers built before the decoration token landed
      * keep compiling and behaving identically.
      *
+     * @param palette    colour tokens
+     * @param typography font + size scale
+     * @param spacing    paddings / margins / weights
      * @deprecated since the introduction of {@link CvDecoration} —
      *             pass an explicit decoration so callers can choose
      *             a different bullet glyph or contact separator
@@ -59,6 +64,8 @@ public record CvTheme(CvPalette palette,
      * pale-grey section banners, round bullets, pipe contact
      * separators. Visual signature of the original
      * {@code cv-boxed-sections.pdf} reference output.
+     *
+     * @return a {@code CvTheme} for the "Boxed Sections" classic look
      */
     public static CvTheme boxedClassic() {
         return new CvTheme(
@@ -78,6 +85,8 @@ public record CvTheme(CvPalette palette,
      * <p>When (or if) a second preset wants the same accent palette,
      * extract those colours into a new field on {@link CvPalette} and
      * point both presets at it.</p>
+     *
+     * @return a {@code CvTheme} for the "Modern Professional" look
      */
     public static CvTheme modernProfessional() {
         return new CvTheme(
@@ -93,6 +102,8 @@ public record CvTheme(CvPalette palette,
      * palette, thin full-width rules separating headline / contact /
      * each module. Pipe contact separator matches the classic
      * decoration.
+     *
+     * @return a {@code CvTheme} for the "Centered Headline" look
      */
     public static CvTheme centeredHeadline() {
         return new CvTheme(
@@ -106,6 +117,8 @@ public record CvTheme(CvPalette palette,
      * The "Classic Serif" look — PT Serif throughout, warm dark ink,
      * tan rules, cream profile band, and the roomy pipe separator
      * from the classic decoration.
+     *
+     * @return a {@code CvTheme} for the "Classic Serif" look
      */
     public static CvTheme classicSerif() {
         return new CvTheme(
@@ -119,6 +132,8 @@ public record CvTheme(CvPalette palette,
      * The "Nordic Clean" look — Barlow display typography, Lato body,
      * deep blue-green ink, pale teal profile band/rules, and compact
      * two-column spacing.
+     *
+     * @return a {@code CvTheme} for the "Nordic Clean" look
      */
     public static CvTheme nordicClean() {
         return new CvTheme(
@@ -132,6 +147,8 @@ public record CvTheme(CvPalette palette,
      * The "Compact Mono" look — dark command-bar header, IBM Plex
      * Mono labels, teal accents, pale left rail, and compact card
      * spacing.
+     *
+     * @return a {@code CvTheme} for the "Compact Mono" look
      */
     public static CvTheme compactMono() {
         return new CvTheme(
@@ -145,6 +162,8 @@ public record CvTheme(CvPalette palette,
      * The "Blue Banner" look — PT Serif display name, Lato body,
      * compact spacing, blue full-width section banners, and tighter
      * pipe separators.
+     *
+     * @return a {@code CvTheme} for the "Blue Banner" look
      */
     public static CvTheme blueBanner() {
         return new CvTheme(
@@ -158,6 +177,8 @@ public record CvTheme(CvPalette palette,
      * The "Editorial Blue" look — compact Helvetica, vivid blue
      * section rules, centred editorial header, and dense body
      * spacing.
+     *
+     * @return a {@code CvTheme} for the "Editorial Blue" look
      */
     public static CvTheme editorialBlue() {
         return new CvTheme(
@@ -176,6 +197,8 @@ public record CvTheme(CvPalette palette,
      * via a hero strip), professional profile, and experience
      * timeline. Visual signature ported from the v1
      * {@code SidebarPortraitCvTemplateComposer}.
+     *
+     * @return a {@code CvTheme} for the "Sidebar Portrait" look
      */
     public static CvTheme sidebarPortrait() {
         return new CvTheme(
@@ -193,6 +216,8 @@ public record CvTheme(CvPalette palette,
      * headline and main career narrative on the right. Visual
      * signature ported from the v1
      * {@code MonogramSidebarCvTemplateComposer}.
+     *
+     * @return a {@code CvTheme} for the "Monogram Sidebar" look
      */
     public static CvTheme monogramSidebar() {
         return new CvTheme(
@@ -209,6 +234,8 @@ public record CvTheme(CvPalette palette,
      * for Leadership Experience + Technical Evidence on the right.
      * Visual signature ported from the v1
      * {@code TechLeadCvTemplateComposer}.
+     *
+     * @return a {@code CvTheme} for the "Engineering Resume" look
      */
     public static CvTheme engineeringResume() {
         return new CvTheme(
@@ -225,6 +252,8 @@ public record CvTheme(CvPalette palette,
      * with three circles separating the sidebar from the main column.
      * Visual signature ported from the v1
      * {@code TimelineMinimalCvTemplateComposer}.
+     *
+     * @return a {@code CvTheme} for the "Timeline Minimal" look
      */
     public static CvTheme timelineMinimal() {
         return new CvTheme(
@@ -240,6 +269,8 @@ public record CvTheme(CvPalette palette,
      * masthead text, and teal section headings with a small accent
      * strip beneath each title. Visual signature ported from the v1
      * {@code PanelCvTemplateComposer} (ProductLeader tokens).
+     *
+     * @return a {@code CvTheme} for the "Panel" look
      */
     public static CvTheme panel() {
         return new CvTheme(
@@ -255,6 +286,8 @@ public record CvTheme(CvPalette palette,
      * links, and a thin full-width muted rule under the header.
      * Visual signature ported from the legacy
      * {@code ExecutiveSlateCvTemplate}.
+     *
+     * @return a {@code CvTheme} for the "Executive" look
      */
     public static CvTheme executive() {
         return new CvTheme(
@@ -273,6 +306,8 @@ public record CvTheme(CvPalette palette,
      * skill bars, social) beside a main column (profile, experience,
      * awards, references). Paired 1:1 with the Mint Editorial cover
      * letter, which reuses this exact theme.
+     *
+     * @return a {@code CvTheme} for the "Mint Editorial" look
      */
     public static CvTheme mintEditorial() {
         return new CvTheme(
@@ -287,46 +322,104 @@ public record CvTheme(CvPalette palette,
     // call site. This is the only "computed" code in the theme — every
     // value reads from the underlying records.
 
+    /**
+     * Composed text style for the top-of-document headline — headline
+     * font at the headline size in the primary ink colour.
+     *
+     * @return the headline text style
+     */
     public DocumentTextStyle headlineStyle() {
         return style(typography.headlineFont(), typography.sizeHeadline(),
                 DocumentTextDecoration.DEFAULT, palette.ink());
     }
 
+    /**
+     * Composed text style for the bold spaced-caps section banner
+     * label — headline font at the banner size in the primary ink
+     * colour.
+     *
+     * @return the banner text style
+     */
     public DocumentTextStyle bannerStyle() {
         return style(typography.headlineFont(), typography.sizeBanner(),
                 DocumentTextDecoration.BOLD, palette.ink());
     }
 
+    /**
+     * Composed text style for the contact line — body font at the
+     * contact size in the primary ink colour.
+     *
+     * @return the contact text style
+     */
     public DocumentTextStyle contactStyle() {
         return style(typography.bodyFont(), typography.sizeContact(),
                 DocumentTextDecoration.DEFAULT, palette.ink());
     }
 
+    /**
+     * Composed text style for the separator glyph between contact
+     * items — body font at the contact size in the quieter rule
+     * colour.
+     *
+     * @return the contact-separator text style
+     */
     public DocumentTextStyle contactSeparatorStyle() {
         return style(typography.bodyFont(), typography.sizeContact(),
                 DocumentTextDecoration.DEFAULT, palette.rule());
     }
 
+    /**
+     * Composed text style for body prose — body font at the body size
+     * in the primary ink colour.
+     *
+     * @return the body text style
+     */
     public DocumentTextStyle bodyStyle() {
         return style(typography.bodyFont(), typography.sizeBody(),
                 DocumentTextDecoration.DEFAULT, palette.ink());
     }
 
+    /**
+     * Composed text style for emphasised body text — body font at the
+     * body size, bold, in the primary ink colour.
+     *
+     * @return the bold body text style
+     */
     public DocumentTextStyle bodyBoldStyle() {
         return style(typography.bodyFont(), typography.sizeBody(),
                 DocumentTextDecoration.BOLD, palette.ink());
     }
 
+    /**
+     * Composed text style for an entry title (job title, degree) —
+     * body font at the entry-title size, bold, in the primary ink
+     * colour.
+     *
+     * @return the entry-title text style
+     */
     public DocumentTextStyle entryTitleStyle() {
         return style(typography.bodyFont(), typography.sizeEntryTitle(),
                 DocumentTextDecoration.BOLD, palette.ink());
     }
 
+    /**
+     * Composed text style for the right-aligned entry date column —
+     * body font at the entry-date size in the primary ink colour.
+     *
+     * @return the entry-date text style
+     */
     public DocumentTextStyle entryDateStyle() {
         return style(typography.bodyFont(), typography.sizeEntryDate(),
                 DocumentTextDecoration.DEFAULT, palette.ink());
     }
 
+    /**
+     * Composed text style for an italic entry subtitle (employer,
+     * institution) — body font at the entry-subtitle size, italic, in
+     * the muted secondary colour.
+     *
+     * @return the entry-subtitle text style
+     */
     public DocumentTextStyle entrySubtitleStyle() {
         return style(typography.bodyFont(), typography.sizeEntrySubtitle(),
                 DocumentTextDecoration.ITALIC, palette.muted());

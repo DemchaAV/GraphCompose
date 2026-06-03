@@ -75,6 +75,8 @@ public final class EditorialBlue {
 
     /**
      * Builds the preset with its Editorial Blue theme.
+     *
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
         return create(CvTheme.editorialBlue());
@@ -82,6 +84,9 @@ public final class EditorialBlue {
 
     /**
      * Builds the preset with a caller-supplied theme.
+     *
+     * @param theme active theme
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create(CvTheme theme) {
         Objects.requireNonNull(theme, "theme");

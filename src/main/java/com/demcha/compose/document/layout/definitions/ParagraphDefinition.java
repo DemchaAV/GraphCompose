@@ -26,6 +26,13 @@ import static com.demcha.compose.document.layout.TextFlowSupport.splitParagraph;
  * @author Artem Demchyshyn
  */
 public final class ParagraphDefinition implements NodeDefinition<ParagraphNode> {
+
+    /**
+     * Creates the paragraph layout definition.
+     */
+    public ParagraphDefinition() {
+    }
+
     @Override
     public Class<ParagraphNode> nodeType() {
         return ParagraphNode.class;

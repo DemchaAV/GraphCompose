@@ -52,6 +52,8 @@ public final class CenteredHeadlineLetter {
 
     /**
      * Builds the letter with its Centered Headline theme.
+     *
+     * @return a {@code DocumentTemplate} for the "Centered Headline Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create() {
         return create(CvTheme.centeredHeadline());
@@ -60,6 +62,9 @@ public final class CenteredHeadlineLetter {
     /**
      * Builds the letter with a caller-supplied theme (share the paired
      * CV's theme instance for a guaranteed visual match).
+     *
+     * @param theme the active theme supplying palette, typography, and spacing
+     * @return a {@code DocumentTemplate} for the "Centered Headline Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create(CvTheme theme) {
         Objects.requireNonNull(theme, "theme");

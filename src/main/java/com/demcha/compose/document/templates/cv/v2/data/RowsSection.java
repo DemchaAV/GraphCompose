@@ -28,6 +28,11 @@ import java.util.Objects;
 public record RowsSection(String title, List<CvRow> rows, RowStyle style)
         implements CvSection {
 
+    /**
+     * Validates that {@code title}, {@code rows}, and {@code style}
+     * are non-null, rejects a blank title, and defensively copies the
+     * row list.
+     */
     public RowsSection {
         Objects.requireNonNull(title, "title");
         Objects.requireNonNull(rows, "rows");
@@ -62,16 +67,34 @@ public record RowsSection(String title, List<CvRow> rows, RowStyle style)
             this.style = style;
         }
 
+        /**
+         * Appends one row built from its label and body.
+         *
+         * @param label bold key (required, non-blank)
+         * @param body  free-form text; may contain inline markdown
+         * @return this builder for chaining
+         */
         public Builder row(String label, String body) {
             this.rows.add(new CvRow(label, body));
             return this;
         }
 
+        /**
+         * Appends one pre-built row.
+         *
+         * @param row the row to append (non-null)
+         * @return this builder for chaining
+         */
         public Builder row(CvRow row) {
             this.rows.add(Objects.requireNonNull(row, "row"));
             return this;
         }
 
+        /**
+         * Builds the immutable {@link RowsSection}.
+         *
+         * @return the assembled section
+         */
         public RowsSection build() {
             return new RowsSection(title, rows, style);
         }

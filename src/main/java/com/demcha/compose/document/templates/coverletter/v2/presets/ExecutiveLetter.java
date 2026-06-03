@@ -74,6 +74,8 @@ public final class ExecutiveLetter {
 
     /**
      * Builds the letter with its Executive theme.
+     *
+     * @return a {@code DocumentTemplate} for the "Executive Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create() {
         return create(CvTheme.executive());
@@ -82,6 +84,9 @@ public final class ExecutiveLetter {
     /**
      * Builds the letter with a caller-supplied theme (share the paired
      * CV's theme instance for a guaranteed visual match).
+     *
+     * @param theme the active theme supplying palette, typography, and spacing
+     * @return a {@code DocumentTemplate} for the "Executive Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create(CvTheme theme) {
         Objects.requireNonNull(theme, "theme");

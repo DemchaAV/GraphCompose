@@ -39,6 +39,12 @@ public final class ClassicSerifLetter {
     private ClassicSerifLetter() {
     }
 
+    /**
+     * Builds the cover-letter template paired with the {@code ClassicSerif} CV preset.
+     *
+     * @param theme the active theme supplying palette, typography, and spacing
+     * @return a {@code DocumentTemplate} for the "Classic Serif Letter"
+     */
     public static DocumentTemplate<CoverLetterSpec> create(BusinessTheme theme) {
         Spacing spacing = Spacing.comfortable();
 

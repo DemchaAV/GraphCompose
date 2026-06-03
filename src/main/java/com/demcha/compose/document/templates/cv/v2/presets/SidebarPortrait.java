@@ -180,6 +180,8 @@ public final class SidebarPortrait {
      * Builds the preset with its Sidebar Portrait theme and default
      * options (theme's banner fill for the sidebar, white for the
      * main column, mid-grey accent rule).
+     *
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
         return create(CvTheme.sidebarPortrait(), Options.defaults());
@@ -188,6 +190,9 @@ public final class SidebarPortrait {
     /**
      * Builds the preset with a caller-supplied theme and default
      * options.
+     *
+     * @param theme active theme
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create(CvTheme theme) {
         return create(theme, Options.defaults());
@@ -197,6 +202,10 @@ public final class SidebarPortrait {
      * Builds the preset with explicit colour options. Use this to
      * override the sidebar fill, main fill or accent colour without
      * forking the theme.
+     *
+     * @param theme   active theme
+     * @param options sidebar colour options
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create(CvTheme theme,
                                                       Options options) {
@@ -220,14 +229,28 @@ public final class SidebarPortrait {
                           DocumentColor mainFillColor,
                           DocumentColor accentColor) {
 
+        /**
+         * Default options: every field unset, falling back to the V1
+         * defaults.
+         *
+         * @return options that leave the committed look unchanged
+         */
         public static Options defaults() {
             return new Options(null, null, null);
         }
 
+        /**
+         * Starts a mutable builder for the sidebar colour knobs.
+         *
+         * @return new builder
+         */
         public static Builder builder() {
             return new Builder();
         }
 
+        /**
+         * Builder for {@link Options}.
+         */
         public static final class Builder {
             private DocumentColor sidebarFillColor;
             private DocumentColor mainFillColor;
@@ -236,21 +259,44 @@ public final class SidebarPortrait {
             private Builder() {
             }
 
+            /**
+             * Sets the sidebar column fill.
+             *
+             * @param value sidebar fill colour
+             * @return this builder
+             */
             public Builder sidebarFillColor(DocumentColor value) {
                 this.sidebarFillColor = value;
                 return this;
             }
 
+            /**
+             * Sets the main column fill.
+             *
+             * @param value main fill colour
+             * @return this builder
+             */
             public Builder mainFillColor(DocumentColor value) {
                 this.mainFillColor = value;
                 return this;
             }
 
+            /**
+             * Sets the divider rule colour above each sidebar heading.
+             *
+             * @param value accent colour
+             * @return this builder
+             */
             public Builder accentColor(DocumentColor value) {
                 this.accentColor = value;
                 return this;
             }
 
+            /**
+             * Builds the configured options.
+             *
+             * @return a new {@link Options} with the configured colours
+             */
             public Options build() {
                 return new Options(sidebarFillColor, mainFillColor,
                         accentColor);

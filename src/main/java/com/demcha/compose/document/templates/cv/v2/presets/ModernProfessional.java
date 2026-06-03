@@ -77,6 +77,8 @@ public final class ModernProfessional {
     /**
      * Builds the preset with the Modern Professional theme
      * ({@link CvTheme#modernProfessional()}).
+     *
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
         return create(CvTheme.modernProfessional());
@@ -86,6 +88,9 @@ public final class ModernProfessional {
      * Builds the preset with a caller-supplied theme. Allows
      * variations on the Modern Professional theme (different
      * typography scale, custom spacing) without forking this class.
+     *
+     * @param theme active theme
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create(CvTheme theme) {
         Objects.requireNonNull(theme, "theme");

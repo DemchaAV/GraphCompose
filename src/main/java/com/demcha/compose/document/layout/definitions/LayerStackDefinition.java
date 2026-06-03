@@ -26,6 +26,13 @@ import static com.demcha.compose.document.layout.NodeDefinitionSupport.toPadding
  * @author Artem Demchyshyn
  */
 public final class LayerStackDefinition implements NodeDefinition<LayerStackNode> {
+
+    /**
+     * Creates the layer-stack layout definition.
+     */
+    public LayerStackDefinition() {
+    }
+
     @Override
     public Class<LayerStackNode> nodeType() {
         return LayerStackNode.class;

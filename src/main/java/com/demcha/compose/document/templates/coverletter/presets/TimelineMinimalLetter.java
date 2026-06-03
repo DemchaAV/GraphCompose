@@ -39,6 +39,12 @@ public final class TimelineMinimalLetter {
     private TimelineMinimalLetter() {
     }
 
+    /**
+     * Builds the cover-letter template paired with the {@code TimelineMinimal} CV preset.
+     *
+     * @param theme the active theme supplying palette, typography, and spacing
+     * @return a {@code DocumentTemplate} for the "Timeline Minimal Letter"
+     */
     public static DocumentTemplate<CoverLetterSpec> create(BusinessTheme theme) {
         Spacing spacing = Spacing.comfortable();
 

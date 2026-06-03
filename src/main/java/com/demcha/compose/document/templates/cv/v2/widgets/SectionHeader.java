@@ -64,6 +64,10 @@ public final class SectionHeader {
     /**
      * Pale-grey banner panel with centred spaced-caps title. Visual
      * signature of {@code BoxedSections}.
+     *
+     * @param host  the section builder the header is appended to
+     * @param title the section title text
+     * @param theme the active theme supplying palette, typography, and spacing
      */
     public static void banner(SectionBuilder host, String title, CvTheme theme) {
         host.softPanel(theme.palette().banner(),
@@ -83,6 +87,10 @@ public final class SectionHeader {
      * in the main page flow (for example {@code BlueBanner}), not a
      * soft inset panel. Any rules above or below the band are
      * page-flow ornaments and should be composed by the preset.
+     *
+     * @param host  the section builder the header is appended to
+     * @param title the section title text
+     * @param theme the active theme supplying palette, typography, and spacing
      */
     public static void fullWidthBanner(SectionBuilder host, String title, CvTheme theme) {
         fullWidthBanner(host, title, theme, null);
@@ -91,6 +99,9 @@ public final class SectionHeader {
     /**
      * Full-width filled banner with an explicit title style override.
      *
+     * @param host               the section builder the header is appended to
+     * @param title              the section title text
+     * @param theme              the active theme supplying palette, typography, and spacing
      * @param titleStyleOverride text style for the banner label; pass
      *                           {@code null} to use
      *                           {@link CvTheme#bannerStyle()}
@@ -115,6 +126,10 @@ public final class SectionHeader {
     /**
      * Small left-aligned spaced-caps title with a thin accent rule
      * beneath. Visual signature of {@code MinimalUnderlined}.
+     *
+     * @param host  the section builder the header is appended to
+     * @param title the section title text
+     * @param theme the active theme supplying palette, typography, and spacing
      */
     public static void underlined(SectionBuilder host, String title, CvTheme theme) {
         DocumentTextStyle titleStyle = theme.entryTitleStyle();
@@ -133,8 +148,11 @@ public final class SectionHeader {
      * no rule, no transform. Visual signature of
      * {@code ModernProfessional}.
      *
+     * @param host  the section builder the header is appended to
+     * @param title the section title text
      * @param color the title colour — typically the preset's
      *              accent colour
+     * @param theme the active theme supplying palette, typography, and spacing
      */
     public static void flat(SectionBuilder host, String title,
                             DocumentColor color, CvTheme theme) {
@@ -215,6 +233,12 @@ public final class SectionHeader {
      * Short accent tick above a compact uppercase label with an
      * explicit label style override.
      *
+     * @param host       host section
+     * @param title      label text, transformed to uppercase
+     * @param theme      active theme; supplies the default mono label
+     *                   font and size
+     * @param color      accent/tick and label colour
+     * @param tickWidth  width of the short rule above the label
      * @param titleStyle explicit style override; pass {@code null} to
      *                   derive a bold style from the theme headline
      *                   font and banner size
@@ -249,6 +273,13 @@ public final class SectionHeader {
      * Uppercase label followed by a short rule. Used by side-rail
      * presets where a section title is a compact block heading rather
      * than a full-width page-flow banner.
+     *
+     * @param host       the section builder the header is appended to
+     * @param title      the section title text, transformed to uppercase
+     * @param theme      the active theme supplying palette, typography, and spacing
+     * @param titleStyle text style for the label
+     * @param ruleColor  colour of the rule beneath the label
+     * @param ruleWidth  width in points of the rule beneath the label
      */
     public static void upperRule(SectionBuilder host, String title,
                                  CvTheme theme, DocumentTextStyle titleStyle,
@@ -270,6 +301,15 @@ public final class SectionHeader {
      * Left-aligned spaced-caps label followed by a short rule. Used by
      * classic/editorial CV modules that need a quiet title plus a
      * small accent underline.
+     *
+     * @param host          the section builder the header is appended to
+     * @param title         the section title text, transformed to spaced caps
+     * @param theme         the active theme supplying palette, typography, and spacing
+     * @param titleStyle    text style for the label; pass {@code null} for the theme-derived default
+     * @param ruleColor     colour of the rule beneath the label
+     * @param ruleWidth     width in points of the rule beneath the label
+     * @param ruleThickness thickness in points of the rule
+     * @param ruleMargin    outer margin of the rule
      */
     public static void spacedCapsRule(SectionBuilder host, String title,
                                       CvTheme theme, DocumentTextStyle titleStyle,

@@ -22,6 +22,7 @@ import java.util.Objects;
  */
 public record CvEntry(String title, String subtitle, String date, String body) {
 
+    /** Validates that every field is non-null and that {@code title} is non-blank. */
     public CvEntry {
         Objects.requireNonNull(title, "title");
         Objects.requireNonNull(subtitle, "subtitle");

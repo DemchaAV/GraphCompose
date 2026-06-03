@@ -101,6 +101,8 @@ public final class NordicClean {
 
     /**
      * Builds the preset with its Nordic Clean theme.
+     *
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
         return create(CvTheme.nordicClean(), Options.defaults());
@@ -108,6 +110,9 @@ public final class NordicClean {
 
     /**
      * Builds the preset with a caller-supplied theme.
+     *
+     * @param theme active theme
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create(CvTheme theme) {
         return create(theme, Options.defaults());
@@ -116,6 +121,10 @@ public final class NordicClean {
     /**
      * Builds the preset with a caller-supplied theme and explicit
      * Nordic-specific layout/colour options.
+     *
+     * @param theme   active theme
+     * @param options Nordic-specific layout and colour options
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create(CvTheme theme,
                                                       Options options) {
@@ -152,6 +161,7 @@ public final class NordicClean {
                           DocumentColor railFillColor,
                           DocumentColor profileFillColor) {
 
+        /** Normalises null rail side, accent, and rail fill to their defaults. */
         public Options {
             railSide = railSide == null ? RailSide.LEFT : railSide;
             accentColor = accentColor == null ? DEFAULT_ACCENT : accentColor;
@@ -163,6 +173,8 @@ public final class NordicClean {
         /**
          * Default Nordic look: left rail, teal accent, pale rail fill,
          * and profile fill read from {@code CvTheme.nordicClean()}.
+         *
+         * @return the default Nordic options
          */
         public static Options defaults() {
             return new Options(RailSide.LEFT, null, null, null);
@@ -170,6 +182,8 @@ public final class NordicClean {
 
         /**
          * Starts a mutable builder for ergonomic colour overrides.
+         *
+         * @return new builder
          */
         public static Builder builder() {
             return new Builder();
@@ -193,26 +207,55 @@ public final class NordicClean {
             private Builder() {
             }
 
+            /**
+             * Sets the side carrying the skills/education rail.
+             *
+             * @param value rail side
+             * @return this builder
+             */
             public Builder railSide(RailSide value) {
                 this.railSide = value;
                 return this;
             }
 
+            /**
+             * Sets the teal accent for rules, links, and the underline.
+             *
+             * @param value accent colour
+             * @return this builder
+             */
             public Builder accentColor(DocumentColor value) {
                 this.accentColor = value;
                 return this;
             }
 
+            /**
+             * Sets the fill behind the rail column.
+             *
+             * @param value rail fill colour
+             * @return this builder
+             */
             public Builder railFillColor(DocumentColor value) {
                 this.railFillColor = value;
                 return this;
             }
 
+            /**
+             * Sets the profile band fill.
+             *
+             * @param value profile band fill colour
+             * @return this builder
+             */
             public Builder profileFillColor(DocumentColor value) {
                 this.profileFillColor = value;
                 return this;
             }
 
+            /**
+             * Builds the configured options.
+             *
+             * @return a new {@link Options} with the configured values
+             */
             public Options build() {
                 return new Options(railSide, accentColor, railFillColor,
                         profileFillColor);

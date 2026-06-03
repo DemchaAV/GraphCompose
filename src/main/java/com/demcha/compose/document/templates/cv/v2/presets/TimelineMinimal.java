@@ -112,6 +112,8 @@ public final class TimelineMinimal {
 
     /**
      * Builds the preset with its Timeline Minimal theme.
+     *
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
         return create(CvTheme.timelineMinimal());
@@ -119,6 +121,9 @@ public final class TimelineMinimal {
 
     /**
      * Builds the preset with a caller-supplied theme.
+     *
+     * @param theme active theme
+     * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create(CvTheme theme) {
         Objects.requireNonNull(theme, "theme");

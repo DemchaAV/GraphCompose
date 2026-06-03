@@ -11,6 +11,7 @@ import java.util.Objects;
  */
 public record CvLink(String label, String url) {
 
+    /** Validates that both fields are non-null and non-blank. */
     public CvLink {
         Objects.requireNonNull(label, "label");
         Objects.requireNonNull(url, "url");
@@ -25,6 +26,10 @@ public record CvLink(String label, String url) {
     /**
      * Convenience factory mirroring {@code CvLink.of("LinkedIn",
      * "https://...")} call sites.
+     *
+     * @param label visible link text (required, non-blank)
+     * @param url   click target (required, non-blank)
+     * @return a {@code CvLink} with the given label and target
      */
     public static CvLink of(String label, String url) {
         return new CvLink(label, url);

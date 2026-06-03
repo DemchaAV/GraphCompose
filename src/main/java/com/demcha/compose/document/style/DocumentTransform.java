@@ -44,6 +44,8 @@ public record DocumentTransform(double rotationDegrees, double scaleX, double sc
     }
 
     /**
+     * Returns the identity transform.
+     *
      * @return the identity transform (alias for {@link #NONE})
      */
     public static DocumentTransform none() {
@@ -51,6 +53,8 @@ public record DocumentTransform(double rotationDegrees, double scaleX, double sc
     }
 
     /**
+     * Creates a rotation-only transform with identity scaling.
+     *
      * @param degrees clockwise rotation in degrees
      * @return a transform that only rotates, with identity scaling
      */
@@ -80,6 +84,8 @@ public record DocumentTransform(double rotationDegrees, double scaleX, double sc
     }
 
     /**
+     * Returns a copy of this transform with the rotation replaced.
+     *
      * @param degrees clockwise rotation in degrees
      * @return a copy of this transform with the rotation replaced
      */
@@ -88,6 +94,8 @@ public record DocumentTransform(double rotationDegrees, double scaleX, double sc
     }
 
     /**
+     * Returns a copy of this transform with the scale factors replaced.
+     *
      * @param scaleX horizontal scale factor
      * @param scaleY vertical scale factor
      * @return a copy of this transform with the scale factors replaced
@@ -97,6 +105,8 @@ public record DocumentTransform(double rotationDegrees, double scaleX, double sc
     }
 
     /**
+     * Reports whether this transform is the identity.
+     *
      * @return {@code true} when the transform is the identity (no
      *         rotation, no scaling); backends may skip CTM push/pop
      *         when this is the case

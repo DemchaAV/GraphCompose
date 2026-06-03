@@ -17,11 +17,15 @@ public sealed interface ShapeOutline permits
         ShapeOutline.Ellipse {
 
     /**
+     * Returns the outline outer width.
+     *
      * @return outline outer width in points
      */
     double width();
 
     /**
+     * Returns the outline outer height.
+     *
      * @return outline outer height in points
      */
     double height();

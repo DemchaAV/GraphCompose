@@ -27,6 +27,13 @@ import static com.demcha.compose.document.layout.TextFlowSupport.splitList;
  * @author Artem Demchyshyn
  */
 public final class ListDefinition implements NodeDefinition<ListNode> {
+
+    /**
+     * Creates the list layout definition.
+     */
+    public ListDefinition() {
+    }
+
     @Override
     public Class<ListNode> nodeType() {
         return ListNode.class;

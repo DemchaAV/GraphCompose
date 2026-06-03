@@ -23,6 +23,12 @@ import java.util.List;
  */
 public final class SpacerDefinition implements NodeDefinition<SpacerNode> {
 
+    /**
+     * Creates the spacer layout definition.
+     */
+    public SpacerDefinition() {
+    }
+
     @Override
     public Class<SpacerNode> nodeType() {
         return SpacerNode.class;

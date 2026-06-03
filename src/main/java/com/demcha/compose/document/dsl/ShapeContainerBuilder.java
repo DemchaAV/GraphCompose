@@ -318,47 +318,92 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
     // read the same way. Keeping the surface aligned helps autocomplete:
     // "I started with addCircle, the same vocabulary works."
 
-    /** Anchors a layer to the top-left corner. */
+    /**
+     * Anchors a layer to the top-left corner.
+     *
+     * @param node child node
+     * @return this builder
+     */
     public ShapeContainerBuilder topLeft(DocumentNode node) {
         return layer(node, LayerAlign.TOP_LEFT);
     }
 
-    /** Anchors a layer to the top edge, centred horizontally. */
+    /**
+     * Anchors a layer to the top edge, centred horizontally.
+     *
+     * @param node child node
+     * @return this builder
+     */
     public ShapeContainerBuilder topCenter(DocumentNode node) {
         return layer(node, LayerAlign.TOP_CENTER);
     }
 
-    /** Anchors a layer to the top-right corner. */
+    /**
+     * Anchors a layer to the top-right corner.
+     *
+     * @param node child node
+     * @return this builder
+     */
     public ShapeContainerBuilder topRight(DocumentNode node) {
         return layer(node, LayerAlign.TOP_RIGHT);
     }
 
-    /** Anchors a layer to the left edge, centred vertically. */
+    /**
+     * Anchors a layer to the left edge, centred vertically.
+     *
+     * @param node child node
+     * @return this builder
+     */
     public ShapeContainerBuilder centerLeft(DocumentNode node) {
         return layer(node, LayerAlign.CENTER_LEFT);
     }
 
-    /** Centred layer (the typical foreground content above an outline fill). */
+    /**
+     * Centred layer (the typical foreground content above an outline fill).
+     *
+     * @param node child node
+     * @return this builder
+     */
     public ShapeContainerBuilder center(DocumentNode node) {
         return layer(node, LayerAlign.CENTER);
     }
 
-    /** Anchors a layer to the right edge, centred vertically. */
+    /**
+     * Anchors a layer to the right edge, centred vertically.
+     *
+     * @param node child node
+     * @return this builder
+     */
     public ShapeContainerBuilder centerRight(DocumentNode node) {
         return layer(node, LayerAlign.CENTER_RIGHT);
     }
 
-    /** Anchors a layer to the bottom-left corner. */
+    /**
+     * Anchors a layer to the bottom-left corner.
+     *
+     * @param node child node
+     * @return this builder
+     */
     public ShapeContainerBuilder bottomLeft(DocumentNode node) {
         return layer(node, LayerAlign.BOTTOM_LEFT);
     }
 
-    /** Anchors a layer to the bottom edge, centred horizontally. */
+    /**
+     * Anchors a layer to the bottom edge, centred horizontally.
+     *
+     * @param node child node
+     * @return this builder
+     */
     public ShapeContainerBuilder bottomCenter(DocumentNode node) {
         return layer(node, LayerAlign.BOTTOM_CENTER);
     }
 
-    /** Anchors a layer to the bottom-right corner. */
+    /**
+     * Anchors a layer to the bottom-right corner.
+     *
+     * @param node child node
+     * @return this builder
+     */
     public ShapeContainerBuilder bottomRight(DocumentNode node) {
         return layer(node, LayerAlign.BOTTOM_RIGHT);
     }

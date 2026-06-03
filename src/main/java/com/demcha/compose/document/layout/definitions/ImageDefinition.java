@@ -28,6 +28,13 @@ import static com.demcha.compose.document.layout.NodeDefinitionSupport.wrapAtomi
  * @author Artem Demchyshyn
  */
 public final class ImageDefinition implements NodeDefinition<ImageNode> {
+
+    /**
+     * Creates the image layout definition.
+     */
+    public ImageDefinition() {
+    }
+
     @Override
     public Class<ImageNode> nodeType() {
         return ImageNode.class;

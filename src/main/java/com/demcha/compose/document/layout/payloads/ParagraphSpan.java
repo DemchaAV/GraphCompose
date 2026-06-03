@@ -9,16 +9,22 @@ import com.demcha.compose.document.node.DocumentLinkOptions;
  */
 public sealed interface ParagraphSpan permits ParagraphTextSpan, ParagraphImageSpan {
     /**
+     * Measured width of this span.
+     *
      * @return measured span width in points
      */
     double width();
 
     /**
+     * Link metadata anchored to this span, if any.
+     *
      * @return optional link metadata anchored to this span
      */
     DocumentLinkOptions linkOptions();
 
     /**
+     * Height this span contributes to its line.
+     *
      * @return effective height contribution for line metrics (font line
      *         height for text spans, image height for image spans)
      */

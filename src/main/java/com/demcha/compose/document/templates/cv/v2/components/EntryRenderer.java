@@ -30,6 +30,13 @@ public final class EntryRenderer {
     private EntryRenderer() {
     }
 
+    /**
+     * Renders one entry as the four-zone timeline row described above.
+     *
+     * @param section the section builder being populated
+     * @param entry   the entry supplying title, date, subtitle, and body
+     * @param theme   the active theme supplying palette, typography, and spacing
+     */
     public static void render(SectionBuilder section, CvEntry entry, CvTheme theme) {
         DocumentTextStyle titleStyle = theme.entryTitleStyle();
         DocumentTextStyle dateStyle = theme.entryDateStyle();

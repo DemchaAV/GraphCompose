@@ -25,6 +25,13 @@ import static com.demcha.compose.document.layout.NodeDefinitionSupport.wrapAtomi
  * @author Artem Demchyshyn
  */
 public final class EllipseDefinition implements NodeDefinition<EllipseNode> {
+
+    /**
+     * Creates the ellipse layout definition.
+     */
+    public EllipseDefinition() {
+    }
+
     @Override
     public Class<EllipseNode> nodeType() {
         return EllipseNode.class;

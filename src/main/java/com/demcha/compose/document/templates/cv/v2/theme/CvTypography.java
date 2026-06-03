@@ -40,6 +40,7 @@ public record CvTypography(
         double sizeBody,
         double bodyLineSpacing) {
 
+    /** Validates that the font tokens are not null. */
     public CvTypography {
         Objects.requireNonNull(headlineFont, "headlineFont");
         Objects.requireNonNull(bodyFont, "bodyFont");
@@ -48,6 +49,8 @@ public record CvTypography(
     /**
      * The classic PT-Serif scale used by the original Boxed Sections
      * preset.
+     *
+     * @return a {@code CvTypography} scale for the classic preset
      */
     public static CvTypography classic() {
         return new CvTypography(
@@ -65,6 +68,8 @@ public record CvTypography(
     /**
      * Helvetica scale for the Modern Professional preset — larger
      * display name, larger section titles, comfortable body size.
+     *
+     * @return a {@code CvTypography} scale for the Modern Professional preset
      */
     public static CvTypography modernProfessional() {
         return new CvTypography(
@@ -89,6 +94,8 @@ public record CvTypography(
      * {@link com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader#flatSpacedCaps}
      * variant — small bold spaced-caps title in the soft palette
      * tone.</p>
+     *
+     * @return a {@code CvTypography} scale for the Centered Headline preset
      */
     public static CvTypography centeredHeadline() {
         return new CvTypography(
@@ -108,6 +115,8 @@ public record CvTypography(
      * editorial masthead, quiet metadata, and compact detail entries.
      * Preset-local body variants still override this when the visual
      * needs a distinct summary size.
+     *
+     * @return a {@code CvTypography} scale for the Classic Serif preset
      */
     public static CvTypography classicSerif() {
         return new CvTypography(
@@ -126,6 +135,8 @@ public record CvTypography(
      * Barlow headline + Lato body scale for the {@code NordicClean}
      * preset. Compact sizes keep the two-column rail/body layout
      * single-page friendly while preserving the crisp editorial feel.
+     *
+     * @return a {@code CvTypography} scale for the Nordic Clean preset
      */
     public static CvTypography nordicClean() {
         return new CvTypography(
@@ -144,6 +155,8 @@ public record CvTypography(
      * IBM Plex Mono headline + Lato body scale for the Compact Mono
      * preset. The section-title slot also uses the mono headline font
      * so tick labels keep the terminal/card visual signature.
+     *
+     * @return a {@code CvTypography} scale for the Compact Mono preset
      */
     public static CvTypography compactMono() {
         return new CvTypography(
@@ -161,6 +174,8 @@ public record CvTypography(
     /**
      * Compact PT-Serif headline + Lato body scale used by the Blue
      * Banner preset.
+     *
+     * @return a {@code CvTypography} scale for the Blue Banner preset
      */
     public static CvTypography blueBanner() {
         return new CvTypography(
@@ -177,6 +192,8 @@ public record CvTypography(
 
     /**
      * Compact Helvetica scale for the Editorial Blue preset.
+     *
+     * @return a {@code CvTypography} scale for the Editorial Blue preset
      */
     public static CvTypography editorialBlue() {
         return new CvTypography(
@@ -197,6 +214,8 @@ public record CvTypography(
      * 12pt main section title, 10pt body, and 8-9pt sidebar metadata.
      * The sample data is information-dense, so the body sizes are
      * compact and the line spacing trends to 1.35 for readability.
+     *
+     * @return a {@code CvTypography} scale for the Sidebar Portrait preset
      */
     public static CvTypography sidebarPortrait() {
         return new CvTypography(
@@ -218,6 +237,8 @@ public record CvTypography(
      * body sizes across the pale-teal sidebar and the right column.
      * The PT-Serif monogram font is preset-local because no other v2
      * preset uses it for a circle-ring badge.
+     *
+     * @return a {@code CvTypography} scale for the Monogram Sidebar preset
      */
     public static CvTypography monogramSidebar() {
         return new CvTypography(
@@ -237,6 +258,8 @@ public record CvTypography(
      * {@code TechLeadCvTemplateComposer}: 24.5pt UPPERCASE masthead,
      * 7.8pt main section headings, 7.25pt body, and a 1.08 line
      * spacing tuned for dense engineering-resume cards.
+     *
+     * @return a {@code CvTypography} scale for the Engineering Resume preset
      */
     public static CvTypography engineeringResume() {
         return new CvTypography(
@@ -257,6 +280,8 @@ public record CvTypography(
      * masthead, 12.5pt sidebar module titles, 13.5pt main module
      * titles, 7.5-7.9pt body. Compact sizes squeeze the 3-column
      * sidebar / axis / main layout onto one page.
+     *
+     * @return a {@code CvTypography} scale for the Timeline Minimal preset
      */
     public static CvTypography timelineMinimal() {
         return new CvTypography(
@@ -277,6 +302,8 @@ public record CvTypography(
      * uppercase name in the tinted header card, a 10.4pt section-title
      * slot for the teal module headings, and a 9.4pt body with 1.2
      * line spacing tuned for the dense card layout.
+     *
+     * @return a {@code CvTypography} scale for the Panel preset
      */
     public static CvTypography panel() {
         return new CvTypography(
@@ -297,6 +324,8 @@ public record CvTypography(
      * 10.8pt section-title slot driving the bronze module headings,
      * and a 9.5pt body with 1.25 line-spacing tuned for an executive
      * single-column resume density.
+     *
+     * @return a {@code CvTypography} scale for the Executive preset
      */
     public static CvTypography executive() {
         return new CvTypography(
@@ -316,6 +345,8 @@ public record CvTypography(
      * 26pt spaced-caps centered name, an 11pt spaced-caps accent section
      * heading, and compact 7.4-8pt metadata/body tuned for the dense
      * two-column editorial layout.
+     *
+     * @return a {@code CvTypography} scale for the Mint Editorial preset
      */
     public static CvTypography mintEditorial() {
         return new CvTypography(

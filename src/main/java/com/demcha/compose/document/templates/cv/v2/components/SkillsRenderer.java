@@ -22,6 +22,14 @@ public final class SkillsRenderer {
     private SkillsRenderer() {
     }
 
+    /**
+     * Renders each skill group as one bulleted paragraph with the
+     * category bolded and its skills joined inline.
+     *
+     * @param section the section builder being populated
+     * @param skills  the grouped skills to render
+     * @param theme   the active theme supplying palette, typography, and spacing
+     */
     public static void render(SectionBuilder section,
                               SkillsSection skills,
                               CvTheme theme) {

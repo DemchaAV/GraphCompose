@@ -180,6 +180,11 @@ public final class TableWidget {
                         Double lineSpacing,
                         double widthAdjustment) {
 
+        /**
+         * Normalises a blank name to {@code "TemplateTable"} and a null
+         * padding to zero insets, and validates the column count,
+         * line spacing, and width adjustment.
+         */
         public Style {
             name = (name == null || name.isBlank()) ? "TemplateTable" : name;
             if (columns < 1) {
@@ -205,6 +210,8 @@ public final class TableWidget {
         }
 
         /**
+         * Creates a new style builder.
+         *
          * @return mutable builder seeded with conservative defaults
          */
         public static Builder builder() {
@@ -228,56 +235,122 @@ public final class TableWidget {
             private Builder() {
             }
 
+            /**
+             * Sets the semantic table node name.
+             *
+             * @param value semantic table node name
+             * @return this builder for chaining
+             */
             public Builder name(String value) {
                 this.name = value;
                 return this;
             }
 
+            /**
+             * Sets the fixed column count.
+             *
+             * @param value fixed column count
+             * @return this builder for chaining
+             */
             public Builder columns(int value) {
                 this.columns = value;
                 return this;
             }
 
+            /**
+             * Sets the padding inside every cell.
+             *
+             * @param value padding inside every cell
+             * @return this builder for chaining
+             */
             public Builder cellPadding(DocumentInsets value) {
                 this.cellPadding = value;
                 return this;
             }
 
+            /**
+             * Sets the cell border stroke from a colour and width.
+             *
+             * @param color border colour
+             * @param width border width in points
+             * @return this builder for chaining
+             */
             public Builder border(DocumentColor color, double width) {
                 this.cellStroke = DocumentStroke.of(color, width);
                 return this;
             }
 
+            /**
+             * Sets the optional cell border stroke.
+             *
+             * @param value optional border stroke
+             * @return this builder for chaining
+             */
             public Builder cellStroke(DocumentStroke value) {
                 this.cellStroke = value;
                 return this;
             }
 
+            /**
+             * Sets the optional default fill for every cell.
+             *
+             * @param value optional default fill for every cell
+             * @return this builder for chaining
+             */
             public Builder cellFillColor(DocumentColor value) {
                 this.cellFillColor = value;
                 return this;
             }
 
+            /**
+             * Sets the optional fill for alternating rows.
+             *
+             * @param value optional fill for alternating rows
+             * @return this builder for chaining
+             */
             public Builder zebraFillColor(DocumentColor value) {
                 this.zebraFillColor = value;
                 return this;
             }
 
+            /**
+             * Sets the optional text style override.
+             *
+             * @param value optional text style override
+             * @return this builder for chaining
+             */
             public Builder textStyle(DocumentTextStyle value) {
                 this.textStyle = value;
                 return this;
             }
 
+            /**
+             * Sets the optional line spacing override.
+             *
+             * @param value optional line spacing override
+             * @return this builder for chaining
+             */
             public Builder lineSpacing(Double value) {
                 this.lineSpacing = value;
                 return this;
             }
 
+            /**
+             * Sets the value subtracted before splitting width into columns.
+             *
+             * @param value value subtracted before splitting width into columns
+             * @return this builder for chaining
+             */
             public Builder widthAdjustment(double value) {
                 this.widthAdjustment = value;
                 return this;
             }
 
+            /**
+             * Builds the configured {@link Style}.
+             *
+             * @return a new {@code Style} carrying the configured table options
+             */
             public Style build() {
                 return new Style(name, columns, cellPadding, cellStroke,
                         cellFillColor, zebraFillColor, textStyle,

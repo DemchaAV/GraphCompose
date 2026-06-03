@@ -20,6 +20,10 @@ import java.util.Objects;
 public record EntriesSection(String title, List<CvEntry> entries)
         implements CvSection {
 
+    /**
+     * Validates that {@code title} and {@code entries} are non-null,
+     * rejects a blank title, and defensively copies the entry list.
+     */
     public EntriesSection {
         Objects.requireNonNull(title, "title");
         Objects.requireNonNull(entries, "entries");
@@ -50,16 +54,38 @@ public record EntriesSection(String title, List<CvEntry> entries)
             this.title = title;
         }
 
+        /**
+         * Appends one entry built from its four fields.
+         *
+         * @param title    bold heading (job title, degree)
+         * @param subtitle italic subtitle (employer, institution);
+         *                 blank collapses the subtitle line
+         * @param date     right-aligned date column; blank removes it
+         * @param body     full-width prose paragraph; may contain
+         *                 inline markdown
+         * @return this builder for chaining
+         */
         public Builder entry(String title, String subtitle, String date, String body) {
             this.entries.add(new CvEntry(title, subtitle, date, body));
             return this;
         }
 
+        /**
+         * Appends one pre-built entry.
+         *
+         * @param entry the entry to append (non-null)
+         * @return this builder for chaining
+         */
         public Builder entry(CvEntry entry) {
             this.entries.add(Objects.requireNonNull(entry, "entry"));
             return this;
         }
 
+        /**
+         * Builds the immutable {@link EntriesSection}.
+         *
+         * @return the assembled section
+         */
         public EntriesSection build() {
             return new EntriesSection(title, entries);
         }

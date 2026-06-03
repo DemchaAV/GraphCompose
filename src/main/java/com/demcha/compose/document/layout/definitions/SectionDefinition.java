@@ -27,6 +27,13 @@ import static com.demcha.compose.document.layout.NodeDefinitionSupport.toStroke;
  * @author Artem Demchyshyn
  */
 public final class SectionDefinition implements NodeDefinition<SectionNode> {
+
+    /**
+     * Creates the section layout definition.
+     */
+    public SectionDefinition() {
+    }
+
     @Override
     public Class<SectionNode> nodeType() {
         return SectionNode.class;

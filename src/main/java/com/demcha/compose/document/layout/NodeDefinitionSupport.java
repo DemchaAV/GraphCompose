@@ -459,6 +459,7 @@ public final class NodeDefinitionSupport {
      * Emits row fragments for a prepared table.
      *
      * @param prepared prepared table node
+     * @param ctx fragment-emission context
      * @param placement resolved fragment placement
      * @return renderer-facing table row fragments
      */

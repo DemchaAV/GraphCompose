@@ -18,6 +18,8 @@ public final class ParagraphRenderer {
     }
 
     /**
+     * Renders one body-style prose paragraph into the host section.
+     *
      * @param section host
      * @param text    paragraph text; blank inputs are silently skipped
      * @param theme   active theme

@@ -61,6 +61,13 @@ public record ImageNode(
 
     /**
      * Backward-compatible convenience constructor without link/bookmark metadata.
+     *
+     * @param name node name used in snapshots and layout graph paths
+     * @param imageData semantic image payload
+     * @param width optional target width
+     * @param height optional target height
+     * @param padding inner padding
+     * @param margin outer margin
      */
     public ImageNode(String name,
                      DocumentImageData imageData,
@@ -73,6 +80,15 @@ public record ImageNode(
 
     /**
      * Backward-compatible convenience constructor without image fit options.
+     *
+     * @param name node name used in snapshots and layout graph paths
+     * @param imageData semantic image payload
+     * @param width optional target width
+     * @param height optional target height
+     * @param linkOptions optional node-level link metadata
+     * @param bookmarkOptions optional node-level bookmark metadata
+     * @param padding inner padding
+     * @param margin outer margin
      */
     public ImageNode(String name,
                      DocumentImageData imageData,
@@ -88,6 +104,17 @@ public record ImageNode(
     /**
      * Backward-compatible convenience constructor without transform — defaults
      * to {@link DocumentTransform#NONE}.
+     *
+     * @param name node name used in snapshots and layout graph paths
+     * @param imageData semantic image payload
+     * @param width optional target width
+     * @param height optional target height
+     * @param scale optional uniform scale applied when width and height are omitted
+     * @param fitMode image fit policy used when drawing inside explicit bounds
+     * @param linkOptions optional node-level link metadata
+     * @param bookmarkOptions optional node-level bookmark metadata
+     * @param padding inner padding
+     * @param margin outer margin
      */
     public ImageNode(String name,
                      DocumentImageData imageData,

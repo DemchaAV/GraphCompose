@@ -20,6 +20,9 @@ public final class BannerRenderer {
     }
 
     /**
+     * @param section the section builder being populated
+     * @param title   the section title text
+     * @param theme   the active theme supplying palette, typography, and spacing
      * @deprecated delegates to {@link SectionHeader#banner}.
      */
     @Deprecated

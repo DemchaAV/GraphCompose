@@ -51,6 +51,8 @@ public record CoverLetterDocument(CvIdentity identity,
     }
 
     /**
+     * Creates a new fluent builder.
+     *
      * @return new fluent builder
      */
     public static Builder builder() {

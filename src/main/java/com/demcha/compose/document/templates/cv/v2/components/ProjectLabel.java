@@ -20,6 +20,9 @@ import java.util.regex.Pattern;
  * fragment) is always plain text — link syntax inside the stack is not
  * supported because the regex requires the stack content to contain
  * no parentheses.</p>
+ *
+ * @param title the display title, with inline Markdown syntax preserved
+ * @param stack the parenthesised technology stack as plain text
  */
 public record ProjectLabel(String title, String stack) {
 
@@ -32,6 +35,7 @@ public record ProjectLabel(String title, String stack) {
     private static final Pattern TRAILING_STACK =
             Pattern.compile("\\s+\\(([^()]*)\\)\\s*$");
 
+    /** Normalises null title and stack to empty strings. */
     public ProjectLabel {
         title = title == null ? "" : title;
         stack = stack == null ? "" : stack;

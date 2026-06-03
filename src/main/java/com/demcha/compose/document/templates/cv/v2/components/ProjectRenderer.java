@@ -22,6 +22,18 @@ public final class ProjectRenderer {
     private ProjectRenderer() {
     }
 
+    /**
+     * Renders the project title (link-aware), optional stack, and body
+     * inline on a single paragraph.
+     *
+     * @param host        host section receiving the row
+     * @param row         the row supplying the label and body
+     * @param titleStyle  text style for the parsed title
+     * @param stackStyle  text style for the parenthesised stack
+     * @param bodyStyle   text style for the trailing body
+     * @param lineSpacing extra space between wrapped lines
+     * @param margin      outer margin of the paragraph
+     */
     public static void inline(SectionBuilder host,
                               CvRow row,
                               DocumentTextStyle titleStyle,
@@ -47,6 +59,18 @@ public final class ProjectRenderer {
                 }));
     }
 
+    /**
+     * Renders the label as plain text (dropping link syntax) and the
+     * body inline on a single line, separated by {@code delimiter}.
+     *
+     * @param host        host section receiving the row
+     * @param row         the row supplying the label and body
+     * @param labelStyle  text style for the plain-text label
+     * @param bodyStyle   text style for the trailing body
+     * @param lineSpacing extra space between wrapped lines
+     * @param margin      outer margin of the paragraph
+     * @param delimiter   separator inserted between label and body
+     */
     public static void plainInline(SectionBuilder host,
                                    CvRow row,
                                    DocumentTextStyle labelStyle,
@@ -73,6 +97,19 @@ public final class ProjectRenderer {
                 }));
     }
 
+    /**
+     * Renders the project title (link-aware) and optional stack on
+     * their own paragraph, then the body paragraph beneath.
+     *
+     * @param host            host section receiving the row
+     * @param row             the row supplying the label and body
+     * @param titleStyle      text style for the parsed title
+     * @param stackStyle      text style for the parenthesised stack
+     * @param bodyStyle       text style for the body paragraph
+     * @param bodyLineSpacing extra space between wrapped body lines
+     * @param titleMargin     outer margin of the title paragraph
+     * @param bodyMargin      outer margin of the body paragraph
+     */
     public static void titleThenBody(SectionBuilder host,
                                      CvRow row,
                                      DocumentTextStyle titleStyle,

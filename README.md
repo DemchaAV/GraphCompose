@@ -19,8 +19,8 @@
 </p>
 
 > **Release status** &mdash;
-> 🟢 **Latest stable**: [v1.6.8](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.6.8) (CV v2 hyperlink-aware project titles + 4 contemporary BusinessTheme presets + logback CVE-2026-9828 fix; zero breaking from v1.6.7)
-> &nbsp;·&nbsp; 🟡 **In develop**: v1.6.9 (next bug-fix / housekeeping cycle)
+> 🟢 **Latest stable**: [v1.6.9](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.6.9) (public pixel-level visual-regression API + canonical Javadoc doclint-clean + central-publishing 0.10; zero breaking from v1.6.8)
+> &nbsp;·&nbsp; 🟡 **In develop**: v1.6.10 (next bug-fix / housekeeping cycle)
 > &nbsp;·&nbsp; ⚪ **Planned next**: v1.7.0 (new canonical DSL primitives)
 > &nbsp;·&nbsp; See [API stability policy](./docs/api-stability.md) for tier definitions.
 

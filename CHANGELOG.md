@@ -54,6 +54,17 @@ API turns the open cycle into a minor.
   design is one enum constant plus its vertex ring — the foundation for letting
   a caller choose which tick or arrow to render.
 
+### Fixed
+
+- **`position(node, dx, dy, align)` offsets are now honored for stacks nested
+  inside a fixed slot.** A `LayerStack` / `ShapeContainer` placed inside a row
+  column or another layer compiled through the fixed-slot stack path, which
+  silently dropped the per-layer offsets (anchoring on alignment only) — so a
+  positioned badge or cap could not be nudged from its anchor once nested, even
+  though the same call worked at the document root. The nested path now feeds
+  the same `PreparedStackLayout` offsets as the root path. Layout for documents
+  that did not use `position(...)` inside a nested stack is unchanged.
+
 ## v1.6.9 — 2026-06-03
 
 Housekeeping cycle plus the public pixel-level visual-regression API (Track N).

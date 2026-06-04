@@ -868,10 +868,11 @@ public final class LayoutCompiler {
     /**
      * Places a single layer inside a stack composite at the given inner-box
      * coordinates. Shared between {@link #compileStackedLayer} (mutating
-     * placement path that feeds offsets from {@link PreparedStackLayout})
-     * and the STACK branch of {@link #compileNodeInFixedSlot} (non-mutating
-     * placement path that ignores offsets — fixed-slot stacks anchor on
-     * alignment only).
+     * placement path) and the STACK branch of {@link #compileNodeInFixedSlot}
+     * (non-mutating placement path). Both feed per-layer offsets from
+     * {@link PreparedStackLayout}, so a {@code position(node, dx, dy, align)}
+     * layer is nudged from its anchor identically whether the stack is placed
+     * at the root or nested inside a fixed slot (a row column or outer layer).
      *
      * <p>Layer placement is delegated to {@link #compileNodeInFixedSlot}
      * because each layer occupies a single fixed page slot whose origin
@@ -1200,8 +1201,8 @@ public final class LayoutCompiler {
                             stackInnerWidth,
                             stackInnerHeight,
                             stackLayout.alignments().get(i),
-                            0.0,
-                            0.0,
+                            stackLayout.offsetsX().get(i),
+                            stackLayout.offsetsY().get(i),
                             ctx);
                 }
 

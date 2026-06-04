@@ -132,7 +132,7 @@ public final class PdfShapeFragmentRenderHandler
      * sharp 90° corner (no arc, just a line into the corner). PDF y
      * grows up, so {@code (x, y)} is the bottom-left of the rectangle.
      */
-    private static void drawRoundedRectangle(PDPageContentStream stream,
+    static void drawRoundedRectangle(PDPageContentStream stream,
                                              float x,
                                              float y,
                                              float width,

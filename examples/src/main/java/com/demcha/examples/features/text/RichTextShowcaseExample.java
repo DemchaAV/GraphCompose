@@ -5,7 +5,9 @@ import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.style.ShapeOutline;
 import com.demcha.compose.document.theme.BusinessTheme;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
@@ -17,7 +19,8 @@ import java.nio.file.Path;
  *
  * <p>Walks through every fluent method on {@code RichText} —
  * {@code plain / bold / italic / boldItalic / underline / strikethrough /
- * color / accent / size / style / link / append} — laid out as labelled
+ * color / accent / size / style / link / append / dot / ellipse / diamond /
+ * star / shape} — laid out as labelled
  * "what does this look like" rows on a single A4 page so the rendered PDF
  * reads like a quick reference.</p>
  */
@@ -121,6 +124,24 @@ public final class RichTextShowcaseExample {
                                     .plain("Pre-built ")
                                     .append(reusableRun())
                                     .plain(" composes with ad-hoc fragments — share recurring fragments across paragraphs.")))
+                    .addSection("Inline shapes", section -> labelledRow(section,
+                            "dot / diamond / star / arrow / chevron / shape",
+                            rich -> rich
+                                    .plain("Java ")
+                                    .dot(5, BRAND)
+                                    .dot(5, BRAND)
+                                    .dot(5, BRAND)
+                                    .dot(5, null, DocumentStroke.of(BRAND, 0.6))
+                                    .plain("    Step 1 ")
+                                    .arrow(8, ShapeOutline.Direction.RIGHT, ACCENT)
+                                    .plain(" Step 2    Home ")
+                                    .chevron(6, ShapeOutline.Direction.RIGHT, MUTED)
+                                    .plain(" Docs    ")
+                                    .diamond(7, ACCENT)
+                                    .plain(" ")
+                                    .star(8, ACCENT)
+                                    .plain(" ")
+                                    .shape(ShapeOutline.checkmark(8, 8), BRAND)))
                     .addSection("Footer", section -> section
                             .accentTop(THEME.palette().rule(), 0.6)
                             .padding(new DocumentInsets(8, 0, 0, 0))

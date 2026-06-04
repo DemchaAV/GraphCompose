@@ -4,11 +4,13 @@ import com.demcha.compose.document.backend.fixed.pdf.PdfFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ParagraphShapeSpan;
 import com.demcha.compose.document.layout.payloads.ParagraphImageSpan;
 import com.demcha.compose.document.layout.payloads.ParagraphLine;
 import com.demcha.compose.document.layout.payloads.ParagraphSpan;
 import com.demcha.compose.document.layout.payloads.ParagraphTextSpan;
 import com.demcha.compose.document.node.InlineImageAlignment;
+import com.demcha.compose.document.style.ShapeOutline;
 import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -127,6 +129,14 @@ public final class PdfParagraphFragmentRenderHandler
                             (float) imageSpan.width(),
                             (float) imageSpan.height());
                     cursorX += imageSpan.width();
+                } else if (span instanceof ParagraphShapeSpan shapeSpan) {
+                    if (inTextBlock) {
+                        stream.endText();
+                        inTextBlock = false;
+                    }
+                    renderShape(stream, shapeSpan, cursorX, baselineY,
+                            line.textAscent(), line.baselineOffsetFromBottom(), line.lineHeight());
+                    cursorX += shapeSpan.width();
                 }
             }
         } finally {
@@ -141,18 +151,78 @@ public final class PdfParagraphFragmentRenderHandler
                                              double textAscent,
                                              double baselineOffsetFromBottom,
                                              double lineHeight) {
-        double imageHeight = imageSpan.height();
+        return resolveInlineGraphicBottom(
+                imageSpan.height(),
+                imageSpan.alignment(),
+                imageSpan.baselineOffset(),
+                baselineY,
+                textAscent,
+                baselineOffsetFromBottom,
+                lineHeight);
+    }
+
+    /**
+     * Resolves the PDF-space bottom edge of an inline graphic (image or
+     * ellipse) for the given vertical alignment. Shared by both span kinds so
+     * dots and icons sit identically next to text.
+     */
+    private static double resolveInlineGraphicBottom(double graphicHeight,
+                                                     InlineImageAlignment alignment,
+                                                     double baselineOffset,
+                                                     double baselineY,
+                                                     double textAscent,
+                                                     double baselineOffsetFromBottom,
+                                                     double lineHeight) {
         double lineBottom = baselineY - baselineOffsetFromBottom;
-        double base = switch (imageSpan.alignment() == null ? InlineImageAlignment.CENTER : imageSpan.alignment()) {
+        double base = switch (alignment == null ? InlineImageAlignment.CENTER : alignment) {
             case BASELINE -> baselineY;
-            // Visually centers the image inside the resolved line box
+            // Visually centers the graphic inside the resolved line box
             // (lineBottom + lineHeight/2). This matches how readers expect
-            // icons next to text to sit, regardless of text ascender height.
-            case CENTER -> lineBottom + (lineHeight - imageHeight) / 2.0;
-            case TEXT_TOP -> baselineY + textAscent - imageHeight;
+            // icons or dots next to text to sit, regardless of ascender height.
+            case CENTER -> lineBottom + (lineHeight - graphicHeight) / 2.0;
+            case TEXT_TOP -> baselineY + textAscent - graphicHeight;
             case TEXT_BOTTOM -> lineBottom;
         };
-        return base + imageSpan.baselineOffset();
+        return base + baselineOffset;
+    }
+
+    private static void renderShape(PDPageContentStream stream,
+                                    ParagraphShapeSpan span,
+                                    double cursorX,
+                                    double baselineY,
+                                    double textAscent,
+                                    double baselineOffsetFromBottom,
+                                    double lineHeight) throws IOException {
+        double width = span.width();
+        double height = span.height();
+        if (width <= 0 || height <= 0) {
+            return;
+        }
+        double bottom = resolveInlineGraphicBottom(
+                height,
+                span.alignment(),
+                span.baselineOffset(),
+                baselineY,
+                textAscent,
+                baselineOffsetFromBottom,
+                lineHeight);
+        float x = (float) cursorX;
+        float y = (float) bottom;
+        float w = (float) width;
+        float h = (float) height;
+        ShapeOutline outline = span.outline();
+        PdfShapeGeometry.fillAndStrokePath(stream, span.fillColor(), span.stroke(), s -> {
+            if (outline instanceof ShapeOutline.Ellipse) {
+                PdfEllipseFragmentRenderHandler.drawEllipse(s, x, y, w, h);
+            } else if (outline instanceof ShapeOutline.Rectangle) {
+                s.addRect(x, y, w, h);
+            } else if (outline instanceof ShapeOutline.RoundedRectangle r) {
+                float radius = (float) Math.min(r.cornerRadius(), Math.min(w, h) / 2.0f);
+                PdfShapeFragmentRenderHandler.drawRoundedRectangle(s, x, y, w, h, radius, radius, radius, radius);
+            } else if (outline instanceof ShapeOutline.Polygon p) {
+                PdfShapeGeometry.addPolygonPath(s, x, y, w, h, p.points());
+            }
+        });
     }
 
 }

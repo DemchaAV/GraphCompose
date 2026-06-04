@@ -35,40 +35,16 @@ public final class PdfEllipseFragmentRenderHandler
         if (fragment.width() <= 0 || fragment.height() <= 0) {
             return;
         }
-
-        boolean hasFill = payload.fillColor() != null;
-        boolean hasStroke = payload.stroke() != null
-                && payload.stroke().strokeColor() != null
-                && payload.stroke().strokeColor().color() != null
-                && payload.stroke().width() > 0;
-        if (!hasFill && !hasStroke) {
-            return;
-        }
-
         PDPageContentStream stream = environment.pageSurface(fragment.pageIndex());
-        stream.saveGraphicsState();
-        try {
-            if (hasStroke) {
-                stream.setStrokingColor(payload.stroke().strokeColor().color());
-                stream.setLineWidth((float) payload.stroke().width());
-            }
-            if (hasFill) {
-                stream.setNonStrokingColor(payload.fillColor());
-            }
-            drawEllipse(stream, (float) fragment.x(), (float) fragment.y(), (float) fragment.width(), (float) fragment.height());
-            if (hasFill && hasStroke) {
-                stream.fillAndStroke();
-            } else if (hasFill) {
-                stream.fill();
-            } else {
-                stream.stroke();
-            }
-        } finally {
-            stream.restoreGraphicsState();
-        }
+        float x = (float) fragment.x();
+        float y = (float) fragment.y();
+        float width = (float) fragment.width();
+        float height = (float) fragment.height();
+        PdfShapeGeometry.fillAndStrokePath(stream, payload.fillColor(), payload.stroke(),
+                s -> drawEllipse(s, x, y, width, height));
     }
 
-    private static void drawEllipse(PDPageContentStream stream,
+    static void drawEllipse(PDPageContentStream stream,
                                     float x,
                                     float y,
                                     float width,

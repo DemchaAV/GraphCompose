@@ -3,9 +3,35 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v1.6.10 — Planned
+## v1.7.0 — Planned
 
-Next bug-fix / housekeeping cycle. Track open in `docs/private/` taskboard.
+Canonical DSL primitives — additive only, zero breaking changes. Adding public
+API turns the open cycle into a minor.
+
+### Public API
+
+- **Inline shape runs — geometry-based dots, diamonds, stars and bullets.** New
+  `com.demcha.compose.document.node.InlineShapeRun` (`@since 1.7.0`) joins the
+  sealed `InlineRun` hierarchy alongside text and image runs. It draws any
+  `ShapeOutline` figure on the paragraph baseline directly from geometry — no
+  raster payload, no font glyph — so skill rating dots (`Java ●●●●○`), custom
+  bullets and inline status markers no longer depend on a font shipping
+  `U+25CF` and friends. Authored through `ParagraphBuilder` / `RichText`
+  `dot(...)`, `ellipse(...)`, `diamond(...)`, `triangle(...)`, `star(...)` and
+  the generic `shape(ShapeOutline, ...)`; measured into line width and height
+  like inline images. A `null` fill paints an outlined figure, a `null` stroke
+  a filled one; at least one must be present.
+- **New polygon shape geometry, usable block-level and inline.** `ShapeOutline`
+  (`com.demcha.compose.document.style`) gains a `Polygon` kind plus a family of
+  factories built from normalized `ShapePoint` vertices (`@since 1.7.0`):
+  `diamond`, `triangle`, `star`, `polygon`, `arrow` / `arrowRight` / `arrowLeft`
+  (4-way `Direction`), `chevron`, `checkmark`, `plus` and `regularPolygon(sides)`.
+  Arrows and chevrons read as directional list bullets or inline markers
+  between text ("Step 1 → Step 2", "Home › Docs"). `ParagraphBuilder` /
+  `RichText` add `arrow(size, Direction, fill)` and `chevron(...)` shortcuts
+  (every other kind is reachable through `shape(ShapeOutline, ...)`);
+  `ShapeContainerBuilder` exposes matching block outlines. Rectangle,
+  rounded-rectangle and ellipse shape containers are unchanged.
 
 ## v1.6.9 — 2026-06-03
 

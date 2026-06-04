@@ -79,6 +79,8 @@ public final class PdfShapeClipBeginRenderHandler
                         (float) Math.min(r.cornerRadius(), Math.min(width, height) / 2.0f));
             } else if (outline instanceof ShapeOutline.Rectangle) {
                 stream.addRect(x, y, width, height);
+            } else if (outline instanceof ShapeOutline.Polygon p) {
+                PdfShapeGeometry.addPolygonPath(stream, x, y, width, height, p.points());
             } else {
                 throw new IllegalStateException("Unknown outline: " + outline);
             }

@@ -9,6 +9,7 @@ import com.demcha.examples.features.snapshots.LayoutSnapshotRegressionExample;
 import com.demcha.examples.features.streaming.HttpStreamingExample;
 import com.demcha.examples.features.tables.ComposedTableCellExample;
 import com.demcha.examples.features.tables.TableAdvancedExample;
+import com.demcha.examples.features.text.InlineShapesExample;
 import com.demcha.examples.features.text.RichTextShowcaseExample;
 import com.demcha.examples.features.text.SectionPresetsExample;
 import com.demcha.examples.features.themes.CustomBusinessThemeExample;
@@ -127,6 +128,7 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + TableAdvancedExample.generate());
 
         // Text + sections
+        System.out.println("Generated: " + InlineShapesExample.generate());
         System.out.println("Generated: " + RichTextShowcaseExample.generate());
         System.out.println("Generated: " + SectionPresetsExample.generate());
 

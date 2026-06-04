@@ -1,5 +1,6 @@
 package com.demcha.compose.document.layout;
 
+import com.demcha.compose.document.layout.payloads.ParagraphShapeSpan;
 import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ParagraphImageSpan;
 import com.demcha.compose.document.layout.payloads.ParagraphLine;
@@ -9,6 +10,7 @@ import com.demcha.compose.document.layout.payloads.PreparedListItemLayout;
 import com.demcha.compose.document.layout.payloads.PreparedListLayout;
 import com.demcha.compose.document.layout.payloads.PreparedParagraphLayout;
 import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.InlineShapeRun;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.InlineImageRun;
 import com.demcha.compose.document.node.InlineRun;
@@ -22,7 +24,9 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextAutoSize;
 import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.style.ShapeOutline;
 import com.demcha.compose.engine.components.content.ImageData;
+import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.content.text.TextDataBody;
 import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
 import com.demcha.compose.engine.components.content.text.TextStyle;
@@ -31,6 +35,7 @@ import com.demcha.compose.engine.components.style.Padding;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 import com.demcha.compose.engine.text.markdown.MarkDownParser;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -38,6 +43,7 @@ import java.util.Objects;
 import static com.demcha.compose.document.layout.DocumentNodeAdapters.toImageData;
 import static com.demcha.compose.document.layout.DocumentNodeAdapters.toIndentStrategy;
 import static com.demcha.compose.document.layout.DocumentNodeAdapters.toPadding;
+import static com.demcha.compose.document.layout.DocumentNodeAdapters.toStroke;
 import static com.demcha.compose.document.layout.DocumentNodeAdapters.toTextStyle;
 import static com.demcha.compose.document.layout.NodeDefinitionSupport.EPS;
 
@@ -601,6 +607,8 @@ public final class TextFlowSupport {
                     width += measurement.textWidth(engineStyle, textRun.text());
                 } else if (run instanceof InlineImageRun imageRun) {
                     width += imageRun.width();
+                } else if (run instanceof InlineShapeRun shapeRun) {
+                    width += shapeRun.outline().width();
                 }
             }
             return width <= innerWidth;
@@ -1253,6 +1261,8 @@ public final class TextFlowSupport {
                 }
             } else if (run instanceof InlineImageRun imageRun) {
                 currentLine.add(InlineImageToken.of(imageRun));
+            } else if (run instanceof InlineShapeRun shapeRun) {
+                currentLine.add(InlineShapeToken.of(shapeRun));
             }
         }
 
@@ -1290,15 +1300,19 @@ public final class TextFlowSupport {
             dominantBaselineFromBottom = defaultMetrics.baselineOffsetFromBottom();
         }
 
-        double maxImageHeight = 0.0;
+        double maxInlineGraphicHeight = 0.0;
         for (InlineLayoutToken token : trimmedTokens) {
             if (token instanceof InlineImageToken imageToken) {
-                if (imageToken.height() > maxImageHeight) {
-                    maxImageHeight = imageToken.height();
+                if (imageToken.height() > maxInlineGraphicHeight) {
+                    maxInlineGraphicHeight = imageToken.height();
+                }
+            } else if (token instanceof InlineShapeToken shapeToken) {
+                if (shapeToken.height() > maxInlineGraphicHeight) {
+                    maxInlineGraphicHeight = shapeToken.height();
                 }
             }
         }
-        double resolvedLineHeight = Math.max(dominantTextLineHeight, maxImageHeight);
+        double resolvedLineHeight = Math.max(dominantTextLineHeight, maxInlineGraphicHeight);
 
         List<ParagraphSpan> spans = new ArrayList<>(trimmedTokens.size());
         StringBuilder text = new StringBuilder();
@@ -1322,6 +1336,15 @@ public final class TextFlowSupport {
                         imageToken.baselineOffset(),
                         imageToken.linkOptions()));
                 width += imageToken.width();
+            } else if (token instanceof InlineShapeToken shapeToken) {
+                spans.add(new ParagraphShapeSpan(
+                        shapeToken.outline(),
+                        shapeToken.fillColor(),
+                        shapeToken.stroke(),
+                        shapeToken.alignment(),
+                        shapeToken.baselineOffset(),
+                        shapeToken.linkOptions()));
+                width += shapeToken.width();
             }
         }
 
@@ -1537,7 +1560,7 @@ public final class TextFlowSupport {
         }
     }
 
-    private sealed interface InlineLayoutToken permits InlineTextToken, InlineImageToken {
+    private sealed interface InlineLayoutToken permits InlineTextToken, InlineImageToken, InlineShapeToken {
         double width();
     }
 
@@ -1581,6 +1604,38 @@ public final class TextFlowSupport {
                     toImageData(run.imageData()),
                     run.width(),
                     run.height(),
+                    run.alignment(),
+                    run.baselineOffset(),
+                    run.linkOptions());
+        }
+    }
+
+    private record InlineShapeToken(
+            ShapeOutline outline,
+            Color fillColor,
+            Stroke stroke,
+            InlineImageAlignment alignment,
+            double baselineOffset,
+            DocumentLinkOptions linkOptions
+    ) implements InlineLayoutToken {
+        private InlineShapeToken {
+            alignment = alignment == null ? InlineImageAlignment.CENTER : alignment;
+        }
+
+        @Override
+        public double width() {
+            return outline.width();
+        }
+
+        private double height() {
+            return outline.height();
+        }
+
+        private static InlineShapeToken of(InlineShapeRun run) {
+            return new InlineShapeToken(
+                    run.outline(),
+                    run.fill() == null ? null : run.fill().color(),
+                    toStroke(run.stroke()),
                     run.alignment(),
                     run.baselineOffset(),
                     run.linkOptions());

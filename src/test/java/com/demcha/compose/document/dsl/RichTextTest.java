@@ -1,12 +1,16 @@
 package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.InlineRun;
+import com.demcha.compose.document.node.InlineShapeRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.SectionNode;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
+import com.demcha.compose.document.style.ShapeOutline;
 import org.junit.jupiter.api.Test;
 
 import java.awt.Color;
@@ -210,5 +214,78 @@ class RichTextTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Test
+    void dotProducesFilledCircleShapeRunWithCenterDefault() {
+        List<InlineRun> runs = RichText.empty().dot(6.0, RED).runs();
+        assertThat(runs).hasSize(1);
+        InlineShapeRun dot = (InlineShapeRun) runs.get(0);
+        assertThat(dot.outline()).isInstanceOf(ShapeOutline.Ellipse.class);
+        assertThat(dot.outline().width()).isEqualTo(6.0, within(EPS));
+        assertThat(dot.fill()).isEqualTo(RED);
+        assertThat(dot.stroke()).isNull();
+        assertThat(dot.alignment()).isEqualTo(InlineImageAlignment.CENTER);
+    }
+
+    @Test
+    void ratingDotsMixWithTextInSourceOrder() {
+        List<InlineRun> runs = RichText.text("Java ")
+                .dot(5.0, ACCENT)
+                .dot(5.0, ACCENT)
+                .dot(5.0, null, DocumentStroke.of(ACCENT, 0.5))
+                .runs();
+
+        assertThat(runs).hasSize(4);
+        assertThat(runs.get(0)).isInstanceOf(InlineTextRun.class);
+        assertThat(runs.get(1)).isInstanceOf(InlineShapeRun.class);
+
+        InlineShapeRun outlined = (InlineShapeRun) runs.get(3);
+        assertThat(outlined.fill()).isNull();
+        assertThat(outlined.stroke()).isNotNull();
+    }
+
+    @Test
+    void diamondAndStarFactoriesProducePolygonShapeRuns() {
+        InlineShapeRun diamond = (InlineShapeRun) RichText.empty().diamond(8, ACCENT).runs().get(0);
+        InlineShapeRun star = (InlineShapeRun) RichText.empty().star(8, ACCENT).runs().get(0);
+
+        assertThat(diamond.outline()).isInstanceOf(ShapeOutline.Polygon.class);
+        assertThat(star.outline()).isInstanceOf(ShapeOutline.Polygon.class);
+        assertThat(((ShapeOutline.Polygon) star.outline()).points()).hasSize(10);
+    }
+
+    @Test
+    void shapeAcceptsAnyOutlineAlignmentAndOffset() {
+        InlineShapeRun run = (InlineShapeRun) RichText.empty()
+                .shape(new ShapeOutline.Rectangle(10, 6), RED, null, InlineImageAlignment.BASELINE, 1.5, null)
+                .runs().get(0);
+        assertThat(run.outline()).isInstanceOf(ShapeOutline.Rectangle.class);
+        assertThat(run.alignment()).isEqualTo(InlineImageAlignment.BASELINE);
+        assertThat(run.baselineOffset()).isEqualTo(1.5, within(EPS));
+    }
+
+    @Test
+    void paragraphBuilderDotAppendsShapeRunAfterText() {
+        ParagraphNode paragraph = new ParagraphBuilder()
+                .name("Rating")
+                .inlineText("Java ")
+                .dot(5.0, ACCENT)
+                .build();
+
+        assertThat(paragraph.inlineRuns()).hasSize(2);
+        assertThat(paragraph.inlineRuns().get(0)).isInstanceOf(InlineTextRun.class);
+        assertThat(paragraph.inlineRuns().get(1)).isInstanceOf(InlineShapeRun.class);
+    }
+
+    @Test
+    void arrowAndChevronFactoriesProduceDirectionalPolygonRuns() {
+        InlineShapeRun arrow = (InlineShapeRun) RichText.empty()
+                .arrow(8, ShapeOutline.Direction.RIGHT, ACCENT).runs().get(0);
+        InlineShapeRun chevron = (InlineShapeRun) RichText.empty()
+                .chevron(8, ShapeOutline.Direction.LEFT, ACCENT).runs().get(0);
+
+        assertThat(arrow.outline()).isInstanceOf(ShapeOutline.Polygon.class);
+        assertThat(chevron.outline()).isInstanceOf(ShapeOutline.Polygon.class);
     }
 }

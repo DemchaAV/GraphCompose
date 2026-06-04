@@ -4,15 +4,19 @@ import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.InlineImageAlignment;
+import com.demcha.compose.document.node.InlineShapeRun;
 import com.demcha.compose.document.node.InlineImageRun;
 import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextAutoSize;
 import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.style.ShapeOutline;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -233,6 +237,150 @@ public final class ParagraphBuilder {
                 imageData,
                 width,
                 height,
+                alignment == null ? InlineImageAlignment.CENTER : alignment,
+                baselineOffset,
+                linkOptions));
+        this.text = "";
+        return this;
+    }
+
+    /**
+     * Adds an inline filled circle ("dot") measured on the same baseline as the
+     * surrounding text — the building block for skill rating dots, custom
+     * bullets and status indicators that should not depend on font glyph
+     * coverage.
+     *
+     * @param diameter circle diameter in points
+     * @param fill fill color
+     * @return this builder
+     */
+    public ParagraphBuilder dot(double diameter, DocumentColor fill) {
+        return shape(ShapeOutline.circle(diameter), fill, null, InlineImageAlignment.CENTER, 0.0, null);
+    }
+
+    /**
+     * Adds an inline circle with an explicit fill and/or outline stroke — for
+     * example a filled dot ({@code ●}) or an outlined one ({@code ○}).
+     *
+     * @param diameter circle diameter in points
+     * @param fill optional fill color
+     * @param stroke optional outline stroke
+     * @return this builder
+     */
+    public ParagraphBuilder dot(double diameter, DocumentColor fill, DocumentStroke stroke) {
+        return shape(ShapeOutline.circle(diameter), fill, stroke, InlineImageAlignment.CENTER, 0.0, null);
+    }
+
+    /**
+     * Adds an inline ellipse measured on the surrounding text baseline.
+     *
+     * @param width target width in points
+     * @param height target height in points ({@code width == height} renders a circle)
+     * @param fill optional fill color
+     * @param stroke optional outline stroke
+     * @return this builder
+     */
+    public ParagraphBuilder ellipse(double width, double height, DocumentColor fill, DocumentStroke stroke) {
+        return shape(new ShapeOutline.Ellipse(width, height), fill, stroke, InlineImageAlignment.CENTER, 0.0, null);
+    }
+
+    /**
+     * Adds an inline diamond (rhombus) sized {@code size × size}.
+     *
+     * @param size figure width and height in points
+     * @param fill fill color
+     * @return this builder
+     */
+    public ParagraphBuilder diamond(double size, DocumentColor fill) {
+        return shape(ShapeOutline.diamond(size, size), fill, null, InlineImageAlignment.CENTER, 0.0, null);
+    }
+
+    /**
+     * Adds an inline upward-pointing triangle sized {@code size × size}.
+     *
+     * @param size figure width and height in points
+     * @param fill fill color
+     * @return this builder
+     */
+    public ParagraphBuilder triangle(double size, DocumentColor fill) {
+        return shape(ShapeOutline.triangle(size, size), fill, null, InlineImageAlignment.CENTER, 0.0, null);
+    }
+
+    /**
+     * Adds an inline five-pointed star sized {@code size × size}.
+     *
+     * @param size figure width and height in points
+     * @param fill fill color
+     * @return this builder
+     */
+    public ParagraphBuilder star(double size, DocumentColor fill) {
+        return shape(ShapeOutline.star(size, size), fill, null, InlineImageAlignment.CENTER, 0.0, null);
+    }
+
+    /**
+     * Adds an inline block arrow sized {@code size × size} pointing in
+     * {@code direction} — a directional marker between text or a list bullet.
+     *
+     * @param size figure width and height in points
+     * @param direction the way the arrow points
+     * @param fill fill color
+     * @return this builder
+     */
+    public ParagraphBuilder arrow(double size, ShapeOutline.Direction direction, DocumentColor fill) {
+        return shape(ShapeOutline.arrow(size, size, direction), fill, null, InlineImageAlignment.CENTER, 0.0, null);
+    }
+
+    /**
+     * Adds an inline chevron sized {@code size × size} pointing in
+     * {@code direction} — a lighter directional separator for step lists.
+     *
+     * @param size figure width and height in points
+     * @param direction the way the chevron points
+     * @param fill fill color
+     * @return this builder
+     */
+    public ParagraphBuilder chevron(double size, ShapeOutline.Direction direction, DocumentColor fill) {
+        return shape(ShapeOutline.chevron(size, size, direction), fill, null, InlineImageAlignment.CENTER, 0.0, null);
+    }
+
+    /**
+     * Adds an inline shape of any {@link ShapeOutline} kind with a filled
+     * interior, default {@link InlineImageAlignment#CENTER} alignment and zero
+     * offset.
+     *
+     * @param outline figure geometry; supplies the run's size
+     * @param fill fill color
+     * @return this builder
+     */
+    public ParagraphBuilder shape(ShapeOutline outline, DocumentColor fill) {
+        return shape(outline, fill, null, InlineImageAlignment.CENTER, 0.0, null);
+    }
+
+    /**
+     * Adds an inline shape of any {@link ShapeOutline} kind, measured on the
+     * surrounding text baseline. At least one of {@code fill} or {@code stroke}
+     * must be present; vertical alignment defaults to
+     * {@link InlineImageAlignment#CENTER} when {@code null}. The figure is drawn
+     * from geometry, so it never depends on font glyph coverage.
+     *
+     * @param outline figure geometry; supplies the run's size
+     * @param fill optional fill color
+     * @param stroke optional outline stroke
+     * @param alignment vertical alignment relative to surrounding text
+     * @param baselineOffset extra vertical shift in points; positive moves up
+     * @param linkOptions optional inline link metadata
+     * @return this builder
+     */
+    public ParagraphBuilder shape(ShapeOutline outline,
+                                  DocumentColor fill,
+                                  DocumentStroke stroke,
+                                  InlineImageAlignment alignment,
+                                  double baselineOffset,
+                                  DocumentLinkOptions linkOptions) {
+        this.inlineRuns.add(new InlineShapeRun(
+                outline,
+                fill,
+                stroke,
                 alignment == null ? InlineImageAlignment.CENTER : alignment,
                 baselineOffset,
                 linkOptions));

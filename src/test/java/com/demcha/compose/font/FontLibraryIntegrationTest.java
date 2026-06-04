@@ -19,7 +19,7 @@ class FontLibraryIntegrationTest {
         try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf().create()) {
             assertThat(composer.availableFonts())
                     .contains(FontName.HELVETICA, FontName.LATO, FontName.IBM_PLEX_SERIF, FontName.ZILLA_SLAB,
-                            FontName.KANIT, FontName.VOLKHOV, FontName.ANDIKA);
+                            FontName.KANIT, FontName.VOLKHOV, FontName.ANDIKA, FontName.JETBRAINS_MONO);
         }
 
         try (PDDocument document = new PDDocument()) {
@@ -28,6 +28,8 @@ class FontLibraryIntegrationTest {
             assertThat(fonts.getFont(FontName.LATO, WordFont.class)).isPresent();
             assertThat(fonts.getFont(FontName.KANIT, PdfFont.class)).isPresent();
             assertThat(fonts.getFont(FontName.KANIT, WordFont.class)).isPresent();
+            assertThat(fonts.getFont(FontName.JETBRAINS_MONO, PdfFont.class)).isPresent();
+            assertThat(fonts.getFont(FontName.JETBRAINS_MONO, WordFont.class)).isPresent();
         }
     }
 

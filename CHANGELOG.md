@@ -53,6 +53,11 @@ API turns the open cycle into a minor.
   also accepts a raw `ShapeOutline` mark for fully custom ticks. Adding a new
   design is one enum constant plus its vertex ring — the foundation for letting
   a caller choose which tick or arrow to render.
+- **Bundled font: JetBrains Mono.** New `FontName.JETBRAINS_MONO` (`@since 1.7.0`)
+  joins the built-in `DefaultFonts` catalog with its Regular / Bold / Italic /
+  Bold-Italic faces (bundled from the OFL-1.1 release), so monospaced code and
+  data blocks render without a system-font install. Usable through any
+  `DocumentTextStyle.fontName(...)` and listed in the font showcase.
 
 ## v1.6.9 — 2026-06-03
 

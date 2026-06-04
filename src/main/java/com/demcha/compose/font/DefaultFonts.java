@@ -61,7 +61,8 @@ public class DefaultFonts {
             google(FontName.SARABUN, "sarabun", "Sarabun"),
             google(FontName.PROMPT, "prompt", "Prompt"),
             google(FontName.ANDIKA, "andika", "Andika"),
-            google(FontName.BAI_JAMJUREE, "baijamjuree", "BaiJamjuree"));
+            google(FontName.BAI_JAMJUREE, "baijamjuree", "BaiJamjuree"),
+            google(FontName.JETBRAINS_MONO, "jetbrainsmono", "JetBrainsMono"));
 
     private DefaultFonts() {
     }

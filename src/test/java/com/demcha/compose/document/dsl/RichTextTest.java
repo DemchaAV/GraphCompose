@@ -1,12 +1,16 @@
 package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.InlineRun;
+import com.demcha.compose.document.node.InlineShapeRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.SectionNode;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
+import com.demcha.compose.document.style.ShapeOutline;
 import org.junit.jupiter.api.Test;
 
 import java.awt.Color;
@@ -210,5 +214,109 @@ class RichTextTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Test
+    void dotProducesFilledCircleShapeRunWithCenterDefault() {
+        List<InlineRun> runs = RichText.empty().dot(6.0, RED).runs();
+        assertThat(runs).hasSize(1);
+        InlineShapeRun dot = (InlineShapeRun) runs.get(0);
+        assertThat(dot.layers().get(0).outline()).isInstanceOf(ShapeOutline.Ellipse.class);
+        assertThat(dot.layers().get(0).outline().width()).isEqualTo(6.0, within(EPS));
+        assertThat(dot.layers().get(0).fill()).isEqualTo(RED);
+        assertThat(dot.layers().get(0).stroke()).isNull();
+        assertThat(dot.alignment()).isEqualTo(InlineImageAlignment.CENTER);
+    }
+
+    @Test
+    void ratingDotsMixWithTextInSourceOrder() {
+        List<InlineRun> runs = RichText.text("Java ")
+                .dot(5.0, ACCENT)
+                .dot(5.0, ACCENT)
+                .dot(5.0, null, DocumentStroke.of(ACCENT, 0.5))
+                .runs();
+
+        assertThat(runs).hasSize(4);
+        assertThat(runs.get(0)).isInstanceOf(InlineTextRun.class);
+        assertThat(runs.get(1)).isInstanceOf(InlineShapeRun.class);
+
+        InlineShapeRun outlined = (InlineShapeRun) runs.get(3);
+        assertThat(outlined.layers().get(0).fill()).isNull();
+        assertThat(outlined.layers().get(0).stroke()).isNotNull();
+    }
+
+    @Test
+    void diamondAndStarFactoriesProducePolygonShapeRuns() {
+        InlineShapeRun diamond = (InlineShapeRun) RichText.empty().diamond(8, ACCENT).runs().get(0);
+        InlineShapeRun star = (InlineShapeRun) RichText.empty().star(8, ACCENT).runs().get(0);
+
+        assertThat(diamond.layers().get(0).outline()).isInstanceOf(ShapeOutline.Polygon.class);
+        assertThat(star.layers().get(0).outline()).isInstanceOf(ShapeOutline.Polygon.class);
+        assertThat(((ShapeOutline.Polygon) star.layers().get(0).outline()).points()).hasSize(10);
+    }
+
+    @Test
+    void shapeAcceptsAnyOutlineAlignmentAndOffset() {
+        InlineShapeRun run = (InlineShapeRun) RichText.empty()
+                .shape(new ShapeOutline.Rectangle(10, 6), RED, null, InlineImageAlignment.BASELINE, 1.5, null)
+                .runs().get(0);
+        assertThat(run.layers().get(0).outline()).isInstanceOf(ShapeOutline.Rectangle.class);
+        assertThat(run.alignment()).isEqualTo(InlineImageAlignment.BASELINE);
+        assertThat(run.baselineOffset()).isEqualTo(1.5, within(EPS));
+    }
+
+    @Test
+    void paragraphBuilderDotAppendsShapeRunAfterText() {
+        ParagraphNode paragraph = new ParagraphBuilder()
+                .name("Rating")
+                .inlineText("Java ")
+                .dot(5.0, ACCENT)
+                .build();
+
+        assertThat(paragraph.inlineRuns()).hasSize(2);
+        assertThat(paragraph.inlineRuns().get(0)).isInstanceOf(InlineTextRun.class);
+        assertThat(paragraph.inlineRuns().get(1)).isInstanceOf(InlineShapeRun.class);
+    }
+
+    @Test
+    void arrowAndChevronFactoriesProduceDirectionalPolygonRuns() {
+        InlineShapeRun arrow = (InlineShapeRun) RichText.empty()
+                .arrow(8, ShapeOutline.Direction.RIGHT, ACCENT).runs().get(0);
+        InlineShapeRun chevron = (InlineShapeRun) RichText.empty()
+                .chevron(8, ShapeOutline.Direction.LEFT, ACCENT).runs().get(0);
+
+        assertThat(arrow.layers().get(0).outline()).isInstanceOf(ShapeOutline.Polygon.class);
+        assertThat(chevron.layers().get(0).outline()).isInstanceOf(ShapeOutline.Polygon.class);
+    }
+
+    @Test
+    void checkboxAppendsCheckedAndUncheckedShapeRuns() {
+        InlineShapeRun checked = (InlineShapeRun) RichText.empty().checkbox(10, true, ACCENT).runs().get(0);
+        InlineShapeRun unchecked = (InlineShapeRun) RichText.empty().checkbox(10, false, ACCENT).runs().get(0);
+
+        assertThat(checked.layers()).hasSize(2);
+        assertThat(unchecked.layers()).hasSize(1);
+    }
+
+    @Test
+    void checkboxStyleAndRawMarkOverloadsReachInlineShapeRun() {
+        InlineShapeRun styled = (InlineShapeRun) RichText.empty()
+                .checkbox(10, true, ShapeOutline.CheckmarkStyle.HEAVY, ACCENT, ACCENT).runs().get(0);
+        InlineShapeRun raw = (InlineShapeRun) RichText.empty()
+                .checkbox(10, true, ShapeOutline.plus(6, 6), ACCENT, ACCENT).runs().get(0);
+
+        assertThat(styled.layers()).hasSize(2);
+        assertThat(raw.layers().get(1).outline()).isInstanceOf(ShapeOutline.Polygon.class);
+    }
+
+    @Test
+    void arrowStyleOverloadProducesChosenArrowDesign() {
+        InlineShapeRun block = (InlineShapeRun) RichText.empty()
+                .arrow(8, ShapeOutline.Direction.RIGHT, ShapeOutline.ArrowStyle.BLOCK, ACCENT).runs().get(0);
+        InlineShapeRun triangle = (InlineShapeRun) RichText.empty()
+                .arrow(8, ShapeOutline.Direction.RIGHT, ShapeOutline.ArrowStyle.TRIANGLE, ACCENT).runs().get(0);
+
+        assertThat(((ShapeOutline.Polygon) block.layers().get(0).outline()).points()).hasSize(7);
+        assertThat(((ShapeOutline.Polygon) triangle.layers().get(0).outline()).points()).hasSize(3);
     }
 }

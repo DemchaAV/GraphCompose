@@ -108,6 +108,81 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
     }
 
     /**
+     * Sets a diamond (rhombus) outline.
+     *
+     * @param width outline width in points
+     * @param height outline height in points
+     * @return this builder
+     */
+    public ShapeContainerBuilder diamond(double width, double height) {
+        this.outline = ShapeOutline.diamond(width, height);
+        return this;
+    }
+
+    /**
+     * Sets an upward-pointing triangle outline.
+     *
+     * @param width outline width in points
+     * @param height outline height in points
+     * @return this builder
+     */
+    public ShapeContainerBuilder triangle(double width, double height) {
+        this.outline = ShapeOutline.triangle(width, height);
+        return this;
+    }
+
+    /**
+     * Sets a five-pointed star outline.
+     *
+     * @param width outline width in points
+     * @param height outline height in points
+     * @return this builder
+     */
+    public ShapeContainerBuilder star(double width, double height) {
+        this.outline = ShapeOutline.star(width, height);
+        return this;
+    }
+
+    /**
+     * Sets an {@code n}-pointed star outline.
+     *
+     * @param width outline width in points
+     * @param height outline height in points
+     * @param points number of outer points (at least 2)
+     * @return this builder
+     */
+    public ShapeContainerBuilder star(double width, double height, int points) {
+        this.outline = ShapeOutline.star(width, height, points);
+        return this;
+    }
+
+    /**
+     * Sets a block arrow outline pointing in {@code direction}.
+     *
+     * @param width outline width in points
+     * @param height outline height in points
+     * @param direction the way the arrow points
+     * @return this builder
+     */
+    public ShapeContainerBuilder arrow(double width, double height, ShapeOutline.Direction direction) {
+        this.outline = ShapeOutline.arrow(width, height, direction);
+        return this;
+    }
+
+    /**
+     * Sets a chevron outline pointing in {@code direction}.
+     *
+     * @param width outline width in points
+     * @param height outline height in points
+     * @param direction the way the chevron points
+     * @return this builder
+     */
+    public ShapeContainerBuilder chevron(double width, double height, ShapeOutline.Direction direction) {
+        this.outline = ShapeOutline.chevron(width, height, direction);
+        return this;
+    }
+
+    /**
      * Replaces the outline with a pre-built {@link ShapeOutline} value.
      *
      * @param outline outline value

@@ -4,6 +4,7 @@ import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
 import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfBarcodeFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfEllipseFragmentRenderHandler;
+import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfPolygonFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfImageFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfLineFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfParagraphFragmentRenderHandler;
@@ -96,6 +97,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                 new PdfShapeFragmentRenderHandler(),
                 new PdfLineFragmentRenderHandler(),
                 new PdfEllipseFragmentRenderHandler(),
+                new PdfPolygonFragmentRenderHandler(),
                 new PdfImageFragmentRenderHandler(),
                 new PdfTableRowFragmentRenderHandler(),
                 new PdfShapeClipBeginRenderHandler(),
@@ -411,29 +413,43 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                                                                            double lineHeight,
                                                                            double textAscent,
                                                                            double baselineOffsetFromBottom) {
+        com.demcha.compose.document.node.InlineImageAlignment alignment;
+        double graphicHeight;
+        double baselineOffset;
         if (span instanceof ParagraphImageSpan imageSpan) {
-            double baselineY = lineTop - lineHeight + baselineOffsetFromBottom;
-            double lineBottom = baselineY - baselineOffsetFromBottom;
-            double base = switch (imageSpan.alignment() == null
-                    ? com.demcha.compose.document.node.InlineImageAlignment.CENTER
-                    : imageSpan.alignment()) {
-                case BASELINE -> baselineY;
-                case CENTER -> lineBottom + (lineHeight - imageSpan.height()) / 2.0;
-                case TEXT_TOP -> baselineY + textAscent - imageSpan.height();
-                case TEXT_BOTTOM -> lineBottom;
-            };
-            double imageBottom = base + imageSpan.baselineOffset();
+            alignment = imageSpan.alignment();
+            graphicHeight = imageSpan.height();
+            baselineOffset = imageSpan.baselineOffset();
+        } else if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphShapeSpan shapeSpan) {
+            alignment = shapeSpan.alignment();
+            graphicHeight = shapeSpan.height();
+            baselineOffset = shapeSpan.baselineOffset();
+        } else {
+            // Text spans cover the full line box.
             return new PdfLinkAnnotationWriter.PlacedPdfRect(
                     spanX,
-                    imageBottom,
-                    imageSpan.width(),
-                    imageSpan.height());
+                    lineTop - lineHeight,
+                    span.width(),
+                    lineHeight);
         }
+        // Inline-graphic baseline placement, kept in lockstep with
+        // PdfParagraphFragmentRenderHandler.resolveInlineGraphicBottom — both
+        // place an inline image or shape on the text baseline identically.
+        double baselineY = lineTop - lineHeight + baselineOffsetFromBottom;
+        double lineBottom = baselineY - baselineOffsetFromBottom;
+        double base = switch (alignment == null
+                ? com.demcha.compose.document.node.InlineImageAlignment.CENTER
+                : alignment) {
+            case BASELINE -> baselineY;
+            case CENTER -> lineBottom + (lineHeight - graphicHeight) / 2.0;
+            case TEXT_TOP -> baselineY + textAscent - graphicHeight;
+            case TEXT_BOTTOM -> lineBottom;
+        };
         return new PdfLinkAnnotationWriter.PlacedPdfRect(
                 spanX,
-                lineTop - lineHeight,
+                base + baselineOffset,
                 span.width(),
-                lineHeight);
+                graphicHeight);
     }
 
     @SuppressWarnings("unchecked")

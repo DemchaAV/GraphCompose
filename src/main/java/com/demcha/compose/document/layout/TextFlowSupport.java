@@ -1,5 +1,7 @@
 package com.demcha.compose.document.layout;
 
+import com.demcha.compose.document.layout.payloads.ParagraphShapeSpan;
+import com.demcha.compose.document.layout.payloads.ResolvedShapeLayer;
 import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ParagraphImageSpan;
 import com.demcha.compose.document.layout.payloads.ParagraphLine;
@@ -9,6 +11,8 @@ import com.demcha.compose.document.layout.payloads.PreparedListItemLayout;
 import com.demcha.compose.document.layout.payloads.PreparedListLayout;
 import com.demcha.compose.document.layout.payloads.PreparedParagraphLayout;
 import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.InlineShapeRun;
+import com.demcha.compose.document.node.ShapeLayer;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.InlineImageRun;
 import com.demcha.compose.document.node.InlineRun;
@@ -38,6 +42,7 @@ import java.util.Objects;
 import static com.demcha.compose.document.layout.DocumentNodeAdapters.toImageData;
 import static com.demcha.compose.document.layout.DocumentNodeAdapters.toIndentStrategy;
 import static com.demcha.compose.document.layout.DocumentNodeAdapters.toPadding;
+import static com.demcha.compose.document.layout.DocumentNodeAdapters.toStroke;
 import static com.demcha.compose.document.layout.DocumentNodeAdapters.toTextStyle;
 import static com.demcha.compose.document.layout.NodeDefinitionSupport.EPS;
 
@@ -601,6 +606,8 @@ public final class TextFlowSupport {
                     width += measurement.textWidth(engineStyle, textRun.text());
                 } else if (run instanceof InlineImageRun imageRun) {
                     width += imageRun.width();
+                } else if (run instanceof InlineShapeRun shapeRun) {
+                    width += shapeRun.width();
                 }
             }
             return width <= innerWidth;
@@ -1253,6 +1260,8 @@ public final class TextFlowSupport {
                 }
             } else if (run instanceof InlineImageRun imageRun) {
                 currentLine.add(InlineImageToken.of(imageRun));
+            } else if (run instanceof InlineShapeRun shapeRun) {
+                currentLine.add(InlineShapeToken.of(shapeRun));
             }
         }
 
@@ -1290,15 +1299,19 @@ public final class TextFlowSupport {
             dominantBaselineFromBottom = defaultMetrics.baselineOffsetFromBottom();
         }
 
-        double maxImageHeight = 0.0;
+        double maxInlineGraphicHeight = 0.0;
         for (InlineLayoutToken token : trimmedTokens) {
             if (token instanceof InlineImageToken imageToken) {
-                if (imageToken.height() > maxImageHeight) {
-                    maxImageHeight = imageToken.height();
+                if (imageToken.height() > maxInlineGraphicHeight) {
+                    maxInlineGraphicHeight = imageToken.height();
+                }
+            } else if (token instanceof InlineShapeToken shapeToken) {
+                if (shapeToken.height() > maxInlineGraphicHeight) {
+                    maxInlineGraphicHeight = shapeToken.height();
                 }
             }
         }
-        double resolvedLineHeight = Math.max(dominantTextLineHeight, maxImageHeight);
+        double resolvedLineHeight = Math.max(dominantTextLineHeight, maxInlineGraphicHeight);
 
         List<ParagraphSpan> spans = new ArrayList<>(trimmedTokens.size());
         StringBuilder text = new StringBuilder();
@@ -1322,6 +1335,15 @@ public final class TextFlowSupport {
                         imageToken.baselineOffset(),
                         imageToken.linkOptions()));
                 width += imageToken.width();
+            } else if (token instanceof InlineShapeToken shapeToken) {
+                spans.add(new ParagraphShapeSpan(
+                        shapeToken.layers(),
+                        shapeToken.width(),
+                        shapeToken.height(),
+                        shapeToken.alignment(),
+                        shapeToken.baselineOffset(),
+                        shapeToken.linkOptions()));
+                width += shapeToken.width();
             }
         }
 
@@ -1537,7 +1559,7 @@ public final class TextFlowSupport {
         }
     }
 
-    private sealed interface InlineLayoutToken permits InlineTextToken, InlineImageToken {
+    private sealed interface InlineLayoutToken permits InlineTextToken, InlineImageToken, InlineShapeToken {
         double width();
     }
 
@@ -1579,6 +1601,36 @@ public final class TextFlowSupport {
         private static InlineImageToken of(InlineImageRun run) {
             return new InlineImageToken(
                     toImageData(run.imageData()),
+                    run.width(),
+                    run.height(),
+                    run.alignment(),
+                    run.baselineOffset(),
+                    run.linkOptions());
+        }
+    }
+
+    private record InlineShapeToken(
+            List<ResolvedShapeLayer> layers,
+            double width,
+            double height,
+            InlineImageAlignment alignment,
+            double baselineOffset,
+            DocumentLinkOptions linkOptions
+    ) implements InlineLayoutToken {
+        private InlineShapeToken {
+            alignment = alignment == null ? InlineImageAlignment.CENTER : alignment;
+        }
+
+        private static InlineShapeToken of(InlineShapeRun run) {
+            List<ResolvedShapeLayer> resolved = new ArrayList<>(run.layers().size());
+            for (ShapeLayer layer : run.layers()) {
+                resolved.add(new ResolvedShapeLayer(
+                        layer.outline(),
+                        layer.fill() == null ? null : layer.fill().color(),
+                        toStroke(layer.stroke())));
+            }
+            return new InlineShapeToken(
+                    List.copyOf(resolved),
                     run.width(),
                     run.height(),
                     run.alignment(),

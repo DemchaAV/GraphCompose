@@ -3,6 +3,7 @@ package com.demcha.compose.document.layout.definitions;
 import com.demcha.compose.document.layout.BoxConstraints;
 import com.demcha.compose.document.layout.CompositeLayoutSpec;
 import com.demcha.compose.document.layout.payloads.EllipseFragmentPayload;
+import com.demcha.compose.document.layout.payloads.PolygonFragmentPayload;
 import com.demcha.compose.document.layout.payloads.PreparedStackLayout;
 import com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload;
 import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
@@ -140,6 +141,15 @@ public final class ShapeContainerDefinition implements NodeDefinition<ShapeConta
                     width,
                     height,
                     new ShapeFragmentPayload(awtFill, stroke, r.cornerRadius(), null, null, null));
+        } else if (outline instanceof ShapeOutline.Polygon p) {
+            outlineFragment = new LayoutFragment(
+                    placement.path(),
+                    0,
+                    padLeft,
+                    padBottom,
+                    width,
+                    height,
+                    new PolygonFragmentPayload(p.points(), awtFill, stroke, null, null));
         } else {
             throw new IllegalStateException("Unsupported shape outline: " + outline);
         }

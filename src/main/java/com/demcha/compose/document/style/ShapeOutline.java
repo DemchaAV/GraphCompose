@@ -132,6 +132,37 @@ public sealed interface ShapeOutline permits
     }
 
     /**
+     * Selectable design of a checkmark ("✓") figure — the swappable "tick"
+     * variant used by {@link #checkmark(double, double, CheckmarkStyle)} and by
+     * inline checkbox factories. Adding a new look is one enum constant plus its
+     * vertex ring, so callers (and a future "pick your tick" UI) choose a style
+     * by name rather than hand-building geometry.
+     *
+     * @since 1.7.0
+     */
+    enum CheckmarkStyle {
+        /** The default tick: a slim six-vertex checkmark band. */
+        CLASSIC,
+        /** A bolder tick with a visibly thicker band. */
+        HEAVY
+    }
+
+    /**
+     * Selectable design of an arrow figure — the swappable "arrow" variant used
+     * by {@link #arrow(double, double, Direction, ArrowStyle)}. Each style is a
+     * normalized vertex ring pointed right and rotated to {@link Direction} at
+     * build time, so a new arrow look is one enum constant plus its ring.
+     *
+     * @since 1.7.0
+     */
+    enum ArrowStyle {
+        /** The default arrow: a seven-vertex block arrow with a shaft. */
+        BLOCK,
+        /** A solid triangular arrowhead ("▶") with no shaft. */
+        TRIANGLE
+    }
+
+    /**
      * Convenience factory for a circular {@link Ellipse}.
      *
      * @param diameter circle diameter in points
@@ -237,10 +268,32 @@ public sealed interface ShapeOutline permits
      * @return arrow polygon outline
      */
     static Polygon arrow(double width, double height, Direction direction) {
+        return arrow(width, height, direction, ArrowStyle.BLOCK);
+    }
+
+    /**
+     * Creates an arrow of the given {@link ArrowStyle} pointing in
+     * {@code direction} — the swappable-design overload. {@link ArrowStyle#BLOCK}
+     * reproduces {@link #arrow(double, double, Direction)} exactly.
+     *
+     * @param width outer width in points
+     * @param height outer height in points
+     * @param direction the way the arrow points
+     * @param style the arrow design
+     * @return arrow polygon outline
+     * @since 1.7.0
+     */
+    static Polygon arrow(double width, double height, Direction direction, ArrowStyle style) {
         Objects.requireNonNull(direction, "direction");
-        double[][] base = {
-                {0.00, 0.65}, {0.55, 0.65}, {0.55, 0.88},
-                {1.00, 0.50}, {0.55, 0.12}, {0.55, 0.35}, {0.00, 0.35}
+        Objects.requireNonNull(style, "style");
+        double[][] base = switch (style) {
+            case BLOCK -> new double[][] {
+                    {0.00, 0.65}, {0.55, 0.65}, {0.55, 0.88},
+                    {1.00, 0.50}, {0.55, 0.12}, {0.55, 0.35}, {0.00, 0.35}
+            };
+            case TRIANGLE -> new double[][] {
+                    {0.00, 0.00}, {1.00, 0.50}, {0.00, 1.00}
+            };
         };
         return new Polygon(width, height, directional(base, direction));
     }
@@ -294,11 +347,30 @@ public sealed interface ShapeOutline permits
      * @return checkmark polygon outline
      */
     static Polygon checkmark(double width, double height) {
-        double[][] points = {
-                {0.45, 0.00}, {1.00, 0.72}, {0.86, 0.92},
-                {0.42, 0.34}, {0.16, 0.58}, {0.04, 0.44}
+        return checkmark(width, height, CheckmarkStyle.CLASSIC);
+    }
+
+    /**
+     * Creates a checkmark ("✓") of the given {@link CheckmarkStyle} — the
+     * swappable-design overload. {@link CheckmarkStyle#CLASSIC} reproduces
+     * {@link #checkmark(double, double)} exactly.
+     *
+     * @param width outer width in points
+     * @param height outer height in points
+     * @param style the checkmark design
+     * @return checkmark polygon outline
+     * @since 1.7.0
+     */
+    static Polygon checkmark(double width, double height, CheckmarkStyle style) {
+        Objects.requireNonNull(style, "style");
+        List<ShapePoint> ring = switch (style) {
+            case CLASSIC -> toPoints(new double[][] {
+                    {0.45, 0.00}, {1.00, 0.72}, {0.86, 0.92},
+                    {0.42, 0.34}, {0.16, 0.58}, {0.04, 0.44}
+            });
+            case HEAVY -> toPoints(ShapeRings.checkmarkBand(0.13));
         };
-        return new Polygon(width, height, toPoints(points));
+        return new Polygon(width, height, ring);
     }
 
     /**

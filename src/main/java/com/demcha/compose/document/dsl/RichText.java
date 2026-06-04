@@ -399,6 +399,26 @@ public final class RichText {
     }
 
     /**
+     * Appends an inline arrow of the given {@link ShapeOutline.ArrowStyle} — the
+     * swappable-design overload, so a caller (or a future "pick your arrow" UI)
+     * can choose a block arrow, a triangular arrowhead, etc.
+     *
+     * @param size figure width and height in points
+     * @param direction the way the arrow points
+     * @param style the arrow design
+     * @param fill fill color
+     * @return this builder
+     * @since 1.7.0
+     */
+    public RichText arrow(double size,
+                          ShapeOutline.Direction direction,
+                          ShapeOutline.ArrowStyle style,
+                          DocumentColor fill) {
+        return shape(ShapeOutline.arrow(size, size, direction, style), fill, null,
+                InlineImageAlignment.CENTER, 0.0, null);
+    }
+
+    /**
      * Appends an inline chevron sized {@code size × size} pointing in
      * {@code direction} — a lighter directional separator for step lists.
      *
@@ -449,6 +469,79 @@ public final class RichText {
                 alignment == null ? InlineImageAlignment.CENTER : alignment,
                 baselineOffset,
                 linkOptions));
+        return this;
+    }
+
+    /**
+     * Appends an inline checkbox — a rounded square frame with an optional
+     * centred checkmark inside (the checked state), each in its own colour —
+     * for todo / checklist markers between text.
+     *
+     * @param size box width and height in points
+     * @param checked whether the checkmark is shown
+     * @param boxColor frame stroke color
+     * @param checkColor checkmark fill color
+     * @return this builder
+     */
+    public RichText checkbox(double size, boolean checked, DocumentColor boxColor, DocumentColor checkColor) {
+        runs.add(InlineShapeRun.checkbox(size, checked, boxColor, checkColor));
+        return this;
+    }
+
+    /**
+     * Appends an inline checkbox using one colour for both the frame and the
+     * checkmark.
+     *
+     * @param size box width and height in points
+     * @param checked whether the checkmark is shown
+     * @param color frame and checkmark color
+     * @return this builder
+     */
+    public RichText checkbox(double size, boolean checked, DocumentColor color) {
+        return checkbox(size, checked, color, color);
+    }
+
+    /**
+     * Appends an inline checkbox whose checked-state tick uses the given
+     * {@link ShapeOutline.CheckmarkStyle} — the "pick your tick" overload.
+     *
+     * @param size box width and height in points
+     * @param checked whether the checkmark is shown
+     * @param markStyle design of the checked-state tick
+     * @param boxColor frame stroke color
+     * @param checkColor checkmark fill color
+     * @return this builder
+     * @since 1.7.0
+     */
+    public RichText checkbox(double size,
+                             boolean checked,
+                             ShapeOutline.CheckmarkStyle markStyle,
+                             DocumentColor boxColor,
+                             DocumentColor checkColor) {
+        runs.add(InlineShapeRun.checkbox(size, checked, markStyle, boxColor, checkColor));
+        return this;
+    }
+
+    /**
+     * Appends an inline checkbox whose checked-state mark is an arbitrary
+     * {@link ShapeOutline} — the power-user overload. Size the mark to fit the
+     * frame (≈ {@code 0.6 × size}); it is drawn centred in the box.
+     *
+     * @param size box width and height in points
+     * @param checked whether the mark is shown
+     * @param mark checked-state mark geometry, already sized; must be non-null
+     *             when {@code checked} is {@code true}
+     * @param boxColor frame stroke color
+     * @param checkColor mark fill color
+     * @return this builder
+     * @since 1.7.0
+     */
+    public RichText checkbox(double size,
+                             boolean checked,
+                             ShapeOutline mark,
+                             DocumentColor boxColor,
+                             DocumentColor checkColor) {
+        runs.add(InlineShapeRun.checkbox(size, checked, mark, boxColor, checkColor));
         return this;
     }
 

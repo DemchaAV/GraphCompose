@@ -221,10 +221,10 @@ class RichTextTest {
         List<InlineRun> runs = RichText.empty().dot(6.0, RED).runs();
         assertThat(runs).hasSize(1);
         InlineShapeRun dot = (InlineShapeRun) runs.get(0);
-        assertThat(dot.outline()).isInstanceOf(ShapeOutline.Ellipse.class);
-        assertThat(dot.outline().width()).isEqualTo(6.0, within(EPS));
-        assertThat(dot.fill()).isEqualTo(RED);
-        assertThat(dot.stroke()).isNull();
+        assertThat(dot.layers().get(0).outline()).isInstanceOf(ShapeOutline.Ellipse.class);
+        assertThat(dot.layers().get(0).outline().width()).isEqualTo(6.0, within(EPS));
+        assertThat(dot.layers().get(0).fill()).isEqualTo(RED);
+        assertThat(dot.layers().get(0).stroke()).isNull();
         assertThat(dot.alignment()).isEqualTo(InlineImageAlignment.CENTER);
     }
 
@@ -241,8 +241,8 @@ class RichTextTest {
         assertThat(runs.get(1)).isInstanceOf(InlineShapeRun.class);
 
         InlineShapeRun outlined = (InlineShapeRun) runs.get(3);
-        assertThat(outlined.fill()).isNull();
-        assertThat(outlined.stroke()).isNotNull();
+        assertThat(outlined.layers().get(0).fill()).isNull();
+        assertThat(outlined.layers().get(0).stroke()).isNotNull();
     }
 
     @Test
@@ -250,9 +250,9 @@ class RichTextTest {
         InlineShapeRun diamond = (InlineShapeRun) RichText.empty().diamond(8, ACCENT).runs().get(0);
         InlineShapeRun star = (InlineShapeRun) RichText.empty().star(8, ACCENT).runs().get(0);
 
-        assertThat(diamond.outline()).isInstanceOf(ShapeOutline.Polygon.class);
-        assertThat(star.outline()).isInstanceOf(ShapeOutline.Polygon.class);
-        assertThat(((ShapeOutline.Polygon) star.outline()).points()).hasSize(10);
+        assertThat(diamond.layers().get(0).outline()).isInstanceOf(ShapeOutline.Polygon.class);
+        assertThat(star.layers().get(0).outline()).isInstanceOf(ShapeOutline.Polygon.class);
+        assertThat(((ShapeOutline.Polygon) star.layers().get(0).outline()).points()).hasSize(10);
     }
 
     @Test
@@ -260,7 +260,7 @@ class RichTextTest {
         InlineShapeRun run = (InlineShapeRun) RichText.empty()
                 .shape(new ShapeOutline.Rectangle(10, 6), RED, null, InlineImageAlignment.BASELINE, 1.5, null)
                 .runs().get(0);
-        assertThat(run.outline()).isInstanceOf(ShapeOutline.Rectangle.class);
+        assertThat(run.layers().get(0).outline()).isInstanceOf(ShapeOutline.Rectangle.class);
         assertThat(run.alignment()).isEqualTo(InlineImageAlignment.BASELINE);
         assertThat(run.baselineOffset()).isEqualTo(1.5, within(EPS));
     }
@@ -285,7 +285,38 @@ class RichTextTest {
         InlineShapeRun chevron = (InlineShapeRun) RichText.empty()
                 .chevron(8, ShapeOutline.Direction.LEFT, ACCENT).runs().get(0);
 
-        assertThat(arrow.outline()).isInstanceOf(ShapeOutline.Polygon.class);
-        assertThat(chevron.outline()).isInstanceOf(ShapeOutline.Polygon.class);
+        assertThat(arrow.layers().get(0).outline()).isInstanceOf(ShapeOutline.Polygon.class);
+        assertThat(chevron.layers().get(0).outline()).isInstanceOf(ShapeOutline.Polygon.class);
+    }
+
+    @Test
+    void checkboxAppendsCheckedAndUncheckedShapeRuns() {
+        InlineShapeRun checked = (InlineShapeRun) RichText.empty().checkbox(10, true, ACCENT).runs().get(0);
+        InlineShapeRun unchecked = (InlineShapeRun) RichText.empty().checkbox(10, false, ACCENT).runs().get(0);
+
+        assertThat(checked.layers()).hasSize(2);
+        assertThat(unchecked.layers()).hasSize(1);
+    }
+
+    @Test
+    void checkboxStyleAndRawMarkOverloadsReachInlineShapeRun() {
+        InlineShapeRun styled = (InlineShapeRun) RichText.empty()
+                .checkbox(10, true, ShapeOutline.CheckmarkStyle.HEAVY, ACCENT, ACCENT).runs().get(0);
+        InlineShapeRun raw = (InlineShapeRun) RichText.empty()
+                .checkbox(10, true, ShapeOutline.plus(6, 6), ACCENT, ACCENT).runs().get(0);
+
+        assertThat(styled.layers()).hasSize(2);
+        assertThat(raw.layers().get(1).outline()).isInstanceOf(ShapeOutline.Polygon.class);
+    }
+
+    @Test
+    void arrowStyleOverloadProducesChosenArrowDesign() {
+        InlineShapeRun block = (InlineShapeRun) RichText.empty()
+                .arrow(8, ShapeOutline.Direction.RIGHT, ShapeOutline.ArrowStyle.BLOCK, ACCENT).runs().get(0);
+        InlineShapeRun triangle = (InlineShapeRun) RichText.empty()
+                .arrow(8, ShapeOutline.Direction.RIGHT, ShapeOutline.ArrowStyle.TRIANGLE, ACCENT).runs().get(0);
+
+        assertThat(((ShapeOutline.Polygon) block.layers().get(0).outline()).points()).hasSize(7);
+        assertThat(((ShapeOutline.Polygon) triangle.layers().get(0).outline()).points()).hasSize(3);
     }
 }

@@ -60,7 +60,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | Example | What it shows | Preview · Source |
 |---|---|---|
 | [Rich text](#rich-text) | Every `RichText` method (bold / italic / underline / link / colour / accent / size / append) | [PDF](../assets/readme/examples/rich-text-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/text/RichTextShowcaseExample.java) |
-| [Inline shapes](#inline-shapes) | `InlineShapeRun` — dots, arrows, chevrons, diamonds, stars, checkmarks drawn as geometry on the text baseline | [PDF](../assets/readme/examples/inline-shapes.pdf) · [Source](src/main/java/com/demcha/examples/features/text/InlineShapesExample.java) |
+| [Inline shapes](#inline-shapes) | `InlineShapeRun` — dots, arrows, chevrons, diamonds, stars, checkmarks and checkboxes drawn as geometry on the text baseline | [PDF](../assets/readme/examples/inline-shapes.pdf) · [Source](src/main/java/com/demcha/examples/features/text/InlineShapesExample.java) |
 | [Section presets](#section-presets) | `pageBackground`, `band`, `softPanel`, `accentLeft / Right / Top / Bottom`, per-corner `DocumentCornerRadius` | [PDF](../assets/readme/examples/section-presets.pdf) · [Source](src/main/java/com/demcha/examples/features/text/SectionPresetsExample.java) |
 | [Nested lists](#nested-lists-v16) | `ListBuilder.addItem(label, Consumer)` — depth cascade, per-depth markers, mixed flat / nested authoring | [PDF](../assets/readme/examples/nested-list-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/lists/NestedListExample.java) |
 | [Composed table cells](#composed-table-cells-v16) | `DocumentTableCell.node(DocumentNode)` — paragraphs, lists, sub-tables inside cells with two-pass measurement | [PDF](../assets/readme/examples/composed-table-cell-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/tables/ComposedTableCellExample.java) |
@@ -414,8 +414,10 @@ visual reference when picking which call to make for inline text.
 
 `InlineShapeRun` (`@since 1.7.0`) draws geometric figures on the text
 baseline from geometry — no font glyph needed — so rating dots, arrows,
-chevrons, diamonds, stars, checkmarks and any other `ShapeOutline` work
-between text and as list bullets, at any size and colour.
+chevrons, diamonds, stars, checkmarks, checkboxes (checked / unchecked
+todo markers) and any other `ShapeOutline` work between text and as list
+bullets, at any size and colour. The tick and arrow designs are swappable
+via `CheckmarkStyle` / `ArrowStyle`.
 
 ```java
 .addRich(rich -> rich
@@ -425,7 +427,8 @@ between text and as list bullets, at any size and colour.
         .arrow(8, ShapeOutline.Direction.RIGHT, accent)
         .plain(" Published"))
 // also: dot(size, fill), diamond, triangle, star, chevron,
-// or shape(ShapeOutline.checkmark(size, size), fill) for any figure
+// checkbox(size, checked, color) for todo markers, and
+// arrow(size, dir, ArrowStyle.TRIANGLE, fill) to pick a design variant
 ```
 
 [📄 View PDF](../assets/readme/examples/inline-shapes.pdf) ·

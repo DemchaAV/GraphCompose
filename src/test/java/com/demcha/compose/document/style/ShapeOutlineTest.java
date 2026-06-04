@@ -146,4 +146,53 @@ class ShapeOutlineTest {
             }
         }
     }
+
+    @Test
+    void checkmarkDefaultEqualsClassicStyle() {
+        assertThat(ShapeOutline.checkmark(10, 10).points())
+                .isEqualTo(ShapeOutline.checkmark(10, 10, ShapeOutline.CheckmarkStyle.CLASSIC).points());
+    }
+
+    @Test
+    void heavyCheckmarkDiffersFromClassicButKeepsSixVerticesInBox() {
+        ShapeOutline.Polygon classic = ShapeOutline.checkmark(10, 10, ShapeOutline.CheckmarkStyle.CLASSIC);
+        ShapeOutline.Polygon heavy = ShapeOutline.checkmark(10, 10, ShapeOutline.CheckmarkStyle.HEAVY);
+
+        assertThat(heavy.points()).hasSize(6);
+        assertThat(heavy.points()).isNotEqualTo(classic.points());
+        for (ShapePoint point : heavy.points()) {
+            assertThat(point.x()).isBetween(0.0, 1.0);
+            assertThat(point.y()).isBetween(0.0, 1.0);
+        }
+    }
+
+    @Test
+    void arrowDefaultEqualsBlockStyle() {
+        assertThat(ShapeOutline.arrow(10, 10, ShapeOutline.Direction.RIGHT).points())
+                .isEqualTo(ShapeOutline.arrow(10, 10, ShapeOutline.Direction.RIGHT,
+                        ShapeOutline.ArrowStyle.BLOCK).points());
+    }
+
+    @Test
+    void triangleArrowHasThreeVerticesAndDirectionalTip() {
+        assertThat(ShapeOutline.arrow(10, 10, ShapeOutline.Direction.RIGHT, ShapeOutline.ArrowStyle.TRIANGLE).points())
+                .hasSize(3)
+                .anySatisfy(p -> {
+                    assertThat(p.x()).isEqualTo(1.0, within(EPS));
+                    assertThat(p.y()).isEqualTo(0.5, within(EPS));
+                });
+        assertThat(ShapeOutline.arrow(10, 10, ShapeOutline.Direction.UP, ShapeOutline.ArrowStyle.TRIANGLE).points())
+                .anySatisfy(p -> {
+                    assertThat(p.x()).isEqualTo(0.5, within(EPS));
+                    assertThat(p.y()).isEqualTo(1.0, within(EPS));
+                });
+    }
+
+    @Test
+    void checkmarkAndArrowStyleOverloadsRejectNullStyle() {
+        assertThatThrownBy(() -> ShapeOutline.checkmark(10, 10, null))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> ShapeOutline.arrow(10, 10, ShapeOutline.Direction.RIGHT, null))
+                .isInstanceOf(NullPointerException.class);
+    }
 }

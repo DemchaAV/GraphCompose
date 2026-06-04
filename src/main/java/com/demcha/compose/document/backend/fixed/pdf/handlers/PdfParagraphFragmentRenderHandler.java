@@ -5,6 +5,7 @@ import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ParagraphShapeSpan;
+import com.demcha.compose.document.layout.payloads.ResolvedShapeLayer;
 import com.demcha.compose.document.layout.payloads.ParagraphImageSpan;
 import com.demcha.compose.document.layout.payloads.ParagraphLine;
 import com.demcha.compose.document.layout.payloads.ParagraphSpan;
@@ -206,23 +207,27 @@ public final class PdfParagraphFragmentRenderHandler
                 textAscent,
                 baselineOffsetFromBottom,
                 lineHeight);
-        float x = (float) cursorX;
-        float y = (float) bottom;
-        float w = (float) width;
-        float h = (float) height;
-        ShapeOutline outline = span.outline();
-        PdfShapeGeometry.fillAndStrokePath(stream, span.fillColor(), span.stroke(), s -> {
-            if (outline instanceof ShapeOutline.Ellipse) {
-                PdfEllipseFragmentRenderHandler.drawEllipse(s, x, y, w, h);
-            } else if (outline instanceof ShapeOutline.Rectangle) {
-                s.addRect(x, y, w, h);
-            } else if (outline instanceof ShapeOutline.RoundedRectangle r) {
-                float radius = (float) Math.min(r.cornerRadius(), Math.min(w, h) / 2.0f);
-                PdfShapeFragmentRenderHandler.drawRoundedRectangle(s, x, y, w, h, radius, radius, radius, radius);
-            } else if (outline instanceof ShapeOutline.Polygon p) {
-                PdfShapeGeometry.addPolygonPath(s, x, y, w, h, p.points());
-            }
-        });
+        for (ResolvedShapeLayer layer : span.layers()) {
+            ShapeOutline outline = layer.outline();
+            float lw = (float) outline.width();
+            float lh = (float) outline.height();
+            // Each layer is centred within the run's bounding box, so a smaller
+            // checkmark sits inside its larger checkbox frame.
+            float lx = (float) (cursorX + (width - outline.width()) / 2.0);
+            float ly = (float) (bottom + (height - outline.height()) / 2.0);
+            PdfShapeGeometry.fillAndStrokePath(stream, layer.fillColor(), layer.stroke(), s -> {
+                if (outline instanceof ShapeOutline.Ellipse) {
+                    PdfEllipseFragmentRenderHandler.drawEllipse(s, lx, ly, lw, lh);
+                } else if (outline instanceof ShapeOutline.Rectangle) {
+                    s.addRect(lx, ly, lw, lh);
+                } else if (outline instanceof ShapeOutline.RoundedRectangle r) {
+                    float radius = (float) Math.min(r.cornerRadius(), Math.min(lw, lh) / 2.0f);
+                    PdfShapeFragmentRenderHandler.drawRoundedRectangle(s, lx, ly, lw, lh, radius, radius, radius, radius);
+                } else if (outline instanceof ShapeOutline.Polygon p) {
+                    PdfShapeGeometry.addPolygonPath(s, lx, ly, lw, lh, p.points());
+                }
+            });
+        }
     }
 
 }

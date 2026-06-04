@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class InlineShapeRenderTest {
 
     private static final DocumentColor ACCENT = DocumentColor.of(new java.awt.Color(40, 90, 180));
+    private static final DocumentColor CHECK = DocumentColor.of(new java.awt.Color(34, 130, 92));
 
     @Test
     void ratingShapesRenderEndToEndKeepingTextWithoutGlyphSubstitution() throws Exception {
@@ -103,6 +104,74 @@ class InlineShapeRenderTest {
                             .shape(ShapeOutline.regularPolygon(8, 8, 6), ACCENT))
                     .build();
             assertThat(session.toPdfBytes()).isNotEmpty();
+        }
+    }
+
+    @Test
+    void checkboxRendersCheckedStateWithMoreInkThanUnchecked() throws Exception {
+        int checked = countColorNear(renderCheckbox(true), 34, 130, 92, 45);
+        int unchecked = countColorNear(renderCheckbox(false), 34, 130, 92, 45);
+
+        // The empty box paints its frame stroke; the checked box stamps a filled
+        // tick inside the same frame, so it must add ink — that is exactly the
+        // "marked vs unmarked" distinction a checklist needs.
+        assertThat(unchecked).as("the unchecked frame still paints").isGreaterThan(0);
+        assertThat(checked).as("the checked tick adds ink inside the frame").isGreaterThan(unchecked);
+    }
+
+    @Test
+    void checkmarkAndArrowVariantsRenderEndToEnd() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(260, 140)
+                .margin(14, 14, 14, 14)
+                .create()) {
+            session.dsl()
+                    .pageFlow()
+                    .name("Flow")
+                    .addParagraph(paragraph -> paragraph
+                            .inlineText("Variants ")
+                            .checkbox(12, true, ShapeOutline.CheckmarkStyle.HEAVY, CHECK, CHECK)
+                            .arrow(9, ShapeOutline.Direction.RIGHT, ShapeOutline.ArrowStyle.TRIANGLE, ACCENT)
+                            .shape(ShapeOutline.checkmark(9, 9, ShapeOutline.CheckmarkStyle.HEAVY), CHECK))
+                    .build();
+            assertThat(session.toPdfBytes()).isNotEmpty();
+        }
+    }
+
+    private static byte[] renderCheckbox(boolean checked) throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(160, 90)
+                .margin(14, 14, 14, 14)
+                .create()) {
+            session.dsl()
+                    .pageFlow()
+                    .name("Flow")
+                    .addParagraph(paragraph -> paragraph
+                            .inlineText("Task ")
+                            .checkbox(16, checked, CHECK, CHECK))
+                    .build();
+            return session.toPdfBytes();
+        }
+    }
+
+    private static int countColorNear(byte[] pdf, int r, int g, int b, int tolerance) throws Exception {
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            BufferedImage image = new PDFRenderer(document).renderImageWithDPI(0, 144);
+            int count = 0;
+            for (int y = 0; y < image.getHeight(); y++) {
+                for (int x = 0; x < image.getWidth(); x++) {
+                    int rgb = image.getRGB(x, y);
+                    int rr = (rgb >> 16) & 0xFF;
+                    int gg = (rgb >> 8) & 0xFF;
+                    int bb = rgb & 0xFF;
+                    if (Math.abs(rr - r) <= tolerance
+                            && Math.abs(gg - g) <= tolerance
+                            && Math.abs(bb - b) <= tolerance) {
+                        count++;
+                    }
+                }
+            }
+            return count;
         }
     }
 

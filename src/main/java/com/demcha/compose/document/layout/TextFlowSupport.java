@@ -1,6 +1,7 @@
 package com.demcha.compose.document.layout;
 
 import com.demcha.compose.document.layout.payloads.ParagraphShapeSpan;
+import com.demcha.compose.document.layout.payloads.ResolvedShapeLayer;
 import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ParagraphImageSpan;
 import com.demcha.compose.document.layout.payloads.ParagraphLine;
@@ -11,6 +12,7 @@ import com.demcha.compose.document.layout.payloads.PreparedListLayout;
 import com.demcha.compose.document.layout.payloads.PreparedParagraphLayout;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.InlineShapeRun;
+import com.demcha.compose.document.node.ShapeLayer;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.InlineImageRun;
 import com.demcha.compose.document.node.InlineRun;
@@ -24,9 +26,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextAutoSize;
 import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.document.style.ShapeOutline;
 import com.demcha.compose.engine.components.content.ImageData;
-import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.content.text.TextDataBody;
 import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
 import com.demcha.compose.engine.components.content.text.TextStyle;
@@ -35,7 +35,6 @@ import com.demcha.compose.engine.components.style.Padding;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 import com.demcha.compose.engine.text.markdown.MarkDownParser;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -608,7 +607,7 @@ public final class TextFlowSupport {
                 } else if (run instanceof InlineImageRun imageRun) {
                     width += imageRun.width();
                 } else if (run instanceof InlineShapeRun shapeRun) {
-                    width += shapeRun.outline().width();
+                    width += shapeRun.width();
                 }
             }
             return width <= innerWidth;
@@ -1338,9 +1337,9 @@ public final class TextFlowSupport {
                 width += imageToken.width();
             } else if (token instanceof InlineShapeToken shapeToken) {
                 spans.add(new ParagraphShapeSpan(
-                        shapeToken.outline(),
-                        shapeToken.fillColor(),
-                        shapeToken.stroke(),
+                        shapeToken.layers(),
+                        shapeToken.width(),
+                        shapeToken.height(),
                         shapeToken.alignment(),
                         shapeToken.baselineOffset(),
                         shapeToken.linkOptions()));
@@ -1611,9 +1610,9 @@ public final class TextFlowSupport {
     }
 
     private record InlineShapeToken(
-            ShapeOutline outline,
-            Color fillColor,
-            Stroke stroke,
+            List<ResolvedShapeLayer> layers,
+            double width,
+            double height,
             InlineImageAlignment alignment,
             double baselineOffset,
             DocumentLinkOptions linkOptions
@@ -1622,20 +1621,18 @@ public final class TextFlowSupport {
             alignment = alignment == null ? InlineImageAlignment.CENTER : alignment;
         }
 
-        @Override
-        public double width() {
-            return outline.width();
-        }
-
-        private double height() {
-            return outline.height();
-        }
-
         private static InlineShapeToken of(InlineShapeRun run) {
+            List<ResolvedShapeLayer> resolved = new ArrayList<>(run.layers().size());
+            for (ShapeLayer layer : run.layers()) {
+                resolved.add(new ResolvedShapeLayer(
+                        layer.outline(),
+                        layer.fill() == null ? null : layer.fill().color(),
+                        toStroke(layer.stroke())));
+            }
             return new InlineShapeToken(
-                    run.outline(),
-                    run.fill() == null ? null : run.fill().color(),
-                    toStroke(run.stroke()),
+                    List.copyOf(resolved),
+                    run.width(),
+                    run.height(),
                     run.alignment(),
                     run.baselineOffset(),
                     run.linkOptions());

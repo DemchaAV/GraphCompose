@@ -21,10 +21,12 @@ import java.util.function.Consumer;
  * Runnable showcase for inline shape runs ({@code @since 1.7.0}).
  *
  * <p>Geometric figures — rating dots, arrows, chevrons, diamonds, stars,
- * checkmarks, plus signs, regular polygons — drawn on the text baseline from
- * geometry (no font glyphs), used between text and as list bullets. Each row
- * pairs the rendered output with the {@code ParagraphBuilder} / {@code RichText}
- * call that produced it, so the PDF reads like a quick reference.</p>
+ * checkmarks, plus signs, regular polygons and checkboxes (checked / unchecked
+ * todo markers) — drawn on the text baseline from geometry (no font glyphs),
+ * used between text and as list bullets. The closing rows show the swappable
+ * {@code CheckmarkStyle} / {@code ArrowStyle} designs. Each row pairs the
+ * rendered output with the {@code ParagraphBuilder} / {@code RichText} call that
+ * produced it, so the PDF reads like a quick reference.</p>
  */
 public final class InlineShapesExample {
     private static final BusinessTheme THEME = BusinessTheme.modern();
@@ -88,15 +90,17 @@ public final class InlineShapesExample {
                             .softPanel(PANEL, 6, 12)
                             .spacing(5)
                             .addParagraph(p -> p
-                                    .text("shape(ShapeOutline.checkmark(...)/plus(...), fill) — checklist markers")
+                                    .text("checkbox(size, checked, color) — todo markers, checked and unchecked")
                                     .textStyle(caption())
                                     .margin(DocumentInsets.zero()))
-                            .addRich(rich -> rich.shape(ShapeOutline.checkmark(9, 9), GREEN)
-                                    .plain("  Figures render from geometry"))
-                            .addRich(rich -> rich.shape(ShapeOutline.checkmark(9, 9), GREEN)
-                                    .plain("  They reuse the ShapeOutline taxonomy"))
-                            .addRich(rich -> rich.shape(ShapeOutline.plus(9, 9), ACCENT)
-                                    .plain("  A new figure is one factory away")))
+                            .addRich(rich -> rich.checkbox(10, true, GREEN)
+                                    .plain("  A checked box stamps a filled tick inside the frame"))
+                            .addRich(rich -> rich.checkbox(10, true, GREEN)
+                                    .plain("  Both states share the same geometry pipeline"))
+                            .addRich(rich -> rich.checkbox(10, false, MUTED)
+                                    .plain("  An empty box is the unchecked state"))
+                            .addRich(rich -> rich.checkbox(10, false, MUTED)
+                                    .plain("  No font glyph, so it renders anywhere")))
                     .addSection("Bullets", section -> labelledRow(section,
                             "any ShapeOutline as a list bullet",
                             rich -> rich
@@ -105,6 +109,26 @@ public final class InlineShapesExample {
                                     .triangle(7, BRAND).plain(" Triangle     ")
                                     .arrow(8, ShapeOutline.Direction.RIGHT, BRAND).plain(" Arrow     ")
                                     .shape(ShapeOutline.regularPolygon(8, 8, 6), MUTED).plain(" Hexagon")))
+                    .addSection("Variants", section -> section
+                            .softPanel(PANEL, 6, 12)
+                            .spacing(5)
+                            .addParagraph(p -> p
+                                    .text("checkmark(w, h, CheckmarkStyle) · arrow(w, h, Direction, ArrowStyle) — swap the design")
+                                    .textStyle(caption())
+                                    .margin(DocumentInsets.zero()))
+                            .addRich(rich -> rich
+                                    .plain("Tick ")
+                                    .shape(ShapeOutline.checkmark(9, 9, ShapeOutline.CheckmarkStyle.CLASSIC), GREEN)
+                                    .plain(" classic    ")
+                                    .shape(ShapeOutline.checkmark(9, 9, ShapeOutline.CheckmarkStyle.HEAVY), GREEN)
+                                    .plain(" heavy         Arrow ")
+                                    .arrow(9, ShapeOutline.Direction.RIGHT, ShapeOutline.ArrowStyle.BLOCK, ACCENT)
+                                    .plain(" block    ")
+                                    .arrow(9, ShapeOutline.Direction.RIGHT, ShapeOutline.ArrowStyle.TRIANGLE, ACCENT)
+                                    .plain(" triangle"))
+                            .addRich(rich -> rich
+                                    .checkbox(11, true, ShapeOutline.CheckmarkStyle.HEAVY, BRAND, BRAND)
+                                    .plain("  A checkbox takes any tick variant — here HEAVY")))
                     .addSection("Footer", section -> section
                             .accentTop(THEME.palette().rule(), 0.6)
                             .padding(new DocumentInsets(8, 0, 0, 0))

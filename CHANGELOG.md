@@ -32,6 +32,27 @@ API turns the open cycle into a minor.
   (every other kind is reachable through `shape(ShapeOutline, ...)`);
   `ShapeContainerBuilder` exposes matching block outlines. Rectangle,
   rounded-rectangle and ellipse shape containers are unchanged.
+- **Inline checkboxes + composite (multi-layer) inline figures.** An inline
+  shape run is now a stack of paint layers
+  (`com.demcha.compose.document.node.ShapeLayer`, `@since 1.7.0`) drawn overlaid
+  and centred, so a figure can compose several outlines — each with its own
+  fill/stroke — and still measure and place as one unit on the baseline.
+  `ParagraphBuilder` / `RichText` gain `checkbox(size, checked, color)` /
+  `checkbox(size, checked, boxColor, checkColor)` (`@since 1.7.0`): a rounded
+  frame plus, in the checked state, a centred tick — the todo / checklist marker
+  for "some items done, some not". The single-outline `InlineShapeRun`
+  convenience constructors are unchanged; every other kind still renders as one
+  layer.
+- **Swappable tick and arrow designs (the "pick your figure" seam).**
+  `ShapeOutline` adds `CheckmarkStyle` (`CLASSIC`, `HEAVY`) and `ArrowStyle`
+  (`BLOCK`, `TRIANGLE`) enums plus the overloads
+  `checkmark(w, h, CheckmarkStyle)` and `arrow(w, h, Direction, ArrowStyle)`
+  (`@since 1.7.0`); the no-style factories delegate to `CLASSIC` / `BLOCK`, so
+  the default look is unchanged. `checkbox(...)`, `RichText.arrow(...)` and
+  `ParagraphBuilder.arrow(...)` gain matching style overloads, and `checkbox`
+  also accepts a raw `ShapeOutline` mark for fully custom ticks. Adding a new
+  design is one enum constant plus its vertex ring — the foundation for letting
+  a caller choose which tick or arrow to render.
 
 ## v1.6.9 — 2026-06-03
 

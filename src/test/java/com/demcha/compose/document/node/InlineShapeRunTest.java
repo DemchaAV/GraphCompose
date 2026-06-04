@@ -20,11 +20,13 @@ class InlineShapeRunTest {
     @Test
     void filledShapeConvenienceConstructorKeepsOutlineAndDefaults() {
         InlineShapeRun run = new InlineShapeRun(ShapeOutline.circle(6.0), FILL);
+        ShapeLayer layer = run.layers().get(0);
 
-        assertThat(run.outline()).isEqualTo(ShapeOutline.circle(6.0));
-        assertThat(run.outline().width()).isEqualTo(6.0, within(EPS));
-        assertThat(run.fill()).isSameAs(FILL);
-        assertThat(run.stroke()).isNull();
+        assertThat(run.layers()).hasSize(1);
+        assertThat(layer.outline()).isEqualTo(ShapeOutline.circle(6.0));
+        assertThat(layer.outline().width()).isEqualTo(6.0, within(EPS));
+        assertThat(layer.fill()).isSameAs(FILL);
+        assertThat(layer.stroke()).isNull();
         assertThat(run.alignment()).isEqualTo(InlineImageAlignment.CENTER);
         assertThat(run.baselineOffset()).isEqualTo(0.0, within(EPS));
         assertThat(run.linkOptions()).isNull();
@@ -32,20 +34,21 @@ class InlineShapeRunTest {
 
     @Test
     void carriesAnyOutlineKind() {
-        assertThat(new InlineShapeRun(ShapeOutline.diamond(8, 8), FILL).outline())
+        assertThat(new InlineShapeRun(ShapeOutline.diamond(8, 8), FILL).layers().get(0).outline())
                 .isInstanceOf(ShapeOutline.Polygon.class);
-        assertThat(new InlineShapeRun(ShapeOutline.star(8, 8), FILL).outline())
+        assertThat(new InlineShapeRun(ShapeOutline.star(8, 8), FILL).layers().get(0).outline())
                 .isInstanceOf(ShapeOutline.Polygon.class);
-        assertThat(new InlineShapeRun(new ShapeOutline.Rectangle(8, 4), FILL).outline())
+        assertThat(new InlineShapeRun(new ShapeOutline.Rectangle(8, 4), FILL).layers().get(0).outline())
                 .isInstanceOf(ShapeOutline.Rectangle.class);
     }
 
     @Test
     void outlinedOnlyShapeIsAllowed() {
         InlineShapeRun run = new InlineShapeRun(ShapeOutline.circle(8), null, STROKE, null, 0.0, null);
+        ShapeLayer layer = run.layers().get(0);
 
-        assertThat(run.fill()).isNull();
-        assertThat(run.stroke()).isSameAs(STROKE);
+        assertThat(layer.fill()).isNull();
+        assertThat(layer.stroke()).isSameAs(STROKE);
         assertThat(run.alignment()).isEqualTo(InlineImageAlignment.CENTER);
     }
 
@@ -83,5 +86,79 @@ class InlineShapeRunTest {
     void filledConvenienceConstructorRejectsNullFill() {
         assertThatThrownBy(() -> new InlineShapeRun(ShapeOutline.circle(6), null))
                 .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void checkedCheckboxStacksFrameAndMarkLayers() {
+        InlineShapeRun box = InlineShapeRun.checkbox(12, true, DocumentColor.BLACK, FILL);
+
+        assertThat(box.layers()).hasSize(2);
+        ShapeLayer frame = box.layers().get(0);
+        assertThat(frame.outline()).isInstanceOf(ShapeOutline.RoundedRectangle.class);
+        assertThat(frame.fill()).isNull();
+        assertThat(frame.stroke()).isNotNull();
+        ShapeLayer mark = box.layers().get(1);
+        assertThat(mark.outline()).isInstanceOf(ShapeOutline.Polygon.class);
+        assertThat(mark.fill()).isSameAs(FILL);
+        assertThat(box.width()).isEqualTo(12.0, within(EPS));
+        assertThat(box.height()).isEqualTo(12.0, within(EPS));
+    }
+
+    @Test
+    void uncheckedCheckboxIsFrameOnly() {
+        InlineShapeRun box = InlineShapeRun.checkbox(12, false, DocumentColor.BLACK, FILL);
+
+        assertThat(box.layers()).hasSize(1);
+        assertThat(box.layers().get(0).fill()).isNull();
+        assertThat(box.layers().get(0).stroke()).isNotNull();
+    }
+
+    @Test
+    void defaultCheckboxUsesClassicTick() {
+        ShapeOutline preset = InlineShapeRun.checkbox(12, true, DocumentColor.BLACK, FILL)
+                .layers().get(1).outline();
+        ShapeOutline classic = InlineShapeRun.checkbox(12, true, ShapeOutline.CheckmarkStyle.CLASSIC,
+                        DocumentColor.BLACK, FILL)
+                .layers().get(1).outline();
+
+        assertThat(((ShapeOutline.Polygon) preset).points())
+                .isEqualTo(((ShapeOutline.Polygon) classic).points());
+    }
+
+    @Test
+    void checkboxStyleOverloadSwapsTheTickDesign() {
+        ShapeOutline classic = InlineShapeRun.checkbox(12, true, ShapeOutline.CheckmarkStyle.CLASSIC,
+                        DocumentColor.BLACK, FILL)
+                .layers().get(1).outline();
+        ShapeOutline heavy = InlineShapeRun.checkbox(12, true, ShapeOutline.CheckmarkStyle.HEAVY,
+                        DocumentColor.BLACK, FILL)
+                .layers().get(1).outline();
+
+        assertThat(((ShapeOutline.Polygon) heavy).points())
+                .isNotEqualTo(((ShapeOutline.Polygon) classic).points());
+    }
+
+    @Test
+    void rawMarkCheckboxUsesGivenOutlineAndGuardsNullWhenChecked() {
+        ShapeOutline mark = ShapeOutline.plus(7, 7);
+        InlineShapeRun box = InlineShapeRun.checkbox(12, true, mark, DocumentColor.BLACK, FILL);
+        assertThat(box.layers().get(1).outline()).isSameAs(mark);
+
+        assertThatThrownBy(() ->
+                InlineShapeRun.checkbox(12, true, (ShapeOutline) null, DocumentColor.BLACK, FILL))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("mark");
+
+        // An unchecked box ignores the mark, so a null mark is tolerated.
+        assertThat(InlineShapeRun.checkbox(12, false, (ShapeOutline) null, DocumentColor.BLACK, FILL).layers())
+                .hasSize(1);
+    }
+
+    @Test
+    void checkboxStyleOverloadRejectsNullStyle() {
+        assertThatThrownBy(() ->
+                InlineShapeRun.checkbox(12, true, (ShapeOutline.CheckmarkStyle) null, DocumentColor.BLACK, FILL))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("markStyle");
     }
 }

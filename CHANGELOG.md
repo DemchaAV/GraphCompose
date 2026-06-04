@@ -53,6 +53,14 @@ API turns the open cycle into a minor.
   also accepts a raw `ShapeOutline` mark for fully custom ticks. Adding a new
   design is one enum constant plus its vertex ring — the foundation for letting
   a caller choose which tick or arrow to render.
+- **`softPanel(...)` gains stroke overloads — rounded fill + outline in one node.**
+  `AbstractFlowBuilder.softPanel(color, radius, padding, stroke)` and
+  `softPanel(color, cornerRadius, padding, stroke)` (`@since 1.7.0`) apply a
+  border stroke alongside the panel fill on the same flow node (section, module,
+  page flow), so a rounded, padded background with a thin outline no longer needs
+  a separate wrapping node. Equivalent to the always-available
+  `softPanel(...).stroke(...)` chain — these overloads just make the one-node
+  form discoverable.
 
 ### Fixed
 

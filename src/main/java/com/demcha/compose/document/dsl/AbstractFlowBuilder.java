@@ -260,6 +260,42 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     }
 
     /**
+     * Soft-panel preset (scalar radius) plus a uniform border stroke, applied to
+     * the same node. Equivalent to
+     * {@code softPanel(color, radius, padding).stroke(stroke)} — a rounded,
+     * padded fill with a thin outline, without a separate wrapping node.
+     *
+     * @param color panel fill color
+     * @param radius corner radius in points
+     * @param padding inner padding in points (applied uniformly on all sides)
+     * @param stroke border stroke, or {@code null} for no border
+     * @return this builder
+     * @since 1.7.0
+     */
+    public T softPanel(DocumentColor color, double radius, double padding, DocumentStroke stroke) {
+        softPanel(color, radius, padding);
+        return stroke(stroke);
+    }
+
+    /**
+     * Soft-panel preset (per-corner radius) plus a uniform border stroke, applied
+     * to the same node. Equivalent to
+     * {@code softPanel(color, cornerRadius, padding).stroke(stroke)}.
+     *
+     * @param color panel fill color
+     * @param cornerRadius per-corner radii (see {@link DocumentCornerRadius})
+     * @param padding inner padding in points (applied uniformly on all sides)
+     * @param stroke border stroke, or {@code null} for no border
+     * @return this builder
+     * @since 1.7.0
+     */
+    public T softPanel(DocumentColor color, DocumentCornerRadius cornerRadius, double padding,
+                       DocumentStroke stroke) {
+        softPanel(color, cornerRadius, padding);
+        return stroke(stroke);
+    }
+
+    /**
      * Convenience preset for a left accent strip (decorative bar on the left
      * edge, common in callouts, asides, and quote blocks).
      *

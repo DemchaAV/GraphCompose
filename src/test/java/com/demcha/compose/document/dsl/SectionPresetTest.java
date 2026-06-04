@@ -3,6 +3,7 @@ package com.demcha.compose.document.dsl;
 import com.demcha.compose.document.node.SectionNode;
 import com.demcha.compose.document.style.DocumentBorders;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentStroke;
 import org.junit.jupiter.api.Test;
 
@@ -57,6 +58,37 @@ class SectionPresetTest {
         assertThat(section.fillColor()).isEqualTo(PANEL);
         assertThat(section.cornerRadius().radius()).isEqualTo(8.0, within(EPS));
         assertThat(section.padding().top()).isEqualTo(12.0, within(EPS));
+    }
+
+    @Test
+    void softPanelWithStrokeSetsFillRadiusPaddingAndStroke() {
+        DocumentStroke outline = new DocumentStroke(ACCENT, 1.0);
+        SectionNode section = new SectionBuilder()
+                .name("OutlinedPanel")
+                .softPanel(PANEL, 12.0, 16.0, outline)
+                .addParagraph("Inside")
+                .build();
+
+        assertThat(section.fillColor()).isEqualTo(PANEL);
+        assertThat(section.cornerRadius().radius()).isEqualTo(12.0, within(EPS));
+        assertThat(section.padding().left()).isEqualTo(16.0, within(EPS));
+        assertThat(section.stroke()).isEqualTo(outline);
+    }
+
+    @Test
+    void softPanelWithPerCornerRadiusAndStroke() {
+        DocumentStroke outline = new DocumentStroke(ACCENT, 1.0);
+        DocumentCornerRadius corners = DocumentCornerRadius.right(10.0);
+        SectionNode section = new SectionBuilder()
+                .name("CappedPanel")
+                .softPanel(PANEL, corners, 14.0, outline)
+                .addParagraph("Inside")
+                .build();
+
+        assertThat(section.fillColor()).isEqualTo(PANEL);
+        assertThat(section.cornerRadius()).isEqualTo(corners);
+        assertThat(section.padding().top()).isEqualTo(14.0, within(EPS));
+        assertThat(section.stroke()).isEqualTo(outline);
     }
 
     @Test

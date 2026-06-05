@@ -61,6 +61,7 @@ public final class FontName {
     public static final FontName PROMPT = of("Prompt");
     public static final FontName ANDIKA = of("Andika");
     public static final FontName BAI_JAMJUREE = of("Bai Jamjuree");
+    public static final FontName JETBRAINS_MONO = of("JetBrains Mono");
 
     private final String name;
     private final String normalizedName;

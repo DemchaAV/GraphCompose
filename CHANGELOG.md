@@ -82,6 +82,11 @@ API turns the open cycle into a minor.
   the correction is derived from font metrics (ascent, descent, leading, cap
   height), not a magic number. Render-only and opt-in — existing layouts are
   byte-for-byte unchanged.
+- **Bundled font: JetBrains Mono.** New `FontName.JETBRAINS_MONO` (`@since 1.7.0`)
+  joins the built-in `DefaultFonts` catalog with its Regular / Bold / Italic /
+  Bold-Italic faces (bundled from the OFL-1.1 release), so monospaced code and
+  data blocks render without a system-font install. Usable through any
+  `DocumentTextStyle.fontName(...)` and listed in the font showcase.
 
 ### Fixed
 

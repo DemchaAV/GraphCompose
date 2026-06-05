@@ -141,6 +141,15 @@ public final class ShapeContainerDefinition implements NodeDefinition<ShapeConta
                     width,
                     height,
                     new ShapeFragmentPayload(awtFill, stroke, r.cornerRadius(), null, null, null));
+        } else if (outline instanceof ShapeOutline.RoundedRectanglePerCorner rp) {
+            outlineFragment = new LayoutFragment(
+                    placement.path(),
+                    0,
+                    padLeft,
+                    padBottom,
+                    width,
+                    height,
+                    new ShapeFragmentPayload(awtFill, stroke, rp.corners(), null, null, null));
         } else if (outline instanceof ShapeOutline.Polygon p) {
             outlineFragment = new LayoutFragment(
                     placement.path(),

@@ -13,6 +13,8 @@ import java.util.List;
  * inline shape render emit identical paths from one source.
  */
 final class PdfShapeGeometry {
+    private static final float BEZIER_CIRCLE_CONSTANT = 0.552284749831f;
+
     private PdfShapeGeometry() {
     }
 
@@ -80,6 +82,65 @@ final class PdfShapeGeometry {
         for (int i = 1; i < points.size(); i++) {
             ShapePoint point = points.get(i);
             stream.lineTo(x + (float) (point.x() * width), y + (float) (point.y() * height));
+        }
+        stream.closePath();
+    }
+
+    /**
+     * Appends a closed rounded-rectangle path whose four corners may have
+     * independent radii. Each radius gets its own Bezier arc; a zero radius
+     * keeps a sharp 90° corner. PDF y grows up, so {@code (x, y)} is the
+     * bottom-left of the box. Callers clamp each radius to half the smaller
+     * side first. Shared by block fill/stroke and clip masking so both emit an
+     * identical path.
+     */
+    static void roundedRectPath(PDPageContentStream stream,
+                                float x,
+                                float y,
+                                float width,
+                                float height,
+                                float topLeft,
+                                float topRight,
+                                float bottomRight,
+                                float bottomLeft) throws IOException {
+        float right = x + width;
+        float top = y + height;
+        stream.moveTo(x + topLeft, top);
+        stream.lineTo(right - topRight, top);
+        if (topRight > 0f) {
+            float control = topRight * BEZIER_CIRCLE_CONSTANT;
+            stream.curveTo(right - topRight + control, top,
+                    right, top - topRight + control,
+                    right, top - topRight);
+        } else {
+            stream.lineTo(right, top);
+        }
+        stream.lineTo(right, y + bottomRight);
+        if (bottomRight > 0f) {
+            float control = bottomRight * BEZIER_CIRCLE_CONSTANT;
+            stream.curveTo(right, y + bottomRight - control,
+                    right - bottomRight + control, y,
+                    right - bottomRight, y);
+        } else {
+            stream.lineTo(right, y);
+        }
+        stream.lineTo(x + bottomLeft, y);
+        if (bottomLeft > 0f) {
+            float control = bottomLeft * BEZIER_CIRCLE_CONSTANT;
+            stream.curveTo(x + bottomLeft - control, y,
+                    x, y + bottomLeft - control,
+                    x, y + bottomLeft);
+        } else {
+            stream.lineTo(x, y);
+        }
+        stream.lineTo(x, top - topLeft);
+        if (topLeft > 0f) {
+            float control = topLeft * BEZIER_CIRCLE_CONSTANT;
+            stream.curveTo(x, top - topLeft + control,
+                    x + topLeft - control, top,
+                    x + topLeft, top);
+        } else {
+            stream.lineTo(x, top);
         }
         stream.closePath();
     }

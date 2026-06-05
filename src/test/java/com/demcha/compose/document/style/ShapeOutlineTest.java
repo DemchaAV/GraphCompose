@@ -21,6 +21,30 @@ class ShapeOutlineTest {
     }
 
     @Test
+    void roundedRectanglePerCornerKeepsSizeAndCorners() {
+        DocumentCornerRadius corners = DocumentCornerRadius.right(6.0);
+        ShapeOutline.RoundedRectanglePerCorner outline =
+                new ShapeOutline.RoundedRectanglePerCorner(40, 20, corners);
+        assertThat(outline.width()).isEqualTo(40.0, within(EPS));
+        assertThat(outline.height()).isEqualTo(20.0, within(EPS));
+        assertThat(outline.corners()).isEqualTo(corners);
+    }
+
+    @Test
+    void roundedRectanglePerCornerRejectsNonPositiveSizeAndNullCorners() {
+        DocumentCornerRadius corners = DocumentCornerRadius.of(4.0);
+        assertThatThrownBy(() -> new ShapeOutline.RoundedRectanglePerCorner(0, 10, corners))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("width");
+        assertThatThrownBy(() -> new ShapeOutline.RoundedRectanglePerCorner(10, -1, corners))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("height");
+        assertThatThrownBy(() -> new ShapeOutline.RoundedRectanglePerCorner(10, 10, null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("corners");
+    }
+
+    @Test
     void diamondHasFourVerticesAndKeepsSize() {
         ShapeOutline.Polygon diamond = ShapeOutline.diamond(12, 8);
         assertThat(diamond.width()).isEqualTo(12.0, within(EPS));

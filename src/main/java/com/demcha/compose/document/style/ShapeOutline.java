@@ -18,6 +18,7 @@ import java.util.Objects;
 public sealed interface ShapeOutline permits
         ShapeOutline.Rectangle,
         ShapeOutline.RoundedRectangle,
+        ShapeOutline.RoundedRectanglePerCorner,
         ShapeOutline.Ellipse,
         ShapeOutline.Polygon {
 
@@ -69,6 +70,30 @@ public sealed interface ShapeOutline permits
             if (cornerRadius < 0 || Double.isNaN(cornerRadius) || Double.isInfinite(cornerRadius)) {
                 throw new IllegalArgumentException("cornerRadius must be finite and non-negative: " + cornerRadius);
             }
+        }
+    }
+
+    /**
+     * Rectangle with independent per-corner radii. Render code clamps each
+     * radius to half the smaller side at draw time. Use it for a container
+     * rounded on only one side — e.g.
+     * {@link DocumentCornerRadius#right(double)} for a card that sits flush
+     * against a left edge — without a CLIP_PATH parent workaround.
+     *
+     * @param width outer width in points
+     * @param height outer height in points
+     * @param corners per-corner radii
+     * @since 1.7.0
+     */
+    record RoundedRectanglePerCorner(double width, double height, DocumentCornerRadius corners)
+            implements ShapeOutline {
+        /**
+         * Validates dimensions and that {@code corners} is non-null.
+         */
+        public RoundedRectanglePerCorner {
+            requirePositive("width", width);
+            requirePositive("height", height);
+            Objects.requireNonNull(corners, "corners");
         }
     }
 

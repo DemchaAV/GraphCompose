@@ -18,6 +18,7 @@ import com.demcha.compose.document.node.ShapeNode;
 import com.demcha.compose.document.node.SpacerNode;
 import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTransform;
@@ -127,6 +128,37 @@ class ShapeContainerBuilderTest {
             double cardTopEdge = card.placementY() + card.placementHeight();
             assertThat(badgeRightEdge).isEqualTo(cardRightEdge, within(EPS));
             assertThat(badgeTopEdge).isEqualTo(cardTopEdge, within(EPS));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void perCornerRoundedRectOutlineReachesTheClipPayload() {
+        // roundedRect(w, h, DocumentCornerRadius) must produce a
+        // RoundedRectanglePerCorner outline (rounded on one side, square on
+        // the other) that travels through to the clip-begin payload, so the
+        // child clip follows the asymmetric corners — no CLIP_PATH parent.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            DocumentCornerRadius corners = DocumentCornerRadius.right(14.0);
+            session.add(new ShapeContainerBuilder()
+                    .name("LeftFlushCard")
+                    .roundedRect(180.0, 90.0, corners)
+                    .fillColor(BRAND)
+                    .center(spacer("Inside", 60.0, 16.0))
+                    .build());
+
+            List<PlacedFragment> fragments = session.layoutGraph().fragments();
+            int begin = indexOfPayload(fragments, ShapeClipBeginPayload.class);
+            assertThat(begin).isGreaterThanOrEqualTo(0);
+
+            ShapeOutline outline = ((ShapeClipBeginPayload) fragments.get(begin).payload()).outline();
+            assertThat(outline).isInstanceOf(ShapeOutline.RoundedRectanglePerCorner.class);
+            assertThat(((ShapeOutline.RoundedRectanglePerCorner) outline).corners()).isEqualTo(corners);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

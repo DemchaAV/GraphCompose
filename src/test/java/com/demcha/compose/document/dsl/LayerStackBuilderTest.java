@@ -301,6 +301,55 @@ class LayerStackBuilderTest {
     }
 
     @Test
+    void positionOffsetsHonoredWhenStackNestedInFixedSlot() {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(420, 320)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            // Inner stack carries a badge nudged from its TOP_LEFT anchor.
+            SpacerNode innerBg = new SpacerNode("NestPosBg", 200.0, 100.0,
+                    DocumentInsets.zero(), DocumentInsets.zero());
+            SpacerNode badge = new SpacerNode("NestPosBadge", 40.0, 20.0,
+                    DocumentInsets.zero(), DocumentInsets.zero());
+            LayerStackNode innerStack = new LayerStackBuilder()
+                    .name("InnerPositionedStack")
+                    .layer(innerBg, LayerAlign.TOP_LEFT)
+                    .position(badge, 12.0, 6.0, LayerAlign.TOP_LEFT)
+                    .build();
+
+            // Hosting the inner stack as a layer of an outer stack routes the
+            // inner stack through the fixed-slot STACK branch — the path that
+            // previously dropped per-layer position() offsets.
+            SpacerNode outerBg = new SpacerNode("NestOuterBg", 300.0, 160.0,
+                    DocumentInsets.zero(), DocumentInsets.zero());
+            LayerStackNode outerStack = new LayerStackBuilder()
+                    .name("OuterStack")
+                    .layer(outerBg, LayerAlign.TOP_LEFT)
+                    .layer(innerStack, LayerAlign.TOP_LEFT)
+                    .build();
+
+            session.add(outerStack);
+            LayoutGraph graph = session.layoutGraph();
+
+            PlacedNode innerStackNode = nodeWithSemanticName(graph, "InnerPositionedStack");
+            PlacedNode badgeNode = nodeWithSemanticName(graph, "NestPosBadge");
+
+            // Same screen-space convention as positionNudgesLayerFromAnchor,
+            // but one fixed slot deep: offsetX 12 → right, offsetY 6 → down.
+            double innerTopY = innerStackNode.placementY() + innerStackNode.placementHeight();
+            double badgeTopY = badgeNode.placementY() + badgeNode.placementHeight();
+
+            assertThat(badgeNode.placementX())
+                    .isEqualTo(innerStackNode.placementX() + 12.0, within(EPS));
+            assertThat(badgeTopY)
+                    .isEqualTo(innerTopY - 6.0, within(EPS));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
     void positionFromBottomRightMovesUpAndLeft() {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(420, 320)

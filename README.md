@@ -20,8 +20,7 @@
 
 > **Release status** &mdash;
 > 🟢 **Latest stable**: [v1.6.9](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.6.9) (public pixel-level visual-regression API + canonical Javadoc doclint-clean + central-publishing 0.10; zero breaking from v1.6.8)
-> &nbsp;·&nbsp; 🟡 **In develop**: v1.6.10 (next bug-fix / housekeeping cycle)
-> &nbsp;·&nbsp; ⚪ **Planned next**: v1.7.0 (new canonical DSL primitives)
+> &nbsp;·&nbsp; 🟡 **In develop**: v1.7.0 (new canonical DSL primitives — inline shapes, checkboxes, per-corner radii, vertical text seating)
 > &nbsp;·&nbsp; See [API stability policy](./docs/api-stability.md) for tier definitions.
 
 <p align="center">

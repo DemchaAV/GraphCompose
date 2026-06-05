@@ -18,7 +18,6 @@ import java.io.IOException;
  */
 public final class PdfShapeFragmentRenderHandler
         implements PdfFragmentRenderHandler<ShapeFragmentPayload> {
-    private static final float BEZIER_CIRCLE_CONSTANT = 0.552284749831f;
 
     /**
      * Creates the shape fragment renderer.
@@ -133,57 +132,15 @@ public final class PdfShapeFragmentRenderHandler
      * grows up, so {@code (x, y)} is the bottom-left of the rectangle.
      */
     static void drawRoundedRectangle(PDPageContentStream stream,
-                                             float x,
-                                             float y,
-                                             float width,
-                                             float height,
-                                             float topLeft,
-                                             float topRight,
-                                             float bottomRight,
-                                             float bottomLeft) throws IOException {
-        float right = x + width;
-        float top = y + height;
-        // Start at the right end of the top edge (one radius left of the
-        // top-right corner) and walk clockwise around the box. Each
-        // corner emits either a curveTo (for radius > 0) or just lets
-        // the next lineTo land on the corner point (for radius == 0).
-        stream.moveTo(x + topLeft, top);
-        stream.lineTo(right - topRight, top);
-        if (topRight > 0f) {
-            float control = topRight * BEZIER_CIRCLE_CONSTANT;
-            stream.curveTo(right - topRight + control, top,
-                    right, top - topRight + control,
-                    right, top - topRight);
-        } else {
-            stream.lineTo(right, top);
-        }
-        stream.lineTo(right, y + bottomRight);
-        if (bottomRight > 0f) {
-            float control = bottomRight * BEZIER_CIRCLE_CONSTANT;
-            stream.curveTo(right, y + bottomRight - control,
-                    right - bottomRight + control, y,
-                    right - bottomRight, y);
-        } else {
-            stream.lineTo(right, y);
-        }
-        stream.lineTo(x + bottomLeft, y);
-        if (bottomLeft > 0f) {
-            float control = bottomLeft * BEZIER_CIRCLE_CONSTANT;
-            stream.curveTo(x + bottomLeft - control, y,
-                    x, y + bottomLeft - control,
-                    x, y + bottomLeft);
-        } else {
-            stream.lineTo(x, y);
-        }
-        stream.lineTo(x, top - topLeft);
-        if (topLeft > 0f) {
-            float control = topLeft * BEZIER_CIRCLE_CONSTANT;
-            stream.curveTo(x, top - topLeft + control,
-                    x + topLeft - control, top,
-                    x + topLeft, top);
-        } else {
-            stream.lineTo(x, top);
-        }
-        stream.closePath();
+                                     float x,
+                                     float y,
+                                     float width,
+                                     float height,
+                                     float topLeft,
+                                     float topRight,
+                                     float bottomRight,
+                                     float bottomLeft) throws IOException {
+        PdfShapeGeometry.roundedRectPath(stream, x, y, width, height,
+                topLeft, topRight, bottomRight, bottomLeft);
     }
 }

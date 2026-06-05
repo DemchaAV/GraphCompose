@@ -6,6 +6,7 @@ import com.demcha.compose.document.node.LayerStackNode;
 import com.demcha.compose.document.node.ShapeContainerNode;
 import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTransform;
@@ -81,6 +82,22 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
      */
     public ShapeContainerBuilder roundedRect(double width, double height, double cornerRadius) {
         this.outline = new ShapeOutline.RoundedRectangle(width, height, cornerRadius);
+        return this;
+    }
+
+    /**
+     * Sets a rounded-rectangle outline with independent per-corner radii — use
+     * it to round only one side of a container (e.g.
+     * {@link DocumentCornerRadius#right(double)}) without a CLIP_PATH parent.
+     *
+     * @param width outline width in points
+     * @param height outline height in points
+     * @param cornerRadius per-corner radii
+     * @return this builder
+     * @since 1.7.0
+     */
+    public ShapeContainerBuilder roundedRect(double width, double height, DocumentCornerRadius cornerRadius) {
+        this.outline = new ShapeOutline.RoundedRectanglePerCorner(width, height, cornerRadius);
         return this;
     }
 

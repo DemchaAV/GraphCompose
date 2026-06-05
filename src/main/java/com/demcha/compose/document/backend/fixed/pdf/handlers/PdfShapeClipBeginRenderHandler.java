@@ -5,6 +5,7 @@ import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload;
 import com.demcha.compose.document.style.ClipPolicy;
+import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.ShapeOutline;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
@@ -26,7 +27,8 @@ import java.io.IOException;
  * layout layer skips emitting both markers when the policy is visible. For
  * {@link ClipPolicy#CLIP_BOUNDS} the clip path is the axis-aligned outline
  * rectangle; for {@link ClipPolicy#CLIP_PATH} it is the geometric outline
- * (ellipse for circle/ellipse, rounded rectangle for rounded-rect).</p>
+ * (ellipse for circle/ellipse, uniform or per-corner rounded rectangle for
+ * rounded-rect, polygon for diamonds / arrows / stars).</p>
  *
  * @author Artem Demchyshyn
  */
@@ -75,8 +77,17 @@ public final class PdfShapeClipBeginRenderHandler
             if (outline instanceof ShapeOutline.Ellipse) {
                 addEllipsePath(stream, x, y, width, height);
             } else if (outline instanceof ShapeOutline.RoundedRectangle r) {
-                addRoundedRectanglePath(stream, x, y, width, height,
-                        (float) Math.min(r.cornerRadius(), Math.min(width, height) / 2.0f));
+                float radius = (float) Math.min(r.cornerRadius(), Math.min(width, height) / 2.0f);
+                PdfShapeGeometry.roundedRectPath(stream, x, y, width, height,
+                        radius, radius, radius, radius);
+            } else if (outline instanceof ShapeOutline.RoundedRectanglePerCorner rp) {
+                float maxRadius = Math.min(width, height) / 2.0f;
+                DocumentCornerRadius c = rp.corners();
+                PdfShapeGeometry.roundedRectPath(stream, x, y, width, height,
+                        (float) Math.min(c.topLeft(), maxRadius),
+                        (float) Math.min(c.topRight(), maxRadius),
+                        (float) Math.min(c.bottomRight(), maxRadius),
+                        (float) Math.min(c.bottomLeft(), maxRadius));
             } else if (outline instanceof ShapeOutline.Rectangle) {
                 stream.addRect(x, y, width, height);
             } else if (outline instanceof ShapeOutline.Polygon p) {
@@ -116,37 +127,6 @@ public final class PdfShapeClipBeginRenderHandler
         stream.curveTo(centerX + controlX, centerY - radiusY,
                 centerX + radiusX, centerY - controlY,
                 centerX + radiusX, centerY);
-        stream.closePath();
-    }
-
-    private static void addRoundedRectanglePath(PDPageContentStream stream,
-                                                float x,
-                                                float y,
-                                                float width,
-                                                float height,
-                                                float radius) throws IOException {
-        if (radius <= 0f) {
-            stream.addRect(x, y, width, height);
-            return;
-        }
-        float control = radius * BEZIER_CIRCLE_CONSTANT;
-        stream.moveTo(x + radius, y + height);
-        stream.lineTo(x + width - radius, y + height);
-        stream.curveTo(x + width - radius + control, y + height,
-                x + width, y + height - radius + control,
-                x + width, y + height - radius);
-        stream.lineTo(x + width, y + radius);
-        stream.curveTo(x + width, y + radius - control,
-                x + width - radius + control, y,
-                x + width - radius, y);
-        stream.lineTo(x + radius, y);
-        stream.curveTo(x + radius - control, y,
-                x, y + radius - control,
-                x, y + radius);
-        stream.lineTo(x, y + height - radius);
-        stream.curveTo(x, y + height - radius + control,
-                x + radius - control, y + height,
-                x + radius, y + height);
         stream.closePath();
     }
 }

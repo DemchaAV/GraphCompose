@@ -11,6 +11,7 @@ import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
@@ -130,6 +131,26 @@ public final class ShapeContainerExample {
                                     .plain(" clips to the bounding box, and ")
                                     .bold("OVERFLOW_VISIBLE")
                                     .plain(" keeps child overflow visible for deliberate effects.")))
+                    .addSection("PerCornerRadius", section -> section
+                            .softPanel(DocumentColor.WHITE, 8, 12)
+                            .stroke(DocumentStroke.of(THEME.palette().rule(), 0.5))
+                            .spacing(6)
+                            .addParagraph(paragraph -> paragraph
+                                    .text("Per-corner radius")
+                                    .textStyle(THEME.text().h3())
+                                    .margin(DocumentInsets.zero()))
+                            .addRich(rich -> rich
+                                    .plain("roundedRect(w, h, ")
+                                    .bold("DocumentCornerRadius.right(r)")
+                                    .plain(") rounds corners independently — a card flush on one side, no CLIP_PATH parent."))
+                            .addRow("CornerCards", row -> row
+                                    .spacing(12)
+                                    .evenWeights()
+                                    .addSection("CcUniform", col -> cornerCard(col, "of(r)", DocumentCornerRadius.of(18)))
+                                    .addSection("CcLeft", col -> cornerCard(col, "left(r)", DocumentCornerRadius.left(18)))
+                                    .addSection("CcRight", col -> cornerCard(col, "right(r)", DocumentCornerRadius.right(18)))
+                                    .addSection("CcTop", col -> cornerCard(col, "top(r)", DocumentCornerRadius.top(18)))
+                                    .addSection("CcBottom", col -> cornerCard(col, "bottom(r)", DocumentCornerRadius.bottom(18)))))
                     .build();
 
             document.buildPdf();
@@ -157,6 +178,22 @@ public final class ShapeContainerExample {
                 .fillColor(color)
                 .cornerRadius(height / 2.0)
                 .build();
+    }
+
+    // One tall card per corner preset, clipped to the per-corner outline.
+    private static void cornerCard(SectionBuilder col, String caption, DocumentCornerRadius corners) {
+        col.spacing(4)
+                .addContainer(card -> card
+                        .name("Corner" + caption)
+                        .roundedRect(96, 56, corners)
+                        .fillColor(DEEP_TEAL)
+                        .clipPolicy(ClipPolicy.CLIP_PATH)
+                        .center(label("Aa", style(FontName.HELVETICA_BOLD, 16,
+                                DocumentTextDecoration.BOLD, DocumentColor.WHITE))))
+                .addParagraph(paragraph -> paragraph
+                        .text(caption)
+                        .textStyle(caption())
+                        .margin(DocumentInsets.zero()));
     }
 
     private static DocumentNode cardCopy() {

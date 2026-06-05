@@ -61,6 +61,15 @@ API turns the open cycle into a minor.
   a separate wrapping node. Equivalent to the always-available
   `softPanel(...).stroke(...)` chain — these overloads just make the one-node
   form discoverable.
+- **Per-corner radius on shape containers.** `ShapeContainerBuilder.roundedRect(width,
+  height, DocumentCornerRadius)` plus the new `ShapeOutline.RoundedRectanglePerCorner`
+  (`@since 1.7.0`) round a container's four corners independently — a card "rounded on
+  the left, square on the right" no longer needs a CLIP_PATH-parent workaround, since
+  both the outline fill/stroke and the child clip now follow the per-corner geometry.
+  `DocumentCornerRadius.left/right/top/bottom(...)` give the common asymmetric presets.
+  The single-radius `roundedRect(w, h, double)` overload is unchanged, and uniform
+  rounded rectangles render byte-for-byte identically (the clip and fill now share one
+  per-corner path implementation, called with four equal radii).
 
 ### Fixed
 

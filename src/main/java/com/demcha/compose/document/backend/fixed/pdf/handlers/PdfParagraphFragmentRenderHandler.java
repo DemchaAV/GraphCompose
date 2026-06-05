@@ -11,6 +11,7 @@ import com.demcha.compose.document.layout.payloads.ParagraphLine;
 import com.demcha.compose.document.layout.payloads.ParagraphSpan;
 import com.demcha.compose.document.layout.payloads.ParagraphTextSpan;
 import com.demcha.compose.document.node.InlineImageAlignment;
+import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.ShapeOutline;
 import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.engine.render.pdf.PdfFont;
@@ -223,8 +224,18 @@ public final class PdfParagraphFragmentRenderHandler
                 } else if (outline instanceof ShapeOutline.RoundedRectangle r) {
                     float radius = (float) Math.min(r.cornerRadius(), Math.min(lw, lh) / 2.0f);
                     PdfShapeFragmentRenderHandler.drawRoundedRectangle(s, lx, ly, lw, lh, radius, radius, radius, radius);
+                } else if (outline instanceof ShapeOutline.RoundedRectanglePerCorner rp) {
+                    float maxRadius = Math.min(lw, lh) / 2.0f;
+                    DocumentCornerRadius c = rp.corners();
+                    PdfShapeFragmentRenderHandler.drawRoundedRectangle(s, lx, ly, lw, lh,
+                            (float) Math.min(c.topLeft(), maxRadius),
+                            (float) Math.min(c.topRight(), maxRadius),
+                            (float) Math.min(c.bottomRight(), maxRadius),
+                            (float) Math.min(c.bottomLeft(), maxRadius));
                 } else if (outline instanceof ShapeOutline.Polygon p) {
                     PdfShapeGeometry.addPolygonPath(s, lx, ly, lw, lh, p.points());
+                } else {
+                    throw new IllegalStateException("Unknown inline outline: " + outline);
                 }
             });
         }

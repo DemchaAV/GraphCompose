@@ -4,6 +4,7 @@ import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.LineNode;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTransform;
@@ -28,6 +29,7 @@ public final class LineBuilder implements Transformable<LineBuilder> {
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
     private DocumentTransform transform = DocumentTransform.NONE;
+    private DocumentDashPattern dashPattern = DocumentDashPattern.NONE;
 
     /**
      * Creates a line builder.
@@ -201,6 +203,46 @@ public final class LineBuilder implements Transformable<LineBuilder> {
     }
 
     /**
+     * Makes the line dashed using alternating on/off lengths in points (the
+     * first length paints, the next is skipped, repeating).
+     *
+     * @param pattern at least one strictly-positive segment length in points
+     * @return this builder
+     * @throws IllegalArgumentException if no segments are supplied or any is not
+     *                                  finite and strictly positive
+     * @since 1.7.0
+     */
+    public LineBuilder dashed(double... pattern) {
+        this.dashPattern = DocumentDashPattern.of(pattern);
+        return this;
+    }
+
+    /**
+     * Makes the line dashed using a prepared {@link DocumentDashPattern}. A
+     * {@code null} or {@link DocumentDashPattern#NONE} pattern restores a solid
+     * stroke.
+     *
+     * @param pattern dash pattern, or {@code null} for solid
+     * @return this builder
+     * @since 1.7.0
+     */
+    public LineBuilder dashed(DocumentDashPattern pattern) {
+        this.dashPattern = pattern == null ? DocumentDashPattern.NONE : pattern;
+        return this;
+    }
+
+    /**
+     * Makes the line dashed with a balanced default pattern (3pt on, 2pt off).
+     *
+     * @return this builder
+     * @since 1.7.0
+     */
+    public LineBuilder dashed() {
+        this.dashPattern = DocumentDashPattern.of(3.0, 2.0);
+        return this;
+    }
+
+    /**
      * Attaches line-level link metadata.
      *
      * @param linkOptions link metadata
@@ -282,7 +324,8 @@ public final class LineBuilder implements Transformable<LineBuilder> {
                 bookmarkOptions,
                 padding,
                 margin,
-                transform);
+                transform,
+                dashPattern);
     }
 
     private boolean isHorizontalLine() {

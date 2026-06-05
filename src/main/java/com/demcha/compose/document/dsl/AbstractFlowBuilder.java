@@ -815,6 +815,57 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     }
 
     /**
+     * Adds a heading bar with the default light-grey band look.
+     *
+     * @param text the heading label text
+     * @return this builder
+     * @since 1.7.0
+     */
+    public T headingBar(String text) {
+        return headingBar(text, null);
+    }
+
+    /**
+     * Adds a filled, rounded title bar — a section heading band with a single
+     * label — configured through {@link HeadingBarStyle}. A convenience over the
+     * {@code addSection(bar -> bar.softPanel(...).addParagraph(...))} recipe so
+     * the common "coloured heading bar above the body" pattern is one call; the
+     * bar is added as a child of this flow, so body content follows it.
+     *
+     * <p>The bar is a sibling of whatever follows it in this flow. When this flow
+     * is itself an atomic block (a section or module), the bar plus a tall body
+     * paginate as one unit; call {@code headingBar(...)} on the page flow itself
+     * when the body must break across pages independently of its heading.</p>
+     *
+     * @param text the heading label text
+     * @param customizer callback to tune the bar look (fill, corners, padding,
+     *                   margin, text style, alignment, optional outline); may be
+     *                   {@code null} for the default light-grey band
+     * @return this builder
+     * @since 1.7.0
+     */
+    public T headingBar(String text, Consumer<HeadingBarStyle> customizer) {
+        HeadingBarStyle style = new HeadingBarStyle();
+        if (customizer != null) {
+            customizer.accept(style);
+        }
+        return addSection(bar -> {
+            bar.fillColor(style.fill())
+                    .cornerRadius(style.cornerRadius())
+                    .padding(style.padding())
+                    .margin(style.margin());
+            if (style.stroke() != null) {
+                bar.stroke(style.stroke());
+            }
+            bar.addParagraph(p -> p
+                    .text(text)
+                    .textStyle(style.textStyle())
+                    .align(style.align())
+                    .margin(DocumentInsets.zero()));
+        });
+    }
+
+    /**
      * Adds a titled semantic module.
      *
      * @param title visible module title

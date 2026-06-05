@@ -70,6 +70,18 @@ API turns the open cycle into a minor.
   The single-radius `roundedRect(w, h, double)` overload is unchanged, and uniform
   rounded rectangles render byte-for-byte identically (the clip and fill now share one
   per-corner path implementation, called with four equal radii).
+- **Vertical text alignment for shape-container labels.**
+  `ParagraphBuilder.verticalAlign(TextVerticalAlign)` (new enum
+  `com.demcha.compose.document.node.TextVerticalAlign`, `@since 1.7.0`) seats a
+  single line by its cap band within its line box — `TOP` (cap top to the box top),
+  `CENTER` (cap band centred) or `BOTTOM` (baseline to the box bottom). Combined
+  with a vertically-centred layer placement (`.center(...)` / `.centerLeft(...)`), a
+  label dropped into a taller `ShapeContainer` / `LayerStack` "pill" sits where you
+  ask instead of always on the font baseline — no compensating offset hacks.
+  `TextVerticalAlign.DEFAULT` keeps the pre-1.7.0 baseline seating;
+  the correction is derived from font metrics (ascent, descent, leading, cap
+  height), not a magic number. Render-only and opt-in — existing layouts are
+  byte-for-byte unchanged.
 
 ### Fixed
 

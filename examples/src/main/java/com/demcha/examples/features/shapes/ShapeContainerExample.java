@@ -9,6 +9,7 @@ import com.demcha.compose.document.dsl.ShapeBuilder;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentCornerRadius;
@@ -151,6 +152,26 @@ public final class ShapeContainerExample {
                                     .addSection("CcRight", col -> cornerCard(col, "right(r)", DocumentCornerRadius.right(18)))
                                     .addSection("CcTop", col -> cornerCard(col, "top(r)", DocumentCornerRadius.top(18)))
                                     .addSection("CcBottom", col -> cornerCard(col, "bottom(r)", DocumentCornerRadius.bottom(18)))))
+                    .addSection("VerticalAlign", section -> section
+                            .softPanel(DocumentColor.WHITE, 8, 12)
+                            .stroke(DocumentStroke.of(THEME.palette().rule(), 0.5))
+                            .spacing(6)
+                            .addParagraph(paragraph -> paragraph
+                                    .text("Vertical text seating")
+                                    .textStyle(THEME.text().h3())
+                                    .margin(DocumentInsets.zero()))
+                            .addRich(rich -> rich
+                                    .plain("paragraph.")
+                                    .bold("verticalAlign(TextVerticalAlign.TOP / CENTER / BOTTOM)")
+                                    .plain(" seats a single line by its cap band inside a taller shape — no lift offsets. ")
+                                    .accent("The gold line marks the box centre.", GOLD))
+                            .addRow("VAlignPills", row -> row
+                                    .spacing(12)
+                                    .evenWeights()
+                                    .addSection("SeatDefault", col -> seatColumn(col, TextVerticalAlign.DEFAULT))
+                                    .addSection("SeatTop", col -> seatColumn(col, TextVerticalAlign.TOP))
+                                    .addSection("SeatCenter", col -> seatColumn(col, TextVerticalAlign.CENTER))
+                                    .addSection("SeatBottom", col -> seatColumn(col, TextVerticalAlign.BOTTOM))))
                     .build();
 
             document.buildPdf();
@@ -168,6 +189,37 @@ public final class ShapeContainerExample {
                 .text(text)
                 .textStyle(style)
                 .align(TextAlign.CENTER)
+                .margin(DocumentInsets.zero())
+                .build();
+    }
+
+    // One tall pill per seat: a gold guide line at the box centre, the same big
+    // "GC" label seated by TOP / CENTER / BOTTOM, and the mode name underneath.
+    private static void seatColumn(SectionBuilder col, TextVerticalAlign verticalAlign) {
+        col.spacing(5)
+                .addContainer(card -> card
+                        .name("Seat" + verticalAlign)
+                        .roundedRect(112, 80, 18)
+                        .fillColor(DEEP_TEAL)
+                        .center(seatGuide())
+                        .center(valignLabel("GC", verticalAlign)))
+                .addParagraph(paragraph -> paragraph
+                        .text(verticalAlign.name())
+                        .textStyle(caption())
+                        .align(TextAlign.CENTER)
+                        .margin(DocumentInsets.zero()));
+    }
+
+    private static DocumentNode seatGuide() {
+        return new ShapeBuilder().size(96, 1.2).fillColor(GOLD).build();
+    }
+
+    private static DocumentNode valignLabel(String text, TextVerticalAlign verticalAlign) {
+        return new ParagraphBuilder()
+                .text(text)
+                .textStyle(style(FontName.HELVETICA_BOLD, 34, DocumentTextDecoration.BOLD, DocumentColor.WHITE))
+                .align(TextAlign.CENTER)
+                .verticalAlign(verticalAlign)
                 .margin(DocumentInsets.zero())
                 .build();
     }

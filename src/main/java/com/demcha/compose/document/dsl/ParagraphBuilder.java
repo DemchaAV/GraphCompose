@@ -10,6 +10,7 @@ import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
@@ -41,6 +42,7 @@ public final class ParagraphBuilder {
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
     private DocumentTextAutoSize autoSize;
+    private TextVerticalAlign verticalAlign = TextVerticalAlign.DEFAULT;
 
     /**
      * Creates a paragraph builder.
@@ -90,6 +92,29 @@ public final class ParagraphBuilder {
      */
     public ParagraphBuilder align(TextAlign align) {
         this.align = align == null ? TextAlign.LEFT : align;
+        return this;
+    }
+
+    /**
+     * Sets the vertical seating of the text within its line box.
+     *
+     * <p>{@link TextVerticalAlign#TOP}, {@code CENTER} and {@code BOTTOM} seat the
+     * line by its cap band (cap top to the box top, cap band centred, or baseline
+     * to the box bottom); pair them with a vertically-centred layer placement
+     * ({@code .center(...)} / {@code .centerLeft(...)}) to seat a single line
+     * inside a taller {@code ShapeContainer} / {@code LayerStack} layer.</p>
+     *
+     * <p>Tuned for a single line of text. A multi-line paragraph seats each line
+     * independently, and a line that mixes inline images with text is seated by
+     * the text cap height.</p>
+     *
+     * @param verticalAlign vertical text alignment, or {@code null} for
+     *                      {@link TextVerticalAlign#DEFAULT}
+     * @return this builder
+     * @since 1.7.0
+     */
+    public ParagraphBuilder verticalAlign(TextVerticalAlign verticalAlign) {
+        this.verticalAlign = verticalAlign == null ? TextVerticalAlign.DEFAULT : verticalAlign;
         return this;
     }
 
@@ -668,7 +693,8 @@ public final class ParagraphBuilder {
                 bookmarkOptions,
                 padding,
                 margin,
-                autoSize);
+                autoSize,
+                verticalAlign);
     }
 }
 

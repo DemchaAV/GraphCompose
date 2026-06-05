@@ -22,6 +22,7 @@ import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.node.ListNode;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextAutoSize;
 import com.demcha.compose.document.style.DocumentTextIndent;
@@ -139,7 +140,8 @@ public final class TextFlowSupport {
                 layout.baselineOffset(),
                 layout.visualLines(),
                 node.linkOptions(),
-                layout.emitBookmark() ? node.bookmarkOptions() : null);
+                layout.emitBookmark() ? node.bookmarkOptions() : null,
+                node.verticalAlign());
 
         return List.of(new LayoutFragment(
                 placement.path(),
@@ -354,7 +356,8 @@ public final class TextFlowSupport {
                             itemLayout.baselineOffset(),
                             itemLayout.visualLines(),
                             null,
-                            null)));
+                            null,
+                            TextVerticalAlign.DEFAULT)));
             itemTopOffset += fragmentHeight + node.itemSpacing();
         }
 
@@ -746,7 +749,9 @@ public final class TextFlowSupport {
                         keepTopInsets ? source.margin().top() : 0.0,
                         source.margin().right(),
                         keepBottomInsets ? source.margin().bottom() : 0.0,
-                        source.margin().left()));
+                        source.margin().left()),
+                null,
+                source.verticalAlign());
 
         PreparedParagraphLayout fragmentLayout = new PreparedParagraphLayout(
                 List.copyOf(sliceLogicalLines),

@@ -27,6 +27,8 @@ import java.util.Objects;
  * @param padding inner padding
  * @param margin outer margin
  * @param autoSize optional automatic font down-scaling policy
+ * @param verticalAlign vertical seating of the text within its line box
+ *                      ({@link TextVerticalAlign#DEFAULT} keeps baseline seating)
  * @author Artem Demchyshyn
  */
 public record ParagraphNode(
@@ -42,7 +44,8 @@ public record ParagraphNode(
         DocumentBookmarkOptions bookmarkOptions,
         DocumentInsets padding,
         DocumentInsets margin,
-        DocumentTextAutoSize autoSize
+        DocumentTextAutoSize autoSize,
+        TextVerticalAlign verticalAlign
 ) implements DocumentNode {
     /**
      * Normalizes optional text, inline runs, style, alignment, spacing, and
@@ -67,9 +70,45 @@ public record ParagraphNode(
         indentStrategy = indentStrategy == null ? DocumentTextIndent.NONE : indentStrategy;
         padding = padding == null ? DocumentInsets.zero() : padding;
         margin = margin == null ? DocumentInsets.zero() : margin;
+        verticalAlign = verticalAlign == null ? TextVerticalAlign.DEFAULT : verticalAlign;
         if (lineSpacing < 0 || Double.isNaN(lineSpacing) || Double.isInfinite(lineSpacing)) {
             throw new IllegalArgumentException("lineSpacing must be finite and non-negative: " + lineSpacing);
         }
+    }
+
+    /**
+     * Backwards-compatible 13-arg constructor without a vertical-alignment
+     * override; defaults {@link TextVerticalAlign#DEFAULT}.
+     *
+     * @param name node name used in snapshots and layout graph paths
+     * @param text paragraph text when inline runs are not supplied
+     * @param inlineRuns optional inline runs in source order
+     * @param textStyle base paragraph text style
+     * @param align horizontal text alignment
+     * @param lineSpacing extra space between wrapped lines
+     * @param bulletOffset first-line prefix used by list-style paragraph paths
+     * @param indentStrategy hanging/first-line indent strategy
+     * @param linkOptions optional node-level link metadata
+     * @param bookmarkOptions optional node-level bookmark metadata
+     * @param padding inner padding
+     * @param margin outer margin
+     * @param autoSize optional automatic font down-scaling policy
+     */
+    public ParagraphNode(String name,
+                         String text,
+                         List<InlineRun> inlineRuns,
+                         DocumentTextStyle textStyle,
+                         TextAlign align,
+                         double lineSpacing,
+                         String bulletOffset,
+                         DocumentTextIndent indentStrategy,
+                         DocumentLinkOptions linkOptions,
+                         DocumentBookmarkOptions bookmarkOptions,
+                         DocumentInsets padding,
+                         DocumentInsets margin,
+                         DocumentTextAutoSize autoSize) {
+        this(name, text, inlineRuns, textStyle, align, lineSpacing, bulletOffset, indentStrategy,
+                linkOptions, bookmarkOptions, padding, margin, autoSize, TextVerticalAlign.DEFAULT);
     }
 
     /**

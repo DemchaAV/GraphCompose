@@ -3,6 +3,7 @@ package com.demcha.compose.document.layout.payloads;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.style.Padding;
 
@@ -20,6 +21,7 @@ import java.util.List;
  * @param lines measured lines contained by the fragment
  * @param linkOptions optional fragment-level link metadata
  * @param bookmarkOptions optional fragment-level bookmark metadata
+ * @param verticalAlign vertical seating of the text within its line box
  */
 public record ParagraphFragmentPayload(
         TextStyle textStyle,
@@ -30,12 +32,14 @@ public record ParagraphFragmentPayload(
         double baselineOffset,
         List<ParagraphLine> lines,
         DocumentLinkOptions linkOptions,
-        DocumentBookmarkOptions bookmarkOptions
+        DocumentBookmarkOptions bookmarkOptions,
+        TextVerticalAlign verticalAlign
 ) implements PdfSemanticFragmentPayload {
     /**
      * Creates an immutable paragraph fragment payload.
      */
     public ParagraphFragmentPayload {
         lines = List.copyOf(lines);
+        verticalAlign = verticalAlign == null ? TextVerticalAlign.DEFAULT : verticalAlign;
     }
 }

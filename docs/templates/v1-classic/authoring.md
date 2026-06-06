@@ -163,7 +163,7 @@ when you need a `DocumentNode` outside a flow (e.g. composing a
 `BusinessTheme.withPageBackground(color)` and `withName(name)` give
 you cheap forks. To brand for your project, hand-build a
 `BusinessTheme(...)` once — see
-[`CustomBusinessThemeExample`](../examples/src/main/java/com/demcha/examples/CustomBusinessThemeExample.java).
+[`CustomBusinessThemeExample`](../../../examples/src/main/java/com/demcha/examples/features/themes/CustomBusinessThemeExample.java).
 
 ---
 
@@ -419,9 +419,9 @@ visual review, not as the regression contract (use snapshots for
 that).
 
 For the runnable end-to-end pattern see
-[`InvoiceTemplateV2DemoTest`](../src/test/java/com/demcha/testing/visual/InvoiceTemplateV2DemoTest.java)
+[`InvoiceTemplateV2DemoTest`](../../../src/test/java/com/demcha/testing/visual/InvoiceTemplateV2DemoTest.java)
 and
-[`LayoutSnapshotRegressionExample`](../examples/src/main/java/com/demcha/examples/LayoutSnapshotRegressionExample.java).
+[`LayoutSnapshotRegressionExample`](../../../examples/src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java).
 
 ---
 
@@ -429,14 +429,14 @@ and
 
 | Need | File |
 |---|---|
-| First-time orientation | [`getting-started.md`](getting-started.md) |
-| Theme deep-dive (palette, scales, bridge) | [`recipes/themes.md`](recipes/themes.md) |
-| Tables (row span, zebra, totals, repeat header) | [`recipes/tables.md`](recipes/tables.md) |
-| Shapes-as-containers, transforms, z-index | [`recipes/shape-as-container.md`](recipes/shape-as-container.md) + [`recipes/transforms.md`](recipes/transforms.md) |
-| Adding a new node / builder / backend | [`extension-guide.md`](extension-guide.md) + [`recipes/extending.md`](recipes/extending.md) |
-| Streaming output to HTTP / S3 | [`recipes/streaming.md`](recipes/streaming.md) |
-| Snapshot-based regression workflow | [`recipes/extending.md` § 4](recipes/extending.md#4-validate-a-custom-nodes-layout-via-snapshots) |
-| Migrating from v1.4 to v1.5 | [`migration-v1-4-to-v1-5.md`](migration-v1-4-to-v1-5.md) |
-| Architecture decision records | [`adr/`](adr/) |
-| Reference V2 templates | [`InvoiceTemplateV2`](../src/main/java/com/demcha/compose/document/templates/builtins/InvoiceTemplateV2.java), [`ProposalTemplateV2`](../src/main/java/com/demcha/compose/document/templates/builtins/ProposalTemplateV2.java) |
-| Hand-built theme example | [`CustomBusinessThemeExample`](../examples/src/main/java/com/demcha/examples/CustomBusinessThemeExample.java) |
+| First-time orientation | [`getting-started.md`](../../getting-started.md) |
+| Theme deep-dive (palette, scales, bridge) | [`recipes/themes.md`](../../recipes/themes.md) |
+| Tables (row span, zebra, totals, repeat header) | [`recipes/tables.md`](../../recipes/tables.md) |
+| Shapes-as-containers, transforms, z-index | [`recipes/shape-as-container.md`](../../recipes/shape-as-container.md) + [`recipes/transforms.md`](../../recipes/transforms.md) |
+| Adding a new node / builder / backend | [`extension-guide.md`](../../contributing/extension-guide.md) + [`recipes/extending.md`](../../recipes/extending.md) |
+| Streaming output to HTTP / S3 | [`recipes/streaming.md`](../../recipes/streaming.md) |
+| Snapshot-based regression workflow | [`recipes/extending.md` § 4](../../recipes/extending.md#4-validate-a-custom-nodes-layout-via-snapshots) |
+| Migrating from v1.4 to v1.5 | [`migration-v1-4-to-v1-5.md`](../../roadmaps/migration-v1-4-to-v1-5.md) |
+| Architecture decision records | [`adr/`](../../adr/) |
+| Reference V2 templates | [`InvoiceTemplateV2`](../../../src/main/java/com/demcha/compose/document/templates/builtins/InvoiceTemplateV2.java), [`ProposalTemplateV2`](../../../src/main/java/com/demcha/compose/document/templates/builtins/ProposalTemplateV2.java) |
+| Hand-built theme example | [`CustomBusinessThemeExample`](../../../examples/src/main/java/com/demcha/examples/features/themes/CustomBusinessThemeExample.java) |

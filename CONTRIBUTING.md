@@ -29,7 +29,7 @@ When writing new code, avoid Java 21+ APIs and language constructs that don't ex
 ## Build and test
 
 - The blocking validation gate for repository work is `./mvnw -B -ntp clean verify`.
-- Run the guard-focused suite with `./mvnw -B -ntp "-Dtest=EnginePdfBoundaryTest,CanonicalTemplateComposerPdfBoundaryTest,PdfRenderInterfaceGuardTest,PdfRenderingSystemECSDispatchTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest,TemplateComposeApiTest" test`.
+- Run the guard-focused suite with `./mvnw -B -ntp "-Dtest=EnginePdfBoundaryTest,CanonicalTemplateComposerPdfBoundaryTest,PdfRenderInterfaceGuardTest,PdfRenderingSystemECSDispatchTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest" test`.
 - Run a focused documentation sanity check with `./mvnw -B -ntp "-Dtest=DocumentationExamplesTest" test`.
 - Run the local benchmark wrapper with `powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1` when you change performance-sensitive code or benchmark tooling.
 
@@ -199,10 +199,9 @@ Keep the entity core thin:
 The rules above are enforced by tests:
 
 - canonical surface guards:
-  [CanonicalSurfaceGuardTest.java](./src/test/java/com/demcha/compose/document/architecture/CanonicalSurfaceGuardTest.java),
-  [TemplateComposeApiTest.java](./src/test/java/com/demcha/compose/document/templates/architecture/TemplateComposeApiTest.java),
-  [PublicApiNoEngineLeakTest.java](./src/test/java/com/demcha/compose/document/architecture/PublicApiNoEngineLeakTest.java),
-  [SemanticLayerNoPdfBoxDependencyTest.java](./src/test/java/com/demcha/compose/document/architecture/SemanticLayerNoPdfBoxDependencyTest.java),
+  [CanonicalSurfaceGuardTest.java](./src/test/java/com/demcha/documentation/CanonicalSurfaceGuardTest.java),
+  [PublicApiNoEngineLeakTest.java](./src/test/java/com/demcha/documentation/PublicApiNoEngineLeakTest.java),
+  [SemanticLayerNoPdfBoxDependencyTest.java](./src/test/java/com/demcha/documentation/SemanticLayerNoPdfBoxDependencyTest.java),
   [DocumentationExamplesTest.java](./src/test/java/com/demcha/documentation/DocumentationExamplesTest.java),
   [DocumentationCoverageTest.java](./src/test/java/com/demcha/documentation/DocumentationCoverageTest.java)
 - engine internals guards:

@@ -75,7 +75,7 @@ intended.
 
 > **Preset families.** Concrete document families live under `…templates.<family>` — `cv`, `coverletter`, `invoice`, `proposal`, `schedule`. CV and cover letter additionally ship a layered v2 surface (`…cv.v2.*` / `…coverletter.v2.*`: `data` / `theme` / `components` / `widgets` / `presets`). These per-family packages are documented by the template guides rather than enumerated here — see [which-template-system.md](../templates/which-template-system.md) for the status matrix and [templates/v2-layered/](../templates/v2-layered/README.md) for the layered architecture.
 
-> **`theme` vs `themes`.** The near-identical names are a known rough edge. `…templates.theme` (singular) is the older shared-theme-object package (built-in `WeeklyScheduleTheme`); `…templates.themes` (plural) is the Templates-v2 token-record package (`Spacing`, `Typography`). Until the two are consolidated, treat `themes` (plural) as the home for new v2 token work.
+> **`theme` vs `themes`.** The near-identical names are a known rough edge. `…templates.theme` (singular) is the older shared-theme-object package (built-in `WeeklyScheduleTheme`); `…templates.themes` (plural) is the Templates-v2 token-record package (`Spacing`, `Typography`). Until the two are consolidated, treat `themes` (plural) as the home for new v2 token work. The consolidation itself is a planned **2.0** change (it moves public types, so it is binary-incompatible) — tracked in the [deprecation inventory](../templates/which-template-system.md).
 
 ## Policy
 

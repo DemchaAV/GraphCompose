@@ -194,6 +194,7 @@ private taskboard.
 | `DocumentDsl.text(...)` (deprecated alias) | Pre-rebuild text shortcut. | `paragraph(...)` builders inside `pageFlow`. |
 | `DocumentPalette.of(...)` (deprecated alias) | Pre-rebuild palette factory. | `DocumentPalette.from(...)` (or theme-specific factories). |
 | PDF-specific chrome overloads on `BusinessTheme` | Coupled CV-specific tokens with PDF-specific decisions. | Layered `CvTheme` + render-time `pageBackgrounds(...)`. |
+| `templates.theme` + `templates.themes` (two near-identical packages) | Confusingly similar names: `theme` (singular) holds built-in theme objects (`WeeklyScheduleTheme`); `themes` (plural) holds v2 token records (`Spacing`, `Typography`). | Merge into one **singular** `templates.theme` (matching `document.theme` / `cv.v2.theme`). Deferred to 2.0 because these are public types — the package move is binary-incompatible and would fail the japicmp gate. |
 
 ### Open questions for 2.0 (no decision yet)
 

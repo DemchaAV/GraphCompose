@@ -99,7 +99,7 @@ class VersionConsistencyGuardTest {
     }
 
     /**
-     * The GitHub Pages showcase ({@code docs/index.html}) hardcodes the version
+     * The GitHub Pages showcase ({@code web/index.html}) hardcodes the version
      * in three spots — JSON-LD {@code softwareVersion}, the hero badge, and the
      * Maven + Gradle install snippets. None inherit from the pom, so without
      * this guard they silently drift. {@code cut-release.ps1} flips them on
@@ -108,19 +108,19 @@ class VersionConsistencyGuardTest {
     @Test
     void showcaseSiteVersionMatchesTheProjectVersion() throws Exception {
         Set<String> targets = acceptableTargets();
-        String site = Files.readString(PROJECT_ROOT.resolve("docs/index.html"));
+        String site = Files.readString(PROJECT_ROOT.resolve("web/index.html"));
 
         assertThat(firstGroup(site, "\"softwareVersion\":\\s*\"v?([0-9][^\"]*)\""))
-                .describedAs("docs/index.html JSON-LD softwareVersion must equal the current pom or planned version (one of %s)", targets)
+                .describedAs("web/index.html JSON-LD softwareVersion must equal the current pom or planned version (one of %s)", targets)
                 .isIn(targets);
         assertThat(firstGroup(site, "v([0-9][0-9.]*)\\s*&middot;\\s*MIT"))
-                .describedAs("docs/index.html hero version badge must equal the current pom or planned version (one of %s)", targets)
+                .describedAs("web/index.html hero version badge must equal the current pom or planned version (one of %s)", targets)
                 .isIn(targets);
         assertThat(firstMatchingGroup(site, INSTALL_SNIPPET_PATTERNS_SHOWCASE_MAVEN))
-                .describedAs("docs/index.html Maven install snippet must equal the current pom or planned version (one of %s)", targets)
+                .describedAs("web/index.html Maven install snippet must equal the current pom or planned version (one of %s)", targets)
                 .isIn(targets);
         assertThat(firstMatchingGroup(site, INSTALL_SNIPPET_PATTERNS_SHOWCASE_GRADLE))
-                .describedAs("docs/index.html Gradle install snippet must equal the current pom or planned version (one of %s)", targets)
+                .describedAs("web/index.html Gradle install snippet must equal the current pom or planned version (one of %s)", targets)
                 .isIn(targets);
     }
 

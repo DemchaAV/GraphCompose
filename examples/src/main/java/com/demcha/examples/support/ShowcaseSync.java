@@ -21,7 +21,7 @@ import java.util.stream.Stream;
 
 /**
  * Build-time tool that mirrors generated example PDFs into the
- * GitHub Pages site under {@code docs/showcase/}.
+ * GitHub Pages site under {@code web/showcase/}.
  *
  * <p>For each PDF found under
  * {@code examples/target/generated-pdfs/<category>/<group>/<file>.pdf}
@@ -29,13 +29,13 @@ import java.util.stream.Stream;
  *
  * <ol>
  *   <li>Copies the PDF to
- *       {@code docs/showcase/pdf/<category>/<group>/<file>.pdf}.</li>
+ *       {@code web/showcase/pdf/<category>/<group>/<file>.pdf}.</li>
  *   <li>Renders page 0 of the PDF to a {@code 1.5x} PNG and writes it to
- *       {@code docs/showcase/screenshots/<category>/<group>/<file>.png}
+ *       {@code web/showcase/screenshots/<category>/<group>/<file>.png}
  *       — the static site uses these as preview thumbnails.</li>
  * </ol>
  *
- * <p>Then it writes a structured {@code docs/examples.json} manifest
+ * <p>Then it writes a structured {@code web/examples.json} manifest
  * grouping every example by category and group. Per-example titles,
  * descriptions, and tags come from the hand-curated
  * {@link ShowcaseMetadata} catalogue; entries without metadata fall
@@ -59,9 +59,9 @@ public final class ShowcaseSync {
     public static void main(String[] args) throws Exception {
         Path repoRoot = locateRepoRoot();
         Path generatedPdfs = repoRoot.resolve("examples/target/generated-pdfs");
-        Path docsRoot = repoRoot.resolve("docs");
-        Path showcaseRoot = docsRoot.resolve("showcase");
-        Path manifestFile = docsRoot.resolve("examples.json");
+        Path siteRoot = repoRoot.resolve("web");
+        Path showcaseRoot = siteRoot.resolve("showcase");
+        Path manifestFile = siteRoot.resolve("examples.json");
 
         if (!Files.isDirectory(generatedPdfs)) {
             throw new IllegalStateException("No generated PDFs found at " + generatedPdfs
@@ -113,8 +113,8 @@ public final class ShowcaseSync {
                         meta.title(),
                         meta.description(),
                         meta.tags(),
-                        relativeUrl(showcaseRoot, pdfTarget, docsRoot),
-                        relativeUrl(showcaseRoot, pngTarget, docsRoot),
+                        relativeUrl(showcaseRoot, pdfTarget, siteRoot),
+                        relativeUrl(showcaseRoot, pngTarget, siteRoot),
                         meta.codeUrl());
                 tree.computeIfAbsent(category, c -> new TreeMap<>())
                         .computeIfAbsent(group, g -> new ArrayList<>())

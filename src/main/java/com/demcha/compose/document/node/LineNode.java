@@ -1,5 +1,6 @@
 package com.demcha.compose.document.node;
 
+import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTransform;
@@ -21,6 +22,8 @@ import com.demcha.compose.document.style.DocumentTransform;
  * @param margin outer margin
  * @param transform render-time affine transform; defaults to
  *                  {@link DocumentTransform#NONE}.
+ * @param dashPattern dash pattern for the stroke; defaults to
+ *                  {@link DocumentDashPattern#NONE} (solid)
  * @author Artem Demchyshyn
  */
 public record LineNode(
@@ -36,7 +39,8 @@ public record LineNode(
         DocumentBookmarkOptions bookmarkOptions,
         DocumentInsets padding,
         DocumentInsets margin,
-        DocumentTransform transform
+        DocumentTransform transform,
+        DocumentDashPattern dashPattern
 ) implements DocumentNode {
     /**
      * Normalizes spacing defaults and validates explicit line geometry.
@@ -46,12 +50,47 @@ public record LineNode(
         padding = padding == null ? DocumentInsets.zero() : padding;
         margin = margin == null ? DocumentInsets.zero() : margin;
         transform = transform == null ? DocumentTransform.NONE : transform;
+        dashPattern = dashPattern == null ? DocumentDashPattern.NONE : dashPattern;
         requireNonNegativeFinite(width, "width");
         requireNonNegativeFinite(height, "height");
         requireFinite(startX, "startX");
         requireFinite(startY, "startY");
         requireFinite(endX, "endX");
         requireFinite(endY, "endY");
+    }
+
+    /**
+     * Backward-compatible constructor without a dash pattern — defaults to a
+     * solid stroke ({@link DocumentDashPattern#NONE}).
+     *
+     * @param name node name used in snapshots and layout graph paths
+     * @param width resolved line box width
+     * @param height resolved line box height
+     * @param startX line start x offset inside the box
+     * @param startY line start y offset inside the box
+     * @param endX line end x offset inside the box
+     * @param endY line end y offset inside the box
+     * @param stroke line stroke descriptor
+     * @param linkOptions optional node-level link metadata
+     * @param bookmarkOptions optional node-level bookmark metadata
+     * @param padding inner padding
+     * @param margin outer margin
+     * @param transform render-time affine transform
+     */
+    public LineNode(String name,
+                    double width,
+                    double height,
+                    double startX,
+                    double startY,
+                    double endX,
+                    double endY,
+                    DocumentStroke stroke,
+                    DocumentLinkOptions linkOptions,
+                    DocumentBookmarkOptions bookmarkOptions,
+                    DocumentInsets padding,
+                    DocumentInsets margin,
+                    DocumentTransform transform) {
+        this(name, width, height, startX, startY, endX, endY, stroke, linkOptions, bookmarkOptions, padding, margin, transform, DocumentDashPattern.NONE);
     }
 
     /**

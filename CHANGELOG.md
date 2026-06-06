@@ -87,6 +87,16 @@ API turns the open cycle into a minor.
   Bold-Italic faces (bundled from the OFL-1.1 release), so monospaced code and
   data blocks render without a system-font install. Usable through any
   `DocumentTextStyle.fontName(...)` and listed in the font showcase.
+- **Dashed and dotted lines.** `LineBuilder.dashed(double... pattern)` /
+  `dashed()` / `dashed(DocumentDashPattern)` plus the new value type
+  `com.demcha.compose.document.style.DocumentDashPattern` (`@since 1.7.0`) make a
+  `line(...)` paint an on/off dash instead of a solid stroke — section and résumé
+  dividers, timeline connectors, cut-here rules. The pattern alternates paint-on
+  and paint-off lengths in points (`dashed(8, 5)`; `dashed()` is a balanced 3pt-on
+  / 2pt-off; `dashed(1, 4)` reads as dotted). Carried on the line independently of
+  `DocumentStroke`, so the stroke value stays a stable two-component record; lines
+  are solid by default and the PDF backend honours the dash (other backends fall
+  back to a solid stroke).
 
 ### Fixed
 

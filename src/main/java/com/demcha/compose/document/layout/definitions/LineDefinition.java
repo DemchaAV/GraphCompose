@@ -73,7 +73,8 @@ public final class LineDefinition implements NodeDefinition<LineNode> {
                         node.endX(),
                         node.endY(),
                         node.linkOptions(),
-                        node.bookmarkOptions()));
+                        node.bookmarkOptions(),
+                        node.dashPattern()));
         return wrapAtomicWithTransform(leaf, placement, node.transform());
     }
 }

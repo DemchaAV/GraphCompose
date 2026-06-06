@@ -4,10 +4,12 @@ import com.demcha.compose.document.backend.fixed.pdf.PdfFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.LineFragmentPayload;
+import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Renders fixed semantic line fragments.
@@ -42,11 +44,24 @@ public final class PdfLineFragmentRenderHandler
         try {
             stream.setStrokingColor(stroke.strokeColor().color());
             stream.setLineWidth((float) stroke.width());
+            applyDashPattern(stream, payload.dashPattern());
             stream.moveTo((float) (fragment.x() + payload.startX()), (float) (fragment.y() + payload.startY()));
             stream.lineTo((float) (fragment.x() + payload.endX()), (float) (fragment.y() + payload.endY()));
             stream.stroke();
         } finally {
             stream.restoreGraphicsState();
         }
+    }
+
+    private static void applyDashPattern(PDPageContentStream stream, DocumentDashPattern dash) throws IOException {
+        if (dash == null || dash.isSolid()) {
+            return;
+        }
+        List<Double> segments = dash.segments();
+        float[] dashArray = new float[segments.size()];
+        for (int i = 0; i < dashArray.length; i++) {
+            dashArray[i] = segments.get(i).floatValue();
+        }
+        stream.setLineDashPattern(dashArray, 0f);
     }
 }

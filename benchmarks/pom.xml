@@ -24,6 +24,7 @@
         <graphcompose.version>${project.version}</graphcompose.version>
         <maven.compiler.release>17</maven.compiler.release>
 
+        <jmh.version>1.37</jmh.version>
         <junit.bom.version>6.1.0</junit.bom.version>
         <assertj.version>3.27.7</assertj.version>
         <logback.version>1.5.34</logback.version>
@@ -72,6 +73,18 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>${logback.version}</version>
+        </dependency>
+
+        <!--
+            Strict JMH layer (forked JVM, warmup, measurement, GC profiling)
+            alongside the existing manual smoke/stress/endurance harness.
+            jmh-generator-annprocess runs as an annotation processor (see the
+            compiler plugin), so it is not a runtime dependency here.
+        -->
+        <dependency>
+            <groupId>org.openjdk.jmh</groupId>
+            <artifactId>jmh-core</artifactId>
+            <version>${jmh.version}</version>
         </dependency>
 
         <!--
@@ -124,6 +137,13 @@
                 <version>3.15.0</version>
                 <configuration>
                     <release>${maven.compiler.release}</release>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.openjdk.jmh</groupId>
+                            <artifactId>jmh-generator-annprocess</artifactId>
+                            <version>${jmh.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
             <plugin>
@@ -135,6 +155,60 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.6.3</version>
+            </plugin>
+            <!--
+                Strict JMH runner: a self-contained uber-jar with
+                org.openjdk.jmh.Main so forked benchmark JVMs inherit the full
+                classpath (exec:java cannot fork — the child VM loses it). The
+                manual-harness comparison libraries (iText, JasperReports,
+                openHTMLtoPDF) are excluded — the JMH benchmarks render through
+                GraphCompose only, so the jar stays lean.
+
+                Build + run:
+                  ./mvnw -f benchmarks/pom.xml clean package -DskipTests
+                  java -jar benchmarks/target/benchmarks.jar CanonicalRender
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>jmh-benchmarks-jar</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>benchmarks</finalName>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>net.sf.jasperreports:*</exclude>
+                                    <exclude>com.itextpdf:*</exclude>
+                                    <exclude>com.openhtmltopdf:*</exclude>
+                                </excludes>
+                            </artifactSet>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>org.openjdk.jmh.Main</mainClass>
+                                </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                            </transformers>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>module-info.class</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

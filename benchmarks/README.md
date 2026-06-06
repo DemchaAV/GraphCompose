@@ -15,9 +15,10 @@
 > JasperReports?" with rigour.
 >
 > A separate JMH layer (sibling chain Track C: B3 → B4 → B5 → B6 in the
-> 1.7.0 plan) will sit alongside this harness when it lands. Until
-> then, treat these numbers as **smoke-test fidelity, not benchmark
-> fidelity**.
+> 1.7.0 plan) sits alongside this harness — the infrastructure and first
+> benchmark have landed (B4); see [Strict JMH layer](#strict-jmh-layer).
+> Treat the **manual** harness numbers below as **smoke-test fidelity, not
+> benchmark fidelity**; quote the JMH layer for rigorous claims.
 
 ## When to use the harness
 
@@ -109,6 +110,28 @@ per-scenario sub-records. Each sub-record carries:
 - `peakMB` — peak heap as observed by `MemoryMXBean`; coarse, do not
   use for memory-budget enforcement.
 
+## Strict JMH layer
+
+The Track C JMH layer (forked JVM, warmup + measurement, JIT-stable numbers)
+lives alongside this manual harness. JMH benchmarks are annotated classes under
+`com.demcha.compose.jmh`; the shade plugin builds a self-contained runner jar so
+forked benchmark JVMs inherit the full classpath.
+
+```bash
+# Build the runner jar
+./mvnw -B -ntp -f benchmarks/pom.xml clean package -DskipTests
+
+# Run all JMH benchmarks (real config: forked, warmup + measurement)
+java -jar benchmarks/target/benchmarks.jar
+
+# Run one benchmark with a quick ad-hoc config
+java -jar benchmarks/target/benchmarks.jar CanonicalRender -f 1 -wi 2 -i 3
+```
+
+An `exec:java` run **cannot** fork (the child JVM loses the project classpath),
+so always run JMH through the jar. Quote the JMH numbers — not the manual
+harness numbers — for any public performance claim.
+
 ## Roadmap
 
 The 1.7.0 plan (Track C, B3 → B4 → B5 → B6) introduces a sibling JMH
@@ -116,8 +139,8 @@ layer:
 
 - **B3** — pull fixtures into a `fixtures/` package with deterministic
   seeds so the JMH layer can reuse them.
-- **B4** — JMH infrastructure (`jmh-core`, `jmh-generator-annprocess`,
-  shade plugin) + first benchmark (`SimpleDocumentJmhBenchmark`).
+- ✅ **B4** — JMH infrastructure (`jmh-core`, `jmh-generator-annprocess`,
+  shade runner jar) + first benchmark (`CanonicalRenderJmhBenchmark`). **Landed.**
 - **B5** — Invoice / CV / LargeTable / PdfRender JMH benchmarks.
 - **B6** — CI job that runs the JMH layer on a `workflow_dispatch` /
   weekly cadence and uploads `*.json` reports as artifacts.

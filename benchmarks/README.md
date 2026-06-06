@@ -115,7 +115,10 @@ per-scenario sub-records. Each sub-record carries:
 The Track C JMH layer (forked JVM, warmup + measurement, JIT-stable numbers)
 lives alongside this manual harness. JMH benchmarks are annotated classes under
 `com.demcha.compose.jmh`; the shade plugin builds a self-contained runner jar so
-forked benchmark JVMs inherit the full classpath.
+forked benchmark JVMs inherit the full classpath. Present benchmarks:
+`CanonicalRender` (bare-DSL multi-section render), `TemplateCv` (the
+`ModernProfessional` layered template), and `PaginatedDocument` (a multi-page
+document parameterised by section count).
 
 ```bash
 # Build the runner jar
@@ -141,7 +144,8 @@ layer:
   seeds so the JMH layer can reuse them.
 - ✅ **B4** — JMH infrastructure (`jmh-core`, `jmh-generator-annprocess`,
   shade runner jar) + first benchmark (`CanonicalRenderJmhBenchmark`). **Landed.**
-- **B5** — Invoice / CV / LargeTable / PdfRender JMH benchmarks.
+- 🟡 **B5** — JMH benchmarks landed: `CanonicalRender`, `TemplateCv`,
+  `PaginatedDocument`. Invoice / large-table coverage to follow.
 - **B6** — CI job that runs the JMH layer on a `workflow_dispatch` /
   weekly cadence and uploads `*.json` reports as artifacts.
 

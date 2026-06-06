@@ -24,7 +24,7 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import java.awt.Color;
 import java.util.List;
 
-final class CanonicalBenchmarkSupport {
+public final class CanonicalBenchmarkSupport {
     static final DocumentTextStyle TITLE_STYLE = DocumentTextStyle.builder()
             .size(20)
             .decoration(DocumentTextDecoration.BOLD)
@@ -47,7 +47,7 @@ final class CanonicalBenchmarkSupport {
      * removed alongside {@code CvTemplateV1} when Templates v2 landed
      * in v1.6.
      */
-    static CvSpec canonicalCv() {
+    public static CvSpec canonicalCv() {
         return CvSpec.builder()
                 .header(CvHeader.builder()
                         .name("Jordan Rivera")
@@ -95,11 +95,11 @@ final class CanonicalBenchmarkSupport {
                 .build();
     }
 
-    static InvoiceDocumentSpec canonicalInvoice() {
+    public static InvoiceDocumentSpec canonicalInvoice() {
         return InvoiceDocumentSpec.from(InvoiceDataFixtures.standardInvoice());
     }
 
-    static ProposalDocumentSpec canonicalProposal() {
+    public static ProposalDocumentSpec canonicalProposal() {
         return ProposalDocumentSpec.from(ProposalDataFixtures.longProposal());
     }
 

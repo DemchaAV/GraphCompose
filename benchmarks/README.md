@@ -146,8 +146,10 @@ layer:
   shade runner jar) + first benchmark (`CanonicalRenderJmhBenchmark`). **Landed.**
 - 🟡 **B5** — JMH benchmarks landed: `CanonicalRender`, `TemplateCv`,
   `PaginatedDocument`. Invoice / large-table coverage to follow.
-- **B6** — CI job that runs the JMH layer on a `workflow_dispatch` /
-  weekly cadence and uploads `*.json` reports as artifacts.
+- ✅ **B6** — CI job ([`benchmarks-jmh.yml`](../.github/workflows/benchmarks-jmh.yml))
+  runs the JMH layer on a `workflow_dispatch` / weekly cadence and uploads the
+  `*.json` report as an artifact. Decoupled from the main CI pipeline so forked
+  runs never gate PRs. **Landed.**
 
 Once that chain is in place, any *public* performance claim should
 quote the JMH layer's numbers, with explicit warmup / measurement /

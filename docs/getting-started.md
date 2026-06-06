@@ -1,6 +1,6 @@
 # Getting Started
 
-GraphCompose v1.5 uses the canonical session-first API. Application
+GraphCompose uses a canonical session-first API. Application
 code starts with `GraphCompose.document(...)`, creates one
 `DocumentSession`, describes content with `DocumentDsl`, and finishes
 with `writePdf(...)`, `buildPdf()`, or `toPdfBytes()`.
@@ -178,15 +178,21 @@ for the full recipe.
 ## Built-In Templates
 
 Built-ins compose into the same `DocumentSession`. Template data
-lives under `com.demcha.compose.document.templates.data.*`, and
-templates live under
-`com.demcha.compose.document.templates.builtins`.
+lives under `com.demcha.compose.document.templates.data.*`, and the
+current built-in templates live under
+`com.demcha.compose.document.templates.builtins` — `InvoiceTemplateV2`,
+`ProposalTemplateV2`, and the weekly schedule. (For CVs and cover
+letters, prefer the layered `cv.v2` / `coverletter.v2` authoring model —
+see [Templates v2 (layered) quickstart](templates/v2-layered/quickstart.md).)
 
 ```java
-InvoiceTemplate template = new InvoiceTemplateV1();
+import com.demcha.compose.document.templates.builtins.InvoiceTemplateV2;
+import com.demcha.compose.document.theme.BusinessTheme;
+
+InvoiceTemplateV2 template = new InvoiceTemplateV2(BusinessTheme.modern());
 
 try (DocumentSession document = GraphCompose.document(Path.of("invoice.pdf")).create()) {
-    template.compose(document, invoice);
+    template.compose(document, invoice);   // invoice = your InvoiceDocumentSpec
     document.buildPdf();
 }
 ```

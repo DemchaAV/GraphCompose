@@ -14,6 +14,9 @@ on:
         default: ''
   schedule:
     # Weekly, Monday 06:00 UTC (one hour after the ci.yml weekly job).
+    # NOTE: GitHub runs scheduled workflows only from the default branch (main),
+    # so this cron stays dormant while the file lives on develop and starts firing
+    # once it reaches main at release. workflow_dispatch works on any branch now.
     - cron: '0 6 * * 1'
 
 permissions:

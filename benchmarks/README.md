@@ -120,6 +120,12 @@ forked benchmark JVMs inherit the full classpath. Present benchmarks:
 `ModernProfessional` layered template), and `PaginatedDocument` (a multi-page
 document parameterised by section count).
 
+The measured region differs per benchmark: `TemplateCv` hoists fixture
+construction into `@Setup` and times the render only, while `CanonicalRender` and
+`PaginatedDocument` build the document inside the benchmark, so their scores also
+include `DocumentSession` creation and DSL construction. Compare each benchmark
+against its own history, not across the three.
+
 ```bash
 # Build the runner jar
 ./mvnw -B -ntp -f benchmarks/pom.xml clean package -DskipTests

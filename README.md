@@ -44,56 +44,6 @@
 
 Sits between **iText** (low-level page primitives) and **JasperReports** (XML-template-driven layout): a Java DSL describes the document semantically, the engine renders.
 
-## Scope and comparison
-
-### Output support
-
-| Format | Status | Notes |
-|---|---|---|
-| PDF | Production | Fixed-layout backend on PDFBox 3.0. Full DSL coverage. |
-| DOCX | Partial | Semantic export via Apache POI. Unsupported nodes (`shape`, `line`, `ellipse`, `barcode`) are dropped silently &mdash; layout fidelity is best-effort for paragraph / list / table content. |
-| PPTX | Skeleton | Validates supported node types and emits a manifest. **Not a real PowerPoint export yet** &mdash; planned only if there is demand. |
-
-### When to use GraphCompose
-
-- **Server-side PDF generation in Java** &mdash; invoices, CVs, reports, proposals, statements, schedules.
-- **Templated documents from data** &mdash; themed presets (`ModernProfessional`, `InvoiceTemplateV2`, &hellip;) you parameterise instead of re-styling every time.
-- **Regression-tested layouts** &mdash; `DocumentSession#layoutSnapshot()` makes layout changes visible in PRs before any byte ships; `PdfVisualRegression` adds a pixel-level gate for font and colour fidelity.
-- **Streaming PDFs from web backends** &mdash; Spring Boot `@RestController` writing straight to the response ([`HttpStreamingExample`](./examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java)).
-- **Higher-level than PDFBox, lighter than JasperReports** &mdash; Java DSL describes semantics; no XML templates, no manual coordinates.
-
-### What GraphCompose is not
-
-- Not a hosted PDF rendering service &mdash; it is a library you embed.
-- Not a WYSIWYG editor &mdash; the DSL is code, not drag-and-drop.
-- Not a reporting engine like JasperReports &mdash; no datasource bindings, no XML templates, no compiled `.jasper` files.
-- Not a browser / HTML-to-PDF renderer &mdash; the engine has its own layout pipeline; HTML/CSS input is not supported.
-
-### Compared with similar Java libraries
-
-| Library | API style | Layout | License | Best for |
-|---|---|---|---|---|
-| **GraphCompose** | Java DSL, semantic nodes | Two-pass, deterministic, snapshot-testable | MIT | Code-first business documents with layout regression tests |
-| **PDFBox** | Low-level text / path primitives | Manual coordinates | Apache 2.0 | Direct PDF manipulation, parsing, extraction |
-| **iText 7** | Low-level page primitives + high-level helpers | Manual + helpers | AGPL / commercial | When AGPL is acceptable or you have a commercial licence |
-| **OpenPDF** | iText 4 fork | Manual + helpers | LGPL / MPL | Legacy iText 4 codebases |
-| **JasperReports** | XML templates compiled to `.jasper` | Template-driven | LGPL | Tabular reports with datasource bindings |
-
-GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the comparison is about authoring surface, not the renderer.
-
-### Which API should I use?
-
-| You want to&hellip; | Surface | Entry point |
-|---|---|---|
-| Generate a one-off PDF programmatically | DSL | `GraphCompose.document(...).pageFlow(...)` &mdash; see [Hello world](#hello-world) below |
-| Generate a CV / cover letter from data | Layered templates | `ModernProfessional.create().compose(session, cvDocument)` &mdash; see [layered templates](./docs/templates/v2-layered/README.md) |
-| Add a custom visual primitive | Engine extension | `NodeDefinition` + `PdfFragmentRenderHandler` &mdash; see [extension guide](./docs/contributing/extension-guide.md) |
-| Regression-test generated layouts | Layout snapshots | `DocumentSession#layoutSnapshot()` &mdash; quickstart at [Testing your document](./docs/operations/test-your-document.md); full reference at [snapshot testing](./docs/operations/layout-snapshot-testing.md) |
-| Pixel-test the rendered PDF (fonts, colours, anti-aliasing) | Visual regression | `PdfVisualRegression.standard()&hellip;assertMatchesBaseline(...)` &mdash; see [visual regression testing](./docs/operations/visual-regression-testing.md) |
-| See the live playground / gallery | Next.js showcase site | [Showcase](https://DemchaAV.github.io/GraphCompose/) &mdash; source under [`site/`](./site), built with `next build` and deployed via the [Pages workflow](./.github/workflows/deploy-site.yml) |
-
-> **Choosing a template surface** &mdash; layered (`cv.v2`), classic (`cv.presets`), or the built-in `*TemplateV2` family? See **[Which template system should I use?](./docs/templates/which-template-system.md)** for the status matrix, decision tree, and `classic → layered` migration map.
-
 ## Installation
 
 ```xml
@@ -152,6 +102,56 @@ class Hello {
 ```
 
 For a Spring Boot `@RestController` streaming the PDF straight to the response, see [`HttpStreamingExample`](./examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java).
+
+## Scope and comparison
+
+### Output support
+
+| Format | Status | Notes |
+|---|---|---|
+| PDF | Production | Fixed-layout backend on PDFBox 3.0. Full DSL coverage. |
+| DOCX | Partial | Semantic export via Apache POI. Unsupported nodes (`shape`, `line`, `ellipse`, `barcode`) are dropped silently &mdash; layout fidelity is best-effort for paragraph / list / table content. |
+| PPTX | Skeleton | Validates supported node types and emits a manifest. **Not a real PowerPoint export yet** &mdash; planned only if there is demand. |
+
+### When to use GraphCompose
+
+- **Server-side PDF generation in Java** &mdash; invoices, CVs, reports, proposals, statements, schedules.
+- **Templated documents from data** &mdash; themed presets (`ModernProfessional`, `InvoiceTemplateV2`, &hellip;) you parameterise instead of re-styling every time.
+- **Regression-tested layouts** &mdash; `DocumentSession#layoutSnapshot()` makes layout changes visible in PRs before any byte ships; `PdfVisualRegression` adds a pixel-level gate for font and colour fidelity.
+- **Streaming PDFs from web backends** &mdash; Spring Boot `@RestController` writing straight to the response ([`HttpStreamingExample`](./examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java)).
+- **Higher-level than PDFBox, lighter than JasperReports** &mdash; Java DSL describes semantics; no XML templates, no manual coordinates.
+
+### What GraphCompose is not
+
+- Not a hosted PDF rendering service &mdash; it is a library you embed.
+- Not a WYSIWYG editor &mdash; the DSL is code, not drag-and-drop.
+- Not a reporting engine like JasperReports &mdash; no datasource bindings, no XML templates, no compiled `.jasper` files.
+- Not a browser / HTML-to-PDF renderer &mdash; the engine has its own layout pipeline; HTML/CSS input is not supported.
+
+### Compared with similar Java libraries
+
+| Library | API style | Layout | License | Best for |
+|---|---|---|---|---|
+| **GraphCompose** | Java DSL, semantic nodes | Two-pass, deterministic, snapshot-testable | MIT | Code-first business documents with layout regression tests |
+| **PDFBox** | Low-level text / path primitives | Manual coordinates | Apache 2.0 | Direct PDF manipulation, parsing, extraction |
+| **iText 7** | Low-level page primitives + high-level helpers | Manual + helpers | AGPL / commercial | When AGPL is acceptable or you have a commercial licence |
+| **OpenPDF** | iText 4 fork | Manual + helpers | LGPL / MPL | Legacy iText 4 codebases |
+| **JasperReports** | XML templates compiled to `.jasper` | Template-driven | LGPL | Tabular reports with datasource bindings |
+
+GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the comparison is about authoring surface, not the renderer.
+
+### Which API should I use?
+
+| You want to&hellip; | Surface | Entry point |
+|---|---|---|
+| Generate a one-off PDF programmatically | DSL | `GraphCompose.document(...).pageFlow(...)` &mdash; see [Hello world](#hello-world) above |
+| Generate a CV / cover letter from data | Layered templates | `ModernProfessional.create().compose(session, cvDocument)` &mdash; see [layered templates](./docs/templates/v2-layered/README.md) |
+| Add a custom visual primitive | Engine extension | `NodeDefinition` + `PdfFragmentRenderHandler` &mdash; see [extension guide](./docs/contributing/extension-guide.md) |
+| Regression-test generated layouts | Layout snapshots | `DocumentSession#layoutSnapshot()` &mdash; quickstart at [Testing your document](./docs/operations/test-your-document.md); full reference at [snapshot testing](./docs/operations/layout-snapshot-testing.md) |
+| Pixel-test the rendered PDF (fonts, colours, anti-aliasing) | Visual regression | `PdfVisualRegression.standard()&hellip;assertMatchesBaseline(...)` &mdash; see [visual regression testing](./docs/operations/visual-regression-testing.md) |
+| See the live playground / gallery | Next.js showcase site | [Showcase](https://DemchaAV.github.io/GraphCompose/) &mdash; source under [`site/`](./site), built with `next build` and deployed via the [Pages workflow](./.github/workflows/deploy-site.yml) |
+
+> **Choosing a template surface** &mdash; layered (`cv.v2`), classic (`cv.presets`), or the built-in `*TemplateV2` family? See **[Which template system should I use?](./docs/templates/which-template-system.md)** for the status matrix, decision tree, and `classic → layered` migration map.
 
 ## What's in v1.6 &mdash; "expressive"
 

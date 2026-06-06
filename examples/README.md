@@ -235,7 +235,7 @@ preset for your own CV product. Each preset is a one-liner factory
 | Timeline minimal | [PDF](../assets/readme/examples/cv-timeline-minimal.pdf) |
 | Engineering resume | [PDF](../assets/readme/examples/cv-engineering-resume.pdf) |
 | Panel | [PDF](../assets/readme/examples/cv-panel.pdf) |
-| Executive · BoxedSections · CenteredHeadline · BlueBanner · EditorialBlue · SidebarPortrait · MonogramSidebar | run the gallery to render |
+| Executive · BoxedSections · CenteredHeadline · BlueBanner · EditorialBlue · SidebarPortrait · MonogramSidebar · MintEditorial · MinimalUnderlined | run the gallery to render |
 
 [📜 Full source](src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java)
 

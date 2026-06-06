@@ -96,13 +96,13 @@ See [docs/contributing/release-process.md](./docs/contributing/release-process.m
 - `src/main/java/com/demcha/compose/document/templates/*`
   Built-in templates (CV, cover letter, invoice, proposal, weekly schedule), DTOs, themes, registries, and scene composition helpers
 - `src/main/java/com/demcha/compose/engine/*`
-  Internal ECS engine kept for the legacy template path. Not part of the recommended public API
+  Internal shared engine foundation under the canonical surface (measure, paginate, place, render). Not part of the recommended public API
 - `src/main/java/com/demcha/compose/font`
   Public font registry, `FontName`, default fonts, `FontShowcase`
 - `src/test/java/com/demcha/documentation/*`
   Examples used to keep README/documentation snippets honest
 - `src/test/java/com/demcha/compose/engine/integration/*`
-  End-to-end behaviour checks for the legacy ECS layout, pagination, and rendering paths
+  End-to-end behaviour checks for the engine foundation's layout, pagination, and rendering paths
 - `src/test/java/com/demcha/compose/document/*`
   Canonical API, DSL, layout, backend, and template tests
 - `assets/readme/*`
@@ -367,7 +367,7 @@ The repository uses these normalized package roots:
 - `com.demcha.compose.document.backend.fixed.pdf` — PDF fixed-layout backend
 - `com.demcha.compose.document.backend.semantic` — DOCX / PPTX semantic backends
 - `com.demcha.compose.document.templates` — built-in templates and data
-- `com.demcha.compose.engine` — internal ECS engine; kept for the legacy template path, not part of the recommended public API
+- `com.demcha.compose.engine` — internal shared engine foundation under the canonical surface; not part of the recommended public API
 - `com.demcha.compose.font` — public font registry
 
 Please treat these names as the current source of truth in code, tests, examples, and docs. Do not introduce aliases or partial fallback imports.

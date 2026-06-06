@@ -40,7 +40,7 @@ JSON report: `target/benchmarks/current-speed/run-20260427-094410.json`
 
 The optimizations target hot paths used in the **template** scenarios
 (invoice, cv, proposal, feature-rich, FullCv) since they go through the
-legacy ECS engine pipeline (`engine.*` package):
+shared engine foundation (`engine.*` package):
 
 1. **UUID bit-comparison in `PageBreaker.paginationPriority`** — removes
    `UUID::toString` allocation per `PriorityQueue` compare. Should help

@@ -108,6 +108,20 @@ API turns the open cycle into a minor.
   relationship replaces the hand-placed bullet-plus-margin pattern; the timeline
   paginates between entries and a tall entry splits within itself, the rail
   continuing across the page break.
+- **`DocumentSession.availableHeight()`.** A one-call alias for
+  `canvas().innerHeight()` (`@since 1.7.0`) — the usable page content height
+  (page height minus top and bottom margins), the value a composition reads to
+  decide how much vertical room a section, sidebar or spacer may fill.
+  Previously reachable only through the layout-inspection facade.
+- **`headingBar(text, bar -> ...)` — one-call filled title band.** Every flow,
+  section and module gains `headingBar(String)` and `headingBar(String,
+  Consumer<HeadingBarStyle>)` (`@since 1.7.0`) on `AbstractFlowBuilder`: a
+  filled, rounded heading band with a single label, added as a child above the
+  body. `HeadingBarStyle` (`com.demcha.compose.document.dsl`) tunes fill, corner
+  radius, padding, margin, label text style, alignment and an optional outline
+  stroke, each with a sensible default (a light-grey band with a centred bold
+  label), so `bar -> bar.fill(brand).textStyle(white)` is enough. Sugar over the
+  `softPanel(...).addParagraph(...)` recipe — no new node type, just discoverable.
 
 ### Fixed
 

@@ -637,6 +637,19 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
+     * Returns the usable content height of the page in points — the page height
+     * minus the top and bottom margins. Convenience alias for
+     * {@code canvas().innerHeight()}: the value a composition reads to decide how
+     * much vertical space a section, sidebar, or spacer may fill.
+     *
+     * @return the inner (content) height of the current page canvas, in points
+     * @since 1.7.0
+     */
+    public double availableHeight() {
+        return canvas().innerHeight();
+    }
+
+    /**
      * Returns an immutable copy of the current semantic roots.
      *
      * @return semantic root nodes in insertion order

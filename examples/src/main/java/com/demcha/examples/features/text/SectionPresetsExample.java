@@ -18,8 +18,9 @@ import java.nio.file.Path;
  * Runnable showcase for the v1.4 / v1.5 section preset shortcuts.
  *
  * <p>Demonstrates {@code pageBackground}, {@code band(color)},
- * {@code softPanel(...)}, {@code accentLeft / accentRight / accentTop /
- * accentBottom}, and per-corner {@code DocumentCornerRadius} on a single
+ * {@code softPanel(...)}, {@code headingBar(...)}, {@code accentLeft /
+ * accentRight / accentTop / accentBottom}, and per-corner
+ * {@code DocumentCornerRadius} on a single
  * designed A4 page so a reader can see the visual difference between
  * each preset side-by-side.</p>
  */
@@ -87,6 +88,16 @@ public final class SectionPresetsExample {
                             .addParagraph(p -> p
                                     .text("softPanel(color, radius=16, padding=20)")
                                     .textStyle(headlineOnDark())
+                                    .margin(DocumentInsets.zero())))
+                    // headingBar(text, bar -> ...) — filled title band above the body
+                    .addSection("Heading bar", section -> section
+                            .spacing(6)
+                            .headingBar("EXPERIENCE", bar -> bar
+                                    .fill(BRAND)
+                                    .textStyle(headlineOnDark()))
+                            .addParagraph(p -> p
+                                    .text("headingBar(text, bar -> ...)  — a filled, rounded title band added above the body in one call")
+                                    .textStyle(panelHeadline())
                                     .margin(DocumentInsets.zero())))
                     // accentLeft
                     .addSection("Accent left", section -> section

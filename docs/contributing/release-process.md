@@ -5,7 +5,7 @@ This is the canonical release runbook for GraphCompose 1.x.
 - Maven Central — `io.github.demchaav:graph-compose:<version>` (canonical, from v1.6.6)
 - JitPack — `com.github.DemchaAV:GraphCompose:v<version>` (legacy; resolves for callers pinned to v1.6.5 and earlier, no longer the documented install channel)
 
-The release workflow is automated by [`scripts/cut-release.ps1`](../scripts/cut-release.ps1). The script must run from the `develop` branch with a clean working tree. The agent (Claude / Codex) **must complete every audit gate below before a release tag is cut**, and **must wait for explicit human approval** ("yes, cut the tag" / "делаем тег") before invoking the script.
+The release workflow is automated by [`scripts/cut-release.ps1`](../../scripts/cut-release.ps1). The script must run from the `develop` branch with a clean working tree. The agent (Claude / Codex) **must complete every audit gate below before a release tag is cut**, and **must wait for explicit human approval** ("yes, cut the tag" / "делаем тег") before invoking the script.
 
 > **Agent contract**: audit and pre-release fixes are local-only by default. The script is the only step that mutates remotes (push develop, push tag). Never tag, push tags, or merge to `main` without an explicit go-signal in the chat.
 
@@ -47,7 +47,7 @@ The shell setup and exact PowerShell commands live in the `graphcompose-release-
 The script's Step 1–4 mutates these. The agent only confirms the *current state is one the script can transition from*:
 
 - [ ] The version lives in four sites that must stay in lockstep: the standalone library `pom.xml`, the reactor `aggregator/pom.xml`, and the inherited `<parent>` version of `examples/pom.xml` and `benchmarks/pom.xml` (the children no longer pin their own `<version>` — they inherit from `graph-compose-build`, and declare `<graphcompose.version>${project.version}</graphcompose.version>` rather than a literal). All four read the same value: either the in-flight develop value or already the target. `VersionConsistencyGuardTest` asserts they agree; `cut-release.ps1` Step 1 moves all four (plus the README) together. Bumping by hand outside the script — or `mvn versions:set` on a single pom — is what previously left benchmarks on the prior release; if you must bump outside the script, use `mvn -f aggregator/pom.xml versions:set -DnewVersion=<X>`.
-- [ ] `examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java` `GH_BASE` points to `/blob/develop`. The script flips it to `/blob/v<target>` and regenerates `docs/examples.json`.
+- [ ] `examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java` `GH_BASE` points to `/blob/develop`. The script flips it to `/blob/v<target>` and regenerates `web/examples.json`.
 
 ### E. Tag must not exist
 
@@ -62,9 +62,9 @@ Running `pwsh ./scripts/cut-release.ps1 -Version <X.Y.Z>` performs:
 1. **Pre-flight** — re-checks all of A above (branch, clean tree, in-sync, no existing tag).
 2. **Bump versions** to `<X.Y.Z>` across the library `pom.xml`, the `aggregator/pom.xml`, the inherited `<parent>` refs in `examples/pom.xml` and `benchmarks/pom.xml`, **and** the README Maven + Gradle install snippets — all in one pass, so `VersionConsistencyGuardTest` stays green at Step 5.
 3. **Date the CHANGELOG** — flips `## v<X.Y.Z> — Planned` to `## v<X.Y.Z> — <today-ISO>`.
-4. **Switch ShowcaseMetadata GH_BASE** from `/blob/develop` to `/blob/v<X.Y.Z>` and regenerate `docs/examples.json`.
+4. **Switch ShowcaseMetadata GH_BASE** from `/blob/develop` to `/blob/v<X.Y.Z>` and regenerate `web/examples.json`.
 5. **`mvnw verify -pl .`** — full sanity build (skip with `-SkipVerify` only if you just ran it).
-6. **Commit** as `Release v<X.Y.Z>`. Files committed: the library `pom.xml`, `aggregator/pom.xml`, `examples/pom.xml`, `benchmarks/pom.xml`, `README.md` (install snippets), `CHANGELOG.md`, `ShowcaseMetadata.java`, and `docs/examples.json`. `examples/README.md` and any other docs are NOT touched by the script — fix those pre-release.
+6. **Commit** as `Release v<X.Y.Z>`. Files committed: the library `pom.xml`, `aggregator/pom.xml`, `examples/pom.xml`, `benchmarks/pom.xml`, `README.md` (install snippets), `CHANGELOG.md`, `ShowcaseMetadata.java`, `web/examples.json`, `web/index.html`, and `web/showcase/`. `examples/README.md` and any other docs are NOT touched by the script — fix those pre-release.
 7. **Annotated tag** `v<X.Y.Z>` (`git tag -a -m "Release v<X.Y.Z>"`).
 8. **Push** `develop` and the tag to `origin` (skip with `-SkipPush`).
 

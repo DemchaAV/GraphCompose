@@ -1,0 +1,43 @@
+name: Deploy web showcase to GitHub Pages
+
+# Publishes the static showcase site under `web/` to GitHub Pages via
+# GitHub Actions. The site is plain HTML / CSS / JS + generated showcase
+# assets — no build step. It replaced the old "deploy from branch /docs"
+# setup when the showcase moved out of docs/ into web/ so that docs/ holds
+# documentation only.
+#
+# REQUIRES: repository Settings → Pages → Source = "GitHub Actions"
+# (one-time switch from "Deploy from a branch"). Until that switch is made,
+# this workflow builds the artifact but Pages keeps serving the old source.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/deploy-web.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: web
+      - id: deployment
+        uses: actions/deploy-pages@v5

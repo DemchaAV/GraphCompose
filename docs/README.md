@@ -89,11 +89,11 @@ it does.
 > were reserved during a v1.5 restructure that landed under ADR 0011
 > instead of multiple smaller records. No deleted ADRs.
 
-### Showcase site
-- **[SHOWCASE.md](SHOWCASE.md)** — how the GitHub Pages showcase is
-  built and how to add new examples to it. (Not documentation about
-  GraphCompose itself — this is meta-doc about the website at
-  https://demchaav.github.io/GraphCompose/.)
+### Showcase website (separate from docs)
+- The public showcase website is **not** documentation — it lives in
+  [`web/`](../web/) (static GitHub Pages site) and is documented by its own
+  [`web/README.md`](../web/README.md). Kept out of `docs/` on purpose so the two
+  don't tangle.
 
 ### Archive
 - **[archive/](archive/)** — old migration guides and roadmaps kept

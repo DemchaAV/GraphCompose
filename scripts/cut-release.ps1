@@ -294,7 +294,7 @@ function Update-SitePresetsVersion($presetsPath, $newVersion) {
 }
 
 function Update-SiteExamplesJsonTag($jsonPath, $tag) {
-    # `site/public/examples.json` is a copy of `docs/examples.json` used
+    # `site/public/examples.json` is a copy of `web/examples.json` used
     # by the Gallery. Re-pin its source links from `/blob/develop/...`
     # to `/blob/<tag>/...` so deep links survive future develop drift.
     if (-not (Test-Path $jsonPath)) { Note "skip (no file): $jsonPath"; return }
@@ -322,7 +322,7 @@ function Update-IndexHtmlVersion($indexHtmlPath, $newVersion) {
     $tag = "v$newVersion"
     $changed = $false
 
-    # The GitHub Pages showcase (docs/index.html) hardcodes the version in
+    # The GitHub Pages showcase (web/index.html) hardcodes the version in
     # several spots that do NOT inherit from the pom — they previously sat at
     # v1.6.1 while the library shipped v1.6.4. VersionConsistencyGuardTest
     # fails the verify gate if any lags, so flip them all in lockstep with the
@@ -348,12 +348,12 @@ function Update-IndexHtmlVersion($indexHtmlPath, $newVersion) {
     }
 
     if (-not $changed) {
-        Note "no change: docs/index.html version (already $tag?)"
+        Note "no change: web/index.html version (already $tag?)"
         return
     }
 
     if ($DryRun) {
-        Write-Host "    [DRY RUN] docs/index.html version -> $tag" -ForegroundColor Yellow
+        Write-Host "    [DRY RUN] web/index.html version -> $tag" -ForegroundColor Yellow
     } else {
         [System.IO.File]::WriteAllText($indexHtmlPath, $content)
     }
@@ -387,19 +387,19 @@ function Sync-SiteShowcase {
     # PDFs / screenshots / manifest are picked up.
     #
     # What gets mirrored:
-    #   docs/showcase/pdf/**           → site/public/showcase/pdf/**
-    #   docs/showcase/screenshots/**   → site/public/showcase/screenshots/**
-    #   docs/examples.json             → site/public/examples.json
-    #   docs/showcase/screenshots/templates/cv/cv-*-v2.png
+    #   web/showcase/pdf/**           → site/public/showcase/pdf/**
+    #   web/showcase/screenshots/**   → site/public/showcase/screenshots/**
+    #   web/examples.json             → site/public/examples.json
+    #   web/showcase/screenshots/templates/cv/cv-*-v2.png
     #                                  → site/public/previews/cv-v2/
-    #   docs/showcase/screenshots/templates/coverletter/cover-letter-*-v2.png
+    #   web/showcase/screenshots/templates/coverletter/cover-letter-*-v2.png
     #                                  → site/public/previews/coverletter-v2/
     #
     # Doesn't touch the 3 Playground PDFs (hello/invoice/cv) — those have
     # no generator yet, see future-work note in site/public/previews/README.md.
-    $docsShowcase = Join-Path $repoRoot 'docs/showcase'
+    $docsShowcase = Join-Path $repoRoot 'web/showcase'
     $siteShowcase = Join-Path $repoRoot 'site/public/showcase'
-    $docsJson     = Join-Path $repoRoot 'docs/examples.json'
+    $docsJson     = Join-Path $repoRoot 'web/examples.json'
     $siteJson     = Join-Path $repoRoot 'site/public/examples.json'
     $cvSrcDir     = Join-Path $docsShowcase 'screenshots/templates/cv'
     $letterSrcDir = Join-Path $docsShowcase 'screenshots/templates/coverletter'
@@ -407,13 +407,13 @@ function Sync-SiteShowcase {
     $letterDstDir = Join-Path $repoRoot 'site/public/previews/coverletter-v2'
 
     if (-not (Test-Path $docsShowcase)) {
-        Note "skip Sync-SiteShowcase: no docs/showcase yet"
+        Note "skip Sync-SiteShowcase: no web/showcase yet"
         return
     }
 
     if ($DryRun) {
-        Write-Host "    [DRY RUN] mirror docs/showcase/{pdf,screenshots} -> site/public/showcase/" -ForegroundColor Yellow
-        Write-Host "    [DRY RUN] copy docs/examples.json -> site/public/examples.json" -ForegroundColor Yellow
+        Write-Host "    [DRY RUN] mirror web/showcase/{pdf,screenshots} -> site/public/showcase/" -ForegroundColor Yellow
+        Write-Host "    [DRY RUN] copy web/examples.json -> site/public/examples.json" -ForegroundColor Yellow
         Write-Host "    [DRY RUN] copy cv/v2 + coverletter/v2 PNGs -> site/public/previews/{cv-v2,coverletter-v2}/" -ForegroundColor Yellow
         return
     }
@@ -422,14 +422,14 @@ function Sync-SiteShowcase {
     New-Item -ItemType Directory -Force -Path $siteShowcase | Out-Null
     Copy-Item -Recurse -Force "$docsShowcase/pdf" $siteShowcase
     Copy-Item -Recurse -Force "$docsShowcase/screenshots" $siteShowcase
-    Note "synced docs/showcase -> site/public/showcase"
+    Note "synced web/showcase -> site/public/showcase"
 
     # Manifest
     if (Test-Path $docsJson) {
         Copy-Item -Force $docsJson $siteJson
-        Note "synced docs/examples.json -> site/public/examples.json"
+        Note "synced web/examples.json -> site/public/examples.json"
         # Re-apply the /blob/develop -> /blob/<tag> pin in case
-        # docs/examples.json itself still points at develop (ShowcaseSync
+        # web/examples.json itself still points at develop (ShowcaseSync
         # writes whatever GH_BASE Step 3 set in ShowcaseMetadata.java).
         if ($script:tag) {
             Update-SiteExamplesJsonTag $siteJson $script:tag
@@ -503,7 +503,7 @@ if ($PostReleaseOnly) {
         $changed = Update-ShowcaseGhBase 'develop'
 
         if ($changed -or $DryRun) {
-            Step 2 "Regenerate docs/examples.json with develop links"
+            Step 2 "Regenerate web/examples.json with develop links"
             Run-ShowcaseSync
 
             Step 3 "Commit"
@@ -511,7 +511,7 @@ if ($PostReleaseOnly) {
             if ($DryRun) {
                 Write-Host "    [DRY RUN] git commit -m `"$msg`"" -ForegroundColor Yellow
             } else {
-                git add $showcaseMetadata 'docs/examples.json'
+                git add $showcaseMetadata 'web/examples.json'
                 git commit -m $msg
             }
 
@@ -595,11 +595,10 @@ try {
     Update-PomVersion (Join-Path $repoRoot 'examples/pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'benchmarks/pom.xml') $Version
     Update-ReadmeInstallVersion (Join-Path $repoRoot 'README.md') $Version
-    Update-IndexHtmlVersion (Join-Path $repoRoot 'docs/index.html') $Version
-    Update-SiteDepsVersion (Join-Path $repoRoot 'site/lib/deps.ts') $Version
-    Update-SiteHeroVersion (Join-Path $repoRoot 'site/components/Hero.tsx') $Version
-    Update-SitePresetsVersion (Join-Path $repoRoot 'site/lib/presets.tsx') $Version
-    Update-SiteExamplesJsonTag (Join-Path $repoRoot 'site/public/examples.json') $tag
+    Update-IndexHtmlVersion (Join-Path $repoRoot 'web/index.html') $Version
+    # The Next.js site/ and the docs->site/public mirror were retired when the static
+    # showcase moved to web/ (deployed directly via .github/workflows/deploy-web.yml).
+    # Only web/ is version-bumped now.
 
     Step 2 "Update CHANGELOG date for v$Version"
     $changelog = Join-Path $repoRoot 'CHANGELOG.md'
@@ -624,9 +623,8 @@ try {
     Step 3 "Switch ShowcaseMetadata GH_BASE to /blob/$tag"
     Update-ShowcaseGhBase $tag | Out-Null
 
-    Step 4 "Regenerate docs/examples.json with $tag links"
+    Step 4 "Regenerate web/examples.json with $tag links"
     Run-ShowcaseSync
-    Sync-SiteShowcase
 
     if (-not $SkipVerify) {
         Step 5 "Run mvnw verify (sanity check)"
@@ -650,7 +648,7 @@ try {
     Step 6 "Commit release"
     $commitMsg = "Release v$Version"
     if ($DryRun) {
-        Write-Host "    [DRY RUN] git add pom.xml aggregator/pom.xml examples/pom.xml benchmarks/pom.xml README.md CHANGELOG.md examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java docs/examples.json docs/index.html docs/showcase site/lib/deps.ts site/components/Hero.tsx site/lib/presets.tsx site/public/examples.json site/public/showcase site/public/previews/cv-v2 site/public/previews/coverletter-v2" -ForegroundColor Yellow
+        Write-Host "    [DRY RUN] git add pom.xml aggregator/pom.xml examples/pom.xml benchmarks/pom.xml README.md CHANGELOG.md examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java web/examples.json web/index.html web/showcase" -ForegroundColor Yellow
         Write-Host "    [DRY RUN] git commit -m `"$commitMsg`"" -ForegroundColor Yellow
     } else {
         git add `
@@ -661,16 +659,9 @@ try {
             README.md `
             CHANGELOG.md `
             examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java `
-            docs/examples.json `
-            docs/index.html `
-            docs/showcase `
-            site/lib/deps.ts `
-            site/components/Hero.tsx `
-            site/lib/presets.tsx `
-            site/public/examples.json `
-            site/public/showcase `
-            site/public/previews/cv-v2 `
-            site/public/previews/coverletter-v2
+            web/examples.json `
+            web/index.html `
+            web/showcase
         git commit -m $commitMsg
         Note "commit: $commitMsg"
     }

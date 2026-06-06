@@ -65,7 +65,17 @@ intended.
 | `com.demcha.compose.document.templates.support.cv` | CV-specific scene composers. | CV layout rules belong here, not in generic business helpers. |
 | `com.demcha.compose.document.templates.support.business` | Invoice, proposal, and cover-letter scene composers and policies. | Use shared module/render paths and template layout policy. |
 | `com.demcha.compose.document.templates.support.schedule` | Schedule-specific scene composer. | Keep schedule-specific table/rhythm decisions isolated here. |
-| `com.demcha.compose.document.templates.theme` | Theme value objects for built-ins. | Themes should carry styling decisions, not document content. |
+| `com.demcha.compose.document.templates.theme` | Older shared theme *objects* for built-ins (e.g. `WeeklyScheduleTheme`). Distinct from `…templates.themes` (plural) below. | Themes carry styling decisions, not document content. New v2 token work goes in `themes`, not here. |
+| `com.demcha.compose.document.templates.themes` | Templates-v2 theme *token records* — `Spacing`, `Typography` (future `Palette`). Pure value types, no engine / session dependencies. | One source of truth per token group; keep it dependency-free. |
+| `com.demcha.compose.document.templates.components` | Templates-v2 reusable composition components shared across families — `Header`, `Module`, `MarkdownText`. | Stateless after construction; produce `DocumentNode`s. Family-specific components go in `<family>.v2.components`. |
+| `com.demcha.compose.document.templates.blocks` | Templates-v2 module-body block kinds — `ParagraphBlock`, `BulletListBlock`, `NumberedListBlock`, `IndentedBlock`, `KeyValueBlock`, `MultiParagraphBlock`, `EducationBlock`, `WorkHistoryBlock`. | A block declares *what* content appears; the renderer expands it per active theme / tokens. |
+| `com.demcha.compose.document.templates.decorations` | Templates-v2 decoration library — `Divider`, `AccentStrip`, `Spacer` (Panel / Banner / Ornament reserved). | First-class artefacts any preset can attach; not baked into composer logic. |
+| `com.demcha.compose.document.templates.widgets` | Shared visual widgets usable by every family — `CardWidget`, `TableWidget`, `TimelineAxisWidget`. | Keep generic (no CV-only assumptions) so invoice / proposal / cover-letter can reuse them. |
+| `com.demcha.compose.document.templates.tables` | **Reserved** for Templates-v2 reusable table styles (zebra / minimal-grid / borderless / accent-header / financial). Currently `package-info.java` only — no classes yet (Phase F). | Land table *styles* here, independent of the data they render. |
+
+> **Preset families.** Concrete document families live under `…templates.<family>` — `cv`, `coverletter`, `invoice`, `proposal`, `schedule`. CV and cover letter additionally ship a layered v2 surface (`…cv.v2.*` / `…coverletter.v2.*`: `data` / `theme` / `components` / `widgets` / `presets`). These per-family packages are documented by the template guides rather than enumerated here — see [which-template-system.md](../templates/which-template-system.md) for the status matrix and [templates/v2-layered/](../templates/v2-layered/README.md) for the layered architecture.
+
+> **`theme` vs `themes`.** The near-identical names are a known rough edge. `…templates.theme` (singular) is the older shared-theme-object package (built-in `WeeklyScheduleTheme`); `…templates.themes` (plural) is the Templates-v2 token-record package (`Spacing`, `Typography`). Until the two are consolidated, treat `themes` (plural) as the home for new v2 token work.
 
 ## Policy
 

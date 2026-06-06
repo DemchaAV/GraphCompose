@@ -57,7 +57,7 @@ GraphCompose follows a fork &rarr; feature branch &rarr; pull request flow. Exte
 6. **CI runs automatically.** Active jobs:
    - `Architecture and Documentation Guards` &mdash; fast canonical / engine-boundary guard tests, fail-first gate
    - `Build and run tests (JDK 17)`, `(JDK 21)`, `(JDK 25)` &mdash; full `mvnw verify` in parallel matrix across the supported JVMs
-   - `Examples Generation Smoke Test` &mdash; regenerates all 26 runnable examples and uploads the PDFs as a CI artifact
+   - `Examples Generation Smoke Test` &mdash; regenerates all 54 runnable examples and uploads the PDFs as a CI artifact
    - `Performance Smoke Check` &mdash; PR-only coarse benchmark to catch performance regressions
 
    The PR cannot merge into a protected branch until all required checks are green.
@@ -107,6 +107,10 @@ See [docs/contributing/release-process.md](./docs/contributing/release-process.m
   Canonical API, DSL, layout, backend, and template tests
 - `assets/readme/*`
   Screenshots used by the README
+- `aggregator/pom.xml`
+  Maven reactor (aggregator POM); release tooling propagates the version bump across all modules through it in one pass
+- `baselines/`
+  Committed performance-benchmark baseline summaries (`BASELINE_SUMMARY.md`, `COMPARISON.md`) — the reference numbers benchmark runs compare against
 
 ## Recommended workflow
 

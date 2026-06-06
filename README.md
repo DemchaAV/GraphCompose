@@ -157,7 +157,7 @@ GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the com
 
 ## What's in v1.6 &mdash; "expressive"
 
-- **Layered templates** &mdash; 14 CV and 14 paired cover-letter presets on the layered `cv.v2` / `coverletter.v2` architecture (data → theme → components → widgets → presets), one-liner `create()` factories over a typed `CvDocument` / `CoverLetterDocument`. Inline markdown, multi-column layouts. The going-forward standard for new template families. See [`docs/templates/v2-layered/README.md`](./docs/templates/v2-layered/README.md). (The earlier `BusinessTheme`-based preset surface is now deprecated.)
+- **Layered templates** &mdash; 16 CV and 15 paired cover-letter presets on the layered `cv.v2` / `coverletter.v2` architecture (data → theme → components → widgets → presets), one-liner `create()` factories over a typed `CvDocument` / `CoverLetterDocument`. Inline markdown, multi-column layouts. The going-forward standard for new template families. See [`docs/templates/v2-layered/README.md`](./docs/templates/v2-layered/README.md). (The earlier `BusinessTheme`-based preset surface is now deprecated.)
 - **Composed primitives** &mdash; `ListBuilder.addItem(label, Consumer)` (nested lists), `DocumentTableCell.node(...)` (any node inside a cell), `CanvasLayerNode` (pixel-precise free-canvas placement).
 - **Architecture hardening** &mdash; `@Internal` API stability marker, public `PdfFragmentRenderHandler` SPI, `DocumentRenderingException` on the convenience render path, documented thread-safety contract.
 

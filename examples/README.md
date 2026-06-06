@@ -15,7 +15,7 @@ Install the library artifact once from the repository root:
 ./mvnw -DskipTests install
 ```
 
-Then run all 26 examples in one shot:
+Then run all 54 examples in one shot:
 
 ```bash
 ./mvnw -f examples/pom.xml exec:java \
@@ -31,6 +31,13 @@ Then run all 26 examples in one shot:
 
 Generated PDFs land in `examples/target/generated-pdfs/`. The same
 `mvnw.cmd` form works on Windows PowerShell with backslash paths.
+
+`GenerateAllExamples` runs **54** example programs — 16 CV + 15
+cover-letter presets plus invoices, proposals, a schedule, the feature
+demos, and the flagships. The showcase site surfaces the full generated
+catalogue (~53 PDFs); a curated 28-PDF subset is committed under
+[`assets/readme/examples/`](../assets/readme/examples/) for the previews
+linked below.
 
 ## Gallery — pick by your goal
 
@@ -71,8 +78,8 @@ are with the canonical DSL, then jump to its detailed section below.
 
 | Example | What it shows | Preview · Source |
 |---|---|---|
-| [CV — template gallery](#cv-template-gallery) | All 14 v2 CV presets in one orchestrated run | [Source](src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java) |
-| [Cover letter — template gallery](#cover-letter-template-gallery) | All 14 paired v2 cover-letter presets in one orchestrated run | [Source](src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java) |
+| [CV — template gallery](#cv-template-gallery) | The v2 CV presets in one orchestrated run | [Source](src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java) |
+| [Cover letter — template gallery](#cover-letter-template-gallery) | All paired v2 cover-letter presets in one orchestrated run | [Source](src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java) |
 | [Proposal — cinematic V2](#proposal-cinematic-v2) | `ProposalTemplateV2 + BusinessTheme.modern()` | [PDF](../assets/readme/examples/proposal-cinematic.pdf) · [Source](src/main/java/com/demcha/examples/templates/proposal/ProposalCinematicFileExample.java) |
 | [Custom Business Theme](#custom-business-theme) | Hand-built `BusinessTheme` driving `InvoiceTemplateV2` — theme-token customisation entry point | [PDF](../assets/readme/examples/invoice-custom-theme.pdf) · [Source](src/main/java/com/demcha/examples/features/themes/CustomBusinessThemeExample.java) |
 
@@ -213,9 +220,8 @@ fork-a-monolith.
 
 ### CV — template gallery
 
-Generates every v2 CV preset in one orchestrated run — 14 presets
-covering single-column, two-column-sidebar, and three-column-magazine
-layouts. Use this as the side-by-side catalogue when picking a base
+Generates the v2 CV presets in one orchestrated run, covering
+single-column, two-column-sidebar, and three-column-magazine layouts. Use this as the side-by-side catalogue when picking a base
 preset for your own CV product. Each preset is a one-liner factory
 (`ModernProfessional.create()`, `NordicClean.create()`,
 …); see `cv/v2/presets/` for the full list.
@@ -235,7 +241,7 @@ preset for your own CV product. Each preset is a one-liner factory
 
 ### Cover letter — template gallery
 
-Generates all 14 paired v2 cover-letter presets in one run — one
+Generates all paired v2 cover-letter presets in one run — one
 letter style per CV preset so a candidate's CV and cover letter
 share the same visual language end-to-end. Each preset is a
 one-liner factory (`ModernProfessionalLetter.create()`,

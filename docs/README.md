@@ -64,6 +64,10 @@ back here.
 - **[recipes/themes.md](recipes/themes.md)** — custom themes.
 - **[recipes/streaming.md](recipes/streaming.md)** — streaming PDFs to HTTP responses.
 - **[recipes/extending.md](recipes/extending.md)** — extension patterns by example.
+- **[recipes/page-backgrounds.md](recipes/page-backgrounds.md)** — per-page fills: sidebars, bands, layered tints.
+- **[recipes/layered-page-design.md](recipes/layered-page-design.md)** — page background vs. row vs. layer stack vs. canvas.
+- **[recipes/absolute-placement.md](recipes/absolute-placement.md)** — pixel-precise canvas placement.
+- **[font-coverage.md](font-coverage.md)** — WinAnsi limits, `●` vs `•`, and glyph fallback.
 
 ### Architecture Decision Records (ADRs)
 Numbered, dated decisions about non-trivial design choices. Read these

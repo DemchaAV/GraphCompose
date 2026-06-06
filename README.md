@@ -28,6 +28,8 @@
   &nbsp;·&nbsp;
   <a href="./examples/README.md"><b>Examples Gallery</b></a>
   &nbsp;·&nbsp;
+  <a href="./docs/README.md"><b>Docs</b></a>
+  &nbsp;·&nbsp;
   <a href="./CHANGELOG.md"><b>Changelog</b></a>
 </p>
 

@@ -224,7 +224,7 @@ Full detail: [architecture overview](./docs/architecture/overview.md) &middot; [
 - [Templates v1-classic landing](./docs/templates/v1-classic/README.md) &mdash; the older `BusinessTheme` / `CvSpec` CV / cover-letter / invoice / proposal preset library (**deprecated** — CV + cover letter are superseded by [v2-layered](./docs/templates/v2-layered/README.md); invoice / proposal / schedule are not yet ported). Cheat sheet: [authoring](./docs/templates/v1-classic/authoring.md).
 
 ### Architecture & operations
-- [Architecture overview](./docs/architecture/overview.md) · [Lifecycle](./docs/architecture/lifecycle.md) · [Production rendering](./docs/operations/production-rendering.md) · [Layout snapshot testing](./docs/operations/layout-snapshot-testing.md)
+- [Architecture overview](./docs/architecture/overview.md) · [Lifecycle](./docs/architecture/lifecycle.md) · [Production rendering](./docs/operations/production-rendering.md) · [Layout snapshot testing](./docs/operations/layout-snapshot-testing.md) · [Troubleshooting](./docs/troubleshooting.md)
 
 ### Recipes & examples
 - [Recipes index](./docs/recipes.md) &mdash; [shape-as-container](./docs/recipes/shape-as-container.md) · [shapes](./docs/recipes/shapes.md) · [transforms](./docs/recipes/transforms.md) · [page-backgrounds](./docs/recipes/page-backgrounds.md) · [layered-page-design](./docs/recipes/layered-page-design.md) · [absolute-placement](./docs/recipes/absolute-placement.md) · [tables](./docs/recipes/tables.md) · [themes](./docs/recipes/themes.md) · [streaming](./docs/recipes/streaming.md) · [extending](./docs/recipes/extending.md) · [font-coverage](./docs/font-coverage.md)

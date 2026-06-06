@@ -27,6 +27,7 @@ back here.
 
 ### Getting started
 - **[getting-started.md](getting-started.md)** — DSL vs templates, first-render walk-through, decision tree.
+- **[troubleshooting.md](troubleshooting.md)** — symptom-first fixes for common gotchas: stray `?` glyphs, silent DOCX drops, optional-dependency `NoClassDefFoundError`, running the bundled examples.
 
 ### Templates
 - **[templates/v2-layered/](templates/v2-layered/)** — 🆕 canonical going-forward pattern (CV is the reference implementation): `data` / `theme` / `components` / `widgets` / `presets`.

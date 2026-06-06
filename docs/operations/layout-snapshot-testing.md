@@ -122,8 +122,6 @@ Minimal pattern:
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
-import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 import org.junit.jupiter.api.Test;
 
@@ -184,7 +182,7 @@ class InvoiceTemplateSnapshotTest {
 
     @Test
     void shouldKeepInvoiceLayoutStable() throws Exception {
-        InvoiceTemplateV1 template = new InvoiceTemplateV1();
+        InvoiceTemplateV2 template = new InvoiceTemplateV2(BusinessTheme.modern());
         InvoiceDocumentSpec spec = invoiceFixture();
 
         try (DocumentSession document = GraphCompose.document()
@@ -287,7 +285,7 @@ To accept an intentional layout change locally:
 Or update a focused test only:
 
 ```powershell
-./mvnw "-Dgraphcompose.updateSnapshots=true" "-Dtest=InvoiceTemplateV1LayoutSnapshotTest" test
+./mvnw "-Dgraphcompose.updateSnapshots=true" "-Dtest=MyFeatureLayoutSnapshotTest" test
 ```
 
 The same property works for downstream projects that use `LayoutSnapshotAssertions` from the published GraphCompose artifact.

@@ -815,6 +815,24 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     }
 
     /**
+     * Adds a semantic timeline — a sequence of marker-paired entries laid out
+     * with a continuous connector rail. Each entry pairs a {@link TimelineMarker}
+     * with its title / meta / body, so the marker-to-content relationship is
+     * declared once instead of hand-placing a bullet plus a left margin per row.
+     *
+     * @param spec callback that adds the timeline's entries and tunes its style
+     * @return this builder
+     * @since 1.7.0
+     */
+    public T addTimeline(Consumer<TimelineBuilder> spec) {
+        TimelineBuilder timeline = new TimelineBuilder();
+        if (spec != null) {
+            spec.accept(timeline);
+        }
+        return addSection(timeline::buildInto);
+    }
+
+    /**
      * Adds a titled semantic module.
      *
      * @param title visible module title

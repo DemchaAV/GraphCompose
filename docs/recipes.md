@@ -13,6 +13,9 @@ authoring API; public application code should not import
 | [Shapes and visual primitives](recipes/shapes.md) | Filled cards, dividers, spacers, lines, ellipses, image fit modes, soft panels |
 | [Shape-as-container](recipes/shape-as-container.md) | `addCircle` / `addEllipse` / `addContainer` with `ClipPolicy` (clipped layered children) |
 | [Transforms and z-index](recipes/transforms.md) | `rotate` / `scale` mixin, per-layer `zIndex` for overlays |
+| [Page backgrounds](recipes/page-backgrounds.md) | `pageBackground` / `pageBackgrounds`, `PageBackgroundFill` columns, bands, point-based fills, layering |
+| [Layered page design](recipes/layered-page-design.md) | Choosing between page backgrounds, rows, layer stacks, and canvases |
+| [Absolute placement](recipes/absolute-placement.md) | `addCanvas` + `position(x, y)` for pixel-precise certificates and badges |
 | [Tables](recipes/tables.md) | Row span, zebra rows, totals row, repeated header on page break |
 | [Streaming and output](recipes/streaming.md) | `buildPdf` / `writePdf` / `toPdfBytes`, DOCX export, layout snapshots, header / footer chrome, guide lines |
 | [Extending GraphCompose](recipes/extending.md) | New semantic node, fluent setter, render backend, snapshot-based regression tests |
@@ -24,6 +27,8 @@ For longer-form material:
   worked example.
 - [Migration v1.4 → v1.5](migration-v1-4-to-v1-5.md) — every public
   API change in v1.5 plus suggested migration order.
+- [Font coverage and glyph fallback](font-coverage.md) — WinAnsi limits,
+  `●` vs `•`, and the inline-shape / bundled-font alternatives.
 - [`ADR 0001 — Shape as container`](adr/0001-shape-as-container.md)
   and [`ADR 0002 — Theme unification`](adr/0002-theme-unification.md)
   for the design reasoning behind the two largest v1.5 additions.

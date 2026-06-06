@@ -134,6 +134,19 @@ API turns the open cycle into a minor.
   the same `PreparedStackLayout` offsets as the root path. Layout for documents
   that did not use `position(...)` inside a nested stack is unchanged.
 
+### Documentation
+
+- **New recipe pages for page composition and font coverage** (closing the
+  `docs/recipes/` discoverability gaps G2 / G6):
+  [`page-backgrounds.md`](docs/recipes/page-backgrounds.md) (`PageBackgroundFill`
+  columns / bands / point-based fills / layering),
+  [`layered-page-design.md`](docs/recipes/layered-page-design.md) (choosing
+  between page backgrounds, rows, layer stacks and canvases),
+  [`absolute-placement.md`](docs/recipes/absolute-placement.md) (`addCanvas` +
+  `position(x, y)`), and [`font-coverage.md`](docs/font-coverage.md) (WinAnsi
+  limits, `●` vs `•`, and the inline-shape / bundled-font alternatives). Linked
+  from the README recipes index, `docs/README.md`, and `docs/recipes.md`.
+
 ## v1.6.9 — 2026-06-03
 
 Housekeeping cycle plus the public pixel-level visual-regression API (Track N).

@@ -196,6 +196,23 @@ document.pageFlow().addCanvas(523, 360, canvas -> canvas
         .position(rule(503, 1.4, accent), 10, 32));
 ```
 
+## Architecture
+
+GraphCompose splits into a **public canonical surface** you author against (`com.demcha.compose.document.*`) and an **internal shared engine foundation** (`com.demcha.compose.engine.*`, marked `@Internal`) that resolves geometry, pagination, and rendering behind it. You author intent; the engine resolves the rest.
+
+```mermaid
+flowchart LR
+    A["GraphCompose.document(...)<br/>DocumentSession · DocumentDsl"] --> B["DocumentNode tree<br/>document.node"]
+    B --> C["LayoutCompiler<br/>document.layout"]
+    C --> D["Engine foundation @Internal<br/>measure → paginate → place"]
+    D --> E{Backend}
+    E -->|PDF| F["PdfFixedLayoutBackend"]
+    E -->|DOCX| G["DocxSemanticBackend · POI"]
+    D -.->|layoutSnapshot| H["Deterministic snapshot<br/>(regression tests)"]
+```
+
+Full detail: [architecture overview](./docs/architecture/overview.md) &middot; [package map](./docs/architecture/package-map.md) &middot; [lifecycle](./docs/architecture/lifecycle.md).
+
 ## Documentation
 
 📚 **[Full docs index](./docs/README.md)** &mdash; categorised map of every doc, ADR, and recipe. Start there to navigate the documentation.

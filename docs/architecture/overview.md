@@ -15,6 +15,25 @@ The supported runtime pipeline is:
    → semantic DocumentNode tree → layout fragments
    → pagination + placement → backend render`
 
+```mermaid
+flowchart TD
+    A["Application code — GraphCompose.document(...)"] --> B["DocumentSession + DocumentDsl<br/>(document.api · document.dsl)"]
+    B --> C["Semantic DocumentNode tree<br/>(document.node) — renderer-neutral"]
+    C --> D["LayoutCompiler + NodeRegistry<br/>(document.layout) → LayoutFragments"]
+    D --> E["Shared engine foundation — @Internal<br/>(engine.*): measure → paginate → place → order"]
+    E --> F{"Active backend"}
+    F -->|PDF| G["PdfFixedLayoutBackend<br/>(document.backend.fixed.pdf + engine.render.pdf)"]
+    F -->|DOCX| H["DocxSemanticBackend — Apache POI<br/>(document.backend.semantic)"]
+    E -.->|"layoutSnapshot()"| I["Deterministic layout snapshot<br/>(regression tests — no bytes rendered)"]
+```
+
+The PDF path deliberately spans **two** packages: the canonical backend
+`document.backend.fixed.pdf` owns PDFBox lifecycle and option translation,
+then dispatches resolved fragments to the engine render handlers under
+`engine.render.pdf`. See *Measurement and renderer ownership* below for that
+seam; it is the one place where the canonical/engine split is least obvious
+from package names alone.
+
 Concretely:
 
 1. application code describes a document through

@@ -97,6 +97,17 @@ API turns the open cycle into a minor.
   `DocumentStroke`, so the stroke value stays a stable two-component record; lines
   are solid by default and the PDF backend honours the dash (other backends fall
   back to a solid stroke).
+- **Semantic timelines.** `addTimeline(timeline -> ...)` on every flow / section /
+  module, plus `TimelineBuilder`, `TimelineMarker` and `TimelineEntryBuilder`
+  (`com.demcha.compose.document.dsl`, `@since 1.7.0`), lay out a vertical timeline
+  where each `entry(marker, e -> e.title(...).meta(...).body(...))` pairs a marker
+  with its content along a continuous connector rail — work history, project
+  milestones, numbered process steps. Markers are `TimelineMarker.dot`, `circle`,
+  `numbered` or `square`; the rail colour/width, gutter, entry spacing and default
+  title / meta / body styles are all tunable. Declaring the marker-to-content
+  relationship replaces the hand-placed bullet-plus-margin pattern; the timeline
+  paginates between entries and a tall entry splits within itself, the rail
+  continuing across the page break.
 
 ### Fixed
 

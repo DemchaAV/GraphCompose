@@ -20,6 +20,11 @@ The DSL and the templates compose against the SAME `DocumentSession`
 — a template can also live alongside hand-written DSL inside one
 session, so you don't have to commit to one layer per document.
 
+Unsure which template surface to target — layered (`cv.v2`), classic
+(`cv.presets`), or a built-in `*TemplateV2`? See
+[Which template system should I use?](templates/which-template-system.md)
+for the authoritative decision tree and status matrix.
+
 ## Quick start
 
 The shortest path to a real PDF: open a session, drop a soft-panel

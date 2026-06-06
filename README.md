@@ -92,6 +92,8 @@ GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the com
 | Pixel-test the rendered PDF (fonts, colours, anti-aliasing) | Visual regression | `PdfVisualRegression.standard()&hellip;assertMatchesBaseline(...)` &mdash; see [visual regression testing](./docs/operations/visual-regression-testing.md) |
 | See the live playground / gallery | Next.js showcase site | [Showcase](https://DemchaAV.github.io/GraphCompose/) &mdash; source under [`site/`](./site), built with `next build` and deployed via the [Pages workflow](./.github/workflows/deploy-site.yml) |
 
+> **Choosing a template surface** &mdash; layered (`cv.v2`), classic (`cv.presets`), or the built-in `*TemplateV2` family? See **[Which template system should I use?](./docs/templates/which-template-system.md)** for the status matrix, decision tree, and `classic → layered` migration map.
+
 ## Installation
 
 ```xml

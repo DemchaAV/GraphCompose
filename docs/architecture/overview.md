@@ -92,8 +92,9 @@ need to reach below it.
 - **`document.image`** — public image types
   (`DocumentImageData`, `DocumentImageFitMode`).
 - **`document.theme`** — `BusinessTheme` design tokens
-  (`DocumentPalette`, `SpacingScale`, `TextScale`, `TablePreset`) plus
-  `CvTheme` and the `CvTheme.fromBusinessTheme(...)` bridge.
+  (`DocumentPalette`, `SpacingScale`, `TextScale`, `TablePreset`). The
+  layered CV theme `CvTheme` lives separately under
+  `…templates.cv.v2.theme`.
 - **`document.output`** — backend-neutral output options
   (`DocumentMetadata`, `DocumentWatermark`, `DocumentProtection`,
   `DocumentHeaderFooter`).

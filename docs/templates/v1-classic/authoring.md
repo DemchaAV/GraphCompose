@@ -165,16 +165,6 @@ you cheap forks. To brand for your project, hand-build a
 `BusinessTheme(...)` once — see
 [`CustomBusinessThemeExample`](../examples/src/main/java/com/demcha/examples/CustomBusinessThemeExample.java).
 
-### Bridging to the legacy `CvTheme`
-
-```java
-CvTheme cvTheme = CvTheme.fromBusinessTheme(theme);   // ADR 0002
-```
-
-Routes the business palette + text scale into the older CV record so a
-single theme drives both invoice / proposal templates and the legacy
-CV gallery without redeclaring colours.
-
 ---
 
 ## 6. Golden patterns (copy these)

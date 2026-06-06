@@ -100,31 +100,32 @@ The earlier `InvoiceTemplateV1` is hard-coded to a default theme via
 the static `BusinessDocumentSceneStyles`. Both V1 and V2 ship side by
 side; V2 is the cinematic theme-driven path.
 
-## Sharing themes with CV templates
+## CV themes
 
-`CvTheme` is the legacy theme type used by the CV gallery
-(`CvTemplateV1` and the ten visual variants). It carries the same
-visual concerns as `BusinessTheme` but with CV-specific accessor
-names (`nameTextStyle`, `sectionHeaderTextStyle`, `bodyTextStyle`).
-
-To keep a CV and a business document visually consistent without
-re-stating colours and fonts, derive the `CvTheme` from your chosen
-`BusinessTheme`:
+CV templates are themed independently of `BusinessTheme`. The layered
+CV presets (`cv.v2.presets.*`) carry their own theme type, `CvTheme`
+(in `com.demcha.compose.document.templates.cv.v2.theme`), so CV tokens
+stay separate from invoice / proposal vocabulary. Each preset ships a
+default theme; render one against a `CvDocument` with its `create()`
+factory:
 
 ```java
-import com.demcha.compose.document.templates.theme.CvTheme;
+import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
+import com.demcha.compose.document.templates.cv.v2.presets.ModernProfessional;
 
-BusinessTheme theme = BusinessTheme.modern();
-CvTheme cvTheme = CvTheme.fromBusinessTheme(theme);
-
-// invoice + proposal both use `theme`
-// CV uses `cvTheme`
+DocumentTemplate<CvDocument> cv = ModernProfessional.create();
+cv.compose(session, cvDocument);
 ```
 
-The bridge maps the business palette / text-scale slots into the
-CV-specific tokens (`primaryColor`, `accentColor`, `nameFontSize`,
-etc.). See [ADR 0002 — Theme unification](../adr/0002-theme-unification.md)
-for the mapping table and the rationale.
+To restyle, pass a custom `CvTheme` to the preset's `create(...)`
+overload, or use its `Options` builder where one is provided (for
+example `MintEditorial.Options.builder().headerBandColor(...).build()`
+→ `MintEditorial.create(options)`). See
+[authoring presets](../templates/v2-layered/authoring-presets.md) for
+the per-preset customisation knobs and
+[which template system?](../templates/which-template-system.md) for the
+full preset list.
 
 ## See also
 

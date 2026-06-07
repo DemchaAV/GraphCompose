@@ -682,6 +682,17 @@
                                 <includeSynthetic>false</includeSynthetic>
                                 <reportOnlyFilename>true</reportOnlyFilename>
                                 <skipPomModules>true</skipPomModules>
+                                <!--
+                                    Internal layout->render handoff DTOs. These records carry
+                                    engine-internal types (TextStyle, Padding, ...) and evolve
+                                    with rendering features (e.g. ParagraphFragmentPayload gained
+                                    verticalAlign in 1.7.0). They are not part of the canonical
+                                    public API (document.api/dsl/node/style) and carry no
+                                    binary-compatibility promise, so they are excluded from the gate.
+                                -->
+                                <excludes>
+                                    <exclude>com.demcha.compose.document.layout.payloads</exclude>
+                                </excludes>
                             </parameter>
                         </configuration>
                     </plugin>

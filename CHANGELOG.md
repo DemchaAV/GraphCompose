@@ -147,6 +147,25 @@ API turns the open cycle into a minor.
   limits, `●` vs `•`, and the inline-shape / bundled-font alternatives). Linked
   from the README recipes index, `docs/README.md`, and `docs/recipes.md`.
 
+### Build
+
+- **Showcase website separated from documentation (`docs/` → `web/`), now deployed
+  via GitHub Actions.** The static GitHub Pages site (`index.html`, `styles.css`,
+  `examples.js`, the generated `examples.json` + `showcase/` gallery assets,
+  `robots.txt`, `sitemap.xml`, logo) moved out of `docs/` — which previously had to
+  host it because branch-based Pages can only serve repo-root or `/docs` — into a new
+  top-level [`web/`](web/) folder, so `docs/` now holds **only documentation**. A new
+  [`deploy-web.yml`](.github/workflows/deploy-web.yml) publishes `web/` to Pages from
+  the **"GitHub Actions"** source; the old branch-`/docs` `deploy-site.yml` was
+  removed. `ShowcaseSync` now writes `web/showcase` + `web/examples.json`,
+  `VersionConsistencyGuardTest` reads `web/index.html`, and `cut-release.ps1`
+  bumps / commits `web/`. The unused Next.js rebuild under `site/` (added in v1.6.8
+  but never deployed) was removed. Also renamed `docs/SHOWCASE.md` → `web/README.md`.
+  **⚠️ Action required before the next release reaches `main`:** set
+  **Settings → Pages → Source = "GitHub Actions"** — once the move lands on `main`,
+  `/docs` no longer holds `index.html`, so a branch-`/docs` Pages source would 404.
+  The live site is unaffected until then.
+
 ## v1.6.9 — 2026-06-03
 
 Housekeeping cycle plus the public pixel-level visual-regression API (Track N).
@@ -369,7 +388,7 @@ dx shortcuts, recipes docs). See [ROADMAP.md](ROADMAP.md).
   one-page marketing / playground built with Next.js 14 App
   Router + TypeScript + Tailwind. `next build` emits `./out` (4
   static pages, 99.7 kB first-load JS) and the new
-  [`.github/workflows/deploy-site.yml`](.github/workflows/deploy-site.yml)
+  `.github/workflows/deploy-site.yml` (removed in v1.7.0)
   uploads it to Pages on every push to `main` that touches
   `site/**`. **Repo Settings → Pages source must be flipped to
   "GitHub Actions"** for the workflow to take over from the

@@ -59,6 +59,3 @@ Run a static server from this folder:
 ```bash
 python -m http.server 8000   # then open http://localhost:8000/
 ```
-
-> A separate Next.js rebuild exists under `site/` — it was built but never deployed;
-> this static `web/` site is the live one.

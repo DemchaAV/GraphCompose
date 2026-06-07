@@ -461,7 +461,12 @@ public final class CurrentSpeedBenchmark {
                 parseThreadCounts(System.getProperty("graphcompose.benchmark.threads", defaultThreadCounts)));
     }
 
-    private PerformanceGateResult evaluatePerformanceGate(BenchmarkProfile profile, List<LatencyRow> latencyRows) {
+    // Package-private and static (uses no instance state) so
+    // CurrentSpeedBenchmarkPerfGateTest can drive it with synthetic LatencyRow
+    // values instead of real, non-deterministic measurements. LatencyRow,
+    // PerformanceGateResult and BenchmarkProfile are package-private for the
+    // same reason.
+    static PerformanceGateResult evaluatePerformanceGate(BenchmarkProfile profile, List<LatencyRow> latencyRows) {
         if (profile != BenchmarkProfile.SMOKE) {
             return new PerformanceGateResult(true, "Performance gate skipped for profile " + profile.id());
         }
@@ -721,7 +726,7 @@ public final class CurrentSpeedBenchmark {
                                     long totalBytes) {
     }
 
-    private record LatencyRow(String scenario,
+    record LatencyRow(String scenario,
                               String description,
                               double avgMillis,
                               double p50Millis,
@@ -762,10 +767,10 @@ public final class CurrentSpeedBenchmark {
     private record SmokeThreshold(double maxAvgMillis, double maxPeakHeapMb) {
     }
 
-    private record PerformanceGateResult(boolean passed, String message) {
+    record PerformanceGateResult(boolean passed, String message) {
     }
 
-    private enum BenchmarkProfile {
+    enum BenchmarkProfile {
         FULL("full", true, Map.of()),
         SMOKE("smoke", false, Map.of(
                 // Thresholds calibrated against the post-warmup smoke profile

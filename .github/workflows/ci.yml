@@ -147,7 +147,7 @@ jobs:
         run: ./mvnw -B -ntp test -pl . -P no-poi
 
   binary-compat:
-    name: Binary Compatibility (japicmp vs v1.6.8)
+    name: Binary Compatibility (japicmp vs v1.6.9)
     if: github.event_name == 'pull_request'
     needs: architecture-and-documentation-guards
     runs-on: ubuntu-latest

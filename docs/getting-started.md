@@ -5,6 +5,8 @@ code starts with `GraphCompose.document(...)`, creates one
 `DocumentSession`, describes content with `DocumentDsl`, and finishes
 with `writePdf(...)`, `buildPdf()`, or `toPdfBytes()`.
 
+> **Prerequisites:** Java 17+ and the `io.github.demchaav:graph-compose` dependency — see the [README install snippet](../README.md#installation).
+
 ## Templates vs DSL — pick the right starting point
 
 GraphCompose has two layers a caller can target. Use this decision

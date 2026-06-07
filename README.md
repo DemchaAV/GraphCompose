@@ -48,6 +48,8 @@ Sits between **iText** (low-level page primitives) and **JasperReports** (XML-te
 
 ## Installation
 
+**Requires Java 17+** (enforced by the build).
+
 ```xml
 <dependency>
     <groupId>io.github.demchaav</groupId>

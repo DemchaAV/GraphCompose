@@ -101,6 +101,18 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!--
+            JasperReports 7 modularised PDF export out of the core jar into this
+            separate extension. Without it JasperExportManager.exportReportToPdf
+            fails at runtime with "Missing JasperReports PDF Extension
+            (jasperreports-pdf-x.x.x.jar)". Required by
+            ComparativeBenchmark#benchmarkJasper.
+        -->
+        <dependency>
+            <groupId>net.sf.jasperreports</groupId>
+            <artifactId>jasperreports-pdf</artifactId>
+            <version>${jasperreports.version}</version>
+        </dependency>
 
         <!-- Test scope for the two utility @Test classes that ship with the harness. -->
         <dependency>

@@ -54,6 +54,7 @@ back here.
 
 ### Roadmaps & migrations
 - **[roadmaps/v1.6-roadmap.md](roadmaps/v1.6-roadmap.md)** — current development roadmap.
+- **[roadmaps/migration-v1-6-to-v1-7.md](roadmaps/migration-v1-6-to-v1-7.md)** — upgrade guide for v1.6 → v1.7.
 - **[roadmaps/migration-v1-5-to-v1-6.md](roadmaps/migration-v1-5-to-v1-6.md)** — upgrade guide for v1.5 → v1.6.
 - **[roadmaps/migration-v1-4-to-v1-5.md](roadmaps/migration-v1-4-to-v1-5.md)** — upgrade guide for v1.4 → v1.5.
 

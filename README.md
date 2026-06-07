@@ -19,8 +19,8 @@
 </p>
 
 > **Release status** &mdash;
-> 🟢 **Latest stable**: [v1.6.9](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.6.9) (public pixel-level visual-regression API + canonical Javadoc doclint-clean + central-publishing 0.10; zero breaking from v1.6.8)
-> &nbsp;·&nbsp; 🟡 **In develop**: v1.7.0 (new canonical DSL primitives — inline shapes, checkboxes, per-corner radii, vertical text seating)
+> 🟢 **Latest stable**: [v1.7.0](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.7.0) (geometric — inline shape runs, polygon geometry, inline checkboxes, per-corner radii, vertical text seating; zero breaking from v1.6.x)
+> &nbsp;·&nbsp; 🟡 **In develop**: v1.7.1 (next bug-fix / housekeeping cycle)
 > &nbsp;·&nbsp; See [API stability policy](./docs/api-stability.md) for tier definitions.
 
 <p align="center">
@@ -234,7 +234,7 @@ Full detail: [architecture overview](./docs/architecture/overview.md) &middot; [
 
 ### Contributing & releases
 - [Contributing](./CONTRIBUTING.md) · [Code of conduct](./CODE_OF_CONDUCT.md) · [Security policy](./SECURITY.md) · [Release process](./docs/contributing/release-process.md)
-- [API stability policy](./docs/api-stability.md) · [Which template system?](./docs/templates/which-template-system.md) · [Migration v1.5 → v1.6](./docs/roadmaps/migration-v1-5-to-v1-6.md)
+- [API stability policy](./docs/api-stability.md) · [Which template system?](./docs/templates/which-template-system.md) · [Migration v1.6 → v1.7](./docs/roadmaps/migration-v1-6-to-v1-7.md) · [Migration v1.5 → v1.6](./docs/roadmaps/migration-v1-5-to-v1-6.md)
 
 ## Companion projects
 

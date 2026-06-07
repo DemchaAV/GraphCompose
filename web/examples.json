@@ -9,15 +9,6 @@
           "label": "CV / Resume",
           "examples": [
             {
-              "id": "cv-blue-banner",
-              "title": "Cv Blue Banner",
-              "description": "Generated showcase for templates / cv.",
-              "tags": ["templates", "cv"],
-              "pdf": "showcase/pdf/templates/cv/cv-blue-banner.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-blue-banner.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
-            },
-            {
               "id": "cv-blue-banner-v2",
               "title": "Blue Banner",
               "description": "Light-blue full-width section bands with high-contrast headings.",
@@ -25,15 +16,6 @@
               "pdf": "showcase/pdf/templates/cv/cv-blue-banner-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-blue-banner-v2.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvBlueBannerExample.java"
-            },
-            {
-              "id": "cv-boxed-sections",
-              "title": "Cv Boxed Sections",
-              "description": "Generated showcase for templates / cv.",
-              "tags": ["templates", "cv"],
-              "pdf": "showcase/pdf/templates/cv/cv-boxed-sections.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-boxed-sections.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
             },
             {
               "id": "cv-boxed-sections-v2",
@@ -45,15 +27,6 @@
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvBoxedV2Example.java"
             },
             {
-              "id": "cv-centered-headline",
-              "title": "Cv Centered Headline",
-              "description": "Generated showcase for templates / cv.",
-              "tags": ["templates", "cv"],
-              "pdf": "showcase/pdf/templates/cv/cv-centered-headline.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-centered-headline.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
-            },
-            {
               "id": "cv-centered-headline-v2",
               "title": "Centered Headline",
               "description": "Centered name + role with full-width accent rules between sections.",
@@ -61,15 +34,6 @@
               "pdf": "showcase/pdf/templates/cv/cv-centered-headline-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-centered-headline-v2.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvCenteredHeadlineExample.java"
-            },
-            {
-              "id": "cv-classic-serif",
-              "title": "Cv Classic Serif",
-              "description": "Generated showcase for templates / cv.",
-              "tags": ["templates", "cv"],
-              "pdf": "showcase/pdf/templates/cv/cv-classic-serif.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-classic-serif.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
             },
             {
               "id": "cv-classic-serif-v2",
@@ -81,15 +45,6 @@
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvClassicSerifExample.java"
             },
             {
-              "id": "cv-compact-mono",
-              "title": "Cv Compact Mono",
-              "description": "Generated showcase for templates / cv.",
-              "tags": ["templates", "cv"],
-              "pdf": "showcase/pdf/templates/cv/cv-compact-mono.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-compact-mono.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
-            },
-            {
               "id": "cv-compact-mono-v2",
               "title": "Compact Mono",
               "description": "Single-column dense layout with monospace contact line — favourite for engineering roles.",
@@ -97,15 +52,6 @@
               "pdf": "showcase/pdf/templates/cv/cv-compact-mono-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-compact-mono-v2.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvCompactMonoExample.java"
-            },
-            {
-              "id": "cv-editorial-blue",
-              "title": "Cv Editorial Blue",
-              "description": "Generated showcase for templates / cv.",
-              "tags": ["templates", "cv"],
-              "pdf": "showcase/pdf/templates/cv/cv-editorial-blue.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-editorial-blue.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
             },
             {
               "id": "cv-editorial-blue-v2",
@@ -117,15 +63,6 @@
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvEditorialBlueExample.java"
             },
             {
-              "id": "cv-engineering-resume",
-              "title": "Cv Engineering Resume",
-              "description": "Generated showcase for templates / cv.",
-              "tags": ["templates", "cv"],
-              "pdf": "showcase/pdf/templates/cv/cv-engineering-resume.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-engineering-resume.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
-            },
-            {
               "id": "cv-engineering-resume-v2",
               "title": "Engineering Resume",
               "description": "Tech-lead style layout with prominent skill matrix and stack tagging — was TechLead in v1.5.",
@@ -133,15 +70,6 @@
               "pdf": "showcase/pdf/templates/cv/cv-engineering-resume-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-engineering-resume-v2.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvEngineeringResumeExample.java"
-            },
-            {
-              "id": "cv-executive",
-              "title": "Cv Executive",
-              "description": "Generated showcase for templates / cv.",
-              "tags": ["templates", "cv"],
-              "pdf": "showcase/pdf/templates/cv/cv-executive.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-executive.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
             },
             {
               "id": "cv-executive-v2",
@@ -153,15 +81,6 @@
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvExecutiveExample.java"
             },
             {
-              "id": "cv-minimal-underlined",
-              "title": "Cv Minimal Underlined",
-              "description": "Generated showcase for templates / cv.",
-              "tags": ["templates", "cv"],
-              "pdf": "showcase/pdf/templates/cv/cv-minimal-underlined.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-minimal-underlined.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
-            },
-            {
               "id": "cv-minimal-underlined-v2",
               "title": "Minimal Underlined",
               "description": "Single-column layout with underlined section titles and tight whitespace — minimalist reference shape.",
@@ -169,15 +88,6 @@
               "pdf": "showcase/pdf/templates/cv/cv-minimal-underlined-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-minimal-underlined-v2.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvMinimalUnderlinedExample.java"
-            },
-            {
-              "id": "cv-mint-editorial",
-              "title": "Cv Mint Editorial",
-              "description": "Generated showcase for templates / cv.",
-              "tags": ["templates", "cv"],
-              "pdf": "showcase/pdf/templates/cv/cv-mint-editorial.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-mint-editorial.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
             },
             {
               "id": "cv-mint-editorial-v2",
@@ -189,15 +99,6 @@
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvMintEditorialExample.java"
             },
             {
-              "id": "cv-modern-professional",
-              "title": "Cv Modern Professional",
-              "description": "Generated showcase for templates / cv.",
-              "tags": ["templates", "cv"],
-              "pdf": "showcase/pdf/templates/cv/cv-modern-professional.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-modern-professional.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
-            },
-            {
               "id": "cv-modern-professional-v2",
               "title": "Modern Professional",
               "description": "Clean two-column resume with right-aligned header, tinted profile panel, and uppercase section headings.",
@@ -205,15 +106,6 @@
               "pdf": "showcase/pdf/templates/cv/cv-modern-professional-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-modern-professional-v2.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvModernV2Example.java"
-            },
-            {
-              "id": "cv-monogram-sidebar",
-              "title": "Cv Monogram Sidebar",
-              "description": "Generated showcase for templates / cv.",
-              "tags": ["templates", "cv"],
-              "pdf": "showcase/pdf/templates/cv/cv-monogram-sidebar.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-monogram-sidebar.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
             },
             {
               "id": "cv-monogram-sidebar-v2",
@@ -225,15 +117,6 @@
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvMonogramSidebarExample.java"
             },
             {
-              "id": "cv-nordic-clean",
-              "title": "Cv Nordic Clean",
-              "description": "Generated showcase for templates / cv.",
-              "tags": ["templates", "cv"],
-              "pdf": "showcase/pdf/templates/cv/cv-nordic-clean.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-nordic-clean.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
-            },
-            {
               "id": "cv-nordic-clean-v2",
               "title": "Nordic Clean",
               "description": "Sidebar layout with soft-tinted PROFILE panel, Nordic palette, and bullet skill list.",
@@ -241,15 +124,6 @@
               "pdf": "showcase/pdf/templates/cv/cv-nordic-clean-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-nordic-clean-v2.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvNordicCleanExample.java"
-            },
-            {
-              "id": "cv-panel",
-              "title": "Cv Panel",
-              "description": "Generated showcase for templates / cv.",
-              "tags": ["templates", "cv"],
-              "pdf": "showcase/pdf/templates/cv/cv-panel.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-panel.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
             },
             {
               "id": "cv-panel-v2",
@@ -261,15 +135,6 @@
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvPanelExample.java"
             },
             {
-              "id": "cv-sidebar-portrait",
-              "title": "Cv Sidebar Portrait",
-              "description": "Generated showcase for templates / cv.",
-              "tags": ["templates", "cv"],
-              "pdf": "showcase/pdf/templates/cv/cv-sidebar-portrait.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-sidebar-portrait.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
-            },
-            {
               "id": "cv-sidebar-portrait-v2",
               "title": "Sidebar Portrait",
               "description": "Edge-to-edge grey sidebar with portrait photo, contact stack, and skills.",
@@ -277,15 +142,6 @@
               "pdf": "showcase/pdf/templates/cv/cv-sidebar-portrait-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-sidebar-portrait-v2.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvSidebarPortraitExample.java"
-            },
-            {
-              "id": "cv-timeline-minimal",
-              "title": "Cv Timeline Minimal",
-              "description": "Generated showcase for templates / cv.",
-              "tags": ["templates", "cv"],
-              "pdf": "showcase/pdf/templates/cv/cv-timeline-minimal.pdf",
-              "screenshot": "showcase/screenshots/templates/cv/cv-timeline-minimal.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
             },
             {
               "id": "cv-timeline-minimal-v2",

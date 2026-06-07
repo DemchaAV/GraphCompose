@@ -6,7 +6,7 @@
 
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose</artifactId>
-    <version>1.6.9</version>
+    <version>1.7.0</version>
 
     <name>GraphCompose</name>
     <description>A declarative layout engine for programmatic document generation, implemented primarily in Java.</description>

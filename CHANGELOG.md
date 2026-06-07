@@ -3,7 +3,7 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v1.7.0 — Planned
+## v1.7.0 — 2026-06-07
 
 Canonical DSL primitives — additive only, zero breaking changes. Adding public
 API turns the open cycle into a minor.

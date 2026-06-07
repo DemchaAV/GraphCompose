@@ -54,12 +54,12 @@ Sits between **iText** (low-level page primitives) and **JasperReports** (XML-te
 <dependency>
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose</artifactId>
-    <version>1.6.9</version>
+    <version>1.7.0</version>
 </dependency>
 ```
 
 ```kotlin
-dependencies { implementation("io.github.demchaav:graph-compose:1.6.9") }
+dependencies { implementation("io.github.demchaav:graph-compose:1.7.0") }
 ```
 
 > **Distribution** &mdash; Maven Central is the canonical channel from **v1.6.6** onwards

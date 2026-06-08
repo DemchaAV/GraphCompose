@@ -20,6 +20,14 @@ Open cycle — bug-fix / housekeeping. Entries land here as they merge.
   rendered markedly faster, and a measurement-count probe showed ~9× fewer
   measured characters on a long paragraph. No public API or behaviour change.
 
+- **Long-token line breaking is no longer quadratic.** `TextFlowSupport.fitCharacters`
+  now binary-searches the break point instead of re-measuring every growing prefix
+  one character at a time. For an unbreakable run (long URL/ID, no-space CJK, or a
+  very narrow column) this cuts measurement calls and measured characters by
+  ~80–85% (probe: 652 → 97 width calls, 36k → 7k measured chars on a 600-char
+  token). **Output is byte-identical** — the fit predicate is monotonic, so the
+  search returns the same break index. No public API or behaviour change.
+
 ### Tests / tooling
 
 - **Benchmark regression gate and measurement probe (benchmarks module, not part

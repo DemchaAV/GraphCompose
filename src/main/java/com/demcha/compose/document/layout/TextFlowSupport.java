@@ -1517,13 +1517,23 @@ public final class TextFlowSupport {
                                      TextStyle style,
                                      double maxWidth,
                                      TextMeasurementSystem measurement) {
+        // Largest prefix length whose width fits. The fit predicate
+        // width(substring(0,n)) <= maxWidth is monotonic in n (each added char
+        // contributes a non-negative glyph advance), so the fitting lengths form
+        // a prefix [1..lastFitting] and a binary search finds the SAME boundary
+        // as the old linear scan — but in O(log n) width calls instead of
+        // measuring every growing prefix (which was O(n) calls and O(n^2)
+        // measured characters for a long unbreakable token).
         int lastFitting = 0;
-        for (int index = 1; index <= text.length(); index++) {
-            String candidate = text.substring(0, index);
-            if (measurement.textWidth(style, candidate) <= maxWidth + EPS) {
-                lastFitting = index;
+        int low = 1;
+        int high = text.length();
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            if (measurement.textWidth(style, text.substring(0, mid)) <= maxWidth + EPS) {
+                lastFitting = mid;
+                low = mid + 1;
             } else {
-                break;
+                high = mid - 1;
             }
         }
         return lastFitting == 0 ? Math.min(1, text.length()) : lastFitting;

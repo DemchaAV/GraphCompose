@@ -39,6 +39,15 @@ Open cycle — bug-fix / housekeeping. Entries land here as they merge.
   redundant); pinned by the visual-regression suite plus a content-stream test
   asserting one `Tf` across many drawn spans. No public API or behaviour change.
 
+- **Table cell text is sanitized once per cell instead of three times.** Resolving
+  a table ran each cell's lines through `sanitizeCellLines` separately in the
+  natural-width, natural-height and resolve passes, rebuilding the list and its
+  per-line control-character cleanup up to three times per cell. The sanitized
+  lines are now computed once when the logical grid is built and reused by all
+  three passes. **Output is byte-identical** (sanitization is deterministic); on a
+  large table this removes the dominant per-cell layout allocation. No public API
+  or behaviour change.
+
 ### Tests / tooling
 
 - **Benchmark regression gate and measurement probe (benchmarks module, not part

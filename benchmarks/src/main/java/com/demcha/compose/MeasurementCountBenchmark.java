@@ -83,12 +83,28 @@ public final class MeasurementCountBenchmark {
         System.out.println("Thread allocation measurement: " + (allocationSupported() ? "enabled" : "UNAVAILABLE (Alloc KB = n/a)"));
         System.out.println();
 
+        Consumer<PageFlowBuilder> longText = flow ->
+                flow.addParagraph(p -> p.text(LONG_PARAGRAPH).textStyle(BODY_STYLE));
+        Consumer<PageFlowBuilder> longToken = flow ->
+                flow.addParagraph(p -> p.text(LONG_TOKEN_PARAGRAPH).textStyle(BODY_STYLE));
+        Consumer<PageFlowBuilder> largeTable = MeasurementCountBenchmark::authorLargeTable;
+
+        // Warm up the JVM (class loading + JIT) BEFORE the allocation window so the
+        // "Alloc KB" column reflects steady-state per-document layout allocation, not
+        // one-time cold-start cost. Without this the FIRST scenario measured carried
+        // ~36 MB of class-load / JIT / static-init allocation — a JVM artifact, not a
+        // layout cost (verified: cold first compile 36.6 MB vs warm 0.65 MB for the
+        // same long-text document). The measurement-COUNT columns are exact either way.
+        for (int warmup = 0; warmup < 5; warmup++) {
+            measureScenario("warmup", longText);
+            measureScenario("warmup", longToken);
+            measureScenario("warmup", largeTable);
+        }
+
         List<Result> results = new ArrayList<>();
-        results.add(measureScenario("long-text", flow ->
-                flow.addParagraph(p -> p.text(LONG_PARAGRAPH).textStyle(BODY_STYLE))));
-        results.add(measureScenario("long-token", flow ->
-                flow.addParagraph(p -> p.text(LONG_TOKEN_PARAGRAPH).textStyle(BODY_STYLE))));
-        results.add(measureScenario("large-table", MeasurementCountBenchmark::authorLargeTable));
+        results.add(measureScenario("long-text", longText));
+        results.add(measureScenario("long-token", longToken));
+        results.add(measureScenario("large-table", largeTable));
 
         System.out.printf("%-14s | %11s | %9s | %9s | %11s | %8s | %11s | %10s | %6s%n",
                 "Scenario", "WidthReqs", "Distinct", "Repeat %", "Sum chars", "Max arg", "LineMetrics", "Alloc KB", "Pages");

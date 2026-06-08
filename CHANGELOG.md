@@ -28,15 +28,6 @@ Open cycle — bug-fix / housekeeping. Entries land here as they merge.
   token). **Output is byte-identical** — the fit predicate is monotonic, so the
   search returns the same break index. No public API or behaviour change.
 
-- **Line assembly avoids quadratic string copying.** `TextFlowSupport.wrapParagraph`
-  now accumulates each wrapped line in a reused `StringBuilder` instead of
-  concatenating Strings token-by-token (which re-copied the whole growing line and
-  produced a throwaway `String` per token). **Output is byte-identical.** The effect
-  is small on typical text (lines are bounded by column width — a probe showed ~1%
-  less per-compile allocation on a long-text document), but it removes a latent
-  O(line-length²) copy on pathologically wide / unwrapped lines. No public API or
-  behaviour change.
-
 ### Tests / tooling
 
 - **Benchmark regression gate and measurement probe (benchmarks module, not part
@@ -49,7 +40,9 @@ Open cycle — bug-fix / housekeeping. Entries land here as they merge.
   median (`-Repeat` >= 2).
   `MeasurementCountBenchmark` + `CountingTextMeasurementSystem` capture
   deterministic measurement-call counts and per-compile allocation bytes for
-  proving algorithmic / allocation changes. `scripts/run-benchmarks.ps1` gains the
+  proving algorithmic / allocation changes (the probe warms up the JVM before its
+  allocation window, so `Alloc KB` reflects steady state, not one-time
+  class-load / JIT cold-start). `scripts/run-benchmarks.ps1` gains the
   `11-verdict-current-speed` step (skippable via `-SkipVerdict`).
 
 ## v1.7.0 — 2026-06-07

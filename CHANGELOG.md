@@ -45,6 +45,21 @@ Open cycle — bug-fix / housekeeping. Entries land here as they merge.
   subsetting removed per session after the first on a thread). Standard-14-only
   documents are unaffected. No public API or behaviour change.
 
+- **Glyph-coverage probing is memoized instead of repeated per glyph.** The render
+  sanitizer (`GlyphFallbackLogger.sanitize` — shared by paragraph spans, table
+  cells, watermark and header/footer chrome, and by width measurement) used to
+  call `PDFont.encode` for *every code point of every string* — allocating a
+  `String` per glyph and, for any glyph the font cannot encode, **throwing and
+  catching an exception** — at measurement and again at render. Coverage is now
+  memoized per `(font, code point)`: `encode` runs once per distinct glyph, then
+  it is a map lookup, and kept glyphs append by code point with no per-glyph
+  `String`. **Output is byte-identical** — the substitution decision is the same
+  `encode`, only cached; the glyph-fallback warning cadence is unchanged (pinned
+  by `PdfFontSanitizerTest`, and width parity by `MeasurementFontParityTest`).
+  This removes real per-glyph work from the render hot path: a long document
+  re-probed tens of thousands of glyph occurrences that now collapse to roughly
+  the number of distinct characters it uses. No public API or behaviour change.
+
 ### Tests / tooling
 
 - **Benchmark regression gate and measurement probe (benchmarks module, not part

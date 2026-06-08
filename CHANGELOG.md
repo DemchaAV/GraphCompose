@@ -60,6 +60,26 @@ Open cycle — bug-fix / housekeeping. Entries land here as they merge.
   re-probed tens of thousands of glyph occurrences that now collapse to roughly
   the number of distinct characters it uses. No public API or behaviour change.
 
+- **Paragraph render writes font and colour operators only when they change.** The
+  paragraph render handler emitted a `setFont` (`Tf`) and `setNonStrokingColor`
+  (`rg`) operator for *every* text span, even across the spans of a single-style
+  paragraph. It now tracks the last-written `(font, size)` and colour across the
+  paragraph's graphics-state block and re-emits only on a real change (invalidating
+  after inline images/shapes), so a multi-span single-style paragraph carries one
+  `Tf` + one `rg` instead of one pair per span — fewer operators for PDFBox to
+  serialize. **Rendered output is unchanged** (the skipped operators were
+  redundant); pinned by the visual-regression suite plus a content-stream test
+  asserting one `Tf` across many drawn spans. No public API or behaviour change.
+
+- **Table cell text is sanitized once per cell instead of three times.** Resolving
+  a table ran each cell's lines through `sanitizeCellLines` separately in the
+  natural-width, natural-height and resolve passes, rebuilding the list and its
+  per-line control-character cleanup up to three times per cell. The sanitized
+  lines are now computed once when the logical grid is built and reused by all
+  three passes. **Output is byte-identical** (sanitization is deterministic); on a
+  large table this removes the dominant per-cell layout allocation. No public API
+  or behaviour change.
+
 ### Tests / tooling
 
 - **Benchmark regression gate and measurement probe (benchmarks module, not part

@@ -95,10 +95,14 @@ final class TableLayoutSupport {
      * are skipped when iterating later source rows. {@code source} is the
      * original public {@link DocumentTableCell}, retained so the layout
      * can detect composed-content cells via
-     * {@link DocumentTableCell#hasComposedContent()}.
+     * {@link DocumentTableCell#hasComposedContent()}. {@code sanitizedLines} is
+     * the cell's text with control characters cleaned, computed once here and
+     * reused by the width, height and resolve passes instead of re-sanitizing the
+     * content three times.
      */
     private record LogicalCell(int startRow, int startColumn, int colSpan, int rowSpan,
-                               TableCellContent content, DocumentTableCell source) {
+                               TableCellContent content, DocumentTableCell source,
+                               List<String> sanitizedLines) {
     }
 
     /**
@@ -207,7 +211,7 @@ final class TableLayoutSupport {
                         width,
                         height,
                         yOffset,
-                        sanitizeCellLines(logical.content()),
+                        logical.sanitizedLines(),
                         style,
                         fillInsets(stylesGrid, rowIndex, logical.startColumn(), logical.colSpan()),
                         borderSides(stylesGrid, rowIndex, logical.startColumn(), logical.colSpan())));
@@ -298,7 +302,7 @@ final class TableLayoutSupport {
             Padding padding = style.padding() == null ? Padding.zero() : style.padding();
             return prepared.measureResult().height() + padding.vertical();
         }
-        return cellNaturalHeight(logical.content(), style, measurement);
+        return cellNaturalHeight(logical.sanitizedLines(), style, measurement);
     }
 
     static PreparedNode<TableNode> sliceTablePreparedNode(TableNode source,
@@ -510,8 +514,9 @@ final class TableLayoutSupport {
                         occupied[r][c] = true;
                     }
                 }
+                TableCellContent content = toTableCell(cell);
                 logical.add(new LogicalCell(rowIndex, col, cell.colSpan(), cell.rowSpan(),
-                        toTableCell(cell), cell));
+                        content, cell, sanitizeCellLines(content)));
                 col += cell.colSpan();
             }
             if (sourceIdx < source.size()) {
@@ -572,7 +577,7 @@ final class TableLayoutSupport {
                 }
                 int col = logical.startColumn();
                 singleCellRequired[col] = Math.max(singleCellRequired[col],
-                        cellNaturalWidth(logical.content(), stylesGrid[rowIndex][col], measurement));
+                        cellNaturalWidth(logical.sanitizedLines(), stylesGrid[rowIndex][col], measurement));
             }
         }
 
@@ -596,7 +601,7 @@ final class TableLayoutSupport {
                 }
                 int startCol = logical.startColumn();
                 int endCol = startCol + logical.colSpan();
-                double need = cellNaturalWidth(logical.content(), stylesGrid[rowIndex][startCol], measurement);
+                double need = cellNaturalWidth(logical.sanitizedLines(), stylesGrid[rowIndex][startCol], measurement);
                 double have = sumRange(widths, startCol, endCol);
                 if (need <= have + EPS) {
                     continue;
@@ -669,22 +674,22 @@ final class TableLayoutSupport {
         return finalWidths;
     }
 
-    private static double cellNaturalWidth(TableCellContent cell,
+    private static double cellNaturalWidth(List<String> sanitizedLines,
                                            TableCellLayoutStyle style,
                                            TextMeasurementSystem measurement) {
         Padding padding = style.padding() == null ? Padding.zero() : style.padding();
         double maxWidth = 0.0;
-        for (String line : sanitizeCellLines(cell)) {
+        for (String line : sanitizedLines) {
             maxWidth = Math.max(maxWidth, measurement.textWidth(style.textStyle(), line));
         }
         return maxWidth + padding.horizontal();
     }
 
-    private static double cellNaturalHeight(TableCellContent cell,
+    private static double cellNaturalHeight(List<String> sanitizedLines,
                                             TableCellLayoutStyle style,
                                             TextMeasurementSystem measurement) {
         Padding padding = style.padding() == null ? Padding.zero() : style.padding();
-        int lineCount = Math.max(1, sanitizeCellLines(cell).size());
+        int lineCount = Math.max(1, sanitizedLines.size());
         return (lineCount * measurement.lineHeight(style.textStyle()))
                 + ((lineCount - 1) * tableCellLineSpacing(style))
                 + padding.vertical();

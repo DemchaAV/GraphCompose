@@ -28,6 +28,38 @@ Open cycle — bug-fix / housekeeping. Entries land here as they merge.
   token). **Output is byte-identical** — the fit predicate is monotonic, so the
   search returns the same break index. No public API or behaviour change.
 
+- **Text measurement no longer embeds binary fonts into a throwaway document.**
+  The layout measurement pipeline used to subset-embed every Google/custom font
+  family into a private `PDDocument` that was immediately discarded — repeated on
+  every new `DocumentSession`, because each render in a server opens a fresh
+  session. Measurement now resolves binary families to a **per-thread cached**
+  font (mirroring the existing parsed-TrueType cache) bound to a reusable,
+  never-saved document, so a family embeds once per worker thread instead of once
+  per session, and opening measurement resources owns no PDF document at all.
+  **Output is byte-identical** — both paths read glyph widths and metrics from the
+  same parsed `TrueTypeFont`; proven by a 960-case render-vs-measurement
+  width-parity check (max |Δ| = 0.0), a new `MeasurementFontParityTest`, and the
+  full visual-regression / snapshot suite passing unchanged. Only Google/custom-font
+  documents are affected (the standard-14 path never embedded); a measurement probe
+  showed the per-session embed waste drop ~94–97% (≈1.5–3 MB and ≈2–4.5 ms of font
+  subsetting removed per session after the first on a thread). Standard-14-only
+  documents are unaffected. No public API or behaviour change.
+
+- **Glyph-coverage probing is memoized instead of repeated per glyph.** The render
+  sanitizer (`GlyphFallbackLogger.sanitize` — shared by paragraph spans, table
+  cells, watermark and header/footer chrome, and by width measurement) used to
+  call `PDFont.encode` for *every code point of every string* — allocating a
+  `String` per glyph and, for any glyph the font cannot encode, **throwing and
+  catching an exception** — at measurement and again at render. Coverage is now
+  memoized per `(font, code point)`: `encode` runs once per distinct glyph, then
+  it is a map lookup, and kept glyphs append by code point with no per-glyph
+  `String`. **Output is byte-identical** — the substitution decision is the same
+  `encode`, only cached; the glyph-fallback warning cadence is unchanged (pinned
+  by `PdfFontSanitizerTest`, and width parity by `MeasurementFontParityTest`).
+  This removes real per-glyph work from the render hot path: a long document
+  re-probed tens of thousands of glyph occurrences that now collapse to roughly
+  the number of distinct characters it uses. No public API or behaviour change.
+
 - **Paragraph render writes font and colour operators only when they change.** The
   paragraph render handler emitted a `setFont` (`Tf`) and `setNonStrokingColor`
   (`rg`) operator for *every* text span, even across the spans of a single-style

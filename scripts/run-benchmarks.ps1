@@ -14,11 +14,17 @@ diff gracefully when no compatible historical pair exists yet.
 
 Use `-Repeat` to generate repeated current-speed/comparative runs and median
 aggregates for more stable local comparisons.
+
+Step 11 (`11-verdict-current-speed`) compares the current-speed result against
+the committed baseline (`baselines/current-speed-<profile>.json`) and fails the
+run when a canonical scenario regresses beyond the noise band. Use `-SkipVerdict`
+to skip that gate while exploring. See `docs/operations/perf-change-workflow.md`.
 #>
 param(
     [switch]$IncludeEndurance,
     [switch]$OpenResults,
     [switch]$SkipDiff,
+    [switch]$SkipVerdict,
     [ValidateSet("full", "smoke")]
     [string]$CurrentSpeedProfile = "full",
     [ValidateRange(1, 10)]
@@ -447,6 +453,40 @@ try {
         Add-SummaryLine(("- Comparative diff latest: ``{0}``" -f $comparativeDiffLatest))
     }
     Add-SummaryLine(("- Benchmarks folder: ``{0}``" -f (Join-Path $repoRoot "target\benchmarks")))
+
+    if (-not $SkipVerdict) {
+        $verdictBaseline = Join-Path $repoRoot ("baselines\current-speed-{0}.json" -f $CurrentSpeedProfile)
+        if ($Repeat -gt 1) {
+            $verdictCandidate = Get-IfExists (Join-Path $repoRoot ("target\benchmarks\{0}\latest.json" -f $currentSpeedAggregateSuite))
+        } else {
+            $verdictCandidate = $currentSpeedLatest
+        }
+
+        if (-not (Test-Path $verdictBaseline)) {
+            Add-SummaryLine("- ``11-verdict-current-speed``: skipped")
+            Add-SummaryLine(("  - Reason: no committed baseline at ``{0}`` (see docs/operations/perf-change-workflow.md)" -f $verdictBaseline))
+        } elseif (-not $verdictCandidate) {
+            Add-SummaryLine("- ``11-verdict-current-speed``: skipped")
+            Add-SummaryLine("  - Reason: no candidate current-speed report was produced this run")
+        } else {
+            # Hard gate only for medians (Repeat >= 2): a single run is too noisy
+            # to gate against a median baseline, so Repeat 1 runs the verdict as
+            # advisory (gate disabled) — it prints the table but never fails the
+            # run. Use -Repeat 5 for the hard gate. The hard gate metric is
+            # average latency; peakHeapMb is advisory inside the tool. When the
+            # gate is on, BenchmarkVerdictTool exits non-zero on a regression,
+            # which makes Invoke-LoggedCommand throw and fail the whole run.
+            $verdictProperties = @()
+            if ($Repeat -le 1) {
+                $verdictProperties += "-Dgraphcompose.benchmark.verdict.gate=false"
+                Add-SummaryLine("- ``11-verdict-current-speed``: advisory (single run; use -Repeat 5 for the hard gate)")
+            }
+            Invoke-JavaMain -Name "11-verdict-current-speed" -Classpath $javaClasspath -MainClass "com.demcha.compose.BenchmarkVerdictTool" -SystemProperties $verdictProperties -Arguments @($verdictBaseline, $verdictCandidate)
+        }
+    } else {
+        Add-SummaryLine("- ``11-verdict-current-speed``: skipped")
+        Add-SummaryLine("  - Reason: ``-SkipVerdict`` was provided")
+    }
 
     Write-Section "Benchmark run completed"
     Write-Host "Summary: $summaryPath" -ForegroundColor Green

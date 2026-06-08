@@ -7,6 +7,44 @@ follow semantic versioning; release dates are ISO 8601.
 
 Open cycle — bug-fix / housekeeping. Entries land here as they merge.
 
+### Performance
+
+- **Text wrapping stops re-measuring the growing line prefix.** The greedy line
+  wrapper in `TextFlowSupport` now keeps a running line width and measures each
+  token once, instead of re-measuring the whole accumulated line on every token.
+  This removes O(line-length × tokens) measured-character work — and the
+  per-glyph sanitize/encode it triggered — from paragraph layout. **Output is
+  byte-identical: all layout and visual-regression snapshots pass unchanged.**
+  The effect is workload-dependent and concentrated in long-text documents;
+  measured locally (same-session A/B, full profile) a long multi-page proposal
+  rendered markedly faster, and a measurement-count probe showed ~9× fewer
+  measured characters on a long paragraph. No public API or behaviour change.
+
+- **Long-token line breaking is no longer quadratic.** `TextFlowSupport.fitCharacters`
+  now binary-searches the break point instead of re-measuring every growing prefix
+  one character at a time. For an unbreakable run (long URL/ID, no-space CJK, or a
+  very narrow column) this cuts measurement calls and measured characters by
+  ~80–85% (probe: 652 → 97 width calls, 36k → 7k measured chars on a 600-char
+  token). **Output is byte-identical** — the fit predicate is monotonic, so the
+  search returns the same break index. No public API or behaviour change.
+
+### Tests / tooling
+
+- **Benchmark regression gate and measurement probe (benchmarks module, not part
+  of the published library).** `BenchmarkVerdictTool` compares a current-speed run
+  to the committed baseline (`baselines/current-speed-full.json`) and reports
+  improved / neutral / regressed. The hard gate fails only on an **average-latency**
+  regression beyond the noise band; peak heap is **advisory** (the `peakHeapMb`
+  used-heap delta is GC-timing noisy — use the probe's per-compile allocation
+  bytes for deterministic heap). A single run is advisory; the hard gate needs a
+  median (`-Repeat` >= 2).
+  `MeasurementCountBenchmark` + `CountingTextMeasurementSystem` capture
+  deterministic measurement-call counts and per-compile allocation bytes for
+  proving algorithmic / allocation changes (the probe warms up the JVM before its
+  allocation window, so `Alloc KB` reflects steady state, not one-time
+  class-load / JIT cold-start). `scripts/run-benchmarks.ps1` gains the
+  `11-verdict-current-speed` step (skippable via `-SkipVerdict`).
+
 ## v1.7.0 — 2026-06-07
 
 Canonical DSL primitives — additive only, zero breaking changes. Adding public

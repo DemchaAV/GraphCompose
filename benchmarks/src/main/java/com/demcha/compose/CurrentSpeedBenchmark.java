@@ -112,7 +112,8 @@ public final class CurrentSpeedBenchmark {
                 new Scenario("invoice-template", "Compose-first invoice template", this::renderInvoiceTemplateDocument),
                 new Scenario("cv-template", "Compose-first CV template", this::renderCvTemplateDocument),
                 new Scenario("proposal-template", "Long multi-page proposal template", this::renderProposalTemplateDocument),
-                new Scenario("feature-rich", "QR, barcode, watermark, header/footer, page break", this::renderFeatureRichDocument)
+                new Scenario("feature-rich", "QR, barcode, watermark, header/footer, page break", this::renderFeatureRichDocument),
+                new Scenario("long-token", "Long unbreakable tokens (URLs/IDs) forcing character-level wrap", this::renderLongTokenDocument)
         );
 
         System.out.println("Latency benchmark");
@@ -547,6 +548,31 @@ public final class CurrentSpeedBenchmark {
                 .margin(22, 22, 22, 22)
                 .create()) {
             proposalTemplate.compose(document, proposal);
+            return document.toPdfBytes();
+        }
+    }
+
+    private byte[] renderLongTokenDocument() throws Exception {
+        // Worst-case for character-level wrapping: many long unbreakable tokens
+        // (long URLs/IDs/no-space runs) that overflow the line and force
+        // splitLongToken -> fitCharacters. Exercises audit finding F2.
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(com.demcha.compose.document.api.DocumentPageSize.A4)
+                .margin(22, 22, 22, 22)
+                .create()) {
+            var root = document.dsl()
+                    .pageFlow()
+                    .name("BenchmarkLongTokenRoot")
+                    .spacing(8);
+            for (int i = 1; i <= 40; i++) {
+                final int index = i;
+                root.addParagraph(paragraph -> paragraph
+                        .name("BenchmarkLongToken" + index)
+                        .text("Reference " + index + ": https://example.com/" + "a".repeat(500)
+                                + " trailing words to wrap normally after the long token.")
+                        .textStyle(BODY_STYLE));
+            }
+            root.build();
             return document.toPdfBytes();
         }
     }

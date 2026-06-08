@@ -819,7 +819,23 @@ public final class TextFlowSupport {
 
             List<String> tokens = tokenize(logicalLine);
             String currentPrefix = initialPrefix;
-            String currentLine = initialPrefix;
+            // currentLine is assembled in a reused StringBuilder: appending a
+            // token is amortised O(1), whereas concatenating Strings re-copied
+            // the whole growing line on every token (O(chars^2) char copies plus
+            // a fresh throwaway String each step). The character sequence is
+            // identical to the old `+` assembly, so wrapping stays byte-for-byte
+            // the same; we only materialise a String via toString() when a line
+            // is emitted (which the result list needs anyway).
+            StringBuilder currentLine = new StringBuilder(initialPrefix);
+            // Running width of currentLine. The greedy fit only needs the width
+            // of the line built so far plus the next token, not a fresh
+            // measurement of the whole growing prefix on every token (which made
+            // wrapping O(chars per line x tokens) measured characters). PDFBox
+            // glyph advances are additive here (no kerning), so accumulating
+            // per-token widths matches measuring the full string to well within
+            // the EPS the fit test already tolerates; each new line re-measures
+            // its (short) start to pin any floating-point drift.
+            double currentWidth = measurement.textWidth(style, initialPrefix);
             boolean hasContent = false;
 
             for (String token : tokens) {
@@ -828,22 +844,28 @@ public final class TextFlowSupport {
                     continue;
                 }
 
-                String candidate = currentLine + nextToken;
-                if (!hasContent || measurement.textWidth(style, candidate) <= maxWidth + EPS) {
-                    currentLine = candidate;
+                double nextTokenWidth = measurement.textWidth(style, nextToken);
+                if (!hasContent || currentWidth + nextTokenWidth <= maxWidth + EPS) {
+                    currentLine.append(nextToken);
+                    currentWidth += nextTokenWidth;
                     hasContent = true;
                     continue;
                 }
 
-                result.add(trimTrailingSpaces(currentLine));
+                result.add(trimTrailingSpaces(currentLine.toString()));
                 currentPrefix = continuationPrefix;
-                currentLine = continuationPrefix;
+                currentLine.setLength(0);
+                currentLine.append(continuationPrefix);
+                currentWidth = measurement.textWidth(style, continuationPrefix);
                 hasContent = false;
 
                 double availableWidth = availableWidthForPrefix(maxWidth, currentPrefix, style, measurement);
                 String strippedToken = nextToken.stripLeading();
-                if (measurement.textWidth(style, currentPrefix + strippedToken) <= maxWidth + EPS) {
-                    currentLine = currentPrefix + strippedToken;
+                double strippedTokenWidth = measurement.textWidth(style, strippedToken);
+                if (currentWidth + strippedTokenWidth <= maxWidth + EPS) {
+                    currentLine.setLength(0);
+                    currentLine.append(currentPrefix).append(strippedToken);
+                    currentWidth += strippedTokenWidth;
                     hasContent = true;
                     continue;
                 }
@@ -857,11 +879,13 @@ public final class TextFlowSupport {
                     result.add(currentPrefix + chunks.get(index));
                     currentPrefix = continuationPrefix;
                 }
-                currentLine = currentPrefix + chunks.get(chunks.size() - 1);
+                currentLine.setLength(0);
+                currentLine.append(currentPrefix).append(chunks.get(chunks.size() - 1));
+                currentWidth = measurement.textWidth(style, currentLine.toString());
                 hasContent = true;
             }
 
-            result.add(trimTrailingSpaces(currentLine));
+            result.add(trimTrailingSpaces(currentLine.toString()));
         }
 
         return List.copyOf(result);
@@ -1503,13 +1527,23 @@ public final class TextFlowSupport {
                                      TextStyle style,
                                      double maxWidth,
                                      TextMeasurementSystem measurement) {
+        // Largest prefix length whose width fits. The fit predicate
+        // width(substring(0,n)) <= maxWidth is monotonic in n (each added char
+        // contributes a non-negative glyph advance), so the fitting lengths form
+        // a prefix [1..lastFitting] and a binary search finds the SAME boundary
+        // as the old linear scan — but in O(log n) width calls instead of
+        // measuring every growing prefix (which was O(n) calls and O(n^2)
+        // measured characters for a long unbreakable token).
         int lastFitting = 0;
-        for (int index = 1; index <= text.length(); index++) {
-            String candidate = text.substring(0, index);
-            if (measurement.textWidth(style, candidate) <= maxWidth + EPS) {
-                lastFitting = index;
+        int low = 1;
+        int high = text.length();
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            if (measurement.textWidth(style, text.substring(0, mid)) <= maxWidth + EPS) {
+                lastFitting = mid;
+                low = mid + 1;
             } else {
-                break;
+                high = mid - 1;
             }
         }
         return lastFitting == 0 ? Math.min(1, text.length()) : lastFitting;

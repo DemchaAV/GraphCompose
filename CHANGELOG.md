@@ -28,6 +28,17 @@ Open cycle — bug-fix / housekeeping. Entries land here as they merge.
   token). **Output is byte-identical** — the fit predicate is monotonic, so the
   search returns the same break index. No public API or behaviour change.
 
+- **Paragraph render writes font and colour operators only when they change.** The
+  paragraph render handler emitted a `setFont` (`Tf`) and `setNonStrokingColor`
+  (`rg`) operator for *every* text span, even across the spans of a single-style
+  paragraph. It now tracks the last-written `(font, size)` and colour across the
+  paragraph's graphics-state block and re-emits only on a real change (invalidating
+  after inline images/shapes), so a multi-span single-style paragraph carries one
+  `Tf` + one `rg` instead of one pair per span — fewer operators for PDFBox to
+  serialize. **Rendered output is unchanged** (the skipped operators were
+  redundant); pinned by the visual-regression suite plus a content-stream test
+  asserting one `Tf` across many drawn spans. No public API or behaviour change.
+
 ### Tests / tooling
 
 - **Benchmark regression gate and measurement probe (benchmarks module, not part

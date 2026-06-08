@@ -17,8 +17,10 @@ import com.demcha.compose.document.style.ShapeOutline;
 import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.util.List;
 
@@ -56,6 +58,11 @@ public final class PdfParagraphFragmentRenderHandler
 
         stream.saveGraphicsState();
         try {
+            // Font and non-stroking colour persist across BT/ET within this one
+            // q...Q block, so track the last-written pair and re-emit Tf/rg only
+            // when a span actually changes them — a single-style paragraph then
+            // emits one setFont + one setNonStrokingColor instead of one per span.
+            TextRenderState textState = new TextRenderState();
             double cursorTop = contentTop;
             for (int lineIndex = 0; lineIndex < payload.lines().size(); lineIndex++) {
                 ParagraphLine line = payload.lines().get(lineIndex);
@@ -71,7 +78,7 @@ public final class PdfParagraphFragmentRenderHandler
                     case LEFT -> innerX;
                 };
 
-                renderLine(stream, fonts, line, lineX, baselineY, environment);
+                renderLine(stream, fonts, line, lineX, baselineY, environment, textState);
 
                 cursorTop = lineTop - resolvedLineHeight - payload.lineGap();
             }
@@ -127,7 +134,8 @@ public final class PdfParagraphFragmentRenderHandler
                             ParagraphLine line,
                             double lineX,
                             double baselineY,
-                            PdfRenderEnvironment environment) throws IOException {
+                            PdfRenderEnvironment environment,
+                            TextRenderState textState) throws IOException {
         List<ParagraphSpan> spans = line.spans();
         if (spans.isEmpty()) {
             return;
@@ -155,8 +163,10 @@ public final class PdfParagraphFragmentRenderHandler
                         stream.newLineAtOffset((float) cursorX, (float) baselineY);
                         inTextBlock = true;
                     }
-                    stream.setFont(font.fontType(textSpan.textStyle().decoration()), (float) textSpan.textStyle().size());
-                    stream.setNonStrokingColor(textSpan.textStyle().color());
+                    textState.applyFont(stream,
+                            font.fontType(textSpan.textStyle().decoration()),
+                            (float) textSpan.textStyle().size());
+                    textState.applyColor(stream, textSpan.textStyle().color());
                     stream.showText(text);
                     cursorX += textSpan.width();
                 } else if (span instanceof ParagraphImageSpan imageSpan) {
@@ -176,6 +186,10 @@ public final class PdfParagraphFragmentRenderHandler
                             (float) imageBottom,
                             (float) imageSpan.width(),
                             (float) imageSpan.height());
+                    // An inline graphic runs its own graphics-state save/restore and
+                    // colour ops; drop the tracked font/colour so the next text span
+                    // re-emits them rather than trusting persistence across it.
+                    textState.invalidate();
                     cursorX += imageSpan.width();
                 } else if (span instanceof ParagraphShapeSpan shapeSpan) {
                     if (inTextBlock) {
@@ -184,6 +198,7 @@ public final class PdfParagraphFragmentRenderHandler
                     }
                     renderShape(stream, shapeSpan, cursorX, baselineY,
                             line.textAscent(), line.baselineOffsetFromBottom(), line.lineHeight());
+                    textState.invalidate();
                     cursorX += shapeSpan.width();
                 }
             }
@@ -284,6 +299,41 @@ public final class PdfParagraphFragmentRenderHandler
                     throw new IllegalStateException("Unknown inline outline: " + outline);
                 }
             });
+        }
+    }
+
+    /**
+     * Tracks the font/size and non-stroking colour last written to the content
+     * stream within one paragraph's {@code q...Q} block, so the handler emits a
+     * {@code Tf}/{@code rg} operator only when a span actually changes them. The
+     * common single-style paragraph then carries one of each instead of one per
+     * span. {@link #invalidate()} forces a re-emit after anything that may disturb
+     * the persisted text state (inline images, shapes).
+     */
+    private static final class TextRenderState {
+        private PDFont font;
+        private float size = Float.NaN;
+        private Color color;
+
+        void applyFont(PDPageContentStream stream, PDFont newFont, float newSize) throws IOException {
+            if (newFont != font || newSize != size) {
+                stream.setFont(newFont, newSize);
+                font = newFont;
+                size = newSize;
+            }
+        }
+
+        void applyColor(PDPageContentStream stream, Color newColor) throws IOException {
+            if (!newColor.equals(color)) {
+                stream.setNonStrokingColor(newColor);
+                color = newColor;
+            }
+        }
+
+        void invalidate() {
+            font = null;
+            size = Float.NaN;
+            color = null;
         }
     }
 

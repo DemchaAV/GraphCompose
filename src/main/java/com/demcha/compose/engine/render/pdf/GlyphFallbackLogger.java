@@ -4,6 +4,7 @@ import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -40,6 +41,24 @@ public final class GlyphFallbackLogger {
      */
     private static final Set<Long> SEEN = ConcurrentHashMap.newKeySet();
 
+    /**
+     * Per-font glyph-coverage memo: a font's PostScript base name to the set of
+     * code points it can ({@code true}) or cannot ({@code false}) encode.
+     *
+     * <p>Glyph coverage is an immutable property of the loaded font program, so
+     * the first {@link PDFont#encode(String)} result for a {@code (font, code
+     * point)} pair holds for the lifetime of the process. Memoizing it turns the
+     * heavy probe — which also throws an exception for every unencodable glyph —
+     * into a map lookup, so {@code encode} runs once per <em>distinct</em>
+     * {@code (font, code point)} instead of once per glyph occurrence on every
+     * measurement and render pass. Two {@code PDType0Font} instances of the same
+     * embedded font share a base name (the subset prefix is only added at save,
+     * after sanitisation), so the measurement font and each render font reuse the
+     * same memo. Bounded in practice by (distinct fonts × distinct code points
+     * actually drawn).</p>
+     */
+    private static final Map<String, Map<Integer, Boolean>> ENCODABLE_BY_FONT = new ConcurrentHashMap<>();
+
     private GlyphFallbackLogger() {
     }
 
@@ -53,7 +72,7 @@ public final class GlyphFallbackLogger {
      * @param codePoint the Unicode code point that was substituted
      */
     public static void report(PDFont font, int codePoint) {
-        String fontName = font != null ? font.getName() : "<null>";
+        String fontName = fontKey(font);
         long key = ((long) fontName.hashCode() << 32) | (codePoint & 0xFFFFFFFFL);
         if (SEEN.add(key)) {
             LOG.warn("glyph.missing font={} codePoint=U+{} replaced='?'",
@@ -82,27 +101,46 @@ public final class GlyphFallbackLogger {
         if (text == null || text.isEmpty()) {
             return text == null ? "" : text;
         }
+        Map<Integer, Boolean> coverage = ENCODABLE_BY_FONT.computeIfAbsent(fontKey(font), key -> new ConcurrentHashMap<>());
         StringBuilder sb = new StringBuilder(text.length());
-        text.codePoints().forEach(cp -> {
-            if (cp == '\n' || cp == '\r') return;
-            String ch = new String(Character.toChars(cp));
-            if (canEncode(font, ch)) {
-                sb.append(ch);
+        int length = text.length();
+        for (int offset = 0; offset < length; ) {
+            int codePoint = text.codePointAt(offset);
+            offset += Character.charCount(codePoint);
+            if (codePoint == '\n' || codePoint == '\r') {
+                continue;
+            }
+            if (isEncodable(font, coverage, codePoint)) {
+                sb.appendCodePoint(codePoint);
             } else {
-                report(font, cp);
+                report(font, codePoint);
                 sb.append('?');
             }
-        });
+        }
         return sb.toString();
     }
 
-    private static boolean canEncode(PDFont font, String ch) {
+    private static boolean isEncodable(PDFont font, Map<Integer, Boolean> coverage, int codePoint) {
+        Boolean cached = coverage.get(codePoint);
+        if (cached != null) {
+            return cached;
+        }
+        boolean encodable = canEncode(font, codePoint);
+        coverage.put(codePoint, encodable);
+        return encodable;
+    }
+
+    private static boolean canEncode(PDFont font, int codePoint) {
         try {
-            font.encode(ch);
+            font.encode(new String(Character.toChars(codePoint)));
             return true;
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private static String fontKey(PDFont font) {
+        return font != null ? font.getName() : "<null>";
     }
 
     /**
@@ -111,5 +149,6 @@ public final class GlyphFallbackLogger {
      */
     static void resetForTesting() {
         SEEN.clear();
+        ENCODABLE_BY_FONT.clear();
     }
 }

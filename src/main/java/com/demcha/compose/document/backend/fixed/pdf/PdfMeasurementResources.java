@@ -5,7 +5,6 @@ import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.font.FontLibrary;
-import org.apache.pdfbox.pdmodel.PDDocument;
 
 import java.util.Collection;
 
@@ -17,29 +16,30 @@ import java.util.Collection;
  * until GraphCompose has a backend-neutral font measurement implementation.</p>
  */
 public final class PdfMeasurementResources implements AutoCloseable {
-    private final PDDocument document;
     private final FontLibrary fontLibrary;
     private final TextMeasurementSystem textMeasurementSystem;
 
-    private PdfMeasurementResources(PDDocument document,
-                                    FontLibrary fontLibrary,
+    private PdfMeasurementResources(FontLibrary fontLibrary,
                                     TextMeasurementSystem textMeasurementSystem) {
-        this.document = document;
         this.fontLibrary = fontLibrary;
         this.textMeasurementSystem = textMeasurementSystem;
     }
 
     /**
-     * Opens a fresh measurement document and resolves built-in plus custom fonts.
+     * Resolves built-in plus custom fonts for the measurement pipeline.
+     *
+     * <p>Binary families resolve to per-thread cached measurement fonts rather than
+     * embedding a subset into a throwaway PDF document (Finding 4), so opening these
+     * resources owns no {@link org.apache.pdfbox.pdmodel.PDDocument}. Measured
+     * metrics are byte-identical to the render font library.</p>
      *
      * @param customFontFamilies document-local font families
      * @return owned measurement resources
      */
     public static PdfMeasurementResources open(Collection<FontFamilyDefinition> customFontFamilies) {
-        PDDocument document = new PDDocument();
-        FontLibrary fontLibrary = PdfFontLibraryFactory.library(document, customFontFamilies);
+        FontLibrary fontLibrary = PdfFontLibraryFactory.measurementLibrary(customFontFamilies);
         TextMeasurementSystem measurement = new FontLibraryTextMeasurementSystem(fontLibrary, PdfFont.class);
-        return new PdfMeasurementResources(document, fontLibrary, measurement);
+        return new PdfMeasurementResources(fontLibrary, measurement);
     }
 
     /**
@@ -63,6 +63,5 @@ public final class PdfMeasurementResources implements AutoCloseable {
     @Override
     public void close() throws Exception {
         textMeasurementSystem.clearCaches();
-        document.close();
     }
 }

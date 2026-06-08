@@ -820,6 +820,15 @@ public final class TextFlowSupport {
             List<String> tokens = tokenize(logicalLine);
             String currentPrefix = initialPrefix;
             String currentLine = initialPrefix;
+            // Running width of currentLine. The greedy fit only needs the width
+            // of the line built so far plus the next token, not a fresh
+            // measurement of the whole growing prefix on every token (which made
+            // wrapping O(chars per line x tokens) measured characters). PDFBox
+            // glyph advances are additive here (no kerning), so accumulating
+            // per-token widths matches measuring the full string to well within
+            // the EPS the fit test already tolerates; each new line re-measures
+            // its (short) start to pin any floating-point drift.
+            double currentWidth = measurement.textWidth(style, currentLine);
             boolean hasContent = false;
 
             for (String token : tokens) {
@@ -828,9 +837,10 @@ public final class TextFlowSupport {
                     continue;
                 }
 
-                String candidate = currentLine + nextToken;
-                if (!hasContent || measurement.textWidth(style, candidate) <= maxWidth + EPS) {
-                    currentLine = candidate;
+                double nextTokenWidth = measurement.textWidth(style, nextToken);
+                if (!hasContent || currentWidth + nextTokenWidth <= maxWidth + EPS) {
+                    currentLine = currentLine + nextToken;
+                    currentWidth += nextTokenWidth;
                     hasContent = true;
                     continue;
                 }
@@ -838,12 +848,15 @@ public final class TextFlowSupport {
                 result.add(trimTrailingSpaces(currentLine));
                 currentPrefix = continuationPrefix;
                 currentLine = continuationPrefix;
+                currentWidth = measurement.textWidth(style, continuationPrefix);
                 hasContent = false;
 
                 double availableWidth = availableWidthForPrefix(maxWidth, currentPrefix, style, measurement);
                 String strippedToken = nextToken.stripLeading();
-                if (measurement.textWidth(style, currentPrefix + strippedToken) <= maxWidth + EPS) {
+                double strippedTokenWidth = measurement.textWidth(style, strippedToken);
+                if (currentWidth + strippedTokenWidth <= maxWidth + EPS) {
                     currentLine = currentPrefix + strippedToken;
+                    currentWidth += strippedTokenWidth;
                     hasContent = true;
                     continue;
                 }
@@ -858,6 +871,7 @@ public final class TextFlowSupport {
                     currentPrefix = continuationPrefix;
                 }
                 currentLine = currentPrefix + chunks.get(chunks.size() - 1);
+                currentWidth = measurement.textWidth(style, currentLine);
                 hasContent = true;
             }
 

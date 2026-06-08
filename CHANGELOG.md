@@ -7,6 +7,30 @@ follow semantic versioning; release dates are ISO 8601.
 
 Open cycle — bug-fix / housekeeping. Entries land here as they merge.
 
+### Performance
+
+- **Text wrapping stops re-measuring the growing line prefix.** The greedy line
+  wrapper in `TextFlowSupport` now keeps a running line width and measures each
+  token once, instead of re-measuring the whole accumulated line on every token.
+  This removes O(line-length × tokens) measured-character work — and the
+  per-glyph sanitize/encode it triggered — from paragraph layout. **Output is
+  byte-identical: all layout and visual-regression snapshots pass unchanged.**
+  The effect is workload-dependent and concentrated in long-text documents;
+  measured locally (same-session A/B, full profile) a long multi-page proposal
+  rendered markedly faster, and a measurement-count probe showed ~9× fewer
+  measured characters on a long paragraph. No public API or behaviour change.
+
+### Tests / tooling
+
+- **Benchmark regression gate and measurement probe (benchmarks module, not part
+  of the published library).** `BenchmarkVerdictTool` compares a current-speed run
+  to the committed baseline (`baselines/current-speed-full.json`) and reports
+  improved / neutral / regressed, failing on a regression beyond the noise band.
+  `MeasurementCountBenchmark` + `CountingTextMeasurementSystem` capture
+  deterministic measurement-call counts and per-compile allocation bytes for
+  proving algorithmic / allocation changes. `scripts/run-benchmarks.ps1` gains the
+  `11-verdict-current-speed` step (skippable via `-SkipVerdict`).
+
 ## v1.7.0 — 2026-06-07
 
 Canonical DSL primitives — additive only, zero breaking changes. Adding public

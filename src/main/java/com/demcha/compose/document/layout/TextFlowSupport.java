@@ -819,7 +819,14 @@ public final class TextFlowSupport {
 
             List<String> tokens = tokenize(logicalLine);
             String currentPrefix = initialPrefix;
-            String currentLine = initialPrefix;
+            // currentLine is assembled in a reused StringBuilder: appending a
+            // token is amortised O(1), whereas concatenating Strings re-copied
+            // the whole growing line on every token (O(chars^2) char copies plus
+            // a fresh throwaway String each step). The character sequence is
+            // identical to the old `+` assembly, so wrapping stays byte-for-byte
+            // the same; we only materialise a String via toString() when a line
+            // is emitted (which the result list needs anyway).
+            StringBuilder currentLine = new StringBuilder(initialPrefix);
             // Running width of currentLine. The greedy fit only needs the width
             // of the line built so far plus the next token, not a fresh
             // measurement of the whole growing prefix on every token (which made
@@ -828,7 +835,7 @@ public final class TextFlowSupport {
             // per-token widths matches measuring the full string to well within
             // the EPS the fit test already tolerates; each new line re-measures
             // its (short) start to pin any floating-point drift.
-            double currentWidth = measurement.textWidth(style, currentLine);
+            double currentWidth = measurement.textWidth(style, initialPrefix);
             boolean hasContent = false;
 
             for (String token : tokens) {
@@ -839,15 +846,16 @@ public final class TextFlowSupport {
 
                 double nextTokenWidth = measurement.textWidth(style, nextToken);
                 if (!hasContent || currentWidth + nextTokenWidth <= maxWidth + EPS) {
-                    currentLine = currentLine + nextToken;
+                    currentLine.append(nextToken);
                     currentWidth += nextTokenWidth;
                     hasContent = true;
                     continue;
                 }
 
-                result.add(trimTrailingSpaces(currentLine));
+                result.add(trimTrailingSpaces(currentLine.toString()));
                 currentPrefix = continuationPrefix;
-                currentLine = continuationPrefix;
+                currentLine.setLength(0);
+                currentLine.append(continuationPrefix);
                 currentWidth = measurement.textWidth(style, continuationPrefix);
                 hasContent = false;
 
@@ -855,7 +863,8 @@ public final class TextFlowSupport {
                 String strippedToken = nextToken.stripLeading();
                 double strippedTokenWidth = measurement.textWidth(style, strippedToken);
                 if (currentWidth + strippedTokenWidth <= maxWidth + EPS) {
-                    currentLine = currentPrefix + strippedToken;
+                    currentLine.setLength(0);
+                    currentLine.append(currentPrefix).append(strippedToken);
                     currentWidth += strippedTokenWidth;
                     hasContent = true;
                     continue;
@@ -870,12 +879,13 @@ public final class TextFlowSupport {
                     result.add(currentPrefix + chunks.get(index));
                     currentPrefix = continuationPrefix;
                 }
-                currentLine = currentPrefix + chunks.get(chunks.size() - 1);
-                currentWidth = measurement.textWidth(style, currentLine);
+                currentLine.setLength(0);
+                currentLine.append(currentPrefix).append(chunks.get(chunks.size() - 1));
+                currentWidth = measurement.textWidth(style, currentLine.toString());
                 hasContent = true;
             }
 
-            result.add(trimTrailingSpaces(currentLine));
+            result.add(trimTrailingSpaces(currentLine.toString()));
         }
 
         return List.copyOf(result);

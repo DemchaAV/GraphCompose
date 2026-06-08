@@ -28,6 +28,15 @@ Open cycle — bug-fix / housekeeping. Entries land here as they merge.
   token). **Output is byte-identical** — the fit predicate is monotonic, so the
   search returns the same break index. No public API or behaviour change.
 
+- **Line assembly avoids quadratic string copying.** `TextFlowSupport.wrapParagraph`
+  now accumulates each wrapped line in a reused `StringBuilder` instead of
+  concatenating Strings token-by-token (which re-copied the whole growing line and
+  produced a throwaway `String` per token). **Output is byte-identical.** The effect
+  is small on typical text (lines are bounded by column width — a probe showed ~1%
+  less per-compile allocation on a long-text document), but it removes a latent
+  O(line-length²) copy on pathologically wide / unwrapped lines. No public API or
+  behaviour change.
+
 ### Tests / tooling
 
 - **Benchmark regression gate and measurement probe (benchmarks module, not part

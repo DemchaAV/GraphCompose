@@ -25,7 +25,11 @@ Open cycle — bug-fix / housekeeping. Entries land here as they merge.
 - **Benchmark regression gate and measurement probe (benchmarks module, not part
   of the published library).** `BenchmarkVerdictTool` compares a current-speed run
   to the committed baseline (`baselines/current-speed-full.json`) and reports
-  improved / neutral / regressed, failing on a regression beyond the noise band.
+  improved / neutral / regressed. The hard gate fails only on an **average-latency**
+  regression beyond the noise band; peak heap is **advisory** (the `peakHeapMb`
+  used-heap delta is GC-timing noisy — use the probe's per-compile allocation
+  bytes for deterministic heap). A single run is advisory; the hard gate needs a
+  median (`-Repeat` >= 2).
   `MeasurementCountBenchmark` + `CountingTextMeasurementSystem` capture
   deterministic measurement-call counts and per-compile allocation bytes for
   proving algorithmic / allocation changes. `scripts/run-benchmarks.ps1` gains the

@@ -33,15 +33,18 @@ class BenchmarkVerdictToolTest {
     }
 
     @Test
-    void flagsPeakHeapRegressionEvenWhenLatencyIsFlat() throws Exception {
+    void peakHeapOverBandIsAdvisoryNotGated() throws Exception {
         JsonNode baseline = report(scenario("cv-template", 10.0, 10.0, 40.0, 100.0));
         JsonNode candidate = report(scenario("cv-template", 10.3, 10.0, 40.0, 120.0)); // +3% avg, +20% heap
 
         BenchmarkVerdictTool.VerdictReport report =
                 BenchmarkVerdictTool.evaluate("base.json", "cand.json", baseline, candidate, GATE);
 
-        assertThat(report.regressed()).isTrue();
-        assertThat(report.scenarios().get(0).verdict()).isEqualTo("REGRESSED");
+        // Heap over band must NOT fail the gate — peakHeapMb is advisory only
+        // (GC-timing noisy). The hard gate metric is average latency.
+        assertThat(report.regressed()).isFalse();
+        assertThat(report.scenarios().get(0).verdict()).isEqualTo("NEUTRAL");
+        assertThat(report.scenarios().get(0).heapAdvisory()).isTrue();
     }
 
     @Test

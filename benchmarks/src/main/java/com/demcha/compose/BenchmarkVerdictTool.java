@@ -22,10 +22,15 @@ import java.util.TreeMap;
  * described in {@code docs/operations/perf-change-workflow.md}. Unlike
  * {@link BenchmarkDiffTool}, which only prints signed deltas between two
  * arbitrary runs, this tool classifies each delta against a noise band and
- * fails the build (non-zero exit) when any scenario regresses beyond the band
- * on a <em>gate metric</em> (average latency or peak heap). It is meant to be
- * pointed at a stable, committed baseline (see {@code baselines/}) rather than
- * at the previous ephemeral run under {@code target/}.</p>
+ * fails the build (non-zero exit) when a scenario regresses beyond the band on
+ * the <em>gate metric</em> (average latency). Peak heap is reported as an
+ * <em>advisory</em> only: the {@code peakHeapMb} field is a used-heap delta
+ * sampled via {@code Runtime}, which is GC-timing dependent and very noisy
+ * run-to-run, so it must not fail the build. The deterministic heap signal is
+ * {@code MeasurementCountBenchmark}'s per-compile allocation bytes
+ * (ThreadMXBean). It is meant to be pointed at a stable, committed baseline (see
+ * {@code baselines/}) rather than at the previous ephemeral run under
+ * {@code target/}.</p>
  *
  * <p>Usage:</p>
  * <ul>
@@ -161,9 +166,14 @@ public final class BenchmarkVerdictTool {
             double candidateHeap = after.path("peakHeapMb").asDouble();
             double heapDeltaPct = percentDelta(baselineHeap, candidateHeap);
 
-            // Gate metrics: average latency and peak heap (both lower-is-better).
+            // Hard gate metric: average latency only. peakHeapMb is a used-heap
+            // delta sampled via Runtime — GC-timing dependent and very noisy
+            // run-to-run (observed 48..170 MB across repeats of identical code),
+            // so it is reported as ADVISORY, never gated. The deterministic heap
+            // signal is MeasurementCountBenchmark's per-compile allocation bytes.
+            boolean heapAdvisory = heapDeltaPct > thresholds.heapBandPct();
             Verdict verdict;
-            if (avgDeltaPct > thresholds.avgBandPct() || heapDeltaPct > thresholds.heapBandPct()) {
+            if (avgDeltaPct > thresholds.avgBandPct()) {
                 verdict = Verdict.REGRESSED;
                 anyRegressed = true;
             } else if (avgDeltaPct < -thresholds.avgBandPct()) {
@@ -184,6 +194,7 @@ public final class BenchmarkVerdictTool {
                     baselineHeap,
                     candidateHeap,
                     heapDeltaPct,
+                    heapAdvisory,
                     verdict.name()));
         }
 
@@ -212,8 +223,10 @@ public final class BenchmarkVerdictTool {
         System.out.println("Profile: " + report.profile());
         System.out.println("Baseline: " + report.baselinePath() + " (" + report.baselineTimestamp() + ")");
         System.out.println("Candidate: " + report.candidatePath() + " (" + report.candidateTimestamp() + ")");
-        System.out.println("Bands: avg +/-" + format(report.avgBandPct()) + "%, peakHeap +/-"
-                + format(report.heapBandPct()) + "% | gate: " + (report.gateEnabled() ? "enabled" : "disabled"));
+        System.out.println("Gate: avg latency +/-" + format(report.avgBandPct())
+                + "% (HARD). peakHeap +/-" + format(report.heapBandPct())
+                + "% = ADVISORY only (GC-timing noisy, not gated). gate: "
+                + (report.gateEnabled() ? "enabled" : "disabled"));
         System.out.println();
         System.out.printf("%-18s | %10s | %10s | %10s | %10s | %-10s%n",
                 "Scenario", "Avg pct", "p95 pct", "Docs/s pct", "Heap pct", "Verdict");
@@ -227,13 +240,22 @@ public final class BenchmarkVerdictTool {
                     signedPercent(row.peakHeapDeltaPct()),
                     row.verdict());
         }
+        List<String> heapAdvisories = report.scenarios().stream()
+                .filter(ScenarioVerdict::heapAdvisory)
+                .map(row -> row.scenario() + " (" + signedPercent(row.peakHeapDeltaPct()) + ")")
+                .toList();
+        if (!heapAdvisories.isEmpty()) {
+            System.out.println();
+            System.out.println("ADVISORY (not gated) - peakHeapMb over band: " + String.join(", ", heapAdvisories)
+                    + ". peakHeapMb is GC-timing noisy; use MeasurementCountBenchmark for the deterministic allocation signal.");
+        }
         if (!report.missingScenarios().isEmpty()) {
             System.out.println();
             System.out.println("WARNING: baseline scenarios missing from candidate (not gated): "
                     + String.join(", ", report.missingScenarios()));
         }
         System.out.println();
-        System.out.println("Overall verdict: " + report.overallVerdict());
+        System.out.println("Overall verdict: " + report.overallVerdict() + " (hard gate: average latency)");
     }
 
     private static void write(VerdictReport report) throws Exception {
@@ -243,7 +265,8 @@ public final class BenchmarkVerdictTool {
                 "verdict",
                 List.of("scenario", "baseline_avg_ms", "candidate_avg_ms", "avg_delta_pct",
                         "p95_delta_pct", "docs_per_sec_delta_pct",
-                        "baseline_peak_heap_mb", "candidate_peak_heap_mb", "peak_heap_delta_pct", "verdict"),
+                        "baseline_peak_heap_mb", "candidate_peak_heap_mb", "peak_heap_delta_pct",
+                        "heap_advisory", "verdict"),
                 report.scenarios().stream()
                         .map(row -> List.of(
                                 row.scenario(),
@@ -255,6 +278,7 @@ public final class BenchmarkVerdictTool {
                                 format(row.baselinePeakHeapMb()),
                                 format(row.candidatePeakHeapMb()),
                                 format(row.peakHeapDeltaPct()),
+                                Boolean.toString(row.heapAdvisory()),
                                 row.verdict()))
                         .toList());
         System.out.println("Saved JSON verdict report to " + jsonPath);
@@ -334,6 +358,7 @@ public final class BenchmarkVerdictTool {
                            double baselinePeakHeapMb,
                            double candidatePeakHeapMb,
                            double peakHeapDeltaPct,
+                           boolean heapAdvisory,
                            String verdict) {
     }
 

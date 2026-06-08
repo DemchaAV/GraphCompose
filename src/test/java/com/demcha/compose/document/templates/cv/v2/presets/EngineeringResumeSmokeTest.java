@@ -4,13 +4,7 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
-import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
-import com.demcha.compose.document.templates.cv.v2.data.EntriesSection;
-import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
-import com.demcha.compose.document.templates.cv.v2.data.RowStyle;
-import com.demcha.compose.document.templates.cv.v2.data.RowsSection;
-import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
+import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTypography;
 import com.demcha.compose.font.FontFamilyDefinition;
@@ -215,7 +209,11 @@ class EngineeringResumeSmokeTest {
                 Path.of("/Library/Fonts/Arial Unicode.ttf"),
                 Path.of("/System/Library/Fonts/Supplemental/Arial Unicode.ttf"),
                 Path.of("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
-                Path.of("/usr/share/fonts/truetype/freefont/FreeSans.ttf"));
+                Path.of("/usr/share/fonts/truetype/freefont/FreeSans.ttf"),
+                // Windows: Tahoma / Arial / Segoe UI all cover Latin + Hebrew + Arabic.
+                Path.of("C:/Windows/Fonts/tahoma.ttf"),
+                Path.of("C:/Windows/Fonts/arial.ttf"),
+                Path.of("C:/Windows/Fonts/segoeui.ttf"));
 
         for (Path candidate : candidates) {
             if (Files.isRegularFile(candidate)) {

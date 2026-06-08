@@ -1,0 +1,88 @@
+{
+  "timestamp" : "2026-06-08 12:07:23",
+  "profile" : "full",
+  "warmupIterations" : 12,
+  "measurementIterations" : 40,
+  "docsPerThread" : 12,
+  "threadCounts" : [ 1, 2, 4, 8 ],
+  "latency" : [ {
+    "scenario" : "cv-template",
+    "description" : "Compose-first CV template",
+    "avgMillis" : 4.28,
+    "p50Millis" : 3.93,
+    "p95Millis" : 5.83,
+    "maxMillis" : 7.15,
+    "docsPerSecond" : 233.52,
+    "avgKilobytes" : 2.29,
+    "peakHeapMb" : 33.08
+  }, {
+    "scenario" : "engine-simple",
+    "description" : "One-page engine composition",
+    "avgMillis" : 3.17,
+    "p50Millis" : 2.96,
+    "p95Millis" : 5.01,
+    "maxMillis" : 5.9,
+    "docsPerSecond" : 315.87,
+    "avgKilobytes" : 1.08,
+    "peakHeapMb" : 12.0
+  }, {
+    "scenario" : "feature-rich",
+    "description" : "QR, barcode, watermark, header/footer, page break",
+    "avgMillis" : 45.37,
+    "p50Millis" : 37.09,
+    "p95Millis" : 60.65,
+    "maxMillis" : 69.62,
+    "docsPerSecond" : 22.04,
+    "avgKilobytes" : 6.37,
+    "peakHeapMb" : 86.14
+  }, {
+    "scenario" : "invoice-template",
+    "description" : "Compose-first invoice template",
+    "avgMillis" : 19.42,
+    "p50Millis" : 18.75,
+    "p95Millis" : 27.88,
+    "maxMillis" : 34.26,
+    "docsPerSecond" : 51.5,
+    "avgKilobytes" : 9.72,
+    "peakHeapMb" : 85.09
+  }, {
+    "scenario" : "proposal-template",
+    "description" : "Long multi-page proposal template",
+    "avgMillis" : 14.41,
+    "p50Millis" : 13.71,
+    "p95Millis" : 19.18,
+    "maxMillis" : 19.93,
+    "docsPerSecond" : 69.38,
+    "avgKilobytes" : 7.72,
+    "peakHeapMb" : 97.52
+  } ],
+  "throughput" : [ {
+    "scenario" : "invoice-template",
+    "threads" : 1,
+    "totalDocs" : 12,
+    "docsPerSecond" : 81.22,
+    "avgMillisPerDoc" : 12.31
+  }, {
+    "scenario" : "invoice-template",
+    "threads" : 2,
+    "totalDocs" : 24,
+    "docsPerSecond" : 158.68,
+    "avgMillisPerDoc" : 6.3
+  }, {
+    "scenario" : "invoice-template",
+    "threads" : 4,
+    "totalDocs" : 48,
+    "docsPerSecond" : 265.11,
+    "avgMillisPerDoc" : 3.77
+  }, {
+    "scenario" : "invoice-template",
+    "threads" : 8,
+    "totalDocs" : 96,
+    "docsPerSecond" : 356.61,
+    "avgMillisPerDoc" : 2.8
+  } ],
+  "totalBytes" : 2905520,
+  "aggregation" : "median",
+  "sourceCount" : 7,
+  "sourceRuns" : [ "C:\\Users\\Demch\\OneDrive\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260608-120624.json", "C:\\Users\\Demch\\OneDrive\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260608-120635.json", "C:\\Users\\Demch\\OneDrive\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260608-120645.json", "C:\\Users\\Demch\\OneDrive\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260608-120655.json", "C:\\Users\\Demch\\OneDrive\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260608-120704.json", "C:\\Users\\Demch\\OneDrive\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260608-120713.json", "C:\\Users\\Demch\\OneDrive\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260608-120722.json" ]
+}

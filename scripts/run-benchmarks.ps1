@@ -14,11 +14,17 @@ diff gracefully when no compatible historical pair exists yet.
 
 Use `-Repeat` to generate repeated current-speed/comparative runs and median
 aggregates for more stable local comparisons.
+
+Step 11 (`11-verdict-current-speed`) compares the current-speed result against
+the committed baseline (`baselines/current-speed-<profile>.json`) and fails the
+run when a canonical scenario regresses beyond the noise band. Use `-SkipVerdict`
+to skip that gate while exploring. See `docs/operations/perf-change-workflow.md`.
 #>
 param(
     [switch]$IncludeEndurance,
     [switch]$OpenResults,
     [switch]$SkipDiff,
+    [switch]$SkipVerdict,
     [ValidateSet("full", "smoke")]
     [string]$CurrentSpeedProfile = "full",
     [ValidateRange(1, 10)]
@@ -447,6 +453,31 @@ try {
         Add-SummaryLine(("- Comparative diff latest: ``{0}``" -f $comparativeDiffLatest))
     }
     Add-SummaryLine(("- Benchmarks folder: ``{0}``" -f (Join-Path $repoRoot "target\benchmarks")))
+
+    if (-not $SkipVerdict) {
+        $verdictBaseline = Join-Path $repoRoot ("baselines\current-speed-{0}.json" -f $CurrentSpeedProfile)
+        if ($Repeat -gt 1) {
+            $verdictCandidate = Get-IfExists (Join-Path $repoRoot ("target\benchmarks\{0}\latest.json" -f $currentSpeedAggregateSuite))
+        } else {
+            $verdictCandidate = $currentSpeedLatest
+        }
+
+        if (-not (Test-Path $verdictBaseline)) {
+            Add-SummaryLine("- ``11-verdict-current-speed``: skipped")
+            Add-SummaryLine(("  - Reason: no committed baseline at ``{0}`` (see docs/operations/perf-change-workflow.md)" -f $verdictBaseline))
+        } elseif (-not $verdictCandidate) {
+            Add-SummaryLine("- ``11-verdict-current-speed``: skipped")
+            Add-SummaryLine("  - Reason: no candidate current-speed report was produced this run")
+        } else {
+            # Hard gate: BenchmarkVerdictTool exits non-zero on a regression
+            # beyond the noise band, which makes Invoke-LoggedCommand throw and
+            # fail the whole benchmark run.
+            Invoke-JavaMain -Name "11-verdict-current-speed" -Classpath $javaClasspath -MainClass "com.demcha.compose.BenchmarkVerdictTool" -Arguments @($verdictBaseline, $verdictCandidate)
+        }
+    } else {
+        Add-SummaryLine("- ``11-verdict-current-speed``: skipped")
+        Add-SummaryLine("  - Reason: ``-SkipVerdict`` was provided")
+    }
 
     Write-Section "Benchmark run completed"
     Write-Host "Summary: $summaryPath" -ForegroundColor Green

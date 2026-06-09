@@ -12,27 +12,14 @@ package com.demcha.compose.engine.font;
  * already depends on {@code engine.font}); the measurement system converts this
  * record into its own {@code LineMetrics} for layout consumers.</p>
  *
+ * <p>Carries only the three primitive components; the measurement system reads
+ * them via {@code ascent()}/{@code descent()}/{@code leading()} and converts to
+ * {@code TextMeasurementSystem.LineMetrics} (which owns the derived
+ * {@code lineHeight()} / baseline helpers) for layout consumers.</p>
+ *
  * @param ascent  distance from the baseline to the glyph top
  * @param descent distance from the baseline to the glyph bottom (non-negative)
  * @param leading extra line leading applied by the backend font metrics
  */
 public record FontLineMetrics(double ascent, double descent, double leading) {
-
-    /**
-     * Returns the total baseline-to-baseline line height.
-     *
-     * @return {@code ascent + descent + leading}
-     */
-    public double lineHeight() {
-        return ascent + descent + leading;
-    }
-
-    /**
-     * Returns the distance from the line bottom to the text baseline.
-     *
-     * @return the baseline offset, equal to {@code descent}
-     */
-    public double baselineOffsetFromBottom() {
-        return descent;
-    }
 }

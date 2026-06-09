@@ -162,6 +162,22 @@ Open cycle — bug-fix / housekeeping. Entries land here as they merge.
   public entry point and carries no binary-compatibility promise, so the move is
   excluded from the japicmp gate rather than treated as a breaking removal.
 
+### Internal
+
+- **Text-measurement line metrics resolve through the `Font` contract instead of a
+  PDF-specific fast path.** `FontLibraryTextMeasurementSystem` previously
+  special-cased `instanceof PdfFont` to obtain real ascent/descent/leading — every
+  other backend font fell back to a degraded `lineHeight`-only metric — which
+  coupled the shared measurement system to `engine.render.pdf.PdfFont` and meant a
+  new backend could get first-class metrics only by editing shared code. Vertical
+  metrics and the process-wide cache key now live on the backend-neutral `Font<T>`
+  seam (`Font.lineMetrics(...)` + `Font.measurementCacheKey(...)`, both `default`
+  methods; new `FontLineMetrics` record), so a backend supplies first-class metrics
+  by overriding the contract and the shared measurement system no longer imports
+  `PdfFont`. Binary-compatible (default methods only; japicmp green) and
+  behaviour-neutral — PDF and Word produce identical metrics, covered by the
+  existing suite plus new polymorphism tests.
+
 ### Tests / tooling
 
 - **Benchmark regression gate and measurement probe (benchmarks module, not part

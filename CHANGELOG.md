@@ -117,6 +117,19 @@ Open cycle — bug-fix / housekeeping. Entries land here as they merge.
   resolved by the layout compiler. The method is kept for binary compatibility and
   scheduled for removal in the next major.
 
+- **The legacy ECS engine packages are deprecated.** `com.demcha.compose.engine.core`,
+  `engine.layout` (and `engine.layout.container`), and `engine.pagination` are the
+  original `Entity`-based layout/pagination engine. They are a parallel second
+  engine that no public API reaches — the canonical pipeline
+  (`GraphCompose.document() → DocumentSession → LayoutCompiler`) imports nothing
+  from them, and the former `GraphCompose.pdf(...)` entry point has already been
+  removed. They survive only to back the legacy engine regression tests. The
+  packages are now `@Deprecated` (package level, so no deprecation-warning cascade)
+  with corrected package docs, to stop misdirecting contributors into optimizing a
+  dead engine. The genuinely shared engine packages (`engine.components`,
+  `engine.measurement`, `engine.font`, `engine.render`) are **not** deprecated.
+  No public API or behaviour change.
+
 ### Tests / tooling
 
 - **Benchmark regression gate and measurement probe (benchmarks module, not part

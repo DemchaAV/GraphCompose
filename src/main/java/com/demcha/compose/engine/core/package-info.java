@@ -1,30 +1,28 @@
 /**
- * Core ECS primitives that hold entity/component graphs and shared traversal
- * state.
+ * Core primitives of the <strong>legacy ECS engine</strong> — entity/component
+ * graphs and shared traversal state for the original {@code Entity}-based
+ * layout / pagination / render pipeline.
  *
- * <p>This package contains the foundation used by the runtime pipeline. In the
- * normal PDF pipeline the high-level flow is:</p>
+ * <p>This is <em>not</em> the engine behind the public API. The canonical
+ * pipeline is {@code GraphCompose.document() -> DocumentSession ->
+ * LayoutCompiler -> LayoutGraph -> PdfFixedLayoutBackend} in
+ * {@code com.demcha.compose.document.*}, and it imports nothing from this
+ * package. The ECS stack ({@code engine.core}, {@code engine.layout},
+ * {@code engine.pagination}) is a parallel second engine that no public entry
+ * point reaches — the former {@code GraphCompose.pdf(...)} surface has been
+ * removed — and it survives only to back the legacy engine regression tests.</p>
  *
- * <ol>
- *   <li>builders populate {@code Entity} graphs and attach components</li>
- *   <li>{@code LayoutSystem} resolves geometry, hierarchy depth, and layer order</li>
- *   <li>{@code PageBreaker} assigns final page-aware {@code Placement}</li>
- *   <li>a backend renderer such as {@code PdfRenderingSystemECS} consumes the resolved entities</li>
- * </ol>
+ * <p>The genuinely shared engine packages are elsewhere and are <em>not</em>
+ * deprecated: {@code engine.components} (value types), {@code engine.measurement}
+ * (text-measurement contracts), {@code engine.font}, and
+ * {@code engine.render} (backend-neutral render-pass contracts) are all used by
+ * the canonical pipeline.</p>
  *
- * <p>The package is intentionally split further into subpackages with narrower
- * responsibilities:</p>
- *
- * <ul>
- *   <li>{@code engine.layout}: low-level layout systems</li>
- *   <li>{@code engine.pagination}: page-breaking helpers</li>
- *   <li>{@code engine.measurement}: text measurement contracts</li>
- *   <li>{@code engine.render}: backend-neutral render-pass contracts and dispatch helpers</li>
- * </ul>
- *
- * <p>Project policy is to keep backend-specific lifecycle concerns out of the
- * shared engine layer wherever possible. The engine should reason in terms of
- * resolved geometry, entity ordering, and render-session seams, while PDFBox,
- * DOCX, or PPTX specifics stay in backend-owned packages.</p>
+ * @deprecated Legacy ECS engine, superseded by the canonical
+ *     {@code com.demcha.compose.document.layout} pipeline. No public API reaches
+ *     it, it is not on the canonical hot path, and it is retained only for the
+ *     legacy engine regression tests — a candidate for removal once those are
+ *     retired. Do not extend it or spend optimization effort here.
  */
+@Deprecated
 package com.demcha.compose.engine.core;

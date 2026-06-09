@@ -1,8 +1,12 @@
 package com.demcha.compose.document.backend.semantic;
 
+import com.demcha.compose.document.chart.ChartData;
+import com.demcha.compose.document.chart.NumberFormatSpec;
+import com.demcha.compose.document.dsl.TableBuilder;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.layout.DocumentGraph;
 import com.demcha.compose.document.layout.LayoutCanvas;
+import com.demcha.compose.document.node.ChartNode;
 import com.demcha.compose.document.node.ContainerNode;
 import com.demcha.compose.document.output.DocumentMetadata;
 import com.demcha.compose.document.output.DocumentOutputOptions;
@@ -65,6 +69,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // template uses many shape containers. Reset on every export() call so
     // each session sees the warning at least once.
     private final AtomicBoolean shapeContainerWarned = new AtomicBoolean(false);
+    private final AtomicBoolean chartWarned = new AtomicBoolean(false);
 
     /**
      * Creates a DOCX semantic backend.
@@ -80,6 +85,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     @Override
     public byte[] export(DocumentGraph graph, SemanticExportContext context) throws Exception {
         shapeContainerWarned.set(false);
+        chartWarned.set(false);
         try (XWPFDocument document = new XWPFDocument()) {
             applyPageGeometry(document, context.canvas());
             applyOutputOptions(document, context.outputOptions());
@@ -137,6 +143,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writeRow(document, row);
         } else if (node instanceof ShapeContainerNode shapeContainer) {
             writeShapeContainer(document, shapeContainer);
+        } else if (node instanceof ChartNode chart) {
+            writeChartFallback(document, chart);
         } else if (node instanceof ContainerNode || node instanceof SectionNode) {
             for (DocumentNode child : node.children()) {
                 writeNode(document, child);
@@ -145,6 +153,45 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // Unsupported node kinds (line, ellipse, shape, barcode) are silently
         // skipped in the semantic export. Authors who need pixel-perfect output
         // should use the PDF fixed-layout backend.
+    }
+
+    /**
+     * Semantic chart fallback: the semantic export has no layout pass, so the
+     * chart's compiled vector geometry is unavailable here. The chart's
+     * <em>semantic</em> content is its data, so the fallback writes a
+     * categories-by-series table (values formatted with the chart's own axis
+     * format). Authors who need the rendered chart must use the PDF
+     * fixed-layout backend, where charts compile into ordinary primitives.
+     */
+    private void writeChartFallback(XWPFDocument document, ChartNode node) throws Exception {
+        if (chartWarned.compareAndSet(false, true)) {
+            LOG.warn("docx.export.chart-fallback kind={} — the semantic DOCX export has no "
+                    + "layout pass, so charts are exported as their data table. "
+                    + "(One warning per export; use the PDF backend for the rendered chart.)",
+                    node.spec().getClass().getSimpleName());
+        }
+        ChartData data = node.spec().data();
+        NumberFormatSpec format = node.spec().valueAxis().format();
+
+        TableBuilder table = new TableBuilder()
+                .name(node.name().isEmpty() ? "ChartData" : node.name() + "Data")
+                .autoColumns(data.seriesCount() + 1);
+        String[] header = new String[data.seriesCount() + 1];
+        header[0] = "";
+        for (int s = 0; s < data.seriesCount(); s++) {
+            header[s + 1] = data.series().get(s).name();
+        }
+        table.headerRow(header);
+        for (int c = 0; c < data.categoryCount(); c++) {
+            String[] row = new String[data.seriesCount() + 1];
+            row[0] = data.categories().get(c);
+            for (int s = 0; s < data.seriesCount(); s++) {
+                Double v = data.series().get(s).values().get(c);
+                row[s + 1] = v == null ? "" : format.format(v);
+            }
+            table.row(row);
+        }
+        writeTable(document, table.build());
     }
 
     private void writeShapeContainer(XWPFDocument document, ShapeContainerNode node) throws Exception {

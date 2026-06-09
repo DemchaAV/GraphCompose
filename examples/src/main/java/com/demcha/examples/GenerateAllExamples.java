@@ -1,6 +1,7 @@
 package com.demcha.examples;
 
 import com.demcha.examples.features.barcodes.BarcodeShowcaseExample;
+import com.demcha.examples.features.charts.ChartShowcaseExample;
 import com.demcha.examples.features.canvas.CanvasLayerExample;
 import com.demcha.examples.features.chrome.PdfChromeExample;
 import com.demcha.examples.features.lists.NestedListExample;
@@ -138,6 +139,9 @@ public final class GenerateAllExamples {
 
         // Barcodes
         System.out.println("Generated: " + BarcodeShowcaseExample.generate());
+
+        // Charts
+        System.out.println("Generated: " + ChartShowcaseExample.generate());
 
         // Pipelines + tooling
         System.out.println("Generated: " + HttpStreamingExample.generate());

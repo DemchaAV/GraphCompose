@@ -33,6 +33,42 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DocxSemanticBackendTest {
 
     @Test
+    void chartExportsAsItsDataTable() throws Exception {
+        com.demcha.compose.document.chart.ChartData data =
+                com.demcha.compose.document.chart.ChartData.builder()
+                        .categories("Q1", "Q2")
+                        .series("2024", 12.4, 15.1)
+                        .series("2025", 14.0, 18.2)
+                        .build();
+        com.demcha.compose.document.chart.ChartSpec spec =
+                com.demcha.compose.document.chart.ChartSpec.bar().data(data).build();
+
+        byte[] docxBytes;
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(595, 842)
+                .margin(DocumentInsets.of(36))
+                .create()) {
+            session.dsl().pageFlow().name("Flow")
+                    .chart(spec)
+                    .build();
+            docxBytes = session.export(new DocxSemanticBackend());
+        }
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
+            List<XWPFTable> tables = document.getTables();
+            assertThat(tables).hasSize(1);
+            XWPFTable table = tables.get(0);
+            // Header (blank corner + series names) plus one row per category.
+            assertThat(table.getRows()).hasSize(3);
+            assertThat(table.getRow(0).getCell(1).getText()).isEqualTo("2024");
+            assertThat(table.getRow(0).getCell(2).getText()).isEqualTo("2025");
+            assertThat(table.getRow(1).getCell(0).getText()).isEqualTo("Q1");
+            assertThat(table.getRow(1).getCell(1).getText()).isEqualTo("12.4");
+            assertThat(table.getRow(2).getCell(2).getText()).isEqualTo("18.2");
+        }
+    }
+
+    @Test
     void exportProducesDocxWithParagraphAndTableContent() throws Exception {
         byte[] docxBytes;
         try (DocumentSession session = GraphCompose.document()

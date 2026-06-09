@@ -34,6 +34,7 @@ class PublicApiNoEngineLeakTest {
     private static final List<Path> PUBLIC_API_ROOTS = List.of(
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/GraphCompose.java"),
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api"),
+            PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/chart"),
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl"),
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/node"),
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/style"),

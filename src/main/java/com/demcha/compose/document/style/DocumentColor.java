@@ -71,6 +71,42 @@ public final class DocumentColor {
     }
 
     /**
+     * Creates a translucent document color from RGBA components.
+     *
+     * <p>The PDF backend honours the alpha channel on shape fills and strokes —
+     * rectangles/panels/bars, chart value-label halos, ellipses (chart point
+     * markers), polygons, and inline shapes — via a graphics-state alpha
+     * constant. Text, lines, and the DOCX backend currently render the colour
+     * fully opaque.</p>
+     *
+     * @param red red channel from 0 to 255
+     * @param green green channel from 0 to 255
+     * @param blue blue channel from 0 to 255
+     * @param alpha alpha channel from 0 (transparent) to 255 (opaque)
+     * @return immutable document color
+     * @since 1.8.0
+     */
+    public static DocumentColor rgba(int red, int green, int blue, int alpha) {
+        return new DocumentColor(new Color(red, green, blue, alpha));
+    }
+
+    /**
+     * Returns a copy of this color with the supplied opacity.
+     *
+     * @param opacity opacity from 0.0 (transparent) to 1.0 (opaque)
+     * @return translucent copy
+     * @since 1.8.0
+     */
+    public DocumentColor withOpacity(double opacity) {
+        if (opacity < 0.0 || opacity > 1.0 || Double.isNaN(opacity)) {
+            throw new IllegalArgumentException("opacity must be in [0,1]: " + opacity);
+        }
+        return new DocumentColor(new Color(
+                color.getRed(), color.getGreen(), color.getBlue(),
+                (int) Math.round(opacity * 255.0)));
+    }
+
+    /**
      * Returns the Java color used by the renderer adapter layer.
      *
      * @return AWT color value

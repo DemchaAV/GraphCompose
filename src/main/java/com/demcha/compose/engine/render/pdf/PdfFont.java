@@ -29,7 +29,18 @@ public class PdfFont extends FontBase<PDFont> {
     }
 
 
-    // Adjust font size automatically based on the width of the text and available space
+    /**
+     * @param text           the text to fit
+     * @param style          the starting style
+     * @param availableWidth the width to fit within
+     * @return a re-sized style
+     * @deprecated Unused and incorrect — it re-measures with the unchanged
+     *     {@code style}, so {@code textWidth} never shrinks and the loop runs to the
+     *     minimum size regardless of fit. Canonical auto-size is handled by the
+     *     layout compiler; kept only for binary compatibility.
+     */
+    @Deprecated
+    @Override
     public TextStyle adjustFontSizeToFit(String text, TextStyle style, double availableWidth) {
         double textWidth = getTextWidth(style, text);
 
@@ -39,7 +50,6 @@ public class PdfFont extends FontBase<PDFont> {
             newSize--;  // Reduce size
             textWidth = getTextWidth(style, text);  // Recalculate text width
         }
-        PDFont pdFont = fontType(style.decoration());
         return new TextStyle(style.fontName(), newSize, style.decoration(), style.color());
     }
 

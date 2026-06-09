@@ -585,14 +585,29 @@ public final class TextFlowSupport {
         double minSize = autoSize.minSize();
         double step = Math.max(0.1, autoSize.step());
 
-        // Single-line text: shrink the font size until the longest logical line
-        // measures inside the available inner width, otherwise fall back to the
-        // smallest configured size.
-        for (double size = maxSize; size >= minSize - 1e-6; size -= step) {
-            DocumentTextStyle candidate = baseStyle.withSize(size);
+        // Single-line text: pick the largest grid size (maxSize, maxSize-step, …,
+        // down to >= minSize) whose longest logical line measures inside the
+        // available inner width, otherwise fall back to the smallest configured
+        // size. The fit predicate is monotonic in size (line width is linear in
+        // size), so binary-search the grid for the boundary instead of measuring
+        // at every step — the same size the linear scan returned, in ~log2(n)
+        // measurements rather than n.
+        int maxStepCount = (int) Math.floor((maxSize - minSize + 1e-6) / step);
+        int lo = 0;
+        int hi = maxStepCount;
+        int fitStep = -1;
+        while (lo <= hi) {
+            int mid = (lo + hi) >>> 1;
+            DocumentTextStyle candidate = baseStyle.withSize(maxSize - mid * step);
             if (paragraphFitsSingleLine(node, candidate, innerWidth, measurement)) {
-                return candidate;
+                fitStep = mid;      // fits — try a larger size (fewer steps down)
+                hi = mid - 1;
+            } else {
+                lo = mid + 1;       // too wide — need a smaller size (more steps)
             }
+        }
+        if (fitStep >= 0) {
+            return baseStyle.withSize(maxSize - fitStep * step);
         }
         return baseStyle.withSize(minSize);
     }

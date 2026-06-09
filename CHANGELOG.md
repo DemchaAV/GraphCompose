@@ -80,6 +80,24 @@ Open cycle — bug-fix / housekeeping. Entries land here as they merge.
   large table this removes the dominant per-cell layout allocation. No public API
   or behaviour change.
 
+- **Auto-size font fitting binary-searches the size grid.** A paragraph with
+  `autoSize(...)` resolved its font size by scanning every step from max down to
+  min, re-measuring the line at each candidate (up to ~50 measurements). Line width
+  is linear in font size, so the fit is monotonic — the search now binary-searches
+  the grid for the same boundary in ~log2(n) measurements instead of n. **Output is
+  byte-identical** — it returns the same grid size the linear scan did (covered by
+  the existing auto-size integration and snapshot tests). No public API or behaviour
+  change.
+
+### Deprecations
+
+- **`Font.adjustFontSizeToFit(...)` is deprecated.** The engine-internal
+  `Font#adjustFontSizeToFit` (and its `PdfFont` / `WordFont` implementations) is
+  unused and incorrect — the only real implementation re-measured with the
+  unchanged style, so it always returned the minimum size. Canonical auto-size is
+  resolved by the layout compiler. The method is kept for binary compatibility and
+  scheduled for removal in the next major.
+
 ### Tests / tooling
 
 - **Benchmark regression gate and measurement probe (benchmarks module, not part

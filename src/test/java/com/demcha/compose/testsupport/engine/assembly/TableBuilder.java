@@ -398,7 +398,7 @@ public class TableBuilder extends ContainerBuilder<TableBuilder> {
 
     private TextMeasurementSystem textMeasurementSystem() {
         return entityManager.getSystems()
-                .getSystem(TextMeasurementSystem.class)
+                .textMeasurement()
                 .orElseThrow(() -> new IllegalStateException("TextMeasurementSystem is required to measure table text."));
     }
 

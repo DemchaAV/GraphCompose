@@ -21,7 +21,7 @@ class TextBuilderTest {
     @BeforeEach
     void setUp() {
         entityManager = new EntityManager();
-        entityManager.getSystems().addSystem(new FontLibraryTextMeasurementSystem(entityManager.getFonts(), PdfFont.class));
+        entityManager.getSystems().registerTextMeasurement(new FontLibraryTextMeasurementSystem(entityManager.getFonts(), PdfFont.class));
     }
 
     @Test
@@ -79,7 +79,7 @@ class TextBuilderTest {
     void shouldExposeFullPdfLineMetricsThroughMeasurementSystem() {
         TextStyle style = TextStyle.DEFAULT_STYLE;
         var measurementSystem = entityManager.getSystems()
-                .getSystem(com.demcha.compose.engine.measurement.TextMeasurementSystem.class)
+                .textMeasurement()
                 .orElseThrow();
 
         PdfFont font = (PdfFont) entityManager.getFonts().getFont(style.fontName(), PdfFont.class).orElseThrow();

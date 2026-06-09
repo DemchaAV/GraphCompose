@@ -1,6 +1,8 @@
 package com.demcha.compose.engine.core;
 
 import com.demcha.compose.engine.core.SystemECS;
+import com.demcha.compose.engine.measurement.TextMeasurementSystem;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,41 @@ public class SystemRegistry {
      * Uses a LinkedHashMap to maintain the order of insertion.
      */
     private final Map<Class<? extends SystemECS>, SystemECS> systems = new LinkedHashMap<>();
+
+    /**
+     * The text-measurement service provider, held separately from the
+     * process()-driven {@link #systems} map. Measurement exposes font metrics to
+     * builders and layout helpers on demand; it is not a {@link SystemECS} and
+     * never participates in the {@code processSystems()} loop, so it is registered
+     * out-of-band via {@link #registerTextMeasurement(TextMeasurementSystem)}
+     * rather than {@link #addSystem(SystemECS)}.
+     */
+    @Getter(AccessLevel.NONE)
+    private TextMeasurementSystem textMeasurement;
+
+    /**
+     * Registers the text-measurement service exposed to the legacy engine's text
+     * components and layout alignment. Unlike {@link #addSystem(SystemECS)} this
+     * does not enroll the measurement system in the {@code process()} loop — it is
+     * a service provider, not an ECS system.
+     *
+     * @param textMeasurement the measurement service to expose
+     * @since 1.7.1
+     */
+    public void registerTextMeasurement(TextMeasurementSystem textMeasurement) {
+        this.textMeasurement = Objects.requireNonNull(textMeasurement, "textMeasurement");
+    }
+
+    /**
+     * Retrieves the registered text-measurement service, if any.
+     *
+     * @return an Optional containing the measurement service, or empty if none has
+     *     been registered
+     * @since 1.7.1
+     */
+    public Optional<TextMeasurementSystem> textMeasurement() {
+        return Optional.ofNullable(textMeasurement);
+    }
 
     /**
      * Adds a single system to the registry.

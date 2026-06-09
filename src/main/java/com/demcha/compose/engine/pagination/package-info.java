@@ -1,25 +1,19 @@
 /**
- * Pagination and page-placement helpers for resolved GraphCompose entities.
+ * Pagination and page-placement helpers of the <strong>legacy ECS engine</strong>.
  *
- * <p>This package owns the logic that runs after layout has produced
- * {@code ComputedPosition} and size metadata but before the renderer writes the
- * final document. Its responsibilities include:</p>
+ * <p>This package paginates the resolved {@code Entity} graph for the original
+ * {@code Entity}-based pipeline ({@code PageBreaker} for the pagination walk,
+ * {@code PageLayoutCalculator} for page-coordinate math, {@code TextBlockProcessor}
+ * for block-text fragmentation, {@code ParentContainerUpdater} for upward
+ * size/position propagation). It is renderer-neutral, but it is part of the
+ * parallel legacy ECS engine: the canonical pipeline
+ * ({@code com.demcha.compose.document.layout}) does its own pagination and
+ * imports nothing here.</p>
  *
- * <ul>
- *   <li>choosing a child-first pagination order for the resolved hierarchy</li>
- *   <li>mapping resolved Y coordinates into page-relative {@code Placement}</li>
- *   <li>splitting breakable content such as block text across pages</li>
- *   <li>propagating child-driven size and page-shift updates into parent containers</li>
- * </ul>
- *
- * <p>The package is intentionally renderer-neutral. It does not open PDF
- * streams, create pages directly, or decide backend drawing policy. Instead it
- * mutates the entity graph so later renderers can consume one deterministic,
- * page-aware layout result.</p>
- *
- * <p>Key classes in this package are {@code PageBreaker} for the pass-level
- * pagination walk, {@code PageLayoutCalculator} for page-coordinate math,
- * {@code TextBlockProcessor} for block-text fragmentation, and
- * {@code ParentContainerUpdater} for upward size/position propagation.</p>
+ * @deprecated Legacy ECS engine, superseded by the canonical
+ *     {@code com.demcha.compose.document.layout} pipeline. Not reachable from
+ *     any public API; retained only for legacy regression tests and a candidate
+ *     for removal. Do not extend it or spend optimization effort here.
  */
+@Deprecated
 package com.demcha.compose.engine.pagination;

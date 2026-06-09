@@ -1,30 +1,36 @@
 /**
- * Core ECS primitives that hold entity/component graphs and shared traversal
- * state.
+ * Core primitives of the <strong>legacy ECS engine</strong> — entity/component
+ * graphs and shared traversal state for the original {@code Entity}-based
+ * layout / pagination / render pipeline.
  *
- * <p>This package contains the foundation used by the runtime pipeline. In the
- * normal PDF pipeline the high-level flow is:</p>
+ * <p>This is <em>not</em> the engine behind the public API. The canonical
+ * pipeline ({@code GraphCompose.document() -> DocumentSession -> LayoutCompiler
+ * -> LayoutGraph -> PdfFixedLayoutBackend}) in {@code com.demcha.compose.document.*}
+ * imports nothing from this package directly, and the former
+ * {@code GraphCompose.pdf(...)} surface that drove the ECS has been removed. The
+ * ECS <em>execution</em> engine — the {@code EntityManager.processSystems()} loop
+ * and the layout / pagination / render systems it drives — is dead: it runs only
+ * under the legacy engine regression tests.</p>
  *
- * <ol>
- *   <li>builders populate {@code Entity} graphs and attach components</li>
- *   <li>{@code LayoutSystem} resolves geometry, hierarchy depth, and layer order</li>
- *   <li>{@code PageBreaker} assigns final page-aware {@code Placement}</li>
- *   <li>a backend renderer such as {@code PdfRenderingSystemECS} consumes the resolved entities</li>
- * </ol>
+ * <p>One vestigial holdover keeps {@code SystemECS} and {@code EntityManager}
+ * referenced from live code: the canonical
+ * {@code engine.measurement.TextMeasurementSystem} still
+ * {@code extends SystemECS} with a no-op {@code process(EntityManager)}.
+ * Decoupling that base — so {@code engine.core} becomes genuinely unreferenced by
+ * the canonical pipeline — is a tracked follow-up.</p>
  *
- * <p>The package is intentionally split further into subpackages with narrower
- * responsibilities:</p>
+ * <p>The genuinely shared engine packages are elsewhere and are <em>not</em>
+ * deprecated: {@code engine.components} (value types), {@code engine.measurement}
+ * (text-measurement contracts), {@code engine.font}, and
+ * {@code engine.render} (backend-neutral render-pass contracts) are all used by
+ * the canonical pipeline.</p>
  *
- * <ul>
- *   <li>{@code engine.layout}: low-level layout systems</li>
- *   <li>{@code engine.pagination}: page-breaking helpers</li>
- *   <li>{@code engine.measurement}: text measurement contracts</li>
- *   <li>{@code engine.render}: backend-neutral render-pass contracts and dispatch helpers</li>
- * </ul>
- *
- * <p>Project policy is to keep backend-specific lifecycle concerns out of the
- * shared engine layer wherever possible. The engine should reason in terms of
- * resolved geometry, entity ordering, and render-session seams, while PDFBox,
- * DOCX, or PPTX specifics stay in backend-owned packages.</p>
+ * @deprecated Legacy ECS engine, superseded by the canonical
+ *     {@code com.demcha.compose.document.layout} pipeline. No public entry point
+ *     runs it and it is not on the canonical hot path; it is retained only for the
+ *     legacy engine regression tests (aside from the vestigial {@code SystemECS}
+ *     base of {@code TextMeasurementSystem}, a tracked cleanup) — a candidate for
+ *     removal. Do not extend it or spend optimization effort here.
  */
+@Deprecated
 package com.demcha.compose.engine.core;

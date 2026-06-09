@@ -3,6 +3,7 @@ package com.demcha.compose.engine.render.pdf;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.geometry.ContentSize;
 import com.demcha.compose.engine.font.FontBase;
+import com.demcha.compose.engine.font.FontLineMetrics;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fontbox.util.BoundingBox;
@@ -70,11 +71,27 @@ public class PdfFont extends FontBase<PDFont> {
     }
 
     /**
+     * Bridges the PDFBox-derived {@link VerticalMetrics} to the backend-neutral
+     * {@link FontLineMetrics} the shared text-measurement system consumes, so the
+     * measurement system resolves PDF line metrics polymorphically rather than via
+     * an {@code instanceof PdfFont} special case.
+     *
+     * @param style the resolved text style
+     * @return ascent, descent, and leading in document units
+     */
+    @Override
+    public FontLineMetrics lineMetrics(TextStyle style) {
+        VerticalMetrics metrics = verticalMetrics(style);
+        return new FontLineMetrics(metrics.ascent(), metrics.descent(), metrics.leading());
+    }
+
+    /**
      * Returns a stable font identity for text measurement caches.
      *
      * @param style style selecting the concrete font variant
      * @return backend font name used for width and metric calculations
      */
+    @Override
     public String measurementCacheKey(TextStyle style) {
         return fontType(style.decoration()).getName();
     }

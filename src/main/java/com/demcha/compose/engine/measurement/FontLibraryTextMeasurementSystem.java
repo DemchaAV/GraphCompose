@@ -5,7 +5,7 @@ import com.demcha.compose.engine.components.content.text.TextDecoration;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.geometry.ContentSize;
 import com.demcha.compose.engine.font.Font;
-import com.demcha.compose.engine.render.pdf.PdfFont;
+import com.demcha.compose.engine.font.FontLineMetrics;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,18 +16,24 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Default measurement system backed by a document font library and a concrete
  * font implementation class supplied by the backend runtime.
+ *
+ * <p>Line metrics resolve polymorphically through the {@link Font} contract
+ * ({@link Font#lineMetrics(TextStyle)} plus {@link Font#measurementCacheKey(TextStyle)}),
+ * so every backend font — not only the PDF font — gets first-class metrics and
+ * can opt into the process-wide cache without this shared class being modified
+ * or special-cased per backend.</p>
  */
 public final class FontLibraryTextMeasurementSystem implements TextMeasurementSystem {
     private static final int GLOBAL_LINE_METRICS_CACHE_LIMIT = 50_000;
     private static final int SESSION_TEXT_WIDTH_CACHE_LIMIT = 10_000;
-    private static final ConcurrentMap<GlobalPdfStyleKey, LineMetrics> GLOBAL_PDF_LINE_METRICS_CACHE = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<GlobalStyleKey, LineMetrics> GLOBAL_LINE_METRICS_CACHE = new ConcurrentHashMap<>();
 
     private final FontLibrary fonts;
     private final Class<? extends Font<?>> fontClass;
     private final Map<TextStyle, Font<?>> fontCache = new HashMap<>();
     private final Map<TextStyle, LineMetrics> lineMetricsCache = new HashMap<>();
     private final Map<TextStyle, Map<String, Double>> textWidthCache = new HashMap<>();
-    private final Map<TextStyle, GlobalPdfStyleKey> globalPdfStyleKeyCache = new HashMap<>();
+    private final Map<TextStyle, GlobalStyleKey> globalStyleKeyCache = new HashMap<>();
 
     public FontLibraryTextMeasurementSystem(FontLibrary fonts, Class<? extends Font<?>> fontClass) {
         this.fonts = Objects.requireNonNull(fonts, "fonts");
@@ -69,20 +75,24 @@ public final class FontLibraryTextMeasurementSystem implements TextMeasurementSy
 
     private LineMetrics resolveLineMetrics(TextStyle style) {
         Font<?> font = resolveFont(style);
-        if (font instanceof PdfFont pdfFont) {
-            GlobalPdfStyleKey cacheKey = globalPdfStyleKey(pdfFont, style);
-            LineMetrics cached = GLOBAL_PDF_LINE_METRICS_CACHE.get(cacheKey);
-            if (cached != null) {
-                return cached;
-            }
-            var metrics = pdfFont.verticalMetrics(style);
-            LineMetrics resolved = new LineMetrics(metrics.ascent(), metrics.descent(), metrics.leading());
-            cacheGlobalLineMetrics(cacheKey, resolved);
-            return resolved;
+        String cacheKey = font.measurementCacheKey(style);
+        if (cacheKey == null) {
+            // Backend opted out of the process-wide cache; the per-session
+            // lineMetricsCache (via lineMetrics(...)) still memoizes per style.
+            return toLineMetrics(font.lineMetrics(style));
         }
+        GlobalStyleKey key = globalStyleKey(style, cacheKey);
+        LineMetrics cached = GLOBAL_LINE_METRICS_CACHE.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        LineMetrics resolved = toLineMetrics(font.lineMetrics(style));
+        cacheGlobalLineMetrics(key, resolved);
+        return resolved;
+    }
 
-        double lineHeight = Math.max(0.0, font.getLineHeight(style));
-        return new LineMetrics(lineHeight, 0.0, 0.0);
+    private static LineMetrics toLineMetrics(FontLineMetrics metrics) {
+        return new LineMetrics(metrics.ascent(), metrics.descent(), metrics.leading());
     }
 
     private double resolveTextWidth(Font<?> font, TextStyle style, String text) {
@@ -95,11 +105,16 @@ public final class FontLibraryTextMeasurementSystem implements TextMeasurementSy
                 .orElseThrow(() -> new IllegalStateException("Font not found for style: " + key.fontName())));
     }
 
-    private GlobalPdfStyleKey globalPdfStyleKey(PdfFont font, TextStyle style) {
-        return globalPdfStyleKeyCache.computeIfAbsent(style, key -> GlobalPdfStyleKey.from(font, key));
+    private GlobalStyleKey globalStyleKey(TextStyle style, String cacheKey) {
+        // Namespace the process-wide cache by backend font type: distinct backends
+        // may return the same measurementCacheKey (e.g. both key on "Helvetica")
+        // for different metrics, so without fontClass they would collide in the
+        // shared static cache.
+        return globalStyleKeyCache.computeIfAbsent(style,
+                key -> new GlobalStyleKey(fontClass.getName(), cacheKey, key.size(), key.decoration()));
     }
 
-    private static void cacheGlobalLineMetrics(GlobalPdfStyleKey key, LineMetrics metrics) {
+    private static void cacheGlobalLineMetrics(GlobalStyleKey key, LineMetrics metrics) {
         // Safety cap on the process-wide line-metrics cache. Distinct styles are
         // few in real use (a handful of font/size/decoration combos); this only
         // guards a pathological style explosion. Stop inserting once full instead
@@ -107,8 +122,8 @@ public final class FontLibraryTextMeasurementSystem implements TextMeasurementSy
         // concurrent rendering (a thundering-herd recompute), so keeping the
         // existing entries is strictly better. This runs on a cache miss only,
         // never on the per-measurement get() path.
-        if (GLOBAL_PDF_LINE_METRICS_CACHE.size() < GLOBAL_LINE_METRICS_CACHE_LIMIT) {
-            GLOBAL_PDF_LINE_METRICS_CACHE.putIfAbsent(key, metrics);
+        if (GLOBAL_LINE_METRICS_CACHE.size() < GLOBAL_LINE_METRICS_CACHE_LIMIT) {
+            GLOBAL_LINE_METRICS_CACHE.putIfAbsent(key, metrics);
         }
     }
 
@@ -117,7 +132,7 @@ public final class FontLibraryTextMeasurementSystem implements TextMeasurementSy
         fontCache.clear();
         lineMetricsCache.clear();
         textWidthCache.clear();
-        globalPdfStyleKeyCache.clear();
+        globalStyleKeyCache.clear();
     }
 
     int sessionTextWidthCacheSize() {
@@ -128,10 +143,7 @@ public final class FontLibraryTextMeasurementSystem implements TextMeasurementSy
         return total;
     }
 
-    private record GlobalPdfStyleKey(String fontKey, double size, TextDecoration decoration) {
-        private static GlobalPdfStyleKey from(PdfFont font, TextStyle style) {
-            return new GlobalPdfStyleKey(font.measurementCacheKey(style), style.size(), style.decoration());
-        }
+    private record GlobalStyleKey(String fontType, String fontKey, double size, TextDecoration decoration) {
     }
 
 }

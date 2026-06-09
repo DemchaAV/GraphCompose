@@ -19,8 +19,8 @@
 </p>
 
 > **Release status** &mdash;
-> 🟢 **Latest stable**: [v1.7.0](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.7.0) (geometric — inline shape runs, polygon geometry, inline checkboxes, per-corner radii, vertical text seating; zero breaking from v1.6.x)
-> &nbsp;·&nbsp; 🟡 **In develop**: v1.7.1 (next bug-fix / housekeeping cycle)
+> 🟢 **Latest stable**: [v1.7.1](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.7.1) (byte-identical layout / render / measurement performance — text wrapping, font embedding, glyph probing, table pagination; the legacy ECS engine is deprecated; zero breaking from v1.7.0)
+> &nbsp;·&nbsp; 🟡 **In develop**: v1.7.2 (next bug-fix / housekeeping cycle)
 > &nbsp;·&nbsp; See [API stability policy](./docs/api-stability.md) for tier definitions.
 
 <p align="center">

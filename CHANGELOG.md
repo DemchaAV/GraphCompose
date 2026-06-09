@@ -195,6 +195,14 @@ Open cycle — bug-fix / housekeeping. Entries land here as they merge.
   class-load / JIT cold-start). `scripts/run-benchmarks.ps1` gains the
   `11-verdict-current-speed` step (skippable via `-SkipVerdict`).
 
+- **Cross-platform A/B benchmark harness.** `scripts/ab-bench.sh` (Linux / macOS /
+  Windows Git Bash) joins the PowerShell `scripts/ab-bench.ps1` to compare engine
+  speed between two branches — interleaved runs, median, per-scenario diff via the
+  existing `BenchmarkMedianTool` / `BenchmarkDiffTool`. A path-filtered
+  `ab-bench-smoke` CI job runs it on Linux; `.gitattributes` pins `*.sh` and `mvnw`
+  to LF so the wrappers stay runnable cross-platform. Benchmark tooling only — not
+  part of the published library.
+
 ## v1.7.0 — 2026-06-07
 
 Canonical DSL primitives — additive only, zero breaking changes. Adding public

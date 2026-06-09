@@ -320,6 +320,34 @@ public final class ModuleBuilder extends AbstractFlowBuilder<ModuleBuilder, Sect
         return add(node);
     }
 
+    private boolean keepTogether = false;
+
+    /**
+     * Keeps the whole module (title plus body) on one page: when it does not fit
+     * in the remaining page space but fits on a fresh page, it relocates whole to
+     * the next page instead of orphaning its title from the body. Modules taller
+     * than a page still flow.
+     *
+     * @return this builder
+     * @since 1.8.0
+     */
+    public ModuleBuilder keepTogether() {
+        this.keepTogether = true;
+        return this;
+    }
+
+    /**
+     * Sets whether the module keeps together on one page.
+     *
+     * @param value true to keep the module whole
+     * @return this builder
+     * @since 1.8.0
+     */
+    public ModuleBuilder keepTogether(boolean value) {
+        this.keepTogether = value;
+        return this;
+    }
+
     @Override
     protected SectionNode buildNode() {
         List<DocumentNode> moduleChildren = new ArrayList<>();
@@ -335,7 +363,8 @@ public final class ModuleBuilder extends AbstractFlowBuilder<ModuleBuilder, Sect
                     .build());
         }
         moduleChildren.addAll(children());
-        return new SectionNode(name(), moduleChildren, spacing(), padding(), margin(), fillColor(), stroke(), cornerRadius(), borders());
+        return new SectionNode(name(), moduleChildren, spacing(), padding(), margin(), fillColor(),
+                stroke(), cornerRadius(), borders(), keepTogether);
     }
 
     /**

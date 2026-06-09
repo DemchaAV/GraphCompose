@@ -2,7 +2,7 @@ package com.demcha.compose.engine.render;
 
 import com.demcha.compose.engine.components.core.Entity;
 import com.demcha.compose.engine.core.EntityManager;
-import com.demcha.compose.engine.render.pdf.PdfRenderingSystemECS;
+import com.demcha.compose.engine.render.pdf.ecs.PdfRenderingSystemECS;
 import com.demcha.compose.engine.render.Render;
 import org.junit.jupiter.api.Test;
 

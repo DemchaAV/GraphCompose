@@ -21,7 +21,7 @@ import com.demcha.compose.engine.debug.LayoutSnapshotExtractor;
 import com.demcha.compose.engine.debug.LayoutNodeSnapshot;
 import com.demcha.compose.engine.debug.LayoutSnapshot;
 import com.demcha.compose.testing.layout.LayoutSnapshotJson;
-import com.demcha.compose.engine.render.pdf.PdfCanvas;
+import com.demcha.compose.engine.render.pdf.ecs.PdfCanvas;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
 

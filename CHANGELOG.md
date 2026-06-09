@@ -144,6 +144,24 @@ Open cycle — bug-fix / housekeeping. Entries land here as they merge.
   until the baseline advances past this release. No canonical API or behaviour
   change.
 
+- **The legacy ECS PDF render pipeline is deprecated.** Follow-up to the ECS
+  engine deprecation above. The `Entity`-based PDFBox renderer
+  (`PdfRenderingSystemECS` and its collaborators — `PdfRenderSession`, `PdfCanvas`,
+  `PdfStream`, `PdfImageCache`, `PdfFileManagerSystem`, `PdfGuidesRenderer`, the
+  render-marker handlers, and the `TableCellBox` / `PdfBookmarkBuilder` helpers) is
+  the renderer for the removed `GraphCompose.pdf(...)` surface and now runs only
+  under the legacy engine regression tests; canonical PDF output goes through
+  `com.demcha.compose.document.backend.fixed.pdf`. Because `engine.render.pdf` is a
+  *mixed* package — it also holds the canonical-shared `PdfFont`,
+  `GlyphFallbackLogger`, and the header/footer + watermark post-processors — the
+  legacy classes were physically moved into a new `engine.render.pdf.ecs`
+  (with `.handlers` / `.helpers` sub-packages), which is then `@Deprecated` at
+  package level (so no deprecation-warning cascade, same pattern as the ECS engine
+  packages). The four genuinely shared `engine.render.pdf` types are **not**
+  deprecated and stay put. No behaviour change. The relocated renderer has no
+  public entry point and carries no binary-compatibility promise, so the move is
+  excluded from the japicmp gate rather than treated as a breaking removal.
+
 ### Tests / tooling
 
 - **Benchmark regression gate and measurement probe (benchmarks module, not part

@@ -693,6 +693,29 @@
                                 <excludes>
                                     <exclude>com.demcha.compose.document.layout.payloads</exclude>
                                     <!--
+                                        Legacy ECS PDF renderer (PdfRenderingSystemECS and its
+                                        collaborators), relocated to
+                                        com.demcha.compose.engine.render.pdf.ecs[.handlers|.helpers]
+                                        and @Deprecated at package level. This is the dead
+                                        Entity-based renderer that no public entry point reaches
+                                        (canonical PDF output goes through
+                                        document.backend.fixed.pdf); it carries no
+                                        binary-compatibility promise. Both the relocated packages
+                                        and the vacated original fully-qualified names are excluded
+                                        so the package split is not flagged as a breaking removal.
+                                    -->
+                                    <exclude>com.demcha.compose.engine.render.pdf.ecs</exclude>
+                                    <exclude>com.demcha.compose.engine.render.pdf.ecs.handlers</exclude>
+                                    <exclude>com.demcha.compose.engine.render.pdf.ecs.helpers</exclude>
+                                    <exclude>com.demcha.compose.engine.render.pdf.handlers</exclude>
+                                    <exclude>com.demcha.compose.engine.render.pdf.PdfRenderingSystemECS</exclude>
+                                    <exclude>com.demcha.compose.engine.render.pdf.PdfCanvas</exclude>
+                                    <exclude>com.demcha.compose.engine.render.pdf.PdfStream</exclude>
+                                    <exclude>com.demcha.compose.engine.render.pdf.PdfFileManagerSystem</exclude>
+                                    <exclude>com.demcha.compose.engine.render.pdf.PdfGuidesRenderer</exclude>
+                                    <exclude>com.demcha.compose.engine.render.pdf.helpers.TableCellBox</exclude>
+                                    <exclude>com.demcha.compose.engine.render.pdf.helpers.PdfBookmarkBuilder</exclude>
+                                    <!--
                                         engine.measurement.TextMeasurementSystem dropped its vestigial
                                         SystemECS super-interface (and the no-op process(EntityManager)
                                         default) — see CHANGELOG v1.7.1. japicmp reports this as

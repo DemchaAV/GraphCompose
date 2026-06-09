@@ -49,7 +49,8 @@ intended.
 | `com.demcha.compose.engine.pagination` | Page-breaking helpers and pagination fallback systems. | Maintain child-first ordering and page-shift propagation rules. |
 | `com.demcha.compose.engine.measurement` | Text measurement contracts and font-backed implementations. | Builders/layout helpers depend on this seam instead of reaching into renderers. |
 | `com.demcha.compose.engine.render` | Backend-neutral render contracts, handler registry, render ordering, and render-pass session lifetime. | Add backend-neutral contracts here, backend-specific drawing elsewhere. |
-| `com.demcha.compose.engine.render.pdf` | Low-level PDF backend internals for ECS rendering. | PDFBox state stays here and in child handler/helper packages. |
+| `com.demcha.compose.engine.render.pdf` | Shared PDFBox primitives for the canonical fixed-layout backend: `PdfFont`, `GlyphFallbackLogger`, and the header/footer + watermark renderers under `helpers`. | Add canonical-shared PDF support here; the legacy ECS renderer lives in the deprecated `ecs` sub-package. |
+| `com.demcha.compose.engine.render.pdf.ecs` | **Deprecated.** Legacy `Entity`-based ECS PDF renderer (`PdfRenderingSystemECS` and collaborators, plus the `ecs.handlers` / `ecs.helpers` sub-packages). | Dead renderer kept only for legacy regression tests; do not extend or optimize. |
 | `com.demcha.compose.engine.render.word` | Experimental Word backend internals. | Treat as research until a supported public surface is designed. |
 | `com.demcha.compose.engine.text` | Internal text hot-path utilities shared by layout and render stages. | Keep helpers backend-neutral and avoid public authoring concepts here. |
 | `com.demcha.compose.engine.text.markdown` | Markdown token parsing used by text preparation. | Keep output backend-neutral. |

@@ -53,6 +53,10 @@ The script prints numbered sections so you can map console output to the pipelin
    Diffs the newest compatible current-speed reports.
 10. `10-diff-comparative`
    Diffs the two newest comparative reports.
+11. `11-verdict-current-speed`
+   Judges the newest current-speed median against the committed baseline
+   (`baselines/current-speed-full.json`). Hard gate on average latency; peak
+   heap is advisory. See [Refreshing the committed baseline](#refreshing-the-committed-baseline-perf-gate).
 
 Each step writes a dedicated log file under `target/benchmark-runs/<timestamp>/logs/`, and the wrapper mirrors that log back to the console after the step finishes.
 
@@ -170,6 +174,115 @@ powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -SkipDiff
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -OpenResults
+```
+
+## Measuring the impact of an engine change
+
+Changing the engine (layout, pagination, render ordering, PDF session, text
+measurement, fonts) and want to see how it moves performance? Pick the view that
+fits, cheapest first:
+
+- **"Did I regress?" — gate against the committed baseline.** Run a median and
+  let the `11-verdict-current-speed` step score each scenario IMPROVED /
+  NEUTRAL / REGRESSED against `baselines/current-speed-full.json` (hard gate:
+  average latency ±10%, non-zero exit on a regression):
+
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -CurrentSpeedProfile full -Repeat 5
+  ```
+
+- **"What exactly moved?" — A/B your branch against its base (any OS).** Commit
+  your change, then compare it to `develop` with the A/B scripts (see
+  [A/B comparison between two branches](#ab-comparison-between-two-branches)).
+  Both sides are rebuilt and benchmarked, with a per-scenario delta:
+
+  ```bash
+  ./scripts/ab-bench.sh -a develop -b my/engine-change -r 5
+  ```
+
+If a change is *meant* to improve performance and the gate confirms it, refresh
+the baseline so the gate ratchets down — see
+[Refreshing the committed baseline](#refreshing-the-committed-baseline-perf-gate).
+Treat sub-~5-10% laptop deltas as inconclusive, and re-run on the final checkout
+before citing a number.
+
+## A/B comparison between two branches
+
+The wrappers above benchmark whatever is currently checked out. To answer "is
+branch B faster or slower than branch A?" fairly on a noisy laptop, use the
+dedicated A/B scripts. They **interleave** the two branches (A,B,A,B,…) so
+thermal drift averages out, **repeat** each branch and compare **medians**, and
+**cool down** between runs. Each branch is rebuilt (`install -pl .`) before its
+runs so the benchmark measures that branch's engine, and untracked benchmark
+probes are moved aside around the branch switch so they cannot break the other
+branch's compile.
+
+- **Windows (PowerShell)** — `scripts/ab-bench.ps1`, full suite (latency,
+  throughput, scalability, stress, comparative):
+
+  ```powershell
+  ./scripts/ab-bench.ps1 -BranchA main -BranchB develop -Repeat 3
+  ./scripts/ab-bench.ps1 -BranchA develop -BranchB feature/x -Repeat 5
+  ```
+
+- **Linux / macOS / Windows Git Bash** — `scripts/ab-bench.sh`, `current-speed`
+  suite (per-scenario latency + parallel throughput, the primary engine-speed
+  signal):
+
+  ```bash
+  ./scripts/ab-bench.sh -a main -b develop -r 3
+  ./scripts/ab-bench.sh --branch-a develop --branch-b feature/x --repeat 5 --cooldown 45
+  ./scripts/ab-bench.sh -a main -b origin/anothertree -r 3   # remote-only ref (detached)
+  ```
+
+Both accept any pair of checkout-able refs (local branches or `origin/<name>`).
+Deltas are reported as **B relative to A** (negative latency % and positive
+docs-per-sec % mean B is faster). The working tree must have no uncommitted
+**tracked** changes — the scripts switch branches. Output lands under
+`target/ab-compare/` and `target/benchmarks/diffs/`. Treat sub-~5-10% deltas on
+a laptop as inconclusive; close other JVMs/IDEs and stay on AC power for the
+cleanest numbers.
+
+## Refreshing the committed baseline (perf gate)
+
+`baselines/current-speed-full.json` is a committed median `current-speed` report
+that `11-verdict-current-speed` judges new runs against (hard gate: average
+latency ±10%; peak heap is advisory, GC-timing noisy). Refresh it **only** for an
+intended, verified improvement so the gate ratchets down — never to turn a red
+gate green. Capture a median of **≥5** runs on the branch that defines the new
+reference, with the IDE closed:
+
+**Windows (PowerShell):**
+
+```powershell
+.\mvnw.cmd -B -ntp -f benchmarks\pom.xml test-compile dependency:build-classpath -DincludeScope=test -Dmdep.outputFile=target/benchmark.classpath
+$cp = 'benchmarks\target\test-classes;benchmarks\target\classes;' + (Get-Content benchmarks\target\benchmark.classpath -Raw).Trim()
+1..5 | ForEach-Object { & java "-Dgraphcompose.benchmark.profile=full" -cp "$cp" com.demcha.compose.CurrentSpeedBenchmark }
+$runs = Get-ChildItem target\benchmarks\current-speed\run-*.json | Sort-Object Name | Select-Object -Last 5 | ForEach-Object { $_.FullName }
+& java -cp "$cp" com.demcha.compose.BenchmarkMedianTool current-speed @runs
+Copy-Item target\benchmarks\aggregates\current-speed\full\latest.json baselines\current-speed-full.json -Force
+```
+
+**Linux / macOS / Git Bash:**
+
+```bash
+./mvnw -B -ntp -f benchmarks/pom.xml test-compile dependency:build-classpath -DincludeScope=test -Dmdep.outputFile=target/benchmark.classpath
+sep=':'; case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) sep=';';; esac
+cp="benchmarks/target/test-classes${sep}benchmarks/target/classes${sep}$(cat benchmarks/target/benchmark.classpath)"
+for i in 1 2 3 4 5; do java -Dgraphcompose.benchmark.profile=full -cp "$cp" com.demcha.compose.CurrentSpeedBenchmark; done
+runs=$(ls -t target/benchmarks/current-speed/run-*.json | head -5)
+java -cp "$cp" com.demcha.compose.BenchmarkMedianTool current-speed $runs
+cp -f target/benchmarks/aggregates/current-speed/full/latest.json baselines/current-speed-full.json
+```
+
+The baseline is machine-class-specific; the JSON records provenance
+(`timestamp`, `profile`, `sourceRuns`). Validate the refresh against a *fresh*
+run — not one of the five that built the median — on that branch; it should
+score NEUTRAL and exit `0`:
+
+```bash
+java -Dgraphcompose.benchmark.profile=full -cp "$cp" com.demcha.compose.CurrentSpeedBenchmark
+java -cp "$cp" com.demcha.compose.BenchmarkVerdictTool baselines/current-speed-full.json target/benchmarks/current-speed/latest.json
 ```
 
 ## Artifact layout

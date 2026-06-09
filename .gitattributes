@@ -1,0 +1,8 @@
+# Shell scripts must keep LF endings so they run on Linux/macOS regardless of
+# the contributor's core.autocrlf setting (a CRLF shebang breaks on Unix).
+*.sh text eol=lf
+
+# Maven wrapper: the POSIX `mvnw` must stay LF to execute on Linux/macOS/WSL
+# (a CRLF shebang is unrunnable there); the Windows `mvnw.cmd` batch stays CRLF.
+mvnw text eol=lf
+mvnw.cmd text eol=crlf

@@ -31,7 +31,7 @@ When writing new code, avoid Java 21+ APIs and language constructs that don't ex
 - The blocking validation gate for repository work is `./mvnw -B -ntp clean verify`.
 - Run the guard-focused suite with `./mvnw -B -ntp "-Dtest=EnginePdfBoundaryTest,CanonicalTemplateComposerPdfBoundaryTest,PdfRenderInterfaceGuardTest,PdfRenderingSystemECSDispatchTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest" test`.
 - Run a focused documentation sanity check with `./mvnw -B -ntp "-Dtest=DocumentationExamplesTest" test`.
-- Run the local benchmark wrapper with `powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1` when you change performance-sensitive code or benchmark tooling.
+- Run the local benchmark wrapper when you change performance-sensitive code or benchmark tooling: `powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1` (Windows). To compare two branches fairly, use `scripts/ab-bench.ps1` (Windows) or the cross-platform `scripts/ab-bench.sh` (Linux/macOS/Git Bash). See [docs/operations/benchmarks.md](./docs/operations/benchmarks.md).
 
 ## How to propose changes
 
@@ -110,7 +110,7 @@ See [docs/contributing/release-process.md](./docs/contributing/release-process.m
 - `aggregator/pom.xml`
   Maven reactor (aggregator POM); release tooling propagates the version bump across all modules through it in one pass
 - `baselines/`
-  Committed performance-benchmark baseline summaries (`BASELINE_SUMMARY.md`, `COMPARISON.md`) — the reference numbers benchmark runs compare against
+  Committed performance-benchmark baselines: `current-speed-full.json` is the median reference the `11-verdict-current-speed` gate judges runs against; `BASELINE_SUMMARY.md` / `COMPARISON.md` are historical pre-optimization snapshots
 
 ## Recommended workflow
 

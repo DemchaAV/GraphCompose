@@ -4,13 +4,20 @@
  * layout / pagination / render pipeline.
  *
  * <p>This is <em>not</em> the engine behind the public API. The canonical
- * pipeline is {@code GraphCompose.document() -> DocumentSession ->
- * LayoutCompiler -> LayoutGraph -> PdfFixedLayoutBackend} in
- * {@code com.demcha.compose.document.*}, and it imports nothing from this
- * package. The ECS stack ({@code engine.core}, {@code engine.layout},
- * {@code engine.pagination}) is a parallel second engine that no public entry
- * point reaches — the former {@code GraphCompose.pdf(...)} surface has been
- * removed — and it survives only to back the legacy engine regression tests.</p>
+ * pipeline ({@code GraphCompose.document() -> DocumentSession -> LayoutCompiler
+ * -> LayoutGraph -> PdfFixedLayoutBackend}) in {@code com.demcha.compose.document.*}
+ * imports nothing from this package directly, and the former
+ * {@code GraphCompose.pdf(...)} surface that drove the ECS has been removed. The
+ * ECS <em>execution</em> engine — the {@code EntityManager.processSystems()} loop
+ * and the layout / pagination / render systems it drives — is dead: it runs only
+ * under the legacy engine regression tests.</p>
+ *
+ * <p>One vestigial holdover keeps {@code SystemECS} and {@code EntityManager}
+ * referenced from live code: the canonical
+ * {@code engine.measurement.TextMeasurementSystem} still
+ * {@code extends SystemECS} with a no-op {@code process(EntityManager)}.
+ * Decoupling that base — so {@code engine.core} becomes genuinely unreferenced by
+ * the canonical pipeline — is a tracked follow-up.</p>
  *
  * <p>The genuinely shared engine packages are elsewhere and are <em>not</em>
  * deprecated: {@code engine.components} (value types), {@code engine.measurement}
@@ -19,10 +26,11 @@
  * the canonical pipeline.</p>
  *
  * @deprecated Legacy ECS engine, superseded by the canonical
- *     {@code com.demcha.compose.document.layout} pipeline. No public API reaches
- *     it, it is not on the canonical hot path, and it is retained only for the
- *     legacy engine regression tests — a candidate for removal once those are
- *     retired. Do not extend it or spend optimization effort here.
+ *     {@code com.demcha.compose.document.layout} pipeline. No public entry point
+ *     runs it and it is not on the canonical hot path; it is retained only for the
+ *     legacy engine regression tests (aside from the vestigial {@code SystemECS}
+ *     base of {@code TextMeasurementSystem}, a tracked cleanup) — a candidate for
+ *     removal. Do not extend it or spend optimization effort here.
  */
 @Deprecated
 package com.demcha.compose.engine.core;

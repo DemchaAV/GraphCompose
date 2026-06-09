@@ -33,6 +33,16 @@ here as they merge.
   `ChartStyle.GridStyle` control horizontal/vertical grid lines;
   `ChartSpec.bar()/line().showCategoryLabels(false)` hides the category axis —
   down to a minimal "bars + value numbers only" chart.
+- **Pie / donut charts** (`@since 1.8.0`). `ChartSpec.pie()` — one slice per
+  category from a single series (multi-series data is rejected loudly).
+  Configurable: `donutRatio` (hole size), `startAngleDegrees`, `clockwise`,
+  `SliceLabelMode` (VALUE / PERCENT / CATEGORY / CATEGORY_PERCENT) with
+  independent value/percent formats, donut-centre KPI text, and a
+  category-listing legend. Style cascade adds `sliceStroke` (separator),
+  `sliceGapDegrees` (pad angle), and `donutCenterTextStyle`. Sectors compile
+  into the new general-purpose `PolygonNode` (arc-tessellated ring polygons at
+  a fixed 3° step — deterministic vertices, no new render handlers), which also
+  lays the groundwork for SVG icon-path import.
 - **Configurable line-chart point markers.** `PointMarker` draws an ellipse at
   every data point — independent width/height axes, explicit fill (or the
   series paint), and an optional outline ring (`PointMarker.circle(5)

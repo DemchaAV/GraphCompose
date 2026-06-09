@@ -17,7 +17,7 @@ import java.util.Objects;
  * @author Artem Demchyshyn
  * @since 1.8.0
  */
-public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line {
+public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSpec.Pie {
 
     /**
      * Tabular data backing this chart.
@@ -27,11 +27,13 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line {
     ChartData data();
 
     /**
-     * Numeric-axis configuration.
+     * Number format for the chart's data values. Axis-based kinds delegate to
+     * their value axis; a pie has no axis and carries its own format. Used by
+     * value labels and by semantic exports that render the chart's data table.
      *
-     * @return value axis spec
+     * @return value number format
      */
-    AxisSpec valueAxis();
+    NumberFormatSpec valueFormat();
 
     /**
      * Legend placement.
@@ -66,6 +68,15 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line {
     }
 
     /**
+     * Starts a pie/donut-chart builder.
+     *
+     * @return pie builder
+     */
+    static Pie.Builder pie() {
+        return new Pie.Builder();
+    }
+
+    /**
      * Bar chart: vertical or horizontal, grouped or stacked.
      *
      * @param data tabular data
@@ -95,6 +106,11 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line {
             legend = legend == null ? LegendPosition.NONE : legend;
             valueLabels = valueLabels == null ? ValueLabelMode.NONE : valueLabels;
             size = size == null ? ChartSize.aspectRatio(16, 9) : size;
+        }
+
+        @Override
+        public NumberFormatSpec valueFormat() {
+            return valueAxis.format();
         }
 
         /**
@@ -255,6 +271,11 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line {
             size = size == null ? ChartSize.aspectRatio(16, 9) : size;
         }
 
+        @Override
+        public NumberFormatSpec valueFormat() {
+            return valueAxis.format();
+        }
+
         /**
          * Backward-compatible constructor without the category-label toggle
          * (defaults to showing category labels).
@@ -366,6 +387,199 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line {
             public Line build() {
                 return new Line(data, smooth, valueAxis, legend, valueLabels, size,
                         showCategoryLabels);
+            }
+        }
+    }
+
+    /**
+     * Pie / donut chart: one slice per category from a single series. An axis is
+     * unrepresentable here by design — the spec carries its own value/percent
+     * formats instead.
+     *
+     * @param data tabular data; must contain exactly one series
+     * @param donutRatio 0 for a solid pie; (0..0.9] = hole radius as a fraction
+     *                   of the outer radius
+     * @param startAngleDegrees angle of the first slice's leading edge
+     *                          (90 = twelve o'clock)
+     * @param clockwise slice layout direction
+     * @param sliceLabels what each slice's outside label shows
+     * @param valueFormat format for {@link SliceLabelMode#VALUE} labels
+     * @param percentFormat format for percent labels (suffix included)
+     * @param centerText optional KPI text in the donut hole; requires
+     *                   {@code donutRatio > 0}
+     * @param legend legend placement; lists category names
+     * @param size width-responsive sizing policy (1:1 by default)
+     */
+    record Pie(
+            ChartData data,
+            double donutRatio,
+            double startAngleDegrees,
+            boolean clockwise,
+            SliceLabelMode sliceLabels,
+            NumberFormatSpec valueFormat,
+            NumberFormatSpec percentFormat,
+            String centerText,
+            LegendPosition legend,
+            ChartSize size
+    ) implements ChartSpec {
+        /** Validates the single-series invariant and the ratio/angle ranges. */
+        public Pie {
+            Objects.requireNonNull(data, "data");
+            if (data.seriesCount() != 1) {
+                throw new IllegalArgumentException(
+                        "pie charts plot exactly one series; got " + data.seriesCount()
+                        + " — pass a single Series or use a bar chart");
+            }
+            if (donutRatio < 0 || donutRatio > 0.9 || Double.isNaN(donutRatio)) {
+                throw new IllegalArgumentException("donutRatio must be in [0, 0.9]: " + donutRatio);
+            }
+            if (Double.isNaN(startAngleDegrees) || Double.isInfinite(startAngleDegrees)) {
+                throw new IllegalArgumentException("startAngleDegrees must be finite: " + startAngleDegrees);
+            }
+            sliceLabels = sliceLabels == null ? SliceLabelMode.NONE : sliceLabels;
+            valueFormat = valueFormat == null ? NumberFormatSpec.defaults() : valueFormat;
+            percentFormat = percentFormat == null
+                    ? NumberFormatSpec.pattern("#,##0.#").withSuffix("%") : percentFormat;
+            legend = legend == null ? LegendPosition.NONE : legend;
+            size = size == null ? ChartSize.aspectRatio(1, 1) : size;
+            if (centerText != null && donutRatio <= 0) {
+                throw new IllegalArgumentException(
+                        "centerText requires a donut hole — set donutRatio > 0");
+            }
+        }
+
+        /** Fluent builder for a {@link Pie} spec. */
+        public static final class Builder {
+            private ChartData data;
+            private double donutRatio = 0.0;
+            private double startAngleDegrees = 90.0;
+            private boolean clockwise = true;
+            private SliceLabelMode sliceLabels = SliceLabelMode.NONE;
+            private NumberFormatSpec valueFormat = NumberFormatSpec.defaults();
+            private NumberFormatSpec percentFormat =
+                    NumberFormatSpec.pattern("#,##0.#").withSuffix("%");
+            private String centerText;
+            private LegendPosition legend = LegendPosition.NONE;
+            private ChartSize size = ChartSize.aspectRatio(1, 1);
+
+            /**
+             * Sets the data (exactly one series).
+             *
+             * @param d chart data
+             * @return this builder
+             */
+            public Builder data(ChartData d) {
+                this.data = d;
+                return this;
+            }
+
+            /**
+             * Sets the donut hole radius fraction.
+             *
+             * @param ratio 0 for a solid pie, up to 0.9
+             * @return this builder
+             */
+            public Builder donutRatio(double ratio) {
+                this.donutRatio = ratio;
+                return this;
+            }
+
+            /**
+             * Sets the first slice's leading-edge angle.
+             *
+             * @param degrees angle, 90 = twelve o'clock
+             * @return this builder
+             */
+            public Builder startAngleDegrees(double degrees) {
+                this.startAngleDegrees = degrees;
+                return this;
+            }
+
+            /**
+             * Sets the slice layout direction.
+             *
+             * @param v true for clockwise
+             * @return this builder
+             */
+            public Builder clockwise(boolean v) {
+                this.clockwise = v;
+                return this;
+            }
+
+            /**
+             * Sets what slice labels show.
+             *
+             * @param mode slice label mode
+             * @return this builder
+             */
+            public Builder sliceLabels(SliceLabelMode mode) {
+                this.sliceLabels = mode;
+                return this;
+            }
+
+            /**
+             * Sets the VALUE label format.
+             *
+             * @param f format spec
+             * @return this builder
+             */
+            public Builder valueFormat(NumberFormatSpec f) {
+                this.valueFormat = f;
+                return this;
+            }
+
+            /**
+             * Sets the percent label format.
+             *
+             * @param f format spec (suffix included)
+             * @return this builder
+             */
+            public Builder percentFormat(NumberFormatSpec f) {
+                this.percentFormat = f;
+                return this;
+            }
+
+            /**
+             * Sets the donut-centre KPI text.
+             *
+             * @param text centre text
+             * @return this builder
+             */
+            public Builder centerText(String text) {
+                this.centerText = text;
+                return this;
+            }
+
+            /**
+             * Sets the legend placement.
+             *
+             * @param l legend position
+             * @return this builder
+             */
+            public Builder legend(LegendPosition l) {
+                this.legend = l;
+                return this;
+            }
+
+            /**
+             * Sets the size policy.
+             *
+             * @param s chart size
+             * @return this builder
+             */
+            public Builder size(ChartSize s) {
+                this.size = s;
+                return this;
+            }
+
+            /**
+             * Builds the pie spec.
+             *
+             * @return pie spec
+             */
+            public Pie build() {
+                return new Pie(data, donutRatio, startAngleDegrees, clockwise, sliceLabels,
+                        valueFormat, percentFormat, centerText, legend, size);
             }
         }
     }

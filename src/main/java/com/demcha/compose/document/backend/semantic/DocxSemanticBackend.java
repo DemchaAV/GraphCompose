@@ -171,7 +171,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     node.spec().getClass().getSimpleName());
         }
         ChartData data = node.spec().data();
-        NumberFormatSpec format = node.spec().valueAxis().format();
+        NumberFormatSpec format = node.spec().valueFormat();
 
         TableBuilder table = new TableBuilder()
                 .name(node.name().isEmpty() ? "ChartData" : node.name() + "Data")

@@ -339,6 +339,91 @@ class ChartLayoutResolverTest {
                 .isEqualTo(2);
     }
 
+    @Test
+    void pieEmitsOneSectorPolygonPerSliceWithPercentLabels() {
+        ChartData data = ChartData.builder()
+                .categories("A", "B", "C")
+                .series("S", 25.0, 25.0, 50.0)
+                .build();
+        ChartSpec.Pie pie = ChartSpec.pie().data(data)
+                .sliceLabels(SliceLabelMode.PERCENT)
+                .legend(LegendPosition.BOTTOM)
+                .build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                pie, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 200.0, METRICS);
+
+        List<ChartPrimitive> sectors = out.stream()
+                .filter(p -> p.node() instanceof com.demcha.compose.document.node.PolygonNode)
+                .toList();
+        assertThat(sectors).hasSize(3);
+        // Solid pie sectors close through the centre point.
+        com.demcha.compose.document.node.PolygonNode first =
+                (com.demcha.compose.document.node.PolygonNode) sectors.get(0).node();
+        assertThat(first.points().get(first.points().size() - 1).x()).isEqualTo(0.5);
+        assertThat(first.points().get(first.points().size() - 1).y()).isEqualTo(0.5);
+        // The 50% slice tessellates roughly twice as many arc vertices as a 25% one.
+        com.demcha.compose.document.node.PolygonNode big =
+                (com.demcha.compose.document.node.PolygonNode) sectors.get(2).node();
+        assertThat(big.points().size()).isGreaterThan(first.points().size() + 20);
+        // Percent labels with the default percent format.
+        assertThat(out.stream().map(p -> p.node())
+                .filter(n -> n instanceof ParagraphNode pn && pn.name().startsWith("slice_label_"))
+                .map(n -> ((ParagraphNode) n).text()))
+                .containsExactlyInAnyOrder("25%", "25%", "50%");
+        // Legend lists CATEGORIES for a pie.
+        assertThat(out.stream().map(p -> p.node())
+                .filter(n -> n instanceof ParagraphNode pn && pn.name().startsWith("legend_label_"))
+                .map(n -> ((ParagraphNode) n).text()))
+                .containsExactly("A", "B", "C");
+    }
+
+    @Test
+    void donutSectorsAreRingsAndCenterTextRenders() {
+        ChartData data = ChartData.builder()
+                .categories("A", "B")
+                .series("S", 60.0, 40.0)
+                .build();
+        ChartSpec.Pie donut = ChartSpec.pie().data(data)
+                .donutRatio(0.5)
+                .centerText("100k")
+                .build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                donut, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 200.0, METRICS);
+
+        com.demcha.compose.document.node.PolygonNode ring = out.stream()
+                .filter(p -> p.node() instanceof com.demcha.compose.document.node.PolygonNode)
+                .map(p -> (com.demcha.compose.document.node.PolygonNode) p.node())
+                .findFirst().orElseThrow();
+        // A ring sector has no centre vertex: every point sits at >= inner radius.
+        double minDistance = ring.points().stream()
+                .mapToDouble(pt -> Math.hypot(pt.x() - 0.5, pt.y() - 0.5))
+                .min().orElseThrow();
+        assertThat(minDistance).isGreaterThan(0.24);
+        // Centre KPI text present.
+        assertThat(out.stream().map(p -> p.node())
+                .anyMatch(n -> n instanceof ParagraphNode pn && pn.text().equals("100k")))
+                .isTrue();
+    }
+
+    @Test
+    void pieRejectsInvalidInputLoudly() {
+        ChartData twoSeries = ChartData.builder()
+                .categories("A").series("S1", 1.0).series("S2", 2.0).build();
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> ChartSpec.pie().data(twoSeries).build());
+
+        ChartData negative = ChartData.builder().categories("A", "B").series("S", 5.0, -1.0).build();
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> ChartLayoutResolver.resolve(ChartSpec.pie().data(negative).build(),
+                        baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 200.0, METRICS));
+
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> ChartSpec.pie().data(ChartData.builder().categories("A").series("S", 1.0).build())
+                        .centerText("x").build());  // centerText without a donut hole
+    }
+
     private static long count(List<ChartPrimitive> out, Class<?> type) {
         return out.stream().filter(p -> type.isInstance(p.node())).count();
     }

@@ -12,6 +12,7 @@ import com.demcha.compose.document.chart.DocumentPaint;
 import com.demcha.compose.document.chart.LegendPosition;
 import com.demcha.compose.document.chart.NumberFormatSpec;
 import com.demcha.compose.document.chart.PointMarker;
+import com.demcha.compose.document.chart.SliceLabelMode;
 import com.demcha.compose.document.chart.ValueLabelMode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentCornerRadius;
@@ -98,6 +99,31 @@ public final class ChartShowcaseExample {
                 .valueLabelOffset(3)
                 .build();
 
+        // Pie / donut: one slice per category from a single series.
+        ChartData regions = ChartData.builder()
+                .categories("EMEA", "Americas", "APAC", "Other")
+                .series("Share", 38.0, 31.0, 22.0, 9.0)
+                .build();
+
+        ChartSpec pieSpec = ChartSpec.pie()
+                .data(regions)
+                .sliceLabels(SliceLabelMode.CATEGORY_PERCENT)
+                .size(ChartSize.fixedHeight(190))
+                .build();
+
+        ChartSpec donutSpec = ChartSpec.pie()
+                .data(regions)
+                .donutRatio(0.58)
+                .sliceLabels(SliceLabelMode.PERCENT)
+                .centerText("58.4k")
+                .legend(LegendPosition.BOTTOM)
+                .size(ChartSize.fixedHeight(200))
+                .build();
+
+        ChartStyle donutStyle = ChartStyle.builder()
+                .sliceGapDegrees(2.0)
+                .build();
+
         try (DocumentSession document = GraphCompose.document(outputFile)
                 .pageSize(DocumentPageSize.A4)
                 .pageBackground(THEME.pageBackground())
@@ -145,6 +171,24 @@ public final class ChartShowcaseExample {
                                     .textStyle(THEME.text().h3())
                                     .margin(DocumentInsets.zero()))
                             .chart(lineSpec, lineStyle))
+                    .addSection("PieCard", section -> section
+                            .keepTogether()
+                            .softPanel(DocumentColor.WHITE, 8, 16)
+                            .spacing(10)
+                            .addParagraph(p -> p
+                                    .text("Regional share — pie")
+                                    .textStyle(THEME.text().h3())
+                                    .margin(DocumentInsets.zero()))
+                            .chart(pieSpec))
+                    .addSection("DonutCard", section -> section
+                            .keepTogether()
+                            .softPanel(DocumentColor.WHITE, 8, 16)
+                            .spacing(10)
+                            .addParagraph(p -> p
+                                    .text("Regional share — donut with centre KPI and slice gaps")
+                                    .textStyle(THEME.text().h3())
+                                    .margin(DocumentInsets.zero()))
+                            .chart(donutSpec, donutStyle))
                     .build();
 
             document.buildPdf();

@@ -47,6 +47,12 @@ import java.util.Map;
  * @param valueLabelHalo halo chip painted behind line-chart value labels so the
  *                       digits stay legible where line strokes cross them; match
  *                       it to the chart's surface colour on non-white backgrounds
+ * @param sliceStroke pie/donut slice separator stroke, or {@code null} for the
+ *                    themed default (white 1pt)
+ * @param sliceGapDegrees angular gap between pie/donut slices (pad angle), or
+ *                        {@code null} for none
+ * @param donutCenterTextStyle style for the donut-centre KPI text, or
+ *                             {@code null} for the themed default
  *
  * @author Artem Demchyshyn
  * @since 1.8.0
@@ -63,7 +69,10 @@ public record ChartStyle(
         DocumentTextStyle axisTextStyle,
         DocumentTextStyle legendTextStyle,
         DocumentTextStyle valueLabelTextStyle,
-        DocumentPaint valueLabelHalo
+        DocumentPaint valueLabelHalo,
+        DocumentStroke sliceStroke,
+        Double sliceGapDegrees,
+        DocumentTextStyle donutCenterTextStyle
 ) {
     /** Copy-protects collections and validates ratio bounds. */
     public ChartStyle {
@@ -81,6 +90,11 @@ public record ChartStyle(
             throw new IllegalArgumentException(
                     "valueLabelOffset must be finite and non-negative: " + valueLabelOffset);
         }
+        if (sliceGapDegrees != null && (sliceGapDegrees < 0 || sliceGapDegrees > 30
+                || sliceGapDegrees.isNaN())) {
+            throw new IllegalArgumentException(
+                    "sliceGapDegrees must be in [0, 30]: " + sliceGapDegrees);
+        }
     }
 
     /**
@@ -90,7 +104,7 @@ public record ChartStyle(
      */
     public static ChartStyle inherit() {
         return new ChartStyle(List.of(), Map.of(), null, null, null,
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null);
     }
 
     /**
@@ -130,7 +144,10 @@ public record ChartStyle(
                 top.axisTextStyle != null ? top.axisTextStyle : this.axisTextStyle,
                 top.legendTextStyle != null ? top.legendTextStyle : this.legendTextStyle,
                 top.valueLabelTextStyle != null ? top.valueLabelTextStyle : this.valueLabelTextStyle,
-                top.valueLabelHalo != null ? top.valueLabelHalo : this.valueLabelHalo);
+                top.valueLabelHalo != null ? top.valueLabelHalo : this.valueLabelHalo,
+                top.sliceStroke != null ? top.sliceStroke : this.sliceStroke,
+                top.sliceGapDegrees != null ? top.sliceGapDegrees : this.sliceGapDegrees,
+                top.donutCenterTextStyle != null ? top.donutCenterTextStyle : this.donutCenterTextStyle);
     }
 
     /**
@@ -196,6 +213,9 @@ public record ChartStyle(
         private DocumentTextStyle legendTextStyle;
         private DocumentTextStyle valueLabelTextStyle;
         private DocumentPaint valueLabelHalo;
+        private DocumentStroke sliceStroke;
+        private Double sliceGapDegrees;
+        private DocumentTextStyle donutCenterTextStyle;
 
         /**
          * Sets the series palette.
@@ -334,6 +354,39 @@ public record ChartStyle(
         }
 
         /**
+         * Sets the pie/donut slice separator stroke.
+         *
+         * @param stroke separator stroke
+         * @return this builder
+         */
+        public Builder sliceStroke(DocumentStroke stroke) {
+            this.sliceStroke = stroke;
+            return this;
+        }
+
+        /**
+         * Sets the angular gap between pie/donut slices.
+         *
+         * @param degrees pad angle in degrees
+         * @return this builder
+         */
+        public Builder sliceGapDegrees(double degrees) {
+            this.sliceGapDegrees = degrees;
+            return this;
+        }
+
+        /**
+         * Sets the donut-centre KPI text style.
+         *
+         * @param s text style
+         * @return this builder
+         */
+        public Builder donutCenterTextStyle(DocumentTextStyle s) {
+            this.donutCenterTextStyle = s;
+            return this;
+        }
+
+        /**
          * Builds the immutable style.
          *
          * @return chart style
@@ -341,7 +394,8 @@ public record ChartStyle(
         public ChartStyle build() {
             return new ChartStyle(palette, overrides, lineWidth, barCornerRadius,
                     barWidthRatio, grid, pointMarker, valueLabelOffset,
-                    axisTextStyle, legendTextStyle, valueLabelTextStyle, valueLabelHalo);
+                    axisTextStyle, legendTextStyle, valueLabelTextStyle, valueLabelHalo,
+                    sliceStroke, sliceGapDegrees, donutCenterTextStyle);
         }
     }
 }

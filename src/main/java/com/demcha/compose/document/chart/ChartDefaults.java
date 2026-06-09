@@ -73,6 +73,20 @@ public final class ChartDefaults {
     public static final DocumentPaint VALUE_LABEL_HALO =
             DocumentPaint.solid(DocumentColor.WHITE);
 
+    /** Default pie/donut slice separator — a white 1pt stroke between slices. */
+    public static final DocumentStroke SLICE_STROKE =
+            DocumentStroke.of(DocumentColor.WHITE, 1.0);
+
+    /** Default donut-centre KPI text style. */
+    public static final DocumentTextStyle DONUT_CENTER_TEXT_STYLE = DocumentTextStyle.builder()
+            .fontName(FontName.HELVETICA_BOLD)
+            .size(13)
+            .color(DocumentColor.rgb(45, 45, 45))
+            .build();
+
+    /** Arc tessellation step for pie/donut sector polygons, in degrees. */
+    public static final double SECTOR_TESSELLATION_STEP_DEGREES = 3.0;
+
     /** Built-in default chart theme used when no document theme is supplied. */
     public static final ChartTheme DEFAULT_THEME = new ChartTheme(
             DEFAULT_PALETTE,

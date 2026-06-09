@@ -259,7 +259,7 @@ Relevant files:
 
 - [TableBuilder.java](./../src/test/java/com/demcha/compose/testsupport/engine/assembly/TableBuilder.java)
 - [TableRow.java](./../src/main/java/com/demcha/compose/engine/components/renderable/TableRow.java)
-- [TableCellBox.java](./../src/main/java/com/demcha/compose/engine/render/pdf/helpers/TableCellBox.java)
+- [TableCellBox.java](./../src/main/java/com/demcha/compose/engine/render/pdf/ecs/helpers/TableCellBox.java)
 - [TableResolvedCell.java](./../src/main/java/com/demcha/compose/engine/components/content/table/TableResolvedCell.java)
 
 Rule of thumb:
@@ -321,21 +321,29 @@ Preferred extension pattern for new backends:
 4. keep backend-only helper drawing in renderer-owned helper packages when the code is not an entity render marker
 5. keep renderer ordering policy in the rendering layer rather than in pagination utilities
 
+> **Deprecated reference implementation.** The PDF renderer named below
+> (`PdfRenderingSystemECS` and the `engine.render.pdf.ecs` handlers/helpers) is the
+> legacy `Entity`-based ECS renderer, kept only for regression tests; canonical PDF
+> output is produced by `com.demcha.compose.document.backend.fixed.pdf`. The
+> backend-neutral `engine.render` *contracts* (`Render`, `RenderPassSession`,
+> `RenderStream`, `EntityRenderOrder`) are **not** deprecated — only the ECS PDF
+> implementation is. Do not extend the `ecs` renderer.
+
 Important files:
 
 - [Render.java](./../src/main/java/com/demcha/compose/engine/render/Render.java)
 - [RenderPassSession.java](./../src/main/java/com/demcha/compose/engine/render/RenderPassSession.java)
 - [RenderStream.java](./../src/main/java/com/demcha/compose/engine/render/RenderStream.java)
-- [PdfRenderingSystemECS.java](./../src/main/java/com/demcha/compose/engine/render/pdf/PdfRenderingSystemECS.java)
-- [PdfRenderSession.java](./../src/main/java/com/demcha/compose/engine/render/pdf/PdfRenderSession.java)
+- [PdfRenderingSystemECS.java](./../src/main/java/com/demcha/compose/engine/render/pdf/ecs/PdfRenderingSystemECS.java)
+- [PdfRenderSession.java](./../src/main/java/com/demcha/compose/engine/render/pdf/ecs/PdfRenderSession.java)
 - [EntityRenderOrder.java](./../src/main/java/com/demcha/compose/engine/render/EntityRenderOrder.java)
 
 Migration rule for new engine components:
 
 - implement backend-neutral `Render`, not backend-specific render interfaces
-- move PDF drawing into `...render.pdf.handlers`
+- move PDF drawing into `...render.pdf.ecs.handlers`
 - use `TextMeasurementSystem` for text width and line metrics instead of reaching through `LayoutSystem`
-- place PDF-only helper objects in `...render.pdf.helpers`
+- place PDF-only helper objects in `...render.pdf.ecs.helpers`
 - keep page-surface lifetime in a backend-specific `RenderPassSession`, not in engine builders or render markers
 - keep resolved draw ordering in renderer-owned or renderer-neutral rendering helpers such as `EntityRenderOrder`
 - register a render handler for every engine render marker because the PDF entity path no longer supports a backend-specific render fallback

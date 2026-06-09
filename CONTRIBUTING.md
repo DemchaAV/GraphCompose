@@ -168,10 +168,11 @@ not need any of them.
 - Engine render markers implement backend-neutral `Render`. Do not
   add backend-specific render interfaces back into
   `engine/components`.
-- PDF rendering logic lives in
-  `src/main/java/com/demcha/compose/engine/render/pdf/handlers/`.
+- PDF rendering logic for the legacy ECS renderer (deprecated; canonical PDF
+  output goes through `com.demcha.compose.document.backend.fixed.pdf`) lives in
+  `src/main/java/com/demcha/compose/engine/render/pdf/ecs/handlers/`.
   Backend-only helper objects live in
-  `com.demcha.compose.engine.render.pdf.helpers`, not in
+  `com.demcha.compose.engine.render.pdf.ecs.helpers`, not in
   `components/renderable`.
 - Builders and layout code get text width and line metrics from
   `TextMeasurementSystem`, not from
@@ -208,7 +209,7 @@ The rules above are enforced by tests:
   [EnginePdfBoundaryTest.java](./src/test/java/com/demcha/compose/engine/architecture/EnginePdfBoundaryTest.java),
   [CanonicalTemplateComposerPdfBoundaryTest.java](./src/test/java/com/demcha/compose/document/templates/architecture/CanonicalTemplateComposerPdfBoundaryTest.java),
   [PdfRenderInterfaceGuardTest.java](./src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderInterfaceGuardTest.java),
-  [PdfRenderingSystemECSDispatchTest.java](./src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderingSystemECSDispatchTest.java)
+  [PdfRenderingSystemECSDispatchTest.java](./src/test/java/com/demcha/compose/engine/render/pdf/ecs/PdfRenderingSystemECSDispatchTest.java)
 
 ## Adding a new feature
 
@@ -325,7 +326,7 @@ Choose the smallest tests that match the change:
 - For low-level test harness changes:
   [ComponentBuilderTest.java](./src/test/java/com/demcha/compose/engine/components/ComponentBuilderTest.java)
 - For render-marker dispatch changes:
-  [PdfRenderingSystemECSDispatchTest.java](./src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderingSystemECSDispatchTest.java)
+  [PdfRenderingSystemECSDispatchTest.java](./src/test/java/com/demcha/compose/engine/render/pdf/ecs/PdfRenderingSystemECSDispatchTest.java)
 - For layout/positioning behavior:
   [ComputedPositionTest.java](./src/test/java/com/demcha/compose/engine/components/layout/ComputedPositionTest.java)
 - For pagination and multi-page behavior:

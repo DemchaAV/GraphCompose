@@ -143,7 +143,7 @@ public final class BlockTextLineMetrics {
 
     private static TextMeasurementSystem measurementSystem(EntityManager entityManager) {
         return entityManager.getSystems()
-                .getSystem(TextMeasurementSystem.class)
+                .textMeasurement()
                 .orElseThrow(() -> new IllegalStateException("TextMeasurementSystem is required to resolve block text metrics."));
     }
 }

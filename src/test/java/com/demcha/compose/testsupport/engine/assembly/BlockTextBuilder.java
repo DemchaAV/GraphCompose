@@ -584,7 +584,7 @@ public class BlockTextBuilder extends EmptyBox<BlockTextBuilder> {
 
     private TextMeasurementSystem textMeasurementSystem() {
         return entityManager.getSystems()
-                .getSystem(TextMeasurementSystem.class)
+                .textMeasurement()
                 .orElseThrow(() -> new IllegalStateException("TextMeasurementSystem is required to build block text."));
     }
 

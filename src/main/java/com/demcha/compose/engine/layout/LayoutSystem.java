@@ -388,7 +388,7 @@ public class LayoutSystem<T extends RenderingSystemECS<?>> implements SystemECS 
             if (Double.isNaN(lineWidth)) {
                 if (measurementSystem == null) {
                     measurementSystem = entityManager.getSystems()
-                            .getSystem(TextMeasurementSystem.class)
+                            .textMeasurement()
                             .orElseThrow(() -> new IllegalStateException("TextMeasurementSystem is required to align block text."));
                 }
                 lineWidth = line.width(measurementSystem, style);

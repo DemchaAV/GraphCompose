@@ -31,7 +31,7 @@ class BlockTextBuilderTest {
         @BeforeEach
         void setUp() {
                 entityManager = new EntityManager();
-                entityManager.getSystems().addSystem(new FontLibraryTextMeasurementSystem(entityManager.getFonts(), PdfFont.class));
+                entityManager.getSystems().registerTextMeasurement(new FontLibraryTextMeasurementSystem(entityManager.getFonts(), PdfFont.class));
                 entityManager.setMarkdown(true);
         }
 

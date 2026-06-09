@@ -1,5 +1,5 @@
 {
-  "timestamp" : "2026-06-08 12:07:23",
+  "timestamp" : "2026-06-09 17:19:39",
   "profile" : "full",
   "warmupIterations" : 12,
   "measurementIterations" : 40,
@@ -8,81 +8,91 @@
   "latency" : [ {
     "scenario" : "cv-template",
     "description" : "Compose-first CV template",
-    "avgMillis" : 4.28,
-    "p50Millis" : 3.93,
-    "p95Millis" : 5.83,
-    "maxMillis" : 7.15,
-    "docsPerSecond" : 233.52,
-    "avgKilobytes" : 2.29,
-    "peakHeapMb" : 33.08
+    "avgMillis" : 2.45,
+    "p50Millis" : 2.24,
+    "p95Millis" : 3.53,
+    "maxMillis" : 4.27,
+    "docsPerSecond" : 408.15,
+    "avgKilobytes" : 2.22,
+    "peakHeapMb" : 20.0
   }, {
     "scenario" : "engine-simple",
     "description" : "One-page engine composition",
-    "avgMillis" : 3.17,
-    "p50Millis" : 2.96,
-    "p95Millis" : 5.01,
-    "maxMillis" : 5.9,
-    "docsPerSecond" : 315.87,
+    "avgMillis" : 2.0,
+    "p50Millis" : 1.8,
+    "p95Millis" : 2.88,
+    "maxMillis" : 3.97,
+    "docsPerSecond" : 498.91,
     "avgKilobytes" : 1.08,
-    "peakHeapMb" : 12.0
+    "peakHeapMb" : 8.0
   }, {
     "scenario" : "feature-rich",
     "description" : "QR, barcode, watermark, header/footer, page break",
-    "avgMillis" : 45.37,
-    "p50Millis" : 37.09,
-    "p95Millis" : 60.65,
-    "maxMillis" : 69.62,
-    "docsPerSecond" : 22.04,
-    "avgKilobytes" : 6.37,
-    "peakHeapMb" : 86.14
+    "avgMillis" : 31.99,
+    "p50Millis" : 31.32,
+    "p95Millis" : 36.35,
+    "maxMillis" : 40.65,
+    "docsPerSecond" : 31.26,
+    "avgKilobytes" : 6.33,
+    "peakHeapMb" : 58.89
   }, {
     "scenario" : "invoice-template",
     "description" : "Compose-first invoice template",
-    "avgMillis" : 19.42,
-    "p50Millis" : 18.75,
-    "p95Millis" : 27.88,
-    "maxMillis" : 34.26,
-    "docsPerSecond" : 51.5,
+    "avgMillis" : 13.12,
+    "p50Millis" : 12.88,
+    "p95Millis" : 17.01,
+    "maxMillis" : 19.6,
+    "docsPerSecond" : 76.22,
     "avgKilobytes" : 9.72,
-    "peakHeapMb" : 85.09
+    "peakHeapMb" : 45.11
+  }, {
+    "scenario" : "long-token",
+    "description" : "Long unbreakable tokens (URLs/IDs) forcing character-level wrap",
+    "avgMillis" : 3.38,
+    "p50Millis" : 3.15,
+    "p95Millis" : 4.72,
+    "maxMillis" : 5.51,
+    "docsPerSecond" : 295.43,
+    "avgKilobytes" : 3.97,
+    "peakHeapMb" : 52.0
   }, {
     "scenario" : "proposal-template",
     "description" : "Long multi-page proposal template",
-    "avgMillis" : 14.41,
-    "p50Millis" : 13.71,
-    "p95Millis" : 19.18,
-    "maxMillis" : 19.93,
-    "docsPerSecond" : 69.38,
-    "avgKilobytes" : 7.72,
-    "peakHeapMb" : 97.52
+    "avgMillis" : 9.63,
+    "p50Millis" : 9.24,
+    "p95Millis" : 12.44,
+    "maxMillis" : 13.24,
+    "docsPerSecond" : 103.84,
+    "avgKilobytes" : 7.68,
+    "peakHeapMb" : 51.99
   } ],
   "throughput" : [ {
     "scenario" : "invoice-template",
     "threads" : 1,
     "totalDocs" : 12,
-    "docsPerSecond" : 81.22,
-    "avgMillisPerDoc" : 12.31
+    "docsPerSecond" : 121.21,
+    "avgMillisPerDoc" : 8.25
   }, {
     "scenario" : "invoice-template",
     "threads" : 2,
     "totalDocs" : 24,
-    "docsPerSecond" : 158.68,
-    "avgMillisPerDoc" : 6.3
+    "docsPerSecond" : 223.67,
+    "avgMillisPerDoc" : 4.47
   }, {
     "scenario" : "invoice-template",
     "threads" : 4,
     "totalDocs" : 48,
-    "docsPerSecond" : 265.11,
-    "avgMillisPerDoc" : 3.77
+    "docsPerSecond" : 335.65,
+    "avgMillisPerDoc" : 2.98
   }, {
     "scenario" : "invoice-template",
     "threads" : 8,
     "totalDocs" : 96,
-    "docsPerSecond" : 356.61,
-    "avgMillisPerDoc" : 2.8
+    "docsPerSecond" : 414.73,
+    "avgMillisPerDoc" : 2.41
   } ],
-  "totalBytes" : 2905520,
+  "totalBytes" : 3062560,
   "aggregation" : "median",
-  "sourceCount" : 7,
-  "sourceRuns" : [ "C:\\Users\\Demch\\OneDrive\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260608-120624.json", "C:\\Users\\Demch\\OneDrive\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260608-120635.json", "C:\\Users\\Demch\\OneDrive\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260608-120645.json", "C:\\Users\\Demch\\OneDrive\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260608-120655.json", "C:\\Users\\Demch\\OneDrive\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260608-120704.json", "C:\\Users\\Demch\\OneDrive\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260608-120713.json", "C:\\Users\\Demch\\OneDrive\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260608-120722.json" ]
+  "sourceCount" : 5,
+  "sourceRuns" : [ "C:\\Dev\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260609-171909.json", "C:\\Dev\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260609-171916.json", "C:\\Dev\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260609-171924.json", "C:\\Dev\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260609-171931.json", "C:\\Dev\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260609-171938.json" ]
 }

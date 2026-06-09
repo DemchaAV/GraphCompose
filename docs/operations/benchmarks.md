@@ -176,6 +176,36 @@ powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -SkipDiff
 powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -OpenResults
 ```
 
+## Measuring the impact of an engine change
+
+Changing the engine (layout, pagination, render ordering, PDF session, text
+measurement, fonts) and want to see how it moves performance? Pick the view that
+fits, cheapest first:
+
+- **"Did I regress?" — gate against the committed baseline.** Run a median and
+  let the `11-verdict-current-speed` step score each scenario IMPROVED /
+  NEUTRAL / REGRESSED against `baselines/current-speed-full.json` (hard gate:
+  average latency ±10%, non-zero exit on a regression):
+
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -CurrentSpeedProfile full -Repeat 5
+  ```
+
+- **"What exactly moved?" — A/B your branch against its base (any OS).** Commit
+  your change, then compare it to `develop` with the A/B scripts (see
+  [A/B comparison between two branches](#ab-comparison-between-two-branches)).
+  Both sides are rebuilt and benchmarked, with a per-scenario delta:
+
+  ```bash
+  ./scripts/ab-bench.sh -a develop -b my/engine-change -r 5
+  ```
+
+If a change is *meant* to improve performance and the gate confirms it, refresh
+the baseline so the gate ratchets down — see
+[Refreshing the committed baseline](#refreshing-the-committed-baseline-perf-gate).
+Treat sub-~5-10% laptop deltas as inconclusive, and re-run on the final checkout
+before citing a number.
+
 ## A/B comparison between two branches
 
 The wrappers above benchmark whatever is currently checked out. To answer "is

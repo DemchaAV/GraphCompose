@@ -83,11 +83,14 @@ public class WordFont extends FontBase<String> {
     }
 
     /**
-     * @param text
-     * @param style
-     * @param availableWidth
-     * @return
+     * @param text           the text to fit
+     * @param style          the starting style
+     * @param availableWidth the width to fit within
+     * @return {@code null} — never implemented
+     * @deprecated Unused; never implemented (returns {@code null}). Kept only for
+     *     binary compatibility. See {@code Font#adjustFontSizeToFit}.
      */
+    @Deprecated
     @Override
     public TextStyle adjustFontSizeToFit(String text, TextStyle style, double availableWidth) {
         return null;

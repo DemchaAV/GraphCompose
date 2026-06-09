@@ -46,7 +46,20 @@ public interface Font<T> {
 
     double scale(double size);
 
-    public TextStyle adjustFontSizeToFit(String text, TextStyle style, double availableWidth);
+    /**
+     * @param text           the text to fit
+     * @param style          the starting style
+     * @param availableWidth the width to fit within
+     * @return a re-sized style
+     * @deprecated Unused and incorrect: the only real implementation re-measures
+     *     with the unchanged {@code style}, so the loop never converges and the
+     *     result is always the minimum size. Canonical auto-size is resolved by the
+     *     layout compiler ({@code TextFlowSupport.resolveAutoSizeTextStyle}); this
+     *     method has no callers and is kept only for binary compatibility,
+     *     scheduled for removal in the next major.
+     */
+    @Deprecated
+    TextStyle adjustFontSizeToFit(String text, TextStyle style, double availableWidth);
 
     ContentSize getTightBounds(String text, TextStyle style);
 }

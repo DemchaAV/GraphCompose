@@ -28,6 +28,15 @@ only scenarios present on BOTH branches are compared.
 .EXAMPLE
   # Close your IDE, plug in AC power, then:
   ./scripts/ab-bench.ps1 -Repeat 3
+
+.NOTES
+  No "re-exec from a temp copy" guard is needed here, unlike the bash twin
+  scripts/ab-bench.sh. PowerShell parses the whole script into memory before
+  executing, so when the in-script 'git checkout <other-branch>' removes this
+  file (it is absent on a branch that predates the script) the running script
+  is unaffected. The bash twin streams from its file descriptor and must
+  re-exec out of the work tree to survive the same checkout. Verified on
+  Windows: a committed-script main<->develop run completes and recovers cleanly.
 #>
 param(
     [ValidateRange(1, 10)] [int]$Repeat = 3,

@@ -51,7 +51,8 @@ class PdfBackendIsolationGuardTest {
 
         assertThat(violations)
                 .describedAs("PDFBox dependencies must stay behind document.backend.fixed.pdf.* "
-                        + "or the legacy engine.render.pdf.* renderer. Canonical API and layout contracts "
+                        + "or under engine.render.pdf.* (shared PDFBox primitives plus the legacy "
+                        + "ECS renderer in engine.render.pdf.ecs.*). Canonical API and layout contracts "
                         + "should use document-level value objects such as DocumentPageSize.")
                 .isEmpty();
     }

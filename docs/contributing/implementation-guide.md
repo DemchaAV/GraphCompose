@@ -259,7 +259,7 @@ Relevant files:
 
 - [TableBuilder.java](./../src/test/java/com/demcha/compose/testsupport/engine/assembly/TableBuilder.java)
 - [TableRow.java](./../src/main/java/com/demcha/compose/engine/components/renderable/TableRow.java)
-- [TableCellBox.java](./../src/main/java/com/demcha/compose/engine/render/pdf/helpers/TableCellBox.java)
+- [TableCellBox.java](./../src/main/java/com/demcha/compose/engine/render/pdf/ecs/helpers/TableCellBox.java)
 - [TableResolvedCell.java](./../src/main/java/com/demcha/compose/engine/components/content/table/TableResolvedCell.java)
 
 Rule of thumb:

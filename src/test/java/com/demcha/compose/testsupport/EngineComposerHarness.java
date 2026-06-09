@@ -349,7 +349,7 @@ public final class EngineComposerHarness implements Closeable {
     }
 
     private void setupSystems() {
-        entityManager.getSystems().addSystem(new FontLibraryTextMeasurementSystem(entityManager.getFonts(), PdfFont.class));
+        entityManager.getSystems().registerTextMeasurement(new FontLibraryTextMeasurementSystem(entityManager.getFonts(), PdfFont.class));
         entityManager.getSystems().addSystem(layoutSystem);
         entityManager.getSystems().addSystem(renderingSystem);
     }

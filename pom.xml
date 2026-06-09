@@ -715,6 +715,19 @@
                                     <exclude>com.demcha.compose.engine.render.pdf.PdfGuidesRenderer</exclude>
                                     <exclude>com.demcha.compose.engine.render.pdf.helpers.TableCellBox</exclude>
                                     <exclude>com.demcha.compose.engine.render.pdf.helpers.PdfBookmarkBuilder</exclude>
+                                    <!--
+                                        engine.measurement.TextMeasurementSystem dropped its vestigial
+                                        SystemECS super-interface (and the no-op process(EntityManager)
+                                        default) — see CHANGELOG v1.7.1. japicmp reports this as
+                                        INTERFACE_REMOVED, but it is safe: nothing consumes a
+                                        TextMeasurementSystem as a SystemECS. The legacy ECS engine now
+                                        obtains the measurement service via
+                                        SystemRegistry.registerTextMeasurement(...) / textMeasurement()
+                                        instead of enrolling it as a process()-driven system, and the
+                                        canonical pipeline injects it directly. Drop this exclude once the
+                                        japicmp baseline advances to the release that lands the change.
+                                    -->
+                                    <exclude>com.demcha.compose.engine.measurement.TextMeasurementSystem</exclude>
                                 </excludes>
                             </parameter>
                         </configuration>

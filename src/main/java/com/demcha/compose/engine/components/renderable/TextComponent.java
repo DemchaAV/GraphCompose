@@ -24,7 +24,7 @@ public class TextComponent implements Render {
         Text text = entity.getComponent(Text.class).orElseThrow();
         TextStyle style = entity.getComponent(TextStyle.class).orElseThrow();
         TextMeasurementSystem measurementSystem = entityManager.getSystems()
-                .getSystem(TextMeasurementSystem.class)
+                .textMeasurement()
                 .orElseThrow(() -> new IllegalStateException("TextMeasurementSystem is required to auto-measure text."));
         ContentSize measured = measurementSystem.measure(style, text.value());
         double width = measured.width();

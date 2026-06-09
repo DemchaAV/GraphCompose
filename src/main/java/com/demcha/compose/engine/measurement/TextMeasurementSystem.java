@@ -2,8 +2,6 @@ package com.demcha.compose.engine.measurement;
 
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.geometry.ContentSize;
-import com.demcha.compose.engine.core.EntityManager;
-import com.demcha.compose.engine.core.SystemECS;
 
 /**
  * Engine-level text measurement contract used by builders and layout helpers.
@@ -12,7 +10,7 @@ import com.demcha.compose.engine.core.SystemECS;
  * without forcing engine code to reach through the active rendering system.
  * </p>
  */
-public interface TextMeasurementSystem extends SystemECS {
+public interface TextMeasurementSystem {
 
     /**
      * Vertical metrics for one resolved text style.
@@ -89,20 +87,5 @@ public interface TextMeasurementSystem extends SystemECS {
      */
     default double lineHeight(TextStyle style) {
         return lineMetrics(style).lineHeight();
-    }
-
-    /**
-     * A no-op implementation of the standard ECS system processing method.
-     * <p>
-     * Measurement systems act as service providers that expose metrics to builders
-     * and layout calculations on demand. They do not actively mutate or participate
-     * in the runtime processing of entities within the main game loop / pipeline.
-     *
-     * @param entityManager The active entity manager. Ignored by this system.
-     */
-    @Override
-    default void process(EntityManager entityManager) {
-        // Measurement systems expose services to builders/layout helpers and do
-        // not participate in the runtime processing pipeline.
     }
 }

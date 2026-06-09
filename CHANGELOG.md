@@ -124,14 +124,25 @@ Open cycle — bug-fix / housekeeping. Entries land here as they merge.
   (`GraphCompose.document() → DocumentSession → LayoutCompiler`) never runs; it
   imports nothing from them directly, and the former `GraphCompose.pdf(...)`
   entry point has already been removed. The ECS execution engine runs only under
-  the legacy engine regression tests. (One vestigial coupling remains, tracked as
-  a follow-up: the canonical `TextMeasurementSystem` still `extends
-  engine.core.SystemECS` via a no-op `process(...)`.) The
-  packages are now `@Deprecated` (package level, so no deprecation-warning cascade)
+  the legacy engine regression tests. The packages are now `@Deprecated` (package
+  level, so no deprecation-warning cascade)
   with corrected package docs, to stop misdirecting contributors into optimizing a
   dead engine. The genuinely shared engine packages (`engine.components`,
   `engine.measurement`, `engine.font`, `engine.render`) are **not** deprecated.
   No public API or behaviour change.
+
+- **`TextMeasurementSystem` decoupled from `engine.core.SystemECS`.** The shared
+  text-measurement contract (`engine.measurement.TextMeasurementSystem`) dropped
+  its vestigial `extends SystemECS` and the no-op `process(EntityManager)` default
+  it carried — it was never consumed as an ECS system. The legacy ECS engine now
+  obtains the measurement service via `SystemRegistry.registerTextMeasurement(...)`
+  / `textMeasurement()` instead of enrolling it as a `process()`-driven system,
+  completing the isolation of the deprecated `engine.core` from live and shared
+  code (only the legacy engine regression tests still reference it). Dropping the
+  super-interface is binary-incompatible on paper, so
+  `engine.measurement.TextMeasurementSystem` is excluded from the japicmp gate
+  until the baseline advances past this release. No canonical API or behaviour
+  change.
 
 - **The legacy ECS PDF render pipeline is deprecated.** Follow-up to the ECS
   engine deprecation above. The `Entity`-based PDFBox renderer

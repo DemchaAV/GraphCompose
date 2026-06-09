@@ -80,6 +80,15 @@ Open cycle — bug-fix / housekeeping. Entries land here as they merge.
   large table this removes the dominant per-cell layout allocation. No public API
   or behaviour change.
 
+- **Process-wide line-metrics cache stops inserting instead of flushing when full.**
+  The static line-metrics cache `clear()`-ed every entry once it passed 50,000
+  distinct styles — a full flush whose non-atomic check-then-clear is a
+  thundering-herd recompute under concurrent rendering. It now stops inserting at
+  the cap and keeps the existing entries (distinct styles are few in real use, so
+  this is only a pathological-explosion guard; it runs on a cache miss, never on
+  the per-measurement path). **Measured line metrics are unchanged.** No public API
+  or behaviour change.
+
 - **Auto-size font fitting binary-searches the size grid.** A paragraph with
   `autoSize(...)` resolved its font size by scanning every step from max down to
   min, re-measuring the line at each candidate (up to ~50 measurements). Line width

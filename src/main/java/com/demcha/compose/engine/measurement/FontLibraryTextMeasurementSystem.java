@@ -100,10 +100,16 @@ public final class FontLibraryTextMeasurementSystem implements TextMeasurementSy
     }
 
     private static void cacheGlobalLineMetrics(GlobalPdfStyleKey key, LineMetrics metrics) {
-        if (GLOBAL_PDF_LINE_METRICS_CACHE.size() > GLOBAL_LINE_METRICS_CACHE_LIMIT) {
-            GLOBAL_PDF_LINE_METRICS_CACHE.clear();
+        // Safety cap on the process-wide line-metrics cache. Distinct styles are
+        // few in real use (a handful of font/size/decoration combos); this only
+        // guards a pathological style explosion. Stop inserting once full instead
+        // of clear()-ing: the old full flush wiped every hot entry under
+        // concurrent rendering (a thundering-herd recompute), so keeping the
+        // existing entries is strictly better. This runs on a cache miss only,
+        // never on the per-measurement get() path.
+        if (GLOBAL_PDF_LINE_METRICS_CACHE.size() < GLOBAL_LINE_METRICS_CACHE_LIMIT) {
+            GLOBAL_PDF_LINE_METRICS_CACHE.putIfAbsent(key, metrics);
         }
-        GLOBAL_PDF_LINE_METRICS_CACHE.putIfAbsent(key, metrics);
     }
 
     @Override

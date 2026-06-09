@@ -1,0 +1,46 @@
+name: A/B bench smoke (Linux)
+
+# Proves the cross-platform A/B harness scripts/ab-bench.sh actually RUNS
+# end-to-end on Linux: the re-exec survives the in-script branch switches, the
+# unix mvnw builds each side, and the median/diff is produced. This is a SMOKE
+# test of the script orchestration, NOT a perf gate — the numbers it prints are
+# informational (CI noise). Narrowly triggered (only when the script or this
+# workflow changes, or on demand) so it never burdens unrelated PRs. The coarse
+# perf smoke + weekly benchmark diff live in ci.yml; strict JMH in benchmarks-jmh.yml.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/ab-bench.sh'
+      - '.github/workflows/ab-bench-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  ab-bench-smoke:
+    name: ab-bench.sh smoke (main vs develop)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
+
+    steps:
+      - name: Check out repository (full history for the A/B branch switches)
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Temurin JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Make main + develop available as local branches
+        run: git fetch --no-tags origin main:main develop:develop
+
+      - name: A/B smoke (single run; asserts the script runs on Linux, exit 0)
+        run: bash scripts/ab-bench.sh -a main -b develop -r 1 --cooldown 0

@@ -98,6 +98,16 @@ Open cycle — bug-fix / housekeeping. Entries land here as they merge.
   the existing auto-size integration and snapshot tests). No public API or behaviour
   change.
 
+- **Table pagination stops re-copying the tail on every page split.** A table that
+  spans many pages is split page-by-page, and each split re-sliced the shrinking
+  tail by `List.copyOf`-ing its row and row-height lists — even though the source
+  layout already holds those lists immutably, so the copy made continuation
+  O(rows × pages). The body-only slice now reuses the immutable sub-list views
+  directly. **Output is byte-identical** — same rows in the same order (all table
+  layout, pagination, and visual-regression tests pass unchanged); a deterministic
+  allocation probe on a 2,500-row / 68-page table shows warm compile allocation
+  drop 11,155 KB → 9,851 KB (−11.7%). No public API or behaviour change.
+
 ### Deprecations
 
 - **`Font.adjustFontSizeToFit(...)` is deprecated.** The engine-internal

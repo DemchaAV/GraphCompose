@@ -377,8 +377,17 @@ final class TableLayoutSupport {
             combinedSource.addAll(bodySource);
             fragmentSourceRows = combinedSource;
         } else {
-            rows = List.copyOf(bodyRows);
-            rowHeights = List.copyOf(bodyHeights);
+            // bodyRows / bodyHeights are sub-list views of the source layout's
+            // rows() / rowHeights(), which resolveTableLayout already built with
+            // List.copyOf — so the views are unmodifiable as-is. Re-copying them
+            // here allocated O(slice) per split, and because a table's tail is
+            // re-sliced on every continuation page that made pagination
+            // O(rows x pages). Reuse the views directly: the result is
+            // byte-identical, and the fragment layout is transient — emit reads
+            // individual rows into fragments, so nothing long-lived retains the
+            // view beyond what the copy would have retained anyway.
+            rows = bodyRows;
+            rowHeights = bodyHeights;
             fragmentSourceRows = bodySource;
         }
         double totalHeight = rowHeights.stream().mapToDouble(Double::doubleValue).sum();

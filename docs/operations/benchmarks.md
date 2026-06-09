@@ -246,11 +246,12 @@ cp -f target/benchmarks/aggregates/current-speed/full/latest.json baselines/curr
 ```
 
 The baseline is machine-class-specific; the JSON records provenance
-(`timestamp`, `profile`, `sourceRuns`). Validate the refresh by running the
-verdict tool against an independent run on that branch — it should score
-NEUTRAL and exit `0`:
+(`timestamp`, `profile`, `sourceRuns`). Validate the refresh against a *fresh*
+run — not one of the five that built the median — on that branch; it should
+score NEUTRAL and exit `0`:
 
 ```bash
+java -Dgraphcompose.benchmark.profile=full -cp "$cp" com.demcha.compose.CurrentSpeedBenchmark
 java -cp "$cp" com.demcha.compose.BenchmarkVerdictTool baselines/current-speed-full.json target/benchmarks/current-speed/latest.json
 ```
 

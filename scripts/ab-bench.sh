@@ -86,13 +86,17 @@ if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
   die "working tree has uncommitted TRACKED changes; commit/stash them before A/B."
 fi
 
-START_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+# Symbolic branch name, or the commit SHA when started from a detached HEAD,
+# so the EXIT trap returns exactly where we began.
+START_BRANCH="$(git symbolic-ref -q --short HEAD || git rev-parse HEAD)"
 printf 'A/B: %s vs %s | repeats=%s | cooldown=%ss | profile=%s | start=%s\n' \
   "$BRANCH_A" "$BRANCH_B" "$REPEAT" "$COOLDOWN" "$PROFILE" "$START_BRANCH"
 
 # Move untracked benchmark .java aside: probes may reference branch-only symbols and
 # break the bench compile on the other branch. Detected via git so new probes are handled.
-STASH_DIR="$(mktemp -d 2>/dev/null || echo "${TMPDIR:-/tmp}/ab-bench.$$")"
+# Portable temp dir: GNU `mktemp -d` works bare; BSD/macOS needs a template (-t).
+STASH_DIR="$(mktemp -d 2>/dev/null || mktemp -d -t ab-bench 2>/dev/null || true)"
+[ -n "$STASH_DIR" ] || STASH_DIR="${TMPDIR:-/tmp}/ab-bench.$$"
 mkdir -p "$STASH_DIR"
 MOVED=()   # entries: "relpath|stashedpath"
 if [ "$KEEP_PROBES" -eq 0 ]; then
@@ -187,7 +191,7 @@ resolve_median() {
 
 printf '\n=== aggregating medians ===\n'
 MED_A="$(resolve_median A "${A_RUNS[@]}")"
-sleep 1   # avoid second-resolution filename collision in the aggregates dir
+sleep 1   # cosmetic; median-A is already copied to OUT_DIR above (the real guard)
 MED_B="$(resolve_median B "${B_RUNS[@]}")"
 
 printf '\n'

@@ -35,6 +35,22 @@
 
 set -euo pipefail
 
+# Re-exec from a copy outside the work tree. This script switches branches with
+# `git checkout`, and checking out a branch that does not contain this file would
+# otherwise unlink the very file being executed (Windows locks it; WSL/DrvFs and
+# native git unlink it). Running from a temp copy on a filesystem the checkout
+# never touches makes the run immune. REPO_ROOT is resolved here, while the cwd is
+# still inside the repo, and passed through.
+if [ "${AB_BENCH_REEXEC:-}" != 1 ]; then
+  _ab_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+  [ -n "$_ab_root" ] || _ab_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  _ab_self="$(mktemp 2>/dev/null || mktemp -t ab-bench 2>/dev/null || echo "${TMPDIR:-/tmp}/ab-bench.reexec.$$")"
+  cat "${BASH_SOURCE[0]}" > "$_ab_self"
+  AB_BENCH_REEXEC=1 AB_BENCH_REPO_ROOT="$_ab_root" AB_BENCH_SELF="$_ab_self" exec bash "$_ab_self" "$@"
+fi
+# Remove the temp copy on exit even if we bail before the main restore() trap.
+trap 'rm -f "${AB_BENCH_SELF:-}" 2>/dev/null || true' EXIT
+
 BRANCH_A=main
 BRANCH_B=develop
 REPEAT=3
@@ -60,9 +76,8 @@ done
 case "$REPEAT" in ''|*[!0-9]*) die "--repeat must be a positive integer" ;; esac
 [ "$REPEAT" -ge 1 ] || die "--repeat must be >= 1"
 
-# Repo root (this script lives in <root>/scripts).
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+# Repo root (resolved before re-exec and passed via env; fall back to git/source).
+REPO_ROOT="${AB_BENCH_REPO_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || (cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd))}"
 cd "$REPO_ROOT"
 
 # Classpath separator: ';' on Windows shells (Git Bash / MSYS / Cygwin), ':' elsewhere.
@@ -126,6 +141,7 @@ restore() {
   fi
   rmdir "$STASH_DIR" 2>/dev/null || true
   git checkout -q "$START_BRANCH" 2>/dev/null || true
+  rm -f "${AB_BENCH_SELF:-}" 2>/dev/null || true
   printf 'Back on branch %s\n' "$START_BRANCH"
 }
 trap restore EXIT

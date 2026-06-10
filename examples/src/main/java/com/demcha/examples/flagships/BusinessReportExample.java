@@ -289,15 +289,17 @@ public final class BusinessReportExample {
                                 .build())
                         .stroke(DocumentStroke.of(SUBTLE_RULE, 0.3))
                         .build())
+                // Navy header band — clearly separated from the cream zebra
+                // body and consistent with the report's chart/band palette.
                 .headerStyle(DocumentTableStyle.builder()
                         .padding(new DocumentInsets(8, 8, 8, 8))
                         .textStyle(DocumentTextStyle.builder()
                                 .fontName(FontName.HELVETICA_BOLD)
                                 .size(9)
-                                .color(MUTED)
+                                .color(DocumentColor.WHITE)
                                 .build())
-                        .fillColor(DocumentColor.rgb(248, 246, 240))
-                        .stroke(DocumentStroke.of(SUBTLE_RULE, 0.3))
+                        .fillColor(NAVY)
+                        .stroke(DocumentStroke.of(NAVY, 0.3))
                         .build())
                 .headerRow("Metric", "Q1 2023", "Q2 2023", "Q3 2023", "Q4 2023", "Q1 2024", "YoY Change")
                 .zebra(DocumentColor.WHITE, DocumentColor.rgb(252, 250, 244));

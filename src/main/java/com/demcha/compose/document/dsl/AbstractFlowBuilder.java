@@ -1,7 +1,10 @@
 package com.demcha.compose.document.dsl;
 
+import com.demcha.compose.document.chart.ChartSpec;
+import com.demcha.compose.document.chart.ChartStyle;
 import com.demcha.compose.document.dsl.internal.BuilderSupport;
 import com.demcha.compose.document.image.DocumentImageData;
+import com.demcha.compose.document.node.ChartNode;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.DocumentNode;
@@ -675,6 +678,35 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      */
     public T addBarcode(Consumer<BarcodeBuilder> spec) {
         return add(BuilderSupport.configure(new BarcodeBuilder(), spec).build());
+    }
+
+    /**
+     * Adds a chart that inherits the built-in chart theme. The chart is a
+     * deterministic, vector composite — the layout pass compiles it into shapes,
+     * lines, and labels, so it is snapshot-testable like any other content and
+     * never reaches a render handler as a "chart".
+     *
+     * <p>The chart fills the available width and derives its height from the
+     * spec's {@link com.demcha.compose.document.chart.ChartSize} policy.</p>
+     *
+     * @param spec structural chart description (kind, data, axes, legend)
+     * @return this builder
+     * @since 1.8.0
+     */
+    public T chart(ChartSpec spec) {
+        return add(new ChartNode("", spec, null, DocumentInsets.zero(), DocumentInsets.zero()));
+    }
+
+    /**
+     * Adds a chart with an explicit style layered over the chart theme.
+     *
+     * @param spec structural chart description (kind, data, axes, legend)
+     * @param style visual style overrides; {@code null} inherits the theme
+     * @return this builder
+     * @since 1.8.0
+     */
+    public T chart(ChartSpec spec, ChartStyle style) {
+        return add(new ChartNode("", spec, style, DocumentInsets.zero(), DocumentInsets.zero()));
     }
 
     /**

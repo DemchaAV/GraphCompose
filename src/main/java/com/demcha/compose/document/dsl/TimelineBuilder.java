@@ -54,6 +54,8 @@ public final class TimelineBuilder {
     private DocumentTextStyle titleStyle;
     private DocumentTextStyle metaStyle;
     private DocumentTextStyle bodyStyle;
+    private boolean keepTogether = false;
+    private boolean keepEntriesTogether = false;
 
     private final List<Entry> entries = new ArrayList<>();
 
@@ -181,8 +183,36 @@ public final class TimelineBuilder {
         return this;
     }
 
+    /**
+     * Keeps the whole timeline on one page: when it does not fit in the
+     * remaining page space but fits on a fresh page, it relocates whole instead
+     * of splitting between entries. Timelines taller than a page still flow.
+     *
+     * @return this builder
+     * @since 1.8.0
+     */
+    public TimelineBuilder keepTogether() {
+        this.keepTogether = true;
+        return this;
+    }
+
+    /**
+     * Keeps each timeline entry whole: an entry that does not fit in the
+     * remaining page space moves to the next page instead of splitting its
+     * marker, title, and body across the boundary. The timeline as a whole may
+     * still break <em>between</em> entries.
+     *
+     * @return this builder
+     * @since 1.8.0
+     */
+    public TimelineBuilder keepEntriesTogether() {
+        this.keepEntriesTogether = true;
+        return this;
+    }
+
     void buildInto(SectionBuilder timeline) {
         timeline.spacing(0);
+        timeline.keepTogether(keepTogether);
         DocumentTextStyle resolvedTitle = titleStyle != null ? titleStyle : defaultTitleStyle();
         DocumentTextStyle resolvedMeta = metaStyle != null ? metaStyle : defaultMetaStyle();
         DocumentTextStyle resolvedBody = bodyStyle != null ? bodyStyle : defaultBodyStyle();
@@ -191,7 +221,8 @@ public final class TimelineBuilder {
             boolean last = i == entries.size() - 1;
             double bottom = last ? 0.0 : entrySpacing;
             timeline.addSection(section -> {
-                section.accentLeft(connectorColor, connectorWidth)
+                section.keepTogether(keepEntriesTogether)
+                        .accentLeft(connectorColor, connectorWidth)
                         .padding(new DocumentInsets(0, 0, bottom, gutter))
                         .spacing(4);
                 section.addRow(header -> {

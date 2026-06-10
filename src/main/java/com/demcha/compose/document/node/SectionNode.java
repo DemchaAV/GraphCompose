@@ -21,6 +21,9 @@ import java.util.Objects;
  * @param stroke optional uniform border stroke
  * @param cornerRadius optional render-only corner radius
  * @param borders optional per-side border strokes overriding the uniform stroke
+ * @param keepTogether when {@code true}, the section relocates whole to the next
+ *                     page instead of orphaning its leading children when it does
+ *                     not fit in the remaining page space (and fits on a fresh page)
  *
  * @author Artem Demchyshyn
  */
@@ -33,7 +36,8 @@ public record SectionNode(
         DocumentColor fillColor,
         DocumentStroke stroke,
         DocumentCornerRadius cornerRadius,
-        DocumentBorders borders
+        DocumentBorders borders,
+        boolean keepTogether
 ) implements DocumentNode {
     /**
      * Normalizes optional section fields and validates child spacing.
@@ -49,6 +53,32 @@ public record SectionNode(
         if (spacing < 0 || Double.isNaN(spacing) || Double.isInfinite(spacing)) {
             throw new IllegalArgumentException("spacing must be finite and non-negative: " + spacing);
         }
+    }
+
+    /**
+     * Backward-compatible constructor without the keep-together flag (defaults to
+     * normal flow).
+     *
+     * @param name node name
+     * @param children child nodes
+     * @param spacing vertical spacing
+     * @param padding inner padding
+     * @param margin outer margin
+     * @param fillColor optional background fill
+     * @param stroke optional uniform border stroke
+     * @param cornerRadius optional render-only corner radius
+     * @param borders optional per-side borders
+     */
+    public SectionNode(String name,
+                       List<DocumentNode> children,
+                       double spacing,
+                       DocumentInsets padding,
+                       DocumentInsets margin,
+                       DocumentColor fillColor,
+                       DocumentStroke stroke,
+                       DocumentCornerRadius cornerRadius,
+                       DocumentBorders borders) {
+        this(name, children, spacing, padding, margin, fillColor, stroke, cornerRadius, borders, false);
     }
 
     /**

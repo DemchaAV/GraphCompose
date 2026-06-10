@@ -257,8 +257,18 @@ public final class LayoutCompiler {
             return;
         }
 
+        // Opt-in keep-together: a node that requests it relocates whole to the
+        // next page when it does not fit in the remaining space but would fit on a
+        // fresh page — avoiding an orphaned heading above atomic content (e.g. a
+        // chart). Nodes taller than a full page must still flow. Default-off, so
+        // existing layouts are unchanged.
+        double outerHeight = naturalMeasure.height() + margin.vertical();
+        boolean keepWhole = node.keepTogether()
+                && outerHeight <= state.canvas.innerHeight() + CAPACITY_TOLERANCE;
         double startReservation = margin.top() + padding.top();
-        if (startReservation > state.remainingHeight() + EPS && state.usedHeight > EPS) {
+        if (keepWhole && outerHeight > state.remainingHeight() + EPS && state.usedHeight > EPS) {
+            state.newPage();
+        } else if (startReservation > state.remainingHeight() + EPS && state.usedHeight > EPS) {
             state.newPage();
         }
         state.touchPage();

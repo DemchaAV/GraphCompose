@@ -2,6 +2,7 @@ package com.demcha.compose.document.layout;
 
 import com.demcha.compose.document.layout.definitions.BarcodeDefinition;
 import com.demcha.compose.document.layout.definitions.CanvasLayerDefinition;
+import com.demcha.compose.document.layout.definitions.ChartDefinition;
 import com.demcha.compose.document.layout.definitions.ContainerDefinition;
 import com.demcha.compose.document.layout.definitions.EllipseDefinition;
 import com.demcha.compose.document.layout.definitions.ImageDefinition;
@@ -10,6 +11,7 @@ import com.demcha.compose.document.layout.definitions.LineDefinition;
 import com.demcha.compose.document.layout.definitions.ListDefinition;
 import com.demcha.compose.document.layout.definitions.PageBreakDefinition;
 import com.demcha.compose.document.layout.definitions.ParagraphDefinition;
+import com.demcha.compose.document.layout.definitions.PolygonDefinition;
 import com.demcha.compose.document.layout.definitions.RowDefinition;
 import com.demcha.compose.document.layout.definitions.SectionDefinition;
 import com.demcha.compose.document.layout.definitions.ShapeContainerDefinition;
@@ -56,6 +58,8 @@ public final class BuiltInNodeDefinitions {
                 .register(new LayerStackDefinition())
                 .register(new ShapeContainerDefinition())
                 .register(new TableDefinition())
-                .register(new CanvasLayerDefinition());
+                .register(new CanvasLayerDefinition())
+                .register(new PolygonDefinition())
+                .register(new ChartDefinition());
     }
 }

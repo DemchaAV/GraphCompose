@@ -3,6 +3,95 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v1.8.0 — Planned
+
+Open cycle — the chart subsystem and the keep-together pagination control.
+Entries land here as they merge.
+
+### Public API
+
+- **Native vector charts** (`@since 1.8.0`). New `com.demcha.compose.document.chart`
+  package with a layered, serialization-friendly API: `ChartData` (categories +
+  series, type/colour-agnostic), sealed `ChartSpec` (`bar()` / `line()` with
+  axis, legend, value-label, and sizing knobs), `ChartStyle` (nullable-field
+  cascade merged over `ChartTheme` tokens, per-series paint overrides), and
+  `DocumentPaint` (solid today; linear/radial gradient stops reserved for the
+  gradient work). Charts compile at layout time into existing primitives
+  (shapes, lines, paragraphs) via `ChartDefinition` — no new render handlers,
+  deterministic geometry, covered by the standard snapshot machinery; any
+  fixed-layout backend renders charts with no chart-specific code, while the
+  semantic DOCX export (which has no layout pass) falls back to the chart's
+  categories-by-series data table with a one-time capability warning. DSL:
+  `section.chart(spec)` / `chart(spec, style)`. Declarative `NumberFormatSpec`
+  keeps specs JSON-serializable. The one unsupported combination
+  (`ValueLabelMode.INSIDE`) fails fast with `UnsupportedOperationException`
+  instead of rendering silently wrong.
+- **Horizontal bars, smooth lines, area fills, stacked totals, legend
+  placement.** `ChartSpec.bar().horizontal(true)` transposes the chart
+  (categories on Y in reading order, value axis on X, labels at bar ends);
+  stacked bars label the category total. `ChartSpec.line().smooth(true)`
+  draws deterministic Catmull-Rom curves (fixed 8 sub-segments per span);
+  `.area(true)` fills each series down to the baseline with a translucent
+  series colour (`ChartStyle.areaOpacity`, default 0.35) — alpha-blended
+  fills layer legibly. `LegendPosition.TOP` and `RIGHT` now lay out as a top
+  strip / right column for every chart kind, including pie. The chart
+  resolver is split per kind (`BarChartLayout` / `LineChartLayout` /
+  `PieChartLayout` over a shared `ChartLayoutSupport`).
+- **Axis / grid / label visibility toggles.** `AxisSpec.showTickLabels(false)`
+  hides the numeric axis and collapses its gutter; `showGridLines(false)` and
+  `ChartStyle.GridStyle` control horizontal/vertical grid lines;
+  `ChartSpec.bar()/line().showCategoryLabels(false)` hides the category axis —
+  down to a minimal "bars + value numbers only" chart.
+- **Pie / donut charts** (`@since 1.8.0`). `ChartSpec.pie()` — one slice per
+  category from a single series (multi-series data is rejected loudly).
+  Configurable: `donutRatio` (hole size), `startAngleDegrees`, `clockwise`,
+  `SliceLabelMode` (VALUE / PERCENT / CATEGORY / CATEGORY_PERCENT) with
+  independent value/percent formats, donut-centre KPI text, and a
+  category-listing legend. Style cascade adds `sliceStroke` (separator),
+  `sliceGapDegrees` (pad angle), and `donutCenterTextStyle`. Sectors compile
+  into the new general-purpose `PolygonNode` (arc-tessellated ring polygons at
+  a fixed 3° step — deterministic vertices, no new render handlers), which also
+  lays the groundwork for SVG icon-path import.
+- **Configurable line-chart point markers.** `PointMarker` draws an ellipse at
+  every data point — independent width/height axes, explicit fill (or the
+  series paint), and an optional outline ring (`PointMarker.circle(5)
+  .withStroke(...)`) that keeps joints legible where lines meet; markers always
+  render above all line strokes. Per-point value labels sit at a configurable
+  `ChartStyle.valueLabelOffset(...)` from the marker (or bar top) in the
+  cascading `valueLabelTextStyle`, draw above strokes and markers behind a
+  configurable halo chip (`ChartStyle.valueLabelHalo(...)`, themed white) so
+  digits stay legible where lines cross them, and deterministically flip below
+  their point when two series' labels would collide at the same category.
+- **Translucent shape colours** (`@since 1.8.0`). `DocumentColor.rgba(r, g, b, a)`
+  and `withOpacity(0..1)`: the PDF backend honours the alpha channel on shape
+  fills and strokes (rectangles/panels/bars, chart value-label halos, ellipse
+  point markers, polygons, inline shapes) via a graphics-state alpha constant —
+  e.g. a semi-transparent chart halo lets crossing lines show through faintly.
+  Fully opaque colours emit no graphics-state entry, so existing documents stay
+  byte-identical. Text/lines and the DOCX backend still render opaquely.
+- **`keepTogether()` pagination control** (`@since 1.8.0`). Opt-in flag on
+  `SectionBuilder`, `ModuleBuilder`, and `TimelineBuilder` (plus
+  `keepEntriesTogether()` for per-entry timeline integrity): a block that does
+  not fit in the remaining page space relocates whole to the next page instead
+  of orphaning its heading from the content below. Blocks taller than a page
+  still flow. Default off — existing layouts are byte-identical.
+
+### Documentation
+
+- **`BusinessReportExample` chart is now a native vector chart.** The flagship
+  report's five-quarter Revenue/Profit block previously rasterised a bar chart
+  through Graphics2D into an embedded PNG; it now uses `ChartSpec.bar()` with a
+  `ChartStyle` palette override (navy/gold) and an explicit 0–100 axis —
+  ~90 lines of hand-drawn AWT geometry replaced by a declarative spec.
+
+### Tests
+
+- Chart geometry pinned without rendering: `NiceScaleTest` golden tables and
+  `ChartLayoutResolverTest` exact-position assertions on a font-independent
+  text-metrics fake; `ChartLayoutSnapshotTest` layout snapshots + a
+  fragment-lowering assertion; `SectionKeepTogetherTest` covers section,
+  module, and timeline relocation plus the unchanged default.
+
 ## v1.7.1 — 2026-06-09
 
 Open cycle — bug-fix / housekeeping. Entries land here as they merge.

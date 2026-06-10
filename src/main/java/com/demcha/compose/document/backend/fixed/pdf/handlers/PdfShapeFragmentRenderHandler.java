@@ -66,6 +66,7 @@ public final class PdfShapeFragmentRenderHandler
             boolean anyRounded = topLeft > 0f || topRight > 0f || bottomRight > 0f || bottomLeft > 0f;
 
             if (hasFill) {
+                PdfAlphaSupport.applyFillAlpha(stream, payload.fillColor());
                 stream.setNonStrokingColor(payload.fillColor());
                 if (anyRounded) {
                     drawRoundedRectangle(stream, x, y, width, height,
@@ -84,6 +85,7 @@ public final class PdfShapeFragmentRenderHandler
                 drawSideBorder(stream, payload.sideBorders().bottom(), x,         y,          x + width, y);
                 drawSideBorder(stream, payload.sideBorders().left(),   x,         y + height, x,         y);
             } else if (hasStroke) {
+                PdfAlphaSupport.applyStrokeAlpha(stream, payload.stroke().strokeColor().color());
                 stream.setStrokingColor(payload.stroke().strokeColor().color());
                 stream.setLineWidth((float) payload.stroke().width());
                 if (anyRounded) {

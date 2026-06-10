@@ -90,6 +90,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | [Shape containers](#shape-containers) | Circles, ellipses, rounded cards with `ClipPolicy.CLIP_PATH` | [PDF](../assets/readme/examples/shape-container.pdf) · [Source](src/main/java/com/demcha/examples/features/shapes/ShapeContainerExample.java) |
 | [Advanced tables](#advanced-tables) | Row span, zebra rows, totals, repeating header on page break | [PDF](../assets/readme/examples/table-advanced.pdf) · [Source](src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java) |
 | [Barcodes](#barcodes) | QR, Code 128, Code 39, EAN-13, EAN-8, branded QR with theme colours | [PDF](../assets/readme/examples/barcode-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/barcodes/BarcodeShowcaseExample.java) |
+| [Charts](#charts) | Native vector bar, line, and pie/donut charts — data/spec/style layers, axis & grid toggles, point markers, value labels, legend | [PDF](../assets/readme/examples/chart-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/charts/ChartShowcaseExample.java) |
 | [PDF chrome](#pdf-chrome) | `DocumentMetadata`, `DocumentWatermark`, `DocumentHeaderFooter`, `DocumentBookmarkOptions` | [PDF](../assets/readme/examples/pdf-chrome.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PdfChromeExample.java) |
 | [HTTP streaming](#http-streaming) | `writePdf(OutputStream)` for Servlet / S3 / GCS — caller's stream is not closed | [PDF](../assets/readme/examples/invoice-http-stream.pdf) · [Source](src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java) |
 | [Layout snapshot regression](#layout-snapshot-regression) | Deterministic `layoutSnapshot()` workflow with baseline + drift report — production regression-testing pattern | [PDF](../assets/readme/examples/invoice-snapshot-regression.pdf) · [Source](src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java) |
@@ -478,6 +479,44 @@ PDF backend rasterises and embeds.
 
 [📄 View PDF](../assets/readme/examples/barcode-showcase.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/barcodes/BarcodeShowcaseExample.java)
+
+### Charts
+
+Native vector charts compiled into engine primitives — deterministic,
+snapshot-testable, no raster dependency. Data, structure, and style are
+independent layers: the same `ChartData` feeds bar and line specs, and a
+`ChartStyle` cascade recolours a chart without touching its data.
+
+```java
+ChartData revenue = ChartData.builder()
+    .categories("Q1", "Q2", "Q3", "Q4")
+    .series("2024", 12.4, 15.1, 9.8, 14.2)
+    .series("2025", 14.0, 18.2, 11.3, 16.9)
+    .build();
+
+section.chart(ChartSpec.bar()
+        .data(revenue)
+        .legend(LegendPosition.BOTTOM)
+        .valueLabels(ValueLabelMode.OUTSIDE)
+        .size(ChartSize.aspectRatio(16, 7))
+        .build(),
+    ChartStyle.builder()
+        .seriesPaint(0, DocumentPaint.solid(DocumentColor.rgb(20, 80, 95)))
+        .barCornerRadius(DocumentCornerRadius.top(2))
+        .build());
+```
+
+Axis numbers, grid lines, and category labels are independently
+toggleable (`AxisSpec.showTickLabels(false)`, `showGridLines(false)`,
+`ChartSpec.bar().showCategoryLabels(false)`) — down to a minimal
+"bars + value numbers only" look. Pie/donut charts
+(`ChartSpec.pie().donutRatio(0.58).centerText("58.4k")`) add slice
+labels, separators, pad-angle gaps, and a donut-centre KPI.
+
+![Chart showcase preview](../assets/readme/chart-showcase.png)
+
+[📄 View PDF](../assets/readme/examples/chart-showcase.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/charts/ChartShowcaseExample.java)
 
 ### PDF chrome
 

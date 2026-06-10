@@ -47,10 +47,12 @@ final class PdfShapeGeometry {
         stream.saveGraphicsState();
         try {
             if (hasStroke) {
+                PdfAlphaSupport.applyStrokeAlpha(stream, stroke.strokeColor().color());
                 stream.setStrokingColor(stroke.strokeColor().color());
                 stream.setLineWidth((float) stroke.width());
             }
             if (hasFill) {
+                PdfAlphaSupport.applyFillAlpha(stream, fillColor);
                 stream.setNonStrokingColor(fillColor);
             }
             path.emit(stream);

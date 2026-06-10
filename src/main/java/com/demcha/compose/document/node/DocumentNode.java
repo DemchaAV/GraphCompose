@@ -56,5 +56,19 @@ public interface DocumentNode {
     default String nodeKind() {
         return getClass().getSimpleName();
     }
+
+    /**
+     * Whether this node must paginate as a single unit — when it does not fit in
+     * the remaining page space but would fit on a fresh page, the compiler
+     * relocates it whole to the next page instead of flowing its children across
+     * the boundary. Default {@code false} (normal flow). Nodes taller than a full
+     * page always flow regardless of this flag.
+     *
+     * @return true to keep the node together on one page when possible
+     * @since 1.8.0
+     */
+    default boolean keepTogether() {
+        return false;
+    }
 }
 

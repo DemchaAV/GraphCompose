@@ -78,6 +78,13 @@ Entries land here as they merge.
 
 ### Documentation
 
+- **Recipe coverage is complete.** Nine new cookbook pages close every gap the
+  recipe index tracked: rich text, lists, timelines, barcodes, images,
+  PDF chrome (metadata / watermark / running header-footer / protection /
+  links / bookmarks), translucency, semantic DOCX export, and layout-snapshot
+  regression testing. Every snippet is verified against the current API;
+  the folder index (`docs/recipes/README.md`) no longer carries a
+  "not yet covered" list.
 - **`BusinessReportExample` chart is now a native vector chart.** The flagship
   report's five-quarter Revenue/Profit block previously rasterised a bar chart
   through Graphics2D into an embedded PNG; it now uses `ChartSpec.bar()` with a

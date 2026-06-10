@@ -19,6 +19,15 @@ authoring API; public application code should not import
 | [Layered page design](recipes/layered-page-design.md) | Choosing between page backgrounds, rows, layer stacks, and canvases |
 | [Absolute placement](recipes/absolute-placement.md) | `addCanvas` + `position(x, y)` for pixel-precise certificates and badges |
 | [Tables](recipes/tables.md) | Row span, zebra rows, totals row, repeated header on page break |
+| [Rich text](recipes/rich-text.md) | `RichText` mixed-style runs, inline links/images/shapes, checkboxes |
+| [Lists](recipes/lists.md) | `addList`, marker customisation, nested lists with per-depth markers |
+| [Timelines](recipes/timelines.md) | `addTimeline`: markers on a connector rail, geometry and text-style controls |
+| [Barcodes](recipes/barcodes.md) | QR / Code 128 / EAN / UPC and friends, tinting, quiet zone |
+| [Images](recipes/images.md) | Sources, sizing precedence, fit modes, images in rows and cards |
+| [PDF chrome](recipes/pdf-chrome.md) | Metadata, watermarks, running header/footer placeholders, protection, links, bookmarks |
+| [Translucency](recipes/translucency.md) | `DocumentColor.rgba` / `withOpacity`, alpha coverage, layered tints |
+| [DOCX export](recipes/docx-export.md) | Semantic export, node mapping, fallbacks and skipped kinds |
+| [Snapshot testing](recipes/snapshot-testing.md) | Layout-snapshot regression testing in consumer projects |
 | [Streaming and output](recipes/streaming.md) | `buildPdf` / `writePdf` / `toPdfBytes`, DOCX export, layout snapshots, header / footer chrome, guide lines |
 | [Extending GraphCompose](recipes/extending.md) | New semantic node, fluent setter, render backend, snapshot-based regression tests |
 

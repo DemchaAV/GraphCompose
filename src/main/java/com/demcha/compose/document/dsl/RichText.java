@@ -473,6 +473,49 @@ public final class RichText {
     }
 
     /**
+     * Appends an inline <b>area sparkline</b> — a filled mini-chart silhouette
+     * of the value run, rendered on the text baseline like any other inline
+     * shape. The run's minimum maps to the bottom of the box, its maximum to
+     * the top; pair it with {@link DocumentColor#withOpacity(double)} for a
+     * softer fill.
+     *
+     * <pre>{@code rich.plain("Revenue ").sparkline(36, 9, accent, 65.2, 69.8, 74.1, 81.3, 88.2)}</pre>
+     *
+     * @param width sparkline width in points
+     * @param height sparkline height in points
+     * @param fill silhouette fill colour
+     * @param values data run, at least two finite values
+     * @return this builder
+     * @since 1.8.0
+     */
+    public RichText sparkline(double width, double height, DocumentColor fill, double... values) {
+        return shape(ShapeOutline.polygon(width, height,
+                SparklineGeometry.areaPoints(values)), fill);
+    }
+
+    /**
+     * Appends an inline <b>line sparkline</b> — the value run as a
+     * constant-thickness stroked-looking band, without the filled area.
+     *
+     * @param width sparkline width in points
+     * @param height sparkline height in points
+     * @param thickness line thickness in points (must be smaller than {@code height})
+     * @param color line colour
+     * @param values data run, at least two finite values
+     * @return this builder
+     * @since 1.8.0
+     */
+    public RichText sparklineLine(double width, double height, double thickness,
+                                  DocumentColor color, double... values) {
+        if (thickness <= 0 || thickness >= height) {
+            throw new IllegalArgumentException(
+                    "sparkline thickness must be in (0, height): " + thickness);
+        }
+        return shape(ShapeOutline.polygon(width, height,
+                SparklineGeometry.ribbonPoints(values, thickness / height)), color);
+    }
+
+    /**
      * Appends an inline checkbox — a rounded square frame with an optional
      * centred checkmark inside (the checked state), each in its own colour —
      * for todo / checklist markers between text.

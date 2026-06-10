@@ -148,6 +148,23 @@ ChartStyle.builder()
 
 The palette cycles by modulo, so a chart never runs out of colours.
 
+## Inline sparklines
+
+Mini-charts that sit on the text baseline like any other inline shape — a
+skill trend in a CV line, a KPI direction next to a number:
+
+```java
+section.addRich(r -> r
+        .plain("Revenue trend ")
+        .sparkline(42, 9, accent, 65.2, 69.8, 74.1, 81.3, 88.2)      // filled area
+        .plain("   profit ")
+        .sparklineLine(42, 9, 1.6, gold, 28.1, 30.7, 32.9, 36.4, 39.5)); // line band
+```
+
+The run's minimum maps to the bottom of the box and its maximum to the top;
+`sparklineLine` keeps a constant thickness even at the peaks. Combine with
+`DocumentColor.withOpacity(...)` for a softer area fill.
+
 ## Backends
 
 Any fixed-layout backend (PDF today) renders charts for free — they are

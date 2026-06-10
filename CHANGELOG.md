@@ -52,6 +52,12 @@ Entries land here as they merge.
   into the new general-purpose `PolygonNode` (arc-tessellated ring polygons at
   a fixed 3° step — deterministic vertices, no new render handlers), which also
   lays the groundwork for SVG icon-path import.
+- **Inline sparklines** (`@since 1.8.0`). `RichText.sparkline(w, h, color,
+  values...)` draws a filled mini-area silhouette on the text baseline, and
+  `sparklineLine(w, h, thickness, color, values...)` a constant-thickness line
+  band (full thickness preserved at the peaks). Both compile into the existing
+  inline-shape polygon run — a KPI trend next to a number, a skill trajectory
+  inside a CV line.
 - **Configurable line-chart point markers.** `PointMarker` draws an ellipse at
   every data point — independent width/height axes, explicit fill (or the
   series paint), and an optional outline ring (`PointMarker.circle(5)

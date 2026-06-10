@@ -161,7 +161,15 @@ public final class ChartShowcaseExample {
                             .addParagraph(p -> p
                                     .text("Deterministic, theme-aware vector charts compiled into engine primitives.")
                                     .textStyle(THEME.text().body())
-                                    .margin(DocumentInsets.zero())))
+                                    .margin(DocumentInsets.zero()))
+                            // Inline sparklines: mini-charts on the text baseline.
+                            .addRich(r -> r
+                                    .plain("Revenue trend ")
+                                    .sparkline(42, 9, DocumentColor.rgb(20, 80, 95),
+                                            65.2, 69.8, 74.1, 81.3, 88.2)
+                                    .plain("   profit ")
+                                    .sparklineLine(42, 9, 1.6, DocumentColor.rgb(196, 153, 76),
+                                            28.1, 30.7, 32.9, 36.4, 39.5)))
                     .addSection("BarCard", section -> section
                             .keepTogether()
                             .softPanel(DocumentColor.WHITE, 8, 16)

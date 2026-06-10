@@ -69,6 +69,34 @@ class ChartLayoutSnapshotTest {
     }
 
     @Test
+    void pieChartLowersIntoPolygonFragments() {
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(360, 320)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            ChartSpec spec = ChartSpec.pie()
+                    .data(ChartData.builder()
+                            .categories("A", "B", "C")
+                            .series("Share", 50.0, 30.0, 20.0)
+                            .build())
+                    .donutRatio(0.5)
+                    .size(ChartSize.fixedHeight(200))
+                    .build();
+            document.pageFlow().name("PieFragmentFixture").chart(spec).build();
+
+            LayoutGraph graph = document.layoutGraph();
+            long polygonFragments = graph.fragments().stream()
+                    .filter(f -> f.payload() instanceof
+                            com.demcha.compose.document.layout.payloads.PolygonFragmentPayload)
+                    .count();
+            // One ring-sector polygon per slice reaches the renderer.
+            assertThat(polygonFragments).isEqualTo(3);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
     void barChartLowersIntoShapeFragments() {
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(360, 260)

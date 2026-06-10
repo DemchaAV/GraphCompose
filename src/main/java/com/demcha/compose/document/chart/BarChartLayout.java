@@ -215,6 +215,21 @@ final class BarChartLayout {
         double range = Math.max(1e-9, scale.niceMax() - scale.niceMin());
 
         List<ChartPrimitive> out = new ArrayList<>();
+        // Category separators (GridStyle.vertical) run horizontally here — the
+        // category axis is vertical in a horizontal bar chart.
+        DocumentStroke separatorStroke = style.grid() == null ? null : style.grid().vertical();
+        if (separatorStroke != null && data.categoryCount() >= 2) {
+            double sw = Math.max(separatorStroke.width(), 0.1);
+            double slotHsep = plotH / data.categoryCount();
+            for (int c = 1; c < data.categoryCount(); c++) {
+                double y = plotTopY - c * slotHsep;
+                out.add(new ChartPrimitive(
+                        new LineNode("csep_" + c, plotW, sw, 0.0, sw / 2.0, plotW, sw / 2.0,
+                                separatorStroke, null, null,
+                                DocumentInsets.zero(), DocumentInsets.zero()),
+                        plotLeftX, y - sw / 2.0, plotW, sw));
+            }
+        }
         DocumentStroke gridStroke = style.grid() == null ? null : style.grid().horizontal();
         for (int i = 0; i < scale.tickCount(); i++) {
             double tickValue = scale.niceMin() + i * scale.tickStep();

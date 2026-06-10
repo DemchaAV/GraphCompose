@@ -318,7 +318,10 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
             }
 
             /**
-             * Sets smoothing.
+             * Sets smoothing. Curves are Catmull-Rom splines subdivided at a
+             * fixed step, so geometry stays deterministic. Like any
+             * interpolating spline, a curve may slightly overshoot local
+             * extremes between data points on sharp value swings.
              *
              * @param v true for curved segments
              * @return this builder

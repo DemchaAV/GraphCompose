@@ -494,6 +494,67 @@ class ChartLayoutResolverTest {
     }
 
     @Test
+    void horizontalBarsEmitCategorySeparatorsWhenStyled() {
+        ChartData data = ChartData.builder().categories("A", "B", "C")
+                .series("S", 1.0, 2.0, 3.0).build();
+        ChartStyle style = baseStyle().mergedUnder(ChartStyle.builder()
+                .grid(new ChartStyle.GridStyle(
+                        ChartDefaults.DEFAULT_GRID_STROKE, ChartDefaults.DEFAULT_GRID_STROKE))
+                .build());
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                ChartSpec.bar().data(data).horizontal(true).build(), style,
+                ChartDefaults.DEFAULT_THEME, 200.0, 120.0, METRICS);
+
+        assertThat(out.stream().filter(p -> p.node().name().startsWith("csep_")).count())
+                .isEqualTo(2);
+    }
+
+    @Test
+    void pieRightLegendReservesAColumnOutsideTheCircle() {
+        ChartData data = ChartData.builder().categories("Alpha", "Beta")
+                .series("S", 60.0, 40.0).build();
+        ChartSpec.Pie pie = ChartSpec.pie().data(data).legend(LegendPosition.RIGHT).build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                pie, baseStyle(), ChartDefaults.DEFAULT_THEME, 220.0, 160.0, METRICS);
+
+        ChartPrimitive slice = byName(out, "slice_0");
+        ChartPrimitive swatch = byName(out, "legend_swatch_0");
+        // The legend column starts right of the circle's bounding box.
+        assertThat(swatch.x()).isGreaterThan(slice.x() + slice.width());
+    }
+
+    @Test
+    void sliceGapAndCounterClockwiseLayoutShiftSectorGeometry() {
+        ChartData data = ChartData.builder().categories("A", "B")
+                .series("S", 50.0, 50.0).build();
+
+        ChartSpec.Pie plain = ChartSpec.pie().data(data).build();
+        ChartSpec.Pie ccw = ChartSpec.pie().data(data).clockwise(false)
+                .startAngleDegrees(0.0).build();
+        ChartStyle gapped = baseStyle().mergedUnder(
+                ChartStyle.builder().sliceGapDegrees(10.0).build());
+
+        var plainSlice = (com.demcha.compose.document.node.PolygonNode)
+                byName(ChartLayoutResolver.resolve(plain, baseStyle(),
+                        ChartDefaults.DEFAULT_THEME, 200.0, 200.0, METRICS), "slice_0").node();
+        var gappedSlice = (com.demcha.compose.document.node.PolygonNode)
+                byName(ChartLayoutResolver.resolve(plain, gapped,
+                        ChartDefaults.DEFAULT_THEME, 200.0, 200.0, METRICS), "slice_0").node();
+        var ccwSlice = (com.demcha.compose.document.node.PolygonNode)
+                byName(ChartLayoutResolver.resolve(ccw, baseStyle(),
+                        ChartDefaults.DEFAULT_THEME, 200.0, 200.0, METRICS), "slice_0").node();
+
+        // The pad angle trims the sector: its leading outer vertex moves.
+        assertThat(gappedSlice.points().get(0)).isNotEqualTo(plainSlice.points().get(0));
+        // Counter-clockwise from 0° starts at three o'clock going up:
+        // the first outer vertex sits at (1.0, 0.5).
+        assertThat(ccwSlice.points().get(0).x()).isCloseTo(1.0, within(1e-9));
+        assertThat(ccwSlice.points().get(0).y()).isCloseTo(0.5, within(1e-9));
+    }
+
+    @Test
     void pieRejectsInvalidInputLoudly() {
         ChartData twoSeries = ChartData.builder()
                 .categories("A").series("S1", 1.0).series("S2", 2.0).build();

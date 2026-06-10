@@ -94,6 +94,19 @@ public final class BusinessReportExample {
                 .margin(28, 40, 28, 40)
                 .create()) {
 
+            // Running footer — repeats on every page with live page numbers,
+            // instead of a hardcoded "Page 1 of 8" paragraph in the flow.
+            document.footer(com.demcha.compose.document.output.DocumentHeaderFooter.builder()
+                    .zone(com.demcha.compose.document.output.DocumentHeaderFooterZone.FOOTER)
+                    .leftText("Confidential and proprietary")
+                    .rightText("Page {page} of {pages}")
+                    .fontSize(8f)
+                    .textColor(MUTED)
+                    .showSeparator(true)
+                    .separatorColor(SUBTLE_RULE)
+                    .separatorThickness(0.5f)
+                    .build());
+
             document.pageFlow()
                     .name("BusinessReportCover")
                     .spacing(11)
@@ -246,24 +259,6 @@ public final class BusinessReportExample {
                                     .lineSpacing(1.35)
                                     .margin(new DocumentInsets(0, 0, 2, 0)))
                             .addTable(BusinessReportExample::buildMetricsTable))
-
-                    // Footer
-                    .addRow("Footer", row -> row
-                            .spacing(0)
-                            .weights(1, 1)
-                            .addSection("FootLeft", section -> section
-                                    .padding(new DocumentInsets(8, 0, 0, 0))
-                                    .addParagraph(p -> p
-                                            .text("Confidential and proprietary")
-                                            .textStyle(footerStyle())
-                                            .margin(DocumentInsets.zero())))
-                            .addSection("FootRight", section -> section
-                                    .padding(new DocumentInsets(8, 0, 0, 0))
-                                    .addParagraph(p -> p
-                                            .text("Page 1 of 8")
-                                            .textStyle(footerStyle())
-                                            .align(TextAlign.RIGHT)
-                                            .margin(DocumentInsets.zero()))))
                     .build();
 
             document.buildPdf();
@@ -564,11 +559,4 @@ public final class BusinessReportExample {
                 .build();
     }
 
-    private static DocumentTextStyle footerStyle() {
-        return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA)
-                .size(8)
-                .color(MUTED)
-                .build();
-    }
 }

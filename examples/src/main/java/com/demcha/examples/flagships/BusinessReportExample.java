@@ -460,6 +460,13 @@ public final class BusinessReportExample {
      * Renders a simple gradient hero image (sunset sky + mountain
      * silhouette) so the example does not depend on any external image
      * asset. The result is encoded as PNG bytes and embedded directly.
+     *
+     * <p>This is the one remaining raster block in the example, and it is
+     * deliberate: the sky requires a smooth linear gradient, which the engine
+     * does not paint natively yet ({@code DocumentPaint.linear} is reserved
+     * for the gradient work). Once gradients land, the mountains become
+     * {@code PolygonNode}s, the glow a translucent fill, and this method goes
+     * away like the old chart raster did.</p>
      */
     private static byte[] renderHeroImage(int width, int height) throws Exception {
         BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);

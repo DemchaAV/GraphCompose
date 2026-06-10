@@ -59,7 +59,10 @@ back here.
 - **[roadmaps/migration-v1-4-to-v1-5.md](roadmaps/migration-v1-4-to-v1-5.md)** — upgrade guide for v1.4 → v1.5.
 
 ### Recipes (cookbook-style howtos)
-- **[recipes.md](recipes.md)** — index of all recipes.
+- **[recipes.md](recipes.md)** — index of all recipes (coverage map in [recipes/README.md](recipes/README.md)).
+- **[recipes/charts.md](recipes/charts.md)** — native vector bar/line/area/pie charts.
+- **[recipes/keep-together.md](recipes/keep-together.md)** — blocks that never split at a page break.
+- **[recipes/shapes.md](recipes/shapes.md)** — cards, dividers, lines, ellipses, images.
 - **[recipes/shape-as-container.md](recipes/shape-as-container.md)** — shapes that hold child content.
 - **[recipes/transforms.md](recipes/transforms.md)** — rotation, scaling, skewing.
 - **[recipes/tables.md](recipes/tables.md)** — tabular layouts.

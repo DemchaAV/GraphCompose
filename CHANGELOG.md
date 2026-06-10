@@ -82,6 +82,15 @@ Entries land here as they merge.
   of orphaning its heading from the content below. Blocks taller than a page
   still flow. Default off — existing layouts are byte-identical.
 
+### Bug fixes
+
+- **DOCX export no longer drops lists.** `DocxSemanticBackend` had no branch
+  for `ListNode`, so `addList(...)` content silently vanished from Word
+  exports. Lists now map to marker-prefixed paragraphs in the list's text
+  style, with nested items indented per depth and keeping their own markers.
+  (Found by the recipe fact-check: the docx-export recipe's "what is skipped"
+  list could not honestly be written without it.)
+
 ### Documentation
 
 - **Recipe coverage is complete.** Nine new cookbook pages close every gap the

@@ -145,6 +145,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writeShapeContainer(document, shapeContainer);
         } else if (node instanceof ChartNode chart) {
             writeChartFallback(document, chart);
+        } else if (node instanceof com.demcha.compose.document.node.ListNode list) {
+            writeList(document, list);
         } else if (node instanceof ContainerNode || node instanceof SectionNode) {
             for (DocumentNode child : node.children()) {
                 writeNode(document, child);
@@ -153,6 +155,41 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // Unsupported node kinds (line, ellipse, shape, barcode) are silently
         // skipped in the semantic export. Authors who need pixel-perfect output
         // should use the PDF fixed-layout backend.
+    }
+
+    /**
+     * Semantic list mapping: each item becomes a marker-prefixed paragraph in
+     * the list's text style; nested items indent two spaces per depth and use
+     * their own marker when one is set.
+     */
+    private void writeList(XWPFDocument document,
+                           com.demcha.compose.document.node.ListNode list) {
+        for (String item : list.items()) {
+            writeListLine(document, list.textStyle(),
+                    list.marker().value() + " " + item, 0);
+        }
+        for (com.demcha.compose.document.node.ListItem item : list.nestedItems()) {
+            writeNestedItem(document, list, item, 0);
+        }
+    }
+
+    private void writeNestedItem(XWPFDocument document,
+                                 com.demcha.compose.document.node.ListNode list,
+                                 com.demcha.compose.document.node.ListItem item,
+                                 int depth) {
+        String marker = item.marker() != null ? item.marker().value() : list.marker().value();
+        writeListLine(document, list.textStyle(), marker + " " + item.label(), depth);
+        for (com.demcha.compose.document.node.ListItem child : item.children()) {
+            writeNestedItem(document, list, child, depth + 1);
+        }
+    }
+
+    private void writeListLine(XWPFDocument document, DocumentTextStyle style,
+                               String text, int depth) {
+        XWPFParagraph para = document.createParagraph();
+        XWPFRun run = para.createRun();
+        applyStyle(run, style);
+        run.setText("  ".repeat(depth) + text);
     }
 
     /**

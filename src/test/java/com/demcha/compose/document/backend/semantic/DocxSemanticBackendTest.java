@@ -69,6 +69,27 @@ class DocxSemanticBackendTest {
     }
 
     @Test
+    void listsExportAsMarkerPrefixedParagraphs() throws Exception {
+        byte[] docxBytes;
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(595, 842)
+                .margin(DocumentInsets.of(36))
+                .create()) {
+            session.dsl().pageFlow().name("Flow")
+                    .addList("First", "Second")
+                    .build();
+            docxBytes = session.export(new DocxSemanticBackend());
+        }
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
+            List<String> texts = document.getParagraphs().stream()
+                    .map(XWPFParagraph::getText).toList();
+            assertThat(texts).anyMatch(t -> t.endsWith("First") && t.length() > "First".length());
+            assertThat(texts).anyMatch(t -> t.endsWith("Second"));
+        }
+    }
+
+    @Test
     void exportProducesDocxWithParagraphAndTableContent() throws Exception {
         byte[] docxBytes;
         try (DocumentSession session = GraphCompose.document()

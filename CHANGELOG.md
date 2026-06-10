@@ -77,6 +77,14 @@ here as they merge.
   of orphaning its heading from the content below. Blocks taller than a page
   still flow. Default off — existing layouts are byte-identical.
 
+### Documentation
+
+- **`BusinessReportExample` chart is now a native vector chart.** The flagship
+  report's five-quarter Revenue/Profit block previously rasterised a bar chart
+  through Graphics2D into an embedded PNG; it now uses `ChartSpec.bar()` with a
+  `ChartStyle` palette override (navy/gold) and an explicit 0–100 axis —
+  ~90 lines of hand-drawn AWT geometry replaced by a declarative spec.
+
 ### Tests
 
 - Chart geometry pinned without rendering: `NiceScaleTest` golden tables and

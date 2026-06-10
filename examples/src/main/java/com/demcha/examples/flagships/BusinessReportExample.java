@@ -39,11 +39,12 @@ import java.nio.file.Path;
  * bar chart, a YoY metrics table, and a confidential / page-number
  * footer.
  *
- * <p>The bar chart is composed entirely from canonical primitives —
- * each bar is a {@code ShapeContainerNode} sized to the chart height
- * with a smaller filled rectangle anchored to the bottom — so the
- * file demonstrates how to build a polished, dashboard-grade page
- * without any new chart-specific API.</p>
+ * <p>The bar chart is a native vector chart ({@code ChartSpec.bar()})
+ * compiled into engine primitives at layout time — deterministic,
+ * snapshot-testable, and recoloured to the report's navy/gold palette
+ * through the {@code ChartStyle} cascade. Earlier revisions rasterised
+ * this block via Graphics2D into an embedded PNG; the native chart
+ * subsystem made that workaround obsolete.</p>
  */
 public final class BusinessReportExample {
 
@@ -76,12 +77,7 @@ public final class BusinessReportExample {
 
     // ─────────────────── Layout constants ─────────────────────────
 
-    private static final double CHART_WIDTH = 285;
     private static final double CHART_HEIGHT = 120;
-    private static final double BAR_WIDTH = 13;
-    private static final double GROUP_GAP = 16;
-    private static final double CHART_INSET_LEFT = 18;
-    private static final double CHART_INSET_BOTTOM = 22;
     private static final double CHART_MAX_VALUE = 100.0;
 
     private BusinessReportExample() {
@@ -429,90 +425,33 @@ public final class BusinessReportExample {
     }
 
     private static DocumentNode buildChart() {
-        try {
-            // Bar chart is rasterised via Graphics2D and embedded as a
-            // PNG image. Multi-layer ShapeContainer with 15+ positioned
-            // layers does not currently render every layer at its
-            // explicit (x, y) offset, so the chart goes through the
-            // image path — exactly the same approach the hero photo
-            // uses above.
-            byte[] png = renderChartImage(560, 280);
-            return new com.demcha.compose.document.dsl.ImageBuilder()
-                    .name("PerformanceChart")
-                    .source(DocumentImageData.fromBytes(png))
-                    .size(CHART_WIDTH, CHART_HEIGHT)
-                    .fitMode(DocumentImageFitMode.CONTAIN)
-                    .build();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to render performance chart", e);
-        }
-    }
-
-    private static byte[] renderChartImage(int width, int height) throws Exception {
-        BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = img.createGraphics();
-        try {
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-                    RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-
-            // Background + frame
-            g.setColor(java.awt.Color.WHITE);
-            g.fillRect(0, 0, width, height);
-            g.setColor(new java.awt.Color(212, 215, 222));
-            g.setStroke(new java.awt.BasicStroke(1.0f));
-            g.drawRect(0, 0, width - 1, height - 1);
-
-            int padTop = 18;
-            int padBottom = 44;
-            int padLeft = 38;
-            int padRight = 18;
-            int chartH = height - padTop - padBottom;
-            int chartW = width - padLeft - padRight;
-
-            // Y-axis grid + labels (0, 25, 50, 75, 100)
-            g.setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 13));
-            g.setColor(new java.awt.Color(150, 154, 168));
-            for (int i = 0; i <= 4; i++) {
-                int y = padTop + chartH - (chartH * i / 4);
-                int v = i * 25;
-                g.drawString(String.valueOf(v), 8, y + 5);
-                g.setColor(new java.awt.Color(232, 234, 240));
-                g.drawLine(padLeft, y, padLeft + chartW, y);
-                g.setColor(new java.awt.Color(150, 154, 168));
-            }
-
-            // Bars
-            int slotWidth = chartW / QUARTERS.length;
-            int barWidth = 22;
-            for (int q = 0; q < QUARTERS.length; q++) {
-                int slotX = padLeft + slotWidth * q;
-                int slotCenter = slotX + slotWidth / 2;
-                int revenueX = slotCenter - barWidth - 4;
-                int profitX = slotCenter + 4;
-                int revenueH = (int) (REVENUE[q] * chartH / CHART_MAX_VALUE);
-                int profitH = (int) (PROFIT[q] * chartH / CHART_MAX_VALUE);
-
-                // Revenue (navy)
-                g.setColor(new java.awt.Color(28, 38, 70));
-                g.fillRect(revenueX, padTop + chartH - revenueH, barWidth, revenueH);
-                // Profit (gold)
-                g.setColor(new java.awt.Color(186, 154, 100));
-                g.fillRect(profitX, padTop + chartH - profitH, barWidth, profitH);
-
-                // Quarter label
-                g.setColor(new java.awt.Color(110, 114, 128));
-                g.setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 13));
-                java.awt.FontMetrics fm = g.getFontMetrics();
-                int textW = fm.stringWidth(QUARTERS[q]);
-                g.drawString(QUARTERS[q], slotCenter - textW / 2, padTop + chartH + 22);
-            }
-        } finally {
-            g.dispose();
-        }
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ImageIO.write(img, "png", out);
-        return out.toByteArray();
+        // Native vector chart: the same five-quarter Revenue/Profit data the
+        // old Graphics2D raster drew, compiled into engine primitives at
+        // layout time and recoloured through the ChartStyle cascade. The
+        // explicit 0..100 axis preserves the original chart's scale.
+        com.demcha.compose.document.chart.ChartData data =
+                com.demcha.compose.document.chart.ChartData.builder()
+                        .categories(QUARTERS)
+                        .series("Revenue", REVENUE)
+                        .series("Profit", PROFIT)
+                        .build();
+        com.demcha.compose.document.chart.ChartSpec spec =
+                com.demcha.compose.document.chart.ChartSpec.bar()
+                        .data(data)
+                        .valueAxis(com.demcha.compose.document.chart.AxisSpec.builder()
+                                .baselineAtZero(true)
+                                .max(CHART_MAX_VALUE)
+                                .build())
+                        .size(com.demcha.compose.document.chart.ChartSize
+                                .fixedHeight(CHART_HEIGHT))
+                        .build();
+        com.demcha.compose.document.chart.ChartStyle style =
+                com.demcha.compose.document.chart.ChartStyle.builder()
+                        .seriesPaint(0, com.demcha.compose.document.chart.DocumentPaint.solid(NAVY))
+                        .seriesPaint(1, com.demcha.compose.document.chart.DocumentPaint.solid(GOLD))
+                        .build();
+        return new com.demcha.compose.document.node.ChartNode(
+                "PerformanceChart", spec, style, null, null);
     }
 
     // ─────────────────── Hero image generator ─────────────────────

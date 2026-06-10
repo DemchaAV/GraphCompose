@@ -99,6 +99,24 @@ public final class ChartShowcaseExample {
                 .valueLabelOffset(3)
                 .build();
 
+        // Smooth area: Catmull-Rom curves with a translucent fill to the baseline.
+        ChartSpec areaSpec = ChartSpec.line()
+                .data(revenue)
+                .smooth(true)
+                .area(true)
+                .legend(LegendPosition.TOP)
+                .size(ChartSize.aspectRatio(16, 7))
+                .build();
+
+        // Horizontal bars: categories on Y, values on X, legend as a right column.
+        ChartSpec horizontalSpec = ChartSpec.bar()
+                .data(revenue)
+                .horizontal(true)
+                .valueLabels(ValueLabelMode.OUTSIDE)
+                .legend(LegendPosition.RIGHT)
+                .size(ChartSize.aspectRatio(16, 8))
+                .build();
+
         // Pie / donut: one slice per category from a single series.
         ChartData regions = ChartData.builder()
                 .categories("EMEA", "Americas", "APAC", "Other")
@@ -171,6 +189,24 @@ public final class ChartShowcaseExample {
                                     .textStyle(THEME.text().h3())
                                     .margin(DocumentInsets.zero()))
                             .chart(lineSpec, lineStyle))
+                    .addSection("AreaCard", section -> section
+                            .keepTogether()
+                            .softPanel(DocumentColor.WHITE, 8, 16)
+                            .spacing(10)
+                            .addParagraph(p -> p
+                                    .text("Quarterly revenue — smooth area, legend on top")
+                                    .textStyle(THEME.text().h3())
+                                    .margin(DocumentInsets.zero()))
+                            .chart(areaSpec))
+                    .addSection("HorizontalCard", section -> section
+                            .keepTogether()
+                            .softPanel(DocumentColor.WHITE, 8, 16)
+                            .spacing(10)
+                            .addParagraph(p -> p
+                                    .text("Quarterly revenue — horizontal bars, legend on the right")
+                                    .textStyle(THEME.text().h3())
+                                    .margin(DocumentInsets.zero()))
+                            .chart(horizontalSpec))
                     .addSection("PieCard", section -> section
                             .keepTogether()
                             .softPanel(DocumentColor.WHITE, 8, 16)

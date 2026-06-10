@@ -47,6 +47,8 @@ import java.util.Map;
  * @param valueLabelHalo halo chip painted behind line-chart value labels so the
  *                       digits stay legible where line strokes cross them; match
  *                       it to the chart's surface colour on non-white backgrounds
+ * @param areaOpacity opacity of the area fill under {@code ChartSpec.line().area(true)}
+ *                    series, in (0..1], or {@code null} for the default (0.35)
  * @param sliceStroke pie/donut slice separator stroke, or {@code null} for the
  *                    themed default (white 1pt)
  * @param sliceGapDegrees angular gap between pie/donut slices (pad angle), or
@@ -70,6 +72,7 @@ public record ChartStyle(
         DocumentTextStyle legendTextStyle,
         DocumentTextStyle valueLabelTextStyle,
         DocumentPaint valueLabelHalo,
+        Double areaOpacity,
         DocumentStroke sliceStroke,
         Double sliceGapDegrees,
         DocumentTextStyle donutCenterTextStyle
@@ -90,6 +93,9 @@ public record ChartStyle(
             throw new IllegalArgumentException(
                     "valueLabelOffset must be finite and non-negative: " + valueLabelOffset);
         }
+        if (areaOpacity != null && (areaOpacity <= 0 || areaOpacity > 1 || areaOpacity.isNaN())) {
+            throw new IllegalArgumentException("areaOpacity must be in (0,1]: " + areaOpacity);
+        }
         if (sliceGapDegrees != null && (sliceGapDegrees < 0 || sliceGapDegrees > 30
                 || sliceGapDegrees.isNaN())) {
             throw new IllegalArgumentException(
@@ -104,7 +110,7 @@ public record ChartStyle(
      */
     public static ChartStyle inherit() {
         return new ChartStyle(List.of(), Map.of(), null, null, null,
-                null, null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null, null);
     }
 
     /**
@@ -145,6 +151,7 @@ public record ChartStyle(
                 top.legendTextStyle != null ? top.legendTextStyle : this.legendTextStyle,
                 top.valueLabelTextStyle != null ? top.valueLabelTextStyle : this.valueLabelTextStyle,
                 top.valueLabelHalo != null ? top.valueLabelHalo : this.valueLabelHalo,
+                top.areaOpacity != null ? top.areaOpacity : this.areaOpacity,
                 top.sliceStroke != null ? top.sliceStroke : this.sliceStroke,
                 top.sliceGapDegrees != null ? top.sliceGapDegrees : this.sliceGapDegrees,
                 top.donutCenterTextStyle != null ? top.donutCenterTextStyle : this.donutCenterTextStyle);
@@ -213,6 +220,7 @@ public record ChartStyle(
         private DocumentTextStyle legendTextStyle;
         private DocumentTextStyle valueLabelTextStyle;
         private DocumentPaint valueLabelHalo;
+        private Double areaOpacity;
         private DocumentStroke sliceStroke;
         private Double sliceGapDegrees;
         private DocumentTextStyle donutCenterTextStyle;
@@ -354,6 +362,17 @@ public record ChartStyle(
         }
 
         /**
+         * Sets the opacity of area fills under {@code line().area(true)} series.
+         *
+         * @param opacity opacity in (0..1]
+         * @return this builder
+         */
+        public Builder areaOpacity(double opacity) {
+            this.areaOpacity = opacity;
+            return this;
+        }
+
+        /**
          * Sets the pie/donut slice separator stroke.
          *
          * @param stroke separator stroke
@@ -395,7 +414,7 @@ public record ChartStyle(
             return new ChartStyle(palette, overrides, lineWidth, barCornerRadius,
                     barWidthRatio, grid, pointMarker, valueLabelOffset,
                     axisTextStyle, legendTextStyle, valueLabelTextStyle, valueLabelHalo,
-                    sliceStroke, sliceGapDegrees, donutCenterTextStyle);
+                    areaOpacity, sliceStroke, sliceGapDegrees, donutCenterTextStyle);
         }
     }
 }

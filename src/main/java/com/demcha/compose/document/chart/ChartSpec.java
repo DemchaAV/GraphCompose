@@ -247,6 +247,8 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
      *
      * @param data tabular data
      * @param smooth true = curved (Catmull-Rom) segments; false = straight
+     * @param area fill the region between each series and the axis baseline
+     *             (translucent series colour; see {@code ChartStyle.areaOpacity})
      * @param valueAxis numeric-axis configuration
      * @param legend legend placement
      * @param valueLabels per-point value label mode
@@ -256,6 +258,7 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
     record Line(
             ChartData data,
             boolean smooth,
+            boolean area,
             AxisSpec valueAxis,
             LegendPosition legend,
             ValueLabelMode valueLabels,
@@ -277,8 +280,8 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
         }
 
         /**
-         * Backward-compatible constructor without the category-label toggle
-         * (defaults to showing category labels).
+         * Backward-compatible constructor without the area and category-label
+         * toggles (no area fill; category labels shown).
          *
          * @param data tabular data
          * @param smooth curved segments
@@ -289,13 +292,14 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
          */
         public Line(ChartData data, boolean smooth, AxisSpec valueAxis, LegendPosition legend,
                     ValueLabelMode valueLabels, ChartSize size) {
-            this(data, smooth, valueAxis, legend, valueLabels, size, true);
+            this(data, smooth, false, valueAxis, legend, valueLabels, size, true);
         }
 
         /** Fluent builder for a {@link Line} spec. */
         public static final class Builder {
             private ChartData data;
             private boolean smooth = false;
+            private boolean area = false;
             private AxisSpec valueAxis = AxisSpec.defaults();
             private LegendPosition legend = LegendPosition.NONE;
             private ValueLabelMode valueLabels = ValueLabelMode.NONE;
@@ -321,6 +325,18 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
              */
             public Builder smooth(boolean v) {
                 this.smooth = v;
+                return this;
+            }
+
+            /**
+             * Fills the region between each series and the axis baseline with a
+             * translucent series-colour area.
+             *
+             * @param v true to fill the area
+             * @return this builder
+             */
+            public Builder area(boolean v) {
+                this.area = v;
                 return this;
             }
 
@@ -385,7 +401,7 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
              * @return line spec
              */
             public Line build() {
-                return new Line(data, smooth, valueAxis, legend, valueLabels, size,
+                return new Line(data, smooth, area, valueAxis, legend, valueLabels, size,
                         showCategoryLabels);
             }
         }

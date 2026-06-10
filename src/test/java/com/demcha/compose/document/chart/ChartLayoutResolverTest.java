@@ -157,31 +157,117 @@ class ChartLayoutResolverTest {
     void unsupportedFeaturesAreRejectedLoudly() {
         ChartData data = ChartData.builder().categories("A").series("S", 1.0).build();
 
-        ChartSpec.Bar horizontal = ChartSpec.bar().data(data).horizontal(true).build();
-        org.junit.jupiter.api.Assertions.assertThrows(UnsupportedOperationException.class,
-                () -> ChartLayoutResolver.resolve(horizontal, baseStyle(),
-                        ChartDefaults.DEFAULT_THEME, 200.0, 100.0, METRICS));
-
-        ChartSpec.Bar rightLegend = ChartSpec.bar().data(data).legend(LegendPosition.RIGHT).build();
-        org.junit.jupiter.api.Assertions.assertThrows(UnsupportedOperationException.class,
-                () -> ChartLayoutResolver.resolve(rightLegend, baseStyle(),
-                        ChartDefaults.DEFAULT_THEME, 200.0, 100.0, METRICS));
-
-        ChartSpec.Line smooth = ChartSpec.line().data(data).smooth(true).build();
-        org.junit.jupiter.api.Assertions.assertThrows(UnsupportedOperationException.class,
-                () -> ChartLayoutResolver.resolve(smooth, baseStyle(),
-                        ChartDefaults.DEFAULT_THEME, 200.0, 100.0, METRICS));
-
         ChartSpec.Bar inside = ChartSpec.bar().data(data).valueLabels(ValueLabelMode.INSIDE).build();
         org.junit.jupiter.api.Assertions.assertThrows(UnsupportedOperationException.class,
                 () -> ChartLayoutResolver.resolve(inside, baseStyle(),
                         ChartDefaults.DEFAULT_THEME, 200.0, 100.0, METRICS));
+    }
 
-        ChartSpec.Bar stackedLabels = ChartSpec.bar().data(data)
+    @Test
+    void horizontalBarsGrowRightFromTheLeftEdge() {
+        ChartData data = ChartData.builder().categories("A", "B").series("S", 10.0, 20.0).build();
+        ChartSpec.Bar bar = ChartSpec.bar().data(data).horizontal(true).build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                bar, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 120.0, METRICS);
+
+        ChartPrimitive barA = byName(out, "bar_c0_s0");
+        ChartPrimitive barB = byName(out, "bar_c1_s0");
+        // Both start at the plot's left edge; the 20-bar is twice the 10-bar.
+        assertThat(barA.x()).isEqualTo(barB.x());
+        assertThat(barB.width()).isCloseTo(barA.width() * 2.0, within(1e-6));
+        // First category sits ABOVE the second (reading order).
+        assertThat(barA.y()).isGreaterThan(barB.y());
+    }
+
+    @Test
+    void stackedBarsLabelTheCategoryTotal() {
+        ChartData data = ChartData.builder().categories("A")
+                .series("S1", 10.0).series("S2", 20.0).build();
+        ChartSpec.Bar bar = ChartSpec.bar().data(data)
                 .grouping(BarGrouping.STACKED).valueLabels(ValueLabelMode.OUTSIDE).build();
-        org.junit.jupiter.api.Assertions.assertThrows(UnsupportedOperationException.class,
-                () -> ChartLayoutResolver.resolve(stackedLabels, baseStyle(),
-                        ChartDefaults.DEFAULT_THEME, 200.0, 100.0, METRICS));
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                bar, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 120.0, METRICS);
+
+        ParagraphNode total = (ParagraphNode) byName(out, "total_c0").node();
+        assertThat(total.text()).isEqualTo("30");
+    }
+
+    @Test
+    void areaFillsRenderUnderEveryStroke() {
+        ChartData data = ChartData.builder().categories("A", "B", "C")
+                .series("S1", 1.0, 3.0, 2.0).series("S2", 2.0, 1.0, 3.0).build();
+        ChartSpec.Line line = ChartSpec.line().data(data).area(true).build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                line, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 120.0, METRICS);
+
+        long areas = out.stream()
+                .filter(p -> p.node() instanceof com.demcha.compose.document.node.PolygonNode)
+                .count();
+        assertThat(areas).isEqualTo(2);
+        // Every area polygon is emitted before the first stroke segment.
+        int firstSegment = Integer.MAX_VALUE;
+        int lastArea = -1;
+        for (int i = 0; i < out.size(); i++) {
+            String name = out.get(i).node().name();
+            if (name.startsWith("line_s")) {
+                firstSegment = Math.min(firstSegment, i);
+            }
+            if (name.startsWith("area_s")) {
+                lastArea = Math.max(lastArea, i);
+            }
+        }
+        assertThat(lastArea).isLessThan(firstSegment);
+        // The fill is the translucent series colour.
+        com.demcha.compose.document.node.PolygonNode area =
+                (com.demcha.compose.document.node.PolygonNode) byName(out, "area_s0_r0").node();
+        assertThat(area.fillColor().color().getAlpha()).isLessThan(255);
+    }
+
+    @Test
+    void smoothLineSubdividesEachSpan() {
+        ChartData data = ChartData.builder().categories("A", "B", "C")
+                .series("S", 1.0, 3.0, 2.0).build();
+        ChartSpec.Line line = ChartSpec.line().data(data).smooth(true).build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                line, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 120.0, METRICS);
+
+        long segments = out.stream()
+                .filter(p -> p.node().name().startsWith("line_s0_seg")).count();
+        // Two spans, eight sub-segments each.
+        assertThat(segments).isEqualTo(16);
+    }
+
+    @Test
+    void rightLegendReservesAColumnOutsideThePlot() {
+        ChartData data = ChartData.builder().categories("A", "B")
+                .series("Alpha", 1.0, 2.0).build();
+        ChartSpec.Bar bar = ChartSpec.bar().data(data).legend(LegendPosition.RIGHT).build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                bar, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 120.0, METRICS);
+
+        // The grid line spans the plot; the legend swatch starts right of it.
+        ChartPrimitive grid = byName(out, "grid_0");
+        ChartPrimitive swatch = byName(out, "legend_swatch_0");
+        assertThat(swatch.x()).isGreaterThan(grid.x() + grid.width());
+    }
+
+    @Test
+    void topLegendPlacesTheStripAboveThePlot() {
+        ChartData data = ChartData.builder().categories("A", "B")
+                .series("Alpha", 1.0, 2.0).build();
+        ChartSpec.Line line = ChartSpec.line().data(data).legend(LegendPosition.TOP).build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                line, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 120.0, METRICS);
+
+        ChartPrimitive legendLabel = byName(out, "legend_label_0");
+        ChartPrimitive topGrid = byName(out, "grid_4"); // highest tick gridline
+        assertThat(legendLabel.y()).isGreaterThan(topGrid.y());
     }
 
     @Test
@@ -279,7 +365,7 @@ class ChartLayoutResolverTest {
                 && label1.y() + label1.height() > label2.y();
         assertThat(overlap).isFalse();
         // Theme default paints a halo chip behind each label, just before it.
-        assertThat(out.stream().filter(p -> p.node().name().startsWith("value_halo_")).count())
+        assertThat(out.stream().filter(p -> p.node().name().endsWith("_halo")).count())
                 .isEqualTo(2);
         // Labels (and their halos) are emitted after every marker.
         int lastMarker = -1;
@@ -289,7 +375,7 @@ class ChartLayoutResolverTest {
             if (name.startsWith("point_s")) {
                 lastMarker = Math.max(lastMarker, i);
             }
-            if (name.startsWith("value_halo_")) {
+            if (name.endsWith("_halo")) {
                 firstHalo = Math.min(firstHalo, i);
             }
         }

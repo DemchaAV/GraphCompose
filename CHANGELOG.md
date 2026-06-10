@@ -24,10 +24,20 @@ here as they merge.
   semantic DOCX export (which has no layout pass) falls back to the chart's
   categories-by-series data table with a one-time capability warning. DSL:
   `section.chart(spec)` / `chart(spec, style)`. Declarative `NumberFormatSpec`
-  keeps specs JSON-serializable. Unsupported v1 combinations (horizontal bars,
-  smooth lines, `LegendPosition.RIGHT/TOP`, `ValueLabelMode.INSIDE`, stacked
-  value labels) fail fast with `UnsupportedOperationException` instead of
-  rendering silently wrong.
+  keeps specs JSON-serializable. The one unsupported combination
+  (`ValueLabelMode.INSIDE`) fails fast with `UnsupportedOperationException`
+  instead of rendering silently wrong.
+- **Horizontal bars, smooth lines, area fills, stacked totals, legend
+  placement.** `ChartSpec.bar().horizontal(true)` transposes the chart
+  (categories on Y in reading order, value axis on X, labels at bar ends);
+  stacked bars label the category total. `ChartSpec.line().smooth(true)`
+  draws deterministic Catmull-Rom curves (fixed 8 sub-segments per span);
+  `.area(true)` fills each series down to the baseline with a translucent
+  series colour (`ChartStyle.areaOpacity`, default 0.35) — alpha-blended
+  fills layer legibly. `LegendPosition.TOP` and `RIGHT` now lay out as a top
+  strip / right column for every chart kind, including pie. The chart
+  resolver is split per kind (`BarChartLayout` / `LineChartLayout` /
+  `PieChartLayout` over a shared `ChartLayoutSupport`).
 - **Axis / grid / label visibility toggles.** `AxisSpec.showTickLabels(false)`
   hides the numeric axis and collapses its gutter; `showGridLines(false)` and
   `ChartStyle.GridStyle` control horizontal/vertical grid lines;

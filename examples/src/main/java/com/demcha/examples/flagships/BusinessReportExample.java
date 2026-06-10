@@ -444,8 +444,8 @@ public final class BusinessReportExample {
                         .build();
         com.demcha.compose.document.chart.ChartStyle style =
                 com.demcha.compose.document.chart.ChartStyle.builder()
-                        .seriesPaint(0, com.demcha.compose.document.chart.DocumentPaint.solid(NAVY))
-                        .seriesPaint(1, com.demcha.compose.document.chart.DocumentPaint.solid(GOLD))
+                        .seriesPaint(0, com.demcha.compose.document.style.DocumentPaint.solid(NAVY))
+                        .seriesPaint(1, com.demcha.compose.document.style.DocumentPaint.solid(GOLD))
                         .build();
         return new com.demcha.compose.document.node.ChartNode(
                 "PerformanceChart", spec, style, null, null);

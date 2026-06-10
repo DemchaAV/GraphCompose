@@ -1,6 +1,7 @@
 package com.demcha.compose.document.chart;
 
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;

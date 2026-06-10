@@ -3,6 +3,7 @@ package com.demcha.compose.document.chart;
 import com.demcha.compose.document.node.LineNode;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.ShapeNode;
+import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import org.junit.jupiter.api.Test;
 

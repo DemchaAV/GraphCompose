@@ -42,6 +42,7 @@ render PDF carry no POI footprint.
 | Document node | DOCX output |
 |---|---|
 | Paragraphs | Word paragraphs with alignment, font, size, colour, bold/italic/underline; inline runs preserved |
+| Lists | Marker-prefixed paragraphs in the list's text style; nested items indent per depth and keep their own markers |
 | Tables | Word tables, one cell per cell |
 | Images | Embedded pictures at the node's declared size |
 | Rows | A one-row table, so editors keep the side-by-side layout (cell content limited to atomic children) |

@@ -3,6 +3,7 @@ package com.demcha.examples;
 import com.demcha.examples.features.barcodes.BarcodeShowcaseExample;
 import com.demcha.examples.features.charts.ChartShowcaseExample;
 import com.demcha.examples.features.canvas.CanvasLayerExample;
+import com.demcha.examples.features.docx.WordExportExample;
 import com.demcha.examples.features.chrome.PdfChromeExample;
 import com.demcha.examples.features.lists.NestedListExample;
 import com.demcha.examples.features.shapes.ShapeContainerExample;
@@ -137,6 +138,9 @@ public final class GenerateAllExamples {
         // Theming + chrome
         System.out.println("Generated: " + CustomBusinessThemeExample.generate());
         System.out.println("Generated: " + PdfChromeExample.generate());
+
+        // DOCX export
+        System.out.println("Generated: " + WordExportExample.generate());
 
         // Barcodes
         System.out.println("Generated: " + BarcodeShowcaseExample.generate());

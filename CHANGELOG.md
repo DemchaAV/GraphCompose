@@ -136,6 +136,15 @@ Entries land here as they merge.
   regression testing. Every snippet is verified against the current API;
   the folder index (`docs/recipes/README.md`) no longer carries a
   "not yet covered" list.
+- **Word-export example.** New `WordExportExample`
+  (`examples/features/docx`) renders the same `DocumentSession` as a
+  fixed-layout PDF *and* an editable Word file via `DocxSemanticBackend`,
+  one section per capability-table row: inline runs, nested lists with
+  custom markers, tables, side-by-side rows, an embedded image, a page
+  break, the chart→data-table fallback, and the geometry that stays
+  PDF-only. Committed previews live under `assets/readme/examples/`
+  (`word-export-companion.pdf` / `.docx`); the examples module adds the
+  optional `poi-ooxml` dependency exactly like a consuming project would.
 - **`BusinessReportExample` chart is now a native vector chart.** The flagship
   report's five-quarter Revenue/Profit block previously rasterised a bar chart
   through Graphics2D into an embedded PNG; it now uses `ChartSpec.bar()` with a

@@ -103,6 +103,7 @@ final class ShowcaseMetadata {
         feature("chrome", "pdf-chrome", "PDF Chrome", "Headers, footers, watermarks, metadata, document protection / encryption.", "chrome", "metadata", "watermark");
         feature("streaming", "invoice-http-stream", "HTTP Streaming", "Stream PDF directly to a Servlet response with no buffering.", "streaming", "http");
         feature("snapshots", "invoice-snapshot-regression", "Layout Snapshots", "How LayoutSnapshotAssertions captures the resolved layout graph for regression testing.", "snapshots", "testing");
+        feature("docx", "word-export-companion", "Word Export (DOCX)", "DocxSemanticBackend — the same document as a fixed-layout PDF and an editable Word file; charts fall back to their data table.", "docx", "word", "export");
 
         // ===== Flagships =====
         flagship("master-showcase", "Master Showcase", "Kitchen-sink demo combining every primitive into a single document — the full GraphCompose surface.", "showcase");
@@ -206,6 +207,7 @@ final class ShowcaseMetadata {
             case "chrome" -> "chrome/PdfChromeExample.java";
             case "streaming" -> "streaming/HttpStreamingExample.java";
             case "snapshots" -> "snapshots/LayoutSnapshotRegressionExample.java";
+            case "docx" -> "docx/WordExportExample.java";
             default -> group + "/" + capitalize(id);
         };
         ENTRIES.put(id, entry(title, desc, withCategory(group, tags), EX_BASE + "/features/" + file));

@@ -98,7 +98,6 @@ public final class FeatureCatalogExample {
                     .centerText("Page {page} of {pages}")
                     .fontSize(8f).textColor(MUTED)
                     .build());
-
             var flow = document.pageFlow().name("FeatureCatalog").spacing(12);
 
             flow.addSection("Intro", s -> s
@@ -235,6 +234,33 @@ public final class FeatureCatalogExample {
                             .valueLabels(ValueLabelMode.OUTSIDE)
                             .size(ChartSize.fixedHeight(140)).build()));
 
+            feature(flow, "Images — classpath bytes, explicit size, fit modes", """
+                    DocumentImageData photo = DocumentImageData.fromBytes(
+                        getClass().getResourceAsStream("/engine-hero.png").readAllBytes());
+                    section.addImage(i -> i.source(photo).size(150, 84)
+                        .fitMode(DocumentImageFitMode.COVER))   // vs CONTAIN on the right""",
+                    demo -> demo.addRow(r -> r.spacing(14).weights(1, 1)
+                            .addSection("Cover", a -> a.addImage(i -> i
+                                    .source(catalogImage()).size(150, 84)
+                                    .fitMode(com.demcha.compose.document.image.DocumentImageFitMode.COVER)))
+                            .addSection("Contain", b -> b.addImage(i -> i
+                                    .source(catalogImage()).size(150, 84)
+                                    .fitMode(com.demcha.compose.document.image.DocumentImageFitMode.CONTAIN)))));
+
+            feature(flow, "Shapes — dividers, ellipses, soft cards", """
+                    section.addDivider(d -> d.width(420).thickness(2).color(GOLD));
+                    section.addEllipse(96, 44, TEAL);
+                    section.addShape(s -> s.size(150, 40).cornerRadius(10)
+                        .fillColor(rgb(248, 246, 240)).stroke(DocumentStroke.of(GOLD, 0.8)))""",
+                    demo -> demo
+                            .addDivider(d -> d.width(420).thickness(2).color(GOLD))
+                            .addRow(r -> r.spacing(14).weights(1, 1)
+                                    .addSection("El", a -> a.addEllipse(96, 44, TEAL))
+                                    .addSection("Card", b -> b.addShape(s -> s
+                                            .size(150, 40).cornerRadius(10)
+                                            .fillColor(DocumentColor.rgb(248, 246, 240))
+                                            .stroke(DocumentStroke.of(GOLD, 0.8))))));
+
             feature(flow, "Gradient fills — native linear and radial shadings", """
                     section.addShape(s -> s.size(420, 40).cornerRadius(8)
                         .fill(DocumentPaint.linear(TEAL, GOLD)));            // 0 deg = left -> right
@@ -325,9 +351,10 @@ public final class FeatureCatalogExample {
                     document.footer(…centerText("Page {page} of {pages}")…);
                     paragraph.bookmark(new DocumentBookmarkOptions("Feature catalog", 0))""",
                     demo -> demo.addParagraph(p -> p
-                            .text("Look up: the running header and the page-X-of-Y footer on every "
-                                    + "page of this catalog come from the calls above, and every block "
-                                    + "heading is a clickable entry in the PDF bookmarks panel.")
+                            .text("Look around: the running header and the page-X-of-Y footer on every "
+                                    + "page come from the calls above, and every block heading is a "
+                                    + "clickable entry in the PDF bookmarks panel. A document.watermark(…) "
+                                    + "call stamps text or an image behind or above the content the same way.")
                             .textStyle(THEME.text().body())
                             .lineSpacing(1.35)
                             .margin(DocumentInsets.zero())));
@@ -372,6 +399,18 @@ public final class FeatureCatalogExample {
                                     .margin(DocumentInsets.zero())));
             demo.accept(section);
         });
+    }
+
+    /** Classpath demo photo shared by the image fit-mode pair. */
+    private static com.demcha.compose.document.image.DocumentImageData catalogImage() {
+        try (java.io.InputStream stream = java.util.Objects.requireNonNull(
+                FeatureCatalogExample.class.getResourceAsStream("/engine-hero.png"),
+                "engine-hero.png missing from examples/src/main/resources/")) {
+            return com.demcha.compose.document.image.DocumentImageData.fromBytes(
+                    stream.readAllBytes());
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException("failed to load catalog demo image", e);
+        }
     }
 
     private static com.demcha.compose.document.node.DocumentNode badge(String text) {

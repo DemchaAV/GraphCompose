@@ -47,6 +47,16 @@ class NiceScaleTest {
     }
 
     @Test
+    void allNegativeRangeKeepsNegativeBounds() {
+        NiceScale s = NiceScale.compute(-30.0, -5.0, false, 5);
+        assertThat(s.niceMin()).isEqualTo(-30.0);
+        // ceil(-5 / 10) rounds the upper bound up to (negative) zero.
+        assertThat(s.niceMax()).isCloseTo(0.0, within(1e-12));
+        assertThat(s.tickStep()).isEqualTo(10.0);
+        assertThat(s.tickCount()).isEqualTo(4);
+    }
+
+    @Test
     void degenerateFlatRangeStillPlots() {
         NiceScale s = NiceScale.compute(7.0, 7.0, false, 5);
         assertThat(s.niceMax()).isGreaterThan(s.niceMin());

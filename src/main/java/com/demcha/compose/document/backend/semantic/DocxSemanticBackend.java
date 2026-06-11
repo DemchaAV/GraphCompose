@@ -166,7 +166,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                            com.demcha.compose.document.node.ListNode list) {
         for (String item : list.items()) {
             writeListLine(document, list.textStyle(),
-                    list.marker().value() + " " + item, 0);
+                    list.marker().prefix() + item, 0);
         }
         for (com.demcha.compose.document.node.ListItem item : list.nestedItems()) {
             writeNestedItem(document, list, item, 0);
@@ -177,8 +177,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                  com.demcha.compose.document.node.ListNode list,
                                  com.demcha.compose.document.node.ListItem item,
                                  int depth) {
-        String marker = item.marker() != null ? item.marker().value() : list.marker().value();
-        writeListLine(document, list.textStyle(), marker + " " + item.label(), depth);
+        // prefix() carries its own trailing space (and is empty for
+        // markerless lists), matching the fixed-layout text pipeline.
+        com.demcha.compose.document.node.ListMarker marker =
+                item.marker() != null ? item.marker() : list.marker();
+        writeListLine(document, list.textStyle(), marker.prefix() + item.label(), depth);
         for (com.demcha.compose.document.node.ListItem child : item.children()) {
             writeNestedItem(document, list, child, depth + 1);
         }

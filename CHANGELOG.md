@@ -111,6 +111,11 @@ Entries land here as they merge.
   style, with nested items indented per depth and keeping their own markers.
   (Found by the recipe fact-check: the docx-export recipe's "what is skipped"
   list could not honestly be written without it.)
+- **DOCX list items no longer double-space after the marker.** The new list
+  branch concatenated `ListMarker.value()` — which already carries its
+  trailing space — with another literal space, so every exported item read
+  `"•  text"`, and markerless lists gained a stray leading space. The export
+  now uses `ListMarker.prefix()`, matching the fixed-layout text pipeline.
 
 ### Documentation
 
@@ -144,6 +149,14 @@ Entries land here as they merge.
   text-metrics fake; `ChartLayoutSnapshotTest` layout snapshots + a
   fragment-lowering assertion; `SectionKeepTogetherTest` covers section,
   module, and timeline relocation plus the unchanged default.
+- Audit-driven edge-case coverage. DOCX semantic export: nested lists indent
+  two spaces per depth, per-depth custom markers survive, lists inside
+  sections export, empty lists are a no-op. Pagination: a keep-together
+  section taller than a full page still flows instead of relocating. Charts:
+  negative bar values extend the axis below zero and measure from the nice
+  floor, stacked bars skip non-positive segments, a one-point smooth/area
+  line keeps its marker and label, long category labels stay slot-sized,
+  tight-width legends keep every entry, all-negative `NiceScale` ranges.
 
 ## v1.7.1 — 2026-06-09
 

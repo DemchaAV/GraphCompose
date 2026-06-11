@@ -111,12 +111,12 @@ class DocxSemanticBackendTest {
             List<String> texts = document.getParagraphs().stream()
                     .map(XWPFParagraph::getText).toList();
             // Two spaces of indent per depth; without per-item markers the
-            // semantic export falls back to the list's top-level bullet at
-            // every level (the visual depth cascade is a layout-pass concern).
+            // semantic export falls back to the same depth cascade the
+            // fixed-layout pipeline uses (• ◦ ▪), so PDF and DOCX agree.
             assertThat(texts).contains(
                     "• Level zero",
-                    "  • Level one",
-                    "    • Level two");
+                    "  ◦ Level one",
+                    "    ▪ Level two");
         }
     }
 
@@ -139,10 +139,12 @@ class DocxSemanticBackendTest {
         try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
             List<String> texts = document.getParagraphs().stream()
                     .map(XWPFParagraph::getText).toList();
-            // The top-level custom marker and the per-depth override both
-            // survive the export.
+            // The per-depth override survives; the flat-list marker("→") does
+            // not leak into nested fallbacks — depth 0 takes the cascade
+            // bullet exactly as fixed-layout rendering does (markerFor(0, ...)
+            // is the way to control depth 0).
             assertThat(texts).contains(
-                    "→ Root",
+                    "• Root",
                     "  ‣ Child");
         }
     }

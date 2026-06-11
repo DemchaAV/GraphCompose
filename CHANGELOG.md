@@ -140,6 +140,16 @@ Entries land here as they merge.
   trailing space — with another literal space, so every exported item read
   `"•  text"`, and markerless lists gained a stray leading space. The export
   now uses `ListMarker.prefix()`, matching the fixed-layout text pipeline.
+- **DOCX list export fully matches the PDF list pipeline.** The semantic Word
+  backend resolved nested-item marker fallbacks against the flat-list marker
+  and skipped flat-item normalization, so the two outputs of one session
+  disagreed: a nested item without an explicit marker exported as the list
+  bullet where the PDF renders the depth cascade (`•` → `◦` → `▪` → `·`),
+  an author-typed `"- item"` doubled up as `"• - item"`, and blank items
+  produced marker-only paragraphs. Both rules now live in one shared place —
+  `ListMarker.defaultForDepth(int)` and
+  `ListMarker.normalizeItemText(String, boolean)` (`@since 1.8.0`) — and the
+  fixed-layout pipeline and the DOCX export both call them.
 
 ### Documentation
 

@@ -8,7 +8,7 @@ import com.demcha.compose.document.chart.ChartData;
 import com.demcha.compose.document.chart.ChartSize;
 import com.demcha.compose.document.chart.ChartSpec;
 import com.demcha.compose.document.chart.ChartStyle;
-import com.demcha.compose.document.chart.DocumentPaint;
+import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.chart.LegendPosition;
 import com.demcha.compose.document.chart.NumberFormatSpec;
 import com.demcha.compose.document.chart.PointMarker;

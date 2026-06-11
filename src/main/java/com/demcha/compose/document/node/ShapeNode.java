@@ -3,6 +3,7 @@ package com.demcha.compose.document.node;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTransform;
 
@@ -26,6 +27,10 @@ import java.awt.Color;
  *                  {@link DocumentTransform#NONE}. Layout snapshots stay
  *                  deterministic regardless of rotation/scale — backends
  *                  apply the transform during render only.
+ * @param fillPaint optional paint fill; when set it wins over
+ *                  {@code fillColor}. Gradients render as native shadings in
+ *                  the PDF backend; backends without shading support fall
+ *                  back to {@link DocumentPaint#primaryColor()}.
  *
  * @author Artem Demchyshyn
  */
@@ -40,8 +45,39 @@ public record ShapeNode(
         DocumentBookmarkOptions bookmarkOptions,
         DocumentInsets padding,
         DocumentInsets margin,
-        DocumentTransform transform
+        DocumentTransform transform,
+        DocumentPaint fillPaint
 ) implements DocumentNode {
+    /**
+     * Backwards-compatible canonical constructor without a paint fill.
+     *
+     * @param name node name used in snapshots and layout graph paths
+     * @param width resolved shape width
+     * @param height resolved shape height
+     * @param fillColor optional fill color
+     * @param stroke optional stroke descriptor
+     * @param cornerRadius optional render-only corner radius
+     * @param linkOptions optional node-level link metadata
+     * @param bookmarkOptions optional node-level bookmark metadata
+     * @param padding inner padding
+     * @param margin outer margin
+     * @param transform render-time affine transform
+     */
+    public ShapeNode(String name,
+                     double width,
+                     double height,
+                     DocumentColor fillColor,
+                     DocumentStroke stroke,
+                     DocumentCornerRadius cornerRadius,
+                     DocumentLinkOptions linkOptions,
+                     DocumentBookmarkOptions bookmarkOptions,
+                     DocumentInsets padding,
+                     DocumentInsets margin,
+                     DocumentTransform transform) {
+        this(name, width, height, fillColor, stroke, cornerRadius, linkOptions, bookmarkOptions,
+                padding, margin, transform, null);
+    }
+
     /**
      * Normalizes spacing defaults and validates explicit shape dimensions.
      */

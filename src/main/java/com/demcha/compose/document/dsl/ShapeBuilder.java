@@ -52,6 +52,7 @@ public class ShapeBuilder implements Transformable<ShapeBuilder> {
     protected double width;
     protected double height;
     protected DocumentColor fillColor;
+    protected com.demcha.compose.document.style.DocumentPaint fillPaint;
     protected DocumentStroke stroke;
     protected DocumentCornerRadius cornerRadius = DocumentCornerRadius.ZERO;
     protected DocumentLinkOptions linkOptions;
@@ -131,6 +132,21 @@ public class ShapeBuilder implements Transformable<ShapeBuilder> {
      */
     public ShapeBuilder fillColor(DocumentColor fillColor) {
         this.fillColor = fillColor;
+        return this;
+    }
+
+    /**
+     * Sets the shape fill with a {@link com.demcha.compose.document.style.DocumentPaint}
+     * — a solid colour or a gradient. When set, the paint wins over
+     * {@link #fillColor(DocumentColor)}; gradients render as native shadings in
+     * the PDF backend.
+     *
+     * @param paint fill paint, or {@code null} to clear
+     * @return this builder
+     * @since 1.8.0
+     */
+    public ShapeBuilder fill(com.demcha.compose.document.style.DocumentPaint paint) {
+        this.fillPaint = paint;
         return this;
     }
 
@@ -234,6 +250,7 @@ public class ShapeBuilder implements Transformable<ShapeBuilder> {
      * @return shape node
      */
     public ShapeNode build() {
-        return new ShapeNode(name, width, height, fillColor, stroke, cornerRadius, linkOptions, bookmarkOptions, padding, margin, transform);
+        return new ShapeNode(name, width, height, fillColor, stroke, cornerRadius, linkOptions,
+                bookmarkOptions, padding, margin, transform, fillPaint);
     }
 }

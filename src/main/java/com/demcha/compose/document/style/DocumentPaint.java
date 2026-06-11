@@ -1,18 +1,18 @@
-package com.demcha.compose.document.chart;
+package com.demcha.compose.document.style;
 
-import com.demcha.compose.document.style.DocumentColor;
 
 import java.util.List;
 import java.util.Objects;
 
 /**
- * A fill specification: a flat colour or a gradient. Lives in the chart package
- * for now, but is intended to graduate into
- * {@code com.demcha.compose.document.style} and replace bare {@link DocumentColor}
- * in every fillable surface (shape containers, panel backgrounds, page
- * backgrounds) once gradients land engine-wide. PDFBox renders gradients via
- * axial / radial shadings (PDShadingType2/3); until that work lands every
- * backend (and the v1 chart resolver) renders {@link #primaryColor()}.
+ * A fill specification: a flat colour or a multi-stop gradient. This is the
+ * single paint vocabulary every fillable surface shares — chart palettes
+ * today, shape and panel fills as they adopt the {@code fillPaint} component.
+ *
+ * <p>Backend contract: the PDF backend renders {@link Linear} and
+ * {@link Radial} as native axial / radial shadings; a backend (or surface)
+ * that cannot paint a gradient degrades to {@link #primaryColor()} — the
+ * first stop — so authoring code never branches per backend.</p>
  *
  * @author Artem Demchyshyn
  * @since 1.8.0

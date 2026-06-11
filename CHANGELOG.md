@@ -15,8 +15,8 @@ Entries land here as they merge.
   series, type/colour-agnostic), sealed `ChartSpec` (`bar()` / `line()` with
   axis, legend, value-label, and sizing knobs), `ChartStyle` (nullable-field
   cascade merged over `ChartTheme` tokens, per-series paint overrides), and
-  `DocumentPaint` (solid today; linear/radial gradient stops reserved for the
-  gradient work). Charts compile at layout time into existing primitives
+  `DocumentPaint` (solid, linear, and radial — see the gradient entry below).
+  Charts compile at layout time into existing primitives
   (shapes, lines, paragraphs) via `ChartDefinition` — no new render handlers,
   deterministic geometry, covered by the standard snapshot machinery; any
   fixed-layout backend renders charts with no chart-specific code, while the
@@ -68,6 +68,20 @@ Entries land here as they merge.
   configurable halo chip (`ChartStyle.valueLabelHalo(...)`, themed white) so
   digits stay legible where lines cross them, and deterministically flip below
   their point when two series' labels would collide at the same category.
+- **Gradient fills** (`@since 1.8.0`). `DocumentPaint` graduates to
+  `com.demcha.compose.document.style` as the shared paint vocabulary, and
+  gradients now actually render: `ShapeNode` gains an optional `fillPaint`
+  (`ShapeBuilder.fill(paint)`) that wins over `fillColor`. The PDF backend
+  paints `DocumentPaint.linear` as a native axial shading (0° = left→right,
+  90° = bottom→top; two stops exponential, more stops stitched) and
+  `DocumentPaint.radial` as a radial shading reaching the farthest corner,
+  clipped to the shape path — rounded corners included. Chart bars now carry
+  their full series paint, so a gradient palette renders as gradients instead
+  of degrading to the first stop. Solid paints normalise to the plain
+  fill-colour path, keeping existing documents byte-identical; backends
+  without shading support fall back to `primaryColor()` by contract. The
+  flagship `BusinessReportExample` hero is now fully vector — gradient-sky
+  shape plus polygon mountain ranges replace the last Graphics2D raster.
 - **Translucent shape colours** (`@since 1.8.0`). `DocumentColor.rgba(r, g, b, a)`
   and `withOpacity(0..1)`: the PDF backend honours the alpha channel on shape
   fills and strokes (rectangles/panels/bars, chart value-label halos, ellipse

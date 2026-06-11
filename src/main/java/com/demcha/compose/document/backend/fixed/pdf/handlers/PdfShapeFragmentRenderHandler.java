@@ -39,11 +39,12 @@ public final class PdfShapeFragmentRenderHandler
         }
 
         boolean hasFill = payload.fillColor() != null;
+        boolean hasGradient = payload.fillPaint() != null;
         boolean hasStroke = payload.stroke() != null
                 && payload.stroke().strokeColor() != null
                 && payload.stroke().width() > 0;
         boolean hasSideBorders = payload.sideBorders() != null && payload.sideBorders().hasAny();
-        if (!hasFill && !hasStroke && !hasSideBorders) {
+        if (!hasFill && !hasGradient && !hasStroke && !hasSideBorders) {
             return;
         }
 
@@ -65,7 +66,24 @@ public final class PdfShapeFragmentRenderHandler
             float bottomLeft = clampCornerRadius(radii.bottomLeft(), maxRadius);
             boolean anyRounded = topLeft > 0f || topRight > 0f || bottomRight > 0f || bottomLeft > 0f;
 
-            if (hasFill) {
+            if (hasGradient) {
+                // Clip to the shape's path inside a nested graphics state so the
+                // clip never leaks into the stroke pass, then paint the shading.
+                stream.saveGraphicsState();
+                try {
+                    if (anyRounded) {
+                        drawRoundedRectangle(stream, x, y, width, height,
+                                topLeft, topRight, bottomRight, bottomLeft);
+                    } else {
+                        stream.addRect(x, y, width, height);
+                    }
+                    stream.clip();
+                    stream.shadingFill(PdfShadingSupport.build(
+                            payload.fillPaint(), x, y, width, height));
+                } finally {
+                    stream.restoreGraphicsState();
+                }
+            } else if (hasFill) {
                 PdfAlphaSupport.applyFillAlpha(stream, payload.fillColor());
                 stream.setNonStrokingColor(payload.fillColor());
                 if (anyRounded) {

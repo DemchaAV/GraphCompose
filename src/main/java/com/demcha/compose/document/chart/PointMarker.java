@@ -1,5 +1,6 @@
 package com.demcha.compose.document.chart;
 
+import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentStroke;
 
 /**

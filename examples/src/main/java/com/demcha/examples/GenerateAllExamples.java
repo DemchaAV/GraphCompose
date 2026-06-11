@@ -3,6 +3,7 @@ package com.demcha.examples;
 import com.demcha.examples.features.barcodes.BarcodeShowcaseExample;
 import com.demcha.examples.features.charts.ChartShowcaseExample;
 import com.demcha.examples.features.canvas.CanvasLayerExample;
+import com.demcha.examples.features.debug.DebugOverlayExample;
 import com.demcha.examples.features.docx.WordExportExample;
 import com.demcha.examples.features.chrome.PdfChromeExample;
 import com.demcha.examples.features.lists.NestedListExample;
@@ -151,6 +152,7 @@ public final class GenerateAllExamples {
         // Pipelines + tooling
         System.out.println("Generated: " + HttpStreamingExample.generate());
         System.out.println("Generated: " + LayoutSnapshotRegressionExample.generate());
+        System.out.println("Generated: " + DebugOverlayExample.generate());
 
         // === Flagships ===
         System.out.println("Generated: " + ModuleFirstFileExample.generate());

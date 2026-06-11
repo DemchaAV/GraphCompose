@@ -94,20 +94,20 @@ final class DocumentChromeOptions {
 
     /**
      * Builds a configured {@link PdfFixedLayoutBackend} for the session's
-     * convenience PDF methods. When {@code guideLines} is {@code false} and
-     * no chrome is attached, returns the bare default backend so callers do
+     * convenience PDF methods. When no debug overlay is enabled and no
+     * chrome is attached, returns the bare default backend so callers do
      * not pay for empty option arrays.
      *
-     * @param guideLines whether the convenience PDF backend should draw
-     *                   guide-line overlays
+     * @param debug debug overlay options for the convenience PDF backend;
+     *              never {@code null}
      * @return ready-to-use PDF backend
      */
-    PdfFixedLayoutBackend toConveniencePdfBackend(boolean guideLines) {
-        if (!guideLines && isEmpty()) {
+    PdfFixedLayoutBackend toConveniencePdfBackend(PdfDebugOptions debug) {
+        if (!debug.enabled() && isEmpty()) {
             return new PdfFixedLayoutBackend();
         }
         PdfFixedLayoutBackend.Builder builder = PdfFixedLayoutBackend.builder()
-                .guideLines(guideLines)
+                .debug(debug)
                 .metadata(PdfOutputOptionsTranslator.toPdf(metadata))
                 .watermark(PdfOutputOptionsTranslator.toPdf(watermark))
                 .protect(PdfOutputOptionsTranslator.toPdf(protection));

@@ -6,6 +6,7 @@ import com.demcha.compose.font.FontShowcase;
 import com.demcha.compose.font.DefaultFonts;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfDebugOptions;
 import com.demcha.compose.document.style.DocumentInsets;
 
 import java.nio.file.Path;
@@ -140,6 +141,7 @@ public final class GraphCompose {
         private DocumentInsets margin = DocumentInsets.zero();
         private boolean markdown = true;
         private boolean guideLines;
+        private PdfDebugOptions debug;
         private com.demcha.compose.document.style.DocumentColor pageBackground;
         private java.util.List<com.demcha.compose.document.api.PageBackgroundFill> pageBackgrounds;
         private final List<FontFamilyDefinition> customFontFamilies = new ArrayList<>();
@@ -223,6 +225,24 @@ public final class GraphCompose {
          */
         public DocumentBuilder guideLines(boolean enabled) {
             this.guideLines = enabled;
+            return this;
+        }
+
+        /**
+         * Configures PDF debug overlays (guide lines and semantic node labels)
+         * for the session's convenience PDF output.
+         *
+         * <p>Combines with {@link #guideLines(boolean)}: when both switches are
+         * used, the guide overlay is enabled if either of them requests it.
+         * Like guide lines, debug overlays draw on top of regular content and
+         * never alter semantic layout geometry or layout snapshots.</p>
+         *
+         * @param options debug overlay options, or {@code null} for none
+         * @return this builder
+         * @since 1.8.0
+         */
+        public DocumentBuilder debug(PdfDebugOptions options) {
+            this.debug = options;
             return this;
         }
 
@@ -391,6 +411,9 @@ public final class GraphCompose {
                     List.copyOf(customFontFamilies),
                     markdown,
                     guideLines);
+            if (debug != null) {
+                session.debug(debug.withGuides(debug.showGuides() || guideLines));
+            }
             if (pageBackgrounds != null) {
                 // Explicit pageBackgrounds() call wins over a prior
                 // pageBackground(color). Empty list = clear; see builder Javadoc.

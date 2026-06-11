@@ -104,6 +104,7 @@ final class ShowcaseMetadata {
         feature("streaming", "invoice-http-stream", "HTTP Streaming", "Stream PDF directly to a Servlet response with no buffering.", "streaming", "http");
         feature("snapshots", "invoice-snapshot-regression", "Layout Snapshots", "How LayoutSnapshotAssertions captures the resolved layout graph for regression testing.", "snapshots", "testing");
         feature("docx", "word-export-companion", "Word Export (DOCX)", "DocxSemanticBackend — the same document as a fixed-layout PDF and an editable Word file; charts fall back to their data table.", "docx", "word", "export");
+        feature("debug", "debug-overlay", "Debug Overlay", "PdfDebugOptions — guide lines plus semantic node-path labels on the rendered sheet; trace any misplaced block back to the builder call that authored it.", "debug", "labels", "v1.8");
 
         // ===== Flagships =====
         flagship("master-showcase", "Master Showcase", "Kitchen-sink demo combining every primitive into a single document — the full GraphCompose surface.", "showcase");
@@ -141,6 +142,7 @@ final class ShowcaseMetadata {
             case "features/chrome" -> "PDF Chrome (header / footer / watermark)";
             case "features/streaming" -> "Streaming & I/O";
             case "features/snapshots" -> "Snapshot Testing";
+            case "features/debug" -> "Debug & Diagnostics";
             case "flagships/default" -> "Flagship Demos";
             default -> capitalize(group);
         };

@@ -40,7 +40,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
     private static final Logger RENDER_LOG = LoggerFactory.getLogger("com.demcha.compose.engine.render");
 
     private final Map<Class<?>, PdfFragmentRenderHandler<?>> handlers;
-    private final boolean guideLines;
+    private final PdfDebugOptions debug;
     private final PdfMetadataOptions metadataOptions;
     private final PdfWatermarkOptions watermarkOptions;
     private final PdfProtectionOptions protectionOptions;
@@ -50,15 +50,15 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
      * Creates a backend with the built-in paragraph, shape, image, and table handlers.
      */
     public PdfFixedLayoutBackend() {
-        this(defaultHandlers(), false, null, null, null, List.of());
+        this(defaultHandlers(), PdfDebugOptions.none(), null, null, null, List.of());
     }
 
     PdfFixedLayoutBackend(Collection<? extends PdfFragmentRenderHandler<?>> handlers) {
-        this(handlers, false, null, null, null, List.of());
+        this(handlers, PdfDebugOptions.none(), null, null, null, List.of());
     }
 
     private PdfFixedLayoutBackend(Collection<? extends PdfFragmentRenderHandler<?>> handlers,
-                                  boolean guideLines,
+                                  PdfDebugOptions debug,
                                   PdfMetadataOptions metadataOptions,
                                   PdfWatermarkOptions watermarkOptions,
                                   PdfProtectionOptions protectionOptions,
@@ -71,7 +71,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
             }
         }
         this.handlers = Map.copyOf(registry);
-        this.guideLines = guideLines;
+        this.debug = debug == null ? PdfDebugOptions.none() : debug;
         this.metadataOptions = metadataOptions;
         this.watermarkOptions = watermarkOptions;
         this.protectionOptions = protectionOptions;
@@ -192,12 +192,12 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
 
         long startNanos = System.nanoTime();
         RENDER_LOG.debug(
-                "render.pdf.fixed.start pages={} fragments={} outputConfigured={} streamConfigured={} guideLines={}",
+                "render.pdf.fixed.start pages={} fragments={} outputConfigured={} streamConfigured={} debug={}",
                 graph.totalPages(),
                 graph.fragments().size(),
                 context.outputFile() != null,
                 context.outputStream() != null,
-                guideLines);
+                debug);
         try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             int pageCount = renderToOutput(graph, context, output);
             byte[] bytes = output.toByteArray();
@@ -240,11 +240,11 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
 
         long startNanos = System.nanoTime();
         RENDER_LOG.debug(
-                "render.pdf.fixed.stream.start pages={} fragments={} outputConfigured={} guideLines={}",
+                "render.pdf.fixed.stream.start pages={} fragments={} outputConfigured={} debug={}",
                 graph.totalPages(),
                 graph.fragments().size(),
                 context.outputFile() != null,
-                guideLines);
+                debug);
         try {
             int pageCount;
             if (context.outputFile() == null) {
@@ -280,18 +280,19 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
 
             try (PdfRenderSession session = new PdfRenderSession(document, pages)) {
                 PdfRenderEnvironment environment = new PdfRenderEnvironment(document, fonts, session);
-                Map<String, Map<Integer, PdfGuideLinesRenderer.Bounds>> ownerBounds = guideLines
+                Map<String, Map<Integer, PdfGuideLinesRenderer.Bounds>> ownerBounds = debug.enabled()
                         ? PdfGuideLinesRenderer.computeOwnerBounds(graph.fragments())
                         : Map.of();
+                Set<String> labelKeys = debug.showNodeLabels() ? new HashSet<>() : Set.of();
                 PdfFragmentRenderHandler<?> tableRowHandler = handlers.get(TableRowFragmentPayload.class);
                 for (int index = 0; index < graph.fragments().size(); index++) {
                     PlacedFragment fragment = graph.fragments().get(index);
                     if (fragment.payload() instanceof TableRowFragmentPayload
                         && tableRowHandler instanceof PdfTableRowFragmentRenderHandler tableHandler) {
-                        index = renderTableRowGroup(graph.fragments(), index, tableHandler, environment, guideLines, ownerBounds);
+                        index = renderTableRowGroup(graph.fragments(), index, tableHandler, environment, ownerBounds, labelKeys);
                         continue;
                     }
-                    renderFragment(fragment, environment, guideLines, ownerBounds);
+                    renderFragment(fragment, environment, ownerBounds, labelKeys);
                 }
                 PdfBookmarkOutlineWriter.apply(document, environment.bookmarkRecords());
             }
@@ -313,8 +314,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                                     int startIndex,
                                     PdfTableRowFragmentRenderHandler handler,
                                     PdfRenderEnvironment environment,
-                                    boolean guideLines,
-                                    Map<String, Map<Integer, PdfGuideLinesRenderer.Bounds>> ownerBounds) throws Exception {
+                                    Map<String, Map<Integer, PdfGuideLinesRenderer.Bounds>> ownerBounds,
+                                    Set<String> labelKeys) throws Exception {
         String tablePath = fragments.get(startIndex).path();
         int endExclusive = startIndex;
         while (endExclusive < fragments.size()
@@ -335,7 +336,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
             TableRowFragmentPayload payload =
                     (TableRowFragmentPayload) fragment.payload();
             handler.renderBordersAndText(fragment, payload, environment);
-            finishRenderedFragment(fragment, payload, environment, guideLines, ownerBounds);
+            finishRenderedFragment(fragment, payload, environment, ownerBounds, labelKeys);
         }
 
         return endExclusive - 1;
@@ -355,19 +356,19 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
 
     private void renderFragment(PlacedFragment fragment,
                                 PdfRenderEnvironment environment,
-                                boolean guideLines,
-                                Map<String, Map<Integer, PdfGuideLinesRenderer.Bounds>> ownerBounds) throws Exception {
+                                Map<String, Map<Integer, PdfGuideLinesRenderer.Bounds>> ownerBounds,
+                                Set<String> labelKeys) throws Exception {
         Object payload = fragment.payload();
         PdfFragmentRenderHandler<Object> handler = handlerFor(payload);
         handler.render(fragment, payload, environment);
-        finishRenderedFragment(fragment, payload, environment, guideLines, ownerBounds);
+        finishRenderedFragment(fragment, payload, environment, ownerBounds, labelKeys);
     }
 
     private void finishRenderedFragment(PlacedFragment fragment,
                                         Object payload,
                                         PdfRenderEnvironment environment,
-                                        boolean guideLines,
-                                        Map<String, Map<Integer, PdfGuideLinesRenderer.Bounds>> ownerBounds) throws Exception {
+                                        Map<String, Map<Integer, PdfGuideLinesRenderer.Bounds>> ownerBounds,
+                                        Set<String> labelKeys) throws Exception {
         if (payload instanceof ParagraphFragmentPayload paragraphPayload) {
             addParagraphLinks(fragment, paragraphPayload, environment);
         }
@@ -386,8 +387,11 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                 environment.registerBookmark(fragment, semanticPayload.bookmarkOptions());
             }
         }
-        if (guideLines) {
+        if (debug.showGuides()) {
             PdfGuideLinesRenderer.draw(fragment, payload, environment, ownerBounds);
+        }
+        if (debug.showNodeLabels()) {
+            PdfNodeLabelRenderer.draw(fragment, environment, ownerBounds, labelKeys, debug.labelText());
         }
     }
 
@@ -483,7 +487,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
     public static final class Builder {
         private final List<PdfHeaderFooterOptions> headerFooterOptions = new ArrayList<>();
         private final List<PdfFragmentRenderHandler<?>> additionalHandlers = new ArrayList<>();
-        private boolean guideLines;
+        private PdfDebugOptions debug = PdfDebugOptions.none();
         private PdfMetadataOptions metadataOptions;
         private PdfWatermarkOptions watermarkOptions;
         private PdfProtectionOptions protectionOptions;
@@ -528,11 +532,31 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         /**
          * Enables or disables guide-line overlays in rendered PDFs.
          *
+         * <p>Convenience switch equivalent to toggling
+         * {@link PdfDebugOptions#withGuides(boolean)} on the current debug
+         * configuration; node-label settings made via {@link #debug(PdfDebugOptions)}
+         * are preserved.</p>
+         *
          * @param enabled {@code true} to draw guide lines
          * @return this builder
          */
         public Builder guideLines(boolean enabled) {
-            this.guideLines = enabled;
+            this.debug = this.debug.withGuides(enabled);
+            return this;
+        }
+
+        /**
+         * Configures debug overlays (guide lines and semantic node labels).
+         *
+         * <p>Replaces the whole debug configuration; {@code null} resets to
+         * {@link PdfDebugOptions#none()}.</p>
+         *
+         * @param options debug overlay options, or {@code null} to disable all
+         * @return this builder
+         * @since 1.8.0
+         */
+        public Builder debug(PdfDebugOptions options) {
+            this.debug = options == null ? PdfDebugOptions.none() : options;
             return this;
         }
 
@@ -607,7 +631,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         public PdfFixedLayoutBackend build() {
             return new PdfFixedLayoutBackend(
                     mergeHandlers(defaultHandlers(), additionalHandlers),
-                    guideLines,
+                    debug,
                     metadataOptions,
                     watermarkOptions,
                     protectionOptions,

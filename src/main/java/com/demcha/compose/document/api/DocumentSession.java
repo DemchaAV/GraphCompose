@@ -4,6 +4,7 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.pdf.PdfMeasurementResources;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfDebugOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
@@ -73,7 +74,7 @@ public final class DocumentSession implements AutoCloseable {
     private DocumentInsets margin;
     private LayoutCanvas canvas;
     private boolean markdown;
-    private boolean guideLines;
+    private PdfDebugOptions debug = PdfDebugOptions.none();
     private List<PageBackgroundFill> pageBackgrounds = List.of();
     private PdfMeasurementResources measurementResources;
     private boolean closed;
@@ -100,7 +101,7 @@ public final class DocumentSession implements AutoCloseable {
         this.margin = margin == null ? DocumentInsets.zero() : margin;
         this.canvas = LayoutCanvas.from(pageSize.width(), pageSize.height(), toEngineMargin(this.margin));
         this.markdown = markdown;
-        this.guideLines = guideLines;
+        this.debug = PdfDebugOptions.none().withGuides(guideLines);
         this.registry = BuiltInNodeDefinitions.registerDefaults(new InvalidatingNodeRegistry());
         this.compiler = new LayoutCompiler(registry);
         this.customFontFamilies.addAll(List.copyOf(customFontFamilies));
@@ -308,12 +309,40 @@ public final class DocumentSession implements AutoCloseable {
      * and {@link #toPdfBytes()}. It does not change the semantic layout graph,
      * so existing layout cache entries remain valid.</p>
      *
+     * <p>Shorthand for toggling only the guide overlay on the current
+     * {@link #debug(PdfDebugOptions) debug} configuration; node-label
+     * settings are preserved.</p>
+     *
      * @param enabled {@code true} to draw debug guide-line overlays
      * @return this session
      */
     public DocumentSession guideLines(boolean enabled) {
         ensureOpen();
-        this.guideLines = enabled;
+        this.debug = this.debug.withGuides(enabled);
+        return this;
+    }
+
+    /**
+     * Configures PDF debug overlays (guide lines and semantic node labels)
+     * for convenience PDF output.
+     *
+     * <p>This option affects {@link #buildPdf()}, {@link #writePdf(OutputStream)},
+     * and {@link #toPdfBytes()}. Debug overlays draw on top of regular content
+     * and never participate in measurement or pagination, so the semantic
+     * layout graph and existing layout cache entries remain valid.</p>
+     *
+     * <p>Node labels print each node's stable semantic path — the same path
+     * reported by {@link #layoutSnapshot()} — so a misplaced block on the
+     * sheet can be traced straight back to the builder call that authored
+     * it.</p>
+     *
+     * @param options debug overlay options; {@code null} disables all overlays
+     * @return this session
+     * @since 1.8.0
+     */
+    public DocumentSession debug(PdfDebugOptions options) {
+        ensureOpen();
+        this.debug = options == null ? PdfDebugOptions.none() : options;
         return this;
     }
 
@@ -1008,7 +1037,7 @@ public final class DocumentSession implements AutoCloseable {
 
         @Override
         public PdfFixedLayoutBackend conveniencePdfBackend() {
-            return chromeOptions.toConveniencePdfBackend(guideLines);
+            return chromeOptions.toConveniencePdfBackend(debug);
         }
     }
 }

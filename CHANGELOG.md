@@ -104,6 +104,21 @@ Entries land here as they merge.
   Consumers who relied on the helper can copy the former ~100-line class into
   their own codebase or load configs directly with Jackson
   (`new ObjectMapper(new YAMLFactory()).readValue(...)`).
+- **PDF debug node labels** (`@since 1.8.0`). The debug overlay grew a second
+  layer: `PdfDebugOptions` (guides + node labels + label-text mode) configures
+  the canonical PDF backend via `GraphCompose.document(...).debug(...)`,
+  `DocumentSession.debug(...)`, or `PdfFixedLayoutBackend.builder().debug(...)`.
+  With `nodeLabels()` enabled, every rendered node prints its stable semantic
+  path — the same path `layoutSnapshot()` reports — once per node and page at
+  the node's top-left corner (5pt Helvetica on a pale halo), so a misplaced
+  block on the sheet reads straight back to the builder call that authored it.
+  `LabelText.NAME` (default) prints the compact own segment
+  (`PriceSummaryTitle[0]`); `FULL_PATH` prints the whole ancestry. The overlay
+  uses the base-14 Helvetica font (non-WinAnsi name characters degrade to
+  `?`), draws strictly on top of content, and never touches measurement or
+  pagination. `guideLines(boolean)` everywhere became sugar over the new
+  options — node-label settings survive the toggle — and disabled debug
+  output stays byte-identical.
 
 ### Bug fixes
 

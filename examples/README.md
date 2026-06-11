@@ -95,6 +95,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | [HTTP streaming](#http-streaming) | `writePdf(OutputStream)` for Servlet / S3 / GCS — caller's stream is not closed | [PDF](../assets/readme/examples/invoice-http-stream.pdf) · [Source](src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java) |
 | [Word export (DOCX)](#word-export-docx) | `DocxSemanticBackend` — the same session renders a fixed-layout PDF and an editable Word file; paragraphs / lists / tables / images map 1:1, charts fall back to their data table | [PDF](../assets/readme/examples/word-export-companion.pdf) · [DOCX](../assets/readme/examples/word-export-companion.docx) · [Source](src/main/java/com/demcha/examples/features/docx/WordExportExample.java) |
 | [Layout snapshot regression](#layout-snapshot-regression) | Deterministic `layoutSnapshot()` workflow with baseline + drift report — production regression-testing pattern | [PDF](../assets/readme/examples/invoice-snapshot-regression.pdf) · [Source](src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java) |
+| [Debug overlay](#debug-overlay) | `PdfDebugOptions` — guide lines + semantic node-path labels on the sheet; trace any misplaced block back to the builder call that authored it | [PDF](../assets/readme/examples/debug-overlay.pdf) · [Source](src/main/java/com/demcha/examples/features/debug/DebugOverlayExample.java) |
 | [Business report cover](#business-report-cover) | Single-page Q1 investor brief — hero image, KPI cards, bar chart, metrics table | [PDF](../assets/readme/examples/business-report.pdf) · [Source](src/main/java/com/demcha/examples/flagships/BusinessReportExample.java) |
 | [Master showcase](#master-showcase) | Kitchen-sink "Q2 sample report" combining the canonical surface end-to-end | [PDF](../assets/readme/examples/master-showcase.pdf) · [Source](src/main/java/com/demcha/examples/flagships/MasterShowcaseExample.java) |
 | Feature catalog | Browsable reference PDF: every shipped capability as a block — outline-clickable heading, the exact API call, the rendered result right under it | [PDF](../assets/readme/examples/feature-catalog.pdf) · [Source](src/main/java/com/demcha/examples/flagships/FeatureCatalogExample.java) |
@@ -641,6 +642,33 @@ document.buildPdf();
 
 [📄 View PDF](../assets/readme/examples/invoice-snapshot-regression.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java)
+
+### Debug overlay
+
+One switch turns the rendered sheet into a self-describing layout map:
+fragment boxes, dashed margin / padding guides, and a small purple label
+with each node's stable semantic path — the same path
+`layoutSnapshot()` reports. Spot a misplaced block on paper, read its
+label, then search that name in your builder code.
+
+```java
+try (DocumentSession document = GraphCompose.document(outputFile)
+        .debug(PdfDebugOptions.guidesAndNodeLabels())
+        .create()) {
+    document.pageFlow(page -> page
+            .module("InvoiceHeader", m -> m.paragraph("ACME Corp — Invoice 2026-104")));
+    document.buildPdf();
+}
+```
+
+Labels default to the compact own segment (`InvoiceHeaderTitle[0]`);
+`PdfDebugOptions.LabelText.FULL_PATH` prints the whole ancestor chain
+instead. Debug overlays draw strictly on top of content and never
+affect measurement or pagination — disabling them returns the exact
+production bytes.
+
+[📄 View PDF](../assets/readme/examples/debug-overlay.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/debug/DebugOverlayExample.java)
 
 ---
 

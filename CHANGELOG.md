@@ -104,21 +104,28 @@ Entries land here as they merge.
   Consumers who relied on the helper can copy the former ~100-line class into
   their own codebase or load configs directly with Jackson
   (`new ObjectMapper(new YAMLFactory()).readValue(...)`).
-- **PDF debug node labels** (`@since 1.8.0`). The debug overlay grew a second
-  layer: `PdfDebugOptions` (guides + node labels + label-text mode) configures
-  the canonical PDF backend via `GraphCompose.document(...).debug(...)`,
-  `DocumentSession.debug(...)`, or `PdfFixedLayoutBackend.builder().debug(...)`.
-  With `nodeLabels()` enabled, every rendered node prints its stable semantic
-  path — the same path `layoutSnapshot()` reports — once per node and page at
-  the node's top-left corner (5pt Helvetica on a pale halo), so a misplaced
-  block on the sheet reads straight back to the builder call that authored it.
-  `LabelText.NAME` (default) prints the compact own segment
-  (`PriceSummaryTitle[0]`); `FULL_PATH` prints the whole ancestry. The overlay
-  uses the base-14 Helvetica font (non-WinAnsi name characters degrade to
-  `?`), draws strictly on top of content, and never touches measurement or
-  pagination. `guideLines(boolean)` everywhere became sugar over the new
-  options — node-label settings survive the toggle — and disabled debug
-  output stays byte-identical.
+- **Debug node labels** (`@since 1.8.0`). The debug overlay grew a second
+  layer: backend-neutral `DocumentDebugOptions` (guides + node labels +
+  label-text mode, in `document.output` next to the other neutral output
+  options) configures fixed-layout rendering via
+  `GraphCompose.document(...).debug(...)`, `DocumentSession.debug(...)`, or
+  `PdfFixedLayoutBackend.builder().debug(...)`. With `nodeLabels()` enabled,
+  every rendered node prints its stable semantic path — the same path
+  `layoutSnapshot()` reports — once per node and page, as a small corner
+  badge straddling the top edge of the node's bounds (right-aligned 5pt
+  Helvetica on a pale halo), so a misplaced block on the sheet reads straight
+  back to the builder call that authored it. Labels paint as a single
+  deterministic post-pass after all content, so badges always sit on top —
+  a container's children or a higher layer can never overdraw the label that
+  annotates them. `LabelText.NAME` (default) prints the compact own segment
+  (`PriceSummaryTitle[0]`); `FULL_PATH` prints the whole ancestry. Label text
+  degrades through the shared WinAnsi fallback (accents like `é` survive,
+  anything outside WinAnsi becomes `?` with a `glyph.missing` log). The
+  overlay draws strictly on top of content and never touches measurement or
+  pagination. `guideLines(boolean)` everywhere became sugar over the options
+  object with uniform last-write-wins semantics on all three surfaces —
+  node-label settings survive the toggle, `debug(none())` reliably disables
+  everything — and disabled debug output stays byte-identical.
 
 ### Bug fixes
 

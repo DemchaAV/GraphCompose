@@ -2,7 +2,7 @@ package com.demcha.compose.document.backend.fixed.pdf;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfDebugOptions;
+import com.demcha.compose.document.output.DocumentDebugOptions;
 import com.demcha.compose.document.style.DocumentInsets;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -24,7 +24,7 @@ class PdfDebugNodeLabelsTest {
 
     @Test
     void nodeLabelsPrintLeafSegmentByDefault() throws Exception {
-        String text = extractText(render(PdfDebugOptions.nodeLabels(), "PriceSummary"));
+        String text = extractText(render(DocumentDebugOptions.nodeLabels(), "PriceSummary"));
 
         // The module title is an auto-named paragraph at child index 0; the
         // body paragraph follows at index 1.
@@ -37,7 +37,7 @@ class PdfDebugNodeLabelsTest {
     @Test
     void fullPathLabelsIncludeAncestry() throws Exception {
         String text = extractText(render(
-                PdfDebugOptions.nodeLabels().withLabelText(PdfDebugOptions.LabelText.FULL_PATH),
+                DocumentDebugOptions.nodeLabels().withLabelText(DocumentDebugOptions.LabelText.FULL_PATH),
                 "PriceSummary"));
 
         assertThat(text).contains("PriceSummary[0]");
@@ -54,7 +54,7 @@ class PdfDebugNodeLabelsTest {
 
     @Test
     void guideOverlayAloneDrawsNoLabels() throws Exception {
-        String text = extractText(render(PdfDebugOptions.guides(), "PriceSummary"));
+        String text = extractText(render(DocumentDebugOptions.guides(), "PriceSummary"));
 
         assertThat(text).doesNotContain("ParagraphNode[1]");
         assertThat(text).doesNotContain("PriceSummaryTitle[0]");
@@ -66,7 +66,7 @@ class PdfDebugNodeLabelsTest {
                 .pageSize(340, 260)
                 .margin(DocumentInsets.of(18))
                 .create()) {
-            document.debug(PdfDebugOptions.nodeLabels());
+            document.debug(DocumentDebugOptions.nodeLabels());
             document.guideLines(true);
             document.pageFlow(page -> page.module("PriceSummary",
                     module -> module.paragraph("Body copy")));
@@ -77,9 +77,83 @@ class PdfDebugNodeLabelsTest {
     }
 
     @Test
+    void winAnsiEncodableAccentsSurviveInLabels() throws Exception {
+        String text = extractText(render(DocumentDebugOptions.nodeLabels(), "Résumé"));
+
+        // é is WinAnsi-encodable, so the shared GlyphFallbackLogger
+        // degradation keeps it intact instead of mangling it to '?'.
+        assertThat(text).contains("RésuméTitle[0]");
+        assertThat(text).doesNotContain("R?sum?Title[0]");
+    }
+
+    @Test
+    void builderDebugAfterGuideLinesReplacesTheWholeConfig() throws Exception {
+        // Last-write-wins on the GraphCompose builder, same as the session:
+        // debug(none()) after guideLines(true) disables everything, so the
+        // bytes match a render that never enabled debug at all.
+        byte[] disabled;
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(340, 260)
+                .margin(DocumentInsets.of(18))
+                .guideLines(true)
+                .debug(DocumentDebugOptions.none())
+                .create()) {
+            document.pageFlow(page -> page.module("PriceSummary",
+                    module -> module.paragraph("Body copy for the overlay test")));
+            disabled = document.toPdfBytes();
+        }
+        byte[] plain = render(null, "PriceSummary");
+
+        assertThat(disabled).hasSameSizeAs(plain);
+    }
+
+    @Test
+    void builderGuideLinesAfterDebugPreservesLabelSettings() throws Exception {
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(340, 260)
+                .margin(DocumentInsets.of(18))
+                .debug(DocumentDebugOptions.nodeLabels())
+                .guideLines(true)
+                .create()) {
+            document.pageFlow(page -> page.module("PriceSummary",
+                    module -> module.paragraph("Body copy")));
+
+            String text = extractText(document.toPdfBytes());
+            assertThat(text).contains("ParagraphNode[1]");
+        }
+    }
+
+    @Test
+    void splitOwnersAreLabelledOnEveryPageTheyTouch() throws Exception {
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(220, 120)
+                .margin(DocumentInsets.of(16))
+                .debug(DocumentDebugOptions.nodeLabels())
+                .create()) {
+            document.pageFlow(page -> page.module("LongStory",
+                    module -> module.paragraph("flow ".repeat(160))));
+
+            byte[] pdf = document.toPdfBytes();
+            try (PDDocument loaded = Loader.loadPDF(pdf)) {
+                assertThat(loaded.getNumberOfPages()).isGreaterThan(1);
+                PDFTextStripper firstPage = new PDFTextStripper();
+                firstPage.setStartPage(1);
+                firstPage.setEndPage(1);
+                PDFTextStripper secondPage = new PDFTextStripper();
+                secondPage.setStartPage(2);
+                secondPage.setEndPage(2);
+                // The split paragraph's owner gets one badge on each page it
+                // touches, not just on the page of its first fragment.
+                assertThat(firstPage.getText(loaded)).contains("ParagraphNode[1]");
+                assertThat(secondPage.getText(loaded)).contains("ParagraphNode[1]");
+            }
+        }
+    }
+
+    @Test
     void nonWinAnsiNamesDegradeToPlaceholders() throws Exception {
         String text = extractText(render(
-                PdfDebugOptions.nodeLabels().withLabelText(PdfDebugOptions.LabelText.FULL_PATH),
+                DocumentDebugOptions.nodeLabels().withLabelText(DocumentDebugOptions.LabelText.FULL_PATH),
                 "Шапка"));
 
         // The five Cyrillic letters survive name normalization but exceed the
@@ -92,7 +166,7 @@ class PdfDebugNodeLabelsTest {
     @Test
     void disabledDebugOptionsMatchTheDefaultRender() throws Exception {
         byte[] plain = render(null, "PriceSummary");
-        byte[] explicitNone = render(PdfDebugOptions.none(), "PriceSummary");
+        byte[] explicitNone = render(DocumentDebugOptions.none(), "PriceSummary");
 
         assertThat(new String(plain, 0, 5, StandardCharsets.US_ASCII)).isEqualTo("%PDF-");
         assertThat(new String(explicitNone, 0, 5, StandardCharsets.US_ASCII)).isEqualTo("%PDF-");
@@ -101,7 +175,7 @@ class PdfDebugNodeLabelsTest {
         assertThat(explicitNone).hasSameSizeAs(plain);
     }
 
-    private static byte[] render(PdfDebugOptions debug, String moduleName) throws Exception {
+    private static byte[] render(DocumentDebugOptions debug, String moduleName) throws Exception {
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(340, 260)
                 .margin(DocumentInsets.of(18))

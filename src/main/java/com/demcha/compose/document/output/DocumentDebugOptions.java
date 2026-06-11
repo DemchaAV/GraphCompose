@@ -1,33 +1,38 @@
-package com.demcha.compose.document.backend.fixed.pdf.options;
+package com.demcha.compose.document.output;
 
 import java.util.Objects;
 
 /**
- * Debug-overlay configuration for the canonical PDF backend.
+ * Debug-overlay configuration for fixed-layout document rendering.
  *
  * <p>Debug overlays are development aids drawn on top of the regular page
  * content. They never participate in measurement or pagination, so enabling
  * them does not change the layout graph — and leaving them disabled (the
- * default) keeps rendered documents byte-identical to previous releases.</p>
+ * default) keeps rendered documents byte-identical to previous releases.
+ * Like the other backend-neutral output options in this package
+ * ({@link DocumentWatermark}, {@link DocumentMetadata}, …), the carrier is
+ * format-agnostic; the canonical PDF backend implements both overlays today,
+ * and future fixed-layout backends can honour the same options.</p>
  *
  * <p>Two overlays are available:</p>
  * <ul>
  *   <li><b>Guides</b> — fragment boxes plus dashed margin/padding rectangles,
  *       the overlay previously toggled by the {@code guideLines(boolean)}
  *       convenience switch.</li>
- *   <li><b>Node labels</b> — the stable semantic path of the owning node
- *       printed once per node and page at the top-left corner of the node's
- *       bounds. Labels make a misplaced block traceable back to the exact
- *       builder call that authored it: name nodes via the DSL (for example
- *       {@code pageFlow().name("InvoiceSheet")}; module titles auto-name
- *       their blocks) and the same name appears on the sheet and in
- *       {@code DocumentSession.layoutSnapshot()}.</li>
+ *   <li><b>Node labels</b> — the stable semantic path of the owning node,
+ *       printed once per node and page as a small corner badge straddling
+ *       the top edge of the node's bounds (right-aligned, so it rarely
+ *       covers the node's own text). Labels make a misplaced block traceable
+ *       back to the exact builder call that authored it: name nodes via the
+ *       DSL (for example {@code pageFlow().name("InvoiceSheet")}; module
+ *       titles auto-name their blocks) and the same name appears on the
+ *       sheet and in {@code DocumentSession.layoutSnapshot()}.</li>
  * </ul>
  *
  * <p>Typical usage through the session convenience API:</p>
  * <pre>{@code
  * try (DocumentSession document = GraphCompose.document(out)
- *         .debug(PdfDebugOptions.guidesAndNodeLabels())
+ *         .debug(DocumentDebugOptions.guidesAndNodeLabels())
  *         .create()) {
  *     // author content ...
  *     document.buildPdf();
@@ -42,14 +47,14 @@ import java.util.Objects;
  * @author Artem Demchyshyn
  * @since 1.8.0
  */
-public record PdfDebugOptions(boolean showGuides, boolean showNodeLabels, LabelText labelText) {
+public record DocumentDebugOptions(boolean showGuides, boolean showNodeLabels, LabelText labelText) {
 
-    private static final PdfDebugOptions NONE = new PdfDebugOptions(false, false, LabelText.NAME);
+    private static final DocumentDebugOptions NONE = new DocumentDebugOptions(false, false, LabelText.NAME);
 
     /**
      * Validates record invariants.
      */
-    public PdfDebugOptions {
+    public DocumentDebugOptions {
         Objects.requireNonNull(labelText, "labelText");
     }
 
@@ -58,7 +63,7 @@ public record PdfDebugOptions(boolean showGuides, boolean showNodeLabels, LabelT
      *
      * @return options with all debug overlays off
      */
-    public static PdfDebugOptions none() {
+    public static DocumentDebugOptions none() {
         return NONE;
     }
 
@@ -68,8 +73,8 @@ public record PdfDebugOptions(boolean showGuides, boolean showNodeLabels, LabelT
      *
      * @return options drawing fragment boxes and margin/padding guides
      */
-    public static PdfDebugOptions guides() {
-        return new PdfDebugOptions(true, false, LabelText.NAME);
+    public static DocumentDebugOptions guides() {
+        return new DocumentDebugOptions(true, false, LabelText.NAME);
     }
 
     /**
@@ -77,8 +82,8 @@ public record PdfDebugOptions(boolean showGuides, boolean showNodeLabels, LabelT
      *
      * @return options drawing semantic node labels
      */
-    public static PdfDebugOptions nodeLabels() {
-        return new PdfDebugOptions(false, true, LabelText.NAME);
+    public static DocumentDebugOptions nodeLabels() {
+        return new DocumentDebugOptions(false, true, LabelText.NAME);
     }
 
     /**
@@ -87,8 +92,8 @@ public record PdfDebugOptions(boolean showGuides, boolean showNodeLabels, LabelT
      *
      * @return options drawing guides and semantic node labels
      */
-    public static PdfDebugOptions guidesAndNodeLabels() {
-        return new PdfDebugOptions(true, true, LabelText.NAME);
+    public static DocumentDebugOptions guidesAndNodeLabels() {
+        return new DocumentDebugOptions(true, true, LabelText.NAME);
     }
 
     /**
@@ -97,8 +102,8 @@ public record PdfDebugOptions(boolean showGuides, boolean showNodeLabels, LabelT
      * @param enabled {@code true} to draw guide lines
      * @return new options instance with the requested guide state
      */
-    public PdfDebugOptions withGuides(boolean enabled) {
-        return enabled == showGuides ? this : new PdfDebugOptions(enabled, showNodeLabels, labelText);
+    public DocumentDebugOptions withGuides(boolean enabled) {
+        return enabled == showGuides ? this : new DocumentDebugOptions(enabled, showNodeLabels, labelText);
     }
 
     /**
@@ -107,8 +112,8 @@ public record PdfDebugOptions(boolean showGuides, boolean showNodeLabels, LabelT
      * @param enabled {@code true} to draw semantic node labels
      * @return new options instance with the requested label state
      */
-    public PdfDebugOptions withNodeLabels(boolean enabled) {
-        return enabled == showNodeLabels ? this : new PdfDebugOptions(showGuides, enabled, labelText);
+    public DocumentDebugOptions withNodeLabels(boolean enabled) {
+        return enabled == showNodeLabels ? this : new DocumentDebugOptions(showGuides, enabled, labelText);
     }
 
     /**
@@ -117,9 +122,9 @@ public record PdfDebugOptions(boolean showGuides, boolean showNodeLabels, LabelT
      * @param text label text mode; must not be {@code null}
      * @return new options instance with the requested label text mode
      */
-    public PdfDebugOptions withLabelText(LabelText text) {
+    public DocumentDebugOptions withLabelText(LabelText text) {
         Objects.requireNonNull(text, "text");
-        return text == labelText ? this : new PdfDebugOptions(showGuides, showNodeLabels, text);
+        return text == labelText ? this : new DocumentDebugOptions(showGuides, showNodeLabels, text);
     }
 
     /**

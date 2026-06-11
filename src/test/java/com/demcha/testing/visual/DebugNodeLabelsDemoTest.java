@@ -2,7 +2,7 @@ package com.demcha.testing.visual;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfDebugOptions;
+import com.demcha.compose.document.output.DocumentDebugOptions;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.testing.visual.ImageDiff;
 import com.demcha.compose.testing.visual.PdfVisualRegression;
@@ -26,8 +26,8 @@ class DebugNodeLabelsDemoTest {
 
     @Test
     void debugOverlayPaintsGuidesAndNodeLabels() throws Exception {
-        byte[] plain = sheet(PdfDebugOptions.none());
-        byte[] debug = sheet(PdfDebugOptions.guidesAndNodeLabels());
+        byte[] plain = sheet(DocumentDebugOptions.none());
+        byte[] debug = sheet(DocumentDebugOptions.guidesAndNodeLabels());
 
         assertThat(debug).isNotEmpty();
         assertThat(new String(debug, 0, 5, StandardCharsets.US_ASCII)).isEqualTo("%PDF-");
@@ -46,7 +46,7 @@ class DebugNodeLabelsDemoTest {
                 out.resolveSibling("debug_node_labels.png").toFile());
     }
 
-    private static byte[] sheet(PdfDebugOptions options) throws Exception {
+    private static byte[] sheet(DocumentDebugOptions options) throws Exception {
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(360, 320)
                 .margin(DocumentInsets.of(22))

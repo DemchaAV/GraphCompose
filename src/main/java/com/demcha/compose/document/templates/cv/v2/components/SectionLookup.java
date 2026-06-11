@@ -42,7 +42,15 @@ public final class SectionLookup {
     /**
      * Reports whether the section carries any renderable content.
      *
-     * @param section the section to inspect
+     * <p><b>{@code null} is accepted and reports {@code false}.</b> Preset
+     * call sites feed this method straight from {@link #firstMatching}, which
+     * returns {@code null} when no section title matches, and rely on the
+     * null tolerance to silently skip absent modules. Keep that tolerance if
+     * this method is ever rewritten as an exhaustive {@code switch} over the
+     * sealed {@code CvSection} hierarchy — {@code SectionLookupTest} pins the
+     * contract.</p>
+     *
+     * @param section the section to inspect; may be {@code null}
      * @return {@code true} if the section has non-empty body, entries,
      * rows, or skill groups
      */

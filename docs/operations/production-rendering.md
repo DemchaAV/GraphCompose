@@ -42,10 +42,12 @@ the session.
 
 ## Debug Output
 
-Use `GraphCompose.document(path).guideLines(true)` or
-`document.guideLines(true)` only for local diagnostics, visual tests, and layout
-debugging. Guide lines are a render-only overlay and do not change pagination or
-layout snapshots. Production services should normally leave them disabled.
+Use `GraphCompose.document(path).guideLines(true)`, `document.guideLines(true)`,
+or the fuller `document.debug(DocumentDebugOptions.guidesAndNodeLabels())` —
+which adds semantic node-path badges on top of the guides — only for local
+diagnostics, visual tests, and layout debugging. Debug overlays are render-only
+and do not change pagination or layout snapshots. Production services should
+normally leave them disabled.
 
 ## Cache And Privacy Policy
 

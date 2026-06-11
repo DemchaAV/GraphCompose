@@ -111,6 +111,11 @@ Entries land here as they merge.
   style, with nested items indented per depth and keeping their own markers.
   (Found by the recipe fact-check: the docx-export recipe's "what is skipped"
   list could not honestly be written without it.)
+- **DOCX list items no longer double-space after the marker.** The new list
+  branch concatenated `ListMarker.value()` — which already carries its
+  trailing space — with another literal space, so every exported item read
+  `"•  text"`, and markerless lists gained a stray leading space. The export
+  now uses `ListMarker.prefix()`, matching the fixed-layout text pipeline.
 
 ### Documentation
 

@@ -4,6 +4,7 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.ShapeContainerBuilder;
+import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.output.DocumentMetadata;
 import com.demcha.compose.document.style.DocumentColor;
@@ -86,6 +87,107 @@ class DocxSemanticBackendTest {
                     .map(XWPFParagraph::getText).toList();
             assertThat(texts).anyMatch(t -> t.endsWith("First") && t.length() > "First".length());
             assertThat(texts).anyMatch(t -> t.endsWith("Second"));
+        }
+    }
+
+    @Test
+    void nestedListItemsIndentTwoSpacesPerDepth() throws Exception {
+        byte[] docxBytes;
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(595, 842)
+                .margin(DocumentInsets.of(36))
+                .create()) {
+            session.dsl().pageFlow().name("Flow")
+                    .addList(list -> list
+                            .name("Outline")
+                            .addItem("Level zero", l1 -> l1
+                                    .addItem("Level one", l2 -> l2
+                                            .addItem("Level two"))))
+                    .build();
+            docxBytes = session.export(new DocxSemanticBackend());
+        }
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
+            List<String> texts = document.getParagraphs().stream()
+                    .map(XWPFParagraph::getText).toList();
+            // Two spaces of indent per depth; without per-item markers the
+            // semantic export falls back to the list's top-level bullet at
+            // every level (the visual depth cascade is a layout-pass concern).
+            assertThat(texts).contains(
+                    "• Level zero",
+                    "  • Level one",
+                    "    • Level two");
+        }
+    }
+
+    @Test
+    void nestedListItemsKeepTheirCustomMarkers() throws Exception {
+        byte[] docxBytes;
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(595, 842)
+                .margin(DocumentInsets.of(36))
+                .create()) {
+            session.dsl().pageFlow().name("Flow")
+                    .addList(list -> list
+                            .marker("→")
+                            .markerFor(1, ListMarker.custom("‣"))
+                            .addItem("Root", child -> child.addItem("Child")))
+                    .build();
+            docxBytes = session.export(new DocxSemanticBackend());
+        }
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
+            List<String> texts = document.getParagraphs().stream()
+                    .map(XWPFParagraph::getText).toList();
+            // The top-level custom marker and the per-depth override both
+            // survive the export.
+            assertThat(texts).contains(
+                    "→ Root",
+                    "  ‣ Child");
+        }
+    }
+
+    @Test
+    void listInsideASectionIsExported() throws Exception {
+        byte[] docxBytes;
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(595, 842)
+                .margin(DocumentInsets.of(36))
+                .create()) {
+            session.dsl().pageFlow().name("Flow")
+                    .addSection("Wrapper", s -> s.addList("Inside section"))
+                    .build();
+            docxBytes = session.export(new DocxSemanticBackend());
+        }
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
+            List<String> texts = document.getParagraphs().stream()
+                    .map(XWPFParagraph::getText).toList();
+            // writeNode recurses through section/container wrappers, so the
+            // nested list is not dropped.
+            assertThat(texts).contains("• Inside section");
+        }
+    }
+
+    @Test
+    void emptyListExportsNothingAndDoesNotFail() throws Exception {
+        byte[] docxBytes;
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(595, 842)
+                .margin(DocumentInsets.of(36))
+                .create()) {
+            session.dsl().pageFlow().name("Flow")
+                    .addParagraph(paragraph -> paragraph.text("Before"))
+                    .addList(list -> list.name("Empty"))
+                    .build();
+            docxBytes = session.export(new DocxSemanticBackend());
+        }
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
+            List<String> texts = document.getParagraphs().stream()
+                    .map(XWPFParagraph::getText).toList();
+            assertThat(texts).contains("Before");
+            assertThat(texts).noneMatch(t -> t.contains("•"));
         }
     }
 

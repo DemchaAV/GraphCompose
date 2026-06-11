@@ -3,7 +3,7 @@ package com.demcha.examples.features.debug;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfDebugOptions;
+import com.demcha.compose.document.output.DocumentDebugOptions;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.examples.support.ExampleOutputPaths;
 
@@ -18,16 +18,17 @@ import java.nio.file.Path;
  *
  * <pre>{@code
  * GraphCompose.document(out)
- *         .debug(PdfDebugOptions.guidesAndNodeLabels())
+ *         .debug(DocumentDebugOptions.guidesAndNodeLabels())
  *         .create()
  * }</pre>
  *
  * <p>Every rendered node then prints its stable semantic path — the same
  * path {@code DocumentSession.layoutSnapshot()} reports — once per node
- * and page at the node's top-left corner, next to the familiar fragment
- * boxes and dashed margin/padding guides. Spot a misplaced block on
+ * and page as a corner badge straddling the top edge of the node's bounds
+ * (right-aligned), next to the familiar fragment boxes and dashed
+ * margin/padding guides. Spot a misplaced block on
  * paper, read its label, and grep that name straight in your builder
- * code. {@code PdfDebugOptions.LabelText.FULL_PATH} switches the labels
+ * code. {@code DocumentDebugOptions.LabelText.FULL_PATH} switches the labels
  * from the compact own segment to the whole ancestor chain.</p>
  *
  * <p>Debug overlays draw strictly on top of regular content and never
@@ -53,7 +54,7 @@ public final class DebugOverlayExample {
         try (DocumentSession document = GraphCompose.document(pdfFile)
                 .pageSize(DocumentPageSize.A4)
                 .margin(DocumentInsets.of(28))
-                .debug(PdfDebugOptions.guidesAndNodeLabels())
+                .debug(DocumentDebugOptions.guidesAndNodeLabels())
                 .create()) {
             document.pageFlow(page -> page
                     .module("HowToReadThisSheet", module -> module

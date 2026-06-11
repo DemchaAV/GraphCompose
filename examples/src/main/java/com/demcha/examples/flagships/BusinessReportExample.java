@@ -5,8 +5,6 @@ import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
-import com.demcha.compose.document.image.DocumentImageData;
-import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.TextAlign;
@@ -21,13 +19,6 @@ import com.demcha.compose.document.theme.BusinessTheme;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
 
-import javax.imageio.ImageIO;
-import java.awt.GradientPaint;
-import java.awt.Graphics2D;
-import java.awt.Polygon;
-import java.awt.RenderingHints;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
 
 /**
@@ -85,8 +76,6 @@ public final class BusinessReportExample {
 
     public static Path generate() throws Exception {
         Path outputFile = ExampleOutputPaths.prepare("flagships", "business-report.pdf");
-
-        DocumentImageData heroImage = DocumentImageData.fromBytes(renderHeroImage(380, 200));
 
         try (DocumentSession document = GraphCompose.document(outputFile)
                 .pageSize(DocumentPageSize.A4)
@@ -155,22 +144,17 @@ public final class BusinessReportExample {
                                             .margin(new DocumentInsets(4, 0, 0, 0))))
                             .addSection("HeroImage", section -> section
                                     .padding(DocumentInsets.zero())
-                                    // Hero image lives inside a rounded
-                                    // shape container so the navy edges
-                                    // soften into a frame instead of
-                                    // bleeding straight to the page edge.
+                                    // The hero scene is fully vector now: a
+                                    // gradient-sky shape with two polygon
+                                    // mountain ranges, clipped to the rounded
+                                    // frame. No raster, no AWT.
                                     .addContainer(frame -> frame
                                             .name("HeroFrame")
                                             .roundedRect(210, 110, 12)
                                             .fillColor(NAVY_DARK)
                                             .stroke(DocumentStroke.of(GOLD, 0.6))
                                             .clipPolicy(ClipPolicy.CLIP_PATH)
-                                            .center(new com.demcha.compose.document.dsl.ImageBuilder()
-                                                    .name("HeroImage")
-                                                    .source(heroImage)
-                                                    .size(204, 104)
-                                                    .fitMode(DocumentImageFitMode.COVER)
-                                                    .build()))))
+                                            .center(buildHeroScene(204, 104)))))
 
                     // Three KPI cards
                     .addRow("KpiRow", row -> row
@@ -454,53 +438,60 @@ public final class BusinessReportExample {
     // ─────────────────── Hero image generator ─────────────────────
 
     /**
-     * Renders a simple gradient hero image (sunset sky + mountain
-     * silhouette) so the example does not depend on any external image
-     * asset. The result is encoded as PNG bytes and embedded directly.
-     *
-     * <p>This is the one remaining raster block in the example, and it is
-     * deliberate: the sky requires a smooth linear gradient, which the engine
-     * does not paint natively yet ({@code DocumentPaint.linear} is reserved
-     * for the gradient work). Once gradients land, the mountains become
-     * {@code PolygonNode}s, the glow a translucent fill, and this method goes
-     * away like the old chart raster did.</p>
+     * Builds the hero scene fully from vector primitives: a gradient-sky
+     * shape (warm cream at the horizon rising into slate) with two polygon
+     * mountain ranges — the distant one translucent, the foreground one
+     * solid. The same sunset the old Graphics2D raster painted, now native:
+     * deterministic, crisp at any zoom, and free of the AWT dependency.
      */
-    private static byte[] renderHeroImage(int width, int height) throws Exception {
-        BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g = img.createGraphics();
-        try {
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            // Sky gradient: slate at the top, warm cream at the horizon.
-            g.setPaint(new GradientPaint(
-                    0, 0, new java.awt.Color(58, 70, 100),
-                    0, height * 0.7f, new java.awt.Color(218, 196, 162)));
-            g.fillRect(0, 0, width, height);
-            // Distant mountain silhouette.
-            g.setColor(new java.awt.Color(50, 62, 88, 230));
-            Polygon farRange = new Polygon(
-                    new int[]{0, (int) (width * 0.18), (int) (width * 0.36), (int) (width * 0.54),
-                            (int) (width * 0.72), (int) (width * 0.88), width, width, 0},
-                    new int[]{(int) (height * 0.55), (int) (height * 0.40), (int) (height * 0.50),
-                            (int) (height * 0.34), (int) (height * 0.46), (int) (height * 0.36),
-                            (int) (height * 0.50), height, height},
-                    9);
-            g.fill(farRange);
-            // Foreground mountain wedge.
-            g.setColor(new java.awt.Color(28, 36, 60));
-            Polygon foreRange = new Polygon(
-                    new int[]{0, (int) (width * 0.22), (int) (width * 0.40), (int) (width * 0.60),
-                            (int) (width * 0.82), width, width, 0},
-                    new int[]{(int) (height * 0.78), (int) (height * 0.55), (int) (height * 0.68),
-                            (int) (height * 0.50), (int) (height * 0.62), (int) (height * 0.74),
-                            height, height},
-                    8);
-            g.fill(foreRange);
-        } finally {
-            g.dispose();
+    private static DocumentNode buildHeroScene(double width, double height) {
+        com.demcha.compose.document.node.ShapeNode sky =
+                new com.demcha.compose.document.dsl.ShapeBuilder()
+                        .name("HeroSky")
+                        .size(width, height)
+                        .fill(new com.demcha.compose.document.style.DocumentPaint.Linear(
+                                java.util.List.of(
+                                        new com.demcha.compose.document.style.DocumentPaint.Stop(
+                                                0.0, DocumentColor.rgb(218, 196, 162)),
+                                        new com.demcha.compose.document.style.DocumentPaint.Stop(
+                                                0.30, DocumentColor.rgb(218, 196, 162)),
+                                        new com.demcha.compose.document.style.DocumentPaint.Stop(
+                                                1.0, DocumentColor.rgb(58, 70, 100))),
+                                90.0))
+                        .build();
+        com.demcha.compose.document.node.PolygonNode farRange =
+                new com.demcha.compose.document.node.PolygonNode(
+                        "HeroFarRange", width, height,
+                        heroPoints(new double[][] {
+                                {0, .45}, {.18, .60}, {.36, .50}, {.54, .66},
+                                {.72, .54}, {.88, .64}, {1, .50}, {1, 0}, {0, 0}}),
+                        DocumentColor.rgba(50, 62, 88, 230), null,
+                        DocumentInsets.zero(), DocumentInsets.zero());
+        com.demcha.compose.document.node.PolygonNode foreRange =
+                new com.demcha.compose.document.node.PolygonNode(
+                        "HeroForeRange", width, height,
+                        heroPoints(new double[][] {
+                                {0, .22}, {.22, .45}, {.40, .32}, {.60, .50},
+                                {.82, .38}, {1, .26}, {1, 0}, {0, 0}}),
+                        DocumentColor.rgb(28, 36, 60), null,
+                        DocumentInsets.zero(), DocumentInsets.zero());
+        return new com.demcha.compose.document.node.CanvasLayerNode(
+                "HeroScene", width, height,
+                java.util.List.of(
+                        new com.demcha.compose.document.node.CanvasChild(sky, 0, 0),
+                        new com.demcha.compose.document.node.CanvasChild(farRange, 0, 0),
+                        new com.demcha.compose.document.node.CanvasChild(foreRange, 0, 0)),
+                ClipPolicy.OVERFLOW_VISIBLE, DocumentInsets.zero(), DocumentInsets.zero());
+    }
+
+    private static java.util.List<com.demcha.compose.document.style.ShapePoint> heroPoints(
+            double[][] xy) {
+        java.util.List<com.demcha.compose.document.style.ShapePoint> points =
+                new java.util.ArrayList<>(xy.length);
+        for (double[] p : xy) {
+            points.add(new com.demcha.compose.document.style.ShapePoint(p[0], p[1]));
         }
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ImageIO.write(img, "png", out);
-        return out.toByteArray();
+        return points;
     }
 
     // ─────────────────── Text styles ──────────────────────────────

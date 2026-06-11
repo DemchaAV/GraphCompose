@@ -6,6 +6,7 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
 
@@ -91,10 +92,11 @@ final class BarChartLayout {
                     if (segH < MIN_BAR_HEIGHT) {
                         continue;
                     }
-                    DocumentColor color = style.paintForSeries(s, theme.palette()).primaryColor();
+                    DocumentPaint paint = style.paintForSeries(s, theme.palette());
                     out.add(new ChartPrimitive(
-                            new ShapeNode("bar_c" + c + "_s" + s, groupW, segH, color, null,
-                                    barRadius, null, null, DocumentInsets.zero(), DocumentInsets.zero()),
+                            new ShapeNode("bar_c" + c + "_s" + s, groupW, segH, null, null,
+                                    barRadius, null, null, DocumentInsets.zero(), DocumentInsets.zero(),
+                                    null, paint),
                             groupX, f.plotBottomY() + cum, groupW, segH));
                     cum += segH;
                 }
@@ -118,10 +120,11 @@ final class BarChartLayout {
                         continue;
                     }
                     double bx = groupX + s * barW + (barW - innerBarW) / 2.0;
-                    DocumentColor color = style.paintForSeries(s, theme.palette()).primaryColor();
+                    DocumentPaint paint = style.paintForSeries(s, theme.palette());
                     out.add(new ChartPrimitive(
-                            new ShapeNode("bar_c" + c + "_s" + s, innerBarW, h, color, null,
-                                    barRadius, null, null, DocumentInsets.zero(), DocumentInsets.zero()),
+                            new ShapeNode("bar_c" + c + "_s" + s, innerBarW, h, null, null,
+                                    barRadius, null, null, DocumentInsets.zero(), DocumentInsets.zero(),
+                                    null, paint),
                             bx, f.plotBottomY(), innerBarW, h));
                     if (bar.valueLabels() == ValueLabelMode.OUTSIDE) {
                         String text = bar.valueAxis().format().format(v);
@@ -278,10 +281,11 @@ final class BarChartLayout {
                     if (segW < MIN_BAR_HEIGHT) {
                         continue;
                     }
-                    DocumentColor color = style.paintForSeries(s, theme.palette()).primaryColor();
+                    DocumentPaint paint = style.paintForSeries(s, theme.palette());
                     out.add(new ChartPrimitive(
-                            new ShapeNode("bar_c" + c + "_s" + s, segW, groupH, color, null,
-                                    barRadius, null, null, DocumentInsets.zero(), DocumentInsets.zero()),
+                            new ShapeNode("bar_c" + c + "_s" + s, segW, groupH, null, null,
+                                    barRadius, null, null, DocumentInsets.zero(), DocumentInsets.zero(),
+                                    null, paint),
                             plotLeftX + cum, groupTop - groupH, segW, groupH));
                     cum += segW;
                 }
@@ -303,10 +307,11 @@ final class BarChartLayout {
                         continue;
                     }
                     double barTop = groupTop - s * barH - (barH - innerBarH) / 2.0;
-                    DocumentColor color = style.paintForSeries(s, theme.palette()).primaryColor();
+                    DocumentPaint paint = style.paintForSeries(s, theme.palette());
                     out.add(new ChartPrimitive(
-                            new ShapeNode("bar_c" + c + "_s" + s, w, innerBarH, color, null,
-                                    barRadius, null, null, DocumentInsets.zero(), DocumentInsets.zero()),
+                            new ShapeNode("bar_c" + c + "_s" + s, w, innerBarH, null, null,
+                                    barRadius, null, null, DocumentInsets.zero(), DocumentInsets.zero(),
+                                    null, paint),
                             plotLeftX, barTop - innerBarH, w, innerBarH));
                     if (bar.valueLabels() == ValueLabelMode.OUTSIDE) {
                         emitEndLabel(out, "value_c" + c + "_s" + s, axis.format().format(v),

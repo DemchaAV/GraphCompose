@@ -159,14 +159,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Semantic list mapping: each item becomes a marker-prefixed paragraph in
-     * the list's text style; nested items indent two spaces per depth and use
-     * their own marker when one is set.
+     * the list's text style. Flat items run through the same
+     * {@code ListMarker.normalizeItemText} step as fixed-layout rendering
+     * (author-typed markers stripped, blank items skipped); nested items
+     * indent two spaces per depth and use their own marker when one is set,
+     * falling back to {@code ListMarker.defaultForDepth} otherwise.
      */
     private void writeList(XWPFDocument document,
                            com.demcha.compose.document.node.ListNode list) {
         for (String item : list.items()) {
+            // Same normalization as the fixed-layout pipeline: strip an
+            // author-typed leading marker and skip items with no content.
+            String normalized = com.demcha.compose.document.node.ListMarker
+                    .normalizeItemText(item, list.normalizeMarkers());
+            if (normalized.isBlank()) {
+                continue;
+            }
             writeListLine(document, list.textStyle(),
-                    list.marker().prefix() + item, 0);
+                    list.marker().prefix() + normalized, 0);
         }
         for (com.demcha.compose.document.node.ListItem item : list.nestedItems()) {
             writeNestedItem(document, list, item, 0);
@@ -178,9 +188,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                  com.demcha.compose.document.node.ListItem item,
                                  int depth) {
         // prefix() carries its own trailing space (and is empty for
-        // markerless lists), matching the fixed-layout text pipeline.
+        // markerless lists). Items without an explicit (or markerFor-baked)
+        // marker fall back to the same depth cascade the fixed-layout
+        // pipeline uses — never to the flat-list marker.
         com.demcha.compose.document.node.ListMarker marker =
-                item.marker() != null ? item.marker() : list.marker();
+                item.marker() != null
+                        ? item.marker()
+                        : com.demcha.compose.document.node.ListMarker.defaultForDepth(depth);
         writeListLine(document, list.textStyle(), marker.prefix() + item.label(), depth);
         for (com.demcha.compose.document.node.ListItem child : item.children()) {
             writeNestedItem(document, list, child, depth + 1);

@@ -195,7 +195,7 @@ public final class TextFlowSupport {
 
     private static void flattenNestedItems(List<ListItem> items, int depth, List<String> output) {
         for (ListItem item : items) {
-            ListMarker marker = item.marker() != null ? item.marker() : defaultMarkerForDepth(depth);
+            ListMarker marker = item.marker() != null ? item.marker() : ListMarker.defaultForDepth(depth);
             StringBuilder prefix = new StringBuilder(NESTED_LIST_INDENT_UNIT.repeat(depth));
             if (marker.isVisible()) {
                 // ListMarker.normalize already appends a trailing space
@@ -208,20 +208,6 @@ public final class TextFlowSupport {
                 flattenNestedItems(item.children(), depth + 1, output);
             }
         }
-    }
-
-    /**
-     * Built-in marker cascade used when a nested item has no
-     * {@code marker} override and the list builder didn't set one for
-     * this depth via {@code markerFor(int, ListMarker)}.
-     */
-    private static ListMarker defaultMarkerForDepth(int depth) {
-        return switch (depth) {
-            case 0 -> ListMarker.bullet();        // •
-            case 1 -> new ListMarker("◦");   // ◦
-            case 2 -> new ListMarker("▪");   // ▪
-            default -> new ListMarker("·");  // ·
-        };
     }
 
     /**
@@ -350,7 +336,7 @@ public final class TextFlowSupport {
                                                         boolean markdownEnabled) {
         List<PreparedListItemLayout> items = new ArrayList<>();
         for (String item : node.items()) {
-            String normalizedItem = normalizeListItem(item, node.normalizeMarkers());
+            String normalizedItem = ListMarker.normalizeItemText(item, node.normalizeMarkers());
             if (normalizedItem.isBlank()) {
                 continue;
             }
@@ -515,33 +501,6 @@ public final class TextFlowSupport {
             }
         }
         return total;
-    }
-
-    private static String normalizeListItem(String value, boolean normalizeMarkers) {
-        String safe = value == null ? "" : value;
-        if (!normalizeMarkers) {
-            // Preserve raw whitespace and any author-supplied marker
-            // characters. Used by the nested-list flatten path so the
-            // depth-based indent prefix survives layout.
-            return safe;
-        }
-        String normalized = safe.trim();
-        if (normalized.isEmpty()) {
-            return normalized;
-        }
-        if (normalized.startsWith("•")) {
-            return normalized.substring(1).trim();
-        }
-        if (normalized.startsWith("- ")) {
-            return normalized.substring(2).trim();
-        }
-        if (normalized.startsWith("+ ")) {
-            return normalized.substring(2).trim();
-        }
-        if (normalized.startsWith("* ") && !normalized.startsWith("**")) {
-            return normalized.substring(2).trim();
-        }
-        return normalized;
     }
 
     // ------------------------------------------------------------------

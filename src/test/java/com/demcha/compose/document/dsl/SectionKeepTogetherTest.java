@@ -106,6 +106,37 @@ class SectionKeepTogetherTest {
     }
 
     @Test
+    void keepTogetherSectionTallerThanAPageStillFlows() {
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(300, 400)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            document.pageFlow().name("Flow").spacing(12)
+                    .addSection("Filler", s -> s.addShape(260, 250, DocumentColor.rgb(220, 220, 220)))
+                    .addSection("Oversized", s -> {
+                        s.keepTogether().spacing(8);
+                        // 5 × 100pt + spacing ≈ 532pt — taller than the 360pt
+                        // inner page, so relocation cannot help.
+                        for (int i = 0; i < 5; i++) {
+                            s.addShape(260, 100, DocumentColor.rgb(20, 80, 95));
+                        }
+                    })
+                    .build();
+
+            PlacedNode oversized = document.layoutGraph().nodes().stream()
+                    .filter(n -> "Oversized".equals(n.semanticName()))
+                    .findFirst().orElseThrow();
+            // The keep-together request is ignored for a block taller than a
+            // full page: the section starts in the remaining space on page 0
+            // (no pointless relocation) and flows across the boundary.
+            assertThat(oversized.startPage()).isEqualTo(0);
+            assertThat(oversized.endPage()).isGreaterThan(oversized.startPage());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
     void withoutKeepTogetherTheCardStraddlesThePageBoundary() {
         PlacedNode card = cardNode(false);
         // Default behavior: the section flows across the boundary (heading on the

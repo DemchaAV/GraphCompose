@@ -196,6 +196,122 @@ class ChartLayoutResolverTest {
     }
 
     @Test
+    void groupedBarsWithNegativeValuesMeasureFromTheNiceFloor() {
+        ChartData data = ChartData.builder()
+                .categories("A", "B")
+                .series("S", 10.0, -2.0)
+                .build();
+        ChartSpec.Bar bar = ChartSpec.bar().data(data).build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                bar, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 100.0, METRICS);
+
+        // Domain [-2, 10] with the zero baseline rounds to the nice range
+        // [-5, 10]: the axis extends below zero and both bars anchor at the
+        // -5 floor, so the negative bar renders as a short positive-height
+        // column reaching its value level (no crash, no inverted geometry).
+        ChartPrimitive positive = byName(out, "bar_c0_s0");
+        ChartPrimitive negative = byName(out, "bar_c1_s0");
+        assertThat(negative.y()).isEqualTo(positive.y());
+        // fractionOf(10) = 1.0 vs fractionOf(-2) = 0.2 over [-5, 10].
+        assertThat(negative.height()).isCloseTo(positive.height() * 0.2, within(1e-9));
+        // The negative bound appears as a tick label.
+        assertThat(out.stream().anyMatch(p -> p.node() instanceof ParagraphNode pn
+                && pn.name().startsWith("tick_") && "-5".equals(pn.text()))).isTrue();
+    }
+
+    @Test
+    void stackedBarsSkipNonPositiveSegments() {
+        ChartData data = ChartData.builder().categories("A")
+                .series("Up", 5.0)
+                .series("Down", -3.0)
+                .series("Zero", 0.0)
+                .build();
+        ChartSpec.Bar bar = ChartSpec.bar().data(data)
+                .grouping(BarGrouping.STACKED).valueLabels(ValueLabelMode.OUTSIDE).build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                bar, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 120.0, METRICS);
+
+        // Only the positive segment stacks; negative and zero segments are
+        // skipped and the category total counts the positives alone.
+        assertThat(out.stream().filter(p -> p.node().name().startsWith("bar_c0_")).count())
+                .isEqualTo(1);
+        byName(out, "bar_c0_s0");
+        ParagraphNode total = (ParagraphNode) byName(out, "total_c0").node();
+        assertThat(total.text()).isEqualTo("5");
+    }
+
+    @Test
+    void onePointLineEmitsItsMarkerButNoSegments() {
+        ChartData data = ChartData.builder().categories("A").series("S", 7.0).build();
+        ChartStyle style = baseStyle().mergedUnder(ChartStyle.builder()
+                .pointMarker(PointMarker.circle(5.0))
+                .build());
+        // smooth + area exercise the interpolation and fill paths with a
+        // single sample as well.
+        ChartSpec.Line line = ChartSpec.line().data(data)
+                .smooth(true).area(true)
+                .valueLabels(ValueLabelMode.OUTSIDE).build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                line, style, ChartDefaults.DEFAULT_THEME, 200.0, 100.0, METRICS);
+
+        // No connecting stroke exists, but the lone point still gets its
+        // marker and value label.
+        assertThat(out.stream().noneMatch(p -> p.node().name().startsWith("line_s0_seg")))
+                .isTrue();
+        byName(out, "point_s0_c0");
+        ParagraphNode label = (ParagraphNode) byName(out, "value_s0_c0").node();
+        assertThat(label.text()).isEqualTo("7");
+    }
+
+    @Test
+    void veryLongCategoryLabelsKeepTheirSlotWidth() {
+        ChartData data = ChartData.builder()
+                .categories("Short", "An extremely long category label that far exceeds the slot")
+                .series("S", 10.0, 20.0)
+                .build();
+        ChartSpec.Bar bar = ChartSpec.bar().data(data).build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                bar, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 100.0, METRICS);
+
+        // Category labels are slot-sized: a long text wraps/centres inside
+        // its category slot instead of widening the geometry.
+        ChartPrimitive shortLabel = byName(out, "cat_0");
+        ChartPrimitive longLabel = byName(out, "cat_1");
+        assertThat(longLabel.width()).isEqualTo(shortLabel.width());
+        assertThat(longLabel.x()).isGreaterThan(shortLabel.x());
+    }
+
+    @Test
+    void bottomLegendInTightWidthStillEmitsEveryEntry() {
+        ChartData data = ChartData.builder().categories("A")
+                .series("First series with a long name", 1.0)
+                .series("Second series with a long name", 2.0)
+                .series("Third series with a long name", 3.0)
+                .series("Fourth series with a long name", 4.0)
+                .series("Fifth series with a long name", 5.0)
+                .build();
+        ChartSpec.Bar bar = ChartSpec.bar().data(data)
+                .legend(LegendPosition.BOTTOM).build();
+
+        // 120pt is far too narrow for five long legend entries: layout must
+        // stay deterministic and keep every entry (overflow, not loss).
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                bar, baseStyle(), ChartDefaults.DEFAULT_THEME, 120.0, 100.0, METRICS);
+
+        double previousX = Double.NEGATIVE_INFINITY;
+        for (int s = 0; s < 5; s++) {
+            byName(out, "legend_swatch_" + s);
+            ChartPrimitive label = byName(out, "legend_label_" + s);
+            assertThat(label.x()).isGreaterThan(previousX);
+            previousX = label.x();
+        }
+    }
+
+    @Test
     void areaFillsRenderUnderEveryStroke() {
         ChartData data = ChartData.builder().categories("A", "B", "C")
                 .series("S1", 1.0, 3.0, 2.0).series("S2", 2.0, 1.0, 3.0).build();

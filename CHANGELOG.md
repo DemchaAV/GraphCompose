@@ -98,6 +98,13 @@ Entries land here as they merge.
 
 ### Bug fixes
 
+- **`BEHIND_CONTENT` watermarks no longer wash out the page.** The PDF
+  watermark renderer set its low-opacity graphics state in a *prepended*
+  content stream without a save/restore pair; PDFBox's `resetContext` only
+  isolates appended streams, so the watermark alpha leaked into the entire
+  page and every element rendered nearly invisible. The watermark now wraps
+  its drawing in `q`/`Q`, keeping page content at full strength. This
+  affected every document using the default `DocumentWatermark` layer.
 - **DOCX export no longer drops lists.** `DocxSemanticBackend` had no branch
   for `ListNode`, so `addList(...)` content silently vanished from Word
   exports. Lists now map to marker-prefixed paragraphs in the list's text

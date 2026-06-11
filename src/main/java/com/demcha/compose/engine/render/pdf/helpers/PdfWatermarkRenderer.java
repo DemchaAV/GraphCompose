@@ -54,6 +54,12 @@ public final class PdfWatermarkRenderer {
             };
 
             try (PDPageContentStream cs = new PDPageContentStream(doc, page, mode, true, true)) {
+                // PDFBox's resetContext only isolates APPEND streams; a
+                // PREPEND stream shares its graphics state with the page
+                // content that follows, so without this q/Q pair the
+                // watermark opacity bleeds into the entire page.
+                cs.saveGraphicsState();
+
                 // Set opacity
                 PDExtendedGraphicsState gState = new PDExtendedGraphicsState();
                 gState.setNonStrokingAlphaConstant(config.getOpacity());
@@ -65,6 +71,8 @@ public final class PdfWatermarkRenderer {
                 } else if (config.isImageBased()) {
                     renderImageWatermark(cs, doc, config, mediaBox);
                 }
+
+                cs.restoreGraphicsState();
             }
         }
     }

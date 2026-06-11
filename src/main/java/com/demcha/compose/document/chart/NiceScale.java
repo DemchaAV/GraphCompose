@@ -7,11 +7,10 @@ package com.demcha.compose.document.chart;
  * machine or locale — this is the keystone of chart determinism, and it is
  * unit-tested in isolation with golden tables before any rendering is involved.
  *
- * @param niceMin rounded lower bound
- * @param niceMax rounded upper bound
- * @param tickStep distance between successive ticks
+ * @param niceMin   rounded lower bound
+ * @param niceMax   rounded upper bound
+ * @param tickStep  distance between successive ticks
  * @param tickCount number of tick marks ({@code niceMin .. niceMax} inclusive)
- *
  * @author Artem Demchyshyn
  * @since 1.8.0
  */
@@ -20,8 +19,8 @@ public record NiceScale(double niceMin, double niceMax, double tickStep, int tic
     /**
      * Computes a nice scale.
      *
-     * @param dataMin smallest value to cover
-     * @param dataMax largest value to cover
+     * @param dataMin     smallest value to cover
+     * @param dataMax     largest value to cover
      * @param includeZero pull the range to include zero (bars)
      * @param targetTicks desired number of intervals (e.g. 5); a hint, not exact
      * @return rounded bounds and step

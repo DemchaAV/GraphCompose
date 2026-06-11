@@ -1,13 +1,14 @@
 package com.demcha.compose.document.templates.data.schedule;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 /**
  * Label-plus-values row rendered above the roster matrix.
  *
- * @param label metric label
+ * @param label     metric label
  * @param dayValues values aligned to days in display order
  */
 public record ScheduleMetricRow(
@@ -25,7 +26,7 @@ public record ScheduleMetricRow(
     /**
      * Creates a metric row from a label and day values.
      *
-     * @param label metric label
+     * @param label     metric label
      * @param dayValues values aligned to schedule days
      * @return schedule metric row
      */
@@ -89,9 +90,7 @@ public record ScheduleMetricRow(
         public Builder dayValues(String... dayValues) {
             this.dayValues.clear();
             if (dayValues != null) {
-                for (String dayValue : dayValues) {
-                    this.dayValues.add(dayValue);
-                }
+                Collections.addAll(this.dayValues, dayValues);
             }
             return this;
         }

@@ -7,7 +7,7 @@ import java.util.Objects;
  * Wraps the item's text alongside the prepared paragraph layout that
  * the list definition uses to split items across pages.
  *
- * @param text raw item text
+ * @param text            raw item text
  * @param paragraphLayout prepared paragraph layout for this item
  */
 public record PreparedListItemLayout(

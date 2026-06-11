@@ -1,9 +1,8 @@
 package com.demcha.compose.document.layout;
 
 import com.demcha.compose.document.node.DocumentNode;
-
-import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
+import com.demcha.compose.font.FontLibrary;
 
 /**
  * Shared measurement context passed to node definitions.
@@ -12,7 +11,7 @@ public interface MeasureContext {
     /**
      * Measures a semantic node under the supplied constraints.
      *
-     * @param node semantic node
+     * @param node        semantic node
      * @param constraints available layout constraints
      * @return measured box size
      */

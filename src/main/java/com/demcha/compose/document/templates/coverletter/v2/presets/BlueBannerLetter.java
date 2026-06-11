@@ -29,13 +29,19 @@ import java.util.Objects;
  */
 public final class BlueBannerLetter {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "blue-banner-letter";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Blue Banner Letter";
 
-    /** Recommended page margin (in points) — generous business-letter feel. */
+    /**
+     * Recommended page margin (in points) — generous business-letter feel.
+     */
     public static final double RECOMMENDED_MARGIN = 48.0;
 
     private BlueBannerLetter() {
@@ -62,42 +68,36 @@ public final class BlueBannerLetter {
         return new Template(theme);
     }
 
-    private static final class Template implements DocumentTemplate<CoverLetterDocument> {
-
-        private final CvTheme theme;
-
-        Template(CvTheme theme) {
-            this.theme = theme;
-        }
+    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
-        public String id() {
-            return ID;
+            public String id() {
+                return ID;
+            }
+
+            @Override
+            public String displayName() {
+                return DISPLAY_NAME;
+            }
+
+            @Override
+            public void compose(DocumentSession document, CoverLetterDocument doc) {
+                Objects.requireNonNull(document, "document");
+                Objects.requireNonNull(doc, "doc");
+
+                PageFlowBuilder flow = document.dsl()
+                        .pageFlow()
+                        .name("CoverLetterV2BlueBannerRoot")
+                        .spacing(theme.spacing().pageFlowSpacing())
+                        .addSection("CoverLetterV2BlueBannerHeader", section ->
+                                Headline.spacedCentered(section, doc.identity().name(), theme))
+                        .addSection("CoverLetterV2BlueBannerContact", section ->
+                                ContactLine.centered(section, doc.identity(), theme));
+
+                flow.addSection("CoverLetterV2BlueBannerBody", host ->
+                        LetterBody.render(host, doc, theme));
+
+                flow.build();
+            }
         }
-
-        @Override
-        public String displayName() {
-            return DISPLAY_NAME;
-        }
-
-        @Override
-        public void compose(DocumentSession document, CoverLetterDocument doc) {
-            Objects.requireNonNull(document, "document");
-            Objects.requireNonNull(doc, "doc");
-
-            PageFlowBuilder flow = document.dsl()
-                    .pageFlow()
-                    .name("CoverLetterV2BlueBannerRoot")
-                    .spacing(theme.spacing().pageFlowSpacing())
-                    .addSection("CoverLetterV2BlueBannerHeader", section ->
-                            Headline.spacedCentered(section, doc.identity().name(), theme))
-                    .addSection("CoverLetterV2BlueBannerContact", section ->
-                            ContactLine.centered(section, doc.identity(), theme));
-
-            flow.addSection("CoverLetterV2BlueBannerBody", host ->
-                    LetterBody.render(host, doc, theme));
-
-            flow.build();
-        }
-    }
 }

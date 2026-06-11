@@ -28,13 +28,19 @@ import java.util.Objects;
  */
 public final class BoxedSectionsLetter {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "boxed-sections-letter";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Boxed Sections Letter";
 
-    /** Recommended page margin (in points) — generous business-letter feel. */
+    /**
+     * Recommended page margin (in points) — generous business-letter feel.
+     */
     public static final double RECOMMENDED_MARGIN = 48.0;
 
     private BoxedSectionsLetter() {
@@ -61,48 +67,42 @@ public final class BoxedSectionsLetter {
         return new Template(theme);
     }
 
-    private static final class Template implements DocumentTemplate<CoverLetterDocument> {
-
-        private final CvTheme theme;
-
-        Template(CvTheme theme) {
-            this.theme = theme;
-        }
+    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
-        public String id() {
-            return ID;
+            public String id() {
+                return ID;
+            }
+
+            @Override
+            public String displayName() {
+                return DISPLAY_NAME;
+            }
+
+            @Override
+            public void compose(DocumentSession document, CoverLetterDocument doc) {
+                Objects.requireNonNull(document, "document");
+                Objects.requireNonNull(doc, "doc");
+
+                PageFlowBuilder flow = document.dsl()
+                        .pageFlow()
+                        .name("CoverLetterV2BoxedRoot")
+                        .spacing(theme.spacing().pageFlowSpacing())
+                        .addSection("CoverLetterV2BoxedHeadline", section -> {
+                            section.accentBottom(theme.palette().rule(),
+                                    theme.spacing().accentRuleWidth());
+                            Headline.spacedCentered(section, doc.identity().name(), theme);
+                        })
+                        .addSection("CoverLetterV2BoxedContact", section -> {
+                            section.accentBottom(theme.palette().rule(),
+                                    theme.spacing().accentRuleWidth());
+                            ContactLine.centered(section, doc.identity(), theme);
+                        });
+
+                flow.addSection("CoverLetterV2BoxedBody", host ->
+                        LetterBody.render(host, doc, theme));
+
+                flow.build();
+            }
         }
-
-        @Override
-        public String displayName() {
-            return DISPLAY_NAME;
-        }
-
-        @Override
-        public void compose(DocumentSession document, CoverLetterDocument doc) {
-            Objects.requireNonNull(document, "document");
-            Objects.requireNonNull(doc, "doc");
-
-            PageFlowBuilder flow = document.dsl()
-                    .pageFlow()
-                    .name("CoverLetterV2BoxedRoot")
-                    .spacing(theme.spacing().pageFlowSpacing())
-                    .addSection("CoverLetterV2BoxedHeadline", section -> {
-                        section.accentBottom(theme.palette().rule(),
-                                theme.spacing().accentRuleWidth());
-                        Headline.spacedCentered(section, doc.identity().name(), theme);
-                    })
-                    .addSection("CoverLetterV2BoxedContact", section -> {
-                        section.accentBottom(theme.palette().rule(),
-                                theme.spacing().accentRuleWidth());
-                        ContactLine.centered(section, doc.identity(), theme);
-                    });
-
-            flow.addSection("CoverLetterV2BoxedBody", host ->
-                    LetterBody.render(host, doc, theme));
-
-            flow.build();
-        }
-    }
 }

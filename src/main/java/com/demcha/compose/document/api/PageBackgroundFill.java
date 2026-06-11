@@ -52,7 +52,9 @@ public record PageBackgroundFill(double xRatio,
                                  double heightRatio,
                                  DocumentColor color) {
 
-    /** Validates the ratio bounds and that the fill color is non-null. */
+    /**
+     * Validates the ratio bounds and that the fill color is non-null.
+     */
     public PageBackgroundFill {
         Objects.requireNonNull(color, "color");
         if (xRatio < 0.0 || xRatio > 1.0) {
@@ -87,7 +89,7 @@ public record PageBackgroundFill(double xRatio,
      * Full-height column at the left page edge, with width = ratio of page width.
      *
      * @param widthRatio width as a fraction of the canvas width (0..1]
-     * @param color fill color (required)
+     * @param color      fill color (required)
      * @return a {@code PageBackgroundFill} spanning the full page height at the left edge
      */
     public static PageBackgroundFill leftColumn(double widthRatio,
@@ -99,7 +101,7 @@ public record PageBackgroundFill(double xRatio,
      * Full-height column at the right page edge, with width = ratio of page width.
      *
      * @param widthRatio width as a fraction of the canvas width (0..1]
-     * @param color fill color (required)
+     * @param color      fill color (required)
      * @return a {@code PageBackgroundFill} spanning the full page height at the right edge
      */
     public static PageBackgroundFill rightColumn(double widthRatio,
@@ -111,9 +113,9 @@ public record PageBackgroundFill(double xRatio,
     /**
      * Full-height column at an arbitrary horizontal offset.
      *
-     * @param xRatio left edge of the column: 0.0 = left edge, 1.0 = right edge
+     * @param xRatio     left edge of the column: 0.0 = left edge, 1.0 = right edge
      * @param widthRatio width as a fraction of the canvas width (0..1]
-     * @param color fill color (required)
+     * @param color      fill color (required)
      * @return a {@code PageBackgroundFill} spanning the full page height from {@code xRatio}
      */
     public static PageBackgroundFill column(double xRatio,
@@ -126,7 +128,7 @@ public record PageBackgroundFill(double xRatio,
      * Full-width band flush with the top of the page (height = ratio of page height).
      *
      * @param heightRatio height as a fraction of the canvas height (0..1]
-     * @param color fill color (required)
+     * @param color       fill color (required)
      * @return a {@code PageBackgroundFill} spanning the full page width at the top edge
      */
     public static PageBackgroundFill topBand(double heightRatio,
@@ -138,7 +140,7 @@ public record PageBackgroundFill(double xRatio,
      * Full-width band flush with the bottom of the page (height = ratio of page height).
      *
      * @param heightRatio height as a fraction of the canvas height (0..1]
-     * @param color fill color (required)
+     * @param color       fill color (required)
      * @return a {@code PageBackgroundFill} spanning the full page width at the bottom edge
      */
     public static PageBackgroundFill bottomBand(double heightRatio,
@@ -151,8 +153,8 @@ public record PageBackgroundFill(double xRatio,
      * Full-width band whose top edge sits {@code yRatioFromTop} down the page (0.0 = page top).
      *
      * @param yRatioFromTop top edge of the band: 0.0 = page top, 1.0 = page bottom
-     * @param heightRatio height as a fraction of the canvas height (0..1]
-     * @param color fill color (required)
+     * @param heightRatio   height as a fraction of the canvas height (0..1]
+     * @param color         fill color (required)
      * @return a {@code PageBackgroundFill} spanning the full page width from {@code yRatioFromTop}
      */
     public static PageBackgroundFill band(double yRatioFromTop,
@@ -166,8 +168,8 @@ public record PageBackgroundFill(double xRatio,
      * Top-aligned band sized in absolute points, converted against {@code pageHeight}.
      *
      * @param heightPoints band height in points
-     * @param pageHeight reference page height in points used to convert points to a ratio
-     * @param color fill color (required)
+     * @param pageHeight   reference page height in points used to convert points to a ratio
+     * @param color        fill color (required)
      * @return a {@code PageBackgroundFill} spanning the full page width at the top edge
      */
     public static PageBackgroundFill topBandPoints(double heightPoints,
@@ -180,9 +182,9 @@ public record PageBackgroundFill(double xRatio,
      * Band positioned and sized in absolute points from the page top, converted against {@code pageHeight}.
      *
      * @param yFromTopPoints offset of the band top edge from the page top in points
-     * @param heightPoints band height in points
-     * @param pageHeight reference page height in points used to convert points to ratios
-     * @param color fill color (required)
+     * @param heightPoints   band height in points
+     * @param pageHeight     reference page height in points used to convert points to ratios
+     * @param color          fill color (required)
      * @return a {@code PageBackgroundFill} spanning the full page width from {@code yFromTopPoints}
      */
     public static PageBackgroundFill bandPoints(double yFromTopPoints,

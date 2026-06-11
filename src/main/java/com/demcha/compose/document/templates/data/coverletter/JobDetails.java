@@ -11,11 +11,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * <p><b>Mutability:</b> immutable record. <b>Thread-safety:</b> thread-safe
  * when referenced through immutable component values.</p>
  *
- * @param url optional job posting URL
- * @param title target role title
- * @param company target company name
- * @param location target job location
- * @param description optional job description text
+ * @param url            optional job posting URL
+ * @param title          target role title
+ * @param company        target company name
+ * @param location       target job location
+ * @param description    optional job description text
  * @param seniorityLevel optional seniority label
  * @param employmentType optional employment type label
  */

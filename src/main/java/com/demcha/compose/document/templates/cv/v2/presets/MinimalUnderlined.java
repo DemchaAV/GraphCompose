@@ -44,13 +44,19 @@ import java.util.Objects;
  */
 public final class MinimalUnderlined {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "minimal-underlined";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Minimal Underlined";
 
-    /** Recommended page margin (in points). */
+    /**
+     * Recommended page margin (in points).
+     */
     public static final double RECOMMENDED_MARGIN = 32.0;
 
     private MinimalUnderlined() {
@@ -76,54 +82,48 @@ public final class MinimalUnderlined {
         return new Template(theme);
     }
 
-    private static final class Template implements DocumentTemplate<CvDocument> {
-
-        private final CvTheme theme;
-
-        Template(CvTheme theme) {
-            this.theme = theme;
-        }
+    private record Template(CvTheme theme) implements DocumentTemplate<CvDocument> {
 
         @Override
-        public String id() {
-            return ID;
-        }
-
-        @Override
-        public String displayName() {
-            return DISPLAY_NAME;
-        }
-
-        @Override
-        public void compose(DocumentSession document, CvDocument doc) {
-            Objects.requireNonNull(document, "document");
-            Objects.requireNonNull(doc, "doc");
-
-            PageFlowBuilder pageFlow = document.dsl()
-                    .pageFlow()
-                    .name("CvV2MinimalRoot")
-                    .spacing(theme.spacing().pageFlowSpacing())
-                    .addSection("Headline", section ->
-                            Headline.spacedCentered(section, doc.identity().name(), theme))
-                    .addSection("Contact", section -> {
-                        section.accentBottom(theme.palette().rule(),
-                                theme.spacing().accentRuleWidth());
-                        ContactLine.centered(section, doc.identity(), theme);
-                    });
-
-            // Single-column preset — only renders MAIN-slot sections.
-            // Sidebar / footer placements are intentionally dropped here.
-            List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
-            for (int i = 0; i < sections.size(); i++) {
-                final CvSection sec = sections.get(i);
-                final int idx = i;
-                pageFlow.addSection("Title_" + idx, host ->
-                        SectionHeader.underlined(host, sec.title(), theme));
-                pageFlow.addSection("Body_" + idx, host ->
-                        SectionDispatcher.renderBody(host, sec, theme));
+            public String id() {
+                return ID;
             }
 
-            pageFlow.build();
+            @Override
+            public String displayName() {
+                return DISPLAY_NAME;
+            }
+
+            @Override
+            public void compose(DocumentSession document, CvDocument doc) {
+                Objects.requireNonNull(document, "document");
+                Objects.requireNonNull(doc, "doc");
+
+                PageFlowBuilder pageFlow = document.dsl()
+                        .pageFlow()
+                        .name("CvV2MinimalRoot")
+                        .spacing(theme.spacing().pageFlowSpacing())
+                        .addSection("Headline", section ->
+                                Headline.spacedCentered(section, doc.identity().name(), theme))
+                        .addSection("Contact", section -> {
+                            section.accentBottom(theme.palette().rule(),
+                                    theme.spacing().accentRuleWidth());
+                            ContactLine.centered(section, doc.identity(), theme);
+                        });
+
+                // Single-column preset — only renders MAIN-slot sections.
+                // Sidebar / footer placements are intentionally dropped here.
+                List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
+                for (int i = 0; i < sections.size(); i++) {
+                    final CvSection sec = sections.get(i);
+                    final int idx = i;
+                    pageFlow.addSection("Title_" + idx, host ->
+                            SectionHeader.underlined(host, sec.title(), theme));
+                    pageFlow.addSection("Body_" + idx, host ->
+                            SectionDispatcher.renderBody(host, sec, theme));
+                }
+
+                pageFlow.build();
+            }
         }
-    }
 }

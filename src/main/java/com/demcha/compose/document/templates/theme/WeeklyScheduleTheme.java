@@ -1,38 +1,38 @@
 package com.demcha.compose.document.templates.theme;
 
-import com.demcha.compose.font.FontName;
 import com.demcha.compose.engine.components.content.text.TextDecoration;
 import com.demcha.compose.engine.components.content.text.TextStyle;
+import com.demcha.compose.font.FontName;
 
-import java.awt.Color;
+import java.awt.*;
 
 /**
  * Shared visual tokens for weekly schedule templates.
  *
- * @param titleColor title text color
- * @param accentColor accent color
- * @param bodyColor body text color
- * @param mutedTextColor muted text color
- * @param gridBorderColor grid border color
- * @param bandFillColor header band fill color
- * @param nameColumnFillColor name column fill color
- * @param emptyCellFillColor empty cell fill color
- * @param titleFont title font family
- * @param bodyFont body font family
- * @param titleFontSize title font size
- * @param weekLabelFontSize week label font size
- * @param dayLabelFontSize day label font size
- * @param noteFontSize note font size
- * @param metricFontSize metric font size
- * @param personNameFontSize person name font size
- * @param cellFontSize schedule cell font size
- * @param footerFontSize footer font size
- * @param rootSpacing spacing between root blocks
- * @param sectionSpacing spacing between sections
- * @param nameColumnWidth width of the fixed name column
- * @param bandPaddingVertical vertical padding for header bands
+ * @param titleColor            title text color
+ * @param accentColor           accent color
+ * @param bodyColor             body text color
+ * @param mutedTextColor        muted text color
+ * @param gridBorderColor       grid border color
+ * @param bandFillColor         header band fill color
+ * @param nameColumnFillColor   name column fill color
+ * @param emptyCellFillColor    empty cell fill color
+ * @param titleFont             title font family
+ * @param bodyFont              body font family
+ * @param titleFontSize         title font size
+ * @param weekLabelFontSize     week label font size
+ * @param dayLabelFontSize      day label font size
+ * @param noteFontSize          note font size
+ * @param metricFontSize        metric font size
+ * @param personNameFontSize    person name font size
+ * @param cellFontSize          schedule cell font size
+ * @param footerFontSize        footer font size
+ * @param rootSpacing           spacing between root blocks
+ * @param sectionSpacing        spacing between sections
+ * @param nameColumnWidth       width of the fixed name column
+ * @param bandPaddingVertical   vertical padding for header bands
  * @param bandPaddingHorizontal horizontal padding for header bands
- * @param bodyPaddingVertical vertical body padding
+ * @param bodyPaddingVertical   vertical body padding
  * @param bodyPaddingHorizontal horizontal body padding
  */
 public record WeeklyScheduleTheme(

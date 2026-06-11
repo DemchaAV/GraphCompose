@@ -3,24 +3,18 @@ package com.demcha.compose.document.backend.fixed.pdf.handlers;
 import com.demcha.compose.document.backend.fixed.pdf.PdfFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
 import com.demcha.compose.document.layout.PlacedFragment;
-import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
-import com.demcha.compose.document.layout.payloads.ParagraphShapeSpan;
-import com.demcha.compose.document.layout.payloads.ResolvedShapeLayer;
-import com.demcha.compose.document.layout.payloads.ParagraphImageSpan;
-import com.demcha.compose.document.layout.payloads.ParagraphLine;
-import com.demcha.compose.document.layout.payloads.ParagraphSpan;
-import com.demcha.compose.document.layout.payloads.ParagraphTextSpan;
+import com.demcha.compose.document.layout.payloads.*;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.ShapeOutline;
-import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.engine.render.pdf.PdfFont;
+import com.demcha.compose.font.FontLibrary;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
-import java.awt.Color;
+import java.awt.*;
 import java.io.IOException;
 import java.util.List;
 
@@ -39,52 +33,6 @@ public final class PdfParagraphFragmentRenderHandler
      * Creates the paragraph fragment renderer.
      */
     public PdfParagraphFragmentRenderHandler() {
-    }
-
-    @Override
-    public Class<ParagraphFragmentPayload> payloadType() {
-        return ParagraphFragmentPayload.class;
-    }
-
-    @Override
-    public void render(PlacedFragment fragment,
-                       ParagraphFragmentPayload payload,
-                       PdfRenderEnvironment environment) throws IOException {
-        FontLibrary fonts = environment.fonts();
-        double innerX = fragment.x() + payload.padding().left();
-        double innerWidth = Math.max(0.0, fragment.width() - payload.padding().horizontal());
-        double contentTop = fragment.y() + fragment.height() - payload.padding().top();
-        PDPageContentStream stream = environment.pageSurface(fragment.pageIndex());
-
-        stream.saveGraphicsState();
-        try {
-            // Font and non-stroking colour persist across BT/ET within this one
-            // q...Q block, so track the last-written pair and re-emit Tf/rg only
-            // when a span actually changes them — a single-style paragraph then
-            // emits one setFont + one setNonStrokingColor instead of one per span.
-            TextRenderState textState = new TextRenderState();
-            double cursorTop = contentTop;
-            for (int lineIndex = 0; lineIndex < payload.lines().size(); lineIndex++) {
-                ParagraphLine line = payload.lines().get(lineIndex);
-                double lineTop = cursorTop;
-                double resolvedLineHeight = line.lineHeight();
-                double baselineY = lineTop - resolvedLineHeight + line.baselineOffsetFromBottom();
-                if (payload.verticalAlign() != TextVerticalAlign.DEFAULT) {
-                    baselineY += verticalSeatShift(line, fonts, payload.verticalAlign());
-                }
-                double lineX = switch (payload.align()) {
-                    case RIGHT -> innerX + innerWidth - line.width();
-                    case CENTER -> innerX + (innerWidth - line.width()) / 2.0;
-                    case LEFT -> innerX;
-                };
-
-                renderLine(stream, fonts, line, lineX, baselineY, environment, textState);
-
-                cursorTop = lineTop - resolvedLineHeight - payload.lineGap();
-            }
-        } finally {
-            stream.restoreGraphicsState();
-        }
     }
 
     /**
@@ -127,86 +75,6 @@ public final class PdfParagraphFragmentRenderHandler
             }
         }
         return 0.0;
-    }
-
-    private void renderLine(PDPageContentStream stream,
-                            FontLibrary fonts,
-                            ParagraphLine line,
-                            double lineX,
-                            double baselineY,
-                            PdfRenderEnvironment environment,
-                            TextRenderState textState) throws IOException {
-        List<ParagraphSpan> spans = line.spans();
-        if (spans.isEmpty()) {
-            return;
-        }
-
-        boolean inTextBlock = false;
-        double cursorX = lineX;
-        try {
-            for (ParagraphSpan span : spans) {
-                if (span instanceof ParagraphTextSpan textSpan) {
-                    PdfFont font = fonts.getFont(textSpan.textStyle().fontName(), PdfFont.class).orElseThrow();
-                    // Font-aware sanitization keeps width measurement
-                    // (PdfFont.getTextWidth) and the bytes emitted here
-                    // in lockstep. PdfFont.sanitizeForRender substitutes
-                    // any code point the resolved font cannot encode
-                    // with '?', preventing PDFBox from throwing on
-                    // arrows / bullets / emoji / unsupported unicode.
-                    String text = font.sanitizeForRender(textSpan.textStyle(), textSpan.text());
-                    if (text.isEmpty()) {
-                        cursorX += textSpan.width();
-                        continue;
-                    }
-                    if (!inTextBlock) {
-                        stream.beginText();
-                        stream.newLineAtOffset((float) cursorX, (float) baselineY);
-                        inTextBlock = true;
-                    }
-                    textState.applyFont(stream,
-                            font.fontType(textSpan.textStyle().decoration()),
-                            (float) textSpan.textStyle().size());
-                    textState.applyColor(stream, textSpan.textStyle().color());
-                    stream.showText(text);
-                    cursorX += textSpan.width();
-                } else if (span instanceof ParagraphImageSpan imageSpan) {
-                    if (inTextBlock) {
-                        stream.endText();
-                        inTextBlock = false;
-                    }
-                    double imageBottom = resolveImageBottom(
-                            imageSpan,
-                            baselineY,
-                            line.textAscent(),
-                            line.baselineOffsetFromBottom(),
-                            line.lineHeight());
-                    PDImageXObject image = environment.resolveImage(imageSpan.imageData());
-                    stream.drawImage(image,
-                            (float) cursorX,
-                            (float) imageBottom,
-                            (float) imageSpan.width(),
-                            (float) imageSpan.height());
-                    // An inline graphic runs its own graphics-state save/restore and
-                    // colour ops; drop the tracked font/colour so the next text span
-                    // re-emits them rather than trusting persistence across it.
-                    textState.invalidate();
-                    cursorX += imageSpan.width();
-                } else if (span instanceof ParagraphShapeSpan shapeSpan) {
-                    if (inTextBlock) {
-                        stream.endText();
-                        inTextBlock = false;
-                    }
-                    renderShape(stream, shapeSpan, cursorX, baselineY,
-                            line.textAscent(), line.baselineOffsetFromBottom(), line.lineHeight());
-                    textState.invalidate();
-                    cursorX += shapeSpan.width();
-                }
-            }
-        } finally {
-            if (inTextBlock) {
-                stream.endText();
-            }
-        }
     }
 
     private static double resolveImageBottom(ParagraphImageSpan imageSpan,
@@ -299,6 +167,132 @@ public final class PdfParagraphFragmentRenderHandler
                     throw new IllegalStateException("Unknown inline outline: " + outline);
                 }
             });
+        }
+    }
+
+    @Override
+    public Class<ParagraphFragmentPayload> payloadType() {
+        return ParagraphFragmentPayload.class;
+    }
+
+    @Override
+    public void render(PlacedFragment fragment,
+                       ParagraphFragmentPayload payload,
+                       PdfRenderEnvironment environment) throws IOException {
+        FontLibrary fonts = environment.fonts();
+        double innerX = fragment.x() + payload.padding().left();
+        double innerWidth = Math.max(0.0, fragment.width() - payload.padding().horizontal());
+        double contentTop = fragment.y() + fragment.height() - payload.padding().top();
+        PDPageContentStream stream = environment.pageSurface(fragment.pageIndex());
+
+        stream.saveGraphicsState();
+        try {
+            // Font and non-stroking colour persist across BT/ET within this one
+            // q...Q block, so track the last-written pair and re-emit Tf/rg only
+            // when a span actually changes them — a single-style paragraph then
+            // emits one setFont + one setNonStrokingColor instead of one per span.
+            TextRenderState textState = new TextRenderState();
+            double cursorTop = contentTop;
+            for (int lineIndex = 0; lineIndex < payload.lines().size(); lineIndex++) {
+                ParagraphLine line = payload.lines().get(lineIndex);
+                double lineTop = cursorTop;
+                double resolvedLineHeight = line.lineHeight();
+                double baselineY = lineTop - resolvedLineHeight + line.baselineOffsetFromBottom();
+                if (payload.verticalAlign() != TextVerticalAlign.DEFAULT) {
+                    baselineY += verticalSeatShift(line, fonts, payload.verticalAlign());
+                }
+                double lineX = switch (payload.align()) {
+                    case RIGHT -> innerX + innerWidth - line.width();
+                    case CENTER -> innerX + (innerWidth - line.width()) / 2.0;
+                    case LEFT -> innerX;
+                };
+
+                renderLine(stream, fonts, line, lineX, baselineY, environment, textState);
+
+                cursorTop = lineTop - resolvedLineHeight - payload.lineGap();
+            }
+        } finally {
+            stream.restoreGraphicsState();
+        }
+    }
+
+    private void renderLine(PDPageContentStream stream,
+                            FontLibrary fonts,
+                            ParagraphLine line,
+                            double lineX,
+                            double baselineY,
+                            PdfRenderEnvironment environment,
+                            TextRenderState textState) throws IOException {
+        List<ParagraphSpan> spans = line.spans();
+        if (spans.isEmpty()) {
+            return;
+        }
+
+        boolean inTextBlock = false;
+        double cursorX = lineX;
+        try {
+            for (ParagraphSpan span : spans) {
+                if (span instanceof ParagraphTextSpan textSpan) {
+                    PdfFont font = fonts.getFont(textSpan.textStyle().fontName(), PdfFont.class).orElseThrow();
+                    // Font-aware sanitization keeps width measurement
+                    // (PdfFont.getTextWidth) and the bytes emitted here
+                    // in lockstep. PdfFont.sanitizeForRender substitutes
+                    // any code point the resolved font cannot encode
+                    // with '?', preventing PDFBox from throwing on
+                    // arrows / bullets / emoji / unsupported unicode.
+                    String text = font.sanitizeForRender(textSpan.textStyle(), textSpan.text());
+                    if (text.isEmpty()) {
+                        cursorX += textSpan.width();
+                        continue;
+                    }
+                    if (!inTextBlock) {
+                        stream.beginText();
+                        stream.newLineAtOffset((float) cursorX, (float) baselineY);
+                        inTextBlock = true;
+                    }
+                    textState.applyFont(stream,
+                            font.fontType(textSpan.textStyle().decoration()),
+                            (float) textSpan.textStyle().size());
+                    textState.applyColor(stream, textSpan.textStyle().color());
+                    stream.showText(text);
+                    cursorX += textSpan.width();
+                } else if (span instanceof ParagraphImageSpan imageSpan) {
+                    if (inTextBlock) {
+                        stream.endText();
+                        inTextBlock = false;
+                    }
+                    double imageBottom = resolveImageBottom(
+                            imageSpan,
+                            baselineY,
+                            line.textAscent(),
+                            line.baselineOffsetFromBottom(),
+                            line.lineHeight());
+                    PDImageXObject image = environment.resolveImage(imageSpan.imageData());
+                    stream.drawImage(image,
+                            (float) cursorX,
+                            (float) imageBottom,
+                            (float) imageSpan.width(),
+                            (float) imageSpan.height());
+                    // An inline graphic runs its own graphics-state save/restore and
+                    // colour ops; drop the tracked font/colour so the next text span
+                    // re-emits them rather than trusting persistence across it.
+                    textState.invalidate();
+                    cursorX += imageSpan.width();
+                } else if (span instanceof ParagraphShapeSpan shapeSpan) {
+                    if (inTextBlock) {
+                        stream.endText();
+                        inTextBlock = false;
+                    }
+                    renderShape(stream, shapeSpan, cursorX, baselineY,
+                            line.textAscent(), line.baselineOffsetFromBottom(), line.lineHeight());
+                    textState.invalidate();
+                    cursorX += shapeSpan.width();
+                }
+            }
+        } finally {
+            if (inTextBlock) {
+                stream.endText();
+            }
         }
     }
 

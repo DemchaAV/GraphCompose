@@ -6,20 +6,36 @@ package com.demcha.compose.document.node;
  * @author Artem Demchyshyn
  */
 public enum DocumentBarcodeType {
-    /** QR code. */
+    /**
+     * QR code.
+     */
     QR_CODE,
-    /** Code 128 barcode. */
+    /**
+     * Code 128 barcode.
+     */
     CODE_128,
-    /** Code 39 barcode. */
+    /**
+     * Code 39 barcode.
+     */
     CODE_39,
-    /** EAN-13 barcode. */
+    /**
+     * EAN-13 barcode.
+     */
     EAN_13,
-    /** EAN-8 barcode. */
+    /**
+     * EAN-8 barcode.
+     */
     EAN_8,
-    /** UPC-A barcode. */
+    /**
+     * UPC-A barcode.
+     */
     UPC_A,
-    /** PDF417 barcode. */
+    /**
+     * PDF417 barcode.
+     */
     PDF_417,
-    /** Data Matrix barcode. */
+    /**
+     * Data Matrix barcode.
+     */
     DATA_MATRIX
 }

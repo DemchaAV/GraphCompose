@@ -4,7 +4,7 @@ import com.demcha.compose.document.style.ShapePoint;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
-import java.awt.Color;
+import java.awt.*;
 import java.io.IOException;
 import java.util.List;
 
@@ -19,15 +19,6 @@ final class PdfShapeGeometry {
     }
 
     /**
-     * A path contribution: the caller adds the geometry (ellipse, rectangle,
-     * polygon, …) so the fill/stroke wrapper can be shared.
-     */
-    @FunctionalInterface
-    interface PathEmitter {
-        void emit(PDPageContentStream stream) throws IOException;
-    }
-
-    /**
      * Paints a path with optional fill and/or stroke, sharing the
      * save/restore + colour setup + fill/stroke selection across every shape
      * render handler. No-op when neither a fill nor a visible stroke is present.
@@ -38,9 +29,9 @@ final class PdfShapeGeometry {
                                   PathEmitter path) throws IOException {
         boolean hasFill = fillColor != null;
         boolean hasStroke = stroke != null
-                && stroke.strokeColor() != null
-                && stroke.strokeColor().color() != null
-                && stroke.width() > 0;
+                            && stroke.strokeColor() != null
+                            && stroke.strokeColor().color() != null
+                            && stroke.width() > 0;
         if (!hasFill && !hasStroke) {
             return;
         }
@@ -145,5 +136,14 @@ final class PdfShapeGeometry {
             stream.lineTo(x, top);
         }
         stream.closePath();
+    }
+
+    /**
+     * A path contribution: the caller adds the geometry (ellipse, rectangle,
+     * polygon, …) so the fill/stroke wrapper can be shared.
+     */
+    @FunctionalInterface
+    interface PathEmitter {
+        void emit(PDPageContentStream stream) throws IOException;
     }
 }

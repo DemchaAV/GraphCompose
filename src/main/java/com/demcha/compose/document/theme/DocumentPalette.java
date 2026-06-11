@@ -2,7 +2,7 @@ package com.demcha.compose.document.theme;
 
 import com.demcha.compose.document.style.DocumentColor;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.Objects;
 
 /**
@@ -11,14 +11,13 @@ import java.util.Objects;
  * <p>Tokens are referenced by role rather than by value so a single template can
  * be re-skinned by swapping {@link BusinessTheme}s.</p>
  *
- * @param primary headline color (titles, primary buttons, brand accents)
- * @param accent secondary accent (status keywords, hyperlinks, highlights)
- * @param surface dominant background tone (page, default panel)
+ * @param primary      headline color (titles, primary buttons, brand accents)
+ * @param accent       secondary accent (status keywords, hyperlinks, highlights)
+ * @param surface      dominant background tone (page, default panel)
  * @param surfaceMuted subdued background (soft panels, table zebra)
- * @param textPrimary primary body text color
- * @param textMuted secondary/caption text color
- * @param rule rule/divider/border color used by tables and accent strips
- *
+ * @param textPrimary  primary body text color
+ * @param textMuted    secondary/caption text color
+ * @param rule         rule/divider/border color used by tables and accent strips
  * @author Artem Demchyshyn
  */
 public record DocumentPalette(
@@ -62,17 +61,17 @@ public record DocumentPalette(
     /**
      * Convenience factory accepting AWT colors.
      *
-     * @param primary primary color
-     * @param accent accent color
-     * @param surface surface color
+     * @param primary      primary color
+     * @param accent       accent color
+     * @param surface      surface color
      * @param surfaceMuted muted surface color
-     * @param textPrimary primary text color
-     * @param textMuted muted text color
-     * @param rule rule/border color
+     * @param textPrimary  primary text color
+     * @param textMuted    muted text color
+     * @param rule         rule/border color
      * @return palette built from raw AWT colors
      * @deprecated since 1.6.0; prefer {@link #builder()} so adding or
-     *             reorganising palette tokens does not silently shift other
-     *             values via argument-order. Scheduled for removal in v2.0.
+     * reorganising palette tokens does not silently shift other
+     * values via argument-order. Scheduled for removal in v2.0.
      */
     @Deprecated(since = "1.6.0", forRemoval = true)
     public static DocumentPalette of(Color primary,
@@ -268,8 +267,8 @@ public record DocumentPalette(
          *
          * @return immutable palette
          * @throws IllegalStateException if any required token was never set;
-         *         the message names every missing token so the caller can
-         *         add them in one fix-up.
+         *                               the message names every missing token so the caller can
+         *                               add them in one fix-up.
          */
         public DocumentPalette build() {
             StringBuilder missing = null;
@@ -283,7 +282,7 @@ public record DocumentPalette(
             if (missing != null) {
                 throw new IllegalStateException(
                         "DocumentPalette.builder().build() requires every token to be set; missing: "
-                                + missing);
+                        + missing);
             }
             return new DocumentPalette(primary, accent, surface, surfaceMuted, textPrimary, textMuted, rule);
         }

@@ -22,8 +22,8 @@ import java.util.Objects;
  * @since 1.0.0
  */
 public final class LayerStackBuilder {
-    private String name = "";
     private final List<LayerStackNode.Layer> layers = new ArrayList<>();
+    private String name = "";
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
 
@@ -57,7 +57,7 @@ public final class LayerStackBuilder {
     /**
      * Appends a layer with explicit alignment inside the stack box.
      *
-     * @param node child node
+     * @param node  child node
      * @param align layer alignment
      * @return this builder
      */
@@ -71,8 +71,8 @@ public final class LayerStackBuilder {
      * {@code zIndex} renders on top of lower {@code zIndex} regardless
      * of source order; the default is {@code 0}.
      *
-     * @param node child node
-     * @param align layer alignment
+     * @param node   child node
+     * @param align  layer alignment
      * @param zIndex render-order key
      * @return this builder
      */
@@ -87,10 +87,10 @@ public final class LayerStackBuilder {
      * offset from that anchor point. Positive {@code offsetX} moves the layer
      * to the right, positive {@code offsetY} moves it down.
      *
-     * @param node child node
+     * @param node    child node
      * @param offsetX horizontal offset from the anchor (positive = right)
      * @param offsetY vertical offset from the anchor (positive = down)
-     * @param align anchor inside the stack box
+     * @param align   anchor inside the stack box
      * @return this builder
      */
     public LayerStackBuilder position(DocumentNode node,
@@ -106,11 +106,11 @@ public final class LayerStackBuilder {
      * Appends a layer anchored to {@code align}, nudged by an on-screen
      * offset, and assigned an explicit z-index.
      *
-     * @param node child node
+     * @param node    child node
      * @param offsetX horizontal offset from the anchor (positive = right)
      * @param offsetY vertical offset from the anchor (positive = down)
-     * @param align anchor inside the stack box
-     * @param zIndex render-order key
+     * @param align   anchor inside the stack box
+     * @param zIndex  render-order key
      * @return this builder
      */
     public LayerStackBuilder position(DocumentNode node,

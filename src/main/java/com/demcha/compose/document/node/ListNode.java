@@ -30,18 +30,18 @@ import java.util.List;
  * are ignored. When {@code nestedItems} is empty, the node behaves
  * exactly like the v1.5 flat list.</p>
  *
- * @param name optional semantic name used in snapshots and diagnostics
- * @param items item texts in source order — used when {@code nestedItems} is empty
- * @param nestedItems nested item tree, empty for flat lists
- * @param marker top-level marker rendered before each flat item
- * @param textStyle shared item text style
- * @param align horizontal alignment for item text
- * @param lineSpacing extra space between wrapped lines within one item
- * @param itemSpacing extra space between list items
+ * @param name               optional semantic name used in snapshots and diagnostics
+ * @param items              item texts in source order — used when {@code nestedItems} is empty
+ * @param nestedItems        nested item tree, empty for flat lists
+ * @param marker             top-level marker rendered before each flat item
+ * @param textStyle          shared item text style
+ * @param align              horizontal alignment for item text
+ * @param lineSpacing        extra space between wrapped lines within one item
+ * @param itemSpacing        extra space between list items
  * @param continuationIndent prefix used only for wrapped continuation lines when the marker is hidden
- * @param normalizeMarkers whether leading user-supplied bullets or dashes are stripped
- * @param padding inner list padding
- * @param margin outer list margin
+ * @param normalizeMarkers   whether leading user-supplied bullets or dashes are stripped
+ * @param padding            inner list padding
+ * @param margin             outer list margin
  * @author Artem Demchyshyn
  */
 public record ListNode(
@@ -83,17 +83,17 @@ public record ListNode(
      * Back-compat constructor matching the v1.4 / v1.5 11-component
      * signature. Treats the list as flat (no nested items).
      *
-     * @param name optional semantic name used in snapshots and diagnostics
-     * @param items item texts in source order — used when {@code nestedItems} is empty
-     * @param marker top-level marker rendered before each flat item
-     * @param textStyle shared item text style
-     * @param align horizontal alignment for item text
-     * @param lineSpacing extra space between wrapped lines within one item
-     * @param itemSpacing extra space between list items
+     * @param name               optional semantic name used in snapshots and diagnostics
+     * @param items              item texts in source order — used when {@code nestedItems} is empty
+     * @param marker             top-level marker rendered before each flat item
+     * @param textStyle          shared item text style
+     * @param align              horizontal alignment for item text
+     * @param lineSpacing        extra space between wrapped lines within one item
+     * @param itemSpacing        extra space between list items
      * @param continuationIndent prefix used only for wrapped continuation lines when the marker is hidden
-     * @param normalizeMarkers whether leading user-supplied bullets or dashes are stripped
-     * @param padding inner list padding
-     * @param margin outer list margin
+     * @param normalizeMarkers   whether leading user-supplied bullets or dashes are stripped
+     * @param padding            inner list padding
+     * @param margin             outer list margin
      */
     public ListNode(String name,
                     List<String> items,

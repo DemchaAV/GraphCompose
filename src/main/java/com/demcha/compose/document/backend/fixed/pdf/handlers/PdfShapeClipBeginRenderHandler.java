@@ -42,6 +42,34 @@ public final class PdfShapeClipBeginRenderHandler
     public PdfShapeClipBeginRenderHandler() {
     }
 
+    private static void addEllipsePath(PDPageContentStream stream,
+                                       float x,
+                                       float y,
+                                       float width,
+                                       float height) throws IOException {
+        float centerX = x + width / 2.0f;
+        float centerY = y + height / 2.0f;
+        float radiusX = width / 2.0f;
+        float radiusY = height / 2.0f;
+        float controlX = radiusX * BEZIER_CIRCLE_CONSTANT;
+        float controlY = radiusY * BEZIER_CIRCLE_CONSTANT;
+
+        stream.moveTo(centerX + radiusX, centerY);
+        stream.curveTo(centerX + radiusX, centerY + controlY,
+                centerX + controlX, centerY + radiusY,
+                centerX, centerY + radiusY);
+        stream.curveTo(centerX - controlX, centerY + radiusY,
+                centerX - radiusX, centerY + controlY,
+                centerX - radiusX, centerY);
+        stream.curveTo(centerX - radiusX, centerY - controlY,
+                centerX - controlX, centerY - radiusY,
+                centerX, centerY - radiusY);
+        stream.curveTo(centerX + controlX, centerY - radiusY,
+                centerX + radiusX, centerY - controlY,
+                centerX + radiusX, centerY);
+        stream.closePath();
+    }
+
     @Override
     public Class<ShapeClipBeginPayload> payloadType() {
         return ShapeClipBeginPayload.class;
@@ -100,33 +128,5 @@ public final class PdfShapeClipBeginRenderHandler
         // itself is not painted (we follow up immediately with stroke/fill
         // ops on subsequent fragments, so we use the no-op path-painter).
         stream.clip();
-    }
-
-    private static void addEllipsePath(PDPageContentStream stream,
-                                       float x,
-                                       float y,
-                                       float width,
-                                       float height) throws IOException {
-        float centerX = x + width / 2.0f;
-        float centerY = y + height / 2.0f;
-        float radiusX = width / 2.0f;
-        float radiusY = height / 2.0f;
-        float controlX = radiusX * BEZIER_CIRCLE_CONSTANT;
-        float controlY = radiusY * BEZIER_CIRCLE_CONSTANT;
-
-        stream.moveTo(centerX + radiusX, centerY);
-        stream.curveTo(centerX + radiusX, centerY + controlY,
-                centerX + controlX, centerY + radiusY,
-                centerX, centerY + radiusY);
-        stream.curveTo(centerX - controlX, centerY + radiusY,
-                centerX - radiusX, centerY + controlY,
-                centerX - radiusX, centerY);
-        stream.curveTo(centerX - radiusX, centerY - controlY,
-                centerX - controlX, centerY - radiusY,
-                centerX, centerY - radiusY);
-        stream.curveTo(centerX + controlX, centerY - radiusY,
-                centerX + radiusX, centerY - controlY,
-                centerX + radiusX, centerY);
-        stream.closePath();
     }
 }

@@ -1,10 +1,6 @@
 package com.demcha.compose.document.node;
 
-import com.demcha.compose.document.style.DocumentBorders;
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentCornerRadius;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.*;
 
 import java.util.List;
 import java.util.Objects;
@@ -23,17 +19,16 @@ import java.util.Objects;
  * {@link ContainerNode}) acting as columns. Nested rows and tables are
  * disallowed at the DSL boundary.</p>
  *
- * @param name node name used in snapshots and layout graph paths
- * @param children child semantic nodes in source order
- * @param weights optional per-child weights (length must match children, or be empty)
- * @param gap horizontal gap between children
- * @param padding inner padding
- * @param margin outer margin
- * @param fillColor optional background fill
- * @param stroke optional border stroke
+ * @param name         node name used in snapshots and layout graph paths
+ * @param children     child semantic nodes in source order
+ * @param weights      optional per-child weights (length must match children, or be empty)
+ * @param gap          horizontal gap between children
+ * @param padding      inner padding
+ * @param margin       outer margin
+ * @param fillColor    optional background fill
+ * @param stroke       optional border stroke
  * @param cornerRadius optional render-only corner radius
- * @param borders optional per-side border strokes overriding the uniform stroke
- *
+ * @param borders      optional per-side border strokes overriding the uniform stroke
  * @author Artem Demchyshyn
  */
 public record RowNode(
@@ -58,7 +53,7 @@ public record RowNode(
         weights = weights == null ? List.of() : List.copyOf(weights);
         if (!weights.isEmpty() && weights.size() != children.size()) {
             throw new IllegalArgumentException("RowNode weights size " + weights.size()
-                    + " does not match children size " + children.size());
+                                               + " does not match children size " + children.size());
         }
         for (Double weight : weights) {
             if (weight == null || Double.isNaN(weight) || Double.isInfinite(weight) || weight <= 0.0) {
@@ -77,14 +72,14 @@ public record RowNode(
     /**
      * Backwards-compatible constructor without per-side borders.
      *
-     * @param name node name used in snapshots and layout graph paths
-     * @param children child semantic nodes in source order
-     * @param weights optional per-child weights (length must match children, or be empty)
-     * @param gap horizontal gap between children
-     * @param padding inner padding
-     * @param margin outer margin
-     * @param fillColor optional background fill
-     * @param stroke optional border stroke
+     * @param name         node name used in snapshots and layout graph paths
+     * @param children     child semantic nodes in source order
+     * @param weights      optional per-child weights (length must match children, or be empty)
+     * @param gap          horizontal gap between children
+     * @param padding      inner padding
+     * @param margin       outer margin
+     * @param fillColor    optional background fill
+     * @param stroke       optional border stroke
      * @param cornerRadius optional render-only corner radius
      */
     public RowNode(String name,

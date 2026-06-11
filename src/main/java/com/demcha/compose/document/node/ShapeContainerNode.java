@@ -1,11 +1,6 @@
 package com.demcha.compose.document.node;
 
-import com.demcha.compose.document.style.ClipPolicy;
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTransform;
-import com.demcha.compose.document.style.ShapeOutline;
+import com.demcha.compose.document.style.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,23 +27,22 @@ import java.util.Objects;
  * <p>Pagination is atomic: the outline plus all of its layers stays on the
  * same page or moves to the next as one unit.</p>
  *
- * @param name node name used in snapshots and layout graph paths
- * @param outline geometric outline that drives the bounding box
- * @param layers child layers in back-to-front order; must contain at least one
+ * @param name       node name used in snapshots and layout graph paths
+ * @param outline    geometric outline that drives the bounding box
+ * @param layers     child layers in back-to-front order; must contain at least one
  * @param clipPolicy how children are clipped relative to the outline
- * @param fillColor optional outline fill colour
- * @param stroke optional outline stroke
- * @param padding inner padding applied around all layers (subtracted from outline)
- * @param margin outer margin around the container
- * @param transform render-time affine transform (rotation around the
- *                  placement centre and/or scaling) applied to the
- *                  outline + layers as a single unit; defaults to
- *                  {@link DocumentTransform#NONE}. The canonical layout
- *                  layer measures and places the node against its
- *                  natural bounding box — backends apply the transform
- *                  during render so layout snapshots stay deterministic
- *                  regardless of rotation/scale.
- *
+ * @param fillColor  optional outline fill colour
+ * @param stroke     optional outline stroke
+ * @param padding    inner padding applied around all layers (subtracted from outline)
+ * @param margin     outer margin around the container
+ * @param transform  render-time affine transform (rotation around the
+ *                   placement centre and/or scaling) applied to the
+ *                   outline + layers as a single unit; defaults to
+ *                   {@link DocumentTransform#NONE}. The canonical layout
+ *                   layer measures and places the node against its
+ *                   natural bounding box — backends apply the transform
+ *                   during render so layout snapshots stay deterministic
+ *                   regardless of rotation/scale.
  * @author Artem Demchyshyn
  */
 public record ShapeContainerNode(
@@ -68,14 +62,14 @@ public record ShapeContainerNode(
      * {@link DocumentTransform#NONE}. Lets existing callers built before
      * Phase C compile without changes.
      *
-     * @param name node name used in snapshots and layout graph paths
-     * @param outline geometric outline that drives the bounding box
-     * @param layers child layers in back-to-front order
+     * @param name       node name used in snapshots and layout graph paths
+     * @param outline    geometric outline that drives the bounding box
+     * @param layers     child layers in back-to-front order
      * @param clipPolicy how children are clipped relative to the outline
-     * @param fillColor optional outline fill colour
-     * @param stroke optional outline stroke
-     * @param padding inner padding applied around all layers
-     * @param margin outer margin around the container
+     * @param fillColor  optional outline fill colour
+     * @param stroke     optional outline stroke
+     * @param padding    inner padding applied around all layers
+     * @param margin     outer margin around the container
      */
     public ShapeContainerNode(String name,
                               ShapeOutline outline,
@@ -119,8 +113,8 @@ public record ShapeContainerNode(
 
     /**
      * @return ordered child node references — equivalent to
-     *         {@code layers.stream().map(Layer::node)}, kept aligned with
-     *         {@link DocumentNode#children()}'s contract
+     * {@code layers.stream().map(Layer::node)}, kept aligned with
+     * {@link DocumentNode#children()}'s contract
      */
     @Override
     public List<DocumentNode> children() {

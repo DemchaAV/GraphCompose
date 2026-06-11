@@ -10,22 +10,40 @@ package com.demcha.compose.document.node;
  * @author Artem Demchyshyn
  */
 public enum LayerAlign {
-    /** Anchored to the top-left corner of the stack box. */
+    /**
+     * Anchored to the top-left corner of the stack box.
+     */
     TOP_LEFT,
-    /** Centered horizontally and anchored to the top edge. */
+    /**
+     * Centered horizontally and anchored to the top edge.
+     */
     TOP_CENTER,
-    /** Anchored to the top-right corner of the stack box. */
+    /**
+     * Anchored to the top-right corner of the stack box.
+     */
     TOP_RIGHT,
-    /** Centered vertically and anchored to the left edge. */
+    /**
+     * Centered vertically and anchored to the left edge.
+     */
     CENTER_LEFT,
-    /** Centered both horizontally and vertically. */
+    /**
+     * Centered both horizontally and vertically.
+     */
     CENTER,
-    /** Centered vertically and anchored to the right edge. */
+    /**
+     * Centered vertically and anchored to the right edge.
+     */
     CENTER_RIGHT,
-    /** Anchored to the bottom-left corner of the stack box. */
+    /**
+     * Anchored to the bottom-left corner of the stack box.
+     */
     BOTTOM_LEFT,
-    /** Centered horizontally and anchored to the bottom edge. */
+    /**
+     * Centered horizontally and anchored to the bottom edge.
+     */
     BOTTOM_CENTER,
-    /** Anchored to the bottom-right corner of the stack box. */
+    /**
+     * Anchored to the bottom-right corner of the stack box.
+     */
     BOTTOM_RIGHT
 }

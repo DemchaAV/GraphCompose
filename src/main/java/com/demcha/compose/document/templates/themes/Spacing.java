@@ -43,7 +43,7 @@ public record Spacing(
      * numeric token, and rejects {@code null} {@code contentPadding}.
      *
      * @throws IllegalArgumentException if any numeric token is negative,
-     *         {@code NaN}, or infinite
+     *                                  {@code NaN}, or infinite
      * @throws NullPointerException     if {@code contentPadding} is {@code null}
      */
     public Spacing {

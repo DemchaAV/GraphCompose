@@ -21,20 +21,20 @@ public final class EntryCompactRenderer {
      * Renders title and date as a two-column row, then an optional
      * subtitle line and the body paragraph beneath.
      *
-     * @param host           host section receiving the entry
-     * @param entry          the entry supplying title, date, subtitle, and body
-     * @param rowName        node name for the title/date row
-     * @param titleStyle     text style for the title column
-     * @param dateStyle      text style for the date column
-     * @param subtitleStyle  text style for the subtitle line
-     * @param bodyStyle      text style for the body paragraph
-     * @param rowSpacing     horizontal spacing between the title and date columns
-     * @param titleWeight    relative weight of the title column
-     * @param dateWeight     relative weight of the date column
-     * @param subtitleMargin outer margin of the subtitle line
-     * @param bodyMargin     outer margin of the body paragraph
+     * @param host            host section receiving the entry
+     * @param entry           the entry supplying title, date, subtitle, and body
+     * @param rowName         node name for the title/date row
+     * @param titleStyle      text style for the title column
+     * @param dateStyle       text style for the date column
+     * @param subtitleStyle   text style for the subtitle line
+     * @param bodyStyle       text style for the body paragraph
+     * @param rowSpacing      horizontal spacing between the title and date columns
+     * @param titleWeight     relative weight of the title column
+     * @param dateWeight      relative weight of the date column
+     * @param subtitleMargin  outer margin of the subtitle line
+     * @param bodyMargin      outer margin of the body paragraph
      * @param bodyLineSpacing extra space between wrapped body lines
-     * @param uppercaseTitle whether the title is upper-cased
+     * @param uppercaseTitle  whether the title is upper-cased
      */
     public static void twoColumnTitleDateBody(SectionBuilder host,
                                               CvEntry entry,
@@ -151,19 +151,19 @@ public final class EntryCompactRenderer {
      * {@code datePrefix}, then an optional subtitle line and the body
      * paragraph beneath.
      *
-     * @param host             host section receiving the entry
-     * @param entry            the entry supplying title, date, subtitle, and body
-     * @param titleStyle       text style for the title
-     * @param dateStyle        text style for the appended date
-     * @param subtitleStyle    text style for the subtitle line
-     * @param bodyStyle        text style for the body paragraph
-     * @param datePrefix       separator inserted between title and date
+     * @param host              host section receiving the entry
+     * @param entry             the entry supplying title, date, subtitle, and body
+     * @param titleStyle        text style for the title
+     * @param dateStyle         text style for the appended date
+     * @param subtitleStyle     text style for the subtitle line
+     * @param bodyStyle         text style for the body paragraph
+     * @param datePrefix        separator inserted between title and date
      * @param headerLineSpacing extra space between wrapped header lines
-     * @param headerMargin     outer margin of the title/date header
-     * @param subtitleMargin   outer margin of the subtitle line
-     * @param bodyMargin       outer margin of the body paragraph
-     * @param bodyLineSpacing  extra space between wrapped body lines
-     * @param uppercaseTitle   whether the title is upper-cased
+     * @param headerMargin      outer margin of the title/date header
+     * @param subtitleMargin    outer margin of the subtitle line
+     * @param bodyMargin        outer margin of the body paragraph
+     * @param bodyLineSpacing   extra space between wrapped body lines
+     * @param uppercaseTitle    whether the title is upper-cased
      */
     public static void titleDateBody(SectionBuilder host,
                                      CvEntry entry,
@@ -208,18 +208,18 @@ public final class EntryCompactRenderer {
      * {@code subtitlePrefix} and {@code datePrefix}, then the body
      * paragraph beneath.
      *
-     * @param host             host section receiving the entry
-     * @param entry            the entry supplying title, subtitle, date, and body
-     * @param titleStyle       text style for the title
-     * @param subtitleStyle    text style for the appended subtitle
-     * @param dateStyle        text style for the appended date
-     * @param bodyStyle        text style for the body paragraph
-     * @param subtitlePrefix   separator inserted before the subtitle
-     * @param datePrefix       separator inserted before the date
+     * @param host              host section receiving the entry
+     * @param entry             the entry supplying title, subtitle, date, and body
+     * @param titleStyle        text style for the title
+     * @param subtitleStyle     text style for the appended subtitle
+     * @param dateStyle         text style for the appended date
+     * @param bodyStyle         text style for the body paragraph
+     * @param subtitlePrefix    separator inserted before the subtitle
+     * @param datePrefix        separator inserted before the date
      * @param headerLineSpacing extra space between wrapped header lines
-     * @param headerMargin     outer margin of the header paragraph
-     * @param bodyMargin       outer margin of the body paragraph
-     * @param bodyLineSpacing  extra space between wrapped body lines
+     * @param headerMargin      outer margin of the header paragraph
+     * @param bodyMargin        outer margin of the body paragraph
+     * @param bodyLineSpacing   extra space between wrapped body lines
      */
     public static void titleSubtitleDateBody(SectionBuilder host,
                                              CvEntry entry,

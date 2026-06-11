@@ -55,7 +55,7 @@ public interface WeeklyScheduleTemplate {
      * Composes a weekly schedule into a live document session.
      *
      * @param document active mutable document session receiving template nodes
-     * @param spec weekly schedule document spec
+     * @param spec     weekly schedule document spec
      * @throws NullPointerException if an implementation requires non-null inputs
      */
     void compose(DocumentSession document, WeeklyScheduleDocumentSpec spec);

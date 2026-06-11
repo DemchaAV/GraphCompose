@@ -36,19 +36,29 @@ import java.util.Objects;
  */
 public final class ModernProfessionalLetter {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "modern-professional-letter";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Modern Professional Letter";
 
-    /** Recommended page margin (in points) — generous business-letter feel. */
+    /**
+     * Recommended page margin (in points) — generous business-letter feel.
+     */
     public static final double RECOMMENDED_MARGIN = 48.0;
 
-    /** Slate-blue display name. Mirrors the ModernProfessional CV's preset-local token. */
+    /**
+     * Slate-blue display name. Mirrors the ModernProfessional CV's preset-local token.
+     */
     private static final DocumentColor NAME_COLOR = DocumentColor.rgb(44, 62, 80);
 
-    /** Royal-blue contact links. Mirrors the ModernProfessional CV's preset-local token. */
+    /**
+     * Royal-blue contact links. Mirrors the ModernProfessional CV's preset-local token.
+     */
     private static final DocumentColor LINK_COLOR = DocumentColor.rgb(65, 105, 225);
 
     private ModernProfessionalLetter() {
@@ -75,61 +85,55 @@ public final class ModernProfessionalLetter {
         return new Template(theme);
     }
 
-    private static final class Template implements DocumentTemplate<CoverLetterDocument> {
-
-        private final CvTheme theme;
-
-        Template(CvTheme theme) {
-            this.theme = theme;
-        }
+    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
-        public String id() {
-            return ID;
+            public String id() {
+                return ID;
+            }
+
+            @Override
+            public String displayName() {
+                return DISPLAY_NAME;
+            }
+
+            @Override
+            public void compose(DocumentSession document, CoverLetterDocument doc) {
+                Objects.requireNonNull(document, "document");
+                Objects.requireNonNull(doc, "doc");
+
+                DocumentTextStyle nameStyle = CvTextStyles.of(FontName.HELVETICA_BOLD,
+                        theme.typography().sizeHeadline(),
+                        DocumentTextDecoration.BOLD, NAME_COLOR);
+                DocumentTextStyle contactBodyStyle = CvTextStyles.of(FontName.HELVETICA,
+                        theme.typography().sizeContact(),
+                        DocumentTextDecoration.DEFAULT, theme.palette().ink());
+                DocumentTextStyle contactLinkStyle = CvTextStyles.of(FontName.HELVETICA,
+                        theme.typography().sizeContact(),
+                        DocumentTextDecoration.UNDERLINE, LINK_COLOR);
+                DocumentTextStyle contactSeparatorStyle = CvTextStyles.of(FontName.HELVETICA,
+                        theme.typography().sizeContact(),
+                        DocumentTextDecoration.DEFAULT, theme.palette().rule());
+
+                PageFlowBuilder flow = document.dsl()
+                        .pageFlow()
+                        .name("CoverLetterV2ModernRoot")
+                        .spacing(theme.spacing().pageFlowSpacing())
+                        .addSection("Header", section ->
+                                Headline.rightAligned(section, doc.identity().name(),
+                                        theme, nameStyle))
+                        .addSection("Contact", section -> {
+                            section.accentBottom(theme.palette().rule(),
+                                    theme.spacing().accentRuleWidth());
+                            ContactLine.twoRowRightAligned(section, doc.identity(),
+                                    theme, contactBodyStyle, contactLinkStyle,
+                                    contactSeparatorStyle);
+                        });
+
+                flow.addSection("CoverLetterV2ModernBody", host ->
+                        LetterBody.render(host, doc, theme));
+
+                flow.build();
+            }
         }
-
-        @Override
-        public String displayName() {
-            return DISPLAY_NAME;
-        }
-
-        @Override
-        public void compose(DocumentSession document, CoverLetterDocument doc) {
-            Objects.requireNonNull(document, "document");
-            Objects.requireNonNull(doc, "doc");
-
-            DocumentTextStyle nameStyle = CvTextStyles.of(FontName.HELVETICA_BOLD,
-                    theme.typography().sizeHeadline(),
-                    DocumentTextDecoration.BOLD, NAME_COLOR);
-            DocumentTextStyle contactBodyStyle = CvTextStyles.of(FontName.HELVETICA,
-                    theme.typography().sizeContact(),
-                    DocumentTextDecoration.DEFAULT, theme.palette().ink());
-            DocumentTextStyle contactLinkStyle = CvTextStyles.of(FontName.HELVETICA,
-                    theme.typography().sizeContact(),
-                    DocumentTextDecoration.UNDERLINE, LINK_COLOR);
-            DocumentTextStyle contactSeparatorStyle = CvTextStyles.of(FontName.HELVETICA,
-                    theme.typography().sizeContact(),
-                    DocumentTextDecoration.DEFAULT, theme.palette().rule());
-
-            PageFlowBuilder flow = document.dsl()
-                    .pageFlow()
-                    .name("CoverLetterV2ModernRoot")
-                    .spacing(theme.spacing().pageFlowSpacing())
-                    .addSection("Header", section ->
-                            Headline.rightAligned(section, doc.identity().name(),
-                                    theme, nameStyle))
-                    .addSection("Contact", section -> {
-                        section.accentBottom(theme.palette().rule(),
-                                theme.spacing().accentRuleWidth());
-                        ContactLine.twoRowRightAligned(section, doc.identity(),
-                                theme, contactBodyStyle, contactLinkStyle,
-                                contactSeparatorStyle);
-                    });
-
-            flow.addSection("CoverLetterV2ModernBody", host ->
-                    LetterBody.render(host, doc, theme));
-
-            flow.build();
-        }
-    }
 }

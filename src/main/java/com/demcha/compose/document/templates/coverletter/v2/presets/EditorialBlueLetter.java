@@ -33,16 +33,24 @@ import java.util.Objects;
  */
 public final class EditorialBlueLetter {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "editorial-blue-letter";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Editorial Blue Letter";
 
-    /** Recommended page margin (in points) — generous business-letter feel. */
+    /**
+     * Recommended page margin (in points) — generous business-letter feel.
+     */
     public static final double RECOMMENDED_MARGIN = 48.0;
 
-    /** Navy display name. Mirrors the EditorialBlue CV's preset-local token. */
+    /**
+     * Navy display name. Mirrors the EditorialBlue CV's preset-local token.
+     */
     private static final DocumentColor NAME_COLOR = DocumentColor.rgb(18, 31, 72);
 
     private EditorialBlueLetter() {
@@ -69,63 +77,57 @@ public final class EditorialBlueLetter {
         return new Template(theme);
     }
 
-    private static final class Template implements DocumentTemplate<CoverLetterDocument> {
-
-        private final CvTheme theme;
-
-        Template(CvTheme theme) {
-            this.theme = theme;
-        }
+    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
-        public String id() {
-            return ID;
+            public String id() {
+                return ID;
+            }
+
+            @Override
+            public String displayName() {
+                return DISPLAY_NAME;
+            }
+
+            @Override
+            public void compose(DocumentSession document, CoverLetterDocument doc) {
+                Objects.requireNonNull(document, "document");
+                Objects.requireNonNull(doc, "doc");
+
+                PageFlowBuilder flow = document.dsl()
+                        .pageFlow()
+                        .name("CoverLetterV2EditorialBlueRoot")
+                        .spacing(theme.spacing().pageFlowSpacing());
+
+                flow.addSection("CoverLetterV2EditorialBlueHeader", section ->
+                        Masthead.centered(section, doc.identity(), theme,
+                                mastheadStyle()));
+
+                flow.addSection("CoverLetterV2EditorialBlueBody", host ->
+                        LetterBody.render(host, doc, theme));
+
+                flow.build();
+            }
+
+            private Masthead.Style mastheadStyle() {
+                DocumentTextStyle nameStyle = CvTextStyles.of(FontName.HELVETICA_BOLD,
+                        theme.typography().sizeHeadline(),
+                        DocumentTextDecoration.BOLD, NAME_COLOR);
+                DocumentTextStyle titleStyle = CvTextStyles.of(FontName.HELVETICA,
+                        10.0, DocumentTextDecoration.DEFAULT,
+                        theme.palette().ink());
+                DocumentTextStyle linkStyle = CvTextStyles.of(FontName.HELVETICA,
+                        theme.typography().sizeContact(),
+                        DocumentTextDecoration.UNDERLINE,
+                        theme.palette().rule());
+                return Masthead.Style.builder()
+                        .nameStyle(nameStyle)
+                        .titleStyle(titleStyle)
+                        .metaStyle(theme.contactStyle())
+                        .linkStyle(linkStyle)
+                        .separatorStyle(theme.contactStyle())
+                        .lineMargin(DocumentInsets.top(1))
+                        .build();
+            }
         }
-
-        @Override
-        public String displayName() {
-            return DISPLAY_NAME;
-        }
-
-        @Override
-        public void compose(DocumentSession document, CoverLetterDocument doc) {
-            Objects.requireNonNull(document, "document");
-            Objects.requireNonNull(doc, "doc");
-
-            PageFlowBuilder flow = document.dsl()
-                    .pageFlow()
-                    .name("CoverLetterV2EditorialBlueRoot")
-                    .spacing(theme.spacing().pageFlowSpacing());
-
-            flow.addSection("CoverLetterV2EditorialBlueHeader", section ->
-                    Masthead.centered(section, doc.identity(), theme,
-                            mastheadStyle()));
-
-            flow.addSection("CoverLetterV2EditorialBlueBody", host ->
-                    LetterBody.render(host, doc, theme));
-
-            flow.build();
-        }
-
-        private Masthead.Style mastheadStyle() {
-            DocumentTextStyle nameStyle = CvTextStyles.of(FontName.HELVETICA_BOLD,
-                    theme.typography().sizeHeadline(),
-                    DocumentTextDecoration.BOLD, NAME_COLOR);
-            DocumentTextStyle titleStyle = CvTextStyles.of(FontName.HELVETICA,
-                    10.0, DocumentTextDecoration.DEFAULT,
-                    theme.palette().ink());
-            DocumentTextStyle linkStyle = CvTextStyles.of(FontName.HELVETICA,
-                    theme.typography().sizeContact(),
-                    DocumentTextDecoration.UNDERLINE,
-                    theme.palette().rule());
-            return Masthead.Style.builder()
-                    .nameStyle(nameStyle)
-                    .titleStyle(titleStyle)
-                    .metaStyle(theme.contactStyle())
-                    .linkStyle(linkStyle)
-                    .separatorStyle(theme.contactStyle())
-                    .lineMargin(DocumentInsets.top(1))
-                    .build();
-        }
-    }
 }

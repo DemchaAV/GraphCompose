@@ -20,11 +20,11 @@ import java.util.Objects;
  * Backends that cannot express path clipping (e.g. DOCX/POI) skip both
  * fragments and emit a capability warning instead.</p>
  *
- * @param outline outline geometry to clip against
- * @param policy clip policy chosen for the container; renderers may
- *               degrade {@link ClipPolicy#CLIP_PATH} to
- *               {@link ClipPolicy#CLIP_BOUNDS} when path clipping is
- *               unavailable
+ * @param outline   outline geometry to clip against
+ * @param policy    clip policy chosen for the container; renderers may
+ *                  degrade {@link ClipPolicy#CLIP_PATH} to
+ *                  {@link ClipPolicy#CLIP_BOUNDS} when path clipping is
+ *                  unavailable
  * @param ownerPath semantic path of the owning container — used by
  *                  architecture-guard tests to verify the begin/end
  *                  pair balance

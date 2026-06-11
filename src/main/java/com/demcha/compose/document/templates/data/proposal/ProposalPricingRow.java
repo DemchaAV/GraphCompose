@@ -5,10 +5,10 @@ import java.util.Objects;
 /**
  * Display-oriented proposal pricing row.
  *
- * @param label row label
+ * @param label       row label
  * @param description row description
- * @param amount display amount
- * @param emphasized whether the row should be visually emphasized
+ * @param amount      display amount
+ * @param emphasized  whether the row should be visually emphasized
  */
 public record ProposalPricingRow(
         String label,

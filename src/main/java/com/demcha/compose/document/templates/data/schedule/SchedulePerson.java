@@ -5,9 +5,9 @@ import java.util.Objects;
 /**
  * Person row in the weekly roster matrix.
  *
- * @param id stable person identifier
+ * @param id          stable person identifier
  * @param displayName display name
- * @param sortOrder ordering token for roster display
+ * @param sortOrder   ordering token for roster display
  */
 public record SchedulePerson(
         String id,
@@ -25,9 +25,9 @@ public record SchedulePerson(
     /**
      * Creates a person row.
      *
-     * @param id stable person identifier
+     * @param id          stable person identifier
      * @param displayName display name
-     * @param sortOrder ordering token
+     * @param sortOrder   ordering token
      * @return schedule person
      */
     public static SchedulePerson of(String id, String displayName, int sortOrder) {

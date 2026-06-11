@@ -11,14 +11,6 @@ package com.demcha.compose.document.chart;
 public sealed interface ChartSize permits ChartSize.Fixed, ChartSize.AspectRatio {
 
     /**
-     * Resolves the chart height in points.
-     *
-     * @param availableWidth width handed down by the layout pass
-     * @return chart height in points
-     */
-    double resolveHeight(double availableWidth);
-
-    /**
      * Height fixed in points regardless of width.
      *
      * @param points fixed height
@@ -40,19 +32,30 @@ public sealed interface ChartSize permits ChartSize.Fixed, ChartSize.AspectRatio
     }
 
     /**
+     * Resolves the chart height in points.
+     *
+     * @param availableWidth width handed down by the layout pass
+     * @return chart height in points
+     */
+    double resolveHeight(double availableWidth);
+
+    /**
      * Fixed-height policy.
      *
      * @param points height in points
      */
     record Fixed(double points) implements ChartSize {
-        /** Validates the fixed height. */
+        /**
+         * Validates the fixed height.
+         */
         public Fixed {
             if (points <= 0 || Double.isNaN(points) || Double.isInfinite(points)) {
                 throw new IllegalArgumentException("fixed height must be finite and positive: " + points);
             }
         }
 
-        @Override public double resolveHeight(double availableWidth) {
+        @Override
+        public double resolveHeight(double availableWidth) {
             return points;
         }
     }
@@ -64,14 +67,17 @@ public sealed interface ChartSize permits ChartSize.Fixed, ChartSize.AspectRatio
      * @param h ratio height term
      */
     record AspectRatio(double w, double h) implements ChartSize {
-        /** Validates the ratio terms. */
+        /**
+         * Validates the ratio terms.
+         */
         public AspectRatio {
             if (w <= 0 || h <= 0 || Double.isNaN(w) || Double.isNaN(h)) {
                 throw new IllegalArgumentException("aspect ratio sides must be positive: " + w + ":" + h);
             }
         }
 
-        @Override public double resolveHeight(double availableWidth) {
+        @Override
+        public double resolveHeight(double availableWidth) {
             return availableWidth * (h / w);
         }
     }

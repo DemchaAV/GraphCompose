@@ -1,19 +1,10 @@
 package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.image.DocumentImageData;
-import com.demcha.compose.document.node.DocumentLinkOptions;
-import com.demcha.compose.document.node.InlineImageAlignment;
-import com.demcha.compose.document.node.InlineShapeRun;
-import com.demcha.compose.document.node.InlineImageRun;
-import com.demcha.compose.document.node.InlineRun;
-import com.demcha.compose.document.node.InlineTextRun;
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTextDecoration;
-import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.document.style.ShapeOutline;
+import com.demcha.compose.document.node.*;
+import com.demcha.compose.document.style.*;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -129,7 +120,7 @@ public final class RichText {
     /**
      * Appends a colored text run with the default decoration.
      *
-     * @param text text fragment
+     * @param text  text fragment
      * @param color text color
      * @return this builder
      */
@@ -140,7 +131,7 @@ public final class RichText {
     /**
      * Convenience overload accepting a {@link Color}.
      *
-     * @param text text fragment
+     * @param text  text fragment
      * @param color text color
      * @return this builder
      */
@@ -152,7 +143,7 @@ public final class RichText {
      * Appends a bold-and-colored "accent" text run — the typical pattern for
      * highlighting status keywords ("Pending", "Paid", "Overdue") inline.
      *
-     * @param text text fragment
+     * @param text  text fragment
      * @param color accent color
      * @return this builder
      */
@@ -167,7 +158,7 @@ public final class RichText {
      * Convenience overload of {@link #accent(String, DocumentColor)} accepting a
      * {@link Color}.
      *
-     * @param text text fragment
+     * @param text  text fragment
      * @param color accent color
      * @return this builder
      */
@@ -190,7 +181,7 @@ public final class RichText {
     /**
      * Appends a fully-styled text run.
      *
-     * @param text text fragment
+     * @param text  text fragment
      * @param style explicit style for this run; when {@code null}, falls back
      *              to the paragraph default
      * @return this builder
@@ -202,7 +193,7 @@ public final class RichText {
     /**
      * Appends a clickable link run with default link styling.
      *
-     * @param text visible link text
+     * @param text    visible link text
      * @param options link metadata
      * @return this builder
      */
@@ -214,7 +205,7 @@ public final class RichText {
      * Convenience link overload using a raw URI string.
      *
      * @param text visible link text
-     * @param uri link target URI
+     * @param uri  link target URI
      * @return this builder
      */
     public RichText link(String text, String uri) {
@@ -225,9 +216,9 @@ public final class RichText {
      * Appends a fully-customized run with both an explicit style and link
      * metadata.
      *
-     * @param text text fragment
+     * @param text  text fragment
      * @param style explicit style or {@code null}
-     * @param link link metadata or {@code null}
+     * @param link  link metadata or {@code null}
      * @return this builder
      */
     public RichText with(String text, DocumentTextStyle style, DocumentLinkOptions link) {
@@ -260,8 +251,8 @@ public final class RichText {
      * alignment and zero offset.
      *
      * @param imageData image payload
-     * @param width target width in points
-     * @param height target height in points
+     * @param width     target width in points
+     * @param height    target height in points
      * @return this builder
      */
     public RichText image(DocumentImageData imageData, double width, double height) {
@@ -272,8 +263,8 @@ public final class RichText {
      * Appends an inline image run with explicit vertical alignment.
      *
      * @param imageData image payload
-     * @param width target width in points
-     * @param height target height in points
+     * @param width     target width in points
+     * @param height    target height in points
      * @param alignment vertical alignment relative to surrounding text
      * @return this builder
      */
@@ -288,12 +279,12 @@ public final class RichText {
      * Appends a clickable inline image run; the link annotation covers the
      * image rectangle on supporting backends.
      *
-     * @param imageData image payload
-     * @param width target width in points
-     * @param height target height in points
-     * @param alignment vertical alignment relative to surrounding text
+     * @param imageData      image payload
+     * @param width          target width in points
+     * @param height         target height in points
+     * @param alignment      vertical alignment relative to surrounding text
      * @param baselineOffset extra vertical shift in points; positive moves up
-     * @param linkOptions optional link metadata
+     * @param linkOptions    optional link metadata
      * @return this builder
      */
     public RichText image(DocumentImageData imageData,
@@ -318,7 +309,7 @@ public final class RichText {
      * should not depend on font glyph coverage.
      *
      * @param diameter circle diameter in points
-     * @param fill fill color
+     * @param fill     fill color
      * @return this builder
      */
     public RichText dot(double diameter, DocumentColor fill) {
@@ -330,8 +321,8 @@ public final class RichText {
      * — for example a filled dot ({@code ●}) or an outlined one ({@code ○}).
      *
      * @param diameter circle diameter in points
-     * @param fill optional fill color
-     * @param stroke optional outline stroke
+     * @param fill     optional fill color
+     * @param stroke   optional outline stroke
      * @return this builder
      */
     public RichText dot(double diameter, DocumentColor fill, DocumentStroke stroke) {
@@ -342,9 +333,9 @@ public final class RichText {
      * Appends an inline ellipse run with default
      * {@link InlineImageAlignment#CENTER} alignment and zero offset.
      *
-     * @param width target width in points
+     * @param width  target width in points
      * @param height target height in points
-     * @param fill optional fill color
+     * @param fill   optional fill color
      * @param stroke optional outline stroke
      * @return this builder
      */
@@ -389,9 +380,9 @@ public final class RichText {
      * Appends an inline block arrow sized {@code size × size} pointing in
      * {@code direction} — a directional marker between text or a list bullet.
      *
-     * @param size figure width and height in points
+     * @param size      figure width and height in points
      * @param direction the way the arrow points
-     * @param fill fill color
+     * @param fill      fill color
      * @return this builder
      */
     public RichText arrow(double size, ShapeOutline.Direction direction, DocumentColor fill) {
@@ -403,10 +394,10 @@ public final class RichText {
      * swappable-design overload, so a caller (or a future "pick your arrow" UI)
      * can choose a block arrow, a triangular arrowhead, etc.
      *
-     * @param size figure width and height in points
+     * @param size      figure width and height in points
      * @param direction the way the arrow points
-     * @param style the arrow design
-     * @param fill fill color
+     * @param style     the arrow design
+     * @param fill      fill color
      * @return this builder
      * @since 1.7.0
      */
@@ -422,9 +413,9 @@ public final class RichText {
      * Appends an inline chevron sized {@code size × size} pointing in
      * {@code direction} — a lighter directional separator for step lists.
      *
-     * @param size figure width and height in points
+     * @param size      figure width and height in points
      * @param direction the way the chevron points
-     * @param fill fill color
+     * @param fill      fill color
      * @return this builder
      */
     public RichText chevron(double size, ShapeOutline.Direction direction, DocumentColor fill) {
@@ -437,7 +428,7 @@ public final class RichText {
      * offset.
      *
      * @param outline figure geometry; supplies the run's size
-     * @param fill fill color
+     * @param fill    fill color
      * @return this builder
      */
     public RichText shape(ShapeOutline outline, DocumentColor fill) {
@@ -448,12 +439,12 @@ public final class RichText {
      * Appends a fully-specified inline shape run of any {@link ShapeOutline}
      * kind. At least one of {@code fill} or {@code stroke} must be present.
      *
-     * @param outline figure geometry; supplies the run's size
-     * @param fill optional fill color
-     * @param stroke optional outline stroke
-     * @param alignment vertical alignment relative to surrounding text
+     * @param outline        figure geometry; supplies the run's size
+     * @param fill           optional fill color
+     * @param stroke         optional outline stroke
+     * @param alignment      vertical alignment relative to surrounding text
      * @param baselineOffset extra vertical shift in points; positive moves up
-     * @param linkOptions optional inline link metadata
+     * @param linkOptions    optional inline link metadata
      * @return this builder
      */
     public RichText shape(ShapeOutline outline,
@@ -481,9 +472,9 @@ public final class RichText {
      *
      * <pre>{@code rich.plain("Revenue ").sparkline(36, 9, accent, 65.2, 69.8, 74.1, 81.3, 88.2)}</pre>
      *
-     * @param width sparkline width in points
+     * @param width  sparkline width in points
      * @param height sparkline height in points
-     * @param fill silhouette fill colour
+     * @param fill   silhouette fill colour
      * @param values data run, at least two finite values
      * @return this builder
      * @since 1.8.0
@@ -497,11 +488,11 @@ public final class RichText {
      * Appends an inline <b>line sparkline</b> — the value run as a
      * constant-thickness stroked-looking band, without the filled area.
      *
-     * @param width sparkline width in points
-     * @param height sparkline height in points
+     * @param width     sparkline width in points
+     * @param height    sparkline height in points
      * @param thickness line thickness in points (must be smaller than {@code height})
-     * @param color line colour
-     * @param values data run, at least two finite values
+     * @param color     line colour
+     * @param values    data run, at least two finite values
      * @return this builder
      * @since 1.8.0
      */
@@ -520,9 +511,9 @@ public final class RichText {
      * centred checkmark inside (the checked state), each in its own colour —
      * for todo / checklist markers between text.
      *
-     * @param size box width and height in points
-     * @param checked whether the checkmark is shown
-     * @param boxColor frame stroke color
+     * @param size       box width and height in points
+     * @param checked    whether the checkmark is shown
+     * @param boxColor   frame stroke color
      * @param checkColor checkmark fill color
      * @return this builder
      */
@@ -535,9 +526,9 @@ public final class RichText {
      * Appends an inline checkbox using one colour for both the frame and the
      * checkmark.
      *
-     * @param size box width and height in points
+     * @param size    box width and height in points
      * @param checked whether the checkmark is shown
-     * @param color frame and checkmark color
+     * @param color   frame and checkmark color
      * @return this builder
      */
     public RichText checkbox(double size, boolean checked, DocumentColor color) {
@@ -548,10 +539,10 @@ public final class RichText {
      * Appends an inline checkbox whose checked-state tick uses the given
      * {@link ShapeOutline.CheckmarkStyle} — the "pick your tick" overload.
      *
-     * @param size box width and height in points
-     * @param checked whether the checkmark is shown
-     * @param markStyle design of the checked-state tick
-     * @param boxColor frame stroke color
+     * @param size       box width and height in points
+     * @param checked    whether the checkmark is shown
+     * @param markStyle  design of the checked-state tick
+     * @param boxColor   frame stroke color
      * @param checkColor checkmark fill color
      * @return this builder
      * @since 1.7.0
@@ -570,11 +561,11 @@ public final class RichText {
      * {@link ShapeOutline} — the power-user overload. Size the mark to fit the
      * frame (≈ {@code 0.6 × size}); it is drawn centred in the box.
      *
-     * @param size box width and height in points
-     * @param checked whether the mark is shown
-     * @param mark checked-state mark geometry, already sized; must be non-null
-     *             when {@code checked} is {@code true}
-     * @param boxColor frame stroke color
+     * @param size       box width and height in points
+     * @param checked    whether the mark is shown
+     * @param mark       checked-state mark geometry, already sized; must be non-null
+     *                   when {@code checked} is {@code true}
+     * @param boxColor   frame stroke color
      * @param checkColor mark fill color
      * @return this builder
      * @since 1.7.0

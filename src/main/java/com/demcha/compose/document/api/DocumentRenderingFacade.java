@@ -42,6 +42,10 @@ final class DocumentRenderingFacade {
         this.context = Objects.requireNonNull(context, "context");
     }
 
+    private static long elapsedMillis(long startNanos) {
+        return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+    }
+
     <R> R render(FixedLayoutBackend<R> backend, Path outputFile) throws Exception {
         context.ensureOpen();
         Objects.requireNonNull(backend, "backend");
@@ -168,10 +172,6 @@ final class DocumentRenderingFacade {
                     ex);
             throw ex;
         }
-    }
-
-    private static long elapsedMillis(long startNanos) {
-        return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
     }
 
     /**

@@ -75,10 +75,10 @@ final class ParagraphPrimitive {
      * that need a one-off combination not covered by the convenience
      * methods above.
      *
-     * @param margin       paragraph margin
-     * @param lineSpacing  optional lineSpacing override; null = use
-     *                     engine default
-     * @param bulletGlyph  optional bullet prefix; null = no bullet
+     * @param margin      paragraph margin
+     * @param lineSpacing optional lineSpacing override; null = use
+     *                    engine default
+     * @param bulletGlyph optional bullet prefix; null = no bullet
      */
     static void write(SectionBuilder host, String text,
                       DocumentTextStyle style,

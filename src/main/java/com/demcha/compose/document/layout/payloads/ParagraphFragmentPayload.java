@@ -12,16 +12,16 @@ import java.util.List;
 /**
  * PDF payload for a resolved paragraph fragment.
  *
- * @param textStyle base text style for the fragment
- * @param align horizontal text alignment
- * @param padding fragment padding
- * @param lineHeight resolved line height
- * @param lineGap extra spacing between lines
- * @param baselineOffset offset from line bottom to baseline
- * @param lines measured lines contained by the fragment
- * @param linkOptions optional fragment-level link metadata
+ * @param textStyle       base text style for the fragment
+ * @param align           horizontal text alignment
+ * @param padding         fragment padding
+ * @param lineHeight      resolved line height
+ * @param lineGap         extra spacing between lines
+ * @param baselineOffset  offset from line bottom to baseline
+ * @param lines           measured lines contained by the fragment
+ * @param linkOptions     optional fragment-level link metadata
  * @param bookmarkOptions optional fragment-level bookmark metadata
- * @param verticalAlign vertical seating of the text within its line box
+ * @param verticalAlign   vertical seating of the text within its line box
  */
 public record ParagraphFragmentPayload(
         TextStyle textStyle,

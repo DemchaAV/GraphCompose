@@ -78,7 +78,7 @@ public final class TimelineEntryBuilder {
     /**
      * Sets the meta line with a per-entry style override.
      *
-     * @param meta meta text
+     * @param meta  meta text
      * @param style meta text style
      * @return this builder
      */
@@ -113,7 +113,7 @@ public final class TimelineEntryBuilder {
     /**
      * Sets the entry body with a per-entry style override.
      *
-     * @param body body text
+     * @param body  body text
      * @param style body text style
      * @return this builder
      */

@@ -19,11 +19,11 @@ package com.demcha.compose.document.templates.blocks;
  */
 public sealed interface Block
         permits ParagraphBlock,
-                BulletListBlock,
-                NumberedListBlock,
-                IndentedBlock,
-                KeyValueBlock,
-                MultiParagraphBlock,
-                WorkHistoryBlock,
-                EducationBlock {
+        BulletListBlock,
+        NumberedListBlock,
+        IndentedBlock,
+        KeyValueBlock,
+        MultiParagraphBlock,
+        WorkHistoryBlock,
+        EducationBlock {
 }

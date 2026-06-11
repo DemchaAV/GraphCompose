@@ -8,22 +8,22 @@ import com.demcha.compose.document.style.DocumentTransform;
 /**
  * Atomic semantic line drawn inside a fixed-size box.
  *
- * @param name node name used in snapshots and layout graph paths
- * @param width resolved line box width
- * @param height resolved line box height
- * @param startX line start x offset inside the box
- * @param startY line start y offset inside the box
- * @param endX line end x offset inside the box
- * @param endY line end y offset inside the box
- * @param stroke line stroke descriptor
- * @param linkOptions optional node-level link metadata
+ * @param name            node name used in snapshots and layout graph paths
+ * @param width           resolved line box width
+ * @param height          resolved line box height
+ * @param startX          line start x offset inside the box
+ * @param startY          line start y offset inside the box
+ * @param endX            line end x offset inside the box
+ * @param endY            line end y offset inside the box
+ * @param stroke          line stroke descriptor
+ * @param linkOptions     optional node-level link metadata
  * @param bookmarkOptions optional node-level bookmark metadata
- * @param padding inner padding
- * @param margin outer margin
- * @param transform render-time affine transform; defaults to
- *                  {@link DocumentTransform#NONE}.
- * @param dashPattern dash pattern for the stroke; defaults to
- *                  {@link DocumentDashPattern#NONE} (solid)
+ * @param padding         inner padding
+ * @param margin          outer margin
+ * @param transform       render-time affine transform; defaults to
+ *                        {@link DocumentTransform#NONE}.
+ * @param dashPattern     dash pattern for the stroke; defaults to
+ *                        {@link DocumentDashPattern#NONE} (solid)
  * @author Artem Demchyshyn
  */
 public record LineNode(
@@ -63,19 +63,19 @@ public record LineNode(
      * Backward-compatible constructor without a dash pattern — defaults to a
      * solid stroke ({@link DocumentDashPattern#NONE}).
      *
-     * @param name node name used in snapshots and layout graph paths
-     * @param width resolved line box width
-     * @param height resolved line box height
-     * @param startX line start x offset inside the box
-     * @param startY line start y offset inside the box
-     * @param endX line end x offset inside the box
-     * @param endY line end y offset inside the box
-     * @param stroke line stroke descriptor
-     * @param linkOptions optional node-level link metadata
+     * @param name            node name used in snapshots and layout graph paths
+     * @param width           resolved line box width
+     * @param height          resolved line box height
+     * @param startX          line start x offset inside the box
+     * @param startY          line start y offset inside the box
+     * @param endX            line end x offset inside the box
+     * @param endY            line end y offset inside the box
+     * @param stroke          line stroke descriptor
+     * @param linkOptions     optional node-level link metadata
      * @param bookmarkOptions optional node-level bookmark metadata
-     * @param padding inner padding
-     * @param margin outer margin
-     * @param transform render-time affine transform
+     * @param padding         inner padding
+     * @param margin          outer margin
+     * @param transform       render-time affine transform
      */
     public LineNode(String name,
                     double width,
@@ -97,18 +97,18 @@ public record LineNode(
      * Backward-compatible convenience constructor without transform — defaults
      * to {@link DocumentTransform#NONE}.
      *
-     * @param name node name used in snapshots and layout graph paths
-     * @param width resolved line box width
-     * @param height resolved line box height
-     * @param startX line start x offset inside the box
-     * @param startY line start y offset inside the box
-     * @param endX line end x offset inside the box
-     * @param endY line end y offset inside the box
-     * @param stroke line stroke descriptor
-     * @param linkOptions optional node-level link metadata
+     * @param name            node name used in snapshots and layout graph paths
+     * @param width           resolved line box width
+     * @param height          resolved line box height
+     * @param startX          line start x offset inside the box
+     * @param startY          line start y offset inside the box
+     * @param endX            line end x offset inside the box
+     * @param endY            line end y offset inside the box
+     * @param stroke          line stroke descriptor
+     * @param linkOptions     optional node-level link metadata
      * @param bookmarkOptions optional node-level bookmark metadata
-     * @param padding inner padding
-     * @param margin outer margin
+     * @param padding         inner padding
+     * @param margin          outer margin
      */
     public LineNode(String name,
                     double width,

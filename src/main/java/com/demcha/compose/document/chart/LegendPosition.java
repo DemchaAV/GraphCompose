@@ -12,12 +12,20 @@ package com.demcha.compose.document.chart;
  * @since 1.8.0
  */
 public enum LegendPosition {
-    /** No legend is rendered. */
+    /**
+     * No legend is rendered.
+     */
     NONE,
-    /** Single legend row below the plot area. */
+    /**
+     * Single legend row below the plot area.
+     */
     BOTTOM,
-    /** Reserved — legend column to the right of the plot area. */
+    /**
+     * Reserved — legend column to the right of the plot area.
+     */
     RIGHT,
-    /** Reserved — single legend row above the plot area. */
+    /**
+     * Reserved — single legend row above the plot area.
+     */
     TOP
 }

@@ -34,8 +34,8 @@ public final class TextOrnaments {
             char current = upper.charAt(i);
             out.append(current);
             if (Character.isLetterOrDigit(current)
-                    && i + 1 < upper.length()
-                    && Character.isLetterOrDigit(upper.charAt(i + 1))) {
+                && i + 1 < upper.length()
+                && Character.isLetterOrDigit(upper.charAt(i + 1))) {
                 out.append(' ');
             } else if (Character.isWhitespace(current)) {
                 out.append("  ");

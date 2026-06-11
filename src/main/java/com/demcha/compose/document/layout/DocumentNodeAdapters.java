@@ -1,11 +1,7 @@
 package com.demcha.compose.document.layout;
 
 import com.demcha.compose.document.image.DocumentImageData;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTextDecoration;
-import com.demcha.compose.document.style.DocumentTextIndent;
-import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.style.*;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;

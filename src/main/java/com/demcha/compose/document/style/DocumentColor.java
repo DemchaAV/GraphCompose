@@ -1,6 +1,6 @@
 package com.demcha.compose.document.style;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.Objects;
 
 /**
@@ -61,9 +61,9 @@ public final class DocumentColor {
     /**
      * Creates a document color from RGB components.
      *
-     * @param red red channel from 0 to 255
+     * @param red   red channel from 0 to 255
      * @param green green channel from 0 to 255
-     * @param blue blue channel from 0 to 255
+     * @param blue  blue channel from 0 to 255
      * @return immutable document color
      */
     public static DocumentColor rgb(int red, int green, int blue) {
@@ -79,9 +79,9 @@ public final class DocumentColor {
      * constant. Text, lines, and the DOCX backend currently render the colour
      * fully opaque.</p>
      *
-     * @param red red channel from 0 to 255
+     * @param red   red channel from 0 to 255
      * @param green green channel from 0 to 255
-     * @param blue blue channel from 0 to 255
+     * @param blue  blue channel from 0 to 255
      * @param alpha alpha channel from 0 (transparent) to 255 (opaque)
      * @return immutable document color
      * @since 1.8.0

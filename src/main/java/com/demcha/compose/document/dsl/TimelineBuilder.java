@@ -44,7 +44,7 @@ public final class TimelineBuilder {
     private static final DocumentColor DEFAULT_RAIL = DocumentColor.rgb(150, 158, 172);
     private static final DocumentColor DEFAULT_INK = DocumentColor.rgb(34, 38, 50);
     private static final DocumentColor DEFAULT_MUTED = DocumentColor.rgb(120, 124, 136);
-
+    private final List<Entry> entries = new ArrayList<>();
     private DocumentColor connectorColor = DEFAULT_RAIL;
     private double connectorWidth = 1.5;
     private double gutter = 8.0;
@@ -57,9 +57,36 @@ public final class TimelineBuilder {
     private boolean keepTogether = false;
     private boolean keepEntriesTogether = false;
 
-    private final List<Entry> entries = new ArrayList<>();
-
     TimelineBuilder() {
+    }
+
+    private static boolean notBlank(String value) {
+        return value != null && !value.isBlank();
+    }
+
+    private static DocumentTextStyle defaultTitleStyle() {
+        return DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA_BOLD)
+                .decoration(DocumentTextDecoration.BOLD)
+                .size(11)
+                .color(DEFAULT_INK)
+                .build();
+    }
+
+    private static DocumentTextStyle defaultMetaStyle() {
+        return DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA)
+                .size(8.5)
+                .color(DEFAULT_MUTED)
+                .build();
+    }
+
+    private static DocumentTextStyle defaultBodyStyle() {
+        return DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA)
+                .size(9.5)
+                .color(DEFAULT_INK)
+                .build();
     }
 
     /**
@@ -168,7 +195,7 @@ public final class TimelineBuilder {
     /**
      * Adds one timeline entry — a marker paired with its content.
      *
-     * @param marker the marker drawn in the rail for this entry
+     * @param marker  the marker drawn in the rail for this entry
      * @param content callback configuring the entry's title, meta and body
      * @return this builder
      * @throws NullPointerException if {@code marker} is {@code null}
@@ -265,35 +292,6 @@ public final class TimelineBuilder {
                 }
             });
         }
-    }
-
-    private static boolean notBlank(String value) {
-        return value != null && !value.isBlank();
-    }
-
-    private static DocumentTextStyle defaultTitleStyle() {
-        return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
-                .decoration(DocumentTextDecoration.BOLD)
-                .size(11)
-                .color(DEFAULT_INK)
-                .build();
-    }
-
-    private static DocumentTextStyle defaultMetaStyle() {
-        return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA)
-                .size(8.5)
-                .color(DEFAULT_MUTED)
-                .build();
-    }
-
-    private static DocumentTextStyle defaultBodyStyle() {
-        return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA)
-                .size(9.5)
-                .color(DEFAULT_INK)
-                .build();
     }
 
     private record Entry(TimelineMarker marker, TimelineEntryBuilder entry) {

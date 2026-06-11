@@ -65,7 +65,7 @@ public final class SessionFontApi {
      * {@link DocumentSession#registerNodeDefinition(NodeDefinition)}.
      *
      * @param definition node definition implementation
-     * @param <E> semantic node type handled by the definition
+     * @param <E>        semantic node type handled by the definition
      * @return this facade for chaining
      * @throws IllegalStateException if the owning session has already been closed
      */

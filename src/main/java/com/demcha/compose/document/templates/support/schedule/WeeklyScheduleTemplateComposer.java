@@ -1,32 +1,22 @@
 package com.demcha.compose.document.templates.support.schedule;
 
-import com.demcha.compose.document.templates.support.common.*;
-
 import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.document.templates.data.schedule.ScheduleAssignment;
-import com.demcha.compose.document.templates.data.schedule.ScheduleCategory;
-import com.demcha.compose.document.templates.data.schedule.ScheduleDay;
-import com.demcha.compose.document.templates.data.schedule.ScheduleMetricRow;
-import com.demcha.compose.document.templates.data.schedule.SchedulePerson;
-import com.demcha.compose.document.templates.data.schedule.ScheduleSlot;
-import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
-import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleDocumentSpec;
+import com.demcha.compose.document.templates.data.schedule.*;
+import com.demcha.compose.document.templates.support.common.TemplateComposeTarget;
+import com.demcha.compose.document.templates.support.common.TemplateSceneSupport;
+import com.demcha.compose.document.templates.support.common.TemplateTableSpec;
 import com.demcha.compose.document.templates.theme.WeeklyScheduleTheme;
+import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.content.table.TableCellContent;
 import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
 import com.demcha.compose.engine.components.content.table.TableColumnLayout;
-import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.layout.Anchor;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
 
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
+import java.awt.*;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 /**
  * Shared scene composer for the weekly schedule template.
@@ -48,7 +38,7 @@ public final class WeeklyScheduleTemplateComposer {
      * Emits the weekly schedule header, day bands, roster matrix, and footer notes.
      *
      * @param target canonical template compose target
-     * @param spec weekly schedule document spec
+     * @param spec   weekly schedule document spec
      */
     public void compose(TemplateComposeTarget target, WeeklyScheduleDocumentSpec spec) {
         WeeklyScheduleData safe = Objects.requireNonNull(spec, "spec").schedule();

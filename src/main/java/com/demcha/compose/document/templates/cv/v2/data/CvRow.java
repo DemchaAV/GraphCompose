@@ -21,7 +21,9 @@ import java.util.Objects;
  */
 public record CvRow(String label, String body) {
 
-    /** Validates that every field is non-null and that {@code label} is non-blank. */
+    /**
+     * Validates that every field is non-null and that {@code label} is non-blank.
+     */
     public CvRow {
         Objects.requireNonNull(label, "label");
         Objects.requireNonNull(body, "body");

@@ -8,10 +8,10 @@ import java.util.Optional;
 /**
  * Prepared semantic node with reusable measure and layout payload.
  *
- * @param <E> semantic node type
- * @param node source semantic node
- * @param measureResult measured node size
- * @param preparedLayout node-specific reusable layout payload
+ * @param <E>             semantic node type
+ * @param node            source semantic node
+ * @param measureResult   measured node size
+ * @param preparedLayout  node-specific reusable layout payload
  * @param compositeLayout optional composite child-layout metadata
  */
 public record PreparedNode<E extends DocumentNode>(
@@ -20,10 +20,6 @@ public record PreparedNode<E extends DocumentNode>(
         PreparedNodeLayout preparedLayout,
         Optional<CompositeLayoutSpec> compositeLayout
 ) {
-    private enum EmptyPreparedLayout implements PreparedNodeLayout {
-        INSTANCE
-    }
-
     /**
      * Normalizes optional layout payloads and validates required node state.
      */
@@ -37,9 +33,9 @@ public record PreparedNode<E extends DocumentNode>(
     /**
      * Creates a prepared leaf node without a custom layout payload.
      *
-     * @param node semantic node
+     * @param node          semantic node
      * @param measureResult measured node size
-     * @param <E> semantic node type
+     * @param <E>           semantic node type
      * @return prepared leaf node
      */
     public static <E extends DocumentNode> PreparedNode<E> leaf(E node, MeasureResult measureResult) {
@@ -49,10 +45,10 @@ public record PreparedNode<E extends DocumentNode>(
     /**
      * Creates a prepared leaf node with a reusable layout payload.
      *
-     * @param node semantic node
-     * @param measureResult measured node size
+     * @param node           semantic node
+     * @param measureResult  measured node size
      * @param preparedLayout node-specific layout payload
-     * @param <E> semantic node type
+     * @param <E>            semantic node type
      * @return prepared leaf node
      */
     public static <E extends DocumentNode> PreparedNode<E> leaf(E node,
@@ -64,10 +60,10 @@ public record PreparedNode<E extends DocumentNode>(
     /**
      * Creates a prepared composite node without a custom layout payload.
      *
-     * @param node semantic node
-     * @param measureResult measured node size
+     * @param node            semantic node
+     * @param measureResult   measured node size
      * @param compositeLayout composite child layout metadata
-     * @param <E> semantic node type
+     * @param <E>             semantic node type
      * @return prepared composite node
      */
     public static <E extends DocumentNode> PreparedNode<E> composite(E node,
@@ -79,11 +75,11 @@ public record PreparedNode<E extends DocumentNode>(
     /**
      * Creates a prepared composite node with a reusable layout payload.
      *
-     * @param node semantic node
-     * @param measureResult measured node size
-     * @param preparedLayout node-specific layout payload
+     * @param node            semantic node
+     * @param measureResult   measured node size
+     * @param preparedLayout  node-specific layout payload
      * @param compositeLayout composite child layout metadata
-     * @param <E> semantic node type
+     * @param <E>             semantic node type
      * @return prepared composite node
      */
     public static <E extends DocumentNode> PreparedNode<E> composite(E node,
@@ -116,16 +112,20 @@ public record PreparedNode<E extends DocumentNode>(
      * Returns the prepared layout payload as a concrete type.
      *
      * @param layoutType required layout payload type
-     * @param <T> layout payload type
+     * @param <T>        layout payload type
      * @return typed prepared layout payload
      */
     public <T extends PreparedNodeLayout> T requirePreparedLayout(Class<T> layoutType) {
         Objects.requireNonNull(layoutType, "layoutType");
         if (!layoutType.isInstance(preparedLayout)) {
             throw new IllegalStateException("Prepared node '" + node.nodeKind()
-                    + "' does not carry layout payload " + layoutType.getSimpleName() + ".");
+                                            + "' does not carry layout payload " + layoutType.getSimpleName() + ".");
         }
         return layoutType.cast(preparedLayout);
+    }
+
+    private enum EmptyPreparedLayout implements PreparedNodeLayout {
+        INSTANCE
     }
 }
 

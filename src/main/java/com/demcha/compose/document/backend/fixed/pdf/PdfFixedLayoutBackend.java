@@ -2,35 +2,12 @@ package com.demcha.compose.document.backend.fixed.pdf;
 
 import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
-import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfBarcodeFragmentRenderHandler;
-import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfEllipseFragmentRenderHandler;
-import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfPolygonFragmentRenderHandler;
-import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfImageFragmentRenderHandler;
-import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfLineFragmentRenderHandler;
-import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfParagraphFragmentRenderHandler;
-import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfShapeClipBeginRenderHandler;
-import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfShapeClipEndRenderHandler;
-import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfShapeFragmentRenderHandler;
-import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfTableRowFragmentRenderHandler;
-import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfTransformBeginRenderHandler;
-import com.demcha.compose.document.backend.fixed.pdf.handlers.PdfTransformEndRenderHandler;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterZone;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
+import com.demcha.compose.document.backend.fixed.pdf.handlers.*;
+import com.demcha.compose.document.backend.fixed.pdf.options.*;
 import com.demcha.compose.document.exceptions.UnsupportedNodeCapabilityException;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
-import com.demcha.compose.document.layout.payloads.BarcodeFragmentPayload;
-import com.demcha.compose.document.layout.payloads.ImageFragmentPayload;
-import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
-import com.demcha.compose.document.layout.payloads.ParagraphImageSpan;
-import com.demcha.compose.document.layout.payloads.ParagraphLine;
-import com.demcha.compose.document.layout.payloads.ParagraphSpan;
-import com.demcha.compose.document.layout.payloads.PdfSemanticFragmentPayload;
-import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
-import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
+import com.demcha.compose.document.layout.payloads.*;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -41,12 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -81,31 +53,6 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         this(defaultHandlers(), false, null, null, null, List.of());
     }
 
-    /**
-     * Returns a builder for PDF-specific render options.
-     *
-     * @return PDF backend builder
-     */
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    private static List<PdfFragmentRenderHandler<?>> defaultHandlers() {
-        return List.of(
-                new PdfBarcodeFragmentRenderHandler(),
-                new PdfParagraphFragmentRenderHandler(),
-                new PdfShapeFragmentRenderHandler(),
-                new PdfLineFragmentRenderHandler(),
-                new PdfEllipseFragmentRenderHandler(),
-                new PdfPolygonFragmentRenderHandler(),
-                new PdfImageFragmentRenderHandler(),
-                new PdfTableRowFragmentRenderHandler(),
-                new PdfShapeClipBeginRenderHandler(),
-                new PdfShapeClipEndRenderHandler(),
-                new PdfTransformBeginRenderHandler(),
-                new PdfTransformEndRenderHandler());
-    }
-
     PdfFixedLayoutBackend(Collection<? extends PdfFragmentRenderHandler<?>> handlers) {
         this(handlers, false, null, null, null, List.of());
     }
@@ -131,6 +78,99 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         this.headerFooterOptions = List.copyOf(headerFooterOptions);
     }
 
+    /**
+     * Returns a builder for PDF-specific render options.
+     *
+     * @return PDF backend builder
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    private static List<PdfFragmentRenderHandler<?>> defaultHandlers() {
+        return List.of(
+                new PdfBarcodeFragmentRenderHandler(),
+                new PdfParagraphFragmentRenderHandler(),
+                new PdfShapeFragmentRenderHandler(),
+                new PdfLineFragmentRenderHandler(),
+                new PdfEllipseFragmentRenderHandler(),
+                new PdfPolygonFragmentRenderHandler(),
+                new PdfImageFragmentRenderHandler(),
+                new PdfTableRowFragmentRenderHandler(),
+                new PdfShapeClipBeginRenderHandler(),
+                new PdfShapeClipEndRenderHandler(),
+                new PdfTransformBeginRenderHandler(),
+                new PdfTransformEndRenderHandler());
+    }
+
+    private static PdfLinkAnnotationWriter.PlacedPdfRect spanLinkRectangle(ParagraphSpan span,
+                                                                           double spanX,
+                                                                           double lineTop,
+                                                                           double lineHeight,
+                                                                           double textAscent,
+                                                                           double baselineOffsetFromBottom) {
+        com.demcha.compose.document.node.InlineImageAlignment alignment;
+        double graphicHeight;
+        double baselineOffset;
+        if (span instanceof ParagraphImageSpan imageSpan) {
+            alignment = imageSpan.alignment();
+            graphicHeight = imageSpan.height();
+            baselineOffset = imageSpan.baselineOffset();
+        } else if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphShapeSpan shapeSpan) {
+            alignment = shapeSpan.alignment();
+            graphicHeight = shapeSpan.height();
+            baselineOffset = shapeSpan.baselineOffset();
+        } else {
+            // Text spans cover the full line box.
+            return new PdfLinkAnnotationWriter.PlacedPdfRect(
+                    spanX,
+                    lineTop - lineHeight,
+                    span.width(),
+                    lineHeight);
+        }
+        // Inline-graphic baseline placement, kept in lockstep with
+        // PdfParagraphFragmentRenderHandler.resolveInlineGraphicBottom — both
+        // place an inline image or shape on the text baseline identically.
+        double baselineY = lineTop - lineHeight + baselineOffsetFromBottom;
+        double lineBottom = baselineY - baselineOffsetFromBottom;
+        double base = switch (alignment == null
+                ? com.demcha.compose.document.node.InlineImageAlignment.CENTER
+                : alignment) {
+            case BASELINE -> baselineY;
+            case CENTER -> lineBottom + (lineHeight - graphicHeight) / 2.0;
+            case TEXT_TOP -> baselineY + textAscent - graphicHeight;
+            case TEXT_BOTTOM -> lineBottom;
+        };
+        return new PdfLinkAnnotationWriter.PlacedPdfRect(
+                spanX,
+                base + baselineOffset,
+                span.width(),
+                graphicHeight);
+    }
+
+    private static List<PdfFragmentRenderHandler<?>> mergeHandlers(
+            List<PdfFragmentRenderHandler<?>> defaults,
+            List<PdfFragmentRenderHandler<?>> additions) {
+        if (additions.isEmpty()) {
+            return defaults;
+        }
+        Map<Class<?>, PdfFragmentRenderHandler<?>> byPayloadType = new LinkedHashMap<>();
+        for (PdfFragmentRenderHandler<?> handler : defaults) {
+            byPayloadType.put(handler.payloadType(), handler);
+        }
+        for (PdfFragmentRenderHandler<?> handler : additions) {
+            PdfFragmentRenderHandler<?> previous = byPayloadType.put(handler.payloadType(), handler);
+            if (previous != null) {
+                RENDER_LOG.debug(
+                        "render.pdf.handler.replaced payloadType={} previous={} replacement={}",
+                        handler.payloadType().getName(),
+                        previous.getClass().getName(),
+                        handler.getClass().getName());
+            }
+        }
+        return List.copyOf(byPayloadType.values());
+    }
+
     @Override
     public String name() {
         return "pdf-fixed-layout";
@@ -140,7 +180,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
      * Renders the resolved layout graph into PDF bytes and optionally writes the
      * result to the configured output file.
      *
-     * @param graph resolved layout graph produced by the semantic compiler
+     * @param graph   resolved layout graph produced by the semantic compiler
      * @param context fixed-layout render configuration including page canvas and output target
      * @return rendered PDF document bytes
      * @throws Exception if PDF creation, rendering, or saving fails
@@ -189,7 +229,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
      * never closes it. The caller remains responsible for HTTP/file/S3 stream
      * lifecycle and backpressure.</p>
      *
-     * @param graph resolved layout graph produced by the semantic compiler
+     * @param graph   resolved layout graph produced by the semantic compiler
      * @param context fixed-layout render configuration with a non-null output stream
      * @throws Exception if PDF creation, rendering, or saving fails
      */
@@ -247,7 +287,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                 for (int index = 0; index < graph.fragments().size(); index++) {
                     PlacedFragment fragment = graph.fragments().get(index);
                     if (fragment.payload() instanceof TableRowFragmentPayload
-                            && tableRowHandler instanceof PdfTableRowFragmentRenderHandler tableHandler) {
+                        && tableRowHandler instanceof PdfTableRowFragmentRenderHandler tableHandler) {
                         index = renderTableRowGroup(graph.fragments(), index, tableHandler, environment, guideLines, ownerBounds);
                         continue;
                     }
@@ -278,8 +318,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         String tablePath = fragments.get(startIndex).path();
         int endExclusive = startIndex;
         while (endExclusive < fragments.size()
-                && Objects.equals(fragments.get(endExclusive).path(), tablePath)
-                && fragments.get(endExclusive).payload() instanceof TableRowFragmentPayload) {
+               && Objects.equals(fragments.get(endExclusive).path(), tablePath)
+               && fragments.get(endExclusive).payload() instanceof TableRowFragmentPayload) {
             endExclusive++;
         }
 
@@ -407,51 +447,6 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         }
     }
 
-    private static PdfLinkAnnotationWriter.PlacedPdfRect spanLinkRectangle(ParagraphSpan span,
-                                                                           double spanX,
-                                                                           double lineTop,
-                                                                           double lineHeight,
-                                                                           double textAscent,
-                                                                           double baselineOffsetFromBottom) {
-        com.demcha.compose.document.node.InlineImageAlignment alignment;
-        double graphicHeight;
-        double baselineOffset;
-        if (span instanceof ParagraphImageSpan imageSpan) {
-            alignment = imageSpan.alignment();
-            graphicHeight = imageSpan.height();
-            baselineOffset = imageSpan.baselineOffset();
-        } else if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphShapeSpan shapeSpan) {
-            alignment = shapeSpan.alignment();
-            graphicHeight = shapeSpan.height();
-            baselineOffset = shapeSpan.baselineOffset();
-        } else {
-            // Text spans cover the full line box.
-            return new PdfLinkAnnotationWriter.PlacedPdfRect(
-                    spanX,
-                    lineTop - lineHeight,
-                    span.width(),
-                    lineHeight);
-        }
-        // Inline-graphic baseline placement, kept in lockstep with
-        // PdfParagraphFragmentRenderHandler.resolveInlineGraphicBottom — both
-        // place an inline image or shape on the text baseline identically.
-        double baselineY = lineTop - lineHeight + baselineOffsetFromBottom;
-        double lineBottom = baselineY - baselineOffsetFromBottom;
-        double base = switch (alignment == null
-                ? com.demcha.compose.document.node.InlineImageAlignment.CENTER
-                : alignment) {
-            case BASELINE -> baselineY;
-            case CENTER -> lineBottom + (lineHeight - graphicHeight) / 2.0;
-            case TEXT_TOP -> baselineY + textAscent - graphicHeight;
-            case TEXT_BOTTOM -> lineBottom;
-        };
-        return new PdfLinkAnnotationWriter.PlacedPdfRect(
-                spanX,
-                base + baselineOffset,
-                span.width(),
-                graphicHeight);
-    }
-
     @SuppressWarnings("unchecked")
     private PdfFragmentRenderHandler<Object> handlerFor(Object payload) {
         if (payload == null) {
@@ -486,12 +481,12 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
      * Fluent builder for PDF-specific render options.
      */
     public static final class Builder {
+        private final List<PdfHeaderFooterOptions> headerFooterOptions = new ArrayList<>();
+        private final List<PdfFragmentRenderHandler<?>> additionalHandlers = new ArrayList<>();
         private boolean guideLines;
         private PdfMetadataOptions metadataOptions;
         private PdfWatermarkOptions watermarkOptions;
         private PdfProtectionOptions protectionOptions;
-        private final List<PdfHeaderFooterOptions> headerFooterOptions = new ArrayList<>();
-        private final List<PdfFragmentRenderHandler<?>> additionalHandlers = new ArrayList<>();
 
         private Builder() {
         }
@@ -512,8 +507,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
          * @param handler non-{@code null} handler implementation
          * @return this builder
          * @throws IllegalArgumentException if {@code handler} reports the same
-         *         payload type as another custom handler already registered
-         *         on this builder
+         *                                  payload type as another custom handler already registered
+         *                                  on this builder
          * @since 1.6.0
          */
         public Builder addHandler(PdfFragmentRenderHandler<?> handler) {
@@ -522,8 +517,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                 if (existing.payloadType().equals(handler.payloadType())) {
                     throw new IllegalArgumentException(
                             "Duplicate custom PDF handler for payload type "
-                                    + handler.payloadType().getName()
-                                    + "; remove the previous addHandler() call before registering another");
+                            + handler.payloadType().getName()
+                            + "; remove the previous addHandler() call before registering another");
                 }
             }
             this.additionalHandlers.add(handler);
@@ -618,28 +613,5 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                     protectionOptions,
                     headerFooterOptions);
         }
-    }
-
-    private static List<PdfFragmentRenderHandler<?>> mergeHandlers(
-            List<PdfFragmentRenderHandler<?>> defaults,
-            List<PdfFragmentRenderHandler<?>> additions) {
-        if (additions.isEmpty()) {
-            return defaults;
-        }
-        Map<Class<?>, PdfFragmentRenderHandler<?>> byPayloadType = new LinkedHashMap<>();
-        for (PdfFragmentRenderHandler<?> handler : defaults) {
-            byPayloadType.put(handler.payloadType(), handler);
-        }
-        for (PdfFragmentRenderHandler<?> handler : additions) {
-            PdfFragmentRenderHandler<?> previous = byPayloadType.put(handler.payloadType(), handler);
-            if (previous != null) {
-                RENDER_LOG.debug(
-                        "render.pdf.handler.replaced payloadType={} previous={} replacement={}",
-                        handler.payloadType().getName(),
-                        previous.getClass().getName(),
-                        handler.getClass().getName());
-            }
-        }
-        return List.copyOf(byPayloadType.values());
     }
 }

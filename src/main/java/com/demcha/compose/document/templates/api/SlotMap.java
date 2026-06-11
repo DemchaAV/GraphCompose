@@ -2,12 +2,7 @@ package com.demcha.compose.document.templates.api;
 
 import com.demcha.compose.document.node.DocumentNode;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Mutable map from slot names to ordered lists of {@link DocumentNode}
@@ -85,7 +80,7 @@ public final class SlotMap {
      *
      * @param slot slot name; may be unknown
      * @return immutable list of children, or an empty list if the slot
-     *         has no children (or is unknown)
+     * has no children (or is unknown)
      */
     public List<DocumentNode> get(String slot) {
         List<DocumentNode> children = bySlot.get(slot);

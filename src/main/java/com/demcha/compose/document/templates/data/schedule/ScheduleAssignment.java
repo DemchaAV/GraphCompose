@@ -1,17 +1,18 @@
 package com.demcha.compose.document.templates.data.schedule;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 /**
  * Display-oriented assignment for one person/day cell.
  *
- * @param personId person identifier
- * @param dayId day identifier
+ * @param personId   person identifier
+ * @param dayId      day identifier
  * @param categoryId category identifier
- * @param slots shift/time slots
- * @param note optional assignment note
+ * @param slots      shift/time slots
+ * @param note       optional assignment note
  */
 public record ScheduleAssignment(
         String personId,
@@ -109,9 +110,7 @@ public record ScheduleAssignment(
         public Builder slots(ScheduleSlot... slots) {
             this.slots.clear();
             if (slots != null) {
-                for (ScheduleSlot slot : slots) {
-                    this.slots.add(slot);
-                }
+                Collections.addAll(this.slots, slots);
             }
             return this;
         }
@@ -131,7 +130,7 @@ public record ScheduleAssignment(
          * Appends a slot row from start and end labels.
          *
          * @param start start label
-         * @param end end label
+         * @param end   end label
          * @return this builder
          */
         public Builder slot(String start, String end) {

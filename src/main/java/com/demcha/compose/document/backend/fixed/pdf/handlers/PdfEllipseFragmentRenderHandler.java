@@ -23,32 +23,11 @@ public final class PdfEllipseFragmentRenderHandler
     public PdfEllipseFragmentRenderHandler() {
     }
 
-    @Override
-    public Class<EllipseFragmentPayload> payloadType() {
-        return EllipseFragmentPayload.class;
-    }
-
-    @Override
-    public void render(PlacedFragment fragment,
-                       EllipseFragmentPayload payload,
-                       PdfRenderEnvironment environment) throws IOException {
-        if (fragment.width() <= 0 || fragment.height() <= 0) {
-            return;
-        }
-        PDPageContentStream stream = environment.pageSurface(fragment.pageIndex());
-        float x = (float) fragment.x();
-        float y = (float) fragment.y();
-        float width = (float) fragment.width();
-        float height = (float) fragment.height();
-        PdfShapeGeometry.fillAndStrokePath(stream, payload.fillColor(), payload.stroke(),
-                s -> drawEllipse(s, x, y, width, height));
-    }
-
     static void drawEllipse(PDPageContentStream stream,
-                                    float x,
-                                    float y,
-                                    float width,
-                                    float height) throws IOException {
+                            float x,
+                            float y,
+                            float width,
+                            float height) throws IOException {
         float centerX = x + width / 2.0f;
         float centerY = y + height / 2.0f;
         float radiusX = width / 2.0f;
@@ -70,5 +49,26 @@ public final class PdfEllipseFragmentRenderHandler
                 centerX + radiusX, centerY - controlY,
                 centerX + radiusX, centerY);
         stream.closePath();
+    }
+
+    @Override
+    public Class<EllipseFragmentPayload> payloadType() {
+        return EllipseFragmentPayload.class;
+    }
+
+    @Override
+    public void render(PlacedFragment fragment,
+                       EllipseFragmentPayload payload,
+                       PdfRenderEnvironment environment) throws IOException {
+        if (fragment.width() <= 0 || fragment.height() <= 0) {
+            return;
+        }
+        PDPageContentStream stream = environment.pageSurface(fragment.pageIndex());
+        float x = (float) fragment.x();
+        float y = (float) fragment.y();
+        float width = (float) fragment.width();
+        float height = (float) fragment.height();
+        PdfShapeGeometry.fillAndStrokePath(stream, payload.fillColor(), payload.stroke(),
+                s -> drawEllipse(s, x, y, width, height));
     }
 }

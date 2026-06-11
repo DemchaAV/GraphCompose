@@ -19,10 +19,14 @@ package com.demcha.compose.document.templates.cv.v2.data;
  */
 public enum Slot {
 
-    /** Primary content column. Default when no slot is specified. */
+    /**
+     * Primary content column. Default when no slot is specified.
+     */
     MAIN,
 
-    /** Sidebar / secondary column — typically narrower than MAIN. */
+    /**
+     * Sidebar / secondary column — typically narrower than MAIN.
+     */
     SIDEBAR,
 
     /**

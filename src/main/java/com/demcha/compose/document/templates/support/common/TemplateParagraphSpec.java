@@ -13,17 +13,17 @@ import java.util.List;
 /**
  * Immutable paragraph instruction used by shared template scene composers.
  *
- * @param name semantic paragraph name used in snapshots
- * @param text paragraph text when inline runs are not supplied
+ * @param name           semantic paragraph name used in snapshots
+ * @param text           paragraph text when inline runs are not supplied
  * @param inlineTextRuns optional styled inline runs in source order
- * @param style paragraph text style
- * @param align horizontal text alignment
- * @param lineSpacing extra space between wrapped lines
- * @param bulletOffset first-line prefix for list-like paragraph paths
+ * @param style          paragraph text style
+ * @param align          horizontal text alignment
+ * @param lineSpacing    extra space between wrapped lines
+ * @param bulletOffset   first-line prefix for list-like paragraph paths
  * @param indentStrategy hanging/first-line indent strategy
- * @param linkOptions optional paragraph link metadata
- * @param padding inner padding
- * @param margin outer margin
+ * @param linkOptions    optional paragraph link metadata
+ * @param padding        inner padding
+ * @param margin         outer margin
  * @author Artem Demchyshyn
  */
 public record TemplateParagraphSpec(
@@ -57,16 +57,16 @@ public record TemplateParagraphSpec(
     /**
      * Creates a paragraph instruction from plain text.
      *
-     * @param name semantic paragraph name
-     * @param text paragraph text
-     * @param style paragraph text style
-     * @param align horizontal text alignment
-     * @param lineSpacing extra line spacing
-     * @param bulletOffset first-line marker or prefix
+     * @param name           semantic paragraph name
+     * @param text           paragraph text
+     * @param style          paragraph text style
+     * @param align          horizontal text alignment
+     * @param lineSpacing    extra line spacing
+     * @param bulletOffset   first-line marker or prefix
      * @param indentStrategy text indent strategy
-     * @param linkOptions optional link metadata
-     * @param padding inner padding
-     * @param margin outer margin
+     * @param linkOptions    optional link metadata
+     * @param padding        inner padding
+     * @param margin         outer margin
      */
     public TemplateParagraphSpec(String name,
                                  String text,

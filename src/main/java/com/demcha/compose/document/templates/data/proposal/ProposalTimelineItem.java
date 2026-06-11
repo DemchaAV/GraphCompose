@@ -5,9 +5,9 @@ import java.util.Objects;
 /**
  * Display-oriented timeline item for proposals.
  *
- * @param phase timeline phase label
+ * @param phase    timeline phase label
  * @param duration display duration
- * @param details supporting details
+ * @param details  supporting details
  */
 public record ProposalTimelineItem(
         String phase,

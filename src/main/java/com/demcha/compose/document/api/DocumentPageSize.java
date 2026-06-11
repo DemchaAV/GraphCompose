@@ -6,7 +6,7 @@ package com.demcha.compose.document.api;
  * <p>The values are deliberately plain geometry. PDFBox-specific page objects
  * are created only by the PDF backend when a document is rendered.</p>
  *
- * @param width page width in points
+ * @param width  page width in points
  * @param height page height in points
  * @since 1.0.0
  */
@@ -29,7 +29,7 @@ public record DocumentPageSize(double width, double height) {
     /**
      * Creates a page size from point dimensions.
      *
-     * @param width page width in points
+     * @param width  page width in points
      * @param height page height in points
      */
     public DocumentPageSize {
@@ -44,7 +44,7 @@ public record DocumentPageSize(double width, double height) {
     /**
      * Creates a page size from point dimensions.
      *
-     * @param width page width in points
+     * @param width  page width in points
      * @param height page height in points
      * @return page size value
      */

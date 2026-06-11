@@ -34,7 +34,9 @@ public record CvDecoration(String bulletGlyph,
                            String stackedIndent,
                            String contactSeparator) {
 
-    /** Validates that no token is null. */
+    /**
+     * Validates that no token is null.
+     */
     public CvDecoration {
         Objects.requireNonNull(bulletGlyph, "bulletGlyph");
         Objects.requireNonNull(stackedIndent, "stackedIndent");

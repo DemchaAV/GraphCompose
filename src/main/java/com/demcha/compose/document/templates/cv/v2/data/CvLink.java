@@ -11,7 +11,9 @@ import java.util.Objects;
  */
 public record CvLink(String label, String url) {
 
-    /** Validates that both fields are non-null and non-blank. */
+    /**
+     * Validates that both fields are non-null and non-blank.
+     */
     public CvLink {
         Objects.requireNonNull(label, "label");
         Objects.requireNonNull(url, "url");

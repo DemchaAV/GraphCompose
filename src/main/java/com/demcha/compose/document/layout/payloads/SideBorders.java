@@ -9,10 +9,10 @@ import com.demcha.compose.engine.components.content.shape.Stroke;
  * side. The renderer treats this record as a request to draw the four lines
  * separately rather than rely on a single uniform rectangle stroke.</p>
  *
- * @param top top side stroke, or {@code null} for no border on that side
- * @param right right side stroke, or {@code null} for no border on that side
+ * @param top    top side stroke, or {@code null} for no border on that side
+ * @param right  right side stroke, or {@code null} for no border on that side
  * @param bottom bottom side stroke, or {@code null} for no border on that side
- * @param left left side stroke, or {@code null} for no border on that side
+ * @param left   left side stroke, or {@code null} for no border on that side
  */
 public record SideBorders(Stroke top, Stroke right, Stroke bottom, Stroke left) {
     /**

@@ -93,6 +93,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | [Charts](#charts) | Native vector bar, line, and pie/donut charts — data/spec/style layers, axis & grid toggles, point markers, value labels, legend | [PDF](../assets/readme/examples/chart-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/charts/ChartShowcaseExample.java) |
 | [PDF chrome](#pdf-chrome) | `DocumentMetadata`, `DocumentWatermark`, `DocumentHeaderFooter`, `DocumentBookmarkOptions` | [PDF](../assets/readme/examples/pdf-chrome.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PdfChromeExample.java) |
 | [HTTP streaming](#http-streaming) | `writePdf(OutputStream)` for Servlet / S3 / GCS — caller's stream is not closed | [PDF](../assets/readme/examples/invoice-http-stream.pdf) · [Source](src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java) |
+| [Word export (DOCX)](#word-export-docx) | `DocxSemanticBackend` — the same session renders a fixed-layout PDF and an editable Word file; paragraphs / lists / tables / images map 1:1, charts fall back to their data table | [PDF](../assets/readme/examples/word-export-companion.pdf) · [DOCX](../assets/readme/examples/word-export-companion.docx) · [Source](src/main/java/com/demcha/examples/features/docx/WordExportExample.java) |
 | [Layout snapshot regression](#layout-snapshot-regression) | Deterministic `layoutSnapshot()` workflow with baseline + drift report — production regression-testing pattern | [PDF](../assets/readme/examples/invoice-snapshot-regression.pdf) · [Source](src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java) |
 | [Business report cover](#business-report-cover) | Single-page Q1 investor brief — hero image, KPI cards, bar chart, metrics table | [PDF](../assets/readme/examples/business-report.pdf) · [Source](src/main/java/com/demcha/examples/flagships/BusinessReportExample.java) |
 | [Master showcase](#master-showcase) | Kitchen-sink "Q2 sample report" combining the canonical surface end-to-end | [PDF](../assets/readme/examples/master-showcase.pdf) · [Source](src/main/java/com/demcha/examples/flagships/MasterShowcaseExample.java) |
@@ -575,6 +576,47 @@ public ResponseEntity<StreamingResponseBody> invoice(@PathVariable Long id) {
 
 [📄 View PDF](../assets/readme/examples/invoice-http-stream.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java)
+
+### Word export (DOCX)
+
+The semantic backend walks the document graph and writes **editable
+Word content** — no layout pass, no PDF chrome. One session, two
+outputs:
+
+```java
+try (DocumentSession document = GraphCompose.document(pdfFile)
+        .pageSize(595, 842)
+        .margin(DocumentInsets.of(48))
+        .create()) {
+    document.metadata(DocumentMetadata.builder()
+            .title("GraphCompose Word export companion")
+            .author("GraphCompose").build());          // → Word core properties
+
+    document.pageFlow().name("Flow")
+            .addRich(rich -> rich.plain("Inline ").bold("runs").plain(" survive."))
+            .addList(list -> list.markerFor(1, ListMarker.custom("◦"))
+                    .addItem("Nested authoring", l1 -> l1
+                            .addItem("Two spaces of indent per depth in Word")))
+            .addTable(t -> t.headerRow("Quarter", "Revenue").row("Q1", "42"))
+            .addSection("Chart", s -> s.chart(ChartSpec.bar().data(quarters).build()))
+            .build();
+
+    document.buildPdf();                                   // fixed-layout PDF
+    document.export(new DocxSemanticBackend(), docxFile);  // editable Word file
+}
+```
+
+Paragraphs (inline runs included), lists, tables, side-by-side rows,
+images, spacers, and page breaks map 1:1; session metadata lands in the
+Word core properties. Charts export as their categories-by-series data
+table (one capability warning per export), shape containers flatten to
+inline layers, and pure geometry — dividers, shapes, barcodes — stays
+PDF-only by design. Requires `org.apache.poi:poi-ooxml` on the
+classpath (the dependency is optional in the GraphCompose POM).
+
+[📄 View PDF](../assets/readme/examples/word-export-companion.pdf) ·
+[📝 Word file](../assets/readme/examples/word-export-companion.docx) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/docx/WordExportExample.java)
 
 ### Layout snapshot regression
 

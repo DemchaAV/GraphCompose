@@ -29,7 +29,7 @@ final class RowSlots {
      * children count. Callers must skip this check when {@code weights}
      * is null or empty — the even-split fallback applies there instead.
      *
-     * @param weights non-null, non-empty weights list
+     * @param weights    non-null, non-empty weights list
      * @param childCount number of row children
      * @throws IllegalArgumentException if {@code weights.size() != childCount}
      */
@@ -37,8 +37,8 @@ final class RowSlots {
         if (weights.size() != childCount) {
             throw new IllegalArgumentException(
                     "Row weights size (" + weights.size() + ") must match children size ("
-                            + childCount + "). Pass exactly " + childCount
-                            + " weight(s) or leave weights empty for an even split.");
+                    + childCount + "). Pass exactly " + childCount
+                    + " weight(s) or leave weights empty for an even split.");
         }
     }
 }

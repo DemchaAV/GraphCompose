@@ -4,15 +4,9 @@ import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.LayerStackNode;
 import com.demcha.compose.document.node.ShapeContainerNode;
-import com.demcha.compose.document.style.ClipPolicy;
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentCornerRadius;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTransform;
-import com.demcha.compose.document.style.ShapeOutline;
+import com.demcha.compose.document.style.*;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -31,9 +25,9 @@ import java.util.Objects;
  * @since 1.0.0
  */
 public final class ShapeContainerBuilder implements Transformable<ShapeContainerBuilder> {
+    private final List<LayerStackNode.Layer> layers = new ArrayList<>();
     private String name = "";
     private ShapeOutline outline;
-    private final List<LayerStackNode.Layer> layers = new ArrayList<>();
     // Default to CLIP_PATH per ADR §Decision — see ShapeContainerNode for
     // the rationale.
     private ClipPolicy clipPolicy = ClipPolicy.CLIP_PATH;
@@ -63,7 +57,7 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
     /**
      * Sets a plain rectangle outline.
      *
-     * @param width outline width in points
+     * @param width  outline width in points
      * @param height outline height in points
      * @return this builder
      */
@@ -75,8 +69,8 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
     /**
      * Sets a rounded-rectangle outline.
      *
-     * @param width outline width in points
-     * @param height outline height in points
+     * @param width        outline width in points
+     * @param height       outline height in points
      * @param cornerRadius corner radius in points
      * @return this builder
      */
@@ -90,8 +84,8 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
      * it to round only one side of a container (e.g.
      * {@link DocumentCornerRadius#right(double)}) without a CLIP_PATH parent.
      *
-     * @param width outline width in points
-     * @param height outline height in points
+     * @param width        outline width in points
+     * @param height       outline height in points
      * @param cornerRadius per-corner radii
      * @return this builder
      * @since 1.7.0
@@ -104,7 +98,7 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
     /**
      * Sets an ellipse outline.
      *
-     * @param width outline width in points
+     * @param width  outline width in points
      * @param height outline height in points
      * @return this builder
      */
@@ -127,7 +121,7 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
     /**
      * Sets a diamond (rhombus) outline.
      *
-     * @param width outline width in points
+     * @param width  outline width in points
      * @param height outline height in points
      * @return this builder
      */
@@ -139,7 +133,7 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
     /**
      * Sets an upward-pointing triangle outline.
      *
-     * @param width outline width in points
+     * @param width  outline width in points
      * @param height outline height in points
      * @return this builder
      */
@@ -151,7 +145,7 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
     /**
      * Sets a five-pointed star outline.
      *
-     * @param width outline width in points
+     * @param width  outline width in points
      * @param height outline height in points
      * @return this builder
      */
@@ -163,7 +157,7 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
     /**
      * Sets an {@code n}-pointed star outline.
      *
-     * @param width outline width in points
+     * @param width  outline width in points
      * @param height outline height in points
      * @param points number of outer points (at least 2)
      * @return this builder
@@ -176,8 +170,8 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
     /**
      * Sets a block arrow outline pointing in {@code direction}.
      *
-     * @param width outline width in points
-     * @param height outline height in points
+     * @param width     outline width in points
+     * @param height    outline height in points
      * @param direction the way the arrow points
      * @return this builder
      */
@@ -189,8 +183,8 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
     /**
      * Sets a chevron outline pointing in {@code direction}.
      *
-     * @param width outline width in points
-     * @param height outline height in points
+     * @param width     outline width in points
+     * @param height    outline height in points
      * @param direction the way the chevron points
      * @return this builder
      */
@@ -321,7 +315,7 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
     /**
      * Appends a layer with explicit alignment.
      *
-     * @param node child node
+     * @param node  child node
      * @param align anchor inside the inner box
      * @return this builder
      */
@@ -335,8 +329,8 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
      * {@code zIndex} renders on top of lower {@code zIndex} regardless
      * of source order; the default is {@code 0}.
      *
-     * @param node child node
-     * @param align anchor inside the inner box
+     * @param node   child node
+     * @param align  anchor inside the inner box
      * @param zIndex render-order key
      * @return this builder
      */
@@ -360,10 +354,10 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
      * Appends a layer anchored to {@code align} and shifted by an on-screen
      * offset (positive {@code offsetX} = right, positive {@code offsetY} = down).
      *
-     * @param node child node
+     * @param node    child node
      * @param offsetX horizontal offset in points
      * @param offsetY vertical offset in points
-     * @param align anchor inside the inner box
+     * @param align   anchor inside the inner box
      * @return this builder
      */
     public ShapeContainerBuilder position(DocumentNode node,
@@ -379,11 +373,11 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
      * Appends a layer anchored to {@code align}, shifted by an on-screen
      * offset, and assigned an explicit z-index.
      *
-     * @param node child node
+     * @param node    child node
      * @param offsetX horizontal offset in points
      * @param offsetY vertical offset in points
-     * @param align anchor inside the inner box
-     * @param zIndex render-order key
+     * @param align   anchor inside the inner box
+     * @param zIndex  render-order key
      * @return this builder
      */
     public ShapeContainerBuilder position(DocumentNode node,
@@ -510,7 +504,7 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
         if (outline == null) {
             throw new IllegalStateException(
                     "ShapeContainerBuilder '" + name + "' requires an outline; "
-                            + "call rectangle/roundedRect/ellipse/circle before build().");
+                    + "call rectangle/roundedRect/ellipse/circle before build().");
         }
         return new ShapeContainerNode(name, outline, layers, clipPolicy, fillColor, stroke, padding, margin, transform);
     }

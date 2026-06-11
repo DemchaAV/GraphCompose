@@ -7,8 +7,12 @@ package com.demcha.compose.document.chart;
  * @since 1.8.0
  */
 public enum BarGrouping {
-    /** Series render side by side inside the category slot. */
+    /**
+     * Series render side by side inside the category slot.
+     */
     GROUPED,
-    /** Series stack on top of each other; the axis scales to stacked sums. */
+    /**
+     * Series stack on top of each other; the axis scales to stacked sums.
+     */
     STACKED
 }

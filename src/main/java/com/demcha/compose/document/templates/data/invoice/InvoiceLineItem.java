@@ -6,10 +6,10 @@ import java.util.Objects;
  * Display-oriented invoice line item.
  *
  * @param description item description
- * @param details optional supporting details
- * @param quantity display quantity
- * @param unitPrice display unit price
- * @param amount display amount
+ * @param details     optional supporting details
+ * @param quantity    display quantity
+ * @param unitPrice   display unit price
+ * @param amount      display amount
  */
 public record InvoiceLineItem(
         String description,

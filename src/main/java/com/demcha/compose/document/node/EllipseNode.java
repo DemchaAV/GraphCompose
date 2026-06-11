@@ -8,17 +8,17 @@ import com.demcha.compose.document.style.DocumentTransform;
 /**
  * Atomic ellipse or circle semantic shape.
  *
- * @param name node name used in snapshots and layout graph paths
- * @param width resolved ellipse width
- * @param height resolved ellipse height
- * @param fillColor optional fill color
- * @param stroke optional stroke descriptor
- * @param linkOptions optional node-level link metadata
+ * @param name            node name used in snapshots and layout graph paths
+ * @param width           resolved ellipse width
+ * @param height          resolved ellipse height
+ * @param fillColor       optional fill color
+ * @param stroke          optional stroke descriptor
+ * @param linkOptions     optional node-level link metadata
  * @param bookmarkOptions optional node-level bookmark metadata
- * @param padding inner padding
- * @param margin outer margin
- * @param transform render-time affine transform; defaults to
- *                  {@link DocumentTransform#NONE}.
+ * @param padding         inner padding
+ * @param margin          outer margin
+ * @param transform       render-time affine transform; defaults to
+ *                        {@link DocumentTransform#NONE}.
  * @author Artem Demchyshyn
  */
 public record EllipseNode(
@@ -53,15 +53,15 @@ public record EllipseNode(
      * Backward-compatible convenience constructor without transform — defaults
      * to {@link DocumentTransform#NONE}.
      *
-     * @param name node name used in snapshots and layout graph paths
-     * @param width resolved ellipse width
-     * @param height resolved ellipse height
-     * @param fillColor optional fill color
-     * @param stroke optional stroke descriptor
-     * @param linkOptions optional node-level link metadata
+     * @param name            node name used in snapshots and layout graph paths
+     * @param width           resolved ellipse width
+     * @param height          resolved ellipse height
+     * @param fillColor       optional fill color
+     * @param stroke          optional stroke descriptor
+     * @param linkOptions     optional node-level link metadata
      * @param bookmarkOptions optional node-level bookmark metadata
-     * @param padding inner padding
-     * @param margin outer margin
+     * @param padding         inner padding
+     * @param margin          outer margin
      */
     public EllipseNode(String name,
                        double width,

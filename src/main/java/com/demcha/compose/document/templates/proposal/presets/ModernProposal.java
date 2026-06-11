@@ -21,10 +21,14 @@ import com.demcha.compose.font.FontName;
  */
 public final class ModernProposal {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "modern-proposal";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Modern Proposal";
 
     private ModernProposal() {

@@ -15,7 +15,9 @@ import java.util.Objects;
  */
 public record ParagraphSection(String title, String body) implements CvSection {
 
-    /** Validates that every field is non-null and that {@code title} is non-blank. */
+    /**
+     * Validates that every field is non-null and that {@code title} is non-blank.
+     */
     public ParagraphSection {
         Objects.requireNonNull(title, "title");
         Objects.requireNonNull(body, "body");

@@ -12,14 +12,13 @@ import java.util.Objects;
  * scale is intentionally compact — picking from a fixed set keeps invoice,
  * proposal, and report templates visually consistent.</p>
  *
- * @param h1 document/title heading style
- * @param h2 section heading style
- * @param h3 sub-heading style
- * @param body default paragraph style
+ * @param h1      document/title heading style
+ * @param h2      section heading style
+ * @param h3      sub-heading style
+ * @param body    default paragraph style
  * @param caption small/secondary text style
- * @param label form-label or table-header style
- * @param accent inline accent style (for status keywords, totals)
- *
+ * @param label   form-label or table-header style
+ * @param accent  inline accent style (for status keywords, totals)
  * @author Artem Demchyshyn
  */
 public record TextScale(

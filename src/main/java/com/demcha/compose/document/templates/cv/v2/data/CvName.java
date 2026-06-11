@@ -48,7 +48,7 @@ public record CvName(String first, String middle, String last) {
      * Optional middle component, absent when blank.
      *
      * @return middle wrapped in {@link Optional#empty()} when blank,
-     *         otherwise the middle name
+     * otherwise the middle name
      */
     public Optional<String> middleName() {
         return middle.isBlank() ? Optional.empty() : Optional.of(middle);

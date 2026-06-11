@@ -15,14 +15,15 @@ import java.util.Objects;
  * authoring time rather than producing a skewed plot.</p>
  *
  * @param categories ordered category (x-axis) labels; at least one
- * @param series ordered value series; at least one, each aligned to categories
- *
+ * @param series     ordered value series; at least one, each aligned to categories
  * @author Artem Demchyshyn
  * @since 1.8.0
  */
 public record ChartData(List<String> categories, List<Series> series) {
 
-    /** Defensively copies both lists and enforces the alignment invariant. */
+    /**
+     * Defensively copies both lists and enforces the alignment invariant.
+     */
     public ChartData {
         Objects.requireNonNull(categories, "categories");
         Objects.requireNonNull(series, "series");
@@ -44,6 +45,15 @@ public record ChartData(List<String> categories, List<Series> series) {
     }
 
     /**
+     * Starts a mutable builder.
+     *
+     * @return new builder
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
      * Number of value series.
      *
      * @return series count
@@ -62,23 +72,16 @@ public record ChartData(List<String> categories, List<Series> series) {
     }
 
     /**
-     * Starts a mutable builder.
-     *
-     * @return new builder
-     */
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    /**
      * One named value series. {@code null} entries are allowed and mean a
      * missing point — a gap in a line, a skipped bar — distinct from {@code 0}.
      *
-     * @param name legend label for this series
+     * @param name   legend label for this series
      * @param values value per category, aligned by index; entries may be null
      */
     public record Series(String name, List<Double> values) {
-        /** Normalizes the name and tolerates {@code null} value entries. */
+        /**
+         * Normalizes the name and tolerates {@code null} value entries.
+         */
         public Series {
             name = name == null ? "" : name;
             Objects.requireNonNull(values, "values");
@@ -88,7 +91,7 @@ public record ChartData(List<String> categories, List<Series> series) {
         /**
          * Convenience: build a series from a name and a primitive run.
          *
-         * @param name series name
+         * @param name   series name
          * @param values value run
          * @return series
          */
@@ -101,7 +104,9 @@ public record ChartData(List<String> categories, List<Series> series) {
         }
     }
 
-    /** Mutable builder; produces an immutable {@link ChartData}. */
+    /**
+     * Mutable builder; produces an immutable {@link ChartData}.
+     */
     public static final class Builder {
         private final List<String> categories = new ArrayList<>();
         private final List<Series> series = new ArrayList<>();
@@ -142,7 +147,7 @@ public record ChartData(List<String> categories, List<Series> series) {
         /**
          * Adds a value series from a name and a primitive run.
          *
-         * @param name series name
+         * @param name   series name
          * @param values value run
          * @return this builder
          */

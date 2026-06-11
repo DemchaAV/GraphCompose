@@ -6,8 +6,12 @@ package com.demcha.compose.document.output;
  * @author Artem Demchyshyn
  */
 public enum DocumentWatermarkLayer {
-    /** Watermark renders behind page content. */
+    /**
+     * Watermark renders behind page content.
+     */
     BEHIND_CONTENT,
-    /** Watermark renders on top of page content. */
+    /**
+     * Watermark renders on top of page content.
+     */
     ABOVE_CONTENT
 }

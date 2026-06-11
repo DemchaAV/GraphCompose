@@ -1,12 +1,7 @@
 package com.demcha.compose.document.backend.fixed.pdf.handlers;
 
 import com.demcha.compose.document.style.DocumentPaint;
-import org.apache.pdfbox.cos.COSArray;
-import org.apache.pdfbox.cos.COSBoolean;
-import org.apache.pdfbox.cos.COSDictionary;
-import org.apache.pdfbox.cos.COSFloat;
-import org.apache.pdfbox.cos.COSInteger;
-import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.cos.*;
 import org.apache.pdfbox.pdmodel.common.function.PDFunction;
 import org.apache.pdfbox.pdmodel.common.function.PDFunctionType2;
 import org.apache.pdfbox.pdmodel.common.function.PDFunctionType3;
@@ -15,7 +10,7 @@ import org.apache.pdfbox.pdmodel.graphics.shading.PDShading;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShadingType2;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShadingType3;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -41,14 +36,14 @@ final class PdfShadingSupport {
     /**
      * Builds the shading for a gradient paint over the given box.
      *
-     * @param paint gradient paint ({@link DocumentPaint.Linear} or {@link DocumentPaint.Radial})
-     * @param x box left, page coordinates
-     * @param y box bottom, page coordinates
-     * @param width box width
+     * @param paint  gradient paint ({@link DocumentPaint.Linear} or {@link DocumentPaint.Radial})
+     * @param x      box left, page coordinates
+     * @param y      box bottom, page coordinates
+     * @param width  box width
      * @param height box height
      * @return configured shading
      * @throws IllegalArgumentException for a {@link DocumentPaint.Solid} (solid
-     *         fills never reach the shading path)
+     *                                  fills never reach the shading path)
      */
     static PDShading build(DocumentPaint paint, float x, float y, float width, float height) {
         if (paint instanceof DocumentPaint.Linear linear) {
@@ -92,7 +87,7 @@ final class PdfShadingSupport {
         double cy = y + radial.cy() * height;
         // Radius to the farthest corner so the last stop always reaches it.
         double r = 0.0;
-        for (double[] corner : new double[][] {{x, y}, {x + width, y}, {x, y + height},
+        for (double[] corner : new double[][]{{x, y}, {x + width, y}, {x, y + height},
                 {x + width, y + height}}) {
             r = Math.max(r, Math.hypot(corner[0] - cx, corner[1] - cy));
         }
@@ -120,7 +115,9 @@ final class PdfShadingSupport {
         return extend;
     }
 
-    /** Two stops → one exponential function; more → a stitching function. */
+    /**
+     * Two stops → one exponential function; more → a stitching function.
+     */
     private static PDFunction stopsFunction(List<DocumentPaint.Stop> stops) {
         if (stops.size() == 2) {
             return segment(stops.get(0).color().color(), stops.get(1).color().color());

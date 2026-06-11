@@ -8,12 +8,12 @@ import java.util.List;
 /**
  * Horizontal row instruction for canonical template scene composers.
  *
- * @param name semantic row name
+ * @param name    semantic row name
  * @param columns vertical sections rendered left-to-right
  * @param weights optional per-column width weights
- * @param gap horizontal gap between columns
+ * @param gap     horizontal gap between columns
  * @param padding inner row padding
- * @param margin outer row margin
+ * @param margin  outer row margin
  */
 public record TemplateRowSpec(
         String name,
@@ -48,10 +48,10 @@ public record TemplateRowSpec(
     /**
      * Creates a weighted row with zero padding and margin.
      *
-     * @param name semantic row name
+     * @param name    semantic row name
      * @param columns row columns
      * @param weights per-column weights
-     * @param gap horizontal gap
+     * @param gap     horizontal gap
      * @return row specification
      */
     public static TemplateRowSpec weighted(String name, List<TemplateColumnSpec> columns, List<Double> weights, double gap) {

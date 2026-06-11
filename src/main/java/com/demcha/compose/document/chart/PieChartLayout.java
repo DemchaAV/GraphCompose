@@ -2,20 +2,12 @@ package com.demcha.compose.document.chart;
 
 import com.demcha.compose.document.node.PolygonNode;
 import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.document.style.ShapePoint;
+import com.demcha.compose.document.style.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.demcha.compose.document.chart.ChartLayoutSupport.GAP;
-import static com.demcha.compose.document.chart.ChartLayoutSupport.HALO_PAD_Y;
-import static com.demcha.compose.document.chart.ChartLayoutSupport.emitChipLabel;
-import static com.demcha.compose.document.chart.ChartLayoutSupport.label;
-import static com.demcha.compose.document.chart.ChartLayoutSupport.valueLabelGap;
+import static com.demcha.compose.document.chart.ChartLayoutSupport.*;
 
 /**
  * Geometry for pie/donut charts: arc-tessellated sector polygons, mid-angle

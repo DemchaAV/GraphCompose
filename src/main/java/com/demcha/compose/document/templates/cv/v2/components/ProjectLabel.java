@@ -35,7 +35,9 @@ public record ProjectLabel(String title, String stack) {
     private static final Pattern TRAILING_STACK =
             Pattern.compile("\\s+\\(([^()]*)\\)\\s*$");
 
-    /** Normalises null title and stack to empty strings. */
+    /**
+     * Normalises null title and stack to empty strings.
+     */
     public ProjectLabel {
         title = title == null ? "" : title;
         stack = stack == null ? "" : stack;

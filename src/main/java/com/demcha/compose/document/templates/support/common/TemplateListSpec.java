@@ -12,17 +12,17 @@ import java.util.List;
 /**
  * Immutable list instruction used by shared template scene composers.
  *
- * @param name semantic list name used in snapshots and layout graph paths
- * @param items list item texts in source order
- * @param marker marker rendered before each item
- * @param style shared item text style
- * @param align horizontal item alignment
- * @param lineSpacing extra spacing between wrapped lines in one item
- * @param itemSpacing extra spacing between list items
+ * @param name               semantic list name used in snapshots and layout graph paths
+ * @param items              list item texts in source order
+ * @param marker             marker rendered before each item
+ * @param style              shared item text style
+ * @param align              horizontal item alignment
+ * @param lineSpacing        extra spacing between wrapped lines in one item
+ * @param itemSpacing        extra spacing between list items
  * @param continuationIndent prefix used only for wrapped continuation lines when marker is hidden
- * @param normalizeMarkers whether input items may include pre-existing markers
- * @param padding list padding
- * @param margin list margin
+ * @param normalizeMarkers   whether input items may include pre-existing markers
+ * @param padding            list padding
+ * @param margin             list margin
  * @author Artem Demchyshyn
  */
 public record TemplateListSpec(

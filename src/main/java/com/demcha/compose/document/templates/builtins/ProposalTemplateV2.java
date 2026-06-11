@@ -2,20 +2,11 @@ package com.demcha.compose.document.templates.builtins;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.TableBuilder;
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentCornerRadius;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.style.*;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.document.templates.api.ProposalTemplate;
-import com.demcha.compose.document.templates.data.proposal.ProposalData;
-import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
-import com.demcha.compose.document.templates.data.proposal.ProposalParty;
-import com.demcha.compose.document.templates.data.proposal.ProposalPricingRow;
-import com.demcha.compose.document.templates.data.proposal.ProposalSection;
-import com.demcha.compose.document.templates.data.proposal.ProposalTimelineItem;
+import com.demcha.compose.document.templates.data.proposal.*;
 import com.demcha.compose.document.templates.support.common.TemplateLifecycleLog;
 import com.demcha.compose.document.theme.BusinessTheme;
 
@@ -85,7 +76,7 @@ public final class ProposalTemplateV2 implements ProposalTemplate {
     @Override
     public String getDescription() {
         return "Theme-driven proposal template using soft panels, accent strips, "
-                + "themed timeline / pricing tables, and a repeating pricing header.";
+               + "themed timeline / pricing tables, and a repeating pricing header.";
     }
 
     @Override

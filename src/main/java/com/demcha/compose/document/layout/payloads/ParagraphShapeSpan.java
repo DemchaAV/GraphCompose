@@ -11,12 +11,12 @@ import java.util.List;
  * bounding box, so composite figures (e.g. a checkbox: box + checkmark) place
  * on the text baseline as one unit.
  *
- * @param layers resolved paint layers, back-to-front
- * @param width bounding width in points
- * @param height bounding height in points
- * @param alignment vertical alignment relative to the surrounding text
+ * @param layers         resolved paint layers, back-to-front
+ * @param width          bounding width in points
+ * @param height         bounding height in points
+ * @param alignment      vertical alignment relative to the surrounding text
  * @param baselineOffset extra vertical offset in points; positive moves up
- * @param linkOptions optional link metadata
+ * @param linkOptions    optional link metadata
  */
 public record ParagraphShapeSpan(
         List<ResolvedShapeLayer> layers,

@@ -44,6 +44,15 @@
             <version>${graphcompose.version}</version>
         </dependency>
 
+        <!-- DOCX export (WordExportExample): poi-ooxml is optional in the
+             GraphCompose POM, so consumers add it explicitly.
+             Keep in lockstep with the root pom's poi.version. -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.5.1</version>
+        </dependency>
+
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>

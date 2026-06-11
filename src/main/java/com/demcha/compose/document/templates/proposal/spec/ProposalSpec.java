@@ -91,10 +91,10 @@ public record ProposalSpec(
      * One pricing row — label + value pair appearing in the pricing
      * summary block.
      *
-     * @param label       row label (e.g. "Discovery workshop")
-     * @param value       row value (e.g. "GBP 1,450")
-     * @param isHeadline  whether this row is the headline total
-     *                    (rendered emphasised by the preset)
+     * @param label      row label (e.g. "Discovery workshop")
+     * @param value      row value (e.g. "GBP 1,450")
+     * @param isHeadline whether this row is the headline total
+     *                   (rendered emphasised by the preset)
      */
     public record PricingRow(String label, String value, boolean isHeadline) {
 
@@ -158,42 +158,65 @@ public record ProposalSpec(
          * @param value title
          * @return this builder
          */
-        public Builder title(String value) { this.title = value; return this; }
+        public Builder title(String value) {
+            this.title = value;
+            return this;
+        }
+
         /**
          * Sets the sender party.
          *
          * @param value sender party
          * @return this builder
          */
-        public Builder fromParty(Party value) { this.fromParty = value; return this; }
+        public Builder fromParty(Party value) {
+            this.fromParty = value;
+            return this;
+        }
+
         /**
          * Sets the receiving party.
          *
          * @param value receiving party
          * @return this builder
          */
-        public Builder toParty(Party value) { this.toParty = value; return this; }
+        public Builder toParty(Party value) {
+            this.toParty = value;
+            return this;
+        }
+
         /**
          * Adds a content section.
          *
          * @param section content section
          * @return this builder
          */
-        public Builder section(Section section) { this.sections.add(section); return this; }
+        public Builder section(Section section) {
+            this.sections.add(section);
+            return this;
+        }
+
         /**
          * Adds a pricing row.
          *
          * @param row pricing row
          * @return this builder
          */
-        public Builder pricingRow(PricingRow row) { this.pricingRows.add(row); return this; }
+        public Builder pricingRow(PricingRow row) {
+            this.pricingRows.add(row);
+            return this;
+        }
+
         /**
          * Sets the footer note.
          *
          * @param note footer note
          * @return this builder
          */
-        public Builder footerNote(String note) { this.footerNote = note == null ? "" : note; return this; }
+        public Builder footerNote(String note) {
+            this.footerNote = note == null ? "" : note;
+            return this;
+        }
 
         /**
          * Builds an immutable {@link ProposalSpec}.

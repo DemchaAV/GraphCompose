@@ -12,11 +12,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
 import com.demcha.compose.document.templates.cv.v2.components.SectionDispatcher;
-import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
-import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
-import com.demcha.compose.document.templates.cv.v2.data.CvLink;
-import com.demcha.compose.document.templates.cv.v2.data.CvSection;
-import com.demcha.compose.document.templates.cv.v2.data.Slot;
+import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
 import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
@@ -45,13 +41,19 @@ import java.util.Objects;
  */
 public final class Executive {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "executive";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Executive";
 
-    /** Recommended page margin (in points) — generous for an executive feel. */
+    /**
+     * Recommended page margin (in points) — generous for an executive feel.
+     */
     public static final double RECOMMENDED_MARGIN = 28.0;
 
     /**
@@ -92,156 +94,150 @@ public final class Executive {
         return new Template(theme);
     }
 
-    private static final class Template implements DocumentTemplate<CvDocument> {
-
-        private final CvTheme theme;
-
-        Template(CvTheme theme) {
-            this.theme = theme;
-        }
+    private record Template(CvTheme theme) implements DocumentTemplate<CvDocument> {
 
         @Override
-        public String id() {
-            return ID;
-        }
-
-        @Override
-        public String displayName() {
-            return DISPLAY_NAME;
-        }
-
-        @Override
-        public void compose(DocumentSession document, CvDocument doc) {
-            Objects.requireNonNull(document, "document");
-            Objects.requireNonNull(doc, "doc");
-
-            double width = document.canvas().innerWidth();
-            PageFlowBuilder flow = document.dsl()
-                    .pageFlow()
-                    .name("CvV2ExecutiveRoot")
-                    .spacing(theme.spacing().pageFlowSpacing());
-
-            addHeader(flow, doc.identity(), width);
-
-            List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
-            for (int i = 0; i < sections.size(); i++) {
-                CvSection sec = sections.get(i);
-                int idx = i;
-                flow.addSection("CvV2ExecutiveTitle_" + idx, host ->
-                        SectionHeader.flat(host,
-                                sec.title().toUpperCase(Locale.ROOT),
-                                ACCENT, theme));
-                flow.addSection("CvV2ExecutiveBody_" + idx, host ->
-                        SectionDispatcher.renderBody(host, sec, theme));
+            public String id() {
+                return ID;
             }
 
-            flow.build();
-        }
-
-        private void addHeader(PageFlowBuilder flow, CvIdentity identity,
-                               double width) {
-            flow.addSection("CvV2ExecutiveHeader", section -> {
-                section.spacing(2)
-                        .padding(DocumentInsets.zero());
-                Headline.uppercaseLeftAligned(section, identity.name(), theme,
-                        nameStyle());
-                String meta = joinPipe(identity.contact().address(),
-                        identity.contact().phone());
-                if (!meta.isBlank()) {
-                    section.addParagraph(paragraph -> paragraph
-                            .text(meta)
-                            .textStyle(metaStyle())
-                            .align(TextAlign.LEFT)
-                            .margin(DocumentInsets.top(2)));
-                }
-                addLinkRow(section, identity);
-                section.addLine(line -> line
-                        .name("CvV2ExecutiveHeaderRule")
-                        .horizontal(width)
-                        .color(theme.palette().rule())
-                        .thickness(theme.spacing().accentRuleWidth())
-                        .margin(DocumentInsets.top(5)));
-            });
-        }
-
-        private void addLinkRow(SectionBuilder section, CvIdentity identity) {
-            boolean hasEmail = !identity.contact().email().isBlank();
-            boolean hasLinks = !identity.links().isEmpty();
-            if (!hasEmail && !hasLinks) {
-                return;
+            @Override
+            public String displayName() {
+                return DISPLAY_NAME;
             }
-            DocumentTextStyle bodyStyle = linkRowBodyStyle();
-            DocumentTextStyle linkStyle = linkRowLinkStyle();
-            section.addParagraph(paragraph -> paragraph
-                    .textStyle(bodyStyle)
-                    .align(TextAlign.LEFT)
-                    .margin(DocumentInsets.top(1))
-                    .rich(rich -> {
-                        boolean first = true;
-                        String email = identity.contact().email();
-                        if (!email.isBlank()) {
-                            rich.with(email, linkStyle,
-                                    new DocumentLinkOptions("mailto:" + email));
-                            first = false;
-                        }
-                        for (CvLink link : identity.links()) {
-                            if (link.label().isBlank()) {
-                                continue;
-                            }
-                            if (!first) {
-                                rich.style(" | ", bodyStyle);
-                            }
-                            first = false;
-                            if (link.url().isBlank()) {
-                                rich.style(link.label(), bodyStyle);
-                            } else {
-                                rich.with(link.label(), linkStyle,
-                                        new DocumentLinkOptions(link.url()));
-                            }
-                        }
-                    }));
-        }
 
-        private DocumentTextStyle nameStyle() {
-            return CvTextStyles.of(FontName.POPPINS,
-                    theme.typography().sizeHeadline(),
-                    DocumentTextDecoration.BOLD,
-                    PRIMARY_NAME);
-        }
+            @Override
+            public void compose(DocumentSession document, CvDocument doc) {
+                Objects.requireNonNull(document, "document");
+                Objects.requireNonNull(doc, "doc");
 
-        private DocumentTextStyle metaStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeContact(),
-                    DocumentTextDecoration.DEFAULT,
-                    theme.palette().ink());
-        }
+                double width = document.canvas().innerWidth();
+                PageFlowBuilder flow = document.dsl()
+                        .pageFlow()
+                        .name("CvV2ExecutiveRoot")
+                        .spacing(theme.spacing().pageFlowSpacing());
 
-        private DocumentTextStyle linkRowBodyStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeBody(),
-                    DocumentTextDecoration.DEFAULT,
-                    theme.palette().ink());
-        }
+                addHeader(flow, doc.identity(), width);
 
-        private DocumentTextStyle linkRowLinkStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeBody(),
-                    DocumentTextDecoration.UNDERLINE,
-                    ACCENT);
-        }
-
-        private static String joinPipe(String... parts) {
-            StringBuilder sb = new StringBuilder();
-            for (String part : parts) {
-                if (part == null || part.isBlank()) {
-                    continue;
+                List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
+                for (int i = 0; i < sections.size(); i++) {
+                    CvSection sec = sections.get(i);
+                    int idx = i;
+                    flow.addSection("CvV2ExecutiveTitle_" + idx, host ->
+                            SectionHeader.flat(host,
+                                    sec.title().toUpperCase(Locale.ROOT),
+                                    ACCENT, theme));
+                    flow.addSection("CvV2ExecutiveBody_" + idx, host ->
+                            SectionDispatcher.renderBody(host, sec, theme));
                 }
-                if (sb.length() > 0) {
-                    sb.append(" | ");
-                }
-                sb.append(part.trim());
+
+                flow.build();
             }
-            return sb.toString();
+
+            private void addHeader(PageFlowBuilder flow, CvIdentity identity,
+                                   double width) {
+                flow.addSection("CvV2ExecutiveHeader", section -> {
+                    section.spacing(2)
+                            .padding(DocumentInsets.zero());
+                    Headline.uppercaseLeftAligned(section, identity.name(), theme,
+                            nameStyle());
+                    String meta = joinPipe(identity.contact().address(),
+                            identity.contact().phone());
+                    if (!meta.isBlank()) {
+                        section.addParagraph(paragraph -> paragraph
+                                .text(meta)
+                                .textStyle(metaStyle())
+                                .align(TextAlign.LEFT)
+                                .margin(DocumentInsets.top(2)));
+                    }
+                    addLinkRow(section, identity);
+                    section.addLine(line -> line
+                            .name("CvV2ExecutiveHeaderRule")
+                            .horizontal(width)
+                            .color(theme.palette().rule())
+                            .thickness(theme.spacing().accentRuleWidth())
+                            .margin(DocumentInsets.top(5)));
+                });
+            }
+
+            private void addLinkRow(SectionBuilder section, CvIdentity identity) {
+                boolean hasEmail = !identity.contact().email().isBlank();
+                boolean hasLinks = !identity.links().isEmpty();
+                if (!hasEmail && !hasLinks) {
+                    return;
+                }
+                DocumentTextStyle bodyStyle = linkRowBodyStyle();
+                DocumentTextStyle linkStyle = linkRowLinkStyle();
+                section.addParagraph(paragraph -> paragraph
+                        .textStyle(bodyStyle)
+                        .align(TextAlign.LEFT)
+                        .margin(DocumentInsets.top(1))
+                        .rich(rich -> {
+                            boolean first = true;
+                            String email = identity.contact().email();
+                            if (!email.isBlank()) {
+                                rich.with(email, linkStyle,
+                                        new DocumentLinkOptions("mailto:" + email));
+                                first = false;
+                            }
+                            for (CvLink link : identity.links()) {
+                                if (link.label().isBlank()) {
+                                    continue;
+                                }
+                                if (!first) {
+                                    rich.style(" | ", bodyStyle);
+                                }
+                                first = false;
+                                if (link.url().isBlank()) {
+                                    rich.style(link.label(), bodyStyle);
+                                } else {
+                                    rich.with(link.label(), linkStyle,
+                                            new DocumentLinkOptions(link.url()));
+                                }
+                            }
+                        }));
+            }
+
+            private DocumentTextStyle nameStyle() {
+                return CvTextStyles.of(FontName.POPPINS,
+                        theme.typography().sizeHeadline(),
+                        DocumentTextDecoration.BOLD,
+                        PRIMARY_NAME);
+            }
+
+            private DocumentTextStyle metaStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeContact(),
+                        DocumentTextDecoration.DEFAULT,
+                        theme.palette().ink());
+            }
+
+            private DocumentTextStyle linkRowBodyStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeBody(),
+                        DocumentTextDecoration.DEFAULT,
+                        theme.palette().ink());
+            }
+
+            private DocumentTextStyle linkRowLinkStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeBody(),
+                        DocumentTextDecoration.UNDERLINE,
+                        ACCENT);
+            }
+
+            private static String joinPipe(String... parts) {
+                StringBuilder sb = new StringBuilder();
+                for (String part : parts) {
+                    if (part == null || part.isBlank()) {
+                        continue;
+                    }
+                    if (sb.length() > 0) {
+                        sb.append(" | ");
+                    }
+                    sb.append(part.trim());
+                }
+                return sb.toString();
+            }
         }
-    }
 }

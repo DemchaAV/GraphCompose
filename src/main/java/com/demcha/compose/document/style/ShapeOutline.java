@@ -39,7 +39,7 @@ public sealed interface ShapeOutline permits
     /**
      * Plain axis-aligned rectangle outline.
      *
-     * @param width outer width in points
+     * @param width  outer width in points
      * @param height outer height in points
      */
     record Rectangle(double width, double height) implements ShapeOutline {
@@ -56,8 +56,8 @@ public sealed interface ShapeOutline permits
      * Rectangle with a uniform corner radius. Render code may further clamp
      * {@code cornerRadius} to half of the smaller side at draw time.
      *
-     * @param width outer width in points
-     * @param height outer height in points
+     * @param width        outer width in points
+     * @param height       outer height in points
      * @param cornerRadius corner radius in points (0 means square corners)
      */
     record RoundedRectangle(double width, double height, double cornerRadius) implements ShapeOutline {
@@ -80,8 +80,8 @@ public sealed interface ShapeOutline permits
      * {@link DocumentCornerRadius#right(double)} for a card that sits flush
      * against a left edge — without a CLIP_PATH parent workaround.
      *
-     * @param width outer width in points
-     * @param height outer height in points
+     * @param width   outer width in points
+     * @param height  outer height in points
      * @param corners per-corner radii
      * @since 1.7.0
      */
@@ -100,7 +100,7 @@ public sealed interface ShapeOutline permits
     /**
      * Ellipse outline. A circle is just an ellipse with {@code width == height}.
      *
-     * @param width outer width in points
+     * @param width  outer width in points
      * @param height outer height in points
      */
     record Ellipse(double width, double height) implements ShapeOutline {
@@ -120,7 +120,7 @@ public sealed interface ShapeOutline permits
      * size. Diamonds, triangles, stars and arbitrary convex/concave polygons
      * are all expressed through this single kind via the factories below.
      *
-     * @param width outer width in points
+     * @param width  outer width in points
      * @param height outer height in points
      * @param points ring of at least three normalized vertices, in draw order
      * @since 1.7.0
@@ -146,13 +146,21 @@ public sealed interface ShapeOutline permits
      * @since 1.7.0
      */
     enum Direction {
-        /** Pointing right. */
+        /**
+         * Pointing right.
+         */
         RIGHT,
-        /** Pointing left. */
+        /**
+         * Pointing left.
+         */
         LEFT,
-        /** Pointing up. */
+        /**
+         * Pointing up.
+         */
         UP,
-        /** Pointing down. */
+        /**
+         * Pointing down.
+         */
         DOWN
     }
 
@@ -166,9 +174,13 @@ public sealed interface ShapeOutline permits
      * @since 1.7.0
      */
     enum CheckmarkStyle {
-        /** The default tick: a slim six-vertex checkmark band. */
+        /**
+         * The default tick: a slim six-vertex checkmark band.
+         */
         CLASSIC,
-        /** A bolder tick with a visibly thicker band. */
+        /**
+         * A bolder tick with a visibly thicker band.
+         */
         HEAVY
     }
 
@@ -181,9 +193,13 @@ public sealed interface ShapeOutline permits
      * @since 1.7.0
      */
     enum ArrowStyle {
-        /** The default arrow: a seven-vertex block arrow with a shaft. */
+        /**
+         * The default arrow: a seven-vertex block arrow with a shaft.
+         */
         BLOCK,
-        /** A solid triangular arrowhead ("▶") with no shaft. */
+        /**
+         * A solid triangular arrowhead ("▶") with no shaft.
+         */
         TRIANGLE
     }
 
@@ -200,7 +216,7 @@ public sealed interface ShapeOutline permits
     /**
      * Creates a {@link Polygon} from an explicit ring of normalized vertices.
      *
-     * @param width outer width in points
+     * @param width  outer width in points
      * @param height outer height in points
      * @param points ring of at least three normalized vertices, in draw order
      * @return polygon outline
@@ -212,7 +228,7 @@ public sealed interface ShapeOutline permits
     /**
      * Creates a four-point diamond (rhombus) inscribed in the box.
      *
-     * @param width outer width in points
+     * @param width  outer width in points
      * @param height outer height in points
      * @return diamond polygon outline
      */
@@ -227,7 +243,7 @@ public sealed interface ShapeOutline permits
     /**
      * Creates an upward-pointing triangle inscribed in the box.
      *
-     * @param width outer width in points
+     * @param width  outer width in points
      * @param height outer height in points
      * @return triangle polygon outline
      */
@@ -241,7 +257,7 @@ public sealed interface ShapeOutline permits
     /**
      * Creates a five-pointed star inscribed in the box.
      *
-     * @param width outer width in points
+     * @param width  outer width in points
      * @param height outer height in points
      * @return five-pointed star polygon outline
      */
@@ -253,7 +269,7 @@ public sealed interface ShapeOutline permits
      * Creates an {@code n}-pointed star inscribed in the box, with the first
      * point facing up.
      *
-     * @param width outer width in points
+     * @param width  outer width in points
      * @param height outer height in points
      * @param points number of outer points (at least 3)
      * @return star polygon outline
@@ -287,8 +303,8 @@ public sealed interface ShapeOutline permits
      * Creates a block arrow pointing in {@code direction} — a list bullet or an
      * inline marker between text ("Step 1 → Step 2").
      *
-     * @param width outer width in points
-     * @param height outer height in points
+     * @param width     outer width in points
+     * @param height    outer height in points
      * @param direction the way the arrow points
      * @return arrow polygon outline
      */
@@ -301,10 +317,10 @@ public sealed interface ShapeOutline permits
      * {@code direction} — the swappable-design overload. {@link ArrowStyle#BLOCK}
      * reproduces {@link #arrow(double, double, Direction)} exactly.
      *
-     * @param width outer width in points
-     * @param height outer height in points
+     * @param width     outer width in points
+     * @param height    outer height in points
      * @param direction the way the arrow points
-     * @param style the arrow design
+     * @param style     the arrow design
      * @return arrow polygon outline
      * @since 1.7.0
      */
@@ -312,11 +328,11 @@ public sealed interface ShapeOutline permits
         Objects.requireNonNull(direction, "direction");
         Objects.requireNonNull(style, "style");
         double[][] base = switch (style) {
-            case BLOCK -> new double[][] {
+            case BLOCK -> new double[][]{
                     {0.00, 0.65}, {0.55, 0.65}, {0.55, 0.88},
                     {1.00, 0.50}, {0.55, 0.12}, {0.55, 0.35}, {0.00, 0.35}
             };
-            case TRIANGLE -> new double[][] {
+            case TRIANGLE -> new double[][]{
                     {0.00, 0.00}, {1.00, 0.50}, {0.00, 1.00}
             };
         };
@@ -326,7 +342,7 @@ public sealed interface ShapeOutline permits
     /**
      * Creates a right-pointing block arrow.
      *
-     * @param width outer width in points
+     * @param width  outer width in points
      * @param height outer height in points
      * @return right arrow polygon outline
      */
@@ -337,7 +353,7 @@ public sealed interface ShapeOutline permits
     /**
      * Creates a left-pointing block arrow.
      *
-     * @param width outer width in points
+     * @param width  outer width in points
      * @param height outer height in points
      * @return left arrow polygon outline
      */
@@ -349,8 +365,8 @@ public sealed interface ShapeOutline permits
      * Creates a chevron ("›") pointing in {@code direction} — a lighter
      * directional marker for breadcrumbs and step lists.
      *
-     * @param width outer width in points
-     * @param height outer height in points
+     * @param width     outer width in points
+     * @param height    outer height in points
      * @param direction the way the chevron points
      * @return chevron polygon outline
      */
@@ -367,7 +383,7 @@ public sealed interface ShapeOutline permits
     /**
      * Creates a checkmark ("✓") figure for "done" items in checklists.
      *
-     * @param width outer width in points
+     * @param width  outer width in points
      * @param height outer height in points
      * @return checkmark polygon outline
      */
@@ -380,16 +396,16 @@ public sealed interface ShapeOutline permits
      * swappable-design overload. {@link CheckmarkStyle#CLASSIC} reproduces
      * {@link #checkmark(double, double)} exactly.
      *
-     * @param width outer width in points
+     * @param width  outer width in points
      * @param height outer height in points
-     * @param style the checkmark design
+     * @param style  the checkmark design
      * @return checkmark polygon outline
      * @since 1.7.0
      */
     static Polygon checkmark(double width, double height, CheckmarkStyle style) {
         Objects.requireNonNull(style, "style");
         List<ShapePoint> ring = switch (style) {
-            case CLASSIC -> toPoints(new double[][] {
+            case CLASSIC -> toPoints(new double[][]{
                     {0.45, 0.00}, {1.00, 0.72}, {0.86, 0.92},
                     {0.42, 0.34}, {0.16, 0.58}, {0.04, 0.44}
             });
@@ -401,7 +417,7 @@ public sealed interface ShapeOutline permits
     /**
      * Creates a plus ("+") figure for "add" affordances or checklist markers.
      *
-     * @param width outer width in points
+     * @param width  outer width in points
      * @param height outer height in points
      * @return plus polygon outline
      */
@@ -420,9 +436,9 @@ public sealed interface ShapeOutline permits
      * Creates a regular {@code sides}-gon (pentagon, hexagon, …) inscribed in
      * the box, with the first vertex facing up.
      *
-     * @param width outer width in points
+     * @param width  outer width in points
      * @param height outer height in points
-     * @param sides number of sides (at least 3)
+     * @param sides  number of sides (at least 3)
      * @return regular polygon outline
      */
     static Polygon regularPolygon(double width, double height, int sides) {

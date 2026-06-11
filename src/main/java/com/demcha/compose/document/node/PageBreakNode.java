@@ -9,7 +9,7 @@ import com.demcha.compose.document.style.DocumentInsets;
  * uses it as a control signal that forces subsequent content onto the next
  * page.</p>
  *
- * @param name semantic name used in snapshots and diagnostics
+ * @param name   semantic name used in snapshots and diagnostics
  * @param margin optional surrounding spacing; {@code null} resolves to zero
  */
 public record PageBreakNode(String name, DocumentInsets margin) implements DocumentNode {
@@ -17,7 +17,7 @@ public record PageBreakNode(String name, DocumentInsets margin) implements Docum
     /**
      * Creates a page-break node.
      *
-     * @param name semantic name used in snapshots and diagnostics
+     * @param name   semantic name used in snapshots and diagnostics
      * @param margin optional surrounding spacing; {@code null} resolves to zero
      */
     public PageBreakNode {

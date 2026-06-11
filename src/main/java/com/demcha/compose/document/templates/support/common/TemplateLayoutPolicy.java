@@ -3,8 +3,6 @@ package com.demcha.compose.document.templates.support.common;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
 
-import java.util.Objects;
-
 /**
  * Shared rhythm tokens for canonical template scene composers.
  *
@@ -12,20 +10,20 @@ import java.util.Objects;
  * spacing, and reusable cell padding in one support-level object so built-in
  * templates do not hide layout rules in scattered local constants.</p>
  *
- * @param rootSpacing spacing between top-level blocks in the root flow
- * @param sectionMargin margin applied to section/module headings
- * @param subsectionMargin margin applied to nested section blocks
- * @param blockMargin margin applied to regular body blocks when a template
- *                    needs an explicit top gap
- * @param bodyLineSpacing extra spacing between wrapped body text lines
- * @param bodyItemSpacing extra spacing between list items
- * @param tableLineSpacing extra spacing between multiple text lines inside
- *                         table cells
+ * @param rootSpacing                  spacing between top-level blocks in the root flow
+ * @param sectionMargin                margin applied to section/module headings
+ * @param subsectionMargin             margin applied to nested section blocks
+ * @param blockMargin                  margin applied to regular body blocks when a template
+ *                                     needs an explicit top gap
+ * @param bodyLineSpacing              extra spacing between wrapped body text lines
+ * @param bodyItemSpacing              extra spacing between list items
+ * @param tableLineSpacing             extra spacing between multiple text lines inside
+ *                                     table cells
  * @param markerlessContinuationIndent prefix used for wrapped continuation
  *                                     lines in markerless rows
- * @param bodyPadding default body block padding
- * @param compactCellPadding reusable padding for compact table cells
- * @param contentCellPadding reusable padding for content-heavy table cells
+ * @param bodyPadding                  default body block padding
+ * @param compactCellPadding           reusable padding for compact table cells
+ * @param contentCellPadding           reusable padding for content-heavy table cells
  * @author Artem Demchyshyn
  */
 public record TemplateLayoutPolicy(
@@ -112,10 +110,10 @@ public record TemplateLayoutPolicy(
     /**
      * Creates a full margin after validating each spacing value.
      *
-     * @param top top margin
-     * @param right right margin
+     * @param top    top margin
+     * @param right  right margin
      * @param bottom bottom margin
-     * @param left left margin
+     * @param left   left margin
      * @return validated margin
      */
     public Margin margin(double top, double right, double bottom, double left) {

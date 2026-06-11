@@ -1,10 +1,6 @@
 package com.demcha.compose.document.node;
 
-import com.demcha.compose.document.style.DocumentBorders;
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentCornerRadius;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.*;
 
 import java.util.List;
 import java.util.Objects;
@@ -12,16 +8,15 @@ import java.util.Objects;
 /**
  * Vertical flow semantic container.
  *
- * @param name node name used in snapshots and layout graph paths
- * @param children child semantic nodes in source order
- * @param spacing vertical spacing between children
- * @param padding inner padding
- * @param margin outer margin
- * @param fillColor optional background fill
- * @param stroke optional uniform border stroke
+ * @param name         node name used in snapshots and layout graph paths
+ * @param children     child semantic nodes in source order
+ * @param spacing      vertical spacing between children
+ * @param padding      inner padding
+ * @param margin       outer margin
+ * @param fillColor    optional background fill
+ * @param stroke       optional uniform border stroke
  * @param cornerRadius optional render-only corner radius
- * @param borders optional per-side border strokes overriding the uniform stroke
- *
+ * @param borders      optional per-side border strokes overriding the uniform stroke
  * @author Artem Demchyshyn
  */
 public record ContainerNode(
@@ -54,13 +49,13 @@ public record ContainerNode(
     /**
      * Creates a vertical flow container without per-side borders.
      *
-     * @param name node name used in snapshots and layout graph paths
-     * @param children child semantic nodes in source order
-     * @param spacing vertical spacing between children
-     * @param padding inner padding
-     * @param margin outer margin
-     * @param fillColor optional background fill
-     * @param stroke optional uniform border stroke
+     * @param name         node name used in snapshots and layout graph paths
+     * @param children     child semantic nodes in source order
+     * @param spacing      vertical spacing between children
+     * @param padding      inner padding
+     * @param margin       outer margin
+     * @param fillColor    optional background fill
+     * @param stroke       optional uniform border stroke
      * @param cornerRadius optional render-only corner radius
      */
     public ContainerNode(String name,
@@ -77,13 +72,13 @@ public record ContainerNode(
     /**
      * Creates a vertical flow container with square corners and no per-side borders.
      *
-     * @param name node name used in snapshots and layout graph paths
-     * @param children child semantic nodes in source order
-     * @param spacing vertical spacing between children
-     * @param padding inner padding
-     * @param margin outer margin
+     * @param name      node name used in snapshots and layout graph paths
+     * @param children  child semantic nodes in source order
+     * @param spacing   vertical spacing between children
+     * @param padding   inner padding
+     * @param margin    outer margin
      * @param fillColor optional background fill
-     * @param stroke optional uniform border stroke
+     * @param stroke    optional uniform border stroke
      */
     public ContainerNode(String name,
                          List<DocumentNode> children,

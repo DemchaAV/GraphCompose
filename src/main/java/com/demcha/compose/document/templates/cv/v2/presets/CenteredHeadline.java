@@ -1,6 +1,7 @@
 package com.demcha.compose.document.templates.cv.v2.presets;
 
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.dsl.LineBuilder;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -9,12 +10,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.v2.components.ProjectRenderer;
 import com.demcha.compose.document.templates.cv.v2.components.SectionDispatcher;
-import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
-import com.demcha.compose.document.templates.cv.v2.data.CvRow;
-import com.demcha.compose.document.templates.cv.v2.data.CvSection;
-import com.demcha.compose.document.templates.cv.v2.data.RowsSection;
-import com.demcha.compose.document.templates.cv.v2.data.RowStyle;
-import com.demcha.compose.document.templates.cv.v2.data.Slot;
+import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
@@ -64,13 +60,19 @@ import java.util.Objects;
  */
 public final class CenteredHeadline {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "centered-headline";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Centered Headline";
 
-    /** Recommended page margin (in points) — matches the legacy v1 preset. */
+    /**
+     * Recommended page margin (in points) — matches the legacy v1 preset.
+     */
     public static final double RECOMMENDED_MARGIN = 28.0;
 
     /**
@@ -107,121 +109,115 @@ public final class CenteredHeadline {
         return new Template(theme);
     }
 
-    private static final class Template implements DocumentTemplate<CvDocument> {
-
-        private final CvTheme theme;
-
-        Template(CvTheme theme) {
-            this.theme = theme;
-        }
+    private record Template(CvTheme theme) implements DocumentTemplate<CvDocument> {
 
         @Override
-        public String id() {
-            return ID;
-        }
+            public String id() {
+                return ID;
+            }
 
-        @Override
-        public String displayName() {
-            return DISPLAY_NAME;
-        }
+            @Override
+            public String displayName() {
+                return DISPLAY_NAME;
+            }
 
-        @Override
-        public void compose(DocumentSession document, CvDocument doc) {
-            Objects.requireNonNull(document, "document");
-            Objects.requireNonNull(doc, "doc");
+            @Override
+            public void compose(DocumentSession document, CvDocument doc) {
+                Objects.requireNonNull(document, "document");
+                Objects.requireNonNull(doc, "doc");
 
-            double ruleWidth = document.canvas().innerWidth();
+                double ruleWidth = document.canvas().innerWidth();
 
-            // -- name + subheadline + contact, framed by thin rules ----
-            PageFlowBuilder pageFlow = document.dsl()
-                    .pageFlow()
-                    .name("CenteredHeadlineRoot")
-                    .spacing(theme.spacing().pageFlowSpacing())
-                    .addSection("Headline", section -> {
-                        Headline.spacedCentered(section, doc.identity().name(), theme);
-                        Subheadline.centeredSpacedCaps(section, SUBHEADLINE_CAPTION,
-                                subheadlineStyle());
-                    })
-                    .addLine(line -> rule(line, "HeadlineRule", ruleWidth, 7, 0))
-                    .addSection("Contact",
-                            section -> ContactLine.centered(section, doc.identity(), theme))
-                    .addLine(line -> rule(line, "ContactRule", ruleWidth, 0, 8));
+                // -- name + subheadline + contact, framed by thin rules ----
+                PageFlowBuilder pageFlow = document.dsl()
+                        .pageFlow()
+                        .name("CenteredHeadlineRoot")
+                        .spacing(theme.spacing().pageFlowSpacing())
+                        .addSection("Headline", section -> {
+                            Headline.spacedCentered(section, doc.identity().name(), theme);
+                            Subheadline.centeredSpacedCaps(section, SUBHEADLINE_CAPTION,
+                                    subheadlineStyle());
+                        })
+                        .addLine(line -> rule(line, "HeadlineRule", ruleWidth, 7, 0))
+                        .addSection("Contact",
+                                section -> ContactLine.centered(section, doc.identity(), theme))
+                        .addLine(line -> rule(line, "ContactRule", ruleWidth, 0, 8));
 
-            // -- sections — flatSpacedCaps title, dispatched body,
-            //    thin inter-module rule between consecutive sections.
-            List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
-            for (int i = 0; i < sections.size(); i++) {
-                final CvSection sec = sections.get(i);
-                final int idx = i;
-                pageFlow.addSection("Title_" + idx, host ->
-                        SectionHeader.flatSpacedCaps(host, sec.title(),
-                                theme.palette().muted(), theme, null));
-                pageFlow.addLine(line ->
-                        rule(line, "TitleBottomRule_" + idx, ruleWidth, 8, 8));
-                pageFlow.addSection("Body_" + idx, host ->
-                        renderBody(host, sec));
-                if (idx < sections.size() - 1) {
+                // -- sections — flatSpacedCaps title, dispatched body,
+                //    thin inter-module rule between consecutive sections.
+                List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
+                for (int i = 0; i < sections.size(); i++) {
+                    final CvSection sec = sections.get(i);
+                    final int idx = i;
+                    pageFlow.addSection("Title_" + idx, host ->
+                            SectionHeader.flatSpacedCaps(host, sec.title(),
+                                    theme.palette().muted(), theme, null));
                     pageFlow.addLine(line ->
-                            rule(line, "InterModuleRule_" + idx, ruleWidth, 5, 8));
-                }
-            }
-
-            pageFlow.build();
-        }
-
-        private void renderBody(SectionBuilder host, CvSection sec) {
-            if (sec instanceof RowsSection rows
-                    && rows.style() == RowStyle.BULLETED_STACKED) {
-                host.spacing(theme.spacing().sectionBodySpacing())
-                        .padding(theme.spacing().sectionBodyPadding());
-                for (int i = 0; i < rows.rows().size(); i++) {
-                    if (i > 0) {
-                        host.spacer(0, theme.spacing().entrySeparation());
+                            rule(line, "TitleBottomRule_" + idx, ruleWidth, 8, 8));
+                    pageFlow.addSection("Body_" + idx, host ->
+                            renderBody(host, sec));
+                    if (idx < sections.size() - 1) {
+                        pageFlow.addLine(line ->
+                                rule(line, "InterModuleRule_" + idx, ruleWidth, 5, 8));
                     }
-                    renderStackedProject(host, rows.rows().get(i));
                 }
-                return;
+
+                pageFlow.build();
             }
-            SectionDispatcher.renderBody(host, sec, theme);
-        }
 
-        private void renderStackedProject(SectionBuilder host, CvRow row) {
-            ProjectRenderer.titleThenBody(host, row, theme.bodyBoldStyle(),
-                    theme.bodyBoldStyle(), theme.bodyStyle(),
-                    theme.typography().bodyLineSpacing(),
-                    DocumentInsets.top((float) theme.spacing().paragraphMarginTop()),
-                    DocumentInsets.zero());
-        }
+            private void renderBody(SectionBuilder host, CvSection sec) {
+                if (sec instanceof RowsSection rows
+                    && rows.style() == RowStyle.BULLETED_STACKED) {
+                    host.spacing(theme.spacing().sectionBodySpacing())
+                            .padding(theme.spacing().sectionBodyPadding());
+                    for (int i = 0; i < rows.rows().size(); i++) {
+                        if (i > 0) {
+                            host.spacer(0, theme.spacing().entrySeparation());
+                        }
+                        renderStackedProject(host, rows.rows().get(i));
+                    }
+                    return;
+                }
+                SectionDispatcher.renderBody(host, sec, theme);
+            }
 
-        /**
-         * Builds the subheadline text style. Inlined here (not a theme
-         * slot) because no other widget reaches for this exact
-         * combination — Subheadline takes the style as a parameter so
-         * presets stay in control of the visual weight of their
-         * captions.
-         */
-        private DocumentTextStyle subheadlineStyle() {
-            return DocumentTextStyle.builder()
-                    .fontName(theme.typography().headlineFont())
-                    .size(8.6)
-                    .decoration(DocumentTextDecoration.DEFAULT)
-                    .color(theme.palette().muted())
-                    .build();
-        }
+            private void renderStackedProject(SectionBuilder host, CvRow row) {
+                ProjectRenderer.titleThenBody(host, row, theme.bodyBoldStyle(),
+                        theme.bodyBoldStyle(), theme.bodyStyle(),
+                        theme.typography().bodyLineSpacing(),
+                        DocumentInsets.top((float) theme.spacing().paragraphMarginTop()),
+                        DocumentInsets.zero());
+            }
 
-        /**
-         * Configure a thin full-width horizontal rule. The widths and
-         * margin pattern match the v1 preset exactly: top inset
-         * creates breathing room above the rule, bottom inset before
-         * the next paragraph.
-         */
-        private void rule(com.demcha.compose.document.dsl.LineBuilder line,
-                          String name, double width, double top, double bottom) {
-            line.name(name)
-                    .horizontal(width)
-                    .color(theme.palette().rule())
-                    .thickness(theme.spacing().accentRuleWidth())
-                    .margin(new DocumentInsets(top, 0, bottom, 0));
+            /**
+             * Builds the subheadline text style. Inlined here (not a theme
+             * slot) because no other widget reaches for this exact
+             * combination — Subheadline takes the style as a parameter so
+             * presets stay in control of the visual weight of their
+             * captions.
+             */
+            private DocumentTextStyle subheadlineStyle() {
+                return DocumentTextStyle.builder()
+                        .fontName(theme.typography().headlineFont())
+                        .size(8.6)
+                        .decoration(DocumentTextDecoration.DEFAULT)
+                        .color(theme.palette().muted())
+                        .build();
+            }
+
+            /**
+             * Configure a thin full-width horizontal rule. The widths and
+             * margin pattern match the v1 preset exactly: top inset
+             * creates breathing room above the rule, bottom inset before
+             * the next paragraph.
+             */
+            private void rule(LineBuilder line,
+                              String name, double width, double top, double bottom) {
+                line.name(name)
+                        .horizontal(width)
+                        .color(theme.palette().rule())
+                        .thickness(theme.spacing().accentRuleWidth())
+                        .margin(new DocumentInsets(top, 0, bottom, 0));
+            }
         }
-    }
 }

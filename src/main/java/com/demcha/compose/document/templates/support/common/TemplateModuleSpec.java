@@ -10,9 +10,9 @@ import java.util.List;
  * without introducing a new layout primitive or changing pagination
  * semantics.</p>
  *
- * @param name semantic module name used in diagnostics and graph-oriented
- *             tooling
- * @param title optional module title paragraph, or {@code null} when omitted
+ * @param name   semantic module name used in diagnostics and graph-oriented
+ *               tooling
+ * @param title  optional module title paragraph, or {@code null} when omitted
  * @param blocks ordered body blocks rendered after the title
  * @author Artem Demchyshyn
  */

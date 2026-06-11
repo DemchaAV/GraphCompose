@@ -1,17 +1,7 @@
 package com.demcha.compose.document.api;
 
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterZone;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkLayer;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkPosition;
-import com.demcha.compose.document.output.DocumentHeaderFooter;
-import com.demcha.compose.document.output.DocumentHeaderFooterZone;
-import com.demcha.compose.document.output.DocumentProtection;
-import com.demcha.compose.document.output.DocumentWatermark;
-import com.demcha.compose.document.output.DocumentWatermarkLayer;
-import com.demcha.compose.document.output.DocumentWatermarkPosition;
+import com.demcha.compose.document.backend.fixed.pdf.options.*;
+import com.demcha.compose.document.output.*;
 import com.demcha.compose.document.style.DocumentColor;
 
 /**

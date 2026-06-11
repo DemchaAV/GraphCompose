@@ -203,24 +203,6 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
 
-        <!--
-            jackson-dataformat-yaml is consumed only by `ConfigLoader.
-            loadConfigWithEnv(...)` when the caller passes a *.yaml /
-            *.yml resource. Library consumers that load JSON configs
-            (or do not use ConfigLoader at all) should not pay the
-            ~1.7MB SnakeYAML transitive cost. Marked optional in
-            v1.6.7 (F4), mirroring the existing `poi-ooxml` pattern.
-            Apps that load YAML configs must add this dependency to
-            their own classpath; without it `ConfigLoader` throws
-            `NoClassDefFoundError` when it tries to construct
-            `YAMLFactory`.
-        -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-yaml</artifactId>
-            <optional>true</optional>
-        </dependency>
-
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>core</artifactId>
@@ -728,6 +710,16 @@
                                         japicmp baseline advances to the release that lands the change.
                                     -->
                                     <exclude>com.demcha.compose.engine.measurement.TextMeasurementSystem</exclude>
+                                    <!--
+                                        com.demcha.compose.ConfigLoader removed in v1.8.0 — an
+                                        application-bootstrap YAML/JSON config helper with no
+                                        connection to document rendering; nothing in the library,
+                                        tests, or examples referenced it (see CHANGELOG v1.8.0).
+                                        japicmp reports the deliberate deletion as CLASS_REMOVED.
+                                        Drop this exclude once the japicmp baseline advances to the
+                                        release that lands the removal.
+                                    -->
+                                    <exclude>com.demcha.compose.ConfigLoader</exclude>
                                 </excludes>
                             </parameter>
                         </configuration>

@@ -65,7 +65,7 @@ public final class MarkdownText {
         while (i < source.length()) {
             // Bold: **...**
             if (i + 1 < source.length()
-                    && source.charAt(i) == '*' && source.charAt(i + 1) == '*') {
+                && source.charAt(i) == '*' && source.charAt(i + 1) == '*') {
                 int end = source.indexOf("**", i + 2);
                 if (end > i + 2) {
                     flushPlain(plain, baseStyle, runs);
@@ -109,7 +109,7 @@ public final class MarkdownText {
     }
 
     private static void flushPlain(StringBuilder buf, DocumentTextStyle style,
-                                    List<InlineRun> runs) {
+                                   List<InlineRun> runs) {
         if (buf.length() == 0) {
             return;
         }

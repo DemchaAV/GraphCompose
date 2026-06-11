@@ -16,28 +16,13 @@ import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
 import com.demcha.compose.document.templates.cv.v2.components.MarkdownInline;
 import com.demcha.compose.document.templates.cv.v2.components.ProjectLabel;
 import com.demcha.compose.document.templates.cv.v2.components.SectionLookup;
-import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
-import com.demcha.compose.document.templates.cv.v2.data.CvEntry;
-import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
-import com.demcha.compose.document.templates.cv.v2.data.CvLink;
-import com.demcha.compose.document.templates.cv.v2.data.CvRow;
-import com.demcha.compose.document.templates.cv.v2.data.CvSection;
-import com.demcha.compose.document.templates.cv.v2.data.EntriesSection;
-import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
-import com.demcha.compose.document.templates.cv.v2.data.RowsSection;
-import com.demcha.compose.document.templates.cv.v2.data.SkillGroup;
-import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
-import com.demcha.compose.document.templates.cv.v2.data.Slot;
+import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -61,19 +46,29 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class SidebarPortrait {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "sidebar-portrait";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Sidebar Portrait";
 
-    /** Recommended page margin (in points) — 0 so the sidebar bleeds to the edge. */
+    /**
+     * Recommended page margin (in points) — 0 so the sidebar bleeds to the edge.
+     */
     public static final double RECOMMENDED_MARGIN = 0.0;
 
-    /** Ratio of the page width allocated to the left sidebar column. */
+    /**
+     * Ratio of the page width allocated to the left sidebar column.
+     */
     private static final double SIDEBAR_WIDTH_RATIO = 0.34;
 
-    /** V1 default mid-grey accent used for the divider rule under sidebar headings. */
+    /**
+     * V1 default mid-grey accent used for the divider rule under sidebar headings.
+     */
     private static final DocumentColor DEFAULT_ACCENT =
             DocumentColor.rgb(106, 106, 106);
 
@@ -871,7 +866,7 @@ public final class SidebarPortrait {
     // -- Static helpers ----------------------------------------------------
 
     private static boolean hasContent(CvSection section) {
-        return section != null && SectionLookup.hasContent(section);
+        return SectionLookup.hasContent(section);
     }
 
     private static List<ContactItem> contactItems(CvIdentity identity) {
@@ -992,7 +987,7 @@ public final class SidebarPortrait {
                         }
                     }
                 } else if (!label.isBlank()
-                        && (body.contains("(") || body.contains("|"))) {
+                           && (body.contains("(") || body.contains("|"))) {
                     result.add(label + " " + body);
                 }
             }
@@ -1017,8 +1012,8 @@ public final class SidebarPortrait {
             char current = upper.charAt(i);
             builder.append(current);
             if (Character.isLetterOrDigit(current)
-                    && i + 1 < upper.length()
-                    && Character.isLetterOrDigit(upper.charAt(i + 1))) {
+                && i + 1 < upper.length()
+                && Character.isLetterOrDigit(upper.charAt(i + 1))) {
                 builder.append(' ');
             } else if (Character.isWhitespace(current)) {
                 builder.append("  ");

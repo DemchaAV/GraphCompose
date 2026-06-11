@@ -24,10 +24,10 @@ import java.util.Objects;
  */
 public final class CanvasLayerBuilder {
 
+    private final List<CanvasChild> placements = new ArrayList<>();
     private String name = "";
     private double width;
     private double height;
-    private final List<CanvasChild> placements = new ArrayList<>();
     private ClipPolicy clipPolicy = ClipPolicy.CLIP_BOUNDS;
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
@@ -37,7 +37,7 @@ public final class CanvasLayerBuilder {
      * canvas reserves a fixed {@code width × height} rectangle
      * regardless of where children are placed.
      *
-     * @param width canvas width in points (must be {@code > 0})
+     * @param width  canvas width in points (must be {@code > 0})
      * @param height canvas height in points (must be {@code > 0})
      */
     public CanvasLayerBuilder(double width, double height) {
@@ -69,7 +69,7 @@ public final class CanvasLayerBuilder {
      * overflow if {@code width} or {@code height} shrinks past
      * a child's coordinate.
      *
-     * @param width canvas width in points (must be {@code > 0})
+     * @param width  canvas width in points (must be {@code > 0})
      * @param height canvas height in points (must be {@code > 0})
      * @return this builder
      */
@@ -91,8 +91,8 @@ public final class CanvasLayerBuilder {
      * {@code (x, y)} relative to the canvas's top-left origin.
      *
      * @param child child node to place
-     * @param x offset from the canvas's left edge
-     * @param y offset from the canvas's top edge (positive = down)
+     * @param x     offset from the canvas's left edge
+     * @param y     offset from the canvas's top edge (positive = down)
      * @return this builder
      */
     public CanvasLayerBuilder position(DocumentNode child, double x, double y) {

@@ -1,23 +1,9 @@
 package com.demcha.compose.document.templates.components;
 
-import com.demcha.compose.document.node.ContainerNode;
-import com.demcha.compose.document.node.DocumentNode;
-import com.demcha.compose.document.node.InlineRun;
-import com.demcha.compose.document.node.ListMarker;
-import com.demcha.compose.document.node.ListNode;
-import com.demcha.compose.document.node.ParagraphNode;
-import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.node.*;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.document.templates.blocks.Block;
-import com.demcha.compose.document.templates.blocks.BulletListBlock;
-import com.demcha.compose.document.templates.blocks.IndentedBlock;
-import com.demcha.compose.document.templates.blocks.KeyValueBlock;
-import com.demcha.compose.document.templates.blocks.MultiParagraphBlock;
-import com.demcha.compose.document.templates.blocks.EducationBlock;
-import com.demcha.compose.document.templates.blocks.NumberedListBlock;
-import com.demcha.compose.document.templates.blocks.ParagraphBlock;
-import com.demcha.compose.document.templates.blocks.WorkHistoryBlock;
+import com.demcha.compose.document.templates.blocks.*;
 import com.demcha.compose.document.templates.themes.Spacing;
 import com.demcha.compose.document.theme.BusinessTheme;
 
@@ -148,10 +134,10 @@ public final class Module {
                 /* bookmark        */ null,
                 /* padding         */ DocumentInsets.zero(),
                 /* margin          */ new DocumentInsets(
-                        style.marginAbove,
-                        0.0,
-                        style.marginBelow,
-                        0.0),
+                style.marginAbove,
+                0.0,
+                style.marginBelow,
+                0.0),
                 /* autoSize        */ null);
     }
 
@@ -287,13 +273,13 @@ public final class Module {
      * call this directly after building its own per-item source via
      * {@link #concatStructuredFields}.
      *
-     * @param sources           per-item markdown source lines
-     * @param entryNameSuffix   name suffix appended to {@code name}
-     *                          for each paragraph (e.g.
-     *                          {@code "workEntry"} → {@code "<name>.workEntry[0]"})
+     * @param sources         per-item markdown source lines
+     * @param entryNameSuffix name suffix appended to {@code name}
+     *                        for each paragraph (e.g.
+     *                        {@code "workEntry"} → {@code "<name>.workEntry[0]"})
      */
     private DocumentNode renderConcatenatedParagraphs(List<String> sources, String entryNameSuffix,
-                                                     BusinessTheme theme, Spacing spacing) {
+                                                      BusinessTheme theme, Spacing spacing) {
         DocumentTextStyle bodyStyle = bodyStyle(theme);
         List<DocumentNode> paragraphs = new ArrayList<>(sources.size());
         for (int i = 0; i < sources.size(); i++) {
@@ -534,7 +520,7 @@ public final class Module {
      * @param marginBelow  vertical margin below the heading (separates
      *                     it from the body)
      */
-    public static record Style(
+    public record Style(
             DocumentTextStyle headingStyle,
             DocumentTextStyle bodyStyle,
             double marginAbove,

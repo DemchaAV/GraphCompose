@@ -1,42 +1,12 @@
 package com.demcha.compose.document.dsl;
 
-import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.dsl.internal.BuilderSupport;
 import com.demcha.compose.document.dsl.internal.SemanticNameNormalizer;
-import com.demcha.compose.document.image.DocumentImageData;
-import com.demcha.compose.document.node.BarcodeNode;
-import com.demcha.compose.document.node.ContainerNode;
-import com.demcha.compose.document.node.DocumentBarcodeOptions;
-import com.demcha.compose.document.node.DocumentBarcodeType;
-import com.demcha.compose.document.node.DocumentBookmarkOptions;
-import com.demcha.compose.document.node.DocumentLinkOptions;
-import com.demcha.compose.document.node.DocumentNode;
-import com.demcha.compose.document.node.ImageNode;
-import com.demcha.compose.document.node.InlineTextRun;
-import com.demcha.compose.document.node.ListMarker;
-import com.demcha.compose.document.node.ListNode;
-import com.demcha.compose.document.node.PageBreakNode;
-import com.demcha.compose.document.node.ParagraphNode;
-import com.demcha.compose.document.node.SectionNode;
-import com.demcha.compose.document.node.ShapeNode;
-import com.demcha.compose.document.node.TableNode;
-import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.node.*;
 import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.document.table.DocumentTableCell;
-import com.demcha.compose.document.table.DocumentTableColumn;
-import com.demcha.compose.document.table.DocumentTableStyle;
 
-import java.awt.Color;
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -52,6 +22,7 @@ public final class ModuleBuilder extends AbstractFlowBuilder<ModuleBuilder, Sect
     private double titleLineSpacing = 0.0;
     private DocumentInsets titlePadding = DocumentInsets.zero();
     private DocumentInsets titleMargin = DocumentInsets.zero();
+    private boolean keepTogether = false;
 
     /**
      * Creates a module builder.
@@ -217,7 +188,7 @@ public final class ModuleBuilder extends AbstractFlowBuilder<ModuleBuilder, Sect
      * Appends a configurable list.
      *
      * @param items list item texts
-     * @param spec list configuration
+     * @param spec  list configuration
      * @return this builder
      */
     public ModuleBuilder list(List<String> items, Consumer<ListBuilder> spec) {
@@ -253,7 +224,7 @@ public final class ModuleBuilder extends AbstractFlowBuilder<ModuleBuilder, Sect
      * Appends a simple table with auto-width columns.
      *
      * @param headers header row values
-     * @param rows data rows
+     * @param rows    data rows
      * @return this builder
      */
     public ModuleBuilder table(List<String> headers, List<List<String>> rows) {
@@ -319,8 +290,6 @@ public final class ModuleBuilder extends AbstractFlowBuilder<ModuleBuilder, Sect
     public ModuleBuilder custom(DocumentNode node) {
         return add(node);
     }
-
-    private boolean keepTogether = false;
 
     /**
      * Keeps the whole module (title plus body) on one page: when it does not fit

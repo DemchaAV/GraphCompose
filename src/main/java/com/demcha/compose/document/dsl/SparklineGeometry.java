@@ -46,7 +46,7 @@ final class SparklineGeometry {
      * offset is vertical (not perpendicular), which is visually equivalent at
      * sparkline sizes and keeps the maths exact.
      *
-     * @param values at least two finite values
+     * @param values            at least two finite values
      * @param thicknessFraction band thickness as a fraction of the box height, in (0, 1)
      * @return closed ring of {@code 2n} normalized vertices
      */

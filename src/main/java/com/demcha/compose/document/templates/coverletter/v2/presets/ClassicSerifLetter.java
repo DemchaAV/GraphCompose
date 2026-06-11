@@ -35,16 +35,24 @@ import java.util.Objects;
  */
 public final class ClassicSerifLetter {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "classic-serif-letter";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Classic Serif Letter";
 
-    /** Recommended page margin (in points) — generous business-letter feel. */
+    /**
+     * Recommended page margin (in points) — generous business-letter feel.
+     */
     public static final double RECOMMENDED_MARGIN = 48.0;
 
-    /** Bronze accent for contact links. Mirrors the ClassicSerif CV's preset-local token. */
+    /**
+     * Bronze accent for contact links. Mirrors the ClassicSerif CV's preset-local token.
+     */
     private static final DocumentColor ACCENT = DocumentColor.rgb(126, 93, 52);
 
     private ClassicSerifLetter() {
@@ -71,79 +79,73 @@ public final class ClassicSerifLetter {
         return new Template(theme);
     }
 
-    private static final class Template implements DocumentTemplate<CoverLetterDocument> {
-
-        private final CvTheme theme;
-
-        Template(CvTheme theme) {
-            this.theme = theme;
-        }
+    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
-        public String id() {
-            return ID;
+            public String id() {
+                return ID;
+            }
+
+            @Override
+            public String displayName() {
+                return DISPLAY_NAME;
+            }
+
+            @Override
+            public void compose(DocumentSession document, CoverLetterDocument doc) {
+                Objects.requireNonNull(document, "document");
+                Objects.requireNonNull(doc, "doc");
+
+                double width = document.canvas().innerWidth();
+                PageFlowBuilder flow = document.dsl()
+                        .pageFlow()
+                        .name("CoverLetterV2ClassicSerifRoot")
+                        .spacing(theme.spacing().pageFlowSpacing());
+
+                addHeader(flow, doc.identity(), width);
+
+                flow.addSection("CoverLetterV2ClassicSerifBody", host ->
+                        LetterBody.render(host, doc, theme));
+
+                flow.build();
+            }
+
+            private void addHeader(PageFlowBuilder flow, CvIdentity identity,
+                                   double width) {
+                flow.addSection("CoverLetterV2ClassicSerifHeader", section -> {
+                    section.spacing(5);
+                    Headline.spacedCentered(section, identity.name(), theme);
+                    section.addLine(line -> line
+                            .name("CoverLetterV2ClassicSerifHeaderRule")
+                            .horizontal(width)
+                            .color(theme.palette().rule())
+                            .thickness(theme.spacing().accentRuleWidth())
+                            .margin(new DocumentInsets(1, 0, 0, 0)));
+                    ContactLine.centered(section, identity, theme,
+                            contactMetaStyle(), contactLinkStyle(),
+                            contactSeparatorStyle());
+                });
+            }
+
+            private DocumentTextStyle contactMetaStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeContact(),
+                        DocumentTextDecoration.DEFAULT,
+                        theme.palette().muted());
+            }
+
+            private DocumentTextStyle contactLinkStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeContact(),
+                        DocumentTextDecoration.UNDERLINE,
+                        ACCENT);
+            }
+
+            private DocumentTextStyle contactSeparatorStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeContact(),
+                        DocumentTextDecoration.DEFAULT,
+                        theme.palette().rule());
+            }
         }
-
-        @Override
-        public String displayName() {
-            return DISPLAY_NAME;
-        }
-
-        @Override
-        public void compose(DocumentSession document, CoverLetterDocument doc) {
-            Objects.requireNonNull(document, "document");
-            Objects.requireNonNull(doc, "doc");
-
-            double width = document.canvas().innerWidth();
-            PageFlowBuilder flow = document.dsl()
-                    .pageFlow()
-                    .name("CoverLetterV2ClassicSerifRoot")
-                    .spacing(theme.spacing().pageFlowSpacing());
-
-            addHeader(flow, doc.identity(), width);
-
-            flow.addSection("CoverLetterV2ClassicSerifBody", host ->
-                    LetterBody.render(host, doc, theme));
-
-            flow.build();
-        }
-
-        private void addHeader(PageFlowBuilder flow, CvIdentity identity,
-                               double width) {
-            flow.addSection("CoverLetterV2ClassicSerifHeader", section -> {
-                section.spacing(5);
-                Headline.spacedCentered(section, identity.name(), theme);
-                section.addLine(line -> line
-                        .name("CoverLetterV2ClassicSerifHeaderRule")
-                        .horizontal(width)
-                        .color(theme.palette().rule())
-                        .thickness(theme.spacing().accentRuleWidth())
-                        .margin(new DocumentInsets(1, 0, 0, 0)));
-                ContactLine.centered(section, identity, theme,
-                        contactMetaStyle(), contactLinkStyle(),
-                        contactSeparatorStyle());
-            });
-        }
-
-        private DocumentTextStyle contactMetaStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeContact(),
-                    DocumentTextDecoration.DEFAULT,
-                    theme.palette().muted());
-        }
-
-        private DocumentTextStyle contactLinkStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeContact(),
-                    DocumentTextDecoration.UNDERLINE,
-                    ACCENT);
-        }
-
-        private DocumentTextStyle contactSeparatorStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeContact(),
-                    DocumentTextDecoration.DEFAULT,
-                    theme.palette().rule());
-        }
-    }
 }

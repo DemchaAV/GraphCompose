@@ -13,16 +13,15 @@ import java.util.Objects;
  * can carry their own link metadata so the resulting PDF annotation covers
  * the icon (or icon + label, when callers split the link across runs).</p>
  *
- * @param imageData semantic image payload; never {@code null}
- * @param width target width in points; must be finite and positive
- * @param height target height in points; must be finite and positive
- * @param alignment vertical alignment relative to the surrounding text;
- *                  defaults to {@link InlineImageAlignment#CENTER}
+ * @param imageData      semantic image payload; never {@code null}
+ * @param width          target width in points; must be finite and positive
+ * @param height         target height in points; must be finite and positive
+ * @param alignment      vertical alignment relative to the surrounding text;
+ *                       defaults to {@link InlineImageAlignment#CENTER}
  * @param baselineOffset extra vertical offset in points applied after
  *                       {@code alignment} resolution; positive values move
  *                       the image up
- * @param linkOptions optional per-run link metadata
- *
+ * @param linkOptions    optional per-run link metadata
  * @author Artem Demchyshyn
  */
 public record InlineImageRun(
@@ -55,8 +54,8 @@ public record InlineImageRun(
      * alignment and zero offset.
      *
      * @param imageData image payload
-     * @param width target width in points
-     * @param height target height in points
+     * @param width     target width in points
+     * @param height    target height in points
      */
     public InlineImageRun(DocumentImageData imageData, double width, double height) {
         this(imageData, width, height, InlineImageAlignment.CENTER, 0.0, null);
@@ -67,8 +66,8 @@ public record InlineImageRun(
      * link metadata.
      *
      * @param imageData image payload
-     * @param width target width in points
-     * @param height target height in points
+     * @param width     target width in points
+     * @param height    target height in points
      * @param alignment vertical alignment
      */
     public InlineImageRun(DocumentImageData imageData,

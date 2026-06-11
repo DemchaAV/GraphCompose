@@ -24,33 +24,6 @@ public final class PdfImageFragmentRenderHandler
     public PdfImageFragmentRenderHandler() {
     }
 
-    @Override
-    public Class<ImageFragmentPayload> payloadType() {
-        return ImageFragmentPayload.class;
-    }
-
-    @Override
-    public void render(PlacedFragment fragment,
-                       ImageFragmentPayload payload,
-                       PdfRenderEnvironment environment) throws IOException {
-        if (fragment.width() <= 0 || fragment.height() <= 0) {
-            return;
-        }
-
-        PDImageXObject image = environment.resolveImage(payload.imageData());
-        PDPageContentStream stream = environment.pageSurface(fragment.pageIndex());
-        DrawBounds bounds = resolveDrawBounds(fragment, payload.fitMode(), image.getWidth(), image.getHeight());
-        if (payload.fitMode() == DocumentImageFitMode.COVER) {
-            stream.saveGraphicsState();
-            stream.addRect((float) fragment.x(), (float) fragment.y(), (float) fragment.width(), (float) fragment.height());
-            stream.clip();
-            stream.drawImage(image, bounds.x(), bounds.y(), bounds.width(), bounds.height());
-            stream.restoreGraphicsState();
-        } else {
-            stream.drawImage(image, bounds.x(), bounds.y(), bounds.width(), bounds.height());
-        }
-    }
-
     private static DrawBounds resolveDrawBounds(PlacedFragment fragment,
                                                 DocumentImageFitMode fitMode,
                                                 int imageWidth,
@@ -76,6 +49,33 @@ public final class PdfImageFragmentRenderHandler
         double drawX = fragment.x() + (boxWidth - drawWidth) / 2.0;
         double drawY = fragment.y() + (boxHeight - drawHeight) / 2.0;
         return new DrawBounds((float) drawX, (float) drawY, (float) drawWidth, (float) drawHeight);
+    }
+
+    @Override
+    public Class<ImageFragmentPayload> payloadType() {
+        return ImageFragmentPayload.class;
+    }
+
+    @Override
+    public void render(PlacedFragment fragment,
+                       ImageFragmentPayload payload,
+                       PdfRenderEnvironment environment) throws IOException {
+        if (fragment.width() <= 0 || fragment.height() <= 0) {
+            return;
+        }
+
+        PDImageXObject image = environment.resolveImage(payload.imageData());
+        PDPageContentStream stream = environment.pageSurface(fragment.pageIndex());
+        DrawBounds bounds = resolveDrawBounds(fragment, payload.fitMode(), image.getWidth(), image.getHeight());
+        if (payload.fitMode() == DocumentImageFitMode.COVER) {
+            stream.saveGraphicsState();
+            stream.addRect((float) fragment.x(), (float) fragment.y(), (float) fragment.width(), (float) fragment.height());
+            stream.clip();
+            stream.drawImage(image, bounds.x(), bounds.y(), bounds.width(), bounds.height());
+            stream.restoreGraphicsState();
+        } else {
+            stream.drawImage(image, bounds.x(), bounds.y(), bounds.width(), bounds.height());
+        }
     }
 
     private record DrawBounds(float x, float y, float width, float height) {

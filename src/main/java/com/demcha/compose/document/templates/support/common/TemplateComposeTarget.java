@@ -32,7 +32,7 @@ public interface TemplateComposeTarget {
      * Starts one root document flow.
      *
      * @param rootName semantic root name
-     * @param spacing vertical spacing between top-level blocks
+     * @param spacing  vertical spacing between top-level blocks
      */
     void startDocument(String rootName, double spacing);
 

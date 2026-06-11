@@ -40,7 +40,7 @@ public class NodeRegistry {
      * Registers a semantic node definition.
      *
      * @param definition node definition
-     * @param <E> semantic node type
+     * @param <E>        semantic node type
      * @return this registry
      */
     public <E extends DocumentNode> NodeRegistry register(NodeDefinition<E> definition) {
@@ -53,7 +53,7 @@ public class NodeRegistry {
      * Resolves the definition responsible for the supplied node instance.
      *
      * @param node semantic node
-     * @param <E> semantic node type
+     * @param <E>  semantic node type
      * @return matching node definition
      */
     @SuppressWarnings("unchecked")

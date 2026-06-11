@@ -31,32 +31,31 @@ import java.util.Map;
  * the gradient work), the {@link PointMarker} ellipse marker, and the small
  * {@link GridStyle} record below.</p>
  *
- * @param palette ordered series paints
+ * @param palette              ordered series paints
  * @param seriesPaintOverrides explicit per-series paint by zero-based index
- * @param lineWidth stroke width for line series in points, or {@code null} for
- *                  the default; series colour always comes from the paint cascade
- * @param barCornerRadius per-bar corner radius, or {@code null}
- * @param barWidthRatio fraction (0,1] of the category slot a bar group fills
- * @param grid grid-line configuration
- * @param pointMarker ellipse marker drawn at every line-chart data point, or
- *                    {@code null} for none; see {@link PointMarker}
- * @param valueLabelOffset gap in points between a bar top / point marker and its
- *                         value label, or {@code null} for the default
- * @param axisTextStyle tick / category label style
- * @param legendTextStyle legend label style
- * @param valueLabelTextStyle value-label style
- * @param valueLabelHalo halo chip painted behind line-chart value labels so the
- *                       digits stay legible where line strokes cross them; match
- *                       it to the chart's surface colour on non-white backgrounds
- * @param areaOpacity opacity of the area fill under {@code ChartSpec.line().area(true)}
- *                    series, in (0..1], or {@code null} for the default (0.35)
- * @param sliceStroke pie/donut slice separator stroke, or {@code null} for the
- *                    themed default (white 1pt)
- * @param sliceGapDegrees angular gap between pie/donut slices (pad angle), or
- *                        {@code null} for none
+ * @param lineWidth            stroke width for line series in points, or {@code null} for
+ *                             the default; series colour always comes from the paint cascade
+ * @param barCornerRadius      per-bar corner radius, or {@code null}
+ * @param barWidthRatio        fraction (0,1] of the category slot a bar group fills
+ * @param grid                 grid-line configuration
+ * @param pointMarker          ellipse marker drawn at every line-chart data point, or
+ *                             {@code null} for none; see {@link PointMarker}
+ * @param valueLabelOffset     gap in points between a bar top / point marker and its
+ *                             value label, or {@code null} for the default
+ * @param axisTextStyle        tick / category label style
+ * @param legendTextStyle      legend label style
+ * @param valueLabelTextStyle  value-label style
+ * @param valueLabelHalo       halo chip painted behind line-chart value labels so the
+ *                             digits stay legible where line strokes cross them; match
+ *                             it to the chart's surface colour on non-white backgrounds
+ * @param areaOpacity          opacity of the area fill under {@code ChartSpec.line().area(true)}
+ *                             series, in (0..1], or {@code null} for the default (0.35)
+ * @param sliceStroke          pie/donut slice separator stroke, or {@code null} for the
+ *                             themed default (white 1pt)
+ * @param sliceGapDegrees      angular gap between pie/donut slices (pad angle), or
+ *                             {@code null} for none
  * @param donutCenterTextStyle style for the donut-centre KPI text, or
  *                             {@code null} for the themed default
- *
  * @author Artem Demchyshyn
  * @since 1.8.0
  */
@@ -78,7 +77,9 @@ public record ChartStyle(
         Double sliceGapDegrees,
         DocumentTextStyle donutCenterTextStyle
 ) {
-    /** Copy-protects collections and validates ratio bounds. */
+    /**
+     * Copy-protects collections and validates ratio bounds.
+     */
     public ChartStyle {
         palette = palette == null ? List.of() : List.copyOf(palette);
         seriesPaintOverrides = seriesPaintOverrides == null
@@ -90,7 +91,7 @@ public record ChartStyle(
             throw new IllegalArgumentException("barWidthRatio must be in (0,1]: " + barWidthRatio);
         }
         if (valueLabelOffset != null && (valueLabelOffset < 0
-                || valueLabelOffset.isNaN() || valueLabelOffset.isInfinite())) {
+                                         || valueLabelOffset.isNaN() || valueLabelOffset.isInfinite())) {
             throw new IllegalArgumentException(
                     "valueLabelOffset must be finite and non-negative: " + valueLabelOffset);
         }
@@ -98,7 +99,7 @@ public record ChartStyle(
             throw new IllegalArgumentException("areaOpacity must be in (0,1]: " + areaOpacity);
         }
         if (sliceGapDegrees != null && (sliceGapDegrees < 0 || sliceGapDegrees > 30
-                || sliceGapDegrees.isNaN())) {
+                                        || sliceGapDegrees.isNaN())) {
             throw new IllegalArgumentException(
                     "sliceGapDegrees must be in [0, 30]: " + sliceGapDegrees);
         }
@@ -163,7 +164,7 @@ public record ChartStyle(
      * the style palette, then the supplied fallback palette, cycling by modulo so
      * a chart never runs out of colours.
      *
-     * @param index zero-based series index
+     * @param index           zero-based series index
      * @param fallbackPalette palette to use when neither override nor style palette applies
      * @return the paint to fill / stroke this series with
      */
@@ -184,7 +185,7 @@ public record ChartStyle(
      * grid family entirely.
      *
      * @param horizontal stroke for horizontal grid lines (value gridlines)
-     * @param vertical stroke for vertical grid lines (category separators)
+     * @param vertical   stroke for vertical grid lines (category separators)
      */
     public record GridStyle(DocumentStroke horizontal, DocumentStroke vertical) {
         /**
@@ -207,7 +208,9 @@ public record ChartStyle(
         }
     }
 
-    /** Fluent builder; all setters optional. */
+    /**
+     * Fluent builder; all setters optional.
+     */
     public static final class Builder {
         private final List<DocumentPaint> palette = new ArrayList<>();
         private final Map<Integer, DocumentPaint> overrides = new HashMap<>();

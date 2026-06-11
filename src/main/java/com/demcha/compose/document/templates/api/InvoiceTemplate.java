@@ -55,7 +55,7 @@ public interface InvoiceTemplate {
      * Composes an invoice into a live document session.
      *
      * @param document active mutable document session receiving template nodes
-     * @param spec invoice document spec
+     * @param spec     invoice document spec
      * @throws NullPointerException if an implementation requires non-null inputs
      */
     void compose(DocumentSession document, InvoiceDocumentSpec spec);

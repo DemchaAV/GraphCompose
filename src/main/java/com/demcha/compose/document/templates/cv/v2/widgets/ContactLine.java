@@ -338,11 +338,17 @@ public final class ContactLine {
                         }));
     }
 
-    /** Field order in the rendered line. */
+    /**
+     * Field order in the rendered line.
+     */
     public enum Order {
-        /** phone → email → address → links. */
+        /**
+         * phone → email → address → links.
+         */
         PHONE_FIRST,
-        /** address → phone → email → links. */
+        /**
+         * address → phone → email → links.
+         */
         ADDRESS_FIRST
     }
 

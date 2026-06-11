@@ -15,29 +15,14 @@ import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
 import com.demcha.compose.document.templates.cv.v2.components.MarkdownInline;
 import com.demcha.compose.document.templates.cv.v2.components.SectionLookup;
-import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
-import com.demcha.compose.document.templates.cv.v2.data.CvEntry;
-import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
-import com.demcha.compose.document.templates.cv.v2.data.CvLink;
-import com.demcha.compose.document.templates.cv.v2.data.CvRow;
-import com.demcha.compose.document.templates.cv.v2.data.CvSection;
-import com.demcha.compose.document.templates.cv.v2.data.EntriesSection;
-import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
-import com.demcha.compose.document.templates.cv.v2.data.RowsSection;
-import com.demcha.compose.document.templates.cv.v2.data.SkillGroup;
-import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
-import com.demcha.compose.document.templates.cv.v2.data.Slot;
+import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
 import com.demcha.compose.document.templates.widgets.TimelineAxisWidget;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -60,31 +45,49 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class TimelineMinimal {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "timeline-minimal";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Timeline Minimal";
 
-    /** Recommended page margin (in points) — matches V1 TimelineMinimal. */
+    /**
+     * Recommended page margin (in points) — matches V1 TimelineMinimal.
+     */
     public static final double RECOMMENDED_MARGIN = 22.0;
 
-    /** Diameter of each timeline marker; 4 segments + 3 markers by default. */
+    /**
+     * Diameter of each timeline marker; 4 segments + 3 markers by default.
+     */
     private static final double TIMELINE_DOT = 7.0;
 
-    /** Default total axis height — sized for a one-page CV. */
+    /**
+     * Default total axis height — sized for a one-page CV.
+     */
     private static final double TIMELINE_AXIS_HEIGHT = 620.0;
 
-    /** Top inset before the first axis segment starts. */
+    /**
+     * Top inset before the first axis segment starts.
+     */
     private static final double TIMELINE_TOP_PADDING = 28.0;
 
-    /** Number of vertical line segments; markers between = segmentCount - 1. */
+    /**
+     * Number of vertical line segments; markers between = segmentCount - 1.
+     */
     private static final int TIMELINE_SEGMENT_COUNT = 4;
 
-    /** Stroke thickness of every line segment. */
+    /**
+     * Stroke thickness of every line segment.
+     */
     private static final double TIMELINE_LINE_THICKNESS = 0.75;
 
-    /** Stroke thickness of the marker outline. */
+    /**
+     * Stroke thickness of the marker outline.
+     */
     private static final double TIMELINE_MARKER_STROKE = 0.8;
 
     private static final double CONTACT_ICON_SIZE = 10.5;
@@ -130,345 +133,339 @@ public final class TimelineMinimal {
         return new Template(theme);
     }
 
-    private static final class Template implements DocumentTemplate<CvDocument> {
-
-        private final CvTheme theme;
-
-        Template(CvTheme theme) {
-            this.theme = theme;
-        }
+    private record Template(CvTheme theme) implements DocumentTemplate<CvDocument> {
 
         @Override
-        public String id() {
-            return ID;
-        }
-
-        @Override
-        public String displayName() {
-            return DISPLAY_NAME;
-        }
-
-        @Override
-        public void compose(DocumentSession document, CvDocument doc) {
-            Objects.requireNonNull(document, "document");
-            Objects.requireNonNull(doc, "doc");
-
-            double width = document.canvas().innerWidth();
-            List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
-
-            document.dsl()
-                    .pageFlow()
-                    .name("CvV2TimelineMinimalRoot")
-                    .spacing(theme.spacing().pageFlowSpacing())
-                    .addRow("CvV2TimelineMinimalHeader", row -> row
-                            .spacing(3)
-                            .weights(1.00, 0.61)
-                            .addSection("CvV2TimelineMinimalName",
-                                    section -> addNameBlock(section, doc.identity()))
-                            .addSection("CvV2TimelineMinimalContact",
-                                    section -> addContact(section, doc.identity())))
-                    .addLine(line -> line
-                            .name("CvV2TimelineMinimalHeaderRule")
-                            .horizontal(width)
-                            .color(theme.palette().rule())
-                            .thickness(theme.spacing().accentRuleWidth())
-                            .margin(DocumentInsets.zero()))
-                    .addRow("CvV2TimelineMinimalBody", row -> addBodyRow(row,
-                            List.of(
-                                    new ModulePlacement("Education",
-                                            SectionLookup.firstMatching(sections,
-                                                    EDUCATION_KEYS),
-                                            5),
-                                    new ModulePlacement("Skills",
-                                            SectionLookup.firstMatching(sections,
-                                                    SKILL_KEYS),
-                                            6),
-                                    new ModulePlacement("Expertise",
-                                            SectionLookup.firstMatching(sections,
-                                                    PROJECT_KEYS),
-                                            3),
-                                    new ModulePlacement("Languages",
-                                            SectionLookup.firstMatching(sections,
-                                                    ADDITIONAL_KEYS),
-                                            3)),
-                            List.of(
-                                    new ModulePlacement("Professional Profile",
-                                            SectionLookup.firstMatching(sections,
-                                                    SUMMARY_KEYS),
-                                            1),
-                                    new ModulePlacement("Work Experience",
-                                            SectionLookup.firstMatching(sections,
-                                                    EXPERIENCE_KEYS),
-                                            4)),
-                            TIMELINE_AXIS_HEIGHT))
-                    .build();
-        }
-
-        private void addNameBlock(SectionBuilder section, CvIdentity identity) {
-            section.spacing(4)
-                    .addParagraph(paragraph -> paragraph
-                            .text(spacedUpper(identity.name().full()))
-                            .textStyle(nameStyle())
-                            .margin(DocumentInsets.zero()));
-            String jobTitle = identity.jobTitle();
-            if (!jobTitle.isBlank()) {
-                section.addParagraph(paragraph -> paragraph
-                        .text(jobTitle.toUpperCase(Locale.ROOT))
-                        .textStyle(jobTitleStyle())
-                        .margin(DocumentInsets.zero()));
+            public String id() {
+                return ID;
             }
-        }
 
-        private void addBodyRow(RowBuilder row,
-                                List<ModulePlacement> sidebarModules,
-                                List<ModulePlacement> mainModules,
-                                double axisHeight) {
-            row.spacing(16)
-                    .weights(0.74, 0.12, 1.74)
-                    .addSection("CvV2TimelineMinimalSidebar", sidebar -> {
-                        sidebar.spacing(10);
-                        for (ModulePlacement placement : sidebarModules) {
-                            addSidebarModule(sidebar, placement.title(),
-                                    placement.section(), placement.limit());
-                        }
-                    })
-                    .addSection("CvV2TimelineMinimalAxis", axis ->
-                            TimelineAxisWidget.render(axis,
-                                    timelineAxisStyle(), axisHeight))
-                    .addSection("CvV2TimelineMinimalMain", main -> {
-                        main.spacing(11);
-                        for (ModulePlacement placement : mainModules) {
-                            boolean bullets = placement.limit() > 1;
-                            addMainModule(main, placement.title(),
-                                    placement.section(), bullets, placement.limit());
-                        }
-                    });
-        }
+            @Override
+            public String displayName() {
+                return DISPLAY_NAME;
+            }
 
-        private void addContact(SectionBuilder section, CvIdentity identity) {
-            section.spacing(3);
-            DocumentTextStyle textStyle = contactTextStyle();
-            DocumentTextStyle fallbackIconStyle = fallbackIconStyle();
-            for (ContactItem item : contactItems(identity)) {
-                section.addParagraph(paragraph -> paragraph
-                        .textStyle(textStyle)
-                        .align(TextAlign.RIGHT)
-                        .link(item.linkOptions())
-                        .margin(DocumentInsets.zero())
-                        .rich(rich -> {
-                            rich.style(item.text(), textStyle);
-                            rich.plain("  ");
-                            if (item.iconFile() != null) {
-                                rich.image(contactIcon(item.iconFile()),
-                                        CONTACT_ICON_SIZE,
-                                        CONTACT_ICON_SIZE,
-                                        InlineImageAlignment.CENTER,
-                                        CONTACT_ICON_BASELINE_OFFSET,
-                                        item.linkOptions());
-                            } else {
-                                rich.style(item.fallbackIcon(),
-                                        fallbackIconStyle);
+            @Override
+            public void compose(DocumentSession document, CvDocument doc) {
+                Objects.requireNonNull(document, "document");
+                Objects.requireNonNull(doc, "doc");
+
+                double width = document.canvas().innerWidth();
+                List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
+
+                document.dsl()
+                        .pageFlow()
+                        .name("CvV2TimelineMinimalRoot")
+                        .spacing(theme.spacing().pageFlowSpacing())
+                        .addRow("CvV2TimelineMinimalHeader", row -> row
+                                .spacing(3)
+                                .weights(1.00, 0.61)
+                                .addSection("CvV2TimelineMinimalName",
+                                        section -> addNameBlock(section, doc.identity()))
+                                .addSection("CvV2TimelineMinimalContact",
+                                        section -> addContact(section, doc.identity())))
+                        .addLine(line -> line
+                                .name("CvV2TimelineMinimalHeaderRule")
+                                .horizontal(width)
+                                .color(theme.palette().rule())
+                                .thickness(theme.spacing().accentRuleWidth())
+                                .margin(DocumentInsets.zero()))
+                        .addRow("CvV2TimelineMinimalBody", row -> addBodyRow(row,
+                                List.of(
+                                        new ModulePlacement("Education",
+                                                SectionLookup.firstMatching(sections,
+                                                        EDUCATION_KEYS),
+                                                5),
+                                        new ModulePlacement("Skills",
+                                                SectionLookup.firstMatching(sections,
+                                                        SKILL_KEYS),
+                                                6),
+                                        new ModulePlacement("Expertise",
+                                                SectionLookup.firstMatching(sections,
+                                                        PROJECT_KEYS),
+                                                3),
+                                        new ModulePlacement("Languages",
+                                                SectionLookup.firstMatching(sections,
+                                                        ADDITIONAL_KEYS),
+                                                3)),
+                                List.of(
+                                        new ModulePlacement("Professional Profile",
+                                                SectionLookup.firstMatching(sections,
+                                                        SUMMARY_KEYS),
+                                                1),
+                                        new ModulePlacement("Work Experience",
+                                                SectionLookup.firstMatching(sections,
+                                                        EXPERIENCE_KEYS),
+                                                4)),
+                                TIMELINE_AXIS_HEIGHT))
+                        .build();
+            }
+
+            private void addNameBlock(SectionBuilder section, CvIdentity identity) {
+                section.spacing(4)
+                        .addParagraph(paragraph -> paragraph
+                                .text(spacedUpper(identity.name().full()))
+                                .textStyle(nameStyle())
+                                .margin(DocumentInsets.zero()));
+                String jobTitle = identity.jobTitle();
+                if (!jobTitle.isBlank()) {
+                    section.addParagraph(paragraph -> paragraph
+                            .text(jobTitle.toUpperCase(Locale.ROOT))
+                            .textStyle(jobTitleStyle())
+                            .margin(DocumentInsets.zero()));
+                }
+            }
+
+            private void addBodyRow(RowBuilder row,
+                                    List<ModulePlacement> sidebarModules,
+                                    List<ModulePlacement> mainModules,
+                                    double axisHeight) {
+                row.spacing(16)
+                        .weights(0.74, 0.12, 1.74)
+                        .addSection("CvV2TimelineMinimalSidebar", sidebar -> {
+                            sidebar.spacing(10);
+                            for (ModulePlacement placement : sidebarModules) {
+                                addSidebarModule(sidebar, placement.title(),
+                                        placement.section(), placement.limit());
                             }
-                        }));
+                        })
+                        .addSection("CvV2TimelineMinimalAxis", axis ->
+                                TimelineAxisWidget.render(axis,
+                                        timelineAxisStyle(), axisHeight))
+                        .addSection("CvV2TimelineMinimalMain", main -> {
+                            main.spacing(11);
+                            for (ModulePlacement placement : mainModules) {
+                                boolean bullets = placement.limit() > 1;
+                                addMainModule(main, placement.title(),
+                                        placement.section(), bullets, placement.limit());
+                            }
+                        });
             }
-        }
 
-        private List<ContactItem> contactItems(CvIdentity identity) {
-            if (identity == null) {
-                return List.of();
-            }
-            List<ContactItem> items = new ArrayList<>();
-            addContactItem(items, "LOC", "location.png",
-                    identity.contact().address(), null);
-            addContactItem(items, "TEL", "phone.png",
-                    identity.contact().phone(), null);
-            String email = identity.contact().email();
-            if (!email.isBlank()) {
-                addContactItem(items, "@", "email.png", email,
-                        new DocumentLinkOptions("mailto:" + email));
-            }
-            for (CvLink link : identity.links()) {
-                String label = link.label();
-                if (label.isBlank()) {
-                    continue;
+            private void addContact(SectionBuilder section, CvIdentity identity) {
+                section.spacing(3);
+                DocumentTextStyle textStyle = contactTextStyle();
+                DocumentTextStyle fallbackIconStyle = fallbackIconStyle();
+                for (ContactItem item : contactItems(identity)) {
+                    section.addParagraph(paragraph -> paragraph
+                            .textStyle(textStyle)
+                            .align(TextAlign.RIGHT)
+                            .link(item.linkOptions())
+                            .margin(DocumentInsets.zero())
+                            .rich(rich -> {
+                                rich.style(item.text(), textStyle);
+                                rich.plain("  ");
+                                if (item.iconFile() != null) {
+                                    rich.image(contactIcon(item.iconFile()),
+                                            CONTACT_ICON_SIZE,
+                                            CONTACT_ICON_SIZE,
+                                            InlineImageAlignment.CENTER,
+                                            CONTACT_ICON_BASELINE_OFFSET,
+                                            item.linkOptions());
+                                } else {
+                                    rich.style(item.fallbackIcon(),
+                                            fallbackIconStyle);
+                                }
+                            }));
                 }
-                String url = link.url();
-                addContactItem(items, pickFallbackIcon(label),
-                        pickIconFile(label), label,
-                        url.isBlank()
-                                ? null
-                                : new DocumentLinkOptions(url.trim()));
             }
-            return List.copyOf(items);
-        }
 
-        private static void addContactItem(List<ContactItem> items,
-                                            String fallbackIcon,
-                                            String iconFile,
-                                            String text,
-                                            DocumentLinkOptions linkOptions) {
-            if (text != null && !text.isBlank()) {
-                items.add(new ContactItem(fallbackIcon, iconFile, text,
-                        linkOptions));
-            }
-        }
-
-        private DocumentImageData contactIcon(String iconFile) {
-            return DocumentImageData.fromBytes(
-                    CONTACT_ICON_CACHE.computeIfAbsent(iconFile,
-                            TimelineMinimal::readIconBytes));
-        }
-
-        private void addSidebarModule(SectionBuilder sidebar, String title,
-                                      CvSection section, int limit) {
-            List<String> lines = sectionLines(section);
-            if (lines.isEmpty()) {
-                return;
-            }
-            sidebar.addSection("CvV2TimelineMinimalSidebar"
-                    + SectionLookup.normalize(title), block -> {
-                block.spacing(6)
-                        .addParagraph(paragraph -> paragraph
-                                .text(title.toUpperCase(Locale.ROOT))
-                                .textStyle(sidebarTitleStyle())
-                                .margin(DocumentInsets.zero()));
-                for (String line : lines.stream().limit(limit).toList()) {
-                    block.addParagraph(paragraph -> paragraph
-                            .text(excerpt(line, 76))
-                            .textStyle(sidebarBodyStyle())
-                            .lineSpacing(1)
-                            .margin(DocumentInsets.zero()));
+            private List<ContactItem> contactItems(CvIdentity identity) {
+                if (identity == null) {
+                    return List.of();
                 }
-                block.addLine(line -> line
-                        .horizontal(118)
-                        .color(theme.palette().rule())
-                        .thickness(0.65)
-                        .margin(DocumentInsets.top(5)));
-            });
-        }
-
-        /**
-         * Style applied to the central timeline axis. Drop a custom
-         * {@link TimelineAxisWidget.Style} here (or expose it through
-         * the theme) to swap the marker shape, sizing, or colours.
-         */
-        private TimelineAxisWidget.Style timelineAxisStyle() {
-            return TimelineAxisWidget.Style.builder()
-                    .marker(TimelineAxisWidget.Marker.CIRCLE)
-                    .markerSize(TIMELINE_DOT)
-                    .markerStroke(DocumentStroke.of(
-                            theme.palette().banner(),
-                            TIMELINE_MARKER_STROKE))
-                    .segmentCount(TIMELINE_SEGMENT_COUNT)
-                    .lineColor(theme.palette().rule())
-                    .lineThickness(TIMELINE_LINE_THICKNESS)
-                    .padding(new DocumentInsets(TIMELINE_TOP_PADDING, 0, 0, 0))
-                    .build();
-        }
-
-        private void addMainModule(SectionBuilder main, String title,
-                                   CvSection section, boolean bullets,
-                                   int limit) {
-            List<String> lines = sectionLines(section);
-            if (lines.isEmpty()) {
-                return;
+                List<ContactItem> items = new ArrayList<>();
+                addContactItem(items, "LOC", "location.png",
+                        identity.contact().address(), null);
+                addContactItem(items, "TEL", "phone.png",
+                        identity.contact().phone(), null);
+                String email = identity.contact().email();
+                if (!email.isBlank()) {
+                    addContactItem(items, "@", "email.png", email,
+                            new DocumentLinkOptions("mailto:" + email));
+                }
+                for (CvLink link : identity.links()) {
+                    String label = link.label();
+                    if (label.isBlank()) {
+                        continue;
+                    }
+                    String url = link.url();
+                    addContactItem(items, pickFallbackIcon(label),
+                            pickIconFile(label), label,
+                            url.isBlank()
+                                    ? null
+                                    : new DocumentLinkOptions(url.trim()));
+                }
+                return List.copyOf(items);
             }
-            main.addSection("CvV2TimelineMinimalMain"
-                    + SectionLookup.normalize(title), block -> {
-                block.spacing(5)
-                        .addParagraph(paragraph -> paragraph
-                                .text(title.toUpperCase(Locale.ROOT))
-                                .textStyle(mainTitleStyle())
-                                .margin(DocumentInsets.zero()));
-                if (bullets) {
+
+            private static void addContactItem(List<ContactItem> items,
+                                               String fallbackIcon,
+                                               String iconFile,
+                                               String text,
+                                               DocumentLinkOptions linkOptions) {
+                if (text != null && !text.isBlank()) {
+                    items.add(new ContactItem(fallbackIcon, iconFile, text,
+                            linkOptions));
+                }
+            }
+
+            private DocumentImageData contactIcon(String iconFile) {
+                return DocumentImageData.fromBytes(
+                        CONTACT_ICON_CACHE.computeIfAbsent(iconFile,
+                                TimelineMinimal::readIconBytes));
+            }
+
+            private void addSidebarModule(SectionBuilder sidebar, String title,
+                                          CvSection section, int limit) {
+                List<String> lines = sectionLines(section);
+                if (lines.isEmpty()) {
+                    return;
+                }
+                sidebar.addSection("CvV2TimelineMinimalSidebar"
+                                   + SectionLookup.normalize(title), block -> {
+                    block.spacing(6)
+                            .addParagraph(paragraph -> paragraph
+                                    .text(title.toUpperCase(Locale.ROOT))
+                                    .textStyle(sidebarTitleStyle())
+                                    .margin(DocumentInsets.zero()));
                     for (String line : lines.stream().limit(limit).toList()) {
                         block.addParagraph(paragraph -> paragraph
-                                .text(excerpt(line, 136))
-                                .textStyle(mainBulletStyle())
-                                .lineSpacing(1.2)
-                                .bulletOffset("-")
+                                .text(excerpt(line, 76))
+                                .textStyle(sidebarBodyStyle())
+                                .lineSpacing(1)
                                 .margin(DocumentInsets.zero()));
                     }
-                } else {
-                    block.addParagraph(paragraph -> paragraph
-                            .text(excerpt(lines.get(0), 245))
-                            .textStyle(mainBodyStyle())
-                            .lineSpacing(1.4)
-                            .margin(DocumentInsets.zero()));
+                    block.addLine(line -> line
+                            .horizontal(118)
+                            .color(theme.palette().rule())
+                            .thickness(0.65)
+                            .margin(DocumentInsets.top(5)));
+                });
+            }
+
+            /**
+             * Style applied to the central timeline axis. Drop a custom
+             * {@link TimelineAxisWidget.Style} here (or expose it through
+             * the theme) to swap the marker shape, sizing, or colours.
+             */
+            private TimelineAxisWidget.Style timelineAxisStyle() {
+                return TimelineAxisWidget.Style.builder()
+                        .marker(TimelineAxisWidget.Marker.CIRCLE)
+                        .markerSize(TIMELINE_DOT)
+                        .markerStroke(DocumentStroke.of(
+                                theme.palette().banner(),
+                                TIMELINE_MARKER_STROKE))
+                        .segmentCount(TIMELINE_SEGMENT_COUNT)
+                        .lineColor(theme.palette().rule())
+                        .lineThickness(TIMELINE_LINE_THICKNESS)
+                        .padding(new DocumentInsets(TIMELINE_TOP_PADDING, 0, 0, 0))
+                        .build();
+            }
+
+            private void addMainModule(SectionBuilder main, String title,
+                                       CvSection section, boolean bullets,
+                                       int limit) {
+                List<String> lines = sectionLines(section);
+                if (lines.isEmpty()) {
+                    return;
                 }
-                block.addLine(line -> line
-                        .horizontal(300)
-                        .color(theme.palette().rule())
-                        .thickness(0.65)
-                        .margin(DocumentInsets.top(6)));
-            });
-        }
+                main.addSection("CvV2TimelineMinimalMain"
+                                + SectionLookup.normalize(title), block -> {
+                    block.spacing(5)
+                            .addParagraph(paragraph -> paragraph
+                                    .text(title.toUpperCase(Locale.ROOT))
+                                    .textStyle(mainTitleStyle())
+                                    .margin(DocumentInsets.zero()));
+                    if (bullets) {
+                        for (String line : lines.stream().limit(limit).toList()) {
+                            block.addParagraph(paragraph -> paragraph
+                                    .text(excerpt(line, 136))
+                                    .textStyle(mainBulletStyle())
+                                    .lineSpacing(1.2)
+                                    .bulletOffset("-")
+                                    .margin(DocumentInsets.zero()));
+                        }
+                    } else {
+                        block.addParagraph(paragraph -> paragraph
+                                .text(excerpt(lines.get(0), 245))
+                                .textStyle(mainBodyStyle())
+                                .lineSpacing(1.4)
+                                .margin(DocumentInsets.zero()));
+                    }
+                    block.addLine(line -> line
+                            .horizontal(300)
+                            .color(theme.palette().rule())
+                            .thickness(0.65)
+                            .margin(DocumentInsets.top(6)));
+                });
+            }
 
-        // -- style factories ---------------------------------------------
+            // -- style factories ---------------------------------------------
 
-        private DocumentTextStyle nameStyle() {
-            return CvTextStyles.of(theme.typography().headlineFont(),
-                    theme.typography().sizeHeadline(),
-                    DocumentTextDecoration.DEFAULT,
-                    theme.palette().ink());
-        }
+            private DocumentTextStyle nameStyle() {
+                return CvTextStyles.of(theme.typography().headlineFont(),
+                        theme.typography().sizeHeadline(),
+                        DocumentTextDecoration.DEFAULT,
+                        theme.palette().ink());
+            }
 
-        private DocumentTextStyle jobTitleStyle() {
-            return CvTextStyles.of(theme.typography().headlineFont(),
-                    9.5,
-                    DocumentTextDecoration.BOLD,
-                    theme.palette().ink());
-        }
+            private DocumentTextStyle jobTitleStyle() {
+                return CvTextStyles.of(theme.typography().headlineFont(),
+                        9.5,
+                        DocumentTextDecoration.BOLD,
+                        theme.palette().ink());
+            }
 
-        private DocumentTextStyle contactTextStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeContact(),
-                    DocumentTextDecoration.BOLD,
-                    theme.palette().muted());
-        }
+            private DocumentTextStyle contactTextStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeContact(),
+                        DocumentTextDecoration.BOLD,
+                        theme.palette().muted());
+            }
 
-        private DocumentTextStyle fallbackIconStyle() {
-            return CvTextStyles.of(theme.typography().headlineFont(),
-                    8.0,
-                    DocumentTextDecoration.BOLD,
-                    theme.palette().muted());
-        }
+            private DocumentTextStyle fallbackIconStyle() {
+                return CvTextStyles.of(theme.typography().headlineFont(),
+                        8.0,
+                        DocumentTextDecoration.BOLD,
+                        theme.palette().muted());
+            }
 
-        private DocumentTextStyle sidebarTitleStyle() {
-            return CvTextStyles.of(theme.typography().headlineFont(),
-                    theme.typography().sizeEntryTitle(),
-                    DocumentTextDecoration.BOLD,
-                    theme.palette().ink());
-        }
+            private DocumentTextStyle sidebarTitleStyle() {
+                return CvTextStyles.of(theme.typography().headlineFont(),
+                        theme.typography().sizeEntryTitle(),
+                        DocumentTextDecoration.BOLD,
+                        theme.palette().ink());
+            }
 
-        private DocumentTextStyle sidebarBodyStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeEntrySubtitle(),
-                    DocumentTextDecoration.BOLD,
-                    theme.palette().ink());
-        }
+            private DocumentTextStyle sidebarBodyStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeEntrySubtitle(),
+                        DocumentTextDecoration.BOLD,
+                        theme.palette().ink());
+            }
 
-        private DocumentTextStyle mainTitleStyle() {
-            return CvTextStyles.of(theme.typography().headlineFont(),
-                    theme.typography().sizeBanner(),
-                    DocumentTextDecoration.BOLD,
-                    theme.palette().ink());
-        }
+            private DocumentTextStyle mainTitleStyle() {
+                return CvTextStyles.of(theme.typography().headlineFont(),
+                        theme.typography().sizeBanner(),
+                        DocumentTextDecoration.BOLD,
+                        theme.palette().ink());
+            }
 
-        private DocumentTextStyle mainBulletStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeBody(),
-                    DocumentTextDecoration.DEFAULT,
-                    theme.palette().ink());
-        }
+            private DocumentTextStyle mainBulletStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeBody(),
+                        DocumentTextDecoration.DEFAULT,
+                        theme.palette().ink());
+            }
 
-        private DocumentTextStyle mainBodyStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeEntryDate(),
-                    DocumentTextDecoration.DEFAULT,
-                    theme.palette().ink());
+            private DocumentTextStyle mainBodyStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeEntryDate(),
+                        DocumentTextDecoration.DEFAULT,
+                        theme.palette().ink());
+            }
         }
-    }
 
     // -- helpers -----------------------------------------------------------
 
@@ -482,7 +479,7 @@ public final class TimelineMinimal {
      * around the fixed-height timeline axis.
      */
     private static List<String> sectionLines(CvSection section) {
-        if (section == null || !SectionLookup.hasContent(section)) {
+        if (!SectionLookup.hasContent(section)) {
             return List.of();
         }
         List<String> lines = new ArrayList<>();
@@ -613,7 +610,7 @@ public final class TimelineMinimal {
                 builder.append("  ");
             }
             if (Character.isLetter(current) && i + 1 < upper.length()
-                    && Character.isLetter(upper.charAt(i + 1))) {
+                && Character.isLetter(upper.charAt(i + 1))) {
                 builder.append(' ');
             }
         }

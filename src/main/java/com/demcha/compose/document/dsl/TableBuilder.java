@@ -1,37 +1,29 @@
 package com.demcha.compose.document.dsl;
 
-import com.demcha.compose.document.dsl.internal.BuilderSupport;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
-import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.TableNode;
-import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Consumer;
+import java.util.*;
 
 /**
  * Builder for semantic table nodes.
+ *
  * @since 1.0.0
  */
 public final class TableBuilder {
-    private String name = "";
     private final List<DocumentTableColumn> columns = new ArrayList<>();
     private final List<List<DocumentTableCell>> rows = new ArrayList<>();
     private final Map<Integer, DocumentTableStyle> rowStyles = new LinkedHashMap<>();
     private final Map<Integer, DocumentTableStyle> columnStyles = new LinkedHashMap<>();
+    private String name = "";
     private DocumentTableStyle defaultCellStyle = DocumentTableStyle.empty();
     private Double width;
     private DocumentLinkOptions linkOptions;
@@ -52,6 +44,15 @@ public final class TableBuilder {
      * Creates a table builder.
      */
     public TableBuilder() {
+    }
+
+    private static DocumentTableStyle defaultTotalRowStyle() {
+        return DocumentTableStyle.builder()
+                .textStyle(DocumentTextStyle.builder()
+                        .decoration(DocumentTextDecoration.BOLD)
+                        .build())
+                .fillColor(DocumentColor.rgb(240, 240, 245))
+                .build();
     }
 
     /**
@@ -181,8 +182,8 @@ public final class TableBuilder {
      * row alternation because the row's index is added to {@code rowStyles}
      * directly.
      *
-     * @param style totals-row style override (typically bold + a subtle
-     *              fill to separate the totals from the data rows)
+     * @param style  totals-row style override (typically bold + a subtle
+     *               fill to separate the totals from the data rows)
      * @param values totals cell text values
      * @return this builder
      */
@@ -206,15 +207,6 @@ public final class TableBuilder {
         return totalRow(defaultTotalRowStyle(), values);
     }
 
-    private static DocumentTableStyle defaultTotalRowStyle() {
-        return DocumentTableStyle.builder()
-                .textStyle(DocumentTextStyle.builder()
-                        .decoration(DocumentTextDecoration.BOLD)
-                        .build())
-                .fillColor(DocumentColor.rgb(240, 240, 245))
-                .build();
-    }
-
     /**
      * Configures alternating row fill colours. The {@code odd} style is
      * applied to rows at index 0, 2, 4 (visually first, third, fifth);
@@ -228,8 +220,8 @@ public final class TableBuilder {
      * {@link #headerStyle(DocumentTableStyle)} or
      * {@link #totalRow(String...)} take precedence.</p>
      *
-     * @param odd style for odd-indexed rows (index 0, 2, 4 — first,
-     *            third, fifth visually)
+     * @param odd  style for odd-indexed rows (index 0, 2, 4 — first,
+     *             third, fifth visually)
      * @param even style for even-indexed rows (index 1, 3, 5)
      * @return this builder
      */
@@ -244,7 +236,7 @@ public final class TableBuilder {
      * skipping any other styling. Either colour may be {@code null} to
      * leave that parity unstyled.
      *
-     * @param odd fill colour for odd-indexed rows (1st, 3rd, 5th)
+     * @param odd  fill colour for odd-indexed rows (1st, 3rd, 5th)
      * @param even fill colour for even-indexed rows (2nd, 4th, 6th)
      * @return this builder
      */
@@ -345,7 +337,7 @@ public final class TableBuilder {
      * Applies a public canonical style override to a row.
      *
      * @param rowIndex zero-based row index
-     * @param style row style override
+     * @param style    row style override
      * @return this builder
      */
     public TableBuilder rowStyle(int rowIndex, DocumentTableStyle style) {
@@ -360,7 +352,7 @@ public final class TableBuilder {
      * Applies a public canonical style override to a column.
      *
      * @param columnIndex zero-based column index
-     * @param style column style override
+     * @param style       column style override
      * @return this builder
      */
     public TableBuilder columnStyle(int columnIndex, DocumentTableStyle style) {

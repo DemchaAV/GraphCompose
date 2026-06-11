@@ -7,10 +7,10 @@ package com.demcha.compose.document.style;
  * document spacing without importing low-level engine components. Instances are
  * immutable and thread-safe.</p>
  *
- * @param top top inset in points
- * @param right right inset in points
+ * @param top    top inset in points
+ * @param right  right inset in points
  * @param bottom bottom inset in points
- * @param left left inset in points
+ * @param left   left inset in points
  * @author Artem Demchyshyn
  */
 public record DocumentInsets(double top, double right, double bottom, double left) {
@@ -37,7 +37,7 @@ public record DocumentInsets(double top, double right, double bottom, double lef
     /**
      * Creates spacing from vertical and horizontal values.
      *
-     * @param vertical top and bottom inset in points
+     * @param vertical   top and bottom inset in points
      * @param horizontal left and right inset in points
      * @return symmetric insets
      */

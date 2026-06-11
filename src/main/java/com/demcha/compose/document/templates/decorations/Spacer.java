@@ -21,13 +21,19 @@ import com.demcha.compose.document.style.DocumentInsets;
  */
 public final class Spacer {
 
-    /** Vertical extent of {@link #small()} in points. */
+    /**
+     * Vertical extent of {@link #small()} in points.
+     */
     public static final double SMALL = 4.0;
 
-    /** Vertical extent of {@link #medium()} in points. */
+    /**
+     * Vertical extent of {@link #medium()} in points.
+     */
     public static final double MEDIUM = 8.0;
 
-    /** Vertical extent of {@link #large()} in points. */
+    /**
+     * Vertical extent of {@link #large()} in points.
+     */
     public static final double LARGE = 16.0;
 
     private Spacer() {
@@ -70,7 +76,7 @@ public final class Spacer {
      *               non-negative
      * @return spacer node
      * @throws IllegalArgumentException if {@code height} is negative,
-     *         {@code NaN}, or infinite
+     *                                  {@code NaN}, or infinite
      */
     public static DocumentNode height(double height) {
         return verticalSpacer("Spacer.height", height);

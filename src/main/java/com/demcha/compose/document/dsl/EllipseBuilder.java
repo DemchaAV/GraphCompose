@@ -8,7 +8,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTransform;
 
-import java.awt.Color;
+import java.awt.*;
 
 /**
  * Builder for semantic circle and ellipse nodes.
@@ -70,7 +70,7 @@ public final class EllipseBuilder implements Transformable<EllipseBuilder> {
     /**
      * Sets ellipse width and height.
      *
-     * @param width width in points
+     * @param width  width in points
      * @param height height in points
      * @return this builder
      */

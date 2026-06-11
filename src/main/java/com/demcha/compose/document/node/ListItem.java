@@ -16,11 +16,10 @@ import java.util.List;
  * item. Direct {@code new ListItem(...)} construction is supported but
  * should be reserved for record-shaped fixtures and serialization.</p>
  *
- * @param label visible item text
- * @param marker per-item marker override, or {@code null} to inherit
- *               the per-depth default from the parent list
+ * @param label    visible item text
+ * @param marker   per-item marker override, or {@code null} to inherit
+ *                 the per-depth default from the parent list
  * @param children nested child items, empty for leaves
- *
  * @author Artem Demchyshyn
  */
 public record ListItem(String label, ListMarker marker, List<ListItem> children) {
@@ -46,7 +45,7 @@ public record ListItem(String label, ListMarker marker, List<ListItem> children)
      * Creates an item with the given label, inherited marker, and
      * child sub-tree.
      *
-     * @param label visible item text
+     * @param label    visible item text
      * @param children nested child items
      * @return parent item
      */

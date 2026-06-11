@@ -23,11 +23,7 @@ import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -50,13 +46,19 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class TimelineMinimalLetter {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "timeline-minimal-letter";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Timeline Minimal Letter";
 
-    /** Recommended page margin (in points) — generous business-letter feel. */
+    /**
+     * Recommended page margin (in points) — generous business-letter feel.
+     */
     public static final double RECOMMENDED_MARGIN = 48.0;
 
     /**
@@ -97,151 +99,145 @@ public final class TimelineMinimalLetter {
         return new Template(theme);
     }
 
-    private static final class Template implements DocumentTemplate<CoverLetterDocument> {
-
-        private final CvTheme theme;
-
-        Template(CvTheme theme) {
-            this.theme = theme;
-        }
+    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
-        public String id() {
-            return ID;
-        }
+            public String id() {
+                return ID;
+            }
 
-        @Override
-        public String displayName() {
-            return DISPLAY_NAME;
-        }
+            @Override
+            public String displayName() {
+                return DISPLAY_NAME;
+            }
 
-        @Override
-        public void compose(DocumentSession document, CoverLetterDocument doc) {
-            Objects.requireNonNull(document, "document");
-            Objects.requireNonNull(doc, "doc");
+            @Override
+            public void compose(DocumentSession document, CoverLetterDocument doc) {
+                Objects.requireNonNull(document, "document");
+                Objects.requireNonNull(doc, "doc");
 
-            double width = document.canvas().innerWidth();
-            PageFlowBuilder flow = document.dsl()
-                    .pageFlow()
-                    .name("CoverLetterV2TimelineMinimalRoot")
-                    .spacing(theme.spacing().pageFlowSpacing())
-                    .addRow("CoverLetterV2TimelineMinimalHeader", row -> row
-                            .spacing(3)
-                            .weights(1.00, 0.61)
-                            .addSection("CoverLetterV2TimelineMinimalName",
-                                    section -> addNameBlock(section, doc.identity()))
-                            .addSection("CoverLetterV2TimelineMinimalContact",
-                                    section -> addContact(section, doc.identity())))
-                    .addLine(line -> line
-                            .name("CoverLetterV2TimelineMinimalHeaderRule")
-                            .horizontal(width)
-                            .color(theme.palette().rule())
-                            .thickness(theme.spacing().accentRuleWidth())
+                double width = document.canvas().innerWidth();
+                PageFlowBuilder flow = document.dsl()
+                        .pageFlow()
+                        .name("CoverLetterV2TimelineMinimalRoot")
+                        .spacing(theme.spacing().pageFlowSpacing())
+                        .addRow("CoverLetterV2TimelineMinimalHeader", row -> row
+                                .spacing(3)
+                                .weights(1.00, 0.61)
+                                .addSection("CoverLetterV2TimelineMinimalName",
+                                        section -> addNameBlock(section, doc.identity()))
+                                .addSection("CoverLetterV2TimelineMinimalContact",
+                                        section -> addContact(section, doc.identity())))
+                        .addLine(line -> line
+                                .name("CoverLetterV2TimelineMinimalHeaderRule")
+                                .horizontal(width)
+                                .color(theme.palette().rule())
+                                .thickness(theme.spacing().accentRuleWidth())
+                                .margin(DocumentInsets.zero()));
+
+                flow.addSection("CoverLetterV2TimelineMinimalBody", host ->
+                        LetterBody.render(host, doc, theme, LETTER_BODY_SIZE));
+
+                flow.build();
+            }
+
+            private void addNameBlock(SectionBuilder section, CvIdentity identity) {
+                section.spacing(4)
+                        .addParagraph(paragraph -> paragraph
+                                .text(TextOrnaments.spacedUpper(identity.name().full()))
+                                .textStyle(nameStyle())
+                                .margin(DocumentInsets.zero()));
+                String jobTitle = identity.jobTitle();
+                if (!jobTitle.isBlank()) {
+                    section.addParagraph(paragraph -> paragraph
+                            .text(jobTitle.toUpperCase(Locale.ROOT))
+                            .textStyle(jobTitleStyle())
                             .margin(DocumentInsets.zero()));
-
-            flow.addSection("CoverLetterV2TimelineMinimalBody", host ->
-                    LetterBody.render(host, doc, theme, LETTER_BODY_SIZE));
-
-            flow.build();
-        }
-
-        private void addNameBlock(SectionBuilder section, CvIdentity identity) {
-            section.spacing(4)
-                    .addParagraph(paragraph -> paragraph
-                            .text(TextOrnaments.spacedUpper(identity.name().full()))
-                            .textStyle(nameStyle())
-                            .margin(DocumentInsets.zero()));
-            String jobTitle = identity.jobTitle();
-            if (!jobTitle.isBlank()) {
-                section.addParagraph(paragraph -> paragraph
-                        .text(jobTitle.toUpperCase(Locale.ROOT))
-                        .textStyle(jobTitleStyle())
-                        .margin(DocumentInsets.zero()));
-            }
-        }
-
-        private void addContact(SectionBuilder section, CvIdentity identity) {
-            section.spacing(3);
-            DocumentTextStyle textStyle = contactTextStyle();
-            DocumentTextStyle fallbackIconStyle = fallbackIconStyle();
-            for (ContactItem item : contactItems(identity)) {
-                section.addParagraph(paragraph -> paragraph
-                        .textStyle(textStyle)
-                        .align(TextAlign.RIGHT)
-                        .link(item.linkOptions())
-                        .margin(DocumentInsets.zero())
-                        .rich(rich -> {
-                            rich.style(item.text(), textStyle);
-                            rich.plain("  ");
-                            if (item.iconFile() != null) {
-                                rich.image(contactIcon(item.iconFile()),
-                                        CONTACT_ICON_SIZE,
-                                        CONTACT_ICON_SIZE,
-                                        InlineImageAlignment.CENTER,
-                                        CONTACT_ICON_BASELINE_OFFSET,
-                                        item.linkOptions());
-                            } else {
-                                rich.style(item.fallbackIcon(), fallbackIconStyle);
-                            }
-                        }));
-            }
-        }
-
-        private List<ContactItem> contactItems(CvIdentity identity) {
-            if (identity == null) {
-                return List.of();
-            }
-            List<ContactItem> items = new ArrayList<>();
-            addContactItem(items, "LOC", "location.png",
-                    identity.contact().address(), null);
-            addContactItem(items, "TEL", "phone.png",
-                    identity.contact().phone(), null);
-            String email = identity.contact().email();
-            if (!email.isBlank()) {
-                addContactItem(items, "@", "email.png", email,
-                        new DocumentLinkOptions("mailto:" + email));
-            }
-            for (CvLink link : identity.links()) {
-                String label = link.label();
-                if (label.isBlank()) {
-                    continue;
                 }
-                String url = link.url();
-                addContactItem(items, pickFallbackIcon(label),
-                        pickIconFile(label), label,
-                        url.isBlank() ? null : new DocumentLinkOptions(url.trim()));
             }
-            return List.copyOf(items);
-        }
 
-        private DocumentImageData contactIcon(String iconFile) {
-            return DocumentImageData.fromBytes(
-                    CONTACT_ICON_CACHE.computeIfAbsent(iconFile,
-                            TimelineMinimalLetter::readIconBytes));
-        }
+            private void addContact(SectionBuilder section, CvIdentity identity) {
+                section.spacing(3);
+                DocumentTextStyle textStyle = contactTextStyle();
+                DocumentTextStyle fallbackIconStyle = fallbackIconStyle();
+                for (ContactItem item : contactItems(identity)) {
+                    section.addParagraph(paragraph -> paragraph
+                            .textStyle(textStyle)
+                            .align(TextAlign.RIGHT)
+                            .link(item.linkOptions())
+                            .margin(DocumentInsets.zero())
+                            .rich(rich -> {
+                                rich.style(item.text(), textStyle);
+                                rich.plain("  ");
+                                if (item.iconFile() != null) {
+                                    rich.image(contactIcon(item.iconFile()),
+                                            CONTACT_ICON_SIZE,
+                                            CONTACT_ICON_SIZE,
+                                            InlineImageAlignment.CENTER,
+                                            CONTACT_ICON_BASELINE_OFFSET,
+                                            item.linkOptions());
+                                } else {
+                                    rich.style(item.fallbackIcon(), fallbackIconStyle);
+                                }
+                            }));
+                }
+            }
 
-        private DocumentTextStyle nameStyle() {
-            return CvTextStyles.of(theme.typography().headlineFont(),
-                    theme.typography().sizeHeadline(),
-                    DocumentTextDecoration.DEFAULT, theme.palette().ink());
-        }
+            private List<ContactItem> contactItems(CvIdentity identity) {
+                if (identity == null) {
+                    return List.of();
+                }
+                List<ContactItem> items = new ArrayList<>();
+                addContactItem(items, "LOC", "location.png",
+                        identity.contact().address(), null);
+                addContactItem(items, "TEL", "phone.png",
+                        identity.contact().phone(), null);
+                String email = identity.contact().email();
+                if (!email.isBlank()) {
+                    addContactItem(items, "@", "email.png", email,
+                            new DocumentLinkOptions("mailto:" + email));
+                }
+                for (CvLink link : identity.links()) {
+                    String label = link.label();
+                    if (label.isBlank()) {
+                        continue;
+                    }
+                    String url = link.url();
+                    addContactItem(items, pickFallbackIcon(label),
+                            pickIconFile(label), label,
+                            url.isBlank() ? null : new DocumentLinkOptions(url.trim()));
+                }
+                return List.copyOf(items);
+            }
 
-        private DocumentTextStyle jobTitleStyle() {
-            return CvTextStyles.of(theme.typography().headlineFont(), 9.5,
-                    DocumentTextDecoration.BOLD, theme.palette().ink());
-        }
+            private DocumentImageData contactIcon(String iconFile) {
+                return DocumentImageData.fromBytes(
+                        CONTACT_ICON_CACHE.computeIfAbsent(iconFile,
+                                TimelineMinimalLetter::readIconBytes));
+            }
 
-        private DocumentTextStyle contactTextStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeContact(),
-                    DocumentTextDecoration.BOLD, theme.palette().muted());
-        }
+            private DocumentTextStyle nameStyle() {
+                return CvTextStyles.of(theme.typography().headlineFont(),
+                        theme.typography().sizeHeadline(),
+                        DocumentTextDecoration.DEFAULT, theme.palette().ink());
+            }
 
-        private DocumentTextStyle fallbackIconStyle() {
-            return CvTextStyles.of(theme.typography().headlineFont(), 8.0,
-                    DocumentTextDecoration.BOLD, theme.palette().muted());
+            private DocumentTextStyle jobTitleStyle() {
+                return CvTextStyles.of(theme.typography().headlineFont(), 9.5,
+                        DocumentTextDecoration.BOLD, theme.palette().ink());
+            }
+
+            private DocumentTextStyle contactTextStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeContact(),
+                        DocumentTextDecoration.BOLD, theme.palette().muted());
+            }
+
+            private DocumentTextStyle fallbackIconStyle() {
+                return CvTextStyles.of(theme.typography().headlineFont(), 8.0,
+                        DocumentTextDecoration.BOLD, theme.palette().muted());
+            }
         }
-    }
 
     private static void addContactItem(List<ContactItem> items,
                                        String fallbackIcon, String iconFile,

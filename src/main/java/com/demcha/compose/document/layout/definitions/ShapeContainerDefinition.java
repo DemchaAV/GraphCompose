@@ -1,23 +1,7 @@
 package com.demcha.compose.document.layout.definitions;
 
-import com.demcha.compose.document.layout.BoxConstraints;
-import com.demcha.compose.document.layout.CompositeLayoutSpec;
-import com.demcha.compose.document.layout.payloads.EllipseFragmentPayload;
-import com.demcha.compose.document.layout.payloads.PolygonFragmentPayload;
-import com.demcha.compose.document.layout.payloads.PreparedStackLayout;
-import com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload;
-import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
-import com.demcha.compose.document.layout.payloads.ShapeClipEndPayload;
-import com.demcha.compose.document.layout.payloads.TransformBeginPayload;
-import com.demcha.compose.document.layout.payloads.TransformEndPayload;
-import com.demcha.compose.document.layout.FragmentContext;
-import com.demcha.compose.document.layout.FragmentPlacement;
-import com.demcha.compose.document.layout.LayoutFragment;
-import com.demcha.compose.document.layout.MeasureResult;
-import com.demcha.compose.document.layout.NodeDefinition;
-import com.demcha.compose.document.layout.PaginationPolicy;
-import com.demcha.compose.document.layout.PrepareContext;
-import com.demcha.compose.document.layout.PreparedNode;
+import com.demcha.compose.document.layout.*;
+import com.demcha.compose.document.layout.payloads.*;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.LayerStackNode;
@@ -27,13 +11,11 @@ import com.demcha.compose.document.style.ShapeOutline;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.style.Padding;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.demcha.compose.document.layout.NodeDefinitionSupport.EPS;
-import static com.demcha.compose.document.layout.NodeDefinitionSupport.toPadding;
-import static com.demcha.compose.document.layout.NodeDefinitionSupport.toStroke;
+import static com.demcha.compose.document.layout.NodeDefinitionSupport.*;
 
 /**
  * Layout definition for {@link ShapeContainerNode}: an atomic shape-backed

@@ -56,7 +56,9 @@ public record CvSpacing(
         double entryDateWeight,
         double entrySeparation) {
 
-    /** Validates that no inset token is null. */
+    /**
+     * Validates that no inset token is null.
+     */
     public CvSpacing {
         Objects.requireNonNull(sectionBodyPadding, "sectionBodyPadding");
         Objects.requireNonNull(headlinePadding, "headlinePadding");
@@ -90,9 +92,9 @@ public record CvSpacing(
      * @param entryTitleWeight      flex weight of the entry title column
      * @param entryDateWeight       flex weight of the entry date column
      * @deprecated since {@code entrySeparation} was introduced.
-     *             Supply it explicitly via the 14-arg canonical
-     *             constructor or via {@link #classic()} /
-     *             {@link #modernProfessional()}.
+     * Supply it explicitly via the 14-arg canonical
+     * constructor or via {@link #classic()} /
+     * {@link #modernProfessional()}.
      */
     @Deprecated
     public CvSpacing(double pageFlowSpacing,

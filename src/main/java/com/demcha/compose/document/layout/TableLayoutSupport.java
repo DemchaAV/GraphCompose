@@ -12,17 +12,9 @@ import com.demcha.compose.engine.components.content.table.TableResolvedCell;
 import com.demcha.compose.engine.components.style.Padding;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static com.demcha.compose.document.layout.DocumentNodeAdapters.toTableCell;
-import static com.demcha.compose.document.layout.DocumentNodeAdapters.toTableColumns;
-import static com.demcha.compose.document.layout.DocumentNodeAdapters.toTableStyle;
-import static com.demcha.compose.document.layout.DocumentNodeAdapters.toTableStyles;
+import static com.demcha.compose.document.layout.DocumentNodeAdapters.*;
 
 /**
  * Package-private support helpers for {@code TableNode} layout.
@@ -39,73 +31,6 @@ final class TableLayoutSupport {
     }
 
     /**
-     * Prepared layout payload attached to {@code TableNode} prepared nodes.
-     *
-     * <p>{@code preparedContents} carries the prepared sub-tree for any
-     * {@code DocumentTableCell} authored via {@link DocumentTableCell#node(DocumentNode)};
-     * keyed by the cell's logical {@code (startRow, startColumn)} and
-     * empty for tables that contain only plain-text cells.</p>
-     */
-    record PreparedTableLayout(
-            ResolvedTableLayout resolvedLayout,
-            boolean emitBookmark,
-            Map<CellKey, PreparedNode<?>> preparedContents
-    ) implements PreparedNodeLayout {
-        PreparedTableLayout {
-            preparedContents = preparedContents == null ? Map.of() : Map.copyOf(preparedContents);
-        }
-
-        /**
-         * Back-compat 2-arg constructor for callers that don't carry
-         * composed cell content. Defaults {@code preparedContents} to
-         * an empty map.
-         */
-        PreparedTableLayout(ResolvedTableLayout resolvedLayout, boolean emitBookmark) {
-            this(resolvedLayout, emitBookmark, Map.of());
-        }
-    }
-
-    /**
-     * Logical (row, column) coordinate identifying a cell's starting
-     * position. Used as the key for the {@code preparedContents} map
-     * on {@link PreparedTableLayout}.
-     */
-    record CellKey(int row, int column) {
-    }
-
-    /**
-     * Resolved table layout (column widths, row heights, resolved cells).
-     */
-    record ResolvedTableLayout(
-            List<Double> columnWidths,
-            List<Double> rowHeights,
-            List<List<TableResolvedCell>> rows,
-            double naturalWidth,
-            double finalWidth,
-            double totalHeight
-    ) {
-    }
-
-    /**
-     * Logical cell: a single user-authored cell after the cell-grid pre-pass
-     * has resolved its starting position and colSpan/rowSpan extent. A
-     * spanning cell appears once at its starting (row, column); the
-     * positions it occupies in subsequent rows are tracked by the
-     * occupancy grid built in {@link #buildLogicalRows(TableNode, int)} and
-     * are skipped when iterating later source rows. {@code source} is the
-     * original public {@link DocumentTableCell}, retained so the layout
-     * can detect composed-content cells via
-     * {@link DocumentTableCell#hasComposedContent()}. {@code sanitizedLines} is
-     * the cell's text with control characters cleaned, computed once here and
-     * reused by the width, height and resolve passes instead of re-sanitizing the
-     * content three times.
-     */
-    private record LogicalCell(int startRow, int startColumn, int colSpan, int rowSpan,
-                               TableCellContent content, DocumentTableCell source,
-                               List<String> sanitizedLines) {
-    }
-
-    /**
      * Resolves the table layout. Composed-content cells (those authored
      * via {@link DocumentTableCell#node(DocumentNode)}) require a
      * {@link PrepareContext} so their child sub-tree can be prepared
@@ -114,9 +39,9 @@ final class TableLayoutSupport {
      * will still throw if it encounters a composed cell).
      */
     static ResolvedTableLayoutWithContents resolveTableLayout(TableNode node,
-                                                               PrepareContext prepareContext,
-                                                               TextMeasurementSystem measurement,
-                                                               double availableWidth) {
+                                                              PrepareContext prepareContext,
+                                                              TextMeasurementSystem measurement,
+                                                              double availableWidth) {
         validateRowsExist(node);
         int columnCount = resolveColumnCount(node);
         List<List<LogicalCell>> logicalRows = buildLogicalRows(node, columnCount);
@@ -130,7 +55,7 @@ final class TableLayoutSupport {
         double innerAvailableWidth = Math.max(0.0, availableWidth - node.padding().horizontal());
         if (finalWidth > innerAvailableWidth + EPS) {
             throw new IllegalStateException("Table '" + displayName(node) + "' width " + finalWidth
-                    + " exceeds available width " + innerAvailableWidth + ".");
+                                            + " exceeds available width " + innerAvailableWidth + ".");
         }
 
         // Prepare composed cell content (cells authored via
@@ -230,19 +155,6 @@ final class TableLayoutSupport {
     }
 
     /**
-     * Bundles the resolved table layout with the prepared composed-cell
-     * content map so {@link com.demcha.compose.document.layout.NodeDefinitionSupport#prepareTable}
-     * can attach the map to the {@link PreparedTableLayout}.
-     */
-    record ResolvedTableLayoutWithContents(
-            ResolvedTableLayout layout,
-            Map<CellKey, PreparedNode<?>> preparedContents) {
-        ResolvedTableLayoutWithContents {
-            preparedContents = preparedContents == null ? Map.of() : Map.copyOf(preparedContents);
-        }
-    }
-
-    /**
      * Walks every logical cell, prepares composed children
      * ({@link DocumentTableCell#hasComposedContent()} == true) against
      * the cell's resolved inner width, and returns the prepared map.
@@ -266,7 +178,7 @@ final class TableLayoutSupport {
                 if (prepareContext == null) {
                     throw new IllegalStateException(
                             "Table '" + displayName(node) + "' has a composed cell at ("
-                                    + rowIndex + ", " + logical.startColumn() + ") but no PrepareContext was supplied.");
+                            + rowIndex + ", " + logical.startColumn() + ") but no PrepareContext was supplied.");
                 }
                 double cellOuterWidth = sumRange(finalWidths, logical.startColumn(),
                         logical.startColumn() + logical.colSpan());
@@ -297,7 +209,7 @@ final class TableLayoutSupport {
             if (prepared == null) {
                 throw new IllegalStateException(
                         "Composed cell at (" + logical.startRow() + ", " + logical.startColumn()
-                                + ") was not prepared.");
+                        + ") was not prepared.");
             }
             Padding padding = style.padding() == null ? Padding.zero() : style.padding();
             return prepared.measureResult().height() + padding.vertical();
@@ -497,28 +409,28 @@ final class TableLayoutSupport {
                 }
                 if (sourceIdx >= source.size()) {
                     throw new IllegalStateException("Row " + rowIndex
-                            + " is missing a cell for column " + col
-                            + " (table has " + columnCount + " columns; source row provides "
-                            + source.size() + " cells, prior rowSpan covers some columns).");
+                                                    + " is missing a cell for column " + col
+                                                    + " (table has " + columnCount + " columns; source row provides "
+                                                    + source.size() + " cells, prior rowSpan covers some columns).");
                 }
                 DocumentTableCell cell = source.get(sourceIdx++);
                 if (col + cell.colSpan() > columnCount) {
                     throw new IllegalStateException("Cell at row " + rowIndex
-                            + " column " + col + " has colSpan " + cell.colSpan()
-                            + " but only " + (columnCount - col) + " columns remain.");
+                                                    + " column " + col + " has colSpan " + cell.colSpan()
+                                                    + " but only " + (columnCount - col) + " columns remain.");
                 }
                 if (rowIndex + cell.rowSpan() > rowCount) {
                     throw new IllegalStateException("Cell at row " + rowIndex
-                            + " column " + col + " has rowSpan " + cell.rowSpan()
-                            + " but only " + (rowCount - rowIndex) + " rows remain.");
+                                                    + " column " + col + " has rowSpan " + cell.rowSpan()
+                                                    + " but only " + (rowCount - rowIndex) + " rows remain.");
                 }
                 for (int r = rowIndex; r < rowIndex + cell.rowSpan(); r++) {
                     for (int c = col; c < col + cell.colSpan(); c++) {
                         if (occupied[r][c]) {
                             throw new IllegalStateException("Cell at row " + rowIndex
-                                    + " column " + col + " (colSpan=" + cell.colSpan()
-                                    + ", rowSpan=" + cell.rowSpan()
-                                    + ") overlaps an already-spanned position (" + r + ", " + c + ").");
+                                                            + " column " + col + " (colSpan=" + cell.colSpan()
+                                                            + ", rowSpan=" + cell.rowSpan()
+                                                            + ") overlaps an already-spanned position (" + r + ", " + c + ").");
                         }
                         occupied[r][c] = true;
                     }
@@ -530,9 +442,9 @@ final class TableLayoutSupport {
             }
             if (sourceIdx < source.size()) {
                 throw new IllegalStateException("Row " + rowIndex
-                        + " has " + (source.size() - sourceIdx) + " extra source cell(s) "
-                        + "after the grid was already filled — column slots are accounted for "
-                        + "by colSpan plus rowSpan from earlier rows.");
+                                                + " has " + (source.size() - sourceIdx) + " extra source cell(s) "
+                                                + "after the grid was already filled — column slots are accounted for "
+                                                + "by colSpan plus rowSpan from earlier rows.");
             }
             result.add(List.copyOf(logical));
         }
@@ -595,7 +507,7 @@ final class TableLayoutSupport {
             if (spec.isFixed()) {
                 if (spec.requiredFixedWidth() + EPS < singleCellRequired[columnIndex]) {
                     throw new IllegalStateException("Fixed column " + columnIndex + " width " + spec.requiredFixedWidth()
-                            + " is smaller than required natural width " + singleCellRequired[columnIndex] + ".");
+                                                    + " is smaller than required natural width " + singleCellRequired[columnIndex] + ".");
                 }
                 widths[columnIndex] = spec.requiredFixedWidth();
             } else {
@@ -637,8 +549,8 @@ final class TableLayoutSupport {
         }
         if (autoColumns.isEmpty()) {
             throw new IllegalStateException("Spanned cell at row " + rowIndex + " over " + colSpan
-                    + " fixed columns starting at " + startCol + " requires extra width " + deficit
-                    + " but all spanned columns are fixed.");
+                                            + " fixed columns starting at " + startCol + " requires extra width " + deficit
+                                            + " but all spanned columns are fixed.");
         }
         double share = deficit / autoColumns.size();
         for (int col : autoColumns) {
@@ -656,7 +568,7 @@ final class TableLayoutSupport {
         }
         if (node.width() + EPS < naturalWidth) {
             throw new IllegalStateException("Requested table width " + node.width()
-                    + " is smaller than natural width " + naturalWidth + ".");
+                                            + " is smaller than natural width " + naturalWidth + ".");
         }
 
         double extra = node.width() - naturalWidth;
@@ -700,8 +612,8 @@ final class TableLayoutSupport {
         Padding padding = style.padding() == null ? Padding.zero() : style.padding();
         int lineCount = Math.max(1, sanitizedLines.size());
         return (lineCount * measurement.lineHeight(style.textStyle()))
-                + ((lineCount - 1) * tableCellLineSpacing(style))
-                + padding.vertical();
+               + ((lineCount - 1) * tableCellLineSpacing(style))
+               + padding.vertical();
     }
 
     private static double tableCellLineSpacing(TableCellLayoutStyle style) {
@@ -737,11 +649,6 @@ final class TableLayoutSupport {
             throw new IllegalStateException("Table '" + displayName(node) + "' must contain at least one row.");
         }
     }
-
-    // Note: row colSpan-sum validation is no longer a separate pass — the
-    // occupancy-grid algorithm in buildLogicalRows enforces both
-    // colSpan/rowSpan bounds and per-row coverage with precise diagnostics
-    // (missing cell, extra cell, overlap, out-of-bounds span).
 
     private static EnumSet<Side> borderSides(TableCellLayoutStyle[][] stylesGrid,
                                              int rowIndex,
@@ -808,6 +715,11 @@ final class TableLayoutSupport {
         return true;
     }
 
+    // Note: row colSpan-sum validation is no longer a separate pass — the
+    // occupancy-grid algorithm in buildLogicalRows enforces both
+    // colSpan/rowSpan bounds and per-row coverage with precise diagnostics
+    // (missing cell, extra cell, overlap, out-of-bounds span).
+
     private static boolean ownsLeftBoundary(TableCellLayoutStyle[][] stylesGrid,
                                             int rowIndex,
                                             int startCol) {
@@ -866,5 +778,85 @@ final class TableLayoutSupport {
             return node.nodeKind();
         }
         return node.name();
+    }
+
+    /**
+     * Prepared layout payload attached to {@code TableNode} prepared nodes.
+     *
+     * <p>{@code preparedContents} carries the prepared sub-tree for any
+     * {@code DocumentTableCell} authored via {@link DocumentTableCell#node(DocumentNode)};
+     * keyed by the cell's logical {@code (startRow, startColumn)} and
+     * empty for tables that contain only plain-text cells.</p>
+     */
+    record PreparedTableLayout(
+            ResolvedTableLayout resolvedLayout,
+            boolean emitBookmark,
+            Map<CellKey, PreparedNode<?>> preparedContents
+    ) implements PreparedNodeLayout {
+        PreparedTableLayout {
+            preparedContents = preparedContents == null ? Map.of() : Map.copyOf(preparedContents);
+        }
+
+        /**
+         * Back-compat 2-arg constructor for callers that don't carry
+         * composed cell content. Defaults {@code preparedContents} to
+         * an empty map.
+         */
+        PreparedTableLayout(ResolvedTableLayout resolvedLayout, boolean emitBookmark) {
+            this(resolvedLayout, emitBookmark, Map.of());
+        }
+    }
+
+    /**
+     * Logical (row, column) coordinate identifying a cell's starting
+     * position. Used as the key for the {@code preparedContents} map
+     * on {@link PreparedTableLayout}.
+     */
+    record CellKey(int row, int column) {
+    }
+
+    /**
+     * Resolved table layout (column widths, row heights, resolved cells).
+     */
+    record ResolvedTableLayout(
+            List<Double> columnWidths,
+            List<Double> rowHeights,
+            List<List<TableResolvedCell>> rows,
+            double naturalWidth,
+            double finalWidth,
+            double totalHeight
+    ) {
+    }
+
+    /**
+     * Logical cell: a single user-authored cell after the cell-grid pre-pass
+     * has resolved its starting position and colSpan/rowSpan extent. A
+     * spanning cell appears once at its starting (row, column); the
+     * positions it occupies in subsequent rows are tracked by the
+     * occupancy grid built in {@link #buildLogicalRows(TableNode, int)} and
+     * are skipped when iterating later source rows. {@code source} is the
+     * original public {@link DocumentTableCell}, retained so the layout
+     * can detect composed-content cells via
+     * {@link DocumentTableCell#hasComposedContent()}. {@code sanitizedLines} is
+     * the cell's text with control characters cleaned, computed once here and
+     * reused by the width, height and resolve passes instead of re-sanitizing the
+     * content three times.
+     */
+    private record LogicalCell(int startRow, int startColumn, int colSpan, int rowSpan,
+                               TableCellContent content, DocumentTableCell source,
+                               List<String> sanitizedLines) {
+    }
+
+    /**
+     * Bundles the resolved table layout with the prepared composed-cell
+     * content map so {@link com.demcha.compose.document.layout.NodeDefinitionSupport#prepareTable}
+     * can attach the map to the {@link PreparedTableLayout}.
+     */
+    record ResolvedTableLayoutWithContents(
+            ResolvedTableLayout layout,
+            Map<CellKey, PreparedNode<?>> preparedContents) {
+        ResolvedTableLayoutWithContents {
+            preparedContents = preparedContents == null ? Map.of() : Map.copyOf(preparedContents);
+        }
     }
 }

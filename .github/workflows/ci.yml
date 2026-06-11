@@ -147,7 +147,7 @@ jobs:
         run: ./mvnw -B -ntp test -pl . -P no-poi
 
   binary-compat:
-    name: Binary Compatibility (japicmp vs v1.6.9)
+    name: Binary Compatibility (japicmp vs pom baseline)
     if: github.event_name == 'pull_request'
     needs: architecture-and-documentation-guards
     runs-on: ubuntu-latest
@@ -166,8 +166,9 @@ jobs:
           cache: maven
 
       - name: Compare public API against baseline
-        # The `japicmp` profile resolves the prior published jar
-        # (v1.6.8 from Maven Central) and diffs it against the
+        # The `japicmp` profile resolves the baseline release pinned
+        # by the `japicmp.baseline` property in pom.xml (via the
+        # profile-local JitPack repository) and diffs it against the
         # freshly-built artifact. Fails the job on any binary-
         # incompatible modification to the public surface. Source-
         # incompatible changes are reported only (phased policy).

@@ -26,13 +26,13 @@ public final class FlowSectionHeader {
      * Renders a filled banner title with a rule above and below.
      * Visual signature of the Blue Banner preset.
      *
-     * @param flow            the page-flow builder the rules and banner section are added to
-     * @param name            base node name used for the section and its surrounding rules
-     * @param title           the section title text
-     * @param ruleWidth       width in points of the rules above and below the banner
-     * @param theme           the active theme supplying palette, typography, and spacing
-     * @param titleStyle      text style for the banner title
-     * @param topRuleMargin   outer margin of the rule above the banner
+     * @param flow             the page-flow builder the rules and banner section are added to
+     * @param name             base node name used for the section and its surrounding rules
+     * @param title            the section title text
+     * @param ruleWidth        width in points of the rules above and below the banner
+     * @param theme            the active theme supplying palette, typography, and spacing
+     * @param titleStyle       text style for the banner title
+     * @param topRuleMargin    outer margin of the rule above the banner
      * @param bottomRuleMargin outer margin of the rule below the banner
      */
     public static void banner(PageFlowBuilder flow,
@@ -50,14 +50,14 @@ public final class FlowSectionHeader {
     /**
      * Renders a filled banner title with caller-controlled rule colour.
      *
-     * @param flow            the page-flow builder the rules and banner section are added to
-     * @param name            base node name used for the section and its surrounding rules
-     * @param title           the section title text
-     * @param ruleWidth       width in points of the rules above and below the banner
-     * @param theme           the active theme supplying palette, typography, and spacing
-     * @param titleStyle      text style for the banner title
-     * @param ruleColor       colour of the rules above and below the banner
-     * @param topRuleMargin   outer margin of the rule above the banner
+     * @param flow             the page-flow builder the rules and banner section are added to
+     * @param name             base node name used for the section and its surrounding rules
+     * @param title            the section title text
+     * @param ruleWidth        width in points of the rules above and below the banner
+     * @param theme            the active theme supplying palette, typography, and spacing
+     * @param titleStyle       text style for the banner title
+     * @param ruleColor        colour of the rules above and below the banner
+     * @param topRuleMargin    outer margin of the rule above the banner
      * @param bottomRuleMargin outer margin of the rule below the banner
      */
     public static void banner(PageFlowBuilder flow,
@@ -81,16 +81,16 @@ public final class FlowSectionHeader {
      * Renders a plain left-aligned title between horizontal rules.
      * Visual signature of the Editorial Blue preset.
      *
-     * @param flow            the page-flow builder the rules and title section are added to
-     * @param name            base node name used for the section and its surrounding rules
-     * @param title           the section title text
-     * @param ruleWidth       width in points of the surrounding rules
-     * @param theme           the active theme supplying palette, typography, and spacing
-     * @param titleStyle      text style for the title
-     * @param topRuleMargin   outer margin of the rule above the title
-     * @param titlePadding    inner padding of the title section
+     * @param flow             the page-flow builder the rules and title section are added to
+     * @param name             base node name used for the section and its surrounding rules
+     * @param title            the section title text
+     * @param ruleWidth        width in points of the surrounding rules
+     * @param theme            the active theme supplying palette, typography, and spacing
+     * @param titleStyle       text style for the title
+     * @param topRuleMargin    outer margin of the rule above the title
+     * @param titlePadding     inner padding of the title section
      * @param bottomRuleMargin outer margin of the rule below the title
-     * @param withTopRule     whether to render the rule above the title
+     * @param withTopRule      whether to render the rule above the title
      */
     public static void label(PageFlowBuilder flow,
                              String name,
@@ -111,17 +111,17 @@ public final class FlowSectionHeader {
      * Renders a plain left-aligned title with caller-controlled rule
      * colour.
      *
-     * @param flow            the page-flow builder the rules and title section are added to
-     * @param name            base node name used for the section and its surrounding rules
-     * @param title           the section title text
-     * @param ruleWidth       width in points of the surrounding rules
-     * @param theme           the active theme supplying palette, typography, and spacing
-     * @param titleStyle      text style for the title
-     * @param ruleColor       colour of the surrounding rules
-     * @param topRuleMargin   outer margin of the rule above the title
-     * @param titlePadding    inner padding of the title section
+     * @param flow             the page-flow builder the rules and title section are added to
+     * @param name             base node name used for the section and its surrounding rules
+     * @param title            the section title text
+     * @param ruleWidth        width in points of the surrounding rules
+     * @param theme            the active theme supplying palette, typography, and spacing
+     * @param titleStyle       text style for the title
+     * @param ruleColor        colour of the surrounding rules
+     * @param topRuleMargin    outer margin of the rule above the title
+     * @param titlePadding     inner padding of the title section
      * @param bottomRuleMargin outer margin of the rule below the title
-     * @param withTopRule     whether to render the rule above the title
+     * @param withTopRule      whether to render the rule above the title
      */
     public static void label(PageFlowBuilder flow,
                              String name,

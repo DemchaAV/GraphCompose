@@ -14,8 +14,8 @@ import java.util.Objects;
  * builder's {@code link(...)} method — added when the author wants
  * them, simply omitted otherwise.</p>
  *
- * @param name    structured name with first / last required and an
- *                optional middle component
+ * @param name     structured name with first / last required and an
+ *                 optional middle component
  * @param jobTitle optional professional title rendered by presets
  *                 that have a subtitle line; blank when absent
  * @param contact  phone / email / address — all three required

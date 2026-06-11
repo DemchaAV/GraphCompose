@@ -1,10 +1,6 @@
 package com.demcha.compose.document.node;
 
-import com.demcha.compose.document.style.DocumentBorders;
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentCornerRadius;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.*;
 
 import java.util.List;
 import java.util.Objects;
@@ -12,19 +8,18 @@ import java.util.Objects;
 /**
  * Vertical semantic section node.
  *
- * @param name node name used in snapshots and layout graph paths
- * @param children child semantic nodes in source order
- * @param spacing vertical spacing between children
- * @param padding inner padding
- * @param margin outer margin
- * @param fillColor optional background fill
- * @param stroke optional uniform border stroke
+ * @param name         node name used in snapshots and layout graph paths
+ * @param children     child semantic nodes in source order
+ * @param spacing      vertical spacing between children
+ * @param padding      inner padding
+ * @param margin       outer margin
+ * @param fillColor    optional background fill
+ * @param stroke       optional uniform border stroke
  * @param cornerRadius optional render-only corner radius
- * @param borders optional per-side border strokes overriding the uniform stroke
+ * @param borders      optional per-side border strokes overriding the uniform stroke
  * @param keepTogether when {@code true}, the section relocates whole to the next
  *                     page instead of orphaning its leading children when it does
  *                     not fit in the remaining page space (and fits on a fresh page)
- *
  * @author Artem Demchyshyn
  */
 public record SectionNode(
@@ -59,15 +54,15 @@ public record SectionNode(
      * Backward-compatible constructor without the keep-together flag (defaults to
      * normal flow).
      *
-     * @param name node name
-     * @param children child nodes
-     * @param spacing vertical spacing
-     * @param padding inner padding
-     * @param margin outer margin
-     * @param fillColor optional background fill
-     * @param stroke optional uniform border stroke
+     * @param name         node name
+     * @param children     child nodes
+     * @param spacing      vertical spacing
+     * @param padding      inner padding
+     * @param margin       outer margin
+     * @param fillColor    optional background fill
+     * @param stroke       optional uniform border stroke
      * @param cornerRadius optional render-only corner radius
-     * @param borders optional per-side borders
+     * @param borders      optional per-side borders
      */
     public SectionNode(String name,
                        List<DocumentNode> children,
@@ -84,13 +79,13 @@ public record SectionNode(
     /**
      * Creates a vertical semantic section without per-side borders.
      *
-     * @param name node name used in snapshots and layout graph paths
-     * @param children child semantic nodes in source order
-     * @param spacing vertical spacing between children
-     * @param padding inner padding
-     * @param margin outer margin
-     * @param fillColor optional background fill
-     * @param stroke optional uniform border stroke
+     * @param name         node name used in snapshots and layout graph paths
+     * @param children     child semantic nodes in source order
+     * @param spacing      vertical spacing between children
+     * @param padding      inner padding
+     * @param margin       outer margin
+     * @param fillColor    optional background fill
+     * @param stroke       optional uniform border stroke
      * @param cornerRadius optional render-only corner radius
      */
     public SectionNode(String name,
@@ -107,13 +102,13 @@ public record SectionNode(
     /**
      * Creates a vertical semantic section with square corners and no per-side borders.
      *
-     * @param name node name used in snapshots and layout graph paths
-     * @param children child semantic nodes in source order
-     * @param spacing vertical spacing between children
-     * @param padding inner padding
-     * @param margin outer margin
+     * @param name      node name used in snapshots and layout graph paths
+     * @param children  child semantic nodes in source order
+     * @param spacing   vertical spacing between children
+     * @param padding   inner padding
+     * @param margin    outer margin
      * @param fillColor optional background fill
-     * @param stroke optional uniform border stroke
+     * @param stroke    optional uniform border stroke
      */
     public SectionNode(String name,
                        List<DocumentNode> children,

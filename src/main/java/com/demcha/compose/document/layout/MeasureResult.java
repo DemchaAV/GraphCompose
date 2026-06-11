@@ -3,7 +3,7 @@ package com.demcha.compose.document.layout;
 /**
  * Measured node box size excluding margin.
  *
- * @param width measured content width
+ * @param width  measured content width
  * @param height measured content height
  */
 public record MeasureResult(double width, double height) {

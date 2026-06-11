@@ -22,14 +22,15 @@ package com.demcha.compose.document.style;
  * </ul>
  *
  * @param rotationDegrees clockwise rotation in degrees
- * @param scaleX horizontal scale factor (must be finite, non-zero)
- * @param scaleY vertical scale factor (must be finite, non-zero)
- *
+ * @param scaleX          horizontal scale factor (must be finite, non-zero)
+ * @param scaleY          vertical scale factor (must be finite, non-zero)
  * @author Artem Demchyshyn
  */
 public record DocumentTransform(double rotationDegrees, double scaleX, double scaleY) {
 
-    /** Identity transform — no rotation, no scaling. */
+    /**
+     * Identity transform — no rotation, no scaling.
+     */
     public static final DocumentTransform NONE = new DocumentTransform(0.0, 1.0, 1.0);
 
     /**
@@ -108,8 +109,8 @@ public record DocumentTransform(double rotationDegrees, double scaleX, double sc
      * Reports whether this transform is the identity.
      *
      * @return {@code true} when the transform is the identity (no
-     *         rotation, no scaling); backends may skip CTM push/pop
-     *         when this is the case
+     * rotation, no scaling); backends may skip CTM push/pop
+     * when this is the case
      */
     public boolean isIdentity() {
         return rotationDegrees == 0.0 && scaleX == 1.0 && scaleY == 1.0;

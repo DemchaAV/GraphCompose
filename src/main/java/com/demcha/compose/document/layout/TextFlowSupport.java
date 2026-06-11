@@ -1,28 +1,7 @@
 package com.demcha.compose.document.layout;
 
-import com.demcha.compose.document.layout.payloads.ParagraphShapeSpan;
-import com.demcha.compose.document.layout.payloads.ResolvedShapeLayer;
-import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
-import com.demcha.compose.document.layout.payloads.ParagraphImageSpan;
-import com.demcha.compose.document.layout.payloads.ParagraphLine;
-import com.demcha.compose.document.layout.payloads.ParagraphSpan;
-import com.demcha.compose.document.layout.payloads.ParagraphTextSpan;
-import com.demcha.compose.document.layout.payloads.PreparedListItemLayout;
-import com.demcha.compose.document.layout.payloads.PreparedListLayout;
-import com.demcha.compose.document.layout.payloads.PreparedParagraphLayout;
-import com.demcha.compose.document.node.DocumentLinkOptions;
-import com.demcha.compose.document.node.InlineShapeRun;
-import com.demcha.compose.document.node.ShapeLayer;
-import com.demcha.compose.document.node.InlineImageAlignment;
-import com.demcha.compose.document.node.InlineImageRun;
-import com.demcha.compose.document.node.InlineRun;
-import com.demcha.compose.document.node.InlineTextRun;
-import com.demcha.compose.document.node.ListItem;
-import com.demcha.compose.document.node.ListMarker;
-import com.demcha.compose.document.node.ListNode;
-import com.demcha.compose.document.node.ParagraphNode;
-import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.document.node.TextVerticalAlign;
+import com.demcha.compose.document.layout.payloads.*;
+import com.demcha.compose.document.node.*;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextAutoSize;
 import com.demcha.compose.document.style.DocumentTextIndent;
@@ -40,11 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static com.demcha.compose.document.layout.DocumentNodeAdapters.toImageData;
-import static com.demcha.compose.document.layout.DocumentNodeAdapters.toIndentStrategy;
-import static com.demcha.compose.document.layout.DocumentNodeAdapters.toPadding;
-import static com.demcha.compose.document.layout.DocumentNodeAdapters.toStroke;
-import static com.demcha.compose.document.layout.DocumentNodeAdapters.toTextStyle;
+import static com.demcha.compose.document.layout.DocumentNodeAdapters.*;
 import static com.demcha.compose.document.layout.NodeDefinitionSupport.EPS;
 
 /**
@@ -58,19 +33,29 @@ import static com.demcha.compose.document.layout.NodeDefinitionSupport.EPS;
  * @author Artem Demchyshyn
  */
 public final class TextFlowSupport {
-    private TextFlowSupport() {
-    }
+    /**
+     * Indent unit added per nesting depth in a nested list. Two
+     * non-breaking spaces visually match two regular spaces but are
+     * preserved by paragraph wrapping (which strips leading
+     * {@link Character#isWhitespace whitespace} from the first token
+     * of each line). Switching to NBSP keeps depth indentation intact
+     * without rewriting the wrap pipeline.
+     */
+    private static final String NESTED_LIST_INDENT_UNIT = "  ";
 
     // ------------------------------------------------------------------
     // Paragraph entry points
     // ------------------------------------------------------------------
 
+    private TextFlowSupport() {
+    }
+
     /**
      * Measures a paragraph node and wraps it into a prepared leaf carrying its
      * visual line layout.
      *
-     * @param node paragraph node to prepare
-     * @param ctx prepare-phase context
+     * @param node        paragraph node to prepare
+     * @param ctx         prepare-phase context
      * @param constraints box constraints for measurement
      * @return prepared paragraph node with its line layout
      */
@@ -94,7 +79,7 @@ public final class TextFlowSupport {
      * remaining height.
      *
      * @param prepared prepared paragraph node
-     * @param request split request carrying the remaining height
+     * @param request  split request carrying the remaining height
      * @return the head/tail split result
      */
     public static PreparedSplitResult<ParagraphNode> splitParagraph(PreparedNode<ParagraphNode> prepared,
@@ -120,10 +105,14 @@ public final class TextFlowSupport {
         return new PreparedSplitResult<>(head, tail);
     }
 
+    // ------------------------------------------------------------------
+    // List entry points
+    // ------------------------------------------------------------------
+
     /**
      * Emits the render fragment for a prepared paragraph.
      *
-     * @param prepared prepared paragraph node
+     * @param prepared  prepared paragraph node
      * @param placement resolved fragment placement
      * @return renderer-facing paragraph fragments
      */
@@ -153,16 +142,12 @@ public final class TextFlowSupport {
                 payload));
     }
 
-    // ------------------------------------------------------------------
-    // List entry points
-    // ------------------------------------------------------------------
-
     /**
      * Measures a list node and wraps it into a prepared leaf carrying its
      * per-item paragraph layout, flattening nested items first when present.
      *
-     * @param node list node to prepare
-     * @param ctx prepare-phase context
+     * @param node        list node to prepare
+     * @param ctx         prepare-phase context
      * @param constraints box constraints for measurement
      * @return prepared list node with its item layout
      */
@@ -179,16 +164,6 @@ public final class TextFlowSupport {
                 new MeasureResult(layout.resolvedWidth(), layout.totalHeight() + effective.padding().vertical()),
                 layout);
     }
-
-    /**
-     * Indent unit added per nesting depth in a nested list. Two
-     * non-breaking spaces visually match two regular spaces but are
-     * preserved by paragraph wrapping (which strips leading
-     * {@link Character#isWhitespace whitespace} from the first token
-     * of each line). Switching to NBSP keeps depth indentation intact
-     * without rewriting the wrap pipeline.
-     */
-    private static final String NESTED_LIST_INDENT_UNIT = "  ";
 
     /**
      * Synthesizes a flat {@link ListNode} from a nested one by walking
@@ -254,7 +229,7 @@ public final class TextFlowSupport {
      * splitting the first item's lines when no whole item fits.
      *
      * @param prepared prepared list node
-     * @param request split request carrying the remaining height
+     * @param request  split request carrying the remaining height
      * @return the head/tail split result
      */
     public static PreparedSplitResult<ListNode> splitList(PreparedNode<ListNode> prepared,
@@ -318,7 +293,7 @@ public final class TextFlowSupport {
      * Emits one paragraph fragment per list item so items paginate
      * independently.
      *
-     * @param prepared prepared list node
+     * @param prepared  prepared list node
      * @param placement resolved fragment placement
      * @return renderer-facing per-item fragments
      */
@@ -506,7 +481,7 @@ public final class TextFlowSupport {
                 .max()
                 .orElse(0.0);
         double totalHeight = source.lineHeight() * lines.size()
-                + Math.max(0, lines.size() - 1) * source.lineGap();
+                             + Math.max(0, lines.size() - 1) * source.lineGap();
         PreparedParagraphLayout layout = new PreparedParagraphLayout(
                 logicalLines,
                 lines,
@@ -641,9 +616,9 @@ public final class TextFlowSupport {
     }
 
     private static PreparedParagraphLayout prepareParagraphLayout(ParagraphNode node,
-                                                                 double innerWidth,
-                                                                 TextMeasurementSystem measurement,
-                                                                 boolean markdownEnabled) {
+                                                                  double innerWidth,
+                                                                  TextMeasurementSystem measurement,
+                                                                  boolean markdownEnabled) {
         List<String> logicalLines = sanitizeLogicalLines(node.text());
         boolean useMarkdownLayout = markdownEnabled && logicalLines.stream().anyMatch(TextFlowSupport::containsMarkdownSyntax);
         TextStyle textStyle = node.autoSize() != null
@@ -653,33 +628,33 @@ public final class TextFlowSupport {
         TextMeasurementSystem.LineMetrics lineMetrics = measurement.lineMetrics(textStyle);
         List<ParagraphLine> visualLines = !node.inlineRuns().isEmpty()
                 ? wrapInlineParagraph(
-                        node.inlineRuns(),
-                        textStyle,
-                        lineMetrics,
-                        Math.max(0.0, innerWidth),
-                        node.bulletOffset(),
-                        indentStrategy,
-                        measurement)
+                node.inlineRuns(),
+                textStyle,
+                lineMetrics,
+                Math.max(0.0, innerWidth),
+                node.bulletOffset(),
+                indentStrategy,
+                measurement)
                 : useMarkdownLayout
-                ? wrapMarkdownParagraph(
+                  ? wrapMarkdownParagraph(
+                logicalLines,
+                textStyle,
+                lineMetrics,
+                Math.max(0.0, innerWidth),
+                node.bulletOffset(),
+                indentStrategy,
+                measurement)
+                  : toParagraphLines(
+                wrapParagraph(
                         logicalLines,
                         textStyle,
-                        lineMetrics,
                         Math.max(0.0, innerWidth),
                         node.bulletOffset(),
                         indentStrategy,
-                        measurement)
-                : toParagraphLines(
-                        wrapParagraph(
-                                logicalLines,
-                                textStyle,
-                                Math.max(0.0, innerWidth),
-                                node.bulletOffset(),
-                                indentStrategy,
-                                measurement),
-                        textStyle,
-                        lineMetrics,
-                        measurement);
+                        measurement),
+                textStyle,
+                lineMetrics,
+                measurement);
         if (visualLines.isEmpty()) {
             visualLines = List.of(emptyParagraphLine(lineMetrics));
         }
@@ -1046,8 +1021,8 @@ public final class TextFlowSupport {
             return false;
         }
         return value.indexOf('*') >= 0
-                || value.indexOf('_') >= 0
-                || value.indexOf('`') >= 0;
+               || value.indexOf('_') >= 0
+               || value.indexOf('`') >= 0;
     }
 
     private static List<ParagraphLine> wrapMarkdownParagraph(List<String> logicalLines,
@@ -1418,7 +1393,7 @@ public final class TextFlowSupport {
                 continue;
             }
             if (candidate instanceof InlineTextToken textToken
-                    && (textToken.text() == null || textToken.text().isBlank())) {
+                && (textToken.text() == null || textToken.text().isBlank())) {
                 end--;
                 continue;
             }
@@ -1597,10 +1572,14 @@ public final class TextFlowSupport {
     // Inline tokens + indent spec
     // ------------------------------------------------------------------
 
+    private sealed interface InlineLayoutToken permits InlineTextToken, InlineImageToken, InlineShapeToken {
+        double width();
+    }
+
     private record ParagraphIndentSpec(String firstLinePrefix, String continuationPrefix) {
         private static ParagraphIndentSpec from(String bulletOffset,
-                                               TextStyle style,
-                                               TextMeasurementSystem measurement) {
+                                                TextStyle style,
+                                                TextMeasurementSystem measurement) {
             String raw = bulletOffset == null ? "" : bulletOffset;
             boolean hasVisibleChars = raw.chars().anyMatch(ch -> !Character.isWhitespace(ch));
             if (hasVisibleChars) {
@@ -1611,10 +1590,6 @@ public final class TextFlowSupport {
             }
             return new ParagraphIndentSpec(raw, raw);
         }
-    }
-
-    private sealed interface InlineLayoutToken permits InlineTextToken, InlineImageToken, InlineShapeToken {
-        double width();
     }
 
     private record InlineTextToken(

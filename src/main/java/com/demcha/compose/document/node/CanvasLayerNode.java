@@ -31,16 +31,15 @@ import java.util.Objects;
  * page. Children must therefore stay short enough to live on a
  * single page; oversized canvases throw at layout time.</p>
  *
- * @param name canvas name used in snapshots and layout graph paths
- * @param width canvas inner width in points (must be {@code > 0})
- * @param height canvas inner height in points (must be {@code > 0})
+ * @param name       canvas name used in snapshots and layout graph paths
+ * @param width      canvas inner width in points (must be {@code > 0})
+ * @param height     canvas inner height in points (must be {@code > 0})
  * @param placements per-child {@link CanvasChild} entries (node + position)
  * @param clipPolicy clipping mode applied to children that overflow
  *                   the canvas's bounding box
- * @param padding inner padding between the canvas's outer rectangle
- *                and the placement coordinate space
- * @param margin outer margin around the canvas
- *
+ * @param padding    inner padding between the canvas's outer rectangle
+ *                   and the placement coordinate space
+ * @param margin     outer margin around the canvas
  * @author Artem Demchyshyn
  */
 public record CanvasLayerNode(

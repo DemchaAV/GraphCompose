@@ -48,7 +48,7 @@ public final class SkillLineRenderer {
                 .margin(margin)
                 .rich(rich -> {
                     rich.style(MarkdownInline.plainText(group.category())
-                            + labelSuffix, labelStyle);
+                               + labelSuffix, labelStyle);
                     rich.style(String.join(", ", skills), valueStyle);
                 }));
     }

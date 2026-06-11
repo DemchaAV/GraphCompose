@@ -5,11 +5,11 @@ import com.demcha.compose.document.style.DocumentInsets;
 /**
  * Invisible fixed-size semantic spacer.
  *
- * @param name node name used in snapshots and layout graph paths
- * @param width spacer width contribution
- * @param height spacer height contribution
+ * @param name    node name used in snapshots and layout graph paths
+ * @param width   spacer width contribution
+ * @param height  spacer height contribution
  * @param padding inner padding
- * @param margin outer margin
+ * @param margin  outer margin
  * @author Artem Demchyshyn
  */
 public record SpacerNode(

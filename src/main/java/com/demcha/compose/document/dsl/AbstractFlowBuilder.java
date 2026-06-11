@@ -5,17 +5,11 @@ import com.demcha.compose.document.chart.ChartStyle;
 import com.demcha.compose.document.dsl.internal.BuilderSupport;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.ChartNode;
-import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.DocumentNode;
-import com.demcha.compose.document.style.DocumentBorders;
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentCornerRadius;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.style.*;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -29,8 +23,8 @@ import java.util.function.Consumer;
  * @since 1.0.0
  */
 public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N extends DocumentNode> {
-    private String name = "";
     private final List<DocumentNode> children = new ArrayList<>();
+    private String name = "";
     private double spacing = 0.0;
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
@@ -85,10 +79,10 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     /**
      * Sets flow padding from explicit side values.
      *
-     * @param top top padding
-     * @param right right padding
+     * @param top    top padding
+     * @param right  right padding
      * @param bottom bottom padding
-     * @param left left padding
+     * @param left   left padding
      * @return this builder
      */
     public T padding(float top, float right, float bottom, float left) {
@@ -109,10 +103,10 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     /**
      * Sets flow margin from explicit side values.
      *
-     * @param top top margin
-     * @param right right margin
+     * @param top    top margin
+     * @param right  right margin
      * @param bottom bottom margin
-     * @param left left margin
+     * @param left   left margin
      * @return this builder
      */
     public T margin(float top, float right, float bottom, float left) {
@@ -210,8 +204,8 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      * padding. Pass {@code 0.0} for {@code radius} or {@code padding} to skip
      * either step.</p>
      *
-     * @param color panel fill color
-     * @param radius corner radius in points
+     * @param color   panel fill color
+     * @param radius  corner radius in points
      * @param padding inner padding in points (applied uniformly on all sides)
      * @return this builder
      */
@@ -232,12 +226,12 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      * side — e.g. a hero block that sits flush against a left accent
      * strip and only rounds its right corners.
      *
-     * @param color panel fill color
+     * @param color        panel fill color
      * @param cornerRadius per-corner radii (use the
      *                     {@link DocumentCornerRadius#right(double)} /
      *                     {@code .left} / {@code .top} / {@code .bottom}
      *                     factories for asymmetric layouts)
-     * @param padding inner padding in points (applied uniformly on all sides)
+     * @param padding      inner padding in points (applied uniformly on all sides)
      * @return this builder
      */
     public T softPanel(DocumentColor color, DocumentCornerRadius cornerRadius, double padding) {
@@ -268,10 +262,10 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      * {@code softPanel(color, radius, padding).stroke(stroke)} — a rounded,
      * padded fill with a thin outline, without a separate wrapping node.
      *
-     * @param color panel fill color
-     * @param radius corner radius in points
+     * @param color   panel fill color
+     * @param radius  corner radius in points
      * @param padding inner padding in points (applied uniformly on all sides)
-     * @param stroke border stroke, or {@code null} for no border
+     * @param stroke  border stroke, or {@code null} for no border
      * @return this builder
      * @since 1.7.0
      */
@@ -285,10 +279,10 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      * to the same node. Equivalent to
      * {@code softPanel(color, cornerRadius, padding).stroke(stroke)}.
      *
-     * @param color panel fill color
+     * @param color        panel fill color
      * @param cornerRadius per-corner radii (see {@link DocumentCornerRadius})
-     * @param padding inner padding in points (applied uniformly on all sides)
-     * @param stroke border stroke, or {@code null} for no border
+     * @param padding      inner padding in points (applied uniformly on all sides)
+     * @param stroke       border stroke, or {@code null} for no border
      * @return this builder
      * @since 1.7.0
      */
@@ -378,7 +372,7 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     /**
      * Adds a plain paragraph with a public canonical text style.
      *
-     * @param text paragraph text
+     * @param text      paragraph text
      * @param textStyle paragraph text style
      * @return this builder
      */
@@ -412,7 +406,7 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     /**
      * Alias for {@link #addParagraph(String, DocumentTextStyle)}.
      *
-     * @param text paragraph text
+     * @param text      paragraph text
      * @param textStyle paragraph text style
      * @return this builder
      */
@@ -464,8 +458,8 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      * Adds an image with explicit dimensions — shortcut for the common
      * {@code addImage(i -> i.source(data).size(w, h))} call.
      *
-     * @param data image source bytes/path/url
-     * @param width image width in points
+     * @param data   image source bytes/path/url
+     * @param width  image width in points
      * @param height image height in points
      * @return this builder
      */
@@ -487,8 +481,8 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      * Adds a filled shape with explicit dimensions — shortcut for the common
      * {@code addShape(s -> s.size(w, h).fillColor(c))} call.
      *
-     * @param width shape width in points
-     * @param height shape height in points
+     * @param width     shape width in points
+     * @param height    shape height in points
      * @param fillColor canonical fill color
      * @return this builder
      */
@@ -509,7 +503,7 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     /**
      * Adds an invisible fixed-size spacer.
      *
-     * @param width spacer width in points
+     * @param width  spacer width in points
      * @param height spacer height in points
      * @return this builder
      */
@@ -541,7 +535,7 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      * Adds a filled circle ellipse — shortcut for
      * {@code addEllipse(e -> e.circle(diameter).fillColor(fillColor))}.
      *
-     * @param diameter circle diameter in points
+     * @param diameter  circle diameter in points
      * @param fillColor canonical fill color
      * @return this builder
      */
@@ -553,8 +547,8 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      * Adds a filled ellipse with explicit width and height — shortcut for
      * {@code addEllipse(e -> e.size(w, h).fillColor(fillColor))}.
      *
-     * @param width ellipse width in points
-     * @param height ellipse height in points
+     * @param width     ellipse width in points
+     * @param height    ellipse height in points
      * @param fillColor canonical fill color
      * @return this builder
      */
@@ -576,7 +570,7 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      * Adds a filled circle — shortcut for
      * {@code addCircle(diameter, e -> e.fillColor(fillColor))}.
      *
-     * @param diameter circle diameter in points
+     * @param diameter  circle diameter in points
      * @param fillColor canonical fill color
      * @return this builder
      */
@@ -588,7 +582,7 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      * Adds a circle with equal width and height.
      *
      * @param diameter circle diameter in points
-     * @param spec optional additional ellipse builder callback
+     * @param spec     optional additional ellipse builder callback
      * @return this builder
      */
     public T addCircle(double diameter, Consumer<EllipseBuilder> spec) {
@@ -623,9 +617,9 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      *     .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE));
      * }</pre>
      *
-     * @param width canvas width in points
+     * @param width  canvas width in points
      * @param height canvas height in points
-     * @param spec canvas builder callback
+     * @param spec   canvas builder callback
      * @return this builder
      */
     public T addCanvas(double width, double height, Consumer<CanvasLayerBuilder> spec) {
@@ -641,9 +635,9 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      * section.addCircle(60, brand, c -> c.center(label));
      * }</pre>
      *
-     * @param diameter circle diameter in points
+     * @param diameter  circle diameter in points
      * @param fillColor canonical fill colour
-     * @param spec callback that appends layers
+     * @param spec      callback that appends layers
      * @return this builder
      */
     public T addCircle(double diameter, DocumentColor fillColor, Consumer<ShapeContainerBuilder> spec) {
@@ -657,10 +651,10 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      * Adds an ellipse {@link com.demcha.compose.document.node.ShapeContainerNode}
      * with the supplied fill, then defers to a callback for layers.
      *
-     * @param width ellipse outer width in points
-     * @param height ellipse outer height in points
+     * @param width     ellipse outer width in points
+     * @param height    ellipse outer height in points
      * @param fillColor canonical fill colour
-     * @param spec callback that appends layers
+     * @param spec      callback that appends layers
      * @return this builder
      */
     public T addEllipse(double width, double height, DocumentColor fillColor, Consumer<ShapeContainerBuilder> spec) {
@@ -700,7 +694,7 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     /**
      * Adds a chart with an explicit style layered over the chart theme.
      *
-     * @param spec structural chart description (kind, data, axes, legend)
+     * @param spec  structural chart description (kind, data, axes, legend)
      * @param style visual style overrides; {@code null} inherits the theme
      * @return this builder
      * @since 1.8.0
@@ -781,7 +775,7 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      * text; the link target comes from the supplied URI.</p>
      *
      * @param text visible link text
-     * @param uri target URI
+     * @param uri  target URI
      * @return this builder
      */
     public T addLink(String text, String uri) {
@@ -793,7 +787,7 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      * Adds a paragraph that contains a single clickable link span configured
      * with explicit link options.
      *
-     * @param text visible link text
+     * @param text    visible link text
      * @param options link target metadata
      * @return this builder
      */
@@ -869,7 +863,7 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      * paginate as one unit; call {@code headingBar(...)} on the page flow itself
      * when the body must break across pages independently of its heading.</p>
      *
-     * @param text the heading label text
+     * @param text       the heading label text
      * @param customizer callback to tune the bar look (fill, corners, padding,
      *                   margin, text style, alignment, optional outline); may be
      *                   {@code null} for the default light-grey band
@@ -919,7 +913,7 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      * Adds a titled semantic module.
      *
      * @param title visible module title
-     * @param spec callback that configures module body blocks
+     * @param spec  callback that configures module body blocks
      * @return this builder
      */
     public T module(String title, Consumer<ModuleBuilder> spec) {
@@ -940,7 +934,7 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      * Alias for {@link #module(String, Consumer)}.
      *
      * @param title visible module title
-     * @param spec callback that configures module body blocks
+     * @param spec  callback that configures module body blocks
      * @return this builder
      */
     public T addModule(String title, Consumer<ModuleBuilder> spec) {

@@ -34,11 +34,11 @@ public final class PdfDocumentPostProcessor {
      * Applies canonical document-level PDF options to an already rendered
      * PDFBox document in place.
      *
-     * @param document target PDFBox document
-     * @param canvas semantic layout canvas used to derive content margins
-     * @param metadataOptions canonical metadata options, or {@code null}
-     * @param watermarkOptions canonical watermark options, or {@code null}
-     * @param protectionOptions canonical protection options, or {@code null}
+     * @param document            target PDFBox document
+     * @param canvas              semantic layout canvas used to derive content margins
+     * @param metadataOptions     canonical metadata options, or {@code null}
+     * @param watermarkOptions    canonical watermark options, or {@code null}
+     * @param protectionOptions   canonical protection options, or {@code null}
      * @param headerFooterOptions repeating header/footer options
      * @throws IOException if PDFBox post-processing fails
      */
@@ -94,11 +94,11 @@ public final class PdfDocumentPostProcessor {
      * Applies canonical document-level PDF options to already rendered PDF bytes
      * and returns a new byte array.
      *
-     * @param pdfBytes rendered PDF bytes
-     * @param canvas semantic layout canvas used to derive content margins
-     * @param metadataOptions canonical metadata options, or {@code null}
-     * @param watermarkOptions canonical watermark options, or {@code null}
-     * @param protectionOptions canonical protection options, or {@code null}
+     * @param pdfBytes            rendered PDF bytes
+     * @param canvas              semantic layout canvas used to derive content margins
+     * @param metadataOptions     canonical metadata options, or {@code null}
+     * @param watermarkOptions    canonical watermark options, or {@code null}
+     * @param protectionOptions   canonical protection options, or {@code null}
      * @param headerFooterOptions repeating header/footer options
      * @return post-processed PDF bytes
      * @throws IOException if the PDF cannot be loaded or post-processed
@@ -121,9 +121,9 @@ public final class PdfDocumentPostProcessor {
     /**
      * Returns {@code true} when any document-level post-processing option is set.
      *
-     * @param metadataOptions canonical metadata options, or {@code null}
-     * @param watermarkOptions canonical watermark options, or {@code null}
-     * @param protectionOptions canonical protection options, or {@code null}
+     * @param metadataOptions     canonical metadata options, or {@code null}
+     * @param watermarkOptions    canonical watermark options, or {@code null}
+     * @param protectionOptions   canonical protection options, or {@code null}
      * @param headerFooterOptions repeating header/footer options
      * @return {@code true} when post-processing work is required
      */
@@ -132,9 +132,9 @@ public final class PdfDocumentPostProcessor {
                                             PdfProtectionOptions protectionOptions,
                                             Collection<PdfHeaderFooterOptions> headerFooterOptions) {
         return metadataOptions != null
-                || watermarkOptions != null
-                || protectionOptions != null
-                || (headerFooterOptions != null && !headerFooterOptions.isEmpty());
+               || watermarkOptions != null
+               || protectionOptions != null
+               || (headerFooterOptions != null && !headerFooterOptions.isEmpty());
     }
 
     private static void applyProtection(PDDocument document, PdfProtectionOptions options) throws IOException {

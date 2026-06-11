@@ -6,7 +6,7 @@ import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 
-import java.awt.Color;
+import java.awt.*;
 
 /**
  * PDF payload for a resolved shape fragment.
@@ -22,13 +22,13 @@ import java.awt.Color;
  * {@link DocumentPaint.Radial} and backends without shading support fall
  * back to its {@link DocumentPaint#primaryColor()}.</p>
  *
- * @param fillColor optional shape fill color
- * @param stroke optional shape stroke
- * @param cornerRadius per-corner radii in points
- * @param linkOptions optional fragment-level link metadata
+ * @param fillColor       optional shape fill color
+ * @param stroke          optional shape stroke
+ * @param cornerRadius    per-corner radii in points
+ * @param linkOptions     optional fragment-level link metadata
  * @param bookmarkOptions optional fragment-level bookmark metadata
- * @param sideBorders optional per-side border strokes
- * @param fillPaint optional gradient fill; {@code null} for solid fills
+ * @param sideBorders     optional per-side border strokes
+ * @param fillPaint       optional gradient fill; {@code null} for solid fills
  */
 public record ShapeFragmentPayload(
         Color fillColor,
@@ -51,12 +51,12 @@ public record ShapeFragmentPayload(
     /**
      * Backwards-compatible constructor without a gradient fill.
      *
-     * @param fillColor optional shape fill color
-     * @param stroke optional shape stroke
-     * @param cornerRadius per-corner radii in points
-     * @param linkOptions optional fragment-level link metadata
+     * @param fillColor       optional shape fill color
+     * @param stroke          optional shape stroke
+     * @param cornerRadius    per-corner radii in points
+     * @param linkOptions     optional fragment-level link metadata
      * @param bookmarkOptions optional fragment-level bookmark metadata
-     * @param sideBorders optional per-side border strokes
+     * @param sideBorders     optional per-side border strokes
      */
     public ShapeFragmentPayload(Color fillColor,
                                 Stroke stroke,
@@ -71,12 +71,12 @@ public record ShapeFragmentPayload(
      * Backwards-compatible constructor that accepts a single uniform
      * radius (pre-Phase E.1.1 wiring) and applies it to every corner.
      *
-     * @param fillColor optional shape fill color
-     * @param stroke optional shape stroke
-     * @param cornerRadius uniform corner radius in points
-     * @param linkOptions optional fragment-level link metadata
+     * @param fillColor       optional shape fill color
+     * @param stroke          optional shape stroke
+     * @param cornerRadius    uniform corner radius in points
+     * @param linkOptions     optional fragment-level link metadata
      * @param bookmarkOptions optional fragment-level bookmark metadata
-     * @param sideBorders optional per-side border strokes
+     * @param sideBorders     optional per-side border strokes
      */
     public ShapeFragmentPayload(Color fillColor,
                                 Stroke stroke,
@@ -94,10 +94,10 @@ public record ShapeFragmentPayload(
     /**
      * Backwards-compatible constructor without per-side borders.
      *
-     * @param fillColor optional shape fill color
-     * @param stroke optional shape stroke
-     * @param cornerRadius uniform corner radius in points
-     * @param linkOptions optional fragment-level link metadata
+     * @param fillColor       optional shape fill color
+     * @param stroke          optional shape stroke
+     * @param cornerRadius    uniform corner radius in points
+     * @param linkOptions     optional fragment-level link metadata
      * @param bookmarkOptions optional fragment-level bookmark metadata
      */
     public ShapeFragmentPayload(Color fillColor,

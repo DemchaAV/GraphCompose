@@ -29,7 +29,7 @@ public sealed interface CvSection
      * Banner heading shown above this section's body.
      *
      * @return banner heading shown above the body (non-blank by
-     *         construction)
+     * construction)
      */
     String title();
 }

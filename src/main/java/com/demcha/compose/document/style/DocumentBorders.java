@@ -9,15 +9,16 @@ package com.demcha.compose.document.style;
  * bottom-only divider under a row) without importing internal engine shape
  * components.</p>
  *
- * @param top stroke applied to the top side, or {@code null} for none
- * @param right stroke applied to the right side, or {@code null} for none
+ * @param top    stroke applied to the top side, or {@code null} for none
+ * @param right  stroke applied to the right side, or {@code null} for none
  * @param bottom stroke applied to the bottom side, or {@code null} for none
- * @param left stroke applied to the left side, or {@code null} for none
- *
+ * @param left   stroke applied to the left side, or {@code null} for none
  * @author Artem Demchyshyn
  */
 public record DocumentBorders(DocumentStroke top, DocumentStroke right, DocumentStroke bottom, DocumentStroke left) {
-    /** All-sides empty borders. */
+    /**
+     * All-sides empty borders.
+     */
     public static final DocumentBorders NONE = new DocumentBorders(null, null, null, null);
 
     /**

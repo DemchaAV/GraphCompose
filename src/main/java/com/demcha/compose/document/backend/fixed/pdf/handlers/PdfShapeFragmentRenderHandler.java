@@ -4,7 +4,6 @@ import com.demcha.compose.document.backend.fixed.pdf.PdfFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
-import com.demcha.compose.document.layout.payloads.SideBorders;
 import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -25,6 +24,51 @@ public final class PdfShapeFragmentRenderHandler
     public PdfShapeFragmentRenderHandler() {
     }
 
+    private static void drawSideBorder(PDPageContentStream stream,
+                                       Stroke side,
+                                       float x1, float y1, float x2, float y2) throws IOException {
+        if (side == null || side.strokeColor() == null || side.width() <= 0) {
+            return;
+        }
+        stream.saveGraphicsState();
+        try {
+            stream.setStrokingColor(side.strokeColor().color());
+            stream.setLineWidth((float) side.width());
+            stream.moveTo(x1, y1);
+            stream.lineTo(x2, y2);
+            stream.stroke();
+        } finally {
+            stream.restoreGraphicsState();
+        }
+    }
+
+    private static float clampCornerRadius(double raw, float maxAllowed) {
+        if (raw <= 0.0 || Double.isNaN(raw)) {
+            return 0f;
+        }
+        float capped = (float) raw;
+        return capped > maxAllowed ? maxAllowed : capped;
+    }
+
+    /**
+     * Draws a rectangle outline whose four corners may have independent
+     * radii. Each radius gets its own Bezier arc; a zero radius keeps a
+     * sharp 90° corner (no arc, just a line into the corner). PDF y
+     * grows up, so {@code (x, y)} is the bottom-left of the rectangle.
+     */
+    static void drawRoundedRectangle(PDPageContentStream stream,
+                                     float x,
+                                     float y,
+                                     float width,
+                                     float height,
+                                     float topLeft,
+                                     float topRight,
+                                     float bottomRight,
+                                     float bottomLeft) throws IOException {
+        PdfShapeGeometry.roundedRectPath(stream, x, y, width, height,
+                topLeft, topRight, bottomRight, bottomLeft);
+    }
+
     @Override
     public Class<ShapeFragmentPayload> payloadType() {
         return ShapeFragmentPayload.class;
@@ -41,8 +85,8 @@ public final class PdfShapeFragmentRenderHandler
         boolean hasFill = payload.fillColor() != null;
         boolean hasGradient = payload.fillPaint() != null;
         boolean hasStroke = payload.stroke() != null
-                && payload.stroke().strokeColor() != null
-                && payload.stroke().width() > 0;
+                            && payload.stroke().strokeColor() != null
+                            && payload.stroke().width() > 0;
         boolean hasSideBorders = payload.sideBorders() != null && payload.sideBorders().hasAny();
         if (!hasFill && !hasGradient && !hasStroke && !hasSideBorders) {
             return;
@@ -98,10 +142,10 @@ public final class PdfShapeFragmentRenderHandler
             if (hasSideBorders) {
                 // Per-side borders override the uniform rectangle stroke; rounded
                 // corners are not combined with mixed-side borders in v1.3.
-                drawSideBorder(stream, payload.sideBorders().top(),    x,         y + height, x + width, y + height);
-                drawSideBorder(stream, payload.sideBorders().right(),  x + width, y + height, x + width, y);
-                drawSideBorder(stream, payload.sideBorders().bottom(), x,         y,          x + width, y);
-                drawSideBorder(stream, payload.sideBorders().left(),   x,         y + height, x,         y);
+                drawSideBorder(stream, payload.sideBorders().top(), x, y + height, x + width, y + height);
+                drawSideBorder(stream, payload.sideBorders().right(), x + width, y + height, x + width, y);
+                drawSideBorder(stream, payload.sideBorders().bottom(), x, y, x + width, y);
+                drawSideBorder(stream, payload.sideBorders().left(), x, y + height, x, y);
             } else if (hasStroke) {
                 PdfAlphaSupport.applyStrokeAlpha(stream, payload.stroke().strokeColor().color());
                 stream.setStrokingColor(payload.stroke().strokeColor().color());
@@ -117,50 +161,5 @@ public final class PdfShapeFragmentRenderHandler
         } finally {
             stream.restoreGraphicsState();
         }
-    }
-
-    private static void drawSideBorder(PDPageContentStream stream,
-                                       Stroke side,
-                                       float x1, float y1, float x2, float y2) throws IOException {
-        if (side == null || side.strokeColor() == null || side.width() <= 0) {
-            return;
-        }
-        stream.saveGraphicsState();
-        try {
-            stream.setStrokingColor(side.strokeColor().color());
-            stream.setLineWidth((float) side.width());
-            stream.moveTo(x1, y1);
-            stream.lineTo(x2, y2);
-            stream.stroke();
-        } finally {
-            stream.restoreGraphicsState();
-        }
-    }
-
-    private static float clampCornerRadius(double raw, float maxAllowed) {
-        if (raw <= 0.0 || Double.isNaN(raw)) {
-            return 0f;
-        }
-        float capped = (float) raw;
-        return capped > maxAllowed ? maxAllowed : capped;
-    }
-
-    /**
-     * Draws a rectangle outline whose four corners may have independent
-     * radii. Each radius gets its own Bezier arc; a zero radius keeps a
-     * sharp 90° corner (no arc, just a line into the corner). PDF y
-     * grows up, so {@code (x, y)} is the bottom-left of the rectangle.
-     */
-    static void drawRoundedRectangle(PDPageContentStream stream,
-                                     float x,
-                                     float y,
-                                     float width,
-                                     float height,
-                                     float topLeft,
-                                     float topRight,
-                                     float bottomRight,
-                                     float bottomLeft) throws IOException {
-        PdfShapeGeometry.roundedRectPath(stream, x, y, width, height,
-                topLeft, topRight, bottomRight, bottomLeft);
     }
 }

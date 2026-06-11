@@ -1,34 +1,30 @@
 package com.demcha.compose.document.api;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
-import com.demcha.compose.document.backend.fixed.pdf.PdfMeasurementResources;
 import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
+import com.demcha.compose.document.backend.fixed.pdf.PdfMeasurementResources;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.document.backend.semantic.SemanticBackend;
-import com.demcha.compose.document.output.DocumentHeaderFooter;
-import com.demcha.compose.document.output.DocumentMetadata;
-import com.demcha.compose.document.output.DocumentOutputOptions;
-import com.demcha.compose.document.output.DocumentProtection;
-import com.demcha.compose.document.output.DocumentWatermark;
 import com.demcha.compose.document.debug.snapshot.LayoutGraphSnapshotExtractor;
 import com.demcha.compose.document.dsl.DocumentDsl;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.exceptions.DocumentRenderingException;
 import com.demcha.compose.document.layout.*;
-import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ContainerNode;
+import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.output.*;
 import com.demcha.compose.document.snapshot.LayoutSnapshot;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.font.FontFamilyDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.Color;
+import java.awt.*;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -70,32 +66,28 @@ public final class DocumentSession implements AutoCloseable {
     private final LayoutCompiler compiler;
     private final List<DocumentNode> roots = new ArrayList<>();
     private final List<FontFamilyDefinition> customFontFamilies = new ArrayList<>();
-
+    private final DocumentChromeOptions chromeOptions = new DocumentChromeOptions();
+    private final DocumentLayoutCache layoutCache = new DocumentLayoutCache();
+    private final DocumentRenderingFacade renderingFacade = new DocumentRenderingFacade(new RenderingContextImpl());
     private DocumentPageSize pageSize;
     private DocumentInsets margin;
     private LayoutCanvas canvas;
     private boolean markdown;
     private boolean guideLines;
     private List<PageBackgroundFill> pageBackgrounds = List.of();
-
-    private final DocumentChromeOptions chromeOptions = new DocumentChromeOptions();
-
     private PdfMeasurementResources measurementResources;
-
-    private final DocumentLayoutCache layoutCache = new DocumentLayoutCache();
-    private final DocumentRenderingFacade renderingFacade = new DocumentRenderingFacade(new RenderingContextImpl());
     private boolean closed;
 
 
     /**
      * Creates a canonical document session.
      *
-     * @param defaultOutputFile optional default PDF output path
-     * @param pageSize physical page size
-     * @param margin page margin
+     * @param defaultOutputFile  optional default PDF output path
+     * @param pageSize           physical page size
+     * @param margin             page margin
      * @param customFontFamilies document-local font families
-     * @param markdown whether markdown parsing is enabled
-     * @param guideLines whether PDF guide-line overlays are enabled
+     * @param markdown           whether markdown parsing is enabled
+     * @param guideLines         whether PDF guide-line overlays are enabled
      */
     public DocumentSession(Path defaultOutputFile,
                            DocumentPageSize pageSize,
@@ -125,6 +117,23 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
+     * Runs a PDF convenience body and unifies the cross-cutting checked-exception
+     * wrapping: any underlying {@link Exception} is rewrapped as
+     * {@link DocumentRenderingException} with the supplied {@code action} fragment.
+     * {@link RuntimeException}s pass through unchanged so existing callers that
+     * already catch them keep their semantics.
+     */
+    private static <R> R wrapPdfRendering(String action, PdfRenderingBody<R> body) throws DocumentRenderingException {
+        try {
+            return body.run();
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new DocumentRenderingException("Failed to " + action + ": " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * Returns the fluent semantic DSL facade bound to this session.
      *
      * @return a new DSL facade for authoring roots and semantic nodes
@@ -141,8 +150,8 @@ public final class DocumentSession implements AutoCloseable {
      * @return a new DSL facade for authoring roots and semantic nodes
      * @throws IllegalStateException if this session has already been closed
      * @deprecated since 1.6.0; prefer {@link #dsl()}. Carrying two names for
-     *             the same operation on the session facade adds maintenance
-     *             cost without clarity. Scheduled for removal in v2.0.
+     * the same operation on the session facade adds maintenance
+     * cost without clarity. Scheduled for removal in v2.0.
      */
     @Deprecated(since = "1.6.0", forRemoval = true)
     public DocumentDsl builder() {
@@ -256,7 +265,7 @@ public final class DocumentSession implements AutoCloseable {
     /**
      * Updates the physical page size from point dimensions.
      *
-     * @param width page width in points
+     * @param width  page width in points
      * @param height page height in points
      * @return this session
      */
@@ -408,7 +417,7 @@ public final class DocumentSession implements AutoCloseable {
      * @param options legacy PDF metadata options, or {@code null} to clear
      * @return this session
      * @deprecated since 1.6.0, removal in v2.0; prefer the canonical
-     *             {@link #metadata(DocumentMetadata)}.
+     * {@link #metadata(DocumentMetadata)}.
      */
     @Deprecated(since = "1.6.0", forRemoval = true)
     public DocumentSession metadata(PdfMetadataOptions options) {
@@ -435,7 +444,7 @@ public final class DocumentSession implements AutoCloseable {
      * @param options legacy PDF watermark options, or {@code null} to clear
      * @return this session
      * @deprecated since 1.6.0, removal in v2.0; prefer the canonical
-     *             {@link #watermark(DocumentWatermark)}.
+     * {@link #watermark(DocumentWatermark)}.
      */
     @Deprecated(since = "1.6.0", forRemoval = true)
     public DocumentSession watermark(PdfWatermarkOptions options) {
@@ -462,7 +471,7 @@ public final class DocumentSession implements AutoCloseable {
      * @param options legacy PDF protection options, or {@code null} to clear
      * @return this session
      * @deprecated since 1.6.0, removal in v2.0; prefer the canonical
-     *             {@link #protect(DocumentProtection)}.
+     * {@link #protect(DocumentProtection)}.
      */
     @Deprecated(since = "1.6.0", forRemoval = true)
     public DocumentSession protect(PdfProtectionOptions options) {
@@ -488,7 +497,7 @@ public final class DocumentSession implements AutoCloseable {
      * @param options legacy PDF header/footer options
      * @return this session
      * @deprecated since 1.6.0, removal in v2.0; prefer the canonical
-     *             {@link #header(DocumentHeaderFooter)}.
+     * {@link #header(DocumentHeaderFooter)}.
      */
     @Deprecated(since = "1.6.0", forRemoval = true)
     public DocumentSession header(PdfHeaderFooterOptions options) {
@@ -514,7 +523,7 @@ public final class DocumentSession implements AutoCloseable {
      * @param options legacy PDF header/footer options
      * @return this session
      * @deprecated since 1.6.0, removal in v2.0; prefer the canonical
-     *             {@link #footer(DocumentHeaderFooter)}.
+     * {@link #footer(DocumentHeaderFooter)}.
      */
     @Deprecated(since = "1.6.0", forRemoval = true)
     public DocumentSession footer(PdfHeaderFooterOptions options) {
@@ -557,7 +566,7 @@ public final class DocumentSession implements AutoCloseable {
      * mutations through {@code invalidate()} since v1.6.7).
      *
      * @param definition node definition implementation
-     * @param <E> semantic node type handled by the definition
+     * @param <E>        semantic node type handled by the definition
      * @return this session
      * @throws IllegalStateException if this session has already been closed
      */
@@ -712,7 +721,7 @@ public final class DocumentSession implements AutoCloseable {
      * Renders the current layout graph with the supplied fixed-layout backend.
      *
      * @param backend backend implementation that consumes the resolved layout graph
-     * @param <R> backend-specific result type
+     * @param <R>     backend-specific result type
      * @return backend render result
      * @throws Exception if rendering fails
      */
@@ -723,9 +732,9 @@ public final class DocumentSession implements AutoCloseable {
     /**
      * Renders the current layout graph with an explicit output target override.
      *
-     * @param backend backend implementation that consumes the resolved layout graph
+     * @param backend    backend implementation that consumes the resolved layout graph
      * @param outputFile optional output target for backends that persist to disk
-     * @param <R> backend-specific result type
+     * @param <R>        backend-specific result type
      * @return backend render result
      * @throws Exception if rendering fails
      */
@@ -737,7 +746,7 @@ public final class DocumentSession implements AutoCloseable {
      * Exports the semantic graph through a semantic backend using the default output file.
      *
      * @param backend semantic backend implementation
-     * @param <R> backend-specific result type
+     * @param <R>     backend-specific result type
      * @return export result
      * @throws Exception if export fails
      */
@@ -748,9 +757,9 @@ public final class DocumentSession implements AutoCloseable {
     /**
      * Exports the semantic graph through a semantic backend using an explicit output target.
      *
-     * @param backend semantic backend implementation
+     * @param backend    semantic backend implementation
      * @param outputFile optional output file override
-     * @param <R> backend-specific result type
+     * @param <R>        backend-specific result type
      * @return export result
      * @throws Exception if export fails
      */
@@ -793,7 +802,7 @@ public final class DocumentSession implements AutoCloseable {
     /**
      * Builds the current document into the default output file configured on the builder.
      *
-     * @throws IllegalStateException if no default output file was configured
+     * @throws IllegalStateException      if no default output file was configured
      * @throws DocumentRenderingException if PDF rendering fails
      */
     public void buildPdf() throws DocumentRenderingException {
@@ -910,23 +919,6 @@ public final class DocumentSession implements AutoCloseable {
 
     private long elapsedMillis(long startNanos) {
         return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
-    }
-
-    /**
-     * Runs a PDF convenience body and unifies the cross-cutting checked-exception
-     * wrapping: any underlying {@link Exception} is rewrapped as
-     * {@link DocumentRenderingException} with the supplied {@code action} fragment.
-     * {@link RuntimeException}s pass through unchanged so existing callers that
-     * already catch them keep their semantics.
-     */
-    private static <R> R wrapPdfRendering(String action, PdfRenderingBody<R> body) throws DocumentRenderingException {
-        try {
-            return body.run();
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new DocumentRenderingException("Failed to " + action + ": " + e.getMessage(), e);
-        }
     }
 
     @FunctionalInterface

@@ -49,7 +49,7 @@ public class EmailYaml {
     /**
      * Creates a mailto link with custom display text.
      *
-     * @param to target email address
+     * @param to          target email address
      * @param displayText visible link text
      * @return email payload
      */

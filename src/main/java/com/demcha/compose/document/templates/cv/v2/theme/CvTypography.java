@@ -40,7 +40,9 @@ public record CvTypography(
         double sizeBody,
         double bodyLineSpacing) {
 
-    /** Validates that the font tokens are not null. */
+    /**
+     * Validates that the font tokens are not null.
+     */
     public CvTypography {
         Objects.requireNonNull(headlineFont, "headlineFont");
         Objects.requireNonNull(bodyFont, "bodyFont");

@@ -1,11 +1,7 @@
 package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTextDecoration;
-import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.style.*;
 import com.demcha.compose.font.FontName;
 
 import java.util.function.Consumer;
@@ -36,7 +32,7 @@ public final class TimelineMarker {
     /**
      * A solid filled dot.
      *
-     * @param size diameter in points
+     * @param size  diameter in points
      * @param color fill colour
      * @return the marker
      */
@@ -47,8 +43,8 @@ public final class TimelineMarker {
     /**
      * An outlined circle (filled and/or stroked).
      *
-     * @param size diameter in points
-     * @param fill fill colour, or {@code null} for an unfilled ring
+     * @param size   diameter in points
+     * @param fill   fill colour, or {@code null} for an unfilled ring
      * @param stroke outline stroke, or {@code null} for no outline
      * @return the marker
      */
@@ -66,9 +62,9 @@ public final class TimelineMarker {
     /**
      * A numbered disc — a filled circle with a centred number.
      *
-     * @param number the step number to centre in the disc
-     * @param size diameter in points
-     * @param fill disc fill colour
+     * @param number    the step number to centre in the disc
+     * @param size      diameter in points
+     * @param fill      disc fill colour
      * @param textColor number colour; {@code null} falls back to white
      * @return the marker
      */

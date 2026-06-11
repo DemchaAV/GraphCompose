@@ -9,7 +9,7 @@ import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -26,13 +26,13 @@ public final class TemplateSceneSupport {
     /**
      * Creates a normalized paragraph instruction.
      *
-     * @param name semantic paragraph name
-     * @param text paragraph text
-     * @param style text style
-     * @param align horizontal alignment
+     * @param name        semantic paragraph name
+     * @param text        paragraph text
+     * @param style       text style
+     * @param align       horizontal alignment
      * @param lineSpacing extra line spacing
-     * @param padding inner padding
-     * @param margin outer margin
+     * @param padding     inner padding
+     * @param margin      outer margin
      * @return paragraph instruction
      */
     public static TemplateParagraphSpec paragraph(String name,
@@ -48,14 +48,14 @@ public final class TemplateSceneSupport {
     /**
      * Creates a normalized paragraph instruction with optional hyperlink metadata.
      *
-     * @param name semantic paragraph name
-     * @param text paragraph text
-     * @param style text style
-     * @param align horizontal alignment
+     * @param name        semantic paragraph name
+     * @param text        paragraph text
+     * @param style       text style
+     * @param align       horizontal alignment
      * @param lineSpacing extra line spacing
      * @param linkOptions optional link metadata
-     * @param padding inner padding
-     * @param margin outer margin
+     * @param padding     inner padding
+     * @param margin      outer margin
      * @return paragraph instruction
      */
     public static TemplateParagraphSpec paragraph(String name,
@@ -72,13 +72,13 @@ public final class TemplateSceneSupport {
     /**
      * Creates a normalized paragraph instruction from inline text runs.
      *
-     * @param name semantic paragraph name
-     * @param inlineRuns inline text runs
-     * @param style fallback text style
-     * @param align horizontal alignment
+     * @param name        semantic paragraph name
+     * @param inlineRuns  inline text runs
+     * @param style       fallback text style
+     * @param align       horizontal alignment
      * @param lineSpacing extra line spacing
-     * @param padding inner padding
-     * @param margin outer margin
+     * @param padding     inner padding
+     * @param margin      outer margin
      * @return paragraph instruction
      */
     public static TemplateParagraphSpec inlineParagraph(String name,
@@ -94,15 +94,15 @@ public final class TemplateSceneSupport {
     /**
      * Creates a normalized paragraph instruction with legacy block-indent semantics.
      *
-     * @param name semantic paragraph name
-     * @param text paragraph text
-     * @param style text style
-     * @param align horizontal alignment
-     * @param lineSpacing extra line spacing
-     * @param bulletOffset first-line marker or prefix
+     * @param name           semantic paragraph name
+     * @param text           paragraph text
+     * @param style          text style
+     * @param align          horizontal alignment
+     * @param lineSpacing    extra line spacing
+     * @param bulletOffset   first-line marker or prefix
      * @param indentStrategy text indent strategy
-     * @param padding inner padding
-     * @param margin outer margin
+     * @param padding        inner padding
+     * @param margin         outer margin
      * @return paragraph instruction
      */
     public static TemplateParagraphSpec blockParagraph(String name,
@@ -121,16 +121,16 @@ public final class TemplateSceneSupport {
      * Creates a normalized paragraph instruction with legacy block-indent semantics
      * and optional hyperlink metadata.
      *
-     * @param name semantic paragraph name
-     * @param text paragraph text
-     * @param style text style
-     * @param align horizontal alignment
-     * @param lineSpacing extra line spacing
-     * @param bulletOffset first-line marker or prefix
+     * @param name           semantic paragraph name
+     * @param text           paragraph text
+     * @param style          text style
+     * @param align          horizontal alignment
+     * @param lineSpacing    extra line spacing
+     * @param bulletOffset   first-line marker or prefix
      * @param indentStrategy text indent strategy
-     * @param linkOptions optional link metadata
-     * @param padding inner padding
-     * @param margin outer margin
+     * @param linkOptions    optional link metadata
+     * @param padding        inner padding
+     * @param margin         outer margin
      * @return paragraph instruction
      */
     public static TemplateParagraphSpec blockParagraph(String name,
@@ -149,15 +149,15 @@ public final class TemplateSceneSupport {
     /**
      * Creates a normalized list instruction.
      *
-     * @param name semantic list name
-     * @param items list items
-     * @param marker list marker
-     * @param style item text style
-     * @param align horizontal alignment
+     * @param name        semantic list name
+     * @param items       list items
+     * @param marker      list marker
+     * @param style       item text style
+     * @param align       horizontal alignment
      * @param lineSpacing extra wrapped-line spacing
      * @param itemSpacing extra space between items
-     * @param padding inner padding
-     * @param margin outer margin
+     * @param padding     inner padding
+     * @param margin      outer margin
      * @return list instruction
      */
     public static TemplateListSpec list(String name,
@@ -175,16 +175,16 @@ public final class TemplateSceneSupport {
     /**
      * Creates a normalized list instruction with markerless continuation indentation.
      *
-     * @param name semantic list name
-     * @param items list items
-     * @param marker list marker
-     * @param style item text style
-     * @param align horizontal alignment
-     * @param lineSpacing extra wrapped-line spacing
-     * @param itemSpacing extra space between items
+     * @param name               semantic list name
+     * @param items              list items
+     * @param marker             list marker
+     * @param style              item text style
+     * @param align              horizontal alignment
+     * @param lineSpacing        extra wrapped-line spacing
+     * @param itemSpacing        extra space between items
      * @param continuationIndent markerless continuation indent text
-     * @param padding inner padding
-     * @param margin outer margin
+     * @param padding            inner padding
+     * @param margin             outer margin
      * @return list instruction
      */
     public static TemplateListSpec list(String name,
@@ -214,11 +214,11 @@ public final class TemplateSceneSupport {
     /**
      * Creates a normalized divider instruction.
      *
-     * @param name semantic divider name
-     * @param width divider width
+     * @param name      semantic divider name
+     * @param width     divider width
      * @param thickness divider thickness
-     * @param color divider color
-     * @param margin outer margin
+     * @param color     divider color
+     * @param margin    outer margin
      * @return divider instruction
      */
     public static TemplateDividerSpec divider(String name,
@@ -233,7 +233,7 @@ public final class TemplateSceneSupport {
      * Joins non-blank values with the supplied delimiter.
      *
      * @param delimiter delimiter between values
-     * @param values values to join
+     * @param values    values to join
      * @return joined text
      */
     public static String joinNonBlank(String delimiter, String... values) {
@@ -298,14 +298,14 @@ public final class TemplateSceneSupport {
     /**
      * Appends a simple section header composed of a heading paragraph and a rule.
      *
-     * @param target active template compose target
-     * @param prefix semantic node name prefix
-     * @param title section title
-     * @param titleStyle title text style
-     * @param ruleWidth divider width
-     * @param ruleColor divider color
+     * @param target        active template compose target
+     * @param prefix        semantic node name prefix
+     * @param title         section title
+     * @param titleStyle    title text style
+     * @param ruleWidth     divider width
+     * @param ruleColor     divider color
      * @param ruleThickness divider thickness
-     * @param margin header margin
+     * @param margin        header margin
      */
     public static void addSectionHeader(TemplateComposeTarget target,
                                         String prefix,

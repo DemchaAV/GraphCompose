@@ -58,7 +58,7 @@ public interface CoverLetterTemplate {
      * Composes a cover letter into a live document session.
      *
      * @param document active mutable document session receiving template nodes
-     * @param spec cover-letter document spec
+     * @param spec     cover-letter document spec
      * @throws NullPointerException if an implementation requires non-null inputs
      */
     void compose(DocumentSession document, CoverLetterDocumentSpec spec);

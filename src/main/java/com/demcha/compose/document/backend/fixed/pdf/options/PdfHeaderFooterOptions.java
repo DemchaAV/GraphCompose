@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.awt.Color;
+import java.awt.*;
 
 /**
  * Canonical repeating header/footer configuration for the semantic PDF API.

@@ -55,16 +55,24 @@ import java.util.Objects;
  */
 public final class SkillBar {
 
-    /** Track stroke width in points — a hairline rule. */
+    /**
+     * Track stroke width in points — a hairline rule.
+     */
     private static final double TRACK_THICKNESS = 0.65;
 
-    /** Proficiency marker stroke width in points — heavier than the track. */
+    /**
+     * Proficiency marker stroke width in points — heavier than the track.
+     */
     private static final double MARKER_THICKNESS = 1.2;
 
-    /** Proficiency marker height in points. */
+    /**
+     * Proficiency marker height in points.
+     */
     private static final double MARKER_HEIGHT = 8.0;
 
-    /** Gap (points) between the skill label and the track below it. */
+    /**
+     * Gap (points) between the skill label and the track below it.
+     */
     private static final double LABEL_TO_TRACK_GAP = 8.0;
 
     /**
@@ -74,7 +82,9 @@ public final class SkillBar {
      */
     private static final double MARKER_OVERLAP = MARKER_HEIGHT / 2.0 + 0.35;
 
-    /** Gap (points) below the marker before the next skill bar. */
+    /**
+     * Gap (points) below the marker before the next skill bar.
+     */
     private static final double BAR_BOTTOM_GAP = 12.0;
 
     private SkillBar() {

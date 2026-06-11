@@ -11,15 +11,15 @@ import java.util.function.Consumer;
  * <p><b>Authoring role:</b> keeps cover-letter composition document-shaped:
  * one header, one body, and optional job context for personalization.</p>
  *
- * @param header contact/profile header rendered before the letter body
- * @param body cover-letter body text
+ * @param header     contact/profile header rendered before the letter body
+ * @param body       cover-letter body text
  * @param jobDetails target role metadata used by templates
  * @author Artem Demchyshyn
  * @deprecated Test-only dead code; the live CV/cover-letter model is
- *             {@code cv.v2} / {@code coverletter.v2}. Kept for backward
- *             compatibility; scheduled for removal in a future major. See
- *             {@code docs/templates/v2-layered/} and
- *             {@link com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument}.
+ * {@code cv.v2} / {@code coverletter.v2}. Kept for backward
+ * compatibility; scheduled for removal in a future major. See
+ * {@code docs/templates/v2-layered/} and
+ * {@link com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument}.
  */
 @Deprecated(since = "1.7.0", forRemoval = true)
 public record CoverLetterDocumentSpec(
@@ -38,8 +38,8 @@ public record CoverLetterDocumentSpec(
     /**
      * Creates a document spec from the common cover-letter inputs.
      *
-     * @param header contact/profile header
-     * @param body cover-letter body text
+     * @param header     contact/profile header
+     * @param body       cover-letter body text
      * @param jobDetails target role metadata
      * @return document spec
      */

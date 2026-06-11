@@ -22,7 +22,7 @@ final class ShapeRings {
      *
      * @param half perpendicular half-thickness of the band, in unit-box units
      * @return six ring vertices in draw order: outer elbow, right tip (outer then
-     *         inner), inner elbow, left tip (inner then outer)
+     * inner), inner elbow, left tip (inner then outer)
      */
     static double[][] checkmarkBand(double half) {
         double[] left = {0.12, 0.50};
@@ -34,7 +34,7 @@ final class ShapeRings {
         double[] normalLeft = outwardNormal(toLeft);
         double[] bisector = unit(normalRight[0] + normalLeft[0], normalRight[1] + normalLeft[1]);
         double miter = half / (bisector[0] * normalRight[0] + bisector[1] * normalRight[1]);
-        return new double[][] {
+        return new double[][]{
                 {elbow[0] + bisector[0] * miter, elbow[1] + bisector[1] * miter},     // outer elbow
                 {right[0] + normalRight[0] * half, right[1] + normalRight[1] * half},  // right tip, outer
                 {right[0] - normalRight[0] * half, right[1] - normalRight[1] * half},  // right tip, inner
@@ -44,19 +44,23 @@ final class ShapeRings {
         };
     }
 
-    /** Returns the unit vector along {@code (x, y)}, or the zero vector for zero length. */
+    /**
+     * Returns the unit vector along {@code (x, y)}, or the zero vector for zero length.
+     */
     private static double[] unit(double x, double y) {
         double length = Math.hypot(x, y);
-        return length == 0 ? new double[] {0.0, 0.0} : new double[] {x / length, y / length};
+        return length == 0 ? new double[]{0.0, 0.0} : new double[]{x / length, y / length};
     }
 
-    /** Returns the normal of {@code u} flipped to point toward the bottom (convex) side. */
+    /**
+     * Returns the normal of {@code u} flipped to point toward the bottom (convex) side.
+     */
     private static double[] outwardNormal(double[] u) {
         double nx = u[1];
         double ny = -u[0];
         if (ny > 0) {
-            return new double[] {-nx, -ny};
+            return new double[]{-nx, -ny};
         }
-        return new double[] {nx, ny};
+        return new double[]{nx, ny};
     }
 }

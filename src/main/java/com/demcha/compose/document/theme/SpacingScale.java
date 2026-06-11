@@ -13,7 +13,6 @@ import com.demcha.compose.document.style.DocumentInsets;
  * @param md medium gap (typical: 12)
  * @param lg large gap (typical: 20)
  * @param xl extra-large gap (typical: 32)
- *
  * @author Artem Demchyshyn
  */
 public record SpacingScale(double xs, double sm, double md, double lg, double xl) {
@@ -30,7 +29,7 @@ public record SpacingScale(double xs, double sm, double md, double lg, double xl
         if (!(xs <= sm && sm <= md && md <= lg && lg <= xl)) {
             throw new IllegalArgumentException(
                     "Spacing scale must be non-decreasing: xs=" + xs + " sm=" + sm
-                            + " md=" + md + " lg=" + lg + " xl=" + xl);
+                    + " md=" + md + " lg=" + lg + " xl=" + xl);
         }
     }
 
@@ -91,7 +90,7 @@ public record SpacingScale(double xs, double sm, double md, double lg, double xl
     private static void validate(String label, double value) {
         if (value < 0 || Double.isNaN(value) || Double.isInfinite(value)) {
             throw new IllegalArgumentException("Spacing token '" + label
-                    + "' must be a finite, non-negative number: " + value);
+                                               + "' must be a finite, non-negative number: " + value);
         }
     }
 }

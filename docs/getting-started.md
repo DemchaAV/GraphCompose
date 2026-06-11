@@ -120,6 +120,18 @@ document.guideLines(true);
 byte[] debugPdf = document.toPdfBytes();
 ```
 
+Need to know *which* block is which? `DocumentDebugOptions` adds semantic
+node labels on top of the guides — every rendered node gets a small corner
+badge with the same stable path `layoutSnapshot()` reports:
+
+```java
+document.debug(DocumentDebugOptions.guidesAndNodeLabels());
+byte[] labelledPdf = document.toPdfBytes();
+```
+
+Spot the misplaced block on the sheet, read its badge, then search that
+name in your builder code.
+
 ## Module-First Authoring
 
 Use modules when you are building a normal document section. A module

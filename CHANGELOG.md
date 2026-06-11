@@ -185,6 +185,19 @@ Entries land here as they merge.
   `ChartStyle` palette override (navy/gold) and an explicit 0–100 axis —
   ~90 lines of hand-drawn AWT geometry replaced by a declarative spec.
 
+### Internal
+
+- **Sweep follow-up note for future bisectors.** The v1.8.0 import/Javadoc
+  sweep (`f04a7dce`, part of #162) also carried mechanical code rewrites in
+  roughly 40 files beyond its stated scope: ~30 private preset `Template`
+  classes converted to records, constructor copy-loops replaced with
+  `Collections.addAll`, explicit imports collapsed to wildcards, and five
+  presets' explicit `section == null` guards folded into
+  `SectionLookup.hasContent`'s null tolerance (now documented on the method
+  and pinned by `SectionLookupTest`). All rewrites were verified
+  behavior-preserving by the full gate at merge time; recorded here so a
+  future bisect does not skip that commit on the strength of its message.
+
 ### Tests
 
 - Chart geometry pinned without rendering: `NiceScaleTest` golden tables and

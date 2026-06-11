@@ -102,7 +102,7 @@ final class DocumentChromeOptions {
      *              never {@code null}
      * @return ready-to-use PDF backend
      */
-    PdfFixedLayoutBackend toConveniencePdfBackend(PdfDebugOptions debug) {
+    PdfFixedLayoutBackend toConveniencePdfBackend(DocumentDebugOptions debug) {
         if (!debug.enabled() && isEmpty()) {
             return new PdfFixedLayoutBackend();
         }

@@ -4,7 +4,6 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.pdf.PdfMeasurementResources;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfDebugOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
@@ -74,7 +73,7 @@ public final class DocumentSession implements AutoCloseable {
     private DocumentInsets margin;
     private LayoutCanvas canvas;
     private boolean markdown;
-    private PdfDebugOptions debug = PdfDebugOptions.none();
+    private DocumentDebugOptions debug = DocumentDebugOptions.none();
     private List<PageBackgroundFill> pageBackgrounds = List.of();
     private PdfMeasurementResources measurementResources;
     private boolean closed;
@@ -101,7 +100,7 @@ public final class DocumentSession implements AutoCloseable {
         this.margin = margin == null ? DocumentInsets.zero() : margin;
         this.canvas = LayoutCanvas.from(pageSize.width(), pageSize.height(), toEngineMargin(this.margin));
         this.markdown = markdown;
-        this.debug = PdfDebugOptions.none().withGuides(guideLines);
+        this.debug = DocumentDebugOptions.none().withGuides(guideLines);
         this.registry = BuiltInNodeDefinitions.registerDefaults(new InvalidatingNodeRegistry());
         this.compiler = new LayoutCompiler(registry);
         this.customFontFamilies.addAll(List.copyOf(customFontFamilies));
@@ -310,7 +309,7 @@ public final class DocumentSession implements AutoCloseable {
      * so existing layout cache entries remain valid.</p>
      *
      * <p>Shorthand for toggling only the guide overlay on the current
-     * {@link #debug(PdfDebugOptions) debug} configuration; node-label
+     * {@link #debug(DocumentDebugOptions) debug} configuration; node-label
      * settings are preserved.</p>
      *
      * @param enabled {@code true} to draw debug guide-line overlays
@@ -340,9 +339,9 @@ public final class DocumentSession implements AutoCloseable {
      * @return this session
      * @since 1.8.0
      */
-    public DocumentSession debug(PdfDebugOptions options) {
+    public DocumentSession debug(DocumentDebugOptions options) {
         ensureOpen();
-        this.debug = options == null ? PdfDebugOptions.none() : options;
+        this.debug = options == null ? DocumentDebugOptions.none() : options;
         return this;
     }
 

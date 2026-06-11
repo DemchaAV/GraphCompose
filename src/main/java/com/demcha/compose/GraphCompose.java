@@ -6,7 +6,7 @@ import com.demcha.compose.font.FontShowcase;
 import com.demcha.compose.font.DefaultFonts;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfDebugOptions;
+import com.demcha.compose.document.output.DocumentDebugOptions;
 import com.demcha.compose.document.style.DocumentInsets;
 
 import java.nio.file.Path;
@@ -140,8 +140,7 @@ public final class GraphCompose {
         private DocumentPageSize pageSize = DocumentPageSize.A4;
         private DocumentInsets margin = DocumentInsets.zero();
         private boolean markdown = true;
-        private boolean guideLines;
-        private PdfDebugOptions debug;
+        private DocumentDebugOptions debug = DocumentDebugOptions.none();
         private com.demcha.compose.document.style.DocumentColor pageBackground;
         private java.util.List<com.demcha.compose.document.api.PageBackgroundFill> pageBackgrounds;
         private final List<FontFamilyDefinition> customFontFamilies = new ArrayList<>();
@@ -220,29 +219,35 @@ public final class GraphCompose {
          * {@link DocumentSession#toPdfBytes()}. It does not alter semantic layout
          * geometry or layout snapshots.</p>
          *
+         * <p>Shorthand for toggling only the guide overlay on the current
+         * {@link #debug(DocumentDebugOptions) debug} configuration — node-label
+         * settings are preserved, and the call order with {@code debug(...)}
+         * follows last-write-wins, exactly like the equivalent switches on
+         * {@code DocumentSession} and the PDF backend builder.</p>
+         *
          * @param enabled {@code true} to draw debug guide-line overlays
          * @return this builder
          */
         public DocumentBuilder guideLines(boolean enabled) {
-            this.guideLines = enabled;
+            this.debug = this.debug.withGuides(enabled);
             return this;
         }
 
         /**
-         * Configures PDF debug overlays (guide lines and semantic node labels)
+         * Configures debug overlays (guide lines and semantic node labels)
          * for the session's convenience PDF output.
          *
-         * <p>Combines with {@link #guideLines(boolean)}: when both switches are
-         * used, the guide overlay is enabled if either of them requests it.
-         * Like guide lines, debug overlays draw on top of regular content and
-         * never alter semantic layout geometry or layout snapshots.</p>
+         * <p>Replaces the whole debug configuration; {@code null} resets to
+         * {@link DocumentDebugOptions#none()}. Debug overlays draw on top of
+         * regular content and never alter semantic layout geometry or layout
+         * snapshots.</p>
          *
          * @param options debug overlay options, or {@code null} for none
          * @return this builder
          * @since 1.8.0
          */
-        public DocumentBuilder debug(PdfDebugOptions options) {
-            this.debug = options;
+        public DocumentBuilder debug(DocumentDebugOptions options) {
+            this.debug = options == null ? DocumentDebugOptions.none() : options;
             return this;
         }
 
@@ -410,10 +415,8 @@ public final class GraphCompose {
                     margin,
                     List.copyOf(customFontFamilies),
                     markdown,
-                    guideLines);
-            if (debug != null) {
-                session.debug(debug.withGuides(debug.showGuides() || guideLines));
-            }
+                    debug.showGuides());
+            session.debug(debug);
             if (pageBackgrounds != null) {
                 // Explicit pageBackgrounds() call wins over a prior
                 // pageBackground(color). Empty list = clear; see builder Javadoc.

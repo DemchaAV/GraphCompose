@@ -60,6 +60,20 @@ public final class ShapeDefinition implements NodeDefinition<ShapeNode> {
         if (width <= EPS || height <= EPS) {
             return List.of();
         }
+        // Solid paints normalise to a plain fill colour so the render path (and
+        // its byte output) is identical to a fillColor; only true gradients
+        // travel as fillPaint.
+        com.demcha.compose.document.style.DocumentPaint paint = node.fillPaint();
+        java.awt.Color fill;
+        com.demcha.compose.document.style.DocumentPaint gradient = null;
+        if (paint instanceof com.demcha.compose.document.style.DocumentPaint.Solid solid) {
+            fill = solid.color().color();
+        } else if (paint != null) {
+            gradient = paint;
+            fill = null;
+        } else {
+            fill = node.fillColor() == null ? null : node.fillColor().color();
+        }
         LayoutFragment leaf = new LayoutFragment(
                 placement.path(),
                 0,
@@ -68,12 +82,13 @@ public final class ShapeDefinition implements NodeDefinition<ShapeNode> {
                 width,
                 height,
                 new ShapeFragmentPayload(
-                        node.fillColor() == null ? null : node.fillColor().color(),
+                        fill,
                         toStroke(node.stroke()),
                         node.cornerRadius(),
                         node.linkOptions(),
                         node.bookmarkOptions(),
-                        null));
+                        null,
+                        gradient));
         return wrapAtomicWithTransform(leaf, placement, node.transform());
     }
 }

@@ -95,6 +95,15 @@ Entries land here as they merge.
   not fit in the remaining page space relocates whole to the next page instead
   of orphaning its heading from the content below. Blocks taller than a page
   still flow. Default off — existing layouts are byte-identical.
+- **Removed: `ConfigLoader`** (breaking). The `com.demcha.compose.ConfigLoader`
+  YAML/JSON config-file helper was an application-bootstrap utility with no
+  connection to document rendering — nothing in the library, tests, or
+  examples referenced it. Gone with it: the `<optional>`
+  `jackson-dataformat-yaml` dependency (ConfigLoader was its only consumer)
+  and the YAML entry in the `NoClassDefFoundError` troubleshooting section.
+  Consumers who relied on the helper can copy the former ~100-line class into
+  their own codebase or load configs directly with Jackson
+  (`new ObjectMapper(new YAMLFactory()).readValue(...)`).
 
 ### Bug fixes
 

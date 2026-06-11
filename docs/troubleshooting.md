@@ -39,8 +39,8 @@ Per-feature mapping: [canonical ↔ legacy parity matrix](architecture/canonical
 
 ## `NoClassDefFoundError` at runtime
 
-GraphCompose marks two heavy, rarely-needed dependencies **optional** so
-PDF-only consumers don't pay for them. If you use the feature, add the
+GraphCompose marks one heavy, rarely-needed dependency **optional** so
+PDF-only consumers don't pay for it. If you use DOCX export, add the
 dependency to **your** project.
 
 **DOCX export** — `document.export(new DocxSemanticBackend())` needs
@@ -53,20 +53,6 @@ Apache POI on your classpath:
   <version>5.5.1</version>
 </dependency>
 ```
-
-**YAML config** — loading a `*.yaml` / `*.yml` resource through
-`ConfigLoader` needs the Jackson YAML dataformat (the error names
-`YAMLFactory`):
-
-```xml
-<dependency>
-  <groupId>com.fasterxml.jackson.dataformat</groupId>
-  <artifactId>jackson-dataformat-yaml</artifactId>
-  <!-- version: match the Jackson you already depend on -->
-</dependency>
-```
-
-…or load a JSON config instead, which needs no extra dependency.
 
 ## The bundled examples won't resolve `graph-compose`
 

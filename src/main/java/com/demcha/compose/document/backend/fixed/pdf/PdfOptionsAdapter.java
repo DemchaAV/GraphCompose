@@ -1,14 +1,8 @@
 package com.demcha.compose.document.backend.fixed.pdf;
 
+import com.demcha.compose.document.backend.fixed.pdf.options.*;
 import com.demcha.compose.document.node.DocumentBarcodeOptions;
 import com.demcha.compose.document.node.DocumentBarcodeType;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterZone;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkLayer;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkPosition;
 import com.demcha.compose.engine.components.content.barcode.BarcodeData;
 import com.demcha.compose.engine.components.content.barcode.BarcodeType;
 import com.demcha.compose.engine.components.content.header_footer.HeaderFooterConfig;

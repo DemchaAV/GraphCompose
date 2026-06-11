@@ -1,7 +1,5 @@
 package com.demcha.compose.document.node;
 
-import com.demcha.compose.document.node.DocumentBookmarkOptions;
-import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextAutoSize;
 import com.demcha.compose.document.style.DocumentTextIndent;
@@ -13,22 +11,22 @@ import java.util.Objects;
 /**
  * Semantic paragraph block that may split across pages.
  *
- * @param name node name used in snapshots and layout graph paths
- * @param text paragraph text when inline runs are not supplied
- * @param inlineRuns optional inline runs in source order; may mix text and
- *                   image runs and is wrapped on a single baseline
- * @param textStyle base paragraph text style
- * @param align horizontal text alignment
- * @param lineSpacing extra space between wrapped lines
- * @param bulletOffset first-line prefix used by list-style paragraph paths
- * @param indentStrategy hanging/first-line indent strategy
- * @param linkOptions optional node-level link metadata
+ * @param name            node name used in snapshots and layout graph paths
+ * @param text            paragraph text when inline runs are not supplied
+ * @param inlineRuns      optional inline runs in source order; may mix text and
+ *                        image runs and is wrapped on a single baseline
+ * @param textStyle       base paragraph text style
+ * @param align           horizontal text alignment
+ * @param lineSpacing     extra space between wrapped lines
+ * @param bulletOffset    first-line prefix used by list-style paragraph paths
+ * @param indentStrategy  hanging/first-line indent strategy
+ * @param linkOptions     optional node-level link metadata
  * @param bookmarkOptions optional node-level bookmark metadata
- * @param padding inner padding
- * @param margin outer margin
- * @param autoSize optional automatic font down-scaling policy
- * @param verticalAlign vertical seating of the text within its line box
- *                      ({@link TextVerticalAlign#DEFAULT} keeps baseline seating)
+ * @param padding         inner padding
+ * @param margin          outer margin
+ * @param autoSize        optional automatic font down-scaling policy
+ * @param verticalAlign   vertical seating of the text within its line box
+ *                        ({@link TextVerticalAlign#DEFAULT} keeps baseline seating)
  * @author Artem Demchyshyn
  */
 public record ParagraphNode(
@@ -80,19 +78,19 @@ public record ParagraphNode(
      * Backwards-compatible 13-arg constructor without a vertical-alignment
      * override; defaults {@link TextVerticalAlign#DEFAULT}.
      *
-     * @param name node name used in snapshots and layout graph paths
-     * @param text paragraph text when inline runs are not supplied
-     * @param inlineRuns optional inline runs in source order
-     * @param textStyle base paragraph text style
-     * @param align horizontal text alignment
-     * @param lineSpacing extra space between wrapped lines
-     * @param bulletOffset first-line prefix used by list-style paragraph paths
-     * @param indentStrategy hanging/first-line indent strategy
-     * @param linkOptions optional node-level link metadata
+     * @param name            node name used in snapshots and layout graph paths
+     * @param text            paragraph text when inline runs are not supplied
+     * @param inlineRuns      optional inline runs in source order
+     * @param textStyle       base paragraph text style
+     * @param align           horizontal text alignment
+     * @param lineSpacing     extra space between wrapped lines
+     * @param bulletOffset    first-line prefix used by list-style paragraph paths
+     * @param indentStrategy  hanging/first-line indent strategy
+     * @param linkOptions     optional node-level link metadata
      * @param bookmarkOptions optional node-level bookmark metadata
-     * @param padding inner padding
-     * @param margin outer margin
-     * @param autoSize optional automatic font down-scaling policy
+     * @param padding         inner padding
+     * @param margin          outer margin
+     * @param autoSize        optional automatic font down-scaling policy
      */
     public ParagraphNode(String name,
                          String text,
@@ -114,19 +112,19 @@ public record ParagraphNode(
     /**
      * Backwards-compatible 12-arg canonical constructor without auto-size.
      *
-     * @param name node name used in snapshots and layout graph paths
-     * @param text paragraph text when inline runs are not supplied
-     * @param inlineRuns optional inline runs in source order; may mix text and
-     *                   image runs and is wrapped on a single baseline
-     * @param textStyle base paragraph text style
-     * @param align horizontal text alignment
-     * @param lineSpacing extra space between wrapped lines
-     * @param bulletOffset first-line prefix used by list-style paragraph paths
-     * @param indentStrategy hanging/first-line indent strategy
-     * @param linkOptions optional node-level link metadata
+     * @param name            node name used in snapshots and layout graph paths
+     * @param text            paragraph text when inline runs are not supplied
+     * @param inlineRuns      optional inline runs in source order; may mix text and
+     *                        image runs and is wrapped on a single baseline
+     * @param textStyle       base paragraph text style
+     * @param align           horizontal text alignment
+     * @param lineSpacing     extra space between wrapped lines
+     * @param bulletOffset    first-line prefix used by list-style paragraph paths
+     * @param indentStrategy  hanging/first-line indent strategy
+     * @param linkOptions     optional node-level link metadata
      * @param bookmarkOptions optional node-level bookmark metadata
-     * @param padding inner padding
-     * @param margin outer margin
+     * @param padding         inner padding
+     * @param margin          outer margin
      */
     public ParagraphNode(String name,
                          String text,
@@ -147,17 +145,17 @@ public record ParagraphNode(
     /**
      * Creates a paragraph from plain text with optional link and bookmark metadata.
      *
-     * @param name node name used in snapshots and layout graph paths
-     * @param text paragraph text
-     * @param textStyle paragraph style
-     * @param align horizontal alignment
-     * @param lineSpacing extra spacing between wrapped lines
-     * @param bulletOffset first-line marker or prefix
-     * @param indentStrategy text indent strategy
-     * @param linkOptions optional link metadata
+     * @param name            node name used in snapshots and layout graph paths
+     * @param text            paragraph text
+     * @param textStyle       paragraph style
+     * @param align           horizontal alignment
+     * @param lineSpacing     extra spacing between wrapped lines
+     * @param bulletOffset    first-line marker or prefix
+     * @param indentStrategy  text indent strategy
+     * @param linkOptions     optional link metadata
      * @param bookmarkOptions optional bookmark metadata
-     * @param padding inner padding
-     * @param margin outer margin
+     * @param padding         inner padding
+     * @param margin          outer margin
      */
     public ParagraphNode(String name,
                          String text,
@@ -176,15 +174,15 @@ public record ParagraphNode(
     /**
      * Creates a paragraph from plain text without link or bookmark metadata.
      *
-     * @param name node name used in snapshots and layout graph paths
-     * @param text paragraph text
-     * @param textStyle paragraph style
-     * @param align horizontal alignment
-     * @param lineSpacing extra spacing between wrapped lines
-     * @param bulletOffset first-line marker or prefix
+     * @param name           node name used in snapshots and layout graph paths
+     * @param text           paragraph text
+     * @param textStyle      paragraph style
+     * @param align          horizontal alignment
+     * @param lineSpacing    extra spacing between wrapped lines
+     * @param bulletOffset   first-line marker or prefix
      * @param indentStrategy text indent strategy
-     * @param padding inner padding
-     * @param margin outer margin
+     * @param padding        inner padding
+     * @param margin         outer margin
      */
     public ParagraphNode(String name,
                          String text,
@@ -201,13 +199,13 @@ public record ParagraphNode(
     /**
      * Creates a paragraph without marker indentation.
      *
-     * @param name node name used in snapshots and layout graph paths
-     * @param text paragraph text
-     * @param textStyle paragraph style
-     * @param align horizontal alignment
+     * @param name        node name used in snapshots and layout graph paths
+     * @param text        paragraph text
+     * @param textStyle   paragraph style
+     * @param align       horizontal alignment
      * @param lineSpacing extra spacing between wrapped lines
-     * @param padding inner padding
-     * @param margin outer margin
+     * @param padding     inner padding
+     * @param margin      outer margin
      */
     public ParagraphNode(String name,
                          String text,
@@ -217,6 +215,23 @@ public record ParagraphNode(
                          DocumentInsets padding,
                          DocumentInsets margin) {
         this(name, text, textStyle, align, lineSpacing, "", DocumentTextIndent.NONE, null, null, padding, margin);
+    }
+
+    private static List<InlineRun> normalizeInlineRuns(List<InlineRun> runs) {
+        if (runs == null || runs.isEmpty()) {
+            return List.of();
+        }
+        List<InlineRun> normalized = new java.util.ArrayList<>(runs.size());
+        for (InlineRun run : runs) {
+            if (run == null) {
+                continue;
+            }
+            if (run instanceof InlineTextRun textRun && textRun.text().isEmpty()) {
+                continue;
+            }
+            normalized.add(run);
+        }
+        return List.copyOf(normalized);
     }
 
     /**
@@ -239,23 +254,6 @@ public record ParagraphNode(
             }
         }
         return List.copyOf(textRuns);
-    }
-
-    private static List<InlineRun> normalizeInlineRuns(List<InlineRun> runs) {
-        if (runs == null || runs.isEmpty()) {
-            return List.of();
-        }
-        List<InlineRun> normalized = new java.util.ArrayList<>(runs.size());
-        for (InlineRun run : runs) {
-            if (run == null) {
-                continue;
-            }
-            if (run instanceof InlineTextRun textRun && textRun.text().isEmpty()) {
-                continue;
-            }
-            normalized.add(run);
-        }
-        return List.copyOf(normalized);
     }
 }
 

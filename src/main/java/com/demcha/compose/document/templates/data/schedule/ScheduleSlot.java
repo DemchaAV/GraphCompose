@@ -6,7 +6,7 @@ import java.util.Objects;
  * Display-first shift segment rendered inside a schedule cell.
  *
  * @param start start time/label
- * @param end end time/label
+ * @param end   end time/label
  */
 public record ScheduleSlot(
         String start,
@@ -24,7 +24,7 @@ public record ScheduleSlot(
      * Creates a schedule slot from start and end labels.
      *
      * @param start start label
-     * @param end end label
+     * @param end   end label
      * @return schedule slot
      */
     public static ScheduleSlot of(String start, String end) {

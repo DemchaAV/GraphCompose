@@ -22,7 +22,9 @@ import java.util.List;
  */
 public record DocumentDashPattern(List<Double> segments) {
 
-    /** Solid (un-dashed) stroke — the default for every line. */
+    /**
+     * Solid (un-dashed) stroke — the default for every line.
+     */
     public static final DocumentDashPattern NONE = new DocumentDashPattern(List.of());
 
     /**

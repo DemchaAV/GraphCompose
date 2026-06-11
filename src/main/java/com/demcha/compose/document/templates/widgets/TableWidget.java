@@ -142,7 +142,7 @@ public final class TableWidget {
             if (row.size() > columns) {
                 throw new IllegalArgumentException(
                         "Row has " + row.size() + " cells, but table has "
-                                + columns + " columns");
+                        + columns + " columns");
             }
             List<String> normalized = new ArrayList<>(columns);
             for (int i = 0; i < columns; i++) {
@@ -195,15 +195,15 @@ public final class TableWidget {
                     ? DocumentInsets.zero()
                     : cellPadding;
             if (lineSpacing != null
-                    && (lineSpacing < 0
+                && (lineSpacing < 0
                     || Double.isNaN(lineSpacing)
                     || Double.isInfinite(lineSpacing))) {
                 throw new IllegalArgumentException(
                         "lineSpacing must be finite and non-negative");
             }
             if (widthAdjustment < 0
-                    || Double.isNaN(widthAdjustment)
-                    || Double.isInfinite(widthAdjustment)) {
+                || Double.isNaN(widthAdjustment)
+                || Double.isInfinite(widthAdjustment)) {
                 throw new IllegalArgumentException(
                         "widthAdjustment must be finite and non-negative");
             }

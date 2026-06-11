@@ -1,14 +1,10 @@
 package com.demcha.compose.document.theme;
 
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTextDecoration;
-import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.style.*;
 import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.font.FontName;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.Objects;
 
 /**
@@ -28,13 +24,12 @@ import java.util.Objects;
  * (dark moody surface), and {@link #monochrome()} (brutalist
  * black-and-white with one accent).</p>
  *
- * @param name human-readable theme identifier (used for diagnostics)
- * @param palette color tokens
- * @param spacing spacing scale
- * @param text text-style scale
- * @param table table preset
+ * @param name           human-readable theme identifier (used for diagnostics)
+ * @param palette        color tokens
+ * @param spacing        spacing scale
+ * @param text           text-style scale
+ * @param table          table preset
  * @param pageBackground optional page-wide background tint, or {@code null}
- *
  * @author Artem Demchyshyn
  */
 public record BusinessTheme(

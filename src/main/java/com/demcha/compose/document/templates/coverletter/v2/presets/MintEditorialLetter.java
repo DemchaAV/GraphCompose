@@ -8,11 +8,7 @@ import com.demcha.compose.document.dsl.ShapeBuilder;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.document.style.ClipPolicy;
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentTextDecoration;
-import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.style.*;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.coverletter.v2.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
@@ -45,13 +41,19 @@ import java.util.Objects;
  */
 public final class MintEditorialLetter {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "mint-editorial-letter";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Mint Editorial Letter";
 
-    /** Recommended symmetric page margin (in points). Matches the CV preset. */
+    /**
+     * Recommended symmetric page margin (in points). Matches the CV preset.
+     */
     public static final double RECOMMENDED_MARGIN = 48.0;
 
     // Banded-masthead canvas geometry — mirrors the CV preset so the matched
@@ -59,16 +61,24 @@ public final class MintEditorialLetter {
     // (bandless) masthead positions so the banded render only adds a fill
     // behind an otherwise-unchanged masthead.
 
-    /** Canvas flow footprint (points) — matches the CV masthead footprint. */
+    /**
+     * Canvas flow footprint (points) — matches the CV masthead footprint.
+     */
     private static final double MASTHEAD_CANVAS_HEIGHT = 143.76;
 
-    /** Canvas-local y (points) of the masthead name — matches the default top. */
+    /**
+     * Canvas-local y (points) of the masthead name — matches the default top.
+     */
     private static final double MASTHEAD_NAME_Y = 48.0;
 
-    /** Canvas-local y (points) of the masthead tagline — matches the default top. */
+    /**
+     * Canvas-local y (points) of the masthead tagline — matches the default top.
+     */
     private static final double MASTHEAD_TAGLINE_Y = 87.4;
 
-    /** Canvas-local y (points) of the masthead rule — matches the default top. */
+    /**
+     * Canvas-local y (points) of the masthead rule — matches the default top.
+     */
     private static final double MASTHEAD_RULE_Y = 123.76;
 
     private MintEditorialLetter() {
@@ -356,11 +366,11 @@ public final class MintEditorialLetter {
             String jobTitle = identity.jobTitle();
             ParagraphNode tagline = jobTitle != null && !jobTitle.isBlank()
                     ? new ParagraphBuilder()
-                            .name("CoverLetterV2MintEditorialHeaderTagline")
-                            .text(TextOrnaments.spacedUpper(jobTitle))
-                            .textStyle(taglineStyle())
-                            .align(TextAlign.CENTER)
-                            .build()
+                    .name("CoverLetterV2MintEditorialHeaderTagline")
+                    .text(TextOrnaments.spacedUpper(jobTitle))
+                    .textStyle(taglineStyle())
+                    .align(TextAlign.CENTER)
+                    .build()
                     : null;
 
             section.addCanvas(pageWidth, canvasH, canvas -> {

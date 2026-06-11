@@ -113,7 +113,7 @@ public final class ImageBuilder implements Transformable<ImageBuilder> {
     /**
      * Sets image width and height.
      *
-     * @param width width in points
+     * @param width  width in points
      * @param height height in points
      * @return this builder
      */
@@ -137,7 +137,7 @@ public final class ImageBuilder implements Transformable<ImageBuilder> {
     /**
      * Sets the image bounds and preserves aspect ratio by default.
      *
-     * @param width maximum drawing width in points
+     * @param width  maximum drawing width in points
      * @param height maximum drawing height in points
      * @return this builder
      */

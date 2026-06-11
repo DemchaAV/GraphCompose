@@ -37,8 +37,8 @@ public interface PdfFragmentRenderHandler<T> {
     /**
      * Renders one resolved fragment.
      *
-     * @param fragment resolved fragment placement
-     * @param payload fragment payload data already validated by the layout layer
+     * @param fragment    resolved fragment placement
+     * @param payload     fragment payload data already validated by the layout layer
      * @param environment shared PDF render environment for the current document pass
      * @throws Exception if the PDF drawing operation fails
      */

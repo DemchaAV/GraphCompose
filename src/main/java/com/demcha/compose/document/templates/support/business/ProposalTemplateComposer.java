@@ -1,28 +1,19 @@
 package com.demcha.compose.document.templates.support.business;
 
-import com.demcha.compose.document.templates.support.common.*;
-
 import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.document.templates.data.proposal.ProposalData;
-import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
-import com.demcha.compose.document.templates.data.proposal.ProposalParty;
-import com.demcha.compose.document.templates.data.proposal.ProposalPricingRow;
-import com.demcha.compose.document.templates.data.proposal.ProposalSection;
-import com.demcha.compose.document.templates.data.proposal.ProposalTimelineItem;
+import com.demcha.compose.document.templates.data.proposal.*;
+import com.demcha.compose.document.templates.support.common.*;
+import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.content.table.TableCellContent;
 import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
 import com.demcha.compose.engine.components.content.table.TableColumnLayout;
-import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.layout.Anchor;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
 
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.awt.*;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 /**
  * Shared scene composer for the proposal template.
@@ -54,7 +45,7 @@ public final class ProposalTemplateComposer {
      * Emits proposal header, sections, timeline, pricing, acceptance, and footer modules.
      *
      * @param target canonical template compose target
-     * @param spec proposal document spec
+     * @param spec   proposal document spec
      */
     public void compose(TemplateComposeTarget target, ProposalDocumentSpec spec) {
         ProposalData safe = Objects.requireNonNull(spec, "spec").proposal();

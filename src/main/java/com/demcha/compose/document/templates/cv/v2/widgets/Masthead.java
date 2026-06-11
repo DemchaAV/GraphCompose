@@ -153,7 +153,9 @@ public final class Masthead {
                         String metaJoiner,
                         DocumentInsets lineMargin) {
 
-        /** Applies defaults for {@code metaJoiner} and {@code lineMargin}. */
+        /**
+         * Applies defaults for {@code metaJoiner} and {@code lineMargin}.
+         */
         public Style {
             metaJoiner = metaJoiner == null ? " - " : metaJoiner;
             lineMargin = lineMargin == null

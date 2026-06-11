@@ -1,12 +1,6 @@
 package com.demcha.compose.document.templates.components;
 
-import com.demcha.compose.document.node.ContainerNode;
-import com.demcha.compose.document.node.DocumentLinkOptions;
-import com.demcha.compose.document.node.DocumentNode;
-import com.demcha.compose.document.node.InlineRun;
-import com.demcha.compose.document.node.InlineTextRun;
-import com.demcha.compose.document.node.ParagraphNode;
-import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.node.*;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.themes.Spacing;
@@ -124,7 +118,7 @@ public final class Header {
      *
      * @param input header input data
      * @return container node holding the rendered name, contact, and
-     *         links rows
+     * links rows
      * @throws NullPointerException if {@code input} is null
      */
     public DocumentNode compose(Input input) {
@@ -171,7 +165,7 @@ public final class Header {
                 /* bookmark       */ null,
                 /* padding        */ DocumentInsets.zero(),
                 /* margin         */ new DocumentInsets(
-                        0.0, 0.0, spacing.headerLineSpacing(), 0.0),
+                0.0, 0.0, spacing.headerLineSpacing(), 0.0),
                 /* autoSize       */ null);
     }
 

@@ -12,11 +12,10 @@ import java.util.Objects;
  * into their native representations; backends that cannot honour a particular
  * option simply ignore it.</p>
  *
- * @param metadata document information (title, author, ...)
- * @param watermark optional document-wide watermark
- * @param protection optional access protection
+ * @param metadata          document information (title, author, ...)
+ * @param watermark         optional document-wide watermark
+ * @param protection        optional access protection
  * @param headersAndFooters repeating header/footer entries
- *
  * @author Artem Demchyshyn
  */
 public record DocumentOutputOptions(
@@ -25,7 +24,9 @@ public record DocumentOutputOptions(
         DocumentProtection protection,
         List<DocumentHeaderFooter> headersAndFooters
 ) {
-    /** All-empty defaults. */
+    /**
+     * All-empty defaults.
+     */
     public static final DocumentOutputOptions EMPTY = new DocumentOutputOptions(null, null, null, List.of());
 
     /**

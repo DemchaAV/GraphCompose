@@ -19,8 +19,8 @@ import java.util.function.Consumer;
  * a divider, a page break, or a small custom block without writing raw
  * template-scene code.</p>
  *
- * @param name stable semantic module name used for snapshot/debug naming
- * @param title human-readable module title rendered as the section heading
+ * @param name       stable semantic module name used for snapshot/debug naming
+ * @param title      human-readable module title rendered as the section heading
  * @param bodyBlocks ordered body blocks rendered below the heading
  * @author Artem Demchyshyn
  */
@@ -45,7 +45,7 @@ public record CvModule(
      * Creates a one-paragraph module.
      *
      * @param title visible module title
-     * @param text paragraph body
+     * @param text  paragraph body
      * @return module spec
      */
     public static CvModule paragraph(String title, String text) {
@@ -82,7 +82,7 @@ public record CvModule(
      * Creates a markerless row module with aligned wrapped continuations.
      *
      * @param title visible module title
-     * @param rows ordered row texts
+     * @param rows  ordered row texts
      * @return module spec
      */
     public static CvModule rows(String title, List<String> rows) {
@@ -95,7 +95,7 @@ public record CvModule(
      * Creates a markerless row module with aligned wrapped continuations.
      *
      * @param title visible module title
-     * @param rows ordered row texts
+     * @param rows  ordered row texts
      * @return module spec
      */
     public static CvModule rows(String title, String... rows) {
@@ -447,7 +447,7 @@ public record CvModule(
         /**
          * Appends a paragraph block with an explicit first-line indent.
          *
-         * @param text paragraph text
+         * @param text            paragraph text
          * @param firstLineIndent first-line indent prefix
          * @return this builder
          */
@@ -471,7 +471,7 @@ public record CvModule(
          * Appends a configurable list block.
          *
          * @param items ordered item texts
-         * @param spec optional list configuration
+         * @param spec  optional list configuration
          * @return this builder
          */
         public Builder list(List<String> items, Consumer<ListBlockBuilder> spec) {

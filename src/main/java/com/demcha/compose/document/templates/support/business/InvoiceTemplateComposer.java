@@ -1,35 +1,19 @@
 package com.demcha.compose.document.templates.support.business;
 
 import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.document.templates.data.invoice.InvoiceData;
-import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
-import com.demcha.compose.document.templates.data.invoice.InvoiceLineItem;
-import com.demcha.compose.document.templates.data.invoice.InvoiceParty;
-import com.demcha.compose.document.templates.data.invoice.InvoiceSummaryRow;
-import com.demcha.compose.document.templates.support.common.TemplateColumnSpec;
-import com.demcha.compose.document.templates.support.common.TemplateComposeTarget;
-import com.demcha.compose.document.templates.support.common.TemplateDividerSpec;
-import com.demcha.compose.document.templates.support.common.TemplateLayoutPolicy;
-import com.demcha.compose.document.templates.support.common.TemplateModuleBlock;
-import com.demcha.compose.document.templates.support.common.TemplateModuleSpec;
-import com.demcha.compose.document.templates.support.common.TemplateParagraphSpec;
-import com.demcha.compose.document.templates.support.common.TemplateRowSpec;
-import com.demcha.compose.document.templates.support.common.TemplateSceneSupport;
-import com.demcha.compose.document.templates.support.common.TemplateTableSpec;
+import com.demcha.compose.document.templates.data.invoice.*;
+import com.demcha.compose.document.templates.support.common.*;
+import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.content.table.TableCellContent;
 import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
 import com.demcha.compose.engine.components.content.table.TableColumnLayout;
-import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.layout.Anchor;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
 
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.awt.*;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 /**
  * Shared scene composer for the invoice template.
@@ -59,7 +43,7 @@ public final class InvoiceTemplateComposer {
      * Emits invoice header, parties, line items, notes, totals, and footer modules.
      *
      * @param target canonical template compose target
-     * @param spec invoice document spec
+     * @param spec   invoice document spec
      */
     public void compose(TemplateComposeTarget target, InvoiceDocumentSpec spec) {
         InvoiceData safe = Objects.requireNonNull(spec, "spec").invoice();
@@ -316,8 +300,8 @@ public final class InvoiceTemplateComposer {
         for (int row = 0; row < rows.size(); row++) {
             if (rows.get(row).emphasized()) {
                 rowStyles.put(row, TableCellLayoutStyle.builder()
-                .textStyle(styles.bodyBoldStyle(BODY_SIZE))
-                .build());
+                        .textStyle(styles.bodyBoldStyle(BODY_SIZE))
+                        .build());
             }
         }
         Map<Integer, TableCellLayoutStyle> columnStyles = new LinkedHashMap<>();

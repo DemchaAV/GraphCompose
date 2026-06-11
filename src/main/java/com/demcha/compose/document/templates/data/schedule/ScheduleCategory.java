@@ -1,15 +1,15 @@
 package com.demcha.compose.document.templates.data.schedule;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.Objects;
 
 /**
  * Shared category catalog entry referenced by days and assignments.
  *
- * @param id stable category identifier
- * @param label display label
- * @param fillColor category fill color
- * @param textColor category text color
+ * @param id          stable category identifier
+ * @param label       display label
+ * @param fillColor   category fill color
+ * @param textColor   category text color
  * @param borderColor category border color
  */
 public record ScheduleCategory(
@@ -33,9 +33,9 @@ public record ScheduleCategory(
     /**
      * Creates a category using black text.
      *
-     * @param id stable category identifier
-     * @param label display label
-     * @param fillColor fill color
+     * @param id          stable category identifier
+     * @param label       display label
+     * @param fillColor   fill color
      * @param borderColor border color
      * @return schedule category
      */
@@ -46,10 +46,10 @@ public record ScheduleCategory(
     /**
      * Creates a category with explicit fill, text, and border colors.
      *
-     * @param id stable category identifier
-     * @param label display label
-     * @param fillColor fill color
-     * @param textColor text color
+     * @param id          stable category identifier
+     * @param label       display label
+     * @param fillColor   fill color
+     * @param textColor   text color
      * @param borderColor border color
      * @return schedule category
      */

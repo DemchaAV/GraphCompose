@@ -17,10 +17,10 @@ import java.util.Objects;
  * <p>Pagination is atomic: the entire stack moves to the next page when its
  * measured height does not fit on the current page.</p>
  *
- * @param name node name used in snapshots and layout graph paths
- * @param layers child layers in back-to-front order
+ * @param name    node name used in snapshots and layout graph paths
+ * @param layers  child layers in back-to-front order
  * @param padding inner padding applied around all layers
- * @param margin outer margin around the stack
+ * @param margin  outer margin around the stack
  * @author Artem Demchyshyn
  */
 public record LayerStackNode(
@@ -74,12 +74,12 @@ public record LayerStackNode(
      * share a {@code zIndex} keep source order. The default is
      * {@code 0} which preserves source order entirely.</p>
      *
-     * @param node child node painted in this layer
-     * @param align alignment of the layer inside the stack box
+     * @param node    child node painted in this layer
+     * @param align   alignment of the layer inside the stack box
      * @param offsetX horizontal offset from the anchor (positive = right)
      * @param offsetY vertical offset from the anchor (positive = down)
-     * @param zIndex render-order key; higher values render on top of
-     *               lower values in the same parent stack/container
+     * @param zIndex  render-order key; higher values render on top of
+     *                lower values in the same parent stack/container
      */
     public record Layer(DocumentNode node, LayerAlign align, double offsetX, double offsetY, int zIndex) {
         /**
@@ -103,7 +103,7 @@ public record LayerStackNode(
         /**
          * Creates a layer with explicit alignment and zero offset / zero zIndex.
          *
-         * @param node child node
+         * @param node  child node
          * @param align alignment of the layer
          */
         public Layer(DocumentNode node, LayerAlign align) {
@@ -115,8 +115,8 @@ public record LayerStackNode(
          * shape (node + align + offsets) compiling for callers that
          * pre-date Phase C.3. Defaults {@code zIndex} to {@code 0}.
          *
-         * @param node child node
-         * @param align alignment of the layer
+         * @param node    child node
+         * @param align   alignment of the layer
          * @param offsetX horizontal offset from the anchor
          * @param offsetY vertical offset from the anchor
          */
@@ -147,7 +147,7 @@ public record LayerStackNode(
         /**
          * Convenience factory for an explicitly aligned layer with no offset.
          *
-         * @param node child node
+         * @param node  child node
          * @param align alignment of the layer
          * @return aligned layer
          */
@@ -158,8 +158,8 @@ public record LayerStackNode(
         /**
          * Convenience factory for a layer positioned by anchor + screen-space offset.
          *
-         * @param node child node
-         * @param align anchor inside the stack box
+         * @param node    child node
+         * @param align   anchor inside the stack box
          * @param offsetX horizontal offset from the anchor (positive = right)
          * @param offsetY vertical offset from the anchor (positive = down)
          * @return positioned layer

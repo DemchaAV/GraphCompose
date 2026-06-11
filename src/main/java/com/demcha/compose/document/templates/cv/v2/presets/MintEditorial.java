@@ -9,14 +9,8 @@ import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ParagraphNode;
-import com.demcha.compose.document.node.ShapeNode;
 import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.document.style.ClipPolicy;
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTextDecoration;
-import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.style.*;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
@@ -25,19 +19,7 @@ import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
 import com.demcha.compose.document.templates.cv.v2.components.MarkdownInline;
 import com.demcha.compose.document.templates.cv.v2.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
-import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
-import com.demcha.compose.document.templates.cv.v2.data.CvEntry;
-import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
-import com.demcha.compose.document.templates.cv.v2.data.CvLink;
-import com.demcha.compose.document.templates.cv.v2.data.CvRow;
-import com.demcha.compose.document.templates.cv.v2.data.CvSection;
-import com.demcha.compose.document.templates.cv.v2.data.CvSkill;
-import com.demcha.compose.document.templates.cv.v2.data.EntriesSection;
-import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
-import com.demcha.compose.document.templates.cv.v2.data.RowsSection;
-import com.demcha.compose.document.templates.cv.v2.data.SkillGroup;
-import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
-import com.demcha.compose.document.templates.cv.v2.data.Slot;
+import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
 import com.demcha.compose.document.templates.cv.v2.widgets.IconTextRow;
@@ -49,7 +31,6 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -128,22 +109,34 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class MintEditorial {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "mint-editorial";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Mint Editorial";
 
-    /** Recommended symmetric page margin (in points). */
+    /**
+     * Recommended symmetric page margin (in points).
+     */
     public static final double RECOMMENDED_MARGIN = 48.0;
 
-    /** Sidebar column weight; main column gets {@code 1 - SIDEBAR_WEIGHT}. */
+    /**
+     * Sidebar column weight; main column gets {@code 1 - SIDEBAR_WEIGHT}.
+     */
     private static final double SIDEBAR_WEIGHT = 0.31;
 
-    /** Main column weight. */
+    /**
+     * Main column weight.
+     */
     private static final double MAIN_WEIGHT = 1.0 - SIDEBAR_WEIGHT;
 
-    /** Horizontal gap (points) between the sidebar and main columns. */
+    /**
+     * Horizontal gap (points) between the sidebar and main columns.
+     */
     private static final double COLUMN_GAP = 40.0;
 
     /**
@@ -156,25 +149,39 @@ public final class MintEditorial {
      */
     private static final double BLOCK_GAP = 22.0;
 
-    /** Visual gap (points) between the two grid columns in Awards / References. */
+    /**
+     * Visual gap (points) between the two grid columns in Awards / References.
+     */
     private static final double GRID_COLUMN_GAP = 24.0;
 
-    /** Experience entries rendered on page 1; the rest go to page 2. */
+    /**
+     * Experience entries rendered on page 1; the rest go to page 2.
+     */
     private static final int EXPERIENCE_PAGE_ONE = 2;
 
-    /** Expertise category labels shown beneath the badge. */
+    /**
+     * Expertise category labels shown beneath the badge.
+     */
     private static final int EXPERTISE_LIMIT = 6;
 
-    /** Skill bars rendered in the page-2 sidebar. */
+    /**
+     * Skill bars rendered in the page-2 sidebar.
+     */
     private static final int SKILL_LIMIT = 6;
 
-    /** Inline contact / social icon edge length (points). */
+    /**
+     * Inline contact / social icon edge length (points).
+     */
     private static final double CONTACT_ICON_SIZE = 9.0;
 
-    /** Social icon edge length (points) — the filled badges read larger. */
+    /**
+     * Social icon edge length (points) — the filled badges read larger.
+     */
     private static final double SOCIAL_ICON_SIZE = 12.0;
 
-    /** Expertise badge edge length (points). */
+    /**
+     * Expertise badge edge length (points).
+     */
     private static final double BADGE_SIZE = 36.0;
 
     // Banded-masthead canvas geometry. These values reproduce the DEFAULT
@@ -193,17 +200,25 @@ public final class MintEditorial {
     // typography / spacing / margin change moves the masthead and silently
     // invalidates these hand-measured coordinates.
 
-    /** Canvas flow footprint (points) — sized so the page-1 row starts at the
-     *  same y as the default render. */
+    /**
+     * Canvas flow footprint (points) — sized so the page-1 row starts at the
+     * same y as the default render.
+     */
     static final double MASTHEAD_CANVAS_HEIGHT = 143.76;
 
-    /** Canvas-local y (points) of the masthead name — matches the default top. */
+    /**
+     * Canvas-local y (points) of the masthead name — matches the default top.
+     */
     static final double MASTHEAD_NAME_Y = 48.0;
 
-    /** Canvas-local y (points) of the masthead tagline — matches the default top. */
+    /**
+     * Canvas-local y (points) of the masthead tagline — matches the default top.
+     */
     static final double MASTHEAD_TAGLINE_Y = 87.4;
 
-    /** Canvas-local y (points) of the masthead rule — matches the default top. */
+    /**
+     * Canvas-local y (points) of the masthead rule — matches the default top.
+     */
     static final double MASTHEAD_RULE_Y = 123.76;
 
     private static final String ICON_ROOT = "/templates/cv/mint-editorial/icons/";
@@ -388,13 +403,21 @@ public final class MintEditorial {
     private static final class Template implements DocumentTemplate<CvDocument> {
 
         private final CvTheme theme;
-        /** Accent for the tagline + section headings (defaults to mint). */
+        /**
+         * Accent for the tagline + section headings (defaults to mint).
+         */
         private final DocumentColor accent;
-        /** Masthead rule colour (defaults to the accent). */
+        /**
+         * Masthead rule colour (defaults to the accent).
+         */
         private final DocumentColor ruleColor;
-        /** Masthead name colour (defaults to ink). */
+        /**
+         * Masthead name colour (defaults to ink).
+         */
         private final DocumentColor nameColor;
-        /** Optional page-1 header band; null = no band (white header). */
+        /**
+         * Optional page-1 header band; null = no band (white header).
+         */
         private final DocumentColor headerBandColor;
 
         Template(CvTheme theme, Options options) {
@@ -603,11 +626,11 @@ public final class MintEditorial {
             boolean hasTagline = jobTitle != null && !jobTitle.isBlank();
             ParagraphNode tagline = hasTagline
                     ? new ParagraphBuilder()
-                            .name("CvV2MintEditorialHeaderTagline")
-                            .text(TextOrnaments.spacedUpper(jobTitle))
-                            .textStyle(taglineStyle())
-                            .align(TextAlign.CENTER)
-                            .build()
+                    .name("CvV2MintEditorialHeaderTagline")
+                    .text(TextOrnaments.spacedUpper(jobTitle))
+                    .textStyle(taglineStyle())
+                    .align(TextAlign.CENTER)
+                    .build()
                     : null;
 
             section.addCanvas(pageWidth, canvasH, canvas -> {
@@ -798,7 +821,7 @@ public final class MintEditorial {
 
         private void addProfile(SectionBuilder section, CvSection profile) {
             if (!(profile instanceof ParagraphSection paragraph)
-                    || paragraph.body().isBlank()) {
+                || paragraph.body().isBlank()) {
                 return;
             }
             section.addSection("CvV2MintEditorialProfile", block -> {
@@ -1197,7 +1220,9 @@ public final class MintEditorial {
         return new BodyParts(String.join(" ", prose), List.copyOf(bullets));
     }
 
-    /** Prose + bullet split of an experience entry body. */
+    /**
+     * Prose + bullet split of an experience entry body.
+     */
     private record BodyParts(String prose, List<String> bullets) {
     }
 
@@ -1219,7 +1244,9 @@ public final class MintEditorial {
         return null;
     }
 
-    /** Maps a contact link label to its small inline glyph file. */
+    /**
+     * Maps a contact link label to its small inline glyph file.
+     */
     private static String contactIconFile(String label) {
         String normalized = SectionLookup.normalize(label);
         if (normalized.contains("linkedin")) {
@@ -1238,7 +1265,9 @@ public final class MintEditorial {
         return "website.png";
     }
 
-    /** Maps a social link label to its filled-badge glyph file. */
+    /**
+     * Maps a social link label to its filled-badge glyph file.
+     */
     private static String socialIconFile(String label) {
         String normalized = SectionLookup.normalize(label);
         if (normalized.contains("twitter")) {

@@ -8,9 +8,9 @@ import com.demcha.compose.engine.components.content.ImageData;
 /**
  * PDF payload for a resolved image fragment.
  *
- * @param imageData image source data
- * @param fitMode image fit policy used inside the resolved fragment
- * @param linkOptions optional fragment-level link metadata
+ * @param imageData       image source data
+ * @param fitMode         image fit policy used inside the resolved fragment
+ * @param linkOptions     optional fragment-level link metadata
  * @param bookmarkOptions optional fragment-level bookmark metadata
  */
 public record ImageFragmentPayload(
@@ -26,3 +26,4 @@ public record ImageFragmentPayload(
         fitMode = fitMode == null ? DocumentImageFitMode.STRETCH : fitMode;
     }
 }
+

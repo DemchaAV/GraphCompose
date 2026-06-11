@@ -20,6 +20,33 @@ import java.util.Objects;
 public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSpec.Pie {
 
     /**
+     * Starts a bar-chart builder.
+     *
+     * @return bar builder
+     */
+    static Bar.Builder bar() {
+        return new Bar.Builder();
+    }
+
+    /**
+     * Starts a line-chart builder.
+     *
+     * @return line builder
+     */
+    static Line.Builder line() {
+        return new Line.Builder();
+    }
+
+    /**
+     * Starts a pie/donut-chart builder.
+     *
+     * @return pie builder
+     */
+    static Pie.Builder pie() {
+        return new Pie.Builder();
+    }
+
+    /**
      * Tabular data backing this chart.
      *
      * @return chart data
@@ -50,42 +77,15 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
     ChartSize size();
 
     /**
-     * Starts a bar-chart builder.
-     *
-     * @return bar builder
-     */
-    static Bar.Builder bar() {
-        return new Bar.Builder();
-    }
-
-    /**
-     * Starts a line-chart builder.
-     *
-     * @return line builder
-     */
-    static Line.Builder line() {
-        return new Line.Builder();
-    }
-
-    /**
-     * Starts a pie/donut-chart builder.
-     *
-     * @return pie builder
-     */
-    static Pie.Builder pie() {
-        return new Pie.Builder();
-    }
-
-    /**
      * Bar chart: vertical or horizontal, grouped or stacked.
      *
-     * @param data tabular data
-     * @param horizontal true = bars run horizontally (categories on y)
-     * @param grouping side-by-side vs stacked when multiple series
-     * @param valueAxis numeric-axis configuration
-     * @param legend legend placement
-     * @param valueLabels per-bar value label mode
-     * @param size width-responsive sizing policy
+     * @param data               tabular data
+     * @param horizontal         true = bars run horizontally (categories on y)
+     * @param grouping           side-by-side vs stacked when multiple series
+     * @param valueAxis          numeric-axis configuration
+     * @param legend             legend placement
+     * @param valueLabels        per-bar value label mode
+     * @param size               width-responsive sizing policy
      * @param showCategoryLabels emit the category (x-axis) label under each slot
      */
     record Bar(
@@ -98,7 +98,9 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
             ChartSize size,
             boolean showCategoryLabels
     ) implements ChartSpec {
-        /** Normalizes structural defaults. */
+        /**
+         * Normalizes structural defaults.
+         */
         public Bar {
             Objects.requireNonNull(data, "data");
             grouping = grouping == null ? BarGrouping.GROUPED : grouping;
@@ -108,29 +110,31 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
             size = size == null ? ChartSize.aspectRatio(16, 9) : size;
         }
 
-        @Override
-        public NumberFormatSpec valueFormat() {
-            return valueAxis.format();
-        }
-
         /**
          * Backward-compatible constructor without the category-label toggle
          * (defaults to showing category labels).
          *
-         * @param data tabular data
-         * @param horizontal horizontal orientation
-         * @param grouping multi-series grouping
-         * @param valueAxis numeric-axis configuration
-         * @param legend legend placement
+         * @param data        tabular data
+         * @param horizontal  horizontal orientation
+         * @param grouping    multi-series grouping
+         * @param valueAxis   numeric-axis configuration
+         * @param legend      legend placement
          * @param valueLabels per-bar value label mode
-         * @param size sizing policy
+         * @param size        sizing policy
          */
         public Bar(ChartData data, boolean horizontal, BarGrouping grouping, AxisSpec valueAxis,
                    LegendPosition legend, ValueLabelMode valueLabels, ChartSize size) {
             this(data, horizontal, grouping, valueAxis, legend, valueLabels, size, true);
         }
 
-        /** Fluent builder for a {@link Bar} spec. */
+        @Override
+        public NumberFormatSpec valueFormat() {
+            return valueAxis.format();
+        }
+
+        /**
+         * Fluent builder for a {@link Bar} spec.
+         */
         public static final class Builder {
             private ChartData data;
             private boolean horizontal = false;
@@ -245,14 +249,14 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
      * Line chart: one polyline per series, optional point markers (markers come
      * from {@link ChartStyle#pointMarker()} so the geometry is reused).
      *
-     * @param data tabular data
-     * @param smooth true = curved (Catmull-Rom) segments; false = straight
-     * @param area fill the region between each series and the axis baseline
-     *             (translucent series colour; see {@code ChartStyle.areaOpacity})
-     * @param valueAxis numeric-axis configuration
-     * @param legend legend placement
-     * @param valueLabels per-point value label mode
-     * @param size width-responsive sizing policy
+     * @param data               tabular data
+     * @param smooth             true = curved (Catmull-Rom) segments; false = straight
+     * @param area               fill the region between each series and the axis baseline
+     *                           (translucent series colour; see {@code ChartStyle.areaOpacity})
+     * @param valueAxis          numeric-axis configuration
+     * @param legend             legend placement
+     * @param valueLabels        per-point value label mode
+     * @param size               width-responsive sizing policy
      * @param showCategoryLabels emit the category (x-axis) label under each slot
      */
     record Line(
@@ -265,7 +269,9 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
             ChartSize size,
             boolean showCategoryLabels
     ) implements ChartSpec {
-        /** Normalizes structural defaults. */
+        /**
+         * Normalizes structural defaults.
+         */
         public Line {
             Objects.requireNonNull(data, "data");
             valueAxis = valueAxis == null ? AxisSpec.defaults() : valueAxis;
@@ -274,28 +280,30 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
             size = size == null ? ChartSize.aspectRatio(16, 9) : size;
         }
 
-        @Override
-        public NumberFormatSpec valueFormat() {
-            return valueAxis.format();
-        }
-
         /**
          * Backward-compatible constructor without the area and category-label
          * toggles (no area fill; category labels shown).
          *
-         * @param data tabular data
-         * @param smooth curved segments
-         * @param valueAxis numeric-axis configuration
-         * @param legend legend placement
+         * @param data        tabular data
+         * @param smooth      curved segments
+         * @param valueAxis   numeric-axis configuration
+         * @param legend      legend placement
          * @param valueLabels per-point value label mode
-         * @param size sizing policy
+         * @param size        sizing policy
          */
         public Line(ChartData data, boolean smooth, AxisSpec valueAxis, LegendPosition legend,
                     ValueLabelMode valueLabels, ChartSize size) {
             this(data, smooth, false, valueAxis, legend, valueLabels, size, true);
         }
 
-        /** Fluent builder for a {@link Line} spec. */
+        @Override
+        public NumberFormatSpec valueFormat() {
+            return valueAxis.format();
+        }
+
+        /**
+         * Fluent builder for a {@link Line} spec.
+         */
         public static final class Builder {
             private ChartData data;
             private boolean smooth = false;
@@ -415,19 +423,19 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
      * unrepresentable here by design — the spec carries its own value/percent
      * formats instead.
      *
-     * @param data tabular data; must contain exactly one series
-     * @param donutRatio 0 for a solid pie; (0..0.9] = hole radius as a fraction
-     *                   of the outer radius
+     * @param data              tabular data; must contain exactly one series
+     * @param donutRatio        0 for a solid pie; (0..0.9] = hole radius as a fraction
+     *                          of the outer radius
      * @param startAngleDegrees angle of the first slice's leading edge
      *                          (90 = twelve o'clock)
-     * @param clockwise slice layout direction
-     * @param sliceLabels what each slice's outside label shows
-     * @param valueFormat format for {@link SliceLabelMode#VALUE} labels
-     * @param percentFormat format for percent labels (suffix included)
-     * @param centerText optional KPI text in the donut hole; requires
-     *                   {@code donutRatio > 0}
-     * @param legend legend placement; lists category names
-     * @param size width-responsive sizing policy (1:1 by default)
+     * @param clockwise         slice layout direction
+     * @param sliceLabels       what each slice's outside label shows
+     * @param valueFormat       format for {@link SliceLabelMode#VALUE} labels
+     * @param percentFormat     format for percent labels (suffix included)
+     * @param centerText        optional KPI text in the donut hole; requires
+     *                          {@code donutRatio > 0}
+     * @param legend            legend placement; lists category names
+     * @param size              width-responsive sizing policy (1:1 by default)
      */
     record Pie(
             ChartData data,
@@ -441,7 +449,9 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
             LegendPosition legend,
             ChartSize size
     ) implements ChartSpec {
-        /** Validates the single-series invariant and the ratio/angle ranges. */
+        /**
+         * Validates the single-series invariant and the ratio/angle ranges.
+         */
         public Pie {
             Objects.requireNonNull(data, "data");
             if (data.seriesCount() != 1) {
@@ -467,7 +477,9 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
             }
         }
 
-        /** Fluent builder for a {@link Pie} spec. */
+        /**
+         * Fluent builder for a {@link Pie} spec.
+         */
         public static final class Builder {
             private ChartData data;
             private double donutRatio = 0.0;

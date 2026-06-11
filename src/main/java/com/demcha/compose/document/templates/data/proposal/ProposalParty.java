@@ -1,17 +1,17 @@
 package com.demcha.compose.document.templates.data.proposal;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.ArrayList;
 
 /**
  * Display-oriented proposal party details.
  *
- * @param name party/company name
+ * @param name         party/company name
  * @param addressLines address lines in display order
- * @param email optional email address
- * @param phone optional phone number
- * @param website optional website URL
+ * @param email        optional email address
+ * @param phone        optional phone number
+ * @param website      optional website URL
  */
 public record ProposalParty(
         String name,

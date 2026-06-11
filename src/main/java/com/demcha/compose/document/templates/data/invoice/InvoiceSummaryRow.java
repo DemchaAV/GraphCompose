@@ -5,8 +5,8 @@ import java.util.Objects;
 /**
  * Display-oriented invoice summary row.
  *
- * @param label row label
- * @param value row value
+ * @param label      row label
+ * @param value      row value
  * @param emphasized whether the row should be visually emphasized
  */
 public record InvoiceSummaryRow(

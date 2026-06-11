@@ -51,9 +51,9 @@ public record CvDocument(CvIdentity identity, List<Placement> placements) {
      * @param sections sections to wrap, each in a {@link Slot#MAIN}
      *                 placement, in source order
      * @return a {@code CvDocument} with every section placed in
-     *         {@link Slot#MAIN}
+     * {@link Slot#MAIN}
      * @deprecated since the slot model — prefer the {@link Builder}
-     *             so non-MAIN slots are visible at the call site.
+     * so non-MAIN slots are visible at the call site.
      */
     @Deprecated
     public static CvDocument ofMainSections(CvIdentity identity,
@@ -69,7 +69,9 @@ public record CvDocument(CvIdentity identity, List<Placement> placements) {
      */
     public record Placement(Slot slot, CvSection section) {
 
-        /** Validates that both fields are non-null. */
+        /**
+         * Validates that both fields are non-null.
+         */
         public Placement {
             Objects.requireNonNull(slot, "slot");
             Objects.requireNonNull(section, "section");
@@ -123,7 +125,7 @@ public record CvDocument(CvIdentity identity, List<Placement> placements) {
      *
      * @param section section instance to look up
      * @return its slot, or {@link Slot#MAIN} if the section is not
-     *         in this document
+     * in this document
      */
     public Slot slotOf(CvSection section) {
         Objects.requireNonNull(section, "section");

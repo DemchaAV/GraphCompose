@@ -71,10 +71,10 @@ public interface DocumentTemplate<S> {
      *
      * @param session active document session to compose into
      * @param spec    domain-specific data populating the template
-     * @throws NullPointerException if {@code session} or {@code spec} is null
+     * @throws NullPointerException     if {@code session} or {@code spec} is null
      * @throws IllegalArgumentException if a required slot or module name
-     *         declared by the template cannot be resolved against
-     *         {@code spec}
+     *                                  declared by the template cannot be resolved against
+     *                                  {@code spec}
      */
     void compose(DocumentSession session, S spec);
 }

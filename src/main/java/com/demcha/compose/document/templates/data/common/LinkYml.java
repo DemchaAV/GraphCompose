@@ -35,7 +35,7 @@ public class LinkYml {
     /**
      * Creates a link payload from URL and display text.
      *
-     * @param url target URL
+     * @param url         target URL
      * @param displayText visible link text
      * @return link payload
      */

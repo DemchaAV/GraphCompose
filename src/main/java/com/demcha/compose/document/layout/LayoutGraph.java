@@ -6,10 +6,10 @@ import java.util.Objects;
 /**
  * Canonical resolved v2 layout graph.
  *
- * @param canvas physical page canvas used for the graph
+ * @param canvas     physical page canvas used for the graph
  * @param totalPages number of pages required by the graph
- * @param nodes placed semantic nodes in deterministic order
- * @param fragments placed render fragments in deterministic order
+ * @param nodes      placed semantic nodes in deterministic order
+ * @param fragments  placed render fragments in deterministic order
  */
 public record LayoutGraph(
         LayoutCanvas canvas,

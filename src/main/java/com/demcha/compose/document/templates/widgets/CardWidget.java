@@ -108,7 +108,7 @@ public final class CardWidget {
          */
         public Style {
             if (Double.isNaN(spacing) || Double.isInfinite(spacing)
-                    || spacing < 0) {
+                || spacing < 0) {
                 throw new IllegalArgumentException(
                         "spacing must be finite and non-negative");
             }

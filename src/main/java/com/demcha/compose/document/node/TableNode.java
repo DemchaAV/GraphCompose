@@ -1,7 +1,5 @@
 package com.demcha.compose.document.node;
 
-import com.demcha.compose.document.node.DocumentBookmarkOptions;
-import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
@@ -15,17 +13,17 @@ import java.util.Objects;
 /**
  * Semantic table node with row-atomic pagination.
  *
- * @param name table node name used in snapshots and layout graph paths
- * @param columns negotiated table columns
- * @param rows table rows in source order
- * @param defaultCellStyle default style applied to cells without overrides
- * @param rowStyles row-specific style overrides
- * @param columnStyles column-specific style overrides
- * @param width optional explicit table width
- * @param linkOptions optional node-level link metadata
- * @param bookmarkOptions optional node-level bookmark metadata
- * @param padding outer table padding
- * @param margin outer table margin
+ * @param name                   table node name used in snapshots and layout graph paths
+ * @param columns                negotiated table columns
+ * @param rows                   table rows in source order
+ * @param defaultCellStyle       default style applied to cells without overrides
+ * @param rowStyles              row-specific style overrides
+ * @param columnStyles           column-specific style overrides
+ * @param width                  optional explicit table width
+ * @param linkOptions            optional node-level link metadata
+ * @param bookmarkOptions        optional node-level bookmark metadata
+ * @param padding                outer table padding
+ * @param margin                 outer table margin
  * @param repeatedHeaderRowCount number of leading rows to repeat at the
  *                               top of every continuation page when the
  *                               table is split across pages; {@code 0}
@@ -50,13 +48,13 @@ public record TableNode(
      * authoring shape for callers that do not need row-level or column-level
      * style overrides.
      *
-     * @param name table node name used in snapshots and layout graph paths
-     * @param columns negotiated table columns
-     * @param rows table rows in source order
+     * @param name             table node name used in snapshots and layout graph paths
+     * @param columns          negotiated table columns
+     * @param rows             table rows in source order
      * @param defaultCellStyle default cell style applied to every cell
-     * @param width optional explicit table width
-     * @param padding outer table padding
-     * @param margin outer table margin
+     * @param width            optional explicit table width
+     * @param padding          outer table padding
+     * @param margin           outer table margin
      */
     public TableNode(String name,
                      List<DocumentTableColumn> columns,
@@ -72,15 +70,15 @@ public record TableNode(
      * Backward-compatible constructor that retains row and column style
      * overrides without content-scoped PDF metadata.
      *
-     * @param name table node name used in snapshots and layout graph paths
-     * @param columns negotiated table columns
-     * @param rows table rows in source order
+     * @param name             table node name used in snapshots and layout graph paths
+     * @param columns          negotiated table columns
+     * @param rows             table rows in source order
      * @param defaultCellStyle default cell style applied to every cell
-     * @param rowStyles row-specific style overrides
-     * @param columnStyles column-specific style overrides
-     * @param width optional explicit table width
-     * @param padding outer table padding
-     * @param margin outer table margin
+     * @param rowStyles        row-specific style overrides
+     * @param columnStyles     column-specific style overrides
+     * @param width            optional explicit table width
+     * @param padding          outer table padding
+     * @param margin           outer table margin
      */
     public TableNode(String name,
                      List<DocumentTableColumn> columns,
@@ -98,17 +96,17 @@ public record TableNode(
      * Backward-compatible 11-arg constructor (pre-Phase D.3) that defaults
      * {@code repeatedHeaderRowCount} to {@code 0}.
      *
-     * @param name table node name used in snapshots and layout graph paths
-     * @param columns negotiated table columns
-     * @param rows table rows in source order
+     * @param name             table node name used in snapshots and layout graph paths
+     * @param columns          negotiated table columns
+     * @param rows             table rows in source order
      * @param defaultCellStyle default cell style applied to every cell
-     * @param rowStyles row-specific style overrides
-     * @param columnStyles column-specific style overrides
-     * @param width optional explicit table width
-     * @param linkOptions optional node-level link metadata
-     * @param bookmarkOptions optional node-level bookmark metadata
-     * @param padding outer table padding
-     * @param margin outer table margin
+     * @param rowStyles        row-specific style overrides
+     * @param columnStyles     column-specific style overrides
+     * @param width            optional explicit table width
+     * @param linkOptions      optional node-level link metadata
+     * @param bookmarkOptions  optional node-level bookmark metadata
+     * @param padding          outer table padding
+     * @param margin           outer table margin
      */
     public TableNode(String name,
                      List<DocumentTableColumn> columns,
@@ -150,7 +148,7 @@ public record TableNode(
         if (repeatedHeaderRowCount > rows.size()) {
             throw new IllegalArgumentException(
                     "repeatedHeaderRowCount " + repeatedHeaderRowCount
-                            + " exceeds row count " + rows.size() + ".");
+                    + " exceeds row count " + rows.size() + ".");
         }
     }
 

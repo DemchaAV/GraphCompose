@@ -17,9 +17,9 @@ import java.util.List;
  * earlier-declared layer with {@code zIndex = 5}.</p>
  *
  * @param alignments per-layer alignments resolved from the source order
- * @param offsetsX per-layer horizontal offsets from the alignment anchor
- * @param offsetsY per-layer vertical offsets from the alignment anchor
- * @param zIndices per-layer render-order keys (defaults are {@code 0})
+ * @param offsetsX   per-layer horizontal offsets from the alignment anchor
+ * @param offsetsY   per-layer vertical offsets from the alignment anchor
+ * @param zIndices   per-layer render-order keys (defaults are {@code 0})
  */
 public record PreparedStackLayout(
         List<LayerAlign> alignments,
@@ -36,12 +36,12 @@ public record PreparedStackLayout(
         offsetsY = List.copyOf(offsetsY);
         zIndices = List.copyOf(zIndices);
         if (offsetsX.size() != alignments.size()
-                || offsetsY.size() != alignments.size()
-                || zIndices.size() != alignments.size()) {
+            || offsetsY.size() != alignments.size()
+            || zIndices.size() != alignments.size()) {
             throw new IllegalArgumentException(
                     "PreparedStackLayout: alignments/offsets/zIndices size mismatch ("
-                            + alignments.size() + "/" + offsetsX.size() + "/"
-                            + offsetsY.size() + "/" + zIndices.size() + ")");
+                    + alignments.size() + "/" + offsetsX.size() + "/"
+                    + offsetsY.size() + "/" + zIndices.size() + ")");
         }
     }
 
@@ -50,8 +50,8 @@ public record PreparedStackLayout(
      * zeros so layers render in source order.
      *
      * @param alignments per-layer alignments
-     * @param offsetsX per-layer horizontal offsets
-     * @param offsetsY per-layer vertical offsets
+     * @param offsetsX   per-layer horizontal offsets
+     * @param offsetsY   per-layer vertical offsets
      */
     public PreparedStackLayout(List<LayerAlign> alignments,
                                List<Double> offsetsX,

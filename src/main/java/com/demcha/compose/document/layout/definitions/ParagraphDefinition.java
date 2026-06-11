@@ -1,22 +1,11 @@
 package com.demcha.compose.document.layout.definitions;
 
-import com.demcha.compose.document.layout.BoxConstraints;
-import com.demcha.compose.document.layout.FragmentContext;
-import com.demcha.compose.document.layout.FragmentPlacement;
-import com.demcha.compose.document.layout.LayoutFragment;
-import com.demcha.compose.document.layout.NodeDefinition;
-import com.demcha.compose.document.layout.PaginationPolicy;
-import com.demcha.compose.document.layout.PrepareContext;
-import com.demcha.compose.document.layout.PreparedNode;
-import com.demcha.compose.document.layout.PreparedSplitResult;
-import com.demcha.compose.document.layout.SplitRequest;
+import com.demcha.compose.document.layout.*;
 import com.demcha.compose.document.node.ParagraphNode;
 
 import java.util.List;
 
-import static com.demcha.compose.document.layout.TextFlowSupport.emitParagraphFragments;
-import static com.demcha.compose.document.layout.TextFlowSupport.prepareParagraph;
-import static com.demcha.compose.document.layout.TextFlowSupport.splitParagraph;
+import static com.demcha.compose.document.layout.TextFlowSupport.*;
 
 /**
  * Layout definition for {@link ParagraphNode}: wraps text into visual lines,

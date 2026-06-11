@@ -25,7 +25,7 @@ public class DocumentRenderingException extends RuntimeException {
      * Creates a rendering exception with a message and a wrapped cause.
      *
      * @param message diagnostic message describing what failed
-     * @param cause underlying exception thrown by the rendering pipeline
+     * @param cause   underlying exception thrown by the rendering pipeline
      */
     public DocumentRenderingException(String message, Throwable cause) {
         super(message, cause);

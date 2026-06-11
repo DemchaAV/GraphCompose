@@ -41,7 +41,9 @@ import java.util.Objects;
  */
 public final class IconTextRow {
 
-    /** Spacer between the icon glyph and the label text. */
+    /**
+     * Spacer between the icon glyph and the label text.
+     */
     private static final String GAP = "   ";
 
     private IconTextRow() {

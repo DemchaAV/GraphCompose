@@ -15,9 +15,8 @@ import java.util.Objects;
  * pixel-perfect cover-page elements.</p>
  *
  * @param node child node placed inside the canvas
- * @param x offset from the canvas's left edge (points)
- * @param y offset from the canvas's top edge (points, positive = down)
- *
+ * @param x    offset from the canvas's left edge (points)
+ * @param y    offset from the canvas's top edge (points, positive = down)
  * @author Artem Demchyshyn
  */
 public record CanvasChild(DocumentNode node, double x, double y) {

@@ -26,15 +26,14 @@ import java.util.Objects;
  * layers overlaid and centred: a checkbox is a box layer plus an optional
  * checkmark layer, each with its own colour.</p>
  *
- * @param layers one or more paint layers, drawn back-to-front and centred in the
- *               run's bounding box
- * @param alignment vertical alignment relative to the surrounding text;
- *                  defaults to {@link InlineImageAlignment#CENTER}
+ * @param layers         one or more paint layers, drawn back-to-front and centred in the
+ *                       run's bounding box
+ * @param alignment      vertical alignment relative to the surrounding text;
+ *                       defaults to {@link InlineImageAlignment#CENTER}
  * @param baselineOffset extra vertical offset in points applied after
  *                       {@code alignment} resolution; positive values move the
  *                       figure up
- * @param linkOptions optional per-run link metadata
- *
+ * @param linkOptions    optional per-run link metadata
  * @author Artem Demchyshyn
  * @since 1.7.0
  */
@@ -63,12 +62,12 @@ public record InlineShapeRun(
     /**
      * Single-layer convenience constructor.
      *
-     * @param outline figure geometry
-     * @param fill optional fill color
-     * @param stroke optional outline stroke
-     * @param alignment vertical alignment relative to surrounding text
+     * @param outline        figure geometry
+     * @param fill           optional fill color
+     * @param stroke         optional outline stroke
+     * @param alignment      vertical alignment relative to surrounding text
      * @param baselineOffset extra vertical shift in points; positive moves up
-     * @param linkOptions optional inline link metadata
+     * @param linkOptions    optional inline link metadata
      */
     public InlineShapeRun(ShapeOutline outline,
                           DocumentColor fill,
@@ -84,7 +83,7 @@ public record InlineShapeRun(
      * {@link InlineImageAlignment#CENTER} alignment and zero offset.
      *
      * @param outline figure geometry
-     * @param fill fill color; must not be {@code null}
+     * @param fill    fill color; must not be {@code null}
      */
     public InlineShapeRun(ShapeOutline outline, DocumentColor fill) {
         this(outline, Objects.requireNonNull(fill, "fill"), null, InlineImageAlignment.CENTER, 0.0, null);
@@ -123,9 +122,9 @@ public record InlineShapeRun(
      * own colour. The frame is stroke-only; the checkmark, when present, is a
      * smaller filled figure centred inside the frame.
      *
-     * @param size box width and height in points
-     * @param checked whether the checkmark is shown
-     * @param boxColor frame stroke color
+     * @param size       box width and height in points
+     * @param checked    whether the checkmark is shown
+     * @param boxColor   frame stroke color
      * @param checkColor checkmark fill color
      * @return checkbox shape run
      */
@@ -142,10 +141,10 @@ public record InlineShapeRun(
      * mark is sized to fit the frame automatically; an unchecked box ignores the
      * style and renders the frame alone.
      *
-     * @param size box width and height in points
-     * @param checked whether the checkmark is shown
-     * @param markStyle design of the checked-state tick
-     * @param boxColor frame stroke color
+     * @param size       box width and height in points
+     * @param checked    whether the checkmark is shown
+     * @param markStyle  design of the checked-state tick
+     * @param boxColor   frame stroke color
      * @param checkColor checkmark fill color
      * @return checkbox shape run
      * @since 1.7.0
@@ -168,11 +167,11 @@ public record InlineShapeRun(
      * own size, so size it to fit (≈ {@code 0.6 × size}); an unchecked box
      * renders the frame alone and the {@code mark} is ignored.
      *
-     * @param size box width and height in points
-     * @param checked whether the mark is shown
-     * @param mark checked-state mark geometry, already sized; must be non-null
-     *             when {@code checked} is {@code true}
-     * @param boxColor frame stroke color
+     * @param size       box width and height in points
+     * @param checked    whether the mark is shown
+     * @param mark       checked-state mark geometry, already sized; must be non-null
+     *                   when {@code checked} is {@code true}
+     * @param boxColor   frame stroke color
      * @param checkColor mark fill color
      * @return checkbox shape run
      * @since 1.7.0

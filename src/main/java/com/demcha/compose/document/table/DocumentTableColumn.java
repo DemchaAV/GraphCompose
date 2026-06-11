@@ -6,7 +6,7 @@ package com.demcha.compose.document.table;
  * <p>Use {@link #auto()} for negotiated columns and {@link #fixed(double)} when
  * a column must reserve a known width. Instances are immutable and thread-safe.</p>
  *
- * @param type sizing mode
+ * @param type       sizing mode
  * @param fixedWidth fixed width in points when {@code type} is {@link Type#FIXED}
  * @author Artem Demchyshyn
  */

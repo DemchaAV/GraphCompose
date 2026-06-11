@@ -14,10 +14,10 @@ import java.util.List;
  * <p>The context carries only document-wide render configuration. Backends must
  * treat it as read-only and derive any mutable render-pass state from it.</p>
  *
- * @param canvas physical page canvas used by the resolved layout graph
+ * @param canvas             physical page canvas used by the resolved layout graph
  * @param customFontFamilies document-local font families available to the backend
- * @param outputFile optional file target for backends that persist artifacts to disk
- * @param outputStream optional caller-owned stream target for streaming render output
+ * @param outputFile         optional file target for backends that persist artifacts to disk
+ * @param outputStream       optional caller-owned stream target for streaming render output
  */
 public record FixedLayoutRenderContext(
         LayoutCanvas canvas,

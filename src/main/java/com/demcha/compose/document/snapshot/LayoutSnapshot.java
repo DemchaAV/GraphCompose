@@ -10,9 +10,9 @@ import java.util.List;
  * stable layout state so JSON baselines stay readable and maintainable.</p>
  *
  * @param formatVersion snapshot schema version used to interpret the JSON shape
- * @param canvas resolved canvas metadata for the composed document
- * @param totalPages total number of pages touched by the resolved layout
- * @param nodes deterministic depth-first list of resolved document nodes
+ * @param canvas        resolved canvas metadata for the composed document
+ * @param totalPages    total number of pages touched by the resolved layout
+ * @param nodes         deterministic depth-first list of resolved document nodes
  */
 public record LayoutSnapshot(
         String formatVersion,

@@ -36,25 +36,39 @@ import java.util.Objects;
  */
 public final class CompactMonoLetter {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "compact-mono-letter";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Compact Mono Letter";
 
-    /** Recommended page margin (in points) — generous business-letter feel. */
+    /**
+     * Recommended page margin (in points) — generous business-letter feel.
+     */
     public static final double RECOMMENDED_MARGIN = 48.0;
 
-    /** Near-black command-bar fill. Mirrors the CompactMono CV token. */
+    /**
+     * Near-black command-bar fill. Mirrors the CompactMono CV token.
+     */
     private static final DocumentColor HEADER = DocumentColor.rgb(18, 24, 32);
 
-    /** Contact metadata over the dark band. Mirrors the CV token. */
+    /**
+     * Contact metadata over the dark band. Mirrors the CV token.
+     */
     private static final DocumentColor HEADER_SOFT = DocumentColor.rgb(192, 207, 219);
 
-    /** Cyan contact-link colour over the band. Mirrors the CV token. */
+    /**
+     * Cyan contact-link colour over the band. Mirrors the CV token.
+     */
     private static final DocumentColor LINK_CYAN = DocumentColor.rgb(108, 213, 222);
 
-    /** Contact separator colour over the band. Mirrors the CV token. */
+    /**
+     * Contact separator colour over the band. Mirrors the CV token.
+     */
     private static final DocumentColor SEPARATOR_GRAY = DocumentColor.rgb(102, 117, 132);
 
     private CompactMonoLetter() {
@@ -81,88 +95,82 @@ public final class CompactMonoLetter {
         return new Template(theme);
     }
 
-    private static final class Template implements DocumentTemplate<CoverLetterDocument> {
-
-        private final CvTheme theme;
-
-        Template(CvTheme theme) {
-            this.theme = theme;
-        }
+    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
-        public String id() {
-            return ID;
+            public String id() {
+                return ID;
+            }
+
+            @Override
+            public String displayName() {
+                return DISPLAY_NAME;
+            }
+
+            @Override
+            public void compose(DocumentSession document, CoverLetterDocument doc) {
+                Objects.requireNonNull(document, "document");
+                Objects.requireNonNull(doc, "doc");
+
+                double width = document.canvas().innerWidth();
+                PageFlowBuilder flow = document.dsl()
+                        .pageFlow()
+                        .name("CoverLetterV2CompactMonoRoot")
+                        .spacing(theme.spacing().pageFlowSpacing());
+
+                addHeader(flow, doc.identity(), width);
+
+                flow.addSection("CoverLetterV2CompactMonoBody", host ->
+                        LetterBody.render(host, doc, theme));
+
+                flow.build();
+            }
+
+            private void addHeader(PageFlowBuilder flow, CvIdentity identity,
+                                   double width) {
+                flow.addSection("CoverLetterV2CompactMonoHeader", section -> {
+                    section.spacing(4)
+                            .padding(new DocumentInsets(13, 16, 14, 16))
+                            .fillColor(HEADER)
+                            .cornerRadius(3);
+                    section.addSection("Name", name ->
+                            Headline.uppercaseLeftAligned(name, identity.name(),
+                                    theme, headerNameStyle()));
+                    section.addSection("Contact", contact ->
+                            ContactLine.leftAligned(contact, identity, theme,
+                                    headerMetaStyle(), headerLinkStyle(),
+                                    headerSeparatorStyle()));
+                    section.addLine(line -> line
+                            .name("CoverLetterV2CompactMonoHeaderWidthRule")
+                            .horizontal(Math.max(0, width - 32))
+                            .color(HEADER)
+                            .thickness(0.1)
+                            .margin(DocumentInsets.zero()));
+                });
+            }
+
+            private DocumentTextStyle headerNameStyle() {
+                return CvTextStyles.of(theme.typography().headlineFont(),
+                        theme.typography().sizeHeadline(),
+                        DocumentTextDecoration.BOLD, DocumentColor.WHITE);
+            }
+
+            private DocumentTextStyle headerMetaStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeContact(),
+                        DocumentTextDecoration.DEFAULT, HEADER_SOFT);
+            }
+
+            private DocumentTextStyle headerLinkStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeContact(),
+                        DocumentTextDecoration.UNDERLINE, LINK_CYAN);
+            }
+
+            private DocumentTextStyle headerSeparatorStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeContact(),
+                        DocumentTextDecoration.DEFAULT, SEPARATOR_GRAY);
+            }
         }
-
-        @Override
-        public String displayName() {
-            return DISPLAY_NAME;
-        }
-
-        @Override
-        public void compose(DocumentSession document, CoverLetterDocument doc) {
-            Objects.requireNonNull(document, "document");
-            Objects.requireNonNull(doc, "doc");
-
-            double width = document.canvas().innerWidth();
-            PageFlowBuilder flow = document.dsl()
-                    .pageFlow()
-                    .name("CoverLetterV2CompactMonoRoot")
-                    .spacing(theme.spacing().pageFlowSpacing());
-
-            addHeader(flow, doc.identity(), width);
-
-            flow.addSection("CoverLetterV2CompactMonoBody", host ->
-                    LetterBody.render(host, doc, theme));
-
-            flow.build();
-        }
-
-        private void addHeader(PageFlowBuilder flow, CvIdentity identity,
-                               double width) {
-            flow.addSection("CoverLetterV2CompactMonoHeader", section -> {
-                section.spacing(4)
-                        .padding(new DocumentInsets(13, 16, 14, 16))
-                        .fillColor(HEADER)
-                        .cornerRadius(3);
-                section.addSection("Name", name ->
-                        Headline.uppercaseLeftAligned(name, identity.name(),
-                                theme, headerNameStyle()));
-                section.addSection("Contact", contact ->
-                        ContactLine.leftAligned(contact, identity, theme,
-                                headerMetaStyle(), headerLinkStyle(),
-                                headerSeparatorStyle()));
-                section.addLine(line -> line
-                        .name("CoverLetterV2CompactMonoHeaderWidthRule")
-                        .horizontal(Math.max(0, width - 32))
-                        .color(HEADER)
-                        .thickness(0.1)
-                        .margin(DocumentInsets.zero()));
-            });
-        }
-
-        private DocumentTextStyle headerNameStyle() {
-            return CvTextStyles.of(theme.typography().headlineFont(),
-                    theme.typography().sizeHeadline(),
-                    DocumentTextDecoration.BOLD, DocumentColor.WHITE);
-        }
-
-        private DocumentTextStyle headerMetaStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeContact(),
-                    DocumentTextDecoration.DEFAULT, HEADER_SOFT);
-        }
-
-        private DocumentTextStyle headerLinkStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeContact(),
-                    DocumentTextDecoration.UNDERLINE, LINK_CYAN);
-        }
-
-        private DocumentTextStyle headerSeparatorStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeContact(),
-                    DocumentTextDecoration.DEFAULT, SEPARATOR_GRAY);
-        }
-    }
 }

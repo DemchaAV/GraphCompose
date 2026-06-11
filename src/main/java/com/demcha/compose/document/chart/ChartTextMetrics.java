@@ -21,7 +21,7 @@ public interface ChartTextMetrics {
      * Measures the rendered width of {@code text} in the supplied style.
      *
      * @param style text style
-     * @param text text to measure
+     * @param text  text to measure
      * @return width in points
      */
     double width(DocumentTextStyle style, String text);

@@ -52,23 +52,35 @@ import java.util.Objects;
  */
 public final class ModernProfessional {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "modern-professional";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Modern Professional";
 
-    /** Recommended page margin (in points) — matches the legacy v1 preset. */
+    /**
+     * Recommended page margin (in points) — matches the legacy v1 preset.
+     */
     public static final double RECOMMENDED_MARGIN = 18.0;
 
-    /** Slate-blue used by the display name. Preset-specific. */
+    /**
+     * Slate-blue used by the display name. Preset-specific.
+     */
     private static final DocumentColor NAME_COLOR = DocumentColor.rgb(44, 62, 80);
 
-    /** Bright-blue used by section titles. Preset-specific. */
+    /**
+     * Bright-blue used by section titles. Preset-specific.
+     */
     private static final DocumentColor SECTION_TITLE_COLOR =
             DocumentColor.rgb(41, 128, 185);
 
-    /** Royal-blue used by contact links. Preset-specific. */
+    /**
+     * Royal-blue used by contact links. Preset-specific.
+     */
     private static final DocumentColor LINK_COLOR = DocumentColor.rgb(65, 105, 225);
 
     private ModernProfessional() {
@@ -97,83 +109,77 @@ public final class ModernProfessional {
         return new Template(theme);
     }
 
-    private static final class Template implements DocumentTemplate<CvDocument> {
-
-        private final CvTheme theme;
-
-        Template(CvTheme theme) {
-            this.theme = theme;
-        }
+    private record Template(CvTheme theme) implements DocumentTemplate<CvDocument> {
 
         @Override
-        public String id() {
-            return ID;
-        }
-
-        @Override
-        public String displayName() {
-            return DISPLAY_NAME;
-        }
-
-        @Override
-        public void compose(DocumentSession document, CvDocument doc) {
-            Objects.requireNonNull(document, "document");
-            Objects.requireNonNull(doc, "doc");
-
-            // Preset-specific styles — built once, fed to widgets.
-            // These cannot live in the theme because their colours are
-            // unique to this preset (no other preset uses slate-blue
-            // for the name or royal-blue for links).
-            DocumentTextStyle nameStyle = DocumentTextStyle.builder()
-                    .fontName(FontName.HELVETICA_BOLD)
-                    .size(theme.typography().sizeHeadline())
-                    .decoration(DocumentTextDecoration.BOLD)
-                    .color(NAME_COLOR)
-                    .build();
-            DocumentTextStyle contactBodyStyle = DocumentTextStyle.builder()
-                    .fontName(FontName.HELVETICA)
-                    .size(theme.typography().sizeContact())
-                    .color(theme.palette().ink())
-                    .build();
-            DocumentTextStyle contactLinkStyle = DocumentTextStyle.builder()
-                    .fontName(FontName.HELVETICA)
-                    .size(theme.typography().sizeContact())
-                    .decoration(DocumentTextDecoration.UNDERLINE)
-                    .color(LINK_COLOR)
-                    .build();
-            DocumentTextStyle contactSeparatorStyle = DocumentTextStyle.builder()
-                    .fontName(FontName.HELVETICA)
-                    .size(theme.typography().sizeContact())
-                    .color(theme.palette().rule())
-                    .build();
-
-            PageFlowBuilder pageFlow = document.dsl()
-                    .pageFlow()
-                    .name("CvV2ModernRoot")
-                    .spacing(theme.spacing().pageFlowSpacing())
-                    .addSection("Header", section ->
-                            Headline.rightAligned(section, doc.identity().name(),
-                                    theme, nameStyle))
-                    .addSection("Contact", section -> {
-                        section.accentBottom(theme.palette().rule(),
-                                theme.spacing().accentRuleWidth());
-                        ContactLine.twoRowRightAligned(section, doc.identity(),
-                                theme, contactBodyStyle, contactLinkStyle,
-                                contactSeparatorStyle);
-                    });
-
-            // Single-column preset — only MAIN slot.
-            List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
-            for (int i = 0; i < sections.size(); i++) {
-                final CvSection sec = sections.get(i);
-                final int idx = i;
-                pageFlow.addSection("Title_" + idx, host ->
-                        SectionHeader.flat(host, sec.title(), SECTION_TITLE_COLOR, theme));
-                pageFlow.addSection("Body_" + idx, host ->
-                        SectionDispatcher.renderBody(host, sec, theme));
+            public String id() {
+                return ID;
             }
 
-            pageFlow.build();
+            @Override
+            public String displayName() {
+                return DISPLAY_NAME;
+            }
+
+            @Override
+            public void compose(DocumentSession document, CvDocument doc) {
+                Objects.requireNonNull(document, "document");
+                Objects.requireNonNull(doc, "doc");
+
+                // Preset-specific styles — built once, fed to widgets.
+                // These cannot live in the theme because their colours are
+                // unique to this preset (no other preset uses slate-blue
+                // for the name or royal-blue for links).
+                DocumentTextStyle nameStyle = DocumentTextStyle.builder()
+                        .fontName(FontName.HELVETICA_BOLD)
+                        .size(theme.typography().sizeHeadline())
+                        .decoration(DocumentTextDecoration.BOLD)
+                        .color(NAME_COLOR)
+                        .build();
+                DocumentTextStyle contactBodyStyle = DocumentTextStyle.builder()
+                        .fontName(FontName.HELVETICA)
+                        .size(theme.typography().sizeContact())
+                        .color(theme.palette().ink())
+                        .build();
+                DocumentTextStyle contactLinkStyle = DocumentTextStyle.builder()
+                        .fontName(FontName.HELVETICA)
+                        .size(theme.typography().sizeContact())
+                        .decoration(DocumentTextDecoration.UNDERLINE)
+                        .color(LINK_COLOR)
+                        .build();
+                DocumentTextStyle contactSeparatorStyle = DocumentTextStyle.builder()
+                        .fontName(FontName.HELVETICA)
+                        .size(theme.typography().sizeContact())
+                        .color(theme.palette().rule())
+                        .build();
+
+                PageFlowBuilder pageFlow = document.dsl()
+                        .pageFlow()
+                        .name("CvV2ModernRoot")
+                        .spacing(theme.spacing().pageFlowSpacing())
+                        .addSection("Header", section ->
+                                Headline.rightAligned(section, doc.identity().name(),
+                                        theme, nameStyle))
+                        .addSection("Contact", section -> {
+                            section.accentBottom(theme.palette().rule(),
+                                    theme.spacing().accentRuleWidth());
+                            ContactLine.twoRowRightAligned(section, doc.identity(),
+                                    theme, contactBodyStyle, contactLinkStyle,
+                                    contactSeparatorStyle);
+                        });
+
+                // Single-column preset — only MAIN slot.
+                List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
+                for (int i = 0; i < sections.size(); i++) {
+                    final CvSection sec = sections.get(i);
+                    final int idx = i;
+                    pageFlow.addSection("Title_" + idx, host ->
+                            SectionHeader.flat(host, sec.title(), SECTION_TITLE_COLOR, theme));
+                    pageFlow.addSection("Body_" + idx, host ->
+                            SectionDispatcher.renderBody(host, sec, theme));
+                }
+
+                pageFlow.build();
+            }
         }
-    }
 }

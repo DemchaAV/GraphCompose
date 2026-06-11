@@ -23,12 +23,11 @@ import java.util.Objects;
  * it places whole on a page or moves to the next, exactly like an inline image
  * or a shape container.</p>
  *
- * @param name optional semantic name for snapshots / diagnostics
- * @param spec structural chart description (kind, axes, legend, data)
- * @param style visual styling, or {@code null} to inherit the theme entirely
- * @param margin outer spacing
+ * @param name    optional semantic name for snapshots / diagnostics
+ * @param spec    structural chart description (kind, axes, legend, data)
+ * @param style   visual styling, or {@code null} to inherit the theme entirely
+ * @param margin  outer spacing
  * @param padding inner spacing inside the chart box (insets the plot area)
- *
  * @author Artem Demchyshyn
  * @since 1.8.0
  */
@@ -40,7 +39,9 @@ public record ChartNode(
         DocumentInsets padding
 ) implements DocumentNode {
 
-    /** Normalizes nullable spacing and name. */
+    /**
+     * Normalizes nullable spacing and name.
+     */
     public ChartNode {
         name = name == null ? "" : name;
         Objects.requireNonNull(spec, "spec");

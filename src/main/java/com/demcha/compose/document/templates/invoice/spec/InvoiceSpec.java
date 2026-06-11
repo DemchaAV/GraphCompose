@@ -118,8 +118,8 @@ public record InvoiceSpec(
      * One summary row (subtotal, tax, total, etc.) appearing beneath
      * the line item table.
      *
-     * @param label  row label
-     * @param value  row value
+     * @param label   row label
+     * @param value   row value
      * @param isTotal whether this row is the headline total (rendered
      *                emphasised by the preset)
      */
@@ -187,56 +187,87 @@ public record InvoiceSpec(
          * @param value invoice number
          * @return this builder
          */
-        public Builder invoiceNumber(String value) { this.invoiceNumber = value; return this; }
+        public Builder invoiceNumber(String value) {
+            this.invoiceNumber = value;
+            return this;
+        }
+
         /**
          * Sets the issue date.
          *
          * @param value issue date
          * @return this builder
          */
-        public Builder issueDate(String value) { this.issueDate = value; return this; }
+        public Builder issueDate(String value) {
+            this.issueDate = value;
+            return this;
+        }
+
         /**
          * Sets the due date.
          *
          * @param value due date
          * @return this builder
          */
-        public Builder dueDate(String value) { this.dueDate = value == null ? "" : value; return this; }
+        public Builder dueDate(String value) {
+            this.dueDate = value == null ? "" : value;
+            return this;
+        }
+
         /**
          * Sets the sender party.
          *
          * @param value sender party
          * @return this builder
          */
-        public Builder fromParty(Party value) { this.fromParty = value; return this; }
+        public Builder fromParty(Party value) {
+            this.fromParty = value;
+            return this;
+        }
+
         /**
          * Sets the recipient party.
          *
          * @param value recipient party
          * @return this builder
          */
-        public Builder billToParty(Party value) { this.billToParty = value; return this; }
+        public Builder billToParty(Party value) {
+            this.billToParty = value;
+            return this;
+        }
+
         /**
          * Adds a line item.
          *
          * @param item line item
          * @return this builder
          */
-        public Builder lineItem(LineItem item) { this.lineItems.add(item); return this; }
+        public Builder lineItem(LineItem item) {
+            this.lineItems.add(item);
+            return this;
+        }
+
         /**
          * Adds a summary row.
          *
          * @param row summary row
          * @return this builder
          */
-        public Builder summaryRow(SummaryRow row) { this.summaryRows.add(row); return this; }
+        public Builder summaryRow(SummaryRow row) {
+            this.summaryRows.add(row);
+            return this;
+        }
+
         /**
          * Adds a footer note.
          *
          * @param note footer note
          * @return this builder
          */
-        public Builder note(String note) { if (note != null) this.notes.add(note); return this; }
+        public Builder note(String note) {
+            if (note != null) this.notes.add(note);
+            return this;
+        }
 
         /**
          * Builds an immutable {@link InvoiceSpec}.

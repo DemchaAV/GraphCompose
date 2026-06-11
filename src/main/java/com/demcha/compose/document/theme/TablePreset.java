@@ -14,10 +14,9 @@ import java.util.Objects;
  * {@link #zebraStyle()} for alternating-row tinting.</p>
  *
  * @param defaultCellStyle base cell style (padding, body text style, borders)
- * @param headerStyle override for header rows
- * @param totalRowStyle override for total/summary rows
- * @param zebraStyle override applied to every other body row for zebra tinting
- *
+ * @param headerStyle      override for header rows
+ * @param totalRowStyle    override for total/summary rows
+ * @param zebraStyle       override applied to every other body row for zebra tinting
  * @author Artem Demchyshyn
  */
 public record TablePreset(

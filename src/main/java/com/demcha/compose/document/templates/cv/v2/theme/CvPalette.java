@@ -24,7 +24,9 @@ public record CvPalette(DocumentColor ink,
                         DocumentColor banner,
                         DocumentColor mainFill) {
 
-    /** Validates that no colour token is null. */
+    /**
+     * Validates that no colour token is null.
+     */
     public CvPalette {
         Objects.requireNonNull(ink, "ink");
         Objects.requireNonNull(muted, "muted");

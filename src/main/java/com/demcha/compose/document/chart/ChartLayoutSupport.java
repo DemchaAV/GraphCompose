@@ -4,11 +4,7 @@ import com.demcha.compose.document.node.LineNode;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.ShapeNode;
 import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentCornerRadius;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.style.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,41 +29,12 @@ final class ChartLayoutSupport {
     static final double DEFAULT_VALUE_LABEL_OFFSET = 2.0;
     static final double HALO_PAD_X = 2.0;
     static final double HALO_PAD_Y = 1.0;
-    /** Cap height as a fraction of font size (Helvetica-class fonts ≈ 0.72em). */
+    /**
+     * Cap height as a fraction of font size (Helvetica-class fonts ≈ 0.72em).
+     */
     static final double CAP_HEIGHT_RATIO = 0.70;
 
     private ChartLayoutSupport() {
-    }
-
-    /** One legend entry: a swatch colour plus its label. */
-    record LegendEntry(String name, DocumentColor color) {
-    }
-
-    /** Space reserved for the legend on each side of the plot. */
-    record LegendReserve(double bottomH, double topH, double rightW) {
-        static final LegendReserve NONE = new LegendReserve(0, 0, 0);
-    }
-
-    /** Plot rectangle and scale, all in bottom-up inner-box coordinates. */
-    record Frame(NiceScale scale, double plotLeftX, double plotRightX,
-                 double plotBottomY, double plotTopY,
-                 double leftGutter, double legendH,
-                 double axisLineH, double legendLineH, double valueLineH) {
-        double plotWidth() {
-            return plotRightX - plotLeftX;
-        }
-
-        double plotHeight() {
-            return plotTopY - plotBottomY;
-        }
-
-        double yForValue(double value) {
-            return plotBottomY + scale.fractionOf(value) * plotHeight();
-        }
-
-        double plotCenterY() {
-            return (plotBottomY + plotTopY) / 2.0;
-        }
     }
 
     static List<LegendEntry> seriesLegendEntries(ChartData data, ChartStyle style,
@@ -81,7 +48,9 @@ final class ChartLayoutSupport {
         return entries;
     }
 
-    /** Computes the strip/column space the legend reserves around the plot. */
+    /**
+     * Computes the strip/column space the legend reserves around the plot.
+     */
     static LegendReserve legendReserve(LegendPosition position, List<LegendEntry> entries,
                                        ChartStyle style, ChartTextMetrics metrics) {
         if (position == LegendPosition.NONE || entries.isEmpty()) {
@@ -191,7 +160,7 @@ final class ChartLayoutSupport {
             min = Math.min(min, 0.0);
             max = Math.max(max, 0.0);
         }
-        return new double[] {min, max};
+        return new double[]{min, max};
     }
 
     static void emitGridAndTicks(List<ChartPrimitive> out, Frame f, AxisSpec axis,
@@ -220,7 +189,9 @@ final class ChartLayoutSupport {
         }
     }
 
-    /** Emits one vertical category-separator grid line per inner slot boundary. */
+    /**
+     * Emits one vertical category-separator grid line per inner slot boundary.
+     */
     static void emitVerticalGrid(List<ChartPrimitive> out, Frame f, int categoryCount,
                                  ChartStyle style) {
         DocumentStroke stroke = style.grid() == null ? null : style.grid().vertical();
@@ -316,7 +287,9 @@ final class ChartLayoutSupport {
                 x + SWATCH_SIZE + SWATCH_LABEL_GAP, labelBottom, labelW, legendLineH));
     }
 
-    /** Emits an optional halo chip followed by a centred label box. */
+    /**
+     * Emits an optional halo chip followed by a centred label box.
+     */
     static void emitChipLabel(List<ChartPrimitive> out, String name, String text,
                               DocumentTextStyle textStyle, DocumentColor halo,
                               double centerX, double yBottom, double labelW, double lineH) {
@@ -368,6 +341,43 @@ final class ChartLayoutSupport {
         if (mode == ValueLabelMode.INSIDE) {
             throw new UnsupportedOperationException(
                     "ValueLabelMode.INSIDE is not yet supported; use OUTSIDE or NONE");
+        }
+    }
+
+    /**
+     * One legend entry: a swatch colour plus its label.
+     */
+    record LegendEntry(String name, DocumentColor color) {
+    }
+
+    /**
+     * Space reserved for the legend on each side of the plot.
+     */
+    record LegendReserve(double bottomH, double topH, double rightW) {
+        static final LegendReserve NONE = new LegendReserve(0, 0, 0);
+    }
+
+    /**
+     * Plot rectangle and scale, all in bottom-up inner-box coordinates.
+     */
+    record Frame(NiceScale scale, double plotLeftX, double plotRightX,
+                 double plotBottomY, double plotTopY,
+                 double leftGutter, double legendH,
+                 double axisLineH, double legendLineH, double valueLineH) {
+        double plotWidth() {
+            return plotRightX - plotLeftX;
+        }
+
+        double plotHeight() {
+            return plotTopY - plotBottomY;
+        }
+
+        double yForValue(double value) {
+            return plotBottomY + scale.fractionOf(value) * plotHeight();
+        }
+
+        double plotCenterY() {
+            return (plotBottomY + plotTopY) / 2.0;
         }
     }
 }

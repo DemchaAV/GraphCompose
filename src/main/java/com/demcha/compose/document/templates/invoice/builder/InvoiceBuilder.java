@@ -151,7 +151,7 @@ public final class InvoiceBuilder {
                 List<DocumentNode> children = new ArrayList<>();
                 children.add(headingRow("Invoice " + spec.invoiceNumber()));
                 children.add(bodyParagraph("Issued: " + spec.issueDate()
-                        + (spec.dueDate().isBlank() ? "" : "   Due: " + spec.dueDate())));
+                                           + (spec.dueDate().isBlank() ? "" : "   Due: " + spec.dueDate())));
                 children.add(partyBlock("From", spec.fromParty()));
                 children.add(partyBlock("Bill To", spec.billToParty()));
                 children.add(lineItemsBlock(spec.lineItems()));

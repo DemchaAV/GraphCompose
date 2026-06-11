@@ -1,30 +1,16 @@
 package com.demcha.compose.document.layout;
 
 import com.demcha.compose.document.image.DocumentImageData;
-import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
-import com.demcha.compose.document.layout.payloads.SideBorders;
-import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
-import com.demcha.compose.engine.components.content.table.TableResolvedCell;
-import com.demcha.compose.document.layout.payloads.TransformBeginPayload;
-import com.demcha.compose.document.layout.payloads.TransformEndPayload;
-import com.demcha.compose.document.node.DocumentBarcodeOptions;
-import com.demcha.compose.document.node.DocumentBarcodeType;
-import com.demcha.compose.document.node.DocumentNode;
-import com.demcha.compose.document.node.ImageNode;
-import com.demcha.compose.document.node.LayerStackNode;
-import com.demcha.compose.document.node.RowNode;
-import com.demcha.compose.document.node.TableNode;
-import com.demcha.compose.document.style.DocumentBorders;
-import com.demcha.compose.document.style.DocumentCornerRadius;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTransform;
+import com.demcha.compose.document.layout.payloads.*;
+import com.demcha.compose.document.node.*;
+import com.demcha.compose.document.style.*;
 import com.demcha.compose.engine.components.content.ImageData;
 import com.demcha.compose.engine.components.content.barcode.BarcodeData;
 import com.demcha.compose.engine.components.content.shape.Stroke;
+import com.demcha.compose.engine.components.content.table.TableResolvedCell;
 import com.demcha.compose.engine.components.style.Padding;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,7 +68,7 @@ public final class NodeDefinitionSupport {
      * Wraps an atomic leaf fragment with transform-begin / transform-end markers
      * when the transform is non-identity.
      *
-     * @param leaf resolved leaf fragment
+     * @param leaf      resolved leaf fragment
      * @param placement resolved fragment placement
      * @param transform optional render-time transform
      * @return the leaf alone for identity transforms, otherwise begin/leaf/end
@@ -123,11 +109,11 @@ public final class NodeDefinitionSupport {
     /**
      * Emits an optional background/border decoration fragment.
      *
-     * @param fillColor optional fill color
-     * @param stroke optional uniform stroke
+     * @param fillColor    optional fill color
+     * @param stroke       optional uniform stroke
      * @param cornerRadius optional per-corner radius
-     * @param sideBorders optional per-side borders
-     * @param placement resolved placement
+     * @param sideBorders  optional per-side borders
+     * @param placement    resolved placement
      * @return one shape fragment or an empty list when nothing should render
      */
     public static List<LayoutFragment> emitDecorationFragment(Color fillColor,
@@ -142,10 +128,10 @@ public final class NodeDefinitionSupport {
     /**
      * Emits an optional background/border decoration fragment.
      *
-     * @param fillColor optional fill color
-     * @param stroke optional uniform stroke
+     * @param fillColor    optional fill color
+     * @param stroke       optional uniform stroke
      * @param cornerRadius uniform corner radius
-     * @param placement resolved placement
+     * @param placement    resolved placement
      * @return one shape fragment or an empty list when nothing should render
      */
     public static List<LayoutFragment> emitDecorationFragment(Color fillColor,
@@ -158,11 +144,11 @@ public final class NodeDefinitionSupport {
     /**
      * Emits an optional background/border decoration fragment.
      *
-     * @param fillColor optional fill color
-     * @param stroke optional uniform stroke
+     * @param fillColor    optional fill color
+     * @param stroke       optional uniform stroke
      * @param cornerRadius uniform corner radius
-     * @param sideBorders optional per-side borders
-     * @param placement resolved placement
+     * @param sideBorders  optional per-side borders
+     * @param placement    resolved placement
      * @return one shape fragment or an empty list when nothing should render
      */
     public static List<LayoutFragment> emitDecorationFragment(Color fillColor,
@@ -219,7 +205,7 @@ public final class NodeDefinitionSupport {
      * Resolves image display dimensions from requested size, scale, intrinsic
      * metadata, and available width.
      *
-     * @param node image node to measure
+     * @param node           image node to measure
      * @param availableWidth parent available width
      * @return resolved image dimensions excluding padding
      */
@@ -266,10 +252,10 @@ public final class NodeDefinitionSupport {
      * Measures a vertical composite node by preparing children inside the
      * padding-adjusted inner width.
      *
-     * @param children semantic child nodes
-     * @param spacing vertical spacing between children
-     * @param padding engine padding
-     * @param ctx prepare context
+     * @param children    semantic child nodes
+     * @param spacing     vertical spacing between children
+     * @param padding     engine padding
+     * @param ctx         prepare context
      * @param constraints parent constraints
      * @return measured outer size
      */
@@ -302,9 +288,9 @@ public final class NodeDefinitionSupport {
     /**
      * Measures a horizontal row by preparing each child in its weighted slot.
      *
-     * @param node row node
-     * @param padding engine padding
-     * @param ctx prepare context
+     * @param node        row node
+     * @param padding     engine padding
+     * @param ctx         prepare context
      * @param constraints parent constraints
      * @return measured outer row size
      */
@@ -352,9 +338,9 @@ public final class NodeDefinitionSupport {
      * Measures a stack by preparing each layer inside the padding-adjusted
      * available width and taking the largest child outer box.
      *
-     * @param node layer stack node
-     * @param padding engine padding
-     * @param ctx prepare context
+     * @param node        layer stack node
+     * @param padding     engine padding
+     * @param ctx         prepare context
      * @param constraints parent constraints
      * @return measured outer stack size
      */
@@ -385,8 +371,8 @@ public final class NodeDefinitionSupport {
     /**
      * Prepares a table node through the package-local table layout support.
      *
-     * @param node table node
-     * @param ctx prepare context
+     * @param node        table node
+     * @param ctx         prepare context
      * @param constraints parent constraints
      * @return prepared table node
      */
@@ -410,7 +396,7 @@ public final class NodeDefinitionSupport {
      * Splits a prepared table while preserving repeated-header semantics.
      *
      * @param prepared prepared table node
-     * @param request split request
+     * @param request  split request
      * @return split result
      */
     public static PreparedSplitResult<TableNode> splitTable(PreparedNode<TableNode> prepared, SplitRequest request) {
@@ -458,8 +444,8 @@ public final class NodeDefinitionSupport {
     /**
      * Emits row fragments for a prepared table.
      *
-     * @param prepared prepared table node
-     * @param ctx fragment-emission context
+     * @param prepared  prepared table node
+     * @param ctx       fragment-emission context
      * @param placement resolved fragment placement
      * @return renderer-facing table row fragments
      */
@@ -628,9 +614,9 @@ public final class NodeDefinitionSupport {
                                                                FragmentPlacement placement) {
         boolean hasFill = fillColor != null;
         boolean hasStroke = stroke != null
-                && stroke.strokeColor() != null
-                && stroke.strokeColor().color() != null
-                && stroke.width() > 0;
+                            && stroke.strokeColor() != null
+                            && stroke.strokeColor().color() != null
+                            && stroke.width() > 0;
         boolean hasSideBorders = sideBorders != null && sideBorders.hasAny();
         if ((!hasFill && !hasStroke && !hasSideBorders) || placement.width() <= EPS || placement.height() <= EPS) {
             return List.of();
@@ -652,7 +638,7 @@ public final class NodeDefinitionSupport {
     /**
      * Resolved image dimensions excluding node padding.
      *
-     * @param width resolved width
+     * @param width  resolved width
      * @param height resolved height
      */
     public record ImageDimensions(double width, double height) {

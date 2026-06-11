@@ -1,10 +1,8 @@
 package com.demcha.compose.document.templates.support.business;
 
-import com.demcha.compose.document.templates.support.common.*;
-
 import com.demcha.compose.engine.components.content.text.TextStyle;
 
-import java.awt.Color;
+import java.awt.*;
 
 /**
  * Lightweight style collaborator for invoice and proposal scene composers.

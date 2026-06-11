@@ -10,10 +10,10 @@ import java.util.Objects;
  * <p>The DSL adapts this value into the internal engine text style during
  * composition. Instances are immutable and thread-safe.</p>
  *
- * @param fontName font family name
- * @param size font size in points
+ * @param fontName   font family name
+ * @param size       font size in points
  * @param decoration text decoration
- * @param color text color
+ * @param color      text color
  * @author Artem Demchyshyn
  */
 public record DocumentTextStyle(

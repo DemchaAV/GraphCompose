@@ -1,12 +1,12 @@
 package com.demcha.compose.document.layout;
 
+import com.demcha.compose.document.exceptions.AtomicNodeTooLargeException;
 import com.demcha.compose.document.layout.payloads.PreparedStackLayout;
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.LayerStackNode;
 import com.demcha.compose.document.node.PageBreakNode;
-
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
-import com.demcha.compose.document.exceptions.AtomicNodeTooLargeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,26 +40,6 @@ public final class LayoutCompiler {
      * full page at all?" check.</p>
      */
     private static final double CAPACITY_TOLERANCE = 0.5;
-
-    /**
-     * Identifies the kind of fixed slot a child is being compiled into,
-     * so the validator can distinguish "child of a horizontal row band"
-     * (where a nested {@code Row} would create real composition conflict)
-     * from "child of a {@link com.demcha.compose.document.node.LayerStackNode}
-     * layer" (where a nested {@code Row} is a normal column-row inside an
-     * already-fixed layer rectangle).
-     *
-     * <p>{@link #compileNodeInFixedSlot} takes the kind as a parameter
-     * and propagates it down recursive calls so the validator can
-     * relax just for STACK layer parents.</p>
-     */
-    private enum FixedSlotKind {
-        /** Child sits inside a horizontal row band (column of a row). */
-        ROW_SLOT,
-        /** Child sits inside a {@link LayerStackNode} layer rectangle. */
-        STACK_LAYER_SLOT
-    }
-
     private final NodeRegistry registry;
 
     /**
@@ -73,10 +53,113 @@ public final class LayoutCompiler {
     }
 
     /**
+     * Returns an iteration order over {@code zIndices} that is stable on
+     * ties. Layers with equal {@code zIndex} keep their source order, so
+     * the default of all-zero zIndices yields the identity permutation
+     * {@code [0, 1, ..., n-1]} and existing snapshots stay deterministic.
+     *
+     * @param zIndices per-layer render-order keys (in source order)
+     * @return source indices sorted by ascending {@code zIndex}, stable
+     * on ties
+     */
+    private static int[] stableZIndexOrder(java.util.List<Integer> zIndices) {
+        int n = zIndices.size();
+        if (n <= 1) {
+            return identityOrder(n);
+        }
+        // Common case: every layer uses the same zIndex (typically 0). A
+        // stable sort would preserve source order anyway, so skip the boxed
+        // array allocation and the full sort.
+        int firstZ = zIndices.get(0);
+        boolean allEqual = true;
+        for (int i = 1; i < n; i++) {
+            if (zIndices.get(i) != firstZ) {
+                allEqual = false;
+                break;
+            }
+        }
+        if (allEqual) {
+            return identityOrder(n);
+        }
+        Integer[] boxed = new Integer[n];
+        for (int i = 0; i < n; i++) {
+            boxed[i] = i;
+        }
+        // Comparator.comparingInt + java.util.Arrays.sort on boxed array is
+        // documented stable; primitive int[] sort is not.
+        java.util.Arrays.sort(boxed, java.util.Comparator.comparingInt(zIndices::get));
+        int[] order = new int[n];
+        for (int i = 0; i < n; i++) {
+            order[i] = boxed[i];
+        }
+        return order;
+    }
+
+    private static int[] identityOrder(int n) {
+        int[] order = new int[n];
+        for (int i = 0; i < n; i++) {
+            order[i] = i;
+        }
+        return order;
+    }
+
+    private static double horizontalLayerOffset(com.demcha.compose.document.node.LayerAlign align,
+                                                double innerWidth,
+                                                double childOuterWidth) {
+        return switch (align) {
+            case TOP_LEFT, CENTER_LEFT, BOTTOM_LEFT -> 0.0;
+            case TOP_CENTER, CENTER, BOTTOM_CENTER -> Math.max(0.0, (innerWidth - childOuterWidth) / 2.0);
+            case TOP_RIGHT, CENTER_RIGHT, BOTTOM_RIGHT -> Math.max(0.0, innerWidth - childOuterWidth);
+        };
+    }
+
+    private static double verticalLayerOffset(com.demcha.compose.document.node.LayerAlign align,
+                                              double innerHeight,
+                                              double childOuterHeight) {
+        return switch (align) {
+            case TOP_LEFT, TOP_CENTER, TOP_RIGHT -> 0.0;
+            case CENTER_LEFT, CENTER, CENTER_RIGHT -> Math.max(0.0, (innerHeight - childOuterHeight) / 2.0);
+            case BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT -> Math.max(0.0, innerHeight - childOuterHeight);
+        };
+    }
+
+    private static double[] distributeRowSlotWidths(List<DocumentNode> children,
+                                                    List<Double> weights,
+                                                    double gap,
+                                                    double innerWidth) {
+        int n = children.size();
+        double available = Math.max(0.0, innerWidth - gap * Math.max(0, n - 1));
+        double[] slots = new double[n];
+        if (weights == null || weights.isEmpty()) {
+            double share = n > 0 ? available / n : 0.0;
+            for (int i = 0; i < n; i++) {
+                slots[i] = share;
+            }
+            return slots;
+        }
+        RowSlots.validateWeightsMatchChildren(weights, n);
+        double total = 0.0;
+        for (double w : weights) {
+            total += w;
+        }
+        if (total <= 0.0) {
+            double share = n > 0 ? available / n : 0.0;
+            for (int i = 0; i < n; i++) {
+                slots[i] = share;
+            }
+            return slots;
+        }
+        for (int i = 0; i < n; i++) {
+            slots[i] = available * (weights.get(i) / total);
+        }
+        return slots;
+    }
+
+    /**
      * Compiles semantic roots into placed nodes and renderable fragments.
      *
-     * @param graph semantic document graph
-     * @param prepareContext node preparation context
+     * @param graph           semantic document graph
+     * @param prepareContext  node preparation context
      * @param fragmentContext fragment emission context
      * @return fixed-layout graph ready for rendering or snapshot extraction
      */
@@ -157,15 +240,15 @@ public final class LayoutCompiler {
 
         if (availableWidth <= EPS) {
             throw new IllegalStateException("Node '" + path
-                    + "' has no horizontal layout space. "
-                    + "Reduce padding or margin on the parent, or increase the page width.");
+                                            + "' has no horizontal layout space. "
+                                            + "Reduce padding or margin on the parent, or increase the page width.");
         }
 
         MeasureResult naturalMeasure = prepared.measureResult();
         if (naturalMeasure.width() > availableWidth + EPS) {
             throw new IllegalStateException("Node '" + path + "' measured width " + naturalMeasure.width()
-                    + " exceeds available width " + availableWidth + ". "
-                    + "Reduce the node width, shorten inline content, or wrap content in a smaller container.");
+                                            + " exceeds available width " + availableWidth + ". "
+                                            + "Reduce the node width, shorten inline content, or wrap content in a smaller container.");
         }
 
         if (prepared.isComposite()) {
@@ -264,7 +347,7 @@ public final class LayoutCompiler {
         // existing layouts are unchanged.
         double outerHeight = naturalMeasure.height() + margin.vertical();
         boolean keepWhole = node.keepTogether()
-                && outerHeight <= state.canvas.innerHeight() + CAPACITY_TOLERANCE;
+                            && outerHeight <= state.canvas.innerHeight() + CAPACITY_TOLERANCE;
         double startReservation = margin.top() + padding.top();
         if (keepWhole && outerHeight > state.remainingHeight() + EPS && state.usedHeight > EPS) {
             state.newPage();
@@ -412,8 +495,8 @@ public final class LayoutCompiler {
                         (NodeDefinition<DocumentNode>) registry.definitionFor(child);
                 if (childMeasure.height() > naturalMeasure.height() - padding.vertical() + EPS) {
                     throw new IllegalStateException("Row '" + path + "' child '" + child.nodeKind()
-                            + "' measured height " + childMeasure.height() + " exceeds row inner height. "
-                            + "Reduce the child height, shorten its content, or increase the row height.");
+                                                    + "' measured height " + childMeasure.height() + " exceeds row inner height. "
+                                                    + "Reduce the child height, shorten its content, or increase the row height.");
                 }
 
                 if (childPrepared.isComposite()) {
@@ -671,109 +754,6 @@ public final class LayoutCompiler {
         state.usedHeight += stackOuterHeight;
     }
 
-    /**
-     * Returns an iteration order over {@code zIndices} that is stable on
-     * ties. Layers with equal {@code zIndex} keep their source order, so
-     * the default of all-zero zIndices yields the identity permutation
-     * {@code [0, 1, ..., n-1]} and existing snapshots stay deterministic.
-     *
-     * @param zIndices per-layer render-order keys (in source order)
-     * @return source indices sorted by ascending {@code zIndex}, stable
-     *         on ties
-     */
-    private static int[] stableZIndexOrder(java.util.List<Integer> zIndices) {
-        int n = zIndices.size();
-        if (n <= 1) {
-            return identityOrder(n);
-        }
-        // Common case: every layer uses the same zIndex (typically 0). A
-        // stable sort would preserve source order anyway, so skip the boxed
-        // array allocation and the full sort.
-        int firstZ = zIndices.get(0);
-        boolean allEqual = true;
-        for (int i = 1; i < n; i++) {
-            if (zIndices.get(i) != firstZ) {
-                allEqual = false;
-                break;
-            }
-        }
-        if (allEqual) {
-            return identityOrder(n);
-        }
-        Integer[] boxed = new Integer[n];
-        for (int i = 0; i < n; i++) {
-            boxed[i] = i;
-        }
-        // Comparator.comparingInt + java.util.Arrays.sort on boxed array is
-        // documented stable; primitive int[] sort is not.
-        java.util.Arrays.sort(boxed, java.util.Comparator.comparingInt(zIndices::get));
-        int[] order = new int[n];
-        for (int i = 0; i < n; i++) {
-            order[i] = boxed[i];
-        }
-        return order;
-    }
-
-    private static int[] identityOrder(int n) {
-        int[] order = new int[n];
-        for (int i = 0; i < n; i++) {
-            order[i] = i;
-        }
-        return order;
-    }
-
-    private static double horizontalLayerOffset(com.demcha.compose.document.node.LayerAlign align,
-                                                double innerWidth,
-                                                double childOuterWidth) {
-        return switch (align) {
-            case TOP_LEFT, CENTER_LEFT, BOTTOM_LEFT -> 0.0;
-            case TOP_CENTER, CENTER, BOTTOM_CENTER -> Math.max(0.0, (innerWidth - childOuterWidth) / 2.0);
-            case TOP_RIGHT, CENTER_RIGHT, BOTTOM_RIGHT -> Math.max(0.0, innerWidth - childOuterWidth);
-        };
-    }
-
-    private static double verticalLayerOffset(com.demcha.compose.document.node.LayerAlign align,
-                                              double innerHeight,
-                                              double childOuterHeight) {
-        return switch (align) {
-            case TOP_LEFT, TOP_CENTER, TOP_RIGHT -> 0.0;
-            case CENTER_LEFT, CENTER, CENTER_RIGHT -> Math.max(0.0, (innerHeight - childOuterHeight) / 2.0);
-            case BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT -> Math.max(0.0, innerHeight - childOuterHeight);
-        };
-    }
-
-    private static double[] distributeRowSlotWidths(List<DocumentNode> children,
-                                                    List<Double> weights,
-                                                    double gap,
-                                                    double innerWidth) {
-        int n = children.size();
-        double available = Math.max(0.0, innerWidth - gap * Math.max(0, n - 1));
-        double[] slots = new double[n];
-        if (weights == null || weights.isEmpty()) {
-            double share = n > 0 ? available / n : 0.0;
-            for (int i = 0; i < n; i++) {
-                slots[i] = share;
-            }
-            return slots;
-        }
-        RowSlots.validateWeightsMatchChildren(weights, n);
-        double total = 0.0;
-        for (double w : weights) {
-            total += w;
-        }
-        if (total <= 0.0) {
-            double share = n > 0 ? available / n : 0.0;
-            for (int i = 0; i < n; i++) {
-                slots[i] = share;
-            }
-            return slots;
-        }
-        for (int i = 0; i < n; i++) {
-            slots[i] = available * (weights.get(i) / total);
-        }
-        return slots;
-    }
-
     private void compileAtomicLeaf(PreparedNode<DocumentNode> prepared,
                                    NodeDefinition<DocumentNode> definition,
                                    String path,
@@ -911,11 +891,11 @@ public final class LayoutCompiler {
         // offsetX > 0 nudges the layer right; offsetY > 0 nudges it down
         // (PDF y grows upward, so "down" subtracts from the top-Y).
         double alignedSlotX = innerStartX
-                + horizontalLayerOffset(align, innerWidth, childOuterWidth)
-                + layerOffsetX;
+                              + horizontalLayerOffset(align, innerWidth, childOuterWidth)
+                              + layerOffsetX;
         double alignedSlotTopY = innerTopY
-                - verticalLayerOffset(align, innerHeight, childOuterHeight)
-                - layerOffsetY;
+                                 - verticalLayerOffset(align, innerHeight, childOuterHeight)
+                                 - layerOffsetY;
 
         // Layers always paint into a fixed page band — even when the
         // surrounding flow is mutating, the overlay is pinned to ctx's
@@ -923,12 +903,12 @@ public final class LayoutCompiler {
         PlacementContext layerCtx = ctx instanceof FixedSlotPlacementContext fixed
                 ? fixed
                 : new FixedSlotPlacementContext(
-                        ctx.pageIndex(),
-                        ctx.canvas(),
-                        ctx.prepareContext(),
-                        ctx.fragmentContext(),
-                        ctx.nodes(),
-                        ctx.fragments());
+                ctx.pageIndex(),
+                ctx.canvas(),
+                ctx.prepareContext(),
+                ctx.fragmentContext(),
+                ctx.nodes(),
+                ctx.fragments());
 
         // Child sits inside a LayerStack layer rectangle — the validator
         // can relax for STACK_LAYER_SLOT because there is no competing
@@ -1033,8 +1013,8 @@ public final class LayoutCompiler {
             }
             if (tail != null && tail.equals(current)) {
                 throw new IllegalStateException("Split did not make progress for node '" + path
-                        + "'. The node's NodeDefinition.split() returned the original input as the tail — "
-                        + "check the definition for an infinite split loop and ensure each split advances.");
+                                                + "'. The node's NodeDefinition.split() returned the original input as the tail — "
+                                                + "check the definition for an infinite split loop and ensure each split advances.");
             }
 
             DocumentNode headNode = head.node();
@@ -1128,7 +1108,7 @@ public final class LayoutCompiler {
      * band.</p>
      *
      * @return outer height (measured height + vertical margin) consumed by the
-     *         node, used by the caller's local y-cursor
+     * node, used by the caller's local y-cursor
      */
     private double compileNodeInFixedSlot(PreparedNode<DocumentNode> prepared,
                                           String parentPath,
@@ -1174,11 +1154,11 @@ public final class LayoutCompiler {
             // because they are atomic and anchor their children inside
             // the existing slot.
             if (layoutSpec.axis() == CompositeLayoutSpec.Axis.HORIZONTAL
-                    && kind == FixedSlotKind.ROW_SLOT) {
+                && kind == FixedSlotKind.ROW_SLOT) {
                 throw new IllegalStateException("Row '" + path
-                        + "' cannot contain a nested horizontal row. "
-                        + "Wrap the inner row in a LayerStack layer (allowed since v1.6.2), "
-                        + "or stack horizontal content as sections inside a vertical column.");
+                                                + "' cannot contain a nested horizontal row. "
+                                                + "Wrap the inner row in a LayerStack layer (allowed since v1.6.2), "
+                                                + "or stack horizontal content as sections inside a vertical column.");
             }
 
             int decorationInsertIndex = fragments.size();
@@ -1512,8 +1492,8 @@ public final class LayoutCompiler {
             base = node.nodeKind();
         }
         String segment = base.trim()
-                .replace('\\', '_')
-                .replace('/', '_') + "[" + childIndex + "]";
+                                 .replace('\\', '_')
+                                 .replace('/', '_') + "[" + childIndex + "]";
         return parentPath == null ? segment : parentPath + "/" + segment;
     }
 
@@ -1527,10 +1507,33 @@ public final class LayoutCompiler {
     private AtomicNodeTooLargeException atomicTooLarge(String path, double outerHeight, double pageHeight) {
         return new AtomicNodeTooLargeException(
                 "Node '" + path + "' requires outer height " + outerHeight
-                        + " but page capacity is " + pageHeight + ". "
-                        + "Reduce the node height, split content into multiple atomic blocks, "
-                        + "or increase the page size. Differences under 0.5 pt are tolerated as "
-                        + "rounding noise (v1.6.2+).");
+                + " but page capacity is " + pageHeight + ". "
+                + "Reduce the node height, split content into multiple atomic blocks, "
+                + "or increase the page size. Differences under 0.5 pt are tolerated as "
+                + "rounding noise (v1.6.2+).");
+    }
+
+    /**
+     * Identifies the kind of fixed slot a child is being compiled into,
+     * so the validator can distinguish "child of a horizontal row band"
+     * (where a nested {@code Row} would create real composition conflict)
+     * from "child of a {@link com.demcha.compose.document.node.LayerStackNode}
+     * layer" (where a nested {@code Row} is a normal column-row inside an
+     * already-fixed layer rectangle).
+     *
+     * <p>{@link #compileNodeInFixedSlot} takes the kind as a parameter
+     * and propagates it down recursive calls so the validator can
+     * relax just for STACK layer parents.</p>
+     */
+    private enum FixedSlotKind {
+        /**
+         * Child sits inside a horizontal row band (column of a row).
+         */
+        ROW_SLOT,
+        /**
+         * Child sits inside a {@link LayerStackNode} layer rectangle.
+         */
+        STACK_LAYER_SLOT
     }
 
 }

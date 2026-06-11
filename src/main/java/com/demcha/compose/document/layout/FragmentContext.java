@@ -1,8 +1,8 @@
 package com.demcha.compose.document.layout;
 
 import com.demcha.compose.document.node.DocumentNode;
-import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
+import com.demcha.compose.font.FontLibrary;
 
 import java.util.List;
 
@@ -52,15 +52,15 @@ public interface FragmentContext {
      * {@code FragmentContext} implementations have to opt-in to the
      * recursion.</p>
      *
-     * @param child prepared child node previously obtained from
-     *              {@link PrepareContext#prepare(DocumentNode, BoxConstraints)}
+     * @param child     prepared child node previously obtained from
+     *                  {@link PrepareContext#prepare(DocumentNode, BoxConstraints)}
      * @param placement placement assigned to the child within the
      *                  composite parent's geometry
-     * @param <E> child node type
+     * @param <E>       child node type
      * @return fragments emitted by the child's {@code NodeDefinition}
      * @throws UnsupportedOperationException when the
-     *         {@code FragmentContext} implementation does not back
-     *         child-fragment emission
+     *                                       {@code FragmentContext} implementation does not back
+     *                                       child-fragment emission
      */
     default <E extends DocumentNode> List<LayoutFragment> emitChildFragments(
             PreparedNode<E> child,

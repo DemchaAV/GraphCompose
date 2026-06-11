@@ -1,26 +1,26 @@
 package com.demcha.compose.document.templates.data.invoice;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.ArrayList;
 import java.util.function.Consumer;
 
 /**
  * Display-oriented invoice document input.
  *
- * @param title display title
+ * @param title         display title
  * @param invoiceNumber invoice number shown in the header
- * @param issueDate invoice issue date
- * @param dueDate payment due date
- * @param reference optional customer/project reference
- * @param status optional invoice status label
- * @param fromParty sender/supplier party
- * @param billToParty recipient/customer party
- * @param lineItems invoice line items
- * @param summaryRows subtotal/tax/total rows
- * @param notes invoice notes
- * @param paymentTerms payment term rows
- * @param footerNote footer note rendered at the bottom
+ * @param issueDate     invoice issue date
+ * @param dueDate       payment due date
+ * @param reference     optional customer/project reference
+ * @param status        optional invoice status label
+ * @param fromParty     sender/supplier party
+ * @param billToParty   recipient/customer party
+ * @param lineItems     invoice line items
+ * @param summaryRows   subtotal/tax/total rows
+ * @param notes         invoice notes
+ * @param paymentTerms  payment term rows
+ * @param footerNote    footer note rendered at the bottom
  */
 public record InvoiceData(
         String title,
@@ -243,10 +243,10 @@ public record InvoiceData(
          * Appends a line item from display values.
          *
          * @param description item description
-         * @param details optional details
-         * @param quantity quantity text
-         * @param unitPrice unit price text
-         * @param amount amount text
+         * @param details     optional details
+         * @param quantity    quantity text
+         * @param unitPrice   unit price text
+         * @param amount      amount text
          * @return this builder
          */
         public Builder lineItem(String description, String details, String quantity, String unitPrice, String amount) {

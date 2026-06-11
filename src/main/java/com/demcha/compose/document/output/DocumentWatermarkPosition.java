@@ -8,16 +8,28 @@ package com.demcha.compose.document.output;
  * @author Artem Demchyshyn
  */
 public enum DocumentWatermarkPosition {
-    /** Single watermark centred on the page. */
+    /**
+     * Single watermark centred on the page.
+     */
     CENTER,
-    /** Single watermark anchored to the top-left corner. */
+    /**
+     * Single watermark anchored to the top-left corner.
+     */
     TOP_LEFT,
-    /** Single watermark anchored to the top-right corner. */
+    /**
+     * Single watermark anchored to the top-right corner.
+     */
     TOP_RIGHT,
-    /** Single watermark anchored to the bottom-left corner. */
+    /**
+     * Single watermark anchored to the bottom-left corner.
+     */
     BOTTOM_LEFT,
-    /** Single watermark anchored to the bottom-right corner. */
+    /**
+     * Single watermark anchored to the bottom-right corner.
+     */
     BOTTOM_RIGHT,
-    /** Repeated tiled watermark pattern across the page. */
+    /**
+     * Repeated tiled watermark pattern across the page.
+     */
     TILE
 }

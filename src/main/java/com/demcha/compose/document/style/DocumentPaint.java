@@ -40,7 +40,7 @@ public sealed interface DocumentPaint permits DocumentPaint.Solid, DocumentPaint
      * Two-stop linear gradient along a normalized angle (0 = left→right).
      *
      * @param from start colour
-     * @param to end colour
+     * @param to   end colour
      * @return linear paint
      */
     static DocumentPaint linear(DocumentColor from, DocumentColor to) {
@@ -53,12 +53,15 @@ public sealed interface DocumentPaint permits DocumentPaint.Solid, DocumentPaint
      * @param color fill colour
      */
     record Solid(DocumentColor color) implements DocumentPaint {
-        /** Validates the colour. */
+        /**
+         * Validates the colour.
+         */
         public Solid {
             Objects.requireNonNull(color, "color");
         }
 
-        @Override public DocumentColor primaryColor() {
+        @Override
+        public DocumentColor primaryColor() {
             return color;
         }
     }
@@ -66,11 +69,13 @@ public sealed interface DocumentPaint permits DocumentPaint.Solid, DocumentPaint
     /**
      * Linear gradient.
      *
-     * @param stops ordered colour stops, offsets in [0,1]; at least two
+     * @param stops        ordered colour stops, offsets in [0,1]; at least two
      * @param angleDegrees gradient direction, 0 = left→right, 90 = bottom→top
      */
     record Linear(List<Stop> stops, double angleDegrees) implements DocumentPaint {
-        /** Copy-protects and validates stops. */
+        /**
+         * Copy-protects and validates stops.
+         */
         public Linear {
             Objects.requireNonNull(stops, "stops");
             stops = List.copyOf(stops);
@@ -79,7 +84,8 @@ public sealed interface DocumentPaint permits DocumentPaint.Solid, DocumentPaint
             }
         }
 
-        @Override public DocumentColor primaryColor() {
+        @Override
+        public DocumentColor primaryColor() {
             return stops.get(0).color();
         }
     }
@@ -88,11 +94,13 @@ public sealed interface DocumentPaint permits DocumentPaint.Solid, DocumentPaint
      * Radial gradient from a normalized centre outward.
      *
      * @param stops ordered colour stops, offsets in [0,1]; at least two
-     * @param cx normalized centre x in [0,1]
-     * @param cy normalized centre y in [0,1]
+     * @param cx    normalized centre x in [0,1]
+     * @param cy    normalized centre y in [0,1]
      */
     record Radial(List<Stop> stops, double cx, double cy) implements DocumentPaint {
-        /** Copy-protects and validates stops. */
+        /**
+         * Copy-protects and validates stops.
+         */
         public Radial {
             Objects.requireNonNull(stops, "stops");
             stops = List.copyOf(stops);
@@ -101,7 +109,8 @@ public sealed interface DocumentPaint permits DocumentPaint.Solid, DocumentPaint
             }
         }
 
-        @Override public DocumentColor primaryColor() {
+        @Override
+        public DocumentColor primaryColor() {
             return stops.get(0).color();
         }
     }
@@ -110,10 +119,12 @@ public sealed interface DocumentPaint permits DocumentPaint.Solid, DocumentPaint
      * One gradient colour stop.
      *
      * @param offset position along the gradient axis in [0,1]
-     * @param color colour at this offset
+     * @param color  colour at this offset
      */
     record Stop(double offset, DocumentColor color) {
-        /** Validates the offset and colour. */
+        /**
+         * Validates the offset and colour.
+         */
         public Stop {
             if (offset < 0 || offset > 1 || Double.isNaN(offset)) {
                 throw new IllegalArgumentException("stop offset must be in [0,1]: " + offset);

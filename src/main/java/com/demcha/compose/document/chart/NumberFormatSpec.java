@@ -12,12 +12,11 @@ import java.util.Locale;
  * "k / M" abbreviation without an escape hatch. Java-only callers that truly
  * need arbitrary formatting can still pre-format their {@link ChartData} labels.</p>
  *
- * @param pattern {@link java.text.DecimalFormat} pattern, e.g. {@code "#,##0.0"}
- * @param locale grouping/decimal-separator locale; defaults to {@link Locale#ROOT}
- * @param prefix text prepended to every formatted value (e.g. {@code "$"})
- * @param suffix text appended to every formatted value (e.g. {@code " k"})
+ * @param pattern      {@link java.text.DecimalFormat} pattern, e.g. {@code "#,##0.0"}
+ * @param locale       grouping/decimal-separator locale; defaults to {@link Locale#ROOT}
+ * @param prefix       text prepended to every formatted value (e.g. {@code "$"})
+ * @param suffix       text appended to every formatted value (e.g. {@code " k"})
  * @param scaleDivisor value is divided by this before formatting; must be finite and non-zero
- *
  * @author Artem Demchyshyn
  * @since 1.8.0
  */
@@ -28,7 +27,9 @@ public record NumberFormatSpec(
         String suffix,
         double scaleDivisor
 ) {
-    /** Normalizes nullable fields and rejects a zero / non-finite divisor. */
+    /**
+     * Normalizes nullable fields and rejects a zero / non-finite divisor.
+     */
     public NumberFormatSpec {
         pattern = (pattern == null || pattern.isBlank()) ? "#,##0.##" : pattern;
         locale = locale == null ? Locale.ROOT : locale;

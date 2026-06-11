@@ -3,11 +3,7 @@ package com.demcha.compose.document.dsl;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.LineNode;
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentDashPattern;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTransform;
+import com.demcha.compose.document.style.*;
 
 /**
  * Builder for fixed-size semantic line nodes.
@@ -73,7 +69,7 @@ public final class LineBuilder implements Transformable<LineBuilder> {
     /**
      * Sets the line box width and height.
      *
-     * @param width width in points
+     * @param width  width in points
      * @param height height in points
      * @return this builder
      */
@@ -118,7 +114,7 @@ public final class LineBuilder implements Transformable<LineBuilder> {
     /**
      * Configures a diagonal line across the line box.
      *
-     * @param width line box width
+     * @param width  line box width
      * @param height line box height
      * @return this builder
      */
@@ -330,21 +326,21 @@ public final class LineBuilder implements Transformable<LineBuilder> {
 
     private boolean isHorizontalLine() {
         return startX != null
-                && endX != null
-                && startY != null
-                && endY != null
-                && Double.compare(startX, 0.0) == 0
-                && Double.compare(endX, width) == 0
-                && Double.compare(startY, endY) == 0;
+               && endX != null
+               && startY != null
+               && endY != null
+               && Double.compare(startX, 0.0) == 0
+               && Double.compare(endX, width) == 0
+               && Double.compare(startY, endY) == 0;
     }
 
     private boolean isVerticalLine() {
         return startX != null
-                && endX != null
-                && startY != null
-                && endY != null
-                && Double.compare(startY, 0.0) == 0
-                && Double.compare(endY, height) == 0
-                && Double.compare(startX, endX) == 0;
+               && endX != null
+               && startY != null
+               && endY != null
+               && Double.compare(startY, 0.0) == 0
+               && Double.compare(endY, height) == 0
+               && Double.compare(startX, endX) == 0;
     }
 }

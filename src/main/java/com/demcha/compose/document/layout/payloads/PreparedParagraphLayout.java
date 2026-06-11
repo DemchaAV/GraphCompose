@@ -11,15 +11,15 @@ import java.util.List;
  * cumulative measurements computed during the prepare pass; consumed by
  * the paragraph definition's split + emit paths.
  *
- * @param logicalLines original paragraph lines before wrapping
- * @param visualLines wrapped lines that the renderer paints
- * @param lineMetrics font line metrics for the dominant text style
+ * @param logicalLines   original paragraph lines before wrapping
+ * @param visualLines    wrapped lines that the renderer paints
+ * @param lineMetrics    font line metrics for the dominant text style
  * @param baselineOffset baseline offset in points
- * @param lineHeight resolved line height
- * @param lineGap extra spacing between wrapped lines
- * @param maxLineWidth widest measured line width
- * @param totalHeight cumulative paragraph height
- * @param emitBookmark whether the paragraph should emit a bookmark
+ * @param lineHeight     resolved line height
+ * @param lineGap        extra spacing between wrapped lines
+ * @param maxLineWidth   widest measured line width
+ * @param totalHeight    cumulative paragraph height
+ * @param emitBookmark   whether the paragraph should emit a bookmark
  */
 public record PreparedParagraphLayout(
         List<String> logicalLines,

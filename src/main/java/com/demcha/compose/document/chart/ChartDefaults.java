@@ -23,13 +23,19 @@ import java.util.List;
  */
 public final class ChartDefaults {
 
-    /** Fraction of a category slot a bar group fills when no style overrides it. */
+    /**
+     * Fraction of a category slot a bar group fills when no style overrides it.
+     */
     public static final double BAR_WIDTH_RATIO = 0.72;
 
-    /** Default number of axis tick intervals requested from {@link NiceScale}. */
+    /**
+     * Default number of axis tick intervals requested from {@link NiceScale}.
+     */
     public static final int TARGET_TICKS = 5;
 
-    /** Default professional series palette (Tableau-10 inspired, deterministic). */
+    /**
+     * Default professional series palette (Tableau-10 inspired, deterministic).
+     */
     public static final List<DocumentPaint> DEFAULT_PALETTE = List.of(
             DocumentPaint.solid(DocumentColor.rgb(78, 121, 167)),
             DocumentPaint.solid(DocumentColor.rgb(242, 142, 43)),
@@ -40,25 +46,33 @@ public final class ChartDefaults {
             DocumentPaint.solid(DocumentColor.rgb(176, 122, 161)),
             DocumentPaint.solid(DocumentColor.rgb(156, 117, 95)));
 
-    /** Default grid line stroke — a thin light-grey rule. */
+    /**
+     * Default grid line stroke — a thin light-grey rule.
+     */
     public static final DocumentStroke DEFAULT_GRID_STROKE =
             DocumentStroke.of(DocumentColor.rgb(224, 224, 224), 0.5);
 
-    /** Default tick / category label style. */
+    /**
+     * Default tick / category label style.
+     */
     public static final DocumentTextStyle AXIS_TEXT_STYLE = DocumentTextStyle.builder()
             .fontName(FontName.HELVETICA)
             .size(8)
             .color(DocumentColor.rgb(90, 90, 90))
             .build();
 
-    /** Default legend label style. */
+    /**
+     * Default legend label style.
+     */
     public static final DocumentTextStyle LEGEND_TEXT_STYLE = DocumentTextStyle.builder()
             .fontName(FontName.HELVETICA)
             .size(9)
             .color(DocumentColor.rgb(60, 60, 60))
             .build();
 
-    /** Default value-label style. */
+    /**
+     * Default value-label style.
+     */
     public static final DocumentTextStyle VALUE_LABEL_TEXT_STYLE = DocumentTextStyle.builder()
             .fontName(FontName.HELVETICA)
             .size(8)
@@ -74,21 +88,29 @@ public final class ChartDefaults {
     public static final DocumentPaint VALUE_LABEL_HALO =
             DocumentPaint.solid(DocumentColor.WHITE);
 
-    /** Default pie/donut slice separator — a white 1pt stroke between slices. */
+    /**
+     * Default pie/donut slice separator — a white 1pt stroke between slices.
+     */
     public static final DocumentStroke SLICE_STROKE =
             DocumentStroke.of(DocumentColor.WHITE, 1.0);
 
-    /** Default donut-centre KPI text style. */
+    /**
+     * Default donut-centre KPI text style.
+     */
     public static final DocumentTextStyle DONUT_CENTER_TEXT_STYLE = DocumentTextStyle.builder()
             .fontName(FontName.HELVETICA_BOLD)
             .size(13)
             .color(DocumentColor.rgb(45, 45, 45))
             .build();
 
-    /** Arc tessellation step for pie/donut sector polygons, in degrees. */
+    /**
+     * Arc tessellation step for pie/donut sector polygons, in degrees.
+     */
     public static final double SECTOR_TESSELLATION_STEP_DEGREES = 3.0;
 
-    /** Built-in default chart theme used when no document theme is supplied. */
+    /**
+     * Built-in default chart theme used when no document theme is supplied.
+     */
     public static final ChartTheme DEFAULT_THEME = new ChartTheme(
             DEFAULT_PALETTE,
             DEFAULT_GRID_STROKE,

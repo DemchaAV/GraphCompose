@@ -3,7 +3,7 @@ package com.demcha.compose.document.backend.fixed.pdf.handlers;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 
-import java.awt.Color;
+import java.awt.*;
 import java.io.IOException;
 
 /**
@@ -28,7 +28,7 @@ final class PdfAlphaSupport {
      * Sets the non-stroking (fill) alpha constant when the colour is translucent.
      *
      * @param stream page content stream inside a saved graphics state
-     * @param color fill colour, possibly carrying alpha
+     * @param color  fill colour, possibly carrying alpha
      * @throws IOException when the graphics-state write fails
      */
     static void applyFillAlpha(PDPageContentStream stream, Color color) throws IOException {
@@ -44,7 +44,7 @@ final class PdfAlphaSupport {
      * Sets the stroking alpha constant when the colour is translucent.
      *
      * @param stream page content stream inside a saved graphics state
-     * @param color stroke colour, possibly carrying alpha
+     * @param color  stroke colour, possibly carrying alpha
      * @throws IOException when the graphics-state write fails
      */
     static void applyStrokeAlpha(PDPageContentStream stream, Color color) throws IOException {

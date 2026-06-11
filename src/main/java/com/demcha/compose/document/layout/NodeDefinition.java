@@ -35,8 +35,8 @@ public interface NodeDefinition<E extends DocumentNode> {
     /**
      * Prepares one semantic node for later measurement, pagination, and fragment emission.
      *
-     * @param node semantic node instance being compiled
-     * @param ctx preparation context with measurement services and caches
+     * @param node        semantic node instance being compiled
+     * @param ctx         preparation context with measurement services and caches
      * @param constraints available layout space for this compilation step
      * @return prepared node carrying measured dimensions and optional prepared layout data
      */
@@ -54,7 +54,7 @@ public interface NodeDefinition<E extends DocumentNode> {
      * Splits a prepared node when the current page cannot fit it whole.
      *
      * @param prepared prepared node candidate
-     * @param request split request describing remaining page space
+     * @param request  split request describing remaining page space
      * @return split head/tail result, or throws when the node does not support splitting
      * @throws UnsupportedOperationException when the definition does not implement splitting
      */
@@ -75,8 +75,8 @@ public interface NodeDefinition<E extends DocumentNode> {
     /**
      * Emits renderer-facing fragments for one fully placed semantic node.
      *
-     * @param prepared prepared node being emitted
-     * @param ctx fragment emission context
+     * @param prepared  prepared node being emitted
+     * @param ctx       fragment emission context
      * @param placement resolved placement for the node
      * @return immutable list of emitted layout fragments
      */
@@ -97,8 +97,8 @@ public interface NodeDefinition<E extends DocumentNode> {
      * emitted here (so it sits after the children, restoring graphics
      * state on the same page).</p>
      *
-     * @param prepared prepared node being emitted
-     * @param ctx fragment emission context
+     * @param prepared  prepared node being emitted
+     * @param ctx       fragment emission context
      * @param placement resolved placement for the node
      * @return immutable list of overlay fragments, possibly empty
      */

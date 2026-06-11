@@ -1,6 +1,6 @@
 package com.demcha.compose.document.templates.data.schedule;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -110,9 +110,9 @@ public record WeeklyScheduleDocumentSpec(WeeklyScheduleData schedule) {
         /**
          * Appends a day header from display values.
          *
-         * @param id stable day identifier
-         * @param label display day label
-         * @param headerNote optional header note
+         * @param id               stable day identifier
+         * @param label            display day label
+         * @param headerNote       optional header note
          * @param headerCategoryId optional category identifier
          * @return this builder
          */
@@ -157,9 +157,9 @@ public record WeeklyScheduleDocumentSpec(WeeklyScheduleData schedule) {
         /**
          * Appends a category using black text.
          *
-         * @param id stable category identifier
-         * @param label display label
-         * @param fillColor fill color
+         * @param id          stable category identifier
+         * @param label       display label
+         * @param fillColor   fill color
          * @param borderColor border color
          * @return this builder
          */
@@ -171,10 +171,10 @@ public record WeeklyScheduleDocumentSpec(WeeklyScheduleData schedule) {
         /**
          * Appends a category with explicit text color.
          *
-         * @param id stable category identifier
-         * @param label display label
-         * @param fillColor fill color
-         * @param textColor text color
+         * @param id          stable category identifier
+         * @param label       display label
+         * @param fillColor   fill color
+         * @param textColor   text color
          * @param borderColor border color
          * @return this builder
          */
@@ -219,7 +219,7 @@ public record WeeklyScheduleDocumentSpec(WeeklyScheduleData schedule) {
         /**
          * Appends a header metric row from label and values.
          *
-         * @param label metric label
+         * @param label     metric label
          * @param dayValues day values
          * @return this builder
          */
@@ -231,7 +231,7 @@ public record WeeklyScheduleDocumentSpec(WeeklyScheduleData schedule) {
         /**
          * Appends a header metric row from label and values.
          *
-         * @param label metric label
+         * @param label     metric label
          * @param dayValues day values
          * @return this builder
          */
@@ -276,9 +276,9 @@ public record WeeklyScheduleDocumentSpec(WeeklyScheduleData schedule) {
         /**
          * Appends a person row from display values.
          *
-         * @param id person identifier
+         * @param id          person identifier
          * @param displayName display name
-         * @param sortOrder sort order
+         * @param sortOrder   sort order
          * @return this builder
          */
         public Builder person(String id, String displayName, int sortOrder) {
@@ -322,10 +322,10 @@ public record WeeklyScheduleDocumentSpec(WeeklyScheduleData schedule) {
         /**
          * Appends an assignment from ids and slot rows.
          *
-         * @param personId person identifier
-         * @param dayId day identifier
+         * @param personId   person identifier
+         * @param dayId      day identifier
          * @param categoryId category identifier
-         * @param slots assignment slots
+         * @param slots      assignment slots
          * @return this builder
          */
         public Builder assignment(String personId, String dayId, String categoryId, ScheduleSlot... slots) {
@@ -336,11 +336,11 @@ public record WeeklyScheduleDocumentSpec(WeeklyScheduleData schedule) {
         /**
          * Appends an assignment from ids, slot rows, and a note.
          *
-         * @param personId person identifier
-         * @param dayId day identifier
+         * @param personId   person identifier
+         * @param dayId      day identifier
          * @param categoryId category identifier
-         * @param slots assignment slots
-         * @param note optional note
+         * @param slots      assignment slots
+         * @param note       optional note
          * @return this builder
          */
         public Builder assignment(String personId,

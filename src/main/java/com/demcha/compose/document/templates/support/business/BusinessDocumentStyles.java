@@ -1,12 +1,10 @@
 package com.demcha.compose.document.templates.support.business;
 
-import com.demcha.compose.document.templates.support.common.*;
-
-import com.demcha.compose.font.FontName;
 import com.demcha.compose.engine.components.content.text.TextDecoration;
 import com.demcha.compose.engine.components.content.text.TextStyle;
+import com.demcha.compose.font.FontName;
 
-import java.awt.Color;
+import java.awt.*;
 
 final class BusinessDocumentStyles {
     static final Color TITLE_COLOR = new Color(21, 46, 86);

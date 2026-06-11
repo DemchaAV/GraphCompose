@@ -2,7 +2,6 @@ package com.demcha.compose.document.templates.coverletter.v2.presets;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
-import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
@@ -34,13 +33,19 @@ import java.util.Objects;
  */
 public final class SidebarPortraitLetter {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "sidebar-portrait-letter";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Sidebar Portrait Letter";
 
-    /** Recommended page margin (in points) — generous business-letter feel. */
+    /**
+     * Recommended page margin (in points) — generous business-letter feel.
+     */
     public static final double RECOMMENDED_MARGIN = 48.0;
 
     private SidebarPortraitLetter() {
@@ -67,99 +72,93 @@ public final class SidebarPortraitLetter {
         return new Template(theme);
     }
 
-    private static final class Template implements DocumentTemplate<CoverLetterDocument> {
-
-        private final CvTheme theme;
-
-        Template(CvTheme theme) {
-            this.theme = theme;
-        }
+    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
-        public String id() {
-            return ID;
-        }
+            public String id() {
+                return ID;
+            }
 
-        @Override
-        public String displayName() {
-            return DISPLAY_NAME;
-        }
+            @Override
+            public String displayName() {
+                return DISPLAY_NAME;
+            }
 
-        @Override
-        public void compose(DocumentSession document, CoverLetterDocument doc) {
-            Objects.requireNonNull(document, "document");
-            Objects.requireNonNull(doc, "doc");
+            @Override
+            public void compose(DocumentSession document, CoverLetterDocument doc) {
+                Objects.requireNonNull(document, "document");
+                Objects.requireNonNull(doc, "doc");
 
-            PageFlowBuilder flow = document.dsl()
-                    .pageFlow()
-                    .name("CoverLetterV2SidebarPortraitRoot")
-                    .spacing(theme.spacing().pageFlowSpacing());
+                PageFlowBuilder flow = document.dsl()
+                        .pageFlow()
+                        .name("CoverLetterV2SidebarPortraitRoot")
+                        .spacing(theme.spacing().pageFlowSpacing());
 
-            addHeroBand(flow, doc.identity());
-            addContact(flow, doc.identity());
+                addHeroBand(flow, doc.identity());
+                addContact(flow, doc.identity());
 
-            flow.addSection("CoverLetterV2SidebarPortraitBody", host ->
-                    LetterBody.render(host, doc, theme));
+                flow.addSection("CoverLetterV2SidebarPortraitBody", host ->
+                        LetterBody.render(host, doc, theme));
 
-            flow.build();
-        }
+                flow.build();
+            }
 
-        private void addHeroBand(PageFlowBuilder flow, CvIdentity identity) {
-            String displayName = identity.name().full();
-            String jobTitle = identity.jobTitle();
-            String subline = jobTitle == null || jobTitle.isBlank()
-                    ? ""
-                    : TextOrnaments.spacedUpper(jobTitle);
-            flow.addSection("CoverLetterV2SidebarPortraitHero", hero -> {
-                // No fill: the CV's beige hero band reads as a coloured box
-                // on a single-column letter, which clashed with the concept,
-                // so the name treatment is kept but the background dropped.
-                hero.padding(new DocumentInsets(19, 34, 17, 34))
-                        .spacing(3)
-                        .addParagraph(paragraph -> paragraph
-                                .text(displayName)
-                                .textStyle(nameStyle())
+            private void addHeroBand(PageFlowBuilder flow, CvIdentity identity) {
+                String displayName = identity.name().full();
+                String jobTitle = identity.jobTitle();
+                String subline = jobTitle == null || jobTitle.isBlank()
+                        ? ""
+                        : TextOrnaments.spacedUpper(jobTitle);
+                flow.addSection("CoverLetterV2SidebarPortraitHero", hero -> {
+                    // No fill: the CV's beige hero band reads as a coloured box
+                    // on a single-column letter, which clashed with the concept,
+                    // so the name treatment is kept but the background dropped.
+                    hero.padding(new DocumentInsets(19, 34, 17, 34))
+                            .spacing(3)
+                            .addParagraph(paragraph -> paragraph
+                                    .text(displayName)
+                                    .textStyle(nameStyle())
+                                    .align(TextAlign.CENTER)
+                                    .lineSpacing(1.0)
+                                    .margin(DocumentInsets.zero()));
+                    if (!subline.isBlank()) {
+                        hero.addParagraph(paragraph -> paragraph
+                                .text(subline)
+                                .textStyle(subtitleStyle())
                                 .align(TextAlign.CENTER)
-                                .lineSpacing(1.0)
                                 .margin(DocumentInsets.zero()));
-                if (!subline.isBlank()) {
-                    hero.addParagraph(paragraph -> paragraph
-                            .text(subline)
-                            .textStyle(subtitleStyle())
-                            .align(TextAlign.CENTER)
-                            .margin(DocumentInsets.zero()));
-                }
-            });
-        }
+                    }
+                });
+            }
 
-        private void addContact(PageFlowBuilder flow, CvIdentity identity) {
-            flow.addSection("CoverLetterV2SidebarPortraitContact", section ->
-                    ContactLine.centered(section, identity, theme,
-                            contactStyle(), contactLinkStyle(), contactStyle()));
-        }
+            private void addContact(PageFlowBuilder flow, CvIdentity identity) {
+                flow.addSection("CoverLetterV2SidebarPortraitContact", section ->
+                        ContactLine.centered(section, identity, theme,
+                                contactStyle(), contactLinkStyle(), contactStyle()));
+            }
 
-        private DocumentTextStyle nameStyle() {
-            return CvTextStyles.of(theme.typography().headlineFont(),
-                    theme.typography().sizeHeadline(),
-                    DocumentTextDecoration.BOLD, theme.palette().ink());
-        }
+            private DocumentTextStyle nameStyle() {
+                return CvTextStyles.of(theme.typography().headlineFont(),
+                        theme.typography().sizeHeadline(),
+                        DocumentTextDecoration.BOLD, theme.palette().ink());
+            }
 
-        private DocumentTextStyle subtitleStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeEntryDate(),
-                    DocumentTextDecoration.DEFAULT, theme.palette().ink());
-        }
+            private DocumentTextStyle subtitleStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeEntryDate(),
+                        DocumentTextDecoration.DEFAULT, theme.palette().ink());
+            }
 
-        private DocumentTextStyle contactStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeContact(),
-                    DocumentTextDecoration.DEFAULT, theme.palette().ink());
-        }
+            private DocumentTextStyle contactStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeContact(),
+                        DocumentTextDecoration.DEFAULT, theme.palette().ink());
+            }
 
-        private DocumentTextStyle contactLinkStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeContact(),
-                    DocumentTextDecoration.UNDERLINE, theme.palette().muted());
+            private DocumentTextStyle contactLinkStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeContact(),
+                        DocumentTextDecoration.UNDERLINE, theme.palette().muted());
+            }
         }
-    }
 }

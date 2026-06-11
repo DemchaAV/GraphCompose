@@ -37,10 +37,14 @@ import java.util.Objects;
  */
 public final class Divider {
 
-    /** Default thin rule thickness in points. */
+    /**
+     * Default thin rule thickness in points.
+     */
     public static final double THIN_THICKNESS = 0.5;
 
-    /** Default thick rule thickness in points. */
+    /**
+     * Default thick rule thickness in points.
+     */
     public static final double THICK_THICKNESS = 1.5;
 
     private Divider() {

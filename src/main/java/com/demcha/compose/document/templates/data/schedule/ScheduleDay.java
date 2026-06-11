@@ -5,9 +5,9 @@ import java.util.Objects;
 /**
  * Weekly day header information.
  *
- * @param id stable day identifier
- * @param label display day label
- * @param headerNote optional header note
+ * @param id               stable day identifier
+ * @param label            display day label
+ * @param headerNote       optional header note
  * @param headerCategoryId optional category shown in the header
  */
 public record ScheduleDay(
@@ -29,9 +29,9 @@ public record ScheduleDay(
     /**
      * Creates a day header entry.
      *
-     * @param id stable day identifier
-     * @param label display day label
-     * @param headerNote optional header note
+     * @param id               stable day identifier
+     * @param label            display day label
+     * @param headerNote       optional header note
      * @param headerCategoryId optional header category identifier
      * @return schedule day
      */

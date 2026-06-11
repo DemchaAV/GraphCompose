@@ -30,11 +30,11 @@ public final class DocumentLayoutPassContext implements PrepareContext, Fragment
     /**
      * Creates a layout-pass context.
      *
-     * @param registry semantic node registry used for preparation
-     * @param canvas active layout canvas
-     * @param fontLibrary document font library
+     * @param registry              semantic node registry used for preparation
+     * @param canvas                active layout canvas
+     * @param fontLibrary           document font library
      * @param textMeasurementSystem text measurement service for this pass
-     * @param markdown whether paragraph markdown parsing is enabled
+     * @param markdown              whether paragraph markdown parsing is enabled
      */
     public DocumentLayoutPassContext(NodeRegistry registry,
                                      LayoutCanvas canvas,

@@ -17,9 +17,8 @@ import java.util.Objects;
  *
  * @param outline figure geometry; its {@link ShapeOutline#width()} /
  *                {@link ShapeOutline#height()} size this layer
- * @param fill optional fill color; {@code null} leaves the interior empty
- * @param stroke optional outline stroke; {@code null} leaves no border
- *
+ * @param fill    optional fill color; {@code null} leaves the interior empty
+ * @param stroke  optional outline stroke; {@code null} leaves no border
  * @author Artem Demchyshyn
  * @since 1.7.0
  */
@@ -38,7 +37,7 @@ public record ShapeLayer(ShapeOutline outline, DocumentColor fill, DocumentStrok
      * Creates a filled layer with no stroke.
      *
      * @param outline figure geometry
-     * @param fill fill color; must not be {@code null}
+     * @param fill    fill color; must not be {@code null}
      */
     public ShapeLayer(ShapeOutline outline, DocumentColor fill) {
         this(outline, Objects.requireNonNull(fill, "fill"), null);

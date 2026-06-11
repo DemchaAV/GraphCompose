@@ -1,6 +1,8 @@
 package com.demcha.compose.document.dsl.internal;
 
-/** Normalizes free-form labels into stable semantic node names. */
+/**
+ * Normalizes free-form labels into stable semantic node names.
+ */
 public final class SemanticNameNormalizer {
     private SemanticNameNormalizer() {
     }

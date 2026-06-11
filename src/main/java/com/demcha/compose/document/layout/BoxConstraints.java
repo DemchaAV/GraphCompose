@@ -3,7 +3,7 @@ package com.demcha.compose.document.layout;
 /**
  * Available layout space for one node measurement/layout step.
  *
- * @param availableWidth available content width
+ * @param availableWidth  available content width
  * @param availableHeight available content height
  */
 public record BoxConstraints(double availableWidth, double availableHeight) {

@@ -45,13 +45,21 @@ import java.util.Objects;
  */
 public final class TimelineAxisWidget {
 
-    /** Marker shape drawn between line segments. */
+    /**
+     * Marker shape drawn between line segments.
+     */
     public enum Marker {
-        /** A circle with the configured stroke + fill. */
+        /**
+         * A circle with the configured stroke + fill.
+         */
         CIRCLE,
-        /** A square with the configured stroke + fill. */
+        /**
+         * A square with the configured stroke + fill.
+         */
         SQUARE,
-        /** No marker — line segments join directly. */
+        /**
+         * No marker — line segments join directly.
+         */
         NONE
     }
 
@@ -120,8 +128,8 @@ public final class TimelineAxisWidget {
         DocumentStroke stroke = style.markerStroke() != null
                 ? style.markerStroke()
                 : (style.lineColor() != null
-                        ? DocumentStroke.of(style.lineColor(), 0.8)
-                        : null);
+                   ? DocumentStroke.of(style.lineColor(), 0.8)
+                   : null);
         DocumentColor fill = style.markerFillColor() != null
                 ? style.markerFillColor()
                 : DocumentColor.WHITE;
@@ -150,19 +158,19 @@ public final class TimelineAxisWidget {
     /**
      * Visual configuration for {@link TimelineAxisWidget}.
      *
-     * @param marker            shape drawn between segments
-     * @param markerSize        diameter (CIRCLE) or side length (SQUARE)
-     * @param markerFillColor   fill colour of the marker; {@code null}
-     *                          falls back to {@link DocumentColor#WHITE}
-     * @param markerStroke      stroke around the marker; {@code null}
-     *                          falls back to {@code lineColor} at 0.8pt
-     * @param segmentLength     length of each vertical line segment
-     * @param segmentCount      number of segments (at least 1);
-     *                          markers between = {@code segmentCount - 1}
-     * @param lineColor         colour of every line segment
-     * @param lineThickness     thickness of every line segment
-     * @param padding           inset applied to the host section
-     *                          before any drawing
+     * @param marker          shape drawn between segments
+     * @param markerSize      diameter (CIRCLE) or side length (SQUARE)
+     * @param markerFillColor fill colour of the marker; {@code null}
+     *                        falls back to {@link DocumentColor#WHITE}
+     * @param markerStroke    stroke around the marker; {@code null}
+     *                        falls back to {@code lineColor} at 0.8pt
+     * @param segmentLength   length of each vertical line segment
+     * @param segmentCount    number of segments (at least 1);
+     *                        markers between = {@code segmentCount - 1}
+     * @param lineColor       colour of every line segment
+     * @param lineThickness   thickness of every line segment
+     * @param padding         inset applied to the host section
+     *                        before any drawing
      */
     public record Style(Marker marker,
                         double markerSize,

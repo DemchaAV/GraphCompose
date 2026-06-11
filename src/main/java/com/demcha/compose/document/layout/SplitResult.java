@@ -5,7 +5,7 @@ import com.demcha.compose.document.node.DocumentNode;
 /**
  * Result of splitting a semantic node into head/tail pieces.
  *
- * @param <E> semantic node type
+ * @param <E>  semantic node type
  * @param head first semantic node fragment, or the whole node when unsplit
  * @param tail remaining semantic node fragment, or {@code null} when unsplit
  */
@@ -14,7 +14,7 @@ public record SplitResult<E extends DocumentNode>(E head, E tail) {
      * Creates an unsplit result where the original node remains whole.
      *
      * @param node semantic node
-     * @param <E> semantic node type
+     * @param <E>  semantic node type
      * @return whole-node split result
      */
     public static <E extends DocumentNode> SplitResult<E> whole(E node) {

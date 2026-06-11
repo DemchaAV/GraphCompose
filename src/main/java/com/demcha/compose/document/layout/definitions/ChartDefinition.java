@@ -1,22 +1,7 @@
 package com.demcha.compose.document.layout.definitions;
 
-import com.demcha.compose.document.chart.ChartDefaults;
-import com.demcha.compose.document.chart.ChartLayoutResolver;
-import com.demcha.compose.document.chart.ChartPrimitive;
-import com.demcha.compose.document.chart.ChartSpec;
-import com.demcha.compose.document.chart.ChartStyle;
-import com.demcha.compose.document.chart.ChartTheme;
-import com.demcha.compose.document.layout.BoxConstraints;
-import com.demcha.compose.document.layout.ChartTextMetricsSupport;
-import com.demcha.compose.document.layout.FragmentContext;
-import com.demcha.compose.document.layout.FragmentPlacement;
-import com.demcha.compose.document.layout.LayoutFragment;
-import com.demcha.compose.document.layout.MeasureResult;
-import com.demcha.compose.document.layout.NodeDefinition;
-import com.demcha.compose.document.layout.PaginationPolicy;
-import com.demcha.compose.document.layout.PrepareContext;
-import com.demcha.compose.document.layout.PreparedNode;
-import com.demcha.compose.document.layout.PreparedNodeLayout;
+import com.demcha.compose.document.chart.*;
+import com.demcha.compose.document.layout.*;
 import com.demcha.compose.document.node.ChartNode;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.engine.components.style.Margin;
@@ -59,7 +44,9 @@ import java.util.List;
  */
 public final class ChartDefinition implements NodeDefinition<ChartNode> {
 
-    /** Creates the chart layout definition. */
+    /**
+     * Creates the chart layout definition.
+     */
     public ChartDefinition() {
     }
 
@@ -158,7 +145,7 @@ public final class ChartDefinition implements NodeDefinition<ChartNode> {
     /**
      * One prepared primitive child plus its resolver-assigned placement.
      *
-     * @param prepared prepared child node
+     * @param prepared  prepared child node
      * @param primitive the resolver primitive (node + bottom-up box)
      */
     public record PreparedPrimitive(PreparedNode<DocumentNode> prepared, ChartPrimitive primitive) {

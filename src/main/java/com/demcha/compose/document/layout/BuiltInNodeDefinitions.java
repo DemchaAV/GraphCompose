@@ -1,23 +1,6 @@
 package com.demcha.compose.document.layout;
 
-import com.demcha.compose.document.layout.definitions.BarcodeDefinition;
-import com.demcha.compose.document.layout.definitions.CanvasLayerDefinition;
-import com.demcha.compose.document.layout.definitions.ChartDefinition;
-import com.demcha.compose.document.layout.definitions.ContainerDefinition;
-import com.demcha.compose.document.layout.definitions.EllipseDefinition;
-import com.demcha.compose.document.layout.definitions.ImageDefinition;
-import com.demcha.compose.document.layout.definitions.LayerStackDefinition;
-import com.demcha.compose.document.layout.definitions.LineDefinition;
-import com.demcha.compose.document.layout.definitions.ListDefinition;
-import com.demcha.compose.document.layout.definitions.PageBreakDefinition;
-import com.demcha.compose.document.layout.definitions.ParagraphDefinition;
-import com.demcha.compose.document.layout.definitions.PolygonDefinition;
-import com.demcha.compose.document.layout.definitions.RowDefinition;
-import com.demcha.compose.document.layout.definitions.SectionDefinition;
-import com.demcha.compose.document.layout.definitions.ShapeContainerDefinition;
-import com.demcha.compose.document.layout.definitions.ShapeDefinition;
-import com.demcha.compose.document.layout.definitions.SpacerDefinition;
-import com.demcha.compose.document.layout.definitions.TableDefinition;
+import com.demcha.compose.document.layout.definitions.*;
 
 import java.util.Objects;
 

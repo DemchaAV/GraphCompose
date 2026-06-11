@@ -7,8 +7,8 @@ import com.demcha.compose.engine.components.content.barcode.BarcodeData;
 /**
  * PDF payload for a resolved barcode fragment.
  *
- * @param barcodeData encoded barcode payload
- * @param linkOptions optional fragment-level link metadata
+ * @param barcodeData     encoded barcode payload
+ * @param linkOptions     optional fragment-level link metadata
  * @param bookmarkOptions optional fragment-level bookmark metadata
  */
 public record BarcodeFragmentPayload(

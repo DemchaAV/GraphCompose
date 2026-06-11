@@ -82,7 +82,7 @@ public final class ProfileBand {
         DocumentTextStyle bodyStyle = Objects.requireNonNull(
                 safeStyle.bodyStyle(), "ProfileBand bodyStyle");
         if (title != null && !title.isBlank()
-                && safeStyle.titleStyle() != null) {
+            && safeStyle.titleStyle() != null) {
             host.addParagraph(paragraph -> paragraph
                     .text(safeStyle.transformTitle()
                             ? title.toUpperCase(java.util.Locale.ROOT)
@@ -137,7 +137,9 @@ public final class ProfileBand {
                         TextAlign bodyAlign,
                         double bodyLineSpacing) {
 
-        /** Applies defaults for {@code padding}, {@code titleAlign}, and {@code bodyAlign}. */
+        /**
+         * Applies defaults for {@code padding}, {@code titleAlign}, and {@code bodyAlign}.
+         */
         public Style {
             padding = padding == null ? DocumentInsets.zero() : padding;
             titleAlign = titleAlign == null ? TextAlign.LEFT : titleAlign;

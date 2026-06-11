@@ -5,7 +5,7 @@ import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
 import com.demcha.compose.engine.components.style.Padding;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
-import java.awt.Color;
+import java.awt.*;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -85,23 +85,6 @@ final class PdfGuideLinesRenderer {
         return bounds == null ? Bounds.from(fragment) : bounds;
     }
 
-    /**
-     * Lightweight axis-aligned bounding box used to compute owner unions.
-     */
-    record Bounds(double x, double y, double width, double height) {
-        static Bounds from(PlacedFragment fragment) {
-            return new Bounds(fragment.x(), fragment.y(), fragment.width(), fragment.height());
-        }
-
-        Bounds union(Bounds other) {
-            double minX = Math.min(this.x, other.x);
-            double minY = Math.min(this.y, other.y);
-            double maxX = Math.max(this.x + this.width, other.x + other.width);
-            double maxY = Math.max(this.y + this.height, other.y + other.height);
-            return new Bounds(minX, minY, maxX - minX, maxY - minY);
-        }
-    }
-
     private static void drawBox(PDPageContentStream stream, PlacedFragment fragment) throws IOException {
         stream.setLineDashPattern(new float[0], 0);
         stream.setStrokingColor(BOX_COLOR);
@@ -114,8 +97,8 @@ final class PdfGuideLinesRenderer {
                                    Bounds bounds,
                                    com.demcha.compose.engine.components.style.Margin margin) throws IOException {
         if (bounds == null
-                || margin == null
-                || (margin.horizontal() <= 0.0 && margin.vertical() <= 0.0)) {
+            || margin == null
+            || (margin.horizontal() <= 0.0 && margin.vertical() <= 0.0)) {
             return;
         }
 
@@ -139,8 +122,8 @@ final class PdfGuideLinesRenderer {
                                     Bounds bounds,
                                     Padding padding) throws IOException {
         if (bounds == null
-                || padding == null
-                || (padding.horizontal() <= 0.0 && padding.vertical() <= 0.0)) {
+            || padding == null
+            || (padding.horizontal() <= 0.0 && padding.vertical() <= 0.0)) {
             return;
         }
 
@@ -205,5 +188,22 @@ final class PdfGuideLinesRenderer {
                 (float) (centerX + radius), (float) (centerY - control),
                 (float) (centerX + radius), (float) centerY);
         stream.fill();
+    }
+
+    /**
+     * Lightweight axis-aligned bounding box used to compute owner unions.
+     */
+    record Bounds(double x, double y, double width, double height) {
+        static Bounds from(PlacedFragment fragment) {
+            return new Bounds(fragment.x(), fragment.y(), fragment.width(), fragment.height());
+        }
+
+        Bounds union(Bounds other) {
+            double minX = Math.min(this.x, other.x);
+            double minY = Math.min(this.y, other.y);
+            double maxX = Math.max(this.x + this.width, other.x + other.width);
+            double maxY = Math.max(this.y + this.height, other.y + other.height);
+            return new Bounds(minX, minY, maxX - minX, maxY - minY);
+        }
     }
 }

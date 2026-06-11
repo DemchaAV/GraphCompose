@@ -4,13 +4,13 @@ import com.demcha.compose.document.backend.fixed.pdf.PdfFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
-import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.engine.components.content.shape.Side;
 import com.demcha.compose.engine.components.content.table.TableResolvedCell;
 import com.demcha.compose.engine.components.layout.Anchor;
 import com.demcha.compose.engine.components.style.Padding;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.engine.text.TextControlSanitizer;
+import com.demcha.compose.font.FontLibrary;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import java.io.IOException;
@@ -54,8 +54,8 @@ public final class PdfTableRowFragmentRenderHandler
      * eventual stroke avoids sub-pixel page-background seams around row-span
      * joins.</p>
      *
-     * @param fragment placed row fragment to render
-     * @param payload table-row payload carrying the resolved cells
+     * @param fragment    placed row fragment to render
+     * @param payload     table-row payload carrying the resolved cells
      * @param environment active PDF render environment
      * @throws java.io.IOException if writing to the PDF content stream fails
      */
@@ -74,8 +74,8 @@ public final class PdfTableRowFragmentRenderHandler
     /**
      * Paints table cell borders and text for one row fragment.
      *
-     * @param fragment placed row fragment to render
-     * @param payload table-row payload carrying the resolved cells
+     * @param fragment    placed row fragment to render
+     * @param payload     table-row payload carrying the resolved cells
      * @param environment active PDF render environment
      * @throws java.io.IOException if writing to the PDF content stream fails
      */

@@ -11,8 +11,7 @@ package com.demcha.compose.document.style;
  *
  * @param maxSize upper bound for the resolved font size in points
  * @param minSize lower bound for the resolved font size in points
- * @param step search step in points (rounded down to a positive value)
- *
+ * @param step    search step in points (rounded down to a positive value)
  * @author Artem Demchyshyn
  */
 public record DocumentTextAutoSize(double maxSize, double minSize, double step) {

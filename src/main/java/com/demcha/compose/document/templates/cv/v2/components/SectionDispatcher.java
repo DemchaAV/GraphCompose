@@ -1,13 +1,7 @@
 package com.demcha.compose.document.templates.cv.v2.components;
 
 import com.demcha.compose.document.dsl.SectionBuilder;
-import com.demcha.compose.document.templates.cv.v2.data.CvEntry;
-import com.demcha.compose.document.templates.cv.v2.data.CvRow;
-import com.demcha.compose.document.templates.cv.v2.data.CvSection;
-import com.demcha.compose.document.templates.cv.v2.data.EntriesSection;
-import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
-import com.demcha.compose.document.templates.cv.v2.data.RowsSection;
-import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
+import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
 
 /**

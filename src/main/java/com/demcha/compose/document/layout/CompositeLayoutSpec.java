@@ -10,26 +10,10 @@ import java.util.List;
  * the row's inner width is distributed across children.</p>
  *
  * @param spacing spacing between child nodes (vertical for {@link Axis#VERTICAL}, horizontal for {@link Axis#HORIZONTAL})
- * @param axis composite stacking axis
+ * @param axis    composite stacking axis
  * @param weights optional per-child weights (only consulted for {@link Axis#HORIZONTAL})
  */
 public record CompositeLayoutSpec(double spacing, Axis axis, List<Double> weights) {
-    /**
-     * Composite stacking axis.
-     */
-    public enum Axis {
-        /** Children stack top to bottom. */
-        VERTICAL,
-        /** Children flow left to right inside a single row band. */
-        HORIZONTAL,
-        /**
-         * Children share the same bounding box and are painted in source order
-         * (first child behind, last child in front). Used by {@code LayerStackNode}
-         * to compose background panels, watermarks, and overlay decorations.
-         */
-        STACK
-    }
-
     /**
      * Creates a validated composite child-layout contract.
      */
@@ -59,9 +43,29 @@ public record CompositeLayoutSpec(double spacing, Axis axis, List<Double> weight
      * Convenience constructor without explicit weights.
      *
      * @param spacing spacing between children
-     * @param axis stacking axis
+     * @param axis    stacking axis
      */
     public CompositeLayoutSpec(double spacing, Axis axis) {
         this(spacing, axis, List.of());
+    }
+
+    /**
+     * Composite stacking axis.
+     */
+    public enum Axis {
+        /**
+         * Children stack top to bottom.
+         */
+        VERTICAL,
+        /**
+         * Children flow left to right inside a single row band.
+         */
+        HORIZONTAL,
+        /**
+         * Children share the same bounding box and are painted in source order
+         * (first child behind, last child in front). Used by {@code LayerStackNode}
+         * to compose background panels, watermarks, and overlay decorations.
+         */
+        STACK
     }
 }

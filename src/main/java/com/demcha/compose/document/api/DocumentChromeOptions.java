@@ -2,17 +2,8 @@ package com.demcha.compose.document.api;
 
 import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.pdf.PdfOutputOptionsTranslator;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterZone;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
-import com.demcha.compose.document.output.DocumentHeaderFooter;
-import com.demcha.compose.document.output.DocumentHeaderFooterZone;
-import com.demcha.compose.document.output.DocumentMetadata;
-import com.demcha.compose.document.output.DocumentOutputOptions;
-import com.demcha.compose.document.output.DocumentProtection;
-import com.demcha.compose.document.output.DocumentWatermark;
+import com.demcha.compose.document.backend.fixed.pdf.options.*;
+import com.demcha.compose.document.output.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,10 +32,10 @@ import java.util.Objects;
  * @author Artem Demchyshyn
  */
 final class DocumentChromeOptions {
+    private final List<DocumentHeaderFooter> headersAndFooters = new ArrayList<>();
     private DocumentMetadata metadata;
     private DocumentWatermark watermark;
     private DocumentProtection protection;
-    private final List<DocumentHeaderFooter> headersAndFooters = new ArrayList<>();
 
     DocumentChromeOptions() {
     }
@@ -79,13 +70,13 @@ final class DocumentChromeOptions {
      * Indicates whether at least one chrome option is configured.
      *
      * @return {@code true} when the session has metadata / watermark /
-     *         protection / repeating chrome attached
+     * protection / repeating chrome attached
      */
     boolean isEmpty() {
         return metadata == null
-                && watermark == null
-                && protection == null
-                && headersAndFooters.isEmpty();
+               && watermark == null
+               && protection == null
+               && headersAndFooters.isEmpty();
     }
 
     /**

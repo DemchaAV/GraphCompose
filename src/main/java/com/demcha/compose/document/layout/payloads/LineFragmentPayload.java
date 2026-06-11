@@ -8,14 +8,14 @@ import com.demcha.compose.engine.components.content.shape.Stroke;
 /**
  * PDF payload for a resolved line fragment.
  *
- * @param stroke line stroke
- * @param startX line start x offset inside the fragment
- * @param startY line start y offset inside the fragment
- * @param endX line end x offset inside the fragment
- * @param endY line end y offset inside the fragment
- * @param linkOptions optional fragment-level link metadata
+ * @param stroke          line stroke
+ * @param startX          line start x offset inside the fragment
+ * @param startY          line start y offset inside the fragment
+ * @param endX            line end x offset inside the fragment
+ * @param endY            line end y offset inside the fragment
+ * @param linkOptions     optional fragment-level link metadata
  * @param bookmarkOptions optional fragment-level bookmark metadata
- * @param dashPattern dash pattern for the stroke; {@link DocumentDashPattern#NONE} is solid
+ * @param dashPattern     dash pattern for the stroke; {@link DocumentDashPattern#NONE} is solid
  */
 public record LineFragmentPayload(
         Stroke stroke,
@@ -38,12 +38,12 @@ public record LineFragmentPayload(
     /**
      * Backward-compatible constructor for a solid line fragment.
      *
-     * @param stroke line stroke
-     * @param startX line start x offset inside the fragment
-     * @param startY line start y offset inside the fragment
-     * @param endX line end x offset inside the fragment
-     * @param endY line end y offset inside the fragment
-     * @param linkOptions optional fragment-level link metadata
+     * @param stroke          line stroke
+     * @param startX          line start x offset inside the fragment
+     * @param startY          line start y offset inside the fragment
+     * @param endX            line end x offset inside the fragment
+     * @param endY            line end y offset inside the fragment
+     * @param linkOptions     optional fragment-level link metadata
      * @param bookmarkOptions optional fragment-level bookmark metadata
      */
     public LineFragmentPayload(Stroke stroke,

@@ -25,6 +25,18 @@ public final class PdfLineFragmentRenderHandler
     public PdfLineFragmentRenderHandler() {
     }
 
+    private static void applyDashPattern(PDPageContentStream stream, DocumentDashPattern dash) throws IOException {
+        if (dash == null || dash.isSolid()) {
+            return;
+        }
+        List<Double> segments = dash.segments();
+        float[] dashArray = new float[segments.size()];
+        for (int i = 0; i < dashArray.length; i++) {
+            dashArray[i] = segments.get(i).floatValue();
+        }
+        stream.setLineDashPattern(dashArray, 0f);
+    }
+
     @Override
     public Class<LineFragmentPayload> payloadType() {
         return LineFragmentPayload.class;
@@ -51,17 +63,5 @@ public final class PdfLineFragmentRenderHandler
         } finally {
             stream.restoreGraphicsState();
         }
-    }
-
-    private static void applyDashPattern(PDPageContentStream stream, DocumentDashPattern dash) throws IOException {
-        if (dash == null || dash.isSolid()) {
-            return;
-        }
-        List<Double> segments = dash.segments();
-        float[] dashArray = new float[segments.size()];
-        for (int i = 0; i < dashArray.length; i++) {
-            dashArray[i] = segments.get(i).floatValue();
-        }
-        stream.setLineDashPattern(dashArray, 0f);
     }
 }

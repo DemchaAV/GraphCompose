@@ -56,12 +56,12 @@ public record BarcodeNode(
     /**
      * Backward-compatible convenience constructor without link/bookmark metadata.
      *
-     * @param name            node name used in snapshots and layout graph paths
-     * @param barcodeOptions  canonical barcode payload
-     * @param width           target rendered width
-     * @param height          target rendered height
-     * @param padding         inner padding
-     * @param margin          outer margin
+     * @param name           node name used in snapshots and layout graph paths
+     * @param barcodeOptions canonical barcode payload
+     * @param width          target rendered width
+     * @param height         target rendered height
+     * @param padding        inner padding
+     * @param margin         outer margin
      */
     public BarcodeNode(String name,
                        DocumentBarcodeOptions barcodeOptions,

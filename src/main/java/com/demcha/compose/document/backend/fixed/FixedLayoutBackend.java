@@ -19,7 +19,7 @@ public interface FixedLayoutBackend<R> {
     /**
      * Renders one resolved layout graph.
      *
-     * @param graph resolved graph emitted by the semantic compiler
+     * @param graph   resolved graph emitted by the semantic compiler
      * @param context render-pass configuration and output target
      * @return backend-specific render result
      * @throws Exception if rendering fails

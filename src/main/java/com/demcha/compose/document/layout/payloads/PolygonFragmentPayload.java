@@ -5,7 +5,7 @@ import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.style.ShapePoint;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.List;
 import java.util.Objects;
 
@@ -14,10 +14,10 @@ import java.util.Objects;
  * vertex ring). The normalized vertices are scaled to the placed fragment's
  * size by the render handler.
  *
- * @param points normalized vertex ring (at least three), in draw order
- * @param fillColor optional fill color
- * @param stroke optional stroke
- * @param linkOptions optional fragment-level link metadata
+ * @param points          normalized vertex ring (at least three), in draw order
+ * @param fillColor       optional fill color
+ * @param stroke          optional stroke
+ * @param linkOptions     optional fragment-level link metadata
  * @param bookmarkOptions optional fragment-level bookmark metadata
  */
 public record PolygonFragmentPayload(

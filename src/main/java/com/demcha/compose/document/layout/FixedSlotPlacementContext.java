@@ -8,12 +8,12 @@ import java.util.List;
  * place into a fixed page band — the parent flow has already decided which
  * page is being filled, so children must not move on by themselves.
  *
- * @param pageIndex pinned page index that placements land on
- * @param canvas canvas the placement is happening on
- * @param prepareContext prepare-phase context used to (re)measure children
+ * @param pageIndex       pinned page index that placements land on
+ * @param canvas          canvas the placement is happening on
+ * @param prepareContext  prepare-phase context used to (re)measure children
  * @param fragmentContext fragment-emission context forwarded to {@code emitFragments}
- * @param nodes mutable list of placed semantic nodes; helpers append to this
- * @param fragments mutable list of placed render fragments; helpers append to this
+ * @param nodes           mutable list of placed semantic nodes; helpers append to this
+ * @param fragments       mutable list of placed render fragments; helpers append to this
  * @author Artem Demchyshyn
  */
 public record FixedSlotPlacementContext(
@@ -34,7 +34,7 @@ public record FixedSlotPlacementContext(
     public void advancePage() {
         throw new IllegalStateException(
                 "FixedSlotPlacementContext is locked to page " + pageIndex
-                        + " and cannot advance pages.");
+                + " and cannot advance pages.");
     }
 
     @Override

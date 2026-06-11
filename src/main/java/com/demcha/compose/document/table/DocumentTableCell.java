@@ -31,8 +31,8 @@ import java.util.Objects;
  * specify the cells that are not yet covered by a prior row's
  * spanning cell.</p>
  *
- * @param lines text lines rendered inside the cell when {@code content} is {@code null}
- * @param style optional style override
+ * @param lines   text lines rendered inside the cell when {@code content} is {@code null}
+ * @param style   optional style override
  * @param colSpan number of columns the cell occupies (must be {@code >= 1})
  * @param rowSpan number of rows the cell occupies (must be {@code >= 1})
  * @param content optional composed child node; when non-null the cell
@@ -63,8 +63,8 @@ public record DocumentTableCell(
      * Backward-compatible 4-arg constructor (v1.4 / v1.5 shape) that
      * defaults {@code content} to {@code null} (plain-text cell).
      *
-     * @param lines text lines rendered inside the cell
-     * @param style optional style override
+     * @param lines   text lines rendered inside the cell
+     * @param style   optional style override
      * @param colSpan number of columns the cell occupies (must be {@code >= 1})
      * @param rowSpan number of rows the cell occupies (must be {@code >= 1})
      */
@@ -77,8 +77,8 @@ public record DocumentTableCell(
      * {@code rowSpan}. Defaults {@code rowSpan} to {@code 1} and
      * {@code content} to {@code null}.
      *
-     * @param lines text lines rendered inside the cell
-     * @param style optional style override
+     * @param lines   text lines rendered inside the cell
+     * @param style   optional style override
      * @param colSpan number of columns the cell occupies (must be {@code >= 1})
      */
     public DocumentTableCell(List<String> lines, DocumentTableStyle style, int colSpan) {

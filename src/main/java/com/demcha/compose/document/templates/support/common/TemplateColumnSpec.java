@@ -4,16 +4,15 @@ import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * One vertical column inside a template row.
  *
- * @param name semantic column name
- * @param blocks blocks rendered top-to-bottom inside the column
+ * @param name    semantic column name
+ * @param blocks  blocks rendered top-to-bottom inside the column
  * @param spacing vertical spacing between blocks
  * @param padding inner column padding
- * @param margin outer column margin
+ * @param margin  outer column margin
  */
 public record TemplateColumnSpec(
         String name,
@@ -38,8 +37,8 @@ public record TemplateColumnSpec(
     /**
      * Creates a zero-padding, zero-margin column.
      *
-     * @param name semantic column name
-     * @param blocks column body blocks
+     * @param name    semantic column name
+     * @param blocks  column body blocks
      * @param spacing vertical spacing between blocks
      * @return column specification
      */
@@ -50,9 +49,9 @@ public record TemplateColumnSpec(
     /**
      * Creates a zero-padding, zero-margin column from varargs blocks.
      *
-     * @param name semantic column name
+     * @param name    semantic column name
      * @param spacing vertical spacing between blocks
-     * @param blocks column body blocks
+     * @param blocks  column body blocks
      * @return column specification
      */
     public static TemplateColumnSpec of(String name, double spacing, TemplateModuleBlock... blocks) {

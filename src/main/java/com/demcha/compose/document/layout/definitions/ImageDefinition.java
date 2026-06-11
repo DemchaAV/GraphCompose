@@ -1,24 +1,12 @@
 package com.demcha.compose.document.layout.definitions;
 
-import com.demcha.compose.document.layout.BoxConstraints;
-import com.demcha.compose.document.layout.FragmentContext;
-import com.demcha.compose.document.layout.FragmentPlacement;
-import com.demcha.compose.document.layout.LayoutFragment;
-import com.demcha.compose.document.layout.MeasureResult;
-import com.demcha.compose.document.layout.NodeDefinition;
-import com.demcha.compose.document.layout.NodeDefinitionSupport.ImageDimensions;
-import com.demcha.compose.document.layout.PaginationPolicy;
-import com.demcha.compose.document.layout.PrepareContext;
-import com.demcha.compose.document.layout.PreparedNode;
+import com.demcha.compose.document.layout.*;
 import com.demcha.compose.document.layout.payloads.ImageFragmentPayload;
 import com.demcha.compose.document.node.ImageNode;
 
 import java.util.List;
 
-import static com.demcha.compose.document.layout.NodeDefinitionSupport.EPS;
-import static com.demcha.compose.document.layout.NodeDefinitionSupport.resolveImageDimensions;
-import static com.demcha.compose.document.layout.NodeDefinitionSupport.toImageData;
-import static com.demcha.compose.document.layout.NodeDefinitionSupport.wrapAtomicWithTransform;
+import static com.demcha.compose.document.layout.NodeDefinitionSupport.*;
 
 /**
  * Layout definition for {@link ImageNode}: resolves image dimensions from

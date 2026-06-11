@@ -2,25 +2,8 @@ package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.dsl.internal.BuilderSupport;
 import com.demcha.compose.document.image.DocumentImageData;
-import com.demcha.compose.document.node.BarcodeNode;
-import com.demcha.compose.document.node.ContainerNode;
-import com.demcha.compose.document.node.DocumentNode;
-import com.demcha.compose.document.node.EllipseNode;
-import com.demcha.compose.document.node.ImageNode;
-import com.demcha.compose.document.node.LayerStackNode;
-import com.demcha.compose.document.node.LineNode;
-import com.demcha.compose.document.node.ParagraphNode;
-import com.demcha.compose.document.node.RowNode;
-import com.demcha.compose.document.node.SectionNode;
-import com.demcha.compose.document.node.ShapeNode;
-import com.demcha.compose.document.node.SpacerNode;
-import com.demcha.compose.document.node.TableNode;
-import com.demcha.compose.document.style.DocumentBorders;
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentCornerRadius;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.node.*;
+import com.demcha.compose.document.style.*;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -47,9 +30,9 @@ import java.util.function.Consumer;
  * @since 1.0.0
  */
 public final class RowBuilder {
-    private String name = "";
     private final List<DocumentNode> children = new ArrayList<>();
     private final List<Double> weights = new ArrayList<>();
+    private String name = "";
     private boolean weightsDirty;
     private double gap;
     private DocumentInsets padding = DocumentInsets.zero();
@@ -63,6 +46,23 @@ public final class RowBuilder {
      * Creates a row builder.
      */
     public RowBuilder() {
+    }
+
+    private static boolean isAllowedRowChild(DocumentNode child) {
+        return child instanceof ParagraphNode
+               || child instanceof ImageNode
+               || child instanceof ShapeNode
+               || child instanceof LineNode
+               || child instanceof EllipseNode
+               || child instanceof SpacerNode
+               || child instanceof BarcodeNode
+               || child instanceof SectionNode
+               || child instanceof ContainerNode
+               // LayerStackNode is an atomic overlay composite: its layers
+               // share the same bounding box and do not compete with the
+               // parent row's horizontal band, so it is safe to drop into a
+               // row slot just like a section column.
+               || child instanceof LayerStackNode;
     }
 
     /**
@@ -94,7 +94,7 @@ public final class RowBuilder {
      * @param gap gap in points
      * @return this builder
      * @deprecated since 1.5.0, use {@link #spacing(double)} instead — vertical
-     *             flows and rows now share the same {@code spacing(...)} verb.
+     * flows and rows now share the same {@code spacing(...)} verb.
      */
     @Deprecated(since = "1.5.0")
     public RowBuilder gap(double gap) {
@@ -208,9 +208,9 @@ public final class RowBuilder {
      *
      * @param node atomic semantic node
      * @return this builder
-     * @throws NullPointerException if {@code node} is null
+     * @throws NullPointerException     if {@code node} is null
      * @throws IllegalArgumentException if {@code node} is a {@link RowNode},
-     *         a {@link TableNode}, or any other type the row layout cannot host
+     *                                  a {@link TableNode}, or any other type the row layout cannot host
      */
     public RowBuilder add(DocumentNode node) {
         if (node == null) {
@@ -218,15 +218,15 @@ public final class RowBuilder {
         }
         if (node instanceof RowNode) {
             throw new IllegalArgumentException("Row '" + name
-                    + "' cannot contain another row; use a section as a column instead.");
+                                               + "' cannot contain another row; use a section as a column instead.");
         }
         if (node instanceof TableNode) {
             throw new IllegalArgumentException("Row '" + name
-                    + "' cannot contain a table; tables are splittable and would conflict with the row's atomic pagination.");
+                                               + "' cannot contain a table; tables are splittable and would conflict with the row's atomic pagination.");
         }
         if (!isAllowedRowChild(node)) {
             throw new IllegalArgumentException("Row '" + name + "' does not support child node type '"
-                    + node.getClass().getSimpleName() + "'.");
+                                               + node.getClass().getSimpleName() + "'.");
         }
         this.children.add(node);
         return this;
@@ -255,7 +255,7 @@ public final class RowBuilder {
     /**
      * Adds a paragraph child with the supplied text style.
      *
-     * @param text paragraph text content
+     * @param text      paragraph text content
      * @param textStyle resolved text style
      * @return this builder
      */
@@ -410,25 +410,8 @@ public final class RowBuilder {
     private void validate() {
         if (weightsDirty && !weights.isEmpty() && weights.size() != children.size()) {
             throw new IllegalStateException("RowBuilder weights size " + weights.size()
-                    + " does not match children size " + children.size()
-                    + ". Pass " + children.size() + " weights or call evenWeights().");
+                                            + " does not match children size " + children.size()
+                                            + ". Pass " + children.size() + " weights or call evenWeights().");
         }
-    }
-
-    private static boolean isAllowedRowChild(DocumentNode child) {
-        return child instanceof ParagraphNode
-                || child instanceof ImageNode
-                || child instanceof ShapeNode
-                || child instanceof LineNode
-                || child instanceof EllipseNode
-                || child instanceof SpacerNode
-                || child instanceof BarcodeNode
-                || child instanceof SectionNode
-                || child instanceof ContainerNode
-                // LayerStackNode is an atomic overlay composite: its layers
-                // share the same bounding box and do not compete with the
-                // parent row's horizontal band, so it is safe to drop into a
-                // row slot just like a section column.
-                || child instanceof LayerStackNode;
     }
 }

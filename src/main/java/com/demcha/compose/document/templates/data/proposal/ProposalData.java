@@ -1,26 +1,26 @@
 package com.demcha.compose.document.templates.data.proposal;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.ArrayList;
 import java.util.function.Consumer;
 
 /**
  * Display-oriented proposal document input.
  *
- * @param title display title
- * @param proposalNumber proposal number shown in the header
- * @param preparedDate proposal preparation date
- * @param validUntil optional validity date
- * @param projectTitle project title
+ * @param title            display title
+ * @param proposalNumber   proposal number shown in the header
+ * @param preparedDate     proposal preparation date
+ * @param validUntil       optional validity date
+ * @param projectTitle     project title
  * @param executiveSummary summary paragraph
- * @param sender sender/provider party
- * @param recipient recipient/client party
- * @param sections proposal body sections
- * @param timeline timeline rows
- * @param pricingRows pricing rows
- * @param acceptanceTerms acceptance term rows
- * @param footerNote footer note rendered at the bottom
+ * @param sender           sender/provider party
+ * @param recipient        recipient/client party
+ * @param sections         proposal body sections
+ * @param timeline         timeline rows
+ * @param pricingRows      pricing rows
+ * @param acceptanceTerms  acceptance term rows
+ * @param footerNote       footer note rendered at the bottom
  */
 public record ProposalData(
         String title,
@@ -242,7 +242,7 @@ public record ProposalData(
         /**
          * Appends a proposal section from title and paragraph text.
          *
-         * @param title section title
+         * @param title      section title
          * @param paragraphs section paragraphs
          * @return this builder
          */
@@ -295,9 +295,9 @@ public record ProposalData(
         /**
          * Appends a timeline row from display values.
          *
-         * @param phase phase label
+         * @param phase    phase label
          * @param duration duration text
-         * @param details supporting details
+         * @param details  supporting details
          * @return this builder
          */
         public Builder timelineItem(String phase, String duration, String details) {
@@ -346,9 +346,9 @@ public record ProposalData(
         /**
          * Appends a normal pricing row.
          *
-         * @param label row label
+         * @param label       row label
          * @param description row description
-         * @param amount amount text
+         * @param amount      amount text
          * @return this builder
          */
         public Builder pricingRow(String label, String description, String amount) {
@@ -358,9 +358,9 @@ public record ProposalData(
         /**
          * Appends an emphasized pricing row.
          *
-         * @param label row label
+         * @param label       row label
          * @param description row description
-         * @param amount amount text
+         * @param amount      amount text
          * @return this builder
          */
         public Builder emphasizedPricingRow(String label, String description, String amount) {

@@ -698,6 +698,3 @@ public final class ParagraphBuilder {
     }
 }
 
-/**
- * Builder for simple semantic lists.
- */

@@ -1,13 +1,13 @@
 package com.demcha.compose.document.templates.data.proposal;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.ArrayList;
 
 /**
  * Display-oriented proposal section with paragraph content.
  *
- * @param title section title
+ * @param title      section title
  * @param paragraphs section paragraphs in display order
  */
 public record ProposalSection(

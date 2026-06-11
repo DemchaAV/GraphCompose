@@ -2,19 +2,11 @@ package com.demcha.compose.document.templates.builtins;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.TableBuilder;
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentCornerRadius;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.style.*;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.document.templates.api.InvoiceTemplate;
-import com.demcha.compose.document.templates.data.invoice.InvoiceData;
-import com.demcha.compose.document.templates.data.invoice.InvoiceLineItem;
-import com.demcha.compose.document.templates.data.invoice.InvoiceParty;
-import com.demcha.compose.document.templates.data.invoice.InvoiceSummaryRow;
-import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
+import com.demcha.compose.document.templates.data.invoice.*;
 import com.demcha.compose.document.templates.support.common.TemplateLifecycleLog;
 import com.demcha.compose.document.theme.BusinessTheme;
 
@@ -84,7 +76,7 @@ public final class InvoiceTemplateV2 implements InvoiceTemplate {
     @Override
     public String getDescription() {
         return "Theme-driven invoice template using soft panels, accent strips, "
-                + "rich text, zebra rows, and a repeating totals header.";
+               + "rich text, zebra rows, and a repeating totals header.";
     }
 
     @Override

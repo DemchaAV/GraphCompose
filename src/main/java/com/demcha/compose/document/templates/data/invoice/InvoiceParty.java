@@ -1,17 +1,17 @@
 package com.demcha.compose.document.templates.data.invoice;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.ArrayList;
 
 /**
  * Display-oriented invoice party details.
  *
- * @param name party/company name
+ * @param name         party/company name
  * @param addressLines address lines in display order
- * @param email optional email address
- * @param phone optional phone number
- * @param taxId optional tax or company identifier
+ * @param email        optional email address
+ * @param phone        optional phone number
+ * @param taxId        optional tax or company identifier
  */
 public record InvoiceParty(
         String name,

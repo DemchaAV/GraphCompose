@@ -8,14 +8,24 @@ package com.demcha.compose.document.chart;
  * @since 1.8.0
  */
 public enum SliceLabelMode {
-    /** No slice labels. */
+    /**
+     * No slice labels.
+     */
     NONE,
-    /** The raw value, formatted with the spec's value format. */
+    /**
+     * The raw value, formatted with the spec's value format.
+     */
     VALUE,
-    /** The slice's share of the total, formatted with the spec's percent format. */
+    /**
+     * The slice's share of the total, formatted with the spec's percent format.
+     */
     PERCENT,
-    /** The category name. */
+    /**
+     * The category name.
+     */
     CATEGORY,
-    /** Category name followed by the percent share. */
+    /**
+     * Category name followed by the percent share.
+     */
     CATEGORY_PERCENT
 }

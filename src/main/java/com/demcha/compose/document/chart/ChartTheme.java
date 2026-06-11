@@ -15,14 +15,13 @@ import java.util.Objects;
  * with no {@link ChartStyle} still matches the document's palette and typography
  * automatically.
  *
- * @param palette ordered series paints; cycled by the resolver
- * @param gridStroke default grid line stroke
- * @param axisTextStyle default tick / category label style
- * @param legendTextStyle default legend label style
+ * @param palette             ordered series paints; cycled by the resolver
+ * @param gridStroke          default grid line stroke
+ * @param axisTextStyle       default tick / category label style
+ * @param legendTextStyle     default legend label style
  * @param valueLabelTextStyle default value-label style
- * @param valueLabelHalo default halo chip painted behind line-chart value labels
- *                       so digits stay legible where line strokes cross them
- *
+ * @param valueLabelHalo      default halo chip painted behind line-chart value labels
+ *                            so digits stay legible where line strokes cross them
  * @author Artem Demchyshyn
  * @since 1.8.0
  */
@@ -34,7 +33,9 @@ public record ChartTheme(
         DocumentTextStyle valueLabelTextStyle,
         DocumentPaint valueLabelHalo
 ) {
-    /** Copy-protects and validates the palette. */
+    /**
+     * Copy-protects and validates the palette.
+     */
     public ChartTheme {
         Objects.requireNonNull(palette, "palette");
         palette = List.copyOf(palette);

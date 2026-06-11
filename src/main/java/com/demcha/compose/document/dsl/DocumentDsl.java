@@ -90,9 +90,9 @@ public final class DocumentDsl {
      *
      * @return a detached paragraph builder
      * @deprecated since 1.6.0; prefer {@link #paragraph()}. Carrying two
-     *             names for the same operation on a small facade adds
-     *             maintenance cost without clarity. Scheduled for removal in
-     *             v2.0.
+     * names for the same operation on a small facade adds
+     * maintenance cost without clarity. Scheduled for removal in
+     * v2.0.
      */
     @Deprecated(since = "1.6.0", forRemoval = true)
     public ParagraphBuilder text() {

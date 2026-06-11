@@ -1,12 +1,7 @@
 package com.demcha.compose.document.templates.support.common;
 
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.dsl.AbstractFlowBuilder;
-import com.demcha.compose.document.dsl.DocumentDsl;
-import com.demcha.compose.document.dsl.ModuleBuilder;
-import com.demcha.compose.document.dsl.PageFlowBuilder;
-import com.demcha.compose.document.dsl.RowBuilder;
-import com.demcha.compose.document.dsl.TableBuilder;
+import com.demcha.compose.document.dsl.*;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.table.DocumentTableColumn;
 

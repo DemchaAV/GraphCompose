@@ -55,7 +55,7 @@ public interface ProposalTemplate {
      * Composes a proposal into a live document session.
      *
      * @param document active mutable document session receiving template nodes
-     * @param spec proposal document spec
+     * @param spec     proposal document spec
      * @throws NullPointerException if an implementation requires non-null inputs
      */
     void compose(DocumentSession document, ProposalDocumentSpec spec);

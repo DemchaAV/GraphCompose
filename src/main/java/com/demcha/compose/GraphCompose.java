@@ -15,6 +15,7 @@ import java.util.Objects;
 
 /**
  * Main entry point for GraphCompose document authoring.
+ *
  * <p>
  * Application code starts here and should use the canonical semantic document
  * session through {@link #document()} to turn author intent into a paginated
@@ -23,18 +24,18 @@ import java.util.Objects;
  *
  * <p>The typical runtime flow is:</p>
  * <ol>
- *   <li>create a semantic session with {@link #document(Path)} or {@link #document()}</li>
- *   <li>author content with {@link DocumentSession#pageFlow()}, {@link DocumentSession#compose(java.util.function.Consumer)},
- *       or {@link DocumentSession#dsl()}</li>
- *   <li>inspect {@link DocumentSession#layoutGraph()} or {@link DocumentSession#layoutSnapshot()} if needed</li>
- *   <li>call {@link DocumentSession#buildPdf()} or {@link DocumentSession#toPdfBytes()}</li>
+ *   <li>Create a semantic session with {@link #document(Path)} or {@link #document()}.</li>
+ *   <li>Author content with {@link DocumentSession#pageFlow()},
+ *       {@link DocumentSession#compose(java.util.function.Consumer)}, or
+ *       {@link DocumentSession#dsl()}.</li>
+ *   <li>Inspect {@link DocumentSession#layoutGraph()} or
+ *       {@link DocumentSession#layoutSnapshot()} if needed.</li>
+ *   <li>Call {@link DocumentSession#buildPdf()} or {@link DocumentSession#toPdfBytes()}.</li>
  * </ol>
  *
- * @author Artem Demchyshyn
- * @since 1.0.0
- *
  * <h3>Build a PDF file with the canonical DSL</h3>
- * <pre>
+ *
+ * <pre>{@code
  * try (DocumentSession document = GraphCompose.document(outputFile)
  *         .pageSize(DocumentPageSize.A4)
  *         .margin(24, 24, 24, 24)
@@ -45,10 +46,11 @@ import java.util.Objects;
  *
  *     document.buildPdf();
  * }
- * </pre>
+ * }</pre>
  *
  * <h3>Get bytes instead of writing to disk</h3>
- * <pre>
+ *
+ * <pre>{@code
  * try (DocumentSession document = GraphCompose.document()
  *         .pageSize(DocumentPageSize.A4)
  *         .create()) {
@@ -58,7 +60,10 @@ import java.util.Objects;
  *
  *     byte[] pdfBytes = document.toPdfBytes();
  * }
- * </pre>
+ * }</pre>
+ *
+ * @author Artem Demchyshyn
+ * @since 1.0.0
  */
 public final class GraphCompose {
 

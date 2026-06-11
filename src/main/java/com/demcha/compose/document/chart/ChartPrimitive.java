@@ -16,17 +16,18 @@ import java.util.Objects;
  * within (matching the node's intrinsic size for shapes and lines, and the
  * label box for paragraphs).</p>
  *
- * @param node the primitive node (bar, line segment, grid line, label, swatch)
- * @param x left edge of the box, points from the inner box's left edge
- * @param y bottom edge of the box, points from the inner box's bottom edge
- * @param width box width in points (positive)
+ * @param node   the primitive node (bar, line segment, grid line, label, swatch)
+ * @param x      left edge of the box, points from the inner box's left edge
+ * @param y      bottom edge of the box, points from the inner box's bottom edge
+ * @param width  box width in points (positive)
  * @param height box height in points (positive)
- *
  * @author Artem Demchyshyn
  * @since 1.8.0
  */
 public record ChartPrimitive(DocumentNode node, double x, double y, double width, double height) {
-    /** Validates the node reference, finite coordinates, and positive box. */
+    /**
+     * Validates the node reference, finite coordinates, and positive box.
+     */
     public ChartPrimitive {
         Objects.requireNonNull(node, "node");
         requireFinite(x, "x");

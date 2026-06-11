@@ -1,37 +1,31 @@
 package com.demcha.compose.document.node;
 
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentCornerRadius;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentPaint;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTransform;
+import com.demcha.compose.document.style.*;
 
-import java.awt.Color;
+import java.awt.*;
 
 /**
  * Atomic rectangle-like semantic shape.
  *
- * @param name node name used in snapshots and layout graph paths
- * @param width resolved shape width
- * @param height resolved shape height
- * @param fillColor optional fill color
- * @param stroke optional stroke descriptor
- * @param cornerRadius optional render-only corner radius
- * @param linkOptions optional node-level link metadata
+ * @param name            node name used in snapshots and layout graph paths
+ * @param width           resolved shape width
+ * @param height          resolved shape height
+ * @param fillColor       optional fill color
+ * @param stroke          optional stroke descriptor
+ * @param cornerRadius    optional render-only corner radius
+ * @param linkOptions     optional node-level link metadata
  * @param bookmarkOptions optional node-level bookmark metadata
- * @param padding inner padding
- * @param margin outer margin
- * @param transform render-time affine transform (rotation around the
- *                  placement centre and/or scaling); defaults to
- *                  {@link DocumentTransform#NONE}. Layout snapshots stay
- *                  deterministic regardless of rotation/scale — backends
- *                  apply the transform during render only.
- * @param fillPaint optional paint fill; when set it wins over
- *                  {@code fillColor}. Gradients render as native shadings in
- *                  the PDF backend; backends without shading support fall
- *                  back to {@link DocumentPaint#primaryColor()}.
- *
+ * @param padding         inner padding
+ * @param margin          outer margin
+ * @param transform       render-time affine transform (rotation around the
+ *                        placement centre and/or scaling); defaults to
+ *                        {@link DocumentTransform#NONE}. Layout snapshots stay
+ *                        deterministic regardless of rotation/scale — backends
+ *                        apply the transform during render only.
+ * @param fillPaint       optional paint fill; when set it wins over
+ *                        {@code fillColor}. Gradients render as native shadings in
+ *                        the PDF backend; backends without shading support fall
+ *                        back to {@link DocumentPaint#primaryColor()}.
  * @author Artem Demchyshyn
  */
 public record ShapeNode(
@@ -51,17 +45,17 @@ public record ShapeNode(
     /**
      * Backwards-compatible canonical constructor without a paint fill.
      *
-     * @param name node name used in snapshots and layout graph paths
-     * @param width resolved shape width
-     * @param height resolved shape height
-     * @param fillColor optional fill color
-     * @param stroke optional stroke descriptor
-     * @param cornerRadius optional render-only corner radius
-     * @param linkOptions optional node-level link metadata
+     * @param name            node name used in snapshots and layout graph paths
+     * @param width           resolved shape width
+     * @param height          resolved shape height
+     * @param fillColor       optional fill color
+     * @param stroke          optional stroke descriptor
+     * @param cornerRadius    optional render-only corner radius
+     * @param linkOptions     optional node-level link metadata
      * @param bookmarkOptions optional node-level bookmark metadata
-     * @param padding inner padding
-     * @param margin outer margin
-     * @param transform render-time affine transform
+     * @param padding         inner padding
+     * @param margin          outer margin
+     * @param transform       render-time affine transform
      */
     public ShapeNode(String name,
                      double width,
@@ -98,13 +92,13 @@ public record ShapeNode(
     /**
      * Backward-compatible convenience constructor without link/bookmark metadata.
      *
-     * @param name node name used in snapshots and layout graph paths
-     * @param width resolved shape width
-     * @param height resolved shape height
+     * @param name      node name used in snapshots and layout graph paths
+     * @param width     resolved shape width
+     * @param height    resolved shape height
      * @param fillColor optional fill color
-     * @param stroke optional stroke descriptor
-     * @param padding inner padding
-     * @param margin outer margin
+     * @param stroke    optional stroke descriptor
+     * @param padding   inner padding
+     * @param margin    outer margin
      */
     public ShapeNode(String name,
                      double width,
@@ -120,15 +114,15 @@ public record ShapeNode(
     /**
      * Backward-compatible convenience constructor without corner radius.
      *
-     * @param name node name used in snapshots and layout graph paths
-     * @param width resolved shape width
-     * @param height resolved shape height
-     * @param fillColor optional fill color
-     * @param stroke optional stroke descriptor
-     * @param linkOptions optional node-level link metadata
+     * @param name            node name used in snapshots and layout graph paths
+     * @param width           resolved shape width
+     * @param height          resolved shape height
+     * @param fillColor       optional fill color
+     * @param stroke          optional stroke descriptor
+     * @param linkOptions     optional node-level link metadata
      * @param bookmarkOptions optional node-level bookmark metadata
-     * @param padding inner padding
-     * @param margin outer margin
+     * @param padding         inner padding
+     * @param margin          outer margin
      */
     public ShapeNode(String name,
                      double width,
@@ -146,16 +140,16 @@ public record ShapeNode(
      * Backward-compatible convenience constructor without transform — defaults
      * to {@link DocumentTransform#NONE}.
      *
-     * @param name node name used in snapshots and layout graph paths
-     * @param width resolved shape width
-     * @param height resolved shape height
-     * @param fillColor optional fill color
-     * @param stroke optional stroke descriptor
-     * @param cornerRadius optional render-only corner radius
-     * @param linkOptions optional node-level link metadata
+     * @param name            node name used in snapshots and layout graph paths
+     * @param width           resolved shape width
+     * @param height          resolved shape height
+     * @param fillColor       optional fill color
+     * @param stroke          optional stroke descriptor
+     * @param cornerRadius    optional render-only corner radius
+     * @param linkOptions     optional node-level link metadata
      * @param bookmarkOptions optional node-level bookmark metadata
-     * @param padding inner padding
-     * @param margin outer margin
+     * @param padding         inner padding
+     * @param margin          outer margin
      */
     public ShapeNode(String name,
                      double width,

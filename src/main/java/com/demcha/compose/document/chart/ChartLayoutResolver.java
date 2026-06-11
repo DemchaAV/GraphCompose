@@ -30,11 +30,11 @@ public final class ChartLayoutResolver {
     /**
      * Resolves a chart spec into positioned primitive children.
      *
-     * @param spec what to plot
-     * @param style fully-coalesced style (theme already merged in)
-     * @param theme active chart theme (supplies the fallback palette)
-     * @param width chart inner box width in points
-     * @param height chart inner box height in points
+     * @param spec    what to plot
+     * @param style   fully-coalesced style (theme already merged in)
+     * @param theme   active chart theme (supplies the fallback palette)
+     * @param width   chart inner box width in points
+     * @param height  chart inner box height in points
      * @param metrics text measurement seam for label sizing
      * @return positioned primitive nodes filling the chart box; never null
      */

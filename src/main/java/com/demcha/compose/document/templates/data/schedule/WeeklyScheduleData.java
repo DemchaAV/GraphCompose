@@ -1,7 +1,8 @@
 package com.demcha.compose.document.templates.data.schedule;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -9,14 +10,14 @@ import java.util.function.Consumer;
 /**
  * Display-oriented weekly schedule document input.
  *
- * @param title document title
- * @param weekLabel display week label
- * @param days days in display order
- * @param categories shared category catalog
+ * @param title         document title
+ * @param weekLabel     display week label
+ * @param days          days in display order
+ * @param categories    shared category catalog
  * @param headerMetrics metric rows rendered above the matrix
- * @param people people rows in the schedule matrix
- * @param assignments person/day assignments
- * @param footerNotes footer notes rendered after the matrix
+ * @param people        people rows in the schedule matrix
+ * @param assignments   person/day assignments
+ * @param footerNotes   footer notes rendered after the matrix
  */
 public record WeeklyScheduleData(
         String title,
@@ -131,9 +132,9 @@ public record WeeklyScheduleData(
         /**
          * Appends a day header from display values.
          *
-         * @param id stable day identifier
-         * @param label display day label
-         * @param headerNote optional header note
+         * @param id               stable day identifier
+         * @param label            display day label
+         * @param headerNote       optional header note
          * @param headerCategoryId optional category identifier
          * @return this builder
          */
@@ -183,9 +184,9 @@ public record WeeklyScheduleData(
         /**
          * Appends a category using black text.
          *
-         * @param id stable category identifier
-         * @param label display label
-         * @param fillColor fill color
+         * @param id          stable category identifier
+         * @param label       display label
+         * @param fillColor   fill color
          * @param borderColor border color
          * @return this builder
          */
@@ -196,10 +197,10 @@ public record WeeklyScheduleData(
         /**
          * Appends a category with explicit text color.
          *
-         * @param id stable category identifier
-         * @param label display label
-         * @param fillColor fill color
-         * @param textColor text color
+         * @param id          stable category identifier
+         * @param label       display label
+         * @param fillColor   fill color
+         * @param textColor   text color
          * @param borderColor border color
          * @return this builder
          */
@@ -249,7 +250,7 @@ public record WeeklyScheduleData(
         /**
          * Appends a header metric row from label and values.
          *
-         * @param label metric label
+         * @param label     metric label
          * @param dayValues day values
          * @return this builder
          */
@@ -260,7 +261,7 @@ public record WeeklyScheduleData(
         /**
          * Appends a header metric row from label and values.
          *
-         * @param label metric label
+         * @param label     metric label
          * @param dayValues day values
          * @return this builder
          */
@@ -313,9 +314,9 @@ public record WeeklyScheduleData(
         /**
          * Appends a person row from display values.
          *
-         * @param id person identifier
+         * @param id          person identifier
          * @param displayName display name
-         * @param sortOrder sort order
+         * @param sortOrder   sort order
          * @return this builder
          */
         public Builder person(String id, String displayName, int sortOrder) {
@@ -364,18 +365,16 @@ public record WeeklyScheduleData(
         /**
          * Appends an assignment from ids and slot rows.
          *
-         * @param personId person identifier
-         * @param dayId day identifier
+         * @param personId   person identifier
+         * @param dayId      day identifier
          * @param categoryId category identifier
-         * @param slots assignment slots
+         * @param slots      assignment slots
          * @return this builder
          */
         public Builder assignment(String personId, String dayId, String categoryId, ScheduleSlot... slots) {
             List<ScheduleSlot> normalizedSlots = new ArrayList<>();
             if (slots != null) {
-                for (ScheduleSlot slot : slots) {
-                    normalizedSlots.add(slot);
-                }
+                Collections.addAll(normalizedSlots, slots);
             }
             return assignment(personId, dayId, categoryId, normalizedSlots, "");
         }
@@ -383,11 +382,11 @@ public record WeeklyScheduleData(
         /**
          * Appends an assignment from ids, slot rows, and a note.
          *
-         * @param personId person identifier
-         * @param dayId day identifier
+         * @param personId   person identifier
+         * @param dayId      day identifier
          * @param categoryId category identifier
-         * @param slots assignment slots
-         * @param note optional note
+         * @param slots      assignment slots
+         * @param note       optional note
          * @return this builder
          */
         public Builder assignment(String personId,

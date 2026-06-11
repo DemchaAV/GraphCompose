@@ -26,7 +26,7 @@ public sealed interface ParagraphSpan permits ParagraphTextSpan, ParagraphImageS
      * Height this span contributes to its line.
      *
      * @return effective height contribution for line metrics (font line
-     *         height for text spans, image height for image spans)
+     * height for text spans, image height for image spans)
      */
     double height();
 }

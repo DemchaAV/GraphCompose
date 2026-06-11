@@ -1,53 +1,24 @@
 package com.demcha.compose.document.dsl;
 
-import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.dsl.internal.BuilderSupport;
-import com.demcha.compose.document.dsl.internal.SemanticNameNormalizer;
-import com.demcha.compose.document.image.DocumentImageData;
-import com.demcha.compose.document.node.BarcodeNode;
-import com.demcha.compose.document.node.ContainerNode;
-import com.demcha.compose.document.node.DocumentBarcodeOptions;
-import com.demcha.compose.document.node.DocumentBarcodeType;
-import com.demcha.compose.document.node.DocumentBookmarkOptions;
-import com.demcha.compose.document.node.DocumentLinkOptions;
-import com.demcha.compose.document.node.DocumentNode;
-import com.demcha.compose.document.node.ImageNode;
-import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.ListItem;
 import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.node.ListNode;
-import com.demcha.compose.document.node.PageBreakNode;
-import com.demcha.compose.document.node.ParagraphNode;
-import com.demcha.compose.document.node.SectionNode;
-import com.demcha.compose.document.node.ShapeNode;
-import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.document.table.DocumentTableCell;
-import com.demcha.compose.document.table.DocumentTableColumn;
-import com.demcha.compose.document.table.DocumentTableStyle;
 
-import java.awt.Color;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
  * Builder for semantic list nodes with marker and spacing controls.
+ *
  * @since 1.0.0
  */
 public final class ListBuilder {
-    private String name = "";
     private final List<ListItem> items = new ArrayList<>();
     private final Map<Integer, ListMarker> markerOverrides = new LinkedHashMap<>();
+    private String name = "";
     private boolean usedNestedAuthoring = false;
     private ListMarker marker = ListMarker.bullet();
     private DocumentTextStyle textStyle = DocumentTextStyle.DEFAULT;
@@ -63,6 +34,23 @@ public final class ListBuilder {
      * Creates a list builder.
      */
     public ListBuilder() {
+    }
+
+    private static List<ListItem> applyMarkerOverrides(List<ListItem> items,
+                                                       int depth,
+                                                       Map<Integer, ListMarker> overrides) {
+        if (items.isEmpty()) {
+            return List.of();
+        }
+        List<ListItem> out = new ArrayList<>(items.size());
+        for (ListItem item : items) {
+            ListMarker effective = item.marker() != null
+                    ? item.marker()
+                    : overrides.get(depth);
+            List<ListItem> resolvedChildren = applyMarkerOverrides(item.children(), depth + 1, overrides);
+            out.add(new ListItem(item.label(), effective, resolvedChildren));
+        }
+        return List.copyOf(out);
     }
 
     /**
@@ -134,7 +122,7 @@ public final class ListBuilder {
      * leaves alongside the nested entries.</p>
      *
      * @param label visible label for this item
-     * @param body callback that adds children of this item
+     * @param body  callback that adds children of this item
      * @return this builder
      */
     public ListBuilder addItem(String label, Consumer<ListBuilder> body) {
@@ -157,7 +145,7 @@ public final class ListBuilder {
      * This setter wins over the cascade but is overridden by an
      * explicit per-item marker.</p>
      *
-     * @param depth zero-based depth (0 = top-level)
+     * @param depth  zero-based depth (0 = top-level)
      * @param marker marker to render at that depth, or {@code null} to clear an override
      * @return this builder
      * @throws IllegalArgumentException when {@code depth} is negative
@@ -303,10 +291,10 @@ public final class ListBuilder {
     /**
      * Sets list padding from explicit side values.
      *
-     * @param top top padding
-     * @param right right padding
+     * @param top    top padding
+     * @param right  right padding
      * @param bottom bottom padding
-     * @param left left padding
+     * @param left   left padding
      * @return this builder
      */
     public ListBuilder padding(float top, float right, float bottom, float left) {
@@ -327,10 +315,10 @@ public final class ListBuilder {
     /**
      * Sets list margin from explicit side values.
      *
-     * @param top top margin
-     * @param right right margin
+     * @param top    top margin
+     * @param right  right margin
      * @param bottom bottom margin
-     * @param left left margin
+     * @param left   left margin
      * @return this builder
      */
     public ListBuilder margin(float top, float right, float bottom, float left) {
@@ -390,23 +378,6 @@ public final class ListBuilder {
                 normalizeMarkers,
                 padding,
                 margin);
-    }
-
-    private static List<ListItem> applyMarkerOverrides(List<ListItem> items,
-                                                       int depth,
-                                                       Map<Integer, ListMarker> overrides) {
-        if (items.isEmpty()) {
-            return List.of();
-        }
-        List<ListItem> out = new ArrayList<>(items.size());
-        for (ListItem item : items) {
-            ListMarker effective = item.marker() != null
-                    ? item.marker()
-                    : overrides.get(depth);
-            List<ListItem> resolvedChildren = applyMarkerOverrides(item.children(), depth + 1, overrides);
-            out.add(new ListItem(item.label(), effective, resolvedChildren));
-        }
-        return List.copyOf(out);
     }
 
     /**

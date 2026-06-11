@@ -2,19 +2,12 @@ package com.demcha.compose.document.chart;
 
 import com.demcha.compose.document.node.EllipseNode;
 import com.demcha.compose.document.node.PolygonNode;
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.document.style.ShapePoint;
+import com.demcha.compose.document.style.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.demcha.compose.document.chart.ChartLayoutSupport.DEFAULT_LINE_WIDTH;
-import static com.demcha.compose.document.chart.ChartLayoutSupport.emitChipLabel;
-import static com.demcha.compose.document.chart.ChartLayoutSupport.segment;
-import static com.demcha.compose.document.chart.ChartLayoutSupport.valueLabelGap;
+import static com.demcha.compose.document.chart.ChartLayoutSupport.*;
 
 /**
  * Geometry for line charts: straight or Catmull-Rom-smoothed polylines,
@@ -26,7 +19,9 @@ import static com.demcha.compose.document.chart.ChartLayoutSupport.valueLabelGap
  */
 final class LineChartLayout {
 
-    /** Sub-segments per Catmull-Rom span; fixed so geometry stays deterministic. */
+    /**
+     * Sub-segments per Catmull-Rom span; fixed so geometry stays deterministic.
+     */
     private static final int SMOOTH_SUBDIVISIONS = 8;
     private static final double DEFAULT_AREA_OPACITY = 0.35;
 
@@ -137,7 +132,9 @@ final class LineChartLayout {
         return out;
     }
 
-    /** Splits a series into contiguous non-null runs of (x, y) samples. */
+    /**
+     * Splits a series into contiguous non-null runs of (x, y) samples.
+     */
     private static List<List<double[]>> sampleSeries(ChartData.Series series,
                                                      ChartLayoutSupport.Frame f,
                                                      double slotW, boolean smooth) {
@@ -152,7 +149,7 @@ final class LineChartLayout {
                 }
                 continue;
             }
-            current.add(new double[] {
+            current.add(new double[]{
                     f.plotLeftX() + (c + 0.5) * slotW, f.yForValue(v)});
         }
         if (!current.isEmpty()) {
@@ -179,7 +176,7 @@ final class LineChartLayout {
             double[] p3 = points.get(Math.min(points.size() - 1, i + 2));
             for (int t = 1; t <= SMOOTH_SUBDIVISIONS; t++) {
                 double u = (double) t / SMOOTH_SUBDIVISIONS;
-                samples.add(new double[] {
+                samples.add(new double[]{
                         catmullRom(p0[0], p1[0], p2[0], p3[0], u),
                         catmullRom(p0[1], p1[1], p2[1], p3[1], u)});
             }
@@ -191,12 +188,14 @@ final class LineChartLayout {
         double t2 = t * t;
         double t3 = t2 * t;
         return 0.5 * ((2 * p1)
-                + (-p0 + p2) * t
-                + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2
-                + (-p0 + 3 * p1 - 3 * p2 + p3) * t3);
+                      + (-p0 + p2) * t
+                      + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2
+                      + (-p0 + 3 * p1 - 3 * p2 + p3) * t3);
     }
 
-    /** Closes a sampled run down to the plot baseline and emits it as a polygon. */
+    /**
+     * Closes a sampled run down to the plot baseline and emits it as a polygon.
+     */
     private static void emitAreaPolygon(List<ChartPrimitive> out, String name,
                                         List<double[]> run, double baselineY,
                                         DocumentColor fill) {
@@ -248,7 +247,7 @@ final class LineChartLayout {
             List<int[]> order = new ArrayList<>();
             for (int s = 0; s < data.seriesCount(); s++) {
                 if (data.series().get(s).values().get(c) != null) {
-                    order.add(new int[] {s});
+                    order.add(new int[]{s});
                 }
             }
             int catIndex = c;
@@ -272,7 +271,7 @@ final class LineChartLayout {
                     // Flip below the point; close series read better split around it.
                     yBottom = py - markerHalfH - labelGap - f.valueLineH();
                 }
-                placedBoxes.add(new double[] {yBottom, yBottom + f.valueLineH()});
+                placedBoxes.add(new double[]{yBottom, yBottom + f.valueLineH()});
                 emitChipLabel(out, "value_s" + s + "_c" + c, text, valueStyle, halo,
                         px, yBottom, labelW, f.valueLineH());
             }

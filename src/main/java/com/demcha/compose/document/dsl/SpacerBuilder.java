@@ -58,7 +58,7 @@ public final class SpacerBuilder {
     /**
      * Sets spacer width and height.
      *
-     * @param width width in points
+     * @param width  width in points
      * @param height height in points
      * @return this builder
      */

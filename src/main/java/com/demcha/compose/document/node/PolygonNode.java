@@ -19,15 +19,14 @@ import java.util.Objects;
  * tomorrow. It renders through the existing polygon fragment pipeline — no
  * backend gains any new handler for it.</p>
  *
- * @param name node name used in snapshots and layout graph paths
- * @param width resolved box width
- * @param height resolved box height
- * @param points normalized vertices in draw order; at least three
+ * @param name      node name used in snapshots and layout graph paths
+ * @param width     resolved box width
+ * @param height    resolved box height
+ * @param points    normalized vertices in draw order; at least three
  * @param fillColor optional fill colour
- * @param stroke optional outline stroke
- * @param padding inner padding
- * @param margin outer margin
- *
+ * @param stroke    optional outline stroke
+ * @param padding   inner padding
+ * @param margin    outer margin
  * @author Artem Demchyshyn
  * @since 1.8.0
  */
@@ -41,7 +40,9 @@ public record PolygonNode(
         DocumentInsets padding,
         DocumentInsets margin
 ) implements DocumentNode {
-    /** Validates dimensions and the vertex list; copy-protects the vertices. */
+    /**
+     * Validates dimensions and the vertex list; copy-protects the vertices.
+     */
     public PolygonNode {
         name = name == null ? "" : name;
         Objects.requireNonNull(points, "points");

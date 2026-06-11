@@ -4,13 +4,13 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.v2.components.SectionDispatcher;
-import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
-import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
-import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
 import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
 import com.demcha.compose.document.templates.cv.v2.data.CvSection;
 import com.demcha.compose.document.templates.cv.v2.data.Slot;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
+import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
+import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
 
 import java.util.List;
 import java.util.Objects;
@@ -41,13 +41,19 @@ import java.util.Objects;
  */
 public final class BoxedSections {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "boxed-sections";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Boxed Sections";
 
-    /** Recommended page margin (in points). */
+    /**
+     * Recommended page margin (in points).
+     */
     public static final double RECOMMENDED_MARGIN = 28.0;
 
     private BoxedSections() {
@@ -77,58 +83,52 @@ public final class BoxedSections {
         return new Template(theme);
     }
 
-    private static final class Template implements DocumentTemplate<CvDocument> {
-
-        private final CvTheme theme;
-
-        Template(CvTheme theme) {
-            this.theme = theme;
-        }
+    private record Template(CvTheme theme) implements DocumentTemplate<CvDocument> {
 
         @Override
-        public String id() {
-            return ID;
-        }
-
-        @Override
-        public String displayName() {
-            return DISPLAY_NAME;
-        }
-
-        @Override
-        public void compose(DocumentSession document, CvDocument doc) {
-            Objects.requireNonNull(document, "document");
-            Objects.requireNonNull(doc, "doc");
-
-            PageFlowBuilder pageFlow = document.dsl()
-                    .pageFlow()
-                    .name("CvV2Root")
-                    .spacing(theme.spacing().pageFlowSpacing())
-                    .addSection("CvV2Headline", section -> {
-                        section.accentBottom(theme.palette().rule(),
-                                theme.spacing().accentRuleWidth());
-                        Headline.spacedCentered(section, doc.identity().name(), theme);
-                    })
-                    .addSection("CvV2Contact", section -> {
-                        section.accentBottom(theme.palette().rule(),
-                                theme.spacing().accentRuleWidth());
-                        ContactLine.centered(section, doc.identity(), theme);
-                    });
-
-            // Single-column preset — only renders MAIN-slot sections.
-            // Sidebar / footer placements are intentionally dropped here;
-            // switch to a multi-column preset to render them.
-            List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
-            for (int i = 0; i < sections.size(); i++) {
-                final CvSection sec = sections.get(i);
-                final int idx = i;
-                pageFlow.addSection("CvV2Banner_" + idx,
-                        host -> SectionHeader.banner(host, sec.title(), theme));
-                pageFlow.addSection("CvV2Body_" + idx,
-                        host -> SectionDispatcher.renderBody(host, sec, theme));
+            public String id() {
+                return ID;
             }
 
-            pageFlow.build();
+            @Override
+            public String displayName() {
+                return DISPLAY_NAME;
+            }
+
+            @Override
+            public void compose(DocumentSession document, CvDocument doc) {
+                Objects.requireNonNull(document, "document");
+                Objects.requireNonNull(doc, "doc");
+
+                PageFlowBuilder pageFlow = document.dsl()
+                        .pageFlow()
+                        .name("CvV2Root")
+                        .spacing(theme.spacing().pageFlowSpacing())
+                        .addSection("CvV2Headline", section -> {
+                            section.accentBottom(theme.palette().rule(),
+                                    theme.spacing().accentRuleWidth());
+                            Headline.spacedCentered(section, doc.identity().name(), theme);
+                        })
+                        .addSection("CvV2Contact", section -> {
+                            section.accentBottom(theme.palette().rule(),
+                                    theme.spacing().accentRuleWidth());
+                            ContactLine.centered(section, doc.identity(), theme);
+                        });
+
+                // Single-column preset — only renders MAIN-slot sections.
+                // Sidebar / footer placements are intentionally dropped here;
+                // switch to a multi-column preset to render them.
+                List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
+                for (int i = 0; i < sections.size(); i++) {
+                    final CvSection sec = sections.get(i);
+                    final int idx = i;
+                    pageFlow.addSection("CvV2Banner_" + idx,
+                            host -> SectionHeader.banner(host, sec.title(), theme));
+                    pageFlow.addSection("CvV2Body_" + idx,
+                            host -> SectionDispatcher.renderBody(host, sec, theme));
+                }
+
+                pageFlow.build();
+            }
         }
-    }
 }

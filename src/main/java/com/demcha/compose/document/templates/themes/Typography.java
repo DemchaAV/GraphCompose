@@ -16,14 +16,14 @@ import java.util.Objects;
  * <p>Five built-in presets cover the common sans-serif / serif / monospace
  * / display combinations; use {@link #builder()} for fully custom typography.</p>
  *
- * @param headerFont      font name applied to the document name and section headings
- * @param bodyFont        font name applied to body text and list items
- * @param nameSize        type size for the top-of-document name (largest)
- * @param headingSize     type size for primary section headings
- * @param subHeadingSize  type size for secondary headings (e.g. role titles)
- * @param bodySize        type size for paragraph body text
- * @param smallBodySize   type size for compact body text (contact lines, captions)
- * @param captionSize     type size for the smallest auxiliary text
+ * @param headerFont     font name applied to the document name and section headings
+ * @param bodyFont       font name applied to body text and list items
+ * @param nameSize       type size for the top-of-document name (largest)
+ * @param headingSize    type size for primary section headings
+ * @param subHeadingSize type size for secondary headings (e.g. role titles)
+ * @param bodySize       type size for paragraph body text
+ * @param smallBodySize  type size for compact body text (contact lines, captions)
+ * @param captionSize    type size for the smallest auxiliary text
  */
 public record Typography(
         FontName headerFont,

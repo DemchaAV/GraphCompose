@@ -8,23 +8,8 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
-import com.demcha.compose.document.templates.cv.v2.components.EntryCompactRenderer;
-import com.demcha.compose.document.templates.cv.v2.components.ParagraphRenderer;
-import com.demcha.compose.document.templates.cv.v2.components.ProjectRenderer;
-import com.demcha.compose.document.templates.cv.v2.components.RowRenderer;
-import com.demcha.compose.document.templates.cv.v2.components.SectionLookup;
-import com.demcha.compose.document.templates.cv.v2.components.SkillsRenderer;
-import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
-import com.demcha.compose.document.templates.cv.v2.data.CvEntry;
-import com.demcha.compose.document.templates.cv.v2.data.CvRow;
-import com.demcha.compose.document.templates.cv.v2.data.CvSection;
-import com.demcha.compose.document.templates.cv.v2.data.EntriesSection;
-import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
-import com.demcha.compose.document.templates.cv.v2.data.RowStyle;
-import com.demcha.compose.document.templates.cv.v2.data.RowsSection;
-import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
-import com.demcha.compose.document.templates.cv.v2.data.Slot;
+import com.demcha.compose.document.templates.cv.v2.components.*;
+import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
 import com.demcha.compose.document.templates.cv.v2.widgets.FlowSectionHeader;
@@ -49,13 +34,19 @@ import java.util.Objects;
  */
 public final class BlueBanner {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "blue-banner";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Blue Banner";
 
-    /** Recommended page margin (in points). */
+    /**
+     * Recommended page margin (in points).
+     */
     public static final double RECOMMENDED_MARGIN = 28.0;
 
     private static final double BANNER_RULE_WIDTH = 500.0;
@@ -100,62 +91,56 @@ public final class BlueBanner {
         return new Template(theme);
     }
 
-    private static final class Template implements DocumentTemplate<CvDocument> {
-
-        private final CvTheme theme;
-
-        Template(CvTheme theme) {
-            this.theme = theme;
-        }
+    private record Template(CvTheme theme) implements DocumentTemplate<CvDocument> {
 
         @Override
-        public String id() {
-            return ID;
-        }
-
-        @Override
-        public String displayName() {
-            return DISPLAY_NAME;
-        }
-
-        @Override
-        public void compose(DocumentSession document, CvDocument doc) {
-            Objects.requireNonNull(document, "document");
-            Objects.requireNonNull(doc, "doc");
-
-            DocumentTextStyle bannerTitleStyle = CvTextStyles.of(
-                    theme.typography().bodyFont(),
-                    theme.typography().sizeBanner(),
-                    DocumentTextDecoration.BOLD,
-                    BANNER_TEXT);
-
-            PageFlowBuilder pageFlow = document.dsl()
-                    .pageFlow()
-                    .name("CvV2BlueBannerRoot")
-                    .spacing(theme.spacing().pageFlowSpacing())
-                    .addSection("Header", section ->
-                            Headline.spacedCentered(section,
-                                    doc.identity().name(), theme))
-                    .addSection("Contact", section ->
-                            ContactLine.centered(section, doc.identity(), theme));
-
-            List<CvSection> sections = orderedSections(doc);
-            for (int i = 0; i < sections.size(); i++) {
-                final CvSection sec = sections.get(i);
-                final int idx = i;
-                FlowSectionHeader.banner(pageFlow, "BlueBannerTitle_" + idx,
-                        sec.title(), BANNER_RULE_WIDTH, theme, bannerTitleStyle,
-                        new DocumentInsets(3, BANNER_RULE_HORIZONTAL_INSET,
-                                1, BANNER_RULE_HORIZONTAL_INSET),
-                        new DocumentInsets(1, BANNER_RULE_HORIZONTAL_INSET,
-                                1, BANNER_RULE_HORIZONTAL_INSET));
-                pageFlow.addSection("BlueBannerBody_" + idx, host ->
-                        renderBody(host, sec, theme));
+            public String id() {
+                return ID;
             }
 
-            pageFlow.build();
+            @Override
+            public String displayName() {
+                return DISPLAY_NAME;
+            }
+
+            @Override
+            public void compose(DocumentSession document, CvDocument doc) {
+                Objects.requireNonNull(document, "document");
+                Objects.requireNonNull(doc, "doc");
+
+                DocumentTextStyle bannerTitleStyle = CvTextStyles.of(
+                        theme.typography().bodyFont(),
+                        theme.typography().sizeBanner(),
+                        DocumentTextDecoration.BOLD,
+                        BANNER_TEXT);
+
+                PageFlowBuilder pageFlow = document.dsl()
+                        .pageFlow()
+                        .name("CvV2BlueBannerRoot")
+                        .spacing(theme.spacing().pageFlowSpacing())
+                        .addSection("Header", section ->
+                                Headline.spacedCentered(section,
+                                        doc.identity().name(), theme))
+                        .addSection("Contact", section ->
+                                ContactLine.centered(section, doc.identity(), theme));
+
+                List<CvSection> sections = orderedSections(doc);
+                for (int i = 0; i < sections.size(); i++) {
+                    final CvSection sec = sections.get(i);
+                    final int idx = i;
+                    FlowSectionHeader.banner(pageFlow, "BlueBannerTitle_" + idx,
+                            sec.title(), BANNER_RULE_WIDTH, theme, bannerTitleStyle,
+                            new DocumentInsets(3, BANNER_RULE_HORIZONTAL_INSET,
+                                    1, BANNER_RULE_HORIZONTAL_INSET),
+                            new DocumentInsets(1, BANNER_RULE_HORIZONTAL_INSET,
+                                    1, BANNER_RULE_HORIZONTAL_INSET));
+                    pageFlow.addSection("BlueBannerBody_" + idx, host ->
+                            renderBody(host, sec, theme));
+                }
+
+                pageFlow.build();
+            }
         }
-    }
 
     private static void renderBody(SectionBuilder host,
                                    CvSection section,

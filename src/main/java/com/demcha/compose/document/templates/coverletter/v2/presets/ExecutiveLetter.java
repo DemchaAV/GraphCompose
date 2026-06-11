@@ -43,13 +43,19 @@ import java.util.Objects;
  */
 public final class ExecutiveLetter {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "executive-letter";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Executive Letter";
 
-    /** Recommended page margin (in points) — generous business-letter feel. */
+    /**
+     * Recommended page margin (in points) — generous business-letter feel.
+     */
     public static final double RECOMMENDED_MARGIN = 48.0;
 
     /**
@@ -93,133 +99,127 @@ public final class ExecutiveLetter {
         return new Template(theme);
     }
 
-    private static final class Template implements DocumentTemplate<CoverLetterDocument> {
-
-        private final CvTheme theme;
-
-        Template(CvTheme theme) {
-            this.theme = theme;
-        }
+    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
-        public String id() {
-            return ID;
-        }
-
-        @Override
-        public String displayName() {
-            return DISPLAY_NAME;
-        }
-
-        @Override
-        public void compose(DocumentSession document, CoverLetterDocument doc) {
-            Objects.requireNonNull(document, "document");
-            Objects.requireNonNull(doc, "doc");
-
-            double width = document.canvas().innerWidth();
-            PageFlowBuilder flow = document.dsl()
-                    .pageFlow()
-                    .name("CoverLetterV2ExecutiveRoot")
-                    .spacing(theme.spacing().pageFlowSpacing());
-
-            addHeader(flow, doc.identity(), width);
-
-            flow.addSection("CoverLetterV2ExecutiveBody", host ->
-                    LetterBody.render(host, doc, theme));
-
-            flow.build();
-        }
-
-        private void addHeader(PageFlowBuilder flow, CvIdentity identity,
-                               double width) {
-            flow.addSection("CoverLetterV2ExecutiveHeader", section -> {
-                section.spacing(2)
-                        .padding(DocumentInsets.zero());
-                Headline.uppercaseLeftAligned(section, identity.name(), theme,
-                        nameStyle());
-                String meta = TextOrnaments.joinPipe(identity.contact().address(),
-                        identity.contact().phone());
-                if (!meta.isBlank()) {
-                    section.addParagraph(paragraph -> paragraph
-                            .text(meta)
-                            .textStyle(metaStyle())
-                            .align(TextAlign.LEFT)
-                            .margin(DocumentInsets.top(2)));
-                }
-                addLinkRow(section, identity);
-                section.addLine(line -> line
-                        .name("CoverLetterV2ExecutiveHeaderRule")
-                        .horizontal(width)
-                        .color(theme.palette().rule())
-                        .thickness(theme.spacing().accentRuleWidth())
-                        .margin(DocumentInsets.top(5)));
-            });
-        }
-
-        private void addLinkRow(SectionBuilder section, CvIdentity identity) {
-            boolean hasEmail = !identity.contact().email().isBlank();
-            boolean hasLinks = !identity.links().isEmpty();
-            if (!hasEmail && !hasLinks) {
-                return;
+            public String id() {
+                return ID;
             }
-            DocumentTextStyle bodyStyle = linkRowBodyStyle();
-            DocumentTextStyle linkStyle = linkRowLinkStyle();
-            section.addParagraph(paragraph -> paragraph
-                    .textStyle(bodyStyle)
-                    .align(TextAlign.LEFT)
-                    .margin(DocumentInsets.top(1))
-                    .rich(rich -> {
-                        boolean first = true;
-                        String email = identity.contact().email();
-                        if (!email.isBlank()) {
-                            rich.with(email, linkStyle,
-                                    new DocumentLinkOptions("mailto:" + email));
-                            first = false;
-                        }
-                        for (CvLink link : identity.links()) {
-                            if (link.label().isBlank()) {
-                                continue;
+
+            @Override
+            public String displayName() {
+                return DISPLAY_NAME;
+            }
+
+            @Override
+            public void compose(DocumentSession document, CoverLetterDocument doc) {
+                Objects.requireNonNull(document, "document");
+                Objects.requireNonNull(doc, "doc");
+
+                double width = document.canvas().innerWidth();
+                PageFlowBuilder flow = document.dsl()
+                        .pageFlow()
+                        .name("CoverLetterV2ExecutiveRoot")
+                        .spacing(theme.spacing().pageFlowSpacing());
+
+                addHeader(flow, doc.identity(), width);
+
+                flow.addSection("CoverLetterV2ExecutiveBody", host ->
+                        LetterBody.render(host, doc, theme));
+
+                flow.build();
+            }
+
+            private void addHeader(PageFlowBuilder flow, CvIdentity identity,
+                                   double width) {
+                flow.addSection("CoverLetterV2ExecutiveHeader", section -> {
+                    section.spacing(2)
+                            .padding(DocumentInsets.zero());
+                    Headline.uppercaseLeftAligned(section, identity.name(), theme,
+                            nameStyle());
+                    String meta = TextOrnaments.joinPipe(identity.contact().address(),
+                            identity.contact().phone());
+                    if (!meta.isBlank()) {
+                        section.addParagraph(paragraph -> paragraph
+                                .text(meta)
+                                .textStyle(metaStyle())
+                                .align(TextAlign.LEFT)
+                                .margin(DocumentInsets.top(2)));
+                    }
+                    addLinkRow(section, identity);
+                    section.addLine(line -> line
+                            .name("CoverLetterV2ExecutiveHeaderRule")
+                            .horizontal(width)
+                            .color(theme.palette().rule())
+                            .thickness(theme.spacing().accentRuleWidth())
+                            .margin(DocumentInsets.top(5)));
+                });
+            }
+
+            private void addLinkRow(SectionBuilder section, CvIdentity identity) {
+                boolean hasEmail = !identity.contact().email().isBlank();
+                boolean hasLinks = !identity.links().isEmpty();
+                if (!hasEmail && !hasLinks) {
+                    return;
+                }
+                DocumentTextStyle bodyStyle = linkRowBodyStyle();
+                DocumentTextStyle linkStyle = linkRowLinkStyle();
+                section.addParagraph(paragraph -> paragraph
+                        .textStyle(bodyStyle)
+                        .align(TextAlign.LEFT)
+                        .margin(DocumentInsets.top(1))
+                        .rich(rich -> {
+                            boolean first = true;
+                            String email = identity.contact().email();
+                            if (!email.isBlank()) {
+                                rich.with(email, linkStyle,
+                                        new DocumentLinkOptions("mailto:" + email));
+                                first = false;
                             }
-                            if (!first) {
-                                rich.style(" | ", bodyStyle);
+                            for (CvLink link : identity.links()) {
+                                if (link.label().isBlank()) {
+                                    continue;
+                                }
+                                if (!first) {
+                                    rich.style(" | ", bodyStyle);
+                                }
+                                first = false;
+                                if (link.url().isBlank()) {
+                                    rich.style(link.label(), bodyStyle);
+                                } else {
+                                    rich.with(link.label(), linkStyle,
+                                            new DocumentLinkOptions(link.url()));
+                                }
                             }
-                            first = false;
-                            if (link.url().isBlank()) {
-                                rich.style(link.label(), bodyStyle);
-                            } else {
-                                rich.with(link.label(), linkStyle,
-                                        new DocumentLinkOptions(link.url()));
-                            }
-                        }
-                    }));
-        }
+                        }));
+            }
 
-        private DocumentTextStyle nameStyle() {
-            return CvTextStyles.of(FontName.POPPINS,
-                    theme.typography().sizeHeadline(),
-                    DocumentTextDecoration.BOLD,
-                    PRIMARY_NAME);
-        }
+            private DocumentTextStyle nameStyle() {
+                return CvTextStyles.of(FontName.POPPINS,
+                        theme.typography().sizeHeadline(),
+                        DocumentTextDecoration.BOLD,
+                        PRIMARY_NAME);
+            }
 
-        private DocumentTextStyle metaStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeContact(),
-                    DocumentTextDecoration.DEFAULT,
-                    theme.palette().ink());
-        }
+            private DocumentTextStyle metaStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeContact(),
+                        DocumentTextDecoration.DEFAULT,
+                        theme.palette().ink());
+            }
 
-        private DocumentTextStyle linkRowBodyStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeBody(),
-                    DocumentTextDecoration.DEFAULT,
-                    theme.palette().ink());
-        }
+            private DocumentTextStyle linkRowBodyStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeBody(),
+                        DocumentTextDecoration.DEFAULT,
+                        theme.palette().ink());
+            }
 
-        private DocumentTextStyle linkRowLinkStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeBody(),
-                    DocumentTextDecoration.UNDERLINE,
-                    ACCENT);
+            private DocumentTextStyle linkRowLinkStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeBody(),
+                        DocumentTextDecoration.UNDERLINE,
+                        ACCENT);
+            }
         }
-    }
 }

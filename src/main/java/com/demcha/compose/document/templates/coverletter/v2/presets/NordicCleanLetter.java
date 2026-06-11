@@ -37,16 +37,24 @@ import java.util.Objects;
  */
 public final class NordicCleanLetter {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "nordic-clean-letter";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Nordic Clean Letter";
 
-    /** Recommended page margin (in points) — generous business-letter feel. */
+    /**
+     * Recommended page margin (in points) — generous business-letter feel.
+     */
     public static final double RECOMMENDED_MARGIN = 48.0;
 
-    /** Teal accent bar + link colour. Mirrors the NordicClean CV default accent. */
+    /**
+     * Teal accent bar + link colour. Mirrors the NordicClean CV default accent.
+     */
     private static final DocumentColor ACCENT = DocumentColor.rgb(28, 128, 135);
 
     private NordicCleanLetter() {
@@ -73,88 +81,82 @@ public final class NordicCleanLetter {
         return new Template(theme);
     }
 
-    private static final class Template implements DocumentTemplate<CoverLetterDocument> {
-
-        private final CvTheme theme;
-
-        Template(CvTheme theme) {
-            this.theme = theme;
-        }
+    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
-        public String id() {
-            return ID;
-        }
+            public String id() {
+                return ID;
+            }
 
-        @Override
-        public String displayName() {
-            return DISPLAY_NAME;
-        }
+            @Override
+            public String displayName() {
+                return DISPLAY_NAME;
+            }
 
-        @Override
-        public void compose(DocumentSession document, CoverLetterDocument doc) {
-            Objects.requireNonNull(document, "document");
-            Objects.requireNonNull(doc, "doc");
+            @Override
+            public void compose(DocumentSession document, CoverLetterDocument doc) {
+                Objects.requireNonNull(document, "document");
+                Objects.requireNonNull(doc, "doc");
 
-            PageFlowBuilder flow = document.dsl()
-                    .pageFlow()
-                    .name("CoverLetterV2NordicCleanRoot")
-                    .spacing(theme.spacing().pageFlowSpacing());
+                PageFlowBuilder flow = document.dsl()
+                        .pageFlow()
+                        .name("CoverLetterV2NordicCleanRoot")
+                        .spacing(theme.spacing().pageFlowSpacing());
 
-            addHeader(flow, doc.identity());
+                addHeader(flow, doc.identity());
 
-            flow.addSection("CoverLetterV2NordicCleanBody", host ->
-                    LetterBody.render(host, doc, theme));
+                flow.addSection("CoverLetterV2NordicCleanBody", host ->
+                        LetterBody.render(host, doc, theme));
 
-            flow.build();
-        }
+                flow.build();
+            }
 
-        private void addHeader(PageFlowBuilder flow, CvIdentity identity) {
-            flow.addRow("CoverLetterV2NordicCleanHeader", row -> row
-                    .spacing(14)
-                    .weights(1.2, 0.8)
-                    .addSection("Identity", id -> {
-                        id.spacing(3).padding(new DocumentInsets(1, 0, 2, 0));
-                        Headline.uppercaseLeftAligned(id, identity.name(), theme,
-                                headlineStyle());
-                        id.addShape(shape -> shape
-                                .name("CoverLetterV2NordicCleanNameAccent")
-                                .size(64, 2.6)
-                                .fillColor(ACCENT)
-                                .cornerRadius(1.3)
-                                .margin(DocumentInsets.zero()));
-                        if (!identity.jobTitle().isBlank()) {
-                            id.addParagraph(paragraph -> paragraph
-                                    .text(MarkdownInline.plainText(identity.jobTitle())
-                                            .toUpperCase(Locale.ROOT))
-                                    .textStyle(CvTextStyles.of(
-                                            theme.typography().bodyFont(), 7.7,
-                                            DocumentTextDecoration.BOLD,
-                                            theme.palette().muted()))
+            private void addHeader(PageFlowBuilder flow, CvIdentity identity) {
+                flow.addRow("CoverLetterV2NordicCleanHeader", row -> row
+                        .spacing(14)
+                        .weights(1.2, 0.8)
+                        .addSection("Identity", id -> {
+                            id.spacing(3).padding(new DocumentInsets(1, 0, 2, 0));
+                            Headline.uppercaseLeftAligned(id, identity.name(), theme,
+                                    headlineStyle());
+                            id.addShape(shape -> shape
+                                    .name("CoverLetterV2NordicCleanNameAccent")
+                                    .size(64, 2.6)
+                                    .fillColor(ACCENT)
+                                    .cornerRadius(1.3)
                                     .margin(DocumentInsets.zero()));
-                        }
-                    })
-                    .addSection("Contact", contact ->
-                            ContactLine.rightAlignedStacked(contact, identity,
-                                    theme, contactMetaStyle(), contactLinkStyle())));
-        }
+                            if (!identity.jobTitle().isBlank()) {
+                                id.addParagraph(paragraph -> paragraph
+                                        .text(MarkdownInline.plainText(identity.jobTitle())
+                                                .toUpperCase(Locale.ROOT))
+                                        .textStyle(CvTextStyles.of(
+                                                theme.typography().bodyFont(), 7.7,
+                                                DocumentTextDecoration.BOLD,
+                                                theme.palette().muted()))
+                                        .margin(DocumentInsets.zero()));
+                            }
+                        })
+                        .addSection("Contact", contact ->
+                                ContactLine.rightAlignedStacked(contact, identity,
+                                        theme, contactMetaStyle(), contactLinkStyle())));
+            }
 
-        private DocumentTextStyle headlineStyle() {
-            return CvTextStyles.of(theme.typography().headlineFont(),
-                    theme.typography().sizeHeadline(),
-                    DocumentTextDecoration.BOLD, theme.palette().ink());
-        }
+            private DocumentTextStyle headlineStyle() {
+                return CvTextStyles.of(theme.typography().headlineFont(),
+                        theme.typography().sizeHeadline(),
+                        DocumentTextDecoration.BOLD, theme.palette().ink());
+            }
 
-        private DocumentTextStyle contactMetaStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeContact(),
-                    DocumentTextDecoration.DEFAULT, theme.palette().muted());
-        }
+            private DocumentTextStyle contactMetaStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeContact(),
+                        DocumentTextDecoration.DEFAULT, theme.palette().muted());
+            }
 
-        private DocumentTextStyle contactLinkStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
-                    theme.typography().sizeContact(),
-                    DocumentTextDecoration.UNDERLINE, ACCENT);
+            private DocumentTextStyle contactLinkStyle() {
+                return CvTextStyles.of(theme.typography().bodyFont(),
+                        theme.typography().sizeContact(),
+                        DocumentTextDecoration.UNDERLINE, ACCENT);
+            }
         }
-    }
 }

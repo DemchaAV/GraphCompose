@@ -30,7 +30,9 @@ public record CvTheme(CvPalette palette,
                       CvSpacing spacing,
                       CvDecoration decoration) {
 
-    /** Validates that no sub-record is null. */
+    /**
+     * Validates that no sub-record is null.
+     */
     public CvTheme {
         Objects.requireNonNull(palette, "palette");
         Objects.requireNonNull(typography, "typography");
@@ -48,9 +50,9 @@ public record CvTheme(CvPalette palette,
      * @param typography font + size scale
      * @param spacing    paddings / margins / weights
      * @deprecated since the introduction of {@link CvDecoration} —
-     *             pass an explicit decoration so callers can choose
-     *             a different bullet glyph or contact separator
-     *             without forking the renderer.
+     * pass an explicit decoration so callers can choose
+     * a different bullet glyph or contact separator
+     * without forking the renderer.
      */
     @Deprecated
     public CvTheme(CvPalette palette, CvTypography typography, CvSpacing spacing) {

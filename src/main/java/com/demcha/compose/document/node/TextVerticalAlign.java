@@ -21,13 +21,19 @@ package com.demcha.compose.document.node;
  */
 public enum TextVerticalAlign {
 
-    /** Engine default baseline seating — unchanged from pre-1.7.0 behaviour. */
+    /**
+     * Engine default baseline seating — unchanged from pre-1.7.0 behaviour.
+     */
     DEFAULT,
 
-    /** Seat the cap top at the top of the line box (text hugs the top). */
+    /**
+     * Seat the cap top at the top of the line box (text hugs the top).
+     */
     TOP,
 
-    /** Optically centre the text by cap height within its line box. */
+    /**
+     * Optically centre the text by cap height within its line box.
+     */
     CENTER,
 
     /**

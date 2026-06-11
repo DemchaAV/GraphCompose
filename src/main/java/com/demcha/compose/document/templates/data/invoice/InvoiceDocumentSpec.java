@@ -199,10 +199,10 @@ public record InvoiceDocumentSpec(InvoiceData invoice) {
          * Appends a line item from display values.
          *
          * @param description item description
-         * @param details optional details
-         * @param quantity quantity text
-         * @param unitPrice unit price text
-         * @param amount amount text
+         * @param details     optional details
+         * @param quantity    quantity text
+         * @param unitPrice   unit price text
+         * @param amount      amount text
          * @return this builder
          */
         public Builder lineItem(String description, String details, String quantity, String unitPrice, String amount) {

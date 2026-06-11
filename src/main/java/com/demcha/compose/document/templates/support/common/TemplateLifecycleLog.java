@@ -22,7 +22,7 @@ public final class TemplateLifecycleLog {
      * Records the start of one template composition pass.
      *
      * @param templateId stable template identifier
-     * @param spec template specification object
+     * @param spec       template specification object
      * @return monotonic start time used by {@link #success(String, Object, long)}
      */
     public static long start(String templateId, Object spec) {
@@ -35,7 +35,7 @@ public final class TemplateLifecycleLog {
      * Records successful completion of one template composition pass.
      *
      * @param templateId stable template identifier
-     * @param spec template specification object
+     * @param spec       template specification object
      * @param startNanos monotonic start time returned by {@link #start(String, Object)}
      */
     public static void success(String templateId, Object spec, long startNanos) {
@@ -50,9 +50,9 @@ public final class TemplateLifecycleLog {
      * Records a failed template composition pass without logging user content.
      *
      * @param templateId stable template identifier
-     * @param spec template specification object
+     * @param spec       template specification object
      * @param startNanos monotonic start time returned by {@link #start(String, Object)}
-     * @param failure failure raised during template composition
+     * @param failure    failure raised during template composition
      */
     public static void failure(String templateId, Object spec, long startNanos, Throwable failure) {
         LOG.debug(
@@ -81,7 +81,7 @@ public final class TemplateLifecycleLog {
     /**
      * Records successful completion of one template module composition pass.
      *
-     * @param module module specification
+     * @param module     module specification
      * @param startNanos monotonic start time returned by {@link #moduleStart(TemplateModuleSpec)}
      */
     public static void moduleSuccess(TemplateModuleSpec module, long startNanos) {
@@ -95,9 +95,9 @@ public final class TemplateLifecycleLog {
     /**
      * Records a failed template module composition pass without logging user content.
      *
-     * @param module module specification
+     * @param module     module specification
      * @param startNanos monotonic start time returned by {@link #moduleStart(TemplateModuleSpec)}
-     * @param failure failure raised during module composition
+     * @param failure    failure raised during module composition
      */
     public static void moduleFailure(TemplateModuleSpec module, long startNanos, Throwable failure) {
         LOG.debug(

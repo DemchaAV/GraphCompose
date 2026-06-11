@@ -7,48 +7,18 @@ import com.demcha.compose.document.dsl.LayerStackBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.image.DocumentImageData;
-import com.demcha.compose.document.node.DocumentLinkOptions;
-import com.demcha.compose.document.node.InlineImageAlignment;
-import com.demcha.compose.document.node.LayerAlign;
-import com.demcha.compose.document.node.LayerStackNode;
-import com.demcha.compose.document.node.SpacerNode;
-import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTextDecoration;
-import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.node.*;
+import com.demcha.compose.document.style.*;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
-import com.demcha.compose.document.templates.cv.v2.components.LabelValueRenderer;
-import com.demcha.compose.document.templates.cv.v2.components.MarkdownInline;
-import com.demcha.compose.document.templates.cv.v2.components.ProjectRenderer;
-import com.demcha.compose.document.templates.cv.v2.components.SectionLookup;
-import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
-import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
-import com.demcha.compose.document.templates.cv.v2.data.CvEntry;
-import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
-import com.demcha.compose.document.templates.cv.v2.data.CvLink;
-import com.demcha.compose.document.templates.cv.v2.data.CvName;
-import com.demcha.compose.document.templates.cv.v2.data.CvRow;
-import com.demcha.compose.document.templates.cv.v2.data.CvSection;
-import com.demcha.compose.document.templates.cv.v2.data.EntriesSection;
-import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
-import com.demcha.compose.document.templates.cv.v2.data.RowsSection;
-import com.demcha.compose.document.templates.cv.v2.data.SkillGroup;
-import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
-import com.demcha.compose.document.templates.cv.v2.data.Slot;
+import com.demcha.compose.document.templates.cv.v2.components.*;
+import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
 import com.demcha.compose.font.FontName;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -73,35 +43,51 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class MonogramSidebar {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "monogram-sidebar";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Monogram Sidebar";
 
-    /** Recommended page margin (in points) — 0 so the sidebar bleeds to the edge. */
+    /**
+     * Recommended page margin (in points) — 0 so the sidebar bleeds to the edge.
+     */
     public static final double RECOMMENDED_MARGIN = 0.0;
 
-    /** V1 default muted-gold accent — used for the subtitle, dates. */
+    /**
+     * V1 default muted-gold accent — used for the subtitle, dates.
+     */
     private static final DocumentColor DEFAULT_ACCENT =
             DocumentColor.rgb(158, 146, 104);
 
-    /** V1 default dark monogram ring + initials colour. */
+    /**
+     * V1 default dark monogram ring + initials colour.
+     */
     private static final DocumentColor DEFAULT_MONOGRAM_RING =
             DocumentColor.rgb(54, 62, 74);
 
-    /** V1 dark main-column rule colour (theme rule is sidebar-only). */
+    /**
+     * V1 dark main-column rule colour (theme rule is sidebar-only).
+     */
     private static final DocumentColor MAIN_RULE =
             DocumentColor.rgb(72, 79, 84);
 
-    /** PT Serif used only for the monogram initials inside the ring badge. */
+    /**
+     * PT Serif used only for the monogram initials inside the ring badge.
+     */
     private static final FontName MONOGRAM_FONT = FontName.PT_SERIF;
 
     private static final double MONOGRAM_DIAMETER = 122;
     private static final double SIDEBAR_RULE_WIDTH = 118;
     private static final double CONTACT_ICON_SIZE = 22;
 
-    /** Sidebar column width as a fraction of the page width. */
+    /**
+     * Sidebar column width as a fraction of the page width.
+     */
     private static final double SIDEBAR_WIDTH_RATIO = 0.33;
 
     private static final double MAIN_SECTION_RULE_WIDTH = 355.0;
@@ -178,16 +164,16 @@ public final class MonogramSidebar {
      * back to the theme palette / V1 defaults documented on each
      * accessor.
      *
-     * @param sidebarFillColor   sidebar (left column) background fill;
-     *                           {@code null} → {@code theme.palette().banner()}
-     * @param mainFillColor      main (right column) background fill;
-     *                           {@code null} → {@code theme.palette().mainFill()}
-     *                           (defaults to {@link DocumentColor#WHITE})
-     * @param accentColor        muted-gold accent for subtitle,
-     *                           education date, experience date;
-     *                           {@code null} → V1 rgb(158,146,104)
-     * @param monogramRingColor  ring stroke + initials colour;
-     *                           {@code null} → V1 rgb(54,62,74)
+     * @param sidebarFillColor  sidebar (left column) background fill;
+     *                          {@code null} → {@code theme.palette().banner()}
+     * @param mainFillColor     main (right column) background fill;
+     *                          {@code null} → {@code theme.palette().mainFill()}
+     *                          (defaults to {@link DocumentColor#WHITE})
+     * @param accentColor       muted-gold accent for subtitle,
+     *                          education date, experience date;
+     *                          {@code null} → V1 rgb(158,146,104)
+     * @param monogramRingColor ring stroke + initials colour;
+     *                          {@code null} → V1 rgb(54,62,74)
      */
     public record Options(DocumentColor sidebarFillColor,
                           DocumentColor mainFillColor,
@@ -823,7 +809,7 @@ public final class MonogramSidebar {
     // -- Static helpers ----------------------------------------------------
 
     private static boolean hasContent(CvSection section) {
-        return section != null && SectionLookup.hasContent(section);
+        return SectionLookup.hasContent(section);
     }
 
     private static String initials(CvName name) {

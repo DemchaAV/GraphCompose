@@ -15,7 +15,9 @@ import java.util.Objects;
  */
 public record CvContact(String phone, String email, String address) {
 
-    /** Validates that every field is non-null and non-blank. */
+    /**
+     * Validates that every field is non-null and non-blank.
+     */
     public CvContact {
         Objects.requireNonNull(phone, "phone");
         Objects.requireNonNull(email, "email");

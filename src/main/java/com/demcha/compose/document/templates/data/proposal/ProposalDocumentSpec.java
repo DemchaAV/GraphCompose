@@ -198,7 +198,7 @@ public record ProposalDocumentSpec(ProposalData proposal) {
         /**
          * Appends a proposal section from title and paragraphs.
          *
-         * @param title section title
+         * @param title      section title
          * @param paragraphs section paragraphs
          * @return this builder
          */
@@ -243,9 +243,9 @@ public record ProposalDocumentSpec(ProposalData proposal) {
         /**
          * Appends a timeline row from display values.
          *
-         * @param phase phase label
+         * @param phase    phase label
          * @param duration duration text
-         * @param details supporting details
+         * @param details  supporting details
          * @return this builder
          */
         public Builder timelineItem(String phase, String duration, String details) {
@@ -289,9 +289,9 @@ public record ProposalDocumentSpec(ProposalData proposal) {
         /**
          * Appends a normal pricing row.
          *
-         * @param label row label
+         * @param label       row label
          * @param description row description
-         * @param amount amount text
+         * @param amount      amount text
          * @return this builder
          */
         public Builder pricingRow(String label, String description, String amount) {
@@ -302,9 +302,9 @@ public record ProposalDocumentSpec(ProposalData proposal) {
         /**
          * Appends an emphasized pricing row.
          *
-         * @param label row label
+         * @param label       row label
          * @param description row description
-         * @param amount amount text
+         * @param amount      amount text
          * @return this builder
          */
         public Builder emphasizedPricingRow(String label, String description, String amount) {

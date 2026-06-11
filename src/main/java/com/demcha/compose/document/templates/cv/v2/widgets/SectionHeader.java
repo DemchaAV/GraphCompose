@@ -198,11 +198,11 @@ public final class SectionHeader {
         DocumentTextStyle resolved = titleStyle != null
                 ? titleStyle
                 : DocumentTextStyle.builder()
-                        .fontName(theme.typography().bodyFont())
-                        .size(theme.typography().sizeBanner())
-                        .decoration(DocumentTextDecoration.BOLD)
-                        .color(color)
-                        .build();
+                .fontName(theme.typography().bodyFont())
+                .size(theme.typography().sizeBanner())
+                .decoration(DocumentTextDecoration.BOLD)
+                .color(color)
+                .build();
         host.padding(new DocumentInsets(0, 0, 0, 0))
                 .addParagraph(p -> p
                         .text(TextOrnaments.spacedUpper(title))
@@ -250,11 +250,11 @@ public final class SectionHeader {
         DocumentTextStyle resolved = titleStyle != null
                 ? titleStyle
                 : DocumentTextStyle.builder()
-                        .fontName(theme.typography().headlineFont())
-                        .size(theme.typography().sizeBanner())
-                        .decoration(DocumentTextDecoration.BOLD)
-                        .color(color)
-                        .build();
+                .fontName(theme.typography().headlineFont())
+                .size(theme.typography().sizeBanner())
+                .decoration(DocumentTextDecoration.BOLD)
+                .color(color)
+                .build();
         host.spacing(3)
                 .addShape(shape -> shape
                         .name("CvV2SectionHeaderTick")

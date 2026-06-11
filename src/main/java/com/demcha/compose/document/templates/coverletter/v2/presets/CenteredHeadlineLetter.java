@@ -38,13 +38,19 @@ import java.util.Objects;
  */
 public final class CenteredHeadlineLetter {
 
-    /** Stable template identifier. */
+    /**
+     * Stable template identifier.
+     */
     public static final String ID = "centered-headline-letter";
 
-    /** Human-readable display name. */
+    /**
+     * Human-readable display name.
+     */
     public static final String DISPLAY_NAME = "Centered Headline Letter";
 
-    /** Recommended page margin (in points) — generous business-letter feel. */
+    /**
+     * Recommended page margin (in points) — generous business-letter feel.
+     */
     public static final double RECOMMENDED_MARGIN = 48.0;
 
     private CenteredHeadlineLetter() {
@@ -71,68 +77,62 @@ public final class CenteredHeadlineLetter {
         return new Template(theme);
     }
 
-    private static final class Template implements DocumentTemplate<CoverLetterDocument> {
-
-        private final CvTheme theme;
-
-        Template(CvTheme theme) {
-            this.theme = theme;
-        }
+    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
-        public String id() {
-            return ID;
+            public String id() {
+                return ID;
+            }
+
+            @Override
+            public String displayName() {
+                return DISPLAY_NAME;
+            }
+
+            @Override
+            public void compose(DocumentSession document, CoverLetterDocument doc) {
+                Objects.requireNonNull(document, "document");
+                Objects.requireNonNull(doc, "doc");
+
+                double width = document.canvas().innerWidth();
+                CvIdentity identity = doc.identity();
+
+                PageFlowBuilder flow = document.dsl()
+                        .pageFlow()
+                        .name("CoverLetterV2CenteredHeadlineRoot")
+                        .spacing(theme.spacing().pageFlowSpacing())
+                        .addSection("CoverLetterV2CenteredHeadlineHeadline", section -> {
+                            Headline.spacedCentered(section, identity.name(), theme);
+                            if (!identity.jobTitle().isBlank()) {
+                                Subheadline.centeredSpacedCaps(section,
+                                        identity.jobTitle(), subheadlineStyle());
+                            }
+                        })
+                        .addLine(line -> rule(line, "CoverLetterV2CenteredHeadlineRule",
+                                width, 7, 0))
+                        .addSection("CoverLetterV2CenteredHeadlineContact", section ->
+                                ContactLine.centered(section, identity, theme))
+                        .addLine(line -> rule(line, "CoverLetterV2CenteredContactRule",
+                                width, 0, 0));
+
+                flow.addSection("CoverLetterV2CenteredHeadlineBody", host ->
+                        LetterBody.render(host, doc, theme));
+
+                flow.build();
+            }
+
+            private DocumentTextStyle subheadlineStyle() {
+                return CvTextStyles.of(theme.typography().headlineFont(), 8.6,
+                        DocumentTextDecoration.DEFAULT, theme.palette().muted());
+            }
+
+            private void rule(LineBuilder line, String name, double width,
+                              double top, double bottom) {
+                line.name(name)
+                        .horizontal(width)
+                        .color(theme.palette().rule())
+                        .thickness(theme.spacing().accentRuleWidth())
+                        .margin(new DocumentInsets(top, 0, bottom, 0));
+            }
         }
-
-        @Override
-        public String displayName() {
-            return DISPLAY_NAME;
-        }
-
-        @Override
-        public void compose(DocumentSession document, CoverLetterDocument doc) {
-            Objects.requireNonNull(document, "document");
-            Objects.requireNonNull(doc, "doc");
-
-            double width = document.canvas().innerWidth();
-            CvIdentity identity = doc.identity();
-
-            PageFlowBuilder flow = document.dsl()
-                    .pageFlow()
-                    .name("CoverLetterV2CenteredHeadlineRoot")
-                    .spacing(theme.spacing().pageFlowSpacing())
-                    .addSection("CoverLetterV2CenteredHeadlineHeadline", section -> {
-                        Headline.spacedCentered(section, identity.name(), theme);
-                        if (!identity.jobTitle().isBlank()) {
-                            Subheadline.centeredSpacedCaps(section,
-                                    identity.jobTitle(), subheadlineStyle());
-                        }
-                    })
-                    .addLine(line -> rule(line, "CoverLetterV2CenteredHeadlineRule",
-                            width, 7, 0))
-                    .addSection("CoverLetterV2CenteredHeadlineContact", section ->
-                            ContactLine.centered(section, identity, theme))
-                    .addLine(line -> rule(line, "CoverLetterV2CenteredContactRule",
-                            width, 0, 0));
-
-            flow.addSection("CoverLetterV2CenteredHeadlineBody", host ->
-                    LetterBody.render(host, doc, theme));
-
-            flow.build();
-        }
-
-        private DocumentTextStyle subheadlineStyle() {
-            return CvTextStyles.of(theme.typography().headlineFont(), 8.6,
-                    DocumentTextDecoration.DEFAULT, theme.palette().muted());
-        }
-
-        private void rule(LineBuilder line, String name, double width,
-                          double top, double bottom) {
-            line.name(name)
-                    .horizontal(width)
-                    .color(theme.palette().rule())
-                    .thickness(theme.spacing().accentRuleWidth())
-                    .margin(new DocumentInsets(top, 0, bottom, 0));
-        }
-    }
 }

@@ -19,11 +19,10 @@ package com.demcha.compose.document.style;
  * need asymmetry use the four-arg form or one of the convenience
  * helpers below.</p>
  *
- * @param topLeft top-left radius in points
- * @param topRight top-right radius in points
+ * @param topLeft     top-left radius in points
+ * @param topRight    top-right radius in points
  * @param bottomRight bottom-right radius in points
- * @param bottomLeft bottom-left radius in points
- *
+ * @param bottomLeft  bottom-left radius in points
  * @author Artem Demchyshyn
  */
 public record DocumentCornerRadius(double topLeft, double topRight, double bottomRight, double bottomLeft) {
@@ -66,10 +65,10 @@ public record DocumentCornerRadius(double topLeft, double topRight, double botto
      * Creates a corner radius with explicit values per corner. Order
      * matches CSS-style top-left, top-right, bottom-right, bottom-left.
      *
-     * @param topLeft top-left radius
-     * @param topRight top-right radius
+     * @param topLeft     top-left radius
+     * @param topRight    top-right radius
      * @param bottomRight bottom-right radius
-     * @param bottomLeft bottom-left radius
+     * @param bottomLeft  bottom-left radius
      * @return per-corner radius
      */
     public static DocumentCornerRadius of(double topLeft, double topRight, double bottomRight, double bottomLeft) {

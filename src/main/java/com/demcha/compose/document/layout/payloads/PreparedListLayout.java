@@ -9,9 +9,9 @@ import java.util.List;
  * Aggregates the per-item prepared layouts and the resolved width/height
  * the list definition uses for the emit pass.
  *
- * @param items per-item prepared layouts
- * @param maxLineWidth widest measured line width across items
- * @param totalHeight cumulative list height
+ * @param items         per-item prepared layouts
+ * @param maxLineWidth  widest measured line width across items
+ * @param totalHeight   cumulative list height
  * @param resolvedWidth resolved layout width
  */
 public record PreparedListLayout(

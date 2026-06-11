@@ -96,7 +96,7 @@ public class Header {
         /**
          * Creates and sets email contact metadata.
          *
-         * @param to target email address
+         * @param to          target email address
          * @param displayText visible link text
          * @return this builder
          */
@@ -119,7 +119,7 @@ public class Header {
         /**
          * Creates and sets GitHub link metadata.
          *
-         * @param url GitHub URL
+         * @param url         GitHub URL
          * @param displayText visible link text
          * @return this builder
          */
@@ -142,7 +142,7 @@ public class Header {
         /**
          * Creates and sets LinkedIn link metadata.
          *
-         * @param url LinkedIn URL
+         * @param url         LinkedIn URL
          * @param displayText visible link text
          * @return this builder
          */

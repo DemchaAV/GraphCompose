@@ -2,16 +2,16 @@ package com.demcha.compose.document.templates.support.common;
 
 import com.demcha.compose.engine.components.style.Margin;
 
-import java.awt.Color;
+import java.awt.*;
 
 /**
  * Immutable divider instruction used by shared template scene composers.
  *
- * @param name semantic divider name used in snapshots
- * @param width divider width in points
+ * @param name      semantic divider name used in snapshots
+ * @param width     divider width in points
  * @param thickness divider stroke thickness in points
- * @param color divider color
- * @param margin outer divider margin
+ * @param color     divider color
+ * @param margin    outer divider margin
  */
 public record TemplateDividerSpec(
         String name,

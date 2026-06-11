@@ -107,6 +107,14 @@ Entries land here as they merge.
 
 ### Documentation
 
+- **Browsable feature-catalog PDF.** New flagship `FeatureCatalogExample`
+  renders every shipped capability as a self-documenting block: the heading
+  lands in the PDF outline (the bookmarks panel works as a clickable index),
+  a code panel shows the exact API call, and the live result renders right
+  under it — rich text, sparklines, nested lists, timelines, tables, every
+  chart kind, gradients, translucency, polygons, clipped containers, canvas,
+  transforms, barcodes, and the document's own chrome. Blocks use
+  `keepTogether()`, so a snippet is never orphaned from its result.
 - **Recipe coverage is complete.** Nine new cookbook pages close every gap the
   recipe index tracked: rich text, lists, timelines, barcodes, images,
   PDF chrome (metadata / watermark / running header-footer / protection /

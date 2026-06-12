@@ -1,5 +1,6 @@
 package com.demcha.compose.document.svg;
 
+import com.demcha.compose.document.api.Beta;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentStroke;
 
@@ -36,9 +37,13 @@ import java.util.Objects;
  * flow.addSvgIcon(logo, 48);
  * }</pre>
  *
+ * <p><b>Beta:</b> the SVG surface is new in 1.8.0 and marked {@link Beta}
+ * while it hardens against real-world exporter output.</p>
+ *
  * @author Artem Demchyshyn
  * @since 1.8.0
  */
+@Beta
 public final class SvgIcon {
 
     private final List<Layer> layers;

@@ -67,6 +67,41 @@ Entries land here as they merge.
   every flow builder authors design shapes directly, and
   `dashed(on, off, ...)` makes the stroke dashed with the same
   `DocumentDashPattern` contract as lines — the pattern follows the curve.
+- **SVG path import** (`@since 1.8.0`, **beta** — annotated `@Beta` while
+  the surface hardens against real-world exporter output). `SvgPath.parse(d)` /
+  `parse(d, viewBox...)` in the new `document.svg` package lowers the full
+  SVG 1.1 path grammar — absolute/relative `M L H V C S Q T A Z`, implicit
+  repetition, quadratics (exact cubic elevation), smooth shorthands, and
+  elliptical arcs (deterministic W3C endpoint-to-center conversion, ≤90°
+  cubic slices) — into normalized, y-flipped `DocumentPathSegment`s.
+  `PathBuilder.svg(svgPath)` drops the result straight into `addPath(...)`:
+  any icon's `d` string renders as native PDF curves, no tessellation.
+  Syntax errors report the character position; fills keep SVG's default
+  non-zero winding rule. On top of it, `SvgIcon.read(file)` / `parse(xml)`
+  reads the practical subset of a whole SVG file — every `<path>` plus
+  `rect` / `circle` / `ellipse` / `line` / `polyline` / `polygon` lowered to
+  path data, `<g>` nesting with `translate` / `scale` / `rotate` / `matrix`
+  transforms (affine maps are exact on Bézier control points), and
+  `fill` / `stroke` / `stroke-width` styling with SVG inheritance and
+  defaults — into ordered layers, and `addSvgIcon(icon, width)` stacks them
+  back-to-front on the page. `SvgIcon#node(width)` packages the same layers
+  as one ready-to-place node whose box is exactly the icon box, so it
+  anchors true inside `ShapeContainer` / `LayerStack` nine-point grids (and
+  rows now accept `ShapeContainerNode` children directly — it is the same
+  atomic overlay composite as the already-allowed `LayerStackNode`).
+  **Gradients render natively**: `linearGradient` / `radialGradient`
+  referenced via `url(#id)` — on fills *and strokes* — map to PDF axial /
+  radial shadings with exact endpoints (`userSpaceOnUse` and
+  `objectBoundingBox` units, `gradientTransform`, percentage offsets,
+  multi-stop stitching, one `href` hop for split definitions); gradient
+  strokes ride a shading-pattern stroking colour. Underneath,
+  `DocumentPaint` gains endpoint-exact `LinearAxis` / `RadialCircle` forms
+  and `PathNode` / `PathBuilder` grow `fill(paint)` / `strokePaint(paint)`
+  with solid paints normalising to the flat-colour path (byte-identical
+  output for non-gradient documents). The XML reader refuses DOCTYPEs (no
+  XXE); CSS, text, filters, focal radials, non-pad `spreadMethod` and
+  translucent stops stay deliberately out of scope — the reader fails
+  loudly rather than rendering them wrong.
 - **Inline sparklines** (`@since 1.8.0`). `RichText.sparkline(w, h, color,
   values...)` draws a filled mini-area silhouette on the text baseline, and
   `sparklineLine(w, h, thickness, color, values...)` a constant-thickness line
@@ -183,10 +218,12 @@ Entries land here as they merge.
   a code panel shows the exact API call, and the live result renders right
   under it — rich text, sparklines, nested lists, timelines, tables, every
   chart kind, images (COVER vs CONTAIN fit), gradients, translucency,
-  polygons, shape basics (dividers, ellipses, soft cards), clipped
-  containers, canvas, transforms, barcodes, and the document's own chrome —
-  19 blocks across 6 pages. Blocks use `keepTogether()`, so a snippet is
-  never orphaned from its result.
+  polygons, vector paths (solid and dashed native Béziers), SVG path import
+  and a beta `SvgIcon` tile row, shape basics (dividers, ellipses, soft
+  cards), clipped containers, canvas, transforms, barcodes, the
+  debug-overlay switch, and the document's own chrome — 23 blocks across
+  7 pages. Blocks use `keepTogether()`, so a snippet is never orphaned
+  from its result.
 - **Recipe coverage is complete.** Nine new cookbook pages close every gap the
   recipe index tracked: rich text, lists, timelines, barcodes, images,
   PDF chrome (metadata / watermark / running header-footer / protection /

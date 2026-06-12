@@ -2,10 +2,14 @@ package com.demcha.compose.document.backend.fixed.pdf.handlers;
 
 import com.demcha.compose.document.style.DocumentPaint;
 import org.apache.pdfbox.cos.*;
+import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.common.function.PDFunction;
 import org.apache.pdfbox.pdmodel.common.function.PDFunctionType2;
 import org.apache.pdfbox.pdmodel.common.function.PDFunctionType3;
+import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceRGB;
+import org.apache.pdfbox.pdmodel.graphics.color.PDPattern;
+import org.apache.pdfbox.pdmodel.graphics.pattern.PDShadingPattern;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShading;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShadingType2;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShadingType3;
@@ -22,8 +26,12 @@ import java.util.List;
  * the paint's angle (0° = left→right, 90° = bottom→top), long enough to cover
  * the whole box; a {@link DocumentPaint.Radial} maps to {@code /ShadingType 3}
  * centred at the paint's normalized centre with a radius reaching the farthest
- * box corner. Two stops become one exponential function; more stops become a
- * stitching function over evenly encoded sub-intervals.</p>
+ * box corner. {@link DocumentPaint.LinearAxis} carries explicit normalized
+ * endpoints and {@link DocumentPaint.RadialCircle} an explicit centre plus
+ * radius (a fraction of the box width); both translate verbatim — that is the
+ * exact-extent path SVG gradients ride in on. Two stops become one
+ * exponential function; more stops become a stitching function over evenly
+ * encoded sub-intervals.</p>
  *
  * @author Artem Demchyshyn
  * @since 1.8.0
@@ -52,8 +60,93 @@ final class PdfShadingSupport {
         if (paint instanceof DocumentPaint.Radial radial) {
             return radial(radial, x, y, width, height);
         }
+        if (paint instanceof DocumentPaint.LinearAxis axis) {
+            return axialFromEndpoints(axis, x, y, width, height);
+        }
+        if (paint instanceof DocumentPaint.RadialCircle circle) {
+            return radialFromCircle(circle, x, y, width, height);
+        }
         throw new IllegalArgumentException(
                 "solid paints are normalised before emission and never reach the shading path");
+    }
+
+    /**
+     * Wraps the shading for a gradient paint in a PDF shading pattern
+     * (pattern type 2) registered on the page resources, returning the
+     * pattern colour to use as a stroking colour. Pattern space is the
+     * default page space, which matches the absolute coordinates
+     * {@link #build} already emits — no pattern matrix needed.
+     *
+     * @param paint     gradient paint
+     * @param resources page resources the pattern registers on
+     * @param x         box left, page coordinates
+     * @param y         box bottom, page coordinates
+     * @param width     box width
+     * @param height    box height
+     * @return pattern colour for {@code setStrokingColor}
+     */
+    static PDColor strokePattern(DocumentPaint paint, PDResources resources,
+                                 float x, float y, float width, float height) {
+        PDShadingPattern pattern = new PDShadingPattern();
+        PDShading shading = build(paint, x, y, width, height);
+        // Inline the whole shading subtree (dict, function, stitching
+        // sub-functions): nested free-standing dicts would be promoted to
+        // indirect objects the writer never emits, leaving /Shading and
+        // /Function dangling as null references after reload.
+        inlineDeep(shading.getCOSObject());
+        pattern.setShading(shading);
+        COSName name = resources.add(pattern);
+        return new PDColor(name, new PDPattern(null));
+    }
+
+    private static void inlineDeep(COSBase base) {
+        if (base instanceof COSDictionary dict) {
+            dict.setDirect(true);
+            for (COSBase value : dict.getValues()) {
+                inlineDeep(value);
+            }
+        } else if (base instanceof COSArray array) {
+            array.setDirect(true);
+            for (COSBase item : array) {
+                inlineDeep(item);
+            }
+        }
+    }
+
+    private static PDShading axialFromEndpoints(DocumentPaint.LinearAxis axis,
+                                                float x, float y, float width, float height) {
+        PDShadingType2 shading = new PDShadingType2(new COSDictionary());
+        shading.setShadingType(PDShading.SHADING_TYPE2);
+        shading.setColorSpace(PDDeviceRGB.INSTANCE);
+        COSArray coords = new COSArray();
+        coords.add(new COSFloat((float) (x + axis.x0() * width)));
+        coords.add(new COSFloat((float) (y + axis.y0() * height)));
+        coords.add(new COSFloat((float) (x + axis.x1() * width)));
+        coords.add(new COSFloat((float) (y + axis.y1() * height)));
+        shading.setCoords(coords);
+        shading.setFunction(stopsFunction(axis.stops()));
+        shading.setExtend(bothExtend());
+        return shading;
+    }
+
+    private static PDShading radialFromCircle(DocumentPaint.RadialCircle circle,
+                                              float x, float y, float width, float height) {
+        // Radius scales by width per the RadialCircle contract; with the
+        // aspect-preserving icon frame this keeps circles circular.
+        PDShadingType3 shading = new PDShadingType3(new COSDictionary());
+        shading.setShadingType(PDShading.SHADING_TYPE3);
+        shading.setColorSpace(PDDeviceRGB.INSTANCE);
+        COSArray coords = new COSArray();
+        coords.add(new COSFloat((float) (x + circle.cx() * width)));
+        coords.add(new COSFloat((float) (y + circle.cy() * height)));
+        coords.add(new COSFloat(0f));
+        coords.add(new COSFloat((float) (x + circle.cx() * width)));
+        coords.add(new COSFloat((float) (y + circle.cy() * height)));
+        coords.add(new COSFloat((float) (circle.r() * width)));
+        shading.setCoords(coords);
+        shading.setFunction(stopsFunction(circle.stops()));
+        shading.setExtend(bothExtend());
+        return shading;
     }
 
     private static PDShading axial(DocumentPaint.Linear linear,

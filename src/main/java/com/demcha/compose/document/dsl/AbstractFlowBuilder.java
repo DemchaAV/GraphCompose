@@ -544,6 +544,22 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     }
 
     /**
+     * Adds a multi-layer SVG icon at the given width, keeping the icon's
+     * aspect ratio. Layers stack back-to-front exactly as in the source
+     * file; every curve renders as native PDF geometry.
+     *
+     * @param icon  parsed SVG icon
+     * @param width target icon width in points
+     * @return this builder
+     * @since 1.8.0
+     */
+    @com.demcha.compose.document.api.Beta
+    public T addSvgIcon(com.demcha.compose.document.svg.SvgIcon icon, double width) {
+        Objects.requireNonNull(icon, "icon");
+        return add(icon.node(width));
+    }
+
+    /**
      * Adds a filled circle ellipse — shortcut for
      * {@code addEllipse(e -> e.circle(diameter).fillColor(fillColor))}.
      *

@@ -1,15 +1,19 @@
 package com.demcha.compose.document.dsl;
 
+import com.demcha.compose.document.api.Beta;
 import com.demcha.compose.document.node.PathNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.svg.SvgPath;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Builder for semantic vector-path nodes — free-form design shapes with
@@ -41,7 +45,9 @@ public final class PathBuilder {
     private double width;
     private double height;
     private DocumentColor fillColor;
+    private DocumentPaint fillPaint;
     private DocumentStroke stroke;
+    private DocumentPaint strokePaint;
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
     private DocumentDashPattern dashPattern = DocumentDashPattern.NONE;
@@ -152,6 +158,23 @@ public final class PathBuilder {
     }
 
     /**
+     * Appends every segment of a parsed SVG path. The segments arrive
+     * already normalized to the unit box with the y-axis flipped, so the
+     * only remaining decision is the node's {@link #size(double, double)} —
+     * use {@code svgPath.aspectRatio()} to keep the icon's proportions.
+     *
+     * @param svgPath parsed SVG path data
+     * @return this builder
+     * @since 1.8.0
+     */
+    @Beta
+    public PathBuilder svg(SvgPath svgPath) {
+        Objects.requireNonNull(svgPath, "svgPath");
+        segments.addAll(svgPath.segments());
+        return this;
+    }
+
+    /**
      * Sets the fill color (non-zero winding rule).
      *
      * @param fillColor fill color
@@ -174,6 +197,19 @@ public final class PathBuilder {
     }
 
     /**
+     * Sets a gradient fill — wins over {@link #fillColor(DocumentColor)}.
+     * A {@link DocumentPaint.Solid} behaves exactly like the flat colour.
+     *
+     * @param fillPaint gradient or solid paint, or {@code null} to clear
+     * @return this builder
+     * @since 1.8.0
+     */
+    public PathBuilder fill(DocumentPaint fillPaint) {
+        this.fillPaint = fillPaint;
+        return this;
+    }
+
+    /**
      * Sets the outline stroke.
      *
      * @param stroke stroke descriptor, or {@code null} for no stroke
@@ -181,6 +217,20 @@ public final class PathBuilder {
      */
     public PathBuilder stroke(DocumentStroke stroke) {
         this.stroke = stroke;
+        return this;
+    }
+
+    /**
+     * Paints the outline with a gradient. The {@link #stroke(DocumentStroke)}
+     * still supplies the width (and the flat-colour fallback for backends
+     * that cannot render gradients), so set both.
+     *
+     * @param strokePaint gradient paint for the outline, or {@code null} to clear
+     * @return this builder
+     * @since 1.8.0
+     */
+    public PathBuilder strokePaint(DocumentPaint strokePaint) {
+        this.strokePaint = strokePaint;
         return this;
     }
 
@@ -243,6 +293,7 @@ public final class PathBuilder {
      *                                  added, or the box is not positive
      */
     public PathNode build() {
-        return new PathNode(name, width, height, segments, fillColor, stroke, padding, margin, dashPattern);
+        return new PathNode(name, width, height, segments, fillColor, fillPaint,
+                stroke, strokePaint, padding, margin, dashPattern);
     }
 }

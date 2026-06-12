@@ -17,7 +17,9 @@ import java.util.Objects;
  * @author Artem Demchyshyn
  * @since 1.8.0
  */
-public sealed interface DocumentPaint permits DocumentPaint.Solid, DocumentPaint.Linear, DocumentPaint.Radial {
+public sealed interface DocumentPaint
+        permits DocumentPaint.Solid, DocumentPaint.Linear, DocumentPaint.Radial,
+                DocumentPaint.LinearAxis, DocumentPaint.RadialCircle {
 
     /**
      * Representative colour for backends that cannot render gradients.
@@ -112,6 +114,92 @@ public sealed interface DocumentPaint permits DocumentPaint.Solid, DocumentPaint
         @Override
         public DocumentColor primaryColor() {
             return stops.get(0).color();
+        }
+    }
+
+    /**
+     * Linear gradient along an explicit axis. Endpoints are normalized to the
+     * painted box ({@code 0,0} = bottom-left, {@code 1,1} = top-right, y up)
+     * and may lie outside {@code [0,1]} — an SVG gradient whose axis starts
+     * beyond a small shape's bounds maps here verbatim. The axis extent is
+     * exact: colour runs from the first stop at {@code (x0, y0)} to the last
+     * stop at {@code (x1, y1)} and clamps beyond (pad spread).
+     *
+     * @param stops ordered colour stops, offsets in [0,1]; at least two
+     * @param x0    axis start x, normalized to the box width
+     * @param y0    axis start y, normalized to the box height
+     * @param x1    axis end x, normalized to the box width
+     * @param y1    axis end y, normalized to the box height
+     * @since 1.8.0
+     */
+    record LinearAxis(List<Stop> stops, double x0, double y0, double x1, double y1)
+            implements DocumentPaint {
+        /**
+         * Copy-protects stops and validates the axis.
+         */
+        public LinearAxis {
+            Objects.requireNonNull(stops, "stops");
+            stops = List.copyOf(stops);
+            if (stops.size() < 2) {
+                throw new IllegalArgumentException("linear gradient needs at least two stops");
+            }
+            requireFinite(x0, "x0");
+            requireFinite(y0, "y0");
+            requireFinite(x1, "x1");
+            requireFinite(y1, "y1");
+            if (x0 == x1 && y0 == y1) {
+                throw new IllegalArgumentException(
+                        "gradient axis is degenerate: both endpoints are (" + x0 + ", " + y0 + ")");
+            }
+        }
+
+        @Override
+        public DocumentColor primaryColor() {
+            return stops.get(0).color();
+        }
+    }
+
+    /**
+     * Radial gradient with an explicit radius. Centre coordinates are
+     * normalized to the painted box (y up, may lie outside {@code [0,1]});
+     * the radius is a fraction of the box <em>width</em>, so a circle stays
+     * a circle when the box preserves the source's aspect ratio (the SVG
+     * icon frame contract). Colour clamps beyond the last stop (pad spread).
+     *
+     * @param stops ordered colour stops, offsets in [0,1]; at least two
+     * @param cx    centre x, normalized to the box width
+     * @param cy    centre y, normalized to the box height
+     * @param r     radius as a fraction of the box width; positive
+     * @since 1.8.0
+     */
+    record RadialCircle(List<Stop> stops, double cx, double cy, double r)
+            implements DocumentPaint {
+        /**
+         * Copy-protects stops and validates the circle.
+         */
+        public RadialCircle {
+            Objects.requireNonNull(stops, "stops");
+            stops = List.copyOf(stops);
+            if (stops.size() < 2) {
+                throw new IllegalArgumentException("radial gradient needs at least two stops");
+            }
+            requireFinite(cx, "cx");
+            requireFinite(cy, "cy");
+            requireFinite(r, "r");
+            if (r <= 0) {
+                throw new IllegalArgumentException("radial gradient radius must be positive: " + r);
+            }
+        }
+
+        @Override
+        public DocumentColor primaryColor() {
+            return stops.get(0).color();
+        }
+    }
+
+    private static void requireFinite(double value, String what) {
+        if (Double.isNaN(value) || Double.isInfinite(value)) {
+            throw new IllegalArgumentException(what + " must be finite: " + value);
         }
     }
 

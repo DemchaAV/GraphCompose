@@ -96,6 +96,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                 new PdfLineFragmentRenderHandler(),
                 new PdfEllipseFragmentRenderHandler(),
                 new PdfPolygonFragmentRenderHandler(),
+                new PdfPathFragmentRenderHandler(),
                 new PdfImageFragmentRenderHandler(),
                 new PdfTableRowFragmentRenderHandler(),
                 new PdfShapeClipBeginRenderHandler(),

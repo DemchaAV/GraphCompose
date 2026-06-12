@@ -52,6 +52,15 @@ Entries land here as they merge.
   into the new general-purpose `PolygonNode` (arc-tessellated ring polygons at
   a fixed 3° step — deterministic vertices, no new render handlers), which also
   lays the groundwork for SVG icon-path import.
+- **Vector path primitive** (`@since 1.8.0`). New `PathNode` — the open-path,
+  curve-capable sibling of `PolygonNode`: normalized `DocumentPathSegment`s
+  (`moveTo` / `lineTo` / cubic `cubicTo` / `close`; Bézier control points are
+  free to overshoot the unit box) are scaled to the node's box and rendered
+  with native PDF curve operators, so curves stay perfectly smooth at any
+  zoom level instead of being tessellated into straight pieces. Atomic
+  pagination, deterministic layout snapshots, fill (non-zero winding rule)
+  and/or stroke. This is the leaf vehicle for smooth chart lines, decorative
+  design shapes, and future SVG path import.
 - **Inline sparklines** (`@since 1.8.0`). `RichText.sparkline(w, h, color,
   values...)` draws a filled mini-area silhouette on the text baseline, and
   `sparklineLine(w, h, thickness, color, values...)` a constant-thickness line

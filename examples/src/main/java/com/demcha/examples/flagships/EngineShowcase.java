@@ -42,7 +42,7 @@ import java.util.Objects;
  *   <li><b>Footer brand stripe</b> — accent rule + brand links.</li>
  * </ul>
  *
- * <p>The hero image lives in {@code examples/src/main/resources/engine-hero.png}
+ * <p>The hero image lives in {@code examples/src/main/resources/engine-hero.jpg}
  * and is loaded over the classpath so the example runs without any
  * filesystem path assumptions.</p>
  *
@@ -201,8 +201,8 @@ public final class EngineShowcase {
 
     private static DocumentImageData loadHeroImage() throws Exception {
         try (InputStream is = Objects.requireNonNull(
-                EngineShowcase.class.getResourceAsStream("/engine-hero.png"),
-                "engine-hero.png missing from examples/src/main/resources/")) {
+                EngineShowcase.class.getResourceAsStream("/engine-hero.jpg"),
+                "engine-hero.jpg missing from examples/src/main/resources/")) {
             return DocumentImageData.fromBytes(is.readAllBytes());
         }
     }

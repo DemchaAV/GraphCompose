@@ -200,10 +200,12 @@ Entries land here as they merge.
   a code panel shows the exact API call, and the live result renders right
   under it — rich text, sparklines, nested lists, timelines, tables, every
   chart kind, images (COVER vs CONTAIN fit), gradients, translucency,
-  polygons, shape basics (dividers, ellipses, soft cards), clipped
-  containers, canvas, transforms, barcodes, and the document's own chrome —
-  19 blocks across 6 pages. Blocks use `keepTogether()`, so a snippet is
-  never orphaned from its result.
+  polygons, vector paths (solid and dashed native Béziers), SVG path import
+  and a beta `SvgIcon` tile row, shape basics (dividers, ellipses, soft
+  cards), clipped containers, canvas, transforms, barcodes, the
+  debug-overlay switch, and the document's own chrome — 23 blocks across
+  7 pages. Blocks use `keepTogether()`, so a snippet is never orphaned
+  from its result.
 - **Recipe coverage is complete.** Nine new cookbook pages close every gap the
   recipe index tracked: rich text, lists, timelines, barcodes, images,
   PDF chrome (metadata / watermark / running header-footer / protection /

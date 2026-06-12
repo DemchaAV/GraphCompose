@@ -70,8 +70,10 @@ Entries land here as they merge.
 - **Inline sparklines** (`@since 1.8.0`). `RichText.sparkline(w, h, color,
   values...)` draws a filled mini-area silhouette on the text baseline, and
   `sparklineLine(w, h, thickness, color, values...)` a constant-thickness line
-  band (full thickness preserved at the peaks). Both compile into the existing
-  inline-shape polygon run — a KPI trend next to a number, a skill trajectory
+  band (full thickness preserved at the peaks). Both runs are smoothed with
+  the same Catmull-Rom curve the chart engine uses (densified to 12
+  sub-segments per span — facets stay under half a point at sparkline
+  sizes), and both compile into the existing inline-shape polygon run — a KPI trend next to a number, a skill trajectory
   inside a CV line.
 - **Configurable line-chart point markers.** `PointMarker` draws an ellipse at
   every data point — independent width/height axes, explicit fill (or the

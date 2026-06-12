@@ -12,28 +12,39 @@ import java.util.List;
  * arithmetic only, unit-tested in isolation.
  *
  * <p>Values map linearly: the run's minimum sits on {@code y = 0}, its maximum
- * on {@code y = 1}; a flat run centres on {@code y = 0.5}. Points are evenly
- * spaced across {@code x = 0..1}.</p>
+ * on {@code y = 1}; a flat run centres on {@code y = 0.5}. Data points are
+ * evenly spaced across {@code x = 0..1}, and the polyline between them is
+ * smoothed with the same uniform Catmull-Rom curve the chart engine uses,
+ * densified to {@value #SMOOTH_SUBDIVISIONS} sub-segments per span — at
+ * sparkline sizes the facets are far below visual resolution, so the run
+ * reads as a true curve while staying a deterministic polygon ring.</p>
  *
  * @author Artem Demchyshyn
  * @since 1.8.0
  */
 final class SparklineGeometry {
 
+    /**
+     * Sub-segments per data span. Inline shapes stay polygon rings, so the
+     * curve is densified instead of emitted as Béziers; 12 segments on a
+     * ~40 pt sparkline puts every facet under half a point.
+     */
+    private static final int SMOOTH_SUBDIVISIONS = 12;
+
     private SparklineGeometry() {
     }
 
     /**
-     * Area silhouette: the value polyline closed down to the baseline.
+     * Area silhouette: the smoothed value curve closed down to the baseline.
      *
      * @param values at least two finite values
-     * @return closed ring of {@code n + 2} normalized vertices
+     * @return closed ring of smoothed normalized vertices
      */
     static List<ShapePoint> areaPoints(double[] values) {
-        double[] ys = normalize(values);
-        List<ShapePoint> points = new ArrayList<>(ys.length + 2);
-        for (int i = 0; i < ys.length; i++) {
-            points.add(new ShapePoint(x(i, ys.length), ys[i]));
+        double[][] curve = smoothCurve(normalize(values));
+        List<ShapePoint> points = new ArrayList<>(curve.length + 2);
+        for (double[] p : curve) {
+            points.add(new ShapePoint(p[0], p[1]));
         }
         points.add(new ShapePoint(1.0, 0.0));
         points.add(new ShapePoint(0.0, 0.0));
@@ -48,7 +59,8 @@ final class SparklineGeometry {
      *
      * @param values            at least two finite values
      * @param thicknessFraction band thickness as a fraction of the box height, in (0, 1)
-     * @return closed ring of {@code 2n} normalized vertices
+     * @return closed ring of smoothed normalized vertices (top edge forward,
+ *         bottom edge back)
      */
     static List<ShapePoint> ribbonPoints(double[] values, double thicknessFraction) {
         if (thicknessFraction <= 0 || thicknessFraction >= 1 || Double.isNaN(thicknessFraction)) {
@@ -62,14 +74,56 @@ final class SparklineGeometry {
         for (int i = 0; i < ys.length; i++) {
             ys[i] = half + ys[i] * (1.0 - thicknessFraction);
         }
-        List<ShapePoint> points = new ArrayList<>(ys.length * 2);
-        for (int i = 0; i < ys.length; i++) {
-            points.add(new ShapePoint(x(i, ys.length), ys[i] + half));
+        double[][] curve = smoothCurve(ys);
+        // Clamp the band CENTRE into [half, 1 - half] (spline overshoot may
+        // poke past the compressed range) so the ±half offsets stay inside
+        // the unit box without eating into the band thickness.
+        List<ShapePoint> points = new ArrayList<>(curve.length * 2);
+        for (double[] p : curve) {
+            double centre = Math.max(half, Math.min(1.0 - half, p[1]));
+            points.add(new ShapePoint(p[0], centre + half));
         }
-        for (int i = ys.length - 1; i >= 0; i--) {
-            points.add(new ShapePoint(x(i, ys.length), ys[i] - half));
+        for (int i = curve.length - 1; i >= 0; i--) {
+            double centre = Math.max(half, Math.min(1.0 - half, curve[i][1]));
+            points.add(new ShapePoint(curve[i][0], centre - half));
         }
         return points;
+    }
+
+    /**
+     * Densifies the evenly-spaced value run with a uniform Catmull-Rom curve
+     * (tension 0.5, clamped endpoints) — the same spline the chart engine
+     * draws as native Béziers. Returns {@code (x, y)} samples including every
+     * original point; y is clamped to the unit box because the spline may
+     * overshoot slightly around extremes.
+     */
+    private static double[][] smoothCurve(double[] ys) {
+        int spans = ys.length - 1;
+        double[][] out = new double[spans * SMOOTH_SUBDIVISIONS + 1][2];
+        out[0] = new double[]{0.0, clamp01(ys[0])};
+        int n = 1;
+        for (int i = 0; i < spans; i++) {
+            double p0 = ys[Math.max(0, i - 1)];
+            double p1 = ys[i];
+            double p2 = ys[i + 1];
+            double p3 = ys[Math.min(ys.length - 1, i + 2)];
+            for (int s = 1; s <= SMOOTH_SUBDIVISIONS; s++) {
+                double t = (double) s / SMOOTH_SUBDIVISIONS;
+                double t2 = t * t;
+                double t3 = t2 * t;
+                double y = 0.5 * ((2 * p1)
+                                  + (-p0 + p2) * t
+                                  + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2
+                                  + (-p0 + 3 * p1 - 3 * p2 + p3) * t3);
+                double x = (i + t) / spans;
+                out[n++] = new double[]{x, clamp01(y)};
+            }
+        }
+        return out;
+    }
+
+    private static double clamp01(double v) {
+        return Math.max(0.0, Math.min(1.0, v));
     }
 
     private static double[] normalize(double[] values) {
@@ -94,9 +148,5 @@ final class SparklineGeometry {
             ys[i] = (values[i] - min) / (max - min);
         }
         return ys;
-    }
-
-    private static double x(int index, int count) {
-        return (double) index / (count - 1);
     }
 }

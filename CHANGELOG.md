@@ -77,7 +77,15 @@ Entries land here as they merge.
   `PathBuilder.svg(svgPath)` drops the result straight into `addPath(...)`:
   any icon's `d` string renders as native PDF curves, no tessellation.
   Syntax errors report the character position; fills keep SVG's default
-  non-zero winding rule.
+  non-zero winding rule. On top of it, `SvgIcon.read(file)` / `parse(xml)`
+  reads the practical subset of a whole SVG file — every `<path>` plus
+  `rect` / `circle` / `ellipse` / `line` / `polyline` / `polygon` lowered to
+  path data, `<g>` nesting with `translate` / `scale` / `rotate` / `matrix`
+  transforms (affine maps are exact on Bézier control points), and
+  `fill` / `stroke` / `stroke-width` styling with SVG inheritance and
+  defaults — into ordered layers, and `addSvgIcon(icon, width)` stacks them
+  back-to-front on the page. The XML reader refuses DOCTYPEs (no XXE);
+  gradients, CSS, text and filters stay deliberately out of scope.
 - **Inline sparklines** (`@since 1.8.0`). `RichText.sparkline(w, h, color,
   values...)` draws a filled mini-area silhouette on the text baseline, and
   `sparklineLine(w, h, thickness, color, values...)` a constant-thickness line

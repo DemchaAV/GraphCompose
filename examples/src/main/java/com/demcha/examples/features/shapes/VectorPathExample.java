@@ -5,6 +5,7 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.document.svg.SvgPath;
 import com.demcha.examples.support.ExampleOutputPaths;
 
@@ -45,6 +46,14 @@ public final class VectorPathExample {
             + "c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5"
             + "c0 3.78-3.4 6.86-8.55 11.54L12 21.35z";
 
+    /** Inline two-tone badge: tinted disc behind the Material heart. */
+    private static final String TWO_TONE_BADGE_SVG = """
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="11" fill="#fde9e3"/>
+              <path fill="#c41e3a" d="%s"/>
+            </svg>
+            """.formatted(MATERIAL_HEART_D);
+
     private VectorPathExample() {
     }
 
@@ -59,7 +68,7 @@ public final class VectorPathExample {
         Path pdfFile = ExampleOutputPaths.prepare("features/shapes", "vector-path.pdf");
 
         try (DocumentSession document = GraphCompose.document(pdfFile)
-                .pageSize(420, 660)
+                .pageSize(420, 780)
                 .margin(DocumentInsets.of(28))
                 .create()) {
             document.pageFlow(page -> page
@@ -100,6 +109,8 @@ public final class VectorPathExample {
                             .svg(SvgPath.parse(MATERIAL_HEART_D, 0, 0, 24, 24))
                             .fillColor(DocumentColor.rgb(196, 30, 58))
                             .margin(DocumentInsets.bottom(16)))
+                    .addParagraph("Whole-file icon — SvgIcon.read/parse stacks every layer")
+                    .addSvgIcon(SvgIcon.parse(TWO_TONE_BADGE_SVG), 64)
                     .addParagraph("Mixed ribbon — lines and curves in one closed, filled subpath")
                     .addPath(path -> path
                             .name("Ribbon")

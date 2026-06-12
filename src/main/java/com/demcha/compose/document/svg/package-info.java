@@ -8,6 +8,9 @@
  * {@code PathBuilder.svg(...)} / {@code PathNode}. Curves render as native
  * PDF operators; nothing is tessellated.</p>
  *
+ * <p><b>Beta:</b> the whole package is marked beta for the 1.8 cycle while
+ * it hardens against real-world exporter output.</p>
+ *
  * @since 1.8.0
  */
 package com.demcha.compose.document.svg;

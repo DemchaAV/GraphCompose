@@ -67,7 +67,8 @@ Entries land here as they merge.
   every flow builder authors design shapes directly, and
   `dashed(on, off, ...)` makes the stroke dashed with the same
   `DocumentDashPattern` contract as lines — the pattern follows the curve.
-- **SVG path import** (`@since 1.8.0`). `SvgPath.parse(d)` /
+- **SVG path import** (`@since 1.8.0`, **beta** — annotated `@Beta` while
+  the surface hardens against real-world exporter output). `SvgPath.parse(d)` /
   `parse(d, viewBox...)` in the new `document.svg` package lowers the full
   SVG 1.1 path grammar — absolute/relative `M L H V C S Q T A Z`, implicit
   repetition, quadratics (exact cubic elevation), smooth shorthands, and

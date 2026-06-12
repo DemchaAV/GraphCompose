@@ -1,5 +1,6 @@
 package com.demcha.compose.document.svg;
 
+import com.demcha.compose.document.api.Beta;
 import com.demcha.compose.document.style.DocumentPathSegment;
 
 import java.util.ArrayList;
@@ -33,9 +34,14 @@ import java.util.List;
  *         .fillColor(crimson));
  * }</pre>
  *
+ * <p><b>Beta:</b> the SVG surface is new in 1.8.0 and marked {@link Beta}
+ * while it hardens against real-world files — the API may still adjust in a
+ * minor release based on feedback.</p>
+ *
  * @author Artem Demchyshyn
  * @since 1.8.0
  */
+@Beta
 public final class SvgPath {
 
     private static final double EPS = 1e-9;

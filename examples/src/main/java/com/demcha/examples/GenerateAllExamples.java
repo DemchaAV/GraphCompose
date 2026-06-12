@@ -11,6 +11,7 @@ import com.demcha.examples.features.shapes.ShapeContainerExample;
 import com.demcha.examples.features.shapes.VectorPathExample;
 import com.demcha.examples.features.snapshots.LayoutSnapshotRegressionExample;
 import com.demcha.examples.features.streaming.HttpStreamingExample;
+import com.demcha.examples.features.svg.SvgIconGalleryExample;
 import com.demcha.examples.features.tables.ComposedTableCellExample;
 import com.demcha.examples.features.tables.TableAdvancedExample;
 import com.demcha.examples.features.text.InlineShapesExample;
@@ -130,6 +131,7 @@ public final class GenerateAllExamples {
         // v1.5 visual primitives
         System.out.println("Generated: " + ShapeContainerExample.generate());
         System.out.println("Generated: " + VectorPathExample.generate());
+        System.out.println("Generated: " + SvgIconGalleryExample.generate());
         System.out.println("Generated: " + TransformsExample.generate());
         System.out.println("Generated: " + TableAdvancedExample.generate());
 

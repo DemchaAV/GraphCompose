@@ -236,7 +236,7 @@ public final class FeatureCatalogExample {
 
             feature(flow, "Images — classpath bytes, explicit size, fit modes", """
                     DocumentImageData photo = DocumentImageData.fromBytes(
-                        getClass().getResourceAsStream("/engine-hero.png").readAllBytes());
+                        getClass().getResourceAsStream("/engine-hero.jpg").readAllBytes());
                     section.addImage(i -> i.source(photo).size(150, 84)
                         .fitMode(DocumentImageFitMode.COVER))   // vs CONTAIN on the right""",
                     demo -> demo.addRow(r -> r.spacing(14).weights(1, 1)
@@ -404,8 +404,8 @@ public final class FeatureCatalogExample {
     /** Classpath demo photo shared by the image fit-mode pair. */
     private static com.demcha.compose.document.image.DocumentImageData catalogImage() {
         try (java.io.InputStream stream = java.util.Objects.requireNonNull(
-                FeatureCatalogExample.class.getResourceAsStream("/engine-hero.png"),
-                "engine-hero.png missing from examples/src/main/resources/")) {
+                FeatureCatalogExample.class.getResourceAsStream("/engine-hero.jpg"),
+                "engine-hero.jpg missing from examples/src/main/resources/")) {
             return com.demcha.compose.document.image.DocumentImageData.fromBytes(
                     stream.readAllBytes());
         } catch (java.io.IOException e) {

@@ -3,6 +3,7 @@ package com.demcha.compose.document.node;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.document.style.DocumentStroke;
 
@@ -22,13 +23,21 @@ import java.util.Objects;
  * curves stay perfectly smooth at any zoom level instead of being
  * tessellated into straight pieces.</p>
  *
- * @param name      node name used in snapshots and layout graph paths
- * @param width     resolved box width
- * @param height    resolved box height
- * @param segments  normalized path segments; must start with a
- *                  {@link DocumentPathSegment.MoveTo}
- * @param fillColor optional fill colour (non-zero winding rule)
- * @param stroke    optional outline stroke
+ * <p>Fills and strokes each take an optional gradient: {@code fillPaint}
+ * wins over {@code fillColor}, and {@code strokePaint} paints the outline
+ * through a PDF shading pattern while {@code stroke} keeps supplying the
+ * width (and the flat-colour fallback for backends without gradients).</p>
+ *
+ * @param name        node name used in snapshots and layout graph paths
+ * @param width       resolved box width
+ * @param height      resolved box height
+ * @param segments    normalized path segments; must start with a
+ *                    {@link DocumentPathSegment.MoveTo}
+ * @param fillColor   optional fill colour (non-zero winding rule)
+ * @param fillPaint   optional gradient fill; wins over {@code fillColor}
+ * @param stroke      optional outline stroke
+ * @param strokePaint optional gradient for the outline; requires
+ *                    {@code stroke} for the width
  * @param padding     inner padding
  * @param margin      outer margin
  * @param dashPattern dash pattern for the stroke; defaults to
@@ -42,13 +51,16 @@ public record PathNode(
         double height,
         List<DocumentPathSegment> segments,
         DocumentColor fillColor,
+        DocumentPaint fillPaint,
         DocumentStroke stroke,
+        DocumentPaint strokePaint,
         DocumentInsets padding,
         DocumentInsets margin,
         DocumentDashPattern dashPattern
 ) implements DocumentNode {
     /**
-     * Validates dimensions and the segment list; copy-protects the segments.
+     * Validates dimensions, the segment list, and the paint pairing;
+     * copy-protects the segments.
      */
     public PathNode {
         name = name == null ? "" : name;
@@ -72,6 +84,37 @@ public record PathNode(
         if (height <= 0 || Double.isNaN(height) || Double.isInfinite(height)) {
             throw new IllegalArgumentException("height must be finite and positive: " + height);
         }
+        if (strokePaint != null && stroke == null) {
+            throw new IllegalArgumentException(
+                    "strokePaint needs a stroke to define the outline width — set stroke(...) too");
+        }
+    }
+
+    /**
+     * Compatibility constructor without paints — flat fill colour and flat
+     * stroke only, the common authoring case.
+     *
+     * @param name        node name
+     * @param width       resolved box width
+     * @param height      resolved box height
+     * @param segments    normalized path segments
+     * @param fillColor   optional fill colour
+     * @param stroke      optional outline stroke
+     * @param padding     inner padding
+     * @param margin      outer margin
+     * @param dashPattern dash pattern for the stroke
+     */
+    public PathNode(String name,
+                    double width,
+                    double height,
+                    List<DocumentPathSegment> segments,
+                    DocumentColor fillColor,
+                    DocumentStroke stroke,
+                    DocumentInsets padding,
+                    DocumentInsets margin,
+                    DocumentDashPattern dashPattern) {
+        this(name, width, height, segments, fillColor, null, stroke, null,
+                padding, margin, dashPattern);
     }
 
     @Override

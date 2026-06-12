@@ -1,6 +1,7 @@
 package com.demcha.compose.document.svg;
 
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentStroke;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -14,15 +15,17 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Internal DOM walker behind {@link SvgIcon#parse(String)}: secure XML setup
  * (DOCTYPE refused, so XXE cannot reach the file system), viewBox
  * resolution, recursive {@code <g>} traversal with affine accumulation and
  * paint inheritance, shape-to-path lowering (every basic shape becomes
- * synthesized path data fed through the one tested parser), and the icon
+ * synthesized path data fed through the one tested parser), the icon
  * colour subset ({@code #rgb}, {@code #rrggbb}, {@code rgb(r,g,b)},
- * {@code none}, {@code currentColor} → default ink).
+ * {@code none}, {@code currentColor} → default ink), and {@code url(#id)}
+ * gradient references resolved through {@link SvgGradients}.
  */
 final class SvgIconReader {
 
@@ -35,9 +38,12 @@ final class SvgIconReader {
             throw new IllegalArgumentException("not an SVG document: root element is <" + root.getNodeName() + ">");
         }
         double[] box = viewBox(root);
+        Map<String, Element> gradients = SvgGradients.collect(root);
 
         List<SvgIcon.Layer> layers = new ArrayList<>();
-        walk(root, identity(), new Paint(DocumentColor.rgb(0, 0, 0), null, 1.0), box, layers);
+        walk(root, identity(),
+                new Paint(new PaintValue(DocumentColor.rgb(0, 0, 0), null), PaintValue.NONE, 1.0),
+                box, gradients, layers);
         if (layers.isEmpty()) {
             throw new IllegalArgumentException("SVG document contains no drawable geometry");
         }
@@ -104,13 +110,26 @@ final class SvgIconReader {
     // Tree walk
     // ------------------------------------------------------------------
 
+    /**
+     * One inheritable paint slot: a flat colour, a gradient element awaiting
+     * geometry context, or nothing.
+     */
+    private record PaintValue(DocumentColor color, Element gradient) {
+        static final PaintValue NONE = new PaintValue(null, null);
+
+        boolean visible() {
+            return color != null || gradient != null;
+        }
+    }
+
     /** Inherited paint state: SVG fills default to black, strokes to none. */
-    private record Paint(DocumentColor fill, DocumentColor strokeColor, double strokeWidth) {
+    private record Paint(PaintValue fill, PaintValue stroke, double strokeWidth) {
     }
 
     private static void walk(Element element, double[] transform, Paint inherited,
-                             double[] box, List<SvgIcon.Layer> out) {
-        Paint paint = stylize(element, inherited);
+                             double[] box, Map<String, Element> gradients,
+                             List<SvgIcon.Layer> out) {
+        Paint paint = stylize(element, inherited, gradients);
         double[] matrix = compose(transform, element.getAttribute("transform"));
 
         String name = localName(element);
@@ -129,12 +148,33 @@ final class SvgIconReader {
         };
 
         if (d != null && !d.isBlank()) {
-            DocumentStroke stroke = paint.strokeColor() == null || paint.strokeWidth() <= 0
-                    ? null
-                    : DocumentStroke.of(paint.strokeColor(), paint.strokeWidth());
-            if (paint.fill() != null || stroke != null) {
+            boolean strokeVisible = paint.stroke().visible() && paint.strokeWidth() > 0;
+            if (paint.fill().visible() || strokeVisible) {
                 SvgPath geometry = SvgPath.parseTransformed(d, matrix, box[0], box[1], box[2], box[3]);
-                out.add(new SvgIcon.Layer(geometry, paint.fill(), stroke));
+
+                // Gradients resolve here, where the shape's geometry (the
+                // objectBoundingBox reference) and accumulated affine exist.
+                // The flat colour keeps the gradient's first stop so backends
+                // without shadings degrade per the DocumentPaint contract.
+                DocumentColor fillColor = paint.fill().color();
+                DocumentPaint fillPaint = null;
+                if (paint.fill().gradient() != null) {
+                    fillPaint = SvgGradients.paint(paint.fill().gradient(), gradients,
+                            matrix, box, geometry);
+                    fillColor = fillPaint.primaryColor();
+                }
+                DocumentStroke stroke = null;
+                DocumentPaint strokePaint = null;
+                if (strokeVisible) {
+                    if (paint.stroke().gradient() != null) {
+                        strokePaint = SvgGradients.paint(paint.stroke().gradient(), gradients,
+                                matrix, box, geometry);
+                        stroke = DocumentStroke.of(strokePaint.primaryColor(), paint.strokeWidth());
+                    } else {
+                        stroke = DocumentStroke.of(paint.stroke().color(), paint.strokeWidth());
+                    }
+                }
+                out.add(new SvgIcon.Layer(geometry, fillColor, fillPaint, stroke, strokePaint));
             }
         }
 
@@ -145,7 +185,7 @@ final class SvgIconReader {
             for (int i = 0; i < children.getLength(); i++) {
                 Node child = children.item(i);
                 if (child instanceof Element childElement) {
-                    walk(childElement, matrix, paint, box, out);
+                    walk(childElement, matrix, paint, box, gradients, out);
                 }
             }
         }
@@ -155,24 +195,41 @@ final class SvgIconReader {
     // Styling
     // ------------------------------------------------------------------
 
-    private static Paint stylize(Element element, Paint inherited) {
-        DocumentColor fill = inherited.fill();
-        DocumentColor strokeColor = inherited.strokeColor();
+    private static Paint stylize(Element element, Paint inherited, Map<String, Element> gradients) {
+        PaintValue fill = inherited.fill();
+        PaintValue stroke = inherited.stroke();
         double strokeWidth = inherited.strokeWidth();
 
         String fillAttr = attrOrStyle(element, "fill");
         if (fillAttr != null) {
-            fill = color(fillAttr, inherited.fill());
+            fill = paintValue(fillAttr, inherited.fill(), gradients);
         }
         String strokeAttr = attrOrStyle(element, "stroke");
         if (strokeAttr != null) {
-            strokeColor = color(strokeAttr, inherited.strokeColor());
+            stroke = paintValue(strokeAttr, inherited.stroke(), gradients);
         }
         String widthAttr = attrOrStyle(element, "stroke-width");
         if (widthAttr != null) {
             strokeWidth = Double.parseDouble(widthAttr.replace("px", "").trim());
         }
-        return new Paint(fill, strokeColor, strokeWidth);
+        return new Paint(fill, stroke, strokeWidth);
+    }
+
+    /** Resolves one paint attribute: url(#id) gradient, flat colour, or none. */
+    private static PaintValue paintValue(String value, PaintValue current,
+                                         Map<String, Element> gradients) {
+        String id = SvgGradients.urlId(value);
+        if (id != null) {
+            Element gradient = gradients.get(id);
+            if (gradient == null) {
+                throw new IllegalArgumentException("paint '" + value.trim()
+                                                   + "' references no <linearGradient>/<radialGradient> with id '"
+                                                   + id + "'");
+            }
+            return new PaintValue(null, gradient);
+        }
+        DocumentColor color = color(value, current.color());
+        return color == null ? PaintValue.NONE : new PaintValue(color, null);
     }
 
     private static String attrOrStyle(Element element, String property) {
@@ -190,7 +247,7 @@ final class SvgIconReader {
         return null;
     }
 
-    private static DocumentColor color(String value, DocumentColor current) {
+    static DocumentColor color(String value, DocumentColor current) {
         String v = value.trim().toLowerCase(Locale.ROOT);
         if (v.equals("none")) {
             return null;
@@ -292,12 +349,12 @@ final class SvgIconReader {
     // Transforms
     // ------------------------------------------------------------------
 
-    private static double[] identity() {
+    static double[] identity() {
         return new double[]{1, 0, 0, 1, 0, 0};
     }
 
     /** Composes {@code transform="…"} ops onto the parent matrix, left to right. */
-    private static double[] compose(double[] parent, String transformAttribute) {
+    static double[] compose(double[] parent, String transformAttribute) {
         String attr = transformAttribute == null ? "" : transformAttribute.trim();
         if (attr.isEmpty()) {
             return parent;

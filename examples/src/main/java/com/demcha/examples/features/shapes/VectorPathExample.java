@@ -4,12 +4,14 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.document.svg.SvgPath;
 import com.demcha.examples.support.ExampleOutputPaths;
 
 import java.nio.file.Path;
+import java.util.List;
 
 /**
  * Runnable showcase for the v1.8 vector-path primitive: free-form design
@@ -39,6 +41,13 @@ public final class VectorPathExample {
     private static final DocumentColor SAND_EDGE = DocumentColor.rgb(140, 90, 30);
     private static final DocumentColor MOSS = DocumentColor.rgb(208, 226, 213);
     private static final DocumentColor MOSS_EDGE = DocumentColor.rgb(60, 110, 80);
+    private static final DocumentColor VIOLET = DocumentColor.rgb(167, 139, 250);
+    private static final DocumentColor DEEP_VIOLET = DocumentColor.rgb(97, 40, 217);
+
+    /** Brand gradient along the top-left → bottom-right diagonal. */
+    private static final DocumentPaint BRAND_AXIS = new DocumentPaint.LinearAxis(List.of(
+            new DocumentPaint.Stop(0.0, VIOLET),
+            new DocumentPaint.Stop(1.0, DEEP_VIOLET)), 0.0, 1.0, 1.0, 0.0);
 
     /** Material Icons "favorite" path data (Apache 2.0), viewBox 0 0 24 24. */
     private static final String MATERIAL_HEART_D =
@@ -68,7 +77,7 @@ public final class VectorPathExample {
         Path pdfFile = ExampleOutputPaths.prepare("features/shapes", "vector-path.pdf");
 
         try (DocumentSession document = GraphCompose.document(pdfFile)
-                .pageSize(420, 780)
+                .pageSize(420, 920)
                 .margin(DocumentInsets.of(28))
                 .create()) {
             document.pageFlow(page -> page
@@ -111,6 +120,25 @@ public final class VectorPathExample {
                             .margin(DocumentInsets.bottom(16)))
                     .addParagraph("Whole-file icon — SvgIcon.read/parse stacks every layer")
                     .addSvgIcon(SvgIcon.parse(TWO_TONE_BADGE_SVG), 64)
+                    .addParagraph("Gradient paints — strokePaint and fill ride native PDF shadings")
+                    .addPath(path -> path
+                            .name("GradientWave")
+                            .size(364, 52)
+                            .moveTo(0.0, 0.5)
+                            .curveTo(0.25, 1.1, 0.25, -0.1, 0.5, 0.5)
+                            .curveTo(0.75, 1.1, 0.75, -0.1, 1.0, 0.5)
+                            .stroke(DocumentStroke.of(VIOLET, 2.6))
+                            .strokePaint(BRAND_AXIS)
+                            .margin(DocumentInsets.bottom(8)))
+                    .addPath(path -> path
+                            .name("GradientBlob")
+                            .size(96, 56)
+                            .moveTo(0.5, 1.0)
+                            .curveTo(1.12, 0.94, 0.96, 0.08, 0.5, 0.0)
+                            .curveTo(0.04, 0.08, -0.12, 0.94, 0.5, 1.0)
+                            .closePath()
+                            .fill(BRAND_AXIS)
+                            .margin(DocumentInsets.bottom(16)))
                     .addParagraph("Mixed ribbon — lines and curves in one closed, filled subpath")
                     .addPath(path -> path
                             .name("Ribbon")

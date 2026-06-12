@@ -1,13 +1,17 @@
 package com.demcha.compose.document.svg;
 
 import com.demcha.compose.document.api.Beta;
+import com.demcha.compose.document.node.LayerStackNode;
+import com.demcha.compose.document.node.PathNode;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentStroke;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -18,25 +22,31 @@ import java.util.Objects;
  * polygon}, lowered to path data), {@code <g>} nesting with accumulated
  * {@code transform} attributes ({@code translate} / {@code scale} /
  * {@code rotate} / {@code matrix} — affine maps are exact on Bézier control
- * points), and per-element {@code fill} / {@code stroke} /
- * {@code stroke-width} styling with SVG's inheritance and defaults
- * (missing {@code fill} paints black, {@code fill="none"} skips the fill).
+ * points), per-element {@code fill} / {@code stroke} / {@code stroke-width}
+ * styling with SVG's inheritance and defaults (missing {@code fill} paints
+ * black, {@code fill="none"} skips the fill), and {@code linearGradient} /
+ * {@code radialGradient} paints referenced via {@code url(#id)} — on fills
+ * and strokes alike, rendered as native PDF shadings.
  *
  * <p>Each layer is one {@link SvgPath} with its resolved paint, in document
- * order — render them back-to-front. The DSL does exactly that:
- * {@code flow.addSvgIcon(icon, 48)} stacks the layers into the page at the
+ * order — render them back-to-front. {@link #node(double)} packages the
+ * layers as one ready-to-place node, and the DSL sugar
+ * {@code flow.addSvgIcon(icon, 48)} drops that node into the page at the
  * requested width with the icon's own aspect ratio.</p>
  *
  * <p>Out of scope (deliberately, this is an icon reader, not a browser):
- * gradients, CSS stylesheets and classes, text, masks, clip paths,
- * filters, {@code <use>} references, nested {@code <svg>} viewBoxes (inner
- * frames recurse but their coordinates stay in the outer space), and
- * animations. The XML reader refuses
- * DOCTYPEs, so external-entity tricks cannot reach the file system.</p>
+ * CSS stylesheets and classes, text, masks, clip paths, filters,
+ * {@code <use>} references, nested {@code <svg>} viewBoxes (inner frames
+ * recurse but their coordinates stay in the outer space), animations, and
+ * the gradient corners that have no PDF analogue (focal points,
+ * {@code spreadMethod} other than pad, stop opacity). The XML reader
+ * refuses DOCTYPEs, so external-entity tricks cannot reach the file
+ * system.</p>
  *
  * <pre>{@code
  * SvgIcon logo = SvgIcon.read(Path.of("assets/logo.svg"));
- * flow.addSvgIcon(logo, 48);
+ * flow.addSvgIcon(logo, 48);          // flow sugar
+ * card.center(logo.node(48));         // node form for layer anchors
  * }</pre>
  *
  * <p><b>Beta:</b> the SVG surface is new in 1.8.0 and marked {@link Beta}
@@ -123,19 +133,75 @@ public final class SvgIcon {
     }
 
     /**
-     * One drawable layer: normalized geometry plus its resolved paint.
+     * Packages the icon as one ready-to-place node: a layer stack of path
+     * nodes at the given width, height following the icon's aspect ratio.
+     * The stack's box is exactly the icon box, so it anchors true inside
+     * {@code ShapeContainer} / {@code LayerStack} nine-point grids — the
+     * node-form sibling of the {@code addSvgIcon(icon, width)} flow sugar.
      *
-     * @param geometry normalized path geometry (shared icon frame)
-     * @param fill     fill colour, or {@code null} for no fill
-     * @param stroke   outline stroke, or {@code null} for no stroke
+     * @param width target width in points; must be positive
+     * @return layer stack rendering this icon at {@code width} points
+     * @throws IllegalArgumentException if {@code width} is not positive
      * @since 1.8.0
      */
-    public record Layer(SvgPath geometry, DocumentColor fill, DocumentStroke stroke) {
+    public LayerStackNode node(double width) {
+        if (!(width > 0) || Double.isInfinite(width)) {
+            throw new IllegalArgumentException("icon width must be finite and positive: " + width);
+        }
+        double height = width / aspectRatio();
+        List<LayerStackNode.Layer> stack = new ArrayList<>(layers.size());
+        for (int i = 0; i < layers.size(); i++) {
+            Layer layer = layers.get(i);
+            stack.add(new LayerStackNode.Layer(new PathNode(
+                    "SvgLayer" + i,
+                    width,
+                    height,
+                    layer.geometry().segments(),
+                    layer.fill(),
+                    layer.fillPaint(),
+                    layer.stroke(),
+                    layer.strokePaint(),
+                    null,
+                    null,
+                    null)));
+        }
+        return new LayerStackNode("SvgIcon", stack, null, null);
+    }
+
+    /**
+     * One drawable layer: normalized geometry plus its resolved paint.
+     * Gradient paints, when present, win over the flat colours; the flat
+     * colours stay populated as the degradation target for backends that
+     * cannot render gradients.
+     *
+     * @param geometry    normalized path geometry (shared icon frame)
+     * @param fill        fill colour, or {@code null} for no fill
+     * @param fillPaint   gradient fill, or {@code null} for flat / no fill
+     * @param stroke      outline stroke, or {@code null} for no stroke
+     * @param strokePaint gradient stroke paint, or {@code null} for flat
+     * @since 1.8.0
+     */
+    public record Layer(SvgPath geometry,
+                        DocumentColor fill,
+                        DocumentPaint fillPaint,
+                        DocumentStroke stroke,
+                        DocumentPaint strokePaint) {
         /**
          * Validates the geometry reference.
          */
         public Layer {
             Objects.requireNonNull(geometry, "geometry");
+        }
+
+        /**
+         * Compatibility constructor for flat-colour layers.
+         *
+         * @param geometry normalized path geometry
+         * @param fill     fill colour, or {@code null}
+         * @param stroke   outline stroke, or {@code null}
+         */
+        public Layer(SvgPath geometry, DocumentColor fill, DocumentStroke stroke) {
+            this(geometry, fill, null, stroke, null);
         }
     }
 }

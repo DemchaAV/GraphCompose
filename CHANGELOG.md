@@ -84,8 +84,24 @@ Entries land here as they merge.
   transforms (affine maps are exact on Bézier control points), and
   `fill` / `stroke` / `stroke-width` styling with SVG inheritance and
   defaults — into ordered layers, and `addSvgIcon(icon, width)` stacks them
-  back-to-front on the page. The XML reader refuses DOCTYPEs (no XXE);
-  gradients, CSS, text and filters stay deliberately out of scope.
+  back-to-front on the page. `SvgIcon#node(width)` packages the same layers
+  as one ready-to-place node whose box is exactly the icon box, so it
+  anchors true inside `ShapeContainer` / `LayerStack` nine-point grids (and
+  rows now accept `ShapeContainerNode` children directly — it is the same
+  atomic overlay composite as the already-allowed `LayerStackNode`).
+  **Gradients render natively**: `linearGradient` / `radialGradient`
+  referenced via `url(#id)` — on fills *and strokes* — map to PDF axial /
+  radial shadings with exact endpoints (`userSpaceOnUse` and
+  `objectBoundingBox` units, `gradientTransform`, percentage offsets,
+  multi-stop stitching, one `href` hop for split definitions); gradient
+  strokes ride a shading-pattern stroking colour. Underneath,
+  `DocumentPaint` gains endpoint-exact `LinearAxis` / `RadialCircle` forms
+  and `PathNode` / `PathBuilder` grow `fill(paint)` / `strokePaint(paint)`
+  with solid paints normalising to the flat-colour path (byte-identical
+  output for non-gradient documents). The XML reader refuses DOCTYPEs (no
+  XXE); CSS, text, filters, focal radials, non-pad `spreadMethod` and
+  translucent stops stay deliberately out of scope — the reader fails
+  loudly rather than rendering them wrong.
 - **Inline sparklines** (`@since 1.8.0`). `RichText.sparkline(w, h, color,
   values...)` draws a filled mini-area silhouette on the text baseline, and
   `sparklineLine(w, h, thickness, color, values...)` a constant-thickness line

@@ -89,6 +89,7 @@ are with the canonical DSL, then jump to its detailed section below.
 |---|---|---|
 | [Shape containers](#shape-containers) | Circles, ellipses, rounded cards with `ClipPolicy.CLIP_PATH` | [PDF](../assets/readme/examples/shape-container.pdf) · [Source](src/main/java/com/demcha/examples/features/shapes/ShapeContainerExample.java) |
 | [Vector paths (Bézier)](#vector-paths-bézier) | `addPath(...)` + `SvgPath.parse(...)` — design shapes and imported SVG icons as native curves; zero tessellation | [PDF](../assets/readme/examples/vector-path.pdf) · [Source](src/main/java/com/demcha/examples/features/shapes/VectorPathExample.java) |
+| [SVG icon gallery](#svg-icon-gallery) | 34 real-world multicolour svgrepo icons via `SvgIcon.parse` — up to 19 layers each, the whole set 156 KB of sources | [PDF](../assets/readme/examples/svg-icon-gallery.pdf) · [Source](src/main/java/com/demcha/examples/features/svg/SvgIconGalleryExample.java) |
 | [Advanced tables](#advanced-tables) | Row span, zebra rows, totals, repeating header on page break | [PDF](../assets/readme/examples/table-advanced.pdf) · [Source](src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java) |
 | [Barcodes](#barcodes) | QR, Code 128, Code 39, EAN-13, EAN-8, branded QR with theme colours | [PDF](../assets/readme/examples/barcode-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/barcodes/BarcodeShowcaseExample.java) |
 | [Charts](#charts) | Native vector bar, line, and pie/donut charts — data/spec/style layers, axis & grid toggles, point markers, value labels, legend | [PDF](../assets/readme/examples/chart-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/charts/ChartShowcaseExample.java) |
@@ -379,6 +380,21 @@ flow.addPath(path -> path
 
 [📄 View PDF](../assets/readme/examples/vector-path.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/shapes/VectorPathExample.java)
+
+### SVG icon gallery
+
+A stress-test sheet for the beta SVG reader: 34 real-world multicolour
+icons (svgrepo.com) parsed by `SvgIcon.parse` and presented as a tile
+grid — each icon centred on a rounded card with a label plaque across
+the bottom, every layer a native vector path. The entire icon set weighs
+156 KB of `.svg` sources; the rendered page is a 70 KB PDF.
+
+```java
+flow.addSvgIcon(SvgIcon.parse(readResource("/icons/apple.svg")), 50);
+```
+
+[📄 View PDF](../assets/readme/examples/svg-icon-gallery.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/svg/SvgIconGalleryExample.java)
 
 ### Advanced tables
 

@@ -389,6 +389,19 @@ class ChartLayoutResolverTest {
         assertThat(area.fillColor()).isNotNull();
         assertThat(area.fillColor().color().getAlpha()).isLessThan(255);
         assertThat(area.stroke()).isNull();
+        // The curved fill still paints under the curved stroke.
+        int areaIndex = -1;
+        int curveIndex = -1;
+        for (int i = 0; i < out.size(); i++) {
+            String name = out.get(i).node().name();
+            if (name.equals("area_s0_r0")) {
+                areaIndex = i;
+            }
+            if (name.equals("line_s0_curve0")) {
+                curveIndex = i;
+            }
+        }
+        assertThat(areaIndex).isLessThan(curveIndex);
     }
 
     @Test

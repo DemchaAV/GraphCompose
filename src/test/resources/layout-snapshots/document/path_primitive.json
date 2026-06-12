@@ -1,0 +1,77 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 240.0,
+    "pageHeight" : 200.0,
+    "innerWidth" : 216.0,
+    "innerHeight" : 176.0,
+    "margin" : {
+      "top" : 12.0,
+      "right" : 12.0,
+      "bottom" : 12.0,
+      "left" : 12.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "Wave[0]",
+    "entityName" : "Wave",
+    "entityKind" : "Path",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 12.0,
+    "computedY" : 118.0,
+    "placementX" : 12.0,
+    "placementY" : 118.0,
+    "placementWidth" : 200.0,
+    "placementHeight" : 70.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 200.0,
+    "contentHeight" : 70.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 8.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Blob[1]",
+    "entityName" : "Blob",
+    "entityKind" : "Path",
+    "parentPath" : null,
+    "childIndex" : 1,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 12.0,
+    "computedY" : 30.0,
+    "placementX" : 12.0,
+    "placementY" : 30.0,
+    "placementWidth" : 90.0,
+    "placementHeight" : 80.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 90.0,
+    "contentHeight" : 80.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

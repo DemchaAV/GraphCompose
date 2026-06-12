@@ -43,6 +43,7 @@ public final class BuiltInNodeDefinitions {
                 .register(new TableDefinition())
                 .register(new CanvasLayerDefinition())
                 .register(new PolygonDefinition())
+                .register(new PathDefinition())
                 .register(new ChartDefinition());
     }
 }

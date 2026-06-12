@@ -1,5 +1,6 @@
 package com.demcha.compose.document.backend.fixed.pdf.handlers;
 
+import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.document.style.ShapePoint;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -77,6 +78,35 @@ final class PdfShapeGeometry {
             stream.lineTo(x + (float) (point.x() * width), y + (float) (point.y() * height));
         }
         stream.closePath();
+    }
+
+    /**
+     * Appends a normalized segment path scaled to the fragment box, emitting
+     * native line and cubic-Bézier operators. Segments follow the
+     * {@link DocumentPathSegment} contract: normalized unit-box coordinates,
+     * PDF y-up orientation, {@code MoveTo} first, control points free to
+     * overshoot the box.
+     */
+    static void addPathSegments(PDPageContentStream stream,
+                                float x,
+                                float y,
+                                float width,
+                                float height,
+                                List<DocumentPathSegment> segments) throws IOException {
+        for (DocumentPathSegment segment : segments) {
+            if (segment instanceof DocumentPathSegment.MoveTo move) {
+                stream.moveTo(x + (float) (move.x() * width), y + (float) (move.y() * height));
+            } else if (segment instanceof DocumentPathSegment.LineTo line) {
+                stream.lineTo(x + (float) (line.x() * width), y + (float) (line.y() * height));
+            } else if (segment instanceof DocumentPathSegment.CubicTo cubic) {
+                stream.curveTo(
+                        x + (float) (cubic.control1X() * width), y + (float) (cubic.control1Y() * height),
+                        x + (float) (cubic.control2X() * width), y + (float) (cubic.control2Y() * height),
+                        x + (float) (cubic.x() * width), y + (float) (cubic.y() * height));
+            } else if (segment instanceof DocumentPathSegment.Close) {
+                stream.closePath();
+            }
+        }
     }
 
     /**

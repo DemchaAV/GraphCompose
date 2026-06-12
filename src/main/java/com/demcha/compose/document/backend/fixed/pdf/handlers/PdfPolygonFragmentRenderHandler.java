@@ -12,6 +12,7 @@ import java.io.IOException;
  * Renders fixed polygon fragments (diamond, triangle, star, arbitrary rings).
  *
  * @author Artem Demchyshyn
+ * @since 1.8.0
  */
 public final class PdfPolygonFragmentRenderHandler
         implements PdfFragmentRenderHandler<PolygonFragmentPayload> {

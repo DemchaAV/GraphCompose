@@ -344,7 +344,7 @@ class ChartLayoutResolverTest {
     }
 
     @Test
-    void smoothLineSubdividesEachSpan() {
+    void smoothLineEmitsOneNativeBezierRun() {
         ChartData data = ChartData.builder().categories("A", "B", "C")
                 .series("S", 1.0, 3.0, 2.0).build();
         ChartSpec.Line line = ChartSpec.line().data(data).smooth(true).build();
@@ -352,10 +352,71 @@ class ChartLayoutResolverTest {
         List<ChartPrimitive> out = ChartLayoutResolver.resolve(
                 line, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 120.0, METRICS);
 
-        long segments = out.stream()
-                .filter(p -> p.node().name().startsWith("line_s0_seg")).count();
-        // Two spans, eight sub-segments each.
-        assertThat(segments).isEqualTo(16);
+        // No tessellated sub-segments — the whole run is one native path.
+        assertThat(out.stream().noneMatch(p -> p.node().name().startsWith("line_s0_seg")))
+                .isTrue();
+        com.demcha.compose.document.node.PathNode curve =
+                (com.demcha.compose.document.node.PathNode) byName(out, "line_s0_curve0").node();
+        // MoveTo plus one cubic span per data gap.
+        assertThat(curve.segments()).hasSize(3);
+        assertThat(curve.segments().get(0))
+                .isInstanceOf(com.demcha.compose.document.style.DocumentPathSegment.MoveTo.class);
+        assertThat(curve.segments().get(1))
+                .isInstanceOf(com.demcha.compose.document.style.DocumentPathSegment.CubicTo.class);
+        assertThat(curve.segments().get(2))
+                .isInstanceOf(com.demcha.compose.document.style.DocumentPathSegment.CubicTo.class);
+        assertThat(curve.stroke()).isNotNull();
+        assertThat(curve.fillColor()).isNull();
+    }
+
+    @Test
+    void smoothAreaClosesTheExactCurveDownToTheBaseline() {
+        ChartData data = ChartData.builder().categories("A", "B", "C")
+                .series("S", 1.0, 3.0, 2.0).build();
+        ChartSpec.Line line = ChartSpec.line().data(data).smooth(true).area(true).build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                line, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 120.0, METRICS);
+
+        com.demcha.compose.document.node.PathNode area =
+                (com.demcha.compose.document.node.PathNode) byName(out, "area_s0_r0").node();
+        // moveTo + 2 cubic spans + 2 baseline edges + close.
+        assertThat(area.segments()).hasSize(6);
+        assertThat(area.segments().get(3))
+                .isInstanceOf(com.demcha.compose.document.style.DocumentPathSegment.LineTo.class);
+        assertThat(area.segments().get(5))
+                .isInstanceOf(com.demcha.compose.document.style.DocumentPathSegment.Close.class);
+        assertThat(area.fillColor()).isNotNull();
+        assertThat(area.fillColor().color().getAlpha()).isLessThan(255);
+        assertThat(area.stroke()).isNull();
+        // The curved fill still paints under the curved stroke.
+        int areaIndex = -1;
+        int curveIndex = -1;
+        for (int i = 0; i < out.size(); i++) {
+            String name = out.get(i).node().name();
+            if (name.equals("area_s0_r0")) {
+                areaIndex = i;
+            }
+            if (name.equals("line_s0_curve0")) {
+                curveIndex = i;
+            }
+        }
+        assertThat(areaIndex).isLessThan(curveIndex);
+    }
+
+    @Test
+    void twoPointSmoothRunFallsBackToAStraightSegment() {
+        ChartData data = ChartData.builder().categories("A", "B")
+                .series("S", 1.0, 3.0).build();
+        ChartSpec.Line line = ChartSpec.line().data(data).smooth(true).build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                line, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 120.0, METRICS);
+
+        // A two-point run has no curvature to express — it stays a segment.
+        byName(out, "line_s0_seg0");
+        assertThat(out.stream().noneMatch(p -> p.node().name().startsWith("line_s0_curve")))
+                .isTrue();
     }
 
     @Test

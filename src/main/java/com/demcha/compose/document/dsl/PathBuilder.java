@@ -205,7 +205,9 @@ public final class PathBuilder {
     }
 
     /**
-     * Builds the path node.
+     * Builds the path node. The built node copies the segment list, so the
+     * builder may keep accumulating segments afterwards — each {@code build()}
+     * snapshots the configuration at that moment.
      *
      * @return path node
      * @throws IllegalArgumentException if the segments do not start with a

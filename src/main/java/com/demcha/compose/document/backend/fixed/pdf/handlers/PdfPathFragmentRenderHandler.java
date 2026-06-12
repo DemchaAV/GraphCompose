@@ -13,6 +13,7 @@ import java.io.IOException;
  * operators — curves stay smooth at any zoom level.
  *
  * @author Artem Demchyshyn
+ * @since 1.8.0
  */
 public final class PdfPathFragmentRenderHandler
         implements PdfFragmentRenderHandler<PathFragmentPayload> {

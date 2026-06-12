@@ -1,6 +1,7 @@
 package com.demcha.compose.document.chart;
 
 import com.demcha.compose.document.node.EllipseNode;
+import com.demcha.compose.document.node.PathNode;
 import com.demcha.compose.document.node.PolygonNode;
 import com.demcha.compose.document.style.*;
 
@@ -10,19 +11,20 @@ import java.util.List;
 import static com.demcha.compose.document.chart.ChartLayoutSupport.*;
 
 /**
- * Geometry for line charts: straight or Catmull-Rom-smoothed polylines,
- * optional translucent area fills, point markers, and collision-aware value
- * labels.
+ * Geometry for line charts: straight polylines or native cubic-Bézier
+ * smoothed curves, optional translucent area fills (curved to match in
+ * smooth mode), point markers, and collision-aware value labels.
+ *
+ * <p>Smooth runs compile into a single {@code PathNode} per run whose
+ * Catmull-Rom-derived control points are pure arithmetic on the data points
+ * — the exact continuous curve the pre-1.8 fixed-step sampler approximated,
+ * now rendered with native PDF curve operators and zero tessellation.</p>
  *
  * @author Artem Demchyshyn
  * @since 1.8.0
  */
 final class LineChartLayout {
 
-    /**
-     * Sub-segments per Catmull-Rom span; fixed so geometry stays deterministic.
-     */
-    private static final int SMOOTH_SUBDIVISIONS = 8;
     private static final double DEFAULT_AREA_OPACITY = 0.35;
 
     private LineChartLayout() {
@@ -52,43 +54,57 @@ final class LineChartLayout {
         double strokeWidth = style.lineWidth() == null ? DEFAULT_LINE_WIDTH : style.lineWidth();
         double areaOpacity = style.areaOpacity() == null ? DEFAULT_AREA_OPACITY : style.areaOpacity();
 
-        // Per-series sampled polylines: contiguous non-null runs, optionally
-        // Catmull-Rom smoothed. Samples drive area fills and stroke segments;
-        // markers and labels stay on the original data points.
-        List<List<List<double[]>>> sampledRuns = new ArrayList<>();
+        // Per-series contiguous non-null runs of original data points. Smooth
+        // mode compiles each run into native Bézier primitives; markers and
+        // labels stay on the original data points either way.
+        List<List<List<double[]>>> seriesRuns = new ArrayList<>();
         for (int s = 0; s < data.seriesCount(); s++) {
-            sampledRuns.add(sampleSeries(data.series().get(s), f, slotW, line.smooth()));
+            seriesRuns.add(sampleSeries(data.series().get(s), f, slotW));
         }
+        boolean smooth = line.smooth();
 
-        // Pass 0 — area fills, under every stroke.
+        // Pass 0 — area fills, under every stroke. Smooth runs close the
+        // exact stroke curve down to the baseline so fill and stroke edges
+        // coincide.
         if (line.area()) {
             for (int s = 0; s < data.seriesCount(); s++) {
                 DocumentColor color = style.paintForSeries(s, theme.palette()).primaryColor();
                 DocumentColor fill = color.withOpacity(areaOpacity);
                 int runIndex = 0;
-                for (List<double[]> run : sampledRuns.get(s)) {
+                for (List<double[]> run : seriesRuns.get(s)) {
                     if (run.size() < 2) {
                         runIndex++;
                         continue;
                     }
-                    emitAreaPolygon(out, "area_s" + s + "_r" + runIndex, run,
-                            f.plotBottomY(), fill);
+                    String name = "area_s" + s + "_r" + runIndex;
+                    if (smooth && run.size() >= 3) {
+                        emitCurvedArea(out, name, run, f.plotBottomY(), fill);
+                    } else {
+                        emitAreaPolygon(out, name, run, f.plotBottomY(), fill);
+                    }
                     runIndex++;
                 }
             }
         }
 
-        // Pass 1 — every series' stroke segments.
+        // Pass 1 — series strokes: one native Bézier path per smooth run
+        // (three or more points), straight segments otherwise.
         for (int s = 0; s < data.seriesCount(); s++) {
             DocumentColor color = style.paintForSeries(s, theme.palette()).primaryColor();
             DocumentStroke stroke = DocumentStroke.of(color, strokeWidth);
             int n = 0;
-            for (List<double[]> run : sampledRuns.get(s)) {
-                for (int i = 1; i < run.size(); i++) {
-                    out.add(segment("line_s" + s + "_seg" + n++,
-                            run.get(i - 1)[0], run.get(i - 1)[1],
-                            run.get(i)[0], run.get(i)[1], stroke));
+            int runIndex = 0;
+            for (List<double[]> run : seriesRuns.get(s)) {
+                if (smooth && run.size() >= 3) {
+                    out.add(bezierRun("line_s" + s + "_curve" + runIndex, run, stroke));
+                } else {
+                    for (int i = 1; i < run.size(); i++) {
+                        out.add(segment("line_s" + s + "_seg" + n++,
+                                run.get(i - 1)[0], run.get(i - 1)[1],
+                                run.get(i)[0], run.get(i)[1], stroke));
+                    }
                 }
+                runIndex++;
             }
         }
 
@@ -133,18 +149,18 @@ final class LineChartLayout {
     }
 
     /**
-     * Splits a series into contiguous non-null runs of (x, y) samples.
+     * Splits a series into contiguous non-null runs of (x, y) data points.
      */
     private static List<List<double[]>> sampleSeries(ChartData.Series series,
                                                      ChartLayoutSupport.Frame f,
-                                                     double slotW, boolean smooth) {
+                                                     double slotW) {
         List<List<double[]>> runs = new ArrayList<>();
         List<double[]> current = new ArrayList<>();
         for (int c = 0; c < series.values().size(); c++) {
             Double v = series.values().get(c);
             if (v == null) {
                 if (!current.isEmpty()) {
-                    runs.add(smooth ? smoothRun(current) : current);
+                    runs.add(current);
                     current = new ArrayList<>();
                 }
                 continue;
@@ -153,44 +169,128 @@ final class LineChartLayout {
                     f.plotLeftX() + (c + 0.5) * slotW, f.yForValue(v)});
         }
         if (!current.isEmpty()) {
-            runs.add(smooth ? smoothRun(current) : current);
+            runs.add(current);
         }
         return runs;
     }
 
     /**
-     * Subdivides a run with a centripetal-style Catmull-Rom spline (uniform
-     * parameterisation, clamped endpoints) into {@link #SMOOTH_SUBDIVISIONS}
-     * sub-segments per span. Pure arithmetic on the input points.
+     * Uniform Catmull-Rom control points (tension 0.5, clamped endpoints)
+     * for every span of a run: {@code c1 = p1 + (p2 - p0) / 6},
+     * {@code c2 = p2 - (p3 - p1) / 6}. Pure arithmetic on the data points —
+     * the exact continuous curve the pre-1.8 fixed-step sampler approximated.
+     * Returns one {@code [c1, c2]} pair per span.
      */
-    private static List<double[]> smoothRun(List<double[]> points) {
-        if (points.size() < 3) {
-            return points;
-        }
-        List<double[]> samples = new ArrayList<>();
-        samples.add(points.get(0));
+    private static List<double[][]> catmullRomControls(List<double[]> points) {
+        List<double[][]> controls = new ArrayList<>(points.size() - 1);
         for (int i = 0; i < points.size() - 1; i++) {
             double[] p0 = points.get(Math.max(0, i - 1));
             double[] p1 = points.get(i);
             double[] p2 = points.get(i + 1);
             double[] p3 = points.get(Math.min(points.size() - 1, i + 2));
-            for (int t = 1; t <= SMOOTH_SUBDIVISIONS; t++) {
-                double u = (double) t / SMOOTH_SUBDIVISIONS;
-                samples.add(new double[]{
-                        catmullRom(p0[0], p1[0], p2[0], p3[0], u),
-                        catmullRom(p0[1], p1[1], p2[1], p3[1], u)});
-            }
+            double[] c1 = {p1[0] + (p2[0] - p0[0]) / 6.0, p1[1] + (p2[1] - p0[1]) / 6.0};
+            double[] c2 = {p2[0] - (p3[0] - p1[0]) / 6.0, p2[1] - (p3[1] - p1[1]) / 6.0};
+            controls.add(new double[][]{c1, c2});
         }
-        return samples;
+        return controls;
     }
 
-    private static double catmullRom(double p0, double p1, double p2, double p3, double t) {
-        double t2 = t * t;
-        double t3 = t2 * t;
-        return 0.5 * ((2 * p1)
-                      + (-p0 + p2) * t
-                      + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2
-                      + (-p0 + 3 * p1 - 3 * p2 + p3) * t3);
+    /**
+     * One stroked native-Bézier {@code PathNode} primitive covering a whole
+     * smooth run. The box is the bounding box of the data points and every
+     * control point, so normalized coordinates stay within the unit box by
+     * construction.
+     */
+    private static ChartPrimitive bezierRun(String name, List<double[]> run, DocumentStroke stroke) {
+        List<double[][]> controls = catmullRomControls(run);
+        double minX = Double.POSITIVE_INFINITY;
+        double maxX = Double.NEGATIVE_INFINITY;
+        double minY = Double.POSITIVE_INFINITY;
+        double maxY = Double.NEGATIVE_INFINITY;
+        for (double[] p : run) {
+            minX = Math.min(minX, p[0]);
+            maxX = Math.max(maxX, p[0]);
+            minY = Math.min(minY, p[1]);
+            maxY = Math.max(maxY, p[1]);
+        }
+        for (double[][] c : controls) {
+            for (double[] p : c) {
+                minX = Math.min(minX, p[0]);
+                maxX = Math.max(maxX, p[0]);
+                minY = Math.min(minY, p[1]);
+                maxY = Math.max(maxY, p[1]);
+            }
+        }
+        double w = Math.max(MIN_SEGMENT, maxX - minX);
+        double h = Math.max(MIN_SEGMENT, maxY - minY);
+
+        List<DocumentPathSegment> segments = new ArrayList<>(run.size());
+        segments.add(DocumentPathSegment.moveTo(
+                (run.get(0)[0] - minX) / w, (run.get(0)[1] - minY) / h));
+        for (int i = 0; i < controls.size(); i++) {
+            double[][] c = controls.get(i);
+            double[] end = run.get(i + 1);
+            segments.add(DocumentPathSegment.cubicTo(
+                    (c[0][0] - minX) / w, (c[0][1] - minY) / h,
+                    (c[1][0] - minX) / w, (c[1][1] - minY) / h,
+                    (end[0] - minX) / w, (end[1] - minY) / h));
+        }
+        PathNode node = new PathNode(name, w, h, segments, null, stroke,
+                DocumentInsets.zero(), DocumentInsets.zero());
+        return new ChartPrimitive(node, minX, minY, w, h);
+    }
+
+    /**
+     * Curved area fill for a smooth run: the exact stroke curve closed down
+     * to the plot baseline with two straight edges, emitted as one filled
+     * {@code PathNode}.
+     */
+    private static void emitCurvedArea(List<ChartPrimitive> out, String name,
+                                       List<double[]> run, double baselineY,
+                                       DocumentColor fill) {
+        List<double[][]> controls = catmullRomControls(run);
+        double minX = Double.POSITIVE_INFINITY;
+        double maxX = Double.NEGATIVE_INFINITY;
+        double minY = baselineY;
+        double maxY = baselineY;
+        for (double[] p : run) {
+            minX = Math.min(minX, p[0]);
+            maxX = Math.max(maxX, p[0]);
+            minY = Math.min(minY, p[1]);
+            maxY = Math.max(maxY, p[1]);
+        }
+        for (double[][] c : controls) {
+            for (double[] p : c) {
+                minX = Math.min(minX, p[0]);
+                maxX = Math.max(maxX, p[0]);
+                minY = Math.min(minY, p[1]);
+                maxY = Math.max(maxY, p[1]);
+            }
+        }
+        double w = Math.max(1.0, maxX - minX);
+        double h = Math.max(1.0, maxY - minY);
+
+        List<DocumentPathSegment> segments = new ArrayList<>(run.size() + 3);
+        segments.add(DocumentPathSegment.moveTo(
+                (run.get(0)[0] - minX) / w, (run.get(0)[1] - minY) / h));
+        for (int i = 0; i < controls.size(); i++) {
+            double[][] c = controls.get(i);
+            double[] end = run.get(i + 1);
+            segments.add(DocumentPathSegment.cubicTo(
+                    (c[0][0] - minX) / w, (c[0][1] - minY) / h,
+                    (c[1][0] - minX) / w, (c[1][1] - minY) / h,
+                    (end[0] - minX) / w, (end[1] - minY) / h));
+        }
+        double baselineNorm = (baselineY - minY) / h;
+        segments.add(DocumentPathSegment.lineTo(
+                (run.get(run.size() - 1)[0] - minX) / w, baselineNorm));
+        segments.add(DocumentPathSegment.lineTo(
+                (run.get(0)[0] - minX) / w, baselineNorm));
+        segments.add(DocumentPathSegment.close());
+
+        PathNode node = new PathNode(name, w, h, segments, fill, null,
+                DocumentInsets.zero(), DocumentInsets.zero());
+        out.add(new ChartPrimitive(node, minX, minY, w, h));
     }
 
     /**

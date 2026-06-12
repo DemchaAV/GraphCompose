@@ -30,10 +30,12 @@ Entries land here as they merge.
   placement.** `ChartSpec.bar().horizontal(true)` transposes the chart
   (categories on Y in reading order, value axis on X, labels at bar ends);
   stacked bars label the category total. `ChartSpec.line().smooth(true)`
-  draws deterministic Catmull-Rom curves (fixed 8 sub-segments per span);
-  `.area(true)` fills each series down to the baseline with a translucent
-  series colour (`ChartStyle.areaOpacity`, default 0.35) — alpha-blended
-  fills layer legibly. `LegendPosition.TOP` and `RIGHT` now lay out as a top
+  draws deterministic Catmull-Rom curves as **native cubic Béziers** through
+  the vector path primitive — one `PathNode` per run, perfectly smooth at
+  any zoom level, zero tessellation; `.area(true)` fills each series down to
+  the baseline with a translucent series colour (`ChartStyle.areaOpacity`,
+  default 0.35) — alpha-blended fills layer legibly, and in smooth mode the
+  fill closes the exact stroke curve so fill and stroke edges coincide. `LegendPosition.TOP` and `RIGHT` now lay out as a top
   strip / right column for every chart kind, including pie. The chart
   resolver is split per kind (`BarChartLayout` / `LineChartLayout` /
   `PieChartLayout` over a shared `ChartLayoutSupport`).

@@ -27,6 +27,8 @@ import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.style.DocumentTransform;
 import com.demcha.compose.document.style.ShapePoint;
+import com.demcha.compose.document.svg.SvgIcon;
+import com.demcha.compose.document.svg.SvgPath;
 import com.demcha.compose.document.theme.BusinessTheme;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
@@ -56,6 +58,21 @@ public final class FeatureCatalogExample {
     private static final DocumentColor GOLD = DocumentColor.rgb(196, 153, 76);
     private static final DocumentColor CODE_BG = DocumentColor.rgb(244, 245, 248);
     private static final DocumentColor CODE_INK = DocumentColor.rgb(52, 74, 94);
+
+    /** Material Icons "favorite" path data (Apache 2.0), viewBox 0 0 24 24. */
+    private static final String MATERIAL_HEART_D =
+            "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3"
+            + "c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5"
+            + "c0 3.78-3.4 6.86-8.55 11.54L12 21.35z";
+
+    /** The svgrepo.com icons shown on the beta SvgIcon card row: file → label. */
+    private static final List<String[]> CATALOG_ICONS = List.of(
+            new String[] {"apple", "APPLE"},
+            new String[] {"headphones-music", "HEADPHONES"},
+            new String[] {"shopping-cart", "CART"},
+            new String[] {"camera-take-pictures", "CAMERA"},
+            new String[] {"starfish", "STARFISH"},
+            new String[] {"toolbox", "TOOLBOX"});
 
     private FeatureCatalogExample() {
     }
@@ -300,6 +317,47 @@ public final class FeatureCatalogExample {
                             TEAL, DocumentStroke.of(GOLD, 1.2),
                             DocumentInsets.zero(), DocumentInsets.zero())));
 
+            feature(flow, "Vector paths — native Bézier curves, dashed strokes", """
+                    section.addPath(path -> path.size(420, 48)   // unit box, y-up; controls may overshoot
+                        .moveTo(0.0, 0.5)
+                        .curveTo(0.25, 1.1, 0.25, -0.1, 0.5, 0.5)
+                        .curveTo(0.75, 1.1, 0.75, -0.1, 1.0, 0.5)
+                        .stroke(DocumentStroke.of(TEAL, 2.2)));
+                    // .dashed(6, 3) turns the same stroke into a dash pattern that follows the curve""",
+                    demo -> demo
+                            .addPath(path -> path.size(420, 48)
+                                    .moveTo(0.0, 0.5)
+                                    .curveTo(0.25, 1.1, 0.25, -0.1, 0.5, 0.5)
+                                    .curveTo(0.75, 1.1, 0.75, -0.1, 1.0, 0.5)
+                                    .stroke(DocumentStroke.of(TEAL, 2.2)))
+                            .addPath(path -> path.size(420, 48)
+                                    .moveTo(0.0, 0.5)
+                                    .curveTo(0.25, 1.1, 0.25, -0.1, 0.5, 0.5)
+                                    .curveTo(0.75, 1.1, 0.75, -0.1, 1.0, 0.5)
+                                    .stroke(DocumentStroke.of(GOLD, 2.2))
+                                    .dashed(6, 3)));
+
+            feature(flow, "SVG path import (beta) — any d string as native curves", """
+                    // Material Icons "favorite" (Apache 2.0), viewBox 0 0 24 24
+                    section.addPath(path -> path.size(64, 64)
+                        .svg(SvgPath.parse(HEART_D, 0, 0, 24, 24))   // curves stay native PDF operators
+                        .fillColor(rgb(196, 30, 58)))""",
+                    demo -> demo.addPath(path -> path.size(64, 64)
+                            .svg(SvgPath.parse(MATERIAL_HEART_D, 0, 0, 24, 24))
+                            .fillColor(DocumentColor.rgb(196, 30, 58))));
+
+            feature(flow, "SVG icons (beta) — multicolour files centred on tile cards", """
+                    SvgIcon icon = SvgIcon.read(Path.of("icons/apple.svg"));  // layers + resolved paints
+                    card.roundedRect(74, 64, 8)                       // fixed box = the tile
+                        .position(iconNode(icon), 0, -7, LayerAlign.CENTER)  // anchor centres the icon's
+                        .bottomCenter(plaque("APPLE"))                // own tight box inside the card""",
+                    demo -> demo.addRow(r -> {
+                        r.spacing(8).evenWeights();
+                        for (String[] entry : CATALOG_ICONS) {
+                            r.addSection("Tile" + entry[1], s -> s.add(iconCard(entry[0], entry[1])));
+                        }
+                    }));
+
             feature(flow, "Shape as container — children clipped to the outline", """
                     section.addCircle(72, TEAL, c -> c
                         .stroke(DocumentStroke.of(GOLD, 1.2))
@@ -343,6 +401,21 @@ public final class FeatureCatalogExample {
                                     .foreground(TEAL).size(86, 86)))
                             .addSection("C128", c -> c.addBarcode(b -> b.code128()
                                     .data("GC-2026-001").size(200, 44)))));
+
+            feature(flow, "Debug overlay — corner badges name every box", """
+                    GraphCompose.document(out)
+                        .debug(DocumentDebugOptions.nodeLabels())   // or guidesAndNodeLabels()
+                        .create();
+                    // LabelText.FULL_PATH prints whole layout paths; guides() adds box outlines""",
+                    demo -> demo.addParagraph(p -> p
+                            .text("Re-render any document with nodeLabels() and every placed box "
+                                    + "grows a corner badge with its semantic name (PriceSummaryTitle[0], "
+                                    + "SvgLayer3, …) — a misplaced component traces straight back to the "
+                                    + "builder call that produced it. The full annotated sheet is "
+                                    + "debug-overlay.pdf among the examples.")
+                            .textStyle(THEME.text().body())
+                            .lineSpacing(1.35)
+                            .margin(DocumentInsets.zero())));
 
             feature(flow, "Page chrome — this document's own header, footer, outline", """
                     document.metadata(DocumentMetadata.builder().title("…").author("…").build());
@@ -411,6 +484,63 @@ public final class FeatureCatalogExample {
         } catch (java.io.IOException e) {
             throw new IllegalStateException("failed to load catalog demo image", e);
         }
+    }
+
+    /** Classpath icon for the beta SvgIcon card row (same set as the gallery). */
+    private static SvgIcon catalogIcon(String name) {
+        try (java.io.InputStream stream = java.util.Objects.requireNonNull(
+                FeatureCatalogExample.class.getResourceAsStream("/icons/" + name + ".svg"),
+                "icon resource missing: " + name)) {
+            return SvgIcon.parse(new String(stream.readAllBytes(),
+                    java.nio.charset.StandardCharsets.UTF_8));
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException("failed to load icon: " + name, e);
+        }
+    }
+
+    /**
+     * Mini tile for the icon row: fixed rounded card, the icon centred in the
+     * body as a tight-box layer stack, a label plaque across the bottom. The
+     * stack keeps the icon's exact contain-fit size — that is what makes the
+     * card's CENTER anchor land true.
+     */
+    private static com.demcha.compose.document.node.DocumentNode iconCard(String name, String label) {
+        SvgIcon icon = catalogIcon(name);
+        double box = 34;
+        double width = Math.min(box, box * icon.aspectRatio());
+        double height = width / icon.aspectRatio();
+        var stack = new com.demcha.compose.document.dsl.LayerStackBuilder().name("Icon" + label);
+        for (int i = 0; i < icon.layers().size(); i++) {
+            SvgIcon.Layer layer = icon.layers().get(i);
+            stack.layer(new com.demcha.compose.document.dsl.PathBuilder()
+                    .name("SvgLayer" + i)
+                    .size(width, height)
+                    .svg(layer.geometry())
+                    .fillColor(layer.fill())
+                    .stroke(layer.stroke())
+                    .build());
+        }
+        double plaqueHeight = 14;
+        return new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                .name("IconCard" + label)
+                .roundedRect(74, 64, 8)
+                .fillColor(DocumentColor.rgb(248, 249, 251))
+                .stroke(DocumentStroke.of(DocumentColor.rgb(228, 231, 236), 0.8))
+                .position(stack.build(), 0, -plaqueHeight / 2.0,
+                        com.demcha.compose.document.node.LayerAlign.CENTER)
+                .bottomCenter(new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                        .name("Plaque" + label)
+                        .rectangle(74, plaqueHeight)
+                        .fillColor(DocumentColor.rgb(235, 238, 243))
+                        .center(new com.demcha.compose.document.dsl.ParagraphBuilder()
+                                .text(label)
+                                .textStyle(DocumentTextStyle.builder()
+                                        .fontName(FontName.HELVETICA_BOLD).size(6.2)
+                                        .color(DocumentColor.rgb(82, 90, 102)).build())
+                                .align(com.demcha.compose.document.node.TextAlign.CENTER)
+                                .build())
+                        .build())
+                .build();
     }
 
     private static com.demcha.compose.document.node.DocumentNode badge(String text) {

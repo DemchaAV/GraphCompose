@@ -2,6 +2,7 @@ package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.node.PathNode;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.svg.SvgPath;
 import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentPathSegment;
@@ -10,6 +11,7 @@ import com.demcha.compose.document.style.DocumentStroke;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Builder for semantic vector-path nodes — free-form design shapes with
@@ -148,6 +150,22 @@ public final class PathBuilder {
      */
     public PathBuilder closePath() {
         segments.add(DocumentPathSegment.close());
+        return this;
+    }
+
+    /**
+     * Appends every segment of a parsed SVG path. The segments arrive
+     * already normalized to the unit box with the y-axis flipped, so the
+     * only remaining decision is the node's {@link #size(double, double)} —
+     * use {@code svgPath.aspectRatio()} to keep the icon's proportions.
+     *
+     * @param svgPath parsed SVG path data
+     * @return this builder
+     * @since 1.8.0
+     */
+    public PathBuilder svg(SvgPath svgPath) {
+        Objects.requireNonNull(svgPath, "svgPath");
+        segments.addAll(svgPath.segments());
         return this;
     }
 

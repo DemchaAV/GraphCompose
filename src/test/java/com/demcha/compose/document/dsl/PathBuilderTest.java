@@ -9,6 +9,7 @@ import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.svg.SvgPath;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -62,6 +63,21 @@ class PathBuilderTest {
                 .build();
 
         assertThat(node.dashPattern().segments()).containsExactly(4.0, 2.0);
+    }
+
+    @Test
+    void svgBridgeAppendsParsedSegments() {
+        PathNode node = new PathBuilder()
+                .size(24, 24)
+                .svg(SvgPath.parse("M0 0 L10 0 L5 8 Z", 0, 0, 10, 8))
+                .fillColor(DocumentColor.rgb(196, 30, 58))
+                .build();
+
+        assertThat(node.segments()).hasSize(4);
+        assertThat(node.segments().get(0))
+                .isInstanceOf(DocumentPathSegment.MoveTo.class);
+        assertThat(node.segments().get(3))
+                .isInstanceOf(DocumentPathSegment.Close.class);
     }
 
     @Test

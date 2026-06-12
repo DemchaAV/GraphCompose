@@ -88,7 +88,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | Example | What it shows | Preview · Source |
 |---|---|---|
 | [Shape containers](#shape-containers) | Circles, ellipses, rounded cards with `ClipPolicy.CLIP_PATH` | [PDF](../assets/readme/examples/shape-container.pdf) · [Source](src/main/java/com/demcha/examples/features/shapes/ShapeContainerExample.java) |
-| [Vector paths (Bézier)](#vector-paths-bézier) | `addPath(...)` — design shapes with native cubic curves: waves, blobs, ribbons; zero tessellation | [PDF](../assets/readme/examples/vector-path.pdf) · [Source](src/main/java/com/demcha/examples/features/shapes/VectorPathExample.java) |
+| [Vector paths (Bézier)](#vector-paths-bézier) | `addPath(...)` + `SvgPath.parse(...)` — design shapes and imported SVG icons as native curves; zero tessellation | [PDF](../assets/readme/examples/vector-path.pdf) · [Source](src/main/java/com/demcha/examples/features/shapes/VectorPathExample.java) |
 | [Advanced tables](#advanced-tables) | Row span, zebra rows, totals, repeating header on page break | [PDF](../assets/readme/examples/table-advanced.pdf) · [Source](src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java) |
 | [Barcodes](#barcodes) | QR, Code 128, Code 39, EAN-13, EAN-8, branded QR with theme colours | [PDF](../assets/readme/examples/barcode-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/barcodes/BarcodeShowcaseExample.java) |
 | [Charts](#charts) | Native vector bar, line, and pie/donut charts — data/spec/style layers, axis & grid toggles, point markers, value labels, legend | [PDF](../assets/readme/examples/chart-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/charts/ChartShowcaseExample.java) |
@@ -363,7 +363,9 @@ ribbons in one closed subpath. Curves render as native PDF `curveTo`
 operators — perfectly smooth at any zoom, no tessellation. Coordinates
 are normalized to the shape's box (`(0,0)` bottom-left, `y` up) and
 control points may overshoot it. Strokes can be dashed via
-`dashed(on, off, ...)` — the pattern follows the curve.
+`dashed(on, off, ...)` — the pattern follows the curve. SVG icons drop in
+through `SvgPath.parse(d, viewBox...)` + `.svg(...)` — the full path
+grammar (arcs included) lands as native curves.
 
 ```java
 flow.addPath(path -> path

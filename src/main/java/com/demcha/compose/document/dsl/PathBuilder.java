@@ -1,5 +1,6 @@
 package com.demcha.compose.document.dsl;
 
+import com.demcha.compose.document.api.Beta;
 import com.demcha.compose.document.node.PathNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.svg.SvgPath;
@@ -163,6 +164,7 @@ public final class PathBuilder {
      * @return this builder
      * @since 1.8.0
      */
+    @Beta
     public PathBuilder svg(SvgPath svgPath) {
         Objects.requireNonNull(svgPath, "svgPath");
         segments.addAll(svgPath.segments());

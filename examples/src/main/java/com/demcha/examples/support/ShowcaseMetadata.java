@@ -95,6 +95,7 @@ final class ShowcaseMetadata {
         feature("tables", "composed-table-cell-showcase", "Composed Table Cells", "DocumentTableCell.node(DocumentNode) — paragraphs, lists, sub-tables inside cells with two-pass measurement.", "tables", "v1.6");
         feature("canvas", "canvas-layer-showcase", "Canvas Layer (free-canvas)", "CanvasLayerNode — pixel-precise (x,y) placement of children inside a fixed bounding box.", "canvas", "v1.6", "absolute");
         feature("shapes", "shape-container", "Shape-as-Container", "Rounded rect, ellipse, circle containers with ClipPolicy and layered children.", "shapes", "clip");
+        feature("svg", "svg-icon-gallery", "SVG Icon Gallery", "34 real-world multicolour svgrepo icons through SvgIcon.parse — native vector layers, the whole set 156 KB of sources.", "svg", "icons", "v1.8");
         feature("shapes", "vector-path", "Vector Paths (Bézier)", "addPath(...) — free-form design shapes with native cubic Bézier curves: stroked waves, filled blobs, mixed line/curve ribbons. No tessellation.", "shapes", "bezier", "v1.8");
         feature("transforms", "transforms", "Layers + Transforms", "rotate / scale on every leaf builder + LayerStack with explicit z-index.", "transforms", "layers");
         feature("text", "rich-text-showcase", "Rich Text", "Inline runs with bold / italic / colour / link options, markdown parsing.", "text", "rich");
@@ -143,6 +144,7 @@ final class ShowcaseMetadata {
             case "features/chrome" -> "PDF Chrome (header / footer / watermark)";
             case "features/streaming" -> "Streaming & I/O";
             case "features/snapshots" -> "Snapshot Testing";
+            case "features/svg" -> "SVG Import";
             case "features/debug" -> "Debug & Diagnostics";
             case "flagships/default" -> "Flagship Demos";
             default -> capitalize(group);

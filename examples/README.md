@@ -364,8 +364,9 @@ operators — perfectly smooth at any zoom, no tessellation. Coordinates
 are normalized to the shape's box (`(0,0)` bottom-left, `y` up) and
 control points may overshoot it. Strokes can be dashed via
 `dashed(on, off, ...)` — the pattern follows the curve. SVG icons drop in
-through `SvgPath.parse(d, viewBox...)` + `.svg(...)` — the full path
-grammar (arcs included) lands as native curves.
+through `SvgPath.parse(d, viewBox...)` + `.svg(...)`, or whole files via
+`SvgIcon.read(file)` + `addSvgIcon(icon, width)` — multi-layer icons with
+group transforms and per-layer paints, all as native curves.
 
 ```java
 flow.addPath(path -> path

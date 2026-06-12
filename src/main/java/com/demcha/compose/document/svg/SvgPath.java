@@ -89,6 +89,27 @@ public final class SvgPath {
     }
 
     /**
+     * Parses path data, applies an affine transform in SVG user space, and
+     * normalizes against the given viewBox. Affine maps are exact on cubic
+     * Bézier control points, so group transforms cost no precision. Used by
+     * {@link SvgIcon}; the transform is {@code [a, b, c, d, e, f]} with
+     * {@code x' = a·x + c·y + e}, {@code y' = b·x + d·y + f}.
+     */
+    static SvgPath parseTransformed(String d, double[] affine,
+                                    double minX, double minY, double width, double height) {
+        List<double[]> ops = new SvgPathParser(d).parse();
+        for (double[] op : ops) {
+            for (int i = 1; i + 1 < op.length; i += 2) {
+                double x = op[i];
+                double y = op[i + 1];
+                op[i] = affine[0] * x + affine[2] * y + affine[4];
+                op[i + 1] = affine[1] * x + affine[3] * y + affine[5];
+            }
+        }
+        return normalize(ops, minX, minY, width, height);
+    }
+
+    /**
      * Returns the normalized segments (unit box, y-up), ready for
      * {@code PathBuilder.svg(...)} or a {@code PathNode}.
      *

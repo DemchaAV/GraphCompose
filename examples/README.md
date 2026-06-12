@@ -384,10 +384,10 @@ flow.addPath(path -> path
 ### SVG icon gallery
 
 A stress-test sheet for the beta SVG reader: 34 real-world multicolour
-icons (svgrepo.com) parsed by `SvgIcon.parse` and placed with
-`addSvgIcon(icon, 50)` — captions under every icon, every layer a native
-vector path. The entire icon set weighs 156 KB of `.svg` sources; the
-rendered page is a 65 KB PDF.
+icons (svgrepo.com) parsed by `SvgIcon.parse` and presented as a tile
+grid — each icon centred on a rounded card with a label plaque across
+the bottom, every layer a native vector path. The entire icon set weighs
+156 KB of `.svg` sources; the rendered page is a 70 KB PDF.
 
 ```java
 flow.addSvgIcon(SvgIcon.parse(readResource("/icons/apple.svg")), 50);

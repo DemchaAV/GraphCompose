@@ -532,6 +532,18 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     }
 
     /**
+     * Adds a free-form vector path configured through a nested builder —
+     * design shapes with native cubic Bézier curves.
+     *
+     * @param spec path builder callback
+     * @return this builder
+     * @since 1.8.0
+     */
+    public T addPath(Consumer<PathBuilder> spec) {
+        return add(BuilderSupport.configure(new PathBuilder(), spec).build());
+    }
+
+    /**
      * Adds a filled circle ellipse — shortcut for
      * {@code addEllipse(e -> e.circle(diameter).fillColor(fillColor))}.
      *

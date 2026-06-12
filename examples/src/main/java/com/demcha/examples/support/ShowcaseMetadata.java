@@ -95,6 +95,7 @@ final class ShowcaseMetadata {
         feature("tables", "composed-table-cell-showcase", "Composed Table Cells", "DocumentTableCell.node(DocumentNode) — paragraphs, lists, sub-tables inside cells with two-pass measurement.", "tables", "v1.6");
         feature("canvas", "canvas-layer-showcase", "Canvas Layer (free-canvas)", "CanvasLayerNode — pixel-precise (x,y) placement of children inside a fixed bounding box.", "canvas", "v1.6", "absolute");
         feature("shapes", "shape-container", "Shape-as-Container", "Rounded rect, ellipse, circle containers with ClipPolicy and layered children.", "shapes", "clip");
+        feature("shapes", "vector-path", "Vector Paths (Bézier)", "addPath(...) — free-form design shapes with native cubic Bézier curves: stroked waves, filled blobs, mixed line/curve ribbons. No tessellation.", "shapes", "bezier", "v1.8");
         feature("transforms", "transforms", "Layers + Transforms", "rotate / scale on every leaf builder + LayerStack with explicit z-index.", "transforms", "layers");
         feature("text", "rich-text-showcase", "Rich Text", "Inline runs with bold / italic / colour / link options, markdown parsing.", "text", "rich");
         feature("text", "section-presets", "Section Presets", "Pre-baked section bands, accent strips, soft panels for templates.", "text", "sections");

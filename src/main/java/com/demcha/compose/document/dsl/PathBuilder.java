@@ -3,11 +3,11 @@ package com.demcha.compose.document.dsl;
 import com.demcha.compose.document.api.Beta;
 import com.demcha.compose.document.node.PathNode;
 import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.svg.SvgPath;
 import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.svg.SvgPath;
 
 import java.awt.*;
 import java.util.ArrayList;

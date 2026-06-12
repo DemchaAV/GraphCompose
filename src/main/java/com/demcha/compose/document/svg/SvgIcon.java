@@ -28,8 +28,10 @@ import java.util.Objects;
  * requested width with the icon's own aspect ratio.</p>
  *
  * <p>Out of scope (deliberately, this is an icon reader, not a browser):
- * gradients, CSS stylesheets and classes, text, masks, filters,
- * {@code <use>} references, and animations. The XML reader refuses
+ * gradients, CSS stylesheets and classes, text, masks, clip paths,
+ * filters, {@code <use>} references, nested {@code <svg>} viewBoxes (inner
+ * frames recurse but their coordinates stay in the outer space), and
+ * animations. The XML reader refuses
  * DOCTYPEs, so external-entity tricks cannot reach the file system.</p>
  *
  * <pre>{@code

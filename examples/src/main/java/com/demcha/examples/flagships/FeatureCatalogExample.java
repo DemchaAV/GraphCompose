@@ -348,13 +348,13 @@ public final class FeatureCatalogExample {
 
             feature(flow, "SVG icons (beta) — multicolour files centred on tile cards", """
                     SvgIcon icon = SvgIcon.read(Path.of("icons/apple.svg"));  // layers + resolved paints
-                    card.roundedRect(74, 64, 8)                       // fixed box = the tile
-                        .position(iconNode(icon), 0, -7, LayerAlign.CENTER)  // anchor centres the icon's
-                        .bottomCenter(plaque("APPLE"))                // own tight box inside the card""",
+                    card.roundedRect(74, 64, 8)                          // fixed box = the tile
+                        .position(icon.node(34), 0, -7, LayerAlign.CENTER)  // icon.node keeps its tight
+                        .bottomCenter(plaque("APPLE"))                   // box, so CENTER lands true""",
                     demo -> demo.addRow(r -> {
                         r.spacing(8).evenWeights();
                         for (String[] entry : CATALOG_ICONS) {
-                            r.addSection("Tile" + entry[1], s -> s.add(iconCard(entry[0], entry[1])));
+                            r.add(iconCard(entry[0], entry[1]));
                         }
                     }));
 
@@ -499,34 +499,21 @@ public final class FeatureCatalogExample {
     }
 
     /**
-     * Mini tile for the icon row: fixed rounded card, the icon centred in the
-     * body as a tight-box layer stack, a label plaque across the bottom. The
-     * stack keeps the icon's exact contain-fit size — that is what makes the
-     * card's CENTER anchor land true.
+     * Mini tile for the icon row: fixed rounded card, the icon centred in
+     * the body via {@link SvgIcon#node(double)} (its tight box is what makes
+     * the card's CENTER anchor land true), a label plaque across the bottom.
      */
     private static com.demcha.compose.document.node.DocumentNode iconCard(String name, String label) {
         SvgIcon icon = catalogIcon(name);
         double box = 34;
         double width = Math.min(box, box * icon.aspectRatio());
-        double height = width / icon.aspectRatio();
-        var stack = new com.demcha.compose.document.dsl.LayerStackBuilder().name("Icon" + label);
-        for (int i = 0; i < icon.layers().size(); i++) {
-            SvgIcon.Layer layer = icon.layers().get(i);
-            stack.layer(new com.demcha.compose.document.dsl.PathBuilder()
-                    .name("SvgLayer" + i)
-                    .size(width, height)
-                    .svg(layer.geometry())
-                    .fillColor(layer.fill())
-                    .stroke(layer.stroke())
-                    .build());
-        }
         double plaqueHeight = 14;
         return new com.demcha.compose.document.dsl.ShapeContainerBuilder()
                 .name("IconCard" + label)
                 .roundedRect(74, 64, 8)
                 .fillColor(DocumentColor.rgb(248, 249, 251))
                 .stroke(DocumentStroke.of(DocumentColor.rgb(228, 231, 236), 0.8))
-                .position(stack.build(), 0, -plaqueHeight / 2.0,
+                .position(icon.node(width), 0, -plaqueHeight / 2.0,
                         com.demcha.compose.document.node.LayerAlign.CENTER)
                 .bottomCenter(new com.demcha.compose.document.dsl.ShapeContainerBuilder()
                         .name("Plaque" + label)

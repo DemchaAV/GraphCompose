@@ -7,6 +7,7 @@ import com.demcha.compose.document.layout.PlacedNode;
 import com.demcha.compose.document.node.PathNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.svg.SvgPath;
@@ -90,6 +91,40 @@ class PathBuilderTest {
         assertThatThrownBy(missingMoveTo::build)
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("must start with a MoveTo");
+    }
+
+    @Test
+    void gradientPaintsFlowThroughToTheNode() {
+        DocumentPaint axis = new DocumentPaint.LinearAxis(java.util.List.of(
+                new DocumentPaint.Stop(0.0, DocumentColor.rgb(167, 139, 250)),
+                new DocumentPaint.Stop(1.0, DocumentColor.rgb(97, 40, 217))),
+                0.0, 0.0, 1.0, 1.0);
+
+        PathNode node = new PathBuilder()
+                .size(100, 40)
+                .moveTo(0.0, 0.5)
+                .lineTo(1.0, 0.5)
+                .fill(axis)
+                .stroke(DocumentStroke.of(DocumentColor.rgb(20, 60, 120), 2.0))
+                .strokePaint(axis)
+                .build();
+
+        assertThat(node.fillPaint()).isSameAs(axis);
+        assertThat(node.strokePaint()).isSameAs(axis);
+    }
+
+    @Test
+    void strokePaintWithoutAStrokeFailsAtBuild() {
+        PathBuilder builder = new PathBuilder()
+                .size(100, 40)
+                .moveTo(0.0, 0.5)
+                .lineTo(1.0, 0.5)
+                .strokePaint(DocumentPaint.linear(
+                        DocumentColor.rgb(167, 139, 250), DocumentColor.rgb(97, 40, 217)));
+
+        assertThatThrownBy(builder::build)
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("strokePaint needs a stroke");
     }
 
     @Test

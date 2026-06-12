@@ -3,7 +3,10 @@ package com.demcha.compose.document.layout.definitions;
 import com.demcha.compose.document.layout.*;
 import com.demcha.compose.document.layout.payloads.PathFragmentPayload;
 import com.demcha.compose.document.node.PathNode;
+import com.demcha.compose.document.style.DocumentPaint;
+import com.demcha.compose.document.style.DocumentStroke;
 
+import java.awt.Color;
 import java.util.List;
 
 import static com.demcha.compose.document.layout.NodeDefinitionSupport.EPS;
@@ -52,6 +55,26 @@ public final class PathDefinition implements NodeDefinition<PathNode> {
         if (width <= EPS || height <= EPS) {
             return List.of();
         }
+        // Solid paints normalise to flat colours so the render path (and its
+        // byte output) is identical to plain fillColor/stroke; only true
+        // gradients travel as paints. Mirrors ShapeDefinition.
+        Color fill;
+        DocumentPaint fillGradient = null;
+        if (node.fillPaint() instanceof DocumentPaint.Solid solid) {
+            fill = solid.color().color();
+        } else if (node.fillPaint() != null) {
+            fillGradient = node.fillPaint();
+            fill = null;
+        } else {
+            fill = node.fillColor() == null ? null : node.fillColor().color();
+        }
+        DocumentStroke stroke = node.stroke();
+        DocumentPaint strokeGradient = null;
+        if (node.strokePaint() instanceof DocumentPaint.Solid solid) {
+            stroke = DocumentStroke.of(solid.color(), stroke.width());
+        } else if (node.strokePaint() != null) {
+            strokeGradient = node.strokePaint();
+        }
         return List.of(new LayoutFragment(
                 placement.path(),
                 0,
@@ -61,8 +84,10 @@ public final class PathDefinition implements NodeDefinition<PathNode> {
                 height,
                 new PathFragmentPayload(
                         node.segments(),
-                        node.fillColor() == null ? null : node.fillColor().color(),
-                        toStroke(node.stroke()),
+                        fill,
+                        fillGradient,
+                        toStroke(stroke),
+                        strokeGradient,
                         null,
                         null,
                         node.dashPattern())));

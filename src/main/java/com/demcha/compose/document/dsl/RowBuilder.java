@@ -58,6 +58,11 @@ public final class RowBuilder {
                || child instanceof BarcodeNode
                || child instanceof SectionNode
                || child instanceof ContainerNode
+               // ShapeContainerNode is the same shape of thing as
+               // LayerStackNode below: a fixed atomic box of overlay layers
+               // (it reuses LayerStackNode.Layer), so it slots into a row
+               // column without competing for the horizontal band.
+               || child instanceof ShapeContainerNode
                // LayerStackNode is an atomic overlay composite: its layers
                // share the same bounding box and do not compete with the
                // parent row's horizontal band, so it is safe to drop into a

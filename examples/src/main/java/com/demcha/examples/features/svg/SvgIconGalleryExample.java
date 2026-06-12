@@ -2,9 +2,7 @@ package com.demcha.examples.features.svg;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.dsl.LayerStackBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
-import com.demcha.compose.document.dsl.PathBuilder;
 import com.demcha.compose.document.dsl.ShapeContainerBuilder;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
@@ -123,9 +121,7 @@ public final class SvgIconGalleryExample {
                     page.addRow(row -> {
                         row.spacing(10).evenWeights().margin(DocumentInsets.bottom(10));
                         for (String name : chunk) {
-                            // Rows host sections; the fixed-size card rides inside one.
-                            row.addSection("Tile" + name.replace('-', '_'),
-                                    s -> s.add(card(name)));
+                            row.add(card(name));
                         }
                         // Pad the last row so its cells line up with the full rows.
                         for (int filler = chunk.size(); filler < COLUMNS; filler++) {
@@ -149,33 +145,20 @@ public final class SvgIconGalleryExample {
                 .roundedRect(CARD_WIDTH, CARD_HEIGHT, CARD_RADIUS)
                 .fillColor(CARD_FILL)
                 .stroke(DocumentStroke.of(CARD_BORDER, 0.8))
-                .position(iconStack(name, id), 0, -PLAQUE_HEIGHT / 2.0, LayerAlign.CENTER)
+                .position(iconStack(name), 0, -PLAQUE_HEIGHT / 2.0, LayerAlign.CENTER)
                 .bottomCenter(plaque(name, id))
                 .build();
     }
 
     /**
-     * Builds the icon as a standalone layer stack whose box is exactly the
-     * icon's contain-fit size, so the card's CENTER anchor lands true.
-     * (The flow-level {@code addSvgIcon(...)} sugar targets flows; a card
-     * layer needs the node form of the same composition.)
+     * Builds the icon as a standalone node via {@link SvgIcon#node(double)}
+     * — its box is exactly the icon's contain-fit size, so the card's
+     * CENTER anchor lands true.
      */
-    private static DocumentNode iconStack(String name, String id) {
+    private static DocumentNode iconStack(String name) {
         SvgIcon icon = loadIcon(name);
         double width = Math.min(ICON_BOX, ICON_BOX * icon.aspectRatio());
-        double height = width / icon.aspectRatio();
-        LayerStackBuilder stack = new LayerStackBuilder().name("Icon" + id);
-        for (int i = 0; i < icon.layers().size(); i++) {
-            SvgIcon.Layer layer = icon.layers().get(i);
-            stack.layer(new PathBuilder()
-                    .name("SvgLayer" + i)
-                    .size(width, height)
-                    .svg(layer.geometry())
-                    .fillColor(layer.fill())
-                    .stroke(layer.stroke())
-                    .build());
-        }
-        return stack.build();
+        return icon.node(width);
     }
 
     /**

@@ -556,19 +556,7 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     @com.demcha.compose.document.api.Beta
     public T addSvgIcon(com.demcha.compose.document.svg.SvgIcon icon, double width) {
         Objects.requireNonNull(icon, "icon");
-        double height = width / icon.aspectRatio();
-        return addLayerStack(stack -> {
-            for (int i = 0; i < icon.layers().size(); i++) {
-                com.demcha.compose.document.svg.SvgIcon.Layer layer = icon.layers().get(i);
-                stack.layer(new PathBuilder()
-                        .name("SvgLayer" + i)
-                        .size(width, height)
-                        .svg(layer.geometry())
-                        .fillColor(layer.fill())
-                        .stroke(layer.stroke())
-                        .build());
-            }
-        });
+        return add(icon.node(width));
     }
 
     /**

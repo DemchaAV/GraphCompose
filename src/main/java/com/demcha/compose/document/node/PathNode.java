@@ -1,6 +1,7 @@
 package com.demcha.compose.document.node;
 
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.document.style.DocumentStroke;
@@ -28,8 +29,10 @@ import java.util.Objects;
  *                  {@link DocumentPathSegment.MoveTo}
  * @param fillColor optional fill colour (non-zero winding rule)
  * @param stroke    optional outline stroke
- * @param padding   inner padding
- * @param margin    outer margin
+ * @param padding     inner padding
+ * @param margin      outer margin
+ * @param dashPattern dash pattern for the stroke; defaults to
+ *                    {@link DocumentDashPattern#NONE} (solid)
  * @author Artem Demchyshyn
  * @since 1.8.0
  */
@@ -41,7 +44,8 @@ public record PathNode(
         DocumentColor fillColor,
         DocumentStroke stroke,
         DocumentInsets padding,
-        DocumentInsets margin
+        DocumentInsets margin,
+        DocumentDashPattern dashPattern
 ) implements DocumentNode {
     /**
      * Validates dimensions and the segment list; copy-protects the segments.
@@ -61,6 +65,7 @@ public record PathNode(
         }
         padding = padding == null ? DocumentInsets.zero() : padding;
         margin = margin == null ? DocumentInsets.zero() : margin;
+        dashPattern = dashPattern == null ? DocumentDashPattern.NONE : dashPattern;
         if (width <= 0 || Double.isNaN(width) || Double.isInfinite(width)) {
             throw new IllegalArgumentException("width must be finite and positive: " + width);
         }

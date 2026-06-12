@@ -362,7 +362,8 @@ Free-form design shapes with native cubic Bézier curves through
 ribbons in one closed subpath. Curves render as native PDF `curveTo`
 operators — perfectly smooth at any zoom, no tessellation. Coordinates
 are normalized to the shape's box (`(0,0)` bottom-left, `y` up) and
-control points may overshoot it.
+control points may overshoot it. Strokes can be dashed via
+`dashed(on, off, ...)` — the pattern follows the curve.
 
 ```java
 flow.addPath(path -> path

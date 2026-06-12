@@ -1,5 +1,6 @@
 package com.demcha.compose.document.backend.fixed.pdf.handlers;
 
+import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.document.style.ShapePoint;
 import com.demcha.compose.engine.components.content.shape.Stroke;
@@ -28,6 +29,20 @@ final class PdfShapeGeometry {
                                   Color fillColor,
                                   Stroke stroke,
                                   PathEmitter path) throws IOException {
+        fillAndStrokePath(stream, fillColor, stroke, null, path);
+    }
+
+    /**
+     * Variant of {@link #fillAndStrokePath(PDPageContentStream, Color, Stroke, PathEmitter)}
+     * with an optional dash pattern applied to the stroke inside the saved
+     * graphics state ({@code null} or {@link DocumentDashPattern#NONE} keeps
+     * the stroke solid).
+     */
+    static void fillAndStrokePath(PDPageContentStream stream,
+                                  Color fillColor,
+                                  Stroke stroke,
+                                  DocumentDashPattern dashPattern,
+                                  PathEmitter path) throws IOException {
         boolean hasFill = fillColor != null;
         boolean hasStroke = stroke != null
                             && stroke.strokeColor() != null
@@ -42,6 +57,7 @@ final class PdfShapeGeometry {
                 PdfAlphaSupport.applyStrokeAlpha(stream, stroke.strokeColor().color());
                 stream.setStrokingColor(stroke.strokeColor().color());
                 stream.setLineWidth((float) stroke.width());
+                applyDashPattern(stream, dashPattern);
             }
             if (hasFill) {
                 PdfAlphaSupport.applyFillAlpha(stream, fillColor);
@@ -166,6 +182,23 @@ final class PdfShapeGeometry {
             stream.lineTo(x, top);
         }
         stream.closePath();
+    }
+
+    /**
+     * Applies a dash pattern to the stream's stroking state. No-op for
+     * {@code null} or solid patterns. Shared by the line and path renderers
+     * so both emit identical dash arrays.
+     */
+    static void applyDashPattern(PDPageContentStream stream, DocumentDashPattern dash) throws IOException {
+        if (dash == null || dash.isSolid()) {
+            return;
+        }
+        List<Double> segments = dash.segments();
+        float[] dashArray = new float[segments.size()];
+        for (int i = 0; i < dashArray.length; i++) {
+            dashArray[i] = segments.get(i).floatValue();
+        }
+        stream.setLineDashPattern(dashArray, 0f);
     }
 
     /**

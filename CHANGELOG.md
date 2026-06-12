@@ -64,7 +64,9 @@ Entries land here as they merge.
   and/or stroke. This is the leaf vehicle for smooth chart lines, decorative
   design shapes, and future SVG path import. DSL:
   `addPath(p -> p.moveTo(...).curveTo(...).closePath().fillColor(...))` on
-  every flow builder authors design shapes directly.
+  every flow builder authors design shapes directly, and
+  `dashed(on, off, ...)` makes the stroke dashed with the same
+  `DocumentDashPattern` contract as lines — the pattern follows the curve.
 - **Inline sparklines** (`@since 1.8.0`). `RichText.sparkline(w, h, color,
   values...)` draws a filled mini-area silhouette on the text baseline, and
   `sparklineLine(w, h, thickness, color, values...)` a constant-thickness line

@@ -4,6 +4,7 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.node.PathNode;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.testing.visual.ImageDiff;
@@ -74,7 +75,7 @@ class PathPrimitiveDemoTest {
                             cubicTo(0.75, 1.1, 0.75, -0.1, 1.0, 0.5)),
                     null,
                     DocumentStroke.of(DocumentColor.rgb(20, 60, 120), 2.4),
-                    DocumentInsets.zero(), DocumentInsets.bottom(14)));
+                    DocumentInsets.zero(), DocumentInsets.bottom(14), null));
 
             // Filled blob — closed curves with overshooting control points.
             document.add(new PathNode("Blob", 110, 96,
@@ -84,7 +85,17 @@ class PathPrimitiveDemoTest {
                             close()),
                     DocumentColor.rgb(235, 205, 160),
                     DocumentStroke.of(DocumentColor.rgb(140, 90, 30), 1.4),
-                    DocumentInsets.zero(), DocumentInsets.bottom(14)));
+                    DocumentInsets.zero(), DocumentInsets.bottom(14), null));
+
+            // Dashed Bézier wave — dash pattern follows the curve.
+            document.add(new PathNode("DashedWave", 316, 40,
+                    List.of(moveTo(0.0, 0.5),
+                            cubicTo(0.25, 1.2, 0.25, -0.2, 0.5, 0.5),
+                            cubicTo(0.75, 1.2, 0.75, -0.2, 1.0, 0.5)),
+                    null,
+                    DocumentStroke.of(DocumentColor.rgb(150, 60, 20), 1.8),
+                    DocumentInsets.zero(), DocumentInsets.bottom(14),
+                    DocumentDashPattern.of(5, 3)));
 
             // Mixed ribbon — lines + curves in one closed, filled subpath.
             document.add(new PathNode("Ribbon", 316, 64,
@@ -97,7 +108,7 @@ class PathPrimitiveDemoTest {
                             close()),
                     DocumentColor.rgb(208, 226, 213),
                     DocumentStroke.of(DocumentColor.rgb(60, 110, 80), 1.2),
-                    DocumentInsets.zero(), DocumentInsets.zero()));
+                    DocumentInsets.zero(), DocumentInsets.zero(), null));
 
             return document.toPdfBytes();
         }

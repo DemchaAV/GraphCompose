@@ -236,7 +236,7 @@ final class LineChartLayout {
                     (end[0] - minX) / w, (end[1] - minY) / h));
         }
         PathNode node = new PathNode(name, w, h, segments, null, stroke,
-                DocumentInsets.zero(), DocumentInsets.zero());
+                DocumentInsets.zero(), DocumentInsets.zero(), null);
         return new ChartPrimitive(node, minX, minY, w, h);
     }
 
@@ -289,7 +289,7 @@ final class LineChartLayout {
         segments.add(DocumentPathSegment.close());
 
         PathNode node = new PathNode(name, w, h, segments, fill, null,
-                DocumentInsets.zero(), DocumentInsets.zero());
+                DocumentInsets.zero(), DocumentInsets.zero(), null);
         out.add(new ChartPrimitive(node, minX, minY, w, h));
     }
 

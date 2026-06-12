@@ -2,6 +2,7 @@ package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.node.PathNode;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.document.style.DocumentStroke;
@@ -43,6 +44,7 @@ public final class PathBuilder {
     private DocumentStroke stroke;
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
+    private DocumentDashPattern dashPattern = DocumentDashPattern.NONE;
 
     /**
      * Creates a path builder.
@@ -183,6 +185,32 @@ public final class PathBuilder {
     }
 
     /**
+     * Makes the stroke dashed using alternating on/off lengths in points
+     * (the same contract as {@code LineBuilder.dashed}). Affects only the
+     * stroke; fills are unaffected.
+     *
+     * @param pattern alternating on/off lengths in points
+     * @return this builder
+     */
+    public PathBuilder dashed(double... pattern) {
+        this.dashPattern = DocumentDashPattern.of(pattern);
+        return this;
+    }
+
+    /**
+     * Makes the stroke dashed using a prepared {@link DocumentDashPattern}.
+     * A {@code null} or {@link DocumentDashPattern#NONE} pattern keeps the
+     * stroke solid.
+     *
+     * @param pattern dash pattern, or {@code null} for solid
+     * @return this builder
+     */
+    public PathBuilder dashed(DocumentDashPattern pattern) {
+        this.dashPattern = pattern == null ? DocumentDashPattern.NONE : pattern;
+        return this;
+    }
+
+    /**
      * Sets the path padding.
      *
      * @param padding padding in points
@@ -215,6 +243,6 @@ public final class PathBuilder {
      *                                  added, or the box is not positive
      */
     public PathNode build() {
-        return new PathNode(name, width, height, segments, fillColor, stroke, padding, margin);
+        return new PathNode(name, width, height, segments, fillColor, stroke, padding, margin, dashPattern);
     }
 }

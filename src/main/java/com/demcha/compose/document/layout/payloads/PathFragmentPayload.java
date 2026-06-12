@@ -2,6 +2,7 @@ package com.demcha.compose.document.layout.payloads;
 
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 
@@ -20,6 +21,8 @@ import java.util.Objects;
  * @param stroke          optional stroke
  * @param linkOptions     optional fragment-level link metadata
  * @param bookmarkOptions optional fragment-level bookmark metadata
+ * @param dashPattern     dash pattern for the stroke;
+ *                        {@link DocumentDashPattern#NONE} is solid
  * @author Artem Demchyshyn
  * @since 1.8.0
  */
@@ -28,13 +31,15 @@ public record PathFragmentPayload(
         Color fillColor,
         Stroke stroke,
         DocumentLinkOptions linkOptions,
-        DocumentBookmarkOptions bookmarkOptions
+        DocumentBookmarkOptions bookmarkOptions,
+        DocumentDashPattern dashPattern
 ) implements PdfSemanticFragmentPayload {
     /**
-     * Copies the segment list defensively.
+     * Copies the segment list defensively and normalizes the dash pattern.
      */
     public PathFragmentPayload {
         Objects.requireNonNull(segments, "segments");
         segments = List.copyOf(segments);
+        dashPattern = dashPattern == null ? DocumentDashPattern.NONE : dashPattern;
     }
 }

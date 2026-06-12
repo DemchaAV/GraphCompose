@@ -1,6 +1,7 @@
 package com.demcha.compose.document.node;
 
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.document.style.DocumentStroke;
@@ -77,9 +78,15 @@ class PathNodeTest {
     void boxDimensionsMustBeFiniteAndPositive() {
         assertThatThrownBy(() -> new PathNode("Bad", 0, 40,
                 List.of(moveTo(0, 0), lineTo(1, 1)), null, STROKE,
-                DocumentInsets.zero(), DocumentInsets.zero()))
+                DocumentInsets.zero(), DocumentInsets.zero(), null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("width must be finite and positive");
+    }
+
+    @Test
+    void dashPatternDefaultsToSolid() {
+        assertThat(node(List.of(moveTo(0, 0), lineTo(1, 1))).dashPattern())
+                .isEqualTo(DocumentDashPattern.NONE);
     }
 
     @Test
@@ -89,6 +96,6 @@ class PathNodeTest {
 
     private static PathNode node(List<DocumentPathSegment> segments) {
         return new PathNode("P", 120, 60, segments, null, STROKE,
-                DocumentInsets.zero(), DocumentInsets.zero());
+                DocumentInsets.zero(), DocumentInsets.zero(), null);
     }
 }

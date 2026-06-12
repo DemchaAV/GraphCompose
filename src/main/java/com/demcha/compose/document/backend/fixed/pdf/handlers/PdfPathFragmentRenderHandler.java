@@ -42,6 +42,7 @@ public final class PdfPathFragmentRenderHandler
         float width = (float) fragment.width();
         float height = (float) fragment.height();
         PdfShapeGeometry.fillAndStrokePath(stream, payload.fillColor(), payload.stroke(),
+                payload.dashPattern(),
                 s -> PdfShapeGeometry.addPathSegments(s, x, y, width, height, payload.segments()));
     }
 }

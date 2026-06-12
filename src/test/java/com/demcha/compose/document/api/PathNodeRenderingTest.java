@@ -53,7 +53,7 @@ class PathNodeRenderingTest {
                         cubicTo(0.75, 1.0, 0.75, 0.0, 1.0, 0.5)),
                 null,
                 DocumentStroke.of(DocumentColor.rgb(20, 60, 120), 2.0),
-                DocumentInsets.zero(), DocumentInsets.bottom(8));
+                DocumentInsets.zero(), DocumentInsets.bottom(8), null);
     }
 
     private static PathNode blob() {
@@ -64,6 +64,6 @@ class PathNodeRenderingTest {
                         close()),
                 DocumentColor.rgb(235, 205, 160),
                 DocumentStroke.of(DocumentColor.rgb(140, 90, 30), 1.2),
-                DocumentInsets.zero(), DocumentInsets.zero());
+                DocumentInsets.zero(), DocumentInsets.zero(), null);
     }
 }

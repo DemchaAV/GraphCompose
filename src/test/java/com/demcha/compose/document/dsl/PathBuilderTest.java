@@ -52,6 +52,19 @@ class PathBuilderTest {
     }
 
     @Test
+    void dashedFlowsThroughToTheNode() {
+        PathNode node = new PathBuilder()
+                .size(100, 40)
+                .moveTo(0.0, 0.5)
+                .lineTo(1.0, 0.5)
+                .stroke(DocumentStroke.of(DocumentColor.rgb(20, 60, 120), 1.0))
+                .dashed(4, 2)
+                .build();
+
+        assertThat(node.dashPattern().segments()).containsExactly(4.0, 2.0);
+    }
+
+    @Test
     void nodeValidationFlowsThroughBuild() {
         PathBuilder missingMoveTo = new PathBuilder()
                 .size(100, 40)

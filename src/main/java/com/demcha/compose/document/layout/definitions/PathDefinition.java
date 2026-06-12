@@ -64,6 +64,7 @@ public final class PathDefinition implements NodeDefinition<PathNode> {
                         node.fillColor() == null ? null : node.fillColor().color(),
                         toStroke(node.stroke()),
                         null,
-                        null)));
+                        null,
+                        node.dashPattern())));
     }
 }

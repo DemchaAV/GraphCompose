@@ -52,7 +52,7 @@ public final class VectorPathExample {
         Path pdfFile = ExampleOutputPaths.prepare("features/shapes", "vector-path.pdf");
 
         try (DocumentSession document = GraphCompose.document(pdfFile)
-                .pageSize(420, 420)
+                .pageSize(420, 540)
                 .margin(DocumentInsets.of(28))
                 .create()) {
             document.pageFlow(page -> page
@@ -75,6 +75,16 @@ public final class VectorPathExample {
                             .closePath()
                             .fillColor(SAND)
                             .stroke(DocumentStroke.of(SAND_EDGE, 1.4))
+                            .margin(DocumentInsets.bottom(16)))
+                    .addParagraph("Dashed Bézier wave — dashed(6, 3) follows the curve")
+                    .addPath(path -> path
+                            .name("DashedWave")
+                            .size(364, 44)
+                            .moveTo(0.0, 0.5)
+                            .curveTo(0.25, 1.2, 0.25, -0.2, 0.5, 0.5)
+                            .curveTo(0.75, 1.2, 0.75, -0.2, 1.0, 0.5)
+                            .stroke(DocumentStroke.of(INK, 1.8))
+                            .dashed(6, 3)
                             .margin(DocumentInsets.bottom(16)))
                     .addParagraph("Mixed ribbon — lines and curves in one closed, filled subpath")
                     .addPath(path -> path

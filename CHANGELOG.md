@@ -67,6 +67,17 @@ Entries land here as they merge.
   every flow builder authors design shapes directly, and
   `dashed(on, off, ...)` makes the stroke dashed with the same
   `DocumentDashPattern` contract as lines — the pattern follows the curve.
+- **SVG path import** (`@since 1.8.0`, **beta** — annotated `@Beta` while
+  the surface hardens against real-world exporter output). `SvgPath.parse(d)` /
+  `parse(d, viewBox...)` in the new `document.svg` package lowers the full
+  SVG 1.1 path grammar — absolute/relative `M L H V C S Q T A Z`, implicit
+  repetition, quadratics (exact cubic elevation), smooth shorthands, and
+  elliptical arcs (deterministic W3C endpoint-to-center conversion, ≤90°
+  cubic slices) — into normalized, y-flipped `DocumentPathSegment`s.
+  `PathBuilder.svg(svgPath)` drops the result straight into `addPath(...)`:
+  any icon's `d` string renders as native PDF curves, no tessellation.
+  Syntax errors report the character position; fills keep SVG's default
+  non-zero winding rule.
 - **Inline sparklines** (`@since 1.8.0`). `RichText.sparkline(w, h, color,
   values...)` draws a filled mini-area silhouette on the text baseline, and
   `sparklineLine(w, h, thickness, color, values...)` a constant-thickness line

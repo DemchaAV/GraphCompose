@@ -25,6 +25,7 @@ Committed direction. Tracked in CHANGELOG (Phase E) and issues.
 Not committed. Reflects current thinking; priorities may shift based on user feedback and adoption signals.
 
 - **DOCX visibility for unsupported nodes.** Make currently-silent skips (`shape`, `line`, `ellipse`, `barcode`) loud &mdash; minimum a warn log, ideally a strict-mode flag that fails instead of dropping content silently.
+- **Block-level alignment for fixed-size flow children.** Paths, images, layer stacks, shape containers and barcodes currently left-align in a flow; centring one means wrapping it in a full-width `ShapeContainer` just to use its CENTER anchor. Add a per-node horizontal align (left / centre / right &mdash; the `margin: auto` / `align(center)` analogue) so a fixed box can place itself in the flow directly. Surfaced by the v1.8 SVG icon-gallery and feature-catalog work.
 - **Backend-neutral layout measurement.** Decouple measurement from PDFBox-specific resources so non-PDF backends do not pull PDFBox into the dependency graph.
 - **Multi-module Maven layout.** Split the artifact into `graph-compose-core` / `graph-compose-pdf` / `graph-compose-docx` / `graph-compose-templates` / `graph-compose-testing` if there is clear demand. Adds release complexity, so requires a real adoption signal first.
 - **DOCX maturity.** Either expand DOCX coverage toward PDF parity, or move DOCX behind an explicitly experimental flag.

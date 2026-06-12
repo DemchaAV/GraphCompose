@@ -88,6 +88,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | Example | What it shows | Preview · Source |
 |---|---|---|
 | [Shape containers](#shape-containers) | Circles, ellipses, rounded cards with `ClipPolicy.CLIP_PATH` | [PDF](../assets/readme/examples/shape-container.pdf) · [Source](src/main/java/com/demcha/examples/features/shapes/ShapeContainerExample.java) |
+| [Vector paths (Bézier)](#vector-paths-bézier) | `addPath(...)` — design shapes with native cubic curves: waves, blobs, ribbons; zero tessellation | [PDF](../assets/readme/examples/vector-path.pdf) · [Source](src/main/java/com/demcha/examples/features/shapes/VectorPathExample.java) |
 | [Advanced tables](#advanced-tables) | Row span, zebra rows, totals, repeating header on page break | [PDF](../assets/readme/examples/table-advanced.pdf) · [Source](src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java) |
 | [Barcodes](#barcodes) | QR, Code 128, Code 39, EAN-13, EAN-8, branded QR with theme colours | [PDF](../assets/readme/examples/barcode-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/barcodes/BarcodeShowcaseExample.java) |
 | [Charts](#charts) | Native vector bar, line, and pie/donut charts — data/spec/style layers, axis & grid toggles, point markers, value labels, legend | [PDF](../assets/readme/examples/chart-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/charts/ChartShowcaseExample.java) |
@@ -353,6 +354,27 @@ layers both gain `int zIndex` (default `0`).
 
 [📄 View PDF](../assets/readme/examples/transforms.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/transforms/TransformsExample.java)
+
+### Vector paths (Bézier)
+
+Free-form design shapes with native cubic Bézier curves through
+`addPath(...)`: stroked waves, filled blobs, and mixed line/curve
+ribbons in one closed subpath. Curves render as native PDF `curveTo`
+operators — perfectly smooth at any zoom, no tessellation. Coordinates
+are normalized to the shape's box (`(0,0)` bottom-left, `y` up) and
+control points may overshoot it.
+
+```java
+flow.addPath(path -> path
+        .size(320, 60)
+        .moveTo(0.0, 0.5)
+        .curveTo(0.25, 1.0, 0.25, 0.0, 0.5, 0.5)
+        .curveTo(0.75, 1.0, 0.75, 0.0, 1.0, 0.5)
+        .stroke(DocumentStroke.of(accent, 2.4)));
+```
+
+[📄 View PDF](../assets/readme/examples/vector-path.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/shapes/VectorPathExample.java)
 
 ### Advanced tables
 

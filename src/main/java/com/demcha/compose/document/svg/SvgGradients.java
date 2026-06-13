@@ -216,10 +216,10 @@ final class SvgGradients {
             return userSpace ? defaultFraction * viewportSize : defaultFraction;
         }
         if (v.endsWith("%")) {
-            double fraction = Double.parseDouble(v.substring(0, v.length() - 1)) / 100.0;
+            double fraction = number(v.substring(0, v.length() - 1), "gradient coordinate") / 100.0;
             return userSpace ? fraction * viewportSize : fraction;
         }
-        return Double.parseDouble(v);
+        return number(v, "gradient coordinate");
     }
 
     private static double length(Element gradient, String attr, double defaultFraction,
@@ -231,10 +231,10 @@ final class SvgGradients {
             return userSpace ? defaultFraction * diagonal : defaultFraction;
         }
         if (v.endsWith("%")) {
-            double fraction = Double.parseDouble(v.substring(0, v.length() - 1)) / 100.0;
+            double fraction = number(v.substring(0, v.length() - 1), "gradient radius") / 100.0;
             return userSpace ? fraction * diagonal : fraction;
         }
-        return Double.parseDouble(v);
+        return number(v, "gradient radius");
     }
 
     /**
@@ -321,9 +321,24 @@ final class SvgGradients {
         }
         String v = value.trim();
         if (v.endsWith("%")) {
-            return Double.parseDouble(v.substring(0, v.length() - 1)) / 100.0;
+            return number(v.substring(0, v.length() - 1), "gradient stop value") / 100.0;
         }
-        return Double.parseDouble(v);
+        return number(v, "gradient stop value");
+    }
+
+    /**
+     * Parses a gradient numeric value, naming what failed and the offending
+     * input instead of leaking the raw {@link NumberFormatException} message
+     * ("For input string: …"). The cause is chained, and the referencing
+     * element is added by the reader's per-element error wrapper.
+     */
+    private static double number(String value, String what) {
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(
+                    what + " must be a number, got '" + value + "'", e);
+        }
     }
 
     private static String attrOrStyle(Element element, String property) {

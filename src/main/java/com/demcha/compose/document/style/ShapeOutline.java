@@ -151,6 +151,13 @@ public sealed interface ShapeOutline permits
      * arbitrary vector — a heart, a logo silhouette, an imported SVG path —
      * via {@link com.demcha.compose.document.style.ClipPolicy#CLIP_PATH}.
      *
+     * <p>Fill and clip use the non-zero winding rule and implicitly close each
+     * subpath, so a silhouette with several {@code MoveTo} rings cuts a hole
+     * (a donut, the bowl of an "O") only where an inner ring winds opposite the
+     * outer one. An <em>outline stroke</em>, in contrast, follows the segments
+     * literally and does not auto-close — end the path with a close segment for
+     * a connected stroked border.</p>
+     *
      * @param width    outer width in points
      * @param height   outer height in points
      * @param segments normalized path segments, starting with a

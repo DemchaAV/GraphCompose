@@ -214,6 +214,39 @@ class ShapeContainerBuilderTest {
     }
 
     @Test
+    void multiSubpathPathOutlineRenders() throws Exception {
+        // A donut silhouette: an outer ring and an inner counter-wound ring
+        // (two MoveTo subpaths). Non-zero winding cuts the hole; the document
+        // must render without error — guards multi-MoveTo clip geometry.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(200, 200)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            session.add(new ShapeContainerBuilder()
+                    .name("Donut")
+                    .path(100.0, 100.0, java.util.List.of(
+                            com.demcha.compose.document.style.DocumentPathSegment.moveTo(0.0, 0.0),
+                            com.demcha.compose.document.style.DocumentPathSegment.lineTo(1.0, 0.0),
+                            com.demcha.compose.document.style.DocumentPathSegment.lineTo(1.0, 1.0),
+                            com.demcha.compose.document.style.DocumentPathSegment.lineTo(0.0, 1.0),
+                            com.demcha.compose.document.style.DocumentPathSegment.close(),
+                            // inner ring, opposite winding → hole
+                            com.demcha.compose.document.style.DocumentPathSegment.moveTo(0.3, 0.3),
+                            com.demcha.compose.document.style.DocumentPathSegment.lineTo(0.3, 0.7),
+                            com.demcha.compose.document.style.DocumentPathSegment.lineTo(0.7, 0.7),
+                            com.demcha.compose.document.style.DocumentPathSegment.lineTo(0.7, 0.3),
+                            com.demcha.compose.document.style.DocumentPathSegment.close()))
+                    .fillColor(BRAND)
+                    .center(spacer("x", 20, 20))
+                    .build());
+
+            byte[] pdf = session.toPdfBytes();
+            assertThat(new String(pdf, 0, 5, java.nio.charset.StandardCharsets.US_ASCII)).isEqualTo("%PDF-");
+        }
+    }
+
+    @Test
     void pathOutlineValidatesSegments() {
         assertThatThrownBy(() -> new ShapeContainerBuilder()
                 .name("Bad")

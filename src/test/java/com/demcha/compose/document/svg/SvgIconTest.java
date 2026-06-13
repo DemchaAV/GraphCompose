@@ -472,4 +472,94 @@ class SvgIconTest {
         assertThat(icon.layers()).hasSize(1);
         assertThat(icon.layers().get(0).fill().color()).isEqualTo(new java.awt.Color(18, 52, 86));
     }
+
+    // ------------------------------------------------------------------
+    // Error clarity — say which element and why
+    // ------------------------------------------------------------------
+
+    @Test
+    void unsupportedColourNamesTheOffendingElement() {
+        assertThatThrownBy(() -> SvgIcon.parse("""
+                <svg viewBox="0 0 10 10">
+                  <circle cx="5" cy="5" r="4" fill="burlywoodish"/>
+                </svg>
+                """))
+                .isInstanceOf(IllegalArgumentException.class)
+                // pinpoints the element + the bad attribute, then the reason
+                .hasMessageContaining("<circle")
+                .hasMessageContaining("fill=\"burlywoodish\"")
+                .hasMessageContaining("unsupported SVG colour");
+    }
+
+    @Test
+    void errorContextPinpointsTheDeepestElementNotTheGroup() {
+        assertThatThrownBy(() -> SvgIcon.parse("""
+                <svg viewBox="0 0 10 10">
+                  <g transform="translate(1 1)">
+                    <path d="M0 0 H10" fill="#000" transform="skewX(20)"/>
+                  </g>
+                </svg>
+                """))
+                .isInstanceOf(IllegalArgumentException.class)
+                // the failing element is the path, not the wrapping <g>
+                .hasMessageContaining("<path")
+                .hasMessageContaining("skewX(20)")
+                .hasMessageContaining("unsupported transform");
+    }
+
+    @Test
+    void longAttributesAreTruncatedInTheContext() {
+        // A path whose d is invalid for parsing — the d value is truncated in
+        // the context so the message stays readable.
+        String bigD = "M0 0 " + "L1 1 ".repeat(40) + "BADCMD";
+        assertThatThrownBy(() -> SvgIcon.parse(
+                "<svg viewBox='0 0 10 10'><path fill='#000' d='" + bigD + "'/></svg>"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("<path")
+                .hasMessageContaining("…");
+    }
+
+    @Test
+    void blankIconExplainsWhatItSkipped() {
+        // A text-only SVG renders nothing — the error must say why, naming the
+        // dropped element kind instead of a bare "no geometry".
+        assertThatThrownBy(() -> SvgIcon.parse("""
+                <svg viewBox="0 0 10 10">
+                  <text x="1" y="5" fill="#000">hello</text>
+                </svg>
+                """))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("no drawable geometry")
+                .hasMessageContaining("skipped text")
+                .hasMessageContaining("vector shapes only");
+    }
+
+    @Test
+    void malformedNumericAttributeNamesElementAttributeAndReason() {
+        // A non-numeric geometry attribute must name the element AND say which
+        // field expected a number — not leak a bare JDK "For input string".
+        assertThatThrownBy(() -> SvgIcon.parse("""
+                <svg viewBox="0 0 10 10">
+                  <rect x="0" y="0" width="abc" height="10" fill="#000"/>
+                </svg>
+                """))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("<rect")
+                .hasMessageContaining("width must be a number")
+                .hasMessageContaining("abc");
+    }
+
+    @Test
+    void malformedViewBoxNumberSaysWhatExpectedANumber() {
+        // viewBox is parsed before the element walk, so its own error must be
+        // self-describing rather than a bare JDK parse message.
+        assertThatThrownBy(() -> SvgIcon.parse("""
+                <svg viewBox="0 0 ten 10">
+                  <rect width="10" height="10" fill="#000"/>
+                </svg>
+                """))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("viewBox")
+                .hasMessageContaining("must be a number");
+    }
 }

@@ -44,6 +44,7 @@ public final class BuiltInNodeDefinitions {
                 .register(new CanvasLayerDefinition())
                 .register(new PolygonDefinition())
                 .register(new PathDefinition())
+                .register(new AlignDefinition())
                 .register(new ChartDefinition());
     }
 }

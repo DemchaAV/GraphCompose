@@ -560,6 +560,42 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     }
 
     /**
+     * Adds a multi-layer SVG icon at the given width, horizontally aligned
+     * within the available content width — the one-call way to centre or
+     * right-align an icon on the page.
+     *
+     * @param icon  parsed SVG icon
+     * @param width target icon width in points
+     * @param align horizontal placement within the available width
+     * @return this builder
+     * @since 1.8.0
+     */
+    @com.demcha.compose.document.api.Beta
+    public T addSvgIcon(com.demcha.compose.document.svg.SvgIcon icon, double width,
+                        com.demcha.compose.document.node.HorizontalAlign align) {
+        Objects.requireNonNull(icon, "icon");
+        return addAligned(align, icon.node(width));
+    }
+
+    /**
+     * Adds a node positioned horizontally within the full available content
+     * width — the block-level {@code margin: auto} / {@code align(center)} for
+     * any fixed-size node (path, image, icon, barcode, shape container) that
+     * would otherwise left-align in the flow.
+     *
+     * @param align horizontal placement
+     * @param node  the node to position
+     * @return this builder
+     * @since 1.8.0
+     */
+    public T addAligned(com.demcha.compose.document.node.HorizontalAlign align,
+                        com.demcha.compose.document.node.DocumentNode node) {
+        Objects.requireNonNull(align, "align");
+        Objects.requireNonNull(node, "node");
+        return add(new com.demcha.compose.document.node.AlignNode(node, align));
+    }
+
+    /**
      * Adds a filled circle ellipse — shortcut for
      * {@code addEllipse(e -> e.circle(diameter).fillColor(fillColor))}.
      *

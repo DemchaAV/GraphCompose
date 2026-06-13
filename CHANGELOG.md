@@ -10,6 +10,15 @@ Entries land here as they merge.
 
 ### Public API
 
+- **Block-level horizontal alignment** (`@since 1.8.0`). Fixed-size flow
+  children (paths, images, SVG icons, barcodes, shape containers) left-align
+  by default — there was no built-in way to centre or right-align one without
+  wrapping it in a full-width container and hand-computing the content width.
+  New `AlignNode` + `HorizontalAlign` (LEFT / CENTER / RIGHT) seat any node
+  across the available width: `flow.addAligned(HorizontalAlign.CENTER, node)`
+  and the icon sugar `flow.addSvgIcon(icon, width, HorizontalAlign.CENTER)`.
+  The wrapper fills the width and reuses the stack placement engine (one
+  anchor), so there is no new render handler and no hot-path change.
 - **Native vector charts** (`@since 1.8.0`). New `com.demcha.compose.document.chart`
   package with a layered, serialization-friendly API: `ChartData` (categories +
   series, type/colour-agnostic), sealed `ChartSpec` (`bar()` / `line()` with
@@ -115,7 +124,13 @@ Entries land here as they merge.
   `shape`, …) it drops. The XML reader refuses DOCTYPEs (no XXE); CSS
   stylesheets, text, filters, focal radials, non-pad `spreadMethod` and
   translucent gradient stops stay deliberately out of scope — the reader
-  fails loudly rather than rendering them wrong.
+  fails loudly rather than rendering them wrong. **Every reader error names
+  the offending element and why**: an unsupported colour / transform /
+  gradient / unit is reported as `in <circle fill="…" …>: <reason — and the
+  supported set>`, pinpointing the deepest failing element (not its wrapping
+  `<g>`); a blank result explains itself (`no drawable geometry — skipped
+  text; this reader renders vector shapes only`) instead of a bare "no
+  geometry".
 - **Inline sparklines** (`@since 1.8.0`). `RichText.sparkline(w, h, color,
   values...)` draws a filled mini-area silhouette on the text baseline, and
   `sparklineLine(w, h, thickness, color, values...)` a constant-thickness line

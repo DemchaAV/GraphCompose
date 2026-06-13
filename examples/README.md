@@ -15,7 +15,7 @@ Install the library artifact once from the repository root:
 ./mvnw -DskipTests install
 ```
 
-Then run all 54 examples in one shot:
+Then run all 55 examples in one shot:
 
 ```bash
 ./mvnw -f examples/pom.xml exec:java \
@@ -32,7 +32,7 @@ Then run all 54 examples in one shot:
 Generated PDFs land in `examples/target/generated-pdfs/`. The same
 `mvnw.cmd` form works on Windows PowerShell with backslash paths.
 
-`GenerateAllExamples` runs **54** example programs — 16 CV + 15
+`GenerateAllExamples` runs **55** example programs — 16 CV + 15
 cover-letter presets plus invoices, proposals, a schedule, the feature
 demos, and the flagships. The showcase site surfaces the full generated
 catalogue (~53 PDFs); a curated 28-PDF subset is committed under
@@ -73,6 +73,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | [Composed table cells](#composed-table-cells-v16) | `DocumentTableCell.node(DocumentNode)` — paragraphs, lists, sub-tables inside cells with two-pass measurement | [PDF](../assets/readme/examples/composed-table-cell-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/tables/ComposedTableCellExample.java) |
 | [Canvas layer (free placement)](#canvas-layer-v16) | `CanvasLayerNode` — pixel-precise `(x, y)` placement of children inside a fixed bounding box, with `ClipPolicy` clipping | [PDF](../assets/readme/examples/canvas-layer-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/canvas/CanvasLayerExample.java) |
 | [Transforms](#transforms) | `rotate`, `scale`, and per-layer `zIndex` swap | [PDF](../assets/readme/examples/transforms.pdf) · [Source](src/main/java/com/demcha/examples/features/transforms/TransformsExample.java) |
+| [Block alignment](#block-alignment) | `addAligned(align, node)` / `addSvgIcon(icon, w, align)` — seat any fixed-size node left / centre / right across the content width | [PDF](../assets/readme/examples/block-align.pdf) · [Source](src/main/java/com/demcha/examples/features/layout/BlockAlignExample.java) |
 
 ### 📋 Templates recommended
 
@@ -395,6 +396,22 @@ flow.addSvgIcon(SvgIcon.parse(readResource("/icons/apple.svg")), 50);
 
 [📄 View PDF](../assets/readme/examples/svg-icon-gallery.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/svg/SvgIconGalleryExample.java)
+
+### Block alignment
+
+A fixed-size node (an SVG icon, a vector path, an image) left-aligns in
+the flow by default. `addSvgIcon(icon, width, HorizontalAlign.CENTER)` and
+the general `addAligned(align, node)` seat it left, centre, or right across
+the content width — the `margin: auto` the flow does not give fixed nodes on
+its own, with no manual width maths.
+
+```java
+flow.addSvgIcon(icon, 44, HorizontalAlign.CENTER);
+flow.addAligned(HorizontalAlign.RIGHT, anyFixedNode);
+```
+
+[📄 View PDF](../assets/readme/examples/block-align.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/layout/BlockAlignExample.java)
 
 ### Advanced tables
 

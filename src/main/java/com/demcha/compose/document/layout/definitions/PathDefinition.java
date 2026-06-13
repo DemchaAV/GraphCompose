@@ -90,6 +90,8 @@ public final class PathDefinition implements NodeDefinition<PathNode> {
                         strokeGradient,
                         null,
                         null,
-                        node.dashPattern())));
+                        node.dashPattern(),
+                        node.lineCap(),
+                        node.lineJoin())));
     }
 }

@@ -4,6 +4,9 @@ import com.demcha.compose.document.api.Beta;
 import com.demcha.compose.document.node.LayerStackNode;
 import com.demcha.compose.document.node.PathNode;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentDashPattern;
+import com.demcha.compose.document.style.DocumentLineCap;
+import com.demcha.compose.document.style.DocumentLineJoin;
 import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentStroke;
 
@@ -149,9 +152,22 @@ public final class SvgIcon {
             throw new IllegalArgumentException("icon width must be finite and positive: " + width);
         }
         double height = width / aspectRatio();
+        // Stroke widths and dash lengths live in SVG user units on the
+        // layers; they scale with the icon like every other dimension.
+        double scale = width / sourceWidth;
         List<LayerStackNode.Layer> stack = new ArrayList<>(layers.size());
         for (int i = 0; i < layers.size(); i++) {
             Layer layer = layers.get(i);
+            DocumentStroke stroke = layer.stroke() == null ? null
+                    : DocumentStroke.of(layer.stroke().color(), layer.stroke().width() * scale);
+            DocumentDashPattern dash = null;
+            if (!layer.dashArray().isEmpty()) {
+                double[] scaled = new double[layer.dashArray().size()];
+                for (int s = 0; s < scaled.length; s++) {
+                    scaled[s] = layer.dashArray().get(s) * scale;
+                }
+                dash = DocumentDashPattern.of(scaled);
+            }
             stack.add(new LayerStackNode.Layer(new PathNode(
                     "SvgLayer" + i,
                     width,
@@ -159,11 +175,13 @@ public final class SvgIcon {
                     layer.geometry().segments(),
                     layer.fill(),
                     layer.fillPaint(),
-                    layer.stroke(),
+                    stroke,
                     layer.strokePaint(),
                     null,
                     null,
-                    null)));
+                    dash,
+                    layer.lineCap(),
+                    layer.lineJoin())));
         }
         return new LayerStackNode("SvgIcon", stack, null, null);
     }
@@ -172,25 +190,36 @@ public final class SvgIcon {
      * One drawable layer: normalized geometry plus its resolved paint.
      * Gradient paints, when present, win over the flat colours; the flat
      * colours stay populated as the degradation target for backends that
-     * cannot render gradients.
+     * cannot render gradients. Stroke width (inside {@code stroke}) and the
+     * dash lengths are in <em>SVG user units</em> — {@link #node(double)}
+     * scales them to points together with the geometry.
      *
      * @param geometry    normalized path geometry (shared icon frame)
      * @param fill        fill colour, or {@code null} for no fill
      * @param fillPaint   gradient fill, or {@code null} for flat / no fill
-     * @param stroke      outline stroke, or {@code null} for no stroke
+     * @param stroke      outline stroke (width in user units), or {@code null}
      * @param strokePaint gradient stroke paint, or {@code null} for flat
+     * @param lineCap     stroke end-cap style; never {@code null} (BUTT default)
+     * @param lineJoin    stroke corner style; never {@code null} (MITER default)
+     * @param dashArray   stroke dash lengths in user units; empty for solid
      * @since 1.8.0
      */
     public record Layer(SvgPath geometry,
                         DocumentColor fill,
                         DocumentPaint fillPaint,
                         DocumentStroke stroke,
-                        DocumentPaint strokePaint) {
+                        DocumentPaint strokePaint,
+                        DocumentLineCap lineCap,
+                        DocumentLineJoin lineJoin,
+                        List<Double> dashArray) {
         /**
-         * Validates the geometry reference.
+         * Validates the geometry reference and normalizes style defaults.
          */
         public Layer {
             Objects.requireNonNull(geometry, "geometry");
+            lineCap = lineCap == null ? DocumentLineCap.BUTT : lineCap;
+            lineJoin = lineJoin == null ? DocumentLineJoin.MITER : lineJoin;
+            dashArray = dashArray == null ? List.of() : List.copyOf(dashArray);
         }
 
         /**
@@ -201,7 +230,21 @@ public final class SvgIcon {
          * @param stroke   outline stroke, or {@code null}
          */
         public Layer(SvgPath geometry, DocumentColor fill, DocumentStroke stroke) {
-            this(geometry, fill, null, stroke, null);
+            this(geometry, fill, null, stroke, null, null, null, null);
+        }
+
+        /**
+         * Compatibility constructor with paints but default stroke styling.
+         *
+         * @param geometry    normalized path geometry
+         * @param fill        fill colour, or {@code null}
+         * @param fillPaint   gradient fill, or {@code null}
+         * @param stroke      outline stroke, or {@code null}
+         * @param strokePaint gradient stroke paint, or {@code null}
+         */
+        public Layer(SvgPath geometry, DocumentColor fill, DocumentPaint fillPaint,
+                     DocumentStroke stroke, DocumentPaint strokePaint) {
+            this(geometry, fill, fillPaint, stroke, strokePaint, null, null, null);
         }
     }
 }

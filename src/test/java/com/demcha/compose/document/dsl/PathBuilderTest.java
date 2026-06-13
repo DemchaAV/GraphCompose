@@ -114,6 +114,34 @@ class PathBuilderTest {
     }
 
     @Test
+    void lineCapAndJoinFlowThroughToTheNode() {
+        PathNode node = new PathBuilder()
+                .size(100, 40)
+                .moveTo(0.0, 0.5)
+                .lineTo(1.0, 0.5)
+                .stroke(DocumentStroke.of(DocumentColor.rgb(20, 60, 120), 6.0))
+                .lineCap(com.demcha.compose.document.style.DocumentLineCap.ROUND)
+                .lineJoin(com.demcha.compose.document.style.DocumentLineJoin.BEVEL)
+                .build();
+
+        assertThat(node.lineCap()).isEqualTo(com.demcha.compose.document.style.DocumentLineCap.ROUND);
+        assertThat(node.lineJoin()).isEqualTo(com.demcha.compose.document.style.DocumentLineJoin.BEVEL);
+    }
+
+    @Test
+    void defaultCapAndJoinAreThePdfDefaults() {
+        PathNode node = new PathBuilder()
+                .size(100, 40)
+                .moveTo(0.0, 0.5)
+                .lineTo(1.0, 0.5)
+                .stroke(DocumentStroke.of(DocumentColor.rgb(0, 0, 0), 2.0))
+                .build();
+
+        assertThat(node.lineCap()).isEqualTo(com.demcha.compose.document.style.DocumentLineCap.BUTT);
+        assertThat(node.lineJoin()).isEqualTo(com.demcha.compose.document.style.DocumentLineJoin.MITER);
+    }
+
+    @Test
     void strokePaintWithoutAStrokeFailsAtBuild() {
         PathBuilder builder = new PathBuilder()
                 .size(100, 40)

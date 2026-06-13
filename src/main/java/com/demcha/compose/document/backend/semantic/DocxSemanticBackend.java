@@ -70,6 +70,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // each session sees the warning at least once.
     private final AtomicBoolean shapeContainerWarned = new AtomicBoolean(false);
     private final AtomicBoolean chartWarned = new AtomicBoolean(false);
+    // Geometry-only node kinds already warned about this export pass.
+    private final java.util.Set<String> warnedNodeKinds =
+            java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     /**
      * Creates a DOCX semantic backend.
@@ -86,6 +89,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     public byte[] export(DocumentGraph graph, SemanticExportContext context) throws Exception {
         shapeContainerWarned.set(false);
         chartWarned.set(false);
+        warnedNodeKinds.clear();
         try (XWPFDocument document = new XWPFDocument()) {
             applyPageGeometry(document, context.canvas());
             applyOutputOptions(document, context.outputOptions());
@@ -147,14 +151,31 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writeChartFallback(document, chart);
         } else if (node instanceof com.demcha.compose.document.node.ListNode list) {
             writeList(document, list);
-        } else if (node instanceof ContainerNode || node instanceof SectionNode) {
+        } else if (node instanceof ContainerNode || node instanceof SectionNode
+                   || node instanceof com.demcha.compose.document.node.LayerStackNode
+                   || node instanceof com.demcha.compose.document.node.CanvasLayerNode) {
+            // Overlay/positioned wrappers have no DOCX analogue for their
+            // geometry, but their children can be semantic (text, images) —
+            // render them sequentially rather than dropping the subtree.
             for (DocumentNode child : node.children()) {
                 writeNode(document, child);
             }
+        } else {
+            // Geometry-only node kinds (line, ellipse, shape, path, polygon,
+            // barcode) have no semantic Word analogue. Warn once per kind so a
+            // dropped chart-line or icon is visible in the log instead of
+            // silently missing; authors needing pixel-perfect output use the
+            // PDF fixed-layout backend.
+            warnUnsupported(node);
         }
-        // Unsupported node kinds (line, ellipse, shape, barcode) are silently
-        // skipped in the semantic export. Authors who need pixel-perfect output
-        // should use the PDF fixed-layout backend.
+    }
+
+    /** One warning per dropped node kind, deduplicated across the export. */
+    private void warnUnsupported(DocumentNode node) {
+        if (warnedNodeKinds.add(node.nodeKind())) {
+            LOG.warn("DocxSemanticBackend: dropping '{}' node(s) — geometry has no semantic "
+                     + "Word analogue; use the PDF backend for pixel-perfect output", node.nodeKind());
+        }
     }
 
     /**

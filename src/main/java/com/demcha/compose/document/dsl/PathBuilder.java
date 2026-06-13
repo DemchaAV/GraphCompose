@@ -5,6 +5,8 @@ import com.demcha.compose.document.node.PathNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentLineCap;
+import com.demcha.compose.document.style.DocumentLineJoin;
 import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.document.style.DocumentStroke;
@@ -51,6 +53,8 @@ public final class PathBuilder {
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
     private DocumentDashPattern dashPattern = DocumentDashPattern.NONE;
+    private DocumentLineCap lineCap;
+    private DocumentLineJoin lineJoin;
 
     /**
      * Creates a path builder.
@@ -261,6 +265,32 @@ public final class PathBuilder {
     }
 
     /**
+     * Sets the stroke end-cap style; {@code null} keeps the PDF default
+     * ({@link DocumentLineCap#BUTT}).
+     *
+     * @param lineCap cap style, or {@code null} for the default
+     * @return this builder
+     * @since 1.8.0
+     */
+    public PathBuilder lineCap(DocumentLineCap lineCap) {
+        this.lineCap = lineCap;
+        return this;
+    }
+
+    /**
+     * Sets the stroke corner style; {@code null} keeps the PDF default
+     * ({@link DocumentLineJoin#MITER}).
+     *
+     * @param lineJoin join style, or {@code null} for the default
+     * @return this builder
+     * @since 1.8.0
+     */
+    public PathBuilder lineJoin(DocumentLineJoin lineJoin) {
+        this.lineJoin = lineJoin;
+        return this;
+    }
+
+    /**
      * Sets the path padding.
      *
      * @param padding padding in points
@@ -294,6 +324,6 @@ public final class PathBuilder {
      */
     public PathNode build() {
         return new PathNode(name, width, height, segments, fillColor, fillPaint,
-                stroke, strokePaint, padding, margin, dashPattern);
+                stroke, strokePaint, padding, margin, dashPattern, lineCap, lineJoin);
     }
 }

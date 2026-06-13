@@ -4,6 +4,8 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentLineCap;
+import com.demcha.compose.document.style.DocumentLineJoin;
 import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.svg.SvgIcon;
@@ -77,7 +79,7 @@ public final class VectorPathExample {
         Path pdfFile = ExampleOutputPaths.prepare("features/shapes", "vector-path.pdf");
 
         try (DocumentSession document = GraphCompose.document(pdfFile)
-                .pageSize(420, 920)
+                .pageSize(420, 1010)
                 .margin(DocumentInsets.of(28))
                 .create()) {
             document.pageFlow(page -> page
@@ -111,6 +113,17 @@ public final class VectorPathExample {
                             .stroke(DocumentStroke.of(INK, 1.8))
                             .dashed(6, 3)
                             .margin(DocumentInsets.bottom(16)))
+                    .addParagraph("Stroke caps & joins — butt, round, square (lineCap / lineJoin)")
+                    .addRow(row -> row.spacing(24).evenWeights().margin(DocumentInsets.bottom(16))
+                            .addSection(col -> col.spacing(4)
+                                    .add(cappedZigzag("Butt", DocumentLineCap.BUTT, DocumentLineJoin.MITER))
+                                    .addParagraph("BUTT / MITER"))
+                            .addSection(col -> col.spacing(4)
+                                    .add(cappedZigzag("Round", DocumentLineCap.ROUND, DocumentLineJoin.ROUND))
+                                    .addParagraph("ROUND / ROUND"))
+                            .addSection(col -> col.spacing(4)
+                                    .add(cappedZigzag("Square", DocumentLineCap.SQUARE, DocumentLineJoin.BEVEL))
+                                    .addParagraph("SQUARE / BEVEL")))
                     .addParagraph("SVG path import — Material 'favorite' heart via SvgPath.parse")
                     .addPath(path -> path
                             .name("HeartIcon")
@@ -157,6 +170,25 @@ public final class VectorPathExample {
         }
 
         return pdfFile;
+    }
+
+    /**
+     * A thick open zig-zag whose ends and corner expose the cap / join style.
+     * Drawn fat (8 pt) so BUTT vs ROUND vs SQUARE ends and MITER vs ROUND vs
+     * BEVEL corners read clearly.
+     */
+    private static com.demcha.compose.document.node.DocumentNode cappedZigzag(
+            String name, DocumentLineCap cap, DocumentLineJoin join) {
+        return new com.demcha.compose.document.dsl.PathBuilder()
+                .name("Cap" + name)
+                .size(96, 44)
+                .moveTo(0.06, 0.18)
+                .lineTo(0.5, 0.92)
+                .lineTo(0.94, 0.18)
+                .stroke(DocumentStroke.of(INK, 8))
+                .lineCap(cap)
+                .lineJoin(join)
+                .build();
     }
 
     public static void main(String[] args) throws Exception {

@@ -1,8 +1,12 @@
 package com.demcha.compose.document.svg;
 
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentLineCap;
+import com.demcha.compose.document.style.DocumentLineJoin;
 import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentStroke;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -14,8 +18,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Internal DOM walker behind {@link SvgIcon#parse(String)}: secure XML setup
@@ -29,6 +33,17 @@ import java.util.Map;
  */
 final class SvgIconReader {
 
+    private static final Logger LOG = LoggerFactory.getLogger(SvgIconReader.class);
+
+    /**
+     * Shape elements that carry visible content this reader does not render —
+     * worth one warning per kind rather than a silent drop. Containers
+     * ({@code defs}, {@code g}, {@code symbol}, {@code metadata}…) are not
+     * here: they hold no direct geometry, so skipping them loses nothing.
+     */
+    private static final Set<String> DROPS_CONTENT = Set.of(
+            "text", "tspan", "textPath", "image", "use", "foreignObject");
+
     private SvgIconReader() {
     }
 
@@ -41,12 +56,15 @@ final class SvgIconReader {
         Map<String, Element> gradients = SvgGradients.collect(root);
 
         List<SvgIcon.Layer> layers = new ArrayList<>();
+        SkipTally skipped = new SkipTally();
         walk(root, identity(),
-                new Paint(new PaintValue(DocumentColor.rgb(0, 0, 0), null), PaintValue.NONE, 1.0),
-                box, gradients, layers);
+                new Paint(new PaintValue(DocumentColor.rgb(0, 0, 0), null), PaintValue.NONE, 1.0,
+                        DocumentLineCap.BUTT, DocumentLineJoin.MITER, List.of()),
+                box, gradients, skipped, layers);
         if (layers.isEmpty()) {
             throw new IllegalArgumentException("SVG document contains no drawable geometry");
         }
+        skipped.flush();
         return new SvgIcon(layers, box[2], box[3]);
     }
 
@@ -110,25 +128,9 @@ final class SvgIconReader {
     // Tree walk
     // ------------------------------------------------------------------
 
-    /**
-     * One inheritable paint slot: a flat colour, a gradient element awaiting
-     * geometry context, or nothing.
-     */
-    private record PaintValue(DocumentColor color, Element gradient) {
-        static final PaintValue NONE = new PaintValue(null, null);
-
-        boolean visible() {
-            return color != null || gradient != null;
-        }
-    }
-
-    /** Inherited paint state: SVG fills default to black, strokes to none. */
-    private record Paint(PaintValue fill, PaintValue stroke, double strokeWidth) {
-    }
-
     private static void walk(Element element, double[] transform, Paint inherited,
                              double[] box, Map<String, Element> gradients,
-                             List<SvgIcon.Layer> out) {
+                             SkipTally skipped, List<SvgIcon.Layer> out) {
         Paint paint = stylize(element, inherited, gradients);
         double[] matrix = compose(transform, element.getAttribute("transform"));
 
@@ -174,8 +176,13 @@ final class SvgIconReader {
                         stroke = DocumentStroke.of(paint.stroke().color(), paint.strokeWidth());
                     }
                 }
-                out.add(new SvgIcon.Layer(geometry, fillColor, fillPaint, stroke, strokePaint));
+                out.add(new SvgIcon.Layer(geometry, fillColor, fillPaint, stroke, strokePaint,
+                        paint.lineCap(), paint.lineJoin(), paint.dashArray()));
             }
+        } else if (DROPS_CONTENT.contains(name)) {
+            // A shape kind we deliberately don't render — count it so the icon
+            // surfaces one warning per kind instead of silently losing pixels.
+            skipped.note(name);
         }
 
         // Containers (svg, g, unknown wrappers) recurse; defs and metadata
@@ -185,20 +192,19 @@ final class SvgIconReader {
             for (int i = 0; i < children.getLength(); i++) {
                 Node child = children.item(i);
                 if (child instanceof Element childElement) {
-                    walk(childElement, matrix, paint, box, gradients, out);
+                    walk(childElement, matrix, paint, box, gradients, skipped, out);
                 }
             }
         }
     }
 
-    // ------------------------------------------------------------------
-    // Styling
-    // ------------------------------------------------------------------
-
     private static Paint stylize(Element element, Paint inherited, Map<String, Element> gradients) {
         PaintValue fill = inherited.fill();
         PaintValue stroke = inherited.stroke();
         double strokeWidth = inherited.strokeWidth();
+        DocumentLineCap lineCap = inherited.lineCap();
+        DocumentLineJoin lineJoin = inherited.lineJoin();
+        List<Double> dashArray = inherited.dashArray();
 
         String fillAttr = attrOrStyle(element, "fill");
         if (fillAttr != null) {
@@ -210,12 +216,30 @@ final class SvgIconReader {
         }
         String widthAttr = attrOrStyle(element, "stroke-width");
         if (widthAttr != null) {
-            strokeWidth = Double.parseDouble(widthAttr.replace("px", "").trim());
+            strokeWidth = SvgStyles.length(widthAttr, "stroke-width");
         }
-        return new Paint(fill, stroke, strokeWidth);
+        String capAttr = attrOrStyle(element, "stroke-linecap");
+        if (capAttr != null) {
+            DocumentLineCap parsed = SvgStyles.lineCap(capAttr);
+            lineCap = parsed == null ? inherited.lineCap() : parsed;
+        }
+        String joinAttr = attrOrStyle(element, "stroke-linejoin");
+        if (joinAttr != null) {
+            DocumentLineJoin parsed = SvgStyles.lineJoin(joinAttr);
+            lineJoin = parsed == null ? inherited.lineJoin() : parsed;
+        }
+        String dashAttr = attrOrStyle(element, "stroke-dasharray");
+        if (dashAttr != null) {
+            dashArray = dashAttr.equalsIgnoreCase("inherit")
+                    ? inherited.dashArray()
+                    : SvgStyles.dashArray(dashAttr);
+        }
+        return new Paint(fill, stroke, strokeWidth, lineCap, lineJoin, dashArray);
     }
 
-    /** Resolves one paint attribute: url(#id) gradient, flat colour, or none. */
+    /**
+     * Resolves one paint attribute: url(#id) gradient, flat colour, or none.
+     */
     private static PaintValue paintValue(String value, PaintValue current,
                                          Map<String, Element> gradients) {
         String id = SvgGradients.urlId(value);
@@ -232,6 +256,10 @@ final class SvgIconReader {
         return color == null ? PaintValue.NONE : new PaintValue(color, null);
     }
 
+    // ------------------------------------------------------------------
+    // Styling
+    // ------------------------------------------------------------------
+
     private static String attrOrStyle(Element element, String property) {
         String attr = element.getAttribute(property).trim();
         if (!attr.isEmpty()) {
@@ -247,50 +275,15 @@ final class SvgIconReader {
         return null;
     }
 
+    /**
+     * Resolves an SVG paint colour through the shared {@link SvgStyles}
+     * grammar (hex incl. alpha, {@code rgb()}/{@code rgba()}, CSS names,
+     * {@code none}, {@code currentColor}). Stays here as the package entry
+     * point {@link SvgGradients} also calls.
+     */
     static DocumentColor color(String value, DocumentColor current) {
-        String v = value.trim().toLowerCase(Locale.ROOT);
-        if (v.equals("none")) {
-            return null;
-        }
-        if (v.equals("currentcolor") || v.equals("inherit")) {
-            return current;
-        }
-        if (v.startsWith("#")) {
-            String hex = v.substring(1);
-            if (hex.length() == 3) {
-                hex = "" + hex.charAt(0) + hex.charAt(0)
-                      + hex.charAt(1) + hex.charAt(1)
-                      + hex.charAt(2) + hex.charAt(2);
-            }
-            if (hex.length() == 6) {
-                return DocumentColor.rgb(
-                        Integer.parseInt(hex.substring(0, 2), 16),
-                        Integer.parseInt(hex.substring(2, 4), 16),
-                        Integer.parseInt(hex.substring(4, 6), 16));
-            }
-        }
-        if (v.startsWith("rgb(") && v.endsWith(")")) {
-            String[] parts = v.substring(4, v.length() - 1).split(",");
-            if (parts.length == 3) {
-                return DocumentColor.rgb(
-                        Integer.parseInt(parts[0].trim()),
-                        Integer.parseInt(parts[1].trim()),
-                        Integer.parseInt(parts[2].trim()));
-            }
-        }
-        if (v.equals("black")) {
-            return DocumentColor.rgb(0, 0, 0);
-        }
-        if (v.equals("white")) {
-            return DocumentColor.rgb(255, 255, 255);
-        }
-        throw new IllegalArgumentException(
-                "unsupported SVG colour '" + value + "' — use #hex, rgb(r,g,b), none, or currentColor");
+        return SvgStyles.color(value, current);
     }
-
-    // ------------------------------------------------------------------
-    // Shape lowering (synthesized path data through the tested parser)
-    // ------------------------------------------------------------------
 
     private static String rectToPath(Element rect) {
         double x = num(rect, "x");
@@ -332,6 +325,10 @@ final class SvgIconReader {
                + " Z";
     }
 
+    // ------------------------------------------------------------------
+    // Shape lowering (synthesized path data through the tested parser)
+    // ------------------------------------------------------------------
+
     private static String pointsToPath(String points, boolean close) {
         String trimmed = points == null ? "" : points.trim();
         if (trimmed.isEmpty()) {
@@ -345,15 +342,13 @@ final class SvgIconReader {
         return value.isEmpty() ? 0.0 : Double.parseDouble(value);
     }
 
-    // ------------------------------------------------------------------
-    // Transforms
-    // ------------------------------------------------------------------
-
     static double[] identity() {
         return new double[]{1, 0, 0, 1, 0, 0};
     }
 
-    /** Composes {@code transform="…"} ops onto the parent matrix, left to right. */
+    /**
+     * Composes {@code transform="…"} ops onto the parent matrix, left to right.
+     */
     static double[] compose(double[] parent, String transformAttribute) {
         String attr = transformAttribute == null ? "" : transformAttribute.trim();
         if (attr.isEmpty()) {
@@ -382,6 +377,10 @@ final class SvgIconReader {
         return m;
     }
 
+    // ------------------------------------------------------------------
+    // Transforms
+    // ------------------------------------------------------------------
+
     private static double[] transformOp(String op, String[] args, String source) {
         double[] v = new double[args.length];
         for (int i = 0; i < args.length; i++) {
@@ -408,7 +407,9 @@ final class SvgIconReader {
         };
     }
 
-    /** SVG matrix composition: result = a × b (b applies first). */
+    /**
+     * SVG matrix composition: result = a × b (b applies first).
+     */
     private static double[] multiply(double[] a, double[] b) {
         return new double[]{
                 a[0] * b[0] + a[2] * b[1],
@@ -417,5 +418,47 @@ final class SvgIconReader {
                 a[1] * b[2] + a[3] * b[3],
                 a[0] * b[4] + a[2] * b[5] + a[4],
                 a[1] * b[4] + a[3] * b[5] + a[5]};
+    }
+
+    /**
+     * One inheritable paint slot: a flat colour, a gradient element awaiting
+     * geometry context, or nothing.
+     */
+    private record PaintValue(DocumentColor color, Element gradient) {
+        static final PaintValue NONE = new PaintValue(null, null);
+
+        boolean visible() {
+            return color != null || gradient != null;
+        }
+    }
+
+    /**
+     * Inherited paint state: SVG fills default to black, strokes to none.
+     * Stroke style (cap / join / dash) is inheritable too, so it rides here.
+     */
+    private record Paint(PaintValue fill, PaintValue stroke, double strokeWidth,
+                         DocumentLineCap lineCap, DocumentLineJoin lineJoin,
+                         List<Double> dashArray) {
+    }
+
+    /**
+     * One-warning-per-kind tally for shape elements we deliberately drop
+     * (text, images, embedded references). Emitted once after the walk so a
+     * busy icon doesn't flood the log.
+     */
+    private static final class SkipTally {
+        private final Set<String> kinds = new java.util.LinkedHashSet<>();
+
+        void note(String kind) {
+            kinds.add(kind);
+        }
+
+        void flush() {
+            if (!kinds.isEmpty()) {
+                LOG.warn("SvgIcon: skipped unsupported element(s) {} — this icon reader renders "
+                         + "vector geometry only (no text, images, <use>, masks, clips or filters)",
+                        kinds);
+            }
+        }
     }
 }

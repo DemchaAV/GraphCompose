@@ -3,6 +3,8 @@ package com.demcha.compose.document.layout.payloads;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.style.DocumentDashPattern;
+import com.demcha.compose.document.style.DocumentLineCap;
+import com.demcha.compose.document.style.DocumentLineJoin;
 import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.engine.components.content.shape.Stroke;
@@ -31,6 +33,8 @@ import java.util.Objects;
  * @param bookmarkOptions optional fragment-level bookmark metadata
  * @param dashPattern     dash pattern for the stroke;
  *                        {@link DocumentDashPattern#NONE} is solid
+ * @param lineCap         stroke end-cap style; {@code BUTT} is the PDF default
+ * @param lineJoin        stroke corner style; {@code MITER} is the PDF default
  * @author Artem Demchyshyn
  * @since 1.8.0
  */
@@ -42,14 +46,19 @@ public record PathFragmentPayload(
         DocumentPaint strokePaint,
         DocumentLinkOptions linkOptions,
         DocumentBookmarkOptions bookmarkOptions,
-        DocumentDashPattern dashPattern
+        DocumentDashPattern dashPattern,
+        DocumentLineCap lineCap,
+        DocumentLineJoin lineJoin
 ) implements PdfSemanticFragmentPayload {
     /**
-     * Copies the segment list defensively and normalizes the dash pattern.
+     * Copies the segment list defensively and normalizes dash and stroke
+     * style defaults.
      */
     public PathFragmentPayload {
         Objects.requireNonNull(segments, "segments");
         segments = List.copyOf(segments);
         dashPattern = dashPattern == null ? DocumentDashPattern.NONE : dashPattern;
+        lineCap = lineCap == null ? DocumentLineCap.BUTT : lineCap;
+        lineJoin = lineJoin == null ? DocumentLineJoin.MITER : lineJoin;
     }
 }

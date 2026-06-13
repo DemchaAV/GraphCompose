@@ -1,6 +1,8 @@
 package com.demcha.compose.document.backend.fixed.pdf.handlers;
 
 import com.demcha.compose.document.style.DocumentDashPattern;
+import com.demcha.compose.document.style.DocumentLineCap;
+import com.demcha.compose.document.style.DocumentLineJoin;
 import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.document.style.ShapePoint;
 import com.demcha.compose.engine.components.content.shape.Stroke;
@@ -43,6 +45,21 @@ final class PdfShapeGeometry {
                                   Stroke stroke,
                                   DocumentDashPattern dashPattern,
                                   PathEmitter path) throws IOException {
+        fillAndStrokePath(stream, fillColor, stroke, dashPattern, null, null, path);
+    }
+
+    /**
+     * Variant with explicit stroke cap and join styles. {@code null} (or the
+     * PDF defaults {@code BUTT} / {@code MITER}) emits no extra operators, so
+     * every existing call site stays byte-identical.
+     */
+    static void fillAndStrokePath(PDPageContentStream stream,
+                                  Color fillColor,
+                                  Stroke stroke,
+                                  DocumentDashPattern dashPattern,
+                                  DocumentLineCap lineCap,
+                                  DocumentLineJoin lineJoin,
+                                  PathEmitter path) throws IOException {
         boolean hasFill = fillColor != null;
         boolean hasStroke = stroke != null
                             && stroke.strokeColor() != null
@@ -58,6 +75,7 @@ final class PdfShapeGeometry {
                 stream.setStrokingColor(stroke.strokeColor().color());
                 stream.setLineWidth((float) stroke.width());
                 applyDashPattern(stream, dashPattern);
+                applyStrokeStyle(stream, lineCap, lineJoin);
             }
             if (hasFill) {
                 PdfAlphaSupport.applyFillAlpha(stream, fillColor);
@@ -73,6 +91,21 @@ final class PdfShapeGeometry {
             }
         } finally {
             stream.restoreGraphicsState();
+        }
+    }
+
+    /**
+     * Emits line cap / join operators only when they differ from the PDF
+     * defaults, keeping default-styled output byte-identical.
+     */
+    static void applyStrokeStyle(PDPageContentStream stream,
+                                 DocumentLineCap lineCap,
+                                 DocumentLineJoin lineJoin) throws IOException {
+        if (lineCap != null && lineCap != DocumentLineCap.BUTT) {
+            stream.setLineCapStyle(lineCap.pdfCode());
+        }
+        if (lineJoin != null && lineJoin != DocumentLineJoin.MITER) {
+            stream.setLineJoinStyle(lineJoin.pdfCode());
         }
     }
 

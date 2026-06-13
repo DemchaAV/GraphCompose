@@ -98,10 +98,24 @@ Entries land here as they merge.
   `DocumentPaint` gains endpoint-exact `LinearAxis` / `RadialCircle` forms
   and `PathNode` / `PathBuilder` grow `fill(paint)` / `strokePaint(paint)`
   with solid paints normalising to the flat-colour path (byte-identical
-  output for non-gradient documents). The XML reader refuses DOCTYPEs (no
-  XXE); CSS, text, filters, focal radials, non-pad `spreadMethod` and
-  translucent stops stay deliberately out of scope — the reader fails
-  loudly rather than rendering them wrong.
+  output for non-gradient documents). **Stroke fidelity**: the reader honours
+  `stroke-linecap` / `stroke-linejoin` (rendered as native PDF `J` / `j`
+  operators via new `DocumentLineCap` / `DocumentLineJoin`, also on
+  `PathBuilder.lineCap()` / `lineJoin()`) and `stroke-dasharray`, the full
+  CSS named-colour table (147 keywords), `rgb()` / `rgba()` with numbers or
+  percentages, `#rgb` / `#rgba` / `#rrggbb` / `#rrggbbaa` hex, and absolute
+  length units (`px` / `pt` / `pc` / `in` / `mm` / `cm`) on stroke widths;
+  relative units and unknown colours fail with the supported alternatives
+  listed. `SvgIcon#node(width)` now scales stroke widths and dash lengths
+  with the geometry (they live in user units), so an icon drawn smaller than
+  its source no longer renders an over-thick outline. Content the reader
+  can't render (`text`, `image`, `use`, masks, clips, filters) is dropped
+  with a single deduplicated warn-log per kind instead of silently, and the
+  DOCX backend warns once per geometry-only node kind (`path`, `polygon`,
+  `shape`, …) it drops. The XML reader refuses DOCTYPEs (no XXE); CSS
+  stylesheets, text, filters, focal radials, non-pad `spreadMethod` and
+  translucent gradient stops stay deliberately out of scope — the reader
+  fails loudly rather than rendering them wrong.
 - **Inline sparklines** (`@since 1.8.0`). `RichText.sparkline(w, h, color,
   values...)` draws a filled mini-area silhouette on the text baseline, and
   `sparklineLine(w, h, thickness, color, values...)` a constant-thickness line

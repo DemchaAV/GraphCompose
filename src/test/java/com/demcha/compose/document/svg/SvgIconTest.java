@@ -381,4 +381,95 @@ class SvgIconTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("positive");
     }
+
+    // ------------------------------------------------------------------
+    // Stroke style + scaling
+    // ------------------------------------------------------------------
+
+    @Test
+    void strokeStyleAttributesReachTheLayer() {
+        SvgIcon icon = SvgIcon.parse("""
+                <svg viewBox="0 0 20 20">
+                  <path d="M0 10 H20" fill="none" stroke="#08f" stroke-width="3"
+                        stroke-linecap="round" stroke-linejoin="bevel" stroke-dasharray="4 2"/>
+                </svg>
+                """);
+
+        SvgIcon.Layer layer = icon.layers().get(0);
+        assertThat(layer.lineCap()).isEqualTo(com.demcha.compose.document.style.DocumentLineCap.ROUND);
+        assertThat(layer.lineJoin()).isEqualTo(com.demcha.compose.document.style.DocumentLineJoin.BEVEL);
+        assertThat(layer.dashArray()).containsExactly(4.0, 2.0);
+        // Stroke width stays in user units on the layer.
+        assertThat(layer.stroke().width()).isEqualTo(3.0);
+    }
+
+    @Test
+    void groupStrokeStyleInheritsToChildren() {
+        SvgIcon icon = SvgIcon.parse("""
+                <svg viewBox="0 0 20 20">
+                  <g stroke="#000" stroke-width="2" stroke-linecap="square">
+                    <path d="M0 5 H20" fill="none"/>
+                  </g>
+                </svg>
+                """);
+
+        assertThat(icon.layers().get(0).lineCap())
+                .isEqualTo(com.demcha.compose.document.style.DocumentLineCap.SQUARE);
+    }
+
+    @Test
+    void nodeFormScalesStrokeWidthAndDashWithTheGeometry() {
+        // 100-unit frame rendered at 25 pt → 0.25× scale.
+        SvgIcon icon = SvgIcon.parse("""
+                <svg viewBox="0 0 100 100">
+                  <path d="M0 50 H100" fill="none" stroke="#000" stroke-width="8" stroke-dasharray="12 4"/>
+                </svg>
+                """);
+
+        var path = (com.demcha.compose.document.node.PathNode) icon.node(25).layers().get(0).node();
+        assertThat(path.stroke().width()).isCloseTo(2.0, within(1e-9));
+        assertThat(path.dashPattern().segments()).containsExactly(3.0, 1.0);
+        assertThat(path.lineCap()).isNotNull();
+    }
+
+    @Test
+    void pxAndPtStrokeWidthsParse() {
+        SvgIcon px = SvgIcon.parse("""
+                <svg viewBox="0 0 10 10"><path d="M0 0 H10" fill="none" stroke="#000" stroke-width="2px"/></svg>
+                """);
+        assertThat(px.layers().get(0).stroke().width()).isEqualTo(2.0);
+
+        SvgIcon pt = SvgIcon.parse("""
+                <svg viewBox="0 0 10 10"><path d="M0 0 H10" fill="none" stroke="#000" stroke-width="72pt"/></svg>
+                """);
+        assertThat(pt.layers().get(0).stroke().width()).isCloseTo(96.0, within(1e-9));
+    }
+
+    @Test
+    void namedAndRgbaColoursResolveOnShapes() {
+        SvgIcon icon = SvgIcon.parse("""
+                <svg viewBox="0 0 10 10">
+                  <path d="M0 0 H10" fill="rebeccapurple"/>
+                  <path d="M0 5 H10" fill="rgba(20, 80, 95, 0.5)"/>
+                </svg>
+                """);
+
+        assertThat(icon.layers().get(0).fill().color()).isEqualTo(new java.awt.Color(102, 51, 153));
+        assertThat(icon.layers().get(1).fill().color().getAlpha()).isEqualTo(128);
+    }
+
+    @Test
+    void unsupportedContentElementsAreSkippedButGeometrySurvives() {
+        // <text> has no vector analogue; it is dropped (with a one-time log
+        // warning) while the path beside it still renders.
+        SvgIcon icon = SvgIcon.parse("""
+                <svg viewBox="0 0 20 20">
+                  <text x="2" y="10" fill="#000">Hi</text>
+                  <path d="M0 0 H20 V20 Z" fill="#123456"/>
+                </svg>
+                """);
+
+        assertThat(icon.layers()).hasSize(1);
+        assertThat(icon.layers().get(0).fill().color()).isEqualTo(new java.awt.Color(18, 52, 86));
+    }
 }

@@ -50,7 +50,7 @@ public final class PdfPathFragmentRenderHandler
 
         if (payload.fillPaint() == null && payload.strokePaint() == null) {
             PdfShapeGeometry.fillAndStrokePath(stream, payload.fillColor(), payload.stroke(),
-                    payload.dashPattern(),
+                    payload.dashPattern(), payload.lineCap(), payload.lineJoin(),
                     s -> PdfShapeGeometry.addPathSegments(s, x, y, width, height, payload.segments()));
             return;
         }
@@ -83,11 +83,12 @@ public final class PdfPathFragmentRenderHandler
                         payload.strokePaint(), resources, x, y, width, height));
                 stream.setLineWidth((float) payload.stroke().width());
                 PdfShapeGeometry.applyDashPattern(stream, payload.dashPattern());
+                PdfShapeGeometry.applyStrokeStyle(stream, payload.lineCap(), payload.lineJoin());
                 PdfShapeGeometry.addPathSegments(stream, x, y, width, height, payload.segments());
                 stream.stroke();
             } else if (hasStrokeWidth && payload.stroke().strokeColor() != null) {
                 PdfShapeGeometry.fillAndStrokePath(stream, null, payload.stroke(),
-                        payload.dashPattern(),
+                        payload.dashPattern(), payload.lineCap(), payload.lineJoin(),
                         s -> PdfShapeGeometry.addPathSegments(s, x, y, width, height, payload.segments()));
             }
         } finally {

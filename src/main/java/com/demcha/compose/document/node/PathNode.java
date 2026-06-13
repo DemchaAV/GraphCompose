@@ -3,6 +3,8 @@ package com.demcha.compose.document.node;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentLineCap;
+import com.demcha.compose.document.style.DocumentLineJoin;
 import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.document.style.DocumentStroke;
@@ -42,6 +44,10 @@ import java.util.Objects;
  * @param margin      outer margin
  * @param dashPattern dash pattern for the stroke; defaults to
  *                    {@link DocumentDashPattern#NONE} (solid)
+ * @param lineCap     stroke end-cap style; defaults to
+ *                    {@link DocumentLineCap#BUTT} (the PDF default)
+ * @param lineJoin    stroke corner style; defaults to
+ *                    {@link DocumentLineJoin#MITER} (the PDF default)
  * @author Artem Demchyshyn
  * @since 1.8.0
  */
@@ -56,7 +62,9 @@ public record PathNode(
         DocumentPaint strokePaint,
         DocumentInsets padding,
         DocumentInsets margin,
-        DocumentDashPattern dashPattern
+        DocumentDashPattern dashPattern,
+        DocumentLineCap lineCap,
+        DocumentLineJoin lineJoin
 ) implements DocumentNode {
     /**
      * Validates dimensions, the segment list, and the paint pairing;
@@ -78,6 +86,8 @@ public record PathNode(
         padding = padding == null ? DocumentInsets.zero() : padding;
         margin = margin == null ? DocumentInsets.zero() : margin;
         dashPattern = dashPattern == null ? DocumentDashPattern.NONE : dashPattern;
+        lineCap = lineCap == null ? DocumentLineCap.BUTT : lineCap;
+        lineJoin = lineJoin == null ? DocumentLineJoin.MITER : lineJoin;
         if (width <= 0 || Double.isNaN(width) || Double.isInfinite(width)) {
             throw new IllegalArgumentException("width must be finite and positive: " + width);
         }
@@ -114,7 +124,37 @@ public record PathNode(
                     DocumentInsets margin,
                     DocumentDashPattern dashPattern) {
         this(name, width, height, segments, fillColor, null, stroke, null,
-                padding, margin, dashPattern);
+                padding, margin, dashPattern, null, null);
+    }
+
+    /**
+     * Compatibility constructor with paints but default caps and joins.
+     *
+     * @param name        node name
+     * @param width       resolved box width
+     * @param height      resolved box height
+     * @param segments    normalized path segments
+     * @param fillColor   optional fill colour
+     * @param fillPaint   optional gradient fill
+     * @param stroke      optional outline stroke
+     * @param strokePaint optional gradient stroke paint
+     * @param padding     inner padding
+     * @param margin      outer margin
+     * @param dashPattern dash pattern for the stroke
+     */
+    public PathNode(String name,
+                    double width,
+                    double height,
+                    List<DocumentPathSegment> segments,
+                    DocumentColor fillColor,
+                    DocumentPaint fillPaint,
+                    DocumentStroke stroke,
+                    DocumentPaint strokePaint,
+                    DocumentInsets padding,
+                    DocumentInsets margin,
+                    DocumentDashPattern dashPattern) {
+        this(name, width, height, segments, fillColor, fillPaint, stroke, strokePaint,
+                padding, margin, dashPattern, null, null);
     }
 
     @Override

@@ -101,10 +101,10 @@ final class SvgIconReader {
             if (parts.length != 4) {
                 throw new IllegalArgumentException("viewBox must carry four numbers: '" + viewBox + "'");
             }
-            double minX = Double.parseDouble(parts[0]);
-            double minY = Double.parseDouble(parts[1]);
-            double width = Double.parseDouble(parts[2]);
-            double height = Double.parseDouble(parts[3]);
+            double minX = parseNumber(parts[0], "viewBox min-x");
+            double minY = parseNumber(parts[1], "viewBox min-y");
+            double width = parseNumber(parts[2], "viewBox width");
+            double height = parseNumber(parts[3], "viewBox height");
             requirePositive(width, height, viewBox);
             return new double[]{minX, minY, width, height};
         }
@@ -113,8 +113,8 @@ final class SvgIconReader {
         if (w.isEmpty() || h.isEmpty()) {
             throw new IllegalArgumentException("SVG carries neither a viewBox nor width/height attributes");
         }
-        double width = Double.parseDouble(w);
-        double height = Double.parseDouble(h);
+        double width = parseNumber(w, "width");
+        double height = parseNumber(h, "height");
         requirePositive(width, height, w + " x " + h);
         return new double[]{0, 0, width, height};
     }
@@ -159,7 +159,7 @@ final class SvgIconReader {
             };
 
             if (d != null && !d.isBlank()) {
-                emitLayer(element, name, d, paint, matrix, box, gradients, out);
+                emitLayer(element, d, paint, matrix, box, gradients, out);
             } else if (DROPS_CONTENT.contains(name)) {
                 // A shape kind we deliberately don't render — count it so the icon
                 // surfaces one warning per kind instead of silently losing pixels.
@@ -184,7 +184,7 @@ final class SvgIconReader {
     }
 
     /** Builds and appends the layer for a drawable element (curve geometry + paint). */
-    private static void emitLayer(Element element, String name, String d, Paint paint,
+    private static void emitLayer(Element element, String d, Paint paint,
                                   double[] matrix, double[] box, Map<String, Element> gradients,
                                   List<SvgIcon.Layer> out) {
         boolean strokeVisible = paint.stroke().visible() && paint.strokeWidth() > 0;
@@ -229,7 +229,7 @@ final class SvgIconReader {
             Node attr = attrs.item(i);
             String value = attr.getNodeValue();
             if (value != null && value.length() > 40) {
-                value = value.substring(0, 39) + "…";
+                value = value.substring(0, 40) + "…";
             }
             sb.append(' ').append(attr.getNodeName()).append("=\"").append(value).append('"');
         }
@@ -330,7 +330,22 @@ final class SvgIconReader {
 
     private static double num(Element element, String attribute) {
         String value = element.getAttribute(attribute).trim();
-        return value.isEmpty() ? 0.0 : Double.parseDouble(value);
+        return value.isEmpty() ? 0.0 : parseNumber(value, attribute);
+    }
+
+    /**
+     * Parses a numeric SVG value, naming the field and the offending input on
+     * failure instead of leaking the raw {@link NumberFormatException} message
+     * ("For input string: …"). The cause is chained so the JDK detail survives
+     * for anyone who needs it.
+     */
+    private static double parseNumber(String value, String what) {
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(
+                    what + " must be a number, got '" + value + "'", e);
+        }
     }
 
     static double[] identity() {
@@ -375,7 +390,7 @@ final class SvgIconReader {
     private static double[] transformOp(String op, String[] args, String source) {
         double[] v = new double[args.length];
         for (int i = 0; i < args.length; i++) {
-            v[i] = Double.parseDouble(args[i]);
+            v[i] = parseNumber(args[i], "transform '" + source + "' argument");
         }
         return switch (op) {
             case "translate" -> new double[]{1, 0, 0, 1, v[0], v.length > 1 ? v[1] : 0};

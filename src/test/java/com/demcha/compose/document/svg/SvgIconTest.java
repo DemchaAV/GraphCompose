@@ -533,4 +533,33 @@ class SvgIconTest {
                 .hasMessageContaining("skipped text")
                 .hasMessageContaining("vector shapes only");
     }
+
+    @Test
+    void malformedNumericAttributeNamesElementAttributeAndReason() {
+        // A non-numeric geometry attribute must name the element AND say which
+        // field expected a number — not leak a bare JDK "For input string".
+        assertThatThrownBy(() -> SvgIcon.parse("""
+                <svg viewBox="0 0 10 10">
+                  <rect x="0" y="0" width="abc" height="10" fill="#000"/>
+                </svg>
+                """))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("<rect")
+                .hasMessageContaining("width must be a number")
+                .hasMessageContaining("abc");
+    }
+
+    @Test
+    void malformedViewBoxNumberSaysWhatExpectedANumber() {
+        // viewBox is parsed before the element walk, so its own error must be
+        // self-describing rather than a bare JDK parse message.
+        assertThatThrownBy(() -> SvgIcon.parse("""
+                <svg viewBox="0 0 ten 10">
+                  <rect width="10" height="10" fill="#000"/>
+                </svg>
+                """))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("viewBox")
+                .hasMessageContaining("must be a number");
+    }
 }

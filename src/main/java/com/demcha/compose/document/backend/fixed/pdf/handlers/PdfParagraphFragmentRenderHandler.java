@@ -163,6 +163,8 @@ public final class PdfParagraphFragmentRenderHandler
                             (float) Math.min(c.bottomLeft(), maxRadius));
                 } else if (outline instanceof ShapeOutline.Polygon p) {
                     PdfShapeGeometry.addPolygonPath(s, lx, ly, lw, lh, p.points());
+                } else if (outline instanceof ShapeOutline.Path path) {
+                    PdfShapeGeometry.addPathSegments(s, lx, ly, lw, lh, path.segments());
                 } else {
                     throw new IllegalStateException("Unknown inline outline: " + outline);
                 }

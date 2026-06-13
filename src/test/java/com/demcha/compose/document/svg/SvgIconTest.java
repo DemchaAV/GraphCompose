@@ -365,6 +365,25 @@ class SvgIconTest {
     }
 
     @Test
+    void malformedGradientNumberSaysWhatExpectedANumber() {
+        // A non-numeric gradient coordinate must read in the reader's house
+        // style (named + reason) instead of leaking a bare JDK parse message.
+        assertThatThrownBy(() -> SvgIcon.parse("""
+                <svg viewBox="0 0 10 10">
+                  <defs>
+                    <linearGradient id="g" gradientUnits="userSpaceOnUse" x1="abc" y1="0" x2="10" y2="10">
+                      <stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M0 0 H10 V10 Z" fill="url(#g)"/>
+                </svg>
+                """))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("must be a number")
+                .hasMessageContaining("abc");
+    }
+
+    @Test
     void nodeFormPackagesLayersAtTheRequestedWidth() {
         SvgIcon icon = SvgIcon.parse("""
                 <svg viewBox="0 0 48 24">

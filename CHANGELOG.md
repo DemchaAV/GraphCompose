@@ -238,6 +238,13 @@ Entries land here as they merge.
   `ListMarker.defaultForDepth(int)` and
   `ListMarker.normalizeItemText(String, boolean)` (`@since 1.8.0`) — and the
   fixed-layout pipeline and the DOCX export both call them.
+- **SVG gradient number errors read in the reader's house style.** A
+  non-numeric gradient coordinate, radius, or stop value (e.g. `x1="abc"`,
+  `r="x%"`, `offset="?"`) leaked the raw JDK `NumberFormatException`
+  ("For input string: …") as the reason. `SvgGradients` now parses through one
+  shared helper that throws `"<field> must be a number, got '…'"` with the
+  cause chained — matching the rest of the beta SVG reader, where the
+  per-element wrapper already names the referencing element.
 
 ### Documentation
 

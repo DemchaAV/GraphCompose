@@ -6,6 +6,7 @@ import com.demcha.examples.features.canvas.CanvasLayerExample;
 import com.demcha.examples.features.debug.DebugOverlayExample;
 import com.demcha.examples.features.docx.WordExportExample;
 import com.demcha.examples.features.chrome.PdfChromeExample;
+import com.demcha.examples.features.layout.BlockAlignExample;
 import com.demcha.examples.features.lists.NestedListExample;
 import com.demcha.examples.features.shapes.PhotoClipExample;
 import com.demcha.examples.features.shapes.ShapeContainerExample;
@@ -134,6 +135,7 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + VectorPathExample.generate());
         System.out.println("Generated: " + PhotoClipExample.generate());
         System.out.println("Generated: " + SvgIconGalleryExample.generate());
+        System.out.println("Generated: " + BlockAlignExample.generate());
         System.out.println("Generated: " + TransformsExample.generate());
         System.out.println("Generated: " + TableAdvancedExample.generate());
 

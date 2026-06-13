@@ -62,7 +62,8 @@ final class SvgIconReader {
                         DocumentLineCap.BUTT, DocumentLineJoin.MITER, List.of()),
                 box, gradients, skipped, layers);
         if (layers.isEmpty()) {
-            throw new IllegalArgumentException("SVG document contains no drawable geometry");
+            throw new IllegalArgumentException(
+                    "SVG document contains no drawable geometry" + skipped.reason());
         }
         skipped.flush();
         return new SvgIcon(layers, box[2], box[3]);
@@ -100,10 +101,10 @@ final class SvgIconReader {
             if (parts.length != 4) {
                 throw new IllegalArgumentException("viewBox must carry four numbers: '" + viewBox + "'");
             }
-            double minX = Double.parseDouble(parts[0]);
-            double minY = Double.parseDouble(parts[1]);
-            double width = Double.parseDouble(parts[2]);
-            double height = Double.parseDouble(parts[3]);
+            double minX = parseNumber(parts[0], "viewBox min-x");
+            double minY = parseNumber(parts[1], "viewBox min-y");
+            double width = parseNumber(parts[2], "viewBox width");
+            double height = parseNumber(parts[3], "viewBox height");
             requirePositive(width, height, viewBox);
             return new double[]{minX, minY, width, height};
         }
@@ -112,8 +113,8 @@ final class SvgIconReader {
         if (w.isEmpty() || h.isEmpty()) {
             throw new IllegalArgumentException("SVG carries neither a viewBox nor width/height attributes");
         }
-        double width = Double.parseDouble(w);
-        double height = Double.parseDouble(h);
+        double width = parseNumber(w, "width");
+        double height = parseNumber(h, "height");
         requirePositive(width, height, w + " x " + h);
         return new double[]{0, 0, width, height};
     }
@@ -131,58 +132,42 @@ final class SvgIconReader {
     private static void walk(Element element, double[] transform, Paint inherited,
                              double[] box, Map<String, Element> gradients,
                              SkipTally skipped, List<SvgIcon.Layer> out) {
-        Paint paint = stylize(element, inherited, gradients);
-        double[] matrix = compose(transform, element.getAttribute("transform"));
-
         String name = localName(element);
-        String d = switch (name) {
-            case "path" -> element.getAttribute("d");
-            case "rect" -> rectToPath(element);
-            case "circle" -> ellipseToPath(num(element, "cx"), num(element, "cy"),
-                    num(element, "r"), num(element, "r"));
-            case "ellipse" -> ellipseToPath(num(element, "cx"), num(element, "cy"),
-                    num(element, "rx"), num(element, "ry"));
-            case "line" -> "M" + num(element, "x1") + " " + num(element, "y1")
-                           + " L" + num(element, "x2") + " " + num(element, "y2");
-            case "polyline" -> pointsToPath(element.getAttribute("points"), false);
-            case "polygon" -> pointsToPath(element.getAttribute("points"), true);
-            default -> null;
-        };
+        // Process THIS element's own geometry with element context, so any
+        // unsupported colour / transform / gradient / unit names the offending
+        // element. Recursion stays outside the try — a child's error is already
+        // contextualized by its own walk, so it never double-wraps.
+        Paint paint;
+        double[] matrix;
+        try {
+            paint = stylize(element, inherited, gradients);
+            matrix = compose(transform, element.getAttribute("transform"));
+            String d = switch (name) {
+                case "path" -> element.getAttribute("d");
+                case "rect" -> SvgShapeLowering.rect(num(element, "x"), num(element, "y"),
+                        num(element, "width"), num(element, "height"),
+                        num(element, "rx"), num(element, "ry"));
+                case "circle" -> SvgShapeLowering.ellipse(num(element, "cx"), num(element, "cy"),
+                        num(element, "r"), num(element, "r"));
+                case "ellipse" -> SvgShapeLowering.ellipse(num(element, "cx"), num(element, "cy"),
+                        num(element, "rx"), num(element, "ry"));
+                case "line" -> "M" + num(element, "x1") + " " + num(element, "y1")
+                               + " L" + num(element, "x2") + " " + num(element, "y2");
+                case "polyline" -> SvgShapeLowering.points(element.getAttribute("points"), false);
+                case "polygon" -> SvgShapeLowering.points(element.getAttribute("points"), true);
+                default -> null;
+            };
 
-        if (d != null && !d.isBlank()) {
-            boolean strokeVisible = paint.stroke().visible() && paint.strokeWidth() > 0;
-            if (paint.fill().visible() || strokeVisible) {
-                SvgPath geometry = SvgPath.parseTransformed(d, matrix, box[0], box[1], box[2], box[3]);
-
-                // Gradients resolve here, where the shape's geometry (the
-                // objectBoundingBox reference) and accumulated affine exist.
-                // The flat colour keeps the gradient's first stop so backends
-                // without shadings degrade per the DocumentPaint contract.
-                DocumentColor fillColor = paint.fill().color();
-                DocumentPaint fillPaint = null;
-                if (paint.fill().gradient() != null) {
-                    fillPaint = SvgGradients.paint(paint.fill().gradient(), gradients,
-                            matrix, box, geometry);
-                    fillColor = fillPaint.primaryColor();
-                }
-                DocumentStroke stroke = null;
-                DocumentPaint strokePaint = null;
-                if (strokeVisible) {
-                    if (paint.stroke().gradient() != null) {
-                        strokePaint = SvgGradients.paint(paint.stroke().gradient(), gradients,
-                                matrix, box, geometry);
-                        stroke = DocumentStroke.of(strokePaint.primaryColor(), paint.strokeWidth());
-                    } else {
-                        stroke = DocumentStroke.of(paint.stroke().color(), paint.strokeWidth());
-                    }
-                }
-                out.add(new SvgIcon.Layer(geometry, fillColor, fillPaint, stroke, strokePaint,
-                        paint.lineCap(), paint.lineJoin(), paint.dashArray()));
+            if (d != null && !d.isBlank()) {
+                emitLayer(element, d, paint, matrix, box, gradients, out);
+            } else if (DROPS_CONTENT.contains(name)) {
+                // A shape kind we deliberately don't render — count it so the icon
+                // surfaces one warning per kind instead of silently losing pixels.
+                skipped.note(name);
             }
-        } else if (DROPS_CONTENT.contains(name)) {
-            // A shape kind we deliberately don't render — count it so the icon
-            // surfaces one warning per kind instead of silently losing pixels.
-            skipped.note(name);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(
+                    "in " + describe(element) + ": " + e.getMessage(), e);
         }
 
         // Containers (svg, g, unknown wrappers) recurse; defs and metadata
@@ -196,6 +181,59 @@ final class SvgIconReader {
                 }
             }
         }
+    }
+
+    /** Builds and appends the layer for a drawable element (curve geometry + paint). */
+    private static void emitLayer(Element element, String d, Paint paint,
+                                  double[] matrix, double[] box, Map<String, Element> gradients,
+                                  List<SvgIcon.Layer> out) {
+        boolean strokeVisible = paint.stroke().visible() && paint.strokeWidth() > 0;
+        if (!paint.fill().visible() && !strokeVisible) {
+            return;
+        }
+        SvgPath geometry = SvgPath.parseTransformed(d, matrix, box[0], box[1], box[2], box[3]);
+
+        // Gradients resolve here, where the shape's geometry (the
+        // objectBoundingBox reference) and accumulated affine exist. The flat
+        // colour keeps the gradient's first stop so backends without shadings
+        // degrade per the DocumentPaint contract.
+        DocumentColor fillColor = paint.fill().color();
+        DocumentPaint fillPaint = null;
+        if (paint.fill().gradient() != null) {
+            fillPaint = SvgGradients.paint(paint.fill().gradient(), gradients, matrix, box, geometry);
+            fillColor = fillPaint.primaryColor();
+        }
+        DocumentStroke stroke = null;
+        DocumentPaint strokePaint = null;
+        if (strokeVisible) {
+            if (paint.stroke().gradient() != null) {
+                strokePaint = SvgGradients.paint(paint.stroke().gradient(), gradients, matrix, box, geometry);
+                stroke = DocumentStroke.of(strokePaint.primaryColor(), paint.strokeWidth());
+            } else {
+                stroke = DocumentStroke.of(paint.stroke().color(), paint.strokeWidth());
+            }
+        }
+        out.add(new SvgIcon.Layer(geometry, fillColor, fillPaint, stroke, strokePaint,
+                paint.lineCap(), paint.lineJoin(), paint.dashArray()));
+    }
+
+    /**
+     * A compact, log-safe descriptor of an element for error context:
+     * {@code <path fill="magenta-ish" d="M0 0 H1 …">}. Attributes are listed
+     * in document order; long values (notably {@code d}) are truncated.
+     */
+    private static String describe(Element element) {
+        StringBuilder sb = new StringBuilder("<").append(element.getNodeName());
+        org.w3c.dom.NamedNodeMap attrs = element.getAttributes();
+        for (int i = 0; i < attrs.getLength() && sb.length() < 160; i++) {
+            Node attr = attrs.item(i);
+            String value = attr.getNodeValue();
+            if (value != null && value.length() > 40) {
+                value = value.substring(0, 40) + "…";
+            }
+            sb.append(' ').append(attr.getNodeName()).append("=\"").append(value).append('"');
+        }
+        return sb.append('>').toString();
     }
 
     private static Paint stylize(Element element, Paint inherited, Map<String, Element> gradients) {
@@ -285,61 +323,29 @@ final class SvgIconReader {
         return SvgStyles.color(value, current);
     }
 
-    private static String rectToPath(Element rect) {
-        double x = num(rect, "x");
-        double y = num(rect, "y");
-        double w = num(rect, "width");
-        double h = num(rect, "height");
-        double rx = num(rect, "rx");
-        double ry = num(rect, "ry");
-        if (rx <= 0 && ry <= 0) {
-            return "M" + x + " " + y + " h" + w + " v" + h + " h" + (-w) + " Z";
-        }
-        if (rx <= 0) {
-            rx = ry;
-        }
-        if (ry <= 0) {
-            ry = rx;
-        }
-        rx = Math.min(rx, w / 2);
-        ry = Math.min(ry, h / 2);
-        return "M" + (x + rx) + " " + y
-               + " h" + (w - 2 * rx)
-               + " a" + rx + " " + ry + " 0 0 1 " + rx + " " + ry
-               + " v" + (h - 2 * ry)
-               + " a" + rx + " " + ry + " 0 0 1 " + (-rx) + " " + ry
-               + " h" + (2 * rx - w)
-               + " a" + rx + " " + ry + " 0 0 1 " + (-rx) + " " + (-ry)
-               + " v" + (2 * ry - h)
-               + " a" + rx + " " + ry + " 0 0 1 " + rx + " " + (-ry)
-               + " Z";
-    }
-
-    private static String ellipseToPath(double cx, double cy, double rx, double ry) {
-        if (rx <= 0 || ry <= 0) {
-            return null;
-        }
-        return "M" + (cx - rx) + " " + cy
-               + " a" + rx + " " + ry + " 0 1 0 " + (2 * rx) + " 0"
-               + " a" + rx + " " + ry + " 0 1 0 " + (-2 * rx) + " 0"
-               + " Z";
-    }
-
     // ------------------------------------------------------------------
-    // Shape lowering (synthesized path data through the tested parser)
+    // Shape lowering (synthesized path data through the tested parser) lives
+    // in SvgShapeLowering; the reader only extracts the numbers.
     // ------------------------------------------------------------------
-
-    private static String pointsToPath(String points, boolean close) {
-        String trimmed = points == null ? "" : points.trim();
-        if (trimmed.isEmpty()) {
-            return null;
-        }
-        return "M" + trimmed + (close ? " Z" : "");
-    }
 
     private static double num(Element element, String attribute) {
         String value = element.getAttribute(attribute).trim();
-        return value.isEmpty() ? 0.0 : Double.parseDouble(value);
+        return value.isEmpty() ? 0.0 : parseNumber(value, attribute);
+    }
+
+    /**
+     * Parses a numeric SVG value, naming the field and the offending input on
+     * failure instead of leaking the raw {@link NumberFormatException} message
+     * ("For input string: …"). The cause is chained so the JDK detail survives
+     * for anyone who needs it.
+     */
+    private static double parseNumber(String value, String what) {
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(
+                    what + " must be a number, got '" + value + "'", e);
+        }
     }
 
     static double[] identity() {
@@ -384,7 +390,7 @@ final class SvgIconReader {
     private static double[] transformOp(String op, String[] args, String source) {
         double[] v = new double[args.length];
         for (int i = 0; i < args.length; i++) {
-            v[i] = Double.parseDouble(args[i]);
+            v[i] = parseNumber(args[i], "transform '" + source + "' argument");
         }
         return switch (op) {
             case "translate" -> new double[]{1, 0, 0, 1, v[0], v.length > 1 ? v[1] : 0};
@@ -459,6 +465,20 @@ final class SvgIconReader {
                          + "vector geometry only (no text, images, <use>, masks, clips or filters)",
                         kinds);
             }
+        }
+
+        /**
+         * An error-message suffix naming what was skipped, so a blank icon
+         * explains itself ("…no drawable geometry — skipped: text, use; this
+         * reader renders vector shapes only"). Empty when nothing was skipped.
+         */
+        String reason() {
+            if (kinds.isEmpty()) {
+                return "";
+            }
+            return " — skipped " + String.join(", ", kinds)
+                   + "; this reader renders vector shapes only (no text, images, <use>, "
+                   + "masks, clips or filters)";
         }
     }
 }

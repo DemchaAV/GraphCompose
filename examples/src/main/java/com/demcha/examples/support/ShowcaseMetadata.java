@@ -98,6 +98,7 @@ final class ShowcaseMetadata {
         feature("svg", "svg-icon-gallery", "SVG Icon Gallery", "34 real-world multicolour svgrepo icons through SvgIcon.parse — native vector layers, the whole set 156 KB of sources.", "svg", "icons", "v1.8");
         feature("shapes", "vector-path", "Vector Paths (Bézier)", "addPath(...) — free-form design shapes with native cubic Bézier curves: stroked waves, filled blobs, mixed line/curve ribbons. No tessellation.", "shapes", "bezier", "v1.8");
         feature("shapes", "photo-clip", "Photo Clip (silhouette)", "A raster photo clipped to a free-form silhouette — circle, SVG heart, star — via ShapeContainer.path(...) + ClipPolicy.CLIP_PATH; the image COVER-fills each box so the native-curve outline crops it crisply at any zoom.", "shapes", "clip", "v1.8");
+        feature("layout", "block-align", "Block Alignment", "addAligned(align, node) / addSvgIcon(icon, w, align) — seat any fixed-size node left / centre / right across the content width.", "layout", "align", "v1.8");
         feature("transforms", "transforms", "Layers + Transforms", "rotate / scale on every leaf builder + LayerStack with explicit z-index.", "transforms", "layers");
         feature("text", "rich-text-showcase", "Rich Text", "Inline runs with bold / italic / colour / link options, markdown parsing.", "text", "rich");
         feature("text", "section-presets", "Section Presets", "Pre-baked section bands, accent strips, soft panels for templates.", "text", "sections");
@@ -146,6 +147,7 @@ final class ShowcaseMetadata {
             case "features/streaming" -> "Streaming & I/O";
             case "features/snapshots" -> "Snapshot Testing";
             case "features/svg" -> "SVG Import";
+            case "features/layout" -> "Layout & Alignment";
             case "features/debug" -> "Debug & Diagnostics";
             case "flagships/default" -> "Flagship Demos";
             default -> capitalize(group);

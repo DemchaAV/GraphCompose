@@ -115,7 +115,13 @@ Entries land here as they merge.
   `shape`, …) it drops. The XML reader refuses DOCTYPEs (no XXE); CSS
   stylesheets, text, filters, focal radials, non-pad `spreadMethod` and
   translucent gradient stops stay deliberately out of scope — the reader
-  fails loudly rather than rendering them wrong.
+  fails loudly rather than rendering them wrong. **Every reader error names
+  the offending element and why**: an unsupported colour / transform /
+  gradient / unit is reported as `in <circle fill="…" …>: <reason — and the
+  supported set>`, pinpointing the deepest failing element (not its wrapping
+  `<g>`); a blank result explains itself (`no drawable geometry — skipped
+  text; this reader renders vector shapes only`) instead of a bare "no
+  geometry".
 - **Inline sparklines** (`@since 1.8.0`). `RichText.sparkline(w, h, color,
   values...)` draws a filled mini-area silhouette on the text baseline, and
   `sparklineLine(w, h, thickness, color, values...)` a constant-thickness line

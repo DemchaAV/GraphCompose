@@ -1,6 +1,5 @@
 package com.demcha.compose.document.style;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -338,25 +337,7 @@ public sealed interface ShapeOutline permits
         if (points < 3) {
             throw new IllegalArgumentException("star needs at least 3 points: " + points);
         }
-        double outerRadius = 0.5;
-        // Inner/outer ratio of a true star polygon (the inner ring sits on the
-        // chords between outer points); it tends to 1 as the point count grows
-        // and equals the classic 0.382 at five points. Below five points the
-        // formula degenerates, so fall back to a fixed spiky ratio.
-        double innerRatio = points >= 5
-                ? Math.cos(2 * Math.PI / points) / Math.cos(Math.PI / points)
-                : 0.38;
-        double innerRadius = 0.5 * innerRatio;
-        double start = Math.PI / 2.0;     // first outer vertex faces up
-        List<ShapePoint> vertices = new ArrayList<>(points * 2);
-        for (int i = 0; i < points * 2; i++) {
-            double radius = (i % 2 == 0) ? outerRadius : innerRadius;
-            double angle = start + i * Math.PI / points;
-            double x = clampUnit(0.5 + radius * Math.cos(angle));
-            double y = clampUnit(0.5 + radius * Math.sin(angle));
-            vertices.add(new ShapePoint(x, y));
-        }
-        return new Polygon(width, height, vertices);
+        return new Polygon(width, height, ShapeRings.toPoints(ShapeRings.star(points)));
     }
 
     /**
@@ -396,7 +377,7 @@ public sealed interface ShapeOutline permits
                     {0.00, 0.00}, {1.00, 0.50}, {0.00, 1.00}
             };
         };
-        return new Polygon(width, height, directional(base, direction));
+        return new Polygon(width, height, ShapeRings.toPoints(ShapeRings.directional(base, direction)));
     }
 
     /**
@@ -437,7 +418,7 @@ public sealed interface ShapeOutline permits
                 {0.00, 1.00}, {1.00, 0.50}, {0.00, 0.00},
                 {thickness, 0.00}, {1.00 - thickness, 0.50}, {thickness, 1.00}
         };
-        return new Polygon(width, height, directional(base, direction));
+        return new Polygon(width, height, ShapeRings.toPoints(ShapeRings.directional(base, direction)));
     }
 
     /**
@@ -465,11 +446,11 @@ public sealed interface ShapeOutline permits
     static Polygon checkmark(double width, double height, CheckmarkStyle style) {
         Objects.requireNonNull(style, "style");
         List<ShapePoint> ring = switch (style) {
-            case CLASSIC -> toPoints(new double[][]{
+            case CLASSIC -> ShapeRings.toPoints(new double[][]{
                     {0.45, 0.00}, {1.00, 0.72}, {0.86, 0.92},
                     {0.42, 0.34}, {0.16, 0.58}, {0.04, 0.44}
             });
-            case HEAVY -> toPoints(ShapeRings.checkmarkBand(0.13));
+            case HEAVY -> ShapeRings.toPoints(ShapeRings.checkmarkBand(0.13));
         };
         return new Polygon(width, height, ring);
     }
@@ -489,7 +470,7 @@ public sealed interface ShapeOutline permits
                 {1.00, high}, {high, high}, {high, 1.00}, {low, 1.00},
                 {low, high}, {0.00, high}, {0.00, low}, {low, low}
         };
-        return new Polygon(width, height, toPoints(points));
+        return new Polygon(width, height, ShapeRings.toPoints(points));
     }
 
     /**
@@ -505,58 +486,7 @@ public sealed interface ShapeOutline permits
         if (sides < 3) {
             throw new IllegalArgumentException("regular polygon needs at least 3 sides: " + sides);
         }
-        double start = Math.PI / 2.0;
-        List<ShapePoint> vertices = new ArrayList<>(sides);
-        for (int i = 0; i < sides; i++) {
-            double angle = start + i * 2.0 * Math.PI / sides;
-            vertices.add(new ShapePoint(
-                    clampUnit(0.5 + 0.5 * Math.cos(angle)),
-                    clampUnit(0.5 + 0.5 * Math.sin(angle))));
-        }
-        return new Polygon(width, height, vertices);
-    }
-
-    private static List<ShapePoint> directional(double[][] base, Direction direction) {
-        Direction resolved = direction == null ? Direction.RIGHT : direction;
-        List<ShapePoint> points = new ArrayList<>(base.length);
-        for (double[] vertex : base) {
-            double x = vertex[0];
-            double y = vertex[1];
-            double tx;
-            double ty;
-            switch (resolved) {
-                case LEFT -> {
-                    tx = 1.0 - x;
-                    ty = y;
-                }
-                case UP -> {
-                    tx = y;
-                    ty = x;
-                }
-                case DOWN -> {
-                    tx = y;
-                    ty = 1.0 - x;
-                }
-                default -> {
-                    tx = x;
-                    ty = y;
-                }
-            }
-            points.add(new ShapePoint(clampUnit(tx), clampUnit(ty)));
-        }
-        return points;
-    }
-
-    private static List<ShapePoint> toPoints(double[][] raw) {
-        List<ShapePoint> points = new ArrayList<>(raw.length);
-        for (double[] vertex : raw) {
-            points.add(new ShapePoint(clampUnit(vertex[0]), clampUnit(vertex[1])));
-        }
-        return points;
-    }
-
-    private static double clampUnit(double value) {
-        return value < 0.0 ? 0.0 : (value > 1.0 ? 1.0 : value);
+        return new Polygon(width, height, ShapeRings.toPoints(ShapeRings.regularPolygon(sides)));
     }
 
     private static void requirePositive(String label, double value) {

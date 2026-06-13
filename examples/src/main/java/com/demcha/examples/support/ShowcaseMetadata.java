@@ -97,6 +97,7 @@ final class ShowcaseMetadata {
         feature("shapes", "shape-container", "Shape-as-Container", "Rounded rect, ellipse, circle containers with ClipPolicy and layered children.", "shapes", "clip");
         feature("svg", "svg-icon-gallery", "SVG Icon Gallery", "34 real-world multicolour svgrepo icons through SvgIcon.parse — native vector layers, the whole set 156 KB of sources.", "svg", "icons", "v1.8");
         feature("shapes", "vector-path", "Vector Paths (Bézier)", "addPath(...) — free-form design shapes with native cubic Bézier curves: stroked waves, filled blobs, mixed line/curve ribbons. No tessellation.", "shapes", "bezier", "v1.8");
+        feature("shapes", "photo-clip", "Photo Clip (silhouette)", "A raster photo clipped to a free-form silhouette — circle, SVG heart, star — via ShapeContainer.path(...) + ClipPolicy.CLIP_PATH; the image COVER-fills each box so the native-curve outline crops it crisply at any zoom.", "shapes", "clip", "v1.8");
         feature("transforms", "transforms", "Layers + Transforms", "rotate / scale on every leaf builder + LayerStack with explicit z-index.", "transforms", "layers");
         feature("text", "rich-text-showcase", "Rich Text", "Inline runs with bold / italic / colour / link options, markdown parsing.", "text", "rich");
         feature("text", "section-presets", "Section Presets", "Pre-baked section bands, accent strips, soft panels for templates.", "text", "sections");
@@ -204,7 +205,7 @@ final class ShowcaseMetadata {
             case "lists" -> "lists/NestedListExample.java";
             case "tables" -> id.contains("composed") ? "tables/ComposedTableCellExample.java" : "tables/TableAdvancedExample.java";
             case "canvas" -> "canvas/CanvasLayerExample.java";
-            case "shapes" -> "shapes/ShapeContainerExample.java";
+            case "shapes" -> id.equals("photo-clip") ? "shapes/PhotoClipExample.java" : "shapes/ShapeContainerExample.java";
             case "transforms" -> "transforms/TransformsExample.java";
             case "text" -> id.equals("section-presets") ? "text/SectionPresetsExample.java" : "text/RichTextShowcaseExample.java";
             case "themes" -> "themes/CustomBusinessThemeExample.java";

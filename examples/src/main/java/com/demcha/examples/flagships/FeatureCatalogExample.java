@@ -346,6 +346,21 @@ public final class FeatureCatalogExample {
                             .svg(SvgPath.parse(MATERIAL_HEART_D, 0, 0, 24, 24))
                             .fillColor(DocumentColor.rgb(196, 30, 58))));
 
+            feature(flow, "SVG-path clip — content clipped to a curve silhouette (CLIP_PATH)", """
+                    section.addContainer(card -> card
+                        .path(72, 72, SvgPath.parse(HEART_D, 0, 0, 24, 24))
+                        .clipPolicy(ClipPolicy.CLIP_PATH)        // full-box gradient renders heart-shaped
+                        .layer(new ShapeBuilder().size(72, 72)
+                            .fill(DocumentPaint.linear(GOLD, TEAL)).build()))""",
+                    demo -> demo.addContainer(card -> card
+                            .name("HeartClip")
+                            .path(72, 72, SvgPath.parse(MATERIAL_HEART_D, 0, 0, 24, 24))
+                            .clipPolicy(ClipPolicy.CLIP_PATH)
+                            .layer(new com.demcha.compose.document.dsl.ShapeBuilder()
+                                    .size(72, 72)
+                                    .fill(DocumentPaint.linear(GOLD, TEAL))
+                                    .build())));
+
             feature(flow, "SVG icons (beta) — multicolour files centred on tile cards", """
                     SvgIcon icon = SvgIcon.read(Path.of("icons/apple.svg"));  // layers + resolved paints
                     card.roundedRect(74, 64, 8)                          // fixed box = the tile

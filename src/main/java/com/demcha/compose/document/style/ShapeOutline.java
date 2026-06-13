@@ -20,7 +20,8 @@ public sealed interface ShapeOutline permits
         ShapeOutline.RoundedRectangle,
         ShapeOutline.RoundedRectanglePerCorner,
         ShapeOutline.Ellipse,
-        ShapeOutline.Polygon {
+        ShapeOutline.Polygon,
+        ShapeOutline.Path {
 
     /**
      * Returns the outline outer width.
@@ -141,6 +142,51 @@ public sealed interface ShapeOutline permits
     }
 
     /**
+     * Free-form outline described by normalized {@link DocumentPathSegment}s —
+     * the curve-capable sibling of {@link Polygon}. Segments live in a unit
+     * box ({@code (0,0)} bottom-left, {@code y} up, the
+     * {@link com.demcha.compose.document.node.PathNode} convention) and are
+     * scaled to {@code width × height} at render time, so one segment list
+     * clips and fills at any size. Use it to clip a container's children to an
+     * arbitrary vector — a heart, a logo silhouette, an imported SVG path —
+     * via {@link com.demcha.compose.document.style.ClipPolicy#CLIP_PATH}.
+     *
+     * <p>Fill and clip use the non-zero winding rule and implicitly close each
+     * subpath, so a silhouette with several {@code MoveTo} rings cuts a hole
+     * (a donut, the bowl of an "O") only where an inner ring winds opposite the
+     * outer one. An <em>outline stroke</em>, in contrast, follows the segments
+     * literally and does not auto-close — end the path with a close segment for
+     * a connected stroked border.</p>
+     *
+     * @param width    outer width in points
+     * @param height   outer height in points
+     * @param segments normalized path segments, starting with a
+     *                 {@link DocumentPathSegment.MoveTo}
+     * @since 1.8.0
+     */
+    record Path(double width, double height, List<DocumentPathSegment> segments)
+            implements ShapeOutline {
+        /**
+         * Validates dimensions and the segment list; copy-protects the segments.
+         */
+        public Path {
+            requirePositive("width", width);
+            requirePositive("height", height);
+            Objects.requireNonNull(segments, "segments");
+            segments = List.copyOf(segments);
+            if (segments.size() < 2) {
+                throw new IllegalArgumentException(
+                        "path outline needs at least a MoveTo and one drawing segment: " + segments.size());
+            }
+            if (!(segments.get(0) instanceof DocumentPathSegment.MoveTo)) {
+                throw new IllegalArgumentException(
+                        "path outline must start with a MoveTo segment, found: "
+                        + segments.get(0).getClass().getSimpleName());
+            }
+        }
+    }
+
+    /**
      * Cardinal direction for directional figures (arrows, chevrons).
      *
      * @since 1.7.0
@@ -223,6 +269,20 @@ public sealed interface ShapeOutline permits
      */
     static Polygon polygon(double width, double height, List<ShapePoint> points) {
         return new Polygon(width, height, points);
+    }
+
+    /**
+     * Creates a {@link Path} outline from normalized path segments — a
+     * free-form clip / fill silhouette with native curves.
+     *
+     * @param width    outer width in points
+     * @param height   outer height in points
+     * @param segments normalized path segments, starting with a move-to
+     * @return path outline
+     * @since 1.8.0
+     */
+    static Path path(double width, double height, List<DocumentPathSegment> segments) {
+        return new Path(width, height, segments);
     }
 
     /**

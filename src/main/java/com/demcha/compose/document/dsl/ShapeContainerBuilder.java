@@ -194,6 +194,44 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
     }
 
     /**
+     * Sets a free-form path outline — children clip to (and the outline fills /
+     * strokes along) the native-curve silhouette. Segments use the same
+     * normalized unit box as {@code addPath(...)} ({@code (0,0)} bottom-left,
+     * {@code y} up).
+     *
+     * @param width    outer width in points
+     * @param height   outer height in points
+     * @param segments normalized path segments, starting with a move-to
+     * @return this builder
+     * @since 1.8.0
+     */
+    public ShapeContainerBuilder path(double width, double height,
+                                      java.util.List<com.demcha.compose.document.style.DocumentPathSegment> segments) {
+        this.outline = ShapeOutline.path(width, height, segments);
+        return this;
+    }
+
+    /**
+     * Sets a free-form path outline from a parsed SVG path — clip a container's
+     * children to an imported icon or logo silhouette. The SVG path is already
+     * normalized to the unit box with the y-axis flipped, so only the box size
+     * remains to choose (use {@code svgPath.aspectRatio()} to keep proportions).
+     *
+     * @param width   outer width in points
+     * @param height  outer height in points
+     * @param svgPath parsed SVG path geometry
+     * @return this builder
+     * @since 1.8.0
+     */
+    @com.demcha.compose.document.api.Beta
+    public ShapeContainerBuilder path(double width, double height,
+                                      com.demcha.compose.document.svg.SvgPath svgPath) {
+        Objects.requireNonNull(svgPath, "svgPath");
+        this.outline = ShapeOutline.path(width, height, svgPath.segments());
+        return this;
+    }
+
+    /**
      * Replaces the outline with a pre-built {@link ShapeOutline} value.
      *
      * @param outline outline value

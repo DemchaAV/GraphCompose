@@ -79,7 +79,7 @@ public final class VectorPathExample {
         Path pdfFile = ExampleOutputPaths.prepare("features/shapes", "vector-path.pdf");
 
         try (DocumentSession document = GraphCompose.document(pdfFile)
-                .pageSize(420, 1010)
+                .pageSize(420, 1130)
                 .margin(DocumentInsets.of(28))
                 .create()) {
             document.pageFlow(page -> page
@@ -152,6 +152,17 @@ public final class VectorPathExample {
                             .closePath()
                             .fill(BRAND_AXIS)
                             .margin(DocumentInsets.bottom(16)))
+                    .addParagraph("SVG-path clip — content clipped to a heart silhouette (CLIP_PATH)")
+                    .addContainer(card -> card
+                            .name("HeartClip")
+                            .path(96, 96, SvgPath.parse(MATERIAL_HEART_D, 0, 0, 24, 24))
+                            .clipPolicy(com.demcha.compose.document.style.ClipPolicy.CLIP_PATH)
+                            // A full-box gradient layer renders heart-shaped:
+                            // the container clips its children to the outline.
+                            .layer(new com.demcha.compose.document.dsl.ShapeBuilder()
+                                    .size(96, 96)
+                                    .fill(BRAND_AXIS)
+                                    .build()))
                     .addParagraph("Mixed ribbon — lines and curves in one closed, filled subpath")
                     .addPath(path -> path
                             .name("Ribbon")

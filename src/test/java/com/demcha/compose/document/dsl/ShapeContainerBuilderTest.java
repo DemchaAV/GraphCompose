@@ -165,6 +165,140 @@ class ShapeContainerBuilderTest {
     }
 
     @Test
+    void pathOutlineReachesTheClipPayloadAndRenders() throws Exception {
+        // A free-form path outline (a diamond via segments) must travel to the
+        // clip-begin payload as a ShapeOutline.Path, fill its outline, and the
+        // document must render without error.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 300)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            session.add(new ShapeContainerBuilder()
+                    .name("Gem")
+                    .path(120.0, 90.0, java.util.List.of(
+                            com.demcha.compose.document.style.DocumentPathSegment.moveTo(0.5, 1.0),
+                            com.demcha.compose.document.style.DocumentPathSegment.lineTo(1.0, 0.5),
+                            com.demcha.compose.document.style.DocumentPathSegment.lineTo(0.5, 0.0),
+                            com.demcha.compose.document.style.DocumentPathSegment.lineTo(0.0, 0.5),
+                            com.demcha.compose.document.style.DocumentPathSegment.close()))
+                    .fillColor(BRAND)
+                    .center(spacer("Inside", 50.0, 16.0))
+                    .build());
+
+            List<PlacedFragment> fragments = session.layoutGraph().fragments();
+            int begin = indexOfPayload(fragments, ShapeClipBeginPayload.class);
+            assertThat(begin).isGreaterThanOrEqualTo(0);
+            ShapeOutline outline = ((ShapeClipBeginPayload) fragments.get(begin).payload()).outline();
+            assertThat(outline).isInstanceOf(ShapeOutline.Path.class);
+            assertThat(((ShapeOutline.Path) outline).segments()).hasSize(5);
+
+            byte[] pdf = session.toPdfBytes();
+            assertThat(new String(pdf, 0, 5, java.nio.charset.StandardCharsets.US_ASCII)).isEqualTo("%PDF-");
+        }
+    }
+
+    @Test
+    void cubicCurveOutlineKeepsItsCurveSegmentThroughTheClipPipeline() throws Exception {
+        // Every other path-clip test is line-only. A native cubic Bézier
+        // (curveTo) must survive to the clip payload as a CubicTo segment —
+        // NOT flattened to lines — and render without error, since native
+        // curves are the whole point of ShapeOutline.Path. This asserts the
+        // clip *payload*; ShapeClipPathVisualTest covers the rendered pixels.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(200, 160)
+                .margin(DocumentInsets.of(16))
+                .create()) {
+
+            session.add(new ShapeContainerBuilder()
+                    .name("Petal")
+                    .path(120.0, 90.0, java.util.List.of(
+                            com.demcha.compose.document.style.DocumentPathSegment.moveTo(0.5, 1.0),
+                            com.demcha.compose.document.style.DocumentPathSegment.cubicTo(
+                                    1.1, 0.9, 1.0, 0.1, 0.5, 0.0),
+                            com.demcha.compose.document.style.DocumentPathSegment.cubicTo(
+                                    0.0, 0.1, -0.1, 0.9, 0.5, 1.0),
+                            com.demcha.compose.document.style.DocumentPathSegment.close()))
+                    .fillColor(BRAND)
+                    .center(spacer("Inside", 40.0, 16.0))
+                    .build());
+
+            List<PlacedFragment> fragments = session.layoutGraph().fragments();
+            int begin = indexOfPayload(fragments, ShapeClipBeginPayload.class);
+            assertThat(begin).isGreaterThanOrEqualTo(0);
+            ShapeOutline outline = ((ShapeClipBeginPayload) fragments.get(begin).payload()).outline();
+            assertThat(outline).isInstanceOf(ShapeOutline.Path.class);
+            assertThat(((ShapeOutline.Path) outline).segments())
+                    .as("the cubic segment must reach the clip payload, not be flattened to lines")
+                    .anyMatch(s -> s instanceof com.demcha.compose.document.style.DocumentPathSegment.CubicTo);
+
+            byte[] pdf = session.toPdfBytes();
+            assertThat(new String(pdf, 0, 5, java.nio.charset.StandardCharsets.US_ASCII)).isEqualTo("%PDF-");
+        }
+    }
+
+    @Test
+    void svgPathBridgeProducesAPathOutline() {
+        // path(w, h, SvgPath) clips a container to an imported icon silhouette.
+        var icon = com.demcha.compose.document.svg.SvgPath.parse("M0 0 H10 V10 H0 Z", 0, 0, 10, 10);
+        var node = new ShapeContainerBuilder()
+                .name("IconClip")
+                .path(64.0, 64.0, icon)
+                .center(spacer("x", 20, 20))
+                .build();
+
+        assertThat(node.outline()).isInstanceOf(ShapeOutline.Path.class);
+        assertThat(((ShapeOutline.Path) node.outline()).segments())
+                .isEqualTo(icon.segments());
+    }
+
+    @Test
+    void multiSubpathPathOutlineRenders() throws Exception {
+        // A donut silhouette: an outer ring and an inner counter-wound ring
+        // (two MoveTo subpaths). Non-zero winding cuts the hole; the document
+        // must render without error — guards multi-MoveTo clip geometry.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(200, 200)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            session.add(new ShapeContainerBuilder()
+                    .name("Donut")
+                    .path(100.0, 100.0, java.util.List.of(
+                            com.demcha.compose.document.style.DocumentPathSegment.moveTo(0.0, 0.0),
+                            com.demcha.compose.document.style.DocumentPathSegment.lineTo(1.0, 0.0),
+                            com.demcha.compose.document.style.DocumentPathSegment.lineTo(1.0, 1.0),
+                            com.demcha.compose.document.style.DocumentPathSegment.lineTo(0.0, 1.0),
+                            com.demcha.compose.document.style.DocumentPathSegment.close(),
+                            // inner ring, opposite winding → hole
+                            com.demcha.compose.document.style.DocumentPathSegment.moveTo(0.3, 0.3),
+                            com.demcha.compose.document.style.DocumentPathSegment.lineTo(0.3, 0.7),
+                            com.demcha.compose.document.style.DocumentPathSegment.lineTo(0.7, 0.7),
+                            com.demcha.compose.document.style.DocumentPathSegment.lineTo(0.7, 0.3),
+                            com.demcha.compose.document.style.DocumentPathSegment.close()))
+                    .fillColor(BRAND)
+                    .center(spacer("x", 20, 20))
+                    .build());
+
+            byte[] pdf = session.toPdfBytes();
+            assertThat(new String(pdf, 0, 5, java.nio.charset.StandardCharsets.US_ASCII)).isEqualTo("%PDF-");
+        }
+    }
+
+    @Test
+    void pathOutlineValidatesSegments() {
+        assertThatThrownBy(() -> new ShapeContainerBuilder()
+                .name("Bad")
+                .path(80.0, 80.0, java.util.List.of(
+                        com.demcha.compose.document.style.DocumentPathSegment.lineTo(1.0, 1.0),
+                        com.demcha.compose.document.style.DocumentPathSegment.lineTo(0.0, 1.0)))
+                .center(spacer("x", 10, 10))
+                .build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("must start with a MoveTo");
+    }
+
+    @Test
     void positionOffsetMovesLayerInScreenSpaceUnits() {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(400, 300)

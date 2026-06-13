@@ -67,6 +67,16 @@ Entries land here as they merge.
   every flow builder authors design shapes directly, and
   `dashed(on, off, ...)` makes the stroke dashed with the same
   `DocumentDashPattern` contract as lines — the pattern follows the curve.
+- **Path-outline clipper** (`@since 1.8.0`). `ShapeOutline.Path` joins the
+  sealed outline family as the curve-capable sibling of `Polygon`, so a
+  shape container can clip its children to — and fill / stroke along — an
+  arbitrary native-curve silhouette. `ShapeContainerBuilder.path(w, h,
+  segments)` takes raw `DocumentPathSegment`s; `path(w, h, svgPath)` (beta)
+  clips to an imported SVG path, turning any icon or logo into a content
+  mask under `ClipPolicy.CLIP_PATH`. The outline rides the existing
+  vector-path fragment pipeline (one source of truth for native curves) and
+  the clip handler emits the same `addPathSegments` geometry, so fill, clip,
+  and `addPath(...)` all agree.
 - **SVG path import** (`@since 1.8.0`, **beta** — annotated `@Beta` while
   the surface hardens against real-world exporter output). `SvgPath.parse(d)` /
   `parse(d, viewBox...)` in the new `document.svg` package lowers the full

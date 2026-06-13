@@ -141,6 +141,18 @@ public final class ShapeContainerDefinition implements NodeDefinition<ShapeConta
                     width,
                     height,
                     new PolygonFragmentPayload(p.points(), awtFill, stroke, null, null));
+        } else if (outline instanceof ShapeOutline.Path path) {
+            // The outline fill/stroke rides the same vector-path fragment
+            // pipeline as PathNode — native curves, one source of truth.
+            outlineFragment = new LayoutFragment(
+                    placement.path(),
+                    0,
+                    padLeft,
+                    padBottom,
+                    width,
+                    height,
+                    new PathFragmentPayload(path.segments(), awtFill, null, stroke, null,
+                            null, null, null, null, null));
         } else {
             throw new IllegalStateException("Unsupported shape outline: " + outline);
         }

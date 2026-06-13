@@ -28,7 +28,8 @@ import java.io.IOException;
  * {@link ClipPolicy#CLIP_BOUNDS} the clip path is the axis-aligned outline
  * rectangle; for {@link ClipPolicy#CLIP_PATH} it is the geometric outline
  * (ellipse for circle/ellipse, uniform or per-corner rounded rectangle for
- * rounded-rect, polygon for diamonds / arrows / stars).</p>
+ * rounded-rect, polygon for diamonds / arrows / stars, and a native-curve
+ * path for free-form {@code ShapeOutline.Path} silhouettes).</p>
  *
  * @author Artem Demchyshyn
  */
@@ -120,6 +121,8 @@ public final class PdfShapeClipBeginRenderHandler
                 stream.addRect(x, y, width, height);
             } else if (outline instanceof ShapeOutline.Polygon p) {
                 PdfShapeGeometry.addPolygonPath(stream, x, y, width, height, p.points());
+            } else if (outline instanceof ShapeOutline.Path path) {
+                PdfShapeGeometry.addPathSegments(stream, x, y, width, height, path.segments());
             } else {
                 throw new IllegalStateException("Unknown outline: " + outline);
             }

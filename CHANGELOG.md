@@ -10,6 +10,15 @@ Entries land here as they merge.
 
 ### Public API
 
+- **Block-level horizontal alignment** (`@since 1.8.0`). Fixed-size flow
+  children (paths, images, SVG icons, barcodes, shape containers) left-align
+  by default — there was no built-in way to centre or right-align one without
+  wrapping it in a full-width container and hand-computing the content width.
+  New `AlignNode` + `HorizontalAlign` (LEFT / CENTER / RIGHT) seat any node
+  across the available width: `flow.addAligned(HorizontalAlign.CENTER, node)`
+  and the icon sugar `flow.addSvgIcon(icon, width, HorizontalAlign.CENTER)`.
+  The wrapper fills the width and reuses the stack placement engine (one
+  anchor), so there is no new render handler and no hot-path change.
 - **Native vector charts** (`@since 1.8.0`). New `com.demcha.compose.document.chart`
   package with a layered, serialization-friendly API: `ChartData` (categories +
   series, type/colour-agnostic), sealed `ChartSpec` (`bar()` / `line()` with

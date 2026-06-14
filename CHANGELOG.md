@@ -228,6 +228,14 @@ Entries land here as they merge.
 
 ### Bug fixes
 
+- **A stray non-drawing element no longer breaks a whole SVG icon.** A
+  visible-painted SVG element that lowers to a moveto-only or moveto+close
+  path — `d="M12 12"`, a zero-length arc, the stray subpaths real exporters
+  emit — drew no ink, yet a lone moveto threw at `SvgIcon#node(...)` (an empty
+  `PathNode`) and a moveto+close rendered blank. `SvgIconReader` now drops a
+  layer with no drawing segment, so one degenerate element no longer fails the
+  icon; an icon of only such elements still fails loudly with "no drawable
+  geometry".
 - **Stacked bars anchor at zero even with an explicit positive axis minimum.**
   A stacked bar chart with `valueAxis().min(positive)` lifted the baseline
   while segment heights stayed measured from zero, so the stack overshot its

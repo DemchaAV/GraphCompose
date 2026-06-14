@@ -14,7 +14,7 @@ public enum BarGrouping {
     /**
      * Series stack on top of each other; the axis scales to stacked sums.
      * The stacked baseline is always zero (parts summing to a whole), so an
-     * explicit positive {@code valueAxis().min()} does not lift it.
+     * explicit {@code valueAxis().min()} of either sign does not move it.
      */
     STACKED
 }

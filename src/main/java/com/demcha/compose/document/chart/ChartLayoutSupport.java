@@ -94,10 +94,11 @@ final class ChartLayoutSupport {
         }
         // Stacked bars sum their segments up from a fixed floor, and each
         // segment's height is measured from zero (value / range). An explicit
-        // positive axis.min() would lift the baseline without shrinking the
-        // segments, so the stack would overshoot its true total — pin the
-        // stacked floor to zero regardless of the requested min.
-        if (stacked && domain[0] > 0.0) {
+        // axis.min() of either sign would move the baseline off zero without
+        // rescaling the segments — a positive min makes the stack overshoot its
+        // total, a negative min anchors it below zero — so pin the stacked floor
+        // to exactly zero regardless of the requested min.
+        if (stacked && domain[0] != 0.0) {
             domain[0] = 0.0;
         }
         NiceScale scale = NiceScale.compute(domain[0], domain[1],

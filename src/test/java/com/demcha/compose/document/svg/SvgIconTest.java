@@ -68,6 +68,35 @@ class SvgIconTest {
     }
 
     @Test
+    void degenerateGeometryIsDroppedSoOneStrayElementDoesNotFailTheIcon() {
+        // Real exporters emit stray moveto-only / moveto+close subpaths that
+        // draw nothing. They must not break the whole icon: a lone moveto used
+        // to throw at node() (an empty PathNode), a moveto+close rendered blank.
+        SvgIcon icon = SvgIcon.parse("""
+                <svg viewBox="0 0 10 10">
+                  <path d="M5 5" fill="#000"/>
+                  <path d="M5 5 Z" fill="#000"/>
+                  <path d="M0 0 H10 V10 Z" fill="#f00"/>
+                </svg>
+                """);
+
+        // Only the drawable box survives; both degenerate paths are dropped.
+        assertThat(icon.layers()).hasSize(1);
+        assertThat(icon.node(24)).isNotNull();   // threw before the drop guard
+    }
+
+    @Test
+    void anIconOfOnlyDegenerateGeometryFailsLoudly() {
+        assertThatThrownBy(() -> SvgIcon.parse("""
+                <svg viewBox="0 0 10 10">
+                  <path d="M5 5" fill="#000"/>
+                </svg>
+                """))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("no drawable geometry");
+    }
+
+    @Test
     void basicShapesLowerToPathGeometry() {
         SvgIcon icon = SvgIcon.parse("""
                 <svg viewBox="0 0 20 20">

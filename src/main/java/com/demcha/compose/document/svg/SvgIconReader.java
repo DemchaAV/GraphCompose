@@ -192,6 +192,13 @@ final class SvgIconReader {
             return;
         }
         SvgPath geometry = SvgPath.parseTransformed(d, matrix, box[0], box[1], box[2], box[3]);
+        if (!geometry.hasDrawingSegment()) {
+            // A moveto-only or moveto+close element (e.g. d="M12 12", or a
+            // zero-length arc that lowers to a lone moveto) draws no ink. Drop
+            // it so one degenerate element a real-world exporter emitted does
+            // not fail the whole icon at SvgIcon#node(...).
+            return;
+        }
 
         // Gradients resolve here, where the shape's geometry (the
         // objectBoundingBox reference) and accumulated affine exist. The flat

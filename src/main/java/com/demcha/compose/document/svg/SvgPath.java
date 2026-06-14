@@ -154,6 +154,25 @@ public final class SvgPath {
         return sourceWidth / sourceHeight;
     }
 
+    /**
+     * Whether this path actually draws ink: it carries at least one
+     * {@code lineTo} / {@code cubicTo} after the leading {@code moveTo}. A
+     * moveto-only path, or a moveto followed only by {@code close} (which a
+     * degenerate SVG element such as {@code d="M12 12"} or a zero-length arc
+     * lowers to), draws nothing.
+     *
+     * @return {@code true} if a drawing segment is present
+     */
+    boolean hasDrawingSegment() {
+        for (DocumentPathSegment segment : segments) {
+            if (segment instanceof DocumentPathSegment.LineTo
+                    || segment instanceof DocumentPathSegment.CubicTo) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // ------------------------------------------------------------------
     // Normalization (y-flip into the unit box)
     // ------------------------------------------------------------------

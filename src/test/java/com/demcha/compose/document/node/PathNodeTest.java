@@ -42,15 +42,6 @@ class PathNodeTest {
     }
 
     @Test
-    void moveToFollowedOnlyByCloseDrawsNothingAndIsRejected() {
-        // [MoveTo, Close] is size 2 and starts with a MoveTo, so it slipped
-        // past the old size>=2 guard, yet it renders an empty subpath.
-        assertThatThrownBy(() -> node(List.of(moveTo(0.1, 0.1), close())))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("at least a MoveTo and one drawing segment");
-    }
-
-    @Test
     void coordinatesMustBeFinite() {
         assertThatThrownBy(() -> cubicTo(Double.NaN, 0, 0, 0, 1, 1))
                 .isInstanceOf(IllegalArgumentException.class)

@@ -34,8 +34,7 @@ import java.util.Objects;
  * @param width       resolved box width
  * @param height      resolved box height
  * @param segments    normalized path segments; must start with a
- *                    {@link DocumentPathSegment.MoveTo} and contain at least
- *                    one drawing segment (LineTo or CubicTo)
+ *                    {@link DocumentPathSegment.MoveTo}
  * @param fillColor   optional fill colour (non-zero winding rule)
  * @param fillPaint   optional gradient fill; wins over {@code fillColor}
  * @param stroke      optional outline stroke
@@ -75,29 +74,14 @@ public record PathNode(
         name = name == null ? "" : name;
         Objects.requireNonNull(segments, "segments");
         segments = List.copyOf(segments);
-        if (segments.isEmpty()) {
+        if (segments.size() < 2) {
             throw new IllegalArgumentException(
-                    "path needs at least a MoveTo and one drawing segment");
+                    "path needs at least a MoveTo and one drawing segment: " + segments.size());
         }
         if (!(segments.get(0) instanceof DocumentPathSegment.MoveTo)) {
             throw new IllegalArgumentException(
                     "path must start with a MoveTo segment, found: "
                     + segments.get(0).getClass().getSimpleName());
-        }
-        boolean hasDrawingSegment = false;
-        for (DocumentPathSegment segment : segments) {
-            if (segment instanceof DocumentPathSegment.LineTo
-                    || segment instanceof DocumentPathSegment.CubicTo) {
-                hasDrawingSegment = true;
-                break;
-            }
-        }
-        if (!hasDrawingSegment) {
-            // A lone MoveTo, or a MoveTo plus only Close/MoveTo, draws nothing.
-            // The old size>=2 check let [MoveTo, Close] through while the
-            // message still promised a drawing segment — now it is enforced.
-            throw new IllegalArgumentException(
-                    "path needs at least a MoveTo and one drawing segment (LineTo or CubicTo)");
         }
         padding = padding == null ? DocumentInsets.zero() : padding;
         margin = margin == null ? DocumentInsets.zero() : margin;

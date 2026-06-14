@@ -29,8 +29,7 @@ class ChartDataTest {
         assertThatThrownBy(() -> new Series("revenue", Arrays.asList(1.0, Double.NaN, 3.0)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("revenue")
-                .hasMessageContaining("index 1")
-                .hasMessageContaining("finite");
+                .hasMessageContaining("index 1 must be finite");
     }
 
     @Test

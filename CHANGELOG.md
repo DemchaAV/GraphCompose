@@ -10,16 +10,11 @@ Entries land here as they merge.
 
 ### Public API
 
-- **Stricter authoring-time validation on the new vector/chart primitives.**
-  `ChartData.Series` now rejects non-finite values (`NaN` / ±∞) at
-  construction — naming the series and the offending index — instead of
-  letting them poison axis derivation and surface as a misleading
-  "height must be finite" failure deep in the layout pass (`null` entries
-  are still allowed as gaps). `PathNode` now requires at least one drawing
-  segment (`LineTo` or `CubicTo`) after the leading `MoveTo`, so a
-  `[MoveTo, Close]` path that renders nothing is rejected up front rather
-  than slipping past the size check the error message already promised to
-  enforce.
+- **`ChartData.Series` rejects non-finite values.** A `NaN` / ±∞ entry now
+  fails at construction — naming the series and the offending index —
+  instead of poisoning axis derivation and surfacing as a misleading
+  "height must be finite" failure deep in the layout pass. `null` entries
+  are still allowed as gaps.
 - **Block-level horizontal alignment** (`@since 1.8.0`). Fixed-size flow
   children (paths, images, SVG icons, barcodes, shape containers) left-align
   by default — there was no built-in way to centre or right-align one without

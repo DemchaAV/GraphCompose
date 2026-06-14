@@ -10,6 +10,11 @@ Entries land here as they merge.
 
 ### Public API
 
+- **`ChartData.Series` rejects non-finite values.** A `NaN` / ±∞ entry now
+  fails at construction — naming the series and the offending index —
+  instead of poisoning axis derivation and surfacing as a misleading
+  "height must be finite" failure deep in the layout pass. `null` entries
+  are still allowed as gaps.
 - **Block-level horizontal alignment** (`@since 1.8.0`). Fixed-size flow
   children (paths, images, SVG icons, barcodes, shape containers) left-align
   by default — there was no built-in way to centre or right-align one without

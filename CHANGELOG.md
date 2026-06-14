@@ -329,6 +329,13 @@ Entries land here as they merge.
 
 ### Internal
 
+- **Removed the `java.awt.*` / `java.util.*` co-wildcard in four files.**
+  `InvoiceTemplateComposer`, `ProposalTemplateComposer`,
+  `WeeklyScheduleTemplateComposer`, and the engine `PdfRenderingSystemECS`
+  imported both wildcards, leaving `List` resolvable from either
+  `java.awt.List` or `java.util.List` — sound today only because `java.awt.List`
+  was never referenced. Each used only `java.awt.Color`, so the wildcard is now
+  an explicit `import java.awt.Color;`. No behaviour change.
 - **Sweep follow-up note for future bisectors.** The v1.8.0 import/Javadoc
   sweep (`f04a7dce`, part of #162) also carried mechanical code rewrites in
   roughly 40 files beyond its stated scope: ~30 private preset `Template`

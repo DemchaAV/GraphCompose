@@ -219,4 +219,49 @@ class ShapeOutlineTest {
         assertThatThrownBy(() -> ShapeOutline.arrow(10, 10, ShapeOutline.Direction.RIGHT, null))
                 .isInstanceOf(NullPointerException.class);
     }
+
+    @Test
+    void pathOutlineKeepsItsSizeAndSegments() {
+        ShapeOutline.Path outline = ShapeOutline.path(40, 20, List.of(
+                DocumentPathSegment.moveTo(0, 0),
+                DocumentPathSegment.lineTo(1, 0),
+                DocumentPathSegment.lineTo(0.5, 1),
+                DocumentPathSegment.close()));
+
+        assertThat(outline.width()).isEqualTo(40.0, within(EPS));
+        assertThat(outline.height()).isEqualTo(20.0, within(EPS));
+        assertThat(outline.segments()).hasSize(4);
+    }
+
+    @Test
+    void pathOutlineRejectsTooFewSegmentsAndNonMoveToStart() {
+        assertThatThrownBy(() -> ShapeOutline.path(10, 10,
+                List.of(DocumentPathSegment.moveTo(0, 0))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("at least a MoveTo");
+        assertThatThrownBy(() -> ShapeOutline.path(10, 10,
+                List.of(DocumentPathSegment.lineTo(0, 0), DocumentPathSegment.lineTo(1, 1))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("must start with a MoveTo");
+    }
+
+    @Test
+    void pathOutlineRejectsNullSegments() {
+        assertThatThrownBy(() -> ShapeOutline.path(10, 10, null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("segments");
+    }
+
+    @Test
+    void pathOutlineCopiesItsSegmentsDefensively() {
+        List<DocumentPathSegment> mutable = new ArrayList<>(List.of(
+                DocumentPathSegment.moveTo(0, 0),
+                DocumentPathSegment.lineTo(1, 1)));
+        ShapeOutline.Path outline = ShapeOutline.path(10, 10, mutable);
+        mutable.clear();
+
+        assertThat(outline.segments()).hasSize(2);
+        assertThatThrownBy(() -> outline.segments().add(DocumentPathSegment.close()))
+                .isInstanceOf(UnsupportedOperationException.class);
+    }
 }

@@ -67,6 +67,36 @@ class PathBuilderTest {
     }
 
     @Test
+    void dashedRejectsAnEmptyOrNonPositivePattern() {
+        // dashed(double...) delegates to DocumentDashPattern.of, which throws
+        // eagerly at call time — pin both rejection paths.
+        assertThatThrownBy(() -> new PathBuilder().dashed())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("at least one segment");
+        assertThatThrownBy(() -> new PathBuilder().dashed(-1.0, 2.0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("finite and strictly positive");
+    }
+
+    @Test
+    void buildSnapshotsTheSegmentsSoLaterMutationDoesNotLeakBack() {
+        // The documented build()-reuse contract: each build() copies the
+        // segments, so the builder may keep accumulating afterwards and the
+        // earlier node is unaffected.
+        PathBuilder builder = new PathBuilder()
+                .size(100, 40)
+                .moveTo(0.0, 0.5)
+                .lineTo(1.0, 0.5);
+
+        PathNode first = builder.build();
+        builder.lineTo(0.5, 1.0);
+        PathNode second = builder.build();
+
+        assertThat(first.segments()).hasSize(2);
+        assertThat(second.segments()).hasSize(3);
+    }
+
+    @Test
     void svgBridgeAppendsParsedSegments() {
         PathNode node = new PathBuilder()
                 .size(24, 24)

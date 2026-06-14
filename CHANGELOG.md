@@ -320,6 +320,15 @@ Entries land here as they merge.
 
 ### Tests
 
+- Pinned the fail-loud guards on the new value types so a future refactor
+  cannot silently drop one: `PolygonNodeTest` (fewer than three points,
+  non-positive / `NaN` / ∞ box, defensive vertex-ring copy), `DocumentColorTest`
+  (`withOpacity` range + `NaN` rejection, boundary alpha rounding, `rgba`
+  alpha), `ShapeOutline.Path` cases in `ShapeOutlineTest` (segment-count /
+  `MoveTo`-first / null guards, defensive copy), and `PathBuilder` dashed-pattern
+  rejection plus the documented `build()`-snapshot contract. Extended
+  `PublicApiNoEngineLeakTest` to cover the new public `document.svg` package
+  (it is engine-clean today; the guard now keeps it that way).
 - Chart geometry pinned without rendering: `NiceScaleTest` golden tables and
   `ChartLayoutResolverTest` exact-position assertions on a font-independent
   text-metrics fake; `ChartLayoutSnapshotTest` layout snapshots + a

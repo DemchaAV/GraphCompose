@@ -40,6 +40,10 @@ The script prints numbered sections so you can map console output to the pipelin
    runs the thread-scaling throughput sweep (1 → 16 threads).
 3. `03-comparative`
    Runs the GraphCompose canonical vs iText 5 vs JasperReports comparison.
+
+   _Steps 04–06 (`core-engine`, `full-cv`, `scalability`) were retired. The
+   surviving steps keep their original `NN-` console prefixes, so the labels
+   jump from `03-` to `07-`._
 7. `07-stress`
    Runs the concurrent stability stress test.
 8. `08-endurance`

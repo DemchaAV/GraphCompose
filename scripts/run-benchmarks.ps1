@@ -6,7 +6,9 @@ Runs the local GraphCompose benchmark pipeline and stores timestamped logs and r
 .DESCRIPTION
 The wrapper performs a staged local run:
 01 build classpath, 02 current-speed, 03 comparative, 07 stress,
-optional 08 endurance, then 09/10 diff steps.
+optional 08 endurance, then 09/10 diff and 11 verdict steps. Steps 04-06
+(core-engine, full-cv, scalability) were retired; the surviving steps keep
+their original numeric prefixes, so the numbering jumps from 03 to 07.
 
 Current-speed diffs are profile-aware. The wrapper only compares reports
 from the same current-speed profile (`smoke` or `full`) and skips the

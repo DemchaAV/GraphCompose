@@ -24,6 +24,11 @@ import java.util.stream.Collectors;
  * possible, so it can be diffed by {@link BenchmarkDiffTool}. The tool is meant
  * for local benchmark sessions where a few repeated runs are needed to reduce
  * machine noise before comparing results.</p>
+ *
+ * <p>The current-speed per-stage breakdown ({@code stages[]}) is <em>not</em>
+ * carried into the median aggregate — only latency and throughput are medianed.
+ * A median-vs-median diff therefore shows no compose/layout/render stage deltas;
+ * diff a single-run pair when you need stage attribution.</p>
  */
 public final class BenchmarkMedianTool {
 

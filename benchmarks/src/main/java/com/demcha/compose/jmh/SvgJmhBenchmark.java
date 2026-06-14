@@ -24,7 +24,8 @@ import java.util.concurrent.TimeUnit;
  * {@code DocumentSession}, no PDF render):</p>
  * <ul>
  *   <li>{@code parseSvgPath} — {@link SvgPath#parse} of a real Material icon
- *       {@code d} string (arc→cubic conversion, normalization).</li>
+ *       {@code d} string (tokenize, relative/absolute resolution, cubic/line
+ *       lowering, viewBox normalization).</li>
  *   <li>{@code readSvgIcon} — {@link SvgIcon#parse} of a multi-layer icon (XML
  *       parse, {@code <g>} transform accumulation, gradient resolution, one
  *       {@link SvgPath} per layer).</li>

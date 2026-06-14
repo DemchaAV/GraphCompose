@@ -110,21 +110,10 @@ function Parse-Comparative($jsonPath) {
 }
 function Parse-Logs($logsDir) {
     $o = @{}
-    $scal = Join-Path $logsDir "06-scalability.log"
-    if (Test-Path $scal) {
-        foreach ($line in (Get-Content $scal)) {
-            if ($line -match '^\s*(\d+)\s*\|\s*\d+\s*\|\s*([\d.]+)\s*$') {
-                $o["scalability | $($matches[1])t | docs/s"] = [double]$matches[2]
-            }
-        }
-    }
-    foreach ($pair in @(@("04-core-engine.log", "core-engine"), @("05-full-cv.log", "full-cv"))) {
-        $p = Join-Path $logsDir $pair[0]
-        if (Test-Path $p) {
-            $txt = Get-Content $p -Raw
-            if ($txt -match 'Median[^\r\n]*?:\s*([\d.]+)\s*ms') { $o["$($pair[1]) | median ms"] = [double]$matches[1] }
-        }
-    }
+    # Steps 04-06 (core-engine, full-cv, scalability) were retired, so their logs
+    # are no longer produced. Current-speed throughput — including the
+    # thread-scaling series — is read from the JSON report by Parse-CurrentSpeed;
+    # only the surviving stress log is parsed here.
     $stress = Join-Path $logsDir "07-stress.log"
     if (Test-Path $stress) {
         $txt = Get-Content $stress -Raw

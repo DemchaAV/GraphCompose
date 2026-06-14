@@ -182,6 +182,34 @@ class ChartLayoutResolverTest {
     }
 
     @Test
+    void stackedBarsAnchorAtZeroEvenWithAnExplicitPositiveAxisMin() {
+        // A stacked bar sums its parts up from zero. An explicit positive
+        // axis.min() must not lift the baseline: doing so left segment heights
+        // measured from zero while the stack started above it, so the stack
+        // overshot the plot. Pin the stacked floor to zero.
+        ChartData data = ChartData.builder().categories("A")
+                .series("S1", 10.0).series("S2", 20.0).build();  // total 30
+        ChartSpec.Bar bar = ChartSpec.bar().data(data)
+                .grouping(BarGrouping.STACKED)
+                .valueAxis(AxisSpec.builder().min(10.0).max(30.0).build())
+                .build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                bar, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 100.0, METRICS);
+
+        // Same frame as the grouped test: plotBottomY = 14, plotTopY = 95.
+        // The bottom segment sits on the zero baseline and the whole stack stays
+        // inside the plot (with the floor wrongly at 10 it reached ~135 > 95).
+        double baseY = byName(out, "bar_c0_s0").y();
+        double stackTop = out.stream()
+                .filter(p -> p.node().name().startsWith("bar_c0_"))
+                .mapToDouble(p -> p.y() + p.height())
+                .max().orElseThrow();
+        assertThat(baseY).isCloseTo(14.0, within(1e-6));
+        assertThat(stackTop).isLessThanOrEqualTo(95.0 + 1e-6);
+    }
+
+    @Test
     void stackedBarsLabelTheCategoryTotal() {
         ChartData data = ChartData.builder().categories("A")
                 .series("S1", 10.0).series("S2", 20.0).build();

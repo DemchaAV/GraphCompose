@@ -169,6 +169,9 @@ public record ChartStyle(
      * @return the paint to fill / stroke this series with
      */
     public DocumentPaint paintForSeries(int index, List<DocumentPaint> fallbackPalette) {
+        if (index < 0) {
+            throw new IllegalArgumentException("series index must be >= 0: " + index);
+        }
         DocumentPaint override = seriesPaintOverrides.get(index);
         if (override != null) {
             return override;

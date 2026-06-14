@@ -228,6 +228,15 @@ Entries land here as they merge.
 
 ### Bug fixes
 
+- **Stacked bars anchor at zero even with an explicit positive axis minimum.**
+  A stacked bar chart with `valueAxis().min(positive)` lifted the baseline
+  while segment heights stayed measured from zero, so the stack overshot its
+  total and ran past the plot top. The stacked floor is now pinned to zero
+  (parts summing to a whole), independent of the requested minimum. Grouped
+  bars still honour an explicit minimum.
+- **`ChartStyle.paintForSeries` rejects a negative series index** with a
+  value-naming `IllegalArgumentException` instead of leaking a bare
+  `IndexOutOfBoundsException` from the palette modulo.
 - **SVG path reader no longer hangs on malformed `d` data.** A `Z`/`z`
   close command (which consumes no operands) followed by a stray
   non-command token — e.g. `"M0 0 Z5"` — made the scanner loop forever,

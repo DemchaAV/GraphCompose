@@ -35,6 +35,7 @@ class PublicApiNoEngineLeakTest {
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/GraphCompose.java"),
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api"),
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/chart"),
+            PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/svg"),
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl"),
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/node"),
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/style"),

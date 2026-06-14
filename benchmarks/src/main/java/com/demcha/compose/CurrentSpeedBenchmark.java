@@ -55,7 +55,9 @@ public final class CurrentSpeedBenchmark {
     private static final int DEFAULT_FULL_WARMUP_ITERATIONS = 12;
     private static final int DEFAULT_FULL_MEASUREMENT_ITERATIONS = 40;
     private static final int DEFAULT_FULL_DOCS_PER_THREAD = 12;
-    private static final String DEFAULT_FULL_THREAD_COUNTS = "1,2,4,8";
+    // The 16-thread tier is absorbed from the removed ScalabilityBenchmark so the
+    // full profile keeps a thread-scaling data point (smoke runs no throughput).
+    private static final String DEFAULT_FULL_THREAD_COUNTS = "1,2,4,8,16";
     // Bumped from 2/5 to 30/100 so smoke runs reach a steady JIT state and the
     // p95 calculation actually has enough samples to interpolate rather than
     // collapsing to the maximum observed time. The smoke profile remains the

@@ -337,6 +337,13 @@ Entries land here as they merge.
 
 ### Internal
 
+- **Benchmark suite cleanup (not shipped).** Removed three redundant
+  benchmark mains: `FullCvBenchmark` (superseded by the JMH
+  `TemplateCvJmhBenchmark`), `GraphComposeBenchmark` (early-engine relic
+  duplicating `CurrentSpeedBenchmark`'s `engine-simple` scenario), and
+  `ScalabilityBenchmark` (its thread-scaling sweep folded into
+  `CurrentSpeedBenchmark`'s full-profile throughput run, now `1,2,4,8,16`).
+  Dropped the matching `run-benchmarks.ps1` steps and doc entries.
 - **Removed the `java.awt.*` / `java.util.*` co-wildcard in four files.**
   `InvoiceTemplateComposer`, `ProposalTemplateComposer`,
   `WeeklyScheduleTemplateComposer`, and the engine `PdfRenderingSystemECS`

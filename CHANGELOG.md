@@ -10,6 +10,11 @@ Entries land here as they merge.
 
 ### Public API
 
+- **`ChartData.Series` rejects non-finite values.** A `NaN` / ±∞ entry now
+  fails at construction — naming the series and the offending index —
+  instead of poisoning axis derivation and surfacing as a misleading
+  "height must be finite" failure deep in the layout pass. `null` entries
+  are still allowed as gaps.
 - **Block-level horizontal alignment** (`@since 1.8.0`). Fixed-size flow
   children (paths, images, SVG icons, barcodes, shape containers) left-align
   by default — there was no built-in way to centre or right-align one without
@@ -220,6 +225,14 @@ Entries land here as they merge.
 
 ### Bug fixes
 
+- **SVG path reader no longer hangs on malformed `d` data.** A `Z`/`z`
+  close command (which consumes no operands) followed by a stray
+  non-command token — e.g. `"M0 0 Z5"` — made the scanner loop forever,
+  appending a close op every pass until the heap was exhausted. A single
+  malformed or hostile path string could therefore DoS the `@Beta`
+  `SvgPath.parse` / `SvgIcon` reader. The scanner now fails fast with the
+  usual position-carrying `IllegalArgumentException` when an iteration
+  consumes neither a command nor an operand.
 - **`BEHIND_CONTENT` watermarks no longer wash out the page.** The PDF
   watermark renderer set its low-opacity graphics state in a *prepended*
   content stream without a save/restore pair; PDFBox's `resetContext` only

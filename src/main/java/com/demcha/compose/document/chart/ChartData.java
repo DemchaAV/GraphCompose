@@ -74,18 +74,31 @@ public record ChartData(List<String> categories, List<Series> series) {
     /**
      * One named value series. {@code null} entries are allowed and mean a
      * missing point — a gap in a line, a skipped bar — distinct from {@code 0}.
+     * Non-finite entries ({@code NaN} / ±∞) are rejected at construction: they
+     * would otherwise poison axis derivation and only surface as a misleading
+     * "height must be finite" failure deep inside the layout pass.
      *
      * @param name   legend label for this series
      * @param values value per category, aligned by index; entries may be null
+     *               (a gap) but must otherwise be finite
      */
     public record Series(String name, List<Double> values) {
         /**
-         * Normalizes the name and tolerates {@code null} value entries.
+         * Normalizes the name, tolerates {@code null} value entries (gaps),
+         * and rejects non-finite values with the offending index named.
          */
         public Series {
             name = name == null ? "" : name;
             Objects.requireNonNull(values, "values");
             values = java.util.Collections.unmodifiableList(new ArrayList<>(values));
+            for (int i = 0; i < values.size(); i++) {
+                Double v = values.get(i);
+                if (v != null && !Double.isFinite(v)) {
+                    throw new IllegalArgumentException(
+                            "series '" + name + "' value at index " + i
+                            + " must be finite or null, got " + v);
+                }
+            }
         }
 
         /**

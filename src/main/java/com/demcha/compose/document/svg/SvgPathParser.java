@@ -54,6 +54,7 @@ final class SvgPathParser {
                 break;
             }
             char c = d.charAt(pos);
+            int loopStart = pos;
             if (isCommand(c)) {
                 cmd = c;
                 pos++;
@@ -68,6 +69,15 @@ final class SvgPathParser {
                 }
             }
             apply(cmd);
+            if (pos == loopStart) {
+                // No command letter and no operand was consumed this iteration.
+                // This only happens when an operand-less command (Z/z) is
+                // implicitly repeated by a stray non-command token, e.g.
+                // "M0 0 Z5": apply(Z) consumes nothing, so without this guard
+                // the loop would spin forever, appending a close op each pass
+                // until the heap is exhausted. Fail loudly instead of hanging.
+                throw fail("a command letter");
+            }
         }
         return ops;
     }

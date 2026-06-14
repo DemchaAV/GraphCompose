@@ -3,10 +3,10 @@ package com.demcha.compose.document.chart;
 /**
  * Placement of the series legend relative to the plot area.
  *
- * <p>v1 of the geometry resolver supports {@link #NONE} and {@link #BOTTOM}; the
- * remaining placements are reserved and rejected by validation until the
- * corresponding layout lands. Adding resolver support for a reserved constant is
- * an additive, non-breaking change.</p>
+ * <p>All four placements are laid out by the geometry resolver for every chart
+ * kind, including pie: {@link #NONE}, {@link #BOTTOM} (a row below the plot),
+ * {@link #TOP} (a row above), and {@link #RIGHT} (a column beside it). The
+ * resolver reserves the corresponding gutter and packs the entries to fit.</p>
  *
  * @author Artem Demchyshyn
  * @since 1.8.0
@@ -21,11 +21,11 @@ public enum LegendPosition {
      */
     BOTTOM,
     /**
-     * Reserved — legend column to the right of the plot area.
+     * Legend column to the right of the plot area.
      */
     RIGHT,
     /**
-     * Reserved — single legend row above the plot area.
+     * Single legend row above the plot area.
      */
     TOP
 }

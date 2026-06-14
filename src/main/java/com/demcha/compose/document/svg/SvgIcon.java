@@ -42,9 +42,13 @@ import java.util.Objects;
  * {@code <use>} references, nested {@code <svg>} viewBoxes (inner frames
  * recurse but their coordinates stay in the outer space), animations, and
  * the gradient corners that have no PDF analogue (focal points,
- * {@code spreadMethod} other than pad, stop opacity). The XML reader
- * refuses DOCTYPEs, so external-entity tricks cannot reach the file
- * system.</p>
+ * {@code spreadMethod} other than pad, stop opacity). A gradient's
+ * {@code href} / {@code xlink:href} indirection inherits only the referenced
+ * {@code <stop>} list — not its geometry attributes ({@code x1}/{@code y1}/
+ * {@code x2}/{@code y2}, {@code cx}/{@code cy}/{@code r}, {@code gradientUnits},
+ * {@code gradientTransform}); keep the coordinates on the referencing gradient.
+ * The XML reader refuses DOCTYPEs, so external-entity tricks cannot reach the
+ * file system.</p>
  *
  * <pre>{@code
  * SvgIcon logo = SvgIcon.read(Path.of("assets/logo.svg"));

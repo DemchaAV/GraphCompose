@@ -90,7 +90,10 @@ Entries land here as they merge.
   mask under `ClipPolicy.CLIP_PATH`. The outline rides the existing
   vector-path fragment pipeline (one source of truth for native curves) and
   the clip handler emits the same `addPathSegments` geometry, so fill, clip,
-  and `addPath(...)` all agree.
+  and `addPath(...)` all agree. The new `Path` permit is additive and keeps
+  the artifact binary-compatible (the `japicmp` gate stays green); only
+  consumer code that exhaustively `switch`es over `ShapeOutline` would need a
+  new branch, and the canonical authoring surface exposes no such switch.
 - **SVG path import** (`@since 1.8.0`, **beta** — annotated `@Beta` while
   the surface hardens against real-world exporter output). `SvgPath.parse(d)` /
   `parse(d, viewBox...)` in the new `document.svg` package lowers the full
@@ -271,6 +274,16 @@ Entries land here as they merge.
 
 ### Documentation
 
+- **Contract-drift Javadoc fixes on the new 1.8 surface.** `LegendPosition`
+  no longer claims `RIGHT`/`TOP` are "reserved and rejected by validation" —
+  all four placements are laid out for every chart kind, as the resolver and
+  its tests already prove. `DocumentPaint` documents why the `Linear`/`Radial`
+  (angle/corner-reaching) and `LinearAxis`/`RadialCircle` (exact endpoint/radius)
+  forms coexist. `ShapeContainerBuilder`'s missing-outline error and class
+  Javadoc now name the full set of outline setters (including `path`).
+  `PathBuilder.dashed(double...)` documents the `IllegalArgumentException` it
+  throws eagerly, and `SvgIcon` documents that a gradient `href` inherits stops
+  only, not geometry attributes.
 - **Browsable feature-catalog PDF.** New flagship `FeatureCatalogExample`
   renders every shipped capability as a self-documenting block: the heading
   lands in the PDF outline (the bookmarks panel works as a clickable index),

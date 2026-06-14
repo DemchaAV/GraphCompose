@@ -241,10 +241,15 @@ public final class PathBuilder {
     /**
      * Makes the stroke dashed using alternating on/off lengths in points
      * (the same contract as {@code LineBuilder.dashed}). Affects only the
-     * stroke; fills are unaffected.
+     * stroke; fills are unaffected. Validates eagerly: an empty or
+     * non-finite/non-positive pattern is rejected at this call, not at
+     * {@link #build()}.
      *
      * @param pattern alternating on/off lengths in points
      * @return this builder
+     * @throws IllegalArgumentException if no segments are supplied or any
+     *                                  segment is not finite and strictly
+     *                                  positive
      */
     public PathBuilder dashed(double... pattern) {
         this.dashPattern = DocumentDashPattern.of(pattern);

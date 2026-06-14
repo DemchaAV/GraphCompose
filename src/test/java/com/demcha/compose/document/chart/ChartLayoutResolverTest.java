@@ -182,6 +182,44 @@ class ChartLayoutResolverTest {
     }
 
     @Test
+    void stackedBarsAnchorAtZeroEvenWithAnExplicitPositiveAxisMin() {
+        // total 30, axis.min(10) — a positive floor used to lift the baseline
+        // while segments stayed measured from zero, so the stack overshot
+        // (~135 > 95). The floor is pinned to zero, so the stack fills exactly
+        // to the value-30 level at the plot top.
+        assertStackFillsToTheTotal(10.0);
+    }
+
+    @Test
+    void stackedBarsAnchorAtZeroEvenWithAnExplicitNegativeAxisMin() {
+        // total 30, axis.min(-10) — a negative floor used to anchor the stack
+        // below zero (top reached only ~75 < 95). Same zero-floor pin fixes it.
+        assertStackFillsToTheTotal(-10.0);
+    }
+
+    private static void assertStackFillsToTheTotal(double axisMin) {
+        ChartData data = ChartData.builder().categories("A")
+                .series("S1", 10.0).series("S2", 20.0).build();  // total 30
+        ChartSpec.Bar bar = ChartSpec.bar().data(data)
+                .grouping(BarGrouping.STACKED)
+                .valueAxis(AxisSpec.builder().min(axisMin).max(30.0).build())
+                .build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                bar, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 100.0, METRICS);
+
+        // Same frame as the grouped test: plotBottomY = 14, plotTopY = 95. With
+        // the floor at zero and max == total, the stack fills the whole plot.
+        double baseY = byName(out, "bar_c0_s0").y();
+        double stackTop = out.stream()
+                .filter(p -> p.node().name().startsWith("bar_c0_"))
+                .mapToDouble(p -> p.y() + p.height())
+                .max().orElseThrow();
+        assertThat(baseY).isCloseTo(14.0, within(1e-6));
+        assertThat(stackTop).isCloseTo(95.0, within(1e-6));
+    }
+
+    @Test
     void stackedBarsLabelTheCategoryTotal() {
         ChartData data = ChartData.builder().categories("A")
                 .series("S1", 10.0).series("S2", 20.0).build();

@@ -92,6 +92,15 @@ final class ChartLayoutSupport {
         if (axis.max() != null) {
             domain[1] = axis.max();
         }
+        // Stacked bars sum their segments up from a fixed floor, and each
+        // segment's height is measured from zero (value / range). An explicit
+        // axis.min() of either sign would move the baseline off zero without
+        // rescaling the segments — a positive min makes the stack overshoot its
+        // total, a negative min anchors it below zero — so pin the stacked floor
+        // to exactly zero regardless of the requested min.
+        if (stacked && domain[0] != 0.0) {
+            domain[0] = 0.0;
+        }
         NiceScale scale = NiceScale.compute(domain[0], domain[1],
                 axis.baselineAtZero() && axis.min() == null, ChartDefaults.TARGET_TICKS);
 

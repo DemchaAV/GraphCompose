@@ -32,6 +32,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 
 /**
  * Focused local benchmark harness for current GraphCompose performance.
@@ -87,6 +88,36 @@ public final class CurrentSpeedBenchmark {
     private final ProposalDocumentSpec proposal = CanonicalBenchmarkSupport.canonicalProposal();
     private final CvSpec cv = CanonicalBenchmarkSupport.canonicalCv();
 
+    // Canonical scenario list, in table order. Declared statically (the
+    // renderer is bound to an instance at run time) so the gate-coverage guard
+    // test can read the scenario names without re-measuring: a scenario added
+    // here without a matching SMOKE threshold below would silently escape the
+    // perf gate, and CurrentSpeedScenarioGateTest fails loudly if that happens.
+    private static final List<ScenarioDef> SCENARIO_DEFS = List.of(
+            new ScenarioDef("engine-simple", "One-page engine composition",
+                    b -> b::renderEngineSimpleDocument),
+            new ScenarioDef("invoice-template", "Compose-first invoice template",
+                    b -> b::renderInvoiceTemplateDocument),
+            new ScenarioDef("cv-template", "Compose-first CV template",
+                    b -> b::renderCvTemplateDocument),
+            new ScenarioDef("proposal-template", "Long multi-page proposal template",
+                    b -> b::renderProposalTemplateDocument),
+            new ScenarioDef("feature-rich", "QR, barcode, watermark, header/footer, page break",
+                    b -> b::renderFeatureRichDocument),
+            new ScenarioDef("long-token", "Long unbreakable tokens (URLs/IDs) forcing character-level wrap",
+                    b -> b::renderLongTokenDocument)
+    );
+
+    /**
+     * Ordered scenario names. Read by {@code CurrentSpeedScenarioGateTest} to
+     * assert every scenario is covered by a SMOKE gate threshold.
+     *
+     * @return the canonical scenario names in table order
+     */
+    static List<String> scenarioNames() {
+        return SCENARIO_DEFS.stream().map(ScenarioDef::name).toList();
+    }
+
     public static void main(String[] args) throws Exception {
         BenchmarkSupport.configureQuietLogging();
         new CurrentSpeedBenchmark().run();
@@ -109,14 +140,9 @@ public final class CurrentSpeedBenchmark {
         System.out.println("Perf gate: " + (enforceGate ? "enabled" : "disabled"));
         System.out.println();
 
-        List<Scenario> scenarios = List.of(
-                new Scenario("engine-simple", "One-page engine composition", this::renderEngineSimpleDocument),
-                new Scenario("invoice-template", "Compose-first invoice template", this::renderInvoiceTemplateDocument),
-                new Scenario("cv-template", "Compose-first CV template", this::renderCvTemplateDocument),
-                new Scenario("proposal-template", "Long multi-page proposal template", this::renderProposalTemplateDocument),
-                new Scenario("feature-rich", "QR, barcode, watermark, header/footer, page break", this::renderFeatureRichDocument),
-                new Scenario("long-token", "Long unbreakable tokens (URLs/IDs) forcing character-level wrap", this::renderLongTokenDocument)
-        );
+        List<Scenario> scenarios = SCENARIO_DEFS.stream()
+                .map(def -> new Scenario(def.name(), def.description(), def.renderer().apply(this)))
+                .toList();
 
         System.out.println("Latency benchmark");
         System.out.printf("%-18s | %10s | %10s | %10s | %10s | %11s | %10s | %10s%n",
@@ -820,6 +846,13 @@ public final class CurrentSpeedBenchmark {
     private record Scenario(String name, String description, Renderer renderer) {
     }
 
+    // Static scenario template: name + description + a factory that binds the
+    // renderer to a benchmark instance. Keeps the scenario list declarable as a
+    // static constant (so the gate-coverage test can read it) while the actual
+    // render still runs against per-run instance state.
+    private record ScenarioDef(String name, String description, Function<CurrentSpeedBenchmark, Renderer> renderer) {
+    }
+
     @FunctionalInterface
     private interface Renderer {
         byte[] render() throws Exception;
@@ -909,12 +942,16 @@ public final class CurrentSpeedBenchmark {
                 // (typically 1.5-2x slower) does not produce false positives
                 // while real regressions of 50% or more still trigger. The
                 // previous values (800-2600 ms) were 50-100x looser and would
-                // not have flagged even a 10x slowdown.
+                // not have flagged even a 10x slowdown. long-token (observed
+                // ~3.2 ms / ~94 MB) is gated too so every scenario in the
+                // latency table is covered — CurrentSpeedScenarioGateTest pins
+                // that invariant.
                 "engine-simple", new SmokeThreshold(8.0, 96.0),
                 "invoice-template", new SmokeThreshold(35.0, 384.0),
                 "cv-template", new SmokeThreshold(25.0, 192.0),
                 "proposal-template", new SmokeThreshold(45.0, 384.0),
-                "feature-rich", new SmokeThreshold(100.0, 256.0)
+                "feature-rich", new SmokeThreshold(100.0, 256.0),
+                "long-token", new SmokeThreshold(10.0, 256.0)
         ));
 
         private final String id;

@@ -143,20 +143,21 @@ public final class CurrentSpeedBenchmark {
 
         // Stage breakdown: for each template scenario we time compose / layout
         // / render separately so consumers can attribute regressions to the
-        // engine vs. PDFBox. Engine-simple and feature-rich scenarios also
-        // use the canonical pipeline and benefit from the same probe.
+        // engine vs. PDFBox. Only the template scenarios are probed here; the
+        // latency table above still covers every scenario.
+        List<StageRow> stageRows = new ArrayList<>();
         if (profile != BenchmarkProfile.SMOKE || config.measurementIterations() >= 20) {
             System.out.println();
             System.out.println("Stage breakdown (median ms per stage)");
             System.out.printf("%-18s | %12s | %12s | %12s | %12s%n",
                     "Scenario", "Compose", "Layout", "Render", "Total");
             System.out.println("-".repeat(78));
-            runStageBreakdown("invoice-template", () -> openInvoiceSession(),
-                    s -> invoiceTemplate.compose(s, invoice), config.measurementIterations());
-            runStageBreakdown("cv-template", () -> openCvSession(),
-                    s -> cvTemplate.compose(s, cv), config.measurementIterations());
-            runStageBreakdown("proposal-template", () -> openProposalSession(),
-                    s -> proposalTemplate.compose(s, proposal), config.measurementIterations());
+            stageRows.add(runStageBreakdown("invoice-template", () -> openInvoiceSession(),
+                    s -> invoiceTemplate.compose(s, invoice), config.measurementIterations()));
+            stageRows.add(runStageBreakdown("cv-template", () -> openCvSession(),
+                    s -> cvTemplate.compose(s, cv), config.measurementIterations()));
+            stageRows.add(runStageBreakdown("proposal-template", () -> openProposalSession(),
+                    s -> proposalTemplate.compose(s, proposal), config.measurementIterations()));
         }
 
         List<ThroughputRow> throughputRows = new ArrayList<>();
@@ -201,10 +202,13 @@ public final class CurrentSpeedBenchmark {
                 config.docsPerThread(),
                 config.threadCounts(),
                 latencyRows,
+                stageRows,
                 throughputRows,
                 totalBenchmarkBytes);
         System.out.println("Saved JSON benchmark report to " + summary.jsonPath());
-        System.out.println("Saved CSV benchmark reports to " + summary.latencyCsvPath() + " and " + summary.throughputCsvPath());
+        System.out.println("Saved CSV benchmark reports to " + summary.latencyCsvPath() + ", "
+                + summary.stagesCsvPath() + ", and " + summary.throughputCsvPath());
+        System.out.println("Saved markdown summary to " + summary.summaryMarkdownPath());
 
         if (enforceGate) {
             PerformanceGateResult gateResult = evaluatePerformanceGate(profile, latencyRows);
@@ -363,10 +367,10 @@ public final class CurrentSpeedBenchmark {
      * median-ms-per-stage row so callers can attribute regressions to
      * compose / layout / render independently.
      */
-    private void runStageBreakdown(String scenario,
-                                   SessionFactory factory,
-                                   SessionComposer composer,
-                                   int iterations) throws Exception {
+    private StageRow runStageBreakdown(String scenario,
+                                       SessionFactory factory,
+                                       SessionComposer composer,
+                                       int iterations) throws Exception {
         int warmup = Math.max(2, Math.min(20, iterations / 5));
         for (int i = 0; i < warmup; i++) {
             try (DocumentSession session = factory.open()) {
@@ -398,12 +402,13 @@ public final class CurrentSpeedBenchmark {
                 throw new AssertionError();
             }
         }
+        double composeMs = medianMs(composeNs);
+        double layoutMs = medianMs(layoutNs);
+        double renderMs = medianMs(renderNs);
+        double totalMs = medianMs(totalNs);
         System.out.printf("%-18s | %12.3f | %12.3f | %12.3f | %12.3f%n",
-                scenario,
-                medianMs(composeNs),
-                medianMs(layoutNs),
-                medianMs(renderNs),
-                medianMs(totalNs));
+                scenario, composeMs, layoutMs, renderMs, totalMs);
+        return new StageRow(scenario, round(composeMs), round(layoutMs), round(renderMs), round(totalMs));
     }
 
     private static double medianMs(long[] arr) {
@@ -677,16 +682,19 @@ public final class CurrentSpeedBenchmark {
                                      int docsPerThread,
                                      int[] threadCounts,
                                      List<LatencyRow> latencyRows,
+                                     List<StageRow> stageRows,
                                      List<ThroughputRow> throughputRows,
                                      long totalBenchmarkBytes) throws Exception {
+        String timestamp = LocalDateTime.now().format(TIMESTAMP_FORMAT);
         CurrentSpeedReport report = new CurrentSpeedReport(
-                LocalDateTime.now().format(TIMESTAMP_FORMAT),
+                timestamp,
                 profileId,
                 warmupIterations,
                 measurementIterations,
                 docsPerThread,
                 Arrays.stream(threadCounts).boxed().toList(),
                 latencyRows,
+                stageRows,
                 throughputRows,
                 totalBenchmarkBytes);
 
@@ -717,8 +725,88 @@ public final class CurrentSpeedBenchmark {
                                 format(row.docsPerSecond()),
                                 format(row.avgMillisPerDoc())))
                         .toList());
+        var stagesCsvPath = artifacts.writeCsv(
+                "stages",
+                List.of("scenario", "compose_ms", "layout_ms", "render_ms", "total_ms"),
+                stageRows.stream()
+                        .map(row -> List.of(
+                                row.scenario(),
+                                format(row.composeMillis()),
+                                format(row.layoutMillis()),
+                                format(row.renderMillis()),
+                                format(row.totalMillis())))
+                        .toList());
+        var summaryMarkdownPath = artifacts.writeMarkdown(
+                "summary",
+                buildSummaryMarkdown(timestamp, profileId, latencyRows, stageRows,
+                        throughputRows, totalBenchmarkBytes));
 
-        return new PathSummary(jsonPath.toString(), latencyCsvPath.toString(), throughputCsvPath.toString());
+        return new PathSummary(jsonPath.toString(), latencyCsvPath.toString(),
+                stagesCsvPath.toString(), throughputCsvPath.toString(),
+                summaryMarkdownPath.toString());
+    }
+
+    /**
+     * Renders a single human-readable summary of the run — the latency table,
+     * the per-stage compose/layout/render split (the only place the suite
+     * attributes time to engine stages vs. PDFBox), and the throughput table
+     * when present — so a reviewer reads one file instead of stitching the JSON
+     * and several CSVs together.
+     */
+    private static String buildSummaryMarkdown(String timestamp,
+                                               String profileId,
+                                               List<LatencyRow> latencyRows,
+                                               List<StageRow> stageRows,
+                                               List<ThroughputRow> throughputRows,
+                                               long totalBenchmarkBytes) {
+        StringBuilder md = new StringBuilder();
+        md.append("# Current-speed benchmark — ").append(profileId).append(" profile\n\n");
+        md.append('`').append(timestamp).append("`\n\n");
+
+        md.append("## Latency (ms)\n\n");
+        md.append("| Scenario | Avg | p50 | p95 | Max | Docs/s | Avg KB | Peak MB |\n");
+        md.append("|---|---:|---:|---:|---:|---:|---:|---:|\n");
+        for (LatencyRow row : latencyRows) {
+            md.append("| ").append(row.scenario())
+                    .append(" | ").append(format(row.avgMillis()))
+                    .append(" | ").append(format(row.p50Millis()))
+                    .append(" | ").append(format(row.p95Millis()))
+                    .append(" | ").append(format(row.maxMillis()))
+                    .append(" | ").append(format(row.docsPerSecond()))
+                    .append(" | ").append(format(row.avgKilobytes()))
+                    .append(" | ").append(format(row.peakHeapMb()))
+                    .append(" |\n");
+        }
+
+        if (!stageRows.isEmpty()) {
+            md.append("\n## Stages — template scenarios (median ms — compose / layout / render)\n\n");
+            md.append("| Scenario | Compose | Layout | Render | Total |\n");
+            md.append("|---|---:|---:|---:|---:|\n");
+            for (StageRow row : stageRows) {
+                md.append("| ").append(row.scenario())
+                        .append(" | ").append(format(row.composeMillis()))
+                        .append(" | ").append(format(row.layoutMillis()))
+                        .append(" | ").append(format(row.renderMillis()))
+                        .append(" | ").append(format(row.totalMillis()))
+                        .append(" |\n");
+            }
+        }
+
+        if (!throughputRows.isEmpty()) {
+            md.append("\n## Throughput\n\n");
+            md.append("| Threads | Total docs | Docs/s | Avg doc ms |\n");
+            md.append("|---:|---:|---:|---:|\n");
+            for (ThroughputRow row : throughputRows) {
+                md.append("| ").append(row.threads())
+                        .append(" | ").append(row.totalDocs())
+                        .append(" | ").append(format(row.docsPerSecond()))
+                        .append(" | ").append(format(row.avgMillisPerDoc()))
+                        .append(" |\n");
+            }
+        }
+
+        md.append("\nByte guard: ").append(totalBenchmarkBytes).append('\n');
+        return md.toString();
     }
 
     private static double round(double value) {
@@ -772,6 +860,18 @@ public final class CurrentSpeedBenchmark {
                                  double avgMillisPerDoc) {
     }
 
+    /**
+     * Per-scenario compose / layout / render split (median ms). Persisted so a
+     * diff can attribute a regression to an engine stage rather than only the
+     * blended total — previously this was printed to the console and discarded.
+     */
+    private record StageRow(String scenario,
+                            double composeMillis,
+                            double layoutMillis,
+                            double renderMillis,
+                            double totalMillis) {
+    }
+
     private record CurrentSpeedReport(String timestamp,
                                       String profile,
                                       int warmupIterations,
@@ -779,11 +879,13 @@ public final class CurrentSpeedBenchmark {
                                       int docsPerThread,
                                       List<Integer> threadCounts,
                                       List<LatencyRow> latency,
+                                      List<StageRow> stages,
                                       List<ThroughputRow> throughput,
                                       long totalBytes) {
     }
 
-    private record PathSummary(String jsonPath, String latencyCsvPath, String throughputCsvPath) {
+    private record PathSummary(String jsonPath, String latencyCsvPath, String stagesCsvPath,
+                               String throughputCsvPath, String summaryMarkdownPath) {
     }
 
     private record BenchmarkConfig(int warmupIterations,

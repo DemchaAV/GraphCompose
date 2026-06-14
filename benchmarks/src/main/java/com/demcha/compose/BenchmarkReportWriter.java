@@ -60,6 +60,14 @@ final class BenchmarkReportWriter {
             return archived;
         }
 
+        Path writeMarkdown(String name, String content) throws IOException {
+            Path latest = directory.resolve("latest-" + name + ".md");
+            Path archived = directory.resolve(name + "-" + timestamp + ".md");
+            Files.writeString(latest, content, StandardCharsets.UTF_8);
+            Files.writeString(archived, content, StandardCharsets.UTF_8);
+            return archived;
+        }
+
         Path directory() {
             return directory;
         }

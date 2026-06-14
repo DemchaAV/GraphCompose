@@ -200,11 +200,11 @@ public final class BenchmarkDiffTool {
         ComparativeDiffReport report = buildComparativeDiff(input, baseline, candidate);
 
         System.out.println("Comparative diff");
-        System.out.printf("%-20s | %12s | %12s%n",
+        System.out.printf("%-24s | %12s | %12s%n",
                 "Library", "Time pct", "Heap pct");
-        System.out.println("-".repeat(52));
+        System.out.println("-".repeat(56));
         for (ComparativeLibraryDiff row : report.libraries()) {
-            System.out.printf("%-20s | %12s | %12s%n",
+            System.out.printf("%-24s | %12s | %12s%n",
                     row.library(),
                     signedPercent(row.avgTimeDeltaPct()),
                     signedPercent(row.avgHeapDeltaPct()));

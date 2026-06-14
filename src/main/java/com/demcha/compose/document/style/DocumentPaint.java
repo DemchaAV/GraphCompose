@@ -10,10 +10,18 @@ import java.util.Objects;
  * single paint vocabulary every fillable surface shares — chart palettes
  * today, shape and panel fills as they adopt the {@code fillPaint} component.
  *
- * <p>Backend contract: the PDF backend renders {@link Linear} and
- * {@link Radial} as native axial / radial shadings; a backend (or surface)
- * that cannot paint a gradient degrades to {@link #primaryColor()} — the
- * first stop — so authoring code never branches per backend.</p>
+ * <p>Backend contract: the PDF backend renders all gradient forms as native
+ * axial / radial shadings; a backend (or surface) that cannot paint a gradient
+ * degrades to {@link #primaryColor()} — the first stop — so authoring code
+ * never branches per backend.</p>
+ *
+ * <p>Two ways to spell each gradient coexist by design, not by redundancy.
+ * {@link Linear} / {@link Radial} take an ergonomic angle / corner-reaching
+ * geometry and are the chart- and shape-authoring forms; {@link LinearAxis} /
+ * {@link RadialCircle} take exact endpoints / a radius in the unit box and are
+ * the forms the SVG reader emits to reproduce a source gradient verbatim. All
+ * four render through the same shading machinery and degrade to the same
+ * {@link #primaryColor()}.</p>
  *
  * @author Artem Demchyshyn
  * @since 1.8.0

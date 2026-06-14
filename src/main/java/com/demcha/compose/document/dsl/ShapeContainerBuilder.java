@@ -15,11 +15,13 @@ import java.util.Objects;
  * Builder for {@link ShapeContainerNode}.
  *
  * <p>Reads as: <em>"container is a [shape], inside it I'm composing layers"</em>.
- * The outline is mandatory — call {@link #rectangle(double, double)},
- * {@link #roundedRect(double, double, double)}, {@link #ellipse(double, double)},
- * or {@link #circle(double)} before {@link #build()}. Layers are appended in
- * source order (first behind, last in front) and each layer carries one of the
- * nine {@link LayerAlign} anchors plus optional on-screen offset.</p>
+ * The outline is mandatory — call one of the outline setters
+ * ({@link #rectangle(double, double)}, {@link #roundedRect(double, double, double)},
+ * {@link #ellipse(double, double)}, {@link #circle(double)}, a polygon factory,
+ * or {@link #path(double, double, java.util.List)}) before {@link #build()}.
+ * Layers are appended in source order (first behind, last in front) and each
+ * layer carries one of the nine {@link LayerAlign} anchors plus optional
+ * on-screen offset.</p>
  *
  * @author Artem Demchyshyn
  * @since 1.0.0
@@ -541,8 +543,8 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
     public ShapeContainerNode build() {
         if (outline == null) {
             throw new IllegalStateException(
-                    "ShapeContainerBuilder '" + name + "' requires an outline; "
-                    + "call rectangle/roundedRect/ellipse/circle before build().");
+                    "ShapeContainerBuilder '" + name + "' requires an outline; call an outline "
+                    + "setter (rectangle/roundedRect/ellipse/circle/polygon/path/...) before build().");
         }
         return new ShapeContainerNode(name, outline, layers, clipPolicy, fillColor, stroke, padding, margin, transform);
     }

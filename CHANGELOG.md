@@ -344,6 +344,28 @@ Entries land here as they merge.
   `ScalabilityBenchmark` (its thread-scaling sweep folded into
   `CurrentSpeedBenchmark`'s full-profile throughput run, now `1,2,4,8,16`).
   Dropped the matching `run-benchmarks.ps1` steps and doc entries.
+- **Feature-object benchmarks for the v1.8 vector surface (not shipped).**
+  The suite previously exercised only text/table primitives. Added JMH render
+  benches and deterministic probes over the new vector features:
+  `SvgJmhBenchmark` (path parse / whole-file icon read / icon→node) plus a
+  `SvgParseAllocProbe`; `ChartJmhBenchmark` (bar + line + pie render) plus a
+  `ChartAllocProbe` (layout-compile allocation); `VectorRenderOperatorProbe`
+  (the same paths drawn flat vs. gradient vs. translucent, counted as PDF
+  content-stream operators); `IconRampJmhBenchmark` (icon-placement scaling,
+  `@Param` 8/32/128); and `MixedShowcaseJmhBenchmark` (one document combining
+  prose, inline sparklines, bar + pie charts, SVG icons and a gradient path).
+  Shared `SvgBenchmarkFixtures` / `ChartBenchmarkFixtures` hold the inputs so
+  each bench and its probe measure identical data.
+- **Current-speed report carries a stage breakdown and a run summary (not
+  shipped).** `CurrentSpeedBenchmark` persists a per-scenario compose / layout /
+  render split (`stages[]`, median ms) to the JSON and a `stages` CSV, and
+  writes a readable `summary.md`. `BenchmarkDiffTool` consumes `stages[]`,
+  prints a per-stage delta table, and reports the scenarios added/removed
+  between two runs.
+- **Every current-speed scenario is now covered by the smoke perf gate (not
+  shipped).** The `long-token` scenario previously had no SMOKE threshold and
+  silently escaped the gate; it now has one, and `CurrentSpeedScenarioGateTest`
+  fails the build if any scenario lacks a threshold.
 - **Removed the `java.awt.*` / `java.util.*` co-wildcard in four files.**
   `InvoiceTemplateComposer`, `ProposalTemplateComposer`,
   `WeeklyScheduleTemplateComposer`, and the engine `PdfRenderingSystemECS`

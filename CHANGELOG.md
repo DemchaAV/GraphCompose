@@ -220,6 +220,14 @@ Entries land here as they merge.
 
 ### Bug fixes
 
+- **SVG path reader no longer hangs on malformed `d` data.** A `Z`/`z`
+  close command (which consumes no operands) followed by a stray
+  non-command token — e.g. `"M0 0 Z5"` — made the scanner loop forever,
+  appending a close op every pass until the heap was exhausted. A single
+  malformed or hostile path string could therefore DoS the `@Beta`
+  `SvgPath.parse` / `SvgIcon` reader. The scanner now fails fast with the
+  usual position-carrying `IllegalArgumentException` when an iteration
+  consumes neither a command nor an operand.
 - **`BEHIND_CONTENT` watermarks no longer wash out the page.** The PDF
   watermark renderer set its low-opacity graphics state in a *prepended*
   content stream without a save/restore pair; PDFBox's `resetContext` only

@@ -5,8 +5,10 @@ import com.demcha.compose.document.style.DocumentPathSegment.Close;
 import com.demcha.compose.document.style.DocumentPathSegment.CubicTo;
 import com.demcha.compose.document.style.DocumentPathSegment.LineTo;
 import com.demcha.compose.document.style.DocumentPathSegment.MoveTo;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -196,5 +198,23 @@ class SvgPathTest {
         assertThatThrownBy(() -> SvgPath.parse("M0 0 L1 1", 0, 0, 0, 10))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("viewBox");
+    }
+
+    @Test
+    void strayTokenAfterCloseIsRejectedAndDoesNotHang() {
+        // Regression: an operand-less Z/z followed by a non-command token used
+        // to spin forever (the close op consumes no characters, so the scanner
+        // never advanced), appending a close op per iteration until OOM. A
+        // single malformed/hostile 'd' string would DoS the @Beta reader.
+        // Each call must fail fast; the assertTimeout pins that it cannot hang.
+        Assertions.assertTimeoutPreemptively(
+                Duration.ofSeconds(2), () -> {
+                    assertThatThrownBy(() -> SvgPath.parse("M0 0 Z5"))
+                            .isInstanceOf(IllegalArgumentException.class)
+                            .hasMessageContaining("position");
+                    assertThatThrownBy(() -> SvgPath.parse("M0 0 z9 9"))
+                            .isInstanceOf(IllegalArgumentException.class)
+                            .hasMessageContaining("position");
+                });
     }
 }

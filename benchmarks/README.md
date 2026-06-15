@@ -125,18 +125,27 @@ without reproducing locally.
 ## How to read a report
 
 The JSON shape is intentionally simple — a top-level run record with
-per-scenario sub-records. Each sub-record carries:
+per-scenario sub-records. The latency rows carry these fields (the JSON
+keys are camelCase; the CSV columns are the snake_case equivalents):
 
-- `avgMs`, `p50Ms`, `p95Ms`, `maxMs` — latency distribution across
-  iterations within the run.
-- `docsPerSec` — rough throughput; **not statistically rigorous**,
-  intended only as a relative number against a sibling scenario or a
-  previous run on the same machine.
-- `avgKB` — average output byte size. Stable across runs on the same
-  fixture; useful for catching content corruption (size shifts by
-  > a few hundred bytes are usually a bug, not a benchmark fluctuation).
-- `peakMB` — peak heap as observed by `MemoryMXBean`; coarse, do not
-  use for memory-budget enforcement.
+- `avgMillis`, `p50Millis`, `p95Millis`, `maxMillis` — latency distribution
+  across iterations within the run.
+- `docsPerSecond` — a **derived** figure, `1000 / avgMillis`: the reciprocal of
+  average latency, **not** a measured throughput rate. Real parallel throughput
+  lives in the separate `throughput[]` section (full profile only). Treat it as
+  a relative number against a sibling scenario or a previous run on the same
+  machine, not a publishable rate.
+- `avgKilobytes` — average output byte size. Stable across runs on the same
+  fixture; useful for catching content corruption (size shifts by more than a
+  few hundred bytes are usually a bug, not a benchmark fluctuation).
+- `peakHeapMb` — used-heap **delta** over the post-warmup baseline (closer to
+  per-iteration allocation pressure than to absolute live heap). GC-timing
+  noisy, so **advisory only** — for a deterministic memory signal use the
+  allocation bytes from `MeasurementCountBenchmark` or the alloc probes.
+
+A `stages[]` array carries the per-template-scenario compose / layout / render
+median split (`composeMillis` / `layoutMillis` / `renderMillis` / `totalMillis`),
+present when the run has enough measurement iterations.
 
 ## Strict JMH layer
 

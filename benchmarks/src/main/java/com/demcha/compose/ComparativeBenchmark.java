@@ -178,7 +178,7 @@ public class ComparativeBenchmark {
     }
 
     private static void printTableHeader() {
-        System.out.printf("%-24s | %14s | %14s%n", "Library", "Avg Time (ms)", "Avg Heap (MB)");
+        System.out.printf("%-26s | %14s | %14s%n", "Library", "Avg Time (ms)", "Avg Heap (MB)");
         System.out.println("-".repeat(60));
     }
 
@@ -209,7 +209,7 @@ public class ComparativeBenchmark {
         double avgTimeMs = (totalTimeNs / (double) iterations) / 1_000_000.0;
         double avgMemMb = (totalAllocatedBytes / (double) iterations) / (1024.0 * 1024.0);
 
-        System.out.printf("%-24s | %14.2f | %14.2f%n", name, avgTimeMs, avgMemMb);
+        System.out.printf("%-26s | %14.2f | %14.2f%n", name, avgTimeMs, avgMemMb);
 
         // Печатаем dummy-переменную, чтобы JIT не вырезал код генерации
         if (dummyAccumulator == 0) System.out.println("Error: No bytes generated");

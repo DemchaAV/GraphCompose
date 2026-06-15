@@ -152,10 +152,16 @@ present when the run has enough measurement iterations.
 The Track C JMH layer (forked JVM, warmup + measurement, JIT-stable numbers)
 lives alongside this manual harness. JMH benchmarks are annotated classes under
 `com.demcha.compose.jmh`; the shade plugin builds a self-contained runner jar so
-forked benchmark JVMs inherit the full classpath. Present benchmarks:
-`CanonicalRender` (bare-DSL multi-section render), `TemplateCv` (the
-`ModernProfessional` layered template), and `PaginatedDocument` (a multi-page
-document parameterised by section count).
+forked benchmark JVMs inherit the full classpath. The suite spans steady-state
+render benches (`CanonicalRender`, `TemplateCv`, `Chart`, `ChartVariant`, `Image`,
+`MixedShowcase`), parameterised scaling ramps (`IconRamp`, `LargeTable`,
+`SparklineRamp`, `PaginatedDocument`, `VectorPaint`), the SVG-import micro-benches
+(`Svg`), and a single-shot cold-start bench (`ColdStart`).
+
+Every JMH bench uses `@Fork(1)` with a 3×2s warmup / 5×2s measurement window — a
+deliberately fast default for on-demand local iteration (a single fork, so the
+reported `Error` column is blank). For a number you intend to quote, pass more
+forks on the CLI (e.g. `-f 5`) to get a cross-fork error estimate.
 
 The measured region differs per benchmark: `TemplateCv` hoists fixture
 construction into `@Setup` and times the render only, while `CanonicalRender` and

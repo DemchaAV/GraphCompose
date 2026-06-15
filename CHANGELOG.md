@@ -369,10 +369,11 @@ Entries land here as they merge.
 - **Benchmark coverage for the render hot paths (not shipped).** Added an image
   embed/scale gate (`ImageCacheOperatorProbe` + `ImageBenchmarkFixtures` +
   `ImageJmhBenchmark`, with `ImageCacheGateTest` pinning `PdfImageCache` reuse), a
-  single-shot cold-start render bench (`ColdStartJmhBenchmark`), a multi-page
-  "report" tier in `ComparativeBenchmark` (equivalent content across GraphCompose /
-  iText 9 / JasperReports — iText upgraded from the EOL 5.5.x to current 9.x — plus
-  a post-run sample-PDF dump per library/scenario), a
+  single-shot cold-start render bench (`ColdStartJmhBenchmark`), a report-scaling
+  sweep in `ComparativeBenchmark` (equivalent content across GraphCompose /
+  iText 9 / JasperReports at 40 / 200 / 1000 table rows — iText upgraded from the
+  EOL 5.5.x to current 9.x — printing a per-size GraphCompose-advantage ratio plus
+  a post-run sample-PDF dump per library/size), a
   production-scale `LargeTableJmhBenchmark`, an allocation-rate / GC-pressure probe
   (`AllocationRateProbe`), and an accented-Latin measurement scenario.
 - **Deterministic benchmark gates run on every PR (not shipped).** The benchmarks

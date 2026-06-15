@@ -52,9 +52,10 @@
   check after you've already chosen, not a decision tool before.
 - For **comparing GraphCompose to another PDF library** —
   `ComparativeBenchmark` does render equivalent content through iText /
-  JasperReports for rough sizing (two tiers: a tiny single-page invoice
-  for fixed overhead, and a multi-page report — title + 40-row table +
-  prose — for realistic work), but the comparison is a manual smoke test:
+  JasperReports for rough sizing (a tiny single-page invoice for fixed
+  overhead, plus a report-scaling sweep — title + prose + an N-row table
+  at N = 40 / 200 / 1000 — that shows how each engine scales and prints a
+  GraphCompose-advantage ratio per size), but the comparison is a manual smoke test:
   each library has different defaults (compression, font embedding, image
   resampling) and reading too much into a single number is the wrong call.
   Note one boundary asymmetry: the JasperReports figure measures fill +
@@ -92,7 +93,7 @@ These are intentionally **not** on the per-PR path:
 | File | Role |
 |---|---|
 | `CurrentSpeedBenchmark` | Default scenario runner — what CI's `perf-smoke` job exercises. Takes a `-Dgraphcompose.benchmark.profile=smoke\|full\|stress` switch. |
-| `ComparativeBenchmark` | Renders equivalent content through GraphCompose, iText, JasperReports — two tiers (small invoice + multi-page report), and dumps a sample PDF per library/scenario. **Rough local comparison only** — see "When not to use" above. |
+| `ComparativeBenchmark` | Renders equivalent content through GraphCompose, iText, JasperReports — a small-invoice tier plus a report-scaling sweep (40 / 200 / 1000 rows) with a per-size advantage ratio, and dumps a sample PDF per library/size. **Rough local comparison only** — see "When not to use" above. |
 | `CanonicalBenchmarkSupport`, `BenchmarkSupport` | Shared fixture builders + measurement helpers. |
 | `BenchmarkReportWriter` | Writes JSON / CSV / text reports under `benchmarks/target/benchmarks/`. |
 | `BenchmarkDiffTool` | Compares two JSON reports and prints a delta table. Useful for pre/post comparisons. |

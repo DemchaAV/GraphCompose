@@ -43,10 +43,16 @@ public class ComparativeBenchmark {
     private static final int WARMUP_ITERATIONS = 50;
     private static final int MEASUREMENT_ITERATIONS = 100;
 
-    // Multi-page "report" scenario: a title, an N-row line-item table, and prose.
-    // Rendered with equivalent content across all three libraries so the numbers
-    // reflect real multi-page document work, not just per-render fixed overhead.
-    private static final int REPORT_ROWS = 40;
+    // Report-scaling sweep: the same title + prose + N-row table rendered through
+    // every library at growing row counts, so the numbers show how each engine
+    // SCALES (and whether GraphCompose's lead widens with document size) instead
+    // of at a single fixed size. The heavy sizes use fewer iterations to keep the
+    // on-demand run reasonable; this is a directional comparative, not a strict
+    // JMH measurement (see benchmarks/README.md).
+    private static final int[] SWEEP_SIZES = {40, 200, 1000};
+    private static final int SWEEP_WARMUP_ITERATIONS = 20;
+    private static final int SWEEP_MEASUREMENT_ITERATIONS = 30;
+
     private static final String REPORT_PROSE =
             ("GraphCompose lays out structured business documents across many pages "
                     + "while keeping header and footer placement stable. ").repeat(6);
@@ -61,6 +67,17 @@ public class ComparativeBenchmark {
         System.out.println("Timestamp: " + LocalDateTime.now().format(TIMESTAMP_FORMAT));
         System.out.println("------------------------------------------------------------");
 
+        // Per-thread allocation accounting backs the "Avg Heap (MB)" column and the
+        // heap-advantage ratios. Enable it explicitly (and bail loudly if the JVM
+        // does not support it) instead of trusting the platform default, matching
+        // the guard the other allocation probes in this module use.
+        com.sun.management.ThreadMXBean allocBean =
+                (com.sun.management.ThreadMXBean) ManagementFactory.getThreadMXBean();
+        if (!allocBean.isThreadAllocatedMemorySupported()) {
+            throw new IllegalStateException("Thread allocated-memory measurement is not supported on this JVM");
+        }
+        allocBean.setThreadAllocatedMemoryEnabled(true);
+
         // Подготавливаем оба отчета Jasper 1 раз (как в Production)
         setupJasper();
         setupJasperReport();
@@ -71,28 +88,48 @@ public class ComparativeBenchmark {
             benchmarkGraphComposeCanonical();
             benchmarkIText();
             benchmarkJasper();
-            benchmarkGraphComposeReport();
-            benchmarkITextReport();
-            benchmarkJasperReport();
+        }
+        for (int i = 0; i < SWEEP_WARMUP_ITERATIONS; i++) {
+            for (int size : SWEEP_SIZES) {
+                benchmarkGraphComposeReport(size);
+                benchmarkITextReport(size);
+                benchmarkJasperReport(size);
+            }
         }
 
-        // Замер — два сценария: дешёвый (фиксированные накладные) и многостраничный
-        System.out.println("Measuring performance (" + MEASUREMENT_ITERATIONS + " iterations)...");
+        // Замер — два сценария: дешёвый (фиксированные накладные) и масштабирование отчёта
+        System.out.println("Measuring performance...");
         List<ComparativeRow> rows = new ArrayList<>();
 
         System.out.println();
-        System.out.println("Scenario: small invoice (single page, ~3 lines)");
+        System.out.println("Scenario: small invoice (single page, ~3 lines), " + MEASUREMENT_ITERATIONS + " iterations");
         printTableHeader();
-        rows.add(runBenchmark("GraphCompose Canonical", ComparativeBenchmark::benchmarkGraphComposeCanonical));
-        rows.add(runBenchmark("iText 9", ComparativeBenchmark::benchmarkIText));
-        rows.add(runBenchmark("JasperReports", ComparativeBenchmark::benchmarkJasper));
+        rows.add(runBenchmark("GraphCompose Canonical", MEASUREMENT_ITERATIONS, ComparativeBenchmark::benchmarkGraphComposeCanonical).toRow());
+        rows.add(runBenchmark("iText 9", MEASUREMENT_ITERATIONS, ComparativeBenchmark::benchmarkIText).toRow());
+        rows.add(runBenchmark("JasperReports", MEASUREMENT_ITERATIONS, ComparativeBenchmark::benchmarkJasper).toRow());
 
         System.out.println();
-        System.out.println("Scenario: business report (multi-page: title + " + REPORT_ROWS + "-row table + prose)");
-        printTableHeader();
-        rows.add(runBenchmark("GraphCompose (report)", ComparativeBenchmark::benchmarkGraphComposeReport));
-        rows.add(runBenchmark("iText 9 (report)", ComparativeBenchmark::benchmarkITextReport));
-        rows.add(runBenchmark("JasperReports (report)", ComparativeBenchmark::benchmarkJasperReport));
+        System.out.println("Scenario: report scaling sweep (title + prose + N-row table), "
+                + SWEEP_MEASUREMENT_ITERATIONS + " iterations per size");
+        List<ScalingPoint> scaling = new ArrayList<>();
+        for (int size : SWEEP_SIZES) {
+            System.out.println();
+            System.out.println("  N = " + size + " rows");
+            printTableHeader();
+            Measured gc = runBenchmark("GraphCompose (" + size + " rows)", SWEEP_MEASUREMENT_ITERATIONS,
+                    () -> benchmarkGraphComposeReport(size));
+            Measured it = runBenchmark("iText 9 (" + size + " rows)", SWEEP_MEASUREMENT_ITERATIONS,
+                    () -> benchmarkITextReport(size));
+            Measured js = runBenchmark("JasperReports (" + size + " rows)", SWEEP_MEASUREMENT_ITERATIONS,
+                    () -> benchmarkJasperReport(size));
+            rows.add(gc.toRow());
+            rows.add(it.toRow());
+            rows.add(js.toRow());
+            // Ratios are computed from the full-precision averages, not the rounded
+            // report rows, so the advantage figures don't compound rounding error.
+            scaling.add(new ScalingPoint(size, gc, it, js));
+        }
+        printScalingSummary(scaling);
 
         BenchmarkReportWriter.BenchmarkArtifacts artifacts = BenchmarkReportWriter.prepare("comparative");
         ComparativeReport report = new ComparativeReport(
@@ -130,9 +167,13 @@ public class ComparativeBenchmark {
         Files.write(directory.resolve("graphcompose-small.pdf"), benchmarkGraphComposeCanonical());
         Files.write(directory.resolve("itext-small.pdf"), benchmarkIText());
         Files.write(directory.resolve("jasper-small.pdf"), benchmarkJasper());
-        Files.write(directory.resolve("graphcompose-report.pdf"), benchmarkGraphComposeReport());
-        Files.write(directory.resolve("itext-report.pdf"), benchmarkITextReport());
-        Files.write(directory.resolve("jasper-report.pdf"), benchmarkJasperReport());
+        // The smallest and largest sweep sizes, so the reader can see both a short
+        // report and the multi-page document that drives the scaling numbers.
+        for (int size : new int[]{SWEEP_SIZES[0], SWEEP_SIZES[SWEEP_SIZES.length - 1]}) {
+            Files.write(directory.resolve("graphcompose-report-" + size + ".pdf"), benchmarkGraphComposeReport(size));
+            Files.write(directory.resolve("itext-report-" + size + ".pdf"), benchmarkITextReport(size));
+            Files.write(directory.resolve("jasper-report-" + size + ".pdf"), benchmarkJasperReport(size));
+        }
         return directory;
     }
 
@@ -141,14 +182,14 @@ public class ComparativeBenchmark {
         System.out.println("-".repeat(60));
     }
 
-    private static ComparativeRow runBenchmark(String name, BenchmarkTask task) throws Exception {
+    private static Measured runBenchmark(String name, int iterations, BenchmarkTask task) throws Exception {
         long totalTimeNs = 0;
         long totalAllocatedBytes = 0;
         long dummyAccumulator = 0; // Защита от Dead Code Elimination
 
         com.sun.management.ThreadMXBean bean = (com.sun.management.ThreadMXBean) ManagementFactory.getThreadMXBean();
 
-        for (int i = 0; i < MEASUREMENT_ITERATIONS; i++) {
+        for (int i = 0; i < iterations; i++) {
             System.gc(); // Форсируем сборку мусора перед каждым замером для чистоты аллокации
 
             long startBytes = bean.getThreadAllocatedBytes(Thread.currentThread().getId());
@@ -165,19 +206,15 @@ public class ComparativeBenchmark {
             dummyAccumulator += pdfBytes.length;
         }
 
-        double avgTimeMs = (totalTimeNs / (double) MEASUREMENT_ITERATIONS) / 1_000_000.0;
-        double avgMemMb = (totalAllocatedBytes / (double) MEASUREMENT_ITERATIONS) / (1024.0 * 1024.0);
+        double avgTimeMs = (totalTimeNs / (double) iterations) / 1_000_000.0;
+        double avgMemMb = (totalAllocatedBytes / (double) iterations) / (1024.0 * 1024.0);
 
         System.out.printf("%-24s | %14.2f | %14.2f%n", name, avgTimeMs, avgMemMb);
 
         // Печатаем dummy-переменную, чтобы JIT не вырезал код генерации
         if (dummyAccumulator == 0) System.out.println("Error: No bytes generated");
 
-        return new ComparativeRow(
-                name,
-                round(avgTimeMs),
-                round(avgMemMb)
-        );
+        return new Measured(name, avgTimeMs, avgMemMb);
     }
 
     /**
@@ -202,10 +239,10 @@ public class ComparativeBenchmark {
     }
 
     /**
-     * GraphCompose canonical, multi-page report: title + N-row table + prose,
-     * authored through the public page-flow DSL (the realistic consumer path).
+     * GraphCompose canonical, multi-page report: title + {@code rows}-row table +
+     * prose, authored through the public page-flow DSL (the realistic consumer path).
      */
-    private static byte[] benchmarkGraphComposeReport() throws Exception {
+    private static byte[] benchmarkGraphComposeReport(int rows) throws Exception {
         // Equal full-width columns (page width minus the 32pt L/R margins, split
         // four ways), so the table fills the page like iText (setWidthPercentage
         // 100) and Jasper (full-column-width cells) rather than hugging its text.
@@ -223,7 +260,7 @@ public class ComparativeBenchmark {
                             DocumentTableColumn.fixed(columnWidth),
                             DocumentTableColumn.fixed(columnWidth))
                             .header("Item", "Qty", "Unit", "Total").repeatHeader();
-                    for (int r = 1; r <= REPORT_ROWS; r++) {
+                    for (int r = 1; r <= rows; r++) {
                         t.row("Line item " + r, "3", "ea", "38.75");
                     }
                 });
@@ -251,10 +288,10 @@ public class ComparativeBenchmark {
     }
 
     /**
-     * iText, multi-page report: same title + N-row table + prose. iText paginates
-     * the {@code PdfPTable} natively, so this exercises real multi-page layout.
+     * iText, multi-page report: same title + {@code rows}-row table + prose. iText
+     * paginates the table natively, so this exercises real multi-page layout.
      */
-    private static byte[] benchmarkITextReport() throws Exception {
+    private static byte[] benchmarkITextReport(int rows) throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (Document document = new Document(new PdfDocument(new PdfWriter(baos)))) {
             document.add(new Paragraph("Quarterly Business Report"));
@@ -264,7 +301,7 @@ public class ComparativeBenchmark {
             for (String header : new String[]{"Item", "Qty", "Unit", "Total"}) {
                 table.addHeaderCell(new Cell().add(new Paragraph(header)));
             }
-            for (int r = 1; r <= REPORT_ROWS; r++) {
+            for (int r = 1; r <= rows; r++) {
                 table.addCell(new Cell().add(new Paragraph("Line item " + r)));
                 table.addCell(new Cell().add(new Paragraph("3")));
                 table.addCell(new Cell().add(new Paragraph("ea")));
@@ -310,13 +347,13 @@ public class ComparativeBenchmark {
     }
 
     /**
-     * JasperReports, multi-page report: a 4-field detail band filled from an
-     * {@code REPORT_ROWS}-row data source, with a title (+ prose) and column
-     * header. Compiled once here; the benchmark measures fill + PDF export.
+     * JasperReports, multi-page report: a 4-field detail band filled from a
+     * {@code rows}-row data source, with a title (+ prose) and column header.
+     * Compiled once here; the benchmark measures fill + PDF export.
      */
-    private static byte[] benchmarkJasperReport() throws Exception {
-        List<Map<String, ?>> data = new ArrayList<>(REPORT_ROWS);
-        for (int r = 1; r <= REPORT_ROWS; r++) {
+    private static byte[] benchmarkJasperReport(int rows) throws Exception {
+        List<Map<String, ?>> data = new ArrayList<>(rows);
+        for (int r = 1; r <= rows; r++) {
             Map<String, Object> row = new HashMap<>();
             row.put("item", "Line item " + r);
             row.put("qty", "3");
@@ -436,7 +473,47 @@ public class ComparativeBenchmark {
         return Math.round(value * 100.0) / 100.0;
     }
 
+    /**
+     * Prints how GraphCompose's time/memory advantage over iText and Jasper changes
+     * as the row count grows, so the "does the lead widen with document size?"
+     * question is answered by the numbers rather than asserted. A ratio above 1.0
+     * means GraphCompose is that many times faster / lighter at that size.
+     */
+    private static void printScalingSummary(List<ScalingPoint> scaling) {
+        System.out.println();
+        System.out.println("Scaling summary (GraphCompose advantage; >1.0 = GraphCompose faster / lighter)");
+        System.out.printf("%-8s | %16s | %16s | %16s | %16s%n",
+                "Rows", "Time vs iText", "Time vs Jasper", "Heap vs iText", "Heap vs Jasper");
+        System.out.println("-".repeat(86));
+        for (ScalingPoint p : scaling) {
+            System.out.printf("%-8d | %16s | %16s | %16s | %16s%n",
+                    p.rows(),
+                    ratio(p.iText().timeMs(), p.graphCompose().timeMs()),
+                    ratio(p.jasper().timeMs(), p.graphCompose().timeMs()),
+                    ratio(p.iText().heapMb(), p.graphCompose().heapMb()),
+                    ratio(p.jasper().heapMb(), p.graphCompose().heapMb()));
+        }
+    }
+
+    /** {@code other / graphCompose} as an "Nx" string; guards against divide-by-zero. */
+    private static String ratio(double other, double graphCompose) {
+        if (graphCompose <= 0.0) {
+            return "n/a";
+        }
+        return "%.2fx".formatted(other / graphCompose);
+    }
+
     private record ComparativeRow(String library, double avgTimeMs, double avgHeapMb) {
+    }
+
+    /** Full-precision average for one library/scenario, before report rounding. */
+    private record Measured(String name, double timeMs, double heapMb) {
+        ComparativeRow toRow() {
+            return new ComparativeRow(name, round(timeMs), round(heapMb));
+        }
+    }
+
+    private record ScalingPoint(int rows, Measured graphCompose, Measured iText, Measured jasper) {
     }
 
     private record ComparativeReport(String timestamp,

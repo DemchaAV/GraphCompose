@@ -39,7 +39,10 @@ The script prints numbered sections so you can map console output to the pipelin
    Runs `CurrentSpeedBenchmark` in the selected profile. The full profile also
    runs the thread-scaling throughput sweep (1 → 16 threads).
 3. `03-comparative`
-   Runs the GraphCompose canonical vs iText 9 vs JasperReports comparison.
+   Runs the GraphCompose canonical vs iText 9 vs JasperReports comparison: a
+   small-invoice tier plus a report-scaling sweep (40 / 200 / 1000 rows) that
+   prints a per-size GraphCompose-advantage ratio and dumps a sample PDF per
+   library/size.
 
    _Steps 04–06 (`core-engine`, `full-cv`, `scalability`) were retired. The
    surviving steps keep their original `NN-` console prefixes, so the labels

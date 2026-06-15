@@ -8,8 +8,10 @@ import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkLayer;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkPosition;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
 import com.demcha.compose.document.templates.builtins.ProposalTemplateV1;
@@ -105,7 +107,9 @@ public final class CurrentSpeedBenchmark {
             new ScenarioDef("feature-rich", "QR, barcode, watermark, header/footer, page break",
                     b -> b::renderFeatureRichDocument),
             new ScenarioDef("long-token", "Long unbreakable tokens (URLs/IDs) forcing character-level wrap",
-                    b -> b::renderLongTokenDocument)
+                    b -> b::renderLongTokenDocument),
+            new ScenarioDef("vector-rich", "v1.8 vector surface: bar + pie charts, SVG icons, gradient path",
+                    b -> b::renderVectorRichDocument)
     );
 
     /**
@@ -555,6 +559,28 @@ public final class CurrentSpeedBenchmark {
                         + "a root flow container, heading text, paragraph layout, and final PDF serialization.");
     }
 
+    private byte[] renderVectorRichDocument() throws Exception {
+        DocumentPaint accent = DocumentPaint.linear(
+                DocumentColor.rgb(167, 139, 250), DocumentColor.rgb(97, 40, 217));
+        SvgIcon icon = SvgIcon.parse(SvgBenchmarkFixtures.MULTI_LAYER_ICON_SVG);
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(com.demcha.compose.document.api.DocumentPageSize.A4)
+                .margin(28, 28, 28, 28)
+                .create()) {
+            var flow = document.pageFlow().name("BenchmarkVectorRich").spacing(12);
+            flow.addParagraph("v1.8 vector-rich benchmark");
+            flow.chart(ChartBenchmarkFixtures.barSpec(), ChartBenchmarkFixtures.barStyle());
+            flow.chart(ChartBenchmarkFixtures.pieSpec());
+            for (int i = 0; i < 8; i++) {
+                flow.addSvgIcon(icon, 32);
+            }
+            flow.addPath(p -> p.size(220, 28)
+                    .moveTo(0.0, 0.5).curveTo(0.25, 1.0, 0.75, 0.0, 1.0, 0.5).fill(accent));
+            flow.build();
+            return document.toPdfBytes();
+        }
+    }
+
     private byte[] renderInvoiceTemplateDocument() throws Exception {
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(com.demcha.compose.document.api.DocumentPageSize.A4)
@@ -951,7 +977,8 @@ public final class CurrentSpeedBenchmark {
                 "cv-template", new SmokeThreshold(25.0, 192.0),
                 "proposal-template", new SmokeThreshold(45.0, 384.0),
                 "feature-rich", new SmokeThreshold(100.0, 256.0),
-                "long-token", new SmokeThreshold(10.0, 256.0)
+                "long-token", new SmokeThreshold(10.0, 256.0),
+                "vector-rich", new SmokeThreshold(20.0, 256.0)
         ));
 
         private final String id;

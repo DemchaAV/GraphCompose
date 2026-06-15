@@ -31,9 +31,13 @@ import java.util.List;
  */
 public final class VectorRenderOperatorProbe {
 
-    private static final int PATHS = 40;
+    static final int PATHS = 40;
 
-    private enum PaintMode { FLAT, GRADIENT, ALPHA }
+    enum PaintMode { FLAT, GRADIENT, ALPHA }
+
+    /** PDF operator counts for one paint mode: cubic curves, shadings, ExtGState sets, clips. */
+    record OperatorCounts(int curves, int shadings, int extGStates, int clips) {
+    }
 
     public static void main(String[] args) throws Exception {
         BenchmarkSupport.configureQuietLogging();
@@ -50,6 +54,28 @@ public final class VectorRenderOperatorProbe {
     }
 
     private static void report(PaintMode mode) throws Exception {
+        OperatorCounts counts = countOperators(mode);
+        System.out.printf("%-10s | %6d | %6d | %6d | %6d%n",
+                mode.name().toLowerCase(),
+                counts.curves(),
+                counts.shadings(),
+                counts.extGStates(),
+                counts.clips());
+    }
+
+    /**
+     * Renders {@link #PATHS} blob paths in the given paint mode and counts the PDF
+     * operators. Exposed (package-visible) so {@code VectorRenderOperatorGateTest}
+     * can pin the per-mode cost structure: flat takes the fast fill path (no
+     * shading / alpha / clip), gradient adds a shading + clip per shape, alpha
+     * adds an ExtGState per shape — and a flat path must never take the heavier
+     * gradient branch.
+     *
+     * @param mode the paint mode to exercise
+     * @return the operator counts of the rendered document
+     * @throws Exception if rendering fails
+     */
+    static OperatorCounts countOperators(PaintMode mode) throws Exception {
         byte[] pdf;
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(DocumentPageSize.A4).margin(28, 28, 28, 28).create()) {
@@ -57,8 +83,7 @@ public final class VectorRenderOperatorProbe {
             pdf = session.toPdfBytes();
         }
         try (PDDocument document = Loader.loadPDF(pdf)) {
-            System.out.printf("%-10s | %6d | %6d | %6d | %6d%n",
-                    mode.name().toLowerCase(),
+            return new OperatorCounts(
                     count(document, "c"),
                     count(document, "sh"),
                     count(document, "gs"),

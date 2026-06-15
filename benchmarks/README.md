@@ -66,6 +66,27 @@
   project uses (no PDFBox-3-compatible openhtmltopdf release exists yet),
   so it cannot share GraphCompose's classpath.
 
+## What runs on a PR — and what is on-demand (by design)
+
+The per-PR CI gate is deliberately light and deterministic:
+
+- **`perf-smoke` job** — `CurrentSpeedBenchmark` in the `smoke` profile with
+  absolute latency / heap thresholds (a gross-regression tripwire), plus the
+  module's deterministic gate tests (`mvnw -f benchmarks/pom.xml test`:
+  image-cache reuse, render-operator coalescing, scenario/threshold coverage).
+
+These are intentionally **not** on the per-PR path:
+
+- **The JMH benches** (`*JmhBenchmark`) are full / on-demand only. A forked,
+  warmed JMH run of the whole suite takes minutes; running it per PR is too
+  expensive for the signal. Run them by hand (or on a schedule) before a release
+  and quote those numbers for rigorous claims.
+- **The relative `BenchmarkVerdictTool` gate** (±% vs a committed baseline) runs
+  locally only, and no static `smoke` baseline is committed: absolute timings are
+  machine-specific, so a baseline captured on one machine would false-positive on
+  another. Use a local same-machine A/B (a `-Repeat` median before/after) for
+  relative comparison; the absolute smoke thresholds are the CI safety net.
+
 ## Files in this module
 
 | File | Role |

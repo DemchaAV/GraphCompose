@@ -4,6 +4,7 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.table.DocumentTableColumn;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -56,6 +57,9 @@ public class LargeTableJmhBenchmark {
      */
     @Benchmark
     public void renderLargeTable(Blackhole blackhole) throws Exception {
+        // Equal full-width columns (page width minus the 28pt L/R margins, split
+        // five ways) so the table fills the page like a real report, not its text.
+        final double columnWidth = (DocumentPageSize.A4.width() - 2 * 28) / 5.0;
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(DocumentPageSize.A4)
                 .margin(DocumentInsets.of(28))
@@ -64,7 +68,13 @@ public class LargeTableJmhBenchmark {
                 flow.name("LargeTable").spacing(8);
                 flow.addParagraph("Priced line items");
                 flow.addTable(t -> {
-                    t.autoColumns(5).header("#", "Item", "Qty", "Unit", "Total").repeatHeader();
+                    t.columns(
+                            DocumentTableColumn.fixed(columnWidth),
+                            DocumentTableColumn.fixed(columnWidth),
+                            DocumentTableColumn.fixed(columnWidth),
+                            DocumentTableColumn.fixed(columnWidth),
+                            DocumentTableColumn.fixed(columnWidth))
+                            .header("#", "Item", "Qty", "Unit", "Total").repeatHeader();
                     for (int r = 1; r <= rows; r++) {
                         t.row(String.valueOf(r), "Line item " + r, "3", "12.50", "37.50");
                     }

@@ -7,6 +7,7 @@ import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.table.DocumentTableColumn;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfPTable;
@@ -202,6 +203,10 @@ public class ComparativeBenchmark {
      * authored through the public page-flow DSL (the realistic consumer path).
      */
     private static byte[] benchmarkGraphComposeReport() throws Exception {
+        // Equal full-width columns (page width minus the 32pt L/R margins, split
+        // four ways), so the table fills the page like iText (setWidthPercentage
+        // 100) and Jasper (full-column-width cells) rather than hugging its text.
+        final double columnWidth = (DocumentPageSize.A4.width() - 2 * 32) / 4.0;
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(DocumentPageSize.A4).margin(DocumentInsets.of(32)).create()) {
             session.pageFlow(flow -> {
@@ -209,7 +214,12 @@ public class ComparativeBenchmark {
                 flow.addParagraph("Quarterly Business Report");
                 flow.addParagraph(REPORT_PROSE);
                 flow.addTable(t -> {
-                    t.autoColumns(4).header("Item", "Qty", "Unit", "Total").repeatHeader();
+                    t.columns(
+                            DocumentTableColumn.fixed(columnWidth),
+                            DocumentTableColumn.fixed(columnWidth),
+                            DocumentTableColumn.fixed(columnWidth),
+                            DocumentTableColumn.fixed(columnWidth))
+                            .header("Item", "Qty", "Unit", "Total").repeatHeader();
                     for (int r = 1; r <= REPORT_ROWS; r++) {
                         t.row("Line item " + r, "3", "ea", "38.75");
                     }

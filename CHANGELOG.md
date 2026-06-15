@@ -313,6 +313,14 @@ Entries land here as they merge.
   debug-overlay switch, and the document's own chrome — 23 blocks across
   7 pages. Blocks use `keepTogether()`, so a snippet is never orphaned
   from its result.
+- **Landscape capability deck on real benchmark data.** New flagship
+  `EngineDeckExample` renders GraphCompose about itself: a full-page banner
+  (DSL code → engine grid → output backends → real rendered-document
+  thumbnails), an authoring-pipeline page, and two pages that load the
+  repository's comparative benchmark result file and draw the table and charts
+  (GraphCompose vs iText 9 vs JasperReports) straight from it. Content lives in
+  an `EngineDeckData` data layer; an `EngineDeckLayoutSnapshotTest` locks the
+  layout.
 - **Recipe coverage is complete.** Nine new cookbook pages close every gap the
   recipe index tracked: rich text, lists, timelines, barcodes, images,
   PDF chrome (metadata / watermark / running header-footer / protection /

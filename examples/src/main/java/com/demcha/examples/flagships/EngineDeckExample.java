@@ -73,10 +73,11 @@ import java.util.Objects;
  * wide hero and the side-by-side comparison charts anyway.</p>
  *
  * <p>The branding follows the supplied {@code logo.svg}: a violet identity
- * ({@code #7C5CFC} / {@code #6128D9}) on a near-black panel, with the
- * monochrome feature icons sitting on light chips where they read cleanly.
- * Icons are read from {@code /showcase/*.svg} classpath resources via
- * {@link SvgIcon#parse(String)} — native PDF Béziers, no rasterization.</p>
+ * ({@code #7C5CFC} / {@code #6128D9}) on a near-black panel. Feature icons are
+ * read from {@code /showcase/*.svg} classpath resources — monochrome glyphs
+ * recoloured to light variants ({@code *-light.svg}) so they read on the dark
+ * cards — via {@link SvgIcon#parse(String)} as native PDF Béziers, no
+ * rasterization.</p>
  *
  * <p>The comparison pages render <b>real measured data</b>: at build time a
  * snapshot of the repository's comparative benchmark

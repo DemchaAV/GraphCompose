@@ -36,11 +36,15 @@ final class EngineDeckData {
     /** A comparative benchmark run: metadata plus per-scenario time/heap. */
     record BenchRun(String timestamp, int warmup, int measure, Map<String, double[]> rows) {
         double timeMs(String label) {
-            return rows.get(label)[0];
+            return row(label)[0];
         }
 
         double heapMb(String label) {
-            return rows.get(label)[1];
+            return row(label)[1];
+        }
+
+        private double[] row(String label) {
+            return Objects.requireNonNull(rows.get(label), () -> "no benchmark row: " + label);
         }
 
         double timeMs(String lib, int size) {

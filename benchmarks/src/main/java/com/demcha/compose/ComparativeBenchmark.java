@@ -18,6 +18,8 @@ import net.sf.jasperreports.engine.type.TextAdjustEnum;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.lang.management.ManagementFactory;
@@ -107,6 +109,27 @@ public class ComparativeBenchmark {
         System.out.println("-".repeat(60));
         System.out.println("Saved JSON benchmark report to " + jsonPath);
         System.out.println("Saved CSV benchmark report to " + csvPath);
+
+        // After all measurement, dump one rendered PDF per library/scenario so the
+        // exact documents that were benchmarked can be inspected visually. This runs
+        // outside the measured region, so it cannot affect the timing/allocation numbers.
+        Path samples = writeSampleRenders(artifacts.directory().resolve("samples"));
+        System.out.println("Saved sample renders (one PDF per library/scenario) to " + samples);
+    }
+
+    /**
+     * Renders each library/scenario once more and writes the bytes to PDF files,
+     * so a reader can open the actual documents the benchmark measured.
+     */
+    private static Path writeSampleRenders(Path directory) throws Exception {
+        Files.createDirectories(directory);
+        Files.write(directory.resolve("graphcompose-small.pdf"), benchmarkGraphComposeCanonical());
+        Files.write(directory.resolve("itext-small.pdf"), benchmarkIText());
+        Files.write(directory.resolve("jasper-small.pdf"), benchmarkJasper());
+        Files.write(directory.resolve("graphcompose-report.pdf"), benchmarkGraphComposeReport());
+        Files.write(directory.resolve("itext-report.pdf"), benchmarkITextReport());
+        Files.write(directory.resolve("jasper-report.pdf"), benchmarkJasperReport());
+        return directory;
     }
 
     private static void printTableHeader() {

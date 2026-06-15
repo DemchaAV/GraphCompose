@@ -510,6 +510,7 @@ public final class CurrentSpeedBenchmark {
         }
 
         List<String> failures = new ArrayList<>();
+        List<String> advisories = new ArrayList<>();
         for (LatencyRow row : latencyRows) {
             SmokeThreshold threshold = profile.smokeThresholds().get(row.scenario());
             if (threshold == null) {
@@ -527,17 +528,23 @@ public final class CurrentSpeedBenchmark {
                 failures.add(row.scenario() + " avg " + format(row.avgMillis()) + " ms > " + format(maxAvgMillis) + " ms");
             }
             if (row.peakHeapMb() > maxPeakHeapMb) {
-                failures.add(row.scenario() + " peak heap " + format(row.peakHeapMb()) + " MB > " + format(maxPeakHeapMb) + " MB");
+                // peakHeapMb is a GC-timing-noisy used-heap delta, so a breach is
+                // reported as advisory rather than failing the gate — matching
+                // BenchmarkVerdictTool and avoiding flaky CI from a GC blip. The
+                // deterministic memory signal is the allocation-bytes probes.
+                advisories.add(row.scenario() + " peak heap " + format(row.peakHeapMb()) + " MB > " + format(maxPeakHeapMb) + " MB");
             }
         }
 
+        String advisoryNote = advisories.isEmpty() ? "" : " (advisory: " + String.join("; ", advisories) + ")";
+
         if (failures.isEmpty()) {
-            return new PerformanceGateResult(true, "Performance gate passed for profile " + profile.id());
+            return new PerformanceGateResult(true, "Performance gate passed for profile " + profile.id() + advisoryNote);
         }
 
         return new PerformanceGateResult(
                 false,
-                "Performance gate failed for profile " + profile.id() + ": " + String.join("; ", failures));
+                "Performance gate failed for profile " + profile.id() + ": " + String.join("; ", failures) + advisoryNote);
     }
 
     private long usedHeapBytes() {

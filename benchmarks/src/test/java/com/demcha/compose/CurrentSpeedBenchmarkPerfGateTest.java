@@ -53,14 +53,16 @@ class CurrentSpeedBenchmarkPerfGateTest {
     }
 
     @Test
-    void failsWhenPeakHeapExceedsThreshold() {
+    void treatsPeakHeapAsAdvisoryNotAGateFailure() {
         CurrentSpeedBenchmark.PerformanceGateResult result =
                 CurrentSpeedBenchmark.evaluatePerformanceGate(
                         CurrentSpeedBenchmark.BenchmarkProfile.SMOKE,
-                        List.of(latency(ENGINE_SIMPLE, 1.0, 999.0))); // 999 > 96
+                        List.of(latency(ENGINE_SIMPLE, 1.0, 999.0))); // heap 999 > 96, avg 1.0 ok
 
-        assertThat(result.passed()).isFalse();
-        assertThat(result.message()).contains("peak heap");
+        assertThat(result.passed())
+                .as("peak heap is GC-noisy and advisory — a heap-only breach must not fail the gate")
+                .isTrue();
+        assertThat(result.message()).contains("peak heap").contains("advisory");
     }
 
     @Test

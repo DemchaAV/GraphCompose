@@ -37,6 +37,7 @@ build/
 ### Mac OS ###
 .DS_Store
 /logs/
+benchmarks/logs/
 /CV_Generated.pdf
 *.pdf
 # Allow PDF previews that are committed README assets.

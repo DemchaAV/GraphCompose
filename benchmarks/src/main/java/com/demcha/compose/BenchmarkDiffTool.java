@@ -93,6 +93,31 @@ public final class BenchmarkDiffTool {
                     signedPercent(row.peakHeapMbDeltaPct()));
         }
 
+        if (!report.addedScenarios().isEmpty() || !report.removedScenarios().isEmpty()) {
+            System.out.println();
+            System.out.println("Scenario set changes");
+            System.out.println("  Added in candidate:    "
+                    + (report.addedScenarios().isEmpty() ? "(none)" : String.join(", ", report.addedScenarios())));
+            System.out.println("  Removed from baseline: "
+                    + (report.removedScenarios().isEmpty() ? "(none)" : String.join(", ", report.removedScenarios())));
+        }
+
+        if (!report.stages().isEmpty()) {
+            System.out.println();
+            System.out.println("Stage diff (pct delta per stage)");
+            System.out.printf("%-18s | %12s | %12s | %12s | %12s%n",
+                    "Scenario", "Compose pct", "Layout pct", "Render pct", "Total pct");
+            System.out.println("-".repeat(78));
+            for (StageDiff row : report.stages()) {
+                System.out.printf("%-18s | %12s | %12s | %12s | %12s%n",
+                        row.scenario(),
+                        signedPercent(row.composeDeltaPct()),
+                        signedPercent(row.layoutDeltaPct()),
+                        signedPercent(row.renderDeltaPct()),
+                        signedPercent(row.totalDeltaPct()));
+            }
+        }
+
         System.out.println();
         System.out.println("Throughput diff");
         System.out.printf("%-18s | %8s | %12s | %14s%n",
@@ -143,10 +168,29 @@ public final class BenchmarkDiffTool {
                                 format(row.candidateAvgMillisPerDoc()),
                                 format(row.avgMillisPerDocDeltaPct())))
                         .toList());
+        Path stagesCsv = artifacts.writeCsv(
+                "stages-diff",
+                List.of("scenario", "baseline_compose_ms", "candidate_compose_ms", "compose_delta_pct", "baseline_layout_ms", "candidate_layout_ms", "layout_delta_pct", "baseline_render_ms", "candidate_render_ms", "render_delta_pct", "baseline_total_ms", "candidate_total_ms", "total_delta_pct"),
+                report.stages().stream()
+                        .map(row -> List.of(
+                                row.scenario(),
+                                format(row.baselineComposeMillis()),
+                                format(row.candidateComposeMillis()),
+                                format(row.composeDeltaPct()),
+                                format(row.baselineLayoutMillis()),
+                                format(row.candidateLayoutMillis()),
+                                format(row.layoutDeltaPct()),
+                                format(row.baselineRenderMillis()),
+                                format(row.candidateRenderMillis()),
+                                format(row.renderDeltaPct()),
+                                format(row.baselineTotalMillis()),
+                                format(row.candidateTotalMillis()),
+                                format(row.totalDeltaPct())))
+                        .toList());
 
         System.out.println();
         System.out.println("Saved JSON diff report to " + jsonPath);
-        System.out.println("Saved CSV diff reports to " + latencyCsv + " and " + throughputCsv);
+        System.out.println("Saved CSV diff reports to " + latencyCsv + ", " + throughputCsv + ", and " + stagesCsv);
     }
 
     private void diffComparative(DiffInput input,
@@ -156,11 +200,11 @@ public final class BenchmarkDiffTool {
         ComparativeDiffReport report = buildComparativeDiff(input, baseline, candidate);
 
         System.out.println("Comparative diff");
-        System.out.printf("%-20s | %12s | %12s%n",
+        System.out.printf("%-24s | %12s | %12s%n",
                 "Library", "Time pct", "Heap pct");
-        System.out.println("-".repeat(52));
+        System.out.println("-".repeat(56));
         for (ComparativeLibraryDiff row : report.libraries()) {
-            System.out.printf("%-20s | %12s | %12s%n",
+            System.out.printf("%-24s | %12s | %12s%n",
                     row.library(),
                     signedPercent(row.avgTimeDeltaPct()),
                     signedPercent(row.avgHeapDeltaPct()));
@@ -214,6 +258,29 @@ public final class BenchmarkDiffTool {
                 })
                 .toList();
 
+        Map<String, JsonNode> baselineStages = indexBy(baseline.path("stages"), "scenario");
+        Map<String, JsonNode> candidateStages = indexBy(candidate.path("stages"), "scenario");
+        List<StageDiff> stageDiffs = intersectKeys(baselineStages, candidateStages).stream()
+                .map(key -> {
+                    JsonNode before = baselineStages.get(key);
+                    JsonNode after = candidateStages.get(key);
+                    return new StageDiff(
+                            key,
+                            before.path("composeMillis").asDouble(),
+                            after.path("composeMillis").asDouble(),
+                            percentDelta(before.path("composeMillis").asDouble(), after.path("composeMillis").asDouble()),
+                            before.path("layoutMillis").asDouble(),
+                            after.path("layoutMillis").asDouble(),
+                            percentDelta(before.path("layoutMillis").asDouble(), after.path("layoutMillis").asDouble()),
+                            before.path("renderMillis").asDouble(),
+                            after.path("renderMillis").asDouble(),
+                            percentDelta(before.path("renderMillis").asDouble(), after.path("renderMillis").asDouble()),
+                            before.path("totalMillis").asDouble(),
+                            after.path("totalMillis").asDouble(),
+                            percentDelta(before.path("totalMillis").asDouble(), after.path("totalMillis").asDouble()));
+                })
+                .toList();
+
         Map<String, JsonNode> baselineThroughput = indexThroughput(baseline.path("throughput"));
         Map<String, JsonNode> candidateThroughput = indexThroughput(candidate.path("throughput"));
         List<CurrentSpeedThroughputDiff> throughputDiffs = intersectKeys(baselineThroughput, candidateThroughput).stream()
@@ -237,7 +304,10 @@ public final class BenchmarkDiffTool {
                 input.candidatePath().toString(),
                 baseline.path("timestamp").asText(),
                 candidate.path("timestamp").asText(),
+                addedKeys(baselineLatency, candidateLatency),
+                removedKeys(baselineLatency, candidateLatency),
                 latencyDiffs,
+                stageDiffs,
                 throughputDiffs
         );
     }
@@ -292,6 +362,16 @@ public final class BenchmarkDiffTool {
                 .filter(right::containsKey)
                 .sorted()
                 .toList();
+    }
+
+    /** Keys present in {@code candidate} but not {@code baseline} (new scenarios). */
+    private static List<String> addedKeys(Map<String, JsonNode> baseline, Map<String, JsonNode> candidate) {
+        return candidate.keySet().stream().filter(key -> !baseline.containsKey(key)).sorted().toList();
+    }
+
+    /** Keys present in {@code baseline} but not {@code candidate} (dropped scenarios). */
+    private static List<String> removedKeys(Map<String, JsonNode> baseline, Map<String, JsonNode> candidate) {
+        return baseline.keySet().stream().filter(key -> !candidate.containsKey(key)).sorted().toList();
     }
 
     private static Iterable<JsonNode> iterable(JsonNode array) {
@@ -477,11 +557,29 @@ public final class BenchmarkDiffTool {
                                               double avgMillisPerDocDeltaPct) {
     }
 
+    private record StageDiff(String scenario,
+                             double baselineComposeMillis,
+                             double candidateComposeMillis,
+                             double composeDeltaPct,
+                             double baselineLayoutMillis,
+                             double candidateLayoutMillis,
+                             double layoutDeltaPct,
+                             double baselineRenderMillis,
+                             double candidateRenderMillis,
+                             double renderDeltaPct,
+                             double baselineTotalMillis,
+                             double candidateTotalMillis,
+                             double totalDeltaPct) {
+    }
+
     private record CurrentSpeedDiffReport(String baselinePath,
                                           String candidatePath,
                                           String baselineTimestamp,
                                           String candidateTimestamp,
+                                          List<String> addedScenarios,
+                                          List<String> removedScenarios,
                                           List<CurrentSpeedLatencyDiff> latency,
+                                          List<StageDiff> stages,
                                           List<CurrentSpeedThroughputDiff> throughput) {
     }
 

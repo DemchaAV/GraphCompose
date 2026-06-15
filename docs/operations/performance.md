@@ -1,7 +1,13 @@
 # Performance — v1.4 numbers
 
-All numbers below come from `scripts/run-benchmarks.ps1` — the full local
-benchmark workflow that builds the test classpath once and runs
+> **Historical snapshot (v1.4).** The numbers and suite list below are frozen
+> as captured for v1.4 and are kept for reference. The pipeline has since
+> changed: the `core-engine`, `full-cv`, and `scalability` suites were retired,
+> and current numbers come from the `current-speed` / `comparative` / `stress`
+> pipeline plus the JMH suite. See [docs/operations/benchmarks.md](./benchmarks.md).
+
+All numbers below were captured from `scripts/run-benchmarks.ps1` — the full
+local benchmark workflow that built the test classpath once and ran
 `current-speed`, `comparative`, `core-engine`, `full-cv`, `scalability`,
 and `stress` suites in sequence. They were captured on a developer
 laptop; CI machines are typically 1.5–2× slower. The benchmark
@@ -92,6 +98,10 @@ basis while exposing a fully semantic Java DSL with deterministic
 snapshots.
 
 ## Engine-only timings
+
+_The `GraphComposeBenchmark` and `FullCvBenchmark` mains below were retired
+after v1.4. Equivalent timings now come from the `CurrentSpeedBenchmark`
+`engine-simple` scenario and the JMH `TemplateCvJmhBenchmark`._
 
 - `GraphComposeBenchmark` (engine-only, no PDF render): avg **1.04 ms**, p50 **0.97 ms**, p95 **1.64 ms**.
 - `FullCvBenchmark` (full CV template, including render): avg **4.14 ms**, p50 **3.80 ms**, p95 **6.37 ms**.

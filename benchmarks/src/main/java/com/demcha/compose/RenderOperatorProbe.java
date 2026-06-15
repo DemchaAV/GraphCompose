@@ -70,6 +70,29 @@ public final class RenderOperatorProbe {
     }
 
     private static void report(String scenario, Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> author) throws Exception {
+        OpCounts counts = countOperators(author);
+        int saved = Math.max(0, counts.draws() - counts.tf()) + Math.max(0, counts.draws() - counts.rg());
+        double reduction = counts.draws() == 0 ? 0
+                : 100.0 * (2.0 * counts.draws() - counts.tf() - counts.rg()) / (2.0 * counts.draws());
+        System.out.printf("%-22s | %8d | %8d | %8d | %12d | %8.1f%%%n",
+                scenario, counts.draws(), counts.tf(), counts.rg(), saved, reduction);
+    }
+
+    /** Text-show ({@code Tj}/{@code TJ}), {@code setFont} ({@code Tf}) and non-stroking-colour op counts. */
+    record OpCounts(int draws, int tf, int rg) {
+    }
+
+    /**
+     * Renders {@code author} and counts the text-show, font and colour operators.
+     * Exposed (package-visible) so {@code RenderOperatorGateTest} can pin the F5
+     * coalescing invariant: post-F5 the font/colour ops no longer scale 1:1 with
+     * text draws, so {@code tf} and {@code rg} stay below {@code draws}.
+     *
+     * @param author flow author
+     * @return the operator counts of the rendered document
+     * @throws Exception if rendering fails
+     */
+    static OpCounts countOperators(Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> author) throws Exception {
         byte[] pdf;
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(DocumentPageSize.A4).margin(28, 28, 28, 28).create()) {
@@ -80,10 +103,7 @@ public final class RenderOperatorProbe {
             int draws = count(document, "Tj") + count(document, "TJ");
             int tf = count(document, "Tf");
             int rg = count(document, "rg") + count(document, "g") + count(document, "sc") + count(document, "scn");
-            int saved = Math.max(0, draws - tf) + Math.max(0, draws - rg);
-            double reduction = draws == 0 ? 0 : 100.0 * (2.0 * draws - tf - rg) / (2.0 * draws);
-            System.out.printf("%-22s | %8d | %8d | %8d | %12d | %8.1f%%%n",
-                    scenario, draws, tf, rg, saved, reduction);
+            return new OpCounts(draws, tf, rg);
         }
     }
 

@@ -36,15 +36,17 @@ The script prints numbered sections so you can map console output to the pipelin
 1. `01-build-classpath`
    Builds the test classpath once and writes `target/benchmark.classpath`.
 2. `02-current-speed`
-   Runs `CurrentSpeedBenchmark` in the selected profile.
+   Runs `CurrentSpeedBenchmark` in the selected profile. The full profile also
+   runs the thread-scaling throughput sweep (1 → 16 threads).
 3. `03-comparative`
-   Runs the GraphCompose canonical vs iText 5 vs JasperReports comparison.
-4. `04-core-engine`
-   Runs `GraphComposeBenchmark`.
-5. `05-full-cv`
-   Runs `FullCvBenchmark`.
-6. `06-scalability`
-   Runs the thread-scaling throughput benchmark.
+   Runs the GraphCompose canonical vs iText 9 vs JasperReports comparison: a
+   small-invoice tier plus a report-scaling sweep (40 / 200 / 1000 rows) that
+   prints a per-size GraphCompose-advantage ratio and dumps a sample PDF per
+   library/size.
+
+   _Steps 04–06 (`core-engine`, `full-cv`, `scalability`) were retired. The
+   surviving steps keep their original `NN-` console prefixes, so the labels
+   jump from `03-` to `07-`._
 7. `07-stress`
    Runs the concurrent stability stress test.
 8. `08-endurance`

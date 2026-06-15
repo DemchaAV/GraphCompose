@@ -24,6 +24,12 @@ import java.util.stream.Collectors;
  * possible, so it can be diffed by {@link BenchmarkDiffTool}. The tool is meant
  * for local benchmark sessions where a few repeated runs are needed to reduce
  * machine noise before comparing results.</p>
+ *
+ * <p>The current-speed per-stage breakdown ({@code stages[]}) is medianed and
+ * carried into the aggregate when every source run has it (it is present only for
+ * runs with enough measurement iterations), so a median-vs-median
+ * {@link BenchmarkDiffTool} run still attributes a regression to
+ * compose / layout / render.</p>
  */
 public final class BenchmarkMedianTool {
 
@@ -75,6 +81,7 @@ public final class BenchmarkMedianTool {
         List<Integer> threadCounts = requireIntegerArrayConsistency(reportFiles, "threadCounts");
 
         List<CurrentSpeedLatencyMedianRow> latencyRows = aggregateCurrentSpeedLatency(reportFiles);
+        List<CurrentSpeedStageMedianRow> stageRows = aggregateCurrentSpeedStages(reportFiles);
         List<CurrentSpeedThroughputMedianRow> throughputRows = aggregateCurrentSpeedThroughput(reportFiles);
 
         long totalBytesMedian = Math.round(median(
@@ -90,6 +97,7 @@ public final class BenchmarkMedianTool {
                 docsPerThread,
                 threadCounts,
                 latencyRows,
+                stageRows,
                 throughputRows,
                 totalBytesMedian,
                 "median",
@@ -126,12 +134,28 @@ public final class BenchmarkMedianTool {
                                 format(row.avgMillisPerDoc())))
                         .toList());
 
+        Path stagesCsv = null;
+        if (!stageRows.isEmpty()) {
+            stagesCsv = artifacts.writeCsv(
+                    "stages",
+                    List.of("scenario", "compose_ms", "layout_ms", "render_ms", "total_ms"),
+                    stageRows.stream()
+                            .map(row -> List.of(
+                                    row.scenario(),
+                                    format(row.composeMillis()),
+                                    format(row.layoutMillis()),
+                                    format(row.renderMillis()),
+                                    format(row.totalMillis())))
+                            .toList());
+        }
+
         System.out.println("Median benchmark report");
         System.out.println("Suite: current-speed");
         System.out.println("Profile: " + profile);
         System.out.println("Source runs: " + reportFiles.size());
         System.out.println("Saved JSON median report to " + jsonPath);
-        System.out.println("Saved CSV median reports to " + latencyCsv + " and " + throughputCsv);
+        System.out.println("Saved CSV median reports to " + latencyCsv
+                + (stagesCsv != null ? ", " + stagesCsv : "") + " and " + throughputCsv);
     }
 
     private List<CurrentSpeedLatencyMedianRow> aggregateCurrentSpeedLatency(List<ReportFile> reportFiles) {
@@ -161,6 +185,42 @@ public final class BenchmarkMedianTool {
                             median(rows, "docsPerSecond"),
                             median(rows, "avgKilobytes"),
                             median(rows, "peakHeapMb"));
+                })
+                .toList();
+    }
+
+    private List<CurrentSpeedStageMedianRow> aggregateCurrentSpeedStages(List<ReportFile> reportFiles) {
+        // stages[] is optional: CurrentSpeedBenchmark only emits it when the run
+        // has enough measurement iterations (smoke < 20 emits none). Aggregate only
+        // when EVERY source report carries a non-empty stages[] with the same
+        // scenario set; otherwise return empty so the median report simply carries
+        // no stages — mirroring the benchmark's own conditional emission rather
+        // than throwing on an absent/partial optional field.
+        List<JsonNode> firstRows = iterable(reportFiles.get(0).report().path("stages"));
+        if (firstRows.isEmpty()) {
+            return List.of();
+        }
+        Map<String, JsonNode> firstByScenario = indexBy(firstRows, "scenario");
+        for (ReportFile reportFile : reportFiles) {
+            Map<String, JsonNode> currentByScenario = indexBy(iterable(reportFile.report().path("stages")), "scenario");
+            if (!firstByScenario.keySet().equals(currentByScenario.keySet())) {
+                System.out.println("Note: stages omitted from the median aggregate — "
+                        + "the stage-breakdown scenario set differs across the source runs.");
+                return List.of();
+            }
+        }
+
+        return firstByScenario.keySet().stream()
+                .map(scenario -> {
+                    List<JsonNode> rows = reportFiles.stream()
+                            .map(reportFile -> indexBy(iterable(reportFile.report().path("stages")), "scenario").get(scenario))
+                            .toList();
+                    return new CurrentSpeedStageMedianRow(
+                            scenario,
+                            median(rows, "composeMillis"),
+                            median(rows, "layoutMillis"),
+                            median(rows, "renderMillis"),
+                            median(rows, "totalMillis"));
                 })
                 .toList();
     }
@@ -393,6 +453,13 @@ public final class BenchmarkMedianTool {
                                                    double avgMillisPerDoc) {
     }
 
+    private record CurrentSpeedStageMedianRow(String scenario,
+                                              double composeMillis,
+                                              double layoutMillis,
+                                              double renderMillis,
+                                              double totalMillis) {
+    }
+
     private record CurrentSpeedMedianReport(String timestamp,
                                             String profile,
                                             int warmupIterations,
@@ -400,6 +467,7 @@ public final class BenchmarkMedianTool {
                                             int docsPerThread,
                                             List<Integer> threadCounts,
                                             List<CurrentSpeedLatencyMedianRow> latency,
+                                            List<CurrentSpeedStageMedianRow> stages,
                                             List<CurrentSpeedThroughputMedianRow> throughput,
                                             long totalBytes,
                                             String aggregation,

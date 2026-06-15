@@ -5,6 +5,7 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentPaint;
+import com.demcha.compose.document.style.DocumentStroke;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.contentstream.operator.Operator;
 import org.apache.pdfbox.pdfparser.PDFStreamParser;
@@ -33,34 +34,41 @@ public final class VectorRenderOperatorProbe {
 
     static final int PATHS = 40;
 
-    enum PaintMode { FLAT, GRADIENT, ALPHA }
+    enum PaintMode { FLAT, GRADIENT, ALPHA, STROKED, DASHED }
 
-    /** PDF operator counts for one paint mode: cubic curves, shadings, ExtGState sets, clips. */
-    record OperatorCounts(int curves, int shadings, int extGStates, int clips) {
+    /**
+     * PDF operator counts for one paint mode: cubic curves ({@code c}), shadings
+     * ({@code sh}), ExtGState sets ({@code gs}), clips ({@code W}), strokes
+     * ({@code S}/{@code s}) and dash-array sets ({@code d}).
+     */
+    record OperatorCounts(int curves, int shadings, int extGStates, int clips, int strokes, int dashes) {
     }
 
     public static void main(String[] args) throws Exception {
         BenchmarkSupport.configureQuietLogging();
 
         System.out.println("GraphCompose vector-paint render-operator probe (" + PATHS + " blob paths each)");
-        System.out.printf("%-10s | %6s | %6s | %6s | %6s%n", "Mode", "c", "sh", "gs", "W");
-        System.out.println("-".repeat(46));
+        System.out.printf("%-10s | %6s | %6s | %6s | %6s | %6s | %6s%n", "Mode", "c", "sh", "gs", "W", "S", "d");
+        System.out.println("-".repeat(64));
         for (PaintMode mode : PaintMode.values()) {
             report(mode);
         }
         System.out.println();
-        System.out.println("c=cubic curve, sh=shading fill, gs=ExtGState (alpha), W=clip. "
-                + "Flat takes the fast path (no sh/gs/W); gradient adds sh+W per shape; alpha adds gs.");
+        System.out.println("c=cubic curve, sh=shading fill, gs=ExtGState (alpha), W=clip, S=stroke, d=dash set. "
+                + "Flat takes the fast fill path (no sh/gs/W/S/d); gradient adds sh+W per shape; alpha adds gs; "
+                + "stroked adds S per shape; dashed adds d+S per shape.");
     }
 
     private static void report(PaintMode mode) throws Exception {
         OperatorCounts counts = countOperators(mode);
-        System.out.printf("%-10s | %6d | %6d | %6d | %6d%n",
+        System.out.printf("%-10s | %6d | %6d | %6d | %6d | %6d | %6d%n",
                 mode.name().toLowerCase(),
                 counts.curves(),
                 counts.shadings(),
                 counts.extGStates(),
-                counts.clips());
+                counts.clips(),
+                counts.strokes(),
+                counts.dashes());
     }
 
     /**
@@ -87,7 +95,9 @@ public final class VectorRenderOperatorProbe {
                     count(document, "c"),
                     count(document, "sh"),
                     count(document, "gs"),
-                    count(document, "W"));
+                    count(document, "W"),
+                    count(document, "S") + count(document, "s"),
+                    count(document, "d"));
         }
     }
 
@@ -96,6 +106,7 @@ public final class VectorRenderOperatorProbe {
                 DocumentColor.rgb(167, 139, 250), DocumentColor.rgb(97, 40, 217));
         DocumentColor flat = DocumentColor.rgb(40, 90, 160);
         DocumentColor translucent = DocumentColor.rgb(40, 90, 160).withOpacity(0.5);
+        DocumentStroke stroke = DocumentStroke.of(DocumentColor.rgb(40, 90, 160), 2.0);
         for (int i = 0; i < PATHS; i++) {
             flow.addPath(p -> {
                 p.size(60, 36)
@@ -107,6 +118,8 @@ public final class VectorRenderOperatorProbe {
                     case FLAT -> p.fillColor(flat);
                     case GRADIENT -> p.fill(gradient);
                     case ALPHA -> p.fillColor(translucent);
+                    case STROKED -> p.stroke(stroke);
+                    case DASHED -> p.stroke(stroke).dashed(4.0, 2.0);
                 }
             });
         }

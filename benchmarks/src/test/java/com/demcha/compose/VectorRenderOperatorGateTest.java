@@ -26,6 +26,35 @@ class VectorRenderOperatorGateTest {
         assertThat(flat.shadings()).as("flat fill must not paint a shading").isZero();
         assertThat(flat.extGStates()).as("flat fill must not set an ExtGState alpha").isZero();
         assertThat(flat.clips()).as("flat fill must not clip").isZero();
+        assertThat(flat.strokes()).as("a flat fill must not stroke").isZero();
+        assertThat(flat.dashes()).as("a flat fill must not set a dash array").isZero();
+    }
+
+    @Test
+    void strokedPathStrokesOncePerShapeWithoutFillPaint() throws Exception {
+        VectorRenderOperatorProbe.OperatorCounts stroked =
+                VectorRenderOperatorProbe.countOperators(VectorRenderOperatorProbe.PaintMode.STROKED);
+
+        assertThat(stroked.strokes())
+                .as("a stroked path strokes once per shape")
+                .isEqualTo(VectorRenderOperatorProbe.PATHS);
+        assertThat(stroked.dashes()).as("a solid stroke sets no dash array").isZero();
+        assertThat(stroked.shadings()).as("a stroke must not paint a shading").isZero();
+        assertThat(stroked.extGStates()).as("a stroke must not set an ExtGState alpha").isZero();
+    }
+
+    @Test
+    void dashedStrokeSetsADashArrayPerShape() throws Exception {
+        VectorRenderOperatorProbe.OperatorCounts dashed =
+                VectorRenderOperatorProbe.countOperators(VectorRenderOperatorProbe.PaintMode.DASHED);
+
+        assertThat(dashed.dashes())
+                .as("a dashed stroke sets a dash array once per shape")
+                .isEqualTo(VectorRenderOperatorProbe.PATHS);
+        assertThat(dashed.strokes())
+                .as("a dashed path still strokes once per shape")
+                .isEqualTo(VectorRenderOperatorProbe.PATHS);
+        assertThat(dashed.shadings()).as("a dashed stroke must not paint a shading").isZero();
     }
 
     @Test
